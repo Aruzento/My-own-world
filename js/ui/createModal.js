@@ -3,13 +3,21 @@ import {
 } from '../templates/templates.js';
 
 import {
-  createPage,
-  loadWorkspace
+  createPage
 } from '../storage/storage.js';
 
 import {
   renderTree
 } from '../tree/tree.js';
+
+import {
+  openPage
+} from '../editor/editor.js';
+
+import {
+  positionPopupNearAnchor,
+  positionPopupAtPoint
+} from './popupPosition.js';
 
 
 const menu =
@@ -64,7 +72,9 @@ function toggleMenu(event) {
 
     openCreateMenu(
       rect.left,
-      rect.bottom + 8
+      rect.bottom + 8,
+      null,
+      button
     );
 
   } else {
@@ -77,20 +87,44 @@ function toggleMenu(event) {
 export function openCreateMenu(
   x,
   y,
-  parentId = null
+  parentId = null,
+  anchor = null
 ) {
 
   menu.dataset.parentId =
     parentId ?? '';
 
-  menu.style.left =
-    `${x}px`;
-
-  menu.style.top =
-    `${y}px`;
-
   menu.classList.remove(
     'hidden'
+  );
+
+  requestAnimationFrame(
+    () => {
+
+      if (anchor) {
+
+        positionPopupNearAnchor(
+          menu,
+          anchor,
+          {
+            fallbackWidth: 260,
+            fallbackHeight: 220
+          }
+        );
+
+        return;
+      }
+
+      positionPopupAtPoint(
+        menu,
+        x,
+        y,
+        {
+          fallbackWidth: 260,
+          fallbackHeight: 220
+        }
+      );
+    }
   );
 }
 
@@ -146,14 +180,20 @@ function renderMenu() {
   const parentId =
     menu.dataset.parentId || null;
 
-  await createPage(
+  const page =
+    await createPage(
     key,
     parentId
   );
 
-  await loadWorkspace();
-
   renderTree();
+
+  if (page) {
+
+    openPage(
+      page
+    );
+  }
 }
       );
 

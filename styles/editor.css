@@ -286,3 +286,136 @@ a:hover {
     rgba(255,255,255,0.03);
 }
 
+
+/* =========================================
+   EMPTY EDITOR
+========================================= */
+
+.empty-editor-page {
+
+  min-height:
+    calc(100vh - 120px);
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  padding:
+    32px 18px;
+}
+
+
+.empty-editor-inner {
+
+  width:
+    min(560px, 100%);
+
+  text-align:
+    center;
+}
+
+
+.empty-editor-kicker {
+
+  margin:
+    0 0 8px;
+
+  color:
+    rgba(241,211,142,0.72);
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+
+  text-transform:
+    uppercase;
+}
+
+
+.empty-editor-inner h1 {
+
+  margin:
+    0 0 22px;
+
+  color:
+    rgba(255,255,255,0.94);
+
+  font-size:
+    28px;
+
+  letter-spacing:
+    0;
+}
+
+
+.empty-create-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap:
+    10px;
+}
+
+
+.empty-create-option {
+
+  min-height:
+    116px;
+
+  padding:
+    16px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  gap:
+    8px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(255,255,255,0.04);
+
+  color:
+    rgba(255,255,255,0.78);
+
+  cursor:
+    pointer;
+}
+
+
+.empty-create-option:hover {
+
+  background:
+    rgba(241,211,142,0.08);
+
+  border-color:
+    rgba(241,211,142,0.22);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.empty-create-icon {
+
+  font-size:
+    26px;
+}
+

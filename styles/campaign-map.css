@@ -241,6 +241,14 @@
 }
 
 
+.campaign-map-stage[data-tool="draw"],
+.campaign-map-stage[data-tool="erase"] {
+
+  cursor:
+    none;
+}
+
+
 .campaign-map-stage.is-panning {
 
   cursor:
@@ -276,6 +284,49 @@
 
   inset:
     0;
+}
+
+
+.campaign-brush-preview {
+
+  position:
+    absolute;
+
+  left:
+    0;
+
+  top:
+    0;
+
+  z-index:
+    8;
+
+  border:
+    1px solid
+    rgba(255,248,230,0.9);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.08);
+
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.28),
+    0 0 18px rgba(241,211,142,0.16);
+
+  pointer-events:
+    none;
+
+  transform:
+    translate(-50%, -50%);
+}
+
+
+.campaign-brush-preview.hidden {
+
+  display:
+    none;
 }
 
 
@@ -385,6 +436,9 @@
   z-index:
     5;
 
+  opacity:
+    0.2;
+
   pointer-events:
     none;
 }
@@ -476,6 +530,25 @@
   transform:
     translate(-50%, -50%)
     scale(1.08);
+}
+
+
+.campaign-map-token-image {
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  display:
+    block;
+
+  border-radius:
+    inherit;
+
+  object-fit:
+    cover;
 }
 
 

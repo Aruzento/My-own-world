@@ -2,6 +2,8 @@ import {
   getPageIcon
 } from '../core/icons.js';
 
+import { state } from '../state.js';
+
 import {
   openPage
 } from '../editor/editor.js';
@@ -29,6 +31,11 @@ export function renderTreePage(
 
   item.className =
     'tree-item tree-page';
+
+  item.classList.toggle(
+    'active',
+    state.currentPage?.id === page.id
+  );
 
   item.dataset.pageId =
     page.id;

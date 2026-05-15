@@ -1,3 +1,7 @@
+import {
+  positionPopupNearAnchor
+} from './popupPosition.js';
+
 let popup = null;
 let confirmHandler = null;
 
@@ -128,35 +132,12 @@ function positionPopup(
   anchor
 ) {
 
-  const rect =
-    anchor.getBoundingClientRect();
-
-  const popupWidth =
-    element.offsetWidth || 260;
-
-  const popupHeight =
-    element.offsetHeight || 140;
-
-  const left =
-    Math.min(
-      rect.left,
-      window.innerWidth - popupWidth - 12
-    );
-
-  let top =
-    rect.bottom + 8;
-
-  if (
-    top + popupHeight > window.innerHeight - 12
-  ) {
-
-    top =
-      rect.top - popupHeight - 8;
-  }
-
-  element.style.left =
-    `${Math.max(12, left)}px`;
-
-  element.style.top =
-    `${Math.max(12, top)}px`;
+  positionPopupNearAnchor(
+    element,
+    anchor,
+    {
+      fallbackWidth: 260,
+      fallbackHeight: 140
+    }
+  );
 }

@@ -4,6 +4,10 @@ import {
   findPageByTitle
 } from './wikiLinkLookup.js';
 
+import {
+  positionPopupNearAnchor
+} from '../ui/popupPosition.js';
+
 
 let popup = null;
 let showTimer = null;
@@ -210,35 +214,13 @@ function positionPreview(
   link
 ) {
 
-  const rect =
-    link.getBoundingClientRect();
-
-  const popupWidth =
-    element.offsetWidth || 280;
-
-  const popupHeight =
-    element.offsetHeight || 120;
-
-  const left =
-    Math.min(
-      rect.left,
-      window.innerWidth - popupWidth - 12
-    );
-
-  let top =
-    rect.bottom + 10;
-
-  if (
-    top + popupHeight > window.innerHeight - 12
-  ) {
-
-    top =
-      rect.top - popupHeight - 10;
-  }
-
-  element.style.left =
-    `${Math.max(12, left)}px`;
-
-  element.style.top =
-    `${Math.max(12, top)}px`;
+  positionPopupNearAnchor(
+    element,
+    link,
+    {
+      gap: 10,
+      fallbackWidth: 280,
+      fallbackHeight: 120
+    }
+  );
 }

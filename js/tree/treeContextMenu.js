@@ -17,12 +17,21 @@ import {
 } from '../editor/wikiLinks.js';
 
 import {
+  openPage,
+  renderEmptyEditor
+} from '../editor/editor.js';
+
+import {
   openConfirmPopup
 } from '../ui/confirmPopup.js';
 
 import {
   setStatus
 } from '../ui/ui.js';
+
+import {
+  positionPopupAtPoint
+} from '../ui/popupPosition.js';
 
 
 /* Находит DOM-элемент контекстного меню дерева */
@@ -124,18 +133,24 @@ export function openTreeContextMenu(
   );
 
 
-  /* Ставит меню по X координате клика */
-  contextMenu.style.left =
-    `${event.clientX}px`;
-
-  /* Ставит меню по Y координате клика */
-  contextMenu.style.top =
-    `${event.clientY}px`;
-
-
   /* Показывает меню */
   contextMenu.classList.remove(
     'hidden'
+  );
+
+  requestAnimationFrame(
+    () => {
+
+      positionPopupAtPoint(
+        contextMenu,
+        event.clientX,
+        event.clientY,
+        {
+          fallbackWidth: 220,
+          fallbackHeight: 120
+        }
+      );
+    }
   );
 }
 
@@ -146,6 +161,17 @@ async function removePageBranch(
 ) {
 
   closeTreeContextMenu();
+
+  const deletedIds =
+    collectBranchIds(
+      page
+    );
+
+  const deletedCurrentPage =
+    state.currentPage &&
+    deletedIds.has(
+      state.currentPage.id
+    );
 
   /* Проверяет и запрашивает права на запись после клика по кнопке popup,
      чтобы File System Access API получил пользовательскую активацию. */
@@ -167,6 +193,21 @@ async function removePageBranch(
       page
     );
 
+    const campaignMapModule =
+      await import('../editor/campaignMap.js');
+
+    await campaignMapModule.removeDeletedCampaignMapTokens(
+      deletedIds
+    );
+
+    if (deletedCurrentPage) {
+
+      openFallbackPageAfterDelete(
+        page,
+        deletedIds
+      );
+    }
+
     renderTree();
     refreshCurrentEditorWikiLinks();
 
@@ -187,6 +228,61 @@ async function removePageBranch(
       'Не удалось удалить элемент. Переоткрой workspace через кнопку ⊞.'
     );
   }
+}
+
+
+function collectBranchIds(
+  rootPage
+) {
+
+  const ids =
+    new Set([
+      rootPage.id
+    ]);
+
+  state.pages
+    .filter(page =>
+      page.parent === rootPage.id
+    )
+    .forEach(child => {
+
+      collectBranchIds(child)
+        .forEach(id =>
+          ids.add(id)
+        );
+    });
+
+  return ids;
+}
+
+
+function openFallbackPageAfterDelete(
+  deletedRoot,
+  deletedIds
+) {
+
+  const parent =
+    state.pages.find(page =>
+      page.id === deletedRoot.parent &&
+      !deletedIds.has(page.id)
+    );
+
+  const fallback =
+    parent ||
+    state.pages.find(page =>
+      !deletedIds.has(page.id)
+    );
+
+  if (fallback) {
+
+    openPage(
+      fallback
+    );
+
+    return;
+  }
+
+  renderEmptyEditor();
 }
 
 

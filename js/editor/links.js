@@ -2,6 +2,10 @@ import {
   saveCurrentPage
 } from './editor.js';
 
+import {
+  positionPopupAtPoint
+} from '../ui/popupPosition.js';
+
 
 let savedLinkRange =
   null;
@@ -94,17 +98,24 @@ export function createLinkFromSelection() {
     '';
 
 
-  popup.style.left =
-    `${rect.left}px`;
-
-  popup.style.top =
-    `${rect.bottom + 8}px`;
-
-
   popup.classList.remove(
     'hidden'
   );
 
+  requestAnimationFrame(
+    () => {
+
+      positionPopupAtPoint(
+        popup,
+        rect.left,
+        rect.bottom + 8,
+        {
+          fallbackWidth: 300,
+          fallbackHeight: 150
+        }
+      );
+    }
+  );
 
   urlInput.focus();
 }

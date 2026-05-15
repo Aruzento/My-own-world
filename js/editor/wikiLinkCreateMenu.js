@@ -14,6 +14,10 @@ import {
 
 import { state } from '../state.js';
 
+import {
+  positionPopupAtPoint
+} from '../ui/popupPosition.js';
+
 
 const menu =
   document.createElement('div');
@@ -135,14 +139,23 @@ export function openWikiCreateMenu(
     });
 
 
-  menu.style.left =
-    `${x}px`;
-
-  menu.style.top =
-    `${y}px`;
-
   menu.classList.remove(
     'hidden'
+  );
+
+  requestAnimationFrame(
+    () => {
+
+      positionPopupAtPoint(
+        menu,
+        x,
+        y,
+        {
+          fallbackWidth: 300,
+          fallbackHeight: 340
+        }
+      );
+    }
   );
 }
 

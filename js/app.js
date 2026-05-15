@@ -21,6 +21,7 @@ import {
 /* Импорт инициализации editor */
 import {
   setupEditor,
+  renderEmptyEditor,
 } from './editor/editor.js';
 
 
@@ -98,6 +99,11 @@ document
 
       /* Перерисовывает дерево */
       renderTree();
+
+      if (state.pages.length === 0) {
+
+        renderEmptyEditor();
+      }
     }
   );
 
@@ -135,6 +141,9 @@ setupCreateModal();
 /* Инициализация нижнего блока профиля */
 setupProfile();
 
+/* Показывает стартовый экран до выбора workspace или страницы */
+renderEmptyEditor();
+
 
 
 /* Самовызывающаяся async функция */
@@ -152,5 +161,10 @@ setupProfile();
 
   /* Рендерит дерево */
   renderTree();
+
+  if (state.pages.length === 0) {
+
+    renderEmptyEditor();
+  }
 
 })();

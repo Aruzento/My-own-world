@@ -54,6 +54,33 @@ export function createItemsBlock({
 }
 
 
+export function createSpellsBlock({
+  title = 'Заклинания'
+}) {
+
+  return `
+    <div
+      class="template-block spell-set-block"
+      data-block-type="spells"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="spell-set-list"></div>
+
+      <button
+        class="spell-set-add-btn"
+        data-runtime="true"
+        type="button"
+      >
+        + Добавить заклинание
+      </button>
+    </div>
+  `;
+}
+
+
 export function createCharacterStatsBlock({
   title = 'Статистика персонажа'
 }) {

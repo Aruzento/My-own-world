@@ -18,25 +18,6 @@ export async function createPage(
   const template =
     templates[templateKey];
 
-  const pagesDir =
-    await state.workspaceHandle
-      .getDirectoryHandle(
-        'pages'
-      );
-
-  const fileName =
-    `${Date.now()}.md`;
-
-  const fileHandle =
-    await pagesDir.getFileHandle(
-      fileName,
-      { create: true }
-    );
-
-  const writable =
-    await fileHandle
-      .createWritable();
-
   const pageId =
     crypto.randomUUID();
 
@@ -60,11 +41,9 @@ aliases: []
 ${templateContent}
 `;
 
-  await writable.write(
+  return writePageFile(
     content
   );
-
-  await writable.close();
 }
 
 

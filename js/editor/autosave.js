@@ -12,6 +12,11 @@ import {
   serializePersistentEditorHTML
 } from './blocks/blockContract.js';
 
+import {
+  serializeCampaignMapHTML,
+  syncCampaignMapPresentation
+} from './campaignMap.js';
+
 
 export function setupAutosave(
   editor
@@ -72,7 +77,7 @@ type: ${type}
 aliases: [${aliases.join(', ')}]
 ---
 
-${serializePersistentEditorHTML(editor)}
+${getSerializedEditorHTML(editor)}
 `;
 
   const titleElement =
@@ -101,4 +106,26 @@ ${serializePersistentEditorHTML(editor)}
   );
 
   renderTree();
+
+  syncCampaignMapPresentation();
+}
+
+
+function getSerializedEditorHTML(
+  editor
+) {
+
+  if (
+    state.currentPage?.template === 'campaignMap' ||
+    state.currentPage?.type === 'campaignMap'
+  ) {
+
+    return serializeCampaignMapHTML(
+      editor
+    );
+  }
+
+  return serializePersistentEditorHTML(
+    editor
+  );
 }

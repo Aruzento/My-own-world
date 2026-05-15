@@ -1,6 +1,7 @@
 ﻿export const BLOCK_VERSIONS = {
   text: 1,
   items: 1,
+  spells: 1,
   characterStats: 2,
   dndStats: 3,
   table: 1
@@ -20,6 +21,8 @@ const LEGACY_RUNTIME_SELECTOR = [
   '.card-type-custom',
   '.item-set-add-btn',
   '.item-set-remove',
+  '.spell-set-add-btn',
+  '.spell-set-remove',
   '.inline-tag-input',
   '.inline-add-tag-btn',
   '.inline-alias-input',
@@ -532,6 +535,10 @@ function ensureRuntimeControls(
     editor
   );
 
+  ensureSpellSetControls(
+    editor
+  );
+
   ensureTableControls(
     editor
   );
@@ -761,6 +768,90 @@ function ensureItemSetControls(
 }
 
 
+function ensureSpellSetControls(
+  editor
+) {
+
+  getMatchingElements(
+    editor,
+    '.spell-set-block'
+  )
+    .forEach(block => {
+
+      const existingButton =
+        block.querySelector('.spell-set-add-btn');
+
+      if (existingButton) {
+
+        markRuntime(
+          existingButton
+        );
+
+        return;
+      }
+
+      const button =
+        document.createElement('button');
+
+      button.className =
+        'spell-set-add-btn';
+
+      button.type =
+        'button';
+
+      button.textContent =
+        '+ Добавить заклинание';
+
+      markRuntime(
+        button
+      );
+
+      block.appendChild(
+        button
+      );
+    });
+
+  getMatchingElements(
+    editor,
+    '.spell-set-chip'
+  )
+    .forEach(chip => {
+
+      const existingRemove =
+        chip.querySelector('.spell-set-remove');
+
+      if (existingRemove) {
+
+        markRuntime(
+          existingRemove
+        );
+
+        return;
+      }
+
+      const remove =
+        document.createElement('span');
+
+      remove.className =
+        'spell-set-remove';
+
+      remove.title =
+        'Убрать из набора';
+
+      remove.textContent =
+        'x';
+
+      markRuntime(
+        remove
+      );
+
+      chip.appendChild(
+        remove
+      );
+    });
+}
+
+
 function getMatchingElements(
   root,
   selector
@@ -876,6 +967,15 @@ function stripRuntimeMapBackgrounds(
 
       background.removeAttribute(
         'style'
+      );
+    });
+
+  root
+    .querySelectorAll('.campaign-map-token-image')
+    .forEach(image => {
+
+      image.removeAttribute(
+        'src'
       );
     });
 }

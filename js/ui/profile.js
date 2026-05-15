@@ -1,3 +1,7 @@
+import {
+  positionPopupNearAnchor
+} from './popupPosition.js';
+
 const user = {
   image: '',
   name: '{user.name}',
@@ -159,33 +163,14 @@ function positionProfilePopup(
   anchor
 ) {
 
-  const rect =
-    anchor.getBoundingClientRect();
-
-  const popupWidth =
-    element.offsetWidth || 300;
-
-  const popupHeight =
-    element.offsetHeight || 220;
-
-  const left =
-    Math.min(
-      rect.left,
-      window.innerWidth - popupWidth - 12
-    );
-
-  let top =
-    rect.top - popupHeight - 10;
-
-  if (top < 12) {
-
-    top =
-      rect.bottom + 10;
-  }
-
-  element.style.left =
-    `${Math.max(12, left)}px`;
-
-  element.style.top =
-    `${Math.max(12, top)}px`;
+  positionPopupNearAnchor(
+    element,
+    anchor,
+    {
+      preferred: 'top',
+      gap: 10,
+      fallbackWidth: 300,
+      fallbackHeight: 220
+    }
+  );
 }

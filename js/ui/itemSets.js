@@ -8,8 +8,13 @@ import {
   getPageIcon
 } from '../core/icons.js';
 
+import {
+  positionPopupNearAnchor
+} from './popupPosition.js';
+
 
 let activeSetList = null;
+let activeSetKind = 'items';
 
 
 export function setupItemSets() {
@@ -22,17 +27,17 @@ export function setupItemSets() {
 
       const addButton =
         event.target.closest(
-          '.item-set-add-btn'
+          '.item-set-add-btn, .spell-set-add-btn'
         );
 
       const chip =
         event.target.closest(
-          '.item-set-chip'
+          '.item-set-chip, .spell-set-chip'
         );
 
       const removeButton =
         event.target.closest(
-          '.item-set-remove'
+          '.item-set-remove, .spell-set-remove'
         );
 
 
@@ -146,7 +151,7 @@ function setupItemSetPicker() {
 
       if (
         event.target.closest(
-          '.item-set-add-btn'
+          '.item-set-add-btn, .spell-set-add-btn'
         )
       ) return;
 
@@ -162,14 +167,21 @@ function openItemSetPicker(
 
   const block =
     button.closest(
-      '.item-set-block'
+      '.item-set-block, .spell-set-block'
     );
 
   if (!block) return;
 
+  activeSetKind =
+    block.classList.contains('spell-set-block')
+      ? 'spells'
+      : 'items';
+
   activeSetList =
     block.querySelector(
-      '.item-set-list'
+      activeSetKind === 'spells'
+        ? '.spell-set-list'
+        : '.item-set-list'
     );
 
   if (!activeSetList) return;
@@ -187,18 +199,28 @@ function openItemSetPicker(
 
   search.value = '';
 
+  search.placeholder =
+    activeSetKind === 'spells'
+      ? 'Найти заклинание...'
+      : 'Найти предмет...';
 
-  const rect =
-    button.getBoundingClientRect();
-
-  picker.style.left =
-    `${Math.min(rect.left, window.innerWidth - 280)}px`;
-
-  picker.style.top =
-    `${rect.bottom + 8}px`;
 
   picker.classList.remove(
     'hidden'
+  );
+
+  requestAnimationFrame(
+    () => {
+
+      positionPopupNearAnchor(
+        picker,
+        button,
+        {
+          fallbackWidth: 280,
+          fallbackHeight: 320
+        }
+      );
+    }
   );
 
   renderItemSetOptions();
@@ -219,6 +241,7 @@ function closeItemSetPicker() {
   );
 
   activeSetList = null;
+  activeSetKind = 'items';
 }
 
 
@@ -247,7 +270,7 @@ function renderItemSetOptions() {
 
   const selectedIds =
     activeSetList
-      ? [...activeSetList.querySelectorAll('.item-set-chip')]
+      ? [...activeSetList.querySelectorAll('.item-set-chip, .spell-set-chip')]
           .map(chip => chip.dataset.pageId)
       : [];
 
@@ -255,9 +278,17 @@ function renderItemSetOptions() {
   const items =
     state.pages.filter(page => {
 
+      const expectedType =
+        activeSetKind === 'spells'
+          ? 'magic'
+          : 'item';
+
       if (
-        !page.tags ||
-        !page.tags.includes('item')
+        page.type !== expectedType &&
+        (
+          !page.tags ||
+          !page.tags.includes(expectedType)
+        )
       ) {
 
         return false;
@@ -299,7 +330,9 @@ function renderItemSetOptions() {
       'item-set-empty';
 
     empty.textContent =
-      'Предметы не найдены';
+      activeSetKind === 'spells'
+        ? 'Заклинания не найдены'
+        : 'Предметы не найдены';
 
     options.appendChild(
       empty
@@ -320,13 +353,16 @@ function renderItemSetOptions() {
     button.type =
       'button';
 
-    button.innerHTML = `
-      ${getPageIcon(page.tags)}
+    button.innerHTML =
+      activeSetKind === 'spells'
+        ? createSpellOptionHTML(page)
+        : `
+          ${getPageIcon(page.tags)}
 
-      <span class="item-set-option-title">
-        ${page.title || 'Без названия'}
-      </span>
-    `;
+          <span class="item-set-option-title">
+            ${page.title || 'Без названия'}
+          </span>
+        `;
 
     button.addEventListener(
       'click',
@@ -361,25 +397,30 @@ async function addItemToSet(
     'button';
 
   chip.className =
-    'item-set-chip';
+    activeSetKind === 'spells'
+      ? 'spell-set-chip'
+      : 'item-set-chip';
 
   chip.dataset.pageId =
     page.id;
 
-  chip.innerHTML = `
-    ${getPageIcon(page.tags)}
+  chip.innerHTML =
+    activeSetKind === 'spells'
+      ? createSpellChipHTML(page)
+      : `
+        ${getPageIcon(page.tags)}
 
-    <span class="item-set-title">
-      ${page.title || 'Без названия'}
-    </span>
+        <span class="item-set-title">
+          ${page.title || 'Без названия'}
+        </span>
 
-    <span
-      class="item-set-remove"
-      title="Убрать из набора"
-    >
-      ×
-    </span>
-  `;
+        <span
+          class="item-set-remove"
+          title="Убрать из набора"
+        >
+          ×
+        </span>
+      `;
 
   activeSetList.appendChild(
     chip
@@ -397,7 +438,7 @@ async function removeItemFromSet(
 
   const chip =
     button.closest(
-      '.item-set-chip'
+      '.item-set-chip, .spell-set-chip'
     );
 
   if (!chip) return;
@@ -413,4 +454,60 @@ function normalize(value) {
   return String(value || '')
     .trim()
     .toLowerCase();
+}
+
+
+function createSpellOptionHTML(
+  page
+) {
+
+  return `
+    ${getPageIcon(page.tags)}
+
+    <span class="item-set-option-title spell-set-option-text">
+      <strong>${page.title || 'Без названия'}</strong>
+      <small>${getPageShortDescription(page) || 'Без описания'}</small>
+    </span>
+  `;
+}
+
+
+function createSpellChipHTML(
+  page
+) {
+
+  return `
+    ${getPageIcon(page.tags)}
+
+    <span class="spell-set-text">
+      <strong>${page.title || 'Без названия'}</strong>
+      <small>${getPageShortDescription(page) || 'Без описания'}</small>
+    </span>
+
+    <span
+      class="spell-set-remove"
+      title="Убрать из набора"
+    >
+      ×
+    </span>
+  `;
+}
+
+
+function getPageShortDescription(
+  page
+) {
+
+  const wrapper =
+    document.createElement('div');
+
+  wrapper.innerHTML =
+    String(page.content || '')
+      .replace(/---[\s\S]*?---/, '')
+      .trim();
+
+  return wrapper
+    .querySelector('.card-short-description')
+    ?.textContent
+    .trim() || '';
 }

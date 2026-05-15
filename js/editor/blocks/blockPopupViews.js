@@ -26,6 +26,13 @@ export function renderTypePicker(
       })}
 
       ${createTypeOptionHTML({
+        type: 'spells',
+        icon: '✦',
+        title: 'Заклинания',
+        description: 'Список связанных заклинаний'
+      })}
+
+      ${createTypeOptionHTML({
         type: 'characterStats',
         icon: '★',
         title: 'Статистика персонажа',
@@ -165,6 +172,7 @@ export function getBlockPopupTitle(
 
   const titles = {
     items: 'Название блока с предметами',
+    spells: 'Название блока с заклинаниями',
     characterStats: 'Название блока статистики персонажа',
     dndStats: 'Название DnD stat block',
     text: 'Название текстового блока'
@@ -181,6 +189,7 @@ export function getDefaultBlockTitle(
 
   const titles = {
     items: 'Набор',
+    spells: 'Заклинания',
     characterStats: 'Статистика персонажа',
     dndStats: 'Стат. блок DnD',
     text: 'Новый блок'

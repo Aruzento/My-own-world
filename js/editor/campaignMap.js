@@ -14,6 +14,10 @@ import {
 } from '../tree/tree.js';
 
 import {
+  positionPopupNearAnchor
+} from '../ui/popupPosition.js';
+
+import {
   markRuntime,
   serializePersistentEditorHTML
 } from './blocks/blockContract.js';
@@ -67,6 +71,16 @@ export function setupCampaignMaps(
   editor.addEventListener(
     'pointerout',
     handleMapPointerOut
+  );
+
+  editor.addEventListener(
+    'pointermove',
+    handleBrushPreviewMove
+  );
+
+  editor.addEventListener(
+    'pointerleave',
+    hideAllBrushPreviews
   );
 
   editor.addEventListener(
@@ -126,7 +140,7 @@ export async function renderCampaignMap(
     map
   );
 
-  restoreMapTokens(
+  await restoreMapTokens(
     map
   );
 
@@ -165,6 +179,65 @@ export function serializeCampaignMapHTML(
 export function syncCampaignMapPresentation() {
 
   syncPresentation();
+}
+
+
+export async function removeDeletedCampaignMapTokens(
+  pageIds
+) {
+
+  const ids =
+    new Set(
+      pageIds
+    );
+
+  if (ids.size === 0) return;
+
+  const openMap =
+    document.querySelector(
+      '.campaign-map-document'
+    );
+
+  let openMapChanged =
+    false;
+
+  if (openMap) {
+
+    openMapChanged =
+      removeTokensFromMapElement(
+        openMap,
+        ids
+      );
+  }
+
+  for (const page of state.pages) {
+
+    if (
+      ids.has(page.id) ||
+      !isCampaignMapRecord(page)
+    ) {
+
+      continue;
+    }
+
+    if (
+      openMapChanged &&
+      state.currentPage?.id === page.id
+    ) {
+
+      continue;
+    }
+
+    await removeTokensFromMapPageContent(
+      page,
+      ids
+    );
+  }
+
+  if (openMapChanged) {
+
+    await saveAndSync();
+  }
 }
 
 
@@ -232,6 +305,116 @@ function ensureMapControls(
 }
 
 
+function isCampaignMapRecord(
+  page
+) {
+
+  return page?.template === 'campaignMap' ||
+    page?.type === 'campaignMap' ||
+    (page?.tags || []).includes('campaign-map');
+}
+
+
+async function removeTokensFromMapPageContent(
+  page,
+  ids
+) {
+
+  const wrapper =
+    document.createElement('div');
+
+  wrapper.innerHTML =
+    getMarkdownBody(
+      page.content
+    );
+
+  const map =
+    wrapper.querySelector(
+      '.campaign-map-document'
+    );
+
+  if (!map) return false;
+
+  const changed =
+    removeTokensFromMapElement(
+      map,
+      ids
+    );
+
+  if (!changed) return false;
+
+  const content =
+    replaceMarkdownBody(
+      page.content,
+      wrapper.innerHTML
+    );
+
+  const writable =
+    await page.handle.createWritable();
+
+  await writable.write(
+    content
+  );
+
+  await writable.close();
+
+  page.content =
+    content;
+
+  return true;
+}
+
+
+function removeTokensFromMapElement(
+  map,
+  ids
+) {
+
+  let changed =
+    false;
+
+  map
+    .querySelectorAll('.campaign-map-token[data-page-id]')
+    .forEach(token => {
+
+      if (
+        !ids.has(token.dataset.pageId)
+      ) return;
+
+      token.remove();
+      changed =
+        true;
+    });
+
+  return changed;
+}
+
+
+function getMarkdownBody(
+  content
+) {
+
+  return String(content || '')
+    .replace(/---[\s\S]*?---/, '')
+    .trim();
+}
+
+
+function replaceMarkdownBody(
+  content,
+  body
+) {
+
+  const frontMatter =
+    String(content || '')
+      .match(/^---[\s\S]*?---/);
+
+  if (!frontMatter) return body;
+
+  return `${frontMatter[0]}\n\n${body}\n`;
+}
+
+
 function ensureViewportStructure(
   map
 ) {
@@ -275,6 +458,44 @@ function ensureViewportStructure(
 
   viewport.style.height =
     `${WORLD_HEIGHT}px`;
+
+  ensureBrushPreview(
+    stage
+  );
+}
+
+
+function ensureBrushPreview(
+  stage
+) {
+
+  let preview =
+    stage.querySelector('.campaign-brush-preview');
+
+  if (preview) {
+
+    markRuntime(
+      preview
+    );
+
+    return preview;
+  }
+
+  preview =
+    document.createElement('div');
+
+  preview.className =
+    'campaign-brush-preview';
+
+  markRuntime(
+    preview
+  );
+
+  stage.appendChild(
+    preview
+  );
+
+  return preview;
 }
 
 
@@ -302,10 +523,11 @@ function ensureMapViewState(
       '1';
   }
 
-  if (!stage.dataset.tool) {
-    stage.dataset.tool =
-      'draw';
-  }
+  stage.dataset.tool =
+    'pan';
+
+  stage.dataset.fogMode =
+    'draw';
 
   if (!stage.dataset.gridSize) {
     stage.dataset.gridSize =
@@ -455,11 +677,17 @@ function openAddKindPopup(
 
       button.addEventListener(
         'click',
-        () => openCardPickerPopup(
+        event => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          openCardPickerPopup(
           map,
           anchor,
           button.dataset.kind
-        )
+        );
+        }
       );
     });
 
@@ -517,7 +745,11 @@ function openCardPickerPopup(
     .querySelector('.campaign-map-popup-cancel')
     .addEventListener(
       'click',
-      closeMapPopup
+      event => {
+
+        event.stopPropagation();
+        closeMapPopup();
+      }
     );
 
   popup
@@ -568,9 +800,18 @@ function renderCardPickerList(
   const pages =
     state.pages.filter(page => {
 
+      const pageTypes =
+        [
+          page.type,
+          ...(page.tags || [])
+        ]
+          .filter(Boolean);
+
       if (
         page.template !== 'card' ||
-        !allowedTypes.includes(page.type)
+        !pageTypes.some(type =>
+          allowedTypes.includes(type)
+        )
       ) return false;
 
       return normalizeText(
@@ -654,14 +895,14 @@ async function addSelectedPagesToMap(
     );
   }
 
-  duplicates.forEach(page => {
+  for (const page of duplicates) {
 
-    addMapToken(
+    await addMapToken(
       map,
       kind,
       page
     );
-  });
+  }
 
   renderTree();
   await saveAndSync();
@@ -810,6 +1051,14 @@ function getMapPopup() {
     }
   );
 
+  popup.addEventListener(
+    'click',
+    event => {
+
+      event.stopPropagation();
+    }
+  );
+
   return popup;
 }
 
@@ -819,9 +1068,6 @@ function showMapPopup(
   anchor
 ) {
 
-  const rect =
-    anchor.getBoundingClientRect();
-
   popup.classList.remove(
     'hidden'
   );
@@ -829,14 +1075,14 @@ function showMapPopup(
   requestAnimationFrame(
     () => {
 
-      const width =
-        popup.offsetWidth || 280;
-
-      popup.style.left =
-        `${Math.max(12, Math.min(rect.left, window.innerWidth - width - 12))}px`;
-
-      popup.style.top =
-        `${rect.bottom + 8}px`;
+      positionPopupNearAnchor(
+        popup,
+        anchor,
+        {
+          fallbackWidth: 320,
+          fallbackHeight: 260
+        }
+      );
     }
   );
 }
@@ -850,7 +1096,7 @@ function closeMapPopup() {
 }
 
 
-function addMapToken(
+async function addMapToken(
   map,
   type,
   page = null
@@ -883,6 +1129,17 @@ function addMapToken(
 
     token.dataset.pageId =
       page.id;
+
+    const imageAsset =
+      getPagePortraitAsset(
+        page
+      );
+
+    if (imageAsset) {
+
+      token.dataset.imageAsset =
+        imageAsset;
+    }
   }
 
   token.dataset.x =
@@ -899,10 +1156,10 @@ function addMapToken(
         : `Объект ${index}`
     );
 
-  token.textContent =
-    type === 'creature'
-      ? 'С'
-      : 'О';
+  setTokenFallbackText(
+    token,
+    type
+  );
 
   layer.appendChild(
     token
@@ -912,16 +1169,147 @@ function addMapToken(
     token
   );
 
+  await restoreTokenImage(
+    token
+  );
+
 }
 
 
-function restoreMapTokens(
+async function restoreMapTokens(
   map
 ) {
 
-  map
+  const tokens =
+    [...map
     .querySelectorAll('.campaign-map-token')
-    .forEach(positionToken);
+    ];
+
+  for (const token of tokens) {
+
+    positionToken(
+      token
+    );
+
+    if (!token.dataset.imageAsset) {
+
+      const page =
+        state.pages.find(candidate =>
+          candidate.id === token.dataset.pageId
+        );
+
+      const imageAsset =
+        page
+          ? getPagePortraitAsset(page)
+          : '';
+
+      if (imageAsset) {
+
+        token.dataset.imageAsset =
+          imageAsset;
+      }
+    }
+
+    await restoreTokenImage(
+      token
+    );
+  }
+}
+
+
+async function restoreTokenImage(
+  token
+) {
+
+  const asset =
+    token.dataset.imageAsset;
+
+  if (!asset) {
+
+    setTokenFallbackText(
+      token,
+      token.dataset.tokenType
+    );
+
+    return;
+  }
+
+  try {
+
+    const url =
+      await getImageURL(
+        asset
+      );
+
+    token.innerHTML = `
+      <img
+        class="campaign-map-token-image"
+        src="${url}"
+        alt=""
+      >
+    `;
+
+  } catch (error) {
+
+    console.warn(
+      'Не удалось восстановить картинку токена:',
+      asset
+    );
+
+    setTokenFallbackText(
+      token,
+      token.dataset.tokenType
+    );
+  }
+}
+
+
+function setTokenFallbackText(
+  token,
+  type
+) {
+
+  token.textContent =
+    type === 'creature'
+      ? 'С'
+      : 'О';
+}
+
+
+function getPagePortraitAsset(
+  page
+) {
+
+  const parsed =
+    parsePageBody(
+      page
+    );
+
+  const image =
+    parsed.querySelector(
+      '.media-box.is-portrait img[data-asset], img[data-asset]'
+    );
+
+  return image?.dataset.asset || '';
+}
+
+
+function parsePageBody(
+  page
+) {
+
+  const wrapper =
+    document.createElement('div');
+
+  const body =
+    String(page?.content || '')
+      .replace(/---[\s\S]*?---/, '')
+      .trim();
+
+  wrapper.innerHTML =
+    body;
+
+  return wrapper;
 }
 
 
@@ -1191,6 +1579,15 @@ function setMapTool(
   updatePanButton(
     map
   );
+
+  if (
+    tool === 'pan'
+  ) {
+
+    hideBrushPreview(
+      stage
+    );
+  }
 }
 
 
@@ -1441,6 +1838,102 @@ function handleMapPointerOut(
   clearTreeHighlight(
     token.dataset.pageId
   );
+}
+
+
+function handleBrushPreviewMove(
+  event
+) {
+
+  const stage =
+    event.target.closest('.campaign-map-stage');
+
+  if (!stage) {
+
+    hideAllBrushPreviews();
+    return;
+  }
+
+  if (
+    stage.dataset.tool !== 'draw' &&
+    stage.dataset.tool !== 'erase'
+  ) {
+
+    hideBrushPreview(
+      stage
+    );
+
+    return;
+  }
+
+  updateBrushPreview(
+    event,
+    stage
+  );
+}
+
+
+function updateBrushPreview(
+  event,
+  stage
+) {
+
+  const preview =
+    ensureBrushPreview(
+      stage
+    );
+
+  const rect =
+    stage.getBoundingClientRect();
+
+  const view =
+    getStageView(
+      stage
+    );
+
+  const diameter =
+    Number(stage.dataset.brushSize || DEFAULT_BRUSH_SIZE) *
+    view.zoom *
+    2;
+
+  preview.style.width =
+    `${diameter}px`;
+
+  preview.style.height =
+    `${diameter}px`;
+
+  preview.style.left =
+    `${event.clientX - rect.left}px`;
+
+  preview.style.top =
+    `${event.clientY - rect.top}px`;
+
+  preview.classList.remove(
+    'hidden'
+  );
+}
+
+
+function hideBrushPreview(
+  stage
+) {
+
+  stage
+    ?.querySelector('.campaign-brush-preview')
+    ?.classList.add('hidden');
+}
+
+
+function hideAllBrushPreviews() {
+
+  document
+    .querySelectorAll('.campaign-brush-preview')
+    .forEach(preview => {
+
+      preview.classList.add(
+        'hidden'
+      );
+    });
 }
 
 
@@ -2320,6 +2813,14 @@ function getPresentationCSS() {
       border-radius: 10px;
       background: #d8d8d8;
       color: #1d1d1d;
+    }
+
+    .campaign-map-token-image {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border-radius: inherit;
+      object-fit: cover;
     }
 
     .campaign-map-fog-image {

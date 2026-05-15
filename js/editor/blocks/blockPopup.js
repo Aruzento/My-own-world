@@ -19,6 +19,10 @@ import {
   getDefaultBlockTitle
 } from './blockPopupViews.js';
 
+import {
+  positionPopupNearAnchor
+} from '../../ui/popupPosition.js';
+
 
 let popupState = null;
 
@@ -426,37 +430,14 @@ function positionPopupNearButton(
   button
 ) {
 
-  const rect =
-    button.getBoundingClientRect();
-
-  const popupWidth =
-    popup.offsetWidth || 260;
-
-  const popupHeight =
-    popup.offsetHeight || 260;
-
-  const left =
-    Math.min(
-      rect.left,
-      window.innerWidth - popupWidth - 12
-    );
-
-  let top =
-    rect.bottom + 8;
-
-  if (
-    top + popupHeight > window.innerHeight - 12
-  ) {
-
-    top =
-      rect.top - popupHeight - 8;
-  }
-
-  popup.style.left =
-    `${Math.max(12, left)}px`;
-
-  popup.style.top =
-    `${Math.max(12, top)}px`;
+  positionPopupNearAnchor(
+    popup,
+    button,
+    {
+      fallbackWidth: 300,
+      fallbackHeight: 320
+    }
+  );
 }
 
 

@@ -274,7 +274,58 @@ function toggleCustomCardType(
     menu.classList.remove(
       'hidden'
     );
+
+    positionCardTypeMenu(
+      custom,
+      menu
+    );
   }
+}
+
+
+function positionCardTypeMenu(
+  custom,
+  menu
+) {
+
+  requestAnimationFrame(
+    () => {
+
+      const customRect =
+        custom.getBoundingClientRect();
+
+      const menuRect =
+        menu.getBoundingClientRect();
+
+      const overflowRight =
+        menuRect.right - window.innerWidth + 12;
+
+      const overflowBottom =
+        menuRect.bottom - window.innerHeight + 12;
+
+      menu.style.left =
+        overflowRight > 0
+          ? `${Math.min(0, -overflowRight)}px`
+          : '0';
+
+      if (overflowBottom > 0) {
+
+        menu.style.top =
+          'auto';
+
+        menu.style.bottom =
+          `${customRect.height + 6}px`;
+
+        return;
+      }
+
+      menu.style.top =
+        'calc(100% + 6px)';
+
+      menu.style.bottom =
+        'auto';
+    }
+  );
 }
 
 

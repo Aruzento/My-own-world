@@ -1,6 +1,7 @@
 import {
   createTextBlock,
   createItemsBlock,
+  createSpellsBlock,
   createCharacterStatsBlock,
   createDndStatsBlock,
   createTableBlock
@@ -16,6 +17,11 @@ const BLOCK_CREATORS = {
 
   items: title =>
     createItemsBlock({
+      title
+    }),
+
+  spells: title =>
+    createSpellsBlock({
       title
     }),
 

@@ -79,6 +79,10 @@ import {
 } from '../core/markdown.js';
 
 import {
+  createPage
+} from '../storage/storage.js';
+
+import {
   renderTree
 } from '../tree/tree.js';
 
@@ -188,7 +192,33 @@ editor.addEventListener(
 
 editor.addEventListener(
   'click',
-  event => {
+  async event => {
+
+    const emptyCreateButton =
+      event.target.closest(
+        '.empty-create-option'
+      );
+
+    if (emptyCreateButton) {
+
+      event.preventDefault();
+
+      const page =
+        await createPage(
+          emptyCreateButton.dataset.template || 'card'
+        );
+
+      renderTree();
+
+      if (page) {
+
+        openPage(
+          page
+        );
+      }
+
+      return;
+    }
 
     const link =
       event.target.closest('a');
@@ -256,6 +286,8 @@ if (
     `Открыта ${page.name}`
   );
 
+  renderTree();
+
   return;
 }
 
@@ -303,6 +335,50 @@ renderDndStats();
 
   setStatus(
     `Открыта ${page.name}`
+  );
+
+  renderTree();
+}
+
+
+export function renderEmptyEditor() {
+
+  state.currentPage =
+    null;
+
+  editor.innerHTML = `
+    <section class="empty-editor-page" contenteditable="false">
+      <div class="empty-editor-inner">
+        <p class="empty-editor-kicker">Добро пожаловать</p>
+        <h1>Создайте свой мир</h1>
+
+        <div class="empty-create-grid">
+          <button
+            class="empty-create-option"
+            type="button"
+            data-template="card"
+          >
+            <span class="empty-create-icon">◇</span>
+            <span>Карточка</span>
+          </button>
+
+          <button
+            class="empty-create-option"
+            type="button"
+            data-template="campaignMap"
+          >
+            <span class="empty-create-icon">▧</span>
+            <span>Карта</span>
+          </button>
+        </div>
+      </div>
+    </section>
+  `;
+
+  renderTree();
+
+  setStatus(
+    'Пустая страница'
   );
 }
 
