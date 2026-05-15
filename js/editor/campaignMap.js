@@ -6,12 +6,17 @@ import {
 
 import {
   createFolderPage,
+  deletePageBranch,
   duplicatePageAsChild
 } from '../storage/storage.js';
 
 import {
   renderTree
 } from '../tree/tree.js';
+
+import {
+  setStatus
+} from '../ui/ui.js';
 
 import {
   positionPopupNearAnchor
@@ -36,6 +41,9 @@ let presentationState = {
 let draggedToken = null;
 let panningMap = null;
 let fogDrawing = null;
+let tokenPopupTimer = null;
+let tokenPopupCloseTimer = null;
+let activeTokenPopupToken = null;
 
 const WORLD_WIDTH = 2000;
 const WORLD_HEIGHT = 1200;
@@ -43,6 +51,8 @@ const MIN_ZOOM = 0.35;
 const MAX_ZOOM = 3;
 const DEFAULT_GRID_SIZE = 48;
 const DEFAULT_BRUSH_SIZE = 34;
+const TOKEN_DRAG_THRESHOLD = 4;
+const TOKEN_POPUP_DELAY = 420;
 
 
 export function setupCampaignMaps(
@@ -279,6 +289,8 @@ function ensureMapControls(
     <div class="campaign-map-control-group">
       <button class="campaign-fog-draw-btn" type="button" title="Рисовать туман">●</button>
       <button class="campaign-fog-erase-btn" type="button" title="Стирать туман">○</button>
+      <button class="campaign-fog-fill-btn" type="button" title="Затуманить всю карту">◼</button>
+      <button class="campaign-fog-clear-btn" type="button" title="Снять туман с карты">□</button>
       <button class="campaign-brush-size-btn" type="button" title="Размер кисти">◌</button>
     </div>
   `;
@@ -639,6 +651,30 @@ async function handleMapClick(
     setFogMode(
       map,
       'erase'
+    );
+
+    await saveAndSync();
+    return;
+  }
+
+  if (
+    event.target.closest('.campaign-fog-fill-btn')
+  ) {
+
+    fillFog(
+      map
+    );
+
+    await saveAndSync();
+    return;
+  }
+
+  if (
+    event.target.closest('.campaign-fog-clear-btn')
+  ) {
+
+    clearFog(
+      map
     );
 
     await saveAndSync();
@@ -1488,6 +1524,80 @@ function toggleGrid(
 }
 
 
+function fillFog(
+  map
+) {
+
+  const stage =
+    map.querySelector('.campaign-map-stage');
+
+  const canvas =
+    map.querySelector('.campaign-map-fog-canvas');
+
+  if (!stage || !canvas) return;
+
+  ensureCanvasSize(
+    canvas
+  );
+
+  const context =
+    canvas.getContext('2d');
+
+  context.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  context.fillStyle =
+    'rgba(0,0,0,0.76)';
+
+  context.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  persistFogCanvas(
+    map
+  );
+
+  syncPresentation();
+}
+
+
+function clearFog(
+  map
+) {
+
+  const canvas =
+    map.querySelector('.campaign-map-fog-canvas');
+
+  if (!canvas) return;
+
+  ensureCanvasSize(
+    canvas
+  );
+
+  canvas
+    .getContext('2d')
+    .clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+  persistFogCanvas(
+    map
+  );
+
+  syncPresentation();
+}
+
+
 function updateGridButton(
   map
 ) {
@@ -1743,7 +1853,10 @@ function handleMapPointerDown(
   const token =
     event.target.closest('.campaign-map-token');
 
-  if (token) {
+  if (
+    token &&
+    event.button === 0
+  ) {
 
     startTokenDrag(
       event,
@@ -1802,6 +1915,10 @@ async function handleMapDoubleClick(
   event.preventDefault();
   event.stopPropagation();
 
+  clearDraggedToken(
+    false
+  );
+
   const editorModule =
     await import('./editor.js');
 
@@ -1823,6 +1940,10 @@ function handleMapPointerOver(
   highlightTreePage(
     token.dataset.pageId
   );
+
+  scheduleTokenPopup(
+    token
+  );
 }
 
 
@@ -1838,6 +1959,287 @@ function handleMapPointerOut(
   clearTreeHighlight(
     token.dataset.pageId
   );
+
+  scheduleTokenPopupClose();
+}
+
+
+function scheduleTokenPopup(
+  token
+) {
+
+  if (
+    draggedToken ||
+    token.classList.contains('is-dragging')
+  ) return;
+
+  clearTimeout(
+    tokenPopupTimer
+  );
+
+  clearTimeout(
+    tokenPopupCloseTimer
+  );
+
+  tokenPopupTimer =
+    setTimeout(
+      () => {
+
+        openTokenPopup(
+          token
+        );
+      },
+      TOKEN_POPUP_DELAY
+    );
+}
+
+
+function scheduleTokenPopupClose() {
+
+  clearTimeout(
+    tokenPopupTimer
+  );
+
+  clearTimeout(
+    tokenPopupCloseTimer
+  );
+
+  tokenPopupCloseTimer =
+    setTimeout(
+      closeTokenPopup,
+      180
+    );
+}
+
+
+function openTokenPopup(
+  token
+) {
+
+  if (
+    !token.isConnected ||
+    draggedToken ||
+    token.classList.contains('is-dragging')
+  ) return;
+
+  activeTokenPopupToken =
+    token;
+
+  const popup =
+    getTokenPopup();
+
+  const hidden =
+    token.dataset.presentationHidden === 'true';
+
+  popup.innerHTML = `
+    <button class="campaign-token-popup-delete" type="button">Удалить</button>
+    <button class="campaign-token-popup-hide" type="button">
+      ${hidden ? 'Показать' : 'Скрыть'}
+    </button>
+  `;
+
+  popup
+    .querySelector('.campaign-token-popup-delete')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await deleteTokenAndPage(
+          token
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-popup-hide')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await toggleTokenPresentationVisibility(
+          token
+        );
+      }
+    );
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  positionPopupNearAnchor(
+    popup,
+    token,
+    {
+      gap: 10,
+      fallbackWidth: 150,
+      fallbackHeight: 92
+    }
+  );
+}
+
+
+function getTokenPopup() {
+
+  let popup =
+    document.getElementById('campaignTokenPopup');
+
+  if (popup) return popup;
+
+  popup =
+    document.createElement('div');
+
+  popup.id =
+    'campaignTokenPopup';
+
+  popup.className =
+    'campaign-token-popup hidden';
+
+  markRuntime(
+    popup
+  );
+
+  popup.addEventListener(
+    'pointerenter',
+    () => {
+
+      clearTimeout(
+        tokenPopupCloseTimer
+      );
+    }
+  );
+
+  popup.addEventListener(
+    'pointerleave',
+    scheduleTokenPopupClose
+  );
+
+  document.body.appendChild(
+    popup
+  );
+
+  return popup;
+}
+
+
+function closeTokenPopup() {
+
+  const popup =
+    document.getElementById('campaignTokenPopup');
+
+  popup?.classList.add(
+    'hidden'
+  );
+
+  activeTokenPopupToken =
+    null;
+}
+
+
+async function deleteTokenAndPage(
+  token
+) {
+
+  const pageId =
+    token.dataset.pageId;
+
+  const page =
+    state.pages.find(candidate =>
+      candidate.id === pageId
+    );
+
+  closeTokenPopup();
+
+  if (page) {
+
+    try {
+
+      const canWrite =
+        await ensureWorkspaceWritePermission();
+
+      if (!canWrite) {
+
+        throw new Error(
+          'Нет прав на изменение workspace'
+        );
+      }
+
+      await deletePageBranch(
+        page
+      );
+
+    } catch (error) {
+
+      console.error(
+        'Не удалось удалить токен и дочернюю карточку:',
+        error
+      );
+
+      setStatus(
+        'Не удалось удалить дочернюю карточку'
+      );
+
+      return;
+    }
+  }
+
+  token.remove();
+  renderTree();
+  await saveAndSync();
+}
+
+
+async function ensureWorkspaceWritePermission() {
+
+  if (!state.workspaceHandle) return false;
+
+  if (!state.workspaceHandle.queryPermission) return true;
+
+  const currentPermission =
+    await state.workspaceHandle.queryPermission({
+      mode: 'readwrite'
+    });
+
+  if (currentPermission === 'granted') return true;
+
+  if (!state.workspaceHandle.requestPermission) return false;
+
+  const requestedPermission =
+    await state.workspaceHandle.requestPermission({
+      mode: 'readwrite'
+    });
+
+  return requestedPermission === 'granted';
+}
+
+
+async function toggleTokenPresentationVisibility(
+  token
+) {
+
+  const hidden =
+    token.dataset.presentationHidden === 'true';
+
+  token.dataset.presentationHidden =
+    hidden
+      ? 'false'
+      : 'true';
+
+  token.classList.toggle(
+    'is-presentation-hidden',
+    !hidden
+  );
+
+  openTokenPopup(
+    token
+  );
+
+  await saveAndSync();
 }
 
 
@@ -1943,18 +2345,21 @@ function startTokenDrag(
 ) {
 
   event.preventDefault();
+  closeTokenPopup();
+  clearTimeout(
+    tokenPopupTimer
+  );
 
   draggedToken = {
     token,
-    stage: token.closest('.campaign-map-stage')
+    stage: token.closest('.campaign-map-stage'),
+    startX: event.clientX,
+    startY: event.clientY,
+    moved: false
   };
 
   token.classList.add(
     'is-dragging'
-  );
-
-  moveTokenToPointer(
-    event
   );
 }
 
@@ -1990,14 +2395,15 @@ async function handleDocumentPointerUp() {
 
   if (draggedToken) {
 
-    draggedToken.token.classList.remove(
-      'is-dragging'
-    );
+    const shouldSave =
+      clearDraggedToken(
+        true
+      );
 
-    draggedToken =
-      null;
+    if (shouldSave) {
 
-    await saveAndSync();
+      await saveAndSync();
+    }
   }
 
   if (fogDrawing) {
@@ -2026,14 +2432,53 @@ async function handleDocumentPointerUp() {
 }
 
 
+function clearDraggedToken(
+  keepMovedState
+) {
+
+  if (!draggedToken) return false;
+
+  const moved =
+    draggedToken.moved;
+
+  draggedToken.token.classList.remove(
+    'is-dragging'
+  );
+
+  draggedToken =
+    null;
+
+  return keepMovedState && moved;
+}
+
+
 function moveTokenToPointer(
   event
 ) {
 
   const {
     token,
-    stage
+    stage,
+    startX,
+    startY
   } = draggedToken;
+
+  const distance =
+    Math.hypot(
+      event.clientX - startX,
+      event.clientY - startY
+    );
+
+  if (
+    !draggedToken.moved &&
+    distance < TOKEN_DRAG_THRESHOLD
+  ) {
+
+    return;
+  }
+
+  draggedToken.moved =
+    true;
 
   const rect =
     stage.getBoundingClientRect();
@@ -2815,6 +3260,10 @@ function getPresentationCSS() {
       color: #1d1d1d;
     }
 
+    .campaign-map-token[data-presentation-hidden="true"] {
+      display: none;
+    }
+
     .campaign-map-token-image {
       width: 100%;
       height: 100%;
@@ -2835,6 +3284,22 @@ function getPresentationCSS() {
 
 
 async function saveAndSync() {
+
+  const openMap =
+    document.querySelector(
+      '#editorArea .campaign-map-document'
+    );
+
+  if (
+    !openMap ||
+    !isCampaignMapRecord(
+      state.currentPage
+    )
+  ) {
+
+    syncPresentation();
+    return;
+  }
 
   if (saveCurrentPageCallback) {
 
