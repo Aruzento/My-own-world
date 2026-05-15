@@ -68,8 +68,11 @@ contenteditable="false"
 - кнопку удаления предмета из item set;
 - кастомный dropdown типа карты;
 - controls карты кампании;
-- панель списка существ карты;
 - окно презентации карты;
+- popup добавления существ/объектов;
+- popup тумана карты;
+- resize/rotate handles PNG-объектов карты;
+- token action popup карты;
 - popup подтверждения удаления;
 - preview wiki-links;
 - нижнюю секцию профиля и profile popup;
@@ -103,18 +106,26 @@ Persistent данные карты:
 - `data-fog-image` на `.campaign-map-stage`;
 - `data-brush-size` на `.campaign-map-stage`;
 - `data-view-x`, `data-view-y`, `data-view-zoom` на `.campaign-map-stage`;
-- `.campaign-map-token` с `data-token-id`, `data-token-type`, `data-page-id`, `data-name`, `data-x`, `data-y`.
+- `.campaign-map-token` с `data-token-id`, `data-token-type`, `data-page-id`, `data-name`, `data-x`, `data-y`, `data-size`, `data-rotation`, `data-presentation-hidden`.
 
 Runtime данные карты:
 
 - `.campaign-map-controls`;
 - popup выбора существ/объектов;
 - popup размера сетки;
-- popup размера кисти;
+- popup тумана с кистью, ластиком, размером кисти, `Fog all` и `Unfog all`;
+- resize/rotate handles объектов;
+- popup действий токена;
 - blob `background-image` на `.campaign-map-background`;
 - presentation window и его независимый pan/zoom state.
 
 Blob URL изображения карты не сохраняется: перед сохранением serializer удаляет runtime `style` у `.campaign-map-background`, оставляя стабильный `data-map-asset`.
+
+Существа и объекты на карте являются дублями карточек, а не переносом исходных страниц. Дочерняя карточка токена остаётся обычной `template: card`; дублирование токена создаёт новый дубль карточки и новый токен. Для объектных токенов тип дубля нормализуется как `type: object`, чтобы карта не могла случайно записаться в карточку.
+
+Объекты на карте рассчитаны на PNG с прозрачным фоном. Их визуальное состояние сохраняется через `data-size` и `data-rotation`; рамки выделения, уголки resize и ручка поворота являются runtime controls и не должны попадать в `.md`.
+
+Autosave карты должен выполняться только когда открытый DOM и `state.currentPage` оба относятся к `campaignMap`. Если editor содержит карту, а `state.currentPage` уже указывает на карточку, сохранение пропускается, чтобы HTML карты не перезаписал карточку.
 
 ## Wiki-link Policy
 
