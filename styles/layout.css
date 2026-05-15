@@ -1,0 +1,147 @@
+.app {
+
+  display: grid;
+
+  grid-template-columns:
+    270px
+    minmax(0,1fr);
+
+  gap: 10px;
+
+  height: 100vh;
+
+  padding: 10px;
+}
+
+
+
+/* =========================================
+   SIDEBAR SHELL
+========================================= */
+
+.sidebar {
+
+  display: flex;
+
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-radius:
+    var(--radius-lg);
+
+  background:
+    var(--panel);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid
+    var(--border);
+}
+
+
+
+/* =========================================
+   EDITOR SHELL
+========================================= */
+
+.editor {
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+
+  overflow: hidden;
+
+  border-radius:
+    var(--radius-lg);
+
+  background:
+    var(--panel);
+
+  backdrop-filter:
+    blur(12px);
+
+  -webkit-backdrop-filter:
+    blur(12px);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.05);
+}
+
+
+.editor-surface {
+
+  flex: 1;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  padding:
+  clamp(10px, 1.8vw, 26px);
+}
+
+
+
+/* =========================================
+   STATUSBAR
+========================================= */
+
+.statusbar {
+
+  height: 24px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding:
+    0 10px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,0.05);
+
+  color:
+    var(--muted);
+
+  font-size: 11px;
+
+  background:
+    rgba(255,255,255,0.02);
+}
+
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 960px) {
+
+  .app {
+
+    grid-template-columns:
+      1fr;
+  }
+
+  .sidebar {
+
+    display: none;
+  }
+
+  .editor-surface {
+
+    padding:
+      12px 12px 32px;
+  }
+}

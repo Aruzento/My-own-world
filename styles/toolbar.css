@@ -1,0 +1,228 @@
+/* =========================================
+   FLOATING TOOLBAR
+========================================= */
+
+.floating-toolbar {
+
+  position: fixed;
+
+  z-index: 9999;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+
+  padding:
+    6px;
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(18,22,30,0.94);
+
+  backdrop-filter:
+    blur(16px);
+
+  -webkit-backdrop-filter:
+    blur(16px);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  box-shadow:
+    0 12px 40px rgba(0,0,0,0.34);
+
+  transform:
+    translateX(-50%);
+
+  animation:
+    toolbarFade
+    0.12s ease;
+}
+
+
+@keyframes toolbarFade {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateX(-50%)
+      translateY(4px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateX(-50%)
+      translateY(0);
+  }
+}
+
+
+
+/* =========================================
+   TOOLBAR BUTTONS
+========================================= */
+
+.floating-toolbar button {
+
+  width: 30px;
+
+  height: 30px;
+
+  min-height: 30px;
+
+  padding: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: none;
+
+  border-radius:
+    8px;
+
+  background: transparent;
+
+  color:
+    rgba(255,255,255,0.76);
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.floating-toolbar button:hover {
+
+  background:
+    rgba(255,255,255,0.08);
+
+  color:
+    white;
+}
+
+
+.floating-toolbar button:active {
+
+  transform:
+    scale(0.95);
+}
+
+
+
+/* =========================================
+   ACTIVE
+========================================= */
+
+.floating-toolbar button.active {
+
+  background:
+    rgba(120,168,255,0.16);
+
+  color:
+    #9fc1ff;
+}
+
+
+
+/* =========================================
+   SEPARATOR
+========================================= */
+
+.toolbar-separator {
+
+  width: 1px;
+
+  height: 18px;
+
+  margin:
+    0 4px;
+
+  background:
+    rgba(255,255,255,0.08);
+}
+
+
+
+/* =========================================
+   COLOR PICKER
+========================================= */
+
+#textColorPicker {
+
+  width: 28px;
+
+  height: 28px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius:
+    8px;
+
+  overflow: hidden;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+
+#textColorPicker::-webkit-color-swatch {
+
+  border: none;
+
+  border-radius:
+    8px;
+}
+
+
+#textColorPicker::-webkit-color-swatch-wrapper {
+
+  padding: 0;
+}
+
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 700px) {
+
+  .floating-toolbar {
+
+    gap: 2px;
+
+    padding: 4px;
+  }
+
+  .floating-toolbar button {
+
+    width: 28px;
+
+    height: 28px;
+
+    font-size: 12px;
+  }
+}

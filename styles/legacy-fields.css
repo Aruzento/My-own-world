@@ -1,0 +1,38 @@
+/* =========================================
+   LEGACY CHARACTER PROGRESS / MONEY
+   Старые поля персонажа. В новой card-shell модели
+   лучше не развивать, но можно оставить поддержку.
+========================================= */
+
+.character-progress-fields,
+.character-money-fields {
+  display: grid;
+
+  gap: 6px;
+}
+
+
+.character-progress-fields {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+}
+
+
+.character-money-fields {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+}
+
+
+.character-progress-fields p,
+.character-money-fields p {
+  min-width: 0;
+
+  padding: 0 6px;
+
+  border-radius: 7px;
+
+  background:
+    rgba(255,255,255,0.035);
+}

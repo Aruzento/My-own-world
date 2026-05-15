@@ -1,0 +1,568 @@
+/* =========================================
+   TREE
+========================================= */
+
+.tree {
+
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding:
+    4px
+    6px
+    10px;
+}
+
+
+
+/* =========================================
+   TREE ITEM
+========================================= */
+
+.tree-item {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 8px;
+
+  min-height: 30px;
+
+  padding:
+    4px
+    8px;
+
+  border-radius:
+    8px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    transform 0.12s;
+}
+
+
+.tree-item:hover {
+
+  background:
+    var(--hover);
+}
+
+
+.tree-item:active {
+
+  transform:
+    scale(0.995);
+}
+
+
+.tree-item.active {
+
+  background:
+    rgba(120,168,255,0.10);
+}
+
+.tree-title {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  min-width: 0;
+
+  flex: 1;
+
+  font-size: 13px;
+
+  color:
+    var(--muted);
+}
+
+
+.tree-label {
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+
+/* =========================================
+   ENTITY ICON
+========================================= */
+
+.entity-icon {
+
+  width: 12px;
+
+  height: 12px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  opacity: 0.82;
+}
+
+
+.entity-icon svg {
+
+  width: 100%;
+
+  height: 100%;
+
+  fill: none;
+
+  stroke: currentColor;
+
+  stroke-width: 2;
+
+  stroke-linecap: round;
+
+  stroke-linejoin: round;
+}
+
+
+
+/* =========================================
+   TREE ACTIONS
+========================================= */
+
+.tree-actions {
+
+  opacity: 0;
+
+  width: 22px;
+
+  height: 22px;
+
+  min-height: 22px;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  border-radius:
+    6px;
+
+  color:
+    var(--muted);
+
+  cursor: pointer;
+
+  transition:
+    opacity 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+
+.tree-item:hover .tree-actions {
+
+  opacity: 1;
+}
+
+
+.tree-actions:hover {
+
+  background:
+    rgba(255,255,255,0.08);
+
+  color:
+    white;
+}
+
+.tree-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.entity-icon {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px;
+  max-width: 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  color: currentColor;
+  opacity: 0.82;
+}
+
+.entity-icon svg {
+  width: 12px !important;
+  height: 12px !important;
+
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tree-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================
+   TREE CONTEXT MENU
+========================================= */
+
+.tree-context-menu {
+
+  position: fixed;
+
+  z-index: 10000;
+
+  min-width: 190px;
+
+  padding: 6px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(18,22,30,0.96);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+
+  box-shadow:
+    0 18px 50px rgba(0,0,0,0.34);
+}
+
+
+.tree-context-menu button {
+
+  width: 100%;
+
+  min-height: 32px;
+
+  padding:
+    0 10px;
+
+  display: flex;
+
+  align-items: center;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(255,255,255,0.74);
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+
+.tree-context-menu button:hover {
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    white;
+}
+
+
+.tree-context-menu button.danger:hover {
+
+  background:
+    rgba(255,80,80,0.12);
+
+  color:
+    #ffb4b4;
+}
+
+.tree-item {
+
+  padding-left:
+    calc(8px + var(--tree-level, 0) * 18px);
+}
+
+.tree-item[style*="--tree-level: 1"],
+.tree-item[style*="--tree-level: 2"],
+.tree-item[style*="--tree-level: 3"],
+.tree-item[style*="--tree-level: 4"],
+.tree-item[style*="--tree-level: 5"] {
+
+  position: relative;
+}
+
+
+.tree-item[style*="--tree-level: 1"]::before,
+.tree-item[style*="--tree-level: 2"]::before,
+.tree-item[style*="--tree-level: 3"]::before,
+.tree-item[style*="--tree-level: 4"]::before,
+.tree-item[style*="--tree-level: 5"]::before {
+
+  content: "";
+
+  position: absolute;
+
+  left:
+    calc(8px + (var(--tree-level, 0) - 1) * 18px);
+
+  top: 7px;
+
+  bottom: 7px;
+
+  width: 1px;
+
+  background:
+    rgba(255,255,255,0.08);
+}
+
+.tree-toggle {
+
+  width: 18px;
+
+  height: 22px;
+
+  min-height: 22px;
+
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+
+  color:
+    rgba(255,255,255,0.32);
+
+  font-size: 14px;
+
+  line-height: 1;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  cursor: pointer;
+
+  border-radius:
+    6px;
+
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+
+.tree-toggle:hover {
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,255,255,0.82);
+}
+
+.tree-item.is-dragging {
+
+  opacity:
+    0.42;
+}
+
+
+.tree-item.is-drop-target {
+
+  background:
+    rgba(120,168,255,0.14);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(120,168,255,0.24);
+}
+
+
+.tree-item.is-drop-target .tree-title {
+
+  color:
+    rgba(255,255,255,0.92);
+}
+
+.tree-root-drop-zone {
+
+  min-height:
+    28px;
+
+  margin:
+    0 0 4px;
+
+  padding:
+    5px 8px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  border-radius:
+    8px;
+
+  color:
+    rgba(255,255,255,0.30);
+
+  font-size:
+    11px;
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    0.06em;
+
+  cursor:
+    default;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    box-shadow 0.12s;
+}
+
+
+.tree-root-drop-zone.is-drop-target {
+
+  background:
+    rgba(120,168,255,0.12);
+
+  color:
+    rgba(255,255,255,0.84);
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(120,168,255,0.22);
+}
+
+.tree-item.is-drop-before,
+.tree-item.is-drop-after {
+
+  position: relative;
+}
+
+
+.tree-item.is-drop-before::after,
+.tree-item.is-drop-after::after {
+
+  content: "";
+
+  position: absolute;
+
+  left:
+    calc(8px + var(--tree-level, 0) * 18px);
+
+  right:
+    8px;
+
+  height:
+    2px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(120,168,255,0.85);
+
+  box-shadow:
+    0 0 10px
+    rgba(120,168,255,0.35);
+}
+
+
+.tree-item.is-drop-before::after {
+
+  top:
+    -1px;
+}
+
+
+.tree-item.is-drop-after::after {
+
+  bottom:
+    -1px;
+}
+
+.tree-item {
+
+  user-select:
+    none;
+
+  -webkit-user-select:
+    none;
+}
+
+
+.tree-item,
+.tree-item * {
+
+  cursor:
+    grab;
+}
+
+
+.tree-item:active,
+.tree-item.is-dragging,
+.tree-item.is-dragging * {
+
+  cursor:
+    grabbing;
+}
+
+.tree-actions,
+.tree-toggle,
+.tree-actions *,
+.tree-toggle * {
+
+  cursor:
+    pointer;
+}

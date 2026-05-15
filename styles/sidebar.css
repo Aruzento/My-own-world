@@ -1,0 +1,165 @@
+/* =========================================
+   SIDEBAR HEADER
+========================================= */
+
+.sidebar-header {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  padding:
+    14px
+    14px
+    10px;
+
+  border-bottom:
+    1px solid
+    var(--border);
+}
+
+
+.sidebar-title {
+
+  font-size: 15px;
+
+  font-weight: 650;
+
+  letter-spacing:
+    -0.02em;
+
+  color:
+    rgba(255,255,255,0.92);
+}
+
+
+.sidebar-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 4px;
+}
+
+
+
+/* =========================================
+   ICON BUTTONS
+========================================= */
+
+.icon-btn {
+
+  width: 28px;
+
+  height: 28px;
+
+  min-height: 28px;
+
+  padding: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  border: none;
+
+  border-radius:
+    8px;
+
+  background:
+    transparent;
+
+  color:
+    var(--muted);
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.14s,
+    color 0.14s,
+    transform 0.12s;
+}
+
+
+.icon-btn:hover {
+
+  background:
+    var(--hover);
+
+  color:
+    var(--text);
+}
+
+
+.icon-btn:active {
+
+  transform:
+    scale(0.96);
+}
+
+
+
+/* =========================================
+   SEARCH
+========================================= */
+
+.search-wrapper {
+
+  padding:
+    10px;
+}
+
+
+#searchInput {
+
+  width: 100%;
+
+  height: 32px;
+
+  padding:
+    0 12px;
+
+  border: none;
+
+  outline: none;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color:
+    var(--text);
+
+  font-size: 13px;
+
+  transition:
+    background 0.14s,
+    box-shadow 0.14s;
+}
+
+
+#searchInput::placeholder {
+
+  color:
+    rgba(255,255,255,0.30);
+}
+
+
+#searchInput:focus {
+
+  background:
+    rgba(255,255,255,0.07);
+
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.18);
+}

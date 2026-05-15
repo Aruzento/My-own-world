@@ -1,0 +1,143 @@
+* {
+
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+
+:root {
+
+  --bg:
+    #070a12;
+
+  --panel:
+    rgba(14,18,26,0.42);
+
+  --panel-strong:
+    rgba(16,20,28,0.78);
+
+  --panel-soft:
+    rgba(255,255,255,0.05);
+
+  --border:
+    rgba(255,255,255,0.07);
+
+  --border-hover:
+    rgba(140,180,255,0.20);
+
+  --hover:
+    rgba(255,255,255,0.09);
+
+  --text:
+    rgba(248,250,255,0.96);
+
+  --muted:
+    rgba(248,250,255,0.68);
+
+  --accent:
+    #79a8ff;
+
+  --shadow:
+    0 20px 60px rgba(0,0,0,0.28);
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+}
+
+
+html,
+body {
+
+  width: 100%;
+
+  height: 100%;
+}
+
+
+body {
+
+  font-family:
+    Inter,
+    Arial,
+    sans-serif;
+
+  background:
+    var(--bg);
+
+  color:
+    var(--text);
+
+  overflow: hidden;
+
+  -webkit-font-smoothing:
+    antialiased;
+
+  text-rendering:
+    optimizeLegibility;
+}
+
+
+body::before {
+
+  content: "";
+
+  position: fixed;
+
+  inset: 0;
+
+  background-image:
+    linear-gradient(
+      rgba(4,7,12,0.54),
+      rgba(4,7,12,0.72)
+    ),
+    url("../assets/background.jpg");
+
+  background-size:
+    cover;
+
+  background-position:
+    center;
+
+  filter:
+    blur(4px)
+    saturate(1.02);
+
+  transform:
+    scale(1.02);
+
+  z-index: -2;
+}
+
+
+body::after {
+
+  content: "";
+
+  position: fixed;
+
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(120,160,220,0.12),
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at bottom right,
+      rgba(120,90,200,0.08),
+      transparent 46%
+    );
+
+  z-index: -1;
+}
+
+
+.hidden {
+
+  display: none !important;
+}

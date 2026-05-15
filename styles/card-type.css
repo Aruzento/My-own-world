@@ -1,0 +1,79 @@
+/* =========================================
+   CARD TYPE SELECT
+========================================= */
+
+.card-type-row {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin: 6px 0 10px;
+}
+
+
+.card-type-label {
+  color:
+    rgba(255,255,255,0.34);
+
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+
+  white-space: nowrap;
+}
+
+
+.card-type-select {
+  height: 26px;
+
+  min-width: 120px;
+
+  padding: 0 28px 0 10px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius: 9px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.075),
+      rgba(255,255,255,0.045)
+    );
+
+  color:
+    rgba(255,255,255,0.84);
+
+  font-size: 12px;
+
+  outline: none;
+
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+
+.card-type-select:hover {
+  background:
+    rgba(255,255,255,0.08);
+
+  color: white;
+}
+
+
+.card-type-select:focus {
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.22);
+}
+
+
+.card-type-select option {
+  background: #12161e;
+  color: rgba(255,255,255,0.9);
+}

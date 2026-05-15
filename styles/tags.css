@@ -1,0 +1,529 @@
+/* =========================================
+   TAG CONTAINER
+========================================= */
+
+.card-meta {
+
+  display: flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 6px;
+
+  margin-bottom: 12px;
+}
+
+
+.card-meta-label {
+
+  display: none;
+}
+
+
+
+/* =========================================
+   TAG LIST
+========================================= */
+
+.inline-tag-list {
+
+  display: flex;
+
+  align-items: center;
+
+  flex-wrap: wrap;
+
+  gap: 6px;
+}
+
+
+
+/* =========================================
+   SINGLE TAG
+========================================= */
+
+.inline-tag {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  height: 22px;
+
+  padding:
+    0 8px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,255,255,0.62);
+
+  font-size: 11px;
+
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+
+
+.inline-tag:hover {
+
+  background:
+    rgba(255,255,255,0.08);
+
+  border-color:
+    rgba(255,255,255,0.10);
+
+  color:
+    rgba(255,255,255,0.92);
+}
+
+
+
+/* =========================================
+   TAG TEXT
+========================================= */
+
+.inline-tag-label {
+
+  white-space: nowrap;
+}
+
+
+
+/* =========================================
+   REMOVE TAG BUTTON
+========================================= */
+
+.inline-tag-remove {
+
+  width: 14px;
+
+  height: 14px;
+
+  min-height: 14px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius:
+    999px;
+
+  background: transparent;
+
+  color:
+    rgba(255,255,255,0.34);
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+
+.inline-tag-remove:hover {
+
+  background:
+    rgba(255,255,255,0.10);
+
+  color:
+    white;
+}
+
+
+
+/* =========================================
+   TAG INPUT
+========================================= */
+
+.inline-tag-input {
+
+  width: 74px;
+
+  height: 22px;
+
+  padding:
+    0 6px;
+
+  border: none;
+
+  outline: none;
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(255,255,255,0.04);
+
+  color:
+    var(--text);
+
+  font-size: 11px;
+
+  transition:
+    background 0.12s,
+    box-shadow 0.12s;
+}
+
+
+.inline-tag-input::placeholder {
+
+  color:
+    rgba(255,255,255,0.28);
+}
+
+
+.inline-tag-input:focus {
+
+  background:
+    rgba(255,255,255,0.07);
+
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.18);
+}
+
+
+
+/* =========================================
+   ADD TAG BUTTON
+========================================= */
+
+.inline-add-tag-btn {
+
+  width: 22px;
+
+  height: 22px;
+
+  min-height: 22px;
+
+  padding: 0;
+
+  border: none;
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color:
+    var(--muted);
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.inline-add-tag-btn:hover {
+
+  background:
+    rgba(255,255,255,0.09);
+
+  color:
+    white;
+}
+
+
+.inline-add-tag-btn:active {
+
+  transform:
+    scale(0.95);
+}
+
+/* =========================================
+   ALIASES
+========================================= */
+
+.aliases-meta {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    6px;
+
+  margin:
+    4px 0 10px;
+}
+
+
+.aliases-label {
+
+  color:
+    rgba(255,255,255,0.34);
+
+  font-size:
+    11px;
+
+  font-weight:
+    600;
+
+  letter-spacing:
+    0.04em;
+
+  white-space:
+    nowrap;
+}
+
+
+.inline-alias-list {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  flex-wrap:
+    wrap;
+
+  gap:
+    6px;
+}
+
+
+.inline-alias {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    5px;
+
+  height:
+    22px;
+
+  padding:
+    0 8px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(120,168,255,0.055);
+
+  border:
+    1px solid
+    rgba(120,168,255,0.09);
+
+  color:
+    rgba(220,235,255,0.62);
+
+  font-size:
+    11px;
+
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+
+
+.inline-alias:hover {
+
+  background:
+    rgba(120,168,255,0.09);
+
+  border-color:
+    rgba(120,168,255,0.16);
+
+  color:
+    rgba(255,255,255,0.92);
+}
+
+
+.inline-alias-label {
+
+  white-space:
+    nowrap;
+}
+
+
+.inline-alias-remove {
+
+  width:
+    14px;
+
+  height:
+    14px;
+
+  min-height:
+    14px;
+
+  padding:
+    0;
+
+  border:
+    none;
+
+  border-radius:
+    999px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(220,235,255,0.34);
+
+  font-size:
+    11px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+
+.inline-alias-remove:hover {
+
+  background:
+    rgba(255,255,255,0.10);
+
+  color:
+    white;
+}
+
+
+.inline-alias-input {
+
+  width:
+    86px;
+
+  height:
+    22px;
+
+  padding:
+    0 6px;
+
+  border:
+    none;
+
+  outline:
+    none;
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(120,168,255,0.045);
+
+  color:
+    var(--text);
+
+  font-size:
+    11px;
+
+  transition:
+    background 0.12s,
+    box-shadow 0.12s;
+}
+
+
+.inline-alias-input::placeholder {
+
+  color:
+    rgba(220,235,255,0.26);
+}
+
+
+.inline-alias-input:focus {
+
+  background:
+    rgba(120,168,255,0.075);
+
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.18);
+}
+
+
+.inline-add-alias-btn {
+
+  width:
+    22px;
+
+  height:
+    22px;
+
+  min-height:
+    22px;
+
+  padding:
+    0;
+
+  border:
+    none;
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(120,168,255,0.055);
+
+  color:
+    rgba(220,235,255,0.46);
+
+  font-size:
+    12px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.inline-add-alias-btn:hover {
+
+  background:
+    rgba(120,168,255,0.10);
+
+  color:
+    white;
+}
+
+
+.inline-add-alias-btn:active {
+
+  transform:
+    scale(0.95);
+}

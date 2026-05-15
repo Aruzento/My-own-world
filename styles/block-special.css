@@ -1,0 +1,930 @@
+/* =========================================
+   ITEM SET INLINE VIEW
+========================================= */
+
+.item-set-block .item-set-list {
+
+  /* Делает список предметов похожим на теги/алиасы */
+  display:
+    inline-flex;
+
+  /* Выравнивает предметы по центру */
+  align-items:
+    center;
+
+  /* Разрешает перенос предметов */
+  flex-wrap:
+    wrap;
+
+  /* Расстояние между предметами */
+  gap:
+    6px;
+
+  /* Убирает ощущение отдельной строки */
+  margin:
+    4px 6px 4px 0;
+
+  /* Минимальная высота строки */
+  min-height:
+    24px;
+}
+
+
+.item-set-block .item-set-add-btn {
+
+  /* Делаем кнопку inline, как у тегов/алиасов */
+  display:
+    inline-flex;
+
+  /* Выравниваем текст по центру */
+  align-items:
+    center;
+
+  /* Высота как у маленьких chips */
+  height:
+    22px;
+
+  /* Минимальная высота */
+  min-height:
+    22px;
+
+  /* Компактный padding */
+  padding:
+    0 8px;
+
+  /* Убираем крупную кнопку */
+  border:
+    none;
+
+  /* Скругление как у alias/tag */
+  border-radius:
+    7px;
+
+  /* Мягкий фон */
+  background:
+    rgba(255,255,255,0.05);
+
+  /* Приглушённый цвет */
+  color:
+    rgba(255,255,255,0.46);
+
+  /* Размер текста */
+  font-size:
+    11px;
+
+  /* Курсор кнопки */
+  cursor:
+    pointer;
+}
+
+
+.item-set-block .item-set-add-btn:hover {
+
+  /* Фон при наведении */
+  background:
+    rgba(255,255,255,0.09);
+
+  /* Цвет при наведении */
+  color:
+    white;
+}
+
+
+.item-set-block .item-set-chip {
+
+  /* Высота как у tag/alias */
+  height:
+    22px;
+
+  /* Компактный padding */
+  padding:
+    0 7px;
+
+  /* Размер текста */
+  font-size:
+    11px;
+}
+
+
+/* =========================================
+   CHARACTER STATS BLOCK
+========================================= */
+
+.character-stats-grid {
+
+  /* Сетка полей */
+  display:
+    grid;
+
+  /* 5 адаптивных колонок */
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  /* Расстояние между полями */
+  gap:
+    8px;
+}
+
+
+.character-stat-field {
+
+  /* Контейнер поля */
+  display:
+    flex;
+
+  /* Вертикальное расположение label + input */
+  flex-direction:
+    column;
+
+  /* Расстояние между label и input */
+  gap:
+    4px;
+}
+
+
+.character-stat-field span {
+
+  /* Мелкая подпись */
+  color:
+    rgba(255,255,255,0.34);
+
+  /* Размер подписи */
+  font-size:
+    11px;
+
+  /* Жирность подписи */
+  font-weight:
+    600;
+
+  /* Uppercase-подобный вид */
+  letter-spacing:
+    0.04em;
+}
+
+
+.character-stat-field input {
+
+  /* Высота поля */
+  height:
+    28px;
+
+  /* Внутренние отступы */
+  padding:
+    0 8px;
+
+  /* Без стандартной рамки */
+  border:
+    none;
+
+  /* Скругление */
+  border-radius:
+    8px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.045);
+
+  /* Цвет текста */
+  color:
+    rgba(255,255,255,0.86);
+
+  /* Размер текста */
+  font-size:
+    13px;
+
+  /* Убирает outline */
+  outline:
+    none;
+}
+
+
+.character-stat-field input:focus {
+
+  /* Focus ring */
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.22);
+}
+
+
+/* =========================================
+   DND STATS BLOCK
+========================================= */
+
+.dnd-stats-list {
+
+  /* Сетка характеристик */
+  display:
+    grid;
+
+  /* Всегда 6 колонок */
+  grid-template-columns:
+    repeat(6, minmax(0, 1fr));
+
+  /* Расстояние */
+  gap:
+    6px;
+}
+
+
+.dnd-stat-row {
+
+  /* Карточка характеристики */
+  display:
+    grid;
+
+  /* label / input / modifier */
+  grid-template-rows:
+    auto
+    32px
+    auto;
+
+  /* Расстояние внутри */
+  gap:
+    4px;
+
+  /* Padding */
+  padding:
+    6px;
+
+  /* Скругление */
+  border-radius:
+    10px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.035);
+
+  /* Рамка */
+  border:
+    1px solid
+    rgba(255,255,255,0.055);
+}
+
+
+.dnd-stat-label {
+
+  /* Название характеристики */
+  color:
+    rgba(255,255,255,0.42);
+
+  /* Размер */
+  font-size:
+    11px;
+
+  /* Жирность */
+  font-weight:
+    700;
+
+  /* Центрирование */
+  text-align:
+    center;
+}
+
+
+.dnd-stat-score {
+
+  /* Высота input */
+  height:
+    28px;
+
+  /* Текст по центру */
+  text-align:
+    center;
+
+  /* Без рамки */
+  border:
+    none;
+
+  /* Скругление */
+  border-radius:
+    8px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.055);
+
+  /* Цвет */
+  color:
+    rgba(255,255,255,0.9);
+
+  /* Размер */
+  font-size:
+    14px;
+
+  /* Жирность */
+  font-weight:
+    650;
+
+  /* Убирает outline */
+  outline:
+    none;
+}
+
+
+.dnd-stat-score:focus {
+
+  /* Focus ring */
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.22);
+}
+
+
+.dnd-stat-modifier {
+
+  /* Цвет модификатора */
+  color:
+    rgba(255,255,255,0.66);
+
+  /* Размер */
+  font-size:
+    11px;
+
+  /* Жирность */
+  font-weight:
+    650;
+
+  /* Центрирование */
+  text-align:
+    center;
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 800px) {
+
+  .character-stats-grid {
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+
+.dnd-stats-list {
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+}
+
+
+.dnd-checks-list {
+
+  grid-template-columns:
+    1fr;
+}
+}
+
+/* =========================================
+   DND COMBAT FIELDS
+========================================= */
+
+.dnd-combat-grid {
+
+  /* Верхняя сетка КЗ + Хиты */
+  display:
+    grid;
+
+  /* Две колонки */
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 2fr);
+
+  /* Расстояние между полями */
+  gap:
+    8px;
+
+  /* Отступ снизу */
+  margin-bottom:
+    10px;
+}
+
+
+.dnd-secondary-grid {
+
+  /* Вторая строка боевых параметров */
+  display:
+    grid;
+
+  /* Три колонки */
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  /* Расстояние */
+  gap:
+    8px;
+
+  /* Отступ снизу */
+  margin-bottom:
+    12px;
+}
+
+
+.dnd-combat-field {
+
+  /* Контейнер поля */
+  display:
+    flex;
+
+  /* Вертикальное расположение */
+  flex-direction:
+    column;
+
+  /* Расстояние label/input */
+  gap:
+    4px;
+
+  /* Внутренний отступ */
+  padding:
+    8px;
+
+  /* Скругление */
+  border-radius:
+    10px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.035);
+
+  /* Рамка */
+  border:
+    1px solid
+    rgba(255,255,255,0.055);
+}
+
+
+.dnd-combat-field span {
+
+  /* Подпись поля */
+  color:
+    rgba(255,255,255,0.42);
+
+  /* Размер */
+  font-size:
+    11px;
+
+  /* Жирность */
+  font-weight:
+    650;
+}
+
+
+.dnd-combat-field input {
+
+  /* Высота */
+  height:
+    30px;
+
+  /* Отступы */
+  padding:
+    0 8px;
+
+  /* Без рамки */
+  border:
+    none;
+
+  /* Скругление */
+  border-radius:
+    8px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.055);
+
+  /* Цвет */
+  color:
+    rgba(255,255,255,0.9);
+
+  /* Размер */
+  font-size:
+    13px;
+
+  /* Убираем outline */
+  outline:
+    none;
+}
+
+
+.dnd-combat-field input:focus {
+
+  /* Focus ring */
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.22);
+}
+
+
+.dnd-hitpoints-inputs {
+
+  /* Контейнер текущих/максимальных хитов */
+  display:
+    grid;
+
+  /* Две колонки */
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  /* Расстояние */
+  gap:
+    6px;
+}
+
+
+/* =========================================
+   DND CHECKS
+========================================= */
+
+.dnd-checks-section {
+
+  /* Отступ сверху */
+  margin-top:
+    12px;
+}
+
+
+.dnd-checks-title {
+
+  /* Отступ перед списком */
+  margin:
+    0 0 8px;
+
+  /* Цвет */
+  color:
+    rgba(255,255,255,0.56);
+
+  /* Размер */
+  font-size:
+    13px;
+
+  /* Жирность */
+  font-weight:
+    650;
+}
+
+
+.dnd-checks-list {
+
+  /* Сетка навыков */
+  display:
+    grid;
+
+  /* Две колонки */
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  /* Расстояние */
+  gap:
+    6px;
+}
+
+
+.dnd-check-row {
+
+  /* Строка навыка */
+  display:
+    grid;
+
+  /* checkbox / название / число */
+  grid-template-columns:
+    18px
+    minmax(0, 1fr)
+    58px;
+
+  /* Выравнивание */
+  align-items:
+    center;
+
+  /* Расстояние */
+  gap:
+    6px;
+
+  /* Высота */
+  min-height:
+    30px;
+
+  /* Отступы */
+  padding:
+    4px 6px;
+
+  /* Скругление */
+  border-radius:
+    8px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.03);
+}
+
+
+.dnd-check-point {
+
+  /* Размер checkbox */
+  width:
+    14px;
+
+  /* Размер checkbox */
+  height:
+    14px;
+
+  /* Курсор */
+  cursor:
+    pointer;
+}
+
+
+.dnd-check-name {
+
+  /* Обрезка длинного текста */
+  overflow:
+    hidden;
+
+  /* Троеточие */
+  text-overflow:
+    ellipsis;
+
+  /* Не переносить */
+  white-space:
+    nowrap;
+
+  /* Цвет */
+  color:
+    rgba(255,255,255,0.68);
+
+  /* Размер */
+  font-size:
+    12px;
+}
+
+
+.dnd-check-value {
+
+  /* Высота */
+  height:
+    24px;
+
+  /* Центрирование */
+  text-align:
+    center;
+
+  /* Без рамки */
+  border:
+    none;
+
+  /* Скругление */
+  border-radius:
+    7px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.055);
+
+  /* Цвет */
+  color:
+    rgba(255,255,255,0.86);
+
+  /* Размер */
+  font-size:
+    12px;
+
+  /* Убирает outline */
+  outline:
+    none;
+}
+
+
+.dnd-check-value:focus {
+
+  /* Focus ring */
+  box-shadow:
+    0 0 0 1px
+    rgba(120,168,255,0.22);
+}
+
+/* =========================================
+   DND CHECK GROUPS
+========================================= */
+
+.dnd-checks-list {
+
+  /* Сетка групп характеристик */
+  display:
+    grid;
+
+  /* 3 колонки */
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  /* Расстояние */
+  gap:
+    10px;
+}
+
+
+.dnd-check-group {
+
+  /* Контейнер группы */
+  display:
+    flex;
+
+  /* Вертикальная компоновка */
+  flex-direction:
+    column;
+
+  /* Расстояние */
+  gap:
+    6px;
+
+  /* Внутренний отступ */
+  padding:
+    8px;
+
+  /* Скругление */
+  border-radius:
+    10px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.03);
+
+  /* Рамка */
+  border:
+    1px solid
+    rgba(255,255,255,0.05);
+}
+
+
+.dnd-check-group-title {
+
+  /* Заголовок группы */
+  color:
+    rgba(255,255,255,0.46);
+
+  /* Размер */
+  font-size:
+    11px;
+
+  /* Жирность */
+  font-weight:
+    700;
+
+  /* Буквы */
+  letter-spacing:
+    0.05em;
+}
+
+
+.dnd-check-group-list {
+
+  /* Вертикальный список */
+  display:
+    flex;
+
+  /* Вертикальная компоновка */
+  flex-direction:
+    column;
+
+  /* Расстояние */
+  gap:
+    4px;
+}
+
+/* =========================================
+   CUSTOM CHECKBOX
+========================================= */
+
+.dnd-check-point {
+
+  /* Убирает нативный стиль браузера */
+  appearance:
+    none;
+
+  -webkit-appearance:
+    none;
+
+  /* Размер */
+  width:
+    14px;
+
+  height:
+    14px;
+
+  /* Скругление */
+  border-radius:
+    4px;
+
+  /* Рамка */
+  border:
+    1px solid
+    rgba(255,255,255,0.16);
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.04);
+
+  /* Курсор */
+  cursor:
+    pointer;
+
+  /* Анимация */
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+
+
+.dnd-check-point:hover {
+
+  /* Hover background */
+  background:
+    rgba(255,255,255,0.08);
+
+  /* Hover border */
+  border-color:
+    rgba(255,255,255,0.24);
+}
+
+
+.dnd-check-point:checked {
+
+  /* Активный фон */
+  background:
+    rgba(120,168,255,0.85);
+
+  /* Активная рамка */
+  border-color:
+    rgba(120,168,255,1);
+
+  /* Glow */
+  box-shadow:
+    0 0 8px
+    rgba(120,168,255,0.35);
+}
+
+
+.dnd-check-point:checked::before {
+
+  /* Галочка */
+  content:
+    "";
+
+  /* Позиционирование */
+  display:
+    block;
+
+  /* Размер */
+  width:
+    4px;
+
+  height:
+    7px;
+
+  /* Рисует check */
+  border:
+    solid white;
+
+  border-width:
+    0 2px 2px 0;
+
+  /* Поворот */
+  transform:
+    rotate(45deg);
+
+  /* Центровка */
+  margin:
+    1px 0 0 4px;
+}
+
+
+/* =========================================
+   REMOVE NATIVE NUMBER SPINNERS
+========================================= */
+
+.dnd-stat-score::-webkit-outer-spin-button,
+.dnd-stat-score::-webkit-inner-spin-button,
+.dnd-check-value::-webkit-outer-spin-button,
+.dnd-check-value::-webkit-inner-spin-button,
+.character-stat-field input::-webkit-outer-spin-button,
+.character-stat-field input::-webkit-inner-spin-button {
+
+  /* Убирает стрелки Chrome */
+  -webkit-appearance:
+    none;
+
+  margin:
+    0;
+}
+
+
+.dnd-stat-score,
+.dnd-check-value,
+.character-stat-field input {
+
+  /* Убирает стрелки Firefox */
+  -moz-appearance:
+    textfield;
+}

@@ -1,0 +1,405 @@
+export function createTextBlock({
+  title,
+  placeholder = 'Введите текст'
+}) {
+
+  return `
+    <div
+      class="template-block"
+      data-block-type="text"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div
+        contenteditable="true"
+        class="rich-text-field"
+        data-placeholder="${placeholder}"
+      ></div>
+    </div>
+  `;
+}
+
+
+export function createItemsBlock({
+  title = 'Предметы'
+}) {
+
+  return `
+    <div
+      class="template-block item-set-block"
+      data-block-type="items"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="item-set-list"></div>
+
+      <button
+        class="item-set-add-btn"
+        type="button"
+      >
+        + Добавить предмет
+      </button>
+    </div>
+  `;
+}
+
+/* Создаёт блок статистики персонажа: уровень, опыт и деньги */
+export function createCharacterStatsBlock({
+  title = 'Статистика персонажа'
+}) {
+
+  /* Возвращает HTML блока */
+  return `
+    <div
+      class="template-block character-stats-block"
+      data-block-type="characterStats"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="character-stats-grid">
+
+        <label class="character-stat-field">
+          <span>Уровень</span>
+          <input type="number" class="character-level-input" min="1">
+        </label>
+
+        <label class="character-stat-field">
+          <span>Опыт</span>
+          <input type="number" class="character-exp-input" min="0">
+        </label>
+
+        <label class="character-stat-field">
+          <span>ЗМ</span>
+          <input type="number" class="character-money-input" min="0">
+        </label>
+
+        <label class="character-stat-field">
+          <span>СМ</span>
+          <input type="number" class="character-money-input" min="0">
+        </label>
+
+        <label class="character-stat-field">
+          <span>ММ</span>
+          <input type="number" class="character-money-input" min="0">
+        </label>
+
+      </div>
+    </div>
+  `;
+}
+
+
+/* Создаёт DnD stat block с боевыми параметрами, характеристиками, навыками и спасбросками */
+export function createDndStatsBlock({
+  title = 'Стат. блок DnD'
+}) {
+
+  /* Список базовых характеристик */
+  const stats = [
+    ['str', 'СИЛ'],
+    ['dex', 'ЛВК'],
+    ['con', 'ТЛС'],
+    ['int', 'ИНТ'],
+    ['wis', 'МДР'],
+    ['cha', 'ХАР']
+  ];
+
+  /* Список навыков и спасбросков */
+    /* Навыки и спасброски, сгруппированные по характеристикам */
+  const checks = [
+    {
+      title: 'СИЛ',
+      items: [
+        'Спасбросок СИЛ',
+        'Атлетика'
+      ]
+    },
+
+    {
+      title: 'ЛВК',
+      items: [
+        'Спасбросок ЛВК',
+        'Акробатика',
+        'Ловкость рук',
+        'Скрытность'
+      ]
+    },
+
+    {
+      title: 'ТЛС',
+      items: [
+        'Спасбросок ТЛС'
+      ]
+    },
+
+    {
+      title: 'ИНТ',
+      items: [
+        'Спасбросок ИНТ',
+        'История',
+        'Магия',
+        'Природа',
+        'Религия'
+      ]
+    },
+
+    {
+      title: 'МДР',
+      items: [
+        'Спасбросок МДР',
+        'Внимательность',
+        'Выживание',
+        'Медицина',
+        'Проницательность',
+        'Уход за животными'
+      ]
+    },
+
+    {
+      title: 'ХАР',
+      items: [
+        'Спасбросок ХАР',
+        'Выступление',
+        'Запугивание',
+        'Обман',
+        'Убеждение'
+      ]
+    }
+  ];
+
+  /* Создаёт HTML базовых характеристик */
+  const statRows =
+    stats
+      .map(([key, label]) => `
+        <label class="dnd-stat-row" data-stat="${key}">
+          <span class="dnd-stat-label">${label}</span>
+
+          <input
+            type="number"
+            class="dnd-stat-score"
+            value="10"
+          >
+
+          <span class="dnd-stat-modifier">+0</span>
+        </label>
+      `)
+      .join('');
+
+   /* Создаёт HTML секций навыков */
+  const checkRows =
+    checks
+      .map(group => {
+
+        /* Создаёт HTML строк навыков внутри группы */
+        const rows =
+          group.items
+            .map(name => `
+              <label class="dnd-check-row">
+
+                <input
+                  type="checkbox"
+                  class="dnd-check-point"
+                >
+
+                <span class="dnd-check-name">
+                  ${name}
+                </span>
+
+                <input
+                  type="number"
+                  class="dnd-check-value"
+                  value="0"
+                >
+
+              </label>
+            `)
+            .join('');
+
+        /* Возвращает HTML группы */
+        return `
+          <div class="dnd-check-group">
+
+            <div class="dnd-check-group-title">
+              ${group.title}
+            </div>
+
+            <div class="dnd-check-group-list">
+              ${rows}
+            </div>
+
+          </div>
+        `;
+      })
+      .join('');
+
+  /* Возвращает полный HTML блока */
+  return `
+    <div
+      class="template-block dnd-stats-block"
+      data-block-type="dndStats"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="dnd-combat-grid">
+
+        <label class="dnd-combat-field">
+          <span>Класс защиты</span>
+          <input
+            type="number"
+            class="dnd-armor-class"
+            value="10"
+          >
+        </label>
+
+        <label class="dnd-combat-field dnd-hitpoints-field">
+          <span>Хиты</span>
+
+          <div class="dnd-hitpoints-inputs">
+            <input
+              type="text"
+              class="dnd-current-hp"
+              placeholder="текущие"
+            >
+
+            <input
+              type="text"
+              class="dnd-max-hp"
+              placeholder="макс."
+            >
+          </div>
+        </label>
+
+      </div>
+
+      <div class="dnd-secondary-grid">
+
+        <label class="dnd-combat-field">
+          <span>Инициатива</span>
+          <input
+            type="number"
+            class="dnd-initiative"
+            value="0"
+          >
+        </label>
+
+        <label class="dnd-combat-field">
+          <span>Скорость</span>
+          <input
+            type="text"
+            class="dnd-speed"
+            value="30 фт."
+          >
+        </label>
+
+        <label class="dnd-combat-field">
+          <span>Бонус мастерства</span>
+          <input
+            type="number"
+            class="dnd-proficiency"
+            value="2"
+          >
+        </label>
+
+      </div>
+
+      <div class="dnd-stats-list">
+        ${statRows}
+      </div>
+
+      <div class="dnd-checks-section">
+
+        <div class="dnd-checks-title">
+          Навыки и спасброски
+        </div>
+
+        <div class="dnd-checks-list">
+          ${checkRows}
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+/* Создаёт блок таблицы */
+export function createTableBlock({
+  title = 'Таблица',
+  rows = 3,
+  columns = 3
+}) {
+
+  /* Нормализует количество строк */
+  const safeRows =
+    Math.max(1, Number(rows) || 1);
+
+  /* Нормализует количество столбцов */
+  const safeColumns =
+    Math.max(1, Number(columns) || 1);
+
+  /* Создаёт HTML строк таблицы без лишних пробелов внутри ячеек */
+  const tableRows =
+    Array.from({ length: safeRows })
+      .map(() => {
+        /* Создаёт HTML ячеек строки */
+        const cells =
+          Array.from({ length: safeColumns })
+            .map((_, index) => {
+              /* Создаёт кнопки управления строкой только в первой ячейке */
+              const rowControls =
+                index === 0
+                  ? `
+                    <div class="table-row-controls" contenteditable="false">
+
+                      <button
+                        class="table-add-row-btn"
+                        type="button"
+                        title="Добавить строку ниже"
+                      >
+                        +
+                      </button>
+
+                      <button
+                        class="table-delete-row-btn"
+                        type="button"
+                        title="Удалить строку"
+                      >
+                        ×
+                      </button>
+
+                    </div>
+                  `
+                  : '';
+
+              /* Возвращает ячейку с отдельным редактируемым div */
+              return `<td class="table-cell" contenteditable="false">${rowControls}<div class="table-cell-content" contenteditable="true"></div></td>`;
+            })
+            .join('');
+
+        /* Возвращает строку */
+        return `<tr>${cells}</tr>`;
+      })
+      .join('');
+
+  /* Возвращает HTML блока таблицы */
+  return `
+    <div
+      class="template-block table-block"
+      data-block-type="table"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="table-block-scroll">
+        <table class="custom-table">
+          <tbody>
+            ${tableRows}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}

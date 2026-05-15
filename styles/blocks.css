@@ -1,0 +1,425 @@
+/* =========================================
+   BLOCKS ZONE
+========================================= */
+
+.blocks-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 0 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+
+/* =========================================
+   CONTENT BLOCKS
+========================================= */
+
+.template-block {
+  position: relative;
+
+  padding:
+    clamp(10px, 1vw, 16px)
+    0;
+
+  background: transparent;
+  border: none;
+}
+
+
+.template-block + .template-block {
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+
+.template-block h2 {
+  margin: 0 0 6px;
+
+  font-size: 16px;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+
+  color: rgba(255,255,255,0.74);
+}
+
+
+.template-block p {
+  margin: 0;
+
+  font-size: 14px;
+
+  line-height:
+    clamp(1.7, 1.8vw, 1.9);
+
+  color: rgba(255,255,255,0.84);
+}
+
+
+/* =========================================
+   BLOCK CONTROLS
+========================================= */
+
+.block-actions {
+  position: absolute;
+
+  top: 10px;
+  left: -38px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 4px;
+
+  opacity: 0;
+
+  transition:
+    opacity 0.12s;
+}
+
+
+.template-block:hover .block-actions {
+  opacity: 1;
+}
+
+
+.block-drag-handle,
+.block-rename-btn,
+.block-delete-btn {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 7px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color:
+    rgba(255,255,255,0.42);
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.block-drag-handle {
+  cursor: grab;
+}
+
+
+.block-drag-handle:active {
+  cursor: grabbing;
+}
+
+
+.block-drag-handle:hover,
+.block-rename-btn:hover,
+.block-delete-btn:hover {
+  background:
+    rgba(255,255,255,0.10);
+
+  color: white;
+}
+
+
+.block-actions button:active,
+.block-drag-handle:active,
+.block-rename-btn:active,
+.block-delete-btn:active {
+  transform: scale(0.94);
+}
+
+
+.block-delete-btn:hover {
+  background:
+    rgba(255,80,80,0.14);
+
+  color:
+    #ffb4b4;
+}
+
+
+/* =========================================
+   ADD BLOCK
+========================================= */
+
+.add-block-row {
+  padding: 12px 0 0;
+}
+
+
+.add-block-btn {
+  min-height: 30px;
+
+  padding: 0 12px;
+
+  border:
+    1px dashed
+    rgba(255,255,255,0.12);
+
+  border-radius: 10px;
+
+  background:
+    rgba(255,255,255,0.025);
+
+  color:
+    rgba(255,255,255,0.42);
+
+  font-size: 13px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+
+
+.add-block-btn:hover {
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.82);
+
+  border-color:
+    rgba(255,255,255,0.20);
+}
+
+
+/* =========================================
+   BLOCK DRAG STATE
+========================================= */
+
+.template-block.is-dragging {
+  opacity: 0.42;
+}
+
+
+.template-block.is-drop-before,
+.template-block.is-drop-after {
+  position: relative;
+}
+
+
+.template-block.is-drop-before::before,
+.template-block.is-drop-after::after {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  right: 0;
+
+  height: 2px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(120,168,255,0.85);
+
+  box-shadow:
+    0 0 10px
+    rgba(120,168,255,0.35);
+}
+
+
+.template-block.is-drop-before::before {
+  top: -1px;
+}
+
+
+.template-block.is-drop-after::after {
+  bottom: -1px;
+}
+
+
+/* =========================================
+   INLINE BLOCK TITLE EDIT
+========================================= */
+
+.is-editing-title {
+  outline: none;
+
+  border-radius: 6px;
+
+  background:
+    rgba(255,255,255,0.045);
+}
+
+
+/* =========================================
+   RICH TEXT FIELD
+========================================= */
+
+.rich-text-field {
+  min-height: 24px;
+
+  font-size: 14px;
+
+  line-height:
+    clamp(1.7, 1.8vw, 1.9);
+
+  color:
+    rgba(255,255,255,0.84);
+}
+
+
+.rich-text-field p {
+  margin: 0 0 10px;
+}
+
+
+.rich-text-field p:last-child {
+  margin-bottom: 0;
+}
+
+
+/* =========================================
+   ITEM SET BLOCK
+========================================= */
+
+.item-set-block {
+  position: relative;
+}
+
+
+.item-set-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 6px;
+
+  min-height: 26px;
+
+  margin: 6px 0 8px;
+}
+
+
+.item-set-chip {
+  max-width: 100%;
+
+  height: 24px;
+
+  padding: 0 6px 0 8px;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  border-radius: 999px;
+
+  background:
+    rgba(255,255,255,0.045);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+
+
+.item-set-chip:hover {
+  background:
+    rgba(255,255,255,0.08);
+
+  color: white;
+
+  border-color:
+    rgba(255,255,255,0.13);
+}
+
+
+.item-set-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.item-set-remove {
+  width: 15px;
+  height: 15px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 999px;
+
+  color:
+    rgba(255,255,255,0.36);
+
+  font-size: 12px;
+}
+
+
+.item-set-remove:hover {
+  background:
+    rgba(255,255,255,0.10);
+
+  color: white;
+}
+
+
+.item-set-add-btn {
+  min-height: 28px;
+
+  padding: 0 10px;
+
+  border:
+    1px dashed
+    rgba(255,255,255,0.12);
+
+  border-radius: 9px;
+
+  background:
+    rgba(255,255,255,0.025);
+
+  color:
+    rgba(255,255,255,0.42);
+
+  font-size: 12px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+
+
+.item-set-add-btn:hover {
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.82);
+
+  border-color:
+    rgba(255,255,255,0.20);
+}

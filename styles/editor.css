@@ -1,0 +1,287 @@
+/* =========================================
+   EDITOR AREA
+========================================= */
+
+#editorArea {
+
+  width: 100%;
+
+  max-width: none;
+
+  margin: 0;
+
+  padding: 0;
+
+  outline: none;
+
+  font-size: 14px;
+
+  line-height: 1.72;
+}
+
+
+
+/* =========================================
+   CONTENTEDITABLE
+========================================= */
+
+[contenteditable="true"] {
+
+  outline: none;
+
+  min-height: 1.4em;
+}
+
+
+[contenteditable="true"][data-placeholder]:empty::before {
+
+  content:
+    attr(data-placeholder);
+
+  color:
+    rgba(255,255,255,0.26);
+
+  pointer-events: none;
+}
+
+
+
+/* =========================================
+   TYPOGRAPHY
+========================================= */
+
+h1,
+h2,
+h3,
+h4 {
+
+  font-weight: 650;
+
+  letter-spacing:
+    -0.02em;
+}
+
+
+p {
+
+  line-height: 1.75;
+}
+
+
+strong {
+
+  font-weight: 650;
+}
+
+
+em {
+
+  font-style: italic;
+}
+
+
+u {
+
+  text-decoration: underline;
+}
+
+
+
+/* =========================================
+   LISTS
+========================================= */
+
+ul,
+ol {
+
+  padding-left: 22px;
+
+  margin:
+    10px 0;
+}
+
+
+li {
+
+  margin:
+    4px 0;
+}
+
+
+
+/* =========================================
+   BLOCKQUOTE
+========================================= */
+
+blockquote {
+
+  margin:
+    14px 0;
+
+  padding:
+    2px
+    0
+    2px
+    14px;
+
+  border-left:
+    2px solid
+    rgba(255,255,255,0.14);
+
+  color:
+    rgba(255,255,255,0.62);
+
+  font-style: italic;
+}
+
+
+
+/* =========================================
+   LINKS
+========================================= */
+
+a {
+
+  color:
+    var(--accent);
+
+  text-decoration: none;
+}
+
+
+a:hover {
+
+  text-decoration: underline;
+}
+
+
+
+/* =========================================
+   SELECTION
+========================================= */
+
+::selection {
+
+  background:
+    rgba(120,168,255,0.26);
+}
+
+#editorArea a {
+
+  color:
+    rgba(255,255,255,0.92);
+
+  font-weight:
+    650;
+
+  text-decoration:
+    underline;
+
+  text-decoration-style:
+    dotted;
+
+  text-decoration-thickness:
+    1px;
+
+  text-underline-offset:
+    4px;
+
+  text-decoration-color:
+    rgba(255,255,255,0.42);
+}
+
+
+#editorArea a:hover {
+
+  color:
+    white;
+
+  text-decoration-color:
+    rgba(255,255,255,0.82);
+}
+
+/* =========================================
+   INTERNAL WIKI LINKS
+========================================= */
+
+.internal-link {
+
+  color:
+    rgba(255,255,255,0.96) !important;
+
+  font-weight:
+    700;
+
+  text-decoration:
+    underline !important;
+
+  text-decoration-style:
+    dotted;
+
+  text-decoration-thickness:
+    1px;
+
+  text-underline-offset:
+    4px;
+
+  text-decoration-color:
+    rgba(255,255,255,0.42);
+
+  transition:
+    color 0.12s,
+    text-decoration-color 0.12s,
+    background 0.12s;
+}
+
+
+.internal-link:hover {
+
+  color:
+    white !important;
+
+  text-decoration-color:
+    rgba(255,255,255,0.92);
+
+  background:
+    rgba(255,255,255,0.04);
+}
+
+.internal-link.is-missing {
+
+  color:
+    rgba(255,255,255,0.46) !important;
+
+  font-weight:
+    700;
+
+  text-decoration:
+    underline !important;
+
+  text-decoration-style:
+    dotted;
+
+  text-decoration-thickness:
+    1px;
+
+  text-underline-offset:
+    4px;
+
+  text-decoration-color:
+    rgba(255,255,255,0.24);
+
+  cursor:
+    default;
+}
+
+
+.internal-link.is-missing:hover {
+
+  color:
+    rgba(255,255,255,0.62) !important;
+
+  text-decoration-color:
+    rgba(255,255,255,0.36);
+
+  background:
+    rgba(255,255,255,0.03);
+}
