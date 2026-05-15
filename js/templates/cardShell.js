@@ -50,10 +50,12 @@ export function createCardShellTemplate() {
 
                 <select class="card-type-select">
                   <option value="character">Персонаж</option>
+                  <option value="creature">Существо</option>
                   <option value="location">Локация</option>
                   <option value="region">Регион</option>
                   <option value="folder">Папка</option>
                   <option value="magic">Магия</option>
+                  <option value="object">Объект</option>
                   <option value="item">Предмет</option>
                   <option value="lore">Лор</option>
                   <option value="note">Заметка</option>

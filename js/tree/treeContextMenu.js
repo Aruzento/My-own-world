@@ -79,7 +79,7 @@ export function openTreeContextMenu(
 
   /* Задаёт текст кнопки удаления */
   remove.textContent =
-    'Удалить карточку';
+    'Удалить';
 
   /* Добавляет danger-класс для красного hover */
   remove.className =
@@ -99,8 +99,8 @@ export function openTreeContextMenu(
 
       openConfirmPopup({
         anchor: remove,
-        title: 'Удалить карточку',
-        message: `Удалить "${page.title}" и все дочерние карточки?`,
+        title: 'Удалить элемент',
+        message: `Удалить "${page.title}" и все дочерние элементы?`,
         confirmText: 'Удалить',
         onConfirm: async () => {
           await removePageBranch(
@@ -171,7 +171,7 @@ async function removePageBranch(
     refreshCurrentEditorWikiLinks();
 
     setStatus(
-      'Карточка удалена'
+      'Элемент удалён'
     );
 
   } catch (error) {
@@ -181,8 +181,10 @@ async function removePageBranch(
       error
     );
 
+    renderTree();
+
     setStatus(
-      'Не удалось удалить карточку. Переоткрой workspace через кнопку ⊞.'
+      'Не удалось удалить элемент. Переоткрой workspace через кнопку ⊞.'
     );
   }
 }

@@ -53,7 +53,7 @@ parent: ${parentId ?? 'null'}
 order: ${Date.now()}
 tags: [${template.tags.join(', ')}]
 template: ${template.template || templateKey}
-type: note
+type: ${template.type || 'note'}
 aliases: []
 ---
 
@@ -68,83 +68,247 @@ ${templateContent}
 }
 
 
-/* Удаляет страницу и все дочерние страницы */
-export async function deletePageBranch(
-  page
+export async function createFolderPage(
+  title,
+  parentId
 ) {
 
-  /* Собирает всю ветку страниц */
-  const pagesToDelete =
-    collectPageBranch(page);
+  const template =
+    templates.card;
 
-  /* Проверяет права workspace */
-  const permission =
-    await state.workspaceHandle.requestPermission({
-      mode: 'readwrite'
+  const content =
+    buildPageContent({
+      id: crypto.randomUUID(),
+      parent: parentId,
+      tags: ['card', 'folder'],
+      template: 'card',
+      type: 'folder',
+      aliases: [],
+      body: applyInitialTitle(
+        template.content,
+        title
+      )
     });
 
-  /* Если прав нет — выходим */
-  if (permission !== 'granted') {
+  return writePageFile(
+    content
+  );
+}
 
-    console.warn(
-      'Нет прав на изменение workspace'
+
+export async function duplicatePageAsChild(
+  sourcePage,
+  parentId
+) {
+
+  const parsed =
+    parseMarkdown(
+      sourcePage.content
     );
 
-    return;
-  }
+  const content =
+    buildPageContent({
+      id: crypto.randomUUID(),
+      parent: parentId,
+      tags: parsed.tags,
+      template: parsed.template || 'card',
+      type: parsed.type || 'note',
+      aliases: parsed.aliases || [],
+      body: parsed.body
+    });
 
-  /* Проходит по каждой странице ветки */
-  for (const targetPage of pagesToDelete) {
-
-    /* Если у страницы нет handle — пропускаем */
-    if (!targetPage.handle) continue;
-
-    try {
-
-  /* Если FileSystemFileHandle поддерживает прямое удаление */
-  if (
-    targetPage.handle &&
-    typeof targetPage.handle.remove === 'function'
-  ) {
-
-    /* Удаляем сам файл напрямую через его handle */
-    await targetPage.handle.remove();
-
-    /* Переходим к следующей странице */
-    continue;
-  }
+  return writePageFile(
+    content
+  );
+}
 
 
-  /* Fallback: получаем папку pages */
+async function writePageFile(
+  content
+) {
+
   const pagesDir =
     await state.workspaceHandle
       .getDirectoryHandle(
         'pages'
       );
 
-  /* Fallback: удаляем файл по имени */
-  await pagesDir.removeEntry(
-    targetPage.name
+  const fileName =
+    `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.md`;
+
+  const fileHandle =
+    await pagesDir.getFileHandle(
+      fileName,
+      { create: true }
+    );
+
+  const writable =
+    await fileHandle.createWritable();
+
+  await writable.write(
+    content
   );
 
-} catch (error) {
+  await writable.close();
 
-  /* Логируем ошибку удаления */
-  console.error(
-    `Не удалось удалить ${targetPage.name}`,
-    error
+  const parsed =
+    parseMarkdown(
+      content
+    );
+
+  const page = {
+    id: parsed.id,
+    parent: parsed.parent,
+    order: parsed.order,
+    name: fileName,
+    title: parsed.title,
+    type: parsed.type,
+    tags: parsed.tags,
+    template: parsed.template,
+    aliases: parsed.aliases,
+    path: `/pages/${fileName}`,
+    parentDirHandle: pagesDir,
+    handle: fileHandle,
+    content
+  };
+
+  state.pages.push(
+    page
   );
+
+  return page;
 }
+
+
+function buildPageContent({
+  id,
+  parent,
+  tags,
+  template,
+  type,
+  aliases,
+  body
+}) {
+
+  return `---
+id: ${id}
+parent: ${parent ?? 'null'}
+order: ${Date.now()}
+tags: [${tags.join(', ')}]
+template: ${template}
+type: ${type}
+aliases: [${aliases.join(', ')}]
+---
+
+${body}
+`;
+}
+
+
+/* Удаляет страницу и все дочерние страницы */
+export async function deletePageBranch(
+  page
+) {
+
+  const pagesToDelete =
+    collectPageBranch(page);
+
+  await ensureWorkspaceCanWrite();
+
+  const deletedPages =
+    [];
+
+  const failedPages =
+    [];
+
+  for (const targetPage of pagesToDelete) {
+
+    try {
+
+      await deletePageFile(
+        targetPage
+      );
+
+      deletedPages.push(
+        targetPage
+      );
+
+    } catch (error) {
+
+      failedPages.push({
+        page: targetPage,
+        error
+      });
+
+      console.error(
+        `Не удалось удалить ${targetPage.name}`,
+        error
+      );
+    }
   }
 
-  /* Удаляет страницы из global state */
   state.pages =
     state.pages.filter(
       existingPage =>
-        !pagesToDelete.includes(
+        !deletedPages.includes(
           existingPage
         )
     );
+
+  if (failedPages.length > 0) {
+
+    throw new Error(
+      `Не удалось удалить файлов: ${failedPages.length}`
+    );
+  }
+}
+
+
+async function ensureWorkspaceCanWrite() {
+
+  if (!state.workspaceHandle) {
+
+    throw new Error(
+      'Workspace не выбран'
+    );
+  }
+
+  if (!state.workspaceHandle.queryPermission) return;
+
+  const permission =
+    await state.workspaceHandle.queryPermission({
+      mode: 'readwrite'
+    });
+
+  if (permission !== 'granted') {
+
+    throw new Error(
+      'Нет прав на изменение workspace'
+    );
+  }
+}
+
+
+async function deletePageFile(
+  targetPage
+) {
+
+  if (!targetPage.handle) {
+
+    throw new Error(
+      'У страницы нет file handle'
+    );
+  }
+
+  const parentDir =
+    targetPage.parentDirHandle ||
+    await state.workspaceHandle.getDirectoryHandle(
+      'pages'
+    );
+
+  await parentDir.removeEntry(
+    targetPage.name
+  );
 }
 
 
@@ -402,6 +566,9 @@ export async function scanDirectory(
 
       handle:
         entry,
+
+      parentDirHandle:
+        dirHandle,
 
       content,
     });

@@ -20,6 +20,10 @@ export {
   /* Создание страницы */
   createPage,
 
+  createFolderPage,
+
+  duplicatePageAsChild,
+
   /* Удаление страницы вместе с дочерними */
   deletePageBranch,
 

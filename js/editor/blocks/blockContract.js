@@ -84,6 +84,10 @@ export function serializePersistentEditorHTML(
     clone
   );
 
+  stripRuntimeMapBackgrounds(
+    clone
+  );
+
   return clone.innerHTML;
 }
 
@@ -857,6 +861,21 @@ function stripRuntimeAssetSources(
 
       img.removeAttribute(
         'src'
+      );
+    });
+}
+
+
+function stripRuntimeMapBackgrounds(
+  root
+) {
+
+  root
+    .querySelectorAll('.campaign-map-background')
+    .forEach(background => {
+
+      background.removeAttribute(
+        'style'
       );
     });
 }

@@ -61,6 +61,14 @@ import {
   applyContenteditablePolicy
 } from './contenteditablePolicy.js';
 
+import {
+  isCampaignMapPage,
+  renderCampaignMap,
+  serializeCampaignMapHTML,
+  syncCampaignMapPresentation,
+  setupCampaignMaps
+} from './campaignMap.js';
+
 /* ---- */
 
 
@@ -104,6 +112,11 @@ export function setupEditor() {
   editor,
   saveCurrentPage
 );
+
+  setupCampaignMaps(
+    editor,
+    saveCurrentPage
+  );
 
 /* Таймер отложенной нормализации wiki-links */
 let wikiLinkNormalizeTimer =
@@ -229,6 +242,23 @@ editor.innerHTML =
     parsed.body
   );
 
+if (
+  isCampaignMapPage(
+    parsed
+  )
+) {
+
+  renderCampaignMap(
+    editor
+  );
+
+  setStatus(
+    `Открыта ${page.name}`
+  );
+
+  return;
+}
+
 applyContenteditablePolicy(
   editor
 );
@@ -309,7 +339,70 @@ function sanitizeAssetImagesBeforeRender(
 
 export async function saveCurrentPage() {
 
+  if (
+    state.currentPage?.template === 'campaignMap' ||
+    state.currentPage?.type === 'campaignMap'
+  ) {
+
+    await saveCurrentCampaignMap();
+    return;
+  }
+
   await saveCurrentPageWithEditor(editor);
+}
+
+
+async function saveCurrentCampaignMap() {
+
+  if (!state.currentPage) return;
+
+  const tags =
+    state.currentPage.tags || [];
+
+  const aliases =
+    state.currentPage.aliases || [];
+
+  const titleElement =
+    editor.querySelector('h1');
+
+  state.currentPage.title =
+    titleElement
+      ? titleElement.textContent.trim()
+      : 'Без названия';
+
+  const content =
+`---
+id: ${state.currentPage.id}
+parent: ${state.currentPage.parent ?? 'null'}
+order: ${state.currentPage.order ?? Date.now()}
+tags: [${tags.join(', ')}]
+template: campaignMap
+type: campaignMap
+aliases: [${aliases.join(', ')}]
+---
+
+${serializeCampaignMapHTML(editor)}
+`;
+
+  const writable =
+    await state.currentPage.handle
+      .createWritable();
+
+  await writable.write(
+    content
+  );
+
+  await writable.close();
+
+  state.currentPage.content =
+    content;
+
+  setStatus(
+    'Сохранено'
+  );
+
+  renderTree();
+  syncCampaignMapPresentation();
 }
 
 /* =========================================

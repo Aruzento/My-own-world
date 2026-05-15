@@ -1,0 +1,724 @@
+.campaign-map-document {
+
+  width:
+    100%;
+
+  height:
+    calc(100vh - 54px);
+
+  min-height:
+    620px;
+
+  display:
+    grid;
+
+  grid-template-rows:
+    auto minmax(0, 1fr);
+
+  gap:
+    10px;
+}
+
+
+.campaign-map-topbar {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(220px, 0.75fr) minmax(0, 2fr);
+
+  gap:
+    10px;
+
+  align-items:
+    stretch;
+}
+
+
+.campaign-map-title {
+
+  min-height:
+    54px;
+
+  margin:
+    0;
+
+  padding:
+    11px 14px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(255,255,255,0.045);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+
+  color:
+    rgba(255,255,255,0.92);
+
+  font-size:
+    18px;
+
+  line-height:
+    1.25;
+}
+
+
+.campaign-map-controls {
+
+  min-width:
+    0;
+
+  padding:
+    10px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3, auto);
+
+  gap:
+    8px;
+
+  align-items:
+    stretch;
+
+  border-radius:
+    16px;
+
+  background:
+    rgba(255,255,255,0.045);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.07);
+}
+
+
+.campaign-map-control-group {
+
+  display:
+    flex;
+
+  flex-wrap:
+    wrap;
+
+  align-content:
+    flex-start;
+
+  gap:
+    6px;
+}
+
+
+.campaign-map-controls button {
+
+  width:
+    32px;
+
+  min-height:
+    32px;
+
+  padding:
+    0;
+
+  border:
+    none;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.76);
+
+  font-size:
+    15px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.campaign-map-controls button {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+}
+
+
+.campaign-map-controls button:hover {
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.campaign-map-controls button:active {
+
+  transform:
+    scale(0.97);
+}
+
+
+.campaign-map-controls button.is-active {
+
+  background:
+    rgba(241,211,142,0.18);
+
+  color:
+    rgba(255,248,230,0.98);
+}
+
+
+.campaign-map-stage {
+
+  position:
+    relative;
+
+  min-height:
+    0;
+
+  overflow:
+    hidden;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.035),
+      rgba(255,255,255,0.015)
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  touch-action:
+    none;
+
+  --campaign-grid-size:
+    48px;
+}
+
+
+.campaign-map-stage[data-tool="pan"] {
+
+  cursor:
+    grab;
+}
+
+
+.campaign-map-stage.is-panning {
+
+  cursor:
+    grabbing;
+}
+
+
+.campaign-map-viewport {
+
+  position:
+    absolute;
+
+  left:
+    0;
+
+  top:
+    0;
+
+  transform-origin:
+    0 0;
+
+  z-index:
+    1;
+}
+
+
+.campaign-map-background,
+.campaign-map-object-layer,
+.campaign-map-fog-canvas {
+
+  position:
+    absolute;
+
+  inset:
+    0;
+}
+
+
+.campaign-map-fog-canvas {
+
+  width:
+    100%;
+
+  height:
+    100%;
+}
+
+
+.campaign-map-background {
+
+  background-size:
+    contain;
+
+  background-position:
+    center;
+
+  background-repeat:
+    no-repeat;
+
+  z-index:
+    1;
+}
+
+
+.campaign-map-stage::before {
+
+  content:
+    "Смени карту, чтобы добавить изображение";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  color:
+    rgba(255,255,255,0.28);
+
+  font-size:
+    13px;
+
+  pointer-events:
+    none;
+
+  z-index:
+    0;
+}
+
+
+.campaign-map-stage[data-map-asset]::before {
+
+  content:
+    "";
+}
+
+
+.campaign-map-stage[data-grid="true"] .campaign-map-viewport::after {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  background-image:
+    linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px);
+
+  background-size:
+    var(--campaign-grid-size)
+    var(--campaign-grid-size);
+
+  pointer-events:
+    none;
+
+  z-index:
+    3;
+}
+
+
+.campaign-map-object-layer {
+
+  z-index:
+    4;
+}
+
+
+.campaign-map-fog-canvas {
+
+  z-index:
+    5;
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-token {
+
+  position:
+    absolute;
+
+  width:
+    var(--campaign-grid-size);
+
+  height:
+    var(--campaign-grid-size);
+
+  padding:
+    0;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border:
+    2px solid
+    rgba(255,255,255,0.86);
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(241,211,142,0.94);
+
+  color:
+    rgba(32,26,16,0.96);
+
+  font-size:
+    13px;
+
+  font-weight:
+    800;
+
+  cursor:
+    grab;
+
+  transform:
+    translate(-50%, -50%);
+
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.28);
+
+  transition:
+    box-shadow 0.12s,
+    transform 0.12s;
+}
+
+
+.campaign-map-token.is-object {
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(232,232,232,0.92);
+
+  color:
+    rgba(24,24,24,0.96);
+}
+
+
+.campaign-map-token:hover {
+
+  box-shadow:
+    0 12px 30px rgba(0,0,0,0.36),
+    0 0 0 4px rgba(241,211,142,0.12);
+}
+
+
+.campaign-map-token.is-dragging {
+
+  cursor:
+    grabbing;
+
+  transform:
+    translate(-50%, -50%)
+    scale(1.08);
+}
+
+
+.campaign-map-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    10008;
+
+  width:
+    280px;
+
+  padding:
+    12px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    8px;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.97),
+      rgba(14,15,16,0.95)
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+
+.campaign-map-popup-title {
+
+  color:
+    rgba(255,255,255,0.88);
+
+  font-size:
+    13px;
+
+  font-weight:
+    680;
+}
+
+
+.campaign-map-popup-option,
+.campaign-map-popup-actions button {
+
+  min-height:
+    32px;
+
+  padding:
+    0 10px;
+
+  border:
+    none;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.76);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-popup-option:hover,
+.campaign-map-popup-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.campaign-map-picker-search,
+.campaign-map-range {
+
+  width:
+    100%;
+}
+
+
+.campaign-map-picker-search {
+
+  height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  outline:
+    none;
+
+  border-radius:
+    11px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    var(--text);
+}
+
+
+.campaign-map-picker-list {
+
+  max-height:
+    260px;
+
+  overflow-y:
+    auto;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    4px;
+}
+
+
+.campaign-map-picker-row {
+
+  min-height:
+    32px;
+
+  padding:
+    0 8px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  border-radius:
+    9px;
+
+  color:
+    rgba(255,255,255,0.72);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-picker-row:hover {
+
+  background:
+    rgba(241,211,142,0.10);
+
+  color:
+    white;
+}
+
+
+.campaign-map-popup-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.campaign-map-picker-empty {
+
+  padding:
+    8px;
+
+  color:
+    rgba(255,255,255,0.38);
+
+  font-size:
+    12px;
+}
+
+
+@media (max-width: 1180px) {
+
+  .campaign-map-topbar {
+
+    grid-template-columns:
+      1fr;
+  }
+
+  .campaign-map-controls {
+
+    grid-template-columns:
+      repeat(2, minmax(140px, 1fr));
+  }
+}
+
+
+@media (max-width: 760px) {
+
+  .campaign-map-document {
+
+    height:
+      calc(100vh - 48px);
+
+    min-height:
+      560px;
+  }
+
+  .campaign-map-controls {
+
+    grid-template-columns:
+      1fr;
+  }
+}

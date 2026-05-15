@@ -2,6 +2,8 @@
 
 Этот документ фиксирует правила для всех блоков редактора. Его цель: отделить HTML, который хранится в `.md`, от элементов интерфейса, которые нужны только во время работы приложения.
 
+Campaign Map не является блоком и не является карточкой. Она использует те же правила persistent/runtime разделения, но открывается отдельным renderer-ом `js/editor/campaignMap.js`.
+
 ## Persistent HTML
 
 Persistent HTML сохраняется в тело страницы и должен быть достаточным, чтобы восстановить блок после повторного открытия.
@@ -65,6 +67,9 @@ contenteditable="false"
 - кнопку добавления предмета в item set;
 - кнопку удаления предмета из item set;
 - кастомный dropdown типа карты;
+- controls карты кампании;
+- панель списка существ карты;
+- окно презентации карты;
 - popup подтверждения удаления;
 - preview wiki-links;
 - нижнюю секцию профиля и profile popup;
@@ -84,6 +89,32 @@ Serializer обязан:
 - удалить runtime `src` у `img[data-asset]`, оставив стабильный `data-asset`.
 
 Новый form control должен быть либо persistent и корректно сериализоваться, либо runtime и иметь `data-runtime="true"`.
+
+## Campaign Map Serialization
+
+Карта кампании сохраняет persistent HTML через общий serializer, но имеет отдельный save path в `editor.js`.
+
+Persistent данные карты:
+
+- `data-map-asset` на `.campaign-map-stage`;
+- `data-grid` на `.campaign-map-stage`;
+- `data-grid-size` на `.campaign-map-stage`;
+- asset-specific `data-grid*` и `data-fog*` на `.campaign-map-stage`;
+- `data-fog-image` на `.campaign-map-stage`;
+- `data-brush-size` на `.campaign-map-stage`;
+- `data-view-x`, `data-view-y`, `data-view-zoom` на `.campaign-map-stage`;
+- `.campaign-map-token` с `data-token-id`, `data-token-type`, `data-page-id`, `data-name`, `data-x`, `data-y`.
+
+Runtime данные карты:
+
+- `.campaign-map-controls`;
+- popup выбора существ/объектов;
+- popup размера сетки;
+- popup размера кисти;
+- blob `background-image` на `.campaign-map-background`;
+- presentation window и его независимый pan/zoom state.
+
+Blob URL изображения карты не сохраняется: перед сохранением serializer удаляет runtime `style` у `.campaign-map-background`, оставляя стабильный `data-map-asset`.
 
 ## Wiki-link Policy
 

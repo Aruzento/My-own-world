@@ -22,10 +22,12 @@ import {
 
 const CARD_TYPE_LABELS = {
   character: 'Персонаж',
+  creature: 'Существо',
   location: 'Локация',
   region: 'Регион',
   folder: 'Папка',
   magic: 'Магия',
+  object: 'Объект',
   item: 'Предмет',
   lore: 'Лор',
   note: 'Заметка'

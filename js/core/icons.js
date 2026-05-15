@@ -8,6 +8,14 @@ const icons = {
     </span>
   `,
 
+  creature: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3l2.5 5l5.5 .8l-4 3.9l.9 5.5l-4.9 -2.6l-4.9 2.6l.9 -5.5l-4 -3.9l5.5 -.8z"></path>
+      </svg>
+    </span>
+  `,
+
   location: `
     <span class="entity-icon">
       <svg viewBox="0 0 24 24">
@@ -31,6 +39,17 @@ const icons = {
         <path d="M6 3h12l2 6l-8 12l-8 -12z"></path>
         <path d="M6 3l6 18l6 -18"></path>
         <path d="M4 9h16"></path>
+      </svg>
+    </span>
+  `,
+
+  object: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3l8 4.5v9l-8 4.5l-8 -4.5v-9z"></path>
+        <path d="M12 12l8 -4.5"></path>
+        <path d="M12 12v9"></path>
+        <path d="M12 12l-8 -4.5"></path>
       </svg>
     </span>
   `,
@@ -67,6 +86,16 @@ const icons = {
     </span>
   `,
 
+  campaignMap: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M9 18l-6 3v-15l6 -3l6 3l6 -3v15l-6 3z"></path>
+        <path d="M9 3v15"></path>
+        <path d="M15 6v15"></path>
+      </svg>
+    </span>
+  `,
+
   default: `
     <span class="entity-icon">
       <svg viewBox="0 0 24 24">
@@ -82,12 +111,15 @@ export function getPageIcon(tags = []) {
     tags.map(t => t.toLowerCase());
 
   if (normalized.includes('character')) return icons.character;
+  if (normalized.includes('creature')) return icons.creature;
   if (normalized.includes('location')) return icons.location;
+  if (normalized.includes('object')) return icons.object;
   if (normalized.includes('item')) return icons.item;
   if (normalized.includes('lore')) return icons.lore;
   if (normalized.includes('region')) return icons.region;
   if (normalized.includes('folder')) return icons.folder;
   if (normalized.includes('magic')) return icons.magic;
+  if (normalized.includes('campaign-map')) return icons.campaignMap;
 
   return icons.default;
 }

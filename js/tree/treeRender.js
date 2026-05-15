@@ -30,6 +30,9 @@ export function renderTreePage(
   item.className =
     'tree-item tree-page';
 
+  item.dataset.pageId =
+    page.id;
+
   item.style.setProperty(
     '--tree-level',
     level
