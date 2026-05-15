@@ -85,18 +85,6 @@ export async function loadWorkspaceHandle() {
         return;
       }
 
-      const newPermission =
-        await handle.requestPermission({
-          mode: 'readwrite'
-        });
-
-      if (newPermission === 'granted') {
-
-        resolve(handle);
-
-        return;
-      }
-
       resolve(null);
     };
   });

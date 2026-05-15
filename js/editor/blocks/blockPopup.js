@@ -7,6 +7,10 @@ import {
 } from './blockControls.js';
 
 import {
+  applyBlockSystemContract
+} from './blockContract.js';
+
+import {
   renderTypePicker,
   renderDeletePrompt,
   renderNameForm,
@@ -324,6 +328,10 @@ function addNamedBlock(
     block
   );
 
+  applyBlockSystemContract(
+    block
+  );
+
   ensureBlockControls(
     block
   );
@@ -370,6 +378,10 @@ function addConfiguredTable(
     );
 
   main.appendChild(
+    block
+  );
+
+  applyBlockSystemContract(
     block
   );
 

@@ -35,6 +35,38 @@ const icons = {
     </span>
   `,
 
+  region: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"></path>
+        <path d="M3.6 9h16.8"></path>
+        <path d="M3.6 15h16.8"></path>
+        <path d="M12 3a14 14 0 0 1 0 18"></path>
+        <path d="M12 3a14 14 0 0 0 0 18"></path>
+      </svg>
+    </span>
+  `,
+
+  folder: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M3 7a2 2 0 0 1 2 -2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"></path>
+      </svg>
+    </span>
+  `,
+
+  magic: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 20l10 -10"></path>
+        <path d="M13 5l6 6"></path>
+        <path d="M15 3l6 6"></path>
+        <path d="M9 4l1 2l2 1l-2 1l-1 2l-1 -2l-2 -1l2 -1z"></path>
+        <path d="M18 14l0.7 1.4l1.3 0.6l-1.3 0.6l-0.7 1.4l-0.7 -1.4l-1.3 -0.6l1.3 -0.6z"></path>
+      </svg>
+    </span>
+  `,
+
   default: `
     <span class="entity-icon">
       <svg viewBox="0 0 24 24">
@@ -53,6 +85,9 @@ export function getPageIcon(tags = []) {
   if (normalized.includes('location')) return icons.location;
   if (normalized.includes('item')) return icons.item;
   if (normalized.includes('lore')) return icons.lore;
+  if (normalized.includes('region')) return icons.region;
+  if (normalized.includes('folder')) return icons.folder;
+  if (normalized.includes('magic')) return icons.magic;
 
   return icons.default;
 }

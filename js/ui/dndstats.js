@@ -1,131 +1,317 @@
-/* Импорт функции сохранения текущей страницы */
 import {
   saveCurrentPage
 } from '../editor/editor.js';
 
 
-/* Инициализирует поведение DnD stat block */
+const STAT_ORDER = [
+  'str',
+  'dex',
+  'con',
+  'int',
+  'wis',
+  'cha'
+];
+
+
 export function setupDndStats() {
 
-  /* Слушает ввод в любом поле документа */
   document.addEventListener(
     'input',
     event => {
 
-      /* Ищет input значения характеристики */
       const scoreInput =
-        event.target.closest(
-          '.dnd-stat-score'
-        );
+        event.target.closest('.dnd-stat-score');
 
-      /* Если изменили характеристику */
       if (scoreInput) {
 
-        /* Обновляем модификатор */
         updateStatModifier(
           scoreInput
         );
+
+        updateAutoChecksForStat(
+          scoreInput
+        );
+
+        saveCurrentPage();
+        return;
       }
 
-      /* Ищет любое поле внутри DnD блока */
+      const checkValue =
+        event.target.closest('.dnd-check-value');
+
+      if (checkValue) {
+
+        handleCheckManualInput(
+          checkValue
+        );
+
+        saveCurrentPage();
+        return;
+      }
+
       const dndField =
         event.target.closest(
           '.dnd-stats-block input'
         );
 
-      /* Если изменилось поле DnD блока */
       if (dndField) {
 
-        /* Сохраняем текущую страницу */
         saveCurrentPage();
       }
     }
   );
 
 
-  /* Слушает change-события для checkbox */
   document.addEventListener(
     'change',
     event => {
 
-      /* Ищет checkbox навыка или спасброска */
       const checkbox =
         event.target.closest(
           '.dnd-check-point'
         );
 
-      /* Если изменился не checkbox — выходим */
       if (!checkbox) return;
 
-      /* Сохраняем текущую страницу */
       saveCurrentPage();
     }
   );
 }
 
 
-/* Обновляет все модификаторы в открытой карточке */
 export function renderDndStats() {
 
-  /* Находит все input характеристик */
-  const inputs =
-    document.querySelectorAll(
-      '.dnd-stat-score'
-    );
+  document
+    .querySelectorAll('.dnd-stat-score')
+    .forEach(input => {
 
-  /* Пересчитывает каждый input */
-  inputs.forEach(input => {
+      updateStatModifier(
+        input
+      );
+    });
 
-    /* Обновляет модификатор */
-    updateStatModifier(
-      input
-    );
-  });
+  document
+    .querySelectorAll('.dnd-stats-block')
+    .forEach(updateAutoChecks);
 }
 
 
-/* Обновляет один модификатор */
+function handleCheckManualInput(
+  input
+) {
+
+  if (input.value.trim() === '') {
+
+    input.dataset.manualValue =
+      'false';
+
+    input.classList.remove(
+      'is-manual'
+    );
+
+    updateSingleAutoCheck(
+      input
+    );
+
+    return;
+  }
+
+  input.dataset.manualValue =
+    'true';
+
+  input.classList.add(
+    'is-manual'
+  );
+}
+
+
+function updateAutoChecks(
+  block
+) {
+
+  block
+    .querySelectorAll('.dnd-check-group')
+    .forEach((group, index) => {
+
+      const statKey =
+        STAT_ORDER[index];
+
+      if (!statKey) return;
+
+      const statInput =
+        block.querySelector(
+          `.dnd-stat-row[data-stat="${statKey}"] .dnd-stat-score`
+        );
+
+      if (!statInput) return;
+
+      const modifier =
+        getModifierForScore(
+          statInput.value
+        );
+
+      group
+        .querySelectorAll('.dnd-check-value')
+        .forEach(input => {
+
+          updateAutoCheckValue(
+            input,
+            modifier
+          );
+        });
+    });
+}
+
+
+function updateAutoChecksForStat(
+  statInput
+) {
+
+  const block =
+    statInput.closest('.dnd-stats-block');
+
+  const row =
+    statInput.closest('.dnd-stat-row');
+
+  if (!block || !row) return;
+
+  const statIndex =
+    STAT_ORDER.indexOf(
+      row.dataset.stat
+    );
+
+  if (statIndex < 0) return;
+
+  const group =
+    block.querySelectorAll('.dnd-check-group')[statIndex];
+
+  if (!group) return;
+
+  const modifier =
+    getModifierForScore(
+      statInput.value
+    );
+
+  group
+    .querySelectorAll('.dnd-check-value')
+    .forEach(input => {
+
+      updateAutoCheckValue(
+        input,
+        modifier
+      );
+    });
+}
+
+
+function updateSingleAutoCheck(
+  input
+) {
+
+  const block =
+    input.closest('.dnd-stats-block');
+
+  const group =
+    input.closest('.dnd-check-group');
+
+  if (!block || !group) return;
+
+  const groups =
+    [...block.querySelectorAll('.dnd-check-group')];
+
+  const statKey =
+    STAT_ORDER[groups.indexOf(group)];
+
+  if (!statKey) return;
+
+  const statInput =
+    block.querySelector(
+      `.dnd-stat-row[data-stat="${statKey}"] .dnd-stat-score`
+    );
+
+  if (!statInput) return;
+
+  updateAutoCheckValue(
+    input,
+    getModifierForScore(statInput.value)
+  );
+}
+
+
+function updateAutoCheckValue(
+  input,
+  modifier
+) {
+
+  if (
+    input.dataset.manualValue === 'true'
+  ) {
+
+    input.classList.add(
+      'is-manual'
+    );
+
+    return;
+  }
+
+  input.dataset.manualValue =
+    'false';
+
+  input.classList.remove(
+    'is-manual'
+  );
+
+  input.value =
+    String(modifier);
+}
+
+
 function updateStatModifier(
   input
 ) {
 
-  /* Преобразует значение input в число */
-  const value =
-    Number(input.value);
-
-  /* Если значение не число — берём 10 */
-  const score =
-    Number.isFinite(value)
-      ? value
-      : 10;
-
-  /* Считает модификатор DnD */
-  const modifier =
-    Math.floor(
-      (score - 10) / 2
-    );
-
-  /* Находит строку характеристики */
   const row =
-    input.closest(
-      '.dnd-stat-row'
-    );
+    input.closest('.dnd-stat-row');
 
-  /* Если строка не найдена — выходим */
   if (!row) return;
 
-  /* Находит элемент модификатора */
   const modifierElement =
-    row.querySelector(
-      '.dnd-stat-modifier'
-    );
+    row.querySelector('.dnd-stat-modifier');
 
-  /* Если модификатора нет — выходим */
   if (!modifierElement) return;
 
-  /* Записывает модификатор с плюсом для положительных значений */
+  const modifier =
+    getModifierForScore(
+      input.value
+    );
+
   modifierElement.textContent =
-    modifier >= 0
-      ? `+${modifier}`
-      : String(modifier);
+    formatModifier(
+      modifier
+    );
+}
+
+
+function getModifierForScore(
+  value
+) {
+
+  const score =
+    Number(value);
+
+  if (!Number.isFinite(score)) return 0;
+
+  return Math.floor(
+    (Math.max(1, Math.min(30, score)) - 10) / 2
+  );
+}
+
+
+function formatModifier(
+  value
+) {
+
+  return value >= 0
+    ? `+${value}`
+    : String(value);
 }

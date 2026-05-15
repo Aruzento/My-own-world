@@ -18,7 +18,7 @@
 
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
 
   white-space: nowrap;
 }
@@ -139,13 +139,13 @@
 
   z-index: 10020;
 
-  min-width: 168px;
+  width: min(360px, calc(100vw - 28px));
 
-  padding: 7px;
+  padding: 10px;
 
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 
   border-radius: 16px;
 
@@ -177,10 +177,10 @@
 .card-type-option {
   width: 100%;
 
-  min-height: 32px;
+  min-height: 74px;
 
   padding:
-    0 10px;
+    8px 6px;
 
   border:
     none;
@@ -195,10 +195,25 @@
     rgba(255,255,255,0.72);
 
   font-size:
-    12px;
+    11px;
 
   text-align:
-    left;
+    center;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    6px;
 
   cursor:
     pointer;
@@ -209,6 +224,41 @@
     transform 0.12s;
 }
 
+.card-type-option .entity-icon {
+  width:
+    24px;
+
+  height:
+    24px;
+
+  color:
+    rgba(241,211,142,0.78);
+}
+
+
+.card-type-option-label {
+  width:
+    100%;
+
+  display:
+    block;
+
+  line-height:
+    1.2;
+
+  white-space:
+    normal;
+
+  overflow:
+    visible;
+
+  text-overflow:
+    clip;
+
+  overflow-wrap:
+    anywhere;
+}
+
 
 .card-type-option:hover,
 .card-type-option.is-selected {
@@ -217,6 +267,15 @@
 
   color:
     rgba(255,248,230,0.96);
+}
+
+
+@media (max-width: 460px) {
+
+  .card-type-menu {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
 }
 
 

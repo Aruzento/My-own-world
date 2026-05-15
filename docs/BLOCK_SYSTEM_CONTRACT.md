@@ -56,7 +56,7 @@ Serializer обязан:
 - скопировать значения `input`, `textarea`, `select` в clone;
 - пропустить поля внутри runtime controls;
 - удалить все элементы с `data-runtime="true"`;
-- удалить legacy runtime selectors, если они встретились в старых страницах;
+- удалить legacy runtime selectors только как fallback для старых страниц;
 - очистить runtime-зеркала тегов и aliases;
 - удалить runtime `src` у `img[data-asset]`, оставив стабильный `data-asset`.
 
@@ -88,3 +88,16 @@ if (type === 'dndStats' && currentVersion < 2) {
 - runtime controls через `markRuntime()`;
 - upgrade-функцию в `blockContract.js`, если структура может меняться;
 - ручной smoke-тест: создать, заполнить, сохранить, открыть заново.
+
+## Encoding Rule
+
+Любые текстовые файлы и runtime strings хранятся только в UTF-8.
+
+Правила:
+
+- при чтении или записи файлов явно указывать `utf8` / `UTF-8`;
+- не использовать ANSI, `cp1251`, `latin1`;
+- не делать `Buffer -> string` без явного encoding;
+- не добавлять runtime auto-fix encoding в приложение;
+- если текст сломался, исправлять источник, а не декодировать его во время работы;
+- перед merge/review проверять diff на mojibake-маркеры из пользовательского чеклиста: `Рќ` + `Р°`, `СЃ` + `Рї` + `Р°`.

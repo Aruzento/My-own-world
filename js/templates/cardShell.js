@@ -33,8 +33,8 @@ export function createCardShellTemplate() {
             <div class="card-meta" contenteditable="false">
               <span class="card-meta-label">Теги</span>
               <div class="inline-tag-list"></div>
-              <input class="inline-tag-input" placeholder="tag">
-              <button class="inline-add-tag-btn">+</button>
+              <input class="inline-tag-input" data-runtime="true" placeholder="tag">
+              <button class="inline-add-tag-btn" data-runtime="true">+</button>
             </div>
 
             <div class="template-block hero-block" contenteditable="false">
@@ -51,6 +51,9 @@ export function createCardShellTemplate() {
                 <select class="card-type-select">
                   <option value="character">Персонаж</option>
                   <option value="location">Локация</option>
+                  <option value="region">Регион</option>
+                  <option value="folder">Папка</option>
+                  <option value="magic">Магия</option>
                   <option value="item">Предмет</option>
                   <option value="lore">Лор</option>
                   <option value="note">Заметка</option>
@@ -62,8 +65,8 @@ export function createCardShellTemplate() {
               <div class="aliases-meta" contenteditable="false">
                 <span class="aliases-label">Так же известный как:</span>
                 <div class="inline-alias-list"></div>
-                <input class="inline-alias-input" placeholder="alias">
-                <button class="inline-add-alias-btn">+</button>
+                <input class="inline-alias-input" data-runtime="true" placeholder="alias">
+                <button class="inline-add-alias-btn" data-runtime="true">+</button>
               </div>
 
               <div
@@ -77,7 +80,7 @@ export function createCardShellTemplate() {
           </div>
 
           <div class="media-box is-portrait" contenteditable="false">
-            <button class="upload-portrait-btn">
+            <button class="upload-portrait-btn" data-runtime="true">
               + Image
             </button>
           </div>

@@ -1,13 +1,17 @@
-export const BLOCK_VERSIONS = {
+﻿export const BLOCK_VERSIONS = {
   text: 1,
   items: 1,
-  characterStats: 1,
-  dndStats: 2,
+  characterStats: 2,
+  dndStats: 3,
   table: 1
 };
 
 const RUNTIME_SELECTOR = [
-  '[data-runtime="true"]',
+  '[data-runtime="true"]'
+].join(',');
+
+const LEGACY_RUNTIME_SELECTOR = [
+  // Fallback for pages saved before runtime controls received data-runtime.
   '.block-actions',
   '.blocks-toolbar',
   '.block-drop-placeholder',
@@ -16,7 +20,17 @@ const RUNTIME_SELECTOR = [
   '.card-type-custom',
   '.item-set-add-btn',
   '.item-set-remove',
+  '.inline-tag-input',
+  '.inline-add-tag-btn',
+  '.inline-alias-input',
+  '.inline-add-alias-btn',
+  '.upload-portrait-btn',
   '.table-row-controls'
+].join(',');
+
+const RUNTIME_OR_LEGACY_SELECTOR = [
+  RUNTIME_SELECTOR,
+  LEGACY_RUNTIME_SELECTOR
 ].join(',');
 
 export function applyBlockSystemContract(
@@ -142,11 +156,22 @@ function upgradePersistentBlocks(
 
       if (
         type === 'dndStats' &&
+        currentVersion < 3
+      ) {
+
+        changed =
+          upgradeDndStatsToV3Fixed(
+            block
+          ) || changed;
+      }
+
+      if (
+        type === 'characterStats' &&
         currentVersion < 2
       ) {
 
         changed =
-          upgradeDndStatsToV2(
+          upgradeCharacterStatsToV2(
             block
           ) || changed;
       }
@@ -167,49 +192,331 @@ function upgradePersistentBlocks(
 }
 
 
-function upgradeDndStatsToV2(
+function upgradeCharacterStatsToV2(
   block
 ) {
 
-  if (
-    block.querySelector('.dnd-analysis-field')
-  ) {
+  const labels = [
+    'Уровень',
+    'Опыт',
+    'ЗМ',
+    'СМ',
+    'ММ'
+  ];
+
+  let changed =
+    false;
+
+  block
+    .querySelectorAll('.character-stat-field span')
+    .forEach((label, index) => {
+
+      if (!labels[index]) return;
+
+      if (
+        label.textContent.trim() === labels[index]
+      ) return;
+
+      label.textContent =
+        labels[index];
+
+      changed =
+        true;
+    });
+
+  return changed;
+}
+
+
+function upgradeDndStatsToV3Fixed(
+  block
+) {
+
+  let changed =
+    false;
+
+  block
+    .querySelectorAll('.dnd-analysis-field')
+    .forEach(field => {
+
+      field.remove();
+      changed =
+        true;
+    });
+
+  changed =
+    ensureDndAnalysisSkill(
+      block
+    ) || changed;
+
+  changed =
+    normalizeDndStatsLabels(
+      block
+    ) || changed;
+
+  return changed;
+}
+
+
+function ensureDndAnalysisSkill(
+  block
+) {
+
+  const groups =
+    block.querySelectorAll('.dnd-check-group');
+
+  const intelligenceGroup =
+    groups[3];
+
+  if (!intelligenceGroup) {
 
     return false;
   }
 
-  const section =
-    document.createElement('label');
+  const hasAnalysis =
+    [...intelligenceGroup.querySelectorAll('.dnd-check-name')]
+      .some(name =>
+        name.textContent.trim().toLowerCase() === 'анализ'
+      );
 
-  section.className =
-    'dnd-combat-field dnd-analysis-field';
+  if (hasAnalysis) {
 
-  section.innerHTML = `
-    <span>Анализ</span>
-    <textarea
-      class="dnd-analysis-input"
-      rows="3"
-      placeholder="Заметки, тактика, особенности"
-    ></textarea>
-  `;
+    return false;
+  }
 
-  const checksSection =
-    block.querySelector('.dnd-checks-section');
+  const list =
+    intelligenceGroup.querySelector('.dnd-check-group-list');
 
-  if (checksSection) {
+  if (!list) {
 
-    checksSection.before(
-      section
+    return false;
+  }
+
+  const referenceRow =
+    list.querySelectorAll('.dnd-check-row')[2];
+
+  if (referenceRow) {
+
+    referenceRow.insertAdjacentHTML(
+      'beforebegin',
+      createDndCheckRowHTML(
+        'Анализ'
+      )
     );
 
   } else {
 
-    block.appendChild(
-      section
+    list.insertAdjacentHTML(
+      'beforeend',
+      createDndCheckRowHTML(
+        'Анализ'
+      )
     );
   }
 
   return true;
+}
+
+
+function normalizeDndStatsLabels(
+  block
+) {
+
+  let changed =
+    false;
+
+  const combatLabels = [
+    'Класс защиты',
+    'Хиты',
+    'Инициатива',
+    'Скорость',
+    'Бонус мастерства'
+  ];
+
+  block
+    .querySelectorAll('.dnd-combat-field > span')
+    .forEach((label, index) => {
+
+      if (!combatLabels[index]) return;
+
+      if (
+        label.textContent.trim() === combatLabels[index]
+      ) return;
+
+      label.textContent =
+        combatLabels[index];
+
+      changed =
+        true;
+    });
+
+  const placeholders = [
+    ['.dnd-current-hp', 'текущие'],
+    ['.dnd-max-hp', 'макс.']
+  ];
+
+  placeholders.forEach(([selector, value]) => {
+
+    const input =
+      block.querySelector(selector);
+
+    if (!input) return;
+
+    if (
+      input.getAttribute('placeholder') === value
+    ) return;
+
+    input.setAttribute(
+      'placeholder',
+      value
+    );
+
+    changed =
+      true;
+  });
+
+  const speed =
+    block.querySelector('.dnd-speed');
+
+  if (
+    speed &&
+    !speed.value
+  ) {
+
+    speed.value =
+      '30 фт.';
+
+    changed =
+      true;
+  }
+
+  const statLabels = [
+    'СИЛ',
+    'ЛВК',
+    'ТЕЛ',
+    'ИНТ',
+    'МДР',
+    'ХАР'
+  ];
+
+  block
+    .querySelectorAll('.dnd-stat-label')
+    .forEach((label, index) => {
+
+      if (!statLabels[index]) return;
+
+      if (
+        label.textContent.trim() === statLabels[index]
+      ) return;
+
+      label.textContent =
+        statLabels[index];
+
+      changed =
+        true;
+    });
+
+  const groupLabels = [
+    'СИЛ',
+    'ЛВК',
+    'ТЕЛ',
+    'ИНТ',
+    'МДР',
+    'ХАР'
+  ];
+
+  block
+    .querySelectorAll('.dnd-check-group-title')
+    .forEach((label, index) => {
+
+      if (!groupLabels[index]) return;
+
+      if (
+        label.textContent.trim() === groupLabels[index]
+      ) return;
+
+      label.textContent =
+        groupLabels[index];
+
+      changed =
+        true;
+    });
+
+  const checkNames = [
+    ['Спасбросок СИЛ', 'Атлетика'],
+    ['Спасбросок ЛВК', 'Акробатика', 'Ловкость рук', 'Скрытность'],
+    ['Спасбросок ТЕЛ'],
+    ['Спасбросок ИНТ', 'История', 'Анализ', 'Магия', 'Природа', 'Религия'],
+    ['Спасбросок МДР', 'Внимательность', 'Выживание', 'Медицина', 'Проницательность', 'Уход за животными'],
+    ['Спасбросок ХАР', 'Выступление', 'Запугивание', 'Обман', 'Убеждение']
+  ];
+
+  block
+    .querySelectorAll('.dnd-check-group')
+    .forEach((group, groupIndex) => {
+
+      group
+        .querySelectorAll('.dnd-check-name')
+        .forEach((name, nameIndex) => {
+
+          const expected =
+            checkNames[groupIndex]?.[nameIndex];
+
+          if (!expected) return;
+
+          if (
+            name.textContent.trim() === expected
+          ) return;
+
+          name.textContent =
+            expected;
+
+          changed =
+            true;
+        });
+    });
+
+  const title =
+    block.querySelector('.dnd-checks-title');
+
+  if (
+    title &&
+    title.textContent.trim() !== 'Навыки и спасброски'
+  ) {
+
+    title.textContent =
+      'Навыки и спасброски';
+
+    changed =
+      true;
+  }
+
+  return changed;
+}
+
+
+function createDndCheckRowHTML(
+  name
+) {
+
+  return `
+    <label class="dnd-check-row">
+      <input
+        type="checkbox"
+        class="dnd-check-point"
+      >
+
+      <span class="dnd-check-name">
+        ${name}
+      </span>
+
+      <input
+        type="number"
+        class="dnd-check-value"
+        value="0"
+      >
+    </label>
+  `;
 }
 
 
@@ -224,6 +531,145 @@ function ensureRuntimeControls(
   ensureTableControls(
     editor
   );
+
+  ensureCardShellControls(
+    editor
+  );
+}
+
+
+function ensureCardShellControls(
+  editor
+) {
+
+  editor
+    .querySelectorAll('.card-meta')
+    .forEach(meta => {
+
+      ensureRuntimeInput(
+        meta,
+        '.inline-tag-input',
+        'inline-tag-input',
+        'tag'
+      );
+
+      ensureRuntimeButton(
+        meta,
+        '.inline-add-tag-btn',
+        'inline-add-tag-btn',
+        '+'
+      );
+    });
+
+  editor
+    .querySelectorAll('.aliases-meta')
+    .forEach(meta => {
+
+      ensureRuntimeInput(
+        meta,
+        '.inline-alias-input',
+        'inline-alias-input',
+        'alias'
+      );
+
+      ensureRuntimeButton(
+        meta,
+        '.inline-add-alias-btn',
+        'inline-add-alias-btn',
+        '+'
+      );
+    });
+
+  editor
+    .querySelectorAll('.media-box.is-portrait')
+    .forEach(mediaBox => {
+
+      ensureRuntimeButton(
+        mediaBox,
+        '.upload-portrait-btn',
+        'upload-portrait-btn',
+        '+ Image'
+      );
+    });
+}
+
+
+function ensureRuntimeInput(
+  container,
+  selector,
+  className,
+  placeholder
+) {
+
+  const existingInput =
+    container.querySelector(selector);
+
+  if (existingInput) {
+
+    markRuntime(
+      existingInput
+    );
+
+    return;
+  }
+
+  const input =
+    document.createElement('input');
+
+  input.className =
+    className;
+
+  input.placeholder =
+    placeholder;
+
+  markRuntime(
+    input
+  );
+
+  container.appendChild(
+    input
+  );
+}
+
+
+function ensureRuntimeButton(
+  container,
+  selector,
+  className,
+  text
+) {
+
+  const existingButton =
+    container.querySelector(selector);
+
+  if (existingButton) {
+
+    markRuntime(
+      existingButton
+    );
+
+    return;
+  }
+
+  const button =
+    document.createElement('button');
+
+  button.className =
+    className;
+
+  button.type =
+    'button';
+
+  button.textContent =
+    text;
+
+  markRuntime(
+    button
+  );
+
+  container.appendChild(
+    button
+  );
 }
 
 
@@ -231,8 +677,10 @@ function ensureItemSetControls(
   editor
 ) {
 
-  editor
-    .querySelectorAll('.item-set-block')
+  getMatchingElements(
+    editor,
+    '.item-set-block'
+  )
     .forEach(block => {
 
       const existingButton =
@@ -268,8 +716,10 @@ function ensureItemSetControls(
       );
     });
 
-  editor
-    .querySelectorAll('.item-set-chip')
+  getMatchingElements(
+    editor,
+    '.item-set-chip'
+  )
     .forEach(chip => {
 
       const existingRemove =
@@ -304,6 +754,27 @@ function ensureItemSetControls(
         remove
       );
     });
+}
+
+
+function getMatchingElements(
+  root,
+  selector
+) {
+
+  const elements =
+    [...root.querySelectorAll(selector)];
+
+  if (
+    root.matches?.(selector)
+  ) {
+
+    elements.unshift(
+      root
+    );
+  }
+
+  return elements;
 }
 
 
@@ -345,7 +816,7 @@ function removeRuntimeControls(
 ) {
 
   const elements =
-    root.querySelectorAll(RUNTIME_SELECTOR);
+    root.querySelectorAll(RUNTIME_OR_LEGACY_SELECTOR);
 
   const removedAny =
     elements.length > 0;
@@ -490,7 +961,7 @@ function isRuntimeField(
 
   return Boolean(
     field.closest(
-      RUNTIME_SELECTOR
+      RUNTIME_OR_LEGACY_SELECTOR
     )
   );
 }

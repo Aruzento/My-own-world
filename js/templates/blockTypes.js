@@ -1,3 +1,8 @@
+import {
+  createTableRowControlsHTML
+} from '../editor/blocks/blockContract.js';
+
+
 export function createTextBlock({
   title,
   placeholder = 'Введите текст'
@@ -48,12 +53,11 @@ export function createItemsBlock({
   `;
 }
 
-/* Создаёт блок статистики персонажа: уровень, опыт и деньги */
+
 export function createCharacterStatsBlock({
   title = 'Статистика персонажа'
 }) {
 
-  /* Возвращает HTML блока */
   return `
     <div
       class="template-block character-stats-block"
@@ -96,23 +100,19 @@ export function createCharacterStatsBlock({
 }
 
 
-/* Создаёт DnD stat block с боевыми параметрами, характеристиками, навыками и спасбросками */
 export function createDndStatsBlock({
   title = 'Стат. блок DnD'
 }) {
 
-  /* Список базовых характеристик */
   const stats = [
     ['str', 'СИЛ'],
     ['dex', 'ЛВК'],
-    ['con', 'ТЛС'],
+    ['con', 'ТЕЛ'],
     ['int', 'ИНТ'],
     ['wis', 'МДР'],
     ['cha', 'ХАР']
   ];
 
-  /* Список навыков и спасбросков */
-    /* Навыки и спасброски, сгруппированные по характеристикам */
   const checks = [
     {
       title: 'СИЛ',
@@ -121,7 +121,6 @@ export function createDndStatsBlock({
         'Атлетика'
       ]
     },
-
     {
       title: 'ЛВК',
       items: [
@@ -131,25 +130,23 @@ export function createDndStatsBlock({
         'Скрытность'
       ]
     },
-
     {
-      title: 'ТЛС',
+      title: 'ТЕЛ',
       items: [
-        'Спасбросок ТЛС'
+        'Спасбросок ТЕЛ'
       ]
     },
-
     {
       title: 'ИНТ',
       items: [
         'Спасбросок ИНТ',
         'История',
+        'Анализ',
         'Магия',
         'Природа',
         'Религия'
       ]
     },
-
     {
       title: 'МДР',
       items: [
@@ -161,7 +158,6 @@ export function createDndStatsBlock({
         'Уход за животными'
       ]
     },
-
     {
       title: 'ХАР',
       items: [
@@ -174,7 +170,6 @@ export function createDndStatsBlock({
     }
   ];
 
-  /* Создаёт HTML базовых характеристик */
   const statRows =
     stats
       .map(([key, label]) => `
@@ -192,37 +187,15 @@ export function createDndStatsBlock({
       `)
       .join('');
 
-   /* Создаёт HTML секций навыков */
   const checkRows =
     checks
       .map(group => {
 
-        /* Создаёт HTML строк навыков внутри группы */
         const rows =
           group.items
-            .map(name => `
-              <label class="dnd-check-row">
-
-                <input
-                  type="checkbox"
-                  class="dnd-check-point"
-                >
-
-                <span class="dnd-check-name">
-                  ${name}
-                </span>
-
-                <input
-                  type="number"
-                  class="dnd-check-value"
-                  value="0"
-                >
-
-              </label>
-            `)
+            .map(name => createDndCheckRowHTML(name))
             .join('');
 
-        /* Возвращает HTML группы */
         return `
           <div class="dnd-check-group">
 
@@ -239,12 +212,11 @@ export function createDndStatsBlock({
       })
       .join('');
 
-  /* Возвращает полный HTML блока */
   return `
     <div
       class="template-block dnd-stats-block"
       data-block-type="dndStats"
-      data-block-version="2"
+      data-block-version="3"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -326,83 +298,49 @@ export function createDndStatsBlock({
         </div>
 
       </div>
-
-      <label class="dnd-combat-field dnd-analysis-field">
-        <span>Анализ</span>
-        <textarea
-          class="dnd-analysis-input"
-          rows="3"
-          placeholder="Заметки, тактика, особенности"
-        ></textarea>
-      </label>
     </div>
   `;
 }
 
-/* Создаёт блок таблицы */
+
 export function createTableBlock({
   title = 'Таблица',
   rows = 3,
   columns = 3
 }) {
 
-  /* Нормализует количество строк */
   const safeRows =
     Math.max(1, Number(rows) || 1);
 
-  /* Нормализует количество столбцов */
   const safeColumns =
     Math.max(1, Number(columns) || 1);
 
-  /* Создаёт HTML строк таблицы без лишних пробелов внутри ячеек */
   const tableRows =
     Array.from({ length: safeRows })
       .map(() => {
-        /* Создаёт HTML ячеек строки */
+
         const cells =
           Array.from({ length: safeColumns })
             .map((_, index) => {
-              /* Создаёт кнопки управления строкой только в первой ячейке */
+
               const rowControls =
                 index === 0
-                  ? `
-                    <div
-                      class="table-row-controls"
-                      data-runtime="true"
-                      contenteditable="false"
-                    >
-
-                      <button
-                        class="table-add-row-btn"
-                        type="button"
-                        title="Добавить строку ниже"
-                      >
-                        +
-                      </button>
-
-                      <button
-                        class="table-delete-row-btn"
-                        type="button"
-                        title="Удалить строку"
-                      >
-                        ×
-                      </button>
-
-                    </div>
-                  `
+                  ? createTableRowControlsHTML()
                   : '';
 
-              /* Возвращает ячейку с отдельным редактируемым div */
-              return `<td class="table-cell" contenteditable="false">${rowControls}<div class="table-cell-content" contenteditable="true"></div></td>`;
+              return `
+                <td class="table-cell" contenteditable="false">
+                  ${rowControls}
+                  <div class="table-cell-content" contenteditable="true"></div>
+                </td>
+              `;
             })
             .join('');
 
-        /* Возвращает строку */
         return `<tr>${cells}</tr>`;
       })
       .join('');
 
-  /* Возвращает HTML блока таблицы */
   return `
     <div
       class="template-block table-block"
@@ -420,5 +358,30 @@ export function createTableBlock({
         </table>
       </div>
     </div>
+  `;
+}
+
+
+function createDndCheckRowHTML(
+  name
+) {
+
+  return `
+    <label class="dnd-check-row">
+      <input
+        type="checkbox"
+        class="dnd-check-point"
+      >
+
+      <span class="dnd-check-name">
+        ${name}
+      </span>
+
+      <input
+        type="number"
+        class="dnd-check-value"
+        value="0"
+      >
+    </label>
   `;
 }

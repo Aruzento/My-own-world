@@ -9,12 +9,23 @@ import {
 } from '../tree/tree.js';
 
 import {
+  renderTags
+} from './ui.js';
+
+import {
   markRuntime
 } from '../editor/blocks/blockContract.js';
+
+import {
+  getPageIcon
+} from '../core/icons.js';
 
 const CARD_TYPE_LABELS = {
   character: 'Персонаж',
   location: 'Локация',
+  region: 'Регион',
+  folder: 'Папка',
+  magic: 'Магия',
   item: 'Предмет',
   lore: 'Лор',
   note: 'Заметка'
@@ -46,6 +57,10 @@ export function setupCardType() {
         ];
 
       await saveCurrentPage();
+
+      renderTags(
+        state.currentPage.tags
+      );
 
       renderTree();
 
@@ -106,6 +121,10 @@ export function renderCardType() {
 
   if (!select) return;
 
+  ensureNativeCardTypeOptions(
+    select
+  );
+
   select.value =
     state.currentPage.type || 'note';
 
@@ -116,6 +135,34 @@ export function renderCardType() {
   syncCustomCardType(
     select
   );
+}
+
+
+function ensureNativeCardTypeOptions(
+  select
+) {
+
+  Object
+    .entries(CARD_TYPE_LABELS)
+    .forEach(([value, label]) => {
+
+      if (
+        select.querySelector(`option[value="${value}"]`)
+      ) return;
+
+      const option =
+        document.createElement('option');
+
+      option.value =
+        value;
+
+      option.textContent =
+        label;
+
+      select.appendChild(
+        option
+      );
+    });
 }
 
 
@@ -159,7 +206,8 @@ function ensureCustomCardType(
             type="button"
             data-value="${value}"
           >
-            ${label}
+            ${getPageIcon([value])}
+            <span class="card-type-option-label">${label}</span>
           </button>
         `)
         .join('')}
