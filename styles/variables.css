@@ -1,4 +1,4 @@
-* {
+﻿* {
 
   margin: 0;
 
@@ -26,7 +26,7 @@
     rgba(255,255,255,0.07);
 
   --border-hover:
-    rgba(140,180,255,0.20);
+    rgba(241,211,142,0.24);
 
   --hover:
     rgba(255,255,255,0.09);
@@ -38,7 +38,19 @@
     rgba(248,250,255,0.68);
 
   --accent:
-    #79a8ff;
+    #f1d38e;
+
+  --accent-soft:
+    rgba(241,211,142,0.14);
+
+  --accent-strong:
+    rgba(241,211,142,0.84);
+
+  --danger-soft:
+    rgba(255,154,154,0.14);
+
+  --danger:
+    #ffb8b8;
 
   --shadow:
     0 20px 60px rgba(0,0,0,0.28);
@@ -124,12 +136,12 @@ body::after {
   background:
     radial-gradient(
       circle at top left,
-      rgba(120,160,220,0.12),
+      rgba(241,211,142,0.09),
       transparent 42%
     ),
     radial-gradient(
       circle at bottom right,
-      rgba(120,90,200,0.08),
+      rgba(255,255,255,0.045),
       transparent 46%
     );
 
@@ -141,3 +153,4 @@ body::after {
 
   display: none !important;
 }
+

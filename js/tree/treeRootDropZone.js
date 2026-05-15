@@ -5,6 +5,11 @@ import {
   updatePageParent
 } from '../storage/storage.js';
 
+import {
+  moveTreeDropPlaceholder,
+  removeTreeDropPlaceholder
+} from './treeDragDrop.js';
+
 
 export function renderRootDropZone(
   container,
@@ -50,6 +55,24 @@ export function renderRootDropZone(
         'is-drop-target'
       );
 
+      draggedPageState.dropMode =
+        'root';
+
+      draggedPageState.targetId =
+        null;
+
+      moveTreeDropPlaceholder(
+        rootZone,
+        'after',
+        0,
+        {
+          draggedPageState,
+          targetPage: null,
+          collapsedPages: null,
+          renderTree
+        }
+      );
+
       event.dataTransfer.dropEffect =
         'move';
     }
@@ -78,6 +101,8 @@ export function renderRootDropZone(
       rootZone.classList.remove(
         'is-drop-target'
       );
+
+      removeTreeDropPlaceholder();
 
 
       const draggedId =

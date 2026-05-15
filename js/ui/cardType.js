@@ -8,6 +8,14 @@ import {
   renderTree
 } from '../tree/tree.js';
 
+const CARD_TYPE_LABELS = {
+  character: 'Персонаж',
+  location: 'Локация',
+  item: 'Предмет',
+  lore: 'Лор',
+  note: 'Заметка'
+};
+
 
 export function setupCardType() {
 
@@ -36,6 +44,48 @@ export function setupCardType() {
       await saveCurrentPage();
 
       renderTree();
+
+      syncCustomCardType(
+        select
+      );
+    }
+  );
+
+  document.addEventListener(
+    'click',
+    event => {
+
+      const trigger =
+        event.target.closest('.card-type-trigger');
+
+      const option =
+        event.target.closest('.card-type-option');
+
+      if (trigger) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        toggleCustomCardType(
+          trigger.closest('.card-type-custom')
+        );
+
+        return;
+      }
+
+      if (option) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        selectCustomCardType(
+          option
+        );
+
+        return;
+      }
+
+      closeAllCardTypeDropdowns();
     }
   );
 }
@@ -54,4 +104,157 @@ export function renderCardType() {
 
   select.value =
     state.currentPage.type || 'note';
+
+  ensureCustomCardType(
+    select
+  );
+
+  syncCustomCardType(
+    select
+  );
+}
+
+
+function ensureCustomCardType(
+  select
+) {
+
+  if (
+    select.nextElementSibling?.classList.contains('card-type-custom')
+  ) return;
+
+  const custom =
+    document.createElement('div');
+
+  custom.className =
+    'card-type-custom';
+
+  custom.innerHTML = `
+    <button class="card-type-trigger" type="button">
+      <span class="card-type-current"></span>
+      <span class="card-type-arrow"></span>
+    </button>
+
+    <div class="card-type-menu hidden">
+      ${Object
+        .entries(CARD_TYPE_LABELS)
+        .map(([value, label]) => `
+          <button
+            class="card-type-option"
+            type="button"
+            data-value="${value}"
+          >
+            ${label}
+          </button>
+        `)
+        .join('')}
+    </div>
+  `;
+
+  select.after(
+    custom
+  );
+}
+
+
+function syncCustomCardType(
+  select
+) {
+
+  const custom =
+    select.nextElementSibling;
+
+  if (
+    !custom?.classList.contains('card-type-custom')
+  ) return;
+
+  const value =
+    select.value || 'note';
+
+  custom.querySelector('.card-type-current').textContent =
+    CARD_TYPE_LABELS[value] || CARD_TYPE_LABELS.note;
+
+  custom
+    .querySelectorAll('.card-type-option')
+    .forEach(option => {
+
+      option.classList.toggle(
+        'is-selected',
+        option.dataset.value === value
+      );
+    });
+}
+
+
+function toggleCustomCardType(
+  custom
+) {
+
+  if (!custom) return;
+
+  const menu =
+    custom.querySelector('.card-type-menu');
+
+  const willOpen =
+    menu.classList.contains('hidden');
+
+  closeAllCardTypeDropdowns();
+
+  if (willOpen) {
+
+    custom.classList.add(
+      'is-open'
+    );
+
+    menu.classList.remove(
+      'hidden'
+    );
+  }
+}
+
+
+function selectCustomCardType(
+  option
+) {
+
+  const custom =
+    option.closest('.card-type-custom');
+
+  const select =
+    custom?.previousElementSibling;
+
+  if (!select) return;
+
+  select.value =
+    option.dataset.value;
+
+  select.dispatchEvent(
+    new Event(
+      'change',
+      {
+        bubbles: true
+      }
+    )
+  );
+
+  closeAllCardTypeDropdowns();
+}
+
+
+function closeAllCardTypeDropdowns() {
+
+  document
+    .querySelectorAll('.card-type-custom')
+    .forEach(custom => {
+
+      custom.classList.remove(
+        'is-open'
+      );
+
+      custom
+        .querySelector('.card-type-menu')
+        ?.classList.add(
+          'hidden'
+        );
+    });
 }

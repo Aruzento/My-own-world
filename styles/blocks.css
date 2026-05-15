@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    BLOCKS ZONE
 ========================================= */
 
@@ -23,6 +23,11 @@
 
   background: transparent;
   border: none;
+
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    background 0.16s ease;
 }
 
 
@@ -125,9 +130,10 @@
 .block-rename-btn:hover,
 .block-delete-btn:hover {
   background:
-    rgba(255,255,255,0.10);
+    rgba(241,211,142,0.10);
 
-  color: white;
+  color:
+    rgba(255,248,230,0.96);
 }
 
 
@@ -141,10 +147,10 @@
 
 .block-delete-btn:hover {
   background:
-    rgba(255,80,80,0.14);
+    rgba(255,154,154,0.14);
 
   color:
-    #ffb4b4;
+    var(--danger);
 }
 
 
@@ -187,13 +193,13 @@
 
 .add-block-btn:hover {
   background:
-    rgba(255,255,255,0.055);
+    rgba(241,211,142,0.08);
 
   color:
-    rgba(255,255,255,0.82);
+    rgba(255,248,230,0.92);
 
   border-color:
-    rgba(255,255,255,0.20);
+    rgba(241,211,142,0.22);
 }
 
 
@@ -202,46 +208,117 @@
 ========================================= */
 
 .template-block.is-dragging {
-  opacity: 0.42;
+
+  opacity:
+    0.42;
 }
 
 
-.template-block.is-drop-before,
-.template-block.is-drop-after {
-  position: relative;
+.template-block.is-dragging-active {
+
+  transform:
+    scale(0.992);
 }
 
 
-.template-block.is-drop-before::before,
-.template-block.is-drop-after::after {
-  content: "";
+.block-drop-placeholder {
 
-  position: absolute;
+  min-height:
+    var(--dragged-block-height, 72px);
 
-  left: 0;
-  right: 0;
+  padding:
+    10px 0;
 
-  height: 2px;
+  border-top:
+    1px solid
+    rgba(241,211,142,0.22) !important;
 
-  border-radius: 999px;
+  opacity:
+    1;
+
+  transition:
+    min-height 0.12s ease,
+    opacity 0.12s ease,
+    transform 0.12s ease;
+
+  pointer-events:
+    none;
+}
+
+
+.block-drop-placeholder + .template-block {
+
+  border-top:
+    none;
+}
+
+
+.block-drop-placeholder-inner {
+
+  min-height:
+    calc(var(--dragged-block-height, 72px) - 20px);
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    10px;
+
+  padding:
+    0 12px;
+
+  border-radius:
+    10px;
 
   background:
-    rgba(120,168,255,0.85);
+    linear-gradient(
+      90deg,
+      rgba(241,211,142,0.14),
+      rgba(241,211,142,0.035)
+    );
 
   box-shadow:
-    0 0 10px
-    rgba(120,168,255,0.35);
+    inset 0 0 0 1px
+    rgba(241,211,142,0.22);
+
+  color:
+    rgba(241,211,142,0.88);
 }
 
 
-.template-block.is-drop-before::before {
-  top: -1px;
+.block-drop-placeholder-line {
+
+  width:
+    18px;
+
+  height:
+    2px;
+
+  border-radius:
+    999px;
+
+  background:
+    currentColor;
+
+  box-shadow:
+    0 0 12px
+    rgba(241,211,142,0.4);
 }
 
 
-.template-block.is-drop-after::after {
-  bottom: -1px;
+.block-drop-placeholder-text {
+
+  font-size:
+    13px;
+
+  font-weight:
+    650;
 }
+
+
 
 
 /* =========================================
@@ -379,9 +456,10 @@
 
 .item-set-remove:hover {
   background:
-    rgba(255,255,255,0.10);
+    rgba(255,154,154,0.14);
 
-  color: white;
+  color:
+    var(--danger);
 }
 
 
@@ -415,11 +493,13 @@
 
 .item-set-add-btn:hover {
   background:
-    rgba(255,255,255,0.055);
+    rgba(241,211,142,0.08);
 
   color:
-    rgba(255,255,255,0.82);
+    rgba(255,248,230,0.92);
 
   border-color:
-    rgba(255,255,255,0.20);
+    rgba(241,211,142,0.22);
 }
+
+

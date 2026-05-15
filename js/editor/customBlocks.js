@@ -12,6 +12,8 @@ import {
 
 
 let draggedBlock = null;
+let blockDropPlaceholder = null;
+let blockDropReference = null;
 
 
 export function setupCustomBlocks(
@@ -131,6 +133,13 @@ function setupBlockDragAndDrop(
       draggedBlock =
         block;
 
+      const rect =
+        block.getBoundingClientRect();
+
+      getBlockDropPlaceholder(
+        rect.height
+      );
+
       block.classList.add(
         'is-dragging'
       );
@@ -142,6 +151,16 @@ function setupBlockDragAndDrop(
         'text/plain',
         ''
       );
+
+      /* Даём браузеру начать native drag, а затем делаем исходный блок
+         полупрозрачным. Так layout остаётся стабильным до первого hover. */
+      requestAnimationFrame(
+        () => {
+          block.classList.add(
+            'is-dragging-active'
+          );
+        }
+      );
     }
   );
 
@@ -151,28 +170,16 @@ function setupBlockDragAndDrop(
 
       if (!draggedBlock) return;
 
-      const targetBlock =
-        event.target.closest('.entity-main .template-block');
+      const main =
+        draggedBlock.closest('.entity-main');
 
-      if (
-        !targetBlock ||
-        targetBlock === draggedBlock
-      ) return;
+      if (!main) return;
 
       event.preventDefault();
 
-      const isAfter =
-        isPointerAfterMiddle(
-          event,
-          targetBlock
-        );
-
-      clearDropMarkers();
-
-      targetBlock.classList.add(
-        isAfter
-          ? 'is-drop-after'
-          : 'is-drop-before'
+      moveBlockPlaceholderToPointer(
+        main,
+        event.clientY
       );
     }
   );
@@ -183,34 +190,19 @@ function setupBlockDragAndDrop(
 
       if (!draggedBlock) return;
 
-      const targetBlock =
-        event.target.closest('.entity-main .template-block');
+      const placeholder =
+        blockDropPlaceholder;
 
       if (
-        !targetBlock ||
-        targetBlock === draggedBlock
+        !placeholder ||
+        !placeholder.parentNode
       ) return;
 
       event.preventDefault();
 
-      const isAfter =
-        isPointerAfterMiddle(
-          event,
-          targetBlock
-        );
-
-      if (isAfter) {
-
-        targetBlock.after(
-          draggedBlock
-        );
-
-      } else {
-
-        targetBlock.before(
-          draggedBlock
-        );
-      }
+      placeholder.before(
+        draggedBlock
+      );
 
       clearDraggedBlock();
       saveCurrentPage();
@@ -224,25 +216,13 @@ function setupBlockDragAndDrop(
 }
 
 
-function isPointerAfterMiddle(
-  event,
-  element
-) {
-
-  const rect =
-    element.getBoundingClientRect();
-
-  return event.clientY >
-    rect.top + rect.height / 2;
-}
-
-
 function clearDraggedBlock() {
 
   if (draggedBlock) {
 
     draggedBlock.classList.remove(
-      'is-dragging'
+      'is-dragging',
+      'is-dragging-active'
     );
   }
 
@@ -255,15 +235,123 @@ function clearDraggedBlock() {
 
 function clearDropMarkers() {
 
-  document
-    .querySelectorAll(
-      '.template-block.is-drop-before, .template-block.is-drop-after'
-    )
-    .forEach(block => {
+  removeBlockDropPlaceholder();
+}
 
-      block.classList.remove(
-        'is-drop-before',
-        'is-drop-after'
+
+function moveBlockPlaceholderToPointer(
+  main,
+  pointerY
+) {
+
+  const placeholder =
+    getBlockDropPlaceholder();
+
+  const referenceBlock =
+    getBlockInsertionReference(
+      main,
+      pointerY
+    );
+
+  /* Если позиция уже правильная, не трогаем DOM. Иначе браузер
+     перезапускает анимацию placeholder на каждом dragover. */
+  if (
+    blockDropReference === referenceBlock &&
+    placeholder.parentNode === main
+  ) {
+
+    return;
+  }
+
+  blockDropReference =
+    referenceBlock;
+
+  if (referenceBlock) {
+
+    main.insertBefore(
+      placeholder,
+      referenceBlock
+    );
+
+    return;
+  }
+
+  main.appendChild(
+    placeholder
+  );
+}
+
+
+function getBlockInsertionReference(
+  main,
+  pointerY
+) {
+
+  const blocks =
+    [...main.children]
+      .filter(element =>
+        element.classList.contains('template-block') &&
+        element !== draggedBlock
       );
-    });
+
+  return blocks.find(block => {
+
+    const rect =
+      block.getBoundingClientRect();
+
+    return pointerY <
+      rect.top + rect.height / 2;
+  }) || null;
+}
+
+
+function getBlockDropPlaceholder(
+  height
+) {
+
+  if (!blockDropPlaceholder) {
+
+    blockDropPlaceholder =
+      document.createElement('div');
+
+    blockDropPlaceholder.className =
+      'block-drop-placeholder';
+
+    blockDropPlaceholder.setAttribute(
+      'contenteditable',
+      'false'
+    );
+
+    blockDropPlaceholder.innerHTML = `
+      <div class="block-drop-placeholder-inner">
+        <span class="block-drop-placeholder-line"></span>
+        <span class="block-drop-placeholder-text">Блок будет здесь</span>
+      </div>
+    `;
+  }
+
+  if (height) {
+
+    blockDropPlaceholder.style.setProperty(
+      '--dragged-block-height',
+      `${Math.max(48, Math.min(height, 220))}px`
+    );
+  }
+
+  return blockDropPlaceholder;
+}
+
+
+function removeBlockDropPlaceholder() {
+
+  if (
+    blockDropPlaceholder &&
+    blockDropPlaceholder.parentNode
+  ) {
+
+    blockDropPlaceholder.remove();
+  }
+
+  blockDropReference =
+    null;
 }

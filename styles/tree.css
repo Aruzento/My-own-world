@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    TREE
 ========================================= */
 
@@ -43,7 +43,9 @@
 
   transition:
     background 0.12s,
-    transform 0.12s;
+    transform 0.16s ease,
+    opacity 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 
@@ -64,7 +66,7 @@
 .tree-item.active {
 
   background:
-    rgba(120,168,255,0.10);
+    rgba(241,211,142,0.10);
 }
 
 .tree-title {
@@ -182,10 +184,10 @@
 .tree-actions:hover {
 
   background:
-    rgba(255,255,255,0.08);
+    rgba(241,211,142,0.10);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 .tree-title {
@@ -240,7 +242,7 @@
 
   min-width: 190px;
 
-  padding: 6px;
+  padding: 8px;
 
   display: flex;
 
@@ -248,10 +250,14 @@
 
   gap: 2px;
 
-  border-radius: 12px;
+  border-radius: 18px;
 
   background:
-    rgba(18,22,30,0.96);
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
 
   backdrop-filter:
     blur(18px);
@@ -260,10 +266,11 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.34);
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 
@@ -303,20 +310,20 @@
 .tree-context-menu button:hover {
 
   background:
-    rgba(255,255,255,0.06);
+    rgba(241,211,142,0.10);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 
 .tree-context-menu button.danger:hover {
 
   background:
-    rgba(255,80,80,0.12);
+    rgba(255,154,154,0.12);
 
   color:
-    #ffb4b4;
+    var(--danger);
 }
 
 .tree-item {
@@ -408,18 +415,24 @@
 .tree-item.is-dragging {
 
   opacity:
-    0.42;
+    0.34;
+
+  transform:
+    scale(0.985);
+
+  background:
+    rgba(255,255,255,0.035);
 }
 
 
 .tree-item.is-drop-target {
 
   background:
-    rgba(120,168,255,0.14);
+    rgba(241,211,142,0.14);
 
   box-shadow:
     inset 0 0 0 1px
-    rgba(120,168,255,0.24);
+    rgba(241,211,142,0.24);
 }
 
 
@@ -474,62 +487,14 @@
 .tree-root-drop-zone.is-drop-target {
 
   background:
-    rgba(120,168,255,0.12);
+    rgba(241,211,142,0.12);
 
   color:
     rgba(255,255,255,0.84);
 
   box-shadow:
     inset 0 0 0 1px
-    rgba(120,168,255,0.22);
-}
-
-.tree-item.is-drop-before,
-.tree-item.is-drop-after {
-
-  position: relative;
-}
-
-
-.tree-item.is-drop-before::after,
-.tree-item.is-drop-after::after {
-
-  content: "";
-
-  position: absolute;
-
-  left:
-    calc(8px + var(--tree-level, 0) * 18px);
-
-  right:
-    8px;
-
-  height:
-    2px;
-
-  border-radius:
-    999px;
-
-  background:
-    rgba(120,168,255,0.85);
-
-  box-shadow:
-    0 0 10px
-    rgba(120,168,255,0.35);
-}
-
-
-.tree-item.is-drop-before::after {
-
-  top:
-    -1px;
-}
-
-
-.tree-item.is-drop-after::after {
-
-  bottom:
-    -1px;
+    rgba(241,211,142,0.22);
 }
 
 .tree-item {
@@ -566,3 +531,107 @@
   cursor:
     pointer;
 }
+
+.tree-drop-placeholder {
+
+  min-height:
+    30px;
+
+  margin:
+    3px 0;
+
+  padding-left:
+    calc(8px + var(--tree-level, 0) * 18px);
+
+  display:
+    grid;
+
+  grid-template-columns:
+    18px minmax(0, 1fr);
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  border-radius:
+    8px;
+
+  color:
+    rgba(241,211,142,0.88);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(241,211,142,0.15),
+      rgba(241,211,142,0.04)
+    );
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(241,211,142,0.24);
+
+  animation:
+    tree-placeholder-in 0.14s ease-out;
+
+  pointer-events:
+    auto;
+}
+
+
+.tree-drop-placeholder-line {
+
+  width:
+    12px;
+
+  height:
+    2px;
+
+  border-radius:
+    999px;
+
+  background:
+    currentColor;
+
+  box-shadow:
+    0 0 10px
+    rgba(241,211,142,0.42);
+}
+
+
+.tree-drop-placeholder-label {
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  font-size:
+    12px;
+
+  font-weight:
+    650;
+}
+
+
+@keyframes tree-placeholder-in {
+
+  from {
+    min-height: 8px;
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    min-height: 30px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+

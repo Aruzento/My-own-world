@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    CARD TYPE SELECT
 ========================================= */
 
@@ -25,22 +25,32 @@
 
 
 .card-type-select {
-  height: 26px;
+  display: none;
+}
 
-  min-width: 120px;
 
-  padding: 0 28px 0 10px;
+.card-type-custom {
+  position: relative;
+}
+
+
+.card-type-trigger {
+  height: 30px;
+
+  min-width: 134px;
+
+  padding: 0 10px 0 12px;
 
   border:
     1px solid
     rgba(255,255,255,0.08);
 
-  border-radius: 9px;
+  border-radius: 12px;
 
   background:
     linear-gradient(
       180deg,
-      rgba(255,255,255,0.075),
+      rgba(255,255,255,0.09),
       rgba(255,255,255,0.045)
     );
 
@@ -48,32 +58,183 @@
     rgba(255,255,255,0.84);
 
   font-size: 12px;
+  font-weight: 560;
 
   outline: none;
 
   cursor: pointer;
 
-  appearance: none;
-  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    box-shadow 0.12s,
+    border-color 0.12s;
 }
 
 
-.card-type-select:hover {
+.card-type-trigger:hover,
+.card-type-custom.is-open .card-type-trigger {
   background:
-    rgba(255,255,255,0.08);
+    linear-gradient(
+      180deg,
+      rgba(241,211,142,0.13),
+      rgba(255,255,255,0.055)
+    );
 
   color: white;
 }
 
 
-.card-type-select:focus {
+.card-type-trigger:focus,
+.card-type-custom.is-open .card-type-trigger {
   box-shadow:
-    0 0 0 1px
-    rgba(120,168,255,0.22);
+    0 0 0 3px rgba(241,211,142,0.09),
+    inset 0 0 0 1px rgba(241,211,142,0.28);
 }
 
 
-.card-type-select option {
-  background: #12161e;
-  color: rgba(255,255,255,0.9);
+.card-type-current {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+
+.card-type-arrow {
+  width: 7px;
+  height: 7px;
+
+  border-right:
+    1px solid rgba(255,248,230,0.78);
+
+  border-bottom:
+    1px solid rgba(255,248,230,0.78);
+
+  transform:
+    rotate(45deg)
+    translateY(-2px);
+
+  transition:
+    transform 0.14s ease;
+}
+
+
+.card-type-custom.is-open .card-type-arrow {
+  transform:
+    rotate(225deg)
+    translateY(-1px);
+}
+
+
+.card-type-menu {
+  position: absolute;
+
+  top: calc(100% + 6px);
+  left: 0;
+
+  z-index: 10020;
+
+  min-width: 168px;
+
+  padding: 7px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.97),
+      rgba(14,15,16,0.96)
+    );
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  animation:
+    cardTypeMenuIn 0.12s ease-out;
+}
+
+
+.card-type-option {
+  width: 100%;
+
+  min-height: 32px;
+
+  padding:
+    0 10px;
+
+  border:
+    none;
+
+  border-radius:
+    10px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(255,255,255,0.72);
+
+  font-size:
+    12px;
+
+  text-align:
+    left;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.card-type-option:hover,
+.card-type-option.is-selected {
+  background:
+    rgba(241,211,142,0.11);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.card-type-option:active {
+  transform:
+    scale(0.98);
+}
+
+
+@keyframes cardTypeMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+

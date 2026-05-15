@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    ITEM SET INLINE VIEW
 ========================================= */
 
@@ -203,7 +203,7 @@
   /* Focus ring */
   box-shadow:
     0 0 0 1px
-    rgba(120,168,255,0.22);
+    rgba(241,211,142,0.22);
 }
 
 
@@ -327,7 +327,7 @@
   /* Focus ring */
   box-shadow:
     0 0 0 1px
-    rgba(120,168,255,0.22);
+    rgba(241,211,142,0.22);
 }
 
 
@@ -513,7 +513,7 @@
   /* Focus ring */
   box-shadow:
     0 0 0 1px
-    rgba(120,168,255,0.22);
+    rgba(241,211,142,0.22);
 }
 
 
@@ -701,7 +701,7 @@
   /* Focus ring */
   box-shadow:
     0 0 0 1px
-    rgba(120,168,255,0.22);
+    rgba(241,211,142,0.22);
 }
 
 /* =========================================
@@ -853,22 +853,22 @@
 
   /* Активный фон */
   background:
-    rgba(120,168,255,0.85);
+    rgba(255,255,255,0.05);
 
   /* Активная рамка */
   border-color:
-    rgba(120,168,255,1);
+    rgba(241,211,142,0.64);
 
   /* Glow */
   box-shadow:
-    0 0 8px
-    rgba(120,168,255,0.35);
+    inset 0 0 0 4px rgba(12,13,14,0.94),
+    0 0 0 3px rgba(241,211,142,0.09);
 }
 
 
 .dnd-check-point:checked::before {
 
-  /* Галочка */
+  /* Точка вместо галочки */
   content:
     "";
 
@@ -878,25 +878,23 @@
 
   /* Размер */
   width:
-    4px;
+    6px;
 
   height:
-    7px;
+    6px;
 
-  /* Рисует check */
   border:
-    solid white;
+    none;
 
-  border-width:
-    0 2px 2px 0;
+  border-radius:
+    999px;
 
-  /* Поворот */
-  transform:
-    rotate(45deg);
+  background:
+    rgba(241,211,142,0.95);
 
   /* Центровка */
   margin:
-    1px 0 0 4px;
+    3px;
 }
 
 
@@ -928,3 +926,4 @@
   -moz-appearance:
     textfield;
 }
+

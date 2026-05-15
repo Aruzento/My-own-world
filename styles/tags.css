@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    TAG CONTAINER
 ========================================= */
 
@@ -141,10 +141,10 @@
 .inline-tag-remove:hover {
 
   background:
-    rgba(255,255,255,0.10);
+    rgba(255,154,154,0.14);
 
   color:
-    white;
+    var(--danger);
 }
 
 
@@ -197,7 +197,7 @@
 
   box-shadow:
     0 0 0 1px
-    rgba(120,168,255,0.18);
+    rgba(241,211,142,0.18);
 }
 
 
@@ -241,10 +241,10 @@
 .inline-add-tag-btn:hover {
 
   background:
-    rgba(255,255,255,0.09);
+    rgba(241,211,142,0.10);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 
@@ -333,14 +333,14 @@
     999px;
 
   background:
-    rgba(120,168,255,0.055);
+    rgba(241,211,142,0.055);
 
   border:
     1px solid
-    rgba(120,168,255,0.09);
+    rgba(241,211,142,0.09);
 
   color:
-    rgba(220,235,255,0.62);
+    rgba(255,248,230,0.62);
 
   font-size:
     11px;
@@ -355,10 +355,10 @@
 .inline-alias:hover {
 
   background:
-    rgba(120,168,255,0.09);
+    rgba(241,211,142,0.09);
 
   border-color:
-    rgba(120,168,255,0.16);
+    rgba(241,211,142,0.16);
 
   color:
     rgba(255,255,255,0.92);
@@ -396,7 +396,7 @@
     transparent;
 
   color:
-    rgba(220,235,255,0.34);
+    rgba(255,248,230,0.34);
 
   font-size:
     11px;
@@ -413,10 +413,10 @@
 .inline-alias-remove:hover {
 
   background:
-    rgba(255,255,255,0.10);
+    rgba(255,154,154,0.14);
 
   color:
-    white;
+    var(--danger);
 }
 
 
@@ -441,7 +441,7 @@
     7px;
 
   background:
-    rgba(120,168,255,0.045);
+    rgba(241,211,142,0.045);
 
   color:
     var(--text);
@@ -458,18 +458,18 @@
 .inline-alias-input::placeholder {
 
   color:
-    rgba(220,235,255,0.26);
+    rgba(255,248,230,0.26);
 }
 
 
 .inline-alias-input:focus {
 
   background:
-    rgba(120,168,255,0.075);
+    rgba(241,211,142,0.075);
 
   box-shadow:
     0 0 0 1px
-    rgba(120,168,255,0.18);
+    rgba(241,211,142,0.18);
 }
 
 
@@ -494,10 +494,10 @@
     7px;
 
   background:
-    rgba(120,168,255,0.055);
+    rgba(241,211,142,0.055);
 
   color:
-    rgba(220,235,255,0.46);
+    rgba(255,248,230,0.46);
 
   font-size:
     12px;
@@ -515,10 +515,10 @@
 .inline-add-alias-btn:hover {
 
   background:
-    rgba(120,168,255,0.10);
+    rgba(241,211,142,0.10);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 
@@ -527,3 +527,4 @@
   transform:
     scale(0.95);
 }
+

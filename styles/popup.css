@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    CREATE MENU
 ========================================= */
 
@@ -8,16 +8,20 @@
 
   width: 220px;
 
-  padding: 8px;
+  padding: 10px;
 
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
 
-  border-radius: 14px;
+  border-radius: 18px;
 
   background:
-    rgba(18,22,30,0.96);
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
 
   backdrop-filter:
     blur(18px);
@@ -26,10 +30,11 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.34);
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 
   animation:
     popupFade 0.14s ease;
@@ -76,7 +81,7 @@
 
   border: none;
 
-  border-radius: 10px;
+  border-radius: 12px;
 
   background:
     transparent;
@@ -95,10 +100,10 @@
 
 .create-option:hover {
   background:
-    rgba(255,255,255,0.06);
+    rgba(241,211,142,0.10);
 
   color:
-    rgba(255,255,255,0.94);
+    rgba(255,248,230,0.96);
 }
 
 
@@ -192,7 +197,7 @@
 
   width: 260px;
 
-  padding: 10px;
+  padding: 12px;
 
   display: flex;
 
@@ -200,10 +205,14 @@
 
   gap: 8px;
 
-  border-radius: 14px;
+  border-radius: 18px;
 
   background:
-    rgba(18,22,30,0.96);
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
 
   backdrop-filter:
     blur(18px);
@@ -212,10 +221,11 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.34);
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 
@@ -223,26 +233,41 @@
 
   width: 100%;
 
-  height: 32px;
+  height: 34px;
 
   padding:
     0 10px;
 
-  border: none;
+  border:
+    1px solid rgba(255,255,255,0.08);
 
   outline: none;
 
   border-radius:
-    9px;
+    11px;
 
   background:
-    rgba(255,255,255,0.055);
+    rgba(255,255,255,0.06);
 
   color:
     var(--text);
 
   font-size:
     13px;
+}
+
+
+.link-popup input:focus,
+.wiki-page-search:focus,
+.block-popup-input:focus,
+.item-set-search:focus,
+.table-config-field input:focus {
+
+  border-color:
+    rgba(241,211,142,0.30);
+
+  box-shadow:
+    0 0 0 3px rgba(241,211,142,0.08);
 }
 
 
@@ -269,6 +294,46 @@
 
   padding:
     0 10px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  font-size:
+    12px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.link-popup-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.link-popup-actions button:active {
+
+  transform:
+    scale(0.96);
 }
 
 /* =========================================
@@ -287,7 +352,7 @@
     190px;
 
   padding:
-    6px;
+    8px;
 
   display:
     flex;
@@ -299,10 +364,14 @@
     4px;
 
   border-radius:
-    14px;
+    18px;
 
   background:
-    rgba(18,22,30,0.96);
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
 
   backdrop-filter:
     blur(18px);
@@ -311,10 +380,11 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.34);
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 
@@ -362,10 +432,10 @@
 .wiki-create-option:hover {
 
   background:
-    rgba(255,255,255,0.06);
+    rgba(241,211,142,0.10);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 
@@ -428,13 +498,13 @@
     0 10px;
 
   border:
-    none;
+    1px solid rgba(255,255,255,0.08);
 
   outline:
     none;
 
   border-radius:
-    9px;
+    11px;
 
   background:
     rgba(255,255,255,0.055);
@@ -513,7 +583,7 @@
 .wiki-page-option:hover {
 
   background:
-    rgba(255,255,255,0.06);
+    rgba(241,211,142,0.10);
 
   color:
     white;
@@ -548,7 +618,7 @@
     260px;
 
   padding:
-    10px;
+    12px;
 
   display:
     flex;
@@ -560,10 +630,14 @@
     8px;
 
   border-radius:
-    14px;
+    18px;
 
   background:
-    rgba(18,22,30,0.96);
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
 
   backdrop-filter:
     blur(18px);
@@ -572,10 +646,11 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.34);
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 
   animation:
     popupFade 0.14s ease;
@@ -601,19 +676,19 @@
     100%;
 
   height:
-    32px;
+    34px;
 
   padding:
     0 10px;
 
   border:
-    none;
+    1px solid rgba(255,255,255,0.08);
 
   outline:
     none;
 
   border-radius:
-    9px;
+    11px;
 
   background:
     rgba(255,255,255,0.055);
@@ -695,10 +770,10 @@
 .block-popup-actions button:hover {
 
   background:
-    rgba(255,255,255,0.10);
+    rgba(241,211,142,0.12);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 
@@ -712,17 +787,17 @@
 .block-popup-confirm.danger {
 
   background:
-    rgba(255,80,80,0.12);
+    var(--danger-soft);
 
   color:
-    #ffb4b4;
+    var(--danger);
 }
 
 
 .block-popup-confirm.danger:hover {
 
   background:
-    rgba(255,80,80,0.18);
+    rgba(255,154,154,0.20);
 
   color:
     white;
@@ -744,7 +819,7 @@
     260px;
 
   padding:
-    10px;
+    12px;
 
   display:
     flex;
@@ -756,10 +831,14 @@
     8px;
 
   border-radius:
-    14px;
+    18px;
 
   background:
-    rgba(18,22,30,0.96);
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
 
   backdrop-filter:
     blur(18px);
@@ -768,10 +847,11 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 18px 50px rgba(0,0,0,0.34);
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
 
   animation:
     popupFade 0.14s ease;
@@ -790,13 +870,13 @@
     0 10px;
 
   border:
-    none;
+    1px solid rgba(255,255,255,0.08);
 
   outline:
     none;
 
   border-radius:
-    9px;
+    11px;
 
   background:
     rgba(255,255,255,0.055);
@@ -878,7 +958,7 @@
 .item-set-option:hover {
 
   background:
-    rgba(255,255,255,0.06);
+    rgba(241,211,142,0.10);
 
   color:
     white;
@@ -951,7 +1031,7 @@
     none;
 
   border-radius:
-    10px;
+    12px;
 
   background:
     rgba(255,255,255,0.035);
@@ -974,10 +1054,10 @@
 .block-type-option:hover {
 
   background:
-    rgba(255,255,255,0.07);
+    rgba(241,211,142,0.10);
 
   color:
-    white;
+    rgba(255,248,230,0.96);
 }
 
 
@@ -1002,10 +1082,10 @@
     8px;
 
   background:
-    rgba(255,255,255,0.06);
+    rgba(241,211,142,0.10);
 
   color:
-    rgba(255,255,255,0.72);
+    rgba(255,248,230,0.86);
 
   font-size:
     12px;
@@ -1049,3 +1129,4 @@
   line-height:
     1.3;
 }
+
