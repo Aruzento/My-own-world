@@ -70,6 +70,10 @@ import {
   setupCardType
 } from './ui/cardType.js';
 
+import {
+  setupProfile
+} from './ui/profile.js';
+
 
 
 document
@@ -127,6 +131,9 @@ setupTables();
 
 /* Инициализация popup создания карточек */
 setupCreateModal();
+
+/* Инициализация нижнего блока профиля */
+setupProfile();
 
 
 

@@ -21,6 +21,10 @@ import {
   normalizeWikiLinksInEditor
 } from './wikiLinkNormalizer.js';
 
+import {
+  setupWikiLinkPreviews
+} from './wikiLinkPreview.js';
+
 
 export {
   refreshWikiLinks,
@@ -52,6 +56,10 @@ export function setupWikiLinks(
   editor.addEventListener(
     'click',
     handleWikiLinkClick
+  );
+
+  setupWikiLinkPreviews(
+    editor
   );
 }
 
@@ -172,7 +180,8 @@ async function convertLastWikiLink(
     match,
     link: createWikiLinkElement(
       title,
-      findPageByTitle(title)
+      findPageByTitle(title),
+      title
     ),
     selection
   });

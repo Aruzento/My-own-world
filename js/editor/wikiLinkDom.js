@@ -7,7 +7,8 @@ import {
 
 export function createWikiLinkElement(
   title,
-  targetPage = findPageByTitle(title)
+  targetPage = findPageByTitle(title),
+  displayText = title
 ) {
 
   const link =
@@ -28,7 +29,7 @@ export function createWikiLinkElement(
       targetPage.title;
 
     link.textContent =
-      targetPage.title;
+      displayText;
 
   } else {
 
@@ -36,7 +37,7 @@ export function createWikiLinkElement(
       title;
 
     link.textContent =
-      title;
+      displayText;
 
     link.classList.add(
       'is-missing'

@@ -6,6 +6,15 @@ import {
   createLinkFromSelection
 } from './links.js';
 
+import {
+  applyTextColor,
+  runInlineFormattingCommand
+} from './formattingService.js';
+
+import {
+  isSelectionInsidePersistentEditable
+} from './contenteditablePolicy.js';
+
 
 export function setupFloatingToolbar() {
 
@@ -40,7 +49,10 @@ export function setupFloatingToolbar() {
       const text =
         selection.toString().trim();
 
-      if (!text) {
+      if (
+        !text ||
+        !isSelectionInsidePersistentEditable(selection)
+      ) {
 
         toolbar.classList.add(
           'hidden'
@@ -101,10 +113,8 @@ export function setupFloatingToolbar() {
 
       if (command) {
 
-        document.execCommand(
-          command,
-          false,
-          null
+        runInlineFormattingCommand(
+          command
         );
       }
 
@@ -137,9 +147,7 @@ export function setupFloatingToolbar() {
       'input',
       async event => {
 
-        document.execCommand(
-          'foreColor',
-          false,
+        applyTextColor(
           event.target.value
         );
 

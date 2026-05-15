@@ -57,6 +57,10 @@ import {
   applyBlockSystemContract
 } from './blocks/blockContract.js';
 
+import {
+  applyContenteditablePolicy
+} from './contenteditablePolicy.js';
+
 /* ---- */
 
 
@@ -225,10 +229,18 @@ editor.innerHTML =
     parsed.body
   );
 
+applyContenteditablePolicy(
+  editor
+);
+
 const blockContractChanged =
   applyBlockSystemContract(
     editor
   );
+
+applyContenteditablePolicy(
+  editor
+);
 
  restoreAssetImagesWithEditor(
   editor

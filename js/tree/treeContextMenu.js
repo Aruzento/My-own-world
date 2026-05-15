@@ -16,6 +16,14 @@ import {
   refreshCurrentEditorWikiLinks
 } from '../editor/wikiLinks.js';
 
+import {
+  openConfirmPopup
+} from '../ui/confirmPopup.js';
+
+import {
+  setStatus
+} from '../ui/ui.js';
+
 
 /* Находит DOM-элемент контекстного меню дерева */
 const contextMenu =
@@ -77,60 +85,30 @@ export function openTreeContextMenu(
   remove.className =
     'danger';
 
+  remove.dataset.confirmAnchor =
+    'true';
+
 
   /* Обработчик клика по удалению */
   remove.addEventListener(
     'click',
-    async event => {
+    event => {
 
       /* Не даёт клику всплыть выше */
       event.stopPropagation();
 
-      /* Закрывает контекстное меню */
-      closeTreeContextMenu();
-
-      /* Спрашивает подтверждение удаления */
-      const confirmed =
-        confirm(
-          `Удалить "${page.title}" и все дочерние карточки?`
-        );
-
-      /* Если пользователь отменил — выходим */
-      if (!confirmed) return;
-
-      /* Проверяет и запрашивает права на запись */
-      const hasPermission =
-        await ensureWorkspaceWritePermission();
-
-      /* Если прав нет — выходим */
-      if (!hasPermission) return;
-
-      try {
-
-        /* Удаляет страницу и дочерние страницы */
-        await deletePageBranch(
-          page
-        );
-
-        /* Перерисовывает дерево */
-        renderTree();
-
-        /* Обновляет wiki-links в открытой карточке */
-        refreshCurrentEditorWikiLinks();
-
-      } catch (error) {
-
-        /* Показывает ошибку в консоли */
-        console.error(
-          'Не удалось удалить карточку:',
-          error
-        );
-
-        /* Показывает понятное сообщение пользователю */
-        alert(
-          'Не удалось удалить карточку. Переоткрой workspace через кнопку ⊞ и попробуй снова.'
-        );
-      }
+      openConfirmPopup({
+        anchor: remove,
+        title: 'Удалить карточку',
+        message: `Удалить "${page.title}" и все дочерние карточки?`,
+        confirmText: 'Удалить',
+        onConfirm: async () => {
+          await removePageBranch(
+            page,
+            renderTree
+          );
+        }
+      });
     }
   );
 
@@ -159,6 +137,54 @@ export function openTreeContextMenu(
   contextMenu.classList.remove(
     'hidden'
   );
+}
+
+
+async function removePageBranch(
+  page,
+  renderTree
+) {
+
+  closeTreeContextMenu();
+
+  /* Проверяет и запрашивает права на запись после клика по кнопке popup,
+     чтобы File System Access API получил пользовательскую активацию. */
+  const hasPermission =
+    await ensureWorkspaceWritePermission();
+
+  if (!hasPermission) {
+
+    setStatus(
+      'Нет прав на удаление. Открой workspace через кнопку ⊞.'
+    );
+
+    return;
+  }
+
+  try {
+
+    await deletePageBranch(
+      page
+    );
+
+    renderTree();
+    refreshCurrentEditorWikiLinks();
+
+    setStatus(
+      'Карточка удалена'
+    );
+
+  } catch (error) {
+
+    console.error(
+      'Не удалось удалить карточку:',
+      error
+    );
+
+    setStatus(
+      'Не удалось удалить карточку. Переоткрой workspace через кнопку ⊞.'
+    );
+  }
 }
 
 

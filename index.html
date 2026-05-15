@@ -42,6 +42,24 @@
         <div class="tree" id="tree">
 
         </div> <!-- Контейнер дерева страниц -->
+
+        <div class="sidebar-profile">
+          <button
+            class="profile-button"
+            id="profileButton"
+            type="button"
+          >
+            <span class="profile-avatar">
+              <img class="profile-image" alt="">
+              <span class="profile-avatar-fallback">U</span>
+            </span>
+
+            <span class="profile-text">
+              <span class="profile-name">{user.name}</span>
+              <span class="profile-tarif">{user.tarif}</span>
+            </span>
+          </button>
+        </div>
       </aside>
 
       
@@ -53,15 +71,15 @@
           
           <button data-command="bold" title="Жирный">
             B
-          </button> <!-- Кнопка жирного текста через execCommand -->
+          </button> <!-- Кнопка жирного текста через formattingService -->
 
           <button data-command="italic" title="Курсив">
             I
-          </button> <!-- Кнопка курсива через execCommand -->
+          </button> <!-- Кнопка курсива через formattingService -->
 
           <button data-command="underline" title="Подчёркнутый">
             U
-          </button> <!-- Кнопка подчёркивания через execCommand -->
+          </button> <!-- Кнопка подчёркивания через formattingService -->
 
           <div class="toolbar-separator">
           </div> <!-- Визуальный разделитель toolbar -->
@@ -87,11 +105,11 @@
 
           <button data-command="insertUnorderedList" title="Маркированный список">
             •
-          </button> <!-- Создаёт маркированный список через execCommand -->
+          </button> <!-- Создаёт маркированный список через formattingService -->
 
           <button data-command="insertOrderedList" title="Нумерованный список">
             1.
-          </button> <!-- Создаёт нумерованный список через execCommand -->
+          </button> <!-- Создаёт нумерованный список через formattingService -->
 
           <button data-action="link" title="Добавить ссылку">
           🔗

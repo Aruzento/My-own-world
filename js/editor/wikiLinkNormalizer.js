@@ -3,6 +3,10 @@ import {
   refreshWikiLinks
 } from './wikiLinkDom.js';
 
+import {
+  isInsidePersistentEditable
+} from './contenteditablePolicy.js';
+
 
 /* Нормализует все текстовые [[wiki links]] внутри редактора. */
 export function normalizeWikiLinksInEditor(
@@ -97,20 +101,10 @@ function acceptNode(
     return NodeFilter.FILTER_REJECT;
   }
 
-  /* Служебный интерфейс карточки не является пользовательским текстом,
-     поэтому сырой [[...]] внутри него не превращаем в ссылки. */
   if (
-    parent.closest(
-      '.block-actions, .blocks-toolbar, .card-meta, .aliases-meta, .media-box'
+    !isInsidePersistentEditable(
+      parent
     )
-  ) {
-
-    return NodeFilter.FILTER_REJECT;
-  }
-
-  if (
-    parent.closest('[contenteditable="false"]') &&
-    !parent.closest('[contenteditable="true"]')
   ) {
 
     return NodeFilter.FILTER_REJECT;
@@ -228,6 +222,8 @@ function appendWikiLinkOrRawText(
 
   fragment.appendChild(
     createWikiLinkElement(
+      title,
+      undefined,
       title
     )
   );
