@@ -1,3 +1,7 @@
+import {
+  markRuntime
+} from './blockContract.js';
+
 export function ensureBlocksToolbar(
   main
 ) {
@@ -12,9 +16,8 @@ export function ensureBlocksToolbar(
   toolbar.className =
     'blocks-toolbar';
 
-  toolbar.setAttribute(
-    'contenteditable',
-    'false'
+  markRuntime(
+    toolbar
   );
 
   toolbar.innerHTML = `
@@ -54,9 +57,8 @@ export function ensureBlockControls(
   actions.className =
     'block-actions';
 
-  actions.setAttribute(
-    'contenteditable',
-    'false'
+  markRuntime(
+    actions
   );
 
   actions.innerHTML = `

@@ -10,6 +10,10 @@ import {
   openDeletePopup
 } from './blocks/blockPopup.js';
 
+import {
+  markRuntime
+} from './blocks/blockContract.js';
+
 
 let draggedBlock = null;
 let blockDropPlaceholder = null;
@@ -317,9 +321,8 @@ function getBlockDropPlaceholder(
     blockDropPlaceholder.className =
       'block-drop-placeholder';
 
-    blockDropPlaceholder.setAttribute(
-      'contenteditable',
-      'false'
+    markRuntime(
+      blockDropPlaceholder
     );
 
     blockDropPlaceholder.innerHTML = `

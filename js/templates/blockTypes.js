@@ -7,6 +7,7 @@ export function createTextBlock({
     <div
       class="template-block"
       data-block-type="text"
+      data-block-version="1"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -29,6 +30,7 @@ export function createItemsBlock({
     <div
       class="template-block item-set-block"
       data-block-type="items"
+      data-block-version="1"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -37,6 +39,7 @@ export function createItemsBlock({
 
       <button
         class="item-set-add-btn"
+        data-runtime="true"
         type="button"
       >
         + Добавить предмет
@@ -55,6 +58,7 @@ export function createCharacterStatsBlock({
     <div
       class="template-block character-stats-block"
       data-block-type="characterStats"
+      data-block-version="1"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -240,6 +244,7 @@ export function createDndStatsBlock({
     <div
       class="template-block dnd-stats-block"
       data-block-type="dndStats"
+      data-block-version="2"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -321,6 +326,15 @@ export function createDndStatsBlock({
         </div>
 
       </div>
+
+      <label class="dnd-combat-field dnd-analysis-field">
+        <span>Анализ</span>
+        <textarea
+          class="dnd-analysis-input"
+          rows="3"
+          placeholder="Заметки, тактика, особенности"
+        ></textarea>
+      </label>
     </div>
   `;
 }
@@ -352,7 +366,11 @@ export function createTableBlock({
               const rowControls =
                 index === 0
                   ? `
-                    <div class="table-row-controls" contenteditable="false">
+                    <div
+                      class="table-row-controls"
+                      data-runtime="true"
+                      contenteditable="false"
+                    >
 
                       <button
                         class="table-add-row-btn"
@@ -389,6 +407,7 @@ export function createTableBlock({
     <div
       class="template-block table-block"
       data-block-type="table"
+      data-block-version="1"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>

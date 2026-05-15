@@ -517,6 +517,52 @@
 }
 
 
+.dnd-analysis-field {
+
+  margin-top:
+    14px;
+}
+
+
+.dnd-analysis-input {
+
+  min-height:
+    84px;
+
+  resize:
+    vertical;
+
+  padding:
+    10px 12px;
+
+  border:
+    none;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.9);
+
+  font:
+    inherit;
+
+  outline:
+    none;
+}
+
+
+.dnd-analysis-input:focus {
+
+  box-shadow:
+    0 0 0 1px
+    rgba(241,211,142,0.22);
+}
+
+
 .dnd-hitpoints-inputs {
 
   /* Контейнер текущих/максимальных хитов */

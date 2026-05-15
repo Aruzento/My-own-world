@@ -2,6 +2,10 @@ import {
   saveCurrentPage
 } from '../../editor/editor.js';
 
+import {
+  createTableRowControlsHTML
+} from '../../editor/blocks/blockContract.js';
+
 
 export function addRowBelow(
   button
@@ -195,28 +199,7 @@ function createTableCell(
 
 function createRowControlsHTML() {
 
-  return `
-    <div
-      class="table-row-controls"
-      contenteditable="false"
-    >
-      <button
-        class="table-add-row-btn"
-        type="button"
-        title="Добавить строку ниже"
-      >
-        +
-      </button>
-
-      <button
-        class="table-delete-row-btn"
-        type="button"
-        title="Удалить строку"
-      >
-        ×
-      </button>
-    </div>
-  `;
+  return createTableRowControlsHTML();
 }
 
 

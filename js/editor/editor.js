@@ -53,6 +53,10 @@ import {
   renderCustomBlocks
 } from './customBlocks.js';
 
+import {
+  applyBlockSystemContract
+} from './blocks/blockContract.js';
+
 /* ---- */
 
 
@@ -221,6 +225,11 @@ editor.innerHTML =
     parsed.body
   );
 
+const blockContractChanged =
+  applyBlockSystemContract(
+    editor
+  );
+
  restoreAssetImagesWithEditor(
   editor
 );
@@ -237,6 +246,10 @@ if (
 ) {
 
   /* Сохраняет страницу, если при открытии были найдены сырые wiki-links */
+  saveCurrentPage();
+}
+if (blockContractChanged) {
+
   saveCurrentPage();
 }
   renderBacklinks();

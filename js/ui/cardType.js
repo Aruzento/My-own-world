@@ -8,6 +8,10 @@ import {
   renderTree
 } from '../tree/tree.js';
 
+import {
+  markRuntime
+} from '../editor/blocks/blockContract.js';
+
 const CARD_TYPE_LABELS = {
   character: 'Персонаж',
   location: 'Локация',
@@ -121,13 +125,24 @@ function ensureCustomCardType(
 
   if (
     select.nextElementSibling?.classList.contains('card-type-custom')
-  ) return;
+  ) {
+
+    markRuntime(
+      select.nextElementSibling
+    );
+
+    return;
+  }
 
   const custom =
     document.createElement('div');
 
   custom.className =
     'card-type-custom';
+
+  markRuntime(
+    custom
+  );
 
   custom.innerHTML = `
     <button class="card-type-trigger" type="button">
