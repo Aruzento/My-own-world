@@ -1,6 +1,10 @@
 import { state } from '../state.js';
 
 import {
+  parseMarkdown
+} from '../core/markdown.js';
+
+import {
   getImageURL
 } from '../storage/assetStorage.js';
 
@@ -41,6 +45,8 @@ let presentationState = {
 let draggedToken = null;
 let panningMap = null;
 let fogDrawing = null;
+let resizedToken = null;
+let rotatedToken = null;
 let tokenPopupTimer = null;
 let tokenPopupCloseTimer = null;
 let activeTokenPopupToken = null;
@@ -53,6 +59,7 @@ const DEFAULT_GRID_SIZE = 48;
 const DEFAULT_BRUSH_SIZE = 34;
 const TOKEN_DRAG_THRESHOLD = 4;
 const TOKEN_POPUP_DELAY = 420;
+const TOKEN_RESIZE_THRESHOLD = 2;
 
 
 export function setupCampaignMaps(
@@ -96,6 +103,11 @@ export function setupCampaignMaps(
   editor.addEventListener(
     'pointerdown',
     handleMapPointerDown
+  );
+
+  editor.addEventListener(
+    'input',
+    handleMapInput
   );
 
   document.addEventListener(
@@ -287,11 +299,7 @@ function ensureMapControls(
     </div>
 
     <div class="campaign-map-control-group">
-      <button class="campaign-fog-draw-btn" type="button" title="Рисовать туман">●</button>
-      <button class="campaign-fog-erase-btn" type="button" title="Стирать туман">○</button>
-      <button class="campaign-fog-fill-btn" type="button" title="Затуманить всю карту">◼</button>
-      <button class="campaign-fog-clear-btn" type="button" title="Снять туман с карты">□</button>
-      <button class="campaign-brush-size-btn" type="button" title="Размер кисти">◌</button>
+      <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
     </div>
   `;
 
@@ -562,9 +570,37 @@ async function handleMapClick(
 
   if (!map) return;
 
+  const token =
+    event.target.closest('.campaign-map-token');
+
+  if (
+    token &&
+    token.dataset.tokenType === 'object'
+  ) {
+
+    selectMapToken(
+      token
+    );
+  } else if (
+    !event.target.closest('.campaign-map-controls') &&
+    !event.target.closest('.campaign-map-popup')
+  ) {
+
+    clearSelectedMapTokens(
+      map
+    );
+  }
+
   if (
     event.target.closest('.campaign-add-btn')
   ) {
+
+    if (
+      toggleMapPopupForAnchor(
+        event.target.closest('.campaign-add-btn'),
+        'add'
+      )
+    ) return;
 
     openAddKindPopup(
       map,
@@ -602,6 +638,13 @@ async function handleMapClick(
     event.target.closest('.campaign-grid-size-btn')
   ) {
 
+    if (
+      toggleMapPopupForAnchor(
+        event.target.closest('.campaign-grid-size-btn'),
+        'grid-size'
+      )
+    ) return;
+
     openGridSizePopup(
       map,
       event.target.closest('.campaign-grid-size-btn')
@@ -632,62 +675,19 @@ async function handleMapClick(
   }
 
   if (
-    event.target.closest('.campaign-fog-draw-btn')
+    event.target.closest('.campaign-fog-btn')
   ) {
 
-    setFogMode(
+    if (
+      toggleMapPopupForAnchor(
+        event.target.closest('.campaign-fog-btn'),
+        'fog'
+      )
+    ) return;
+
+    openFogPopup(
       map,
-      'draw'
-    );
-
-    await saveAndSync();
-    return;
-  }
-
-  if (
-    event.target.closest('.campaign-fog-erase-btn')
-  ) {
-
-    setFogMode(
-      map,
-      'erase'
-    );
-
-    await saveAndSync();
-    return;
-  }
-
-  if (
-    event.target.closest('.campaign-fog-fill-btn')
-  ) {
-
-    fillFog(
-      map
-    );
-
-    await saveAndSync();
-    return;
-  }
-
-  if (
-    event.target.closest('.campaign-fog-clear-btn')
-  ) {
-
-    clearFog(
-      map
-    );
-
-    await saveAndSync();
-    return;
-  }
-
-  if (
-    event.target.closest('.campaign-brush-size-btn')
-  ) {
-
-    openBrushSizePopup(
-      map,
-      event.target.closest('.campaign-brush-size-btn')
+      event.target.closest('.campaign-fog-btn')
     );
   }
 }
@@ -729,7 +729,8 @@ function openAddKindPopup(
 
   showMapPopup(
     popup,
-    anchor
+    anchor,
+    'add'
   );
 }
 
@@ -811,7 +812,8 @@ function openCardPickerPopup(
   render();
   showMapPopup(
     popup,
-    anchor
+    anchor,
+    `picker-${kind}`
   );
   search.focus();
 }
@@ -1008,12 +1010,13 @@ function openGridSizePopup(
 
   showMapPopup(
     popup,
-    anchor
+    anchor,
+    'grid-size'
   );
 }
 
 
-function openBrushSizePopup(
+function openFogPopup(
   map,
   anchor
 ) {
@@ -1025,9 +1028,56 @@ function openBrushSizePopup(
     getMapPopup();
 
   popup.innerHTML = `
-    <div class="campaign-map-popup-title">Размер кисти</div>
-    <input class="campaign-map-range" type="range" min="12" max="120" step="2" value="${stage.dataset.brushSize || DEFAULT_BRUSH_SIZE}">
+    <div class="campaign-map-popup-title">Туман</div>
+    <div class="campaign-fog-mode-row">
+      <button class="campaign-fog-draw-btn campaign-fog-mode-btn" type="button">
+        <span>●</span>
+        <strong>Кисть</strong>
+      </button>
+      <button class="campaign-fog-erase-btn campaign-fog-mode-btn" type="button">
+        <span>○</span>
+        <strong>Ластик</strong>
+      </button>
+    </div>
+    <label class="campaign-map-range-label">
+      <span>Размер кисти</span>
+      <input class="campaign-map-range" type="range" min="12" max="120" step="2" value="${stage.dataset.brushSize || DEFAULT_BRUSH_SIZE}">
+    </label>
+    <div class="campaign-map-popup-actions campaign-fog-fill-row">
+      <button class="campaign-fog-fill-btn" type="button">Fog all</button>
+      <button class="campaign-fog-clear-btn" type="button">Unfog all</button>
+    </div>
   `;
+
+  popup
+    .querySelector('.campaign-fog-draw-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        setFogMode(
+          map,
+          'draw'
+        );
+        await saveAndSync();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-fog-erase-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        setFogMode(
+          map,
+          'erase'
+        );
+        await saveAndSync();
+      }
+    );
 
   popup
     .querySelector('.campaign-map-range')
@@ -1042,10 +1092,65 @@ function openBrushSizePopup(
       }
     );
 
+  popup
+    .querySelector('.campaign-fog-fill-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        fillFog(
+          map
+        );
+        await saveAndSync();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-fog-clear-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        clearFog(
+          map
+        );
+        await saveAndSync();
+      }
+    );
+
+  updateFogButtons(
+    map
+  );
+
   showMapPopup(
     popup,
-    anchor
+    anchor,
+    'fog'
   );
+}
+
+
+function toggleMapPopupForAnchor(
+  anchor,
+  key
+) {
+
+  const popup =
+    getMapPopup();
+
+  if (
+    popup.dataset.popupKey === key &&
+    popup.dataset.anchorKey === getAnchorKey(anchor) &&
+    !popup.classList.contains('hidden')
+  ) {
+
+    closeMapPopup();
+    return true;
+  }
+
+  return false;
 }
 
 
@@ -1101,8 +1206,17 @@ function getMapPopup() {
 
 function showMapPopup(
   popup,
-  anchor
+  anchor,
+  key = ''
 ) {
+
+  popup.dataset.popupKey =
+    key;
+
+  popup.dataset.anchorKey =
+    getAnchorKey(
+      anchor
+    );
 
   popup.classList.remove(
     'hidden'
@@ -1126,9 +1240,32 @@ function showMapPopup(
 
 function closeMapPopup() {
 
-  document
-    .getElementById('campaignMapPopup')
-    ?.classList.add('hidden');
+  const popup =
+    document.getElementById('campaignMapPopup');
+
+  if (!popup) return;
+
+  popup.classList.add('hidden');
+  popup.dataset.popupKey =
+    '';
+  popup.dataset.anchorKey =
+    '';
+}
+
+
+function getAnchorKey(
+  anchor
+) {
+
+  if (!anchor) return '';
+
+  if (!anchor.dataset.popupAnchorId) {
+
+    anchor.dataset.popupAnchorId =
+      crypto.randomUUID();
+  }
+
+  return anchor.dataset.popupAnchorId;
 }
 
 
@@ -1192,6 +1329,18 @@ async function addMapToken(
         : `Объект ${index}`
     );
 
+  if (!token.dataset.size) {
+
+    token.dataset.size =
+      '1';
+  }
+
+  if (!token.dataset.rotation) {
+
+    token.dataset.rotation =
+      '0';
+  }
+
   setTokenFallbackText(
     token,
     type
@@ -1202,6 +1351,14 @@ async function addMapToken(
   );
 
   positionToken(
+    token
+  );
+
+  applyTokenSize(
+    token
+  );
+
+  applyTokenRotation(
     token
   );
 
@@ -1224,6 +1381,14 @@ async function restoreMapTokens(
   for (const token of tokens) {
 
     positionToken(
+      token
+    );
+
+    applyTokenSize(
+      token
+    );
+
+    applyTokenRotation(
       token
     );
 
@@ -1285,6 +1450,10 @@ async function restoreTokenImage(
       >
     `;
 
+    ensureTokenResizeHandles(
+      token
+    );
+
   } catch (error) {
 
     console.warn(
@@ -1309,6 +1478,92 @@ function setTokenFallbackText(
     type === 'creature'
       ? 'С'
       : 'О';
+
+  ensureTokenResizeHandles(
+    token
+  );
+}
+
+
+function ensureTokenResizeHandles(
+  token
+) {
+
+  if (
+    token.dataset.tokenType !== 'object'
+  ) return;
+
+  if (
+    token.querySelector('.campaign-map-token-resize')
+  ) return;
+
+  ['nw', 'ne', 'sw', 'se'].forEach(corner => {
+
+    const handle =
+      document.createElement('span');
+
+    handle.className =
+      `campaign-map-token-resize is-${corner}`;
+
+    handle.dataset.corner =
+      corner;
+
+    markRuntime(
+      handle
+    );
+
+    token.appendChild(
+      handle
+    );
+  });
+
+  const rotateHandle =
+    document.createElement('span');
+
+  rotateHandle.className =
+    'campaign-map-token-rotate';
+
+  rotateHandle.title =
+    'Повернуть';
+
+  markRuntime(
+    rotateHandle
+  );
+
+  token.appendChild(
+    rotateHandle
+  );
+}
+
+
+function applyTokenSize(
+  token
+) {
+
+  const size =
+    Math.max(
+      0.5,
+      Number(token.dataset.size || 1)
+    );
+
+  token.style.setProperty(
+    '--token-size',
+    String(size)
+  );
+}
+
+
+function applyTokenRotation(
+  token
+) {
+
+  const rotation =
+    Number(token.dataset.rotation || 0);
+
+  token.style.setProperty(
+    '--token-rotation',
+    `${rotation}deg`
+  );
 }
 
 
@@ -1361,6 +1616,38 @@ function positionToken(
 
   token.title =
     token.dataset.name || '';
+}
+
+
+function selectMapToken(
+  token
+) {
+
+  const map =
+    token.closest('.campaign-map-document');
+
+  clearSelectedMapTokens(
+    map
+  );
+
+  token.classList.add(
+    'is-selected'
+  );
+}
+
+
+function clearSelectedMapTokens(
+  map
+) {
+
+  map
+    ?.querySelectorAll('.campaign-map-token.is-selected')
+    .forEach(token => {
+
+      token.classList.remove(
+        'is-selected'
+      );
+    });
 }
 
 
@@ -1712,14 +1999,24 @@ function updateFogButtons(
     stage?.dataset.tool || stage?.dataset.fogMode || 'draw';
 
   map
-    .querySelector('.campaign-fog-draw-btn')
+    .querySelector('.campaign-fog-btn')
+    ?.classList.toggle(
+      'is-active',
+      mode === 'draw' ||
+      mode === 'erase'
+    );
+
+  document
+    .getElementById('campaignMapPopup')
+    ?.querySelector('.campaign-fog-draw-btn')
     ?.classList.toggle(
       'is-active',
       mode === 'draw'
     );
 
-  map
-    .querySelector('.campaign-fog-erase-btn')
+  document
+    .getElementById('campaignMapPopup')
+    ?.querySelector('.campaign-fog-erase-btn')
     ?.classList.toggle(
       'is-active',
       mode === 'erase'
@@ -1850,6 +2147,38 @@ function handleMapPointerDown(
   event
 ) {
 
+  const rotateHandle =
+    event.target.closest('.campaign-map-token-rotate');
+
+  if (
+    rotateHandle &&
+    event.button === 0
+  ) {
+
+    startTokenRotate(
+      event,
+      rotateHandle.closest('.campaign-map-token')
+    );
+
+    return;
+  }
+
+  const resizeHandle =
+    event.target.closest('.campaign-map-token-resize');
+
+  if (
+    resizeHandle &&
+    event.button === 0
+  ) {
+
+    startTokenResize(
+      event,
+      resizeHandle.closest('.campaign-map-token')
+    );
+
+    return;
+  }
+
   const token =
     event.target.closest('.campaign-map-token');
 
@@ -1857,6 +2186,22 @@ function handleMapPointerDown(
     token &&
     event.button === 0
   ) {
+
+    const stage =
+      token.closest('.campaign-map-stage');
+
+    if (
+      stage?.dataset.tool === 'draw' ||
+      stage?.dataset.tool === 'erase'
+    ) {
+
+      startFogDraw(
+        event,
+        stage
+      );
+
+      return;
+    }
 
     startTokenDrag(
       event,
@@ -1890,6 +2235,39 @@ function handleMapPointerDown(
     event,
     stage
   );
+}
+
+
+async function handleMapInput(
+  event
+) {
+
+  if (
+    !event.target.closest('.campaign-map-title')
+  ) return;
+
+  syncCurrentMapTitle();
+}
+
+
+function syncCurrentMapTitle() {
+
+  if (
+    !isCampaignMapRecord(
+      state.currentPage
+    )
+  ) return;
+
+  const titleElement =
+    document.querySelector(
+      '#editorArea .campaign-map-title'
+    );
+
+  if (!titleElement) return;
+
+  state.currentPage.title =
+    titleElement.textContent.trim() ||
+    'Новая карта';
 }
 
 
@@ -1970,6 +2348,8 @@ function scheduleTokenPopup(
 
   if (
     draggedToken ||
+    resizedToken ||
+    rotatedToken ||
     token.classList.contains('is-dragging')
   ) return;
 
@@ -2019,6 +2399,8 @@ function openTokenPopup(
   if (
     !token.isConnected ||
     draggedToken ||
+    resizedToken ||
+    rotatedToken ||
     token.classList.contains('is-dragging')
   ) return;
 
@@ -2032,10 +2414,11 @@ function openTokenPopup(
     token.dataset.presentationHidden === 'true';
 
   popup.innerHTML = `
-    <button class="campaign-token-popup-delete" type="button">Удалить</button>
-    <button class="campaign-token-popup-hide" type="button">
-      ${hidden ? 'Показать' : 'Скрыть'}
+    <button class="campaign-token-popup-icon campaign-token-popup-delete" type="button" title="Удалить">×</button>
+    <button class="campaign-token-popup-icon campaign-token-popup-hide" type="button" title="${hidden ? 'Показать' : 'Скрыть'}">
+      ${getTokenVisibilityIcon(hidden)}
     </button>
+    <button class="campaign-token-popup-icon campaign-token-popup-duplicate" type="button" title="Дублировать">x2</button>
   `;
 
   popup
@@ -2068,6 +2451,21 @@ function openTokenPopup(
       }
     );
 
+  popup
+    .querySelector('.campaign-token-popup-duplicate')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await duplicateTokenAndPage(
+          token
+        );
+      }
+    );
+
   popup.classList.remove(
     'hidden'
   );
@@ -2077,8 +2475,8 @@ function openTokenPopup(
     token,
     {
       gap: 10,
-      fallbackWidth: 150,
-      fallbackHeight: 92
+      fallbackWidth: 132,
+      fallbackHeight: 48
     }
   );
 }
@@ -2124,6 +2522,30 @@ function getTokenPopup() {
   );
 
   return popup;
+}
+
+
+function getTokenVisibilityIcon(
+  hidden
+) {
+
+  if (!hidden) {
+
+    return `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M4 4l16 16"></path>
+      </svg>
+    `;
+  }
+
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+      <circle cx="12" cy="12" r="3"></circle>
+    </svg>
+  `;
 }
 
 
@@ -2191,6 +2613,273 @@ async function deleteTokenAndPage(
   token.remove();
   renderTree();
   await saveAndSync();
+}
+
+
+async function duplicateTokenAndPage(
+  token
+) {
+
+  const tokenType =
+    getNormalizedTokenType(
+      token
+    );
+
+  const page =
+    state.pages.find(candidate =>
+      candidate.id === token.dataset.pageId
+    );
+
+  if (!page) return;
+
+  refreshPageMetaFromContent(
+    page
+  );
+
+  if (
+    isCampaignMapRecord(
+      page
+    )
+  ) {
+
+    console.warn(
+      'Дублирование токена отменено: дочерняя карточка распознана как карта.',
+      page
+    );
+
+    setStatus(
+      'Нельзя дублировать: карточка токена повреждена и распознана как карта'
+    );
+
+    closeTokenPopup();
+    return;
+  }
+
+  closeTokenPopup();
+
+  try {
+
+    const canWrite =
+      await ensureWorkspaceWritePermission();
+
+    if (!canWrite) {
+
+      throw new Error(
+        'Нет прав на изменение workspace'
+      );
+    }
+
+    const duplicate =
+      await duplicatePageAsChild(
+        page,
+        page.parent
+      );
+
+    await normalizeDuplicatedTokenPage(
+      duplicate,
+      tokenType
+    );
+
+    const map =
+      token.closest('.campaign-map-document');
+
+    await addMapTokenFromExisting(
+      map,
+      token,
+      duplicate
+    );
+
+    renderTree();
+    await saveAndSync();
+
+  } catch (error) {
+
+    console.error(
+      'Не удалось дублировать токен:',
+      error
+    );
+
+    setStatus(
+      'Не удалось дублировать токен'
+    );
+  }
+}
+
+
+function refreshPageMetaFromContent(
+  page
+) {
+
+  const parsed =
+    parseMarkdown(
+      page.content || ''
+    );
+
+  page.template =
+    parsed.template;
+
+  page.type =
+    parsed.type;
+
+  page.tags =
+    parsed.tags;
+
+  page.aliases =
+    parsed.aliases;
+}
+
+
+async function addMapTokenFromExisting(
+  map,
+  sourceToken,
+  page
+) {
+
+  const layer =
+    map?.querySelector('.campaign-map-object-layer');
+
+  if (!layer || !page) return;
+
+  const tokenType =
+    getNormalizedTokenType(
+      sourceToken
+    );
+
+  const token =
+    document.createElement('button');
+
+  token.className =
+    `campaign-map-token is-${tokenType}`;
+
+  token.type =
+    'button';
+
+  token.dataset.tokenId =
+    crypto.randomUUID();
+
+  token.dataset.tokenType =
+    tokenType;
+
+  token.dataset.pageId =
+    page.id;
+
+  token.dataset.name =
+    page.title || sourceToken.dataset.name || '';
+
+  token.dataset.x =
+    String(
+      clamp(
+        Number(sourceToken.dataset.x || 50) + 2,
+        0,
+        100
+      )
+    );
+
+  token.dataset.y =
+    String(
+      clamp(
+        Number(sourceToken.dataset.y || 50) + 2,
+        0,
+        100
+      )
+    );
+
+  token.dataset.size =
+    sourceToken.dataset.size || '1';
+
+  token.dataset.rotation =
+    sourceToken.dataset.rotation || '0';
+
+  if (sourceToken.dataset.imageAsset) {
+
+    token.dataset.imageAsset =
+      sourceToken.dataset.imageAsset;
+  }
+
+  setTokenFallbackText(
+    token,
+    token.dataset.tokenType
+  );
+
+  layer.appendChild(
+    token
+  );
+
+  positionToken(
+    token
+  );
+
+  applyTokenSize(
+    token
+  );
+
+  applyTokenRotation(
+    token
+  );
+
+  await restoreTokenImage(
+    token
+  );
+}
+
+
+function getNormalizedTokenType(
+  token
+) {
+
+  return token?.dataset.tokenType === 'object'
+    ? 'object'
+    : 'creature';
+}
+
+
+async function normalizeDuplicatedTokenPage(
+  page,
+  tokenType
+) {
+
+  if (!page) return;
+
+  page.template =
+    'card';
+
+  page.type =
+    tokenType;
+
+  page.tags =
+    [
+      ...new Set([
+        'card',
+        ...(page.tags || []).filter(tag =>
+          tag !== 'campaign-map' &&
+          tag !== 'campaignmap'
+        ),
+        tokenType
+      ])
+    ];
+
+  page.content =
+    page.content.replace(
+      /^---[\s\S]*?---/,
+      `---
+id: ${page.id}
+parent: ${page.parent ?? 'null'}
+order: ${page.order ?? Date.now()}
+tags: [${page.tags.join(', ')}]
+template: card
+type: ${tokenType}
+aliases: [${(page.aliases || []).join(', ')}]
+---`
+    );
+
+  const writable =
+    await page.handle.createWritable();
+
+  await writable.write(
+    page.content
+  );
+
+  await writable.close();
 }
 
 
@@ -2368,6 +3057,20 @@ function handleDocumentPointerMove(
   event
 ) {
 
+  if (rotatedToken) {
+
+    rotateTokenToPointer(
+      event
+    );
+  }
+
+  if (resizedToken) {
+
+    resizeTokenToPointer(
+      event
+    );
+  }
+
   if (draggedToken) {
 
     moveTokenToPointer(
@@ -2392,6 +3095,32 @@ function handleDocumentPointerMove(
 
 
 async function handleDocumentPointerUp() {
+
+  if (rotatedToken) {
+
+    const shouldSave =
+      clearRotatedToken(
+        true
+      );
+
+    if (shouldSave) {
+
+      await saveAndSync();
+    }
+  }
+
+  if (resizedToken) {
+
+    const shouldSave =
+      clearResizedToken(
+        true
+      );
+
+    if (shouldSave) {
+
+      await saveAndSync();
+    }
+  }
 
   if (draggedToken) {
 
@@ -2429,6 +3158,267 @@ async function handleDocumentPointerUp() {
 
     await saveAndSync();
   }
+}
+
+
+function startTokenResize(
+  event,
+  token
+) {
+
+  if (!token) return;
+
+  const stage =
+    token.closest('.campaign-map-stage');
+
+  if (
+    stage?.dataset.tool === 'draw' ||
+    stage?.dataset.tool === 'erase'
+  ) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  closeTokenPopup();
+
+  selectMapToken(
+    token
+  );
+
+  const rect =
+    token.getBoundingClientRect();
+
+  resizedToken = {
+    token,
+    stage,
+    corner: event.target.dataset.corner || 'se',
+    startX: event.clientX,
+    startY: event.clientY,
+    startSize: Math.max(
+      0.5,
+      Number(token.dataset.size || 1)
+    ),
+    startPixelSize: Math.max(
+      rect.width,
+      rect.height,
+      1
+    ),
+    moved: false
+  };
+
+  token.classList.add(
+    'is-resizing'
+  );
+}
+
+
+function startTokenRotate(
+  event,
+  token
+) {
+
+  if (!token) return;
+
+  const stage =
+    token.closest('.campaign-map-stage');
+
+  if (
+    stage?.dataset.tool === 'draw' ||
+    stage?.dataset.tool === 'erase'
+  ) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  closeTokenPopup();
+
+  selectMapToken(
+    token
+  );
+
+  const rect =
+    token.getBoundingClientRect();
+
+  const centerX =
+    rect.left + rect.width / 2;
+
+  const centerY =
+    rect.top + rect.height / 2;
+
+  rotatedToken = {
+    token,
+    centerX,
+    centerY,
+    startAngle: getPointerAngle(
+      event,
+      centerX,
+      centerY
+    ),
+    startRotation: Number(token.dataset.rotation || 0),
+    moved: false
+  };
+
+  token.classList.add(
+    'is-rotating'
+  );
+}
+
+
+function rotateTokenToPointer(
+  event
+) {
+
+  const angle =
+    getPointerAngle(
+      event,
+      rotatedToken.centerX,
+      rotatedToken.centerY
+    );
+
+  const rotation =
+    normalizeDegrees(
+      rotatedToken.startRotation +
+      angle -
+      rotatedToken.startAngle
+    );
+
+  if (
+    !rotatedToken.moved &&
+    Math.abs(rotation - rotatedToken.startRotation) < 1
+  ) return;
+
+  rotatedToken.moved =
+    true;
+
+  rotatedToken.token.dataset.rotation =
+    String(rotation);
+
+  applyTokenRotation(
+    rotatedToken.token
+  );
+
+  syncPresentation();
+}
+
+
+function clearRotatedToken(
+  keepMovedState
+) {
+
+  if (!rotatedToken) return false;
+
+  const moved =
+    rotatedToken.moved;
+
+  rotatedToken.token.classList.remove(
+    'is-rotating'
+  );
+
+  rotatedToken =
+    null;
+
+  return keepMovedState && moved;
+}
+
+
+function resizeTokenToPointer(
+  event
+) {
+
+  const distance =
+    Math.hypot(
+      event.clientX - resizedToken.startX,
+      event.clientY - resizedToken.startY
+    );
+
+  if (
+    !resizedToken.moved &&
+    distance < TOKEN_RESIZE_THRESHOLD
+  ) return;
+
+  resizedToken.moved =
+    true;
+
+  const delta =
+    getResizeDelta(
+      event
+    );
+
+  const nextSize =
+    clamp(
+      resizedToken.startSize *
+      ((resizedToken.startPixelSize + delta) / resizedToken.startPixelSize),
+      0.5,
+      8
+    );
+
+  resizedToken.token.dataset.size =
+    nextSize.toFixed(3);
+
+  applyTokenSize(
+    resizedToken.token
+  );
+
+  syncPresentation();
+}
+
+
+function getResizeDelta(
+  event
+) {
+
+  const dx =
+    event.clientX - resizedToken.startX;
+
+  const dy =
+    event.clientY - resizedToken.startY;
+
+  switch (resizedToken.corner) {
+
+    case 'nw':
+      return Math.max(
+        -dx,
+        -dy
+      );
+
+    case 'ne':
+      return Math.max(
+        dx,
+        -dy
+      );
+
+    case 'sw':
+      return Math.max(
+        -dx,
+        dy
+      );
+
+    default:
+      return Math.max(
+        dx,
+        dy
+      );
+  }
+}
+
+
+function clearResizedToken(
+  keepMovedState
+) {
+
+  if (!resizedToken) return false;
+
+  const moved =
+    resizedToken.moved;
+
+  resizedToken.token.classList.remove(
+    'is-resizing'
+  );
+
+  resizedToken =
+    null;
+
+  return keepMovedState && moved;
 }
 
 
@@ -3039,6 +4029,18 @@ function syncPresentation() {
     .querySelectorAll('[data-runtime="true"]')
     .forEach(element => element.remove());
 
+  clone
+    .querySelectorAll('.campaign-map-token')
+    .forEach(token => {
+
+      token.classList.remove(
+        'is-selected',
+        'is-dragging',
+        'is-resizing',
+        'is-rotating'
+      );
+    });
+
   const viewport =
     clone.querySelector('.campaign-map-viewport');
 
@@ -3235,18 +4237,20 @@ function getPresentationCSS() {
         var(--campaign-grid-size, 48px)
         var(--campaign-grid-size, 48px);
       pointer-events: none;
-      z-index: 2;
+      z-index: 3;
     }
 
     .campaign-map-object-layer {
-      z-index: 3;
+      pointer-events: none;
     }
 
     .campaign-map-token {
       position: absolute;
-      transform: translate(-50%, -50%);
-      width: var(--campaign-grid-size, 48px);
-      height: var(--campaign-grid-size, 48px);
+      transform: translate(-50%, -50%) rotate(var(--token-rotation, 0deg));
+      z-index: 4;
+      pointer-events: auto;
+      width: calc(var(--campaign-grid-size, 48px) * var(--token-size, 1));
+      height: calc(var(--campaign-grid-size, 48px) * var(--token-size, 1));
       border-radius: 50%;
       border: 2px solid rgba(255,255,255,0.86);
       background: #f1d38e;
@@ -3255,8 +4259,10 @@ function getPresentationCSS() {
     }
 
     .campaign-map-token.is-object {
-      border-radius: 10px;
-      background: #d8d8d8;
+      z-index: 2;
+      border-radius: 0;
+      border-color: transparent;
+      background: transparent;
       color: #1d1d1d;
     }
 
@@ -3272,11 +4278,16 @@ function getPresentationCSS() {
       object-fit: cover;
     }
 
+    .campaign-map-token.is-object .campaign-map-token-image {
+      border-radius: 0;
+      object-fit: contain;
+    }
+
     .campaign-map-fog-image {
       width: 100%;
       height: 100%;
       object-fit: fill;
-      z-index: 4;
+      z-index: 5;
       pointer-events: none;
     }
   `;
@@ -3303,6 +4314,8 @@ async function saveAndSync() {
 
   if (saveCurrentPageCallback) {
 
+    syncCurrentMapTitle();
+
     await saveCurrentPageCallback();
   }
 
@@ -3322,5 +4335,28 @@ function clamp(
       min,
       value
     )
+  );
+}
+
+
+function getPointerAngle(
+  event,
+  centerX,
+  centerY
+) {
+
+  return Math.atan2(
+    event.clientY - centerY,
+    event.clientX - centerX
+  ) * 180 / Math.PI;
+}
+
+
+function normalizeDegrees(
+  value
+) {
+
+  return Math.round(
+    ((value % 360) + 360) % 360
   );
 }

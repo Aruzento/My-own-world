@@ -54,6 +54,19 @@ export async function saveCurrentPage(
 
   if (!state.currentPage) return;
 
+  if (
+    isCampaignMapEditorMismatch(
+      editor
+    )
+  ) {
+
+    console.warn(
+      'Autosave skipped: current page and campaign map editor state are out of sync.'
+    );
+
+    return;
+  }
+
   const tags =
     state.currentPage.tags || [];
 
@@ -65,6 +78,14 @@ export async function saveCurrentPage(
 
   const type =
     state.currentPage.type || 'note';
+
+  const titleElement =
+    editor.querySelector('h1');
+
+  state.currentPage.title =
+    titleElement
+      ? titleElement.textContent.trim()
+      : 'Без названия';
 
   const content =
 `---
@@ -79,14 +100,6 @@ aliases: [${aliases.join(', ')}]
 
 ${getSerializedEditorHTML(editor)}
 `;
-
-  const titleElement =
-    editor.querySelector('h1');
-
-  state.currentPage.title =
-    titleElement
-      ? titleElement.textContent.trim()
-      : 'Без названия';
 
   const writable =
     await state.currentPage.handle
@@ -108,6 +121,23 @@ ${getSerializedEditorHTML(editor)}
   renderTree();
 
   syncCampaignMapPresentation();
+}
+
+
+function isCampaignMapEditorMismatch(
+  editor
+) {
+
+  const editorHasMap =
+    Boolean(
+      editor.querySelector('.campaign-map-document')
+    );
+
+  const currentIsMap =
+    state.currentPage?.template === 'campaignMap' ||
+    state.currentPage?.type === 'campaignMap';
+
+  return editorHasMap !== currentIsMap;
 }
 
 

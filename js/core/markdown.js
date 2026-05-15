@@ -1,25 +1,33 @@
 export function parseMarkdown(content) {
 
+  const frontMatterMatch =
+    content.match(/^---\s*([\s\S]*?)\s*---/);
+
+  const frontMatter =
+    frontMatterMatch
+      ? frontMatterMatch[1]
+      : content;
+
   const idMatch =
-    content.match(/id:\s*(.*)/i);
+    frontMatter.match(/^id:\s*(.*)$/im);
 
   const parentMatch =
-    content.match(/parent:\s*(.*)/i);
+    frontMatter.match(/^parent:\s*(.*)$/im);
 
   const orderMatch =
-    content.match(/order:\s*(.*)/i);
+    frontMatter.match(/^order:\s*(.*)$/im);
 
   const tagsMatch =
-    content.match(/tags:\s*\[(.*?)\]/i);
+    frontMatter.match(/^tags:\s*\[(.*?)\]/im);
 
   const templateMatch =
-  content.match(/template:\s*(.*)/i);
+  frontMatter.match(/^template:\s*(.*)$/im);
 
   const typeMatch =
-  content.match(/type:\s*(.*)/i);
+  frontMatter.match(/^type:\s*(.*)$/im);
 
   const aliasesMatch =
-  content.match(/aliases:\s*\[(.*?)\]/i);
+  frontMatter.match(/^aliases:\s*\[(.*?)\]/im);
 
   const template =
   templateMatch
@@ -88,18 +96,19 @@ if (
 
   const body =
     content
-      .replace(/---[\s\S]*?---/, '')
+      .replace(/^---[\s\S]*?---/, '')
       .trim();
 
 
   const titleMatch =
-    body.match(/<h1[^>]*>(.*?)<\/h1>/i);
+    body.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
 
 
   const title =
     titleMatch
       ? titleMatch[1]
           .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
           .trim()
       : 'Без названия';
 

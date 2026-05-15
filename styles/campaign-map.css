@@ -198,6 +198,25 @@
 }
 
 
+.campaign-map-controls .campaign-fog-btn {
+
+  width:
+    auto;
+
+  min-width:
+    58px;
+
+  padding:
+    0 10px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+}
+
+
 .campaign-map-stage {
 
   position:
@@ -426,8 +445,8 @@
 
 .campaign-map-object-layer {
 
-  z-index:
-    4;
+  pointer-events:
+    none;
 }
 
 
@@ -449,11 +468,14 @@
   position:
     absolute;
 
+  z-index:
+    4;
+
   width:
-    var(--campaign-grid-size);
+    calc(var(--campaign-grid-size) * var(--token-size, 1));
 
   height:
-    var(--campaign-grid-size);
+    calc(var(--campaign-grid-size) * var(--token-size, 1));
 
   padding:
     0;
@@ -477,6 +499,9 @@
   background:
     rgba(241,211,142,0.94);
 
+  appearance:
+    none;
+
   color:
     rgba(32,26,16,0.96);
 
@@ -489,8 +514,12 @@
   cursor:
     grab;
 
+  pointer-events:
+    auto;
+
   transform:
-    translate(-50%, -50%);
+    translate(-50%, -50%)
+    rotate(var(--token-rotation, 0deg));
 
   box-shadow:
     0 10px 24px rgba(0,0,0,0.28);
@@ -503,14 +532,24 @@
 
 .campaign-map-token.is-object {
 
+  z-index:
+    2;
+
   border-radius:
-    10px;
+    0;
 
   background:
-    rgba(232,232,232,0.92);
+    transparent;
 
   color:
     rgba(24,24,24,0.96);
+
+  border:
+    2px solid
+    transparent;
+
+  box-shadow:
+    none;
 }
 
 
@@ -522,6 +561,23 @@
 }
 
 
+.campaign-map-token.is-object:hover {
+
+  box-shadow:
+    none;
+}
+
+
+.campaign-map-token.is-object.is-selected {
+
+  border-color:
+    rgba(241,211,142,0.96);
+
+  box-shadow:
+    0 0 0 3px rgba(241,211,142,0.18);
+}
+
+
 .campaign-map-token.is-dragging {
 
   cursor:
@@ -529,7 +585,24 @@
 
   transform:
     translate(-50%, -50%)
+    rotate(var(--token-rotation, 0deg))
     scale(1.08);
+}
+
+
+.campaign-map-stage[data-tool="draw"] .campaign-map-token,
+.campaign-map-stage[data-tool="erase"] .campaign-map-token {
+
+  cursor:
+    none;
+}
+
+
+.campaign-map-token.is-resizing,
+.campaign-map-token.is-rotating {
+
+  cursor:
+    nwse-resize;
 }
 
 
@@ -559,6 +632,174 @@
 }
 
 
+.campaign-map-token.is-object .campaign-map-token-image {
+
+  object-fit:
+    contain;
+
+  border-radius:
+    0;
+}
+
+
+.campaign-map-token-resize {
+
+  position:
+    absolute;
+
+  right:
+    auto;
+
+  bottom:
+    auto;
+
+  width:
+    12px;
+
+  height:
+    12px;
+
+  display:
+    none;
+
+  border:
+    2px solid
+    rgba(38,31,18,0.92);
+
+  border-radius:
+    4px;
+
+  background:
+    rgba(241,211,142,0.96);
+
+  cursor:
+    nwse-resize;
+}
+
+
+.campaign-map-token-rotate {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    -30px;
+
+  width:
+    14px;
+
+  height:
+    14px;
+
+  display:
+    none;
+
+  border:
+    2px solid
+    rgba(38,31,18,0.92);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,248,230,0.98);
+
+  cursor:
+    grab;
+
+  transform:
+    translateX(-50%);
+}
+
+
+.campaign-map-token-rotate::before {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    100%;
+
+  width:
+    1px;
+
+  height:
+    14px;
+
+  background:
+    rgba(241,211,142,0.82);
+}
+
+
+.campaign-map-token-resize.is-nw {
+
+  left:
+    -7px;
+
+  top:
+    -7px;
+}
+
+
+.campaign-map-token-resize.is-ne {
+
+  right:
+    -7px;
+
+  top:
+    -7px;
+
+  cursor:
+    nesw-resize;
+}
+
+
+.campaign-map-token-resize.is-sw {
+
+  left:
+    -7px;
+
+  bottom:
+    -7px;
+
+  cursor:
+    nesw-resize;
+}
+
+
+.campaign-map-token-resize.is-se {
+
+  right:
+    -7px;
+
+  bottom:
+    -7px;
+}
+
+
+.campaign-map-token.is-object.is-selected .campaign-map-token-resize {
+
+  display:
+    block;
+}
+
+
+.campaign-map-token.is-object.is-selected .campaign-map-token-rotate {
+
+  display:
+    block;
+}
+
+
 .campaign-token-popup {
 
   position:
@@ -568,13 +809,16 @@
     10009;
 
   width:
-    150px;
+    auto;
 
   padding:
     8px;
 
   display:
     grid;
+
+  grid-template-columns:
+    repeat(3, 34px);
 
   gap:
     6px;
@@ -601,8 +845,26 @@
 
 .campaign-token-popup button {
 
+  width:
+    34px;
+
+  height:
+    34px;
+
   min-height:
-    30px;
+    34px;
+
+  padding:
+    0;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
 
   border:
     none;
@@ -618,6 +880,40 @@
 
   cursor:
     pointer;
+
+  font-size:
+    14px;
+
+  font-weight:
+    800;
+
+  line-height:
+    1;
+}
+
+
+.campaign-token-popup svg {
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    2;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
 }
 
 
@@ -691,6 +987,19 @@
 }
 
 
+.campaign-map-popup[data-popup-key="fog"] {
+
+  width:
+    300px;
+
+  padding:
+    14px;
+
+  gap:
+    12px;
+}
+
+
 .campaign-map-popup-title {
 
   color:
@@ -705,6 +1014,7 @@
 
 
 .campaign-map-popup-option,
+.campaign-fog-mode-row button,
 .campaign-map-popup-actions button {
 
   min-height:
@@ -731,6 +1041,7 @@
 
 
 .campaign-map-popup-option:hover,
+.campaign-fog-mode-row button:hover,
 .campaign-map-popup-actions button:hover {
 
   background:
@@ -746,6 +1057,13 @@
 
   width:
     100%;
+}
+
+
+.campaign-map-range {
+
+  accent-color:
+    rgb(241,211,142);
 }
 
 
@@ -842,6 +1160,110 @@
 
   gap:
     6px;
+}
+
+
+.campaign-fog-mode-row,
+.campaign-fog-fill-row {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    8px;
+}
+
+
+.campaign-fog-mode-btn {
+
+  min-height:
+    58px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  gap:
+    4px;
+
+  padding:
+    8px;
+}
+
+
+.campaign-fog-mode-btn span {
+
+  width:
+    24px;
+
+  height:
+    24px;
+
+  display:
+    inline-grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.92);
+
+  font-size:
+    15px;
+}
+
+
+.campaign-fog-mode-btn strong {
+
+  font-size:
+    12px;
+
+  font-weight:
+    680;
+}
+
+
+.campaign-fog-mode-row button.is-active {
+
+  background:
+    rgba(241,211,142,0.2);
+
+  color:
+    rgba(255,248,230,0.98);
+}
+
+
+.campaign-fog-fill-row button {
+
+  min-height:
+    34px;
+}
+
+
+.campaign-map-range-label {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,255,255,0.7);
+
+  font-size:
+    12px;
 }
 
 

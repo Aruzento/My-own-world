@@ -33,8 +33,11 @@ import {
   updatePageTreePosition
 } from '../storage/storage.js';
 
+const COLLAPSED_TREE_STORAGE_KEY =
+  'my-own-world:collapsed-tree-pages';
+
 const collapsedPages =
-  new Set();
+  loadCollapsedPages();
 
 const draggedPageState = {
   id: null,
@@ -74,6 +77,10 @@ export function renderFilteredTree(
     );
   });
 
+  pruneCollapsedPages(
+    pageMap
+  );
+
 
   const rootPages = [];
 
@@ -112,4 +119,85 @@ export function renderFilteredTree(
   renderTree
 );
   });
+
+  saveCollapsedPages();
+}
+
+
+function loadCollapsedPages() {
+
+  try {
+
+    const value =
+      localStorage.getItem(
+        COLLAPSED_TREE_STORAGE_KEY
+      );
+
+    const ids =
+      JSON.parse(value || '[]');
+
+    return new Set(
+      Array.isArray(ids)
+        ? ids.filter(Boolean)
+        : []
+    );
+
+  } catch (error) {
+
+    console.warn(
+      'Не удалось восстановить свернутые ветки дерева:',
+      error
+    );
+
+    return new Set();
+  }
+}
+
+
+function saveCollapsedPages() {
+
+  try {
+
+    localStorage.setItem(
+      COLLAPSED_TREE_STORAGE_KEY,
+      JSON.stringify(
+        [...collapsedPages]
+      )
+    );
+
+  } catch (error) {
+
+    console.warn(
+      'Не удалось сохранить свернутые ветки дерева:',
+      error
+    );
+  }
+}
+
+
+function pruneCollapsedPages(
+  pageMap
+) {
+
+  let changed =
+    false;
+
+  collapsedPages.forEach(pageId => {
+
+    if (
+      pageMap.has(pageId)
+    ) return;
+
+    collapsedPages.delete(
+      pageId
+    );
+
+    changed =
+      true;
+  });
+
+  if (changed) {
+
+    saveCollapsedPages();
+  }
 }
