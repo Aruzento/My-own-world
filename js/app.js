@@ -15,6 +15,7 @@ import {
 /* Импорт рендера дерева страниц */
 import {
   renderTree,
+  restoreWorkspaceTreeExpansionState,
 } from './tree/tree.js';
 
 
@@ -97,6 +98,8 @@ document
       /* Загружает все страницы workspace */
       await loadWorkspace();
 
+      await restoreWorkspaceTreeExpansionState();
+
       /* Перерисовывает дерево */
       renderTree();
 
@@ -158,6 +161,8 @@ renderEmptyEditor();
 
   /* Загружает страницы */
   await loadWorkspace();
+
+  await restoreWorkspaceTreeExpansionState();
 
   /* Рендерит дерево */
   renderTree();

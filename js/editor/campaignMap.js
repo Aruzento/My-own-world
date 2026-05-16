@@ -1189,15 +1189,15 @@ function openShapesPopup(
     <div class="campaign-map-popup-title">Фигуры</div>
     <div class="campaign-shape-picker">
       <button class="campaign-shape-option" type="button" data-shape="square">
-        <span>□</span>
+        <span class="campaign-shape-icon is-square"></span>
         <strong>Квадрат</strong>
       </button>
       <button class="campaign-shape-option" type="button" data-shape="triangle">
-        <span>△</span>
+        <span class="campaign-shape-icon is-triangle"></span>
         <strong>Треугольник</strong>
       </button>
       <button class="campaign-shape-option" type="button" data-shape="circle">
-        <span>○</span>
+        <span class="campaign-shape-icon is-circle"></span>
         <strong>Круг</strong>
       </button>
     </div>

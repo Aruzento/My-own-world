@@ -16,13 +16,16 @@ import {
   setupTreeDragAndDrop
 } from './treeDragDrop.js';
 
+import {
+  getTreePageKeys
+} from './treeKeys.js';
+
 
 export function renderTreePage(
   page,
   container,
   level,
   collapsedPages,
-  expandedPages,
   draggedPageState,
   renderTree,
   saveTreeExpansionState
@@ -53,14 +56,15 @@ export function renderTreePage(
     &&
     page.children.length > 0;
 
-  const pageKey =
-    getTreePageKey(
+  const pageKeys =
+    getTreePageKeys(
       page
     );
 
   const isCollapsed =
-    collapsedPages.has(pageKey) ||
-    isCollapsed;
+    pageKeys.some(pageKey =>
+      collapsedPages.has(pageKey)
+    );
 
 
   const toggle =
@@ -92,31 +96,21 @@ export function renderTreePage(
         isCollapsed
       ) {
 
-        collapsedPages.delete(
-          page.id
-        );
+        pageKeys.forEach(pageKey => {
 
-        collapsedPages.delete(
-          pageKey
-        );
-
-        expandedPages.add(
-          pageKey
-        );
+          collapsedPages.delete(
+            pageKey
+          );
+        });
 
       } else {
 
-        collapsedPages.add(
-          pageKey
-        );
+        pageKeys.forEach(pageKey => {
 
-        expandedPages.delete(
-          page.id
-        );
-
-        expandedPages.delete(
-          pageKey
-        );
+          collapsedPages.add(
+            pageKey
+          );
+        });
       }
 
       saveTreeExpansionState();
@@ -205,22 +199,10 @@ export function renderTreePage(
         container,
         level + 1,
         collapsedPages,
-        expandedPages,
         draggedPageState,
         renderTree,
         saveTreeExpansionState
       );
     });
   }
-}
-
-
-function getTreePageKey(
-  page
-) {
-
-  return page?.path ||
-    page?.name ||
-    page?.id ||
-    '';
 }

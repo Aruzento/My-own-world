@@ -4,9 +4,7 @@ import { state } from '../state.js';
 /* Импорт из деревьев */
 
 import {
-  canMovePage,
-  sortTreePages,
-  getPageOrder
+  sortTreePages
 } from './treeUtils.js';
 
 import {
@@ -26,24 +24,20 @@ export function renderTree() {
   );
 }
 
-import {
-  createPage,
-  loadWorkspace,
-  updatePageParent,
-  updatePageTreePosition
-} from '../storage/storage.js';
-
 const COLLAPSED_TREE_STORAGE_KEY =
   'my-own-world:collapsed-tree-pages';
 
 const TREE_EXPANSION_STORAGE_KEY =
   'my-own-world:tree-expansion-state';
 
+const WORKSPACE_UI_STATE_FILE =
+  '.my-own-world-ui.json';
+
 const collapsedPages =
   new Set();
 
-const expandedPages =
-  new Set();
+let workspaceSaveTimer =
+  null;
 
 loadTreeExpansionState();
 
@@ -62,6 +56,8 @@ export function renderFilteredTree(
     document.getElementById(
       'tree'
     );
+
+  loadTreeExpansionState();
 
   tree.innerHTML = '';
 
@@ -84,17 +80,6 @@ export function renderFilteredTree(
       page
     );
   });
-
-  const isFullTree =
-    pages === state.pages;
-
-  if (isFullTree) {
-
-    pruneTreeExpansionState(
-      pages
-    );
-  }
-
 
   const rootPages = [];
 
@@ -129,17 +114,11 @@ export function renderFilteredTree(
   tree,
   0,
   collapsedPages,
-  expandedPages,
   draggedPageState,
   renderTree,
   saveTreeExpansionState
 );
   });
-
-  if (isFullTree) {
-
-    saveTreeExpansionState();
-  }
 }
 
 
@@ -157,17 +136,10 @@ function loadTreeExpansionState() {
       const parsed =
         JSON.parse(stateValue);
 
-      fillSet(
+      addValuesToSet(
         collapsedPages,
         parsed?.collapsed
       );
-
-      fillSet(
-        expandedPages,
-        parsed?.expanded
-      );
-
-      return;
     }
 
     const legacyValue =
@@ -178,7 +150,7 @@ function loadTreeExpansionState() {
     const ids =
       JSON.parse(legacyValue || '[]');
 
-    fillSet(
+    addValuesToSet(
       collapsedPages,
       ids
     );
@@ -191,7 +163,6 @@ function loadTreeExpansionState() {
     );
 
     collapsedPages.clear();
-    expandedPages.clear();
   }
 }
 
@@ -200,19 +171,21 @@ function saveTreeExpansionState() {
 
   try {
 
+    const payload = {
+      collapsed: [...collapsedPages]
+    };
+
     localStorage.setItem(
       TREE_EXPANSION_STORAGE_KEY,
-      JSON.stringify({
-        collapsed: [...collapsedPages],
-        expanded: [...expandedPages]
-      })
+      JSON.stringify(
+        payload
+      )
     );
 
     localStorage.setItem(
       COLLAPSED_TREE_STORAGE_KEY,
       JSON.stringify([...collapsedPages])
     );
-
   } catch (error) {
 
     console.warn(
@@ -220,84 +193,131 @@ function saveTreeExpansionState() {
       error
     );
   }
+
+  scheduleWorkspaceTreeExpansionStateSave();
 }
 
 
-function pruneTreeExpansionState(
-  pages
-) {
+export async function restoreWorkspaceTreeExpansionState() {
 
-  const pageKeys =
-    new Set();
+  loadTreeExpansionState();
 
-  pages.forEach(page => {
+  if (!state.workspaceHandle) return;
 
-    pageKeys.add(
-      page.id
+  try {
+
+    const fileHandle =
+      await state.workspaceHandle.getFileHandle(
+        WORKSPACE_UI_STATE_FILE
+      );
+
+    const file =
+      await fileHandle.getFile();
+
+    const uiState =
+      JSON.parse(
+        await file.text() || '{}'
+      );
+
+    addValuesToSet(
+      collapsedPages,
+      uiState?.tree?.collapsed
     );
-
-    pageKeys.add(
-      getTreePageKey(
-        page
-      )
-    );
-  });
-
-  let changed =
-    false;
-
-  collapsedPages.forEach(pageId => {
-
-    if (
-      pageKeys.has(pageId)
-    ) return;
-
-    collapsedPages.delete(
-      pageId
-    );
-
-    changed =
-      true;
-  });
-
-  expandedPages.forEach(pageId => {
-
-    if (
-      pageKeys.has(pageId)
-    ) return;
-
-    expandedPages.delete(
-      pageId
-    );
-
-    changed =
-      true;
-  });
-
-  if (changed) {
 
     saveTreeExpansionState();
+
+  } catch (error) {
+
+    if (error?.name === 'NotFoundError') return;
+
+    console.warn(
+      'Не удалось восстановить состояние дерева из workspace:',
+      error
+    );
   }
 }
 
 
-export function getTreePageKey(
-  page
-) {
+function scheduleWorkspaceTreeExpansionStateSave() {
 
-  return page?.path ||
-    page?.name ||
-    page?.id ||
-    '';
+  if (!state.workspaceHandle) return;
+
+  clearTimeout(
+    workspaceSaveTimer
+  );
+
+  workspaceSaveTimer =
+    setTimeout(
+      () => {
+
+        saveWorkspaceTreeExpansionState();
+      },
+      120
+    );
 }
 
 
-function fillSet(
+async function saveWorkspaceTreeExpansionState() {
+
+  if (!state.workspaceHandle) return;
+
+  try {
+
+    const fileHandle =
+      await state.workspaceHandle.getFileHandle(
+        WORKSPACE_UI_STATE_FILE,
+        { create: true }
+      );
+
+    let uiState = {};
+
+    try {
+
+      const file =
+        await fileHandle.getFile();
+
+      uiState =
+        JSON.parse(
+          await file.text() || '{}'
+        );
+
+    } catch (error) {
+
+      uiState = {};
+    }
+
+    uiState.tree = {
+      ...(uiState.tree || {}),
+      collapsed: [...collapsedPages]
+    };
+
+    const writable =
+      await fileHandle.createWritable();
+
+    await writable.write(
+      JSON.stringify(
+        uiState,
+        null,
+        2
+      )
+    );
+
+    await writable.close();
+
+  } catch (error) {
+
+    console.warn(
+      'Не удалось сохранить состояние дерева в workspace:',
+      error
+    );
+  }
+}
+
+
+function addValuesToSet(
   target,
   values
 ) {
-
-  target.clear();
 
   if (!Array.isArray(values)) return;
 

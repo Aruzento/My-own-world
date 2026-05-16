@@ -217,6 +217,28 @@
 }
 
 
+.campaign-map-controls .campaign-shapes-btn {
+
+  width:
+    auto;
+
+  min-width:
+    62px;
+
+  padding:
+    0 9px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    760;
+
+  line-height:
+    1;
+}
+
+
 .campaign-map-stage {
 
   position:
@@ -1264,6 +1286,48 @@
 }
 
 
+.campaign-token-popup-icon {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  font-family:
+    system-ui, sans-serif;
+}
+
+
+.campaign-token-popup-delete {
+
+  font-size:
+    20px;
+
+  font-weight:
+    720;
+}
+
+
+.campaign-token-popup-duplicate {
+
+  font-size:
+    11px;
+
+  font-weight:
+    860;
+
+  letter-spacing:
+    0;
+
+  text-transform:
+    uppercase;
+}
+
+
 .campaign-token-popup .campaign-token-popup-text,
 .campaign-token-popup-menu button,
 .campaign-token-hp-actions button {
@@ -1375,6 +1439,19 @@
 
   background-size:
     14px;
+
+  color-scheme:
+    dark;
+}
+
+
+.campaign-token-hp-sign option {
+
+  background:
+    rgb(28,29,27);
+
+  color:
+    rgba(255,248,230,0.96);
 }
 
 
@@ -1516,13 +1593,19 @@
 .campaign-map-popup-title {
 
   color:
-    rgba(255,255,255,0.88);
+    rgba(255,248,230,0.82);
 
   font-size:
-    13px;
+    11px;
 
   font-weight:
-    680;
+    760;
+
+  line-height:
+    1;
+
+  text-transform:
+    uppercase;
 }
 
 
@@ -1775,30 +1858,94 @@
     repeat(3, minmax(0, 1fr));
 
   gap:
-    8px;
+    6px;
 }
 
 
 .campaign-shape-option {
 
   min-height:
-    74px;
+    52px;
 
   display:
     grid;
 
-  place-items:
+  grid-template-rows:
+    20px auto;
+
+  align-items:
+    center;
+
+  justify-items:
     center;
 
   gap:
-    6px;
+    3px;
+
+  padding:
+    7px 4px;
+}
+
+
+.campaign-shape-icon {
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  display:
+    inline-block;
+
+  box-sizing:
+    border-box;
+
+  color:
+    currentColor;
+}
+
+
+.campaign-shape-icon.is-square {
+
+  border:
+    2px solid currentColor;
+}
+
+
+.campaign-shape-icon.is-circle {
+
+  border:
+    2px solid currentColor;
+
+  border-radius:
+    999px;
+}
+
+
+.campaign-shape-icon.is-triangle {
+
+  width:
+    0;
+
+  height:
+    0;
+
+  border-left:
+    9px solid transparent;
+
+  border-right:
+    9px solid transparent;
+
+  border-bottom:
+    17px solid currentColor;
 }
 
 
 .campaign-shape-option span {
 
   font-size:
-    26px;
+    19px;
 
   line-height:
     1;
@@ -1808,7 +1955,41 @@
 .campaign-shape-option strong {
 
   font-size:
-    12px;
+    9px;
+
+  font-weight:
+    740;
+
+  line-height:
+    1.1;
+
+  white-space:
+    normal;
+
+  max-width:
+    100%;
+
+  overflow-wrap:
+    anywhere;
+
+  text-align:
+    center;
+}
+
+
+.campaign-map-popup[data-popup-key="shapes"] {
+
+  width:
+    208px;
+
+  padding:
+    10px;
+
+  gap:
+    7px;
+
+  border-radius:
+    14px;
 }
 
 
