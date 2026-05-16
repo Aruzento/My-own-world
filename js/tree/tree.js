@@ -36,8 +36,16 @@ import {
 const COLLAPSED_TREE_STORAGE_KEY =
   'my-own-world:collapsed-tree-pages';
 
+const TREE_EXPANSION_STORAGE_KEY =
+  'my-own-world:tree-expansion-state';
+
 const collapsedPages =
-  loadCollapsedPages();
+  new Set();
+
+const expandedPages =
+  new Set();
+
+loadTreeExpansionState();
 
 const draggedPageState = {
   id: null,
@@ -77,9 +85,15 @@ export function renderFilteredTree(
     );
   });
 
-  pruneCollapsedPages(
-    pageMap
-  );
+  const isFullTree =
+    pages === state.pages;
+
+  if (isFullTree) {
+
+    pruneTreeExpansionState(
+      pageMap
+    );
+  }
 
 
   const rootPages = [];
@@ -115,31 +129,58 @@ export function renderFilteredTree(
   tree,
   0,
   collapsedPages,
+  expandedPages,
   draggedPageState,
-  renderTree
+  renderTree,
+  saveTreeExpansionState
 );
   });
 
-  saveCollapsedPages();
+  if (isFullTree) {
+
+    saveTreeExpansionState();
+  }
 }
 
 
-function loadCollapsedPages() {
+function loadTreeExpansionState() {
 
   try {
 
-    const value =
+    const stateValue =
+      localStorage.getItem(
+        TREE_EXPANSION_STORAGE_KEY
+      );
+
+    if (stateValue) {
+
+      const parsed =
+        JSON.parse(stateValue);
+
+      fillSet(
+        collapsedPages,
+        parsed?.collapsed
+      );
+
+      fillSet(
+        expandedPages,
+        parsed?.expanded
+      );
+
+      return;
+    }
+
+    const legacyValue =
       localStorage.getItem(
         COLLAPSED_TREE_STORAGE_KEY
       );
 
     const ids =
-      JSON.parse(value || '[]');
+      JSON.parse(legacyValue || '[]');
 
-    return new Set(
-      Array.isArray(ids)
-        ? ids.filter(Boolean)
-        : []
+    fillSet(
+      collapsedPages,
+      ids
     );
 
   } catch (error) {
@@ -149,20 +190,27 @@ function loadCollapsedPages() {
       error
     );
 
-    return new Set();
+    collapsedPages.clear();
+    expandedPages.clear();
   }
 }
 
 
-function saveCollapsedPages() {
+function saveTreeExpansionState() {
 
   try {
 
     localStorage.setItem(
+      TREE_EXPANSION_STORAGE_KEY,
+      JSON.stringify({
+        collapsed: [...collapsedPages],
+        expanded: [...expandedPages]
+      })
+    );
+
+    localStorage.setItem(
       COLLAPSED_TREE_STORAGE_KEY,
-      JSON.stringify(
-        [...collapsedPages]
-      )
+      JSON.stringify([...collapsedPages])
     );
 
   } catch (error) {
@@ -175,7 +223,7 @@ function saveCollapsedPages() {
 }
 
 
-function pruneCollapsedPages(
+function pruneTreeExpansionState(
   pageMap
 ) {
 
@@ -196,8 +244,42 @@ function pruneCollapsedPages(
       true;
   });
 
+  expandedPages.forEach(pageId => {
+
+    if (
+      pageMap.has(pageId)
+    ) return;
+
+    expandedPages.delete(
+      pageId
+    );
+
+    changed =
+      true;
+  });
+
   if (changed) {
 
-    saveCollapsedPages();
+    saveTreeExpansionState();
   }
+}
+
+
+function fillSet(
+  target,
+  values
+) {
+
+  target.clear();
+
+  if (!Array.isArray(values)) return;
+
+  values
+    .filter(Boolean)
+    .forEach(value => {
+
+      target.add(
+        value
+      );
+    });
 }

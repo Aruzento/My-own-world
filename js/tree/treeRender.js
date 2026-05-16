@@ -22,8 +22,10 @@ export function renderTreePage(
   container,
   level,
   collapsedPages,
+  expandedPages,
   draggedPageState,
-  renderTree
+  renderTree,
+  saveTreeExpansionState
 ) {
 
   const item =
@@ -85,13 +87,22 @@ export function renderTreePage(
           page.id
         );
 
+        expandedPages.add(
+          page.id
+        );
+
       } else {
 
         collapsedPages.add(
           page.id
         );
+
+        expandedPages.delete(
+          page.id
+        );
       }
 
+      saveTreeExpansionState();
       renderTree();
     }
   );
@@ -177,8 +188,10 @@ export function renderTreePage(
         container,
         level + 1,
         collapsedPages,
+        expandedPages,
         draggedPageState,
-        renderTree
+        renderTree,
+        saveTreeExpansionState
       );
     });
   }

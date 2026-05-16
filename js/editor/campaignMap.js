@@ -47,6 +47,8 @@ let panningMap = null;
 let fogDrawing = null;
 let resizedToken = null;
 let rotatedToken = null;
+let resizedShape = null;
+let draggedShape = null;
 let tokenPopupTimer = null;
 let tokenPopupCloseTimer = null;
 let activeTokenPopupToken = null;
@@ -60,6 +62,9 @@ const DEFAULT_BRUSH_SIZE = 34;
 const TOKEN_DRAG_THRESHOLD = 4;
 const TOKEN_POPUP_DELAY = 420;
 const TOKEN_RESIZE_THRESHOLD = 2;
+const DEFAULT_SHAPE_SIZE = 192;
+const SHAPE_HANDLE_THRESHOLD = 2;
+const FOG_PAINT_COLOR = 'rgba(0,0,0,1)';
 
 
 export function setupCampaignMaps(
@@ -166,7 +171,11 @@ export async function renderCampaignMap(
     map
   );
 
-  restoreFogCanvas(
+  await restoreFogCanvas(
+    map
+  );
+
+  restoreMapShapes(
     map
   );
 
@@ -299,6 +308,7 @@ function ensureMapControls(
     </div>
 
     <div class="campaign-map-control-group">
+      <button class="campaign-shapes-btn" type="button" title="Фигуры">◇</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
     </div>
   `;
@@ -573,6 +583,9 @@ async function handleMapClick(
   const token =
     event.target.closest('.campaign-map-token');
 
+  const shape =
+    event.target.closest('.campaign-map-shape');
+
   if (
     token &&
     token.dataset.tokenType === 'object'
@@ -581,12 +594,21 @@ async function handleMapClick(
     selectMapToken(
       token
     );
+  } else if (shape) {
+
+    selectMapShape(
+      shape
+    );
   } else if (
     !event.target.closest('.campaign-map-controls') &&
     !event.target.closest('.campaign-map-popup')
   ) {
 
     clearSelectedMapTokens(
+      map
+    );
+
+    clearSelectedMapShapes(
       map
     );
   }
@@ -671,6 +693,25 @@ async function handleMapClick(
 
     openPresentationWindow();
     syncPresentation();
+    return;
+  }
+
+  if (
+    event.target.closest('.campaign-shapes-btn')
+  ) {
+
+    if (
+      toggleMapPopupForAnchor(
+        event.target.closest('.campaign-shapes-btn'),
+        'shapes'
+      )
+    ) return;
+
+    openShapesPopup(
+      map,
+      event.target.closest('.campaign-shapes-btn')
+    );
+
     return;
   }
 
@@ -1132,6 +1173,62 @@ function openFogPopup(
 }
 
 
+function openShapesPopup(
+  map,
+  anchor
+) {
+
+  const popup =
+    getMapPopup();
+
+  popup.innerHTML = `
+    <div class="campaign-map-popup-title">Фигуры</div>
+    <div class="campaign-shape-picker">
+      <button class="campaign-shape-option" type="button" data-shape="square">
+        <span>□</span>
+        <strong>Квадрат</strong>
+      </button>
+      <button class="campaign-shape-option" type="button" data-shape="triangle">
+        <span>△</span>
+        <strong>Треугольник</strong>
+      </button>
+      <button class="campaign-shape-option" type="button" data-shape="circle">
+        <span>○</span>
+        <strong>Круг</strong>
+      </button>
+    </div>
+  `;
+
+  popup
+    .querySelectorAll('.campaign-shape-option')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          addMapShape(
+            map,
+            button.dataset.shape
+          );
+
+          closeMapPopup();
+          await saveAndSync();
+        }
+      );
+    });
+
+  showMapPopup(
+    popup,
+    anchor,
+    'shapes'
+  );
+}
+
+
 function toggleMapPopupForAnchor(
   anchor,
   key
@@ -1362,6 +1459,10 @@ async function addMapToken(
     token
   );
 
+  applyTokenHealthState(
+    token
+  );
+
   await restoreTokenImage(
     token
   );
@@ -1406,15 +1507,173 @@ async function restoreMapTokens(
 
       if (imageAsset) {
 
-        token.dataset.imageAsset =
-          imageAsset;
+          token.dataset.imageAsset =
+            imageAsset;
       }
     }
+
+    applyTokenHealthState(
+      token
+    );
 
     await restoreTokenImage(
       token
     );
   }
+}
+
+
+function applyTokenHealthState(
+  token
+) {
+
+  if (
+    token.dataset.tokenType !== 'creature'
+  ) {
+
+    clearTokenHealthState(
+      token
+    );
+
+    return;
+  }
+
+  const page =
+    state.pages.find(candidate =>
+      candidate.id === token.dataset.pageId
+    );
+
+  const health =
+    getPageDndHealth(
+      page
+    );
+
+  if (!health) {
+
+    clearTokenHealthState(
+      token
+    );
+
+    return;
+  }
+
+  const percent =
+    clamp(
+      health.current / health.max,
+      0,
+      1
+    );
+
+  token.dataset.hpPercent =
+    String(
+      Math.round(percent * 100)
+    );
+
+  token.dataset.hpState =
+    health.current <= 0
+      ? 'dead'
+      : 'alive';
+
+  token.style.setProperty(
+    '--token-health-color',
+    getHealthColor(
+      percent
+    )
+  );
+}
+
+
+function clearTokenHealthState(
+  token
+) {
+
+  delete token.dataset.hpPercent;
+  delete token.dataset.hpState;
+
+  token.style.removeProperty(
+    '--token-health-color'
+  );
+}
+
+
+function getPageDndHealth(
+  page
+) {
+
+  if (!page?.content) return null;
+
+  const body =
+    parsePageBody(
+      page
+    );
+
+  const block =
+    body.querySelector(
+      '.dnd-stats-block'
+    );
+
+  if (!block) return null;
+
+  const current =
+    readNumberFromInput(
+      block.querySelector('.dnd-current-hp')
+    );
+
+  const max =
+    readNumberFromInput(
+      block.querySelector('.dnd-max-hp')
+    );
+
+  if (
+    current === null ||
+    max === null ||
+    max <= 0
+  ) return null;
+
+  return {
+    current,
+    max
+  };
+}
+
+
+function readNumberFromInput(
+  input
+) {
+
+  if (!input) return null;
+
+  const raw =
+    input.getAttribute('value') ||
+    input.value ||
+    '';
+
+  const match =
+    String(raw)
+      .replace(',', '.')
+      .match(/-?\d+(\.\d+)?/);
+
+  if (!match) return null;
+
+  const value =
+    Number(match[0]);
+
+  return Number.isFinite(value)
+    ? value
+    : null;
+}
+
+
+function getHealthColor(
+  percent
+) {
+
+  const hue =
+    Math.round(
+      clamp(percent, 0, 1) * 120
+    );
+
+  return `hsl(${hue} 76% 48%)`;
 }
 
 
@@ -1651,6 +1910,339 @@ function clearSelectedMapTokens(
 }
 
 
+function clearSelectedMapShapes(
+  map
+) {
+
+  map
+    ?.querySelectorAll('.campaign-map-shape.is-selected')
+    .forEach(shape => {
+
+      shape.classList.remove(
+        'is-selected'
+      );
+    });
+}
+
+
+function restoreMapShapes(
+  map
+) {
+
+  map
+    .querySelectorAll('.campaign-map-shape')
+    .forEach(shape => {
+
+      renderMapShape(
+        shape
+      );
+    });
+}
+
+
+function addMapShape(
+  map,
+  type
+) {
+
+  const layer =
+    map.querySelector('.campaign-map-object-layer');
+
+  const stage =
+    map.querySelector('.campaign-map-stage');
+
+  if (!layer || !stage) return;
+
+  const view =
+    getStageView(
+      stage
+    );
+
+  const x =
+    clamp(
+      (stage.clientWidth / 2 - view.x) / view.zoom - DEFAULT_SHAPE_SIZE / 2,
+      0,
+      WORLD_WIDTH - DEFAULT_SHAPE_SIZE
+    );
+
+  const y =
+    clamp(
+      (stage.clientHeight / 2 - view.y) / view.zoom - DEFAULT_SHAPE_SIZE / 2,
+      0,
+      WORLD_HEIGHT - DEFAULT_SHAPE_SIZE
+    );
+
+  const shape =
+    document.createElement('div');
+
+  shape.className =
+    'campaign-map-shape';
+
+  shape.dataset.shapeType =
+    type;
+
+  shape.dataset.x =
+    String(Math.round(x));
+
+  shape.dataset.y =
+    String(Math.round(y));
+
+  shape.dataset.w =
+    String(DEFAULT_SHAPE_SIZE);
+
+  shape.dataset.h =
+    String(DEFAULT_SHAPE_SIZE);
+
+  if (type === 'triangle') {
+
+    shape.dataset.points =
+      '50,6 94,94 6,94';
+  }
+
+  layer.appendChild(
+    shape
+  );
+
+  renderMapShape(
+    shape
+  );
+
+  selectMapShape(
+    shape
+  );
+}
+
+
+function renderMapShape(
+  shape
+) {
+
+  applyShapeGeometry(
+    shape
+  );
+
+  const type =
+    shape.dataset.shapeType || 'square';
+
+  shape.innerHTML =
+    getShapeInnerHTML(
+      shape,
+      type
+    );
+
+  shape
+    .querySelectorAll('.campaign-map-shape-handle')
+    .forEach(handle => markRuntime(handle));
+}
+
+
+function getShapeInnerHTML(
+  shape,
+  type
+) {
+
+  if (type === 'triangle') {
+
+    const points =
+      getTrianglePoints(
+        shape
+      );
+
+    const width =
+      Number(shape.dataset.w || DEFAULT_SHAPE_SIZE);
+
+    const height =
+      Number(shape.dataset.h || DEFAULT_SHAPE_SIZE);
+
+    return `
+      <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <polygon points="${points.map(point => `${point.x},${point.y}`).join(' ')}"></polygon>
+      </svg>
+      ${points.map((point, index) => `
+        <span
+          class="campaign-map-shape-handle"
+          data-point="${index}"
+          style="left:${point.x}%;top:${point.y}%"
+        ></span>
+      `).join('')}
+      ${getTriangleLabels(points, width, height)}
+    `;
+  }
+
+  if (type === 'circle') {
+
+    return `
+      <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <ellipse cx="50" cy="50" rx="48" ry="48"></ellipse>
+      </svg>
+      <span class="campaign-map-shape-handle is-se" data-corner="se"></span>
+      <span class="campaign-map-shape-label is-top">${getFeetLabel(Number(shape.dataset.w || DEFAULT_SHAPE_SIZE))}</span>
+    `;
+  }
+
+  return `
+    <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <rect x="2" y="2" width="96" height="96"></rect>
+    </svg>
+    <span class="campaign-map-shape-handle is-nw" data-corner="nw"></span>
+    <span class="campaign-map-shape-handle is-ne" data-corner="ne"></span>
+    <span class="campaign-map-shape-handle is-sw" data-corner="sw"></span>
+    <span class="campaign-map-shape-handle is-se" data-corner="se"></span>
+    <span class="campaign-map-shape-label is-top">${getFeetLabel(Number(shape.dataset.w || DEFAULT_SHAPE_SIZE))}</span>
+    <span class="campaign-map-shape-label is-right">${getFeetLabel(Number(shape.dataset.h || DEFAULT_SHAPE_SIZE))}</span>
+  `;
+}
+
+
+function applyShapeGeometry(
+  shape
+) {
+
+  shape.style.left =
+    `${Number(shape.dataset.x || 0)}px`;
+
+  shape.style.top =
+    `${Number(shape.dataset.y || 0)}px`;
+
+  shape.style.width =
+    `${Number(shape.dataset.w || DEFAULT_SHAPE_SIZE)}px`;
+
+  shape.style.height =
+    `${Number(shape.dataset.h || DEFAULT_SHAPE_SIZE)}px`;
+}
+
+
+function selectMapShape(
+  shape
+) {
+
+  const map =
+    shape.closest('.campaign-map-document');
+
+  clearSelectedMapTokens(
+    map
+  );
+
+  clearSelectedMapShapes(
+    map
+  );
+
+  shape.classList.add(
+    'is-selected'
+  );
+}
+
+
+function getTrianglePoints(
+  shape
+) {
+
+  return String(shape.dataset.points || '50,6 94,94 6,94')
+    .split(/\s+/)
+    .map(pair => {
+
+      const [x, y] =
+        pair.split(',').map(Number);
+
+      return {
+        x: Number.isFinite(x) ? x : 50,
+        y: Number.isFinite(y) ? y : 50
+      };
+    })
+    .slice(0, 3);
+}
+
+
+function setTrianglePoints(
+  shape,
+  points
+) {
+
+  shape.dataset.points =
+    points
+      .map(point => `${roundShapePercent(point.x)},${roundShapePercent(point.y)}`)
+      .join(' ');
+}
+
+
+function getTriangleLabels(
+  points,
+  width,
+  height
+) {
+
+  return points
+    .map((point, index) => {
+
+      const next =
+        points[(index + 1) % points.length];
+
+      const x =
+        (point.x + next.x) / 2;
+
+      const y =
+        (point.y + next.y) / 2;
+
+      const length =
+        Math.hypot(
+          ((next.x - point.x) / 100) * width,
+          ((next.y - point.y) / 100) * height
+        );
+
+      return `
+        <span
+          class="campaign-map-shape-label"
+          style="left:${x}%;top:${y}%"
+        >
+          ${getFeetLabel(length)}
+        </span>
+      `;
+    })
+    .join('');
+}
+
+
+function getFeetLabel(
+  pixels
+) {
+
+  const cells =
+    Math.max(
+      1,
+      Math.round(
+        pixels / getActiveGridSize()
+      )
+    );
+
+  return `${cells * 5} ft`;
+}
+
+
+function getActiveGridSize(
+) {
+
+  const stage =
+    document.querySelector(
+      '#editorArea .campaign-map-stage'
+    );
+
+  return Math.max(
+    1,
+    Number(stage?.dataset.gridSize || DEFAULT_GRID_SIZE)
+  );
+}
+
+
+function roundShapePercent(
+  value
+) {
+
+  return Math.round(
+    value * 10
+  ) / 10;
+}
+
+
 function applyViewportTransform(
   map
 ) {
@@ -1838,7 +2430,7 @@ function fillFog(
   );
 
   context.fillStyle =
-    'rgba(0,0,0,0.76)';
+    FOG_PAINT_COLOR;
 
   context.fillRect(
     0,
@@ -1927,6 +2519,10 @@ function updateGridSize(
   stage.style.setProperty(
     '--campaign-grid-size',
     `${gridSize}px`
+  );
+
+  restoreMapShapes(
+    map
   );
 }
 
@@ -2104,7 +2700,7 @@ async function changeMapImage(
     map
   );
 
-  restoreFogCanvas(
+  await restoreFogCanvas(
     map
   );
 }
@@ -2147,6 +2743,22 @@ function handleMapPointerDown(
   event
 ) {
 
+  const shapeHandle =
+    event.target.closest('.campaign-map-shape-handle');
+
+  if (
+    shapeHandle &&
+    event.button === 0
+  ) {
+
+    startShapeResize(
+      event,
+      shapeHandle.closest('.campaign-map-shape')
+    );
+
+    return;
+  }
+
   const rotateHandle =
     event.target.closest('.campaign-map-token-rotate');
 
@@ -2181,6 +2793,38 @@ function handleMapPointerDown(
 
   const token =
     event.target.closest('.campaign-map-token');
+
+  const shape =
+    event.target.closest('.campaign-map-shape');
+
+  if (
+    shape &&
+    event.button === 0
+  ) {
+
+    const stage =
+      shape.closest('.campaign-map-stage');
+
+    if (
+      stage?.dataset.tool === 'draw' ||
+      stage?.dataset.tool === 'erase'
+    ) {
+
+      startFogDraw(
+        event,
+        stage
+      );
+
+      return;
+    }
+
+    startShapeDrag(
+      event,
+      shape
+    );
+
+    return;
+  }
 
   if (
     token &&
@@ -2310,6 +2954,18 @@ function handleMapPointerOver(
   event
 ) {
 
+  const shape =
+    event.target.closest('.campaign-map-shape');
+
+  if (shape) {
+
+    scheduleTokenPopup(
+      shape
+    );
+
+    return;
+  }
+
   const token =
     event.target.closest('.campaign-map-token');
 
@@ -2328,6 +2984,15 @@ function handleMapPointerOver(
 function handleMapPointerOut(
   event
 ) {
+
+  const shape =
+    event.target.closest('.campaign-map-shape');
+
+  if (shape) {
+
+    scheduleTokenPopupClose();
+    return;
+  }
 
   const token =
     event.target.closest('.campaign-map-token');
@@ -2348,9 +3013,12 @@ function scheduleTokenPopup(
 
   if (
     draggedToken ||
+    draggedShape ||
     resizedToken ||
     rotatedToken ||
-    token.classList.contains('is-dragging')
+    resizedShape ||
+    token.classList.contains('is-dragging') ||
+    token.classList.contains('is-resizing')
   ) return;
 
   clearTimeout(
@@ -2399,9 +3067,12 @@ function openTokenPopup(
   if (
     !token.isConnected ||
     draggedToken ||
+    draggedShape ||
     resizedToken ||
     rotatedToken ||
-    token.classList.contains('is-dragging')
+    resizedShape ||
+    token.classList.contains('is-dragging') ||
+    token.classList.contains('is-resizing')
   ) return;
 
   activeTokenPopupToken =
@@ -2409,6 +3080,9 @@ function openTokenPopup(
 
   const popup =
     getTokenPopup();
+
+  const isShape =
+    token.classList.contains('campaign-map-shape');
 
   const hidden =
     token.dataset.presentationHidden === 'true';
@@ -2430,9 +3104,18 @@ function openTokenPopup(
         event.preventDefault();
         event.stopPropagation();
 
-        await deleteTokenAndPage(
-          token
-        );
+        if (isShape) {
+
+          await deleteMapShape(
+            token
+          );
+
+        } else {
+
+          await deleteTokenAndPage(
+            token
+          );
+        }
       }
     );
 
@@ -2445,7 +3128,7 @@ function openTokenPopup(
         event.preventDefault();
         event.stopPropagation();
 
-        await toggleTokenPresentationVisibility(
+        await toggleMapItemPresentationVisibility(
           token
         );
       }
@@ -2460,9 +3143,18 @@ function openTokenPopup(
         event.preventDefault();
         event.stopPropagation();
 
-        await duplicateTokenAndPage(
-          token
-        );
+        if (isShape) {
+
+          await duplicateMapShape(
+            token
+          );
+
+        } else {
+
+          await duplicateTokenAndPage(
+            token
+          );
+        }
       }
     );
 
@@ -2470,12 +3162,17 @@ function openTokenPopup(
     'hidden'
   );
 
+  const fallbackWidth =
+    token.classList.contains('campaign-map-shape')
+      ? 132
+      : 132;
+
   positionPopupNearAnchor(
     popup,
     token,
     {
       gap: 10,
-      fallbackWidth: 132,
+      fallbackWidth,
       fallbackHeight: 48
     }
   );
@@ -2817,6 +3514,10 @@ async function addMapTokenFromExisting(
     token
   );
 
+  applyTokenHealthState(
+    token
+  );
+
   await restoreTokenImage(
     token
   );
@@ -2907,27 +3608,91 @@ async function ensureWorkspaceWritePermission() {
 }
 
 
-async function toggleTokenPresentationVisibility(
-  token
+async function toggleMapItemPresentationVisibility(
+  item
 ) {
 
   const hidden =
-    token.dataset.presentationHidden === 'true';
+    item.dataset.presentationHidden === 'true';
 
-  token.dataset.presentationHidden =
+  item.dataset.presentationHidden =
     hidden
       ? 'false'
       : 'true';
 
-  token.classList.toggle(
+  item.classList.toggle(
     'is-presentation-hidden',
     !hidden
   );
 
   openTokenPopup(
-    token
+    item
   );
 
+  await saveAndSync();
+}
+
+
+async function deleteMapShape(
+  shape
+) {
+
+  closeTokenPopup();
+  shape.remove();
+  await saveAndSync();
+}
+
+
+async function duplicateMapShape(
+  shape
+) {
+
+  const clone =
+    shape.cloneNode(false);
+
+  clone.className =
+    'campaign-map-shape';
+
+  [
+    'shapeType',
+    'x',
+    'y',
+    'w',
+    'h',
+    'points',
+    'presentationHidden'
+  ].forEach(key => {
+
+    if (shape.dataset[key] !== undefined) {
+
+      clone.dataset[key] =
+        shape.dataset[key];
+    }
+  });
+
+  clone.dataset.x =
+    String(
+      Number(shape.dataset.x || 0) + 24
+    );
+
+  clone.dataset.y =
+    String(
+      Number(shape.dataset.y || 0) + 24
+    );
+
+  shape.after(
+    clone
+  );
+
+  renderMapShape(
+    clone
+  );
+
+  selectMapShape(
+    clone
+  );
+
+  closeTokenPopup();
   await saveAndSync();
 }
 
@@ -3044,6 +3809,9 @@ function startTokenDrag(
     stage: token.closest('.campaign-map-stage'),
     startX: event.clientX,
     startY: event.clientY,
+    startWorldX: Number(token.dataset.x || 50) / 100 * WORLD_WIDTH,
+    startWorldY: Number(token.dataset.y || 50) / 100 * WORLD_HEIGHT,
+    measure: null,
     moved: false
   };
 
@@ -3067,6 +3835,20 @@ function handleDocumentPointerMove(
   if (resizedToken) {
 
     resizeTokenToPointer(
+      event
+    );
+  }
+
+  if (resizedShape) {
+
+    resizeShapeToPointer(
+      event
+    );
+  }
+
+  if (draggedShape) {
+
+    moveShapeToPointer(
       event
     );
   }
@@ -3126,6 +3908,32 @@ async function handleDocumentPointerUp() {
 
     const shouldSave =
       clearDraggedToken(
+        true
+      );
+
+    if (shouldSave) {
+
+      await saveAndSync();
+    }
+  }
+
+  if (resizedShape) {
+
+    const shouldSave =
+      clearResizedShape(
+        true
+      );
+
+    if (shouldSave) {
+
+      await saveAndSync();
+    }
+  }
+
+  if (draggedShape) {
+
+    const shouldSave =
+      clearDraggedShape(
         true
       );
 
@@ -3422,6 +4230,362 @@ function clearResizedToken(
 }
 
 
+function startShapeResize(
+  event,
+  shape
+) {
+
+  if (!shape) return;
+
+  const stage =
+    shape.closest('.campaign-map-stage');
+
+  if (
+    stage?.dataset.tool === 'draw' ||
+    stage?.dataset.tool === 'erase'
+  ) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  selectMapShape(
+    shape
+  );
+
+  resizedShape = {
+    shape,
+    stage,
+    corner: event.target.dataset.corner || '',
+    point: event.target.dataset.point || '',
+    startX: event.clientX,
+    startY: event.clientY,
+    startLeft: Number(shape.dataset.x || 0),
+    startTop: Number(shape.dataset.y || 0),
+    startWidth: Number(shape.dataset.w || DEFAULT_SHAPE_SIZE),
+    startHeight: Number(shape.dataset.h || DEFAULT_SHAPE_SIZE),
+    startPoints: getTrianglePoints(shape),
+    moved: false
+  };
+
+  shape.classList.add(
+    'is-resizing'
+  );
+}
+
+
+function resizeShapeToPointer(
+  event
+) {
+
+  const delta =
+    getWorldDeltaFromPointer(
+      event,
+      resizedShape
+    );
+
+  const distance =
+    Math.hypot(
+      delta.x,
+      delta.y
+    );
+
+  if (
+    !resizedShape.moved &&
+    distance < SHAPE_HANDLE_THRESHOLD
+  ) return;
+
+  resizedShape.moved =
+    true;
+
+  if (resizedShape.point !== '') {
+
+    resizeTrianglePoint(
+      delta
+    );
+
+  } else {
+
+    resizeShapeBox(
+      delta
+    );
+  }
+
+  renderMapShape(
+    resizedShape.shape
+  );
+
+  resizedShape.shape.classList.add(
+    'is-selected',
+    'is-resizing'
+  );
+
+  syncPresentation();
+}
+
+
+function resizeShapeBox(
+  delta
+) {
+
+  const {
+    shape,
+    corner,
+    startLeft,
+    startTop,
+    startWidth,
+    startHeight
+  } = resizedShape;
+
+  let x =
+    startLeft;
+
+  let y =
+    startTop;
+
+  let width =
+    startWidth;
+
+  let height =
+    startHeight;
+
+  if (corner.includes('e')) width =
+    startWidth + delta.x;
+
+  if (corner.includes('s')) height =
+    startHeight + delta.y;
+
+  if (corner.includes('w')) {
+
+    x =
+      startLeft + delta.x;
+
+    width =
+      startWidth - delta.x;
+  }
+
+  if (corner.includes('n')) {
+
+    y =
+      startTop + delta.y;
+
+    height =
+      startHeight - delta.y;
+  }
+
+  width =
+    Math.max(
+      24,
+      width
+    );
+
+  height =
+    Math.max(
+      24,
+      height
+    );
+
+  if (
+    shape.dataset.shapeType === 'circle'
+  ) {
+
+    const size =
+      Math.max(
+        width,
+        height
+      );
+
+    width =
+      size;
+
+    height =
+      size;
+  }
+
+  shape.dataset.x =
+    String(Math.round(x));
+
+  shape.dataset.y =
+    String(Math.round(y));
+
+  shape.dataset.w =
+    String(Math.round(width));
+
+  shape.dataset.h =
+    String(Math.round(height));
+}
+
+
+function resizeTrianglePoint(
+  delta
+) {
+
+  const {
+    shape,
+    point,
+    startWidth,
+    startHeight,
+    startPoints
+  } = resizedShape;
+
+  const index =
+    Number(point);
+
+  const points =
+    startPoints.map(item => ({ ...item }));
+
+  if (!points[index]) return;
+
+  points[index].x =
+    points[index].x + (delta.x / startWidth) * 100;
+
+  points[index].y =
+    points[index].y + (delta.y / startHeight) * 100;
+
+  setTrianglePoints(
+    shape,
+    points
+  );
+}
+
+
+function getWorldDeltaFromPointer(
+  event,
+  action
+) {
+
+  const view =
+    getStageView(
+      action.stage
+    );
+
+  return {
+    x: (event.clientX - action.startX) / view.zoom,
+    y: (event.clientY - action.startY) / view.zoom
+  };
+}
+
+
+function clearResizedShape(
+  keepMovedState
+) {
+
+  if (!resizedShape) return false;
+
+  const moved =
+    resizedShape.moved;
+
+  resizedShape.shape.classList.remove(
+    'is-resizing'
+  );
+
+  resizedShape =
+    null;
+
+  return keepMovedState && moved;
+}
+
+
+function startShapeDrag(
+  event,
+  shape
+) {
+
+  if (!shape) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  closeTokenPopup();
+  clearTimeout(
+    tokenPopupTimer
+  );
+
+  selectMapShape(
+    shape
+  );
+
+  draggedShape = {
+    shape,
+    stage: shape.closest('.campaign-map-stage'),
+    startX: event.clientX,
+    startY: event.clientY,
+    startLeft: Number(shape.dataset.x || 0),
+    startTop: Number(shape.dataset.y || 0),
+    moved: false
+  };
+
+  shape.classList.add(
+    'is-dragging'
+  );
+}
+
+
+function moveShapeToPointer(
+  event
+) {
+
+  const delta =
+    getWorldDeltaFromPointer(
+      event,
+      draggedShape
+    );
+
+  const distance =
+    Math.hypot(
+      delta.x,
+      delta.y
+    );
+
+  if (
+    !draggedShape.moved &&
+    distance < TOKEN_DRAG_THRESHOLD
+  ) return;
+
+  draggedShape.moved =
+    true;
+
+  draggedShape.shape.dataset.x =
+    String(
+      Math.round(
+        draggedShape.startLeft + delta.x
+      )
+    );
+
+  draggedShape.shape.dataset.y =
+    String(
+      Math.round(
+        draggedShape.startTop + delta.y
+      )
+    );
+
+  applyShapeGeometry(
+    draggedShape.shape
+  );
+
+  syncPresentation();
+}
+
+
+function clearDraggedShape(
+  keepMovedState
+) {
+
+  if (!draggedShape) return false;
+
+  const moved =
+    draggedShape.moved;
+
+  draggedShape.shape.classList.remove(
+    'is-dragging'
+  );
+
+  draggedShape =
+    null;
+
+  return keepMovedState && moved;
+}
+
+
 function clearDraggedToken(
   keepMovedState
 ) {
@@ -3433,6 +4597,10 @@ function clearDraggedToken(
 
   draggedToken.token.classList.remove(
     'is-dragging'
+  );
+
+  removeDragMeasure(
+    draggedToken
   );
 
   draggedToken =
@@ -3503,7 +4671,153 @@ function moveTokenToPointer(
     token
   );
 
+  updateDragMeasure(
+    draggedToken,
+    point
+  );
+
   syncPresentation();
+}
+
+
+function updateDragMeasure(
+  drag,
+  point
+) {
+
+  const cells =
+    getDragDistanceCells(
+      drag,
+      point
+    );
+
+  if (cells <= 0) {
+
+    removeDragMeasure(
+      drag
+    );
+
+    drag.measure =
+      null;
+
+    return;
+  }
+
+  const viewport =
+    drag.stage.querySelector('.campaign-map-viewport');
+
+  if (!viewport) return;
+
+  if (!drag.measure) {
+
+    drag.measure =
+      document.createElementNS(
+        'http://www.w3.org/2000/svg',
+        'svg'
+      );
+
+    drag.measure.classList.add(
+      'campaign-map-drag-measure'
+    );
+
+    drag.measure.setAttribute(
+      'viewBox',
+      `0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`
+    );
+
+    drag.measure.innerHTML = `
+      <defs>
+        <marker id="campaign-drag-arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+          <path d="M2,2 L10,6 L2,10 Z"></path>
+        </marker>
+      </defs>
+      <line></line>
+      <text></text>
+    `;
+
+    viewport.appendChild(
+      drag.measure
+    );
+  }
+
+  const line =
+    drag.measure.querySelector('line');
+
+  const label =
+    drag.measure.querySelector('text');
+
+  line.setAttribute(
+    'x1',
+    String(drag.startWorldX)
+  );
+
+  line.setAttribute(
+    'y1',
+    String(drag.startWorldY)
+  );
+
+  line.setAttribute(
+    'x2',
+    String(point.x)
+  );
+
+  line.setAttribute(
+    'y2',
+    String(point.y)
+  );
+
+  label.setAttribute(
+    'x',
+    String((drag.startWorldX + point.x) / 2)
+  );
+
+  label.setAttribute(
+    'y',
+    String((drag.startWorldY + point.y) / 2 - 12)
+  );
+
+  label.textContent =
+    `${cells * 5} ft`;
+}
+
+
+function removeDragMeasure(
+  drag
+) {
+
+  drag?.measure?.remove();
+}
+
+
+function getDragDistanceLabel(
+  drag,
+  point
+) {
+
+  return `${getDragDistanceCells(drag, point) * 5} ft`;
+}
+
+
+function getDragDistanceCells(
+  drag,
+  point
+) {
+
+  const gridSize =
+    Math.max(
+      1,
+      Number(drag.stage.dataset.gridSize || DEFAULT_GRID_SIZE)
+    );
+
+  const cells =
+    Math.round(
+      Math.max(
+        Math.abs(point.x - drag.startWorldX),
+        Math.abs(point.y - drag.startWorldY)
+      ) / gridSize
+    );
+
+  return cells;
 }
 
 
@@ -3653,7 +4967,7 @@ function drawFogAtPointer(
       : 'source-over';
 
   context.fillStyle =
-    'rgba(0,0,0,0.76)';
+    FOG_PAINT_COLOR;
 
   context.beginPath();
   context.arc(
@@ -3742,7 +5056,7 @@ function restoreFogCanvas(
   const canvas =
     map.querySelector('.campaign-map-fog-canvas');
 
-  if (!stage || !canvas) return;
+  if (!stage || !canvas) return Promise.resolve();
 
   ensureCanvasSize(
     canvas
@@ -3761,31 +5075,47 @@ function restoreFogCanvas(
   const fogImage =
     stage.dataset.fogImage;
 
-  if (!fogImage) return;
+  if (!fogImage) {
+
+    syncPresentation();
+    return Promise.resolve();
+  }
 
   const image =
     new Image();
 
-  image.onload = () => {
+  return new Promise(resolve => {
 
-    context.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    image.onload = () => {
 
-    context.drawImage(
-      image,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-  };
+      context.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
 
-  image.src =
-    fogImage;
+      context.drawImage(
+        image,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      syncPresentation();
+      resolve();
+    };
+
+    image.onerror = () => {
+
+      syncPresentation();
+      resolve();
+    };
+
+    image.src =
+      fogImage;
+  });
 }
 
 
@@ -4041,6 +5371,23 @@ function syncPresentation() {
       );
     });
 
+  clone
+    .querySelectorAll('.campaign-map-shape')
+    .forEach(shape => {
+
+      shape.classList.remove(
+        'is-selected',
+        'is-resizing'
+      );
+    });
+
+  clone
+    .querySelectorAll('.campaign-map-shape[data-presentation-hidden="true"]')
+    .forEach(shape => {
+
+      shape.remove();
+    });
+
   const viewport =
     clone.querySelector('.campaign-map-viewport');
 
@@ -4258,6 +5605,37 @@ function getPresentationCSS() {
       font: 700 13px system-ui;
     }
 
+    .campaign-map-token.is-creature[data-hp-percent] {
+      border-color: var(--token-health-color, rgba(255,255,255,0.86));
+      box-shadow:
+        0 0 0 4px color-mix(in srgb, var(--token-health-color, #65b96b) 32%, transparent),
+        0 12px 28px rgba(0,0,0,0.36);
+    }
+
+    .campaign-map-token.is-creature[data-hp-state="dead"] {
+      border-color: rgba(210,58,58,0.96);
+      background: rgba(24,18,18,0.92);
+      color: rgba(255,238,230,0.98);
+    }
+
+    .campaign-map-token.is-creature[data-hp-state="dead"] .campaign-map-token-image {
+      display: none;
+    }
+
+    .campaign-map-token.is-creature[data-hp-state="dead"]::after {
+      content: "RIP";
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), transparent 48%),
+        rgba(24,18,18,0.92);
+      font: 900 15px/1 system-ui, sans-serif;
+      letter-spacing: 0;
+    }
+
     .campaign-map-token.is-object {
       z-index: 2;
       border-radius: 0;
@@ -4283,11 +5661,87 @@ function getPresentationCSS() {
       object-fit: contain;
     }
 
+    .campaign-map-shape {
+      position: absolute;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .campaign-map-shape-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+
+    .campaign-map-shape-svg rect,
+    .campaign-map-shape-svg polygon,
+    .campaign-map-shape-svg ellipse {
+      fill: rgba(241,211,142,0.15);
+      stroke: rgba(255,244,214,0.92);
+      stroke-width: 3;
+      vector-effect: non-scaling-stroke;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.32));
+    }
+
+    .campaign-map-shape-label {
+      position: absolute;
+      padding: 3px 7px;
+      border: 1px solid rgba(255,248,230,0.68);
+      border-radius: 999px;
+      background: rgba(20,18,14,0.76);
+      color: rgba(255,250,236,0.96);
+      font: 800 11px/1 system-ui, sans-serif;
+      white-space: nowrap;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+
+    .campaign-map-shape-label.is-top {
+      left: 50%;
+      top: -10px;
+    }
+
+    .campaign-map-shape-label.is-right {
+      left: calc(100% + 12px);
+      top: 50%;
+    }
+
+    .campaign-map-drag-measure {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .campaign-map-drag-measure line {
+      stroke: rgba(255,244,214,0.96);
+      stroke-width: 4;
+      stroke-linecap: round;
+      marker-end: url(#campaign-drag-arrow);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .campaign-map-drag-measure path {
+      fill: rgba(255,244,214,0.96);
+    }
+
+    .campaign-map-drag-measure text {
+      fill: rgba(255,250,236,0.98);
+      paint-order: stroke;
+      stroke: rgba(20,18,14,0.9);
+      stroke-width: 5;
+      font: 700 28px system-ui, sans-serif;
+      text-anchor: middle;
+    }
+
     .campaign-map-fog-image {
       width: 100%;
       height: 100%;
       object-fit: fill;
       z-index: 5;
+      opacity: 1 !important;
       pointer-events: none;
     }
   `;
