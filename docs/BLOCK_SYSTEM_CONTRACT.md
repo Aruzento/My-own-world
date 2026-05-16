@@ -190,6 +190,8 @@ if (type === 'dndStats' && currentVersion < 2) {
 - upgrade-функцию в `blockContract.js`, если структура может меняться;
 - ручной smoke-тест: создать, заполнить, сохранить, открыть заново.
 
+Image block использует `data-block-type="image"` и не имеет заголовка. Persistent HTML хранит только `.image-block-frame` и `img[data-asset]` с `data-crop-x`, `data-crop-y`, `data-crop-zoom`; кнопки загрузки, удаления и кадрирования являются runtime controls.
+
 ## Encoding Rule
 
 Любые текстовые файлы и runtime strings хранятся только в UTF-8.

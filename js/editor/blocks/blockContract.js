@@ -2,6 +2,7 @@
   text: 1,
   items: 1,
   spells: 1,
+  image: 1,
   characterStats: 2,
   dndStats: 3,
   table: 1
@@ -28,6 +29,8 @@ const LEGACY_RUNTIME_SELECTOR = [
   '.inline-alias-input',
   '.inline-add-alias-btn',
   '.upload-portrait-btn',
+  '.image-upload-btn',
+  '.image-runtime-actions',
   '.table-row-controls'
 ].join(',');
 
@@ -543,6 +546,10 @@ function ensureRuntimeControls(
     editor
   );
 
+  ensureImageBlockControls(
+    editor
+  );
+
   ensureCardShellControls(
     editor
   );
@@ -600,6 +607,35 @@ function ensureCardShellControls(
         '.upload-portrait-btn',
         'upload-portrait-btn',
         '+ Image'
+      );
+    });
+}
+
+
+function ensureImageBlockControls(
+  editor
+) {
+
+  getMatchingElements(
+    editor,
+    '.image-block'
+  )
+    .forEach(block => {
+
+      const frame =
+        block.querySelector('.image-block-frame');
+
+      if (!frame) return;
+
+      if (
+        frame.querySelector('img[data-asset]')
+      ) return;
+
+      ensureRuntimeButton(
+        frame,
+        '.image-upload-btn',
+        'image-upload-btn',
+        '+ Загрузить картинку'
       );
     });
 }

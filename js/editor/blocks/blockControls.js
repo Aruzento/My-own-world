@@ -49,8 +49,6 @@ export function ensureBlockControls(
   const title =
     block.querySelector('h2');
 
-  if (!title) return;
-
   const actions =
     document.createElement('div');
 
@@ -71,13 +69,17 @@ export function ensureBlockControls(
       ⠿
     </button>
 
-    <button
-      class="block-rename-btn"
-      type="button"
-      title="Переименовать блок"
-    >
-      ✎
-    </button>
+    ${title
+      ? `
+        <button
+          class="block-rename-btn"
+          type="button"
+          title="Переименовать блок"
+        >
+          ✎
+        </button>
+      `
+      : ''}
 
     <button
       class="block-delete-btn"
@@ -88,7 +90,16 @@ export function ensureBlockControls(
     </button>
   `;
 
-  title.before(
+  if (title) {
+
+    title.before(
+      actions
+    );
+
+    return;
+  }
+
+  block.prepend(
     actions
   );
 }

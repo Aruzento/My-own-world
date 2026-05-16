@@ -33,6 +33,13 @@ export function renderTypePicker(
       })}
 
       ${createTypeOptionHTML({
+        type: 'image',
+        icon: '▧',
+        title: 'Картинка',
+        description: 'Изображение на всю ширину блока'
+      })}
+
+      ${createTypeOptionHTML({
         type: 'characterStats',
         icon: '★',
         title: 'Статистика персонажа',

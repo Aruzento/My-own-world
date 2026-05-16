@@ -81,6 +81,29 @@ export function createSpellsBlock({
 }
 
 
+export function createImageBlock() {
+
+  return `
+    <div
+      class="template-block image-block"
+      data-block-type="image"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <div class="image-block-frame">
+        <button
+          class="image-upload-btn"
+          data-runtime="true"
+          type="button"
+        >
+          + Загрузить картинку
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+
 export function createCharacterStatsBlock({
   title = 'Статистика персонажа'
 }) {

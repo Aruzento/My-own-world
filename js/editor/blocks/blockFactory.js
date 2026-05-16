@@ -2,6 +2,7 @@ import {
   createTextBlock,
   createItemsBlock,
   createSpellsBlock,
+  createImageBlock,
   createCharacterStatsBlock,
   createDndStatsBlock,
   createTableBlock
@@ -24,6 +25,9 @@ const BLOCK_CREATORS = {
     createSpellsBlock({
       title
     }),
+
+  image: () =>
+    createImageBlock(),
 
   characterStats: title =>
     createCharacterStatsBlock({

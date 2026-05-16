@@ -204,6 +204,99 @@
 
 
 /* =========================================
+   IMAGE BLOCK
+========================================= */
+
+.image-block {
+  padding:
+    14px 0;
+}
+
+
+.image-block-frame {
+  position:
+    relative;
+
+  width:
+    100%;
+
+  min-height:
+    120px;
+
+  overflow:
+    hidden;
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(255,255,255,0.035);
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+}
+
+
+.image-block-frame img {
+  width:
+    100%;
+
+  height:
+    auto;
+
+  display:
+    block;
+
+  transform-origin:
+    center;
+}
+
+
+.image-upload-btn {
+  width:
+    100%;
+
+  min-height:
+    120px;
+
+  border:
+    1px dashed rgba(255,255,255,0.12);
+
+  border-radius:
+    14px;
+
+  background:
+    rgba(255,255,255,0.025);
+
+  color:
+    rgba(255,255,255,0.46);
+
+  font-size:
+    13px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+
+
+.image-upload-btn:hover {
+  background:
+    rgba(241,211,142,0.08);
+
+  color:
+    rgba(255,248,230,0.94);
+
+  border-color:
+    rgba(241,211,142,0.22);
+}
+
+
+/* =========================================
    BLOCK DRAG STATE
 ========================================= */
 

@@ -273,6 +273,8 @@ Toolbar больше не вызывает `document.execCommand()` напрям
 - serializer/upgrade логику, если есть form controls или меняется структура;
 - ручной smoke-тест: создать, заполнить, сохранить, открыть заново.
 
+`image` block — отдельный блок без заголовка: хранит `img[data-asset]` и настройки кадрирования в `data-crop-x`, `data-crop-y`, `data-crop-zoom`. Кнопки загрузки, удаления и кадрирования остаются runtime UI.
+
 ## UTF-8
 
 Любые текстовые файлы и runtime strings только UTF-8.

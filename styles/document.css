@@ -154,6 +154,9 @@
 ========================================= */
 
 .media-box {
+  position:
+    relative;
+
   width:
     100%;
 
@@ -196,6 +199,109 @@
 
   display:
     block;
+
+  transform-origin:
+    center;
+}
+
+
+.image-runtime-actions {
+  position:
+    absolute;
+
+  top:
+    8px;
+
+  right:
+    8px;
+
+  z-index:
+    3;
+
+  display:
+    flex;
+
+  gap:
+    6px;
+
+  opacity:
+    0;
+
+  transform:
+    translateY(-3px);
+
+  transition:
+    opacity 0.14s,
+    transform 0.14s;
+}
+
+
+.media-box:hover .image-runtime-actions,
+.image-block-frame:hover .image-runtime-actions {
+  opacity:
+    1;
+
+  transform:
+    translateY(0);
+}
+
+
+.image-runtime-actions button {
+  min-height:
+    28px;
+
+  padding:
+    0 9px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(14,15,16,0.78);
+
+  color:
+    rgba(255,255,255,0.82);
+
+  font-size:
+    12px;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.24);
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.image-runtime-actions button:hover {
+  background:
+    rgba(241,211,142,0.18);
+
+  color:
+    rgba(255,248,230,0.98);
+}
+
+
+.image-runtime-actions .image-delete-btn:hover {
+  background:
+    rgba(255,154,154,0.18);
+
+  color:
+    var(--danger);
+}
+
+
+.image-runtime-actions button:active {
+  transform:
+    scale(0.96);
 }
 
 

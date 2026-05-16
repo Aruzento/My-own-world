@@ -177,6 +177,18 @@ function openAddBlockPopup({
   saveCurrentPage
 }) {
 
+  if (type === 'image') {
+
+    addImageBlock(
+      button,
+      saveCurrentPage
+    );
+
+    closeBlockPopup();
+
+    return;
+  }
+
   /* Таблице нужны дополнительные параметры, поэтому у неё отдельная форма. */
   if (type === 'table') {
 
@@ -311,6 +323,38 @@ async function applyPopupAction() {
   }
 
   closeBlockPopup();
+}
+
+
+function addImageBlock(
+  button,
+  saveCurrentPage
+) {
+
+  const main =
+    button.closest('.entity-main');
+
+  if (!main) return;
+
+  const block =
+    createTypedBlock(
+      'image',
+      ''
+    );
+
+  main.appendChild(
+    block
+  );
+
+  applyBlockSystemContract(
+    block
+  );
+
+  ensureBlockControls(
+    block
+  );
+
+  saveCurrentPage();
 }
 
 
