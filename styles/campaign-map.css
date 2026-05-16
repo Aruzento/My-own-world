@@ -553,6 +553,66 @@
 }
 
 
+.campaign-map-token.is-creature[data-hp-percent] {
+
+  border-color:
+    var(--token-health-color, rgba(255,255,255,0.86));
+
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--token-health-color, #65b96b) 28%, transparent),
+    0 12px 28px rgba(0,0,0,0.34);
+}
+
+
+.campaign-map-token.is-creature[data-hp-state="dead"] {
+
+  border-color:
+    rgba(210,58,58,0.96);
+
+  background:
+    rgba(24,18,18,0.92);
+
+  color:
+    rgba(255,238,230,0.98);
+}
+
+
+.campaign-map-token.is-creature[data-hp-state="dead"] .campaign-map-token-image {
+
+  display:
+    none;
+}
+
+
+.campaign-map-token.is-creature[data-hp-state="dead"]::after {
+
+  content:
+    "RIP";
+
+  width:
+    100%;
+
+  height:
+    100%;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    inherit;
+
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), transparent 48%),
+    rgba(24,18,18,0.92);
+
+  font:
+    900 15px/1 system-ui, sans-serif;
+}
+
+
 .campaign-map-token:hover {
 
   box-shadow:
@@ -1127,6 +1187,34 @@
 }
 
 
+.campaign-token-popup-compact {
+
+  grid-template-columns:
+    minmax(76px, auto) 34px;
+}
+
+
+.campaign-token-popup-menu,
+.campaign-token-popup-hp {
+
+  width:
+    190px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+}
+
+
+.campaign-token-popup-hp {
+
+  width:
+    220px;
+}
+
+
 .campaign-token-popup button {
 
   width:
@@ -1173,6 +1261,147 @@
 
   line-height:
     1;
+}
+
+
+.campaign-token-popup .campaign-token-popup-text,
+.campaign-token-popup-menu button,
+.campaign-token-hp-actions button {
+
+  width:
+    auto;
+
+  justify-content:
+    flex-start;
+
+  padding:
+    0 12px;
+}
+
+
+.campaign-token-popup-menu button {
+
+  justify-content:
+    flex-start;
+
+  font-size:
+    13px;
+
+  font-weight:
+    700;
+}
+
+
+.campaign-token-popup-more {
+
+  letter-spacing:
+    1px;
+}
+
+
+.campaign-token-hp-title {
+
+  color:
+    rgba(255,248,230,0.92);
+
+  font-size:
+    12px;
+
+  font-weight:
+    780;
+}
+
+
+.campaign-token-hp-row {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    58px minmax(0, 1fr);
+
+  gap:
+    8px;
+}
+
+
+.campaign-token-hp-sign,
+.campaign-token-hp-value {
+
+  width:
+    100%;
+
+  min-height:
+    36px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,248,230,0.94);
+
+  font:
+    700 13px system-ui, sans-serif;
+}
+
+
+.campaign-token-hp-sign {
+
+  padding:
+    0 28px 0 12px;
+
+  appearance:
+    none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(241,211,142,0.16),
+      rgba(255,255,255,0.055)
+    ),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%23f4dfaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+
+  background-repeat:
+    no-repeat;
+
+  background-position:
+    right 8px center;
+
+  background-size:
+    14px;
+}
+
+
+.campaign-token-hp-value {
+
+  padding:
+    0 10px;
+}
+
+
+.campaign-token-hp-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.campaign-token-hp-actions button {
+
+  min-width:
+    72px;
 }
 
 

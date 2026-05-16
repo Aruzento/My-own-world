@@ -31,6 +31,10 @@ import {
   serializePersistentEditorHTML
 } from './blocks/blockContract.js';
 
+import {
+  createDndStatsBlock
+} from '../templates/blockTypes.js';
+
 
 let saveCurrentPageCallback = null;
 let presentationWindow = null;
@@ -308,7 +312,7 @@ function ensureMapControls(
     </div>
 
     <div class="campaign-map-control-group">
-      <button class="campaign-shapes-btn" type="button" title="Фигуры">◇</button>
+      <button class="campaign-shapes-btn" type="button" title="Фигуры">Фигуры</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
     </div>
   `;
@@ -1633,6 +1637,76 @@ function getPageDndHealth(
   return {
     current,
     max
+  };
+}
+
+
+function ensurePageDndHealth(
+  page
+) {
+
+  if (!page?.content) return null;
+
+  const existing =
+    getPageDndHealth(
+      page
+    );
+
+  if (existing) return existing;
+
+  const wrapper =
+    parsePageBody(
+      page
+    );
+
+  const blockWrapper =
+    document.createElement('div');
+
+  blockWrapper.innerHTML =
+    createDndStatsBlock({
+      title: 'Стат. блок DnD'
+    });
+
+  const block =
+    blockWrapper.querySelector(
+      '.dnd-stats-block'
+    );
+
+  if (!block) return null;
+
+  const currentInput =
+    block.querySelector('.dnd-current-hp');
+
+  const maxInput =
+    block.querySelector('.dnd-max-hp');
+
+  currentInput?.setAttribute(
+    'value',
+    '10'
+  );
+
+  maxInput?.setAttribute(
+    'value',
+    '10'
+  );
+
+  const target =
+    wrapper.querySelector('.entity-main') ||
+    wrapper;
+
+  target.appendChild(
+    block
+  );
+
+  page.content =
+    replaceMarkdownBody(
+      page.content,
+      wrapper.innerHTML
+    );
+
+  return {
+    current: 10,
+    max: 10
   };
 }
 
@@ -3087,6 +3161,23 @@ function openTokenPopup(
   const hidden =
     token.dataset.presentationHidden === 'true';
 
+  if (
+    !isShape &&
+    token.dataset.tokenType === 'creature'
+  ) {
+
+    openCreatureTokenPopup(
+      token,
+      popup,
+      hidden
+    );
+
+    return;
+  }
+
+  popup.className =
+    'campaign-token-popup hidden';
+
   popup.innerHTML = `
     <button class="campaign-token-popup-icon campaign-token-popup-delete" type="button" title="Удалить">×</button>
     <button class="campaign-token-popup-icon campaign-token-popup-hide" type="button" title="${hidden ? 'Показать' : 'Скрыть'}">
@@ -3176,6 +3267,262 @@ function openTokenPopup(
       fallbackHeight: 48
     }
   );
+}
+
+
+function openCreatureTokenPopup(
+  token,
+  popup,
+  hidden
+) {
+
+  popup.className =
+    'campaign-token-popup campaign-token-popup-compact hidden';
+
+  popup.innerHTML = `
+    <button class="campaign-token-popup-text campaign-token-popup-hide" type="button">
+      ${hidden ? 'Показать' : 'Скрыть'}
+    </button>
+    <button class="campaign-token-popup-more" type="button" title="Действия">...</button>
+  `;
+
+  popup
+    .querySelector('.campaign-token-popup-hide')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await toggleMapItemPresentationVisibility(
+          token
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-popup-more')
+    .addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        openCreatureTokenActionsPopup(
+          token
+        );
+      }
+    );
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  positionPopupNearAnchor(
+    popup,
+    token,
+    {
+      gap: 10,
+      fallbackWidth: 128,
+      fallbackHeight: 48
+    }
+  );
+}
+
+
+function openCreatureTokenActionsPopup(
+  token
+) {
+
+  const popup =
+    getTokenPopup();
+
+  popup.className =
+    'campaign-token-popup campaign-token-popup-menu hidden';
+
+  popup.innerHTML = `
+    <button type="button" data-action="duplicate">Дублировать</button>
+    <button type="button" data-action="hp">Изменить хиты</button>
+    <button type="button" data-action="delete">Удалить</button>
+    <button type="button" data-action="open">Открыть карточку</button>
+  `;
+
+  popup
+    .querySelectorAll('button[data-action]')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          const action =
+            button.dataset.action;
+
+          if (action === 'duplicate') {
+
+            await duplicateTokenAndPage(
+              token
+            );
+            return;
+          }
+
+          if (action === 'hp') {
+
+            openTokenHpPopup(
+              token
+            );
+            return;
+          }
+
+          if (action === 'delete') {
+
+            await deleteTokenAndPage(
+              token
+            );
+            return;
+          }
+
+          if (action === 'open') {
+
+            await openTokenCard(
+              token
+            );
+          }
+        }
+      );
+    });
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  positionPopupNearAnchor(
+    popup,
+    token,
+    {
+      gap: 10,
+      fallbackWidth: 180,
+      fallbackHeight: 170
+    }
+  );
+}
+
+
+function openTokenHpPopup(
+  token
+) {
+
+  const page =
+    getTokenPage(
+      token
+    );
+
+  const health =
+    ensurePageDndHealth(
+      page
+    );
+
+  if (!page || !health) {
+
+    setStatus(
+      'У карточки нет блока DnD с хитами'
+    );
+
+    openCreatureTokenActionsPopup(
+      token
+    );
+
+    return;
+  }
+
+  const popup =
+    getTokenPopup();
+
+  popup.className =
+    'campaign-token-popup campaign-token-popup-hp hidden';
+
+  popup.innerHTML = `
+    <div class="campaign-token-hp-title">Хиты: ${health.current}/${health.max}</div>
+    <div class="campaign-token-hp-row">
+      <select class="campaign-token-hp-sign" aria-label="Знак изменения хитов">
+        <option value="+">+</option>
+        <option value="-">-</option>
+      </select>
+      <input class="campaign-token-hp-value" type="number" min="0" step="1" value="1">
+    </div>
+    <div class="campaign-token-hp-actions">
+      <button class="campaign-token-hp-cancel" type="button">Отмена</button>
+      <button class="campaign-token-hp-ok" type="button">Ок</button>
+    </div>
+  `;
+
+  popup
+    .querySelector('.campaign-token-hp-cancel')
+    .addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        openCreatureTokenActionsPopup(
+          token
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-hp-ok')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const sign =
+          popup.querySelector('.campaign-token-hp-sign').value;
+
+        const value =
+          Number(
+            popup.querySelector('.campaign-token-hp-value').value || 0
+          );
+
+        if (
+          !Number.isFinite(value) ||
+          value < 0
+        ) return;
+
+        await changeTokenHp(
+          token,
+          page,
+          sign === '-' ? -value : value
+        );
+      }
+    );
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  positionPopupNearAnchor(
+    popup,
+    token,
+    {
+      gap: 10,
+      fallbackWidth: 220,
+      fallbackHeight: 146
+    }
+  );
+
+  popup
+    .querySelector('.campaign-token-hp-value')
+    .focus();
 }
 
 
@@ -3310,6 +3657,176 @@ async function deleteTokenAndPage(
   token.remove();
   renderTree();
   await saveAndSync();
+}
+
+
+function getTokenPage(
+  token
+) {
+
+  return state.pages.find(candidate =>
+    candidate.id === token?.dataset.pageId
+  );
+}
+
+
+async function openTokenCard(
+  token
+) {
+
+  const page =
+    getTokenPage(
+      token
+    );
+
+  if (!page) return;
+
+  closeTokenPopup();
+  clearDraggedToken(
+    false
+  );
+
+  const editorModule =
+    await import('./editor.js');
+
+  editorModule.openPage(
+    page
+  );
+}
+
+
+async function changeTokenHp(
+  token,
+  page,
+  delta
+) {
+
+  const canWrite =
+    await ensureWorkspaceWritePermission();
+
+  if (!canWrite) {
+
+    setStatus(
+      'Нет прав на изменение workspace'
+    );
+
+    return;
+  }
+
+  const result =
+    updatePageDndCurrentHp(
+      page,
+      delta
+    );
+
+  if (!result) {
+
+    setStatus(
+      'У карточки нет блока DnD с хитами'
+    );
+
+    return;
+  }
+
+  const writable =
+    await page.handle.createWritable();
+
+  await writable.write(
+    page.content
+  );
+
+  await writable.close();
+
+  applyTokenHealthState(
+    token
+  );
+
+  closeTokenPopup();
+  await saveAndSync();
+
+  setStatus(
+    `Хиты изменены: ${result.current}/${result.max}`
+  );
+}
+
+
+function updatePageDndCurrentHp(
+  page,
+  delta
+) {
+
+  const wrapper =
+    parsePageBody(
+      page
+    );
+
+  let block =
+    wrapper.querySelector(
+      '.dnd-stats-block'
+    );
+
+  if (!block) {
+
+    ensurePageDndHealth(
+      page
+    );
+
+    return updatePageDndCurrentHp(
+      page,
+      delta
+    );
+  }
+
+  if (!block) return null;
+
+  const currentInput =
+    block.querySelector('.dnd-current-hp');
+
+  const maxInput =
+    block.querySelector('.dnd-max-hp');
+
+  const current =
+    readNumberFromInput(
+      currentInput
+    );
+
+  const max =
+    readNumberFromInput(
+      maxInput
+    );
+
+  if (
+    !currentInput ||
+    current === null ||
+    max === null ||
+    max <= 0
+  ) return null;
+
+  const next =
+    clamp(
+      current + delta,
+      0,
+      max
+    );
+
+  currentInput.setAttribute(
+    'value',
+    String(next)
+  );
+
+  currentInput.value =
+    String(next);
+
+  page.content =
+    replaceMarkdownBody(
+      page.content,
+      wrapper.innerHTML
+    );
+
+  return {
+    current: next,
+    max
+  };
 }
 
 

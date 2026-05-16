@@ -53,6 +53,15 @@ export function renderTreePage(
     &&
     page.children.length > 0;
 
+  const pageKey =
+    getTreePageKey(
+      page
+    );
+
+  const isCollapsed =
+    collapsedPages.has(pageKey) ||
+    isCollapsed;
+
 
   const toggle =
     document.createElement('button');
@@ -65,7 +74,7 @@ export function renderTreePage(
 
   toggle.textContent =
     hasChildren
-      ? collapsedPages.has(page.id)
+      ? isCollapsed
         ? '›'
         : '⌄'
       : '';
@@ -80,25 +89,33 @@ export function renderTreePage(
       if (!hasChildren) return;
 
       if (
-        collapsedPages.has(page.id)
+        isCollapsed
       ) {
 
         collapsedPages.delete(
           page.id
         );
 
+        collapsedPages.delete(
+          pageKey
+        );
+
         expandedPages.add(
-          page.id
+          pageKey
         );
 
       } else {
 
         collapsedPages.add(
-          page.id
+          pageKey
         );
 
         expandedPages.delete(
           page.id
+        );
+
+        expandedPages.delete(
+          pageKey
         );
       }
 
@@ -178,7 +195,7 @@ export function renderTreePage(
   if (
     hasChildren
     &&
-    !collapsedPages.has(page.id)
+    !isCollapsed
   ) {
 
     page.children.forEach(child => {
@@ -195,4 +212,15 @@ export function renderTreePage(
       );
     });
   }
+}
+
+
+function getTreePageKey(
+  page
+) {
+
+  return page?.path ||
+    page?.name ||
+    page?.id ||
+    '';
 }

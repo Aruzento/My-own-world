@@ -91,7 +91,7 @@ export function renderFilteredTree(
   if (isFullTree) {
 
     pruneTreeExpansionState(
-      pageMap
+      pages
     );
   }
 
@@ -224,8 +224,24 @@ function saveTreeExpansionState() {
 
 
 function pruneTreeExpansionState(
-  pageMap
+  pages
 ) {
+
+  const pageKeys =
+    new Set();
+
+  pages.forEach(page => {
+
+    pageKeys.add(
+      page.id
+    );
+
+    pageKeys.add(
+      getTreePageKey(
+        page
+      )
+    );
+  });
 
   let changed =
     false;
@@ -233,7 +249,7 @@ function pruneTreeExpansionState(
   collapsedPages.forEach(pageId => {
 
     if (
-      pageMap.has(pageId)
+      pageKeys.has(pageId)
     ) return;
 
     collapsedPages.delete(
@@ -247,7 +263,7 @@ function pruneTreeExpansionState(
   expandedPages.forEach(pageId => {
 
     if (
-      pageMap.has(pageId)
+      pageKeys.has(pageId)
     ) return;
 
     expandedPages.delete(
@@ -262,6 +278,17 @@ function pruneTreeExpansionState(
 
     saveTreeExpansionState();
   }
+}
+
+
+export function getTreePageKey(
+  page
+) {
+
+  return page?.path ||
+    page?.name ||
+    page?.id ||
+    '';
 }
 
 
