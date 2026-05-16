@@ -1,6 +1,10 @@
 import { state } from '../state.js';
 
 import {
+  writeFile
+} from '../storage/storage.js';
+
+import {
   saveCurrentPage
 } from './editor.js';
 
@@ -73,15 +77,11 @@ async function uploadPortrait(
       { create: true }
     );
 
-  const writable =
-    await targetHandle
-      .createWritable();
-
-  await writable.write(
-    await imageFile.arrayBuffer()
+  await writeFile(
+    targetHandle,
+    await imageFile.arrayBuffer(),
+    `asset:${imageFile.name}`
   );
-
-  await writable.close();
 
   const localFile =
     await targetHandle.getFile();
@@ -188,14 +188,11 @@ export async function insertImage(
       { create: true }
     );
 
-  const writable =
-    await targetHandle.createWritable();
-
-  await writable.write(
-    await imageFile.arrayBuffer()
+  await writeFile(
+    targetHandle,
+    await imageFile.arrayBuffer(),
+    `asset:${imageFile.name}`
   );
-
-  await writable.close();
 
 
   const localFile =

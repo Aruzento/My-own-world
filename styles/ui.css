@@ -1,0 +1,176 @@
+/* Общий UI-контракт для новых компонентов. */
+
+.ui-panel {
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+}
+
+
+.ui-button {
+  min-height:
+    30px;
+
+  padding:
+    0 10px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    6px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.74);
+
+  font-size:
+    12px;
+
+  line-height:
+    1;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.ui-button:hover,
+.ui-button.is-active {
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.ui-button:active {
+  transform:
+    scale(0.96);
+}
+
+
+.ui-button.danger:hover {
+  background:
+    rgba(255,154,154,0.12);
+
+  color:
+    var(--danger);
+}
+
+
+.ui-input {
+  width:
+    100%;
+
+  min-height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  outline:
+    none;
+
+  border-radius:
+    11px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    var(--text);
+
+  font-size:
+    13px;
+}
+
+
+.ui-input:focus {
+  border-color:
+    rgba(241,211,142,0.30);
+
+  box-shadow:
+    0 0 0 3px rgba(241,211,142,0.08);
+}
+
+
+.ui-input::placeholder {
+  color:
+    rgba(255,255,255,0.30);
+}
+
+
+.ui-chip {
+  min-height:
+    24px;
+
+  padding:
+    0 8px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    5px;
+
+  border:
+    1px solid rgba(241,211,142,0.14);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.08);
+
+  color:
+    rgba(255,248,230,0.88);
+
+  font-size:
+    11px;
+}

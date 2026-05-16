@@ -15,8 +15,9 @@ import {
 import { state } from '../state.js';
 
 import {
-  positionPopupAtPoint
-} from '../ui/popupPosition.js';
+  openPopupAtPoint,
+  registerPopup
+} from '../ui/popupManager.js';
 
 
 const menu =
@@ -26,6 +27,11 @@ menu.className =
   'wiki-create-menu hidden';
 
 document.body.appendChild(menu);
+
+registerPopup({
+  popup: menu,
+  close: closeWikiCreateMenu
+});
 
 
 export function openWikiCreateMenu(
@@ -139,22 +145,13 @@ export function openWikiCreateMenu(
     });
 
 
-  menu.classList.remove(
-    'hidden'
-  );
-
-  requestAnimationFrame(
-    () => {
-
-      positionPopupAtPoint(
-        menu,
-        x,
-        y,
-        {
-          fallbackWidth: 300,
-          fallbackHeight: 340
-        }
-      );
+  openPopupAtPoint(
+    menu,
+    x,
+    y,
+    {
+      fallbackWidth: 300,
+      fallbackHeight: 340
     }
   );
 }
@@ -344,20 +341,6 @@ export function closeWikiCreateMenu() {
     'hidden'
   );
 }
-
-
-document.addEventListener(
-  'click',
-  event => {
-
-    if (
-      !menu.contains(event.target)
-    ) {
-
-      closeWikiCreateMenu();
-    }
-  }
-);
 
 
 function normalize(value) {

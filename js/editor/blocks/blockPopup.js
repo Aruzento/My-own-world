@@ -20,11 +20,14 @@ import {
 } from './blockPopupViews.js';
 
 import {
-  positionPopupNearAnchor
-} from '../../ui/popupPosition.js';
+  openPopupNearAnchor,
+  registerPopup
+} from '../../ui/popupManager.js';
 
 
 let popupState = null;
+let activeAnchor = null;
+const popupAnchors = [];
 
 
 export function setupBlockPopup() {
@@ -71,25 +74,11 @@ export function setupBlockPopup() {
       applyPopupAction
     );
 
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        popup.classList.contains('hidden')
-      ) return;
-
-      if (
-        popup.contains(event.target)
-      ) return;
-
-      if (
-        event.target.closest('.add-block-btn, .block-delete-btn')
-      ) return;
-
-      closeBlockPopup();
-    }
-  );
+  registerPopup({
+    popup,
+    close: closeBlockPopup,
+    anchors: popupAnchors
+  });
 }
 
 
@@ -100,6 +89,17 @@ export function openTypePicker(
 
   const popup =
     getPopup();
+
+  if (
+    activeAnchor === button &&
+    !popup.classList.contains('hidden') &&
+    !popupState
+  ) {
+
+    closeBlockPopup();
+
+    return;
+  }
 
   renderTypePicker(
     popup
@@ -142,6 +142,17 @@ export function openDeletePopup(
 
   const popup =
     getPopup();
+
+  if (
+    activeAnchor === button &&
+    !popup.classList.contains('hidden') &&
+    popupState?.mode === 'delete'
+  ) {
+
+    closeBlockPopup();
+
+    return;
+  }
 
   renderDeletePrompt(
     popup
@@ -410,27 +421,16 @@ function showPopupNearButton(
   button
 ) {
 
-  popup.classList.remove(
-    'hidden'
+  activeAnchor =
+    button;
+
+  popupAnchors.splice(
+    0,
+    popupAnchors.length,
+    button
   );
 
-  requestAnimationFrame(
-    () => {
-      positionPopupNearButton(
-        popup,
-        button
-      );
-    }
-  );
-}
-
-
-function positionPopupNearButton(
-  popup,
-  button
-) {
-
-  positionPopupNearAnchor(
+  openPopupNearAnchor(
     popup,
     button,
     {
@@ -455,4 +455,12 @@ function closeBlockPopup() {
 
   popupState =
     null;
+
+  activeAnchor =
+    null;
+
+  popupAnchors.splice(
+    0,
+    popupAnchors.length
+  );
 }

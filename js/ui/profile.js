@@ -1,6 +1,7 @@
 import {
-  positionPopupNearAnchor
-} from './popupPosition.js';
+  registerPopup,
+  togglePopupNearAnchor
+} from './popupManager.js';
 
 const user = {
   image: '',
@@ -29,29 +30,12 @@ export function setupProfile() {
       event.preventDefault();
       event.stopPropagation();
 
-      openProfilePopup(
+      toggleProfilePopup(
         button
       );
     }
   );
 
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        !popup ||
-        popup.classList.contains('hidden') ||
-        popup.contains(event.target) ||
-        button.contains(event.target)
-      ) {
-
-        return;
-      }
-
-      closeProfilePopup();
-    }
-  );
 }
 
 
@@ -95,20 +79,22 @@ function renderProfileButton(
 }
 
 
-function openProfilePopup(
+function toggleProfilePopup(
   anchor
 ) {
 
   const element =
     getProfilePopup();
 
-  element.classList.remove(
-    'hidden'
-  );
-
-  positionProfilePopup(
+  togglePopupNearAnchor(
     element,
-    anchor
+    anchor,
+    {
+      preferred: 'top',
+      gap: 10,
+      fallbackWidth: 300,
+      fallbackHeight: 220
+    }
   );
 }
 
@@ -154,23 +140,13 @@ function getProfilePopup() {
     popup
   );
 
+  registerPopup({
+    popup,
+    close: closeProfilePopup,
+    anchors: [
+      document.getElementById('profileButton')
+    ]
+  });
+
   return popup;
-}
-
-
-function positionProfilePopup(
-  element,
-  anchor
-) {
-
-  positionPopupNearAnchor(
-    element,
-    anchor,
-    {
-      preferred: 'top',
-      gap: 10,
-      fallbackWidth: 300,
-      fallbackHeight: 220
-    }
-  );
 }

@@ -1,9 +1,12 @@
 import {
-  positionPopupNearAnchor
-} from './popupPosition.js';
+  openPopupNearAnchor,
+  registerPopup
+} from './popupManager.js';
 
 let popup = null;
 let confirmHandler = null;
+let activeAnchor = null;
+const popupAnchors = [];
 
 
 export function openConfirmPopup({
@@ -17,6 +20,25 @@ export function openConfirmPopup({
 
   const element =
     getConfirmPopup();
+
+  if (
+    activeAnchor === anchor &&
+    !element.classList.contains('hidden')
+  ) {
+
+    closeConfirmPopup();
+
+    return;
+  }
+
+  activeAnchor =
+    anchor;
+
+  popupAnchors.splice(
+    0,
+    popupAnchors.length,
+    anchor
+  );
 
   confirmHandler =
     onConfirm;
@@ -33,13 +55,13 @@ export function openConfirmPopup({
   element.querySelector('.confirm-popup-cancel').textContent =
     cancelText;
 
-  element.classList.remove(
-    'hidden'
-  );
-
-  positionPopup(
+  openPopupNearAnchor(
     element,
-    anchor
+    anchor,
+    {
+      fallbackWidth: 260,
+      fallbackHeight: 140
+    }
   );
 }
 
@@ -54,6 +76,14 @@ export function closeConfirmPopup() {
 
   confirmHandler =
     null;
+
+  activeAnchor =
+    null;
+
+  popupAnchors.splice(
+    0,
+    popupAnchors.length
+  );
 }
 
 
@@ -106,38 +136,11 @@ function getConfirmPopup() {
       }
     );
 
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        popup.classList.contains('hidden') ||
-        popup.contains(event.target) ||
-        event.target.closest('[data-confirm-anchor="true"]')
-      ) {
-
-        return;
-      }
-
-      closeConfirmPopup();
-    }
-  );
+  registerPopup({
+    popup,
+    close: closeConfirmPopup,
+    anchors: popupAnchors
+  });
 
   return popup;
-}
-
-
-function positionPopup(
-  element,
-  anchor
-) {
-
-  positionPopupNearAnchor(
-    element,
-    anchor,
-    {
-      fallbackWidth: 260,
-      fallbackHeight: 140
-    }
-  );
 }

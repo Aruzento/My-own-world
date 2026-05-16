@@ -15,9 +15,10 @@ import {
 } from '../editor/editor.js';
 
 import {
-  positionPopupNearAnchor,
-  positionPopupAtPoint
-} from './popupPosition.js';
+  openPopupAtPoint,
+  openPopupNearAnchor,
+  registerPopup
+} from './popupManager.js';
 
 
 const menu =
@@ -30,6 +31,9 @@ const button =
     'newPageBtn'
   );
 
+const menuAnchors =
+  [];
+
 
 export function setupCreateModal() {
 
@@ -40,20 +44,11 @@ export function setupCreateModal() {
     toggleMenu
   );
 
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        !menu.contains(event.target)
-        &&
-        event.target !== button
-      ) {
-
-        closeMenu();
-      }
-    }
-  );
+  registerPopup({
+    popup: menu,
+    close: closeMenu,
+    anchors: menuAnchors
+  });
 }
 
 
@@ -94,36 +89,36 @@ export function openCreateMenu(
   menu.dataset.parentId =
     parentId ?? '';
 
-  menu.classList.remove(
-    'hidden'
+  menuAnchors.splice(
+    0,
+    menuAnchors.length
   );
 
-  requestAnimationFrame(
-    () => {
+  if (anchor) {
 
-      if (anchor) {
+    menuAnchors.push(
+      anchor
+    );
 
-        positionPopupNearAnchor(
-          menu,
-          anchor,
-          {
-            fallbackWidth: 260,
-            fallbackHeight: 220
-          }
-        );
-
-        return;
+    openPopupNearAnchor(
+      menu,
+      anchor,
+      {
+        fallbackWidth: 260,
+        fallbackHeight: 220
       }
+    );
 
-      positionPopupAtPoint(
-        menu,
-        x,
-        y,
-        {
-          fallbackWidth: 260,
-          fallbackHeight: 220
-        }
-      );
+    return;
+  }
+
+  openPopupAtPoint(
+    menu,
+    x,
+    y,
+    {
+      fallbackWidth: 260,
+      fallbackHeight: 220
     }
   );
 }
@@ -133,6 +128,11 @@ function closeMenu() {
 
   menu.classList.add(
     'hidden'
+  );
+
+  menuAnchors.splice(
+    0,
+    menuAnchors.length
   );
 }
 

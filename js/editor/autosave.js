@@ -5,6 +5,10 @@ import {
 } from '../tree/tree.js';
 
 import {
+  writePageContent
+} from '../storage/storage.js';
+
+import {
   setStatus
 } from '../ui/ui.js';
 
@@ -101,15 +105,10 @@ aliases: [${aliases.join(', ')}]
 ${getSerializedEditorHTML(editor)}
 `;
 
-  const writable =
-    await state.currentPage.handle
-      .createWritable();
-
-  await writable.write(
+  await writePageContent(
+    state.currentPage,
     content
   );
-
-  await writable.close();
 
   state.currentPage.content =
     content;

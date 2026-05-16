@@ -1,4 +1,10 @@
-import { state } from '../state.js';
+import {
+  state
+} from '../state.js';
+
+import {
+  setPages
+} from '../stateActions.js';
 
 import {
   parseMarkdown
@@ -7,6 +13,11 @@ import {
 import {
   templates
 } from '../templates/templates.js';
+
+import {
+  writePageContent,
+  writeTextFile
+} from './writeQueue.js';
 
 
 export async function createPage(
@@ -121,14 +132,11 @@ async function writePageFile(
       { create: true }
     );
 
-  const writable =
-    await fileHandle.createWritable();
-
-  await writable.write(
-    content
+  await writeTextFile(
+    fileHandle,
+    content,
+    fileName
   );
-
-  await writable.close();
 
   const parsed =
     parseMarkdown(
@@ -226,13 +234,14 @@ export async function deletePageBranch(
     }
   }
 
-  state.pages =
+  setPages(
     state.pages.filter(
       existingPage =>
         !deletedPages.includes(
           existingPage
         )
-    );
+    )
+  );
 
   if (failedPages.length > 0) {
 
@@ -330,15 +339,10 @@ export async function updatePageParent(
       `parent: ${parentId ?? 'null'}`
     );
 
-  const writable =
-    await page.handle
-      .createWritable();
-
-  await writable.write(
+  await writePageContent(
+    page,
     updatedContent
   );
-
-  await writable.close();
 
   page.content =
     updatedContent;
@@ -406,15 +410,10 @@ export async function updatePageTreePosition(
   }
 
 
-  const writable =
-    await page.handle
-      .createWritable();
-
-  await writable.write(
+  await writePageContent(
+    page,
     updatedContent
   );
-
-  await writable.close();
 
   page.content =
     updatedContent;
@@ -455,15 +454,10 @@ export async function updatePageAliases(
   }
 
 
-  const writable =
-    await page.handle
-      .createWritable();
-
-  await writable.write(
+  await writePageContent(
+    page,
     updatedContent
   );
-
-  await writable.close();
 
   page.content =
     updatedContent;

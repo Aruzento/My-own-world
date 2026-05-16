@@ -3,6 +3,11 @@ import {
   state
 } from '../state.js';
 
+import {
+  setPages,
+  setWorkspaceHandle
+} from '../stateActions.js';
+
 
 /* Импорт рекурсивного сканирования страниц */
 import {
@@ -28,8 +33,9 @@ export async function openWorkspace() {
       await window.showDirectoryPicker();
 
     /* Сохраняет handle в global state */
-    state.workspaceHandle =
-      handle;
+    setWorkspaceHandle(
+      handle
+    );
 
     /* Сохраняет доступ в persistent storage браузера */
     await saveWorkspaceHandle(
@@ -66,8 +72,9 @@ export async function restoreWorkspace() {
   if (!handle) return false;
 
   /* Кладёт handle в state */
-  state.workspaceHandle =
-    handle;
+  setWorkspaceHandle(
+    handle
+  );
 
   /* Проверяет наличие нужных папок */
   await ensureFolders();
@@ -106,7 +113,7 @@ export async function loadWorkspace() {
   ) return;
 
   /* Очищает текущий массив страниц */
-  state.pages = [];
+  setPages([]);
 
   /* Получает handle папки pages */
   const pagesDir =

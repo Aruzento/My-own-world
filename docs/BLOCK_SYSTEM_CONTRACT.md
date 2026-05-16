@@ -78,6 +78,20 @@ contenteditable="false"
 - нижнюю секцию профиля и profile popup;
 - backlinks и другие информационные панели интерфейса.
 
+Новые popup’ы должны использовать `js/ui/popupManager.js`, если нет явной причины оставить локальную реализацию. Popup manager обеспечивает единые outside click, Escape close, повторное закрытие по anchor-кнопке и viewport-safe positioning. Уже переведены create menu, block popup, wiki create menu, wiki preview, confirm popup и profile popup.
+
+## UI Style Contract
+
+Новые runtime controls должны опираться на базовые классы из `styles/ui.css`:
+
+- `.ui-panel` для popup/panel контейнеров;
+- `.ui-button` для compact-кнопок;
+- `.ui-button.danger` для destructive-действий;
+- `.ui-input` для текстовых полей;
+- `.ui-chip` для маленьких меток.
+
+Если компоненту нужен особый вид, компонентный CSS расширяет эти классы или повторно использует те же CSS-переменные. Не нужно заново копировать базовые hover/focus/background правила в новый файл без причины.
+
 ## Save Serialization
 
 Сохранение идёт через `serializePersistentEditorHTML()` из `js/editor/blocks/blockContract.js`.
@@ -96,6 +110,13 @@ Serializer обязан:
 ## Campaign Map Serialization
 
 Карта кампании сохраняет persistent HTML через общий serializer, но имеет отдельный save path в `editor.js`.
+
+Код карты разделён по contract-границам:
+
+- `campaignMapContract.js` отвечает за persistent serialization карты, fog canvas, asset-specific grid/fog state и проверку `campaignMap`;
+- `campaignMapPresentation.js` отвечает только за отдельное окно презентации и его pan/zoom;
+- `campaignMapHealth.js` отвечает только за чтение/изменение DnD-хитов дочерних карточек токенов;
+- `campaignMapConstants.js` хранит общие константы карты.
 
 Persistent данные карты:
 
@@ -126,6 +147,8 @@ Blob URL изображения карты не сохраняется: пере
 Объекты на карте рассчитаны на PNG с прозрачным фоном. Их визуальное состояние сохраняется через `data-size` и `data-rotation`; рамки выделения, уголки resize и ручка поворота являются runtime controls и не должны попадать в `.md`.
 
 Autosave карты должен выполняться только когда открытый DOM и `state.currentPage` оба относятся к `campaignMap`. Если editor содержит карту, а `state.currentPage` уже указывает на карточку, сохранение пропускается, чтобы HTML карты не перезаписал карточку.
+
+Запись `.md` карты и связанных карточек должна идти через `writePageContent()` из `js/storage/writeQueue.js`. Прямой `createWritable()` вне write queue запрещён, потому что карта может быстро запускать несколько сохранений подряд: autosave, изменение fog, изменение хитов, drag token, duplicate/delete.
 
 ## Wiki-link Policy
 

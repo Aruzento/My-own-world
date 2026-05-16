@@ -1,5 +1,9 @@
 import { state } from '../state.js';
 
+import {
+  writeTextFile
+} from '../storage/storage.js';
+
 
 /* Импорт из деревьев */
 
@@ -291,18 +295,15 @@ async function saveWorkspaceTreeExpansionState() {
       collapsed: [...collapsedPages]
     };
 
-    const writable =
-      await fileHandle.createWritable();
-
-    await writable.write(
+    await writeTextFile(
+      fileHandle,
       JSON.stringify(
         uiState,
         null,
         2
-      )
+      ),
+      WORKSPACE_UI_STATE_FILE
     );
-
-    await writable.close();
 
   } catch (error) {
 

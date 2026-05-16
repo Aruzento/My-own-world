@@ -1,0 +1,7 @@
+export const WORLD_WIDTH = 2000;
+export const WORLD_HEIGHT = 1200;
+export const MIN_ZOOM = 0.35;
+export const MAX_ZOOM = 3;
+export const DEFAULT_GRID_SIZE = 48;
+export const DEFAULT_BRUSH_SIZE = 34;
+export const FOG_PAINT_COLOR = 'rgba(0,0,0,1)';

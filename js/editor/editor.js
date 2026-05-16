@@ -72,7 +72,13 @@ import {
 /* ---- */
 
 
-import { state } from '../state.js';
+import {
+  state
+} from '../state.js';
+
+import {
+  setCurrentPage
+} from '../stateActions.js';
 
 import {
   parseMarkdown,
@@ -85,6 +91,10 @@ import {
 import {
   renderTree
 } from '../tree/tree.js';
+
+import {
+  writePageContent
+} from '../storage/storage.js';
 
 import {
   renderTags,
@@ -247,7 +257,9 @@ editor.addEventListener(
 
 export function openPage(page) {
 
-  state.currentPage = page;
+  setCurrentPage(
+    page
+  );
 
   const parsed =
     parseMarkdown(page.content);
@@ -343,8 +355,9 @@ renderDndStats();
 
 export function renderEmptyEditor() {
 
-  state.currentPage =
-    null;
+  setCurrentPage(
+    null
+  );
 
   editor.innerHTML = `
     <section class="empty-editor-page" contenteditable="false">
@@ -460,15 +473,10 @@ aliases: [${aliases.join(', ')}]
 ${serializeCampaignMapHTML(editor)}
 `;
 
-  const writable =
-    await state.currentPage.handle
-      .createWritable();
-
-  await writable.write(
+  await writePageContent(
+    state.currentPage,
     content
   );
-
-  await writable.close();
 
   state.currentPage.content =
     content;

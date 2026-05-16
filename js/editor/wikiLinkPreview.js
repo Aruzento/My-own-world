@@ -5,8 +5,9 @@ import {
 } from './wikiLinkLookup.js';
 
 import {
-  positionPopupNearAnchor
-} from '../ui/popupPosition.js';
+  openPopupNearAnchor,
+  registerPopup
+} from '../ui/popupManager.js';
 
 
 let popup = null;
@@ -89,13 +90,14 @@ function showPreview(
     getPageShortDescription(page) ||
     'Краткое описание пока не заполнено.';
 
-  element.classList.remove(
-    'hidden'
-  );
-
-  positionPreview(
+  openPopupNearAnchor(
     element,
-    link
+    link,
+    {
+      gap: 10,
+      fallbackWidth: 280,
+      fallbackHeight: 120
+    }
   );
 }
 
@@ -148,6 +150,11 @@ function getPreviewPopup() {
   document.body.appendChild(
     popup
   );
+
+  registerPopup({
+    popup,
+    close: hidePreview
+  });
 
   return popup;
 }
@@ -206,21 +213,4 @@ function getPageBody(
   return String(content || '')
     .replace(/---[\s\S]*?---/, '')
     .trim();
-}
-
-
-function positionPreview(
-  element,
-  link
-) {
-
-  positionPopupNearAnchor(
-    element,
-    link,
-    {
-      gap: 10,
-      fallbackWidth: 280,
-      fallbackHeight: 120
-    }
-  );
 }

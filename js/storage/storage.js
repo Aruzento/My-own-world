@@ -50,3 +50,12 @@ export {
   getImageURL
 
 } from './assetStorage.js';
+
+
+export {
+  getPageWriteKey,
+  queueWrite,
+  writeFile,
+  writePageContent,
+  writeTextFile
+} from './writeQueue.js';
