@@ -1,12 +1,13 @@
 import {
-  MAX_ZOOM,
   MIN_ZOOM,
+  PRESENTATION_MAX_ZOOM,
   WORLD_HEIGHT,
   WORLD_WIDTH
 } from './campaignMapConstants.js';
 
 
 let presentationWindow = null;
+const fogImageCache = new WeakMap();
 
 const presentationState = {
   x: 0,
@@ -111,9 +112,10 @@ export function syncPresentation() {
     source.querySelector('.campaign-map-fog-canvas');
 
   const fogImageSrc =
-    sourceCanvas
-      ? sourceCanvas.toDataURL('image/png')
-      : source.dataset.fogImage;
+    getPresentationFogImage(
+      source,
+      sourceCanvas
+    );
 
   const clone =
     source.cloneNode(true);
@@ -201,6 +203,44 @@ export function syncPresentation() {
 }
 
 
+function getPresentationFogImage(
+  source,
+  canvas
+) {
+
+  if (!canvas) return source.dataset.fogImage || '';
+
+  const version =
+    source.dataset.fogVersion || '0';
+
+  const cached =
+    fogImageCache.get(
+      canvas
+    );
+
+  if (
+    cached &&
+    cached.version === version
+  ) {
+
+    return cached.url;
+  }
+
+  const url =
+    canvas.toDataURL('image/png');
+
+  fogImageCache.set(
+    canvas,
+    {
+      version,
+      url
+    }
+  );
+
+  return url;
+}
+
+
 function handlePresentationWheel(
   event
 ) {
@@ -280,7 +320,7 @@ function zoomPresentation(
     clamp(
       presentationState.zoom * factor,
       MIN_ZOOM,
-      MAX_ZOOM
+      PRESENTATION_MAX_ZOOM
     );
 
   const worldX =
@@ -341,8 +381,8 @@ function getPresentationCSS() {
       position: absolute;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px);
+        linear-gradient(var(--campaign-grid-color, rgba(255,255,255,0.12)) 1px, transparent 1px),
+        linear-gradient(90deg, var(--campaign-grid-color, rgba(255,255,255,0.12)) 1px, transparent 1px);
       background-size:
         var(--campaign-grid-size, 48px)
         var(--campaign-grid-size, 48px);
@@ -356,11 +396,16 @@ function getPresentationCSS() {
 
     .campaign-map-token {
       position: absolute;
+      box-sizing: border-box;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
       transform: translate(-50%, -50%) rotate(var(--token-rotation, 0deg));
       z-index: 4;
       pointer-events: auto;
       width: calc(var(--campaign-grid-size, 48px) * var(--token-size, 1));
       height: calc(var(--campaign-grid-size, 48px) * var(--token-size, 1));
+      aspect-ratio: 1 / 1;
       border-radius: 50%;
       border: 2px solid rgba(255,255,255,0.86);
       background: #f1d38e;
@@ -382,21 +427,25 @@ function getPresentationCSS() {
     }
 
     .campaign-map-token.is-creature[data-hp-state="dead"] .campaign-map-token-image {
-      display: none;
+      filter: grayscale(1) contrast(0.92) brightness(0.72);
     }
 
     .campaign-map-token.is-creature[data-hp-state="dead"]::after {
-      content: "RIP";
+      content: "×";
+      position: absolute;
+      inset: 10%;
       display: grid;
       place-items: center;
-      width: 100%;
-      height: 100%;
       border-radius: inherit;
       background:
-        radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), transparent 48%),
-        rgba(24,18,18,0.92);
-      font: 900 15px/1 system-ui, sans-serif;
+        radial-gradient(circle, rgba(120,18,18,0.34), rgba(120,18,18,0.08) 54%, transparent 68%);
+      color: rgba(255,72,72,0.94);
+      font: 900 clamp(22px, calc(var(--campaign-grid-size, 48px) * 0.72), 52px)/1 system-ui, sans-serif;
       letter-spacing: 0;
+      text-shadow:
+        0 2px 8px rgba(0,0,0,0.52),
+        0 0 16px rgba(255,54,54,0.36);
+      pointer-events: none;
     }
 
     .campaign-map-token.is-object {
@@ -412,6 +461,8 @@ function getPresentationCSS() {
     }
 
     .campaign-map-token-image {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       display: block;

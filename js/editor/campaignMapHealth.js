@@ -39,7 +39,10 @@ export function getPageDndHealth(
 
   return {
     current,
-    max
+    max,
+    temp: getBlockTempHp(
+      block
+    )
   };
 }
 
@@ -109,14 +112,19 @@ export function ensurePageDndHealth(
 
   return {
     current: 10,
-    max: 10
+    max: 10,
+    temp: 0
   };
 }
 
 
-export function updatePageDndCurrentHp(
+export function updatePageDndHealth(
   page,
-  delta
+  {
+    delta = 0,
+    temp = null,
+    mode = 'delta'
+  } = {}
 ) {
 
   const wrapper =
@@ -135,9 +143,13 @@ export function updatePageDndCurrentHp(
       page
     );
 
-    return updatePageDndCurrentHp(
+    return updatePageDndHealth(
       page,
-      delta
+      {
+        delta,
+        temp,
+        mode
+      }
     );
   }
 
@@ -166,20 +178,76 @@ export function updatePageDndCurrentHp(
     max <= 0
   ) return null;
 
-  const next =
-    clamp(
-      current + delta,
-      0,
-      max
-    );
+  let nextCurrent =
+    current;
+
+  let nextTemp =
+    temp === null
+      ? getBlockTempHp(
+        block
+      )
+      : Math.max(
+        0,
+        Math.floor(
+          Number(temp) || 0
+        )
+      );
+
+  if (mode === 'restore') {
+
+    nextCurrent =
+      max;
+
+  } else if (mode === 'kill') {
+
+    nextCurrent =
+      0;
+
+  } else if (delta < 0) {
+
+    const damage =
+      Math.abs(
+        delta
+      );
+
+    const absorbed =
+      Math.min(
+        nextTemp,
+        damage
+      );
+
+    nextTemp -=
+      absorbed;
+
+    nextCurrent =
+      clamp(
+        current - (damage - absorbed),
+        0,
+        max
+      );
+
+  } else {
+
+    nextCurrent =
+      clamp(
+        current + delta,
+        0,
+        max
+      );
+  }
 
   currentInput.setAttribute(
     'value',
-    String(next)
+    String(nextCurrent)
   );
 
   currentInput.value =
-    String(next);
+    String(nextCurrent);
+
+  setBlockTempHp(
+    block,
+    nextTemp
+  );
 
   page.content =
     replaceMarkdownBody(
@@ -188,9 +256,24 @@ export function updatePageDndCurrentHp(
     );
 
   return {
-    current: next,
-    max
+    current: nextCurrent,
+    max,
+    temp: nextTemp
   };
+}
+
+
+export function updatePageDndCurrentHp(
+  page,
+  delta
+) {
+
+  return updatePageDndHealth(
+    page,
+    {
+      delta
+    }
+  );
 }
 
 
@@ -204,6 +287,51 @@ export function getHealthColor(
     );
 
   return `hsl(${hue} 76% 48%)`;
+}
+
+
+function getBlockTempHp(
+  block
+) {
+
+  const value =
+    Number(
+      block?.dataset?.tempHp || 0
+    );
+
+  return Number.isFinite(value)
+    ? Math.max(
+      0,
+      Math.floor(value)
+    )
+    : 0;
+}
+
+
+function setBlockTempHp(
+  block,
+  value
+) {
+
+  if (!block) return;
+
+  const next =
+    Math.max(
+      0,
+      Math.floor(
+        Number(value) || 0
+      )
+    );
+
+  if (next > 0) {
+
+    block.dataset.tempHp =
+      String(next);
+
+    return;
+  }
+
+  delete block.dataset.tempHp;
 }
 
 

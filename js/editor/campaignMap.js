@@ -34,6 +34,7 @@ import {
 
 import {
   DEFAULT_BRUSH_SIZE,
+  DEFAULT_GRID_COLOR,
   DEFAULT_GRID_SIZE,
   FOG_PAINT_COLOR,
   MAX_ZOOM,
@@ -60,7 +61,7 @@ import {
   ensurePageDndHealth,
   getHealthColor,
   getPageDndHealth,
-  updatePageDndCurrentHp
+  updatePageDndHealth
 } from './campaignMapHealth.js';
 
 export {
@@ -80,10 +81,16 @@ let draggedShape = null;
 let tokenPopupTimer = null;
 let tokenPopupCloseTimer = null;
 let activeTokenPopupToken = null;
+let presentationSyncFrame = null;
+let presentationSyncTimeout = null;
+let lastPresentationSyncAt = 0;
+const restoredTokenImageAssets = new WeakMap();
+const tokenHealthCache = new WeakMap();
 
 const TOKEN_DRAG_THRESHOLD = 4;
 const TOKEN_POPUP_DELAY = 420;
 const TOKEN_RESIZE_THRESHOLD = 2;
+const PRESENTATION_SYNC_INTERVAL = 80;
 const DEFAULT_SHAPE_SIZE = 192;
 const SHAPE_HANDLE_THRESHOLD = 2;
 
@@ -195,13 +202,20 @@ export async function renderCampaignMap(
     map
   );
 
-  syncPresentation();
+  if (token.dataset.presentationHidden === 'true') {
+
+    syncPresentation();
+
+    return;
+  }
+
+  schedulePresentationSync();
 }
 
 
 export function syncCampaignMapPresentation() {
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -293,8 +307,7 @@ function ensureMapControls(
     </div>
 
     <div class="campaign-map-control-group">
-      <button class="campaign-toggle-grid-btn" type="button" title="Включить сетку">▦</button>
-      <button class="campaign-grid-size-btn" type="button" title="Размер сетки">↔</button>
+      <button class="campaign-grid-btn" type="button" title="Сетка">Сетка</button>
       <button class="campaign-change-map-btn" type="button" title="Сменить карту">🖼</button>
       <button class="campaign-open-presentation-btn" type="button" title="Презентация">▣</button>
     </div>
@@ -542,6 +555,11 @@ function ensureMapViewState(
       String(DEFAULT_GRID_SIZE);
   }
 
+  if (!stage.dataset.gridColor) {
+    stage.dataset.gridColor =
+      DEFAULT_GRID_COLOR;
+  }
+
   if (!stage.dataset.brushSize) {
     stage.dataset.brushSize =
       String(DEFAULT_BRUSH_SIZE);
@@ -610,18 +628,6 @@ async function handleMapClick(
   }
 
   if (
-    event.target.closest('.campaign-toggle-grid-btn')
-  ) {
-
-    toggleGrid(
-      map
-    );
-
-    await saveAndSync();
-    return;
-  }
-
-  if (
     event.target.closest('.campaign-pan-btn')
   ) {
 
@@ -635,19 +641,19 @@ async function handleMapClick(
   }
 
   if (
-    event.target.closest('.campaign-grid-size-btn')
+    event.target.closest('.campaign-grid-btn')
   ) {
 
     if (
       toggleMapPopupForAnchor(
-        event.target.closest('.campaign-grid-size-btn'),
-        'grid-size'
+        event.target.closest('.campaign-grid-btn'),
+        'grid'
       )
     ) return;
 
-    openGridSizePopup(
+    openGridPopup(
       map,
-      event.target.closest('.campaign-grid-size-btn')
+      event.target.closest('.campaign-grid-btn')
     );
 
     return;
@@ -772,6 +778,10 @@ function openCardPickerPopup(
     <div class="campaign-map-popup-title">${title}</div>
     <input class="campaign-map-picker-search" type="search" placeholder="Поиск">
     <div class="campaign-map-picker-list"></div>
+    <label class="campaign-map-copies-label">
+      <span>Число копий</span>
+      <input class="campaign-map-copies-input" type="number" min="1" max="99" value="1">
+    </label>
     <div class="campaign-map-popup-actions">
       <button class="campaign-map-popup-cancel" type="button">Отмена</button>
       <button class="campaign-map-popup-add" type="button">Добавить</button>
@@ -818,10 +828,18 @@ function openCardPickerPopup(
           [...popup.querySelectorAll('.campaign-map-picker-check:checked')]
             .map(input => input.value);
 
+        const copies =
+          clamp(
+            Number(popup.querySelector('.campaign-map-copies-input')?.value || 1),
+            1,
+            99
+          );
+
         await addSelectedPagesToMap(
           map,
           kind,
-          selectedIds
+          selectedIds,
+          copies
         );
 
         closeMapPopup();
@@ -843,6 +861,9 @@ function renderCardPickerList(
   kind,
   query
 ) {
+
+  const pageLookup =
+    createPageLookup();
 
   const normalizedQuery =
     normalizeText(
@@ -866,6 +887,10 @@ function renderCardPickerList(
 
       if (
         page.template !== 'card' ||
+        hasCampaignMapAncestor(
+          page,
+          pageLookup
+        ) ||
         !pageTypes.some(type =>
           allowedTypes.includes(type)
         )
@@ -919,10 +944,60 @@ function renderCardPickerList(
 }
 
 
+function createPageLookup() {
+
+  return new Map(
+    state.pages.map(page => [
+      page.id,
+      page
+    ])
+  );
+}
+
+
+function hasCampaignMapAncestor(
+  page,
+  pageLookup = createPageLookup()
+) {
+
+  const visited =
+    new Set();
+
+  let parentId =
+    page?.parent;
+
+  while (parentId) {
+
+    if (
+      visited.has(parentId)
+    ) return false;
+
+    visited.add(
+      parentId
+    );
+
+    const parent =
+      pageLookup.get(parentId);
+
+    if (!parent) return false;
+
+    if (
+      isCampaignMapRecord(parent)
+    ) return true;
+
+    parentId =
+      parent.parent;
+  }
+
+  return false;
+}
+
+
 async function addSelectedPagesToMap(
   map,
   kind,
-  selectedIds
+  selectedIds,
+  copies = 1
 ) {
 
   if (selectedIds.length === 0) return;
@@ -941,15 +1016,18 @@ async function addSelectedPagesToMap(
 
     if (!source) continue;
 
-    const duplicate =
-      await duplicatePageAsChild(
-        source,
-        bucket.id
-      );
+    for (let index = 0; index < copies; index += 1) {
 
-    duplicates.push(
-      duplicate
-    );
+      const duplicate =
+        await duplicatePageAsChild(
+          source,
+          bucket.id
+        );
+
+      duplicates.push(
+        duplicate
+      );
+    }
   }
 
   for (const page of duplicates) {
@@ -990,7 +1068,7 @@ async function ensureMapBucket(
 }
 
 
-function openGridSizePopup(
+function openGridPopup(
   map,
   anchor
 ) {
@@ -1002,12 +1080,43 @@ function openGridSizePopup(
     getMapPopup();
 
   popup.innerHTML = `
-    <div class="campaign-map-popup-title">Размер сетки</div>
-    <input class="campaign-map-range" type="range" min="24" max="96" step="2" value="${stage.dataset.gridSize || DEFAULT_GRID_SIZE}">
+    <div class="campaign-map-popup-title">Сетка</div>
+    <button class="campaign-grid-toggle-btn campaign-map-popup-option" type="button">
+      ${stage.dataset.grid === 'true' ? 'Выключить сетку' : 'Включить сетку'}
+    </button>
+    <label class="campaign-map-range-label">
+      <span>Размер сетки</span>
+      <input class="campaign-grid-size-range campaign-map-range" type="range" min="24" max="96" step="2" value="${stage.dataset.gridSize || DEFAULT_GRID_SIZE}">
+    </label>
+    <label class="campaign-map-color-label">
+      <span>Цвет сетки</span>
+      <input class="campaign-grid-color-input" type="color" value="${stage.dataset.gridColor || DEFAULT_GRID_COLOR}">
+    </label>
   `;
 
   popup
-    .querySelector('.campaign-map-range')
+    .querySelector('.campaign-grid-toggle-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        toggleGrid(
+          map
+        );
+
+        event.currentTarget.textContent =
+          stage.dataset.grid === 'true'
+            ? 'Выключить сетку'
+            : 'Включить сетку';
+
+        await saveAndSync();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-grid-size-range')
     .addEventListener(
       'input',
       async event => {
@@ -1027,10 +1136,31 @@ function openGridSizePopup(
       }
     );
 
+  popup
+    .querySelector('.campaign-grid-color-input')
+    .addEventListener(
+      'input',
+      async event => {
+
+        stage.dataset.gridColor =
+          event.target.value || DEFAULT_GRID_COLOR;
+
+        rememberMapAssetSettings(
+          stage
+        );
+
+        updateGridSize(
+          map
+        );
+
+        await saveAndSync();
+      }
+    );
+
   showMapPopup(
     popup,
     anchor,
-    'grid-size'
+    'grid'
   );
 }
 
@@ -1452,6 +1582,9 @@ async function restoreMapTokens(
   map
 ) {
 
+  const pageLookup =
+    createPageLookup();
+
   const tokens =
     [...map
     .querySelectorAll('.campaign-map-token')
@@ -1474,8 +1607,8 @@ async function restoreMapTokens(
     if (!token.dataset.imageAsset) {
 
       const page =
-        state.pages.find(candidate =>
-          candidate.id === token.dataset.pageId
+        pageLookup.get(
+          token.dataset.pageId
         );
 
       const imageAsset =
@@ -1491,7 +1624,8 @@ async function restoreMapTokens(
     }
 
     applyTokenHealthState(
-      token
+      token,
+      pageLookup
     );
 
     await restoreTokenImage(
@@ -1502,7 +1636,8 @@ async function restoreMapTokens(
 
 
 function applyTokenHealthState(
-  token
+  token,
+  pageLookup = null
 ) {
 
   if (
@@ -1517,14 +1652,30 @@ function applyTokenHealthState(
   }
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === token.dataset.pageId
-    );
+    pageLookup
+      ? pageLookup.get(token.dataset.pageId)
+      : state.pages.find(candidate =>
+        candidate.id === token.dataset.pageId
+      );
 
   const health =
     getPageDndHealth(
       page
     );
+
+  const cacheKey =
+    health
+      ? `${health.current}/${health.max}/${health.temp || 0}`
+      : 'none';
+
+  if (
+    tokenHealthCache.get(token) === cacheKey
+  ) return;
+
+  tokenHealthCache.set(
+    token,
+    cacheKey
+  );
 
   if (!health) {
 
@@ -1581,11 +1732,28 @@ async function restoreTokenImage(
   const asset =
     token.dataset.imageAsset;
 
+  if (
+    asset &&
+    restoredTokenImageAssets.get(token) === asset &&
+    token.querySelector('.campaign-map-token-image')
+  ) {
+
+    ensureTokenResizeHandles(
+      token
+    );
+
+    return;
+  }
+
   if (!asset) {
 
     setTokenFallbackText(
       token,
       token.dataset.tokenType
+    );
+
+    restoredTokenImageAssets.delete(
+      token
     );
 
     return;
@@ -1610,6 +1778,11 @@ async function restoreTokenImage(
       token
     );
 
+    restoredTokenImageAssets.set(
+      token,
+      asset
+    );
+
   } catch (error) {
 
     console.warn(
@@ -1620,6 +1793,10 @@ async function restoreTokenImage(
     setTokenFallbackText(
       token,
       token.dataset.tokenType
+    );
+
+    restoredTokenImageAssets.delete(
+      token
     );
   }
 }
@@ -2159,8 +2336,6 @@ function applyViewportTransform(
 
   viewport.style.transform =
     `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`;
-
-  syncPresentation();
 }
 
 
@@ -2340,7 +2515,7 @@ function fillFog(
     map
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -2370,7 +2545,7 @@ function clearFog(
     map
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -2382,7 +2557,7 @@ function updateGridButton(
     map.querySelector('.campaign-map-stage');
 
   const button =
-    map.querySelector('.campaign-toggle-grid-btn');
+    map.querySelector('.campaign-grid-btn');
 
   if (!stage || !button) return;
 
@@ -2418,9 +2593,43 @@ function updateGridSize(
     `${gridSize}px`
   );
 
+  stage.style.setProperty(
+    '--campaign-grid-color',
+    hexToGridColor(
+      stage.dataset.gridColor || DEFAULT_GRID_COLOR
+    )
+  );
+
   restoreMapShapes(
     map
   );
+}
+
+
+function hexToGridColor(
+  value
+) {
+
+  const normalized =
+    String(value || DEFAULT_GRID_COLOR).trim();
+
+  if (
+    !/^#[0-9a-f]{6}$/i.test(normalized)
+  ) {
+
+    return 'rgba(255,255,255,0.10)';
+  }
+
+  const red =
+    parseInt(normalized.slice(1, 3), 16);
+
+  const green =
+    parseInt(normalized.slice(3, 5), 16);
+
+  const blue =
+    parseInt(normalized.slice(5, 7), 16);
+
+  return `rgba(${red},${green},${blue},0.34)`;
 }
 
 
@@ -3268,12 +3477,20 @@ function openTokenHpPopup(
 
   popup.innerHTML = `
     <div class="campaign-token-hp-title">Хиты: ${health.current}/${health.max}</div>
+    <label class="campaign-token-hp-temp-label">
+      <span>Временные хиты</span>
+      <input class="campaign-token-hp-temp" type="number" min="0" step="1" value="${health.temp || 0}">
+    </label>
     <div class="campaign-token-hp-row">
       <select class="campaign-token-hp-sign" aria-label="Знак изменения хитов">
         <option value="+">+</option>
         <option value="-">-</option>
       </select>
       <input class="campaign-token-hp-value" type="number" min="0" step="1" value="1">
+    </div>
+    <div class="campaign-token-hp-quick-actions">
+      <button class="campaign-token-hp-restore" type="button">Восстановить хиты</button>
+      <button class="campaign-token-hp-kill" type="button">Убить</button>
     </div>
     <div class="campaign-token-hp-actions">
       <button class="campaign-token-hp-cancel" type="button">Отмена</button>
@@ -3292,6 +3509,50 @@ function openTokenHpPopup(
 
         openCreatureTokenActionsPopup(
           token
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-hp-restore')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await changeTokenHp(
+          token,
+          page,
+          {
+            mode: 'restore',
+            temp: getHpPopupTempValue(
+              popup
+            )
+          }
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-hp-kill')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await changeTokenHp(
+          token,
+          page,
+          {
+            mode: 'kill',
+            temp: getHpPopupTempValue(
+              popup
+            )
+          }
         );
       }
     );
@@ -3321,7 +3582,12 @@ function openTokenHpPopup(
         await changeTokenHp(
           token,
           page,
-          sign === '-' ? -value : value
+          {
+            delta: sign === '-' ? -value : value,
+            temp: getHpPopupTempValue(
+              popup
+            )
+          }
         );
       }
     );
@@ -3335,14 +3601,32 @@ function openTokenHpPopup(
     token,
     {
       gap: 10,
-      fallbackWidth: 220,
-      fallbackHeight: 146
+      fallbackWidth: 250,
+      fallbackHeight: 238
     }
   );
 
   popup
     .querySelector('.campaign-token-hp-value')
     .focus();
+}
+
+
+function getHpPopupTempValue(
+  popup
+) {
+
+  const value =
+    Number(
+      popup.querySelector('.campaign-token-hp-temp')?.value || 0
+    );
+
+  return Number.isFinite(value)
+    ? Math.max(
+      0,
+      Math.floor(value)
+    )
+    : 0;
 }
 
 
@@ -3518,7 +3802,7 @@ async function openTokenCard(
 async function changeTokenHp(
   token,
   page,
-  delta
+  options
 ) {
 
   const canWrite =
@@ -3534,9 +3818,9 @@ async function changeTokenHp(
   }
 
   const result =
-    updatePageDndCurrentHp(
+    updatePageDndHealth(
       page,
-      delta
+      options
     );
 
   if (!result) {
@@ -4354,7 +4638,7 @@ function rotateTokenToPointer(
     rotatedToken.token
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -4416,7 +4700,7 @@ function resizeTokenToPointer(
     resizedToken.token
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -4568,7 +4852,7 @@ function resizeShapeToPointer(
     'is-resizing'
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -4811,7 +5095,7 @@ function moveShapeToPointer(
     draggedShape.shape
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -4925,7 +5209,7 @@ function moveTokenToPointer(
     point
   );
 
-  syncPresentation();
+  schedulePresentationSync();
 }
 
 
@@ -4933,6 +5217,18 @@ function updateDragMeasure(
   drag,
   point
 ) {
+
+  if (drag.token?.dataset.presentationHidden === 'true') {
+
+    removeDragMeasure(
+      drag
+    );
+
+    drag.measure =
+      null;
+
+    return;
+  }
 
   const cells =
     getDragDistanceCells(
@@ -5229,7 +5525,12 @@ function drawFogAtPointer(
   context.fill();
   context.restore();
 
-  syncPresentation();
+  stage.dataset.fogVersion =
+    String(
+      Number(stage.dataset.fogVersion || 0) + 1
+    );
+
+  schedulePresentationSync();
 }
 
 
@@ -5292,6 +5593,54 @@ function normalizeText(
   return String(value || '')
     .trim()
     .toLowerCase();
+}
+
+
+function schedulePresentationSync() {
+
+  const now =
+    performance.now();
+
+  const wait =
+    Math.max(
+      0,
+      PRESENTATION_SYNC_INTERVAL - (now - lastPresentationSyncAt)
+    );
+
+  if (wait > 0) {
+
+    if (presentationSyncTimeout) return;
+
+    presentationSyncTimeout =
+      setTimeout(
+        () => {
+
+          presentationSyncTimeout =
+            null;
+
+          schedulePresentationSync();
+        },
+        wait
+      );
+
+    return;
+  }
+
+  if (presentationSyncFrame) return;
+
+  presentationSyncFrame =
+    requestAnimationFrame(
+      () => {
+
+        presentationSyncFrame =
+          null;
+
+        lastPresentationSyncAt =
+          performance.now();
+
+        syncPresentation();
+      }
+    );
 }
 
 

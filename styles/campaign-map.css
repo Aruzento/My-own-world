@@ -198,7 +198,8 @@
 }
 
 
-.campaign-map-controls .campaign-fog-btn {
+.campaign-map-controls .campaign-fog-btn,
+.campaign-map-controls .campaign-grid-btn {
 
   width:
     auto;
@@ -450,8 +451,8 @@
     0;
 
   background-image:
-    linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px);
+    linear-gradient(var(--campaign-grid-color, rgba(255,255,255,0.12)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--campaign-grid-color, rgba(255,255,255,0.12)) 1px, transparent 1px);
 
   background-size:
     var(--campaign-grid-size)
@@ -490,6 +491,9 @@
   position:
     absolute;
 
+  box-sizing:
+    border-box;
+
   z-index:
     4;
 
@@ -499,17 +503,23 @@
   height:
     calc(var(--campaign-grid-size) * var(--token-size, 1));
 
+  aspect-ratio:
+    1 / 1;
+
   padding:
     0;
 
   display:
-    inline-flex;
+    grid;
 
   align-items:
     center;
 
   justify-content:
     center;
+
+  overflow:
+    hidden;
 
   border:
     2px solid
@@ -601,21 +611,23 @@
 
 .campaign-map-token.is-creature[data-hp-state="dead"] .campaign-map-token-image {
 
-  display:
-    none;
+  filter:
+    grayscale(1)
+    contrast(0.92)
+    brightness(0.72);
 }
 
 
 .campaign-map-token.is-creature[data-hp-state="dead"]::after {
 
   content:
-    "RIP";
+    "×";
 
-  width:
-    100%;
+  position:
+    absolute;
 
-  height:
-    100%;
+  inset:
+    10%;
 
   display:
     grid;
@@ -627,11 +639,20 @@
     inherit;
 
   background:
-    radial-gradient(circle at 50% 35%, rgba(255,255,255,0.10), transparent 48%),
-    rgba(24,18,18,0.92);
+    radial-gradient(circle, rgba(120,18,18,0.34), rgba(120,18,18,0.08) 54%, transparent 68%);
+
+  color:
+    rgba(255,72,72,0.94);
 
   font:
-    900 15px/1 system-ui, sans-serif;
+    900 clamp(22px, calc(var(--campaign-grid-size, 48px) * 0.72), 52px)/1 system-ui, sans-serif;
+
+  text-shadow:
+    0 2px 8px rgba(0,0,0,0.52),
+    0 0 16px rgba(255,54,54,0.36);
+
+  pointer-events:
+    none;
 }
 
 
@@ -691,7 +712,7 @@
 .campaign-map-token[data-presentation-hidden="true"] {
 
   opacity:
-    0.2;
+    0.4;
 }
 
 
@@ -981,6 +1002,12 @@
 
 .campaign-map-token-image {
 
+  position:
+    absolute;
+
+  inset:
+    0;
+
   width:
     100%;
 
@@ -1233,7 +1260,7 @@
 .campaign-token-popup-hp {
 
   width:
-    220px;
+    250px;
 }
 
 
@@ -1376,6 +1403,22 @@
 }
 
 
+.campaign-token-hp-temp-label {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  color:
+    rgba(255,248,230,0.74);
+
+  font:
+    700 11px/1.2 system-ui, sans-serif;
+}
+
+
 .campaign-token-hp-row {
 
   display:
@@ -1390,7 +1433,8 @@
 
 
 .campaign-token-hp-sign,
-.campaign-token-hp-value {
+.campaign-token-hp-value,
+.campaign-token-hp-temp {
 
   width:
     100%;
@@ -1459,6 +1503,58 @@
 
   padding:
     0 10px;
+}
+
+
+.campaign-token-hp-temp {
+
+  padding:
+    0 10px;
+}
+
+
+.campaign-token-hp-quick-actions {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 76px;
+
+  gap:
+    6px;
+}
+
+
+.campaign-token-hp-quick-actions button {
+
+  width:
+    auto;
+
+  min-height:
+    34px;
+
+  padding:
+    0 10px;
+
+  justify-content:
+    center;
+
+  color:
+    rgba(255,248,230,0.9);
+
+  font-size:
+    12px;
+}
+
+
+.campaign-token-hp-kill {
+
+  background:
+    rgba(210,58,58,0.16) !important;
+
+  color:
+    rgba(255,210,204,0.96) !important;
 }
 
 
@@ -1662,6 +1758,71 @@
 
   accent-color:
     rgb(241,211,142);
+}
+
+
+.campaign-map-range-label,
+.campaign-map-color-label,
+.campaign-map-copies-label {
+  display:
+    grid;
+
+  gap:
+    7px;
+
+  color:
+    rgba(255,255,255,0.62);
+
+  font-size:
+    12px;
+}
+
+
+.campaign-map-color-label input {
+  width:
+    100%;
+
+  height:
+    34px;
+
+  padding:
+    3px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-copies-label input {
+  width:
+    100%;
+
+  height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    var(--text);
 }
 
 

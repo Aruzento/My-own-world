@@ -58,7 +58,8 @@ import {
 } from './blocks/blockContract.js';
 
 import {
-  applyContenteditablePolicy
+  applyContenteditablePolicy,
+  isInsidePersistentEditable
 } from './contenteditablePolicy.js';
 
 import {
@@ -184,7 +185,30 @@ editor.addEventListener(
 /* Нормализует wiki-links после вставки текста */
 editor.addEventListener(
   'paste',
-  () => {
+  event => {
+
+    if (
+      !event.target.closest('.table-cell-content')
+    ) {
+
+      const text =
+        event.clipboardData
+          ?.getData('text/plain');
+
+      if (
+        text &&
+        shouldPastePlainText(
+          event.target
+        )
+      ) {
+
+        event.preventDefault();
+
+        insertPlainTextAtSelection(
+          text
+        );
+      }
+    }
 
     /* Даём браузеру сначала вставить текст */
     setTimeout(
@@ -199,6 +223,94 @@ editor.addEventListener(
     );
   }
 );
+
+
+function shouldPastePlainText(
+  target
+) {
+
+  const element =
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target
+      : target?.parentElement;
+
+  if (!element) return false;
+
+  if (
+    isInsidePersistentEditable(
+      element
+    )
+  ) return true;
+
+  const editable =
+    element.closest(
+      '[contenteditable="true"]'
+    );
+
+  if (!editable) return false;
+
+  return Boolean(
+    editor.contains(
+      editable
+    )
+  ) && !Boolean(
+    editable.closest(
+      '[data-runtime="true"]'
+    )
+  );
+}
+
+
+function insertPlainTextAtSelection(
+  text
+) {
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0
+  ) return;
+
+  const range =
+    selection.getRangeAt(0);
+
+  range.deleteContents();
+
+  const fragment =
+    document.createDocumentFragment();
+
+  String(text)
+    .split(/\r?\n/)
+    .forEach((line, index) => {
+
+      if (index > 0) {
+
+        fragment.appendChild(
+          document.createElement('br')
+        );
+      }
+
+      fragment.appendChild(
+        document.createTextNode(line)
+      );
+    });
+
+  range.insertNode(
+    fragment
+  );
+
+  range.collapse(
+    false
+  );
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
+}
+
 
 editor.addEventListener(
   'click',

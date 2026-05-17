@@ -1,4 +1,5 @@
 import {
+  DEFAULT_GRID_COLOR,
   DEFAULT_GRID_SIZE,
   WORLD_HEIGHT,
   WORLD_WIDTH
@@ -160,6 +161,9 @@ export function rememberMapAssetSettings(
 
   stage.dataset[getGridKey(asset)] =
     stage.dataset.gridSize || String(DEFAULT_GRID_SIZE);
+
+  stage.dataset[getGridColorKey(asset)] =
+    stage.dataset.gridColor || DEFAULT_GRID_COLOR;
 }
 
 
@@ -177,6 +181,9 @@ export function restoreMapAssetSettings(
 
   stage.dataset.gridSize =
     stage.dataset[getGridKey(asset)] || String(DEFAULT_GRID_SIZE);
+
+  stage.dataset.gridColor =
+    stage.dataset[getGridColorKey(asset)] || DEFAULT_GRID_COLOR;
 }
 
 
@@ -239,6 +246,14 @@ function getGridKey(
 ) {
 
   return `grid${hashString(asset)}`;
+}
+
+
+function getGridColorKey(
+  asset
+) {
+
+  return `gridColor${hashString(asset)}`;
 }
 
 
