@@ -1,0 +1,403 @@
+/* Новый лист DnD держится в общем темном стиле приложения, а не в белой бумажной теме. */
+.dnd2-stats-block {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(18, 22, 31, 0.94), rgba(11, 14, 21, 0.94));
+  box-shadow: var(--shadow);
+}
+
+.dnd2-stats-block > h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 18px;
+  letter-spacing: 0;
+}
+
+.dnd2-note {
+  padding: 8px 10px;
+  border: 1px solid var(--border-hover);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.dnd2-section {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dnd2-section h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* В этой сетке важна вертикальная связь: Раса над Видом, Класс над Подклассом. */
+.dnd2-identity-grid {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.1fr) minmax(170px, 1.1fr) minmax(132px, 0.72fr);
+  gap: 8px;
+}
+
+.dnd2-combat-grid {
+  display: grid;
+  grid-template-columns: minmax(82px, 0.58fr) minmax(190px, 1.05fr) minmax(190px, 1.05fr) minmax(128px, 0.74fr);
+  grid-template-areas:
+    "ac hp hp hitdie"
+    "speed level death hitdice";
+  gap: 8px;
+}
+
+.dnd2-field,
+.dnd2-mini-field,
+.dnd2-subfield,
+.dnd2-skill-row {
+  min-width: 0;
+}
+
+.dnd2-field {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-height: 58px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.dnd2-field > span,
+.dnd2-mini-field > span,
+.dnd2-subfield > span,
+.dnd2-ability-name,
+.dnd2-skill-group h4 {
+  color: rgba(248, 250, 255, 0.62);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.dnd2-field input,
+.dnd2-field select,
+.dnd2-mini-field input,
+.dnd2-subfield input,
+.dnd2-skill-value {
+  width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(7, 10, 18, 0.56);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.dnd2-field input:focus,
+.dnd2-field select:focus,
+.dnd2-mini-field input:focus,
+.dnd2-subfield input:focus,
+.dnd2-skill-value:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.dnd2-field input,
+.dnd2-field select,
+.dnd2-mini-field input,
+.dnd2-subfield input {
+  padding: 5px 8px;
+}
+
+.dnd2-field select {
+  color-scheme: dark;
+}
+
+.dnd2-field input[readonly] {
+  border-color: var(--border-hover);
+  background: rgba(241, 211, 142, 0.1);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.dnd2-exhaustion-track {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.dnd2-exhaustion-point {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(7, 10, 18, 0.44);
+  color: rgba(248, 250, 255, 0.58);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dnd2-exhaustion-point input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dnd2-exhaustion-point input:checked + span {
+  color: var(--accent);
+}
+
+.dnd2-ac-field {
+  grid-area: ac;
+}
+
+.dnd2-hp-field {
+  grid-area: hp;
+}
+
+.dnd2-hit-die-field {
+  grid-area: hitdie;
+}
+
+.dnd2-speed-field {
+  grid-area: speed;
+}
+
+.dnd2-level-field {
+  grid-area: level;
+}
+
+.dnd2-death-saves {
+  grid-area: death;
+}
+
+.dnd2-hit-dice-field {
+  grid-area: hitdice;
+}
+
+.dnd2-inline-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dnd2-inline-inputs.is-hitpoints {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dnd2-subfield {
+  display: grid;
+  gap: 3px;
+}
+
+.dnd2-death-save-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 28px);
+  gap: 5px;
+}
+
+.dnd2-death-save {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  background: rgba(7, 10, 18, 0.44);
+  color: rgba(248, 250, 255, 0.48);
+  cursor: pointer;
+}
+
+.dnd2-death-save input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dnd2-death-save input:checked + span {
+  color: #ffb8b8;
+  transform: scale(1.08);
+}
+
+.dnd2-death-save.is-success input:checked + span {
+  color: #f1d38e;
+}
+
+.dnd2-proficiencies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 7px;
+}
+
+.dnd2-proficiency-item {
+  display: grid;
+  grid-template-columns: 13px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dnd2-abilities-section {
+  gap: 10px;
+}
+
+.dnd2-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(98px, 1fr));
+  gap: 7px;
+}
+
+.dnd2-ability-card {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dnd2-ability-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.dnd2-ability-short {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.dnd2-mini-field {
+  display: grid;
+  gap: 3px;
+}
+
+.dnd2-mini-field input,
+.dnd2-skill-value {
+  text-align: center;
+}
+
+.dnd2-ability-mod-input.is-manual,
+.dnd2-skill-value.is-manual {
+  border-color: rgba(204, 177, 255, 0.72);
+  background: rgba(132, 105, 196, 0.22);
+}
+
+.dnd2-skills {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(124px, 1fr));
+  gap: 7px;
+  width: 100%;
+}
+
+.dnd2-skill-group {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dnd2-skill-group h4 {
+  margin: 0 0 2px;
+  color: var(--accent);
+}
+
+.dnd2-skill-row {
+  display: grid;
+  grid-template-columns: 13px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 6px;
+  min-height: 27px;
+}
+
+.dnd2-skill-row span {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.18;
+}
+
+.dnd2-skill-value {
+  min-height: 26px;
+  padding: 3px;
+  font-size: 12px;
+}
+
+.dnd2-proficiency-check,
+.dnd2-proficiency-item input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: #f1d38e;
+}
+
+@media (max-width: 1180px) {
+  .dnd2-abilities,
+  .dnd2-skills {
+    grid-template-columns: repeat(3, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .dnd2-identity-grid,
+  .dnd2-combat-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "ac"
+      "hp"
+      "hitdie"
+      "speed"
+      "level"
+      "death"
+      "hitdice";
+  }
+
+  .dnd2-abilities,
+  .dnd2-skills {
+    grid-template-columns: 1fr;
+  }
+
+  .dnd2-inline-inputs,
+  .dnd2-inline-inputs.is-hitpoints {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6,6 +6,7 @@
   image: 1,
   characterStats: 2,
   dndStats: 3,
+  dndStatsV2: 1,
   table: 2
 };
 

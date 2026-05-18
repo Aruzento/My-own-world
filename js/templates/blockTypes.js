@@ -380,6 +380,242 @@ export function createDndStatsBlock({
 }
 
 
+export function createDndStatsV2Block({
+  title = 'Стат. блок DnD v 2.0'
+}) {
+
+  const abilities = [
+    ['str', 'Сила', 'СИЛ'],
+    ['dex', 'Ловкость', 'ЛВК'],
+    ['con', 'Телосложение', 'ТЛС'],
+    ['int', 'Интеллект', 'ИНТ'],
+    ['wis', 'Мудрость', 'МДР'],
+    ['cha', 'Харизма', 'ХАР']
+  ];
+
+  const skillGroups = [
+    ['str', 'СИЛ', ['Спасбросок СИЛ', 'Атлетика']],
+    ['dex', 'ЛВК', ['Спасбросок ЛВК', 'Акробатика', 'Ловкость рук', 'Скрытность']],
+    ['con', 'ТЛС', ['Спасбросок ТЛС']],
+    ['int', 'ИНТ', ['Спасбросок ИНТ', 'Анализ', 'История', 'Магия', 'Природа', 'Религия']],
+    ['wis', 'МДР', ['Спасбросок МДР', 'Внимательность', 'Выживание', 'Медицина', 'Проницательность', 'Уход за животными']],
+    ['cha', 'ХАР', ['Спасбросок ХАР', 'Выступление', 'Запугивание', 'Обман', 'Убеждение']]
+  ];
+
+  const abilityRows =
+    abilities
+      .map(([key, titleText, shortText]) => `
+        <section class="dnd2-ability-card" data-ability="${key}">
+          <div class="dnd2-ability-heading">
+            <span class="dnd2-ability-name">${titleText}</span>
+            <span class="dnd2-ability-short">${shortText}</span>
+          </div>
+
+          <label class="dnd2-mini-field">
+            <span>Модификатор</span>
+            <input
+              class="dnd2-ability-mod-input"
+              type="number"
+              value="0"
+              data-manual-value="false"
+            >
+          </label>
+
+          <label class="dnd2-mini-field">
+            <span>Число</span>
+            <input class="dnd2-ability-score" type="number" min="1" max="30" value="10">
+          </label>
+        </section>
+      `)
+      .join('');
+
+  const skillRows =
+    skillGroups
+      .map(([ability, titleText, names]) => `
+        <section class="dnd2-skill-group" data-ability="${ability}">
+          <h4>${titleText}</h4>
+          ${names.map(name => `
+            <label class="dnd2-skill-row">
+              <input class="dnd2-proficiency-check" type="checkbox">
+              <span>${name}</span>
+              <input class="dnd2-skill-value" type="number" value="0" data-manual-value="false">
+            </label>
+          `).join('')}
+        </section>
+      `)
+      .join('');
+
+  return `
+    <div
+      class="template-block dnd2-stats-block"
+      data-block-type="dndStatsV2"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="dnd2-note">
+        Бонус мастерства DnD 5e: уровни 1-4 = +2, 5-8 = +3, 9-12 = +4, 13-16 = +5, 17-20 = +6.
+        Модификатор считается от значения характеристики с бонусом расы/класса. Навыки и спасброски считаются как модификатор характеристики + бонус мастерства, если отмечено владение.
+      </div>
+
+      <section class="dnd2-section dnd2-identity-section">
+        <h3>Происхождение и развитие</h3>
+
+        <div class="dnd2-identity-grid">
+          <label class="dnd2-field">
+            <span>Раса</span>
+            <select class="dnd2-card-select dnd2-race-select" data-card-tag="race"></select>
+          </label>
+
+          <label class="dnd2-field">
+            <span>Класс</span>
+            <select class="dnd2-card-select dnd2-class-select" data-card-tag="class"></select>
+          </label>
+
+          <div class="dnd2-field dnd2-exhaustion-field">
+            <span>Истощение</span>
+            <div class="dnd2-exhaustion-track">
+              ${[1, 2, 3, 4, 5, 6].map(index => `
+                <label class="dnd2-exhaustion-point">
+                  <input class="dnd2-exhaustion-check" type="checkbox" aria-label="Истощение ${index}">
+                  <span>${index}</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <label class="dnd2-field">
+            <span>Вид</span>
+            <select class="dnd2-card-select dnd2-type-select" data-card-tag="type"></select>
+          </label>
+
+          <label class="dnd2-field">
+            <span>Подкласс</span>
+            <select class="dnd2-card-select dnd2-subclass-select" data-card-tag="subclass"></select>
+          </label>
+
+          <label class="dnd2-field">
+            <span>Бонус мастерства</span>
+            <input class="dnd2-proficiency-bonus" type="number" value="2" readonly>
+          </label>
+        </div>
+      </section>
+
+      <section class="dnd2-section">
+        <h3>Боевые показатели</h3>
+
+        <div class="dnd2-combat-grid">
+          <label class="dnd2-field dnd2-ac-field">
+            <span>КЗ</span>
+            <input class="dnd2-ac" type="number" value="10">
+          </label>
+
+          <label class="dnd2-field is-hitpoints dnd2-hp-field">
+            <span>Хиты</span>
+            <div class="dnd2-inline-inputs is-hitpoints">
+              <label class="dnd2-subfield">
+                <span>факт</span>
+                <input class="dnd2-hp-current" type="number" min="0" value="10">
+              </label>
+              <label class="dnd2-subfield">
+                <span>макс</span>
+                <input class="dnd2-hp-max" type="number" min="1" value="10">
+              </label>
+              <label class="dnd2-subfield">
+                <span>врем.</span>
+                <input class="dnd2-hp-temp" type="number" min="0" value="0">
+              </label>
+            </div>
+          </label>
+
+          <label class="dnd2-field dnd2-hit-die-field">
+            <span>Кость хитов</span>
+            <input class="dnd2-hit-die" type="text" value="d8">
+          </label>
+
+          <label class="dnd2-field dnd2-speed-field">
+            <span>Скорость</span>
+            <input class="dnd2-speed" type="number" value="30">
+          </label>
+
+          <label class="dnd2-field dnd2-level-field">
+            <span>Уровень</span>
+            <div class="dnd2-inline-inputs">
+              <label class="dnd2-subfield">
+                <span>уровень</span>
+                <input class="dnd2-level" type="number" min="1" max="20" value="1">
+              </label>
+              <label class="dnd2-subfield">
+                <span>опыт</span>
+                <input class="dnd2-experience" type="number" min="0" value="0">
+              </label>
+            </div>
+          </label>
+
+          <div class="dnd2-field dnd2-death-saves">
+            <span>Хиты от смерти</span>
+            <div class="dnd2-death-save-grid">
+              ${[1, 2, 3].map(index => `
+                <label class="dnd2-death-save is-fail">
+                  <input class="dnd2-death-fail" type="checkbox" aria-label="Провал ${index}">
+                  <span>☠</span>
+                </label>
+              `).join('')}
+              ${[1, 2, 3].map(index => `
+                <label class="dnd2-death-save is-success">
+                  <input class="dnd2-death-success" type="checkbox" aria-label="Успех ${index}">
+                  <span>♥</span>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <label class="dnd2-field dnd2-hit-dice-field">
+            <span>Кости хитов</span>
+            <div class="dnd2-inline-inputs">
+              <label class="dnd2-subfield">
+                <span>факт</span>
+                <input class="dnd2-hit-dice-current" type="number" min="0" value="1">
+              </label>
+              <label class="dnd2-subfield">
+                <span>макс</span>
+                <input class="dnd2-hit-dice-max" type="number" min="1" value="1">
+              </label>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="dnd2-section">
+        <h3>Владения</h3>
+
+        <div class="dnd2-proficiencies">
+          ${['Лёгкая броня', 'Средняя броня', 'Тяжёлая броня', 'Щиты', 'Простое оружие', 'Воинское оружие', 'Инструменты', 'Языки'].map(label => `
+            <label class="dnd2-proficiency-item">
+              <input type="checkbox">
+              <span>${label}</span>
+            </label>
+          `).join('')}
+        </div>
+      </section>
+
+      <section class="dnd2-section dnd2-abilities-section">
+        <h3>Характеристики, навыки и спасброски</h3>
+
+        <div class="dnd2-abilities">
+          ${abilityRows}
+        </div>
+
+        <div class="dnd2-skills">
+          ${skillRows}
+        </div>
+      </section>
+    </div>
+  `;
+}
+
+
 export function createTableBlock({
   title = 'Таблица',
   rows = 3,
