@@ -33,6 +33,13 @@ export function renderTypePicker(
       })}
 
       ${createTypeOptionHTML({
+        type: 'skills',
+        icon: '✧',
+        title: 'Навыки',
+        description: 'Список связанных навыков'
+      })}
+
+      ${createTypeOptionHTML({
         type: 'image',
         icon: '▧',
         title: 'Картинка',
@@ -180,6 +187,7 @@ export function getBlockPopupTitle(
   const titles = {
     items: 'Название блока с предметами',
     spells: 'Название блока с заклинаниями',
+    skills: 'Название блока с навыками',
     characterStats: 'Название блока статистики персонажа',
     dndStats: 'Название DnD stat block',
     text: 'Название текстового блока'
@@ -197,6 +205,7 @@ export function getDefaultBlockTitle(
   const titles = {
     items: 'Набор',
     spells: 'Заклинания',
+    skills: 'Навыки',
     characterStats: 'Статистика персонажа',
     dndStats: 'Стат. блок DnD',
     text: 'Новый блок'

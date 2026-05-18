@@ -81,6 +81,33 @@ export function createSpellsBlock({
 }
 
 
+export function createSkillsBlock({
+  title = 'Навыки'
+}) {
+
+  return `
+    <div
+      class="template-block skill-set-block"
+      data-block-type="skills"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="skill-set-list"></div>
+
+      <button
+        class="skill-set-add-btn"
+        data-runtime="true"
+        type="button"
+      >
+        + Добавить навык
+      </button>
+    </div>
+  `;
+}
+
+
 export function createImageBlock() {
 
   return `
@@ -391,6 +418,11 @@ export function createTableBlock({
       })
       .join('');
 
+  const tableColumns =
+    Array.from({ length: safeColumns })
+      .map(() => '<col style="width: 160px;">')
+      .join('');
+
   return `
     <div
       class="template-block table-block"
@@ -402,6 +434,10 @@ export function createTableBlock({
 
       <div class="table-block-scroll">
         <table class="custom-table">
+          <colgroup>
+            ${tableColumns}
+          </colgroup>
+
           <tbody>
             ${tableRows}
           </tbody>

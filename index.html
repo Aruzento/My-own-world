@@ -84,6 +84,10 @@
           <div class="toolbar-separator">
           </div> <!-- Визуальный разделитель toolbar -->
 
+          <button data-block="p" title="Обычный текст">
+            T
+          </button> <!-- Преобразует выбранный блок в обычный текст -->
+
           <button data-block="h1" title="Заголовок 1">
             H1
           </button> <!-- Преобразует выбранный блок в H1 -->
@@ -118,7 +122,27 @@
           <div class="toolbar-separator">
           </div> <!-- Визуальный разделитель toolbar -->
 
-          <input type="color" id="textColorPicker" title="Цвет текста"> <!-- Выбор цвета текста -->
+          <button data-action="clear-format" title="Сбросить формат">
+            Tx
+          </button> <!-- Сбрасывает inline-форматирование выделения -->
+
+          <div class="toolbar-separator">
+          </div> <!-- Визуальный разделитель toolbar -->
+
+          <button data-action="color-popup" class="toolbar-color-button" id="toolbarColorButton" title="Цвет текста">
+            <span class="toolbar-color-button-swatch"></span>
+          </button> <!-- Открывает popup выбора цвета -->
+
+          <div class="toolbar-color-popup hidden" id="toolbarColorPopup" data-runtime="true">
+            <input type="color" id="textColorPicker" title="Цвет текста"> <!-- Выбор цвета текста -->
+
+            <div class="toolbar-recent-colors" id="toolbarRecentColors" aria-label="Последние цвета">
+            </div> <!-- Последние использованные цвета -->
+
+            <button data-action="apply-color" class="toolbar-apply-color" title="Применить выбранный цвет">
+              Принять
+            </button> <!-- Применяет текущий выбранный цвет -->
+          </div>
         </div>
         
         <!-- DOCUMENT SURFACE -->

@@ -27,6 +27,7 @@ const CARD_TYPE_LABELS = {
   region: 'Регион',
   folder: 'Папка',
   magic: 'Магия',
+  skill: 'Навык',
   object: 'Объект',
   item: 'Предмет',
   lore: 'Лор',

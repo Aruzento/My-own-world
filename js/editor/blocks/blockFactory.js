@@ -2,6 +2,7 @@ import {
   createTextBlock,
   createItemsBlock,
   createSpellsBlock,
+  createSkillsBlock,
   createImageBlock,
   createCharacterStatsBlock,
   createDndStatsBlock,
@@ -23,6 +24,11 @@ const BLOCK_CREATORS = {
 
   spells: title =>
     createSpellsBlock({
+      title
+    }),
+
+  skills: title =>
+    createSkillsBlock({
       title
     }),
 

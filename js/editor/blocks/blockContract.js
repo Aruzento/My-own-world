@@ -2,10 +2,11 @@
   text: 1,
   items: 1,
   spells: 1,
+  skills: 1,
   image: 1,
   characterStats: 2,
   dndStats: 3,
-  table: 1
+  table: 2
 };
 
 const RUNTIME_SELECTOR = [
@@ -24,6 +25,8 @@ const LEGACY_RUNTIME_SELECTOR = [
   '.item-set-remove',
   '.spell-set-add-btn',
   '.spell-set-remove',
+  '.skill-set-add-btn',
+  '.skill-set-remove',
   '.inline-tag-input',
   '.inline-add-tag-btn',
   '.inline-alias-input',
@@ -82,6 +85,10 @@ export function serializePersistentEditorHTML(
     clone
   );
 
+  clearRuntimeTableState(
+    clone
+  );
+
   clearRuntimeMirrorLists(
     clone
   );
@@ -95,6 +102,30 @@ export function serializePersistentEditorHTML(
   );
 
   return clone.innerHTML;
+}
+
+
+function clearRuntimeTableState(
+  root
+) {
+
+  root
+    .querySelectorAll('.table-cell.is-selected')
+    .forEach(cell => {
+
+      cell.classList.remove(
+        'is-selected'
+      );
+    });
+
+  root
+    .querySelectorAll('.custom-table.is-resizing-column')
+    .forEach(table => {
+
+      table.classList.remove(
+        'is-resizing-column'
+      );
+    });
 }
 
 
@@ -195,6 +226,20 @@ function upgradePersistentBlocks(
 
         changed =
           true;
+      }
+
+      if (
+        type === 'table' &&
+        currentVersion < 2
+      ) {
+
+        changed =
+          upgradeTableBlock(
+            block
+          ) || changed;
+
+        block.dataset.blockVersion =
+          '2';
       }
     });
 
@@ -542,6 +587,10 @@ function ensureRuntimeControls(
     editor
   );
 
+  ensureSkillSetControls(
+    editor
+  );
+
   ensureTableControls(
     editor
   );
@@ -769,6 +818,10 @@ function ensureItemSetControls(
   )
     .forEach(chip => {
 
+      ensureItemCountInput(
+        chip
+      );
+
       const existingRemove =
         chip.querySelector('.item-set-remove');
 
@@ -801,6 +854,88 @@ function ensureItemSetControls(
         remove
       );
     });
+}
+
+
+function ensureItemCountInput(
+  chip
+) {
+
+  if (
+    chip.querySelector('.item-set-quantity-label')
+  ) return;
+
+  const legacyCount =
+    chip.querySelector('.item-set-count-label');
+
+  if (legacyCount) {
+
+    legacyCount.className =
+      'item-set-quantity-label';
+
+    const legacyInput =
+      legacyCount.querySelector('.item-set-count');
+
+    if (legacyInput) {
+
+      legacyInput.className =
+        'item-set-quantity';
+
+      legacyInput.type =
+        'text';
+
+      legacyInput.setAttribute(
+        'inputmode',
+        'numeric'
+      );
+
+      legacyInput.setAttribute(
+        'pattern',
+        '[0-9]*'
+      );
+    }
+
+    legacyCount.childNodes.forEach(node => {
+
+      if (
+        node.nodeType === Node.TEXT_NODE &&
+        node.textContent.trim() === 'x'
+      ) {
+
+        node.remove();
+      }
+    });
+
+    return;
+  }
+
+  const title =
+    chip.querySelector('.item-set-title');
+
+  if (!title) return;
+
+  const label =
+    document.createElement('label');
+
+  label.className =
+    'item-set-quantity-label';
+
+  label.title =
+    'Количество';
+
+  label.innerHTML = `
+    <input
+      class="item-set-quantity"
+      type="text"
+      inputmode="numeric"
+      pattern="[0-9]*"
+      value="1"
+    >
+  `;
+
+  title.after(
+    label
+  );
 }
 
 
@@ -888,6 +1023,90 @@ function ensureSpellSetControls(
 }
 
 
+function ensureSkillSetControls(
+  editor
+) {
+
+  getMatchingElements(
+    editor,
+    '.skill-set-block'
+  )
+    .forEach(block => {
+
+      const existingButton =
+        block.querySelector('.skill-set-add-btn');
+
+      if (existingButton) {
+
+        markRuntime(
+          existingButton
+        );
+
+        return;
+      }
+
+      const button =
+        document.createElement('button');
+
+      button.className =
+        'skill-set-add-btn';
+
+      button.type =
+        'button';
+
+      button.textContent =
+        '+ Добавить навык';
+
+      markRuntime(
+        button
+      );
+
+      block.appendChild(
+        button
+      );
+    });
+
+  getMatchingElements(
+    editor,
+    '.skill-set-chip'
+  )
+    .forEach(chip => {
+
+      const existingRemove =
+        chip.querySelector('.skill-set-remove');
+
+      if (existingRemove) {
+
+        markRuntime(
+          existingRemove
+        );
+
+        return;
+      }
+
+      const remove =
+        document.createElement('span');
+
+      remove.className =
+        'skill-set-remove';
+
+      remove.title =
+        'Убрать из набора';
+
+      remove.textContent =
+        'x';
+
+      markRuntime(
+        remove
+      );
+
+      chip.appendChild(
+        remove
+      );
+    });
+}
+
+
 function getMatchingElements(
   root,
   selector
@@ -912,6 +1131,15 @@ function getMatchingElements(
 function ensureTableControls(
   editor
 ) {
+
+  editor
+    .querySelectorAll('.custom-table')
+    .forEach(table => {
+
+      ensureTableColumns(
+        table
+      );
+    });
 
   editor
     .querySelectorAll('.custom-table tr')
@@ -939,6 +1167,97 @@ function ensureTableControls(
         createTableRowControlsHTML()
       );
     });
+}
+
+
+function upgradeTableBlock(
+  block
+) {
+
+  const table =
+    block.querySelector(
+      '.custom-table'
+    );
+
+  if (!table) return false;
+
+  return ensureTableColumns(
+    table
+  );
+}
+
+
+function ensureTableColumns(
+  table
+) {
+
+  const firstRow =
+    table.querySelector('tr');
+
+  if (!firstRow) return false;
+
+  const columnCount =
+    firstRow.querySelectorAll('.table-cell').length;
+
+  if (columnCount <= 0) return false;
+
+  let colgroup =
+    table.querySelector('colgroup');
+
+  let changed =
+    false;
+
+  if (!colgroup) {
+
+    colgroup =
+      document.createElement('colgroup');
+
+    table.insertBefore(
+      colgroup,
+      table.firstChild
+    );
+
+    changed =
+      true;
+  }
+
+  while (colgroup.children.length < columnCount) {
+
+    const column =
+      document.createElement('col');
+
+    column.style.width =
+      '160px';
+
+    colgroup.appendChild(
+      column
+    );
+
+    changed =
+      true;
+  }
+
+  while (colgroup.children.length > columnCount) {
+
+    colgroup.lastElementChild.remove();
+
+    changed =
+      true;
+  }
+
+  [...colgroup.children]
+    .forEach(column => {
+
+      if (column.style.width) return;
+
+      column.style.width =
+        '160px';
+
+      changed =
+        true;
+    });
+
+  return changed;
 }
 
 

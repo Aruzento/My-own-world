@@ -1,4 +1,28 @@
-export function setupEditorKeyboard() {
+export function setupEditorKeyboard(
+  saveCurrentPage
+) {
+
+  window.addEventListener(
+    'keydown',
+    async event => {
+
+      if (
+        !isSaveShortcut(
+          event
+        )
+      ) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (typeof saveCurrentPage === 'function') {
+
+        await saveCurrentPage();
+      }
+    },
+    true
+  );
 
   document.addEventListener(
     'keydown',
@@ -8,6 +32,7 @@ export function setupEditorKeyboard() {
         event.target;
 
       if (
+        !target?.classList ||
         !target.classList.contains(
           'singleline-field'
         )
@@ -40,6 +65,21 @@ export function setupEditorKeyboard() {
         nextField
       );
     }
+  );
+}
+
+
+function isSaveShortcut(
+  event
+) {
+
+  return (
+    (
+      event.code === 'KeyS' ||
+      event.key?.toLowerCase() === 's' ||
+      event.key?.toLowerCase() === 'ы'
+    ) &&
+    (event.ctrlKey || event.metaKey)
   );
 }
 

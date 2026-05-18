@@ -121,7 +121,9 @@ export function setupEditor() {
 
   setupWikiLinks(editor);
 
-  setupEditorKeyboard();
+  setupEditorKeyboard(
+    saveCurrentPage
+  );
 
   setupCustomBlocks(
   editor,

@@ -990,6 +990,108 @@
     13px;
 }
 
+
+.item-set-create-panel {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  margin-bottom:
+    8px;
+}
+
+
+.item-set-create-panel.hidden,
+.item-set-create-form.hidden {
+
+  display:
+    none;
+}
+
+
+.item-set-create-toggle,
+.item-set-create-confirm {
+
+  min-height:
+    32px;
+
+  padding:
+    0 12px;
+
+  border:
+    1px solid rgba(241,211,142,0.18);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(241,211,142,0.09);
+
+  color:
+    rgba(255,248,230,0.92);
+
+  cursor:
+    pointer;
+
+  font:
+    750 12px/1 system-ui, sans-serif;
+}
+
+
+.item-set-create-toggle:hover,
+.item-set-create-confirm:hover {
+
+  background:
+    rgba(241,211,142,0.15);
+
+  border-color:
+    rgba(241,211,142,0.28);
+}
+
+
+.item-set-create-form {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  gap:
+    6px;
+}
+
+
+.item-set-create-title {
+
+  min-width:
+    0;
+
+  height:
+    32px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,248,230,0.94);
+
+  outline:
+    none;
+}
+
 /* =========================================
    CONFIRM POPUP
 ========================================= */

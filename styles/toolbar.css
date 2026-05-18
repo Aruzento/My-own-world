@@ -12,7 +12,18 @@
 
   align-items: center;
 
+  flex-wrap: nowrap;
+
   gap: 4px;
+
+  width:
+    454px;
+
+  max-width:
+    none;
+
+  box-sizing:
+    border-box;
 
   padding:
     7px;
@@ -116,6 +127,38 @@
 }
 
 
+.floating-toolbar .toolbar-color-button {
+
+  position:
+    relative;
+}
+
+
+.toolbar-color-button-swatch {
+
+  width:
+    16px;
+
+  height:
+    16px;
+
+  display:
+    block;
+
+  border:
+    1px solid rgba(255,255,255,0.36);
+
+  border-radius:
+    5px;
+
+  background:
+    var(--current-text-color, #f4dfa8);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.18);
+}
+
+
 .floating-toolbar button:hover {
 
   background:
@@ -172,11 +215,63 @@
    COLOR PICKER
 ========================================= */
 
+.toolbar-color-popup {
+
+  position:
+    fixed;
+
+  transform:
+    none;
+
+  z-index:
+    10000;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    34px 18px minmax(76px, auto);
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  padding:
+    8px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
+
+  box-shadow:
+    0 18px 54px rgba(0,0,0,0.36),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+
+.toolbar-color-popup.hidden {
+
+  display:
+    none;
+}
+
+
 #textColorPicker {
 
-  width: 28px;
+  width: 34px;
 
-  height: 28px;
+  height: 34px;
 
   padding: 0;
 
@@ -208,6 +303,104 @@
 }
 
 
+.toolbar-recent-colors {
+
+  display:
+    grid;
+
+  grid-template-rows:
+    repeat(5, 10px);
+
+  gap:
+    3px;
+
+  padding:
+    2px;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.045);
+}
+
+
+.toolbar-color-popup .toolbar-recent-colors:empty {
+
+  display:
+    grid;
+}
+
+
+.toolbar-color-popup .toolbar-color-swatch {
+
+  width:
+    10px;
+
+  height:
+    10px;
+
+  min-height:
+    10px;
+
+  padding:
+    0;
+
+  border:
+    1px solid rgba(255,255,255,0.22);
+
+  border-radius:
+    3px;
+
+  background:
+    var(--swatch-color);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,0.16);
+}
+
+
+.toolbar-color-popup .toolbar-color-swatch:hover,
+.toolbar-color-popup .toolbar-color-swatch.is-current {
+
+  border-color:
+    rgba(244,223,168,0.92);
+
+  box-shadow:
+    0 0 0 2px rgba(241,211,142,0.18),
+    inset 0 0 0 1px rgba(0,0,0,0.16);
+}
+
+
+.toolbar-color-popup .toolbar-apply-color {
+
+  width:
+    auto;
+
+  min-width:
+    76px;
+
+  padding:
+    0 12px;
+
+  color:
+    rgba(36,29,16,0.94);
+
+  background:
+    rgba(241,211,142,0.92);
+}
+
+
+.toolbar-color-popup .toolbar-apply-color:hover {
+
+  color:
+    rgba(30,24,14,0.98);
+
+  background:
+    rgba(244,223,168,0.98);
+}
+
+
 
 /* =========================================
    MOBILE
@@ -217,9 +410,18 @@
 
   .floating-toolbar {
 
+    width:
+      calc(100vw - 16px);
+
+    flex-wrap:
+      wrap;
+
     gap: 2px;
 
     padding: 4px;
+
+    border-radius:
+      12px;
   }
 
   .floating-toolbar button {
@@ -230,5 +432,6 @@
 
     font-size: 12px;
   }
+
 }
 

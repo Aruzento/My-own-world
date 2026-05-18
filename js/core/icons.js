@@ -86,6 +86,16 @@ const icons = {
     </span>
   `,
 
+  skill: `
+    <span class="entity-icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3l1.8 4.2l4.2 .3l-3.2 2.8l1 4.1l-3.8 -2.2l-3.8 2.2l1 -4.1l-3.2 -2.8l4.2 -.3z"></path>
+        <path d="M5 21h14"></path>
+        <path d="M8 17h8"></path>
+      </svg>
+    </span>
+  `,
+
   campaignMap: `
     <span class="entity-icon">
       <svg viewBox="0 0 24 24">
@@ -119,6 +129,7 @@ export function getPageIcon(tags = []) {
   if (normalized.includes('region')) return icons.region;
   if (normalized.includes('folder')) return icons.folder;
   if (normalized.includes('magic')) return icons.magic;
+  if (normalized.includes('skill')) return icons.skill;
   if (normalized.includes('campaign-map')) return icons.campaignMap;
 
   return icons.default;

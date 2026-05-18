@@ -55,6 +55,7 @@ export function createCardShellTemplate() {
                   <option value="region">Регион</option>
                   <option value="folder">Папка</option>
                   <option value="magic">Магия</option>
+                  <option value="skill">Навык</option>
                   <option value="object">Объект</option>
                   <option value="item">Предмет</option>
                   <option value="lore">Лор</option>

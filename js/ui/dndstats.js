@@ -12,6 +12,9 @@ const STAT_ORDER = [
   'cha'
 ];
 
+const CHECK_PROFICIENCY_BONUS =
+  2;
+
 
 export function setupDndStats() {
 
@@ -72,6 +75,18 @@ export function setupDndStats() {
         );
 
       if (!checkbox) return;
+
+      const valueInput =
+        checkbox
+          .closest('.dnd-check-row')
+          ?.querySelector('.dnd-check-value');
+
+      if (valueInput) {
+
+        updateSingleAutoCheck(
+          valueInput
+        );
+      }
 
       saveCurrentPage();
     }
@@ -262,7 +277,25 @@ function updateAutoCheckValue(
   );
 
   input.value =
-    String(modifier);
+    String(
+      modifier + getCheckProficiencyBonus(input)
+    );
+}
+
+
+function getCheckProficiencyBonus(
+  input
+) {
+
+  const checked =
+    input
+      .closest('.dnd-check-row')
+      ?.querySelector('.dnd-check-point')
+      ?.checked;
+
+  return checked
+    ? CHECK_PROFICIENCY_BONUS
+    : 0;
 }
 
 

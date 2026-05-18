@@ -36,3 +36,11 @@ export function applyTextColor(
     color
   );
 }
+
+
+export function clearInlineFormatting() {
+
+  return runInlineFormattingCommand(
+    'removeFormat'
+  );
+}

@@ -5,8 +5,17 @@ import {
 } from '../editor/editor.js';
 
 import {
+  createPage,
+  writePageContent
+} from '../storage/storage.js';
+
+import {
   getPageIcon
 } from '../core/icons.js';
+
+import {
+  renderTree
+} from '../tree/tree.js';
 
 import {
   positionPopupNearAnchor
@@ -27,18 +36,26 @@ export function setupItemSets() {
 
       const addButton =
         event.target.closest(
-          '.item-set-add-btn, .spell-set-add-btn'
+          '.item-set-add-btn, .spell-set-add-btn, .skill-set-add-btn'
         );
 
       const chip =
         event.target.closest(
-          '.item-set-chip, .spell-set-chip'
+          '.item-set-chip, .spell-set-chip, .skill-set-chip'
         );
 
       const removeButton =
         event.target.closest(
-          '.item-set-remove, .spell-set-remove'
+          '.item-set-remove, .spell-set-remove, .skill-set-remove'
         );
+
+      if (
+        event.target.closest('.item-set-quantity')
+      ) {
+
+        event.stopPropagation();
+        return;
+      }
 
 
       if (addButton) {
@@ -112,6 +129,30 @@ function setupItemSetPicker() {
     'item-set-picker hidden';
 
   picker.innerHTML = `
+    <div class="item-set-create-panel hidden">
+      <button
+        class="item-set-create-toggle"
+        type="button"
+      >
+        Создать предмет
+      </button>
+
+      <div class="item-set-create-form hidden">
+        <input
+          class="item-set-create-title"
+          type="text"
+          placeholder="Название предмета"
+        >
+
+        <button
+          class="item-set-create-confirm"
+          type="button"
+        >
+          Создать
+        </button>
+      </div>
+    </div>
+
     <input
       class="item-set-search"
       type="text"
@@ -134,6 +175,41 @@ function setupItemSetPicker() {
       renderItemSetOptions
     );
 
+  picker
+    .querySelector('.item-set-create-toggle')
+    .addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const form =
+          picker.querySelector('.item-set-create-form');
+
+        form.classList.toggle(
+          'hidden'
+        );
+
+        form
+          .querySelector('.item-set-create-title')
+          ?.focus();
+      }
+    );
+
+  picker
+    .querySelector('.item-set-create-confirm')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        await createItemFromPicker();
+      }
+    );
+
 
   document.addEventListener(
     'click',
@@ -151,7 +227,7 @@ function setupItemSetPicker() {
 
       if (
         event.target.closest(
-          '.item-set-add-btn, .spell-set-add-btn'
+          '.item-set-add-btn, .spell-set-add-btn, .skill-set-add-btn'
         )
       ) return;
 
@@ -167,21 +243,21 @@ function openItemSetPicker(
 
   const block =
     button.closest(
-      '.item-set-block, .spell-set-block'
+      '.item-set-block, .spell-set-block, .skill-set-block'
     );
 
   if (!block) return;
 
   activeSetKind =
-    block.classList.contains('spell-set-block')
-      ? 'spells'
-      : 'items';
+    getSetKindFromBlock(
+      block
+    );
 
   activeSetList =
     block.querySelector(
-      activeSetKind === 'spells'
-        ? '.spell-set-list'
-        : '.item-set-list'
+      getSetListSelector(
+        activeSetKind
+      )
     );
 
   if (!activeSetList) return;
@@ -197,12 +273,34 @@ function openItemSetPicker(
       '.item-set-search'
     );
 
+  const createPanel =
+    picker.querySelector(
+      '.item-set-create-panel'
+    );
+
+  const createForm =
+    picker.querySelector(
+      '.item-set-create-form'
+    );
+
   search.value = '';
 
+  picker.querySelector('.item-set-create-title').value =
+    '';
+
+  createPanel.classList.toggle(
+    'hidden',
+    activeSetKind !== 'items'
+  );
+
+  createForm.classList.add(
+    'hidden'
+  );
+
   search.placeholder =
-    activeSetKind === 'spells'
-      ? 'Найти заклинание...'
-      : 'Найти предмет...';
+    getSearchPlaceholder(
+      activeSetKind
+    );
 
 
   picker.classList.remove(
@@ -245,6 +343,36 @@ function closeItemSetPicker() {
 }
 
 
+document.addEventListener(
+  'change',
+  async event => {
+
+    const countInput =
+      event.target.closest('.item-set-quantity');
+
+    if (!countInput) return;
+
+    const value =
+      Math.max(
+        1,
+        Math.floor(
+          Number(countInput.value) || 1
+        )
+      );
+
+    countInput.value =
+      String(value);
+
+    countInput.setAttribute(
+      'value',
+      String(value)
+    );
+
+    await saveCurrentPage();
+  }
+);
+
+
 function renderItemSetOptions() {
 
   const picker =
@@ -270,7 +398,7 @@ function renderItemSetOptions() {
 
   const selectedIds =
     activeSetList
-      ? [...activeSetList.querySelectorAll('.item-set-chip, .spell-set-chip')]
+      ? [...activeSetList.querySelectorAll('.item-set-chip, .spell-set-chip, .skill-set-chip')]
           .map(chip => chip.dataset.pageId)
       : [];
 
@@ -279,9 +407,9 @@ function renderItemSetOptions() {
     state.pages.filter(page => {
 
       const expectedType =
-        activeSetKind === 'spells'
-          ? 'magic'
-          : 'item';
+        getExpectedPageType(
+          activeSetKind
+        );
 
       if (
         page.type !== expectedType &&
@@ -330,9 +458,9 @@ function renderItemSetOptions() {
       'item-set-empty';
 
     empty.textContent =
-      activeSetKind === 'spells'
-        ? 'Заклинания не найдены'
-        : 'Предметы не найдены';
+      getEmptyText(
+        activeSetKind
+      );
 
     options.appendChild(
       empty
@@ -354,8 +482,9 @@ function renderItemSetOptions() {
       'button';
 
     button.innerHTML =
-      activeSetKind === 'spells'
-        ? createSpellOptionHTML(page)
+      activeSetKind === 'spells' ||
+      activeSetKind === 'skills'
+        ? createSetOptionHTML(page)
         : `
           ${getPageIcon(page.tags)}
 
@@ -399,13 +528,16 @@ async function addItemToSet(
   chip.className =
     activeSetKind === 'spells'
       ? 'spell-set-chip'
+      : activeSetKind === 'skills'
+        ? 'skill-set-chip'
       : 'item-set-chip';
 
   chip.dataset.pageId =
     page.id;
 
   chip.innerHTML =
-    activeSetKind === 'spells'
+    activeSetKind === 'spells' ||
+    activeSetKind === 'skills'
       ? createSpellChipHTML(page)
       : `
         ${getPageIcon(page.tags)}
@@ -413,6 +545,16 @@ async function addItemToSet(
         <span class="item-set-title">
           ${page.title || 'Без названия'}
         </span>
+
+        <label class="item-set-quantity-label" title="Количество">
+          <input
+            class="item-set-quantity"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            value="1"
+          >
+        </label>
 
         <span
           class="item-set-remove"
@@ -432,13 +574,70 @@ async function addItemToSet(
 }
 
 
+async function createItemFromPicker() {
+
+  if (
+    activeSetKind !== 'items' ||
+    !activeSetList
+  ) return;
+
+  const picker =
+    document.getElementById(
+      'itemSetPicker'
+    );
+
+  const input =
+    picker.querySelector(
+      '.item-set-create-title'
+    );
+
+  const title =
+    input.value.trim();
+
+  if (!title) {
+
+    input.focus();
+    return;
+  }
+
+  const page =
+    await createPage(
+      'card',
+      null,
+      title
+    );
+
+  page.type =
+    'item';
+
+  page.tags =
+    ['card', 'item'];
+
+  page.content =
+    page.content
+      .replace(/^tags:\s*\[[^\]]*\]/m, 'tags: [card, item]')
+      .replace(/^type:\s*.*$/m, 'type: item');
+
+  await writePageContent(
+    page,
+    page.content
+  );
+
+  renderTree();
+
+  await addItemToSet(
+    page
+  );
+}
+
+
 async function removeItemFromSet(
   button
 ) {
 
   const chip =
     button.closest(
-      '.item-set-chip, .spell-set-chip'
+      '.item-set-chip, .spell-set-chip, .skill-set-chip'
     );
 
   if (!chip) return;
@@ -457,9 +656,70 @@ function normalize(value) {
 }
 
 
-function createSpellOptionHTML(
+function getSetKindFromBlock(
+  block
+) {
+
+  if (block.classList.contains('spell-set-block')) return 'spells';
+  if (block.classList.contains('skill-set-block')) return 'skills';
+  return 'items';
+}
+
+
+function getSetListSelector(
+  kind
+) {
+
+  if (kind === 'spells') return '.spell-set-list';
+  if (kind === 'skills') return '.skill-set-list';
+  return '.item-set-list';
+}
+
+
+function getExpectedPageType(
+  kind
+) {
+
+  if (kind === 'spells') return 'magic';
+  if (kind === 'skills') return 'skill';
+  return 'item';
+}
+
+
+function getSearchPlaceholder(
+  kind
+) {
+
+  if (kind === 'spells') return 'Найти заклинание...';
+  if (kind === 'skills') return 'Найти навык...';
+  return 'Найти предмет...';
+}
+
+
+function getEmptyText(
+  kind
+) {
+
+  if (kind === 'spells') return 'Заклинания не найдены';
+  if (kind === 'skills') return 'Навыки не найдены';
+  return 'Предметы не найдены';
+}
+
+
+function createSetOptionHTML(
   page
 ) {
+
+  if (activeSetKind === 'skills') {
+
+    return `
+      ${getPageIcon(page.tags)}
+
+      <span class="item-set-option-title">
+        ${page.title || 'Без названия'}
+      </span>
+    `;
+  }
 
   return `
     ${getPageIcon(page.tags)}
@@ -476,16 +736,26 @@ function createSpellChipHTML(
   page
 ) {
 
+  const textClass =
+    activeSetKind === 'skills'
+      ? 'skill-set-text'
+      : 'spell-set-text';
+
+  const removeClass =
+    activeSetKind === 'skills'
+      ? 'skill-set-remove'
+      : 'spell-set-remove';
+
   return `
     ${getPageIcon(page.tags)}
 
-    <span class="spell-set-text">
+    <span class="${textClass}">
       <strong>${page.title || 'Без названия'}</strong>
       <small>${getPageShortDescription(page) || 'Без описания'}</small>
     </span>
 
     <span
-      class="spell-set-remove"
+      class="${removeClass}"
       title="Убрать из набора"
     >
       ×
