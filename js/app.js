@@ -76,6 +76,10 @@ import {
   setupProfile
 } from './ui/profile.js';
 
+import {
+  setupAppTopbar
+} from './ui/appTopbar.js';
+
 
 
 document
@@ -114,6 +118,9 @@ document
 
 /* Инициализация editor */
 setupEditor();
+
+/* Инициализация верхней панели приложения */
+setupAppTopbar();
 
 /* Инициализация поиска */
 setupSearch();

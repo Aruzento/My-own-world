@@ -9,6 +9,10 @@ import {
 } from '../storage/assetStorage.js';
 
 import {
+  iconSvg
+} from '../core/icons.js';
+
+import {
   createFolderPage,
   deletePageBranch,
   duplicatePageAsChild,
@@ -317,14 +321,14 @@ function ensureMapControls(
 
   controls.innerHTML = `
     <div class="campaign-map-control-group">
-      <button class="campaign-add-btn" type="button" title="Добавить">+</button>
-      <button class="campaign-pan-btn" type="button" title="Двигать карту">✋</button>
+      <button class="campaign-add-btn" type="button" title="Добавить">${iconSvg('plus')}</button>
+      <button class="campaign-pan-btn" type="button" title="Двигать карту">${iconSvg('hand')}</button>
     </div>
 
     <div class="campaign-map-control-group">
-      <button class="campaign-grid-btn" type="button" title="Сетка">Сетка</button>
-      <button class="campaign-change-map-btn" type="button" title="Сменить карту">🖼</button>
-      <button class="campaign-open-presentation-btn" type="button" title="Презентация">▣</button>
+      <button class="campaign-grid-btn" type="button" title="Сетка">${iconSvg('grid')}</button>
+      <button class="campaign-change-map-btn" type="button" title="Сменить карту">${iconSvg('image')}</button>
+      <button class="campaign-open-presentation-btn" type="button" title="Презентация">${iconSvg('presentation')}</button>
     </div>
 
     <div class="campaign-map-control-group">
@@ -3854,11 +3858,11 @@ function openTokenPopup(
     'campaign-token-popup hidden';
 
   popup.innerHTML = `
-    <button class="campaign-token-popup-icon campaign-token-popup-delete" type="button" title="Удалить">×</button>
+    <button class="campaign-token-popup-icon campaign-token-popup-delete" type="button" title="Удалить">${iconSvg('trash')}</button>
     <button class="campaign-token-popup-icon campaign-token-popup-hide" type="button" title="${hidden ? 'Показать' : 'Скрыть'}">
       ${getTokenVisibilityIcon(hidden)}
     </button>
-    <button class="campaign-token-popup-icon campaign-token-popup-duplicate" type="button" title="Дублировать">x2</button>
+    <button class="campaign-token-popup-icon campaign-token-popup-duplicate" type="button" title="Дублировать">${iconSvg('copy')}</button>
   `;
 
   popup
@@ -3958,7 +3962,7 @@ function openCreatureTokenPopup(
     <button class="campaign-token-popup-text campaign-token-popup-hide" type="button">
       ${hidden ? 'Показать' : 'Скрыть'}
     </button>
-    <button class="campaign-token-popup-more" type="button" title="Действия">...</button>
+    <button class="campaign-token-popup-more" type="button" title="Действия">${iconSvg('more')}</button>
   `;
 
   popup
@@ -4323,23 +4327,11 @@ function getTokenVisibilityIcon(
   hidden
 ) {
 
-  if (!hidden) {
-
-    return `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
-        <circle cx="12" cy="12" r="3"></circle>
-        <path d="M4 4l16 16"></path>
-      </svg>
-    `;
-  }
-
-  return `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
-      <circle cx="12" cy="12" r="3"></circle>
-    </svg>
-  `;
+  return iconSvg(
+    hidden
+      ? 'eye'
+      : 'eye-off'
+  );
 }
 
 

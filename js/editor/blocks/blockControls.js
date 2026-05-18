@@ -2,6 +2,10 @@ import {
   markRuntime
 } from './blockContract.js';
 
+import {
+  iconSvg
+} from '../../core/icons.js';
+
 export function ensureBlocksToolbar(
   main
 ) {
@@ -22,7 +26,7 @@ export function ensureBlocksToolbar(
 
   toolbar.innerHTML = `
     <button class="add-block-btn" type="button">
-      + Добавить блок
+      ${iconSvg('plus')} Добавить блок
     </button>
   `;
 
@@ -66,7 +70,7 @@ export function ensureBlockControls(
       draggable="true"
       title="Перетащить блок"
     >
-      ⠿
+      ${iconSvg('grip')}
     </button>
 
     ${title
@@ -76,7 +80,7 @@ export function ensureBlockControls(
           type="button"
           title="Переименовать блок"
         >
-          ✎
+          ${iconSvg('edit')}
         </button>
       `
       : ''}
@@ -86,7 +90,7 @@ export function ensureBlockControls(
       type="button"
       title="Удалить блок"
     >
-      ×
+      ${iconSvg('trash')}
     </button>
   `;
 

@@ -1,0 +1,183 @@
+.app-topbar {
+
+  grid-column:
+    1 / -1;
+
+  height:
+    26px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    space-between;
+
+  padding:
+    0 4px;
+}
+
+
+.app-topbar-actions {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    4px;
+}
+
+
+.app-topbar-btn,
+.app-popup-close {
+
+  width:
+    26px;
+
+  height:
+    26px;
+
+  display:
+    inline-grid;
+
+  place-items:
+    center;
+
+  border:
+    1px solid
+    transparent;
+
+  border-radius:
+    8px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(255,248,230,0.72);
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.14s,
+    color 0.14s,
+    border-color 0.14s;
+}
+
+
+.app-topbar-btn:hover,
+.app-popup-close:hover {
+
+  border-color:
+    rgba(241,211,142,0.18);
+
+  background:
+    rgba(241,211,142,0.08);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.app-settings-popup,
+.app-tools-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    1000;
+
+  border-radius:
+    12px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.16);
+
+  background:
+    rgba(28,27,24,0.96);
+
+  box-shadow:
+    0 18px 46px rgba(0,0,0,0.34);
+}
+
+
+.app-settings-popup {
+
+  width:
+    220px;
+
+  min-height:
+    120px;
+
+  padding:
+    8px;
+}
+
+
+.app-tools-popup {
+
+  width:
+    150px;
+
+  padding:
+    8px;
+
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+
+.app-settings-popup.hidden,
+.app-tools-popup.hidden {
+
+  display:
+    none;
+}
+
+
+.app-popup-close {
+
+  margin-left:
+    auto;
+}
+
+
+.app-tools-popup button {
+
+  height:
+    30px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.14);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.04);
+
+  color:
+    rgba(255,248,230,0.86);
+
+  cursor:
+    pointer;
+}
+
+
+.app-tools-popup button:hover {
+
+  background:
+    rgba(241,211,142,0.10);
+}

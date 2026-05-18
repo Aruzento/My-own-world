@@ -6,6 +6,10 @@
     270px
     minmax(0,1fr);
 
+  grid-template-rows:
+    26px
+    minmax(0,1fr);
+
   gap: 10px;
 
   height: 100vh;
@@ -26,6 +30,9 @@
   flex-direction: column;
 
   overflow: hidden;
+
+  min-height:
+    0;
 
   border-radius:
     var(--radius-lg);
@@ -59,6 +66,9 @@
   min-width: 0;
 
   overflow: hidden;
+
+  min-height:
+    0;
 
   border-radius:
     var(--radius-lg);

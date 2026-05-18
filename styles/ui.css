@@ -26,6 +26,35 @@
 }
 
 
+.app-icon,
+.entity-icon-svg {
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  display:
+    block;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    1.9;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
+}
+
+
 .ui-button {
   min-height:
     30px;

@@ -13,6 +13,24 @@
   <body> <!-- Видимая часть приложения -->
     <div class="app"> <!-- Главный layout-контейнер приложения: sidebar + editor -->
 
+      <header class="app-topbar">
+        <div class="app-topbar-spacer"></div>
+
+        <div class="app-topbar-actions">
+          <button id="appSettingsBtn" class="app-topbar-btn" type="button" title="Настройки">
+            <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <use href="./assets/icons/rpg-ui.svg#icon-settings"></use>
+            </svg>
+          </button>
+
+          <button id="appToolsBtn" class="app-topbar-btn" type="button" title="Инструменты">
+            <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <use href="./assets/icons/rpg-ui.svg#icon-tools"></use>
+            </svg>
+          </button>
+        </div>
+      </header>
+
 
       <!-- SIDEBAR -->
       <aside class="sidebar"> <!-- Левая боковая панель -->
@@ -25,11 +43,15 @@
           <div class="sidebar-actions"> <!-- Кнопки действий в sidebar -->
             
             <button id="openWorkspaceBtn" class="icon-btn" title="Workspace" >
-              ⊞
+              <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <use href="./assets/icons/rpg-ui.svg#icon-folder-open"></use>
+              </svg>
             </button> <!-- Кнопка выбора/открытия рабочей папки -->
 
             <button id="newPageBtn" class="icon-btn" title="Новая страница">
-              +
+              <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <use href="./assets/icons/rpg-ui.svg#icon-plus"></use>
+              </svg>
             </button> <!-- Кнопка открытия меню создания новой карточки -->
           
           </div> <!-- Кнопки действий в sidebar -->
@@ -116,7 +138,9 @@
           </button> <!-- Создаёт нумерованный список через formattingService -->
 
           <button data-action="link" title="Добавить ссылку">
-          🔗
+            <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <use href="./assets/icons/rpg-ui.svg#icon-link"></use>
+            </svg>
           </button> <!-- Открывает popup создания обычной ссылки -->
 
           <div class="toolbar-separator">
@@ -164,6 +188,20 @@
 
     <div id="treeContextMenu" class="tree-context-menu hidden">
     </div> <!-- Контекстное меню дерева страниц -->
+
+    <div id="appSettingsPopup" class="app-settings-popup hidden ui-panel" data-runtime="true">
+      <button id="appSettingsCloseBtn" class="app-popup-close" type="button" title="Закрыть">
+        <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <use href="./assets/icons/rpg-ui.svg#icon-x"></use>
+        </svg>
+      </button>
+    </div>
+
+    <div id="appToolsPopup" class="app-tools-popup hidden ui-panel" data-runtime="true">
+      <button type="button">Кнопка1</button>
+      <button type="button">Кнопка2</button>
+      <button type="button">Кнопка3</button>
+    </div>
 
     <div id="linkPopup" class="link-popup hidden"> <!-- Popup создания обычной внешней ссылки -->
 
