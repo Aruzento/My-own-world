@@ -559,6 +559,7 @@
   transition:
     box-shadow 0.12s,
     transform 0.12s;
+
 }
 
 
@@ -667,7 +668,8 @@
 .campaign-map-token.is-object:hover {
 
   box-shadow:
-    none;
+    0 0 0 2px rgba(218,72,72,0.5),
+    0 8px 22px rgba(0,0,0,0.2);
 }
 
 
@@ -680,7 +682,8 @@
     visible;
 
   box-shadow:
-    0 0 0 3px rgba(241,211,142,0.18);
+    0 0 0 3px rgba(218,72,72,0.5),
+    0 10px 26px rgba(0,0,0,0.22);
 }
 
 
@@ -689,10 +692,25 @@
   cursor:
     grabbing;
 
+  transition:
+    none;
+
+  will-change:
+    left,
+    top,
+    transform;
+
   transform:
     translate(-50%, -50%)
     rotate(var(--token-rotation, 0deg))
     scale(1.08);
+}
+
+
+.campaign-map-token.is-object.is-dragging {
+
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.18);
 }
 
 
@@ -1043,6 +1061,69 @@
 
   border-radius:
     0;
+
+  filter:
+    drop-shadow(0 0 4px rgba(218,72,72,0.52))
+    drop-shadow(0 8px 14px rgba(0,0,0,0.3));
+
+  transition:
+    filter 0.12s,
+    opacity 0.12s;
+}
+
+
+.campaign-map-token.is-object::after {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  right:
+    -5%;
+
+  top:
+    -5%;
+
+  width:
+    16%;
+
+  height:
+    16%;
+
+  border:
+    max(1px, calc(var(--campaign-grid-size, 48px) * 0.025)) solid
+    rgba(255,248,230,0.92);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(218,72,72,0.96);
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.34),
+    0 0 0 3px rgba(218,72,72,0.18);
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-token.is-object:hover .campaign-map-token-image,
+.campaign-map-token.is-object.is-selected .campaign-map-token-image {
+
+  filter:
+    drop-shadow(0 0 8px rgba(218,72,72,0.78))
+    drop-shadow(0 10px 18px rgba(0,0,0,0.34));
+}
+
+
+.campaign-map-token.is-object.is-dragging .campaign-map-token-image {
+
+  filter:
+    none;
 }
 
 

@@ -112,6 +112,7 @@ const VIEWPORT_CULL_MARGIN = 320;
 const backgroundQualityState = new WeakMap();
 const fullDetailBackgroundCache = new Map();
 const lowDetailBackgroundCache = new Map();
+const interactionQualityTimers = new WeakMap();
 
 
 export function setupCampaignMaps(
@@ -3471,7 +3472,8 @@ function loadImage(
 
 function setMapInteractionQuality(
   map,
-  isInteracting
+  isInteracting,
+  options = {}
 ) {
 
   const state =
@@ -3482,9 +3484,57 @@ function setMapInteractionQuality(
   state.forceLowDetail =
     Boolean(isInteracting);
 
-  scheduleVisibleMapObjectsUpdate(
-    map
-  );
+  if (
+    !options.skipVisibleUpdate
+  ) {
+
+    scheduleVisibleMapObjectsUpdate(
+      map
+    );
+  }
+
+  const existingTimer =
+    interactionQualityTimers.get(
+      map
+    );
+
+  if (existingTimer) {
+
+    clearTimeout(
+      existingTimer
+    );
+
+    interactionQualityTimers.delete(
+      map
+    );
+  }
+
+  if (
+    options.deferBackgroundUpdate
+  ) {
+
+    const timer =
+      setTimeout(
+        () => {
+
+          interactionQualityTimers.delete(
+            map
+          );
+
+          updateMapBackgroundQuality(
+            map
+          );
+        },
+        80
+      );
+
+    interactionQualityTimers.set(
+      map,
+      timer
+    );
+
+    return;
+  }
 
   updateMapBackgroundQuality(
     map
@@ -4973,7 +5023,18 @@ function startTokenDrag(
 ) {
 
   event.preventDefault();
-  closeTokenPopup();
+
+  try {
+
+    token.setPointerCapture(
+      event.pointerId
+    );
+
+  } catch (error) {
+
+    // Pointer capture is an optimization; document listeners still handle drag.
+  }
+
   clearTimeout(
     tokenPopupTimer
   );
@@ -4990,13 +5051,19 @@ function startTokenDrag(
     moved: false
   };
 
-  setMapInteractionQuality(
-    draggedToken.map,
-    true
-  );
-
   token.classList.add(
     'is-dragging'
+  );
+
+  closeTokenPopup();
+
+  setMapInteractionQuality(
+    draggedToken.map,
+    true,
+    {
+      deferBackgroundUpdate: true,
+      skipVisibleUpdate: true
+    }
   );
 }
 
@@ -5896,9 +5963,6 @@ function moveTokenToPointer(
 
   draggedToken.moved =
     true;
-
-  const rect =
-    stage.getBoundingClientRect();
 
   const point =
     getWorldPointFromEvent(
