@@ -1,10 +1,6 @@
 import { state } from '../state.js';
 
 import {
-  parseMarkdown
-} from '../core/markdown.js';
-
-import {
   getImageURL
 } from '../storage/assetStorage.js';
 
@@ -13,16 +9,8 @@ import {
 } from '../core/icons.js';
 
 import {
-  createFolderPage,
-  deletePageBranch,
-  duplicatePageAsChild,
-  writeFile,
-  writePageContent
+  writeFile
 } from '../storage/storage.js';
-
-import {
-  renderTree
-} from '../tree/tree.js';
 
 import {
   setStatus
@@ -40,7 +28,7 @@ import {
   DEFAULT_BRUSH_SIZE,
   DEFAULT_GRID_COLOR,
   DEFAULT_GRID_SIZE,
-  FOG_PAINT_COLOR,
+  DEFAULT_SHAPE_SIZE,
   MAX_ZOOM,
   MIN_ZOOM,
   WORLD_HEIGHT,
@@ -48,14 +36,115 @@ import {
 } from './campaignMapConstants.js';
 
 import {
+  clearMapBackgroundCache,
+  setMapInteractionQuality as setMapBackgroundInteractionQuality,
+  updateMapBackgroundQuality
+} from './campaignMapBackground.js';
+
+import {
+  clamp,
+  getActiveGridSize,
+  getShapeWorldRect,
+  getStageView,
+  getTokenWorldRect,
+  getVisibleSpawnPoint,
+  getVisibleWorldRect,
+  isActiveMapObject,
+  rectsIntersect,
+  setStageView
+} from './campaignMapGeometry.js';
+
+import {
+  renderMapShape
+} from './campaignMapShapes.js';
+
+import {
+  removeTokensFromMapElement,
+  removeTokensFromMapPageContent
+} from './campaignMapSerializerHelpers.js';
+
+import {
+  createPageLookup,
+  clearTreeHighlight,
+  highlightTreePage
+} from './campaignMapTreeIntegration.js';
+
+import {
+  getFogPopupHTML,
+  getGridPopupHTML,
+  getMapControlsHTML,
+  getShapesPopupHTML
+} from './campaignMapToolbar.js';
+
+import {
+  openAddKindPopup
+} from './campaignMapPicker.js';
+
+import {
+  refreshCampaignMapModel
+} from './campaignMapModel.js';
+
+import {
+  applyTokenRotation,
+  applyTokenSize,
+  getPagePortraitAsset,
+  positionToken,
+  restoreTokenImage,
+  setTokenFallbackText
+} from './campaignMapTokens.js';
+
+import {
+  changeTokenHp,
+  deleteMapShape,
+  deleteTokenAndPage,
+  duplicateMapShape,
+  duplicateTokenAndPage,
+  ensureTokenHasHealthBlock,
+  getTokenPage,
+  openTokenCard,
+  toggleMapItemPresentationVisibility
+} from './campaignMapTokenActions.js';
+
+import {
+  clearDraggedToken,
+  finishTokenInteractions,
+  hasActiveTokenInteraction,
+  moveTokenInteractions,
+  startTokenDrag,
+  startTokenResize,
+  startTokenRotate
+} from './campaignMapTokenDrag.js';
+
+import {
+  finishShapeInteractions,
+  hasActiveShapeInteraction,
+  moveShapeInteractions,
+  startShapeDrag,
+  startShapeResize
+} from './campaignMapShapeDrag.js';
+
+import {
+  clearFog,
+  createFogDrawing,
+  drawFogAtPointer as drawFogAtPointerOnCanvas,
+  fillFog,
+  setFogMode as setCampaignFogMode,
+  setMapTool as setCampaignMapTool,
+  updateFogButtons,
+  updatePanButton
+} from './campaignMapFog.js';
+
+import {
   openPresentationWindow,
-  syncPresentation,
-  syncPresentationDragMeasure,
-  syncPresentationItem
+  syncPresentation
 } from './campaignMapPresentation.js';
 
 import {
-  ensureCanvasSize,
+  scheduleLivePresentationSync,
+  schedulePresentationSync
+} from './campaignMapPresentationSync.js';
+
+import {
   isCampaignMapRecord,
   persistFogCanvas,
   rememberMapAssetSettings,
@@ -64,10 +153,8 @@ import {
 } from './campaignMapContract.js';
 
 import {
-  ensurePageDndHealth,
   getHealthColor,
-  getPageDndHealth,
-  updatePageDndHealth
+  getPageDndHealth
 } from './campaignMapHealth.js';
 
 export {
@@ -77,44 +164,20 @@ export {
 
 
 let saveCurrentPageCallback = null;
-let draggedToken = null;
 let panningMap = null;
 let fogDrawing = null;
-let resizedToken = null;
-let rotatedToken = null;
-let resizedShape = null;
-let draggedShape = null;
 let tokenPopupTimer = null;
 let tokenPopupCloseTimer = null;
 let activeTokenPopupToken = null;
-let presentationSyncFrame = null;
-let presentationSyncTimeout = null;
-let lastPresentationSyncAt = 0;
 let visibleObjectsFrame = null;
 let pendingVisibleObjectsMap = null;
 let pendingVisibleObjectsView = null;
-let livePresentationFrame = null;
-const pendingPresentationItems = new Set();
-const pendingPresentationMeasureStages = new Set();
-const restoredTokenImageAssets = new WeakMap();
 const tokenHealthCache = new WeakMap();
 
 const TOKEN_DRAG_THRESHOLD = 4;
 const TOKEN_POPUP_DELAY = 420;
 const TOKEN_RESIZE_THRESHOLD = 2;
-const PRESENTATION_SYNC_INTERVAL = 80;
-const DEFAULT_SHAPE_SIZE = 192;
 const SHAPE_HANDLE_THRESHOLD = 2;
-const LOW_DETAIL_ZOOM_THRESHOLD = 0.65;
-const LOW_DETAIL_INTERACTION_ZOOM_THRESHOLD = 0.8;
-const LOW_DETAIL_MAX_SIZE = 960;
-const VIEWPORT_CULL_MARGIN = 320;
-const backgroundQualityState = new WeakMap();
-const fullDetailBackgroundCache = new Map();
-const lowDetailBackgroundCache = new Map();
-const interactionQualityTimers = new WeakMap();
-
-
 export function setupCampaignMaps(
   editor,
   saveCurrentPage
@@ -222,12 +285,9 @@ export async function renderCampaignMap(
     map
   );
 
-  if (token.dataset.presentationHidden === 'true') {
-
-    syncPresentation();
-
-    return;
-  }
+  refreshCampaignMapModel(
+    map
+  );
 
   schedulePresentationSync();
 }
@@ -320,23 +380,8 @@ function ensureMapControls(
     controls
   );
 
-  controls.innerHTML = `
-    <div class="campaign-map-control-group">
-      <button class="campaign-add-btn" type="button" title="Добавить">${iconSvg('plus')}</button>
-      <button class="campaign-pan-btn" type="button" title="Двигать карту">${iconSvg('hand')}</button>
-    </div>
-
-    <div class="campaign-map-control-group">
-      <button class="campaign-grid-btn" type="button" title="Сетка">${iconSvg('grid')}</button>
-      <button class="campaign-change-map-btn" type="button" title="Сменить карту">${iconSvg('image')}</button>
-      <button class="campaign-open-presentation-btn" type="button" title="Презентация">${iconSvg('presentation')}</button>
-    </div>
-
-    <div class="campaign-map-control-group">
-      <button class="campaign-shapes-btn" type="button" title="Фигуры">Фигуры</button>
-      <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
-    </div>
-  `;
+  controls.innerHTML =
+    getMapControlsHTML();
 
   topbar.appendChild(
     controls
@@ -357,102 +402,6 @@ function ensureMapControls(
   updateGridSize(
     map
   );
-}
-
-
-async function removeTokensFromMapPageContent(
-  page,
-  ids
-) {
-
-  const wrapper =
-    document.createElement('div');
-
-  wrapper.innerHTML =
-    getMarkdownBody(
-      page.content
-    );
-
-  const map =
-    wrapper.querySelector(
-      '.campaign-map-document'
-    );
-
-  if (!map) return false;
-
-  const changed =
-    removeTokensFromMapElement(
-      map,
-      ids
-    );
-
-  if (!changed) return false;
-
-  const content =
-    replaceMarkdownBody(
-      page.content,
-      wrapper.innerHTML
-    );
-
-  await writePageContent(
-    page,
-    content
-  );
-
-  page.content =
-    content;
-
-  return true;
-}
-
-
-function removeTokensFromMapElement(
-  map,
-  ids
-) {
-
-  let changed =
-    false;
-
-  map
-    .querySelectorAll('.campaign-map-token[data-page-id]')
-    .forEach(token => {
-
-      if (
-        !ids.has(token.dataset.pageId)
-      ) return;
-
-      token.remove();
-      changed =
-        true;
-    });
-
-  return changed;
-}
-
-
-function getMarkdownBody(
-  content
-) {
-
-  return String(content || '')
-    .replace(/---[\s\S]*?---/, '')
-    .trim();
-}
-
-
-function replaceMarkdownBody(
-  content,
-  body
-) {
-
-  const frontMatter =
-    String(content || '')
-      .match(/^---[\s\S]*?---/);
-
-  if (!frontMatter) return body;
-
-  return `${frontMatter[0]}\n\n${body}\n`;
 }
 
 
@@ -642,7 +591,8 @@ async function handleMapClick(
 
     openAddKindPopup(
       map,
-      event.target.closest('.campaign-add-btn')
+      event.target.closest('.campaign-add-btn'),
+      getMapPickerDeps()
     );
     return;
   }
@@ -738,357 +688,6 @@ async function handleMapClick(
 }
 
 
-function openAddKindPopup(
-  map,
-  anchor
-) {
-
-  const popup =
-    getMapPopup();
-
-  popup.innerHTML = `
-    <div class="campaign-map-popup-title">Добавить</div>
-    <button class="campaign-map-popup-option" type="button" data-kind="creature">Существо</button>
-    <button class="campaign-map-popup-option" type="button" data-kind="object">Объект</button>
-  `;
-
-  popup
-    .querySelectorAll('.campaign-map-popup-option')
-    .forEach(button => {
-
-      button.addEventListener(
-        'click',
-        event => {
-
-          event.preventDefault();
-          event.stopPropagation();
-
-          openCardPickerPopup(
-          map,
-          anchor,
-          button.dataset.kind
-        );
-        }
-      );
-    });
-
-  showMapPopup(
-    popup,
-    anchor,
-    'add'
-  );
-}
-
-
-function openCardPickerPopup(
-  map,
-  anchor,
-  kind
-) {
-
-  const popup =
-    getMapPopup();
-
-  const title =
-    kind === 'creature'
-      ? 'Выбери существ'
-      : 'Выбери объекты';
-
-  popup.innerHTML = `
-    <div class="campaign-map-popup-title">${title}</div>
-    <input class="campaign-map-picker-search" type="search" placeholder="Поиск">
-    <div class="campaign-map-picker-list"></div>
-    <label class="campaign-map-copies-label">
-      <span>Число копий</span>
-      <input class="campaign-map-copies-input" type="number" min="1" max="99" value="1">
-    </label>
-    <div class="campaign-map-popup-actions">
-      <button class="campaign-map-popup-cancel" type="button">Отмена</button>
-      <button class="campaign-map-popup-add" type="button">Добавить</button>
-    </div>
-  `;
-
-  const search =
-    popup.querySelector('.campaign-map-picker-search');
-
-  const list =
-    popup.querySelector('.campaign-map-picker-list');
-
-  const render = () => {
-    renderCardPickerList(
-      list,
-      kind,
-      search.value
-    );
-  };
-
-  search.addEventListener(
-    'input',
-    render
-  );
-
-  popup
-    .querySelector('.campaign-map-popup-cancel')
-    .addEventListener(
-      'click',
-      event => {
-
-        event.stopPropagation();
-        closeMapPopup();
-      }
-    );
-
-  popup
-    .querySelector('.campaign-map-popup-add')
-    .addEventListener(
-      'click',
-      async () => {
-
-        const selectedIds =
-          [...popup.querySelectorAll('.campaign-map-picker-check:checked')]
-            .map(input => input.value);
-
-        const copies =
-          clamp(
-            Number(popup.querySelector('.campaign-map-copies-input')?.value || 1),
-            1,
-            99
-          );
-
-        await addSelectedPagesToMap(
-          map,
-          kind,
-          selectedIds,
-          copies
-        );
-
-        closeMapPopup();
-      }
-    );
-
-  render();
-  showMapPopup(
-    popup,
-    anchor,
-    `picker-${kind}`
-  );
-  search.focus();
-}
-
-
-function renderCardPickerList(
-  list,
-  kind,
-  query
-) {
-
-  const pageLookup =
-    createPageLookup();
-
-  const normalizedQuery =
-    normalizeText(
-      query
-    );
-
-  const allowedTypes =
-    kind === 'creature'
-      ? ['character', 'creature']
-      : ['object'];
-
-  const pages =
-    state.pages.filter(page => {
-
-      const pageTypes =
-        [
-          page.type,
-          ...(page.tags || [])
-        ]
-          .filter(Boolean);
-
-      if (
-        page.template !== 'card' ||
-        hasCampaignMapAncestor(
-          page,
-          pageLookup
-        ) ||
-        !pageTypes.some(type =>
-          allowedTypes.includes(type)
-        )
-      ) return false;
-
-      return normalizeText(
-        page.title
-      ).includes(
-        normalizedQuery
-      );
-    });
-
-  list.innerHTML =
-    '';
-
-  if (pages.length === 0) {
-
-    const empty =
-      document.createElement('div');
-
-    empty.className =
-      'campaign-map-picker-empty';
-
-    empty.textContent =
-      'Ничего не найдено';
-
-    list.appendChild(
-      empty
-    );
-
-    return;
-  }
-
-  pages.forEach(page => {
-
-    const label =
-      document.createElement('label');
-
-    label.className =
-      'campaign-map-picker-row';
-
-    label.innerHTML = `
-      <input class="campaign-map-picker-check" type="checkbox" value="${page.id}">
-      <span>${page.title || 'Без названия'}</span>
-    `;
-
-    list.appendChild(
-      label
-    );
-  });
-}
-
-
-function createPageLookup() {
-
-  return new Map(
-    state.pages.map(page => [
-      page.id,
-      page
-    ])
-  );
-}
-
-
-function hasCampaignMapAncestor(
-  page,
-  pageLookup = createPageLookup()
-) {
-
-  const visited =
-    new Set();
-
-  let parentId =
-    page?.parent;
-
-  while (parentId) {
-
-    if (
-      visited.has(parentId)
-    ) return false;
-
-    visited.add(
-      parentId
-    );
-
-    const parent =
-      pageLookup.get(parentId);
-
-    if (!parent) return false;
-
-    if (
-      isCampaignMapRecord(parent)
-    ) return true;
-
-    parentId =
-      parent.parent;
-  }
-
-  return false;
-}
-
-
-async function addSelectedPagesToMap(
-  map,
-  kind,
-  selectedIds,
-  copies = 1
-) {
-
-  if (selectedIds.length === 0) return;
-
-  const bucket =
-    await ensureMapBucket(
-      kind
-    );
-
-  const duplicates = [];
-
-  for (const pageId of selectedIds) {
-
-    const source =
-      state.pages.find(page => page.id === pageId);
-
-    if (!source) continue;
-
-    for (let index = 0; index < copies; index += 1) {
-
-      const duplicate =
-        await duplicatePageAsChild(
-          source,
-          bucket.id
-        );
-
-      duplicates.push(
-        duplicate
-      );
-    }
-  }
-
-  for (const [index, page] of duplicates.entries()) {
-
-    await addMapToken(
-      map,
-      kind,
-      page,
-      index
-    );
-  }
-
-  renderTree();
-  await saveAndSync();
-}
-
-
-async function ensureMapBucket(
-  kind
-) {
-
-  const title =
-    kind === 'creature'
-      ? 'Существа'
-      : 'Объекты';
-
-  const existing =
-    state.pages.find(page =>
-      page.parent === state.currentPage.id &&
-      normalizeText(page.title) === normalizeText(title)
-    );
-
-  if (existing) return existing;
-
-  return createFolderPage(
-    title,
-    state.currentPage.id
-  );
-}
-
-
 function openGridPopup(
   map,
   anchor
@@ -1100,20 +699,10 @@ function openGridPopup(
   const popup =
     getMapPopup();
 
-  popup.innerHTML = `
-    <div class="campaign-map-popup-title">Сетка</div>
-    <button class="campaign-grid-toggle-btn campaign-map-popup-option" type="button">
-      ${stage.dataset.grid === 'true' ? 'Выключить сетку' : 'Включить сетку'}
-    </button>
-    <label class="campaign-map-range-label">
-      <span>Размер сетки</span>
-      <input class="campaign-grid-size-range campaign-map-range" type="range" min="24" max="96" step="2" value="${stage.dataset.gridSize || DEFAULT_GRID_SIZE}">
-    </label>
-    <label class="campaign-map-color-label">
-      <span>Цвет сетки</span>
-      <input class="campaign-grid-color-input" type="color" value="${stage.dataset.gridColor || DEFAULT_GRID_COLOR}">
-    </label>
-  `;
+  popup.innerHTML =
+    getGridPopupHTML(
+      stage
+    );
 
   popup
     .querySelector('.campaign-grid-toggle-btn')
@@ -1197,27 +786,10 @@ function openFogPopup(
   const popup =
     getMapPopup();
 
-  popup.innerHTML = `
-    <div class="campaign-map-popup-title">Туман</div>
-    <div class="campaign-fog-mode-row">
-      <button class="campaign-fog-draw-btn campaign-fog-mode-btn" type="button">
-        <span>●</span>
-        <strong>Кисть</strong>
-      </button>
-      <button class="campaign-fog-erase-btn campaign-fog-mode-btn" type="button">
-        <span>○</span>
-        <strong>Ластик</strong>
-      </button>
-    </div>
-    <label class="campaign-map-range-label">
-      <span>Размер кисти</span>
-      <input class="campaign-map-range" type="range" min="12" max="120" step="2" value="${stage.dataset.brushSize || DEFAULT_BRUSH_SIZE}">
-    </label>
-    <div class="campaign-map-popup-actions campaign-fog-fill-row">
-      <button class="campaign-fog-fill-btn" type="button">Fog all</button>
-      <button class="campaign-fog-clear-btn" type="button">Unfog all</button>
-    </div>
-  `;
+  popup.innerHTML =
+    getFogPopupHTML(
+      stage
+    );
 
   popup
     .querySelector('.campaign-fog-draw-btn')
@@ -1310,23 +882,8 @@ function openShapesPopup(
   const popup =
     getMapPopup();
 
-  popup.innerHTML = `
-    <div class="campaign-map-popup-title">Фигуры</div>
-    <div class="campaign-shape-picker">
-      <button class="campaign-shape-option" type="button" data-shape="square">
-        <span class="campaign-shape-icon is-square"></span>
-        <strong>Квадрат</strong>
-      </button>
-      <button class="campaign-shape-option" type="button" data-shape="triangle">
-        <span class="campaign-shape-icon is-triangle"></span>
-        <strong>Треугольник</strong>
-      </button>
-      <button class="campaign-shape-option" type="button" data-shape="circle">
-        <span class="campaign-shape-icon is-circle"></span>
-        <strong>Круг</strong>
-      </button>
-    </div>
-  `;
+  popup.innerHTML =
+    getShapesPopupHTML();
 
   popup
     .querySelectorAll('.campaign-shape-option')
@@ -1479,6 +1036,59 @@ function closeMapPopup() {
 }
 
 
+function getMapPickerDeps() {
+
+  // Picker получает только нужные действия, а не весь модуль карты.
+  return {
+    addMapToken,
+    closeMapPopup,
+    getMapPopup,
+    saveAndSync,
+    showMapPopup
+  };
+}
+
+
+function getTokenActionDeps() {
+
+  // Action-модуль получает только операции, нужные для изменения карты.
+  return {
+    applyTokenHealthState,
+    clearDraggedToken,
+    closeTokenPopup,
+    openTokenPopup,
+    saveAndSync,
+    selectMapShape
+  };
+}
+
+
+function getTokenDragDeps() {
+
+  // Drag-модуль токенов не знает popup/save/background детали напрямую.
+  return {
+    clearTokenPopupTimer,
+    closeTokenPopup,
+    saveAndSync,
+    selectMapToken,
+    setMapInteractionQuality
+  };
+}
+
+
+function getShapeDragDeps() {
+
+  // Shape drag использует те же инфраструктурные действия, что и token drag.
+  return {
+    clearTokenPopupTimer,
+    closeTokenPopup,
+    saveAndSync,
+    selectMapShape,
+    setMapInteractionQuality
+  };
+}
+
+
 function getAnchorKey(
   anchor
 ) {
@@ -1603,6 +1213,9 @@ async function addMapToken(
     token
   );
 
+  refreshCampaignMapModel(
+    map
+  );
 }
 
 
@@ -1753,237 +1366,6 @@ function clearTokenHealthState(
 }
 
 
-async function restoreTokenImage(
-  token
-) {
-
-  const asset =
-    token.dataset.imageAsset;
-
-  if (
-    asset &&
-    restoredTokenImageAssets.get(token) === asset &&
-    token.querySelector('.campaign-map-token-image')
-  ) {
-
-    ensureTokenResizeHandles(
-      token
-    );
-
-    return;
-  }
-
-  if (!asset) {
-
-    setTokenFallbackText(
-      token,
-      token.dataset.tokenType
-    );
-
-    restoredTokenImageAssets.delete(
-      token
-    );
-
-    return;
-  }
-
-  try {
-
-    const url =
-      await getFullDetailBackgroundURL(
-        asset
-      );
-
-    token.innerHTML = `
-      <img
-        class="campaign-map-token-image"
-        src="${url}"
-        alt=""
-      >
-    `;
-
-    ensureTokenResizeHandles(
-      token
-    );
-
-    restoredTokenImageAssets.set(
-      token,
-      asset
-    );
-
-  } catch (error) {
-
-    console.warn(
-      'Не удалось восстановить картинку токена:',
-      asset
-    );
-
-    setTokenFallbackText(
-      token,
-      token.dataset.tokenType
-    );
-
-    restoredTokenImageAssets.delete(
-      token
-    );
-  }
-}
-
-
-function setTokenFallbackText(
-  token,
-  type
-) {
-
-  token.textContent =
-    type === 'creature'
-      ? 'С'
-      : 'О';
-
-  ensureTokenResizeHandles(
-    token
-  );
-}
-
-
-function ensureTokenResizeHandles(
-  token
-) {
-
-  if (
-    token.dataset.tokenType !== 'object'
-  ) return;
-
-  ['nw', 'ne', 'sw', 'se'].forEach(corner => {
-
-    if (
-      token.querySelector(`.campaign-map-token-resize.is-${corner}`)
-    ) return;
-
-    const handle =
-      document.createElement('span');
-
-    handle.className =
-      `campaign-map-token-resize is-${corner}`;
-
-    handle.dataset.corner =
-      corner;
-
-    markRuntime(
-      handle
-    );
-
-    token.appendChild(
-      handle
-    );
-  });
-
-  if (
-    token.querySelector('.campaign-map-token-rotate')
-  ) return;
-
-  const rotateHandle =
-    document.createElement('span');
-
-  rotateHandle.className =
-    'campaign-map-token-rotate';
-
-  rotateHandle.title =
-    'Повернуть';
-
-  markRuntime(
-    rotateHandle
-  );
-
-  token.appendChild(
-    rotateHandle
-  );
-}
-
-
-function applyTokenSize(
-  token
-) {
-
-  const size =
-    Math.max(
-      0.5,
-      Number(token.dataset.size || 1)
-    );
-
-  token.style.setProperty(
-    '--token-size',
-    String(size)
-  );
-}
-
-
-function applyTokenRotation(
-  token
-) {
-
-  const rotation =
-    Number(token.dataset.rotation || 0);
-
-  token.style.setProperty(
-    '--token-rotation',
-    `${rotation}deg`
-  );
-}
-
-
-function getPagePortraitAsset(
-  page
-) {
-
-  const parsed =
-    parsePageBody(
-      page
-    );
-
-  const image =
-    parsed.querySelector(
-      '.media-box.is-portrait img[data-asset], img[data-asset]'
-    );
-
-  return image?.dataset.asset || '';
-}
-
-
-function parsePageBody(
-  page
-) {
-
-  const wrapper =
-    document.createElement('div');
-
-  const body =
-    String(page?.content || '')
-      .replace(/---[\s\S]*?---/, '')
-      .trim();
-
-  wrapper.innerHTML =
-    body;
-
-  return wrapper;
-}
-
-
-function positionToken(
-  token
-) {
-
-  token.style.left =
-    `${Number(token.dataset.x || 50)}%`;
-
-  token.style.top =
-    `${Number(token.dataset.y || 50)}%`;
-
-  token.title =
-    token.dataset.name || '';
-}
-
-
 function selectMapToken(
   token
 ) {
@@ -2116,121 +1498,10 @@ function addMapShape(
   selectMapShape(
     shape
   );
-}
 
-
-function renderMapShape(
-  shape
-) {
-
-  ensureShapeId(
-    shape
+  refreshCampaignMapModel(
+    map
   );
-
-  applyShapeGeometry(
-    shape
-  );
-
-  const type =
-    shape.dataset.shapeType || 'square';
-
-  shape.innerHTML =
-    getShapeInnerHTML(
-      shape,
-      type
-    );
-
-  shape
-    .querySelectorAll('.campaign-map-shape-handle')
-    .forEach(handle => markRuntime(handle));
-}
-
-
-function ensureShapeId(
-  shape
-) {
-
-  if (!shape.dataset.shapeId) {
-
-    shape.dataset.shapeId =
-      crypto.randomUUID();
-  }
-}
-
-
-function getShapeInnerHTML(
-  shape,
-  type
-) {
-
-  if (type === 'triangle') {
-
-    const points =
-      getTrianglePoints(
-        shape
-      );
-
-    const width =
-      Number(shape.dataset.w || DEFAULT_SHAPE_SIZE);
-
-    const height =
-      Number(shape.dataset.h || DEFAULT_SHAPE_SIZE);
-
-    return `
-      <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <polygon points="${points.map(point => `${point.x},${point.y}`).join(' ')}"></polygon>
-      </svg>
-      ${points.map((point, index) => `
-        <span
-          class="campaign-map-shape-handle"
-          data-point="${index}"
-          style="left:${point.x}%;top:${point.y}%"
-        ></span>
-      `).join('')}
-      ${getTriangleLabels(points, width, height)}
-    `;
-  }
-
-  if (type === 'circle') {
-
-    return `
-      <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <ellipse cx="50" cy="50" rx="48" ry="48"></ellipse>
-      </svg>
-      <span class="campaign-map-shape-handle is-se" data-corner="se"></span>
-      <span class="campaign-map-shape-label is-top">${getFeetLabel(Number(shape.dataset.w || DEFAULT_SHAPE_SIZE))}</span>
-    `;
-  }
-
-  return `
-    <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <rect x="2" y="2" width="96" height="96"></rect>
-    </svg>
-    <span class="campaign-map-shape-handle is-nw" data-corner="nw"></span>
-    <span class="campaign-map-shape-handle is-ne" data-corner="ne"></span>
-    <span class="campaign-map-shape-handle is-sw" data-corner="sw"></span>
-    <span class="campaign-map-shape-handle is-se" data-corner="se"></span>
-    <span class="campaign-map-shape-label is-top">${getFeetLabel(Number(shape.dataset.w || DEFAULT_SHAPE_SIZE))}</span>
-    <span class="campaign-map-shape-label is-right">${getFeetLabel(Number(shape.dataset.h || DEFAULT_SHAPE_SIZE))}</span>
-  `;
-}
-
-
-function applyShapeGeometry(
-  shape
-) {
-
-  shape.style.left =
-    `${Number(shape.dataset.x || 0)}px`;
-
-  shape.style.top =
-    `${Number(shape.dataset.y || 0)}px`;
-
-  shape.style.width =
-    `${Number(shape.dataset.w || DEFAULT_SHAPE_SIZE)}px`;
-
-  shape.style.height =
-    `${Number(shape.dataset.h || DEFAULT_SHAPE_SIZE)}px`;
 }
 
 
@@ -2252,116 +1523,6 @@ function selectMapShape(
   shape.classList.add(
     'is-selected'
   );
-}
-
-
-function getTrianglePoints(
-  shape
-) {
-
-  return String(shape.dataset.points || '50,6 94,94 6,94')
-    .split(/\s+/)
-    .map(pair => {
-
-      const [x, y] =
-        pair.split(',').map(Number);
-
-      return {
-        x: Number.isFinite(x) ? x : 50,
-        y: Number.isFinite(y) ? y : 50
-      };
-    })
-    .slice(0, 3);
-}
-
-
-function setTrianglePoints(
-  shape,
-  points
-) {
-
-  shape.dataset.points =
-    points
-      .map(point => `${roundShapePercent(point.x)},${roundShapePercent(point.y)}`)
-      .join(' ');
-}
-
-
-function getTriangleLabels(
-  points,
-  width,
-  height
-) {
-
-  return points
-    .map((point, index) => {
-
-      const next =
-        points[(index + 1) % points.length];
-
-      const x =
-        (point.x + next.x) / 2;
-
-      const y =
-        (point.y + next.y) / 2;
-
-      const length =
-        Math.hypot(
-          ((next.x - point.x) / 100) * width,
-          ((next.y - point.y) / 100) * height
-        );
-
-      return `
-        <span
-          class="campaign-map-shape-label"
-          style="left:${x}%;top:${y}%"
-        >
-          ${getFeetLabel(length)}
-        </span>
-      `;
-    })
-    .join('');
-}
-
-
-function getFeetLabel(
-  pixels
-) {
-
-  const cells =
-    Math.max(
-      1,
-      Math.round(
-        pixels / getActiveGridSize()
-      )
-    );
-
-  return `${cells * 5} ft`;
-}
-
-
-function getActiveGridSize(
-) {
-
-  const stage =
-    document.querySelector(
-      '#editorArea .campaign-map-stage'
-    );
-
-  return Math.max(
-    1,
-    Number(stage?.dataset.gridSize || DEFAULT_GRID_SIZE)
-  );
-}
-
-
-function roundShapePercent(
-  value
-) {
-
-  return Math.round(
-    value * 10
-  ) / 10;
 }
 
 
@@ -2439,22 +1600,6 @@ function scheduleVisibleMapObjectsUpdate(
 }
 
 
-function getStageView(
-  stage
-) {
-
-  return {
-    x: Number(stage.dataset.viewX || 0),
-    y: Number(stage.dataset.viewY || 0),
-    zoom: clamp(
-      Number(stage.dataset.viewZoom || 1),
-      MIN_ZOOM,
-      MAX_ZOOM
-    )
-  };
-}
-
-
 function updateVisibleMapObjects(
   map,
   view = null
@@ -2515,217 +1660,6 @@ function updateVisibleMapObjects(
         )
       );
     });
-}
-
-
-function getVisibleWorldRect(
-  stage,
-  view
-) {
-
-  return {
-    left: (-view.x / view.zoom) - VIEWPORT_CULL_MARGIN,
-    top: (-view.y / view.zoom) - VIEWPORT_CULL_MARGIN,
-    right: ((stage.clientWidth - view.x) / view.zoom) + VIEWPORT_CULL_MARGIN,
-    bottom: ((stage.clientHeight - view.y) / view.zoom) + VIEWPORT_CULL_MARGIN
-  };
-}
-
-
-function getVisibleSpawnPoint(
-  map,
-  spawnIndex = 0
-) {
-
-  const stage =
-    map?.querySelector('.campaign-map-stage');
-
-  if (!stage) {
-
-    return {
-      x: WORLD_WIDTH / 2,
-      y: WORLD_HEIGHT / 2
-    };
-  }
-
-  const view =
-    getStageView(
-      stage
-    );
-
-  const center = {
-    x: (stage.clientWidth / 2 - view.x) / view.zoom,
-    y: (stage.clientHeight / 2 - view.y) / view.zoom
-  };
-
-  const offset =
-    getSpawnOffset(
-      stage,
-      spawnIndex
-    );
-
-  return {
-    x: clamp(
-      center.x + offset.x,
-      0,
-      WORLD_WIDTH
-    ),
-    y: clamp(
-      center.y + offset.y,
-      0,
-      WORLD_HEIGHT
-    )
-  };
-}
-
-
-function getSpawnOffset(
-  stage,
-  spawnIndex
-) {
-
-  const pattern = [
-    [0, 0],
-    [1, 0],
-    [0, 1],
-    [-1, 0],
-    [0, -1],
-    [1, 1],
-    [-1, 1],
-    [1, -1],
-    [-1, -1]
-  ];
-
-  const index =
-    Math.max(
-      0,
-      Number(spawnIndex || 0)
-    );
-
-  const gridSize =
-    Math.max(
-      1,
-      Number(stage.dataset.gridSize || DEFAULT_GRID_SIZE)
-    );
-
-  const [x, y] =
-    pattern[index % pattern.length];
-
-  const ring =
-    Math.floor(index / pattern.length);
-
-  const distance =
-    gridSize * (ring + 1);
-
-  return {
-    x: x * distance,
-    y: y * distance
-  };
-}
-
-
-function getTokenWorldRect(
-  token,
-  stage
-) {
-
-  const gridSize =
-    Math.max(
-      1,
-      Number(stage.dataset.gridSize || DEFAULT_GRID_SIZE)
-    );
-
-  const size =
-    gridSize *
-    Math.max(
-      0.5,
-      Number(token.dataset.size || 1)
-    );
-
-  const x =
-    Number(token.dataset.x || 50) / 100 * WORLD_WIDTH;
-
-  const y =
-    Number(token.dataset.y || 50) / 100 * WORLD_HEIGHT;
-
-  return {
-    left: x - size / 2,
-    top: y - size / 2,
-    right: x + size / 2,
-    bottom: y + size / 2
-  };
-}
-
-
-function getShapeWorldRect(
-  shape
-) {
-
-  const x =
-    Number(shape.dataset.x || 0);
-
-  const y =
-    Number(shape.dataset.y || 0);
-
-  const width =
-    Number(shape.dataset.w || DEFAULT_SHAPE_SIZE);
-
-  const height =
-    Number(shape.dataset.h || DEFAULT_SHAPE_SIZE);
-
-  return {
-    left: x,
-    top: y,
-    right: x + width,
-    bottom: y + height
-  };
-}
-
-
-function rectsIntersect(
-  a,
-  b
-) {
-
-  return (
-    a.left <= b.right &&
-    a.right >= b.left &&
-    a.top <= b.bottom &&
-    a.bottom >= b.top
-  );
-}
-
-
-function isActiveMapObject(
-  element
-) {
-
-  return element.classList.contains('is-selected') ||
-    element.classList.contains('is-dragging') ||
-    element.classList.contains('is-resizing') ||
-    element.classList.contains('is-rotating');
-}
-
-
-function setStageView(
-  stage,
-  view
-) {
-
-  stage.dataset.viewX =
-    String(Math.round(view.x));
-
-  stage.dataset.viewY =
-    String(Math.round(view.y));
-
-  stage.dataset.viewZoom =
-    String(
-      clamp(
-        view.zoom,
-        MIN_ZOOM,
-        MAX_ZOOM
-      ).toFixed(3)
-    );
 }
 
 
@@ -2827,80 +1761,6 @@ function toggleGrid(
 }
 
 
-function fillFog(
-  map
-) {
-
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  const canvas =
-    map.querySelector('.campaign-map-fog-canvas');
-
-  if (!stage || !canvas) return;
-
-  ensureCanvasSize(
-    canvas
-  );
-
-  const context =
-    canvas.getContext('2d');
-
-  context.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  context.fillStyle =
-    FOG_PAINT_COLOR;
-
-  context.fillRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-  persistFogCanvas(
-    map
-  );
-
-  schedulePresentationSync();
-}
-
-
-function clearFog(
-  map
-) {
-
-  const canvas =
-    map.querySelector('.campaign-map-fog-canvas');
-
-  if (!canvas) return;
-
-  ensureCanvasSize(
-    canvas
-  );
-
-  canvas
-    .getContext('2d')
-    .clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-  persistFogCanvas(
-    map
-  );
-
-  schedulePresentationSync();
-}
-
-
 function updateGridButton(
   map
 ) {
@@ -2990,13 +1850,12 @@ function setFogMode(
   mode
 ) {
 
-  setMapTool(
+  setCampaignFogMode(
     map,
-    mode
-  );
-
-  updateFogButtons(
-    map
+    mode,
+    {
+      hideBrushPreview
+    }
   );
 }
 
@@ -3006,94 +1865,13 @@ function setMapTool(
   tool
 ) {
 
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  if (!stage) return;
-
-  stage.dataset.tool =
-    tool;
-
-  if (
-    tool === 'draw' ||
-    tool === 'erase'
-  ) {
-
-    stage.dataset.fogMode =
-      tool;
-  }
-
-  updateFogButtons(
-    map
+  setCampaignMapTool(
+    map,
+    tool,
+    {
+      hideBrushPreview
+    }
   );
-
-  updatePanButton(
-    map
-  );
-
-  if (
-    tool === 'pan'
-  ) {
-
-    hideBrushPreview(
-      stage
-    );
-  }
-}
-
-
-function updateFogButtons(
-  map
-) {
-
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  const mode =
-    stage?.dataset.tool || stage?.dataset.fogMode || 'draw';
-
-  map
-    .querySelector('.campaign-fog-btn')
-    ?.classList.toggle(
-      'is-active',
-      mode === 'draw' ||
-      mode === 'erase'
-    );
-
-  document
-    .getElementById('campaignMapPopup')
-    ?.querySelector('.campaign-fog-draw-btn')
-    ?.classList.toggle(
-      'is-active',
-      mode === 'draw'
-    );
-
-  document
-    .getElementById('campaignMapPopup')
-    ?.querySelector('.campaign-fog-erase-btn')
-    ?.classList.toggle(
-      'is-active',
-      mode === 'erase'
-    );
-}
-
-
-function updatePanButton(
-  map
-) {
-
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  const active =
-    stage?.dataset.tool === 'pan';
-
-  map
-    .querySelector('.campaign-pan-btn')
-    ?.classList.toggle(
-      'is-active',
-      active
-    );
 }
 
 
@@ -3137,11 +1915,7 @@ async function changeMapImage(
     `asset:${imageFile.name}`
   );
 
-  fullDetailBackgroundCache.delete(
-    imageFile.name
-  );
-
-  lowDetailBackgroundCache.delete(
+  clearMapBackgroundCache(
     imageFile.name
   );
 
@@ -3206,338 +1980,21 @@ async function restoreMapBackground(
 }
 
 
-async function updateMapBackgroundQuality(
-  map
-) {
-
-  const stage =
-    map?.querySelector('.campaign-map-stage');
-
-  const background =
-    map?.querySelector('.campaign-map-background');
-
-  const asset =
-    stage?.dataset.mapAsset;
-
-  if (!stage || !background || !asset) return;
-
-  const quality =
-    shouldUseLowDetailMap(
-      map
-    )
-      ? 'low'
-      : 'full';
-
-  const state =
-    getBackgroundQualityState(
-      map
-    );
-
-  if (
-    state.asset === asset &&
-    state.quality === quality
-  ) return;
-
-  state.asset =
-    asset;
-
-  state.quality =
-    quality;
-
-  const url =
-    await getMapBackgroundURL(
-      asset,
-      quality
-    );
-
-  const latest =
-    getBackgroundQualityState(
-      map
-    );
-
-  if (
-    latest.asset !== asset ||
-    latest.quality !== quality
-  ) return;
-
-  background.style.backgroundImage =
-    `url("${url}")`;
-}
-
-
-async function getMapBackgroundURL(
-  asset,
-  quality
-) {
-
-  if (quality !== 'low') {
-
-    return getFullDetailBackgroundURL(
-      asset
-    );
-  }
-
-  try {
-
-    return await getLowDetailBackgroundURL(
-      asset
-    );
-
-  } catch (error) {
-
-    return getFullDetailBackgroundURL(
-      asset
-    );
-  }
-}
-
-
-async function getFullDetailBackgroundURL(
-  asset
-) {
-
-  if (!fullDetailBackgroundCache.has(asset)) {
-
-    fullDetailBackgroundCache.set(
-      asset,
-      getImageURL(
-        asset
-      )
-    );
-  }
-
-  return fullDetailBackgroundCache.get(
-    asset
-  );
-}
-
-
-function shouldUseLowDetailMap(
-  map
-) {
-
-  const stage =
-    map?.querySelector('.campaign-map-stage');
-
-  if (!stage) return false;
-
-  const state =
-    getBackgroundQualityState(
-      map
-    );
-
-  const zoom =
-    getStageView(
-      stage
-    ).zoom;
-
-  if (zoom < LOW_DETAIL_ZOOM_THRESHOLD) return true;
-
-  return state.forceLowDetail &&
-    zoom < LOW_DETAIL_INTERACTION_ZOOM_THRESHOLD;
-}
-
-
-function getBackgroundQualityState(
-  map
-) {
-
-  if (!backgroundQualityState.has(map)) {
-
-    backgroundQualityState.set(
-      map,
-      {
-        asset: '',
-        quality: '',
-        forceLowDetail: false
-      }
-    );
-  }
-
-  return backgroundQualityState.get(
-    map
-  );
-}
-
-
-async function getLowDetailBackgroundURL(
-  asset
-) {
-
-  if (!lowDetailBackgroundCache.has(asset)) {
-
-    lowDetailBackgroundCache.set(
-      asset,
-      createLowDetailBackgroundURL(
-        asset
-      )
-    );
-  }
-
-  return lowDetailBackgroundCache.get(
-    asset
-  );
-}
-
-
-async function createLowDetailBackgroundURL(
-  asset
-) {
-
-  const url =
-    await getFullDetailBackgroundURL(
-      asset
-    );
-
-  const image =
-    await loadImage(
-      url
-    );
-
-  const scale =
-    Math.min(
-      1,
-      LOW_DETAIL_MAX_SIZE / Math.max(
-        image.naturalWidth || image.width,
-        image.naturalHeight || image.height,
-        1
-      )
-    );
-
-  if (scale >= 1) return url;
-
-  const canvas =
-    document.createElement('canvas');
-
-  canvas.width =
-    Math.max(
-      1,
-      Math.round((image.naturalWidth || image.width) * scale)
-    );
-
-  canvas.height =
-    Math.max(
-      1,
-      Math.round((image.naturalHeight || image.height) * scale)
-    );
-
-  canvas
-    .getContext('2d')
-    .drawImage(
-      image,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-  return new Promise(resolve => {
-
-    canvas.toBlob(
-      blob => {
-
-        resolve(
-          blob
-            ? URL.createObjectURL(blob)
-            : url
-        );
-      },
-      'image/jpeg',
-      0.72
-    );
-  });
-}
-
-
-function loadImage(
-  url
-) {
-
-  return new Promise((resolve, reject) => {
-
-    const image =
-      new Image();
-
-    image.onload =
-      () => resolve(image);
-
-    image.onerror =
-      reject;
-
-    image.src =
-      url;
-  });
-}
-
-
 function setMapInteractionQuality(
   map,
   isInteracting,
   options = {}
 ) {
 
-  const state =
-    getBackgroundQualityState(
-      map
-    );
-
-  state.forceLowDetail =
-    Boolean(isInteracting);
-
-  if (
-    !options.skipVisibleUpdate
-  ) {
-
-    scheduleVisibleMapObjectsUpdate(
-      map
-    );
-  }
-
-  const existingTimer =
-    interactionQualityTimers.get(
-      map
-    );
-
-  if (existingTimer) {
-
-    clearTimeout(
-      existingTimer
-    );
-
-    interactionQualityTimers.delete(
-      map
-    );
-  }
-
-  if (
-    options.deferBackgroundUpdate
-  ) {
-
-    const timer =
-      setTimeout(
-        () => {
-
-          interactionQualityTimers.delete(
-            map
-          );
-
-          updateMapBackgroundQuality(
-            map
-          );
-        },
-        80
-      );
-
-    interactionQualityTimers.set(
-      map,
-      timer
-    );
-
-    return;
-  }
-
-  updateMapBackgroundQuality(
-    map
+  // Главный файл знает, как пересчитать видимые объекты.
+  // Модуль фона знает только, когда этот пересчет нужно попросить.
+  setMapBackgroundInteractionQuality(
+    map,
+    isInteracting,
+    {
+      ...options,
+      scheduleVisibleMapObjectsUpdate
+    }
   );
 }
 
@@ -3556,7 +2013,8 @@ function handleMapPointerDown(
 
     startShapeResize(
       event,
-      shapeHandle.closest('.campaign-map-shape')
+      shapeHandle.closest('.campaign-map-shape'),
+      getShapeDragDeps()
     );
 
     return;
@@ -3572,7 +2030,8 @@ function handleMapPointerDown(
 
     startTokenRotate(
       event,
-      rotateHandle.closest('.campaign-map-token')
+      rotateHandle.closest('.campaign-map-token'),
+      getTokenDragDeps()
     );
 
     return;
@@ -3588,7 +2047,8 @@ function handleMapPointerDown(
 
     startTokenResize(
       event,
-      resizeHandle.closest('.campaign-map-token')
+      resizeHandle.closest('.campaign-map-token'),
+      getTokenDragDeps()
     );
 
     return;
@@ -3623,7 +2083,8 @@ function handleMapPointerDown(
 
     startShapeDrag(
       event,
-      shape
+      shape,
+      getShapeDragDeps()
     );
 
     return;
@@ -3652,7 +2113,8 @@ function handleMapPointerDown(
 
     startTokenDrag(
       event,
-      token
+      token,
+      getTokenDragDeps()
     );
 
     return;
@@ -3815,11 +2277,8 @@ function scheduleTokenPopup(
 ) {
 
   if (
-    draggedToken ||
-    draggedShape ||
-    resizedToken ||
-    rotatedToken ||
-    resizedShape ||
+    hasActiveTokenInteraction() ||
+    hasActiveShapeInteraction() ||
     token.classList.contains('is-dragging') ||
     token.classList.contains('is-resizing')
   ) return;
@@ -3869,11 +2328,8 @@ function openTokenPopup(
 
   if (
     !token.isConnected ||
-    draggedToken ||
-    draggedShape ||
-    resizedToken ||
-    rotatedToken ||
-    resizedShape ||
+    hasActiveTokenInteraction() ||
+    hasActiveShapeInteraction() ||
     token.classList.contains('is-dragging') ||
     token.classList.contains('is-resizing')
   ) return;
@@ -3927,13 +2383,15 @@ function openTokenPopup(
         if (isShape) {
 
           await deleteMapShape(
-            token
+            token,
+            getTokenActionDeps()
           );
 
         } else {
 
           await deleteTokenAndPage(
-            token
+            token,
+            getTokenActionDeps()
           );
         }
       }
@@ -3949,7 +2407,8 @@ function openTokenPopup(
         event.stopPropagation();
 
         await toggleMapItemPresentationVisibility(
-          token
+          token,
+          getTokenActionDeps()
         );
       }
     );
@@ -3966,13 +2425,15 @@ function openTokenPopup(
         if (isShape) {
 
           await duplicateMapShape(
-            token
+            token,
+            getTokenActionDeps()
           );
 
         } else {
 
           await duplicateTokenAndPage(
-            token
+            token,
+            getTokenActionDeps()
           );
         }
       }
@@ -4025,7 +2486,8 @@ function openCreatureTokenPopup(
         event.stopPropagation();
 
         await toggleMapItemPresentationVisibility(
-          token
+          token,
+          getTokenActionDeps()
         );
       }
     );
@@ -4095,7 +2557,8 @@ function openCreatureTokenActionsPopup(
           if (action === 'duplicate') {
 
             await duplicateTokenAndPage(
-              token
+              token,
+              getTokenActionDeps()
             );
             return;
           }
@@ -4111,7 +2574,8 @@ function openCreatureTokenActionsPopup(
           if (action === 'delete') {
 
             await deleteTokenAndPage(
-              token
+              token,
+              getTokenActionDeps()
             );
             return;
           }
@@ -4119,7 +2583,8 @@ function openCreatureTokenActionsPopup(
           if (action === 'open') {
 
             await openTokenCard(
-              token
+              token,
+              getTokenActionDeps()
             );
           }
         }
@@ -4152,8 +2617,9 @@ function openTokenHpPopup(
     );
 
   const health =
-    ensurePageDndHealth(
-      page
+    ensureTokenHasHealthBlock(
+      token,
+      getTokenActionDeps()
     );
 
   if (!page || !health) {
@@ -4230,7 +2696,8 @@ function openTokenHpPopup(
             temp: getHpPopupTempValue(
               popup
             )
-          }
+          },
+          getTokenActionDeps()
         );
       }
     );
@@ -4252,7 +2719,8 @@ function openTokenHpPopup(
             temp: getHpPopupTempValue(
               popup
             )
-          }
+          },
+          getTokenActionDeps()
         );
       }
     );
@@ -4287,7 +2755,8 @@ function openTokenHpPopup(
             temp: getHpPopupTempValue(
               popup
             )
-          }
+          },
+          getTokenActionDeps()
         );
       }
     );
@@ -4399,525 +2868,11 @@ function closeTokenPopup() {
 }
 
 
-async function deleteTokenAndPage(
-  token
-) {
+function clearTokenPopupTimer() {
 
-  const pageId =
-    token.dataset.pageId;
-
-  const page =
-    state.pages.find(candidate =>
-      candidate.id === pageId
-    );
-
-  closeTokenPopup();
-
-  if (page) {
-
-    try {
-
-      const canWrite =
-        await ensureWorkspaceWritePermission();
-
-      if (!canWrite) {
-
-        throw new Error(
-          'Нет прав на изменение workspace'
-        );
-      }
-
-      await deletePageBranch(
-        page
-      );
-
-    } catch (error) {
-
-      console.error(
-        'Не удалось удалить токен и дочернюю карточку:',
-        error
-      );
-
-      setStatus(
-        'Не удалось удалить дочернюю карточку'
-      );
-
-      return;
-    }
-  }
-
-  token.remove();
-  renderTree();
-  await saveAndSync();
-}
-
-
-function getTokenPage(
-  token
-) {
-
-  return state.pages.find(candidate =>
-    candidate.id === token?.dataset.pageId
+  clearTimeout(
+    tokenPopupTimer
   );
-}
-
-
-async function openTokenCard(
-  token
-) {
-
-  const page =
-    getTokenPage(
-      token
-    );
-
-  if (!page) return;
-
-  closeTokenPopup();
-  clearDraggedToken(
-    false
-  );
-
-  const editorModule =
-    await import('./editor.js');
-
-  editorModule.openPage(
-    page
-  );
-}
-
-
-async function changeTokenHp(
-  token,
-  page,
-  options
-) {
-
-  const canWrite =
-    await ensureWorkspaceWritePermission();
-
-  if (!canWrite) {
-
-    setStatus(
-      'Нет прав на изменение workspace'
-    );
-
-    return;
-  }
-
-  const result =
-    updatePageDndHealth(
-      page,
-      options
-    );
-
-  if (!result) {
-
-    setStatus(
-      'У карточки нет блока DnD с хитами'
-    );
-
-    return;
-  }
-
-  await writePageContent(
-    page,
-    page.content
-  );
-
-  applyTokenHealthState(
-    token
-  );
-
-  closeTokenPopup();
-  await saveAndSync();
-
-  setStatus(
-    `Хиты изменены: ${result.current}/${result.max}`
-  );
-}
-
-
-async function duplicateTokenAndPage(
-  token
-) {
-
-  const tokenType =
-    getNormalizedTokenType(
-      token
-    );
-
-  const page =
-    state.pages.find(candidate =>
-      candidate.id === token.dataset.pageId
-    );
-
-  if (!page) return;
-
-  refreshPageMetaFromContent(
-    page
-  );
-
-  if (
-    isCampaignMapRecord(
-      page
-    )
-  ) {
-
-    console.warn(
-      'Дублирование токена отменено: дочерняя карточка распознана как карта.',
-      page
-    );
-
-    setStatus(
-      'Нельзя дублировать: карточка токена повреждена и распознана как карта'
-    );
-
-    closeTokenPopup();
-    return;
-  }
-
-  closeTokenPopup();
-
-  try {
-
-    const canWrite =
-      await ensureWorkspaceWritePermission();
-
-    if (!canWrite) {
-
-      throw new Error(
-        'Нет прав на изменение workspace'
-      );
-    }
-
-    const duplicate =
-      await duplicatePageAsChild(
-        page,
-        page.parent
-      );
-
-    await normalizeDuplicatedTokenPage(
-      duplicate,
-      tokenType
-    );
-
-    const map =
-      token.closest('.campaign-map-document');
-
-    await addMapTokenFromExisting(
-      map,
-      token,
-      duplicate
-    );
-
-    renderTree();
-    await saveAndSync();
-
-  } catch (error) {
-
-    console.error(
-      'Не удалось дублировать токен:',
-      error
-    );
-
-    setStatus(
-      'Не удалось дублировать токен'
-    );
-  }
-}
-
-
-function refreshPageMetaFromContent(
-  page
-) {
-
-  const parsed =
-    parseMarkdown(
-      page.content || ''
-    );
-
-  page.template =
-    parsed.template;
-
-  page.type =
-    parsed.type;
-
-  page.tags =
-    parsed.tags;
-
-  page.aliases =
-    parsed.aliases;
-}
-
-
-async function addMapTokenFromExisting(
-  map,
-  sourceToken,
-  page
-) {
-
-  const layer =
-    map?.querySelector('.campaign-map-object-layer');
-
-  if (!layer || !page) return;
-
-  const tokenType =
-    getNormalizedTokenType(
-      sourceToken
-    );
-
-  const token =
-    document.createElement('button');
-
-  token.className =
-    `campaign-map-token is-${tokenType}`;
-
-  token.type =
-    'button';
-
-  token.dataset.tokenId =
-    crypto.randomUUID();
-
-  token.dataset.tokenType =
-    tokenType;
-
-  token.dataset.pageId =
-    page.id;
-
-  token.dataset.name =
-    page.title || sourceToken.dataset.name || '';
-
-  token.dataset.x =
-    String(
-      clamp(
-        Number(sourceToken.dataset.x || 50) + 2,
-        0,
-        100
-      )
-    );
-
-  token.dataset.y =
-    String(
-      clamp(
-        Number(sourceToken.dataset.y || 50) + 2,
-        0,
-        100
-      )
-    );
-
-  token.dataset.size =
-    sourceToken.dataset.size || '1';
-
-  token.dataset.rotation =
-    sourceToken.dataset.rotation || '0';
-
-  if (sourceToken.dataset.imageAsset) {
-
-    token.dataset.imageAsset =
-      sourceToken.dataset.imageAsset;
-  }
-
-  setTokenFallbackText(
-    token,
-    token.dataset.tokenType
-  );
-
-  layer.appendChild(
-    token
-  );
-
-  positionToken(
-    token
-  );
-
-  applyTokenSize(
-    token
-  );
-
-  applyTokenRotation(
-    token
-  );
-
-  applyTokenHealthState(
-    token
-  );
-
-  await restoreTokenImage(
-    token
-  );
-}
-
-
-function getNormalizedTokenType(
-  token
-) {
-
-  return token?.dataset.tokenType === 'object'
-    ? 'object'
-    : 'creature';
-}
-
-
-async function normalizeDuplicatedTokenPage(
-  page,
-  tokenType
-) {
-
-  if (!page) return;
-
-  page.template =
-    'card';
-
-  page.type =
-    tokenType;
-
-  page.tags =
-    [
-      ...new Set([
-        'card',
-        ...(page.tags || []).filter(tag =>
-          tag !== 'campaign-map' &&
-          tag !== 'campaignmap'
-        ),
-        tokenType
-      ])
-    ];
-
-  page.content =
-    page.content.replace(
-      /^---[\s\S]*?---/,
-      `---
-id: ${page.id}
-parent: ${page.parent ?? 'null'}
-order: ${page.order ?? Date.now()}
-tags: [${page.tags.join(', ')}]
-template: card
-type: ${tokenType}
-aliases: [${(page.aliases || []).join(', ')}]
----`
-    );
-
-  await writePageContent(
-    page,
-    page.content
-  );
-}
-
-
-async function ensureWorkspaceWritePermission() {
-
-  if (!state.workspaceHandle) return false;
-
-  if (!state.workspaceHandle.queryPermission) return true;
-
-  const currentPermission =
-    await state.workspaceHandle.queryPermission({
-      mode: 'readwrite'
-    });
-
-  if (currentPermission === 'granted') return true;
-
-  if (!state.workspaceHandle.requestPermission) return false;
-
-  const requestedPermission =
-    await state.workspaceHandle.requestPermission({
-      mode: 'readwrite'
-    });
-
-  return requestedPermission === 'granted';
-}
-
-
-async function toggleMapItemPresentationVisibility(
-  item
-) {
-
-  const hidden =
-    item.dataset.presentationHidden === 'true';
-
-  item.dataset.presentationHidden =
-    hidden
-      ? 'false'
-      : 'true';
-
-  item.classList.toggle(
-    'is-presentation-hidden',
-    !hidden
-  );
-
-  openTokenPopup(
-    item
-  );
-
-  await saveAndSync();
-}
-
-
-async function deleteMapShape(
-  shape
-) {
-
-  closeTokenPopup();
-  shape.remove();
-  await saveAndSync();
-}
-
-
-async function duplicateMapShape(
-  shape
-) {
-
-  const clone =
-    shape.cloneNode(false);
-
-  clone.className =
-    'campaign-map-shape';
-
-  [
-    'shapeType',
-    'x',
-    'y',
-    'w',
-    'h',
-    'points',
-    'presentationHidden'
-  ].forEach(key => {
-
-    if (shape.dataset[key] !== undefined) {
-
-      clone.dataset[key] =
-        shape.dataset[key];
-    }
-  });
-
-  clone.dataset.x =
-    String(
-      Number(shape.dataset.x || 0) + 24
-    );
-
-  clone.dataset.y =
-    String(
-      Number(shape.dataset.y || 0) + 24
-    );
-
-  clone.dataset.shapeId =
-    crypto.randomUUID();
-
-  shape.after(
-    clone
-  );
-
-  renderMapShape(
-    clone
-  );
-
-  selectMapShape(
-    clone
-  );
-
-  closeTokenPopup();
-  await saveAndSync();
 }
 
 
@@ -5017,95 +2972,17 @@ function hideAllBrushPreviews() {
 }
 
 
-function startTokenDrag(
-  event,
-  token
-) {
-
-  event.preventDefault();
-
-  try {
-
-    token.setPointerCapture(
-      event.pointerId
-    );
-
-  } catch (error) {
-
-    // Pointer capture is an optimization; document listeners still handle drag.
-  }
-
-  clearTimeout(
-    tokenPopupTimer
-  );
-
-  draggedToken = {
-    token,
-    stage: token.closest('.campaign-map-stage'),
-    map: token.closest('.campaign-map-document'),
-    startX: event.clientX,
-    startY: event.clientY,
-    startWorldX: Number(token.dataset.x || 50) / 100 * WORLD_WIDTH,
-    startWorldY: Number(token.dataset.y || 50) / 100 * WORLD_HEIGHT,
-    measure: null,
-    moved: false
-  };
-
-  token.classList.add(
-    'is-dragging'
-  );
-
-  closeTokenPopup();
-
-  setMapInteractionQuality(
-    draggedToken.map,
-    true,
-    {
-      deferBackgroundUpdate: true,
-      skipVisibleUpdate: true
-    }
-  );
-}
-
-
 function handleDocumentPointerMove(
   event
 ) {
 
-  if (rotatedToken) {
+  moveTokenInteractions(
+    event
+  );
 
-    rotateTokenToPointer(
-      event
-    );
-  }
-
-  if (resizedToken) {
-
-    resizeTokenToPointer(
-      event
-    );
-  }
-
-  if (resizedShape) {
-
-    resizeShapeToPointer(
-      event
-    );
-  }
-
-  if (draggedShape) {
-
-    moveShapeToPointer(
-      event
-    );
-  }
-
-  if (draggedToken) {
-
-    moveTokenToPointer(
-      event
-    );
-  }
+  moveShapeInteractions(
+    event
+  );
 
   if (fogDrawing) {
 
@@ -5125,110 +3002,13 @@ function handleDocumentPointerMove(
 
 async function handleDocumentPointerUp() {
 
-  if (rotatedToken) {
+  await finishTokenInteractions(
+    getTokenDragDeps()
+  );
 
-    const map =
-      rotatedToken.map;
-
-    const shouldSave =
-      clearRotatedToken(
-        true
-      );
-
-    setMapInteractionQuality(
-      map,
-      false
-    );
-
-    if (shouldSave) {
-
-      await saveAndSync();
-    }
-  }
-
-  if (resizedToken) {
-
-    const map =
-      resizedToken.token.closest('.campaign-map-document');
-
-    const shouldSave =
-      clearResizedToken(
-        true
-      );
-
-    setMapInteractionQuality(
-      map,
-      false
-    );
-
-    if (shouldSave) {
-
-      await saveAndSync();
-    }
-  }
-
-  if (draggedToken) {
-
-    const map =
-      draggedToken.map;
-
-    const shouldSave =
-      clearDraggedToken(
-        true
-      );
-
-    setMapInteractionQuality(
-      map,
-      false
-    );
-
-    if (shouldSave) {
-
-      await saveAndSync();
-    }
-  }
-
-  if (resizedShape) {
-
-    const map =
-      resizedShape.map;
-
-    const shouldSave =
-      clearResizedShape(
-        true
-      );
-
-    setMapInteractionQuality(
-      map,
-      false
-    );
-
-    if (shouldSave) {
-
-      await saveAndSync();
-    }
-  }
-
-  if (draggedShape) {
-
-    const map =
-      draggedShape.map;
-
-    const shouldSave =
-      clearDraggedShape(
-        true
-      );
-
-    setMapInteractionQuality(
-      map,
-      false
-    );
-
-    if (shouldSave) {
-
-      await saveAndSync();
-    }
-  }
+  await finishShapeInteractions(
+    getShapeDragDeps()
+  );
 
   if (fogDrawing) {
 
@@ -5261,901 +3041,6 @@ async function handleDocumentPointerUp() {
 
     await saveAndSync();
   }
-}
-
-
-function startTokenResize(
-  event,
-  token
-) {
-
-  if (!token) return;
-
-  const stage =
-    token.closest('.campaign-map-stage');
-
-  if (
-    stage?.dataset.tool === 'draw' ||
-    stage?.dataset.tool === 'erase'
-  ) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-
-  closeTokenPopup();
-
-  selectMapToken(
-    token
-  );
-
-  const rect =
-    token.getBoundingClientRect();
-
-  resizedToken = {
-    token,
-    stage,
-    corner: event.target.dataset.corner || 'se',
-    startX: event.clientX,
-    startY: event.clientY,
-    startSize: Math.max(
-      0.5,
-      Number(token.dataset.size || 1)
-    ),
-    startPixelSize: Math.max(
-      rect.width,
-      rect.height,
-      1
-    ),
-    moved: false
-  };
-
-  setMapInteractionQuality(
-    token.closest('.campaign-map-document'),
-    true
-  );
-
-  token.classList.add(
-    'is-resizing'
-  );
-}
-
-
-function startTokenRotate(
-  event,
-  token
-) {
-
-  if (!token) return;
-
-  const stage =
-    token.closest('.campaign-map-stage');
-
-  if (
-    stage?.dataset.tool === 'draw' ||
-    stage?.dataset.tool === 'erase'
-  ) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-
-  closeTokenPopup();
-
-  selectMapToken(
-    token
-  );
-
-  const rect =
-    token.getBoundingClientRect();
-
-  const centerX =
-    rect.left + rect.width / 2;
-
-  const centerY =
-    rect.top + rect.height / 2;
-
-  rotatedToken = {
-    token,
-    map: token.closest('.campaign-map-document'),
-    centerX,
-    centerY,
-    startAngle: getPointerAngle(
-      event,
-      centerX,
-      centerY
-    ),
-    startRotation: Number(token.dataset.rotation || 0),
-    moved: false
-  };
-
-  setMapInteractionQuality(
-    rotatedToken.map,
-    true
-  );
-
-  token.classList.add(
-    'is-rotating'
-  );
-}
-
-
-function rotateTokenToPointer(
-  event
-) {
-
-  const angle =
-    getPointerAngle(
-      event,
-      rotatedToken.centerX,
-      rotatedToken.centerY
-    );
-
-  const rotation =
-    normalizeDegrees(
-      rotatedToken.startRotation +
-      angle -
-      rotatedToken.startAngle
-    );
-
-  if (
-    !rotatedToken.moved &&
-    Math.abs(rotation - rotatedToken.startRotation) < 1
-  ) return;
-
-  rotatedToken.moved =
-    true;
-
-  rotatedToken.token.dataset.rotation =
-    String(rotation);
-
-  applyTokenRotation(
-    rotatedToken.token
-  );
-
-  scheduleLivePresentationSync(
-    rotatedToken.token
-  );
-}
-
-
-function clearRotatedToken(
-  keepMovedState
-) {
-
-  if (!rotatedToken) return false;
-
-  const moved =
-    rotatedToken.moved;
-
-  rotatedToken.token.classList.remove(
-    'is-rotating'
-  );
-
-  rotatedToken =
-    null;
-
-  return keepMovedState && moved;
-}
-
-
-function resizeTokenToPointer(
-  event
-) {
-
-  const distance =
-    Math.hypot(
-      event.clientX - resizedToken.startX,
-      event.clientY - resizedToken.startY
-    );
-
-  if (
-    !resizedToken.moved &&
-    distance < TOKEN_RESIZE_THRESHOLD
-  ) return;
-
-  resizedToken.moved =
-    true;
-
-  const delta =
-    getResizeDelta(
-      event
-    );
-
-  const nextSize =
-    clamp(
-      resizedToken.startSize *
-      ((resizedToken.startPixelSize + delta) / resizedToken.startPixelSize),
-      0.5,
-      8
-    );
-
-  resizedToken.token.dataset.size =
-    nextSize.toFixed(3);
-
-  applyTokenSize(
-    resizedToken.token
-  );
-
-  scheduleLivePresentationSync(
-    resizedToken.token
-  );
-}
-
-
-function getResizeDelta(
-  event
-) {
-
-  const dx =
-    event.clientX - resizedToken.startX;
-
-  const dy =
-    event.clientY - resizedToken.startY;
-
-  switch (resizedToken.corner) {
-
-    case 'nw':
-      return Math.max(
-        -dx,
-        -dy
-      );
-
-    case 'ne':
-      return Math.max(
-        dx,
-        -dy
-      );
-
-    case 'sw':
-      return Math.max(
-        -dx,
-        dy
-      );
-
-    default:
-      return Math.max(
-        dx,
-        dy
-      );
-  }
-}
-
-
-function clearResizedToken(
-  keepMovedState
-) {
-
-  if (!resizedToken) return false;
-
-  const moved =
-    resizedToken.moved;
-
-  resizedToken.token.classList.remove(
-    'is-resizing'
-  );
-
-  resizedToken =
-    null;
-
-  return keepMovedState && moved;
-}
-
-
-function startShapeResize(
-  event,
-  shape
-) {
-
-  if (!shape) return;
-
-  const stage =
-    shape.closest('.campaign-map-stage');
-
-  if (
-    stage?.dataset.tool === 'draw' ||
-    stage?.dataset.tool === 'erase'
-  ) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-
-  selectMapShape(
-    shape
-  );
-
-  resizedShape = {
-    shape,
-    stage,
-    map: shape.closest('.campaign-map-document'),
-    corner: event.target.dataset.corner || '',
-    point: event.target.dataset.point || '',
-    startX: event.clientX,
-    startY: event.clientY,
-    startLeft: Number(shape.dataset.x || 0),
-    startTop: Number(shape.dataset.y || 0),
-    startWidth: Number(shape.dataset.w || DEFAULT_SHAPE_SIZE),
-    startHeight: Number(shape.dataset.h || DEFAULT_SHAPE_SIZE),
-    startPoints: getTrianglePoints(shape),
-    moved: false
-  };
-
-  setMapInteractionQuality(
-    resizedShape.map,
-    true
-  );
-
-  shape.classList.add(
-    'is-resizing'
-  );
-}
-
-
-function resizeShapeToPointer(
-  event
-) {
-
-  const delta =
-    getWorldDeltaFromPointer(
-      event,
-      resizedShape
-    );
-
-  const distance =
-    Math.hypot(
-      delta.x,
-      delta.y
-    );
-
-  if (
-    !resizedShape.moved &&
-    distance < SHAPE_HANDLE_THRESHOLD
-  ) return;
-
-  resizedShape.moved =
-    true;
-
-  if (resizedShape.point !== '') {
-
-    resizeTrianglePoint(
-      delta
-    );
-
-  } else {
-
-    resizeShapeBox(
-      delta
-    );
-  }
-
-  renderMapShape(
-    resizedShape.shape
-  );
-
-  resizedShape.shape.classList.add(
-    'is-selected',
-    'is-resizing'
-  );
-
-  scheduleLivePresentationSync(
-    resizedShape.shape
-  );
-}
-
-
-function resizeShapeBox(
-  delta
-) {
-
-  const {
-    shape,
-    corner,
-    startLeft,
-    startTop,
-    startWidth,
-    startHeight
-  } = resizedShape;
-
-  let x =
-    startLeft;
-
-  let y =
-    startTop;
-
-  let width =
-    startWidth;
-
-  let height =
-    startHeight;
-
-  if (corner.includes('e')) width =
-    startWidth + delta.x;
-
-  if (corner.includes('s')) height =
-    startHeight + delta.y;
-
-  if (corner.includes('w')) {
-
-    x =
-      startLeft + delta.x;
-
-    width =
-      startWidth - delta.x;
-  }
-
-  if (corner.includes('n')) {
-
-    y =
-      startTop + delta.y;
-
-    height =
-      startHeight - delta.y;
-  }
-
-  width =
-    Math.max(
-      24,
-      width
-    );
-
-  height =
-    Math.max(
-      24,
-      height
-    );
-
-  if (
-    shape.dataset.shapeType === 'circle'
-  ) {
-
-    const size =
-      Math.max(
-        width,
-        height
-      );
-
-    width =
-      size;
-
-    height =
-      size;
-  }
-
-  shape.dataset.x =
-    String(Math.round(x));
-
-  shape.dataset.y =
-    String(Math.round(y));
-
-  shape.dataset.w =
-    String(Math.round(width));
-
-  shape.dataset.h =
-    String(Math.round(height));
-}
-
-
-function resizeTrianglePoint(
-  delta
-) {
-
-  const {
-    shape,
-    point,
-    startWidth,
-    startHeight,
-    startPoints
-  } = resizedShape;
-
-  const index =
-    Number(point);
-
-  const points =
-    startPoints.map(item => ({ ...item }));
-
-  if (!points[index]) return;
-
-  points[index].x =
-    points[index].x + (delta.x / startWidth) * 100;
-
-  points[index].y =
-    points[index].y + (delta.y / startHeight) * 100;
-
-  setTrianglePoints(
-    shape,
-    points
-  );
-}
-
-
-function getWorldDeltaFromPointer(
-  event,
-  action
-) {
-
-  const view =
-    getStageView(
-      action.stage
-    );
-
-  return {
-    x: (event.clientX - action.startX) / view.zoom,
-    y: (event.clientY - action.startY) / view.zoom
-  };
-}
-
-
-function clearResizedShape(
-  keepMovedState
-) {
-
-  if (!resizedShape) return false;
-
-  const moved =
-    resizedShape.moved;
-
-  resizedShape.shape.classList.remove(
-    'is-resizing'
-  );
-
-  resizedShape =
-    null;
-
-  return keepMovedState && moved;
-}
-
-
-function startShapeDrag(
-  event,
-  shape
-) {
-
-  if (!shape) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-
-  closeTokenPopup();
-  clearTimeout(
-    tokenPopupTimer
-  );
-
-  selectMapShape(
-    shape
-  );
-
-  draggedShape = {
-    shape,
-    stage: shape.closest('.campaign-map-stage'),
-    map: shape.closest('.campaign-map-document'),
-    startX: event.clientX,
-    startY: event.clientY,
-    startLeft: Number(shape.dataset.x || 0),
-    startTop: Number(shape.dataset.y || 0),
-    moved: false
-  };
-
-  setMapInteractionQuality(
-    draggedShape.map,
-    true
-  );
-
-  shape.classList.add(
-    'is-dragging'
-  );
-}
-
-
-function moveShapeToPointer(
-  event
-) {
-
-  const delta =
-    getWorldDeltaFromPointer(
-      event,
-      draggedShape
-    );
-
-  const distance =
-    Math.hypot(
-      delta.x,
-      delta.y
-    );
-
-  if (
-    !draggedShape.moved &&
-    distance < TOKEN_DRAG_THRESHOLD
-  ) return;
-
-  draggedShape.moved =
-    true;
-
-  draggedShape.shape.dataset.x =
-    String(
-      Math.round(
-        draggedShape.startLeft + delta.x
-      )
-    );
-
-  draggedShape.shape.dataset.y =
-    String(
-      Math.round(
-        draggedShape.startTop + delta.y
-      )
-    );
-
-  applyShapeGeometry(
-    draggedShape.shape
-  );
-
-  scheduleLivePresentationSync(
-    draggedShape.shape
-  );
-}
-
-
-function clearDraggedShape(
-  keepMovedState
-) {
-
-  if (!draggedShape) return false;
-
-  const moved =
-    draggedShape.moved;
-
-  draggedShape.shape.classList.remove(
-    'is-dragging'
-  );
-
-  draggedShape =
-    null;
-
-  return keepMovedState && moved;
-}
-
-
-function clearDraggedToken(
-  keepMovedState
-) {
-
-  if (!draggedToken) return false;
-
-  const moved =
-    draggedToken.moved;
-
-  draggedToken.token.classList.remove(
-    'is-dragging'
-  );
-
-  removeDragMeasure(
-    draggedToken
-  );
-
-  draggedToken =
-    null;
-
-  return keepMovedState && moved;
-}
-
-
-function moveTokenToPointer(
-  event
-) {
-
-  const {
-    token,
-    stage,
-    startX,
-    startY
-  } = draggedToken;
-
-  const distance =
-    Math.hypot(
-      event.clientX - startX,
-      event.clientY - startY
-    );
-
-  if (
-    !draggedToken.moved &&
-    distance < TOKEN_DRAG_THRESHOLD
-  ) {
-
-    return;
-  }
-
-  draggedToken.moved =
-    true;
-
-  const point =
-    getWorldPointFromEvent(
-      event,
-      stage
-    );
-
-  const x =
-    clamp(
-      (point.x / WORLD_WIDTH) * 100,
-      0,
-      100
-    );
-
-  const y =
-    clamp(
-      (point.y / WORLD_HEIGHT) * 100,
-      0,
-      100
-    );
-
-  token.dataset.x =
-    x.toFixed(3);
-
-  token.dataset.y =
-    y.toFixed(3);
-
-  positionToken(
-    token
-  );
-
-  updateDragMeasure(
-    draggedToken,
-    point
-  );
-
-  scheduleLivePresentationSync(
-    token,
-    stage
-  );
-}
-
-
-function updateDragMeasure(
-  drag,
-  point
-) {
-
-  if (drag.token?.dataset.presentationHidden === 'true') {
-
-    removeDragMeasure(
-      drag
-    );
-
-    drag.measure =
-      null;
-
-    return;
-  }
-
-  const cells =
-    getDragDistanceCells(
-      drag,
-      point
-    );
-
-  if (cells <= 0) {
-
-    removeDragMeasure(
-      drag
-    );
-
-    drag.measure =
-      null;
-
-    return;
-  }
-
-  const viewport =
-    drag.stage.querySelector('.campaign-map-viewport');
-
-  if (!viewport) return;
-
-  if (!drag.measure) {
-
-    drag.measure =
-      document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'svg'
-      );
-
-    drag.measure.classList.add(
-      'campaign-map-drag-measure'
-    );
-
-    drag.measure.setAttribute(
-      'viewBox',
-      `0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`
-    );
-
-    drag.measure.innerHTML = `
-      <defs>
-        <marker id="campaign-drag-arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
-          <path d="M2,2 L10,6 L2,10 Z"></path>
-        </marker>
-      </defs>
-      <line></line>
-      <text></text>
-    `;
-
-    viewport.appendChild(
-      drag.measure
-    );
-  }
-
-  const line =
-    drag.measure.querySelector('line');
-
-  const label =
-    drag.measure.querySelector('text');
-
-  line.setAttribute(
-    'x1',
-    String(drag.startWorldX)
-  );
-
-  line.setAttribute(
-    'y1',
-    String(drag.startWorldY)
-  );
-
-  line.setAttribute(
-    'x2',
-    String(point.x)
-  );
-
-  line.setAttribute(
-    'y2',
-    String(point.y)
-  );
-
-  label.setAttribute(
-    'x',
-    String((drag.startWorldX + point.x) / 2)
-  );
-
-  label.setAttribute(
-    'y',
-    String((drag.startWorldY + point.y) / 2 - 12)
-  );
-
-  label.textContent =
-    `${cells * 5} ft`;
-}
-
-
-function removeDragMeasure(
-  drag
-) {
-
-  drag?.measure?.remove();
-}
-
-
-function getDragDistanceLabel(
-  drag,
-  point
-) {
-
-  return `${getDragDistanceCells(drag, point) * 5} ft`;
-}
-
-
-function getDragDistanceCells(
-  drag,
-  point
-) {
-
-  const gridSize =
-    Math.max(
-      1,
-      Number(drag.stage.dataset.gridSize || DEFAULT_GRID_SIZE)
-    );
-
-  const cells =
-    Math.round(
-      Math.max(
-        Math.abs(point.x - drag.startWorldX),
-        Math.abs(point.y - drag.startWorldY)
-      ) / gridSize
-    );
-
-  return cells;
 }
 
 
@@ -6260,25 +3145,12 @@ function startFogDraw(
   stage
 ) {
 
-  const map =
-    stage.closest('.campaign-map-document');
+  fogDrawing =
+    createFogDrawing(
+      stage
+    );
 
-  const canvas =
-    stage.querySelector('.campaign-map-fog-canvas');
-
-  if (!map || !canvas) return;
-
-  ensureCanvasSize(
-    canvas
-  );
-
-  fogDrawing = {
-    map,
-    stage,
-    canvas,
-    context: canvas.getContext('2d'),
-    mode: stage.dataset.fogMode || 'draw'
-  };
+  if (!fogDrawing) return;
 
   drawFogAtPointer(
     event
@@ -6290,210 +3162,10 @@ function drawFogAtPointer(
   event
 ) {
 
-  const {
-    stage,
-    context,
-    mode
-  } = fogDrawing;
-
-  const point =
-    getWorldPointFromEvent(
-      event,
-      stage
-    );
-
-  context.save();
-
-  context.globalCompositeOperation =
-    mode === 'erase'
-      ? 'destination-out'
-      : 'source-over';
-
-  context.fillStyle =
-    FOG_PAINT_COLOR;
-
-  context.beginPath();
-  context.arc(
-    point.x,
-    point.y,
-    Number(stage.dataset.brushSize || DEFAULT_BRUSH_SIZE),
-    0,
-    Math.PI * 2
+  drawFogAtPointerOnCanvas(
+    event,
+    fogDrawing
   );
-  context.fill();
-  context.restore();
-
-  stage.dataset.fogVersion =
-    String(
-      Number(stage.dataset.fogVersion || 0) + 1
-    );
-
-  schedulePresentationSync();
-}
-
-
-function getWorldPointFromEvent(
-  event,
-  stage
-) {
-
-  const rect =
-    stage.getBoundingClientRect();
-
-  const view =
-    getStageView(
-      stage
-    );
-
-  return {
-    x: clamp(
-      (event.clientX - rect.left - view.x) / view.zoom,
-      0,
-      WORLD_WIDTH
-    ),
-    y: clamp(
-      (event.clientY - rect.top - view.y) / view.zoom,
-      0,
-      WORLD_HEIGHT
-    )
-  };
-}
-
-
-function highlightTreePage(
-  pageId
-) {
-
-  document
-    .querySelector(`.tree-item[data-page-id="${pageId}"]`)
-    ?.classList.add(
-      'is-linked-token'
-    );
-}
-
-
-function clearTreeHighlight(
-  pageId
-) {
-
-  document
-    .querySelector(`.tree-item[data-page-id="${pageId}"]`)
-    ?.classList.remove(
-      'is-linked-token'
-    );
-}
-
-
-function normalizeText(
-  value
-) {
-
-  return String(value || '')
-    .trim()
-    .toLowerCase();
-}
-
-
-function scheduleLivePresentationSync(
-  item,
-  stage = null
-) {
-
-  if (item) {
-
-    pendingPresentationItems.add(
-      item
-    );
-  }
-
-  if (stage) {
-
-    pendingPresentationMeasureStages.add(
-      stage
-    );
-  }
-
-  if (livePresentationFrame) return;
-
-  livePresentationFrame =
-    requestAnimationFrame(
-      () => {
-
-        livePresentationFrame =
-          null;
-
-        const items =
-          [...pendingPresentationItems];
-
-        const stages =
-          [...pendingPresentationMeasureStages];
-
-        pendingPresentationItems.clear();
-        pendingPresentationMeasureStages.clear();
-
-        items.forEach(nextItem => {
-
-          syncPresentationItem(
-            nextItem
-          );
-        });
-
-        stages.forEach(nextStage => {
-
-          syncPresentationDragMeasure(
-            nextStage
-          );
-        });
-      }
-    );
-}
-
-
-function schedulePresentationSync() {
-
-  const now =
-    performance.now();
-
-  const wait =
-    Math.max(
-      0,
-      PRESENTATION_SYNC_INTERVAL - (now - lastPresentationSyncAt)
-    );
-
-  if (wait > 0) {
-
-    if (presentationSyncTimeout) return;
-
-    presentationSyncTimeout =
-      setTimeout(
-        () => {
-
-          presentationSyncTimeout =
-            null;
-
-          schedulePresentationSync();
-        },
-        wait
-      );
-
-    return;
-  }
-
-  if (presentationSyncFrame) return;
-
-  presentationSyncFrame =
-    requestAnimationFrame(
-      () => {
-
-        presentationSyncFrame =
-          null;
-
-        lastPresentationSyncAt =
-          performance.now();
-
-        syncPresentation();
-      }
-    );
 }
 
 
@@ -6519,47 +3191,12 @@ async function saveAndSync() {
 
     syncCurrentMapTitle();
 
+    refreshCampaignMapModel(
+      openMap
+    );
+
     await saveCurrentPageCallback();
   }
 
   syncPresentation();
-}
-
-
-function clamp(
-  value,
-  min,
-  max
-) {
-
-  return Math.min(
-    max,
-    Math.max(
-      min,
-      value
-    )
-  );
-}
-
-
-function getPointerAngle(
-  event,
-  centerX,
-  centerY
-) {
-
-  return Math.atan2(
-    event.clientY - centerY,
-    event.clientX - centerX
-  ) * 180 / Math.PI;
-}
-
-
-function normalizeDegrees(
-  value
-) {
-
-  return Math.round(
-    ((value % 360) + 360) % 360
-  );
 }

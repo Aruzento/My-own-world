@@ -13,6 +13,10 @@ import {
   syncPresentation
 } from './campaignMapPresentation.js';
 
+import {
+  refreshCampaignMapModel
+} from './campaignMapModel.js';
+
 
 export function isCampaignMapPage(
   parsed
@@ -41,6 +45,10 @@ export function serializeCampaignMapHTML(
     editor.querySelector('.campaign-map-document');
 
   if (map) {
+
+    refreshCampaignMapModel(
+      map
+    );
 
     persistFogCanvas(
       map

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyOwnWorld: техдолг и путь развития</title>
+    <style>
+      :root {
+        --bg: #f7f5ef;
+        --ink: #25231f;
+        --muted: #686057;
+        --line: #ddd6c8;
+        --paper: #fffdf8;
+        --paper-2: #f1eadb;
+        --yellow: #f4d98e;
+        --red: #e58d86;
+        --red-dark: #9e3934;
+        --green: #9cc89b;
+        --blue: #9fb7bd;
+        --violet: #b7a3c8;
+        --shadow: 0 18px 40px rgba(44, 35, 24, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background:
+          radial-gradient(circle at 12% 8%, rgba(244, 217, 142, 0.28), transparent 28%),
+          linear-gradient(135deg, #fbfaf6 0%, var(--bg) 52%, #eee8dc 100%);
+        color: var(--ink);
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        line-height: 1.5;
+      }
+
+      .deck {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      .hero,
+      .slide {
+        min-height: 620px;
+        margin: 0 0 28px;
+        padding: 38px;
+        border: 1px solid rgba(100, 86, 60, 0.18);
+        border-radius: 22px;
+        background: rgba(255, 253, 248, 0.88);
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        display: grid;
+        align-content: center;
+        gap: 28px;
+        background:
+          linear-gradient(135deg, rgba(255, 253, 248, 0.94), rgba(241, 234, 219, 0.9)),
+          repeating-linear-gradient(45deg, transparent 0 18px, rgba(158, 57, 52, 0.04) 18px 19px);
+      }
+
+      .eyebrow {
+        margin: 0;
+        color: var(--red-dark);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        line-height: 1.08;
+      }
+
+      h1 {
+        max-width: 860px;
+        font-size: clamp(42px, 7vw, 78px);
+      }
+
+      h2 {
+        margin-bottom: 18px;
+        font-size: clamp(30px, 4vw, 48px);
+      }
+
+      h3 {
+        font-size: 20px;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .lead {
+        max-width: 800px;
+        color: var(--muted);
+        font-size: 21px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.four {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .card {
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper);
+      }
+
+      .card.critical {
+        border-color: rgba(158, 57, 52, 0.28);
+        background: #fff6f4;
+      }
+
+      .card.good {
+        border-color: rgba(91, 132, 87, 0.26);
+        background: #f5fbf3;
+      }
+
+      .card.warn {
+        border-color: rgba(176, 129, 35, 0.28);
+        background: #fff9e8;
+      }
+
+      .card.cool {
+        border-color: rgba(88, 113, 124, 0.25);
+        background: #f2f7f7;
+      }
+
+      .metric {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        margin: 0 6px 8px 0;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: var(--paper-2);
+        color: #4d463d;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .tag.red {
+        background: #f7d2cf;
+        color: #7d2d29;
+      }
+
+      .tag.green {
+        background: #dcefd8;
+        color: #355d33;
+      }
+
+      .tag.blue {
+        background: #dce9eb;
+        color: #35525b;
+      }
+
+      ul {
+        margin: 12px 0 0;
+        padding-left: 20px;
+      }
+
+      li {
+        margin: 8px 0;
+      }
+
+      .rank {
+        display: grid;
+        gap: 12px;
+      }
+
+      .rank-item {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) 132px;
+        gap: 14px;
+        align-items: start;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: var(--paper);
+      }
+
+      .num {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--yellow);
+        font-weight: 900;
+      }
+
+      .impact {
+        justify-self: end;
+        padding: 6px 9px;
+        border-radius: 10px;
+        background: #f1eadb;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .impact.high {
+        background: #f7d2cf;
+        color: #7d2d29;
+      }
+
+      .impact.medium {
+        background: #fff0bd;
+        color: #725515;
+      }
+
+      .matrix {
+        display: grid;
+        grid-template-columns: 1.15fr repeat(3, 1fr);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+      }
+
+      .matrix div {
+        min-height: 68px;
+        padding: 14px;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+        background: rgba(255, 253, 248, 0.86);
+      }
+
+      .matrix div:nth-child(4n) {
+        border-right: none;
+      }
+
+      .matrix .head {
+        background: #efe6d5;
+        font-weight: 900;
+      }
+
+      .matrix .win {
+        background: #eef8eb;
+      }
+
+      .matrix .risk {
+        background: #fff1ef;
+      }
+
+      .matrix .warn {
+        background: #fff9e7;
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .step {
+        position: relative;
+        min-height: 230px;
+        padding: 18px;
+        border-radius: 18px;
+        background: var(--paper);
+        border: 1px solid var(--line);
+      }
+
+      .step::before {
+        content: "";
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        top: 0;
+        height: 5px;
+        border-radius: 999px;
+        background: var(--yellow);
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .verdict {
+        padding: 24px;
+        border-radius: 18px;
+        background: #302a23;
+        color: #fff8e8;
+      }
+
+      .verdict strong {
+        color: var(--yellow);
+      }
+
+      @media (max-width: 900px) {
+        .hero,
+        .slide {
+          min-height: auto;
+          padding: 24px;
+        }
+
+        .grid,
+        .grid.two,
+        .grid.four,
+        .timeline {
+          grid-template-columns: 1fr;
+        }
+
+        .rank-item {
+          grid-template-columns: 44px minmax(0, 1fr);
+        }
+
+        .impact {
+          grid-column: 2;
+          justify-self: start;
+        }
+
+        .matrix {
+          grid-template-columns: 1fr;
+        }
+
+        .matrix div,
+        .matrix div:nth-child(4n) {
+          border-right: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="deck">
+      <section class="hero">
+        <p class="eyebrow">MyOwnWorld · оценка состояния</p>
+        <h1>Проект уже стал продуктом. Теперь ему нужна инженерная опора.</h1>
+        <p class="lead">
+          Текущая версия умеет карточки лора, блоки, таблицы, изображения, карту кампании,
+          fog of war, презентацию, токены и дочерние сущности. Следующий риск уже не в
+          “добавить функцию”, а в том, чтобы функции не начали ломать друг друга.
+        </p>
+        <div>
+          <span class="tag green">Сильная продуктовая база</span>
+          <span class="tag red">Большой технический долг карты</span>
+          <span class="tag blue">Есть путь к desktop app</span>
+          <span class="tag">Web потребует backend</span>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Снимок Сейчас</h2>
+        <div class="grid four">
+          <article class="card critical">
+            <span class="metric">6565</span>
+            <h3>строк в campaignMap.js</h3>
+            <p class="small">Главная зона риска: orchestration, toolbar, tokens, fog, shapes, presentation sync.</p>
+          </article>
+          <article class="card warn">
+            <span class="metric">2310</span>
+            <h3>строк CSS карты</h3>
+            <p class="small">Визуальные правила карты уже сложно менять без побочных эффектов.</p>
+          </article>
+          <article class="card warn">
+            <span class="metric">1462</span>
+            <h3>строки serializer contract</h3>
+            <p class="small">Save/runtime слой есть, но это критическая точка сохранности данных.</p>
+          </article>
+          <article class="card good">
+            <span class="metric">+</span>
+            <h3>есть архитектурные контракты</h3>
+            <p class="small">Block System Contract, write queue, popup manager, contenteditable policy уже помогают.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Что Сделать Прямо Сейчас</h2>
+        <div class="rank">
+          <div class="rank-item">
+            <span class="num">1</span>
+            <div>
+              <h3>Разрезать campaignMap.js на подсистемы</h3>
+              <p class="small">tokens, shapes, fog, toolbar, viewport, presentation sync, map serializer helpers. Это главный долг, который уже тормозит разработку и производительность.</p>
+            </div>
+            <span class="impact high">критично</span>
+          </div>
+          <div class="rank-item">
+            <span class="num">2</span>
+            <div>
+              <h3>Ввести модель данных карты поверх DOM</h3>
+              <p class="small">Сейчас DOM одновременно UI, состояние и save format. Нужна промежуточная модель: tokens, shapes, fog metadata, grid, asset, view.</p>
+            </div>
+            <span class="impact high">критично</span>
+          </div>
+          <div class="rank-item">
+            <span class="num">3</span>
+            <div>
+              <h3>Добавить автоматические smoke/e2e проверки</h3>
+              <p class="small">Минимум Playwright: создать карточку, карту, токен, сохранить, reload, проверить координаты, fog, дерево, блоки.</p>
+            </div>
+            <span class="impact high">критично</span>
+          </div>
+          <div class="rank-item">
+            <span class="num">4</span>
+            <div>
+              <h3>Проверить UTF-8 и документацию как source of truth</h3>
+              <p class="small">Документация должна открываться читаемо в редакторе, git diff и браузере. Любой mojibake в docs опасен, потому что правила проекта начинают жить “по памяти”.</p>
+            </div>
+            <span class="impact medium">важно</span>
+          </div>
+          <div class="rank-item">
+            <span class="num">5</span>
+            <div>
+              <h3>Закрыть XSS/HTML-safety контур</h3>
+              <p class="small">Пока проект локальный, риск умеренный. Для web raw HTML, innerHTML и импорт markdown с HTML сразу становятся security-блокером.</p>
+            </div>
+            <span class="impact medium">важно</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Текущий Техдолг</h2>
+        <div class="grid two">
+          <article class="card critical">
+            <h3>Архитектурный</h3>
+            <ul>
+              <li>Карта слишком большая для одного модуля.</li>
+              <li>DOM всё ещё часто выступает моделью данных.</li>
+              <li>Contenteditable остаётся зоной повышенной хрупкости.</li>
+              <li>Serializer стал лучше, но цена ошибки высокая: можно потерять сохранение.</li>
+            </ul>
+          </article>
+          <article class="card warn">
+            <h3>Продуктовый</h3>
+            <ul>
+              <li>Карта кампании уже похожа на отдельный продукт внутри продукта.</li>
+              <li>Таблицы, изображения, блоки и wiki-links требуют regression-тестов.</li>
+              <li>Перформанс карты зависит от размеров изображений, количества токенов и CSS-эффектов.</li>
+              <li>UI быстро растёт, нужен единый компонентный контракт.</li>
+            </ul>
+          </article>
+          <article class="card warn">
+            <h3>Сохранность данных</h3>
+            <ul>
+              <li>Локальные файлы удобны, но завязаны на File System Access API.</li>
+              <li>Autosave, ручное Ctrl+S, fog, HP и drag должны оставаться в write queue.</li>
+              <li>Нет полноценной истории изменений и восстановления.</li>
+              <li>Нет версионированной миграции всей модели проекта.</li>
+            </ul>
+          </article>
+          <article class="card cool">
+            <h3>Поддерживаемость</h3>
+            <ul>
+              <li>Крупные CSS-файлы трудно проверять глазами.</li>
+              <li>Много popup-ов уже унифицировано, но не всё.</li>
+              <li>execCommand изолирован, но пока не заменён.</li>
+              <li>Нет CI, линтера, форматтера и test gate перед push.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Уязвимости и Риски</h2>
+        <div class="grid">
+          <article class="card critical">
+            <span class="tag red">Web blocker</span>
+            <h3>HTML injection</h3>
+            <p class="small">Markdown хранит HTML, код часто использует innerHTML. Для локального одиночного пользователя это терпимо; для интернета нужен sanitizer и строгая модель документа.</p>
+          </article>
+          <article class="card critical">
+            <span class="tag red">Data loss</span>
+            <h3>Save pipeline</h3>
+            <p class="small">Если runtime UI попадёт в persistent HTML или write queue обойдут напрямую, возможны трудноуловимые баги сохранения.</p>
+          </article>
+          <article class="card warn">
+            <span class="tag">Permission UX</span>
+            <h3>File System Access</h3>
+            <p class="small">Браузерные permissions требуют user activation и не подходят как основа для публичного web-сервиса.</p>
+          </article>
+          <article class="card warn">
+            <span class="tag">Assets</span>
+            <h3>Изображения и память</h3>
+            <p class="small">Большие карты и PNG-объекты требуют лимитов, preview-кэша, lazy loading и освобождения blob/object URL.</p>
+          </article>
+          <article class="card warn">
+            <span class="tag">No auth</span>
+            <h3>Нет пользователей</h3>
+            <p class="small">Для web нужны аккаунты, права доступа, приватность кампаний, backup и экспорт.</p>
+          </article>
+          <article class="card cool">
+            <span class="tag blue">Testing</span>
+            <h3>Нет автоматической сетки безопасности</h3>
+            <p class="small">Проект уже достаточно сложный, чтобы ручные проверки перестали быть достаточными.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Интернет-Ресурс: Реально, Но Это Новый Этаж</h2>
+        <div class="grid two">
+          <article class="card good">
+            <h3>Что даст web</h3>
+            <ul>
+              <li>Доступ с разных устройств.</li>
+              <li>Кампании можно шарить игрокам.</li>
+              <li>Можно сделать совместное редактирование и live-презентацию.</li>
+              <li>Появится нормальный профиль пользователя и тарифы.</li>
+            </ul>
+          </article>
+          <article class="card critical">
+            <h3>Что придётся построить</h3>
+            <ul>
+              <li>Backend API и базу данных вместо прямой записи `.md`.</li>
+              <li>Object storage для картинок и карт.</li>
+              <li>Auth, роли, приватность, permissions.</li>
+              <li>Sanitizer HTML и безопасный renderer.</li>
+              <li>Миграцию существующих workspace в cloud model.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="verdict" style="margin-top: 18px;">
+          <strong>Вывод:</strong> делать web прямо сейчас рано. Сначала нужно отделить модель данных от DOM и стабилизировать карту. Иначе backend просто закрепит текущую хрупкость в более дорогой форме.
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Desktop App: Вероятно Лучший Следующий Формат</h2>
+        <div class="grid two">
+          <article class="card good">
+            <h3>Почему станет стабильнее</h3>
+            <ul>
+              <li>Нативный доступ к файлам без браузерных permission-ловушек.</li>
+              <li>Проще контролировать версию runtime, кэш, меню, hotkeys.</li>
+              <li>Можно оставить локальную философию: пользователь владеет своими файлами.</li>
+              <li>Проще добавить backup, export/import, crash recovery.</li>
+            </ul>
+          </article>
+          <article class="card warn">
+            <h3>Что не решится само</h3>
+            <ul>
+              <li>Монолит `campaignMap.js` останется монолитом.</li>
+              <li>DOM как модель данных останется риском.</li>
+              <li>Без тестов приложение будет ломаться так же, только в упаковке.</li>
+              <li>Security всё равно важна, если открывать чужие workspace.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="verdict" style="margin-top: 18px;">
+          <strong>Рекомендация:</strong> после стабилизации ядра идти в Tauri/Electron-обёртку. Для текущего проекта desktop app даст больше пользы быстрее, чем полноценный cloud web.
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Сравнение Путей</h2>
+        <div class="matrix">
+          <div class="head">Критерий</div>
+          <div class="head">Оставить локальный web</div>
+          <div class="head">Desktop app</div>
+          <div class="head">Интернет-сервис</div>
+
+          <div>Скорость развития</div>
+          <div class="win">Высокая</div>
+          <div class="win">Средне-высокая</div>
+          <div class="risk">Низкая сначала</div>
+
+          <div>Стабильность файлов</div>
+          <div class="warn">Зависит от браузера</div>
+          <div class="win">Лучше всего</div>
+          <div class="win">Хорошо при backend</div>
+
+          <div>Совместная игра онлайн</div>
+          <div class="risk">Почти нет</div>
+          <div class="warn">Можно через sync позже</div>
+          <div class="win">Лучший вариант</div>
+
+          <div>Сложность безопасности</div>
+          <div class="warn">Средняя</div>
+          <div class="warn">Средняя</div>
+          <div class="risk">Высокая</div>
+
+          <div>Цена переписывания</div>
+          <div class="win">Минимальная</div>
+          <div class="warn">Умеренная</div>
+          <div class="risk">Высокая</div>
+
+          <div>Лучший момент</div>
+          <div class="win">Сейчас</div>
+          <div class="win">После стабилизации ядра</div>
+          <div class="warn">После модели данных и тестов</div>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Рекомендованный Маршрут</h2>
+        <div class="timeline">
+          <article class="step">
+            <span class="tag red">0-2 недели</span>
+            <h3>Стабилизация ядра</h3>
+            <ul>
+              <li>Разделить карту.</li>
+              <li>Ввести map data model.</li>
+              <li>Добавить e2e smoke.</li>
+              <li>Починить docs/UTF-8 при необходимости.</li>
+            </ul>
+          </article>
+          <article class="step">
+            <span class="tag">2-4 недели</span>
+            <h3>Надёжное локальное приложение</h3>
+            <ul>
+              <li>Crash-safe save.</li>
+              <li>History/undo для structural actions.</li>
+              <li>Asset cleanup.</li>
+              <li>Performance budget карты.</li>
+            </ul>
+          </article>
+          <article class="step">
+            <span class="tag blue">после</span>
+            <h3>Desktop shell</h3>
+            <ul>
+              <li>Tauri или Electron.</li>
+              <li>Нативные file dialogs.</li>
+              <li>Backup/export.</li>
+              <li>Автообновления.</li>
+            </ul>
+          </article>
+          <article class="step">
+            <span class="tag green">позже</span>
+            <h3>Cloud/Web</h3>
+            <ul>
+              <li>Backend и DB.</li>
+              <li>Auth и sharing.</li>
+              <li>Sanitized document model.</li>
+              <li>Live presentation sync.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="slide">
+        <h2>Итоговое Решение</h2>
+        <div class="grid two">
+          <article class="card critical">
+            <h3>Не делать сейчас</h3>
+            <ul>
+              <li>Не начинать cloud web до отделения данных от DOM.</li>
+              <li>Не добавлять крупные функции в карту, пока она монолитна.</li>
+              <li>Не полагаться только на ручное тестирование.</li>
+            </ul>
+          </article>
+          <article class="card good">
+            <h3>Делать сейчас</h3>
+            <ul>
+              <li>Стабилизировать карту и save pipeline.</li>
+              <li>Разделить код по ответственности.</li>
+              <li>Создать автоматическую сетку smoke-тестов.</li>
+              <li>Готовить проект к desktop app как ближайшему серьёзному формату.</li>
+            </ul>
+          </article>
+        </div>
+        <div class="verdict" style="margin-top: 18px;">
+          <strong>Самый здравый путь:</strong> сначала сделать крепкое локальное ядро, затем упаковать его как desktop app, и только после этого проектировать web/cloud. Это даст стабильность без преждевременного большого переписывания.
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
