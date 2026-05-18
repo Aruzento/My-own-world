@@ -45,7 +45,9 @@ import {
 
 import {
   openPresentationWindow,
-  syncPresentation
+  syncPresentation,
+  syncPresentationDragMeasure,
+  syncPresentationItem
 } from './campaignMapPresentation.js';
 
 import {
@@ -84,6 +86,12 @@ let activeTokenPopupToken = null;
 let presentationSyncFrame = null;
 let presentationSyncTimeout = null;
 let lastPresentationSyncAt = 0;
+let visibleObjectsFrame = null;
+let pendingVisibleObjectsMap = null;
+let pendingVisibleObjectsView = null;
+let livePresentationFrame = null;
+const pendingPresentationItems = new Set();
+const pendingPresentationMeasureStages = new Set();
 const restoredTokenImageAssets = new WeakMap();
 const tokenHealthCache = new WeakMap();
 
@@ -93,6 +101,13 @@ const TOKEN_RESIZE_THRESHOLD = 2;
 const PRESENTATION_SYNC_INTERVAL = 80;
 const DEFAULT_SHAPE_SIZE = 192;
 const SHAPE_HANDLE_THRESHOLD = 2;
+const LOW_DETAIL_ZOOM_THRESHOLD = 0.65;
+const LOW_DETAIL_INTERACTION_ZOOM_THRESHOLD = 0.8;
+const LOW_DETAIL_MAX_SIZE = 960;
+const VIEWPORT_CULL_MARGIN = 320;
+const backgroundQualityState = new WeakMap();
+const fullDetailBackgroundCache = new Map();
+const lowDetailBackgroundCache = new Map();
 
 
 export function setupCampaignMaps(
@@ -1030,12 +1045,13 @@ async function addSelectedPagesToMap(
     }
   }
 
-  for (const page of duplicates) {
+  for (const [index, page] of duplicates.entries()) {
 
     await addMapToken(
       map,
       kind,
-      page
+      page,
+      index
     );
   }
 
@@ -1477,7 +1493,8 @@ function getAnchorKey(
 async function addMapToken(
   map,
   type,
-  page = null
+  page = null,
+  spawnIndex = 0
 ) {
 
   const layer =
@@ -1520,11 +1537,17 @@ async function addMapToken(
     }
   }
 
+  const spawnPoint =
+    getVisibleSpawnPoint(
+      map,
+      spawnIndex
+    );
+
   token.dataset.x =
-    '50';
+    ((spawnPoint.x / WORLD_WIDTH) * 100).toFixed(3);
 
   token.dataset.y =
-    '50';
+    ((spawnPoint.y / WORLD_HEIGHT) * 100).toFixed(3);
 
   token.dataset.name =
     page?.title ||
@@ -1762,7 +1785,7 @@ async function restoreTokenImage(
   try {
 
     const url =
-      await getImageURL(
+      await getFullDetailBackgroundURL(
         asset
       );
 
@@ -1826,11 +1849,11 @@ function ensureTokenResizeHandles(
     token.dataset.tokenType !== 'object'
   ) return;
 
-  if (
-    token.querySelector('.campaign-map-token-resize')
-  ) return;
-
   ['nw', 'ne', 'sw', 'se'].forEach(corner => {
+
+    if (
+      token.querySelector(`.campaign-map-token-resize.is-${corner}`)
+    ) return;
 
     const handle =
       document.createElement('span');
@@ -1849,6 +1872,10 @@ function ensureTokenResizeHandles(
       handle
     );
   });
+
+  if (
+    token.querySelector('.campaign-map-token-rotate')
+  ) return;
 
   const rotateHandle =
     document.createElement('span');
@@ -2091,6 +2118,10 @@ function renderMapShape(
   shape
 ) {
 
+  ensureShapeId(
+    shape
+  );
+
   applyShapeGeometry(
     shape
   );
@@ -2107,6 +2138,18 @@ function renderMapShape(
   shape
     .querySelectorAll('.campaign-map-shape-handle')
     .forEach(handle => markRuntime(handle));
+}
+
+
+function ensureShapeId(
+  shape
+) {
+
+  if (!shape.dataset.shapeId) {
+
+    shape.dataset.shapeId =
+      crypto.randomUUID();
+  }
 }
 
 
@@ -2336,6 +2379,58 @@ function applyViewportTransform(
 
   viewport.style.transform =
     `translate(${view.x}px, ${view.y}px) scale(${view.zoom})`;
+
+  scheduleVisibleMapObjectsUpdate(
+    map,
+    view
+  );
+
+  updateMapBackgroundQuality(
+    map
+  );
+}
+
+
+function scheduleVisibleMapObjectsUpdate(
+  map,
+  view = null
+) {
+
+  pendingVisibleObjectsMap =
+    map;
+
+  pendingVisibleObjectsView =
+    view
+      ? { ...view }
+      : null;
+
+  if (visibleObjectsFrame) return;
+
+  visibleObjectsFrame =
+    requestAnimationFrame(
+      () => {
+
+        visibleObjectsFrame =
+          null;
+
+        const nextMap =
+          pendingVisibleObjectsMap;
+
+        const nextView =
+          pendingVisibleObjectsView;
+
+        pendingVisibleObjectsMap =
+          null;
+
+        pendingVisibleObjectsView =
+          null;
+
+        updateVisibleMapObjects(
+          nextMap,
+          nextView
+        );
+      }
+    );
 }
 
 
@@ -2352,6 +2447,258 @@ function getStageView(
       MAX_ZOOM
     )
   };
+}
+
+
+function updateVisibleMapObjects(
+  map,
+  view = null
+) {
+
+  const stage =
+    map?.querySelector('.campaign-map-stage');
+
+  if (!stage) return;
+
+  const activeView =
+    view ||
+    getStageView(
+      stage
+    );
+
+  const visibleRect =
+    getVisibleWorldRect(
+      stage,
+      activeView
+    );
+
+  map
+    .querySelectorAll('.campaign-map-token')
+    .forEach(token => {
+
+      const tokenRect =
+        getTokenWorldRect(
+          token,
+          stage
+        );
+
+      token.classList.toggle(
+        'is-offscreen',
+        !isActiveMapObject(token) &&
+        !rectsIntersect(
+          visibleRect,
+          tokenRect
+        )
+      );
+    });
+
+  map
+    .querySelectorAll('.campaign-map-shape')
+    .forEach(shape => {
+
+      const shapeRect =
+        getShapeWorldRect(
+          shape
+        );
+
+      shape.classList.toggle(
+        'is-offscreen',
+        !isActiveMapObject(shape) &&
+        !rectsIntersect(
+          visibleRect,
+          shapeRect
+        )
+      );
+    });
+}
+
+
+function getVisibleWorldRect(
+  stage,
+  view
+) {
+
+  return {
+    left: (-view.x / view.zoom) - VIEWPORT_CULL_MARGIN,
+    top: (-view.y / view.zoom) - VIEWPORT_CULL_MARGIN,
+    right: ((stage.clientWidth - view.x) / view.zoom) + VIEWPORT_CULL_MARGIN,
+    bottom: ((stage.clientHeight - view.y) / view.zoom) + VIEWPORT_CULL_MARGIN
+  };
+}
+
+
+function getVisibleSpawnPoint(
+  map,
+  spawnIndex = 0
+) {
+
+  const stage =
+    map?.querySelector('.campaign-map-stage');
+
+  if (!stage) {
+
+    return {
+      x: WORLD_WIDTH / 2,
+      y: WORLD_HEIGHT / 2
+    };
+  }
+
+  const view =
+    getStageView(
+      stage
+    );
+
+  const center = {
+    x: (stage.clientWidth / 2 - view.x) / view.zoom,
+    y: (stage.clientHeight / 2 - view.y) / view.zoom
+  };
+
+  const offset =
+    getSpawnOffset(
+      stage,
+      spawnIndex
+    );
+
+  return {
+    x: clamp(
+      center.x + offset.x,
+      0,
+      WORLD_WIDTH
+    ),
+    y: clamp(
+      center.y + offset.y,
+      0,
+      WORLD_HEIGHT
+    )
+  };
+}
+
+
+function getSpawnOffset(
+  stage,
+  spawnIndex
+) {
+
+  const pattern = [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+    [1, 1],
+    [-1, 1],
+    [1, -1],
+    [-1, -1]
+  ];
+
+  const index =
+    Math.max(
+      0,
+      Number(spawnIndex || 0)
+    );
+
+  const gridSize =
+    Math.max(
+      1,
+      Number(stage.dataset.gridSize || DEFAULT_GRID_SIZE)
+    );
+
+  const [x, y] =
+    pattern[index % pattern.length];
+
+  const ring =
+    Math.floor(index / pattern.length);
+
+  const distance =
+    gridSize * (ring + 1);
+
+  return {
+    x: x * distance,
+    y: y * distance
+  };
+}
+
+
+function getTokenWorldRect(
+  token,
+  stage
+) {
+
+  const gridSize =
+    Math.max(
+      1,
+      Number(stage.dataset.gridSize || DEFAULT_GRID_SIZE)
+    );
+
+  const size =
+    gridSize *
+    Math.max(
+      0.5,
+      Number(token.dataset.size || 1)
+    );
+
+  const x =
+    Number(token.dataset.x || 50) / 100 * WORLD_WIDTH;
+
+  const y =
+    Number(token.dataset.y || 50) / 100 * WORLD_HEIGHT;
+
+  return {
+    left: x - size / 2,
+    top: y - size / 2,
+    right: x + size / 2,
+    bottom: y + size / 2
+  };
+}
+
+
+function getShapeWorldRect(
+  shape
+) {
+
+  const x =
+    Number(shape.dataset.x || 0);
+
+  const y =
+    Number(shape.dataset.y || 0);
+
+  const width =
+    Number(shape.dataset.w || DEFAULT_SHAPE_SIZE);
+
+  const height =
+    Number(shape.dataset.h || DEFAULT_SHAPE_SIZE);
+
+  return {
+    left: x,
+    top: y,
+    right: x + width,
+    bottom: y + height
+  };
+}
+
+
+function rectsIntersect(
+  a,
+  b
+) {
+
+  return (
+    a.left <= b.right &&
+    a.right >= b.left &&
+    a.top <= b.bottom &&
+    a.bottom >= b.top
+  );
+}
+
+
+function isActiveMapObject(
+  element
+) {
+
+  return element.classList.contains('is-selected') ||
+    element.classList.contains('is-dragging') ||
+    element.classList.contains('is-resizing') ||
+    element.classList.contains('is-rotating');
 }
 
 
@@ -2785,6 +3132,14 @@ async function changeMapImage(
     `asset:${imageFile.name}`
   );
 
+  fullDetailBackgroundCache.delete(
+    imageFile.name
+  );
+
+  lowDetailBackgroundCache.delete(
+    imageFile.name
+  );
+
   const stage =
     map.querySelector('.campaign-map-stage');
 
@@ -2834,11 +3189,302 @@ async function restoreMapBackground(
     background.style.backgroundImage =
       `url("${url}")`;
 
+    await updateMapBackgroundQuality(
+      map
+    );
+
   } catch (error) {
 
     background.style.backgroundImage =
       '';
   }
+}
+
+
+async function updateMapBackgroundQuality(
+  map
+) {
+
+  const stage =
+    map?.querySelector('.campaign-map-stage');
+
+  const background =
+    map?.querySelector('.campaign-map-background');
+
+  const asset =
+    stage?.dataset.mapAsset;
+
+  if (!stage || !background || !asset) return;
+
+  const quality =
+    shouldUseLowDetailMap(
+      map
+    )
+      ? 'low'
+      : 'full';
+
+  const state =
+    getBackgroundQualityState(
+      map
+    );
+
+  if (
+    state.asset === asset &&
+    state.quality === quality
+  ) return;
+
+  state.asset =
+    asset;
+
+  state.quality =
+    quality;
+
+  const url =
+    await getMapBackgroundURL(
+      asset,
+      quality
+    );
+
+  const latest =
+    getBackgroundQualityState(
+      map
+    );
+
+  if (
+    latest.asset !== asset ||
+    latest.quality !== quality
+  ) return;
+
+  background.style.backgroundImage =
+    `url("${url}")`;
+}
+
+
+async function getMapBackgroundURL(
+  asset,
+  quality
+) {
+
+  if (quality !== 'low') {
+
+    return getFullDetailBackgroundURL(
+      asset
+    );
+  }
+
+  try {
+
+    return await getLowDetailBackgroundURL(
+      asset
+    );
+
+  } catch (error) {
+
+    return getFullDetailBackgroundURL(
+      asset
+    );
+  }
+}
+
+
+async function getFullDetailBackgroundURL(
+  asset
+) {
+
+  if (!fullDetailBackgroundCache.has(asset)) {
+
+    fullDetailBackgroundCache.set(
+      asset,
+      getImageURL(
+        asset
+      )
+    );
+  }
+
+  return fullDetailBackgroundCache.get(
+    asset
+  );
+}
+
+
+function shouldUseLowDetailMap(
+  map
+) {
+
+  const stage =
+    map?.querySelector('.campaign-map-stage');
+
+  if (!stage) return false;
+
+  const state =
+    getBackgroundQualityState(
+      map
+    );
+
+  const zoom =
+    getStageView(
+      stage
+    ).zoom;
+
+  if (zoom < LOW_DETAIL_ZOOM_THRESHOLD) return true;
+
+  return state.forceLowDetail &&
+    zoom < LOW_DETAIL_INTERACTION_ZOOM_THRESHOLD;
+}
+
+
+function getBackgroundQualityState(
+  map
+) {
+
+  if (!backgroundQualityState.has(map)) {
+
+    backgroundQualityState.set(
+      map,
+      {
+        asset: '',
+        quality: '',
+        forceLowDetail: false
+      }
+    );
+  }
+
+  return backgroundQualityState.get(
+    map
+  );
+}
+
+
+async function getLowDetailBackgroundURL(
+  asset
+) {
+
+  if (!lowDetailBackgroundCache.has(asset)) {
+
+    lowDetailBackgroundCache.set(
+      asset,
+      createLowDetailBackgroundURL(
+        asset
+      )
+    );
+  }
+
+  return lowDetailBackgroundCache.get(
+    asset
+  );
+}
+
+
+async function createLowDetailBackgroundURL(
+  asset
+) {
+
+  const url =
+    await getFullDetailBackgroundURL(
+      asset
+    );
+
+  const image =
+    await loadImage(
+      url
+    );
+
+  const scale =
+    Math.min(
+      1,
+      LOW_DETAIL_MAX_SIZE / Math.max(
+        image.naturalWidth || image.width,
+        image.naturalHeight || image.height,
+        1
+      )
+    );
+
+  if (scale >= 1) return url;
+
+  const canvas =
+    document.createElement('canvas');
+
+  canvas.width =
+    Math.max(
+      1,
+      Math.round((image.naturalWidth || image.width) * scale)
+    );
+
+  canvas.height =
+    Math.max(
+      1,
+      Math.round((image.naturalHeight || image.height) * scale)
+    );
+
+  canvas
+    .getContext('2d')
+    .drawImage(
+      image,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+  return new Promise(resolve => {
+
+    canvas.toBlob(
+      blob => {
+
+        resolve(
+          blob
+            ? URL.createObjectURL(blob)
+            : url
+        );
+      },
+      'image/jpeg',
+      0.72
+    );
+  });
+}
+
+
+function loadImage(
+  url
+) {
+
+  return new Promise((resolve, reject) => {
+
+    const image =
+      new Image();
+
+    image.onload =
+      () => resolve(image);
+
+    image.onerror =
+      reject;
+
+    image.src =
+      url;
+  });
+}
+
+
+function setMapInteractionQuality(
+  map,
+  isInteracting
+) {
+
+  const state =
+    getBackgroundQualityState(
+      map
+    );
+
+  state.forceLowDetail =
+    Boolean(isInteracting);
+
+  scheduleVisibleMapObjectsUpdate(
+    map
+  );
+
+  updateMapBackgroundQuality(
+    map
+  );
 }
 
 
@@ -4213,6 +4859,9 @@ async function duplicateMapShape(
       Number(shape.dataset.y || 0) + 24
     );
 
+  clone.dataset.shapeId =
+    crypto.randomUUID();
+
   shape.after(
     clone
   );
@@ -4340,6 +4989,7 @@ function startTokenDrag(
   draggedToken = {
     token,
     stage: token.closest('.campaign-map-stage'),
+    map: token.closest('.campaign-map-document'),
     startX: event.clientX,
     startY: event.clientY,
     startWorldX: Number(token.dataset.x || 50) / 100 * WORLD_WIDTH,
@@ -4347,6 +4997,11 @@ function startTokenDrag(
     measure: null,
     moved: false
   };
+
+  setMapInteractionQuality(
+    draggedToken.map,
+    true
+  );
 
   token.classList.add(
     'is-dragging'
@@ -4413,10 +5068,18 @@ async function handleDocumentPointerUp() {
 
   if (rotatedToken) {
 
+    const map =
+      rotatedToken.map;
+
     const shouldSave =
       clearRotatedToken(
         true
       );
+
+    setMapInteractionQuality(
+      map,
+      false
+    );
 
     if (shouldSave) {
 
@@ -4426,10 +5089,18 @@ async function handleDocumentPointerUp() {
 
   if (resizedToken) {
 
+    const map =
+      resizedToken.token.closest('.campaign-map-document');
+
     const shouldSave =
       clearResizedToken(
         true
       );
+
+    setMapInteractionQuality(
+      map,
+      false
+    );
 
     if (shouldSave) {
 
@@ -4439,10 +5110,18 @@ async function handleDocumentPointerUp() {
 
   if (draggedToken) {
 
+    const map =
+      draggedToken.map;
+
     const shouldSave =
       clearDraggedToken(
         true
       );
+
+    setMapInteractionQuality(
+      map,
+      false
+    );
 
     if (shouldSave) {
 
@@ -4452,10 +5131,18 @@ async function handleDocumentPointerUp() {
 
   if (resizedShape) {
 
+    const map =
+      resizedShape.map;
+
     const shouldSave =
       clearResizedShape(
         true
       );
+
+    setMapInteractionQuality(
+      map,
+      false
+    );
 
     if (shouldSave) {
 
@@ -4465,10 +5152,18 @@ async function handleDocumentPointerUp() {
 
   if (draggedShape) {
 
+    const map =
+      draggedShape.map;
+
     const shouldSave =
       clearDraggedShape(
         true
       );
+
+    setMapInteractionQuality(
+      map,
+      false
+    );
 
     if (shouldSave) {
 
@@ -4490,12 +5185,20 @@ async function handleDocumentPointerUp() {
 
   if (panningMap) {
 
+    const map =
+      panningMap.map;
+
     panningMap.stage.classList.remove(
       'is-panning'
     );
 
     panningMap =
       null;
+
+    setMapInteractionQuality(
+      map,
+      false
+    );
 
     await saveAndSync();
   }
@@ -4547,6 +5250,11 @@ function startTokenResize(
     moved: false
   };
 
+  setMapInteractionQuality(
+    token.closest('.campaign-map-document'),
+    true
+  );
+
   token.classList.add(
     'is-resizing'
   );
@@ -4588,6 +5296,7 @@ function startTokenRotate(
 
   rotatedToken = {
     token,
+    map: token.closest('.campaign-map-document'),
     centerX,
     centerY,
     startAngle: getPointerAngle(
@@ -4598,6 +5307,11 @@ function startTokenRotate(
     startRotation: Number(token.dataset.rotation || 0),
     moved: false
   };
+
+  setMapInteractionQuality(
+    rotatedToken.map,
+    true
+  );
 
   token.classList.add(
     'is-rotating'
@@ -4638,7 +5352,9 @@ function rotateTokenToPointer(
     rotatedToken.token
   );
 
-  schedulePresentationSync();
+  scheduleLivePresentationSync(
+    rotatedToken.token
+  );
 }
 
 
@@ -4700,7 +5416,9 @@ function resizeTokenToPointer(
     resizedToken.token
   );
 
-  schedulePresentationSync();
+  scheduleLivePresentationSync(
+    resizedToken.token
+  );
 }
 
 
@@ -4788,6 +5506,7 @@ function startShapeResize(
   resizedShape = {
     shape,
     stage,
+    map: shape.closest('.campaign-map-document'),
     corner: event.target.dataset.corner || '',
     point: event.target.dataset.point || '',
     startX: event.clientX,
@@ -4799,6 +5518,11 @@ function startShapeResize(
     startPoints: getTrianglePoints(shape),
     moved: false
   };
+
+  setMapInteractionQuality(
+    resizedShape.map,
+    true
+  );
 
   shape.classList.add(
     'is-resizing'
@@ -4852,7 +5576,9 @@ function resizeShapeToPointer(
     'is-resizing'
   );
 
-  schedulePresentationSync();
+  scheduleLivePresentationSync(
+    resizedShape.shape
+  );
 }
 
 
@@ -5040,12 +5766,18 @@ function startShapeDrag(
   draggedShape = {
     shape,
     stage: shape.closest('.campaign-map-stage'),
+    map: shape.closest('.campaign-map-document'),
     startX: event.clientX,
     startY: event.clientY,
     startLeft: Number(shape.dataset.x || 0),
     startTop: Number(shape.dataset.y || 0),
     moved: false
   };
+
+  setMapInteractionQuality(
+    draggedShape.map,
+    true
+  );
 
   shape.classList.add(
     'is-dragging'
@@ -5095,7 +5827,9 @@ function moveShapeToPointer(
     draggedShape.shape
   );
 
-  schedulePresentationSync();
+  scheduleLivePresentationSync(
+    draggedShape.shape
+  );
 }
 
 
@@ -5209,7 +5943,10 @@ function moveTokenToPointer(
     point
   );
 
-  schedulePresentationSync();
+  scheduleLivePresentationSync(
+    token,
+    stage
+  );
 }
 
 
@@ -5379,6 +6116,11 @@ function startMapPan(
     lastX: event.clientX,
     lastY: event.clientY
   };
+
+  setMapInteractionQuality(
+    panningMap.map,
+    true
+  );
 
   stage.classList.add(
     'is-panning'
@@ -5593,6 +6335,61 @@ function normalizeText(
   return String(value || '')
     .trim()
     .toLowerCase();
+}
+
+
+function scheduleLivePresentationSync(
+  item,
+  stage = null
+) {
+
+  if (item) {
+
+    pendingPresentationItems.add(
+      item
+    );
+  }
+
+  if (stage) {
+
+    pendingPresentationMeasureStages.add(
+      stage
+    );
+  }
+
+  if (livePresentationFrame) return;
+
+  livePresentationFrame =
+    requestAnimationFrame(
+      () => {
+
+        livePresentationFrame =
+          null;
+
+        const items =
+          [...pendingPresentationItems];
+
+        const stages =
+          [...pendingPresentationMeasureStages];
+
+        pendingPresentationItems.clear();
+        pendingPresentationMeasureStages.clear();
+
+        items.forEach(nextItem => {
+
+          syncPresentationItem(
+            nextItem
+          );
+        });
+
+        stages.forEach(nextStage => {
+
+          syncPresentationDragMeasure(
+            nextStage
+          );
+        });
+      }
+    );
 }
 
 

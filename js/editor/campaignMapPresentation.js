@@ -132,7 +132,8 @@ export function syncPresentation() {
         'is-selected',
         'is-dragging',
         'is-resizing',
-        'is-rotating'
+        'is-rotating',
+        'is-offscreen'
       );
     });
 
@@ -142,7 +143,8 @@ export function syncPresentation() {
 
       shape.classList.remove(
         'is-selected',
-        'is-resizing'
+        'is-resizing',
+        'is-offscreen'
       );
     });
 
@@ -187,6 +189,8 @@ export function syncPresentation() {
     clone
   );
 
+  applyPresentationViewportTransform();
+
   const style =
     presentationWindow.document.getElementById('campaign-map-presentation-style') ||
     presentationWindow.document.createElement('style');
@@ -194,12 +198,197 @@ export function syncPresentation() {
   style.id =
     'campaign-map-presentation-style';
 
-  style.textContent =
-    getPresentationCSS();
+  if (!style.textContent) {
+
+    style.textContent =
+      getPresentationCSS();
+  }
 
   presentationWindow.document.head.appendChild(
     style
   );
+}
+
+
+export function syncPresentationItem(
+  sourceItem
+) {
+
+  if (
+    !sourceItem ||
+    !presentationWindow ||
+    presentationWindow.closed
+  ) return false;
+
+  const sourceStage =
+    sourceItem.closest('.campaign-map-stage');
+
+  const targetStage =
+    presentationWindow.document.querySelector('.campaign-map-stage');
+
+  if (!sourceStage || !targetStage) return false;
+
+  const key =
+    getPresentationItemKey(
+      sourceItem
+    );
+
+  if (!key) return false;
+
+  const selector =
+    getPresentationItemSelector(
+      sourceItem,
+      key
+    );
+
+  if (!selector) return false;
+
+  const targetItem =
+    targetStage.querySelector(
+      selector
+    );
+
+  if (
+    sourceItem.dataset.presentationHidden === 'true' ||
+    sourceItem.classList.contains('is-presentation-hidden')
+  ) {
+
+    targetItem?.remove();
+    return true;
+  }
+
+  const clone =
+    clonePresentationItem(
+      sourceItem
+    );
+
+  if (targetItem) {
+
+    targetItem.replaceWith(
+      clone
+    );
+
+    return true;
+  }
+
+  const targetLayer =
+    targetStage.querySelector('.campaign-map-object-layer');
+
+  if (!targetLayer) return false;
+
+  targetLayer.appendChild(
+    clone
+  );
+
+  return true;
+}
+
+
+export function syncPresentationDragMeasure(
+  sourceStage
+) {
+
+  if (
+    !sourceStage ||
+    !presentationWindow ||
+    presentationWindow.closed
+  ) return false;
+
+  const targetStage =
+    presentationWindow.document.querySelector('.campaign-map-stage');
+
+  const targetViewport =
+    targetStage?.querySelector('.campaign-map-viewport');
+
+  if (!targetViewport) return false;
+
+  targetViewport
+    .querySelectorAll('.campaign-map-drag-measure')
+    .forEach(measure => measure.remove());
+
+  const sourceMeasure =
+    sourceStage.querySelector('.campaign-map-drag-measure');
+
+  if (!sourceMeasure) return true;
+
+  targetViewport.appendChild(
+    sourceMeasure.cloneNode(true)
+  );
+
+  return true;
+}
+
+
+function getPresentationItemKey(
+  item
+) {
+
+  if (
+    item.classList.contains('campaign-map-token')
+  ) {
+
+    return item.dataset.tokenId || '';
+  }
+
+  if (
+    item.classList.contains('campaign-map-shape')
+  ) {
+
+    return item.dataset.shapeId || '';
+  }
+
+  return '';
+}
+
+
+function getPresentationItemSelector(
+  item,
+  key
+) {
+
+  const escapedKey =
+    CSS.escape(
+      key
+    );
+
+  if (
+    item.classList.contains('campaign-map-token')
+  ) {
+
+    return `.campaign-map-token[data-token-id="${escapedKey}"]`;
+  }
+
+  if (
+    item.classList.contains('campaign-map-shape')
+  ) {
+
+    return `.campaign-map-shape[data-shape-id="${escapedKey}"]`;
+  }
+
+  return '';
+}
+
+
+function clonePresentationItem(
+  item
+) {
+
+  const clone =
+    item.cloneNode(true);
+
+  clone
+    .querySelectorAll('[data-runtime="true"]')
+    .forEach(element => element.remove());
+
+  clone.classList.remove(
+    'is-selected',
+    'is-dragging',
+    'is-resizing',
+    'is-rotating',
+    'is-offscreen'
+  );
+
+  return clone;
 }
 
 
@@ -300,7 +489,7 @@ function handlePresentationPointerMove(
   presentationState.lastY =
     event.clientY;
 
-  syncPresentation();
+  applyPresentationViewportTransform();
 }
 
 
@@ -338,7 +527,32 @@ function zoomPresentation(
   presentationState.y =
     anchor.y - worldY * nextZoom;
 
-  syncPresentation();
+  applyPresentationViewportTransform();
+}
+
+
+function applyPresentationViewportTransform() {
+
+  if (
+    !presentationWindow ||
+    presentationWindow.closed
+  ) return false;
+
+  const viewport =
+    presentationWindow.document.querySelector(
+      '.campaign-map-viewport'
+    );
+
+  if (!viewport) {
+
+    syncPresentation();
+    return false;
+  }
+
+  viewport.style.transform =
+    `translate(${presentationState.x}px, ${presentationState.y}px) scale(${presentationState.zoom})`;
+
+  return true;
 }
 
 

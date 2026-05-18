@@ -101,6 +101,10 @@ export function serializePersistentEditorHTML(
     clone
   );
 
+  clearRuntimeMapState(
+    clone
+  );
+
   return clone.innerHTML;
 }
 
@@ -1331,6 +1335,23 @@ function stripRuntimeMapBackgrounds(
 
       image.removeAttribute(
         'src'
+      );
+    });
+}
+
+
+function clearRuntimeMapState(
+  root
+) {
+
+  root
+    .querySelectorAll(
+      '.campaign-map-token.is-offscreen, .campaign-map-shape.is-offscreen'
+    )
+    .forEach(element => {
+
+      element.classList.remove(
+        'is-offscreen'
       );
     });
 }

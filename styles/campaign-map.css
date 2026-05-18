@@ -676,6 +676,9 @@
   border-color:
     rgba(241,211,142,0.96);
 
+  overflow:
+    visible;
+
   box-shadow:
     0 0 0 3px rgba(241,211,142,0.18);
 }
@@ -690,6 +693,14 @@
     translate(-50%, -50%)
     rotate(var(--token-rotation, 0deg))
     scale(1.08);
+}
+
+
+.campaign-map-token.is-offscreen,
+.campaign-map-shape.is-offscreen {
+
+  display:
+    none;
 }
 
 
