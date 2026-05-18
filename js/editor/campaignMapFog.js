@@ -13,6 +13,10 @@ import {
 } from './campaignMapGeometry.js';
 
 import {
+  getCampaignMapModel
+} from './campaignMapModel.js';
+
+import {
   schedulePresentationSync
 } from './campaignMapPresentationSync.js';
 
@@ -203,8 +207,18 @@ export function setMapTool(
     tool === 'erase'
   ) {
 
-    stage.dataset.fogMode =
-      tool;
+    const model =
+      getCampaignMapModel(
+        map
+      );
+
+    model?.updateFog({
+      mode: tool
+    });
+
+    model?.commitToElement(
+      map
+    );
   }
 
   updateFogButtons(

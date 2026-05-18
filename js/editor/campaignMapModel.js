@@ -152,6 +152,120 @@ export class CampaignMapModel {
   }
 
 
+  addToken(
+    data = {}
+  ) {
+
+    const token =
+      normalizeToken({
+        ...data,
+        tokenId: data.tokenId || crypto.randomUUID()
+      });
+
+    this.tokens.push(
+      token
+    );
+
+    return token;
+  }
+
+
+  moveToken(
+    tokenId,
+    position
+  ) {
+
+    return this.updateToken(
+      tokenId,
+      {
+        x: position.x,
+        y: position.y
+      }
+    );
+  }
+
+
+  resizeToken(
+    tokenId,
+    size
+  ) {
+
+    return this.updateToken(
+      tokenId,
+      {
+        size
+      }
+    );
+  }
+
+
+  rotateToken(
+    tokenId,
+    rotation
+  ) {
+
+    return this.updateToken(
+      tokenId,
+      {
+        rotation
+      }
+    );
+  }
+
+
+  updateToken(
+    tokenId,
+    patch
+  ) {
+
+    const current =
+      this.getToken(
+        tokenId
+      );
+
+    if (!current) return null;
+
+    Object.assign(
+      current,
+      normalizeToken({
+        ...current,
+        ...patch
+      })
+    );
+
+    return current;
+  }
+
+
+  removeToken(
+    tokenId
+  ) {
+
+    const initialLength =
+      this.tokens.length;
+
+    this.tokens =
+      this.tokens.filter(token =>
+        token.tokenId !== tokenId
+      );
+
+    return this.tokens.length !== initialLength;
+  }
+
+
+  replaceTokens(
+    tokens = []
+  ) {
+
+    this.tokens =
+      tokens.map(
+        normalizeToken
+      );
+
+    return this.tokens;
+  }
+
+
   getShape(
     shapeId
   ) {
@@ -159,6 +273,146 @@ export class CampaignMapModel {
     return this.shapes.find(shape =>
       shape.shapeId === shapeId
     ) || null;
+  }
+
+
+  addShape(
+    data = {}
+  ) {
+
+    const shape =
+      normalizeShape({
+        ...data,
+        shapeId: data.shapeId || crypto.randomUUID()
+      });
+
+    this.shapes.push(
+      shape
+    );
+
+    return shape;
+  }
+
+
+  moveShape(
+    shapeId,
+    position
+  ) {
+
+    return this.updateShape(
+      shapeId,
+      {
+        x: position.x,
+        y: position.y
+      }
+    );
+  }
+
+
+  resizeShape(
+    shapeId,
+    patch
+  ) {
+
+    return this.updateShape(
+      shapeId,
+      patch
+    );
+  }
+
+
+  updateShape(
+    shapeId,
+    patch
+  ) {
+
+    const current =
+      this.getShape(
+        shapeId
+      );
+
+    if (!current) return null;
+
+    Object.assign(
+      current,
+      normalizeShape({
+        ...current,
+        ...patch
+      })
+    );
+
+    return current;
+  }
+
+
+  removeShape(
+    shapeId
+  ) {
+
+    const initialLength =
+      this.shapes.length;
+
+    this.shapes =
+      this.shapes.filter(shape =>
+        shape.shapeId !== shapeId
+      );
+
+    return this.shapes.length !== initialLength;
+  }
+
+
+  replaceShapes(
+    shapes = []
+  ) {
+
+    this.shapes =
+      shapes.map(
+        normalizeShape
+      );
+
+    return this.shapes;
+  }
+
+
+  setGrid(
+    patch
+  ) {
+
+    this.grid =
+      normalizeGrid({
+        ...this.grid,
+        ...patch
+      });
+
+    return this.grid;
+  }
+
+
+  updateFog(
+    patch
+  ) {
+
+    this.fog =
+      normalizeFog({
+        ...this.fog,
+        ...patch
+      });
+
+    return this.fog;
+  }
+
+
+  setView(
+    view
+  ) {
+
+    this.view =
+      normalizeView({
+        ...this.view,
+        ...view
+      });
+
+    return this.view;
   }
 
 
@@ -174,6 +428,23 @@ export class CampaignMapModel {
       shapes: this.shapes
     };
   }
+}
+
+
+export function getCampaignMapModel(
+  map
+) {
+
+  if (!map) return null;
+
+  if (map.campaignMapModel) {
+
+    return map.campaignMapModel;
+  }
+
+  return refreshCampaignMapModel(
+    map
+  );
 }
 
 
@@ -199,9 +470,145 @@ export function refreshCampaignMapModel(
 }
 
 
+export function commitTokenModelToElement(
+  tokenElement,
+  model = null
+) {
+
+  const map =
+    tokenElement?.closest('.campaign-map-document');
+
+  const activeModel =
+    model ||
+    getCampaignMapModel(
+      map
+    );
+
+  const token =
+    activeModel?.getToken(
+      ensureDatasetId(
+        tokenElement,
+        'tokenId'
+      )
+    );
+
+  if (!tokenElement || !token) return;
+
+  tokenElement.dataset.tokenId =
+    token.tokenId;
+
+  tokenElement.dataset.tokenType =
+    token.type;
+
+  tokenElement.dataset.x =
+    token.x.toFixed(3);
+
+  tokenElement.dataset.y =
+    token.y.toFixed(3);
+
+  tokenElement.dataset.size =
+    token.size.toFixed(3);
+
+  tokenElement.dataset.rotation =
+    String(token.rotation);
+
+  tokenElement.dataset.name =
+    token.name;
+
+  if (token.pageId) {
+
+    tokenElement.dataset.pageId =
+      token.pageId;
+
+  } else {
+
+    delete tokenElement.dataset.pageId;
+  }
+
+  if (token.imageAsset) {
+
+    tokenElement.dataset.imageAsset =
+      token.imageAsset;
+
+  } else {
+
+    delete tokenElement.dataset.imageAsset;
+  }
+
+  tokenElement.dataset.presentationHidden =
+    token.presentationHidden
+      ? 'true'
+      : 'false';
+}
+
+
+export function commitShapeModelToElement(
+  shapeElement,
+  model = null
+) {
+
+  const map =
+    shapeElement?.closest('.campaign-map-document');
+
+  const activeModel =
+    model ||
+    getCampaignMapModel(
+      map
+    );
+
+  const shape =
+    activeModel?.getShape(
+      ensureDatasetId(
+        shapeElement,
+        'shapeId'
+      )
+    );
+
+  if (!shapeElement || !shape) return;
+
+  shapeElement.dataset.shapeId =
+    shape.shapeId;
+
+  shapeElement.dataset.shapeType =
+    shape.type;
+
+  shapeElement.dataset.x =
+    String(Math.round(shape.x));
+
+  shapeElement.dataset.y =
+    String(Math.round(shape.y));
+
+  shapeElement.dataset.w =
+    String(Math.round(shape.width));
+
+  shapeElement.dataset.h =
+    String(Math.round(shape.height));
+
+  if (shape.points) {
+
+    shapeElement.dataset.points =
+      shape.points;
+
+  } else {
+
+    delete shapeElement.dataset.points;
+  }
+
+  shapeElement.dataset.presentationHidden =
+    shape.presentationHidden
+      ? 'true'
+      : 'false';
+}
+
+
 function readTokenElement(
   token
 ) {
+
+  ensureDatasetId(
+    token,
+    'tokenId'
+  );
 
   return {
     tokenId: token.dataset.tokenId || '',
@@ -224,6 +631,11 @@ function readShapeElement(
   shape
 ) {
 
+  ensureDatasetId(
+    shape,
+    'shapeId'
+  );
+
   return {
     shapeId: shape.dataset.shapeId || '',
     type: shape.dataset.shapeType || 'square',
@@ -234,6 +646,23 @@ function readShapeElement(
     points: shape.dataset.points || '',
     presentationHidden: shape.dataset.presentationHidden === 'true'
   };
+}
+
+
+function ensureDatasetId(
+  element,
+  key
+) {
+
+  if (!element) return '';
+
+  if (!element.dataset[key]) {
+
+    element.dataset[key] =
+      crypto.randomUUID();
+  }
+
+  return element.dataset[key];
 }
 
 

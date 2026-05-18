@@ -5,6 +5,10 @@ import {
   WORLD_WIDTH
 } from './campaignMapConstants.js';
 
+import {
+  refreshCampaignMapModel
+} from './campaignMapModel.js';
+
 
 let presentationWindow = null;
 const fogImageCache = new WeakMap();
@@ -108,6 +112,11 @@ export function syncPresentation() {
 
   if (!source || !target) return;
 
+  const model =
+    refreshCampaignMapModel(
+      source.closest('.campaign-map-document')
+    );
+
   const sourceCanvas =
     source.querySelector('.campaign-map-fog-canvas');
 
@@ -148,12 +157,11 @@ export function syncPresentation() {
       );
     });
 
-  clone
-    .querySelectorAll('.campaign-map-shape[data-presentation-hidden="true"]')
-    .forEach(shape => {
+  removeHiddenPresentationItems(
+    clone,
+    model
+  );
 
-      shape.remove();
-    });
 
   const viewport =
     clone.querySelector('.campaign-map-viewport');
@@ -207,6 +215,55 @@ export function syncPresentation() {
   presentationWindow.document.head.appendChild(
     style
   );
+}
+
+
+function removeHiddenPresentationItems(
+  clone,
+  model
+) {
+
+  const hiddenTokenIds =
+    new Set(
+      (model?.tokens || [])
+        .filter(token => token.presentationHidden)
+        .map(token => token.tokenId)
+    );
+
+  const hiddenShapeIds =
+    new Set(
+      (model?.shapes || [])
+        .filter(shape => shape.presentationHidden)
+        .map(shape => shape.shapeId)
+    );
+
+  clone
+    .querySelectorAll('.campaign-map-token')
+    .forEach(token => {
+
+      if (
+        hiddenTokenIds.has(
+          token.dataset.tokenId
+        )
+      ) {
+
+        token.remove();
+      }
+    });
+
+  clone
+    .querySelectorAll('.campaign-map-shape')
+    .forEach(shape => {
+
+      if (
+        hiddenShapeIds.has(
+          shape.dataset.shapeId
+        )
+      ) {
+
+        shape.remove();
+      }
+    });
 }
 
 

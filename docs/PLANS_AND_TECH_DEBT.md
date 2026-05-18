@@ -21,6 +21,15 @@
 - `js/editor/campaignMapShapeDrag.js` — вынесена state machine для drag/resize фигур.
 - `js/editor/campaignMapModel.js` — добавлен первый `CampaignMapModel`: нормализованный слепок `asset`, `grid`, `fog`, `view`, `tokens`, `shapes` из текущего DOM.
 - `js/editor/campaignMapConstants.js` расширен константами, которые раньше жили внутри большого файла карты.
+- После коммита `v.2.0.6` модель расширена методами `addToken`, `moveToken`, `resizeToken`, `rotateToken`, `addShape`, `moveShape`, `resizeShape`, `setGrid`, `updateFog`, `setView` и commit helpers для DOM-элементов.
+- Добавлены `removeToken`, `removeShape`, `replaceTokens`, `replaceShapes`.
+- `js/editor/campaignMapElementFactory.js` — выделено создание DOM-токенов и DOM-фигур из записей модели.
+- `js/editor/campaignMapRenderer.js` — выделено применение визуального состояния токенов и фигур к DOM.
+- `js/editor/campaignMapSaveController.js` — выделен порядок save/sync: title карты, refresh модели, сохранение страницы, sync презентации.
+- `js/editor/campaignMapViewport.js` — вынесены viewport structure, pan/zoom, culling offscreen-объектов и визуальные настройки сетки.
+- `js/editor/campaignMapPopupController.js` — вынесен общий контейнер popup-ов карты, повторный клик по кнопке, позиционирование и закрытие по клику снаружи.
+- `js/editor/campaignMapToolbarController.js` — вынесены действия тулбара карты: добавить, рука, сетка, смена карты, презентация, фигуры, туман.
+- `js/editor/campaignMapTokenPopupController.js` — вынесены hover-попапы токенов/фигур, меню существа, действия и изменение хитов.
 
 ### Текущее состояние после разреза
 
@@ -29,6 +38,13 @@
 - Поведение токенов и фигур больше не хранит локальное состояние в `campaignMap.js`; оно управляется отдельными модулями через явные dependency-контракты.
 - Добавление существ/объектов вынесено в отдельный picker, поэтому следующий шаг к `CampaignMapModel` можно делать без повторного вскрытия popup-логики.
 - `CampaignMapModel` уже обновляется после render, после создания токенов/фигур и перед сохранением. Пока это совместимый слой поверх DOM, а не полная замена DOM как источника истины.
+- Создание/дублирование токенов и фигур, drag/resize/rotate токенов, drag/resize фигур, сетка, fog mode/brush и viewport уже проходят через модельные методы.
+- Удаление токенов/фигур теперь тоже обновляет модель перед удалением DOM.
+- Presentation full-sync обновляет модель перед сборкой презентационного clone и использует модель для удаления скрытых элементов из презентации.
+- Save/sync orchestration вынесен из `campaignMap.js` в отдельный controller.
+- `campaignMap.js` больше не хранит состояние pan/culling и не создает общий popup-контейнер напрямую.
+- `campaignMap.js` больше не хранит token popup timers и не строит popup-разметку для токенов.
+- Кнопки тулбара карты теперь маршрутизируются через отдельный controller.
 
 ### Что стало лучше
 
@@ -41,6 +57,10 @@
 - Token actions отделены от pointer interactions: удалить/дублировать/HP теперь можно развивать без риска сломать перетаскивание.
 - Tree integration получила отдельный слой, а значит фильтры выбора карточек и подсветка дерева больше не размазаны по карте.
 - Появилась точка перехода к data-first архитектуре: новые оптимизации карты можно будет делать через `CampaignMapModel`, а не через поиск по DOM.
+- У интерактивных операций появился единый путь: изменить модель, затем применить модель к DOM. Это снижает риск, что разные модули запишут несовместимые `dataset`.
+- DOM creation и DOM render больше не смешаны с action/drag-логикой.
+- Viewport стал отдельной подсистемой, поэтому будущая оптимизация карты может менять culling/zoom/pan без чтения popup и token action кода.
+- Крупный разрез `campaignMap.js` на подсистемы завершен: основной файл стал bootstrap/orchestration, а не владельцем всех behavior-сценариев.
 
 ### Оставшиеся риски
 
@@ -53,31 +73,21 @@
   - поиск активных DOM-элементов при render/reload.
 - Нужно прогнать ручной browser smoke test на карте, потому что разрез затронул runtime modules и import graph.
 - В проекте всё ещё много `innerHTML`; для локального режима это терпимо, для web это security blocker.
-- `CampaignMapModel` пока читает DOM, поэтому DOM всё ещё является источником истины. Следующий риск — начать писать часть логики в модель, а часть напрямую в dataset. Нужно постепенно переводить операции на модельные методы.
+- `CampaignMapModel` всё ещё восстанавливается из DOM при render/save, поэтому DOM не полностью потерял роль источника истины.
+- Presentation live-sync отдельных элементов всё ещё получает source DOM item. Full-sync уже сверяется с моделью, но live-sync лучше позже перевести на `tokenId/shapeId + model`.
+- Save всё ещё сериализует DOM через существующий clean-save слой. Полный data-first save потребует отдельного persistent JSON/HTML mapping слоя.
 - Документация и некоторые старые строки в исходниках могут отображаться как mojibake в консоли Windows. Нельзя лечить это runtime-декодированием; нужно исправлять источник только при отдельной задаче на документацию/кодировку.
 
 ### Следующее развитие из этой работы
 
-1. Расширить `CampaignMapModel` методами изменения данных:
-   - `addToken()`;
-   - `moveToken()`;
-   - `resizeToken()`;
-   - `addShape()`;
-   - `updateFog()`;
-   - `setGrid()`.
-2. Перевести drag/save на модельные операции, а DOM оставить render-target.
-3. Разделить `campaignMap.js` на:
-   - `campaignMapRenderer.js`;
-   - `campaignMapViewport.js`;
-   - `campaignMapPopupController.js`;
-   - `campaignMapSaveController.js`.
-4. Добавить browser smoke tests для карты:
+1. Перевести presentation live-sync на `tokenId/shapeId + CampaignMapModel`, чтобы drag не передавал DOM-элементы между слоями.
+2. Добавить browser smoke tests для карты:
    - открыть карту;
    - добавить token;
    - переместить token;
    - сохранить/reload;
    - проверить координаты, fog и presentation sync.
-5. После стабилизации карты перейти к desktop app spike: проверить Tauri/Electron как оболочку для локального приложения.
+3. После стабилизации карты перейти к desktop app spike: проверить Tauri/Electron как оболочку для локального приложения.
 
 ## Правила развития
 

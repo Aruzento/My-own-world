@@ -17,6 +17,11 @@ import {
   scheduleLivePresentationSync
 } from './campaignMapPresentationSync.js';
 
+import {
+  commitShapeModelToElement,
+  getCampaignMapModel
+} from './campaignMapModel.js';
+
 
 const TOKEN_DRAG_THRESHOLD = 4;
 const SHAPE_HANDLE_THRESHOLD = 2;
@@ -324,17 +329,25 @@ function resizeShapeBox(
       size;
   }
 
-  shape.dataset.x =
-    String(Math.round(x));
+  const model =
+    getCampaignMapModel(
+      resizedShape.map
+    );
 
-  shape.dataset.y =
-    String(Math.round(y));
+  model?.resizeShape(
+    shape.dataset.shapeId,
+    {
+      x: Math.round(x),
+      y: Math.round(y),
+      width: Math.round(width),
+      height: Math.round(height)
+    }
+  );
 
-  shape.dataset.w =
-    String(Math.round(width));
-
-  shape.dataset.h =
-    String(Math.round(height));
+  commitShapeModelToElement(
+    shape,
+    model
+  );
 }
 
 
@@ -368,6 +381,18 @@ function resizeTrianglePoint(
     shape,
     points
   );
+
+  const model =
+    getCampaignMapModel(
+      resizedShape.map
+    );
+
+  model?.resizeShape(
+    shape.dataset.shapeId,
+    {
+      points: shape.dataset.points
+    }
+  );
 }
 
 
@@ -395,19 +420,27 @@ function moveShapeToPointer(
   draggedShape.moved =
     true;
 
-  draggedShape.shape.dataset.x =
-    String(
-      Math.round(
-        draggedShape.startLeft + delta.x
-      )
+  const model =
+    getCampaignMapModel(
+      draggedShape.map
     );
 
-  draggedShape.shape.dataset.y =
-    String(
-      Math.round(
+  model?.moveShape(
+    draggedShape.shape.dataset.shapeId,
+    {
+      x: Math.round(
+        draggedShape.startLeft + delta.x
+      ),
+      y: Math.round(
         draggedShape.startTop + delta.y
       )
-    );
+    }
+  );
+
+  commitShapeModelToElement(
+    draggedShape.shape,
+    model
+  );
 
   applyShapeGeometry(
     draggedShape.shape

@@ -14,6 +14,7 @@ import {
 } from './campaignMapPresentation.js';
 
 import {
+  getCampaignMapModel,
   refreshCampaignMapModel
 } from './campaignMapModel.js';
 
@@ -148,6 +149,19 @@ export function persistFogCanvas(
 
   stage.dataset.fogImage =
     canvas.toDataURL('image/png');
+
+  const model =
+    getCampaignMapModel(
+      map
+    );
+
+  model?.updateFog({
+    image: stage.dataset.fogImage
+  });
+
+  model?.commitToElement(
+    map
+  );
 
   rememberMapAssetSettings(
     stage

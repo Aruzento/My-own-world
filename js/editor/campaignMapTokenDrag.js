@@ -21,6 +21,11 @@ import {
   scheduleLivePresentationSync
 } from './campaignMapPresentationSync.js';
 
+import {
+  commitTokenModelToElement,
+  getCampaignMapModel
+} from './campaignMapModel.js';
+
 
 const TOKEN_DRAG_THRESHOLD = 4;
 const TOKEN_RESIZE_THRESHOLD = 2;
@@ -353,8 +358,20 @@ function rotateTokenToPointer(
   rotatedToken.moved =
     true;
 
-  rotatedToken.token.dataset.rotation =
-    String(rotation);
+  const model =
+    getCampaignMapModel(
+      rotatedToken.map
+    );
+
+  model?.rotateToken(
+    rotatedToken.token.dataset.tokenId,
+    rotation
+  );
+
+  commitTokenModelToElement(
+    rotatedToken.token,
+    model
+  );
 
   applyTokenRotation(
     rotatedToken.token
@@ -417,8 +434,23 @@ function resizeTokenToPointer(
       8
     );
 
-  resizedToken.token.dataset.size =
-    nextSize.toFixed(3);
+  const map =
+    resizedToken.token.closest('.campaign-map-document');
+
+  const model =
+    getCampaignMapModel(
+      map
+    );
+
+  model?.resizeToken(
+    resizedToken.token.dataset.tokenId,
+    nextSize
+  );
+
+  commitTokenModelToElement(
+    resizedToken.token,
+    model
+  );
 
   applyTokenSize(
     resizedToken.token
@@ -537,11 +569,23 @@ function moveTokenToPointer(
       100
     );
 
-  token.dataset.x =
-    x.toFixed(3);
+  const model =
+    getCampaignMapModel(
+      draggedToken.map
+    );
 
-  token.dataset.y =
-    y.toFixed(3);
+  model?.moveToken(
+    token.dataset.tokenId,
+    {
+      x,
+      y
+    }
+  );
+
+  commitTokenModelToElement(
+    token,
+    model
+  );
 
   positionToken(
     token

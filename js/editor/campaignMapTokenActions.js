@@ -32,16 +32,20 @@ import {
 } from './campaignMapHealth.js';
 
 import {
-  applyTokenRotation,
-  applyTokenSize,
-  positionToken,
-  restoreTokenImage,
-  setTokenFallbackText
-} from './campaignMapTokens.js';
+  createMapShapeElement,
+  createMapTokenElement
+} from './campaignMapElementFactory.js';
 
 import {
-  renderMapShape
-} from './campaignMapShapes.js';
+  renderMapShapeElement,
+  renderMapTokenElement
+} from './campaignMapRenderer.js';
+
+import {
+  commitShapeModelToElement,
+  commitTokenModelToElement,
+  getCampaignMapModel
+} from './campaignMapModel.js';
 
 
 // Слой действий карты: операции, которые меняют карточки, дерево или сохраненное
@@ -94,6 +98,18 @@ export async function deleteTokenAndPage(
       return;
     }
   }
+
+  const map =
+    token.closest('.campaign-map-document');
+
+  const model =
+    getCampaignMapModel(
+      map
+    );
+
+  model?.removeToken(
+    token.dataset.tokenId
+  );
 
   token.remove();
   renderTree();
@@ -289,10 +305,44 @@ export async function toggleMapItemPresentationVisibility(
   const hidden =
     item.dataset.presentationHidden === 'true';
 
-  item.dataset.presentationHidden =
-    hidden
-      ? 'false'
-      : 'true';
+  const map =
+    item.closest('.campaign-map-document');
+
+  const model =
+    getCampaignMapModel(
+      map
+    );
+
+  if (
+    item.classList.contains('campaign-map-shape')
+  ) {
+
+    model?.updateShape(
+      item.dataset.shapeId,
+      {
+        presentationHidden: !hidden
+      }
+    );
+
+    commitShapeModelToElement(
+      item,
+      model
+    );
+
+  } else {
+
+    model?.updateToken(
+      item.dataset.tokenId,
+      {
+        presentationHidden: !hidden
+      }
+    );
+
+    commitTokenModelToElement(
+      item,
+      model
+    );
+  }
 
   item.classList.toggle(
     'is-presentation-hidden',
@@ -313,6 +363,19 @@ export async function deleteMapShape(
 ) {
 
   deps.closeTokenPopup();
+
+  const map =
+    shape.closest('.campaign-map-document');
+
+  const model =
+    getCampaignMapModel(
+      map
+    );
+
+  model?.removeShape(
+    shape.dataset.shapeId
+  );
+
   shape.remove();
   await deps.saveAndSync();
 }
@@ -323,47 +386,36 @@ export async function duplicateMapShape(
   deps
 ) {
 
+  const map =
+    shape.closest('.campaign-map-document');
+
+  const model =
+    getCampaignMapModel(
+      map
+    );
+
+  const shapeData =
+    model?.addShape({
+      type: shape.dataset.shapeType,
+      x: Number(shape.dataset.x || 0) + 24,
+      y: Number(shape.dataset.y || 0) + 24,
+      width: shape.dataset.w,
+      height: shape.dataset.h,
+      points: shape.dataset.points || '',
+      presentationHidden: shape.dataset.presentationHidden === 'true'
+    });
+
   const clone =
-    shape.cloneNode(false);
-
-  clone.className =
-    'campaign-map-shape';
-
-  [
-    'shapeType',
-    'x',
-    'y',
-    'w',
-    'h',
-    'points',
-    'presentationHidden'
-  ].forEach(key => {
-
-    if (shape.dataset[key] !== undefined) {
-
-      clone.dataset[key] =
-        shape.dataset[key];
-    }
-  });
-
-  clone.dataset.x =
-    String(
-      Number(shape.dataset.x || 0) + 24
+    createMapShapeElement(
+      shapeData,
+      model
     );
-
-  clone.dataset.y =
-    String(
-      Number(shape.dataset.y || 0) + 24
-    );
-
-  clone.dataset.shapeId =
-    crypto.randomUUID();
 
   shape.after(
     clone
   );
 
-  renderMapShape(
+  renderMapShapeElement(
     clone
   );
 
@@ -418,84 +470,46 @@ async function addMapTokenFromExisting(
       sourceToken
     );
 
-  const token =
-    document.createElement('button');
+  const model =
+    getCampaignMapModel(
+      map
+    );
 
-  token.className =
-    `campaign-map-token is-${tokenType}`;
-
-  token.type =
-    'button';
-
-  token.dataset.tokenId =
-    crypto.randomUUID();
-
-  token.dataset.tokenType =
-    tokenType;
-
-  token.dataset.pageId =
-    page.id;
-
-  token.dataset.name =
-    page.title || sourceToken.dataset.name || '';
-
-  token.dataset.x =
-    String(
-      clamp(
+  const tokenData =
+    model?.addToken({
+      type: tokenType,
+      pageId: page.id,
+      name: page.title || sourceToken.dataset.name || '',
+      x: clamp(
         Number(sourceToken.dataset.x || 50) + 2,
         0,
         100
-      )
-    );
-
-  token.dataset.y =
-    String(
-      clamp(
+      ),
+      y: clamp(
         Number(sourceToken.dataset.y || 50) + 2,
         0,
         100
-      )
+      ),
+      size: sourceToken.dataset.size || '1',
+      rotation: sourceToken.dataset.rotation || '0',
+      imageAsset: sourceToken.dataset.imageAsset || ''
+    });
+
+  const token =
+    createMapTokenElement(
+      tokenData,
+      model
     );
-
-  token.dataset.size =
-    sourceToken.dataset.size || '1';
-
-  token.dataset.rotation =
-    sourceToken.dataset.rotation || '0';
-
-  if (sourceToken.dataset.imageAsset) {
-
-    token.dataset.imageAsset =
-      sourceToken.dataset.imageAsset;
-  }
-
-  setTokenFallbackText(
-    token,
-    token.dataset.tokenType
-  );
 
   layer.appendChild(
     token
   );
 
-  positionToken(
-    token
-  );
-
-  applyTokenSize(
-    token
-  );
-
-  applyTokenRotation(
-    token
-  );
-
-  deps.applyTokenHealthState(
-    token
-  );
-
-  await restoreTokenImage(
-    token
+  await renderMapTokenElement(
+    token,
+    {
+      applyHealth: deps.applyTokenHealthState
+    }
   );
 }
 
