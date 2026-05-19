@@ -108,6 +108,33 @@ export function createSkillsBlock({
 }
 
 
+export function createVariablesBlock({
+  title = 'Переменные'
+}) {
+
+  return `
+    <div
+      class="template-block variables-block"
+      data-block-type="variables"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div class="variables-list"></div>
+
+      <button
+        class="variables-add-btn"
+        data-runtime="true"
+        type="button"
+      >
+        + Добавить переменную
+      </button>
+    </div>
+  `;
+}
+
+
 export function createImageBlock() {
 
   return `

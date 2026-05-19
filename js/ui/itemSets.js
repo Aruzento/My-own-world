@@ -721,6 +721,17 @@ function createSetOptionHTML(
     `;
   }
 
+  if (activeSetKind === 'spells') {
+
+    return `
+      ${getPageIcon(page.tags)}
+
+      <span class="item-set-option-title spell-set-option-text">
+        <strong>${page.title || 'Без названия'}</strong>
+      </span>
+    `;
+  }
+
   return `
     ${getPageIcon(page.tags)}
 

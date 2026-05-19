@@ -48,10 +48,6 @@ import {
   setupDndStats
 } from './ui/dndStats.js';
 
-import {
-  setupDndStatsV2
-} from './ui/dndStatsV2.js';
-
 /* Импорт backlinks */
 import {
   setupBacklinks
@@ -145,7 +141,6 @@ setupItemSets();
 
 /* Инициализация DnD stat block */
 setupDndStats();
-setupDndStatsV2();
 
 /* Инициализация поведения таблиц */
 setupTables();

@@ -298,6 +298,63 @@
 }
 
 
+.campaign-map-stage.is-tree-card-over {
+
+  border-color:
+    rgba(241,211,142,0.48);
+
+  box-shadow:
+    inset 0 0 0 2px rgba(241,211,142,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+
+.campaign-map-stage.is-tree-card-over::after {
+
+  content:
+    "Отпустите, чтобы добавить на карту";
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    18px;
+
+  transform:
+    translateX(-50%);
+
+  z-index:
+    8;
+
+  padding:
+    8px 12px;
+
+  border:
+    1px solid rgba(241,211,142,0.24);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(10,13,20,0.86);
+
+  color:
+    var(--accent);
+
+  font-size:
+    12px;
+
+  font-weight:
+    760;
+
+  pointer-events:
+    none;
+}
+
+
 .campaign-map-viewport {
 
   position:

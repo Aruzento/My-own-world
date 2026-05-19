@@ -6,7 +6,6 @@ import {
   createImageBlock,
   createCharacterStatsBlock,
   createDndStatsBlock,
-  createDndStatsV2Block,
   createTableBlock
 } from '../../templates/blockTypes.js';
 
@@ -43,11 +42,6 @@ const BLOCK_CREATORS = {
 
   dndStats: title =>
     createDndStatsBlock({
-      title
-    }),
-
-  dndStatsV2: title =>
-    createDndStatsV2Block({
       title
     }),
 

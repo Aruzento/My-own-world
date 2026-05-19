@@ -3,6 +3,7 @@
   items: 1,
   spells: 1,
   skills: 1,
+  variables: 1,
   image: 1,
   characterStats: 2,
   dndStats: 3,

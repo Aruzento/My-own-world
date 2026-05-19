@@ -236,6 +236,95 @@ function renderCardPickerList(
 }
 
 
+export function getMapTokenKindForPage(
+  page
+) {
+
+  if (
+    page?.type === 'object'
+  ) {
+
+    return 'object';
+  }
+
+  if (
+    page?.type === 'character' ||
+    page?.type === 'creature'
+  ) {
+
+    return 'creature';
+  }
+
+  return null;
+}
+
+
+export function canAddPageToCampaignMap(
+  page
+) {
+
+  if (!page) return false;
+
+  const kind =
+    getMapTokenKindForPage(
+      page
+    );
+
+  if (!kind) return false;
+
+  return !hasCampaignMapAncestor(
+    page,
+    createPageLookup()
+  );
+}
+
+
+export async function addPageToMap(
+  map,
+  page,
+  deps,
+  options = {}
+) {
+
+  if (
+    !canAddPageToCampaignMap(
+      page
+    )
+  ) return null;
+
+  const kind =
+    getMapTokenKindForPage(
+      page
+    );
+
+  const bucket =
+    await ensureMapBucket(
+      kind
+    );
+
+  const duplicate =
+    await duplicatePageAsChild(
+      page,
+      bucket.id
+    );
+
+  await deps.addMapToken(
+    map,
+    kind,
+    duplicate,
+    options.spawnIndex || 0,
+    {
+      worldPoint: options.worldPoint || null
+    }
+  );
+
+  renderTree();
+  await deps.saveAndSync();
+
+  return duplicate;
+}
+
+
 async function addSelectedPagesToMap(
   map,
   kind,

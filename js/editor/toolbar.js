@@ -25,6 +25,12 @@ const MAX_RECENT_TEXT_COLORS =
 let lastSelectionRange =
   null;
 
+let isPointerSelectingText =
+  false;
+
+let hasDeferredSelectionUpdate =
+  false;
+
 
 export function setupFloatingToolbar() {
 
@@ -72,17 +78,68 @@ export function setupFloatingToolbar() {
 
 
   document.addEventListener(
+    'pointerdown',
+    event => {
+
+      if (
+        event.button !== 0 ||
+        toolbar.contains(event.target)
+      ) return;
+
+      isPointerSelectingText =
+        Boolean(
+          event.target.closest(
+            '[contenteditable="true"]'
+          )
+        );
+
+      if (isPointerSelectingText) {
+
+        hasDeferredSelectionUpdate =
+          false;
+
+        /* Toolbar не должен всплывать посреди протягивания мышью:
+           показываем его только после pointerup. */
+        toolbar.classList.add(
+          'hidden'
+        );
+      }
+    },
+    true
+  );
+
+
+  document.addEventListener(
+    'pointerup',
+    () => {
+
+      if (!isPointerSelectingText) return;
+
+      isPointerSelectingText =
+        false;
+
+      if (hasDeferredSelectionUpdate) {
+
+        hasDeferredSelectionUpdate =
+          false;
+
+        updateToolbarForSelection(
+          toolbar
+        );
+      }
+    },
+    true
+  );
+
+
+  document.addEventListener(
     'selectionchange',
     () => {
 
-      const selection =
-        window.getSelection();
+      if (isPointerSelectingText) {
 
-      if (
-        !selection
-        ||
-        selection.rangeCount === 0
-      ) {
+        hasDeferredSelectionUpdate =
+          true;
 
         toolbar.classList.add(
           'hidden'
@@ -91,42 +148,8 @@ export function setupFloatingToolbar() {
         return;
       }
 
-      const text =
-        selection.toString().trim();
-
-      if (
-        !text ||
-        !isSelectionInsidePersistentEditable(selection)
-      ) {
-
-        toolbar.classList.add(
-          'hidden'
-        );
-
-        return;
-      }
-
-      const range =
-        selection.getRangeAt(0);
-
-      lastSelectionRange =
-        range.cloneRange();
-
-      const rect =
-        range.getBoundingClientRect();
-
-      toolbar.classList.remove(
-        'hidden'
-      );
-
-      updateToolbarActiveState(
-        toolbar,
-        selection
-      );
-
-      positionToolbar(
-        toolbar,
-        rect
+      updateToolbarForSelection(
+        toolbar
       );
     }
   );
@@ -366,6 +389,66 @@ export function setupFloatingToolbar() {
         'hidden'
       );
     }
+  );
+}
+
+
+function updateToolbarForSelection(
+  toolbar
+) {
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection
+    ||
+    selection.rangeCount === 0
+  ) {
+
+    toolbar.classList.add(
+      'hidden'
+    );
+
+    return;
+  }
+
+  const text =
+    selection.toString().trim();
+
+  if (
+    !text ||
+    !isSelectionInsidePersistentEditable(selection)
+  ) {
+
+    toolbar.classList.add(
+      'hidden'
+    );
+
+    return;
+  }
+
+  const range =
+    selection.getRangeAt(0);
+
+  lastSelectionRange =
+    range.cloneRange();
+
+  const rect =
+    range.getBoundingClientRect();
+
+  toolbar.classList.remove(
+    'hidden'
+  );
+
+  updateToolbarActiveState(
+    toolbar,
+    selection
+  );
+
+  positionToolbar(
+    toolbar,
+    rect
   );
 }
 

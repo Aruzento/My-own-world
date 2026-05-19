@@ -90,7 +90,7 @@ export function setupTreeDragAndDrop(
       );
 
       event.dataTransfer.effectAllowed =
-        'move';
+        'copyMove';
     }
   );
 

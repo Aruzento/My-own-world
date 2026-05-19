@@ -9,10 +9,6 @@ import {
 } from '../storage/storage.js';
 
 import {
-  setStatus
-} from '../ui/ui.js';
-
-import {
   markRuntime
 } from './blocks/blockContract.js';
 
@@ -99,6 +95,10 @@ import {
 import {
   openAddKindPopup
 } from './campaignMapPicker.js';
+
+import {
+  setupCampaignMapExternalDrop
+} from './campaignMapExternalDrop.js';
 
 import {
   getCampaignMapModel,
@@ -234,6 +234,13 @@ export function setupCampaignMaps(
     'wheel',
     handleMapWheel,
     { passive: false }
+  );
+
+  setupCampaignMapExternalDrop(
+    editor,
+    {
+      getMapPickerDeps
+    }
   );
 }
 
@@ -542,7 +549,8 @@ async function addMapToken(
   map,
   type,
   page = null,
-  spawnIndex = 0
+  spawnIndex = 0,
+  options = {}
 ) {
 
   const layer =
@@ -559,6 +567,7 @@ async function addMapToken(
     );
 
   const spawnPoint =
+    options.worldPoint ||
     getVisibleSpawnPoint(
       map,
       spawnIndex

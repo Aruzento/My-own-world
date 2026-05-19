@@ -61,13 +61,6 @@ export function renderTypePicker(
       })}
 
       ${createTypeOptionHTML({
-        type: 'dndStatsV2',
-        icon: '20',
-        title: 'Стат. блок DnD v 2.0',
-        description: 'Раса, класс, хиты, владения и навыки'
-      })}
-
-      ${createTypeOptionHTML({
         type: 'table',
         icon: '▦',
         title: 'Таблица',
@@ -197,7 +190,6 @@ export function getBlockPopupTitle(
     skills: 'Название блока с навыками',
     characterStats: 'Название блока статистики персонажа',
     dndStats: 'Название DnD stat block',
-    dndStatsV2: 'Название DnD stat block v 2.0',
     text: 'Название текстового блока'
   };
 
@@ -216,7 +208,6 @@ export function getDefaultBlockTitle(
     skills: 'Навыки',
     characterStats: 'Статистика персонажа',
     dndStats: 'Стат. блок DnD',
-    dndStatsV2: 'Стат. блок DnD v 2.0',
     text: 'Новый блок'
   };
 

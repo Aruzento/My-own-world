@@ -52,6 +52,12 @@ const draggedPageState = {
 
 draggedPageState.dropMode = null;
 
+
+export function getDraggedTreePageId() {
+
+  return draggedPageState.id;
+}
+
 export function renderFilteredTree(
   pages
 ) {

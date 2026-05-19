@@ -19,10 +19,6 @@ import {
 } from '../ui/dndStats.js';
 
 import {
-  renderDndStatsV2
-} from '../ui/dndStatsV2.js';
-
-import {
   setupFloatingToolbar
 } from './toolbar.js';
 
@@ -462,7 +458,6 @@ if (blockContractChanged) {
 );
 /* Пересчитывает DnD модификаторы после открытия страницы */
 renderDndStats();
-renderDndStatsV2();
 
   setStatus(
     `Открыта ${page.name}`
