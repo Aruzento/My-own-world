@@ -6,8 +6,23 @@ import {
 } from './campaignMapConstants.js';
 
 import {
+  getCampaignMapModel,
   refreshCampaignMapModel
 } from './campaignMapModel.js';
+
+import {
+  applyTokenRotation,
+  applyTokenSize,
+  positionToken
+} from './campaignMapTokens.js';
+
+import {
+  renderMapShape
+} from './campaignMapShapes.js';
+
+import {
+  renderPresentationDragMeasure
+} from './campaignMapDragMeasure.js';
 
 
 let presentationWindow = null;
@@ -267,35 +282,38 @@ function removeHiddenPresentationItems(
 }
 
 
-export function syncPresentationItem(
-  sourceItem
+export function syncPresentationItemById(
+  sourceMap,
+  itemType,
+  itemId
 ) {
 
   if (
-    !sourceItem ||
+    !sourceMap ||
+    !itemId ||
     !presentationWindow ||
     presentationWindow.closed
   ) return false;
 
-  const sourceStage =
-    sourceItem.closest('.campaign-map-stage');
+  const model =
+    getCampaignMapModel(
+      sourceMap
+    );
+
+  const record =
+    itemType === 'shape'
+      ? model?.getShape(itemId)
+      : model?.getToken(itemId);
 
   const targetStage =
     presentationWindow.document.querySelector('.campaign-map-stage');
 
-  if (!sourceStage || !targetStage) return false;
-
-  const key =
-    getPresentationItemKey(
-      sourceItem
-    );
-
-  if (!key) return false;
+  if (!targetStage) return false;
 
   const selector =
     getPresentationItemSelector(
-      sourceItem,
-      key
+      itemType,
+      itemId
     );
 
   if (!selector) return false;
@@ -306,47 +324,171 @@ export function syncPresentationItem(
     );
 
   if (
-    sourceItem.dataset.presentationHidden === 'true' ||
-    sourceItem.classList.contains('is-presentation-hidden')
+    !record ||
+    record.presentationHidden
   ) {
 
     targetItem?.remove();
     return true;
   }
 
-  const clone =
-    clonePresentationItem(
-      sourceItem
-    );
+  if (!targetItem) {
 
-  if (targetItem) {
-
-    targetItem.replaceWith(
-      clone
-    );
-
-    return true;
+    syncPresentation();
+    return false;
   }
 
-  const targetLayer =
-    targetStage.querySelector('.campaign-map-object-layer');
-
-  if (!targetLayer) return false;
-
-  targetLayer.appendChild(
-    clone
+  applyPresentationItemRecord(
+    targetItem,
+    itemType,
+    record
   );
 
   return true;
 }
 
 
+function applyPresentationItemRecord(
+  targetItem,
+  itemType,
+  record
+) {
+
+  if (itemType === 'shape') {
+
+    targetItem.dataset.shapeId =
+      record.shapeId;
+
+    targetItem.dataset.shapeType =
+      record.type;
+
+    targetItem.dataset.x =
+      String(Math.round(record.x));
+
+    targetItem.dataset.y =
+      String(Math.round(record.y));
+
+    targetItem.dataset.w =
+      String(Math.round(record.width));
+
+    targetItem.dataset.h =
+      String(Math.round(record.height));
+
+    if (record.points) {
+
+      targetItem.dataset.points =
+        record.points;
+
+    } else {
+
+      delete targetItem.dataset.points;
+    }
+
+    targetItem.dataset.presentationHidden =
+      record.presentationHidden
+        ? 'true'
+        : 'false';
+
+    renderMapShape(
+      targetItem
+    );
+
+    targetItem
+      .querySelectorAll('[data-runtime="true"]')
+      .forEach(element => element.remove());
+
+    targetItem.classList.remove(
+      'is-selected',
+      'is-resizing',
+      'is-offscreen'
+    );
+
+    return;
+  }
+
+  targetItem.dataset.tokenId =
+    record.tokenId;
+
+  targetItem.dataset.tokenType =
+    record.type;
+
+  targetItem.classList.toggle(
+    'is-creature',
+    record.type === 'creature'
+  );
+
+  targetItem.classList.toggle(
+    'is-object',
+    record.type === 'object'
+  );
+
+  targetItem.dataset.x =
+    record.x.toFixed(3);
+
+  targetItem.dataset.y =
+    record.y.toFixed(3);
+
+  targetItem.dataset.size =
+    record.size.toFixed(3);
+
+  targetItem.dataset.rotation =
+    String(record.rotation);
+
+  targetItem.dataset.name =
+    record.name;
+
+  if (record.pageId) {
+
+    targetItem.dataset.pageId =
+      record.pageId;
+
+  } else {
+
+    delete targetItem.dataset.pageId;
+  }
+
+  if (record.imageAsset) {
+
+    targetItem.dataset.imageAsset =
+      record.imageAsset;
+
+  } else {
+
+    delete targetItem.dataset.imageAsset;
+  }
+
+  targetItem.dataset.presentationHidden =
+    record.presentationHidden
+      ? 'true'
+      : 'false';
+
+  positionToken(
+    targetItem
+  );
+
+  applyTokenSize(
+    targetItem
+  );
+
+  applyTokenRotation(
+    targetItem
+  );
+
+  targetItem.classList.remove(
+    'is-selected',
+    'is-dragging',
+    'is-resizing',
+    'is-rotating',
+    'is-offscreen'
+  );
+}
+
+
 export function syncPresentationDragMeasure(
-  sourceStage
+  payload
 ) {
 
   if (
-    !sourceStage ||
     !presentationWindow ||
     presentationWindow.closed
   ) return false;
@@ -357,49 +499,15 @@ export function syncPresentationDragMeasure(
   const targetViewport =
     targetStage?.querySelector('.campaign-map-viewport');
 
-  if (!targetViewport) return false;
-
-  targetViewport
-    .querySelectorAll('.campaign-map-drag-measure')
-    .forEach(measure => measure.remove());
-
-  const sourceMeasure =
-    sourceStage.querySelector('.campaign-map-drag-measure');
-
-  if (!sourceMeasure) return true;
-
-  targetViewport.appendChild(
-    sourceMeasure.cloneNode(true)
+  return renderPresentationDragMeasure(
+    targetViewport,
+    payload
   );
-
-  return true;
-}
-
-
-function getPresentationItemKey(
-  item
-) {
-
-  if (
-    item.classList.contains('campaign-map-token')
-  ) {
-
-    return item.dataset.tokenId || '';
-  }
-
-  if (
-    item.classList.contains('campaign-map-shape')
-  ) {
-
-    return item.dataset.shapeId || '';
-  }
-
-  return '';
 }
 
 
 function getPresentationItemSelector(
-  item,
+  itemType,
   key
 ) {
 
@@ -408,44 +516,17 @@ function getPresentationItemSelector(
       key
     );
 
-  if (
-    item.classList.contains('campaign-map-token')
-  ) {
+  if (itemType === 'token') {
 
     return `.campaign-map-token[data-token-id="${escapedKey}"]`;
   }
 
-  if (
-    item.classList.contains('campaign-map-shape')
-  ) {
+  if (itemType === 'shape') {
 
     return `.campaign-map-shape[data-shape-id="${escapedKey}"]`;
   }
 
   return '';
-}
-
-
-function clonePresentationItem(
-  item
-) {
-
-  const clone =
-    item.cloneNode(true);
-
-  clone
-    .querySelectorAll('[data-runtime="true"]')
-    .forEach(element => element.remove());
-
-  clone.classList.remove(
-    'is-selected',
-    'is-dragging',
-    'is-resizing',
-    'is-rotating',
-    'is-offscreen'
-  );
-
-  return clone;
 }
 
 

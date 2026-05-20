@@ -21,6 +21,10 @@ import {
   syncCampaignMapPresentation
 } from './campaignMap.js';
 
+import {
+  serializeTaskTrackerHTML
+} from '../taskTracker/taskTracker.js';
+
 
 export function setupAutosave(
   editor
@@ -66,6 +70,19 @@ export async function saveCurrentPage(
 
     console.warn(
       'Autosave skipped: current page and campaign map editor state are out of sync.'
+    );
+
+    return;
+  }
+
+  if (
+    isTaskTrackerEditorMismatch(
+      editor
+    )
+  ) {
+
+    console.warn(
+      'Autosave skipped: current page and task tracker editor state are out of sync.'
     );
 
     return;
@@ -140,6 +157,23 @@ function isCampaignMapEditorMismatch(
 }
 
 
+function isTaskTrackerEditorMismatch(
+  editor
+) {
+
+  const editorHasTracker =
+    Boolean(
+      editor.querySelector('.task-tracker-document')
+    );
+
+  const currentIsTracker =
+    state.currentPage?.template === 'taskTracker' ||
+    state.currentPage?.type === 'taskTracker';
+
+  return editorHasTracker !== currentIsTracker;
+}
+
+
 function getSerializedEditorHTML(
   editor
 ) {
@@ -150,6 +184,16 @@ function getSerializedEditorHTML(
   ) {
 
     return serializeCampaignMapHTML(
+      editor
+    );
+  }
+
+  if (
+    state.currentPage?.template === 'taskTracker' ||
+    state.currentPage?.type === 'taskTracker'
+  ) {
+
+    return serializeTaskTrackerHTML(
       editor
     );
   }

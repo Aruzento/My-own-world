@@ -1,5 +1,4 @@
 import {
-  DEFAULT_GRID_SIZE,
   WORLD_HEIGHT,
   WORLD_WIDTH
 } from './campaignMapConstants.js';
@@ -25,6 +24,11 @@ import {
   commitTokenModelToElement,
   getCampaignMapModel
 } from './campaignMapModel.js';
+
+import {
+  removeDragMeasure,
+  updateDragMeasure
+} from './campaignMapDragMeasure.js';
 
 
 const TOKEN_DRAG_THRESHOLD = 4;
@@ -378,7 +382,11 @@ function rotateTokenToPointer(
   );
 
   scheduleLivePresentationSync(
-    rotatedToken.token
+    {
+      map: rotatedToken.map,
+      itemType: 'token',
+      itemId: rotatedToken.token.dataset.tokenId
+    }
   );
 }
 
@@ -457,7 +465,11 @@ function resizeTokenToPointer(
   );
 
   scheduleLivePresentationSync(
-    resizedToken.token
+    {
+      map,
+      itemType: 'token',
+      itemId: resizedToken.token.dataset.tokenId
+    }
   );
 }
 
@@ -591,154 +603,21 @@ function moveTokenToPointer(
     token
   );
 
-  updateDragMeasure(
+  const measure =
+    updateDragMeasure(
     draggedToken,
     point
   );
 
   scheduleLivePresentationSync(
-    token,
-    stage
-  );
-}
-
-
-function updateDragMeasure(
-  drag,
-  point
-) {
-
-  if (drag.token?.dataset.presentationHidden === 'true') {
-
-    removeDragMeasure(
-      drag
-    );
-
-    drag.measure =
-      null;
-
-    return;
-  }
-
-  const cells =
-    getDragDistanceCells(
-      drag,
-      point
-    );
-
-  if (cells <= 0) {
-
-    removeDragMeasure(
-      drag
-    );
-
-    drag.measure =
-      null;
-
-    return;
-  }
-
-  const viewport =
-    drag.stage.querySelector('.campaign-map-viewport');
-
-  if (!viewport) return;
-
-  if (!drag.measure) {
-
-    drag.measure =
-      document.createElementNS(
-        'http://www.w3.org/2000/svg',
-        'svg'
-      );
-
-    drag.measure.classList.add(
-      'campaign-map-drag-measure'
-    );
-
-    drag.measure.setAttribute(
-      'viewBox',
-      `0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`
-    );
-
-    drag.measure.innerHTML = `
-      <defs>
-        <marker id="campaign-drag-arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
-          <path d="M2,2 L10,6 L2,10 Z"></path>
-        </marker>
-      </defs>
-      <line></line>
-      <text></text>
-    `;
-
-    viewport.appendChild(
-      drag.measure
-    );
-  }
-
-  const line =
-    drag.measure.querySelector('line');
-
-  const label =
-    drag.measure.querySelector('text');
-
-  line.setAttribute(
-    'x1',
-    String(drag.startWorldX)
-  );
-
-  line.setAttribute(
-    'y1',
-    String(drag.startWorldY)
-  );
-
-  line.setAttribute(
-    'x2',
-    String(point.x)
-  );
-
-  line.setAttribute(
-    'y2',
-    String(point.y)
-  );
-
-  label.setAttribute(
-    'x',
-    String((drag.startWorldX + point.x) / 2)
-  );
-
-  label.setAttribute(
-    'y',
-    String((drag.startWorldY + point.y) / 2 - 12)
-  );
-
-  label.textContent =
-    `${cells * 5} ft`;
-}
-
-
-function removeDragMeasure(
-  drag
-) {
-
-  drag?.measure?.remove();
-}
-
-
-function getDragDistanceCells(
-  drag,
-  point
-) {
-
-  const gridSize =
-    Math.max(
-      1,
-      Number(drag.stage.dataset.gridSize || DEFAULT_GRID_SIZE)
-    );
-
-  return Math.round(
-    Math.max(
-      Math.abs(point.x - drag.startWorldX),
-      Math.abs(point.y - drag.startWorldY)
-    ) / gridSize
+    {
+      map: draggedToken.map,
+      itemType: 'token',
+      itemId: token.dataset.tokenId
+    },
+    {
+      ...measure,
+      map: draggedToken.map
+    }
   );
 }

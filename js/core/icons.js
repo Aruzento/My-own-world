@@ -12,7 +12,8 @@ const pageIcons = {
   folder: 'folder',
   magic: 'magic',
   skill: 'skill',
-  'campaign-map': 'campaign-map'
+  'campaign-map': 'campaign-map',
+  'task-tracker': 'task-tracker'
 };
 
 

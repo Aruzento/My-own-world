@@ -491,7 +491,7 @@ export function hasActiveMapPan() {
 }
 
 
-function scheduleVisibleMapObjectsUpdate(
+export function scheduleVisibleMapObjectsUpdate(
   map,
   view = null
 ) {

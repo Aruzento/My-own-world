@@ -6,11 +6,18 @@ import {
   createCampaignMapTemplate
 } from './campaignMap.js';
 
+import {
+  createTaskTrackerTemplate
+} from './taskTracker.js';
+
 
 export const templates = {
   card:
     createCardShellTemplate(),
 
   campaignMap:
-    createCampaignMapTemplate()
+    createCampaignMapTemplate(),
+
+  taskTracker:
+    createTaskTrackerTemplate()
 };

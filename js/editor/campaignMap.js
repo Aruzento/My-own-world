@@ -1,46 +1,16 @@
 import { state } from '../state.js';
 
 import {
-  getImageURL
-} from '../storage/assetStorage.js';
-
-import {
-  writeFile
-} from '../storage/storage.js';
-
-import {
   markRuntime
 } from './blocks/blockContract.js';
 
 import {
-  DEFAULT_BRUSH_SIZE,
-  DEFAULT_SHAPE_SIZE,
-  WORLD_HEIGHT,
-  WORLD_WIDTH
-} from './campaignMapConstants.js';
-
-import {
-  clearMapBackgroundCache,
-  setMapInteractionQuality as setMapBackgroundInteractionQuality,
-  updateMapBackgroundQuality
+  setMapInteractionQuality as setMapBackgroundInteractionQuality
 } from './campaignMapBackground.js';
 
 import {
-  clamp,
-  getActiveGridSize,
-  getStageView,
-  getVisibleSpawnPoint
+  getActiveGridSize
 } from './campaignMapGeometry.js';
-
-import {
-  createMapShapeElement,
-  createMapTokenElement
-} from './campaignMapElementFactory.js';
-
-import {
-  renderMapShapeElement,
-  renderMapTokenElement
-} from './campaignMapRenderer.js';
 
 import {
   saveCampaignMapAndSync
@@ -68,25 +38,20 @@ import {
   applyViewportTransform,
   ensureMapViewState,
   ensureViewportStructure,
+  scheduleVisibleMapObjectsUpdate,
+  updateGridButton,
+  updateGridSize,
+  zoomMap,
   finishMapPan,
   hasActiveMapPan,
   moveMapPan,
-  startMapPan,
-  updateGridButton,
-  updateGridSize,
-  zoomMap
+  startMapPan
 } from './campaignMapViewport.js';
 
 import {
   removeTokensFromMapElement,
   removeTokensFromMapPageContent
 } from './campaignMapSerializerHelpers.js';
-
-import {
-  createPageLookup,
-  clearTreeHighlight,
-  highlightTreePage
-} from './campaignMapTreeIntegration.js';
 
 import {
   getMapControlsHTML
@@ -101,13 +66,8 @@ import {
 } from './campaignMapExternalDrop.js';
 
 import {
-  getCampaignMapModel,
   refreshCampaignMapModel
 } from './campaignMapModel.js';
-
-import {
-  getPagePortraitAsset,
-} from './campaignMapTokens.js';
 
 import {
   clearDraggedToken,
@@ -128,8 +88,6 @@ import {
 } from './campaignMapShapeDrag.js';
 
 import {
-  createFogDrawing,
-  drawFogAtPointer as drawFogAtPointerOnCanvas,
   setFogMode as setCampaignFogMode,
   setMapTool as setCampaignMapTool,
   updateFogButtons,
@@ -142,22 +100,31 @@ import {
 } from './campaignMapPresentation.js';
 
 import {
-  scheduleLivePresentationSync,
   schedulePresentationSync
 } from './campaignMapPresentationSync.js';
 
 import {
   isCampaignMapRecord,
-  persistFogCanvas,
-  rememberMapAssetSettings,
-  restoreFogCanvas,
-  restoreMapAssetSettings
+  restoreFogCanvas
 } from './campaignMapContract.js';
 
 import {
-  getHealthColor,
-  getPageDndHealth
-} from './campaignMapHealth.js';
+  addMapShape,
+  addMapToken,
+  applyTokenHealthState,
+  changeMapImage,
+  clearSelectedMapShapes,
+  clearSelectedMapTokens,
+  restoreMapBackground,
+  restoreMapShapes,
+  restoreMapTokens,
+  selectMapShape,
+  selectMapToken
+} from './campaignMapRuntime.js';
+
+import {
+  createCampaignMapPointerController
+} from './campaignMapPointerController.js';
 
 export {
   isCampaignMapPage,
@@ -166,12 +133,7 @@ export {
 
 
 let saveCurrentPageCallback = null;
-let fogDrawing = null;
-const tokenHealthCache = new WeakMap();
-
-const TOKEN_DRAG_THRESHOLD = 4;
-const TOKEN_RESIZE_THRESHOLD = 2;
-const SHAPE_HANDLE_THRESHOLD = 2;
+let pointerController = null;
 export function setupCampaignMaps(
   editor,
   saveCurrentPage
@@ -180,6 +142,11 @@ export function setupCampaignMaps(
   saveCurrentPageCallback =
     saveCurrentPage;
 
+  pointerController =
+    createCampaignMapPointerController(
+      getPointerControllerDeps()
+    );
+
   editor.addEventListener(
     'click',
     handleMapClick
@@ -187,32 +154,32 @@ export function setupCampaignMaps(
 
   editor.addEventListener(
     'dblclick',
-    handleMapDoubleClick
+    pointerController.handleMapDoubleClick
   );
 
   editor.addEventListener(
     'pointerover',
-    handleMapPointerOver
+    pointerController.handleMapPointerOver
   );
 
   editor.addEventListener(
     'pointerout',
-    handleMapPointerOut
+    pointerController.handleMapPointerOut
   );
 
   editor.addEventListener(
     'pointermove',
-    handleBrushPreviewMove
+    pointerController.handleBrushPreviewMove
   );
 
   editor.addEventListener(
     'pointerleave',
-    hideAllBrushPreviews
+    pointerController.hideAllBrushPreviews
   );
 
   editor.addEventListener(
     'pointerdown',
-    handleMapPointerDown
+    pointerController.handleMapPointerDown
   );
 
   editor.addEventListener(
@@ -222,17 +189,17 @@ export function setupCampaignMaps(
 
   document.addEventListener(
     'pointermove',
-    handleDocumentPointerMove
+    pointerController.handleDocumentPointerMove
   );
 
   document.addEventListener(
     'pointerup',
-    handleDocumentPointerUp
+    pointerController.handleDocumentPointerUp
   );
 
   editor.addEventListener(
     'wheel',
-    handleMapWheel,
+    pointerController.handleMapWheel,
     { passive: false }
   );
 
@@ -545,368 +512,31 @@ function getShapeDragDeps() {
 }
 
 
-async function addMapToken(
-  map,
-  type,
-  page = null,
-  spawnIndex = 0,
-  options = {}
-) {
-
-  const layer =
-    map.querySelector('.campaign-map-object-layer');
-
-  if (!layer) return;
-
-  const index =
-    layer.querySelectorAll(`[data-token-type="${type}"]`).length + 1;
-
-  const model =
-    getCampaignMapModel(
-      map
-    );
-
-  const spawnPoint =
-    options.worldPoint ||
-    getVisibleSpawnPoint(
-      map,
-      spawnIndex
-    );
-
-  const imageAsset =
-    page
-      ? getPagePortraitAsset(
-        page
-      )
-      : '';
-
-  const tokenData =
-    model.addToken({
-      type,
-      pageId: page?.id || '',
-      imageAsset,
-      x: ((spawnPoint.x / WORLD_WIDTH) * 100).toFixed(3),
-      y: ((spawnPoint.y / WORLD_HEIGHT) * 100).toFixed(3),
-      name: page?.title ||
-        (
-          type === 'creature'
-            ? `Существо ${index}`
-            : `Объект ${index}`
-        ),
-      size: 1,
-      rotation: 0
-    });
-
-  const token =
-    createMapTokenElement(
-      tokenData,
-      model
-    );
-
-  layer.appendChild(
-    token
-  );
-
-  await renderMapTokenElement(
-    token,
-    {
-      applyHealth: applyTokenHealthState
-    }
-  );
-
-  refreshCampaignMapModel(
-    map
-  );
-}
-
-
-async function restoreMapTokens(
-  map
-) {
-
-  const pageLookup =
-    createPageLookup();
-
-  const tokens =
-    [...map
-    .querySelectorAll('.campaign-map-token')
-    ];
-
-  for (const token of tokens) {
-
-    if (!token.dataset.imageAsset) {
-
-      const page =
-        pageLookup.get(
-          token.dataset.pageId
-        );
-
-      const imageAsset =
-        page
-          ? getPagePortraitAsset(page)
-          : '';
-
-      if (imageAsset) {
-
-          token.dataset.imageAsset =
-            imageAsset;
-      }
-    }
-
-    await renderMapTokenElement(
-      token,
-      {
-        applyHealth: applyTokenHealthState,
-        pageLookup
-      }
-    );
-  }
-}
-
-
-function applyTokenHealthState(
-  token,
-  pageLookup = null
-) {
-
-  if (
-    token.dataset.tokenType !== 'creature'
-  ) {
-
-    clearTokenHealthState(
-      token
-    );
-
-    return;
-  }
-
-  const page =
-    pageLookup
-      ? pageLookup.get(token.dataset.pageId)
-      : state.pages.find(candidate =>
-        candidate.id === token.dataset.pageId
-      );
-
-  const health =
-    getPageDndHealth(
-      page
-    );
-
-  const cacheKey =
-    health
-      ? `${health.current}/${health.max}/${health.temp || 0}`
-      : 'none';
-
-  if (
-    tokenHealthCache.get(token) === cacheKey
-  ) return;
-
-  tokenHealthCache.set(
-    token,
-    cacheKey
-  );
-
-  if (!health) {
-
-    clearTokenHealthState(
-      token
-    );
-
-    return;
-  }
-
-  const percent =
-    clamp(
-      health.current / health.max,
-      0,
-      1
-    );
-
-  token.dataset.hpPercent =
-    String(
-      Math.round(percent * 100)
-    );
-
-  token.dataset.hpState =
-    health.current <= 0
-      ? 'dead'
-      : 'alive';
-
-  token.style.setProperty(
-    '--token-health-color',
-    getHealthColor(
-      percent
-    )
-  );
-}
-
-
-function clearTokenHealthState(
-  token
-) {
-
-  delete token.dataset.hpPercent;
-  delete token.dataset.hpState;
-
-  token.style.removeProperty(
-    '--token-health-color'
-  );
-}
-
-
-function selectMapToken(
-  token
-) {
-
-  const map =
-    token.closest('.campaign-map-document');
-
-  clearSelectedMapTokens(
-    map
-  );
-
-  token.classList.add(
-    'is-selected'
-  );
-}
-
-
-function clearSelectedMapTokens(
-  map
-) {
-
-  map
-    ?.querySelectorAll('.campaign-map-token.is-selected')
-    .forEach(token => {
-
-      token.classList.remove(
-        'is-selected'
-      );
-    });
-}
-
-
-function clearSelectedMapShapes(
-  map
-) {
-
-  map
-    ?.querySelectorAll('.campaign-map-shape.is-selected')
-    .forEach(shape => {
-
-      shape.classList.remove(
-        'is-selected'
-      );
-    });
-}
-
-
-function restoreMapShapes(
-  map
-) {
-
-  map
-    .querySelectorAll('.campaign-map-shape')
-    .forEach(shape => {
-
-      renderMapShapeElement(
-        shape
-      );
-    });
-}
-
-
-function addMapShape(
-  map,
-  type
-) {
-
-  const layer =
-    map.querySelector('.campaign-map-object-layer');
-
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  if (!layer || !stage) return;
-
-  const view =
-    getStageView(
-      stage
-    );
-
-  const x =
-    clamp(
-      (stage.clientWidth / 2 - view.x) / view.zoom - DEFAULT_SHAPE_SIZE / 2,
-      0,
-      WORLD_WIDTH - DEFAULT_SHAPE_SIZE
-    );
-
-  const y =
-    clamp(
-      (stage.clientHeight / 2 - view.y) / view.zoom - DEFAULT_SHAPE_SIZE / 2,
-      0,
-      WORLD_HEIGHT - DEFAULT_SHAPE_SIZE
-    );
-
-  const model =
-    getCampaignMapModel(
-      map
-    );
-
-  const shapeData =
-    model.addShape({
-      type,
-      x: Math.round(x),
-      y: Math.round(y),
-      width: DEFAULT_SHAPE_SIZE,
-      height: DEFAULT_SHAPE_SIZE,
-      points: type === 'triangle'
-        ? '50,6 94,94 6,94'
-        : ''
-    });
-
-  const shape =
-    createMapShapeElement(
-      shapeData,
-      model
-    );
-
-  layer.appendChild(
-    shape
-  );
-
-  renderMapShapeElement(
-    shape
-  );
-
-  selectMapShape(
-    shape
-  );
-
-  refreshCampaignMapModel(
-    map
-  );
-}
-
-
-function selectMapShape(
-  shape
-) {
-
-  const map =
-    shape.closest('.campaign-map-document');
-
-  clearSelectedMapTokens(
-    map
-  );
-
-  clearSelectedMapShapes(
-    map
-  );
-
-  shape.classList.add(
-    'is-selected'
-  );
+function getPointerControllerDeps() {
+
+  return {
+    finishMapPan,
+    finishShapeInteractions,
+    finishTokenInteractions,
+    getShapeDragDeps,
+    getTokenDragDeps,
+    getTokenPopupDeps,
+    hasActiveMapPan,
+    moveMapPan,
+    moveShapeInteractions,
+    moveTokenInteractions,
+    saveAndSync,
+    scheduleTokenPopup,
+    scheduleTokenPopupClose,
+    setMapInteractionQuality,
+    startMapPan,
+    startShapeDrag,
+    startShapeResize,
+    startTokenDrag,
+    startTokenResize,
+    startTokenRotate,
+    zoomMap
+  };
 }
 
 
@@ -919,7 +549,7 @@ function setFogMode(
     map,
     mode,
     {
-      hideBrushPreview
+      hideBrushPreview: pointerController?.hideBrushPreview
     }
   );
 }
@@ -934,114 +564,9 @@ function setMapTool(
     map,
     tool,
     {
-      hideBrushPreview
+      hideBrushPreview: pointerController?.hideBrushPreview
     }
   );
-}
-
-
-async function changeMapImage(
-  map
-) {
-
-  if (!state.workspaceHandle) return;
-
-  const [fileHandle] =
-    await window.showOpenFilePicker({
-      types: [{
-        description: 'Images',
-        accept: {
-          'image/*': [
-            '.png',
-            '.jpg',
-            '.jpeg',
-            '.webp'
-          ]
-        }
-      }]
-    });
-
-  const imageFile =
-    await fileHandle.getFile();
-
-  const assetsDir =
-    await state.workspaceHandle
-      .getDirectoryHandle('assets');
-
-  const targetHandle =
-    await assetsDir.getFileHandle(
-      imageFile.name,
-      { create: true }
-    );
-
-  await writeFile(
-    targetHandle,
-    await imageFile.arrayBuffer(),
-    `asset:${imageFile.name}`
-  );
-
-  clearMapBackgroundCache(
-    imageFile.name
-  );
-
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  rememberMapAssetSettings(
-    stage
-  );
-
-  stage.dataset.mapAsset =
-    imageFile.name;
-
-  restoreMapAssetSettings(
-    stage
-  );
-
-  await restoreMapBackground(
-    map
-  );
-
-  await restoreFogCanvas(
-    map
-  );
-}
-
-
-async function restoreMapBackground(
-  map
-) {
-
-  const stage =
-    map.querySelector('.campaign-map-stage');
-
-  const background =
-    map.querySelector('.campaign-map-background');
-
-  const asset =
-    stage?.dataset.mapAsset;
-
-  if (!stage || !background || !asset) return;
-
-  try {
-
-    const url =
-      await getImageURL(
-        asset
-      );
-
-    background.style.backgroundImage =
-      `url("${url}")`;
-
-    await updateMapBackgroundQuality(
-      map
-    );
-
-  } catch (error) {
-
-    background.style.backgroundImage =
-      '';
-  }
 }
 
 
@@ -1060,157 +585,6 @@ function setMapInteractionQuality(
       ...options,
       scheduleVisibleMapObjectsUpdate
     }
-  );
-}
-
-
-function handleMapPointerDown(
-  event
-) {
-
-  const shapeHandle =
-    event.target.closest('.campaign-map-shape-handle');
-
-  if (
-    shapeHandle &&
-    event.button === 0
-  ) {
-
-    startShapeResize(
-      event,
-      shapeHandle.closest('.campaign-map-shape'),
-      getShapeDragDeps()
-    );
-
-    return;
-  }
-
-  const rotateHandle =
-    event.target.closest('.campaign-map-token-rotate');
-
-  if (
-    rotateHandle &&
-    event.button === 0
-  ) {
-
-    startTokenRotate(
-      event,
-      rotateHandle.closest('.campaign-map-token'),
-      getTokenDragDeps()
-    );
-
-    return;
-  }
-
-  const resizeHandle =
-    event.target.closest('.campaign-map-token-resize');
-
-  if (
-    resizeHandle &&
-    event.button === 0
-  ) {
-
-    startTokenResize(
-      event,
-      resizeHandle.closest('.campaign-map-token'),
-      getTokenDragDeps()
-    );
-
-    return;
-  }
-
-  const token =
-    event.target.closest('.campaign-map-token');
-
-  const shape =
-    event.target.closest('.campaign-map-shape');
-
-  if (
-    shape &&
-    event.button === 0
-  ) {
-
-    const stage =
-      shape.closest('.campaign-map-stage');
-
-    if (
-      stage?.dataset.tool === 'draw' ||
-      stage?.dataset.tool === 'erase'
-    ) {
-
-      startFogDraw(
-        event,
-        stage
-      );
-
-      return;
-    }
-
-    startShapeDrag(
-      event,
-      shape,
-      getShapeDragDeps()
-    );
-
-    return;
-  }
-
-  if (
-    token &&
-    event.button === 0
-  ) {
-
-    const stage =
-      token.closest('.campaign-map-stage');
-
-    if (
-      stage?.dataset.tool === 'draw' ||
-      stage?.dataset.tool === 'erase'
-    ) {
-
-      startFogDraw(
-        event,
-        stage
-      );
-
-      return;
-    }
-
-    startTokenDrag(
-      event,
-      token,
-      getTokenDragDeps()
-    );
-
-    return;
-  }
-
-  const stage =
-    event.target.closest('.campaign-map-stage');
-
-  if (
-    !stage ||
-    event.button !== 0
-  ) return;
-
-  if (
-    stage.dataset.tool === 'pan'
-  ) {
-
-    startMapPan(
-      event,
-      stage,
-      {
-        setMapInteractionQuality
-      }
-    );
-
-    return;
-  }
-
-  startFogDraw(
-    event,
-    stage
   );
 }
 
@@ -1245,312 +619,6 @@ function syncCurrentMapTitle() {
   state.currentPage.title =
     titleElement.textContent.trim() ||
     'Новая карта';
-}
-
-
-async function handleMapDoubleClick(
-  event
-) {
-
-  const token =
-    event.target.closest('.campaign-map-token');
-
-  const pageId =
-    token?.dataset.pageId;
-
-  if (!pageId) return;
-
-  const page =
-    state.pages.find(candidate =>
-      candidate.id === pageId
-    );
-
-  if (!page) return;
-
-  event.preventDefault();
-  event.stopPropagation();
-
-  clearDraggedToken(
-    false
-  );
-
-  const editorModule =
-    await import('./editor.js');
-
-  editorModule.openPage(
-    page
-  );
-}
-
-
-function handleMapPointerOver(
-  event
-) {
-
-  const shape =
-    event.target.closest('.campaign-map-shape');
-
-  if (shape) {
-
-    scheduleTokenPopup(
-      shape,
-      getTokenPopupDeps()
-    );
-
-    return;
-  }
-
-  const token =
-    event.target.closest('.campaign-map-token');
-
-  if (!token?.dataset.pageId) return;
-
-  highlightTreePage(
-    token.dataset.pageId
-  );
-
-  scheduleTokenPopup(
-    token,
-    getTokenPopupDeps()
-  );
-}
-
-
-function handleMapPointerOut(
-  event
-) {
-
-  const shape =
-    event.target.closest('.campaign-map-shape');
-
-  if (shape) {
-
-    scheduleTokenPopupClose();
-    return;
-  }
-
-  const token =
-    event.target.closest('.campaign-map-token');
-
-  if (!token?.dataset.pageId) return;
-
-  clearTreeHighlight(
-    token.dataset.pageId
-  );
-
-  scheduleTokenPopupClose();
-}
-
-
-function handleBrushPreviewMove(
-  event
-) {
-
-  const stage =
-    event.target.closest('.campaign-map-stage');
-
-  if (!stage) {
-
-    hideAllBrushPreviews();
-    return;
-  }
-
-  if (
-    stage.dataset.tool !== 'draw' &&
-    stage.dataset.tool !== 'erase'
-  ) {
-
-    hideBrushPreview(
-      stage
-    );
-
-    return;
-  }
-
-  updateBrushPreview(
-    event,
-    stage
-  );
-}
-
-
-function updateBrushPreview(
-  event,
-  stage
-) {
-
-  const preview =
-    ensureBrushPreview(
-      stage
-    );
-
-  const rect =
-    stage.getBoundingClientRect();
-
-  const view =
-    getStageView(
-      stage
-    );
-
-  const diameter =
-    Number(stage.dataset.brushSize || DEFAULT_BRUSH_SIZE) *
-    view.zoom *
-    2;
-
-  preview.style.width =
-    `${diameter}px`;
-
-  preview.style.height =
-    `${diameter}px`;
-
-  preview.style.left =
-    `${event.clientX - rect.left}px`;
-
-  preview.style.top =
-    `${event.clientY - rect.top}px`;
-
-  preview.classList.remove(
-    'hidden'
-  );
-}
-
-
-function hideBrushPreview(
-  stage
-) {
-
-  stage
-    ?.querySelector('.campaign-brush-preview')
-    ?.classList.add('hidden');
-}
-
-
-function hideAllBrushPreviews() {
-
-  document
-    .querySelectorAll('.campaign-brush-preview')
-    .forEach(preview => {
-
-      preview.classList.add(
-        'hidden'
-      );
-    });
-}
-
-
-function handleDocumentPointerMove(
-  event
-) {
-
-  moveTokenInteractions(
-    event
-  );
-
-  moveShapeInteractions(
-    event
-  );
-
-  if (fogDrawing) {
-
-    drawFogAtPointer(
-      event
-    );
-  }
-
-  if (hasActiveMapPan()) {
-
-    moveMapPan(
-      event
-    );
-  }
-}
-
-
-async function handleDocumentPointerUp() {
-
-  await finishTokenInteractions(
-    getTokenDragDeps()
-  );
-
-  await finishShapeInteractions(
-    getShapeDragDeps()
-  );
-
-  if (fogDrawing) {
-
-    persistFogCanvas(
-      fogDrawing.map
-    );
-
-    fogDrawing =
-      null;
-
-    await saveAndSync();
-  }
-
-  await finishMapPan(
-    {
-      setMapInteractionQuality,
-      saveAndSync
-    }
-  );
-}
-
-
-function handleMapWheel(
-  event
-) {
-
-  const stage =
-    event.target.closest('.campaign-map-stage');
-
-  if (!stage) return;
-
-  event.preventDefault();
-
-  const map =
-    stage.closest('.campaign-map-document');
-
-  const rect =
-    stage.getBoundingClientRect();
-
-  zoomMap(
-    map,
-    event.deltaY < 0 ? 1.08 : 1 / 1.08,
-    {
-      x: event.clientX - rect.left,
-      y: event.clientY - rect.top
-    }
-  );
-}
-
-
-function startFogDraw(
-  event,
-  stage
-) {
-
-  fogDrawing =
-    createFogDrawing(
-      stage
-    );
-
-  if (!fogDrawing) return;
-
-  drawFogAtPointer(
-    event
-  );
-}
-
-
-function drawFogAtPointer(
-  event
-) {
-
-  drawFogAtPointerOnCanvas(
-    event,
-    fogDrawing
-  );
 }
 
 

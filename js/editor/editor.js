@@ -70,6 +70,13 @@ import {
   setupCampaignMaps
 } from './campaignMap.js';
 
+import {
+  isTaskTrackerPage,
+  renderTaskTracker,
+  serializeTaskTrackerHTML,
+  setupTaskTrackers
+} from '../taskTracker/taskTracker.js';
+
 /* ---- */
 
 
@@ -133,6 +140,10 @@ export function setupEditor() {
   setupCampaignMaps(
     editor,
     saveCurrentPage
+  );
+
+  setupTaskTrackers(
+    editor
   );
 
 /* Таймер отложенной нормализации wiki-links */
@@ -417,6 +428,25 @@ if (
   return;
 }
 
+if (
+  isTaskTrackerPage(
+    parsed
+  )
+) {
+
+  renderTaskTracker(
+    editor
+  );
+
+  setStatus(
+    `Открыта ${page.name}`
+  );
+
+  renderTree();
+
+  return;
+}
+
 applyContenteditablePolicy(
   editor
 );
@@ -497,6 +527,15 @@ export function renderEmptyEditor() {
             <span class="empty-create-icon">▧</span>
             <span>Карта</span>
           </button>
+
+          <button
+            class="empty-create-option"
+            type="button"
+            data-template="taskTracker"
+          >
+            <span class="empty-create-icon">☑</span>
+            <span>Таски</span>
+          </button>
         </div>
       </div>
     </section>
@@ -551,7 +590,64 @@ export async function saveCurrentPage() {
     return;
   }
 
+  if (
+    state.currentPage?.template === 'taskTracker' ||
+    state.currentPage?.type === 'taskTracker'
+  ) {
+
+    await saveCurrentTaskTracker();
+    return;
+  }
+
   await saveCurrentPageWithEditor(editor);
+}
+
+
+async function saveCurrentTaskTracker() {
+
+  if (!state.currentPage) return;
+
+  const tags =
+    state.currentPage.tags || ['task-tracker'];
+
+  const aliases =
+    state.currentPage.aliases || [];
+
+  const titleElement =
+    editor.querySelector('.task-tracker-title');
+
+  state.currentPage.title =
+    titleElement
+      ? titleElement.textContent.trim()
+      : 'Новый трекер';
+
+  const content =
+`---
+id: ${state.currentPage.id}
+parent: ${state.currentPage.parent ?? 'null'}
+order: ${state.currentPage.order ?? Date.now()}
+tags: [${tags.join(', ')}]
+template: taskTracker
+type: taskTracker
+aliases: [${aliases.join(', ')}]
+---
+
+${serializeTaskTrackerHTML(editor)}
+`;
+
+  await writePageContent(
+    state.currentPage,
+    content
+  );
+
+  state.currentPage.content =
+    content;
+
+  setStatus(
+    'Сохранено'
+  );
+
+  renderTree();
 }
 
 

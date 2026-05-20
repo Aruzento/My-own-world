@@ -1,7 +1,7 @@
 import {
   syncPresentation,
   syncPresentationDragMeasure,
-  syncPresentationItem
+  syncPresentationItemById
 } from './campaignMapPresentation.js';
 
 
@@ -11,30 +11,44 @@ let presentationSyncFrame = null;
 let presentationSyncTimeout = null;
 let lastPresentationSyncAt = 0;
 let livePresentationFrame = null;
-const pendingPresentationItems = new Set();
-const pendingPresentationMeasureStages = new Set();
+const pendingPresentationItems = new Map();
+let pendingPresentationMeasure = null;
 
 
 // Синхронизация презентации вынесена отдельно, чтобы drag/resize не запускали
 // тяжелое клонирование карты чаще нужного и не раздували основной файл карты.
 
 export function scheduleLivePresentationSync(
-  item,
-  stage = null
+  payload,
+  measurePayload = null
 ) {
 
-  if (item) {
+  if (payload) {
 
-    pendingPresentationItems.add(
-      item
-    );
+    const item =
+      normalizeLiveSyncPayload(
+        payload
+      );
+
+    if (item) {
+
+      pendingPresentationItems.set(
+        `${item.itemType}:${item.itemId}`,
+        item
+      );
+    }
   }
 
-  if (stage) {
+  if (!measurePayload && payload?.measure) {
 
-    pendingPresentationMeasureStages.add(
-      stage
-    );
+    pendingPresentationMeasure =
+      payload.measure;
+  }
+
+  if (measurePayload) {
+
+    pendingPresentationMeasure =
+      measurePayload;
   }
 
   if (livePresentationFrame) return;
@@ -47,29 +61,51 @@ export function scheduleLivePresentationSync(
           null;
 
         const items =
-          [...pendingPresentationItems];
+          [...pendingPresentationItems.values()];
 
-        const stages =
-          [...pendingPresentationMeasureStages];
+        const measure =
+          pendingPresentationMeasure;
 
         pendingPresentationItems.clear();
-        pendingPresentationMeasureStages.clear();
+        pendingPresentationMeasure =
+          null;
 
         items.forEach(nextItem => {
 
-          syncPresentationItem(
-            nextItem
+          syncPresentationItemById(
+            nextItem.map,
+            nextItem.itemType,
+            nextItem.itemId
           );
         });
 
-        stages.forEach(nextStage => {
+        if (measure) {
 
           syncPresentationDragMeasure(
-            nextStage
+            measure
           );
-        });
+        }
       }
     );
+}
+
+
+function normalizeLiveSyncPayload(
+  payload
+) {
+
+  // Контракт live-sync: карта + тип сущности + id.
+  // DOM-элементы сюда больше не передаются.
+  if (
+    payload.map &&
+    payload.itemType &&
+    payload.itemId
+  ) {
+
+    return payload;
+  }
+
+  return null;
 }
 
 

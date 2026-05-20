@@ -246,7 +246,11 @@ function resizeShapeToPointer(
   );
 
   scheduleLivePresentationSync(
-    resizedShape.shape
+    {
+      map: resizedShape.map,
+      itemType: 'shape',
+      itemId: resizedShape.shape.dataset.shapeId
+    }
   );
 }
 
@@ -447,7 +451,11 @@ function moveShapeToPointer(
   );
 
   scheduleLivePresentationSync(
-    draggedShape.shape
+    {
+      map: draggedShape.map,
+      itemType: 'shape',
+      itemId: draggedShape.shape.dataset.shapeId
+    }
   );
 }
 
