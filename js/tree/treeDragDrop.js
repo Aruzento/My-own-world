@@ -13,6 +13,27 @@ import {
 
 let treeDropPlaceholder = null;
 let treeDropContext = null;
+let treeDragPreview = null;
+
+/* Ловит drop по промежутку между строками: placeholder не принимает события мыши, чтобы не вызывать дрожание layout. */
+document.addEventListener(
+  'drop',
+  event => {
+
+    const tree =
+      document.getElementById('tree');
+
+    if (
+      !treeDropContext ||
+      !treeDropPlaceholder?.isConnected ||
+      !tree?.contains(event.target)
+    ) return;
+
+    handlePlaceholderDrop(
+      event
+    );
+  }
+);
 
 
 export function setupTreeDragAndDrop(
@@ -49,6 +70,11 @@ export function setupTreeDragAndDrop(
 
       item.classList.add(
         'is-dragging'
+      );
+
+      showTreeDragPreview(
+        item,
+        event
       );
 
 
@@ -114,6 +140,7 @@ export function setupTreeDragAndDrop(
         null;
 
       removeTreeDropPlaceholder();
+      removeTreeDragPreview();
 
       document
         .querySelectorAll(
@@ -134,6 +161,10 @@ export function setupTreeDragAndDrop(
     event => {
 
       event.preventDefault();
+
+      updateTreeDragPreview(
+        event
+      );
 
       const draggedId =
         draggedPageState.id;
@@ -159,7 +190,7 @@ export function setupTreeDragAndDrop(
       clearTreeDropTargets();
 
 
-      if (ratio < 0.28) {
+      if (ratio < 0.22) {
 
         draggedPageState.dropMode =
           'before';
@@ -179,7 +210,7 @@ export function setupTreeDragAndDrop(
           }
         );
 
-      } else if (ratio > 0.72) {
+      } else if (ratio > 0.78) {
 
         draggedPageState.dropMode =
           'after';
@@ -233,6 +264,7 @@ export function setupTreeDragAndDrop(
 
       clearTreeDropTargets();
       removeTreeDropPlaceholder();
+      removeTreeDragPreview();
 
 
       const draggedId =
@@ -390,6 +422,61 @@ function getTreeDropPlaceholder() {
 }
 
 
+function showTreeDragPreview(
+  item,
+  event
+) {
+
+  removeTreeDragPreview();
+
+  const rect =
+    item.getBoundingClientRect();
+
+  treeDragPreview =
+    item.cloneNode(
+      true
+    );
+
+  treeDragPreview.classList.add(
+    'tree-drag-preview'
+  );
+
+  treeDragPreview.style.width =
+    `${rect.width}px`;
+
+  document.body.appendChild(
+    treeDragPreview
+  );
+
+  updateTreeDragPreview(
+    event
+  );
+}
+
+
+function updateTreeDragPreview(
+  event
+) {
+
+  if (!treeDragPreview) return;
+
+  treeDragPreview.style.left =
+    `${event.clientX + 12}px`;
+
+  treeDragPreview.style.top =
+    `${event.clientY + 12}px`;
+}
+
+
+function removeTreeDragPreview() {
+
+  treeDragPreview?.remove();
+
+  treeDragPreview =
+    null;
+}
+
+
 function getItemLevel(
   item
 ) {
@@ -471,6 +558,7 @@ async function handlePlaceholderDrop(
 
   clearTreeDropTargets();
   removeTreeDropPlaceholder();
+  removeTreeDragPreview();
 
   await loadWorkspace();
 

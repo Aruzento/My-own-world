@@ -88,13 +88,22 @@ export async function createFolderPage(
 
 export async function duplicatePageAsChild(
   sourcePage,
-  parentId
+  parentId,
+  initialTitle = ''
 ) {
 
   const parsed =
     parseMarkdown(
       sourcePage.content
     );
+
+  const body =
+    initialTitle
+      ? applyInitialTitle(
+        parsed.body,
+        initialTitle
+      )
+      : parsed.body;
 
   const content =
     buildPageContent({
@@ -104,11 +113,24 @@ export async function duplicatePageAsChild(
       template: parsed.template || 'card',
       type: parsed.type || 'note',
       aliases: parsed.aliases || [],
-      body: parsed.body
+      body
     });
 
   return writePageFile(
     content
+  );
+}
+
+
+export async function duplicatePageAtSameLevel(
+  sourcePage,
+  title
+) {
+
+  return duplicatePageAsChild(
+    sourcePage,
+    sourcePage.parent,
+    title
   );
 }
 

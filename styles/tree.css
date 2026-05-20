@@ -435,6 +435,32 @@
 }
 
 
+.tree-drag-preview {
+
+  position:
+    fixed;
+
+  z-index:
+    10040;
+
+  pointer-events:
+    none;
+
+  opacity:
+    0.94;
+
+  transform:
+    translate3d(0,0,0)
+    scale(1.015);
+
+  box-shadow:
+    0 16px 44px rgba(0,0,0,0.32);
+
+  background:
+    rgba(24,27,31,0.94);
+}
+
+
 .tree-item.is-drop-target {
 
   background:
@@ -450,6 +476,36 @@
 
   color:
     rgba(255,255,255,0.92);
+}
+
+
+.tree-item.has-duplicate-title {
+
+  background:
+    rgba(255,154,154,0.08);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,154,154,0.20);
+}
+
+
+.tree-item.has-duplicate-title .tree-label {
+
+  color:
+    rgba(255,154,154,0.96);
+}
+
+
+.tree-item.has-duplicate-title .tree-label::after {
+
+  content:
+    '  !';
+
+  color:
+    rgba(255,154,154,0.98);
+
+  font-weight:
+    800;
 }
 
 .tree-root-drop-zone {
@@ -586,7 +642,7 @@
     tree-placeholder-in 0.14s ease-out;
 
   pointer-events:
-    auto;
+    none;
 }
 
 

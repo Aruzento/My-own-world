@@ -3,7 +3,8 @@ import { state } from '../state.js';
 
 /* Импорт функции удаления ветки страниц */
 import {
-  deletePageBranch
+  deletePageBranch,
+  duplicatePageAtSameLevel
 } from '../storage/storage.js';
 
 /* Импорт popup создания карточки */
@@ -32,6 +33,10 @@ import {
 import {
   positionPopupAtPoint
 } from '../ui/popupPosition.js';
+
+import {
+  getUniqueCopyTitle
+} from '../validation/pageTitleValidation.js';
 
 
 /* Находит DOM-элемент контекстного меню дерева */
@@ -121,10 +126,67 @@ export function openTreeContextMenu(
     }
   );
 
+  const duplicate =
+    document.createElement('button');
+
+  duplicate.textContent =
+    'Дублировать';
+
+  duplicate.addEventListener(
+    'click',
+    async event => {
+
+      event.stopPropagation();
+
+      closeTreeContextMenu();
+
+      await duplicatePageAtSameLevel(
+        page,
+        getUniqueCopyTitle(
+          page.title
+        )
+      );
+
+      renderTree();
+
+      setStatus(
+        'Дубль создан'
+      );
+    }
+  );
+
+  const openFolder =
+    document.createElement('button');
+
+  openFolder.textContent =
+    'Открыть в папке';
+
+  openFolder.addEventListener(
+    'click',
+    async event => {
+
+      event.stopPropagation();
+
+      closeTreeContextMenu();
+
+      await openPageInFolder(
+        page
+      );
+    }
+  );
+
 
   /* Добавляет кнопку добавления в меню */
   contextMenu.appendChild(
     addChild
+  );
+
+  contextMenu.appendChild(
+    duplicate
+  );
+
+  contextMenu.appendChild(
+    openFolder
   );
 
   /* Добавляет кнопку удаления в меню */
@@ -147,7 +209,7 @@ export function openTreeContextMenu(
         event.clientY,
         {
           fallbackWidth: 220,
-          fallbackHeight: 120
+          fallbackHeight: 190
         }
       );
     }
@@ -283,6 +345,40 @@ function openFallbackPageAfterDelete(
   }
 
   renderEmptyEditor();
+}
+
+async function openPageInFolder(
+  page
+) {
+
+  const fileName =
+    page?.name || 'страница.md';
+
+  const filePath =
+    page?.path || `/pages/${fileName}`;
+
+  /* Браузерный File System Access API не умеет раскрывать системную папку с выделением файла, поэтому даем пользователю точное имя файла. */
+  try {
+
+    await navigator.clipboard?.writeText(
+      fileName
+    );
+
+    setStatus(
+      `Файл ${fileName} находится в ${filePath}. Имя файла скопировано.`
+    );
+
+  } catch (error) {
+
+    console.warn(
+      'Не удалось скопировать имя файла:',
+      error
+    );
+
+    setStatus(
+      `Файл ${fileName} находится в ${filePath}.`
+    );
+  }
 }
 
 

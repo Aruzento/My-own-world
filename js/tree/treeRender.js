@@ -20,6 +20,10 @@ import {
   getTreePageKeys
 } from './treeKeys.js';
 
+import {
+  getDuplicatePageTitleIds
+} from '../validation/pageTitleValidation.js';
+
 
 export function renderTreePage(
   page,
@@ -28,7 +32,8 @@ export function renderTreePage(
   collapsedPages,
   draggedPageState,
   renderTree,
-  saveTreeExpansionState
+  saveTreeExpansionState,
+  duplicateTitleIds = getDuplicatePageTitleIds()
 ) {
 
   const item =
@@ -41,6 +46,19 @@ export function renderTreePage(
     'active',
     state.currentPage?.id === page.id
   );
+
+  item.classList.toggle(
+    'has-duplicate-title',
+    duplicateTitleIds.has(page.id)
+  );
+
+  if (
+    duplicateTitleIds.has(page.id)
+  ) {
+
+    item.title =
+      'Название уже используется. Нужно сменить название.';
+  }
 
   item.dataset.pageId =
     page.id;
@@ -178,7 +196,12 @@ export function renderTreePage(
 
 
   item.onclick =
-    () => openPage(page);
+    () => openPage(
+      page,
+      {
+        source: 'tree'
+      }
+    );
 
 
   container.appendChild(
@@ -201,7 +224,8 @@ export function renderTreePage(
         collapsedPages,
         draggedPageState,
         renderTree,
-        saveTreeExpansionState
+        saveTreeExpansionState,
+        duplicateTitleIds
       );
     });
   }

@@ -10,6 +10,10 @@ import {
 } from '../tree/tree.js';
 
 import {
+  getCampaignMapEntityTitle
+} from '../validation/pageTitleValidation.js';
+
+import {
   normalizeText
 } from './campaignMapGeometry.js';
 
@@ -305,7 +309,11 @@ export async function addPageToMap(
   const duplicate =
     await duplicatePageAsChild(
       page,
-      bucket.id
+      bucket.id,
+      getCampaignMapEntityTitle(
+        page.title,
+        state.currentPage?.title
+      )
     );
 
   await deps.addMapToken(
@@ -354,7 +362,11 @@ async function addSelectedPagesToMap(
       const duplicate =
         await duplicatePageAsChild(
           source,
-          bucket.id
+          bucket.id,
+          getCampaignMapEntityTitle(
+            source.title,
+            state.currentPage?.title
+          )
         );
 
       duplicates.push(
@@ -384,8 +396,8 @@ async function ensureMapBucket(
 
   const title =
     kind === 'creature'
-      ? 'Существа'
-      : 'Объекты';
+      ? `Существа.${state.currentPage?.title || 'Карта'}`
+      : `Объекты.${state.currentPage?.title || 'Карта'}`;
 
   const existing =
     findMapBucket(

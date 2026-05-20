@@ -77,6 +77,14 @@ import {
   setupTaskTrackers
 } from '../taskTracker/taskTracker.js';
 
+import {
+  hasDuplicatePageTitle
+} from '../validation/pageTitleValidation.js';
+
+import {
+  updateOpenPageTitleWarning
+} from './pageTitleWarning.js';
+
 /* ---- */
 
 
@@ -115,6 +123,8 @@ const editor =
     'editorArea'
   );
 
+const navigationStack =
+  [];
 
 export function setupEditor() {
 
@@ -188,6 +198,11 @@ editor.addEventListener(
   () => {
 
     /* Запускает отложенную нормализацию */
+    updateOpenPageTitleWarning(
+      editor,
+      state.currentPage
+    );
+
     scheduleWikiLinkNormalization(
       editor
     );
@@ -380,7 +395,15 @@ editor.addEventListener(
    OPEN PAGE
 ========================================= */
 
-export function openPage(page) {
+export function openPage(
+  page,
+  options = {}
+) {
+
+  updateNavigationStack(
+    page,
+    options
+  );
 
   setCurrentPage(
     page
@@ -447,6 +470,11 @@ if (
   return;
 }
 
+updateOpenPageTitleWarning(
+  editor,
+  state.currentPage
+);
+
 applyContenteditablePolicy(
   editor
 );
@@ -488,6 +516,10 @@ if (blockContractChanged) {
 );
 /* Пересчитывает DnD модификаторы после открытия страницы */
 renderDndStats();
+
+renderBackButtonIfNeeded(
+  parsed
+);
 
   setStatus(
     `Открыта ${page.name}`
@@ -603,6 +635,153 @@ export async function saveCurrentPage() {
 }
 
 
+function updateNavigationStack(
+  nextPage,
+  options
+) {
+
+  if (
+    options.source === 'tree'
+  ) {
+
+    navigationStack.length =
+      0;
+
+    return;
+  }
+
+  if (
+    options.source === 'back' ||
+    !state.currentPage ||
+    !nextPage ||
+    state.currentPage.id === nextPage.id
+  ) return;
+
+  navigationStack.push(
+    state.currentPage.id
+  );
+}
+
+
+function renderBackButtonIfNeeded(
+  parsed
+) {
+
+  editor
+    .querySelectorAll('.editor-back-button')
+    .forEach(button => button.remove());
+
+  if (
+    navigationStack.length === 0 ||
+    !isCardPageForBackButton(
+      parsed
+    )
+  ) return;
+
+  const title =
+    editor.querySelector('.hero-block h1');
+
+  if (!title) return;
+
+  const button =
+    document.createElement('button');
+
+  button.className =
+    'editor-back-button';
+
+  button.type =
+    'button';
+
+  button.dataset.runtime =
+    'true';
+
+  button.textContent =
+    '←';
+
+  button.title =
+    'Назад';
+
+  button.addEventListener(
+    'click',
+    () => {
+
+      const previousId =
+        navigationStack.pop();
+
+      const previousPage =
+        state.pages.find(page =>
+          page.id === previousId
+        );
+
+      if (previousPage) {
+
+        openPage(
+          previousPage,
+          {
+            source: 'back'
+          }
+        );
+      }
+    }
+  );
+
+  title.parentElement.prepend(
+    button
+  );
+}
+
+
+function isCardPageForBackButton(
+  parsed
+) {
+
+  const template =
+    parsed.template ||
+    state.currentPage?.template ||
+    '';
+
+  const type =
+    parsed.type ||
+    state.currentPage?.type ||
+    '';
+
+  if (
+    template === 'campaignMap' ||
+    type === 'campaignMap' ||
+    template === 'taskTracker' ||
+    type === 'taskTracker'
+  ) return false;
+
+  return true;
+}
+
+
+function hasInvalidCurrentTitle(
+  title
+) {
+
+  const duplicated =
+    hasDuplicatePageTitle(
+      state.currentPage?.id,
+      title
+    );
+
+  updateOpenPageTitleWarning(
+    editor,
+    state.currentPage
+  );
+
+  if (duplicated) {
+
+    setStatus(
+      'Название уже используется. Смените название.'
+    );
+  }
+
+  return duplicated;
+}
+
+
 async function saveCurrentTaskTracker() {
 
   if (!state.currentPage) return;
@@ -620,6 +799,12 @@ async function saveCurrentTaskTracker() {
     titleElement
       ? titleElement.textContent.trim()
       : 'Новый трекер';
+
+  if (
+    hasInvalidCurrentTitle(
+      state.currentPage.title
+    )
+  ) return;
 
   const content =
 `---
@@ -668,6 +853,12 @@ async function saveCurrentCampaignMap() {
     titleElement
       ? titleElement.textContent.trim()
       : 'Без названия';
+
+  if (
+    hasInvalidCurrentTitle(
+      state.currentPage.title
+    )
+  ) return;
 
   const content =
 `---

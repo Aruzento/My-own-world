@@ -25,6 +25,14 @@ import {
   serializeTaskTrackerHTML
 } from '../taskTracker/taskTracker.js';
 
+import {
+  hasDuplicatePageTitle
+} from '../validation/pageTitleValidation.js';
+
+import {
+  updateOpenPageTitleWarning
+} from './pageTitleWarning.js';
+
 
 export function setupAutosave(
   editor
@@ -107,6 +115,33 @@ export async function saveCurrentPage(
     titleElement
       ? titleElement.textContent.trim()
       : 'Без названия';
+
+  /* Не сохраняем конфликтующие названия: дерево, wiki-links и быстрый поиск должны видеть одну сущность на одно имя. */
+  if (
+    hasDuplicatePageTitle(
+      state.currentPage.id,
+      state.currentPage.title
+    )
+  ) {
+
+    updateOpenPageTitleWarning(
+      editor,
+      state.currentPage
+    );
+
+    setStatus(
+      'Название уже используется. Смените название.'
+    );
+
+    renderTree();
+
+    return;
+  }
+
+  updateOpenPageTitleWarning(
+    editor,
+    state.currentPage
+  );
 
   const content =
 `---

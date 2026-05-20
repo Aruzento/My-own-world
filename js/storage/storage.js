@@ -24,6 +24,8 @@ export {
 
   duplicatePageAsChild,
 
+  duplicatePageAtSameLevel,
+
   /* Удаление страницы вместе с дочерними */
   deletePageBranch,
 
