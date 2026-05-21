@@ -9,6 +9,12 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'MY_OWN_WORLD_FULL_MANUAL.docx'
 EXTS = {'.js', '.css', '.html', '.md', '.svg', '.py'}
 NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+SKIP_DIRS = {
+    '.git',
+    'node_modules',
+    'test-results',
+    'playwright-report'
+}
 
 
 def xml(value):
@@ -44,7 +50,7 @@ def collect_files():
         if not path.is_file():
             continue
 
-        if '.git' in path.parts:
+        if any(part in SKIP_DIRS for part in path.parts):
             continue
 
         if path == OUT:
