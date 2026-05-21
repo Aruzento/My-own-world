@@ -19,6 +19,10 @@ import {
   renderTreePage
 } from './treeRender.js';
 
+import {
+  getTreePageKeys
+} from './treeKeys.js';
+
 /* --------------- */
 
 export function renderTree() {
@@ -56,6 +60,54 @@ draggedPageState.dropMode = null;
 export function getDraggedTreePageId() {
 
   return draggedPageState.id;
+}
+
+
+export function revealPageInTree(
+  pageId
+) {
+
+  if (!pageId) return;
+
+  const page =
+    state.pages.find(candidate =>
+      candidate.id === pageId
+    );
+
+  if (!page) return;
+
+  expandPageAncestors(
+    page
+  );
+
+  saveTreeExpansionState();
+  renderTree();
+
+  requestAnimationFrame(
+    () => {
+
+      const item =
+        document.querySelector(
+          `.tree-item[data-page-id="${CSS.escape(pageId)}"]`
+        );
+
+      if (!item) return;
+
+      item.scrollIntoView({
+        block: 'center',
+        behavior: 'smooth'
+      });
+
+      item.classList.add(
+        'is-found-in-tree'
+      );
+
+      setTimeout(
+        () => item.classList.remove('is-found-in-tree'),
+        1400
+      );
+    }
+  );
 }
 
 export function renderFilteredTree(
@@ -129,6 +181,36 @@ export function renderFilteredTree(
   saveTreeExpansionState
 );
   });
+}
+
+
+function expandPageAncestors(
+  page
+) {
+
+  let parentId =
+    page.parent;
+
+  while (parentId) {
+
+    const parent =
+      state.pages.find(candidate =>
+        candidate.id === parentId
+      );
+
+    if (!parent) return;
+
+    getTreePageKeys(
+      parent
+    ).forEach(key =>
+      collapsedPages.delete(
+        key
+      )
+    );
+
+    parentId =
+      parent.parent;
+  }
 }
 
 

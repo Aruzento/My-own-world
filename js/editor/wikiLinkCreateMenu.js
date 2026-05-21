@@ -19,6 +19,11 @@ import {
   registerPopup
 } from '../ui/popupManager.js';
 
+import {
+  createPageLookup,
+  hasCampaignMapAncestor
+} from './campaignMapTreeIntegration.js';
+
 
 const menu =
   document.createElement('div');
@@ -185,10 +190,20 @@ function openExistingPagePicker(
     const query =
       normalize(searchInput.value);
 
+    const lookup =
+      createPageLookup();
+
     list.innerHTML = '';
 
     const pages =
       state.pages.filter(page => {
+
+        if (
+          hasCampaignMapAncestor(
+            page,
+            lookup
+          )
+        ) return false;
 
         if (!query) return true;
 

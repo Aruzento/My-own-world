@@ -85,6 +85,11 @@ import {
   updateOpenPageTitleWarning
 } from './pageTitleWarning.js';
 
+import {
+  setupEditorHistory,
+  pushEditorHistorySnapshot
+} from './editorHistory.js';
+
 /* ---- */
 
 
@@ -105,7 +110,8 @@ import {
 } from '../storage/storage.js';
 
 import {
-  renderTree
+  renderTree,
+  revealPageInTree
 } from '../tree/tree.js';
 
 import {
@@ -129,6 +135,10 @@ const navigationStack =
 export function setupEditor() {
 
   setupAutosave(editor);
+
+  setupEditorHistory(
+    editor
+  );
 
   setupPortraitUploads(editor);
 
@@ -292,6 +302,27 @@ function shouldPastePlainText(
 function insertPlainTextAtSelection(
   text
 ) {
+
+  pushEditorHistorySnapshot(
+    editor,
+    'Вставка текста'
+  );
+
+  // insertText участвует в нативной истории браузера лучше, чем ручная вставка DOM-узлов.
+  try {
+
+    if (
+      document.execCommand(
+        'insertText',
+        false,
+        text
+      )
+    ) return;
+
+  } catch {
+
+    // Ниже остается ручной fallback для браузеров, где insertText недоступен.
+  }
 
   const selection =
     window.getSelection();
@@ -668,11 +699,10 @@ function renderBackButtonIfNeeded(
 ) {
 
   editor
-    .querySelectorAll('.editor-back-button')
-    .forEach(button => button.remove());
+    .querySelectorAll('.editor-page-nav')
+    .forEach(nav => nav.remove());
 
   if (
-    navigationStack.length === 0 ||
     !isCardPageForBackButton(
       parsed
     )
@@ -682,6 +712,60 @@ function renderBackButtonIfNeeded(
     editor.querySelector('.hero-block h1');
 
   if (!title) return;
+
+  const nav =
+    document.createElement('div');
+
+  nav.className =
+    'editor-page-nav';
+
+  nav.dataset.runtime =
+    'true';
+
+  nav.setAttribute(
+    'contenteditable',
+    'false'
+  );
+
+  const findButton =
+    document.createElement('button');
+
+  findButton.className =
+    'editor-find-tree-button';
+
+  findButton.type =
+    'button';
+
+  findButton.textContent =
+    '⌖';
+
+  findButton.title =
+    'Найти в дереве';
+
+  findButton.addEventListener(
+    'click',
+    () => {
+
+      revealPageInTree(
+        state.currentPage?.id
+      );
+    }
+  );
+
+  nav.appendChild(
+    findButton
+  );
+
+  if (
+    navigationStack.length === 0
+  ) {
+
+    title.parentElement.prepend(
+      nav
+    );
+
+    return;
+  }
 
   const button =
     document.createElement('button');
@@ -725,8 +809,12 @@ function renderBackButtonIfNeeded(
     }
   );
 
-  title.parentElement.prepend(
+  nav.prepend(
     button
+  );
+
+  title.parentElement.prepend(
+    nav
   );
 }
 

@@ -108,7 +108,7 @@
 }
 
 
-.editor-back-button {
+.editor-page-nav {
 
   position:
     absolute;
@@ -122,11 +122,8 @@
   z-index:
     30;
 
-  width:
-    30px;
-
   height:
-    30px;
+    32px;
 
   display:
     inline-flex;
@@ -134,8 +131,11 @@
   align-items:
     center;
 
-  justify-content:
-    center;
+  gap:
+    4px;
+
+  padding:
+    2px;
 
   border:
     1px solid rgba(255,255,255,0.12);
@@ -158,18 +158,67 @@
   transition:
     background 0.14s,
     border-color 0.14s,
+    box-shadow 0.14s,
+    opacity 0.14s,
+    transform 0.14s;
+}
+
+
+.editor-back-button,
+.editor-find-tree-button {
+
+  width:
+    28px;
+
+  height:
+    28px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border:
+    none;
+
+  border-radius:
+    999px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(255,255,255,0.76);
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.14s,
     color 0.14s,
     transform 0.14s;
 }
 
 
-.editor-back-button:hover {
+.editor-page-nav:hover {
+
+  border-color:
+    rgba(241,211,142,0.28);
+
+  box-shadow:
+    0 14px 38px rgba(0,0,0,0.34);
+}
+
+
+.editor-back-button:hover,
+.editor-find-tree-button:hover {
 
   transform:
     translateX(-1px);
-
-  border-color:
-    rgba(241,211,142,0.34);
 
   background:
     rgba(241,211,142,0.14);
@@ -298,10 +347,10 @@
 }
 
 
-.editor-back-button + h1 {
+.editor-page-nav + h1 {
 
   padding-left:
-    38px;
+    74px;
 }
 
 

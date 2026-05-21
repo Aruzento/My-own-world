@@ -200,6 +200,34 @@
     rgba(241,211,142,0.34);
 }
 
+
+.tree-item.is-found-in-tree {
+
+  background:
+    rgba(241,211,142,0.22);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(241,211,142,0.44),
+    0 0 0 4px rgba(241,211,142,0.08);
+
+  animation:
+    tree-found-pulse 1.2s ease-out;
+}
+
+
+@keyframes tree-found-pulse {
+
+  from {
+    transform:
+      scale(1.018);
+  }
+
+  to {
+    transform:
+      scale(1);
+  }
+}
+
 .tree-title {
   display: flex;
   align-items: center;

@@ -16,6 +16,10 @@ import {
   isSelectionInsidePersistentEditable
 } from './contenteditablePolicy.js';
 
+import {
+  pushEditorHistorySnapshot
+} from './editorHistory.js';
+
 const RECENT_TEXT_COLORS_KEY =
   'myOwnWorld.recentTextColors';
 
@@ -216,6 +220,11 @@ export function setupFloatingToolbar() {
 
       if (command) {
 
+        pushEditorHistorySnapshot(
+          document.getElementById('editorArea'),
+          `Формат ${command}`
+        );
+
         runInlineFormattingCommand(
           command
         );
@@ -245,6 +254,11 @@ export function setupFloatingToolbar() {
 
         restoreLastSelection();
 
+        pushEditorHistorySnapshot(
+          document.getElementById('editorArea'),
+          'Сброс формата'
+        );
+
         clearInlineFormatting();
       }
 
@@ -256,6 +270,11 @@ export function setupFloatingToolbar() {
       if (action === 'apply-color') {
 
         restoreLastSelection();
+
+        pushEditorHistorySnapshot(
+          document.getElementById('editorArea'),
+          'Цвет текста'
+        );
 
         applyToolbarColor(
           colorPicker,
@@ -294,6 +313,11 @@ export function setupFloatingToolbar() {
 
         restoreLastSelection();
 
+        pushEditorHistorySnapshot(
+          document.getElementById('editorArea'),
+          'Цвет текста'
+        );
+
         applyToolbarColor(
           colorPicker,
           recentColors,
@@ -320,6 +344,11 @@ export function setupFloatingToolbar() {
       async event => {
 
         restoreLastSelection();
+
+        pushEditorHistorySnapshot(
+          document.getElementById('editorArea'),
+          'Цвет текста'
+        );
 
         applyToolbarColor(
           colorPicker,
@@ -349,6 +378,11 @@ export function setupFloatingToolbar() {
         if (!button) return;
 
         restoreLastSelection();
+
+        pushEditorHistorySnapshot(
+          document.getElementById('editorArea'),
+          'Цвет текста'
+        );
 
         if (colorPicker) {
 
@@ -916,46 +950,203 @@ function formatSelectedBlock(
   const range =
     selection.getRangeAt(0);
 
-  let block =
-    range.startContainer;
-
-
-  if (
-    block.nodeType === Node.TEXT_NODE
-  ) {
-
-    block =
-      block.parentElement;
-  }
-
-
-  block =
-    block.closest(
-      'h1, h2, h3, h4, p, div'
+  const editableRoot =
+    getSelectionEditableRoot(
+      range
     );
 
+  const targets =
+    getSelectedFormatTargets(
+      range,
+      editableRoot
+    );
 
-  if (!block) return;
+  if (
+    targets.length === 0
+  ) {
 
+    formatSelectedFragment(
+      range,
+      tagName
+    );
+
+    return;
+  }
+
+  pushEditorHistorySnapshot(
+    document.getElementById('editorArea'),
+    `Формат блока ${tagName}`
+  );
+
+  const formattedBlocks =
+    targets.map(target =>
+      replaceBlockTag(
+        target,
+        tagName
+      )
+    );
+
+  restoreSelectionAroundBlocks(
+    formattedBlocks
+  );
+}
+
+
+function formatSelectedFragment(
+  range,
+  tagName
+) {
+
+  if (
+    range.collapsed
+  ) return;
+
+  pushEditorHistorySnapshot(
+    document.getElementById('editorArea'),
+    `Формат фрагмента ${tagName}`
+  );
 
   const newBlock =
     document.createElement(
       tagName
     );
 
+  newBlock.appendChild(
+    range.extractContents()
+  );
+
+  range.insertNode(
+    newBlock
+  );
+
+  restoreSelectionAroundBlocks([
+    newBlock
+  ]);
+}
+
+
+function getSelectionEditableRoot(
+  range
+) {
+
+  const node =
+    range.commonAncestorContainer;
+
+  const element =
+    node.nodeType === Node.ELEMENT_NODE
+      ? node
+      : node.parentElement;
+
+  return element?.closest(
+    '[data-persistent-editable="true"], [contenteditable="true"]'
+  );
+}
+
+
+function getSelectedFormatTargets(
+  range,
+  editableRoot
+) {
+
+  if (!editableRoot) return [];
+
+  if (
+    editableRoot.matches(
+      'h1, h2, h3, h4, p'
+    )
+  ) {
+
+    return [
+      editableRoot
+    ];
+  }
+
+  const candidates =
+    [
+      ...editableRoot.querySelectorAll(
+        'h1, h2, h3, h4, p, div'
+      )
+    ]
+      .filter(element =>
+        element !== editableRoot &&
+        element.closest('[data-persistent-editable="true"], [contenteditable="true"]') === editableRoot &&
+        !element.closest('[data-runtime="true"]') &&
+        rangeIntersectsNode(
+          range,
+          element
+        )
+      );
+
+  if (
+    candidates.length > 0
+  ) return candidates;
+
+  const startElement =
+    range.startContainer.nodeType === Node.ELEMENT_NODE
+      ? range.startContainer
+      : range.startContainer.parentElement;
+
+  const block =
+    startElement?.closest(
+      'h1, h2, h3, h4, p, div'
+    );
+
+  if (
+    block &&
+    block !== editableRoot &&
+    editableRoot.contains(block)
+  ) {
+
+    return [
+      block
+    ];
+  }
+
+  return [];
+}
+
+
+function rangeIntersectsNode(
+  range,
+  node
+) {
+
+  try {
+
+    return range.intersectsNode(
+      node
+    );
+
+  } catch {
+
+    return false;
+  }
+}
+
+
+function replaceBlockTag(
+  block,
+  tagName
+) {
+
+  if (
+    block.tagName.toLowerCase() === tagName
+  ) return block;
+
+  const newBlock =
+    document.createElement(
+      tagName
+    );
 
   newBlock.innerHTML =
     block.innerHTML;
-
 
   Array.from(block.attributes)
     .forEach(attribute => {
 
       if (
-        attribute.name === 'contenteditable'
-        ||
-        attribute.name === 'class'
-        ||
+        attribute.name === 'contenteditable' ||
+        attribute.name === 'class' ||
         attribute.name.startsWith('data-')
       ) {
 
@@ -966,14 +1157,43 @@ function formatSelectedBlock(
       }
     });
 
-
   block.replaceWith(
     newBlock
   );
 
+  return newBlock;
+}
 
-  placeCaretAtEnd(
-    newBlock
+
+function restoreSelectionAroundBlocks(
+  blocks
+) {
+
+  const first =
+    blocks[0];
+
+  const last =
+    blocks.at(-1);
+
+  if (!first || !last) return;
+
+  const range =
+    document.createRange();
+
+  const selection =
+    window.getSelection();
+
+  range.setStartBefore(
+    first
+  );
+
+  range.setEndAfter(
+    last
+  );
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
   );
 }
 

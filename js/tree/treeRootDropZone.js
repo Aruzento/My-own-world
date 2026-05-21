@@ -1,6 +1,10 @@
 import { state } from '../state.js';
 
 import {
+  setCurrentPage
+} from '../stateActions.js';
+
+import {
   loadWorkspace,
   updatePageParent
 } from '../storage/storage.js';
@@ -131,6 +135,23 @@ export function renderRootDropZone(
 
 
       await loadWorkspace();
+
+      if (
+        state.currentPage?.id
+      ) {
+
+        const refreshedCurrentPage =
+          state.pages.find(page =>
+            page.id === state.currentPage.id
+          );
+
+        if (refreshedCurrentPage) {
+
+          setCurrentPage(
+            refreshedCurrentPage
+          );
+        }
+      }
 
       renderTree();
     }

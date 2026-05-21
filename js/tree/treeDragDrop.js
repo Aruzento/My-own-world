@@ -1,6 +1,10 @@
 import { state } from '../state.js';
 
 import {
+  setCurrentPage
+} from '../stateActions.js';
+
+import {
   loadWorkspace,
   updatePageParent,
   updatePageTreePosition
@@ -14,19 +18,35 @@ import {
 let treeDropPlaceholder = null;
 let treeDropContext = null;
 let treeDragPreview = null;
+let treeDropPlacement = null;
 
 /* Ловит drop по промежутку между строками: placeholder не принимает события мыши, чтобы не вызывать дрожание layout. */
+document.addEventListener(
+  'dragover',
+  event => {
+
+    if (
+      !isPointerOverTreePlaceholder(
+        event
+      )
+    ) return;
+
+    event.preventDefault();
+
+    event.dataTransfer.dropEffect =
+      'move';
+  }
+);
+
+
 document.addEventListener(
   'drop',
   event => {
 
-    const tree =
-      document.getElementById('tree');
-
     if (
-      !treeDropContext ||
-      !treeDropPlaceholder?.isConnected ||
-      !tree?.contains(event.target)
+      !isPointerOverTreePlaceholder(
+        event
+      )
     ) return;
 
     handlePlaceholderDrop(
@@ -186,11 +206,10 @@ export function setupTreeDragAndDrop(
       const ratio =
         y / rect.height;
 
-
       clearTreeDropTargets();
 
 
-      if (ratio < 0.22) {
+      if (ratio < 0.18) {
 
         draggedPageState.dropMode =
           'before';
@@ -210,7 +229,7 @@ export function setupTreeDragAndDrop(
           }
         );
 
-      } else if (ratio > 0.78) {
+      } else if (ratio > 0.82) {
 
         draggedPageState.dropMode =
           'after';
@@ -313,9 +332,9 @@ export function setupTreeDragAndDrop(
       }
 
 
-      await loadWorkspace();
-
-      renderTree();
+      await reloadTreeAfterMove(
+        renderTree
+      );
     }
   );
 }
@@ -331,8 +350,25 @@ export function moveTreeDropPlaceholder(
   const placeholder =
     getTreeDropPlaceholder();
 
+  const placementKey =
+    `${targetItem.dataset.pageId || 'root'}:${position}:${level}`;
+
+  if (
+    treeDropPlacement?.key === placementKey
+  ) {
+
+    treeDropContext =
+      context;
+
+    return;
+  }
+
   treeDropContext =
     context;
+
+  treeDropPlacement = {
+    key: placementKey
+  };
 
   placeholder.style.setProperty(
     '--tree-level',
@@ -365,6 +401,9 @@ export function removeTreeDropPlaceholder() {
   }
 
   treeDropContext =
+    null;
+
+  treeDropPlacement =
     null;
 }
 
@@ -477,6 +516,28 @@ function removeTreeDragPreview() {
 }
 
 
+function isPointerOverTreePlaceholder(
+  event
+) {
+
+  if (
+    !treeDropContext ||
+    !treeDropPlaceholder?.isConnected
+  ) return false;
+
+  const rect =
+    treeDropPlaceholder.getBoundingClientRect();
+
+  const verticalPadding =
+    10;
+
+  return event.clientX >= rect.left &&
+    event.clientX <= rect.right &&
+    event.clientY >= rect.top - verticalPadding &&
+    event.clientY <= rect.bottom + verticalPadding;
+}
+
+
 function getItemLevel(
   item
 ) {
@@ -560,9 +621,9 @@ async function handlePlaceholderDrop(
   removeTreeDropPlaceholder();
   removeTreeDragPreview();
 
-  await loadWorkspace();
-
-  renderTree();
+  await reloadTreeAfterMove(
+    renderTree
+  );
 }
 
 
@@ -626,4 +687,32 @@ async function movePageNearTarget(
       index + 1
     );
   }
+}
+
+
+async function reloadTreeAfterMove(
+  renderTree
+) {
+
+  const currentPageId =
+    state.currentPage?.id;
+
+  await loadWorkspace();
+
+  if (currentPageId) {
+
+    const refreshedCurrentPage =
+      state.pages.find(page =>
+        page.id === currentPageId
+      );
+
+    if (refreshedCurrentPage) {
+
+      setCurrentPage(
+        refreshedCurrentPage
+      );
+    }
+  }
+
+  renderTree();
 }

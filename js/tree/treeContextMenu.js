@@ -38,6 +38,10 @@ import {
   getUniqueCopyTitle
 } from '../validation/pageTitleValidation.js';
 
+import {
+  savePageAsTemplate
+} from '../templates/pageTemplateStorage.js';
+
 
 /* Находит DOM-элемент контекстного меню дерева */
 const contextMenu =
@@ -175,6 +179,30 @@ export function openTreeContextMenu(
     }
   );
 
+  const saveTemplate =
+    document.createElement('button');
+
+  saveTemplate.textContent =
+    'Сделать шаблоном';
+
+  saveTemplate.addEventListener(
+    'click',
+    event => {
+
+      event.stopPropagation();
+
+      closeTreeContextMenu();
+
+      savePageAsTemplate(
+        page
+      );
+
+      setStatus(
+        'Шаблон создан'
+      );
+    }
+  );
+
 
   /* Добавляет кнопку добавления в меню */
   contextMenu.appendChild(
@@ -188,6 +216,17 @@ export function openTreeContextMenu(
   contextMenu.appendChild(
     openFolder
   );
+
+  if (
+    isCardTemplateSource(
+      page
+    )
+  ) {
+
+    contextMenu.appendChild(
+      saveTemplate
+    );
+  }
 
   /* Добавляет кнопку удаления в меню */
   contextMenu.appendChild(
@@ -214,6 +253,17 @@ export function openTreeContextMenu(
       );
     }
   );
+}
+
+
+function isCardTemplateSource(
+  page
+) {
+
+  return page?.template !== 'campaignMap' &&
+    page?.type !== 'campaignMap' &&
+    page?.template !== 'taskTracker' &&
+    page?.type !== 'taskTracker';
 }
 
 

@@ -1,3 +1,7 @@
+import {
+  undoEditorHistory
+} from './editorHistory.js';
+
 export function setupEditorKeyboard(
   saveCurrentPage
 ) {
@@ -5,6 +9,36 @@ export function setupEditorKeyboard(
   window.addEventListener(
     'keydown',
     async event => {
+
+      if (
+        isUndoShortcut(
+          event
+        )
+      ) {
+
+        const editor =
+          document.getElementById(
+            'editorArea'
+          );
+
+        if (
+          undoEditorHistory(
+            editor
+          )
+        ) {
+
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+
+          if (typeof saveCurrentPage === 'function') {
+
+            await saveCurrentPage();
+          }
+        }
+
+        return;
+      }
 
       if (
         !isSaveShortcut(
@@ -65,6 +99,22 @@ export function setupEditorKeyboard(
         nextField
       );
     }
+  );
+}
+
+
+function isUndoShortcut(
+  event
+) {
+
+  return (
+    (
+      event.code === 'KeyZ' ||
+      event.key?.toLowerCase() === 'z' ||
+      event.key?.toLowerCase() === 'я'
+    ) &&
+    (event.ctrlKey || event.metaKey) &&
+    !event.shiftKey
   );
 }
 

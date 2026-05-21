@@ -185,6 +185,124 @@
   pointer-events: none;
 }
 
+
+.create-picker-header {
+  grid-column:
+    1 / -1;
+
+  min-height:
+    34px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,255,255,0.86);
+
+  font-size:
+    12px;
+
+  font-weight:
+    650;
+}
+
+
+.create-picker-back,
+.create-template-delete {
+  width:
+    26px;
+
+  height:
+    26px;
+
+  border:
+    none;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  cursor:
+    pointer;
+}
+
+
+.create-picker-option {
+  grid-column:
+    1 / -1;
+
+  height:
+    auto;
+
+  min-height:
+    36px;
+
+  align-items:
+    flex-start;
+
+  padding:
+    9px 10px;
+
+  text-align:
+    left;
+}
+
+
+.create-template-row {
+  grid-column:
+    1 / -1;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) 28px;
+
+  gap:
+    6px;
+}
+
+
+.create-template-row .create-picker-option {
+  grid-column:
+    auto;
+}
+
+
+.create-template-delete:hover {
+  background:
+    rgba(255,154,154,0.12);
+
+  color:
+    var(--danger);
+}
+
+
+.create-picker-empty {
+  grid-column:
+    1 / -1;
+
+  padding:
+    12px;
+
+  color:
+    rgba(255,255,255,0.48);
+
+  font-size:
+    12px;
+}
+
 /* =========================================
    LINK POPUP
 ========================================= */
