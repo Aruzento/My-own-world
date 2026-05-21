@@ -124,9 +124,7 @@ export function renderFilteredTree(
   tree.innerHTML = '';
 
   renderRootDropZone(
-  tree,
-  draggedPageState,
-  renderTree
+  tree
 );
 
 

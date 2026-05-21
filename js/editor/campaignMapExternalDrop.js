@@ -46,6 +46,14 @@ export function setupCampaignMapExternalDrop(
       deps
     )
   );
+
+  window.addEventListener(
+    'my-own-world:tree-page-pointer-drop',
+    event => handlePointerTreePageDrop(
+      event,
+      deps
+    )
+  );
 }
 
 
@@ -139,6 +147,75 @@ async function handleMapDrop(
       {
         worldPoint: getWorldPointFromEvent(
           event,
+          stage
+        )
+      }
+    );
+
+  if (duplicate) {
+
+    setStatus(
+      `Добавлено на карту: ${duplicate.title || 'Без названия'}`
+    );
+  }
+}
+
+
+async function handlePointerTreePageDrop(
+  event,
+  deps
+) {
+
+  const {
+    pageId,
+    clientX,
+    clientY
+  } =
+    event.detail || {};
+
+  const stage =
+    document
+      .elementFromPoint(
+        clientX,
+        clientY
+      )
+      ?.closest(
+        '.campaign-map-stage'
+      );
+
+  const map =
+    stage?.closest(
+      '.campaign-map-document'
+    );
+
+  if (!stage || !map || !pageId) return;
+
+  const page =
+    state.pages.find(candidate =>
+      candidate.id === pageId
+    );
+
+  if (
+    !canAddPageToCampaignMap(
+      page
+    )
+  ) return;
+
+  stage.classList.remove(
+    'is-tree-card-over'
+  );
+
+  const duplicate =
+    await addPageToMap(
+      map,
+      page,
+      deps.getMapPickerDeps(),
+      {
+        worldPoint: getWorldPointFromEvent(
+          {
+            clientX,
+            clientY
+          },
           stage
         )
       }

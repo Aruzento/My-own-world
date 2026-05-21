@@ -10,7 +10,8 @@ import {
 } from '../tree/tree.js';
 
 import {
-  getCampaignMapEntityTitle
+  getCampaignMapEntityTitle,
+  getCampaignMapNumberedEntityTitle
 } from '../validation/pageTitleValidation.js';
 
 import {
@@ -349,6 +350,12 @@ async function addSelectedPagesToMap(
     );
 
   const duplicates = [];
+  let copyIndex =
+    getNextMapEntityIndex(
+      kind,
+      state.currentPage?.title,
+      bucket.id
+    );
 
   for (const pageId of selectedIds) {
 
@@ -363,11 +370,14 @@ async function addSelectedPagesToMap(
         await duplicatePageAsChild(
           source,
           bucket.id,
-          getCampaignMapEntityTitle(
-            source.title,
-            state.currentPage?.title
+          getCampaignMapNumberedEntityTitle(
+            kind,
+            state.currentPage?.title,
+            copyIndex
           )
         );
+
+      copyIndex += 1;
 
       duplicates.push(
         duplicate
@@ -427,4 +437,59 @@ function clampCopies(
         : 1
     )
   );
+}
+
+
+function getNextMapEntityIndex(
+  kind,
+  mapTitle,
+  bucketId
+) {
+
+  const prefix =
+    kind === 'object'
+      ? 'Объект'
+      : 'Существо';
+
+  const suffix =
+    mapTitle || 'Карта';
+
+  const pattern =
+    new RegExp(
+      `^${escapeRegExp(prefix)}(\\d+)\\.${escapeRegExp(suffix)}$`
+    );
+
+  const maxIndex =
+    state.pages
+      .filter(page =>
+        page.parent === bucketId
+      )
+      .reduce((max, page) => {
+
+        const match =
+          pattern.exec(
+            page.title || ''
+          );
+
+        if (!match) return max;
+
+        return Math.max(
+          max,
+          Number(match[1]) || 0
+        );
+      }, 0);
+
+  return maxIndex + 1;
+}
+
+
+function escapeRegExp(
+  value
+) {
+
+  return String(value)
+    .replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
 }

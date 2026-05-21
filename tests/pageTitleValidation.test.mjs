@@ -7,6 +7,7 @@ import {
 
 import {
   getCampaignMapEntityTitle,
+  getCampaignMapNumberedEntityTitle,
   getDuplicatePageTitleIds,
   getUniqueCopyTitle,
   hasDuplicatePageTitle,
@@ -85,6 +86,24 @@ test(
         'Пещера'
       ),
       'Гоблин - сущность.Пещера'
+    );
+
+    assert.equal(
+      getCampaignMapNumberedEntityTitle(
+        'creature',
+        'Пещера',
+        2
+      ),
+      'Существо2.Пещера'
+    );
+
+    assert.equal(
+      getCampaignMapNumberedEntityTitle(
+        'object',
+        'Пещера',
+        3
+      ),
+      'Объект3.Пещера'
     );
   }
 );

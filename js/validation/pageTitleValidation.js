@@ -106,3 +106,24 @@ export function getCampaignMapEntityTitle(
 
   return `${sourceTitle || 'Без названия'} - сущность.${mapTitle || 'Карта'}`;
 }
+
+
+export function getCampaignMapNumberedEntityTitle(
+  kind,
+  mapTitle,
+  index
+) {
+
+  const prefix =
+    kind === 'object'
+      ? 'Объект'
+      : 'Существо';
+
+  const safeIndex =
+    Math.max(
+      1,
+      Number(index) || 1
+    );
+
+  return `${prefix}${safeIndex}.${mapTitle || 'Карта'}`;
+}
