@@ -38,7 +38,7 @@ export const browserSmokeScenarios = [
     description:
       'Создать карту, добавить существо из карточки, переместить его, перезагрузить страницу и проверить позицию и дочерний дубль в дереве.',
     automationStatus:
-      'partly-automated: campaign-map-data-first-save-reload проверяет model -> save HTML -> reload HTML для token, shape, grid, fog и viewport; UI-дубль в дереве пока остается ручным сценарием.',
+      'automated: campaign-map-data-first-save-reload и campaign-map-add-page-flow-creates-bucket-duplicate-and-token',
     automatesChecklist: [
       'Карта Кампании: 1',
       'Карта Кампании: 4',
@@ -69,6 +69,8 @@ export const browserSmokeScenarios = [
     title: 'Презентация синхронизируется с картой мастера',
     description:
       'Открыть презентацию, переместить токен и фигуру на карте мастера, проверить совпадение размеров, координат и скрытого состояния.',
+    automationStatus:
+      'automated: campaign-map-presentation-syncs-token-and-shape-by-id',
     automatesChecklist: [
       'Карта Кампании: 8',
       'Карта Кампании: 15'
@@ -81,6 +83,8 @@ export const browserSmokeScenarios = [
     title: 'Форматирование не захватывает соседний текст',
     description:
       'Выделить часть текста, применить заголовок, обычный текст, жирный и цвет, затем проверить, что соседний текст не изменился.',
+    automationStatus:
+      'partly-automated: formatting-service-keeps-neighbour-text-unchanged проверяет inline boundary; block formatting и color остаются для Editor History Contract.',
     automatesChecklist: [
       'Карточки: 7',
       'Popup И UI: 3'
@@ -93,6 +97,8 @@ export const browserSmokeScenarios = [
     title: 'Task Tracker сохраняет перенос задач и колонок',
     description:
       'Создать задачу, перенести между колонками, перенести колонку, обновить страницу и проверить порядок.',
+    automationStatus:
+      'automated: task-tracker-model-persists-task-and-column-order',
     automatesChecklist: [
       'Task Tracker: 1',
       'Task Tracker: 2',
@@ -124,6 +130,8 @@ export const browserSmokeScenarios = [
     title: 'Карточка создается по шаблону',
     description:
       'Создать шаблон из карточки, создать новую карточку по шаблону, проверить уровень в дереве, тип, title и базовый HTML.',
+    automationStatus:
+      'automated: page-template-create-delete-and-create-card',
     automatesChecklist: [
       'Шаблоны: 1',
       'Шаблоны: 2',
