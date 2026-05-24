@@ -221,8 +221,7 @@
 
 1. Добавить browser smoke tests для карты и презентации.
 2. Вынести title/input flow в `campaignMapTitleController.js`.
-3. После этого перейти к data-first save mapping: сериализовать карту из модели, а не из DOM-клона.
-4. Когда save станет data-first, рассмотреть `CampaignMapStore` как владелец model + dirty state.
+3. Когда save станет полностью data-first, рассмотреть `CampaignMapStore` как владелец model + dirty state.
 
 ## 2026-05-18: разрез Campaign Map на подсистемы
 
@@ -297,7 +296,7 @@
 - В проекте всё ещё много `innerHTML`; для локального режима это терпимо, для web это security blocker.
 - `CampaignMapModel` всё ещё восстанавливается из DOM при render/save, поэтому DOM не полностью потерял роль источника истины.
 - Presentation live-sync отдельных элементов всё ещё получает source DOM item. Full-sync уже сверяется с моделью, но live-sync лучше позже перевести на `tokenId/shapeId + model`.
-- Save всё ещё сериализует DOM через существующий clean-save слой. Полный data-first save потребует отдельного persistent JSON/HTML mapping слоя.
+- Save карты теперь строит persistent HTML через `CampaignMapModel`, но runtime-события ещё частично обновляют DOM и затем освежают модель.
 - Документация и некоторые старые строки в исходниках могут отображаться как mojibake в консоли Windows. Нельзя лечить это runtime-декодированием; нужно исправлять источник только при отдельной задаче на документацию/кодировку.
 
 ### Следующее развитие из этой работы
@@ -310,6 +309,35 @@
    - сохранить/reload;
    - проверить координаты, fog и presentation sync.
 3. После стабилизации карты перейти к desktop app spike: проверить Tauri/Electron как оболочку для локального приложения.
+
+## 2026-05-24: data-first save карты
+
+### Что сделано
+
+- Добавлен `js/editor/campaignMapDataSerializer.js`: отдельный сериализатор persistent HTML карты из `CampaignMapModel`.
+- `serializeCampaignMapHTML()` больше не сохраняет карту через общий DOM-clone `serializePersistentEditorHTML()`, если открыта `.campaign-map-document`.
+- `CampaignMapModel` теперь хранит `assetSettings`: сохраненные туман/размер сетки/цвет сетки для разных изображений одной карты.
+- В HTML карты сохраняются только данные: stage dataset, токены, фигуры, fog image, grid, view и per-asset settings.
+- Runtime-элементы карты вроде resize/rotate handles, popup-ов и временных классов не участвуют в сохранении карты.
+- Добавлен unit-тест `tests/campaignMapDataSerializer.test.mjs`, который проверяет data-first HTML и отсутствие runtime-разметки.
+
+### Что стало лучше
+
+- Сохранение карты стало предсказуемее: результат зависит от модели, а не от случайного текущего состояния DOM.
+- Следующая оптимизация карты может переводить drag/fog/grid на модель как источник правды без переписывания save-слоя.
+- Переключение изображений карты безопаснее: настройки тумана и сетки для разных map asset теперь описаны в модели.
+
+### Оставшиеся риски
+
+- Drag/fog/grid ещё не являются полностью model-owned: многие операции сначала меняют DOM, затем вызывают refresh модели.
+- `campaignMapSerializerHelpers.js` для точечного удаления токенов из сохраненных закрытых карт всё ещё работает через DOM-parse HTML.
+- Нет browser smoke test, который создает карту, добавляет токен/фигуру, сохраняет, перезагружает и проверяет восстановление.
+
+### Следующее развитие из этой работы
+
+1. Перевести закрытые patch-сценарии карты на модельный serializer, начиная с удаления токенов из сохраненной страницы.
+2. Добавить browser smoke test `карта -> token -> shape -> save/reload -> проверка координат/тумана/сетки`.
+3. Ввести `CampaignMapStore`: единый владелец `CampaignMapModel`, dirty-state и commit/render операций.
 
 ## Правила развития
 

@@ -12,8 +12,9 @@ import {
 } from './campaignMapGeometry.js';
 
 
-// CampaignMapModel — первый слой данных карты поверх текущего DOM.
-// Пока он читает и фиксирует состояние без большой миграции render/save.
+// CampaignMapModel — единый слой данных карты.
+// DOM может быть источником входного снимка, но сохранение и синхронизация
+// должны опираться на нормализованные поля модели.
 
 export class CampaignMapModel {
 
@@ -26,6 +27,11 @@ export class CampaignMapModel {
 
     this.asset =
       data.asset || '';
+
+    this.assetSettings =
+      normalizeAssetSettings(
+        data.assetSettings
+      );
 
     this.grid =
       normalizeGrid(
@@ -71,6 +77,9 @@ export class CampaignMapModel {
 
     return new CampaignMapModel({
       asset: stage?.dataset.mapAsset || '',
+      assetSettings: readAssetSettings(
+        stage
+      ),
       grid: {
         enabled: stage?.dataset.grid === 'true',
         size: stage?.dataset.gridSize,
@@ -107,6 +116,14 @@ export class CampaignMapModel {
       stage.dataset.mapAsset =
         this.asset;
     }
+
+    Object
+      .entries(this.assetSettings)
+      .forEach(([key, value]) => {
+
+        stage.dataset[key] =
+          value;
+      });
 
     stage.dataset.viewX =
       String(this.view.x);
@@ -421,6 +438,7 @@ export class CampaignMapModel {
     return {
       version: this.version,
       asset: this.asset,
+      assetSettings: this.assetSettings,
       grid: this.grid,
       fog: this.fog,
       view: this.view,
@@ -666,6 +684,29 @@ function ensureDatasetId(
 }
 
 
+function readAssetSettings(
+  stage
+) {
+
+  if (!stage) return {};
+
+  return Object
+    .entries(stage.dataset)
+    .filter(([key]) =>
+      /^fog\d+$/.test(key) ||
+      /^grid\d+$/.test(key) ||
+      /^gridColor\d+$/.test(key)
+    )
+    .reduce((settings, [key, value]) => {
+
+      settings[key] =
+        String(value || '');
+
+      return settings;
+    }, {});
+}
+
+
 function normalizeGrid(
   grid = {}
 ) {
@@ -682,6 +723,27 @@ function normalizeGrid(
       ? grid.color
       : DEFAULT_GRID_COLOR
   };
+}
+
+
+function normalizeAssetSettings(
+  settings = {}
+) {
+
+  return Object
+    .entries(settings || {})
+    .filter(([key]) =>
+      /^fog\d+$/.test(key) ||
+      /^grid\d+$/.test(key) ||
+      /^gridColor\d+$/.test(key)
+    )
+    .reduce((normalized, [key, value]) => {
+
+      normalized[key] =
+        String(value || '');
+
+      return normalized;
+    }, {});
 }
 
 

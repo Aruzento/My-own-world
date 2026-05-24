@@ -10,6 +10,10 @@ import {
 } from './blocks/blockContract.js';
 
 import {
+  serializeCampaignMapDocumentHTML
+} from './campaignMapDataSerializer.js';
+
+import {
   syncPresentation
 } from './campaignMapPresentation.js';
 
@@ -52,6 +56,10 @@ export function serializeCampaignMapHTML(
     );
 
     persistFogCanvas(
+      map
+    );
+
+    return serializeCampaignMapDocumentHTML(
       map
     );
   }
