@@ -2,6 +2,141 @@
 
 Этот файл является рабочим журналом архитектурных решений. После крупных изменений нужно добавлять сюда короткий анализ: что стало лучше, какие риски остались и какой следующий шаг логично сделать.
 
+## Актуальный приоритетный план
+
+Этот раздел — верхний навигатор проекта. При новых задачах добавлять их как подпункты в существующую структуру, а не заводить параллельный устный план.
+
+### 1. Smoke / Regression Tests
+
+- Статус: **в работе**.
+- Текущий активный подпункт: **1.6 Browser UI flow карты через кнопку `+`**.
+
+1.1. Smoke app shell: **сделано**.
+
+1.2. Unit-тесты дерева: drop intent / move planner: **сделано**.
+
+1.3. Unit-тесты карты: model / serializer / store: **сделано**.
+
+1.4. Browser smoke карты save/reload: token, shape, grid, fog, viewport: **сделано**.
+
+1.5. Browser regression удаления токена: удалить дочернюю карточку из дерева -> токен исчезает с открытой и закрытой карты: **сделано**.
+
+1.6. Browser UI flow карты через кнопку `+`: picker, копии, папки `Существа.Карта` / `Объекты.Карта`: **не сделано**.
+
+1.7. Browser smoke presentation sync: **не сделано**.
+
+1.8. Browser tests форматирования текста: **не сделано**.
+
+1.9. Browser tests task tracker: **не сделано**.
+
+1.10. Browser tests шаблонов: **не сделано**.
+
+### 2. Tree Pointer-Based DnD
+
+- Статус: **архитектурно сделано**.
+
+2.1. Pointer DnD вместо HTML5 DnD: **сделано**.
+
+2.2. Preview / placeholder / stable drop intent: **сделано**.
+
+2.3. Тесты расчетов drop intent и move planner: **сделано**.
+
+2.4. Дополнительные browser regression tests дерева: **частично не сделано**.
+
+### 3. Campaign Map Data-First Save
+
+- Статус: **основной архитектурный пункт сделан, остались укрепляющие подпункты**.
+
+3.1. `CampaignMapModel`: **сделано**.
+
+3.2. `CampaignMapStore`: **сделано**.
+
+3.3. Data-first serializer: **сделано**.
+
+3.4. Drag стартует из store, не из `dataset`: **сделано**.
+
+3.5. Закрытые карты патчатся через model/data-first путь: **сделано**.
+
+3.6. Browser save/reload regression: **сделано**.
+
+3.7. Render adapter `CampaignMapModel -> DOM`: **не сделано**.
+
+3.8. Убрать compatibility helpers `commitTokenModelToElement()` / `commitShapeModelToElement()`: **не сделано**.
+
+### 4. Editor History Contract
+
+- Статус: **следующий большой архитектурный пункт после тестовых хвостов карты**.
+
+4.1. Описать единый контракт истории: **не сделано**.
+
+4.2. Ctrl+Z / Ctrl+Y через управляемую историю: **не сделано**.
+
+4.3. Вставка текста как history action: **не сделано**.
+
+4.4. Форматирование как history action: **не сделано**.
+
+4.5. Блоки / таблицы / wiki-links как structural actions: **не сделано**.
+
+### 5. FormattingService
+
+- Статус: **частично сделано**.
+
+5.1. Изолировать `execCommand` как fallback: **частично сделано**.
+
+5.2. Описать правила форматирования: **не завершено**.
+
+5.3. Убрать прямую зависимость toolbar от deprecated API: **частично сделано**.
+
+### 6. Шаблоны В Workspace
+
+- Статус: **не сделано**.
+
+6.1. Хранить шаблоны не в `localStorage`, а в файле workspace: **не сделано**.
+
+6.2. UI удаления/создания шаблонов привязать к workspace-файлу: **не сделано**.
+
+### 7. PageRepository / PageIndex
+
+- Статус: **не сделано**.
+
+7.1. Индекс по title / aliases / parent / type / tags: **не сделано**.
+
+7.2. Перевести wiki-links, карту, поиск и проверку дублей на index: **не сделано**.
+
+### 8. Safe HTML Boundary / Sanitizer
+
+- Статус: **не сделано**.
+
+8.1. Определить разрешенный HTML: **частично описано концептуально**.
+
+8.2. Ввести sanitizer перед сохранением/открытием: **не сделано**.
+
+### 9. Разрез Крупных Файлов
+
+- Статус: **в работе**.
+
+9.1. `campaignMap.js`: **сильно продвинулось**.
+
+9.2. `blockContract.js`: **не сделано**.
+
+9.3. `editor.js`: **не сделано**.
+
+9.4. `toolbar.js`: **не сделано**.
+
+9.5. `tables.js`: **не сделано**.
+
+9.6. `campaignMapPresentation.js`: **не сделано**.
+
+### 10. CSS Разделение
+
+- Статус: **не сделано**.
+
+10.1. `campaign-map.css`: **не сделано**.
+
+10.2. `popup.css`: **не сделано**.
+
+10.3. `block-special.css`: **не сделано**.
+
 ## 2026-05-21: Smoke/regression checklist и первый слой автотестов
 
 ### Что делаем
@@ -399,9 +534,42 @@
 
 ### Следующее развитие из этой работы
 
-1. Добавить browser smoke test карты с save/reload и проверкой token/shape/grid/fog.
-2. Добавить regression test на удаление дочерней карточки токена и исчезновение токена с карты.
-3. После тестов выделить render adapter `CampaignMapModel -> DOM` и постепенно убрать direct commit helpers.
+1. Добавить regression test на удаление дочерней карточки токена и исчезновение токена с карты.
+2. После тестов выделить render adapter `CampaignMapModel -> DOM` и постепенно убрать direct commit helpers.
+3. Затем расширить UI-browser тесты карты: picker через `+`, дочерние дубли в дереве, презентация.
+
+## 2026-05-24: browser smoke карты
+
+### Что сделано
+
+- Добавлен `tests/browser/campaign-map-data.spec.mjs`.
+- Новый browser smoke проверяет полный data-cycle карты:
+  - создать DOM карты в браузере;
+  - изменить данные через `CampaignMapStore`;
+  - добавить token и shape через официальные element factory;
+  - сохранить HTML через `serializeCampaignMapDocumentHTML()`;
+  - заново вставить HTML как после reload;
+  - восстановить модель через `refreshCampaignMapStore()`;
+  - проверить token, shape, grid, fog и viewport.
+- `tests/browser/scenarios.mjs` помечает `campaign-map-token-flow` как частично автоматизированный.
+- `campaign-map-token-removal-updates-open-and-closed-map-data` покрывает удаление токена с открытой карты и патч закрытой карты после удаления дочерней карточки.
+
+### Что стало лучше
+
+- Data-first save карты теперь защищен не только unit-тестами, но и браузерным smoke-сценарием.
+- Тест ловит рассинхрон между моделью, DOM factory и serializer.
+- Есть база для следующих UI-browser тестов карты.
+
+### Что осталось не закрыто
+
+- Тест пока не кликает реальный UI `+` и не проверяет создание дочерних дублей в дереве.
+- Presentation sync всё ещё проверяется unit/архитектурно, но не отдельным browser-сценарием с popup window.
+
+### Следующее развитие из этой работы
+
+1. Добавить UI browser flow для `+` на карте и проверки дочерних папок `Существа.Карта` / `Объекты.Карта`.
+2. Добавить presentation browser smoke на `syncPresentationItemById()`.
+3. После этого переходить к большому пункту `4. Editor History Contract`, если не появится критичный regression.
 
 ## Правила развития
 

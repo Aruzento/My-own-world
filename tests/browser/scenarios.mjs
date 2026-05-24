@@ -37,6 +37,8 @@ export const browserSmokeScenarios = [
     title: 'Существо на карте создается, двигается и сохраняется',
     description:
       'Создать карту, добавить существо из карточки, переместить его, перезагрузить страницу и проверить позицию и дочерний дубль в дереве.',
+    automationStatus:
+      'partly-automated: campaign-map-data-first-save-reload проверяет model -> save HTML -> reload HTML для token, shape, grid, fog и viewport; UI-дубль в дереве пока остается ручным сценарием.',
     automatesChecklist: [
       'Карта Кампании: 1',
       'Карта Кампании: 4',
@@ -44,6 +46,20 @@ export const browserSmokeScenarios = [
       'Карта Кампании: 12',
       'Карта Кампании: 13',
       'Карта Кампании: 14'
+    ]
+  },
+  {
+    id: 'campaign-map-token-removal',
+    priority: 'P0',
+    area: 'campaign-map',
+    title: 'Удаление дочерней карточки убирает токен с карты',
+    description:
+      'Удалить страницу, к которой привязан токен, и проверить, что токен исчезает с открытой карты и из сохраненного HTML закрытой карты.',
+    automationStatus:
+      'automated: campaign-map-token-removal-updates-open-and-closed-map-data',
+    automatesChecklist: [
+      'Карта Кампании: 12',
+      'Карта Кампании: 13'
     ]
   },
   {
