@@ -1,7 +1,10 @@
 import {
-  CampaignMapModel,
-  refreshCampaignMapModel
+  CampaignMapModel
 } from './campaignMapModel.js';
+
+import {
+  refreshCampaignMapStore
+} from './campaignMapStore.js';
 
 
 // Data-first сериализатор карты строит persistent HTML из CampaignMapModel.
@@ -12,8 +15,8 @@ export function serializeCampaignMapDocumentHTML(
   map
 ) {
 
-  const model =
-    refreshCampaignMapModel(
+  const store =
+    refreshCampaignMapStore(
       map
     );
 
@@ -21,7 +24,7 @@ export function serializeCampaignMapDocumentHTML(
     title: getMapTitle(
       map
     ),
-    model
+    model: store?.getModel()
   });
 }
 

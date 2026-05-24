@@ -18,9 +18,12 @@ import {
 } from './campaignMapPresentationSync.js';
 
 import {
-  commitShapeModelToElement,
-  getCampaignMapModel
+  commitShapeModelToElement
 } from './campaignMapModel.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
 
 
 const TOKEN_DRAG_THRESHOLD = 4;
@@ -65,6 +68,11 @@ export function startShapeResize(
     shape
   );
 
+  const record =
+    getShapeRecord(
+      shape
+    );
+
   resizedShape = {
     shape,
     stage,
@@ -73,10 +81,10 @@ export function startShapeResize(
     point: event.target.dataset.point || '',
     startX: event.clientX,
     startY: event.clientY,
-    startLeft: Number(shape.dataset.x || 0),
-    startTop: Number(shape.dataset.y || 0),
-    startWidth: Number(shape.dataset.w || DEFAULT_SHAPE_SIZE),
-    startHeight: Number(shape.dataset.h || DEFAULT_SHAPE_SIZE),
+    startLeft: record.x,
+    startTop: record.y,
+    startWidth: record.width,
+    startHeight: record.height,
     startPoints: getTrianglePoints(shape),
     moved: false
   };
@@ -109,14 +117,19 @@ export function startShapeDrag(
     shape
   );
 
+  const record =
+    getShapeRecord(
+      shape
+    );
+
   draggedShape = {
     shape,
     stage: shape.closest('.campaign-map-stage'),
     map: shape.closest('.campaign-map-document'),
     startX: event.clientX,
     startY: event.clientY,
-    startLeft: Number(shape.dataset.x || 0),
-    startTop: Number(shape.dataset.y || 0),
+    startLeft: record.x,
+    startTop: record.y,
     moved: false
   };
 
@@ -316,9 +329,12 @@ function resizeShapeBox(
       height
     );
 
-  if (
-    shape.dataset.shapeType === 'circle'
-  ) {
+  const shapeType =
+    getShapeRecord(
+      shape
+    ).type;
+
+  if (shapeType === 'circle') {
 
     const size =
       Math.max(
@@ -333,12 +349,12 @@ function resizeShapeBox(
       size;
   }
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       resizedShape.map
     );
 
-  model?.resizeShape(
+  store?.resizeShape(
     shape.dataset.shapeId,
     {
       x: Math.round(x),
@@ -350,8 +366,38 @@ function resizeShapeBox(
 
   commitShapeModelToElement(
     shape,
-    model
+    store?.getModel()
   );
+}
+
+
+function getShapeRecord(
+  shape
+) {
+
+  const map =
+    shape?.closest('.campaign-map-document');
+
+  const store =
+    getCampaignMapStore(
+      map
+    );
+
+  const record =
+    store
+      ?.getModel()
+      ?.getShape(
+        shape?.dataset.shapeId
+      );
+
+  return record || {
+    type: 'square',
+    x: 0,
+    y: 0,
+    width: DEFAULT_SHAPE_SIZE,
+    height: DEFAULT_SHAPE_SIZE,
+    points: ''
+  };
 }
 
 
@@ -386,12 +432,12 @@ function resizeTrianglePoint(
     points
   );
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       resizedShape.map
     );
 
-  model?.resizeShape(
+  store?.resizeShape(
     shape.dataset.shapeId,
     {
       points: shape.dataset.points
@@ -424,12 +470,12 @@ function moveShapeToPointer(
   draggedShape.moved =
     true;
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       draggedShape.map
     );
 
-  model?.moveShape(
+  store?.moveShape(
     draggedShape.shape.dataset.shapeId,
     {
       x: Math.round(
@@ -443,7 +489,7 @@ function moveShapeToPointer(
 
   commitShapeModelToElement(
     draggedShape.shape,
-    model
+    store?.getModel()
   );
 
   applyShapeGeometry(

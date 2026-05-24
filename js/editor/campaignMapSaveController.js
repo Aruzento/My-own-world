@@ -5,12 +5,12 @@ import {
 } from './campaignMapContract.js';
 
 import {
-  refreshCampaignMapModel
-} from './campaignMapModel.js';
-
-import {
   syncPresentation
 } from './campaignMapPresentation.js';
+
+import {
+  refreshCampaignMapStore
+} from './campaignMapStore.js';
 
 
 // Save-controller держит порядок операций сохранения карты:
@@ -40,7 +40,7 @@ export async function saveCampaignMapAndSync(
 
     options.syncCurrentMapTitle?.();
 
-    refreshCampaignMapModel(
+    refreshCampaignMapStore(
       openMap
     );
 

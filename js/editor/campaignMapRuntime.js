@@ -31,9 +31,9 @@ import {
 } from './campaignMapElementFactory.js';
 
 import {
-  getCampaignMapModel,
-  refreshCampaignMapModel
-} from './campaignMapModel.js';
+  getCampaignMapStore,
+  refreshCampaignMapStore
+} from './campaignMapStore.js';
 
 import {
   renderMapShapeElement,
@@ -82,8 +82,8 @@ export async function addMapToken(
   const index =
     layer.querySelectorAll(`[data-token-type="${type}"]`).length + 1;
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
@@ -102,7 +102,7 @@ export async function addMapToken(
       : '';
 
   const tokenData =
-    model.addToken({
+    store.addToken({
       type,
       pageId: page?.id || '',
       imageAsset,
@@ -121,7 +121,7 @@ export async function addMapToken(
   const token =
     createMapTokenElement(
       tokenData,
-      model
+      store.getModel()
     );
 
   layer.appendChild(
@@ -135,7 +135,7 @@ export async function addMapToken(
     }
   );
 
-  refreshCampaignMapModel(
+  refreshCampaignMapStore(
     map
   );
 }
@@ -354,13 +354,13 @@ export function addMapShape(
       WORLD_HEIGHT - DEFAULT_SHAPE_SIZE
     );
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
   const shapeData =
-    model.addShape({
+    store.addShape({
       type,
       x: Math.round(x),
       y: Math.round(y),
@@ -374,7 +374,7 @@ export function addMapShape(
   const shape =
     createMapShapeElement(
       shapeData,
-      model
+      store.getModel()
     );
 
   layer.appendChild(
@@ -389,7 +389,7 @@ export function addMapShape(
     shape
   );
 
-  refreshCampaignMapModel(
+  refreshCampaignMapStore(
     map
   );
 }

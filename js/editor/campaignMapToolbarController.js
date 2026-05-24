@@ -3,10 +3,6 @@ import {
 } from './campaignMapConstants.js';
 
 import {
-  getCampaignMapModel
-} from './campaignMapModel.js';
-
-import {
   closeMapPopup,
   getMapPopup,
   showMapPopup,
@@ -33,6 +29,10 @@ import {
 import {
   rememberMapAssetSettings
 } from './campaignMapContract.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
 
 
 // Controller тулбара карты: маршрутизирует клики по кнопкам и управляет
@@ -218,18 +218,14 @@ function openGridPopup(
       'input',
       async event => {
 
-        const model =
-          getCampaignMapModel(
+        const store =
+          getCampaignMapStore(
             map
           );
 
-        model?.setGrid({
+        store?.setGrid({
           size: event.target.value
         });
-
-        model?.commitToElement(
-          map
-        );
 
         rememberMapAssetSettings(
           stage
@@ -249,18 +245,14 @@ function openGridPopup(
       'input',
       async event => {
 
-        const model =
-          getCampaignMapModel(
+        const store =
+          getCampaignMapStore(
             map
           );
 
-        model?.setGrid({
+        store?.setGrid({
           color: event.target.value || DEFAULT_GRID_COLOR
         });
-
-        model?.commitToElement(
-          map
-        );
 
         rememberMapAssetSettings(
           stage
@@ -335,18 +327,14 @@ function openFogPopup(
       'input',
       async event => {
 
-        const model =
-          getCampaignMapModel(
+        const store =
+          getCampaignMapStore(
             map
           );
 
-        model?.updateFog({
+        store?.updateFog({
           brushSize: event.target.value
         });
-
-        model?.commitToElement(
-          map
-        );
 
         await deps.saveAndSync();
       }

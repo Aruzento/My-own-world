@@ -6,9 +6,9 @@ import {
 } from './campaignMapConstants.js';
 
 import {
-  getCampaignMapModel,
-  refreshCampaignMapModel
-} from './campaignMapModel.js';
+  getCampaignMapStore,
+  refreshCampaignMapStore
+} from './campaignMapStore.js';
 
 import {
   applyTokenRotation,
@@ -127,10 +127,13 @@ export function syncPresentation() {
 
   if (!source || !target) return;
 
-  const model =
-    refreshCampaignMapModel(
+  const store =
+    refreshCampaignMapStore(
       source.closest('.campaign-map-document')
     );
+
+  const model =
+    store?.getModel();
 
   const sourceCanvas =
     source.querySelector('.campaign-map-fog-canvas');
@@ -295,10 +298,13 @@ export function syncPresentationItemById(
     presentationWindow.closed
   ) return false;
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       sourceMap
     );
+
+  const model =
+    store?.getModel();
 
   const record =
     itemType === 'shape'

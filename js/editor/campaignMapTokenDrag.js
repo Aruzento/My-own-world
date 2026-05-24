@@ -21,9 +21,12 @@ import {
 } from './campaignMapPresentationSync.js';
 
 import {
-  commitTokenModelToElement,
-  getCampaignMapModel
+  commitTokenModelToElement
 } from './campaignMapModel.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
 
 import {
   removeDragMeasure,
@@ -73,14 +76,19 @@ export function startTokenDrag(
 
   deps.clearTokenPopupTimer();
 
+  const record =
+    getTokenRecord(
+      token
+    );
+
   draggedToken = {
     token,
     stage: token.closest('.campaign-map-stage'),
     map: token.closest('.campaign-map-document'),
     startX: event.clientX,
     startY: event.clientY,
-    startWorldX: Number(token.dataset.x || 50) / 100 * WORLD_WIDTH,
-    startWorldY: Number(token.dataset.y || 50) / 100 * WORLD_HEIGHT,
+    startWorldX: record.x / 100 * WORLD_WIDTH,
+    startWorldY: record.y / 100 * WORLD_HEIGHT,
     measure: null,
     moved: false
   };
@@ -129,6 +137,11 @@ export function startTokenResize(
   const rect =
     token.getBoundingClientRect();
 
+  const record =
+    getTokenRecord(
+      token
+    );
+
   resizedToken = {
     token,
     stage,
@@ -137,7 +150,7 @@ export function startTokenResize(
     startY: event.clientY,
     startSize: Math.max(
       0.5,
-      Number(token.dataset.size || 1)
+      record.size
     ),
     startPixelSize: Math.max(
       rect.width,
@@ -191,6 +204,11 @@ export function startTokenRotate(
   const centerY =
     rect.top + rect.height / 2;
 
+  const record =
+    getTokenRecord(
+      token
+    );
+
   rotatedToken = {
     token,
     map: token.closest('.campaign-map-document'),
@@ -201,7 +219,7 @@ export function startTokenRotate(
       centerX,
       centerY
     ),
-    startRotation: Number(token.dataset.rotation || 0),
+    startRotation: record.rotation,
     moved: false
   };
 
@@ -213,6 +231,34 @@ export function startTokenRotate(
   token.classList.add(
     'is-rotating'
   );
+}
+
+
+function getTokenRecord(
+  token
+) {
+
+  const map =
+    token?.closest('.campaign-map-document');
+
+  const store =
+    getCampaignMapStore(
+      map
+    );
+
+  const record =
+    store
+      ?.getModel()
+      ?.getToken(
+        token?.dataset.tokenId
+      );
+
+  return record || {
+    x: 50,
+    y: 50,
+    size: 1,
+    rotation: 0
+  };
 }
 
 
@@ -362,19 +408,19 @@ function rotateTokenToPointer(
   rotatedToken.moved =
     true;
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       rotatedToken.map
     );
 
-  model?.rotateToken(
+  store?.rotateToken(
     rotatedToken.token.dataset.tokenId,
     rotation
   );
 
   commitTokenModelToElement(
     rotatedToken.token,
-    model
+    store?.getModel()
   );
 
   applyTokenRotation(
@@ -445,19 +491,19 @@ function resizeTokenToPointer(
   const map =
     resizedToken.token.closest('.campaign-map-document');
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
-  model?.resizeToken(
+  store?.resizeToken(
     resizedToken.token.dataset.tokenId,
     nextSize
   );
 
   commitTokenModelToElement(
     resizedToken.token,
-    model
+    store?.getModel()
   );
 
   applyTokenSize(
@@ -581,12 +627,12 @@ function moveTokenToPointer(
       100
     );
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       draggedToken.map
     );
 
-  model?.moveToken(
+  store?.moveToken(
     token.dataset.tokenId,
     {
       x,
@@ -596,7 +642,7 @@ function moveTokenToPointer(
 
   commitTokenModelToElement(
     token,
-    model
+    store?.getModel()
   );
 
   positionToken(

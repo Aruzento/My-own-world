@@ -28,12 +28,12 @@ import {
 } from './campaignMapBackground.js';
 
 import {
-  getCampaignMapModel
-} from './campaignMapModel.js';
-
-import {
   renderMapShapeElement
 } from './campaignMapRenderer.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
 
 
 let visibleObjectsFrame = null;
@@ -271,19 +271,15 @@ export function setMapView(
 
   if (!stage) return;
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
   const nextView =
-    model?.setView(
+    store?.setView(
       view
     ) || view;
-
-  model?.commitToElement(
-    map
-  );
 
   setStageView(
     stage,
@@ -304,18 +300,14 @@ export function toggleGrid(
   const enabled =
     stage.dataset.grid === 'true';
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
-  model?.setGrid({
+  store?.setGrid({
     enabled: !enabled
   });
-
-  model?.commitToElement(
-    map
-  );
 
   updateGridButton(
     map

@@ -2,9 +2,17 @@ import {
   writePageContent
 } from '../storage/storage.js';
 
+import {
+  serializeCampaignMapDocumentHTML
+} from './campaignMapDataSerializer.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
+
 
 // Helpers для точечного изменения сохраненного HTML карты.
-// Они работают с persistent content страницы, а не с текущим runtime DOM.
+// Закрытые карты патчатся через CampaignMapStore и data-first serializer.
 
 export async function removeTokensFromMapPageContent(
   page,
@@ -34,10 +42,15 @@ export async function removeTokensFromMapPageContent(
 
   if (!changed) return false;
 
+  const body =
+    serializeCampaignMapDocumentHTML(
+      map
+    );
+
   const content =
     replaceMarkdownBody(
       page.content,
-      wrapper.innerHTML
+      body
     );
 
   await writePageContent(
@@ -57,6 +70,11 @@ export function removeTokensFromMapElement(
   ids
 ) {
 
+  const store =
+    getCampaignMapStore(
+      map
+    );
+
   let changed =
     false;
 
@@ -67,6 +85,10 @@ export function removeTokensFromMapElement(
       if (
         !ids.has(token.dataset.pageId)
       ) return;
+
+      store?.removeToken(
+        token.dataset.tokenId
+      );
 
       token.remove();
       changed =

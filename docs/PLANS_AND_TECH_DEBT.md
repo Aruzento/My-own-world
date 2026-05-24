@@ -339,6 +339,70 @@
 2. Добавить browser smoke test `карта -> token -> shape -> save/reload -> проверка координат/тумана/сетки`.
 3. Ввести `CampaignMapStore`: единый владелец `CampaignMapModel`, dirty-state и commit/render операций.
 
+## 2026-05-24: CampaignMapStore
+
+### Что сделано
+
+- Добавлен `js/editor/campaignMapStore.js`: единый владелец `CampaignMapModel`, dirty-state и commit в DOM.
+- Основные операции карты переведены на store:
+  - drag/resize/rotate токенов;
+  - drag/resize фигур;
+  - добавление токенов и фигур;
+  - удаление, скрытие и дублирование токенов/фигур;
+  - grid size/color/toggle;
+  - fog mode/brush/fill/clear;
+  - viewport pan/zoom;
+  - save и presentation sync.
+- `campaignMapDataSerializer.js` теперь берет модель через `refreshCampaignMapStore()`.
+- Добавлены unit-тесты `tests/campaignMapStore.test.mjs` для dirty-state, токенов, фигур, сетки, тумана и viewport.
+
+### Что стало лучше
+
+- У карты появился явный model-owner вместо россыпи прямых обращений к `CampaignMapModel`.
+- Новые операции карты можно добавлять в store и не размазывать commit/dirty-state по UI-модулям.
+- Presentation sync и data-first save теперь ближе к одному источнику правды.
+
+### Оставшиеся риски
+
+- Store пока совместимый слой поверх текущего DOM: часть операций всё ещё читает стартовые значения из dataset перед записью в модель.
+- `campaignMapModel.js` оставляет старые compatibility helpers для DOM-commit, потому что renderer/factory ещё используют их.
+- Точечное изменение сохраненного HTML закрытых карт (`campaignMapSerializerHelpers.js`) всё ещё не переведено на store/model.
+
+### Следующее развитие из этой работы
+
+1. Добавить browser smoke test карты с save/reload и проверкой token/shape/grid/fog.
+2. Начать убирать compatibility helpers из `campaignMapModel.js`, когда factory/renderer смогут работать напрямую со store snapshots.
+3. Выделить model-owned render adapter для token/shape, чтобы DOM полностью стал отображением модели.
+
+## 2026-05-24: закрепление model-owned карты
+
+### Что сделано
+
+- Стартовое состояние drag/resize/rotate токенов теперь берется из `CampaignMapStore`, а не из `dataset`.
+- Стартовое состояние drag/resize фигур теперь берется из `CampaignMapStore`.
+- `campaignMapSerializerHelpers.js` переведен на model/data-first путь:
+  - закрытая карта разбирается как persistent HTML;
+  - удаление токенов проходит через `CampaignMapStore.removeToken()`;
+  - результат собирается через `serializeCampaignMapDocumentHTML()`, а не через `wrapper.innerHTML`.
+
+### Что стало лучше
+
+- Drag-слои меньше зависят от DOM как источника истины: `dataset` остается только идентификатором DOM-элемента.
+- Патч закрытых карт теперь совпадает с обычным сохранением карты и не обходит data-first serializer.
+- Следующий шаг по карте можно делать уже не вокруг save, а вокруг render adapter: model snapshot -> DOM.
+
+### Оставшиеся риски
+
+- Для треугольников точки вершин всё ещё вычисляются через DOM-helper `getTrianglePoints(shape)`, потому что shape handles физически живут в DOM.
+- `commitTokenModelToElement()` и `commitShapeModelToElement()` остаются compatibility-мостами.
+- Нет отдельного browser regression test на удаление карточки-токена из дерева и последующий патч закрытой карты.
+
+### Следующее развитие из этой работы
+
+1. Добавить browser smoke test карты с save/reload и проверкой token/shape/grid/fog.
+2. Добавить regression test на удаление дочерней карточки токена и исчезновение токена с карты.
+3. После тестов выделить render adapter `CampaignMapModel -> DOM` и постепенно убрать direct commit helpers.
+
 ## Правила развития
 
 - Любой новый runtime UI должен иметь `data-runtime="true"` и не попадать в persistent HTML.

@@ -18,9 +18,9 @@ import {
 } from './campaignMapPresentation.js';
 
 import {
-  getCampaignMapModel,
-  refreshCampaignMapModel
-} from './campaignMapModel.js';
+  getCampaignMapStore,
+  refreshCampaignMapStore
+} from './campaignMapStore.js';
 
 
 export function isCampaignMapPage(
@@ -51,7 +51,7 @@ export function serializeCampaignMapHTML(
 
   if (map) {
 
-    refreshCampaignMapModel(
+    refreshCampaignMapStore(
       map
     );
 
@@ -158,18 +158,14 @@ export function persistFogCanvas(
   stage.dataset.fogImage =
     canvas.toDataURL('image/png');
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
-  model?.updateFog({
+  store?.updateFog({
     image: stage.dataset.fogImage
   });
-
-  model?.commitToElement(
-    map
-  );
 
   rememberMapAssetSettings(
     stage

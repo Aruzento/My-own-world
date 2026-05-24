@@ -43,9 +43,12 @@ import {
 
 import {
   commitShapeModelToElement,
-  commitTokenModelToElement,
-  getCampaignMapModel
+  commitTokenModelToElement
 } from './campaignMapModel.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
 
 
 // Слой действий карты: операции, которые меняют карточки, дерево или сохраненное
@@ -102,12 +105,12 @@ export async function deleteTokenAndPage(
   const map =
     token.closest('.campaign-map-document');
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
-  model?.removeToken(
+  store?.removeToken(
     token.dataset.tokenId
   );
 
@@ -308,8 +311,8 @@ export async function toggleMapItemPresentationVisibility(
   const map =
     item.closest('.campaign-map-document');
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
@@ -317,7 +320,7 @@ export async function toggleMapItemPresentationVisibility(
     item.classList.contains('campaign-map-shape')
   ) {
 
-    model?.updateShape(
+    store?.updateShape(
       item.dataset.shapeId,
       {
         presentationHidden: !hidden
@@ -326,12 +329,12 @@ export async function toggleMapItemPresentationVisibility(
 
     commitShapeModelToElement(
       item,
-      model
+      store?.getModel()
     );
 
   } else {
 
-    model?.updateToken(
+    store?.updateToken(
       item.dataset.tokenId,
       {
         presentationHidden: !hidden
@@ -340,7 +343,7 @@ export async function toggleMapItemPresentationVisibility(
 
     commitTokenModelToElement(
       item,
-      model
+      store?.getModel()
     );
   }
 
@@ -367,12 +370,12 @@ export async function deleteMapShape(
   const map =
     shape.closest('.campaign-map-document');
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
-  model?.removeShape(
+  store?.removeShape(
     shape.dataset.shapeId
   );
 
@@ -389,13 +392,13 @@ export async function duplicateMapShape(
   const map =
     shape.closest('.campaign-map-document');
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
   const shapeData =
-    model?.addShape({
+    store?.addShape({
       type: shape.dataset.shapeType,
       x: Number(shape.dataset.x || 0) + 24,
       y: Number(shape.dataset.y || 0) + 24,
@@ -408,7 +411,7 @@ export async function duplicateMapShape(
   const clone =
     createMapShapeElement(
       shapeData,
-      model
+      store?.getModel()
     );
 
   shape.after(
@@ -470,13 +473,13 @@ async function addMapTokenFromExisting(
       sourceToken
     );
 
-  const model =
-    getCampaignMapModel(
+  const store =
+    getCampaignMapStore(
       map
     );
 
   const tokenData =
-    model?.addToken({
+    store?.addToken({
       type: tokenType,
       pageId: page.id,
       name: page.title || sourceToken.dataset.name || '',
@@ -498,7 +501,7 @@ async function addMapTokenFromExisting(
   const token =
     createMapTokenElement(
       tokenData,
-      model
+      store?.getModel()
     );
 
   layer.appendChild(

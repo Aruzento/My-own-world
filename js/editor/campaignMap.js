@@ -66,8 +66,8 @@ import {
 } from './campaignMapExternalDrop.js';
 
 import {
-  refreshCampaignMapModel
-} from './campaignMapModel.js';
+  refreshCampaignMapStore
+} from './campaignMapStore.js';
 
 import {
   clearDraggedToken,
@@ -253,7 +253,7 @@ export async function renderCampaignMap(
     map
   );
 
-  refreshCampaignMapModel(
+  refreshCampaignMapStore(
     map
   );
 
@@ -296,7 +296,7 @@ export async function removeDeletedCampaignMapTokens(
 
     if (openMapChanged) {
 
-      refreshCampaignMapModel(
+      refreshCampaignMapStore(
         openMap
       );
     }

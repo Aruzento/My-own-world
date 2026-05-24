@@ -13,12 +13,12 @@ import {
 } from './campaignMapGeometry.js';
 
 import {
-  getCampaignMapModel
-} from './campaignMapModel.js';
-
-import {
   schedulePresentationSync
 } from './campaignMapPresentationSync.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
 
 
 // Fog of war держится отдельно от token/shape логики:
@@ -207,18 +207,14 @@ export function setMapTool(
     tool === 'erase'
   ) {
 
-    const model =
-      getCampaignMapModel(
+    const store =
+      getCampaignMapStore(
         map
       );
 
-    model?.updateFog({
+    store?.updateFog({
       mode: tool
     });
-
-    model?.commitToElement(
-      map
-    );
   }
 
   updateFogButtons(
