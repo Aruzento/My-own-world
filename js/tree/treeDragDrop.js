@@ -6,18 +6,20 @@ import {
 
 import {
   loadWorkspace,
-  updatePageParent,
   updatePageTreePosition
 } from '../storage/storage.js';
 
 import {
-  canMovePage,
-  getPageOrder
+  canMovePage
 } from './treeUtils.js';
 
 import {
   getTreeDropIntentFromRatio
 } from './treeDropIntent.js';
+
+import {
+  createTreeMovePlan
+} from './treeMovePlanner.js';
 
 
 let treeDropPlaceholder = null;
@@ -447,31 +449,24 @@ async function commitTreePointerDrop(
 
   if (!intent) return;
 
-  if (intent.mode === 'root') {
+  const plan =
+    createTreeMovePlan({
+      pages: state.pages,
+      draggedId: page.id,
+      targetId: intent.targetPage?.id || null,
+      mode: intent.mode
+    });
 
-    await updatePageParent(
-      page,
-      null
-    );
-
-  } else if (
-    intent.mode === 'before' ||
-    intent.mode === 'after'
-  ) {
-
-    await movePageNearTarget(
-      page,
-      intent.targetPage,
-      intent.mode
-    );
-
-  } else if (intent.mode === 'inside') {
+  for (const item of plan) {
 
     await updatePageTreePosition(
-      page,
-      intent.targetPage.id,
-      Date.now()
+      item.page,
+      item.parentId,
+      item.order
     );
+  }
+
+  if (intent.mode === 'inside') {
 
     stateToCommit.collapsedPages.delete(
       intent.targetPage.id
@@ -643,64 +638,6 @@ function getItemLevel(
   return Number(
     item.style.getPropertyValue('--tree-level')
   ) || 0;
-}
-
-
-async function movePageNearTarget(
-  draggedPage,
-  targetPage,
-  mode
-) {
-
-  const siblings =
-    state.pages
-      .filter(page =>
-        page.parent === targetPage.parent
-        &&
-        page.id !== draggedPage.id
-      )
-      .sort(
-        (a, b) =>
-          getPageOrder(a) - getPageOrder(b)
-      );
-
-  const targetIndex =
-    siblings.findIndex(
-      page =>
-        page.id === targetPage.id
-    );
-
-  let insertIndex =
-    targetIndex;
-
-  if (mode === 'after') {
-
-    insertIndex =
-      targetIndex + 1;
-  }
-
-  siblings.splice(
-    insertIndex,
-    0,
-    draggedPage
-  );
-
-  for (
-    let index = 0;
-    index < siblings.length;
-    index++
-  ) {
-
-    const sibling =
-      siblings[index];
-
-    // Пишем порядок всем соседям, иначе после reload сортировка может откатиться.
-    await updatePageTreePosition(
-      sibling,
-      targetPage.parent,
-      index + 1
-    );
-  }
 }
 
 
