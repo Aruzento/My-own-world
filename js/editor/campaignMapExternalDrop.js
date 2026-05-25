@@ -1,5 +1,3 @@
-import { state } from '../state.js';
-
 import {
   getDraggedTreePageId
 } from '../tree/tree.js';
@@ -16,6 +14,10 @@ import {
   addPageToMap,
   canAddPageToCampaignMap
 } from './campaignMapPicker.js';
+
+import {
+  getPageById
+} from '../repository/pageRepository.js';
 
 
 // Внешний drop карты отвечает только за сценарий:
@@ -191,8 +193,8 @@ async function handlePointerTreePageDrop(
   if (!stage || !map || !pageId) return;
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === pageId
+    getPageById(
+      pageId
     );
 
   if (
@@ -240,7 +242,7 @@ function getDraggedTreePage(
 
   if (!pageId) return null;
 
-  return state.pages.find(page =>
-    page.id === pageId
-  ) || null;
+  return getPageById(
+    pageId
+  );
 }

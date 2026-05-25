@@ -22,6 +22,11 @@ test(
             await import('/js/state.js');
 
           const {
+            setCurrentPage,
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
             addPageToMap,
             canAddPageToCampaignMap,
             openAddKindPopup
@@ -161,16 +166,16 @@ ${body}
               parent: mapPage.id
             });
 
-          state.pages =
-            [
-              mapPage,
-              source,
-              player,
-              mapChild
-            ];
+          setPages([
+            mapPage,
+            source,
+            player,
+            mapChild
+          ]);
 
-          state.currentPage =
-            mapPage;
+          setCurrentPage(
+            mapPage
+          );
 
           document.querySelector('#editorArea').innerHTML =
             createMapShellHTML();

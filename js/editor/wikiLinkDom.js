@@ -1,7 +1,6 @@
-import { state } from '../state.js';
-
 import {
-  findPageByTitle
+  findPageByTitle,
+  findPageByWikiLinkId
 } from './wikiLinkLookup.js';
 
 
@@ -109,8 +108,8 @@ function findLinkedPage(
   if (pageId) {
 
     const page =
-      state.pages.find(candidate =>
-        candidate.id === pageId
+      findPageByWikiLinkId(
+        pageId
       );
 
     if (page) return page;

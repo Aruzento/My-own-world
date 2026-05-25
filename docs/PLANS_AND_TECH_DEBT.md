@@ -129,39 +129,47 @@
 6.3. Сделать lifecycle индекса: **сделано**.
 Добавлен runtime `PageRepository`, который подписывается на `setPages`, пересобирает `PageIndex` после загрузки и явно обновляется после create, rename, move, delete, alias/tag/type change. На первом этапе update-операции безопасно идут через полный rebuild.
 
-6.4. Перевести wiki-links на `PageIndex`: **не сделано**.
+6.4. Перевести wiki-links на `PageIndex`: **сделано**.
+`wikiLinkLookup`, refresh существующих wiki-links, hover preview и popup "связать с существующей" переведены на `PageRepository / PageIndex`.
 
-6.5. Перевести поиск на `PageIndex`: **не сделано**.
+6.5. Перевести поиск на `PageIndex`: **сделано**.
+Sidebar search берет страницы через `PageRepository`, а логика поиска вынесена в `searchPages()` и покрыта unit-тестом.
 
-6.6. Перевести проверку дублей на `PageIndex`: **не сделано**.
+6.6. Перевести проверку дублей на `PageIndex`: **сделано**.
+`pageTitleValidation` использует `getPagesByTitle()` и `findDuplicateTitles()` из `PageRepository`.
 
-6.7. Перевести campaign map picker/player lookup на `PageIndex`: **не сделано**.
+6.7. Перевести campaign map picker/player lookup на `PageIndex`: **сделано**.
+Picker карты, player lookup, external drop из дерева, действия токенов и bucket lookup переведены на `PageRepository`.
 
-6.8. Перевести шаблоны и будущий graph lookup на `PageIndex`: **не сделано**.
+6.8. Перевести шаблоны и будущий graph lookup на `PageIndex`: **сделано**.
+Создание задач по трекеру, сохранение страниц по шаблону и backlinks/future graph references используют repository API.
 
-6.9. Добавить unit/browser regression для `PageIndex`: **частично сделано**.
-Unit-тесты базового `PageIndex` и lifecycle `PageRepository` добавлены. Browser regression нужны после перевода первых UI-подсистем на repository.
+6.9. Добавить unit/browser regression для `PageIndex`: **сделано, расширять по мере новых систем**.
+Unit-тесты базового `PageIndex`, lifecycle `PageRepository`, wiki-link lookup, sidebar search и duplicate title validation добавлены. Browser regression уже покрывают карту, task tracker, шаблоны, дерево и редактор.
 
 ### 7. Safe HTML Boundary / Sanitizer
 
-- Статус: **не сделано**.
+- Статус: **в работе**.
 - Приоритет: **P0**.
 - Зачем: это главный security blocker перед web/cloud и защита local workspace от мусора в HTML.
 
-7.1. Описать `SAFE_HTML_CONTRACT.md`: **не сделано**.
-Что можно сохранять, что нельзя сохранять, что является runtime UI, что является persistent content.
+7.1. Описать `SAFE_HTML_CONTRACT.md`: **сделано**.
+Описано, что можно сохранять, что нельзя сохранять, что является runtime UI и что является persistent content.
 
-7.2. Составить allowlist HTML: **не сделано**.
-Text blocks, headings, links, wiki-links, tables, images, campaign map shell, task tracker shell.
+7.2. Составить allowlist HTML: **сделано**.
+Allowlist составлен для text blocks, headings, links, wiki-links, card shell, block types, tables, images, campaign map shell, task tracker shell, popup/toolbar runtime.
 
-7.3. Реализовать sanitizer на save: **не сделано**.
+7.3. Реализовать sanitizer на save: **сделано**.
+Добавлен `safeHtmlSanitizer.js`; autosave, сохранение карты/таск-трекера, block serializer и создание по шаблону прогоняют persistent HTML через sanitizer.
 
-7.4. Реализовать sanitizer на load/open: **не сделано**.
+7.4. Реализовать sanitizer на load/open: **сделано**.
+Открытие карточки очищает HTML перед вставкой в editor и затем восстанавливает runtime UI штатными render/setup функциями.
 
-7.5. Реализовать paste sanitization: **не сделано**.
+7.5. Реализовать paste sanitization: **сделано**.
+Paste в редактор и таблицы использует plain text sanitizer: формат внешнего источника не переносится, control chars удаляются.
 
-7.6. Добавить security regression tests: **не сделано**.
-Forbidden tags, script injection, unsafe attributes, malformed HTML, runtime controls leakage.
+7.6. Добавить security regression tests: **сделано, расширять при усилении sanitizer**.
+Добавлены browser regression на forbidden tags, task tracker JSON exception, unsafe attributes, dangerous URLs, malformed HTML, runtime controls leakage, map toolbar leakage и task tracker runtime board leakage.
 
 ### 8. CI На GitHub Actions
 
@@ -468,6 +476,6 @@ Render time, sync time, number of visible objects, background load.
 
 ## Текущий Следующий Шаг
 
-Следующий рекомендуемый пункт: **6.4. Перевести wiki-links на PageIndex**.
+Следующий рекомендуемый пункт: **8.1. Добавить `.github/workflows/verify.yml`**.
 
-Причина: `PageRepository` уже подключен к runtime lifecycle. Wiki-links первыми выиграют от единого поиска по title/aliases и перестанут дублировать lookup-логику поверх `state.pages`.
+Причина: Safe HTML Boundary / Sanitizer закрыт первым исполняемым слоем и browser regression. Следующий P0-контур зрелости — CI на GitHub Actions, чтобы локальные проверки стали обязательной защитой перед merge/push.

@@ -199,14 +199,14 @@ normalizeTitle(value)
 
 Порядок миграции:
 
-1. `wikiLinkLookup.js` и `wikiLinkCreateMenu.js`;
-2. `search/search.js`;
-3. `pageTitleValidation.js`;
-4. `campaignMapPicker.js`;
-5. `campaignMapExternalDrop.js`;
-6. `itemSets.js`, `dndStatsV2.js`, future spell/skill blocks;
-7. `treeUtils.js` и tree context menu;
-8. будущий Knowledge Graph.
+1. `wikiLinkLookup.js` и `wikiLinkCreateMenu.js`: **сделано**;
+2. `search/search.js`: **сделано**;
+3. `pageTitleValidation.js`: **сделано**;
+4. `campaignMapPicker.js`: **сделано**;
+5. `campaignMapExternalDrop.js`: **сделано**;
+6. `itemSets.js`, `dndStatsV2.js`, future spell/skill blocks: **частично сделано**;
+7. `treeUtils.js` и tree context menu: **не сделано**;
+8. будущий Knowledge Graph: **частично сделано**, backlinks references уже читают страницы через repository.
 
 ## Тесты
 
@@ -254,3 +254,14 @@ Browser regression tests добавлять после перевода перв
 - переименование, aliases, tags и type обновляют индекс после сохранения;
 - добавлены unit-тесты на lifecycle repository;
 - план обновлен и следующий пункт — `6.4 Перевести wiki-links на PageIndex`.
+
+## Definition Of Done Для 6.4-6.8
+
+Пункты `6.4-6.8` считаются завершенными, когда:
+
+- wiki-links ищут target по title/aliases через `PageRepository`;
+- sidebar search получает страницы через `PageRepository`;
+- проверка дублей названий использует `PageIndex`;
+- campaign map picker, player lookup и external tree-drop на карту используют repository API;
+- создание задач по трекеру, создание по шаблону и backlinks/future graph references не добавляют новых прямых lookup по `state.pages`;
+- план обновлен и следующий P0-пункт — Safe HTML Boundary / Sanitizer.

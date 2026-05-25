@@ -1,8 +1,10 @@
-import { state } from '../state.js';
-
 import {
   parseMarkdown
 } from '../core/markdown.js';
+
+import {
+  getAllPages
+} from '../repository/pageRepository.js';
 
 
 export function getBacklinks(
@@ -11,7 +13,7 @@ export function getBacklinks(
 
   if (!targetPage) return [];
 
-  return state.pages.filter(page => {
+  return getAllPages().filter(page => {
 
     if (
       page.id === targetPage.id

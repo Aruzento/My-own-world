@@ -45,6 +45,10 @@ import {
 } from './campaignMapTreeIntegration.js';
 
 import {
+  getPageById
+} from '../repository/pageRepository.js';
+
+import {
   getHealthColor,
   getPageDndHealth
 } from './campaignMapHealth.js';
@@ -205,8 +209,8 @@ export function applyTokenHealthState(
   const page =
     pageLookup
       ? pageLookup.get(token.dataset.pageId)
-      : state.pages.find(candidate =>
-        candidate.id === token.dataset.pageId
+      : getPageById(
+        token.dataset.pageId
       );
 
   const health =

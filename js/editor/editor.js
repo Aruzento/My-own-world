@@ -98,6 +98,12 @@ import {
   pushEditorHistorySnapshot
 } from './editorHistory.js';
 
+import {
+  sanitizePersistentHTMLOnLoad,
+  sanitizePersistentHTMLOnSave,
+  sanitizePlainTextPaste
+} from './safeHtmlSanitizer.js';
+
 /* ---- */
 
 
@@ -238,8 +244,10 @@ editor.addEventListener(
     ) {
 
       const text =
-        event.clipboardData
-          ?.getData('text/plain');
+        sanitizePlainTextPaste(
+          event.clipboardData
+            ?.getData('text/plain')
+        );
 
       if (
         text &&
@@ -459,7 +467,9 @@ state.currentPage.schemaVersion =
 
 editor.innerHTML =
   sanitizeAssetImagesBeforeRender(
-    parsed.body
+    sanitizePersistentHTMLOnLoad(
+      parsed.body
+    )
   );
 
 if (
@@ -904,7 +914,9 @@ type: taskTracker
 aliases: [${aliases.join(', ')}]
 ---
 
-${serializeTaskTrackerHTML(editor)}
+${sanitizePersistentHTMLOnSave(
+  serializeTaskTrackerHTML(editor)
+)}
 `;
 
   await writePageContent(
@@ -960,7 +972,9 @@ type: campaignMap
 aliases: [${aliases.join(', ')}]
 ---
 
-${serializeCampaignMapHTML(editor)}
+${sanitizePersistentHTMLOnSave(
+  serializeCampaignMapHTML(editor)
+)}
 `;
 
   await writePageContent(

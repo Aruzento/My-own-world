@@ -1,5 +1,3 @@
-import { state } from '../state.js';
-
 import {
   openWikiCreateMenu
 } from './wikiLinkCreateMenu.js';
@@ -9,7 +7,8 @@ import {
 } from '../ui/backlinks.js';
 
 import {
-  findPageByTitle
+  findPageByTitle,
+  findPageByWikiLinkId
 } from './wikiLinkLookup.js';
 
 import {
@@ -107,8 +106,8 @@ async function handleWikiLinkClick(
   }
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === pageId
+    findPageByWikiLinkId(
+      pageId
     );
 
   if (!page) return;

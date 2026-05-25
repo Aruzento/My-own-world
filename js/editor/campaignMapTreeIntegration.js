@@ -1,5 +1,3 @@
-import { state } from '../state.js';
-
 import {
   normalizeText
 } from './campaignMapGeometry.js';
@@ -8,6 +6,12 @@ import {
   isCampaignMapRecord
 } from './campaignMapContract.js';
 
+import {
+  getAllPages,
+  getChildren,
+  getParentChain
+} from '../repository/pageRepository.js';
+
 
 // Модуль связывает карту кампании с деревом страниц.
 // Карта не должна сама знать детали поиска родителей и CSS-подсветки дерева.
@@ -15,7 +19,7 @@ import {
 export function createPageLookup() {
 
   return new Map(
-    state.pages.map(page => [
+    getAllPages().map(page => [
       page.id,
       page
     ])
@@ -28,27 +32,15 @@ export function hasCampaignMapAncestor(
   pageLookup = createPageLookup()
 ) {
 
-  let current =
-    page;
+  if (!page?.id) return false;
 
-  while (current?.parent) {
-
-    const parent =
-      pageLookup.get(
-        current.parent
-      );
-
-    if (!parent) return false;
-
-    if (
-      isCampaignMapRecord(parent)
-    ) return true;
-
-    current =
-      parent;
-  }
-
-  return false;
+  return getParentChain(
+    page.id
+  ).some(parent =>
+    isCampaignMapRecord(
+      parent
+    )
+  );
 }
 
 
@@ -57,10 +49,18 @@ export function findMapBucket(
   title
 ) {
 
-  return state.pages.find(page =>
-    page.parent === mapPageId &&
-    normalizeText(page.title) === normalizeText(title)
-  );
+  const normalizedTitle =
+    normalizeText(
+      title
+    );
+
+  return getChildren(
+    mapPageId
+  ).find(page =>
+    normalizeText(
+      page.title
+    ) === normalizedTitle
+  ) || null;
 }
 
 

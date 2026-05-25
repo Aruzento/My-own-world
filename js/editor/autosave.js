@@ -37,6 +37,10 @@ import {
   notifyPageUpdated
 } from '../repository/pageRepository.js';
 
+import {
+  sanitizePersistentHTMLOnSave
+} from './safeHtmlSanitizer.js';
+
 
 export function setupAutosave(
   editor
@@ -224,8 +228,10 @@ function getSerializedEditorHTML(
     state.currentPage?.type === 'campaignMap'
   ) {
 
-    return serializeCampaignMapHTML(
-      editor
+    return sanitizePersistentHTMLOnSave(
+      serializeCampaignMapHTML(
+        editor
+      )
     );
   }
 
@@ -234,12 +240,16 @@ function getSerializedEditorHTML(
     state.currentPage?.type === 'taskTracker'
   ) {
 
-    return serializeTaskTrackerHTML(
-      editor
+    return sanitizePersistentHTMLOnSave(
+      serializeTaskTrackerHTML(
+        editor
+      )
     );
   }
 
-  return serializePersistentEditorHTML(
-    editor
+  return sanitizePersistentHTMLOnSave(
+    serializePersistentEditorHTML(
+      editor
+    )
   );
 }

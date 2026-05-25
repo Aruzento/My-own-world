@@ -267,7 +267,19 @@ Runtime-слой `PageRepository` описан в `docs/PAGE_REPOSITORY_CONTRACT
 
 Правило для нового кода: не добавлять новые хаотичные lookup через `state.pages.find(...)`, `state.pages.filter(...)` и ручной обход parent-chain. Если подсистеме нужно найти страницу по `id`, title, alias, parent, type, tags или проверить ветку родителей, это должно проходить через `PageRepository`.
 
+Wiki-links, sidebar search, проверка дублей названий, часть campaign map picker/player lookup, создание задач по трекеру и backlinks references уже используют `PageRepository`.
+
 На переходном этапе прямой доступ к `state.pages` допускается только в storage, тестах, `stateActions.js` и legacy-модулях, которые еще не переведены на repository.
+
+## Safe HTML Boundary
+
+Граница безопасного HTML описана в `docs/SAFE_HTML_CONTRACT.md`.
+
+Короткое правило: в `.md` должен попадать только persistent content. Runtime UI (`data-runtime="true"`, toolbar, popup, drag/resize handles, temporary overlays, block controls) должен удаляться перед сохранением и восстанавливаться при открытии через render/setup функции.
+
+Контракт уже фиксирует allowlist для текстовых блоков, ссылок, wiki-links, таблиц, изображений, campaign map shell и task tracker shell. Следующий шаг плана — реализовать sanitizer на save.
+
+Первый sanitizer уже подключен на save/load/paste в `js/editor/safeHtmlSanitizer.js`: он удаляет runtime UI, опасные теги, inline event handlers, dangerous URLs и временные `blob:` sources, сохраняя рабочие persistent-модели карты и task tracker.
 
 ## Sidebar Profile
 

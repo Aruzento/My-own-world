@@ -6,6 +6,145 @@
 
 ---
 
+## 2026-05-25: Safe HTML Security Regression 7.6
+
+### Что сделано
+
+- Расширен `tests/browser/safe-html.spec.mjs` до набора security regression tests.
+- Добавлены проверки forbidden tags: executable `<script>`, `iframe`, `object`, `embed`, `link`, `meta`, `style`, `form`.
+- Зафиксировано исключение task tracker JSON: `script[type="application/json"][data-task-tracker-data]` сохраняется, лишние атрибуты удаляются.
+- Добавлены проверки unsafe attributes and URLs: `on*`, `javascript:`, `vbscript:`, `data:text/html`, `blob:` sources.
+- Добавлены проверки runtime leakage: block controls, toolbar, image controls, table controls, campaign map toolbar/popup/drag vector, task tracker runtime board.
+- Добавлена проверка malformed HTML и plain text paste sanitizer.
+- `safeHtmlSanitizer.js` расширен runtime selectors для campaign map и task tracker runtime UI.
+
+### Что стало лучше
+
+- Sanitizer теперь прикрыт browser regression tests, а не только ручной уверенностью.
+- Будущие изменения сохранения, карты, task tracker и paste сразу покажут, если runtime UI или опасный HTML снова начнет попадать в persistent content.
+
+### Риски / Что осталось
+
+- Строгий allowlist классов и `data-*` все еще не включен, чтобы не сломать текущие legacy-блоки. Его стоит делать отдельным подпунктом после анализа реальных сохраненных `.md`.
+
+### Следующее развитие
+
+- Перейти к P0-блоку `8. CI На GitHub Actions`.
+
+---
+
+## 2026-05-25: Safe HTML Sanitizer 7.3-7.5
+
+### Что сделано
+
+- Добавлен `js/editor/safeHtmlSanitizer.js`.
+- Реализованы `sanitizePersistentHTMLOnSave()`, `sanitizePersistentHTMLOnLoad()` и `sanitizePlainTextPaste()`.
+- Sanitizer удаляет runtime UI, forbidden tags, inline `on*` handlers, `javascript:` / `vbscript:` URLs, dangerous `data:text/html`, `blob:` sources на save и небезопасные style-атрибуты.
+- Task tracker JSON script сохранен как разрешенное исключение: `type="application/json"` + `data-task-tracker-data`.
+- Save boundary подключен к autosave, сохранению карт, task tracker, block serializer и созданию страниц по шаблону.
+- Load/open boundary подключен перед вставкой HTML в editor.
+- Paste boundary подключен для редактора и таблиц.
+- Добавлен browser regression `tests/browser/safe-html.spec.mjs`.
+
+### Что стало лучше
+
+- Persistent HTML теперь проходит через единый защитный слой перед сохранением и открытием.
+- В `.md` сложнее случайно протащить runtime-кнопки, обработчики событий, `javascript:` ссылки и временные `blob:` sources.
+- Вставка текста продолжает быть plain text и теперь дополнительно чистит control chars.
+
+### Риски / Что осталось
+
+- Sanitizer пока мягкий к `class` и большинству `data-*`, чтобы не сломать текущую разметку. Строгий allowlist классов и data-полей лучше вводить после расширения security tests.
+- 7.6 остается следующим шагом: нужно добавить больше regression cases из `SAFE_HTML_CONTRACT.md`.
+
+### Следующее развитие
+
+- Выполнить `7.6`: forbidden tags, script injection, unsafe attributes, malformed HTML, runtime controls leakage, task tracker JSON exception, map toolbar leakage.
+
+---
+
+## 2026-05-25: Safe HTML Contract 7.1-7.2
+
+### Что сделано
+
+- Создан `docs/SAFE_HTML_CONTRACT.md`.
+- Описана граница `persistent content` и `runtime UI`.
+- Зафиксированы общие запреты: executable tags, inline event handlers, `javascript:` URLs, runtime DOM, временные drag/selection/toolbar элементы.
+- Описан allowlist для базовых текстовых тегов, ссылок, wiki-links, card shell, блоков, form controls, таблиц, изображений, campaign map и task tracker.
+- Зафиксированы будущие boundary-точки: save, load/open и paste.
+- Описаны security regression scenarios для будущего пункта `7.6`.
+
+### Что стало лучше
+
+- Следующий sanitizer можно реализовывать по документу, а не по догадкам из текущего DOM.
+- У команды появился единый язык: что считается runtime, что можно сохранять, что надо восстанавливать при open.
+- Контракт уже учитывает текущую архитектуру data-first карты и JSON-модель task tracker.
+
+### Риски / Что осталось
+
+- Контракт пока не исполняемый: код sanitizer еще не написан.
+- Некоторые текущие подсистемы могут временно хранить больше атрибутов, чем будущий sanitizer разрешит. При реализации 7.3 нужно сверять реальные сохраненные HTML-кейсы.
+
+### Следующее развитие
+
+- Выполнить `7.3`: реализовать sanitizer на save и добавить первые unit-тесты на удаление runtime UI и dangerous HTML.
+
+---
+
+## 2026-05-25: PageRepository Migration 6.6-6.8
+
+### Что сделано
+
+- `pageTitleValidation.js` переведен на `PageRepository`: проверка дублей идет через `getPagesByTitle()` и `findDuplicateTitles()`.
+- Campaign map picker/player lookup переведен на repository API: список доступных карточек, проверка ветки карты, получение выбранных страниц и подсчет следующих индексов дублей.
+- External drop из дерева на карту теперь получает страницу через `getPageById()`.
+- Token actions карты используют repository lookup для удаления, открытия и дублирования карточек токенов.
+- Bucket lookup карты переведен на `getChildren(mapPageId)`.
+- Create menu для задач ищет task tracker через `queryPages({ type: 'taskTracker' })`.
+- Создание карточки по шаблону уведомляет `PageRepository` после изменения metadata созданной страницы.
+- Backlinks/future graph references читают страницы через `getAllPages()`.
+- Тесты `pageTitleValidation` переведены на `setPages`, чтобы проверять актуальный lifecycle repository.
+
+### Что поменялось для пользователя
+
+- Проверка одинаковых названий должна работать так же, но теперь опирается на единый индекс.
+- Добавление существ/объектов/игроков на карту через `+` и перетаскивание из дерева должно сохранить прежнее поведение, но lookup стал единообразнее.
+- Создание задачи через `+ -> задача` и создание карточки по шаблону должны стабильнее видеть актуальные страницы после изменений.
+
+### Риски / Что осталось
+
+- В проекте еще остаются legacy-прямые обращения к `state.pages`, особенно в дереве, editor navigation и некоторых модулях карты. Они не входят в 6.6-6.8 и будут закрываться отдельными задачами разреза крупных файлов или repository hardening.
+- Следующий P0-блок — Safe HTML Boundary / Sanitizer.
+
+### Следующее развитие
+
+- Начать `7.1`: описать `SAFE_HTML_CONTRACT.md`, затем реализовать sanitizer на save/load/paste.
+
+---
+
+## 2026-05-25: PageRepository Migration 6.4-6.5
+
+### Что сделано
+
+- `wikiLinkLookup.js` переведен с прямого обхода `state.pages` на `PageRepository`.
+- Refresh wiki-links, клик по wiki-link, hover preview и popup "Связать с существующей" теперь ищут страницы через единый индекс.
+- Popup выбора существующей wiki-link цели больше не собирает отдельный lookup ветки карты, а использует `isUnderTemplate(page.id, 'campaignMap')`.
+- Sidebar search переведен на `searchPages()`, который берет страницы из `PageRepository`.
+- Добавлены unit-тесты `tests/wikiLinkLookup.test.mjs` и `tests/searchPages.test.mjs`.
+
+### Что поменялось для пользователя
+
+- Wiki-links должны стабильнее находить карточки по названию и alias.
+- В popup "Связать с существующей" не должны попадать технические дубли из веток карт.
+- Поиск в sidebar визуально работает как раньше, но его логика стала единообразной и тестируемой.
+
+### Риски / Что осталось
+
+- В wiki/create/search еще есть локальная фильтрация и parse body. Это нормально для текущего этапа, но будущий `PageRepository` может получить отдельный full-text/search индекс.
+- Следующий важный шаг — `6.6`: перевести проверку дублей названий на `PageIndex`.
+
+---
+
 ## 2026-05-25: PageRepository Lifecycle 6.3
 
 ### Что сделано

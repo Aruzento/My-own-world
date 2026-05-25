@@ -11,6 +11,14 @@ import {
   getUniqueCopyTitle
 } from '../validation/pageTitleValidation.js';
 
+import {
+  notifyPageUpdated
+} from '../repository/pageRepository.js';
+
+import {
+  sanitizePersistentHTMLOnSave
+} from '../editor/safeHtmlSanitizer.js';
+
 
 const PAGE_TEMPLATES_KEY =
   'my-own-world:page-templates';
@@ -55,7 +63,9 @@ export function savePageAsTemplate(
     template: parsed.template || 'card',
     type: parsed.type || 'note',
     aliases: [],
-    body: parsed.body
+    body: sanitizePersistentHTMLOnSave(
+      parsed.body
+    )
   };
 
   const templates =
@@ -124,7 +134,9 @@ type: ${pageTemplate.type || 'note'}
 aliases: []
 ---
 
-${body}
+${sanitizePersistentHTMLOnSave(
+  body
+)}
 `;
 
   await writePageContent(
@@ -143,6 +155,8 @@ ${body}
       content
     }
   );
+
+  notifyPageUpdated();
 
   return page;
 }

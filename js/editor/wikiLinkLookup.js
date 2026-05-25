@@ -1,31 +1,26 @@
-import { state } from '../state.js';
+import {
+  findPageByTitleOrAlias,
+  getPageById
+} from '../repository/pageRepository.js';
 
 
 export function findPageByTitle(
   title
 ) {
 
-  const normalizedTitle =
-    normalizePageName(
-      title
-    );
+  return findPageByTitleOrAlias(
+    title
+  );
+}
 
-  return state.pages.find(page => {
 
-    if (
-      normalizePageName(page.title) === normalizedTitle
-    ) {
+export function findPageByWikiLinkId(
+  pageId
+) {
 
-      return true;
-    }
-
-    const aliases =
-      page.aliases || [];
-
-    return aliases.some(alias =>
-      normalizePageName(alias) === normalizedTitle
-    );
-  });
+  return getPageById(
+    pageId
+  );
 }
 
 

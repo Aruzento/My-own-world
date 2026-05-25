@@ -1,4 +1,7 @@
-import { state } from '../state.js';
+import {
+  findDuplicateTitles,
+  getPagesByTitle
+} from '../repository/pageRepository.js';
 
 
 // Единое правило уникальности названий сущностей.
@@ -27,44 +30,23 @@ export function hasDuplicatePageTitle(
 
   if (!normalized) return false;
 
-  return state.pages.some(page =>
-    page.id !== pageId &&
-    normalizePageTitle(page.title) === normalized
+  return getPagesByTitle(
+    normalized
+  ).some(page =>
+    page.id !== pageId
   );
 }
 
 
 export function getDuplicatePageTitleIds() {
 
-  const groups =
-    new Map();
-
-  state.pages.forEach(page => {
-
-    const normalized =
-      normalizePageTitle(
-        page.title
-      );
-
-    if (!normalized) return;
-
-    if (!groups.has(normalized)) {
-
-      groups.set(
-        normalized,
-        []
-      );
-    }
-
-    groups.get(normalized).push(
-      page.id
-    );
-  });
-
   return new Set(
-    [...groups.values()]
-      .filter(ids => ids.length > 1)
-      .flat()
+    findDuplicateTitles()
+      .flatMap(group =>
+        group.pages.map(page =>
+          page.id
+        )
+      )
   );
 }
 

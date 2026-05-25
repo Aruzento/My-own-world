@@ -19,6 +19,7 @@ import {
 } from '../ui/ui.js';
 
 import {
+  getPageById,
   notifyPageUpdated
 } from '../repository/pageRepository.js';
 
@@ -67,8 +68,8 @@ export async function deleteTokenAndPage(
     token.dataset.pageId;
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === pageId
+    getPageById(
+      pageId
     );
 
   deps.closeTokenPopup();
@@ -133,8 +134,8 @@ export function getTokenPage(
   token
 ) {
 
-  return state.pages.find(candidate =>
-    candidate.id === token?.dataset.pageId
+  return getPageById(
+    token?.dataset.pageId
   );
 }
 
@@ -228,8 +229,8 @@ export async function duplicateTokenAndPage(
     );
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === token.dataset.pageId
+    getPageById(
+      token.dataset.pageId
     );
 
   if (!page) return;

@@ -27,6 +27,10 @@ import {
 } from '../templates/pageTemplateStorage.js';
 
 import {
+  queryPages
+} from '../repository/pageRepository.js';
+
+import {
   setStatus
 } from './ui.js';
 
@@ -274,10 +278,9 @@ function openTaskCreatePicker() {
     );
 
   const trackers =
-    state.pages.filter(page =>
-      page.template === 'taskTracker' ||
-      page.type === 'taskTracker'
-    );
+    queryPages({
+      type: 'taskTracker'
+    });
 
   if (trackers.length === 0) {
 

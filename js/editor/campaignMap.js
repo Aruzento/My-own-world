@@ -66,6 +66,10 @@ import {
 } from './campaignMapExternalDrop.js';
 
 import {
+  queryPages
+} from '../repository/pageRepository.js';
+
+import {
   refreshCampaignMapStore
 } from './campaignMapStore.js';
 
@@ -302,7 +306,9 @@ export async function removeDeletedCampaignMapTokens(
     }
   }
 
-  for (const page of state.pages) {
+  for (const page of queryPages({
+    template: 'campaignMap'
+  })) {
 
     if (
       ids.has(page.id) ||

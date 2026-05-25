@@ -12,21 +12,21 @@ import {
   renderTree
 } from '../tree/tree.js';
 
-import { state } from '../state.js';
-
 import {
   openPopupAtPoint,
   registerPopup
 } from '../ui/popupManager.js';
 
 import {
-  createPageLookup,
-  hasCampaignMapAncestor
-} from './campaignMapTreeIntegration.js';
-
-import {
   pushEditorHistorySnapshot
 } from './editorHistory.js';
+
+import {
+  findPageByTitleOrAlias,
+  getAllPages,
+  getPageById,
+  isUnderTemplate
+} from '../repository/pageRepository.js';
 
 
 const menu =
@@ -133,8 +133,8 @@ export function openWikiCreateMenu(
           );
 
           const createdPage =
-            state.pages.find(page =>
-              normalize(page.title) === normalize(title)
+            findPageByTitleOrAlias(
+              title
             );
 
           if (!createdPage) return;
@@ -194,18 +194,15 @@ function openExistingPagePicker(
     const query =
       normalize(searchInput.value);
 
-    const lookup =
-      createPageLookup();
-
     list.innerHTML = '';
 
     const pages =
-      state.pages.filter(page => {
+      getAllPages().filter(page => {
 
         if (
-          hasCampaignMapAncestor(
-            page,
-            lookup
+          isUnderTemplate(
+            page.id,
+            'campaignMap'
           )
         ) return false;
 
@@ -312,8 +309,8 @@ async function connectMissingLinkToPage(
 
 
   const updatedTarget =
-    state.pages.find(page =>
-      page.id === targetPage.id
+    getPageById(
+      targetPage.id
     );
 
   if (!updatedTarget) return;

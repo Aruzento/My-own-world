@@ -19,7 +19,6 @@ import {
 } from './campaignMapGeometry.js';
 
 import {
-  createPageLookup,
   findMapBucket,
   hasCampaignMapAncestor
 } from './campaignMapTreeIntegration.js';
@@ -28,6 +27,12 @@ import {
   getAddKindPopupHTML,
   getCardPickerPopupHTML
 } from './campaignMapToolbar.js';
+
+import {
+  getChildren,
+  getPageById,
+  queryPages
+} from '../repository/pageRepository.js';
 
 
 // Picker карты отвечает за выбор исходных карточек и создание дочерних дублей.
@@ -165,9 +170,6 @@ function renderCardPickerList(
   query
 ) {
 
-  const lookup =
-    createPageLookup();
-
   const normalizedQuery =
     normalizeText(
       query
@@ -181,15 +183,14 @@ function renderCardPickerList(
       : new Set(['object']);
 
   const pages =
-    state.pages
+    queryPages({
+      type: [...allowedTypes],
+      excludeUnderTemplate: 'campaignMap'
+    })
       .filter(page =>
-        allowedTypes.has(page.type) &&
-        (
-          kind === 'player'
-            ? hasPlayerTag(page)
-            : !hasPlayerTag(page)
-        ) &&
-        !hasCampaignMapAncestor(page, lookup)
+        kind === 'player'
+          ? hasPlayerTag(page)
+          : !hasPlayerTag(page)
       )
       .filter(page => {
 
@@ -296,8 +297,7 @@ export function canAddPageToCampaignMap(
   if (!kind) return false;
 
   return !hasCampaignMapAncestor(
-    page,
-    createPageLookup()
+    page
   );
 }
 
@@ -402,7 +402,9 @@ async function addSelectedPagesToMap(
   for (const pageId of selectedIds) {
 
     const source =
-      state.pages.find(page => page.id === pageId);
+      getPageById(
+        pageId
+      );
 
     if (!source) continue;
 
@@ -536,10 +538,9 @@ function getNextMapEntityIndex(
     );
 
   const maxIndex =
-    state.pages
-      .filter(page =>
-        page.parent === bucketId
-      )
+    getChildren(
+      bucketId
+    )
       .reduce((max, page) => {
 
         const match =

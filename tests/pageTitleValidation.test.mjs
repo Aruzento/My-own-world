@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  state
-} from '../js/state.js';
+  setPages
+} from '../js/stateActions.js';
 
 import {
   getCampaignMapEntityTitle,
@@ -31,7 +31,7 @@ test(
   'pageTitleValidation находит дубли с учетом регистра и пробелов',
   () => {
 
-    state.pages =
+    setPages(
       [
         {
           id: 'a',
@@ -45,7 +45,8 @@ test(
           id: 'c',
           title: 'Лес'
         }
-      ];
+      ]
+    );
 
     assert.equal(
       hasDuplicatePageTitle(
@@ -67,13 +68,14 @@ test(
   'pageTitleValidation создает безопасные названия копий и сущностей карты',
   () => {
 
-    state.pages =
+    setPages(
       [
         {
           id: 'a',
           title: 'Копия1 - Меч'
         }
-      ];
+      ]
+    );
 
     assert.equal(
       getUniqueCopyTitle('Меч'),

@@ -17,6 +17,10 @@ import {
   insertPlainTextAtCaret
 } from './tables/tableClipboard.js';
 
+import {
+  sanitizePlainTextPaste
+} from '../editor/safeHtmlSanitizer.js';
+
 const TABLE_RESIZE_EDGE = 6;
 const TABLE_MIN_COLUMN_WIDTH = 10;
 
@@ -311,8 +315,10 @@ function handleTablePaste(
   if (!cell) return;
 
   const text =
-    event.clipboardData
-      ?.getData('text/plain');
+    sanitizePlainTextPaste(
+      event.clipboardData
+        ?.getData('text/plain')
+    );
 
   if (!text) return;
 

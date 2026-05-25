@@ -11,6 +11,11 @@
   table: 2
 };
 
+import {
+  sanitizePersistentHTMLOnSave
+} from '../safeHtmlSanitizer.js';
+
+
 const RUNTIME_SELECTOR = [
   '[data-runtime="true"]'
 ].join(',');
@@ -107,7 +112,9 @@ export function serializePersistentEditorHTML(
     clone
   );
 
-  return clone.innerHTML;
+  return sanitizePersistentHTMLOnSave(
+    clone.innerHTML
+  );
 }
 
 
