@@ -6,6 +6,30 @@
 
 ---
 
+## 2026-05-26: CI fix для Linux import path case
+
+### Что сделано
+
+- Исправлен регистр tracked-файла `js/ui/dndStats.js`: раньше в git он был записан как `js/ui/dndstats.js`, хотя код импортировал `dndStats.js`.
+- Добавлен `tools/check_import_paths.mjs`.
+- `npm run verify` теперь запускает проверку точного регистра относительных и browser-absolute import-путей.
+- Исправлен UTF-8 комментарий в `tools/run_checks.mjs`.
+
+### Что стало лучше
+
+- GitHub Actions на Ubuntu больше не должен получать 404 при загрузке `js/ui/dndStats.js`.
+- Такая же ошибка не сможет тихо пройти локально на Windows: `verify` остановится до browser smoke.
+
+### Риски / Что осталось
+
+- Нужно дождаться нового запуска GitHub Actions после push и убедиться, что внешний `Verify` стал зеленым.
+
+### Следующее развитие
+
+- Продолжать усиливать CI проверками, которые ловят Windows/Linux различия до запуска браузера.
+
+---
+
 ## 2026-05-25: GitHub Actions CI 8.1-8.2
 
 ### Что сделано

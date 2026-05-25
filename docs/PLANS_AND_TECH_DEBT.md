@@ -196,6 +196,9 @@ CI устанавливает Chromium через `npx playwright install --with
 8.6. Зафиксировать правило: перед merge/push зеленый CI обязателен: **сделано**.
 Правило добавлено в README: локальные проверки ускоряют обратную связь, но не заменяют зеленый GitHub Actions.
 
+8.7. Проверять регистр import-путей для Linux CI: **сделано**.
+Добавлен `tools/check_import_paths.mjs`, который входит в `npm run verify` и ловит ситуацию, когда Windows открывает файл из-за case-insensitive FS, а GitHub Actions на Ubuntu получает 404.
+
 ### 9. Asset Lifecycle Contract
 
 - Статус: **не сделано**.

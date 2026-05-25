@@ -13,7 +13,7 @@ import {
 } from 'node:path';
 
 
-// Единая проверка перед коммитом: синтаксис, тесты, diff и docx.
+// Единая проверка перед коммитом: синтаксис, импорты, тесты, diff и docx.
 
 const root =
   process.cwd();
@@ -129,6 +129,13 @@ function checkJavaScriptSyntax() {
 
 
 checkJavaScriptSyntax();
+
+run(
+  process.execPath,
+  [
+    'tools/check_import_paths.mjs'
+  ]
+);
 
 if (!jsOnly) {
 

@@ -305,6 +305,8 @@ GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
 
 Сейчас CI запускается на push в `main` и pull request, ставит Node.js 22 и Python 3.12, устанавливает зависимости через `npm ci`, выполняет `npm run verify`, устанавливает Chromium для Playwright и запускает `npm run test:browser`.
 
+`npm run verify` дополнительно проверяет точный регистр import-путей через `tools/check_import_paths.mjs`. Это важно, потому что Windows может открыть `dndStats.js` даже при неверном регистре, а Ubuntu в GitHub Actions вернет 404.
+
 Если browser smoke падает, workflow сохраняет `playwright-report/`, `test-results/` и `debug.log` как artifact `browser-smoke-artifacts`. Перед merge/push целевой ветки CI должен быть зеленым: локальные проверки не заменяют GitHub Actions, а только ускоряют обратную связь.
 
 ## Release Process
