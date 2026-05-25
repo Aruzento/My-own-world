@@ -7,7 +7,6 @@ import {
 
 import {
   getCampaignMapStore,
-  refreshCampaignMapStore
 } from './campaignMapStore.js';
 
 import {
@@ -128,7 +127,7 @@ export function syncPresentation() {
   if (!source || !target) return;
 
   const store =
-    refreshCampaignMapStore(
+    getCampaignMapStore(
       source.closest('.campaign-map-document')
     );
 

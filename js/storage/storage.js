@@ -55,6 +55,37 @@ export {
 
 
 export {
+  ASSET_TYPES,
+  createAssetReference,
+  isAssetReference,
+  normalizeAssetOwner,
+  normalizeAssetPath,
+  normalizeAssetReference,
+  normalizeAssetType
+} from './assetReference.js';
+
+
+export {
+  collectAssetReferencesFromHTML,
+  collectAssetReferencesFromPage,
+  collectAssetReferencesFromPages
+} from './assetReferenceScanner.js';
+
+
+export {
+  createAssetPathSet,
+  findBrokenAssetReferences,
+  findBrokenReferences
+} from './assetBrokenChecker.js';
+
+
+export {
+  findOrphanAssetPaths,
+  findOrphanPaths
+} from './assetOrphanDetector.js';
+
+
+export {
   getPageWriteKey,
   queueWrite,
   writeFile,

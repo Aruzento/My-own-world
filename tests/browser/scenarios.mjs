@@ -77,6 +77,20 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'campaign-map-performance-smoke',
+    priority: 'P1',
+    area: 'campaign-map',
+    title: 'Большая карта не ломает presentation sync',
+    description:
+      'Создать синтетическую сцену с большим количеством токенов и фигур, открыть презентацию, выполнить full-sync и item-level sync, проверить количество элементов и мягкие performance budgets.',
+    automationStatus:
+      'automated: campaign-map-performance-smoke-keeps-heavy-presentation-sync-bounded',
+    automatesChecklist: [
+      'Карта Кампании: performance',
+      'Карта Кампании: presentation sync'
+    ]
+  },
+  {
     id: 'toolbar-formatting-boundary',
     priority: 'P1',
     area: 'editor',

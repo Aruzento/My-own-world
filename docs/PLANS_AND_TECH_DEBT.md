@@ -1,4 +1,4 @@
-# Планы и техдолг
+﻿# Планы и техдолг
 
 Этот файл теперь является **единым рабочим backlog-планом** проекта. Исторический лог выполненных работ вынесен в `docs/WORK_LOG.md`.
 
@@ -173,21 +173,27 @@ Paste в редактор и таблицы использует plain text sani
 
 ### 8. CI На GitHub Actions
 
-- Статус: **не сделано**.
+- Статус: **сделано на уровне процесса**.
 - Приоритет: **P0**.
 - Зачем: локальные проверки уже есть, но они должны стать обязательным защитным контуром.
 
-8.1. Добавить `.github/workflows/verify.yml`: **не сделано**.
+8.1. Добавить `.github/workflows/verify.yml`: **сделано**.
+Workflow `Verify` запускается на push в `main` и pull request.
 
-8.2. Запускать `npm ci`: **не сделано**.
+8.2. Запускать `npm ci`: **сделано**.
+CI устанавливает зависимости строго по `package-lock.json`.
 
-8.3. Запускать `npm run verify`: **не сделано**.
+8.3. Запускать `npm run verify`: **сделано**.
+Workflow запускает базовую проверку синтаксиса, unit tests, `git diff --check` и проверку docx.
 
-8.4. Запускать browser tests: **не сделано**.
+8.4. Запускать browser tests: **сделано**.
+CI устанавливает Chromium через `npx playwright install --with-deps chromium` и запускает `npm run test:browser`.
 
-8.5. Добавить artifact/logs при падении Playwright: **не сделано**.
+8.5. Добавить artifact/logs при падении Playwright: **сделано**.
+При падении workflow сохраняет `playwright-report/`, `test-results/` и `debug.log` как artifact `browser-smoke-artifacts`.
 
-8.6. Зафиксировать правило: перед merge/push зеленый CI обязателен: **не сделано**.
+8.6. Зафиксировать правило: перед merge/push зеленый CI обязателен: **сделано**.
+Правило добавлено в README: локальные проверки ускоряют обратную связь, но не заменяют зеленый GitHub Actions.
 
 ### 9. Asset Lifecycle Contract
 
@@ -195,21 +201,28 @@ Paste в редактор и таблицы использует plain text sani
 - Приоритет: **P1**.
 - Зачем: картинки уже активно используются, а новая идея про музыку локаций добавляет audio/playlist assets.
 
-9.1. Описать `ASSET_LIFECYCLE_CONTRACT.md`: **не сделано**.
+9.1. Описать `ASSET_LIFECYCLE_CONTRACT.md`: **сделано**.
+Контракт создан в `docs/ASSET_LIFECYCLE_CONTRACT.md`: описывает цели, правила сохранения/загрузки, `AssetReference`, broken assets и orphan assets.
 
-9.2. Определить типы assets: **не сделано**.
+9.2. Определить типы assets: **сделано**.
 `image`, `portrait`, `map background`, `audio`, `playlist`, future media.
+Дополнительно зафиксирован отдельный тип `mapObjectPng` для PNG-объектов карты с прозрачным фоном.
 
-9.3. Ввести единый `AssetReference`: **не сделано**.
+9.3. Ввести единый `AssetReference`: **сделано**.
+Добавлен `js/storage/assetReference.js` с `ASSET_TYPES`, `createAssetReference()`, `normalizeAssetReference()` и helper-функциями нормализации. Добавлены unit tests в `tests/assetReference.test.mjs`.
 `id/path`, `type`, `owner`, `fallback`, `missing state`.
 
-9.4. Сделать broken asset checker: **не сделано**.
+9.4. Сделать broken asset checker: **сделано**.
+Добавлен `js/storage/assetBrokenChecker.js`: он сравнивает persistent-ссылки страниц со списком файлов assets и возвращает отсутствующие ссылки с `missing: true`.
 
-9.5. Сделать orphan asset detection: **не сделано**.
+9.5. Сделать orphan asset detection: **сделано**.
+Добавлен `js/storage/assetOrphanDetector.js`: он возвращает список файлов-кандидатов, на которые нет persistent-ссылок. Удаление не выполняется автоматически.
 
-9.6. Подготовить основу под музыку локаций из workspace: **не сделано**.
+9.6. Подготовить основу под музыку локаций из workspace: **сделано**.
+В `ASSET_LIFECYCLE_CONTRACT.md`, `ASSET_TYPES` и `assetReferenceScanner` зафиксированы `audio`, `playlist`, `data-audio-asset` и `data-playlist-asset`.
 
-9.7. Добавить asset tests: **не сделано**.
+9.7. Добавить asset tests: **сделано**.
+Добавлены tests для `AssetReference`, сканера persistent-ссылок, broken asset checker и orphan asset detection.
 
 ### 10. Performance Strategy Для Карты
 
@@ -217,19 +230,25 @@ Paste в редактор и таблицы использует plain text sani
 - Приоритет: **P1**.
 - Зачем: карта уже является тяжелой runtime-системой, оптимизации должны стать измеримыми.
 
-10.1. Описать performance risks карты: **не сделано**.
+10.1. Описать performance risks карты: **сделано**.
 Много токенов, много фигур, большой background, fog, presentation sync, zoom/pan.
+Риски описаны в `docs/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`.
 
-10.2. Ввести performance scenarios: **не сделано**.
+10.2. Ввести performance scenarios: **сделано**.
+В strategy-документ добавлены сценарии `small-map-baseline`, `large-map-drag`, `fog-paint-large`, `presentation-live-sync`, `zoom-pan-heavy`.
 
-10.3. Добавить измерения: **не сделано**.
+10.3. Добавить измерения: **сделано**.
 Render time, sync time, number of visible objects, background load.
+Добавлен `js/editor/campaignMapPerformance.js` с performance snapshot: render/sync/fullSync/background time, visible/hidden token/shape count, fog canvas pixels, zoom.
 
-10.4. Ввести performance budgets: **не сделано**.
+10.4. Ввести performance budgets: **сделано**.
+Введены стартовые budgets в `CAMPAIGN_MAP_PERFORMANCE_BUDGETS` и документе стратегии.
 
-10.5. Оптимизировать presentation full-sync: **не сделано**.
+10.5. Оптимизировать presentation full-sync: **сделано частично**.
+`syncPresentation()` больше не вызывает `refreshCampaignMapStore()` на каждый full-sync и использует уже существующий data-first store/model через `getCampaignMapStore()`. Это убирает лишнее чтение модели из DOM во время синхронизации презентации. Дальше нужно измерить эффект в browser performance smoke.
 
-10.6. Добавить performance regression smoke: **не сделано**.
+10.6. Добавить performance regression smoke: **сделано**.
+Добавлен browser smoke `tests/browser/campaign-map-performance.spec.mjs`: он создает сцену на 120 токенов и 40 фигур, проверяет full-sync презентации, item-level sync и мягкие performance budgets.
 
 ### 11. Release Process / Changelog
 
@@ -237,18 +256,24 @@ Render time, sync time, number of visible objects, background load.
 - Приоритет: **P1**.
 - Зачем: версии уже используются в коммитах, но релизный процесс не формализован.
 
-11.1. Создать `CHANGELOG.md`: **не сделано**.
+11.1. Создать `CHANGELOG.md`: **сделано**.
+Файл создан, добавлен раздел `Unreleased` и шаблон release notes.
 
-11.2. Описать release checklist: **не сделано**.
+11.2. Описать release checklist: **сделано**.
+Checklist описан в `docs/RELEASE_PROCESS.md`.
 
-11.3. Согласовать `package.json` version с git tags: **не сделано**.
+11.3. Согласовать `package.json` version с git tags: **сделано на уровне правила**.
+В `docs/RELEASE_PROCESS.md` зафиксировано: при формальном релизном цикле `package.json.version`, git tag `vX.Y.Z` и раздел changelog должны совпадать.
 
-11.4. Ввести правило версий: **не сделано**.
+11.4. Ввести правило версий: **сделано**.
 `patch`, `minor`, `major`, `experimental`.
+Правила описаны в `docs/RELEASE_PROCESS.md`.
 
-11.5. Добавить rollback guide: **не сделано**.
+11.5. Добавить rollback guide: **сделано**.
+Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 
-11.6. Добавить release notes template: **не сделано**.
+11.6. Добавить release notes template: **сделано**.
+Шаблон добавлен в `CHANGELOG.md` и `docs/RELEASE_PROCESS.md`.
 
 ### 12. Campaign Map Initiative
 
@@ -256,21 +281,28 @@ Render time, sync time, number of visible objects, background load.
 - Приоритет: **P1**.
 - Зачем: важная игровая фича, но строить ее нужно на `PageIndex` и текущем map model.
 
-12.1. Спроектировать `InitiativeModel`: **не сделано**.
+12.1. Спроектировать `InitiativeModel`: **сделано на уровне модели**.
+Добавлен `js/editor/campaignMapInitiativeModel.js`.
 
-12.2. Подключить живые токены карты: **не сделано**.
+12.2. Подключить живые токены карты: **сделано на уровне модели**.
+`CampaignMapInitiativeModel.fromTokens()` собирает участников из живых токенов и по умолчанию исключает токены с `hp <= 0`.
 
-12.3. Учесть `sourceMode="original"` для игроков: **не сделано**.
+12.3. Учесть `sourceMode="original"` для игроков: **сделано на уровне модели**.
+`createParticipantFromToken()` сохраняет `sourceMode`, чтобы будущий UI мог отличать игроков, привязанных к оригинальной карточке.
 
 12.4. Сделать popup выбора участников: **не сделано**.
 
-12.5. Добавить `roll d20`: **не сделано**.
+12.5. Добавить `roll d20`: **сделано на уровне модели**.
+Добавлены `rollD20()`, `rollParticipant()` и `rollAll()`.
 
-12.6. Добавить initiative modifier: **не сделано**.
+12.6. Добавить initiative modifier: **сделано на уровне модели**.
+Участник хранит `modifier`, а `total = roll + modifier`.
 
-12.7. Сделать сортировку порядка: **не сделано**.
+12.7. Сделать сортировку порядка: **сделано на уровне модели**.
+`sortByInitiative()` сортирует по total, modifier и имени.
 
-12.8. Сделать active turn / next / previous: **не сделано**.
+12.8. Сделать active turn / next / previous: **сделано на уровне модели**.
+Добавлены `setActive()`, `nextTurn()` и `previousTurn()`.
 
 12.9. Сохранение/восстановление инициативы: **не сделано**.
 
@@ -476,6 +508,6 @@ Render time, sync time, number of visible objects, background load.
 
 ## Текущий Следующий Шаг
 
-Следующий рекомендуемый пункт: **8.1. Добавить `.github/workflows/verify.yml`**.
+Следующий рекомендуемый пункт: **12.1. Спроектировать InitiativeModel**.
 
-Причина: Safe HTML Boundary / Sanitizer закрыт первым исполняемым слоем и browser regression. Следующий P0-контур зрелости — CI на GitHub Actions, чтобы локальные проверки стали обязательной защитой перед merge/push.
+Причина: release process закрыт на уровне документации и checklist. Следующий пункт плана - Campaign Map Initiative.

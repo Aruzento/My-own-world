@@ -6,6 +6,34 @@
 
 ---
 
+## 2026-05-25: GitHub Actions CI 8.1-8.2
+
+### Что сделано
+
+- Добавлен `.github/workflows/verify.yml`.
+- Workflow запускается на push в `main` и на pull request.
+- Добавлен `actions/checkout@v4`.
+- Добавлен `actions/setup-node@v4` с Node.js 22 и npm cache.
+- Добавлен шаг `npm ci`, чтобы зависимости ставились строго по `package-lock.json`.
+- В workflow уже включен `npm run verify`, чтобы базовая проверка работала сразу.
+
+### Что стало лучше
+
+- У проекта появился первый CI-контур на GitHub Actions.
+- Локальный `npm run verify` начинает превращаться в обязательную внешнюю проверку.
+
+### Риски / Что осталось
+
+- Browser smoke пока не вынесен отдельным CI-шагом с artifacts. Это следующий пункт `8.4-8.5`.
+- Правило "перед merge/push зеленый CI обязателен" еще нужно зафиксировать в release/checklist документах.
+
+### Следующее развитие
+
+- Выполнить `8.4`: добавить `npm run test:browser` в CI.
+- Затем `8.5`: сохранять Playwright traces/logs как artifacts при падении.
+
+---
+
 ## 2026-05-25: Safe HTML Security Regression 7.6
 
 ### Что сделано
@@ -1609,3 +1637,192 @@ Render time, sync time, number of visible objects, background load.
 
 - Вынести `reloadTreeAfterMove()` в общий tree move controller.
 - Добавить ручной тест: открыть карточку, перенести ее, не переоткрывая изменить текст, обновить страницу и проверить parent/order.
+
+---
+
+## 2026-05-25: GitHub Actions CI 8.4-8.6
+
+### Что сделано
+
+- В `.github/workflows/verify.yml` добавлен отдельный шаг установки Chromium для Playwright.
+- В CI добавлен запуск `npm run test:browser` после `npm run verify`.
+- При падении workflow сохраняет `playwright-report/`, `test-results/` и `debug.log` как artifact `browser-smoke-artifacts`.
+- В README зафиксировано правило: перед merge/push целевой ветки CI должен быть зеленым.
+
+### Что стало лучше
+
+- Browser smoke теперь является частью обязательной внешней проверки, а не только локальной командой.
+- При падениях браузерных тестов будет проще разбирать причину по артефактам GitHub Actions.
+
+### Следующее развитие
+
+- Перейти к `9.1`: описать Asset Lifecycle Contract для изображений, портретов, фонов карт, object PNG и будущих медиа.
+
+---
+
+## 2026-05-25: Asset Lifecycle Contract 9.1-9.2
+
+### Что сделано
+
+- Создан `docs/ASSET_LIFECYCLE_CONTRACT.md`.
+- Зафиксированы типы ассетов: `image`, `portrait`, `mapBackground`, `mapObjectPng`, `audio`, `playlist`, `futureMedia`.
+- Описан будущий формат `AssetReference` с `id/path/type/owner/fallback/missing`.
+- Описаны правила сохранения: не сохранять `blob:`, абсолютные локальные пути и временные browser URL.
+- Описаны правила загрузки, missing state, broken asset checker и orphan asset detection без автоматического удаления.
+- README и план обновлены под новый контракт.
+
+### Что стало лучше
+
+- Работа с изображениями получила явную архитектурную границу перед рефакторингом asset storage.
+- Будущая музыка локаций теперь вписана в общий media lifecycle, а не остается отдельной неподключенной идеей.
+
+### Следующее развитие
+
+- Перейти к `9.3`: ввести единый `AssetReference` helper и постепенно переводить portrait, image block, map background и object PNG на один формат ссылок.
+
+---
+
+## 2026-05-25: AssetReference 9.3
+
+### Что сделано
+
+- Добавлен `js/storage/assetReference.js`.
+- Введены типы `ASSET_TYPES`: `image`, `portrait`, `mapBackground`, `mapObjectPng`, `audio`, `playlist`, `futureMedia`.
+- Добавлены helpers `createAssetReference()`, `normalizeAssetReference()`, `normalizeAssetPath()`, `normalizeAssetType()`, `normalizeAssetOwner()` и `isAssetReference()`.
+- Добавлен re-export из `js/storage/storage.js`.
+- Добавлены unit tests `tests/assetReference.test.mjs`.
+
+### Что стало лучше
+
+- Появился единый объект, к которому можно постепенно приводить портреты, image block, фон карты и PNG-объекты.
+- Broken asset checker и orphan detection теперь можно писать не как набор частных случаев, а вокруг одного формата.
+
+### Следующее развитие
+
+- Перейти к `9.4`: собрать broken asset checker, который находит отсутствующие файлы и показывает владельца ссылки.
+
+---
+
+## 2026-05-25: Asset Checker 9.4-9.7
+
+### Что сделано
+
+- Добавлен `js/storage/assetReferenceScanner.js` для сбора persistent-ссылок из страниц.
+- Добавлен `js/storage/assetBrokenChecker.js` для поиска отсутствующих файлов.
+- Добавлен `js/storage/assetOrphanDetector.js` для поиска orphan-кандидатов без удаления.
+- В scanner добавлены будущие атрибуты `data-audio-asset` и `data-playlist-asset`.
+- Добавлены unit tests: `assetReferenceScanner.test.mjs`, `assetBrokenChecker.test.mjs`, `assetOrphanDetector.test.mjs`.
+- `ASSET_LIFECYCLE_CONTRACT.md` дополнен основой под музыку локаций.
+
+### Что стало лучше
+
+- Проект теперь умеет программно отличать используемые, отсутствующие и лишние assets на уровне данных.
+- Можно безопасно строить UI проверки workspace: сначала показывать список проблем, а удаление делать только после подтверждения пользователя.
+
+### Следующее развитие
+
+- Перейти к `10.1`: описать performance risks карты и затем добавить измеряемые performance scenarios.
+
+---
+
+## 2026-05-25: Campaign Map Performance Strategy 10.1-10.4
+
+### Что сделано
+
+- Создан `docs/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`.
+- Описаны риски: много токенов, много фигур, большой background, fog, presentation sync, zoom/pan.
+- Введены performance scenarios: `small-map-baseline`, `large-map-drag`, `fog-paint-large`, `presentation-live-sync`, `zoom-pan-heavy`.
+- Добавлен `js/editor/campaignMapPerformance.js` со snapshot-метриками и budgets.
+- Добавлены unit tests `tests/campaignMapPerformance.test.mjs`.
+
+### Что стало лучше
+
+- Оптимизация карты получила измеримый ориентир: теперь можно сравнивать фактические метрики с budgets.
+- Следующая оптимизация presentation full-sync будет опираться на понятные сценарии, а не только на субъективное ощущение лагов.
+
+### Следующее развитие
+
+- Перейти к `10.5`: оптимизировать presentation full-sync, а затем добавить performance regression smoke.
+
+---
+
+## 2026-05-25: Presentation Full-Sync 10.5
+
+### Что сделано
+
+- В `js/editor/campaignMapPresentation.js` full-sync презентации переведен с `refreshCampaignMapStore()` на `getCampaignMapStore()`.
+- Презентация теперь использует уже актуальный data-first store/model и не перечитывает модель из DOM при каждом full-sync.
+
+### Что стало лучше
+
+- Синхронизация презентации делает меньше лишней работы на больших картах.
+- Это снижает риск лагов при full-sync после изменений сетки, тумана, фона или toolbar-действий.
+
+### Следующее развитие
+
+- Перейти к `10.6`: добавить performance regression smoke, который проверит sync/reload на большой сцене и не даст вернуть тяжелый full DOM refresh.
+
+---
+
+## 2026-05-25: Campaign Map Performance Smoke 10.6
+
+### Что сделано
+
+- Добавлен browser smoke `tests/browser/campaign-map-performance.spec.mjs`.
+- Тест создает синтетическую сцену на 120 токенов и 40 фигур.
+- Тест открывает презентацию, выполняет full-sync и серию item-level sync.
+- Тест проверяет количество элементов в презентации и мягкие performance budgets.
+- Сценарий добавлен в `tests/browser/scenarios.mjs`.
+
+### Что стало лучше
+
+- У карты появился первый regression-тест не только на корректность данных, но и на грубую деградацию производительности.
+- Дальнейшие оптимизации презентации теперь можно делать смелее: тест будет ловить явный откат к тяжелому full-sync поведению.
+
+### Следующее развитие
+
+- Перейти к `11.1`: создать CHANGELOG и формализовать release process.
+
+---
+
+## 2026-05-25: Release Process 11.1-11.6
+
+### Что сделано
+
+- Создан `CHANGELOG.md` с разделом `Unreleased` и release notes template.
+- Создан `docs/RELEASE_PROCESS.md`.
+- Описаны правила версий: patch, minor, major, experimental.
+- Описан release checklist.
+- Описано правило будущей синхронизации `package.json.version`, git tag и changelog.
+- Добавлен rollback guide для code regression и workspace data regression.
+- README обновлен ссылкой на release process.
+
+### Что стало лучше
+
+- У проекта появился формальный путь от изменения до релиза.
+- Версии больше не остаются только текстом в commit message: есть место для changelog, checklist и rollback.
+
+### Следующее развитие
+
+- Перейти к `12.1`: спроектировать Campaign Map Initiative как model-first подсистему.
+
+---
+
+## 2026-05-25: Campaign Map Initiative Model 12.1-12.3, 12.5-12.8
+
+### Что сделано
+
+- Добавлен `js/editor/campaignMapInitiativeModel.js`.
+- Модель умеет собирать участников из живых токенов карты.
+- Для player/original flow сохраняется `sourceMode="original"`.
+- Добавлены броски d20, initiative modifier, total, сортировка порядка и active turn / next / previous.
+- Добавлены unit tests `tests/campaignMapInitiativeModel.test.mjs`.
+
+### Что стало лучше
+
+- Инициатива начата model-first, без смешивания боевой логики с popup UI.
+- Будущий popup сможет быть тонким интерфейсом над уже проверенной моделью.
+
+### Следующее развитие
+
+- Закрыть `12.4`: сделать popup выбора участников инициативы, затем `12.9`: сохранить и восстановить состояние инициативы в карте.

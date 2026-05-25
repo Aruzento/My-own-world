@@ -281,6 +281,32 @@ Wiki-links, sidebar search, проверка дублей названий, ча
 
 Первый sanitizer уже подключен на save/load/paste в `js/editor/safeHtmlSanitizer.js`: он удаляет runtime UI, опасные теги, inline event handlers, dangerous URLs и временные `blob:` sources, сохраняя рабочие persistent-модели карты и task tracker.
 
+## Asset Lifecycle
+
+Правила работы с картинками и будущими медиа описаны в `docs/ASSET_LIFECYCLE_CONTRACT.md`.
+
+Документ фиксирует типы ассетов (`image`, `portrait`, `mapBackground`, `mapObjectPng`, `audio`, `playlist`), будущий формат `AssetReference`, правила запрета временных `blob:` URL в сохраненных данных, missing state, broken asset checker и orphan asset detection.
+
+## Campaign Map Performance
+
+Стратегия производительности карты описана в `docs/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`.
+
+В коде есть первый измерительный слой `js/editor/campaignMapPerformance.js`: он собирает snapshot по render/sync time, видимым токенам/фигурам, fog canvas, zoom и сравнивает его со стартовыми budgets. Это база для будущих performance smoke и оптимизации presentation full-sync.
+
+## CI
+
+GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
+
+Сейчас CI запускается на push в `main` и pull request, ставит зависимости через `npm ci`, выполняет `npm run verify`, устанавливает Chromium для Playwright и запускает `npm run test:browser`.
+
+Если browser smoke падает, workflow сохраняет `playwright-report/`, `test-results/` и `debug.log` как artifact `browser-smoke-artifacts`. Перед merge/push целевой ветки CI должен быть зеленым: локальные проверки не заменяют GitHub Actions, а только ускоряют обратную связь.
+
+## Release Process
+
+История изменений ведется в `CHANGELOG.md`, а правила релиза описаны в `docs/RELEASE_PROCESS.md`.
+
+Перед релизом нужно обновить changelog, manual, план/журнал работ, запустить `npm run verify`, `npm run test:browser` и дождаться зеленого GitHub Actions `Verify`.
+
 ## Sidebar Profile
 
 Внизу sidebar есть базовая профильная секция в стиле ChatGPT: `{user.image}`, `{user.name}`, `{user.tarif}`. Сейчас это UI-заготовка без глубоких настроек. По клику открывается пустой profile popup с кнопкой `Закрыть`.
