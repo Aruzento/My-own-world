@@ -3,6 +3,10 @@ import {
 } from '../editor/editor.js';
 
 import {
+  pushEditorHistorySnapshot
+} from '../editor/editorHistory.js';
+
+import {
   addRowBelow,
   removeTableRow,
   focusCellBelow
@@ -79,6 +83,11 @@ function handleTableClick(
     event.preventDefault();
     event.stopPropagation();
 
+    pushEditorHistorySnapshot(
+      document.getElementById('editorArea'),
+      'Удаление строки таблицы'
+    );
+
     removeTableRow(
       deleteRowButton
     );
@@ -91,6 +100,11 @@ function handleTableClick(
 
   event.preventDefault();
   event.stopPropagation();
+
+  pushEditorHistorySnapshot(
+    document.getElementById('editorArea'),
+    'Добавление строки таблицы'
+  );
 
   addRowBelow(
     addRowButton
@@ -304,6 +318,13 @@ function handleTablePaste(
 
   event.preventDefault();
 
+  pushEditorHistorySnapshot(
+    document.getElementById('editorArea'),
+    text.includes('\n') || text.includes('\t')
+      ? 'Вставка в таблицу'
+      : 'Вставка в ячейку таблицы'
+  );
+
   if (
     text.includes('\n') ||
     text.includes('\t')
@@ -374,6 +395,11 @@ function startColumnResize(
       columnIndex
     )
   };
+
+  pushEditorHistorySnapshot(
+    document.getElementById('editorArea'),
+    'Изменение ширины столбца'
+  );
 
   table.classList.add(
     'is-resizing-column'
@@ -638,6 +664,11 @@ function getTableToolbar(
         !event.target.classList.contains('table-toolbar-width-input')
       ) return;
 
+      pushEditorHistorySnapshot(
+        document.getElementById('editorArea'),
+        'Изменение ширины столбца'
+      );
+
       applySelectedColumnWidth(
         Number(event.target.value)
       );
@@ -654,6 +685,11 @@ function getTableToolbar(
         event.target.closest('[data-table-align]');
 
       if (!button) return;
+
+      pushEditorHistorySnapshot(
+        document.getElementById('editorArea'),
+        'Выравнивание ячеек'
+      );
 
       applySelectedCellAlignment(
         button.dataset.tableAlign

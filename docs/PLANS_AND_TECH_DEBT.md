@@ -9,7 +9,7 @@
 ### 1. Smoke / Regression Tests
 
 - Статус: **в работе**.
-- Текущий активный подпункт: **4.2 Ctrl+Z / Ctrl+Y через управляемую историю**.
+- Текущий активный подпункт: **5.2 Описать правила форматирования**.
 
 1.1. Smoke app shell: **сделано**.
 
@@ -65,17 +65,17 @@
 
 ### 4. Editor History Contract
 
-- Статус: **в работе**.
+- Статус: **архитектурно сделано, нужны дальнейшие regression tests по мере расширения редактора**.
 
 4.1. Описать единый контракт истории: **сделано**.
 
-4.2. Ctrl+Z / Ctrl+Y через управляемую историю: **не сделано**.
+4.2. Ctrl+Z / Ctrl+Y через управляемую историю: **сделано**.
 
-4.3. Вставка текста как history action: **не сделано**.
+4.3. Вставка текста как history action: **сделано**.
 
-4.4. Форматирование как history action: **не сделано**.
+4.4. Форматирование как history action: **сделано**.
 
-4.5. Блоки / таблицы / wiki-links как structural actions: **не сделано**.
+4.5. Блоки / таблицы / wiki-links как structural actions: **сделано**.
 
 ### 5. FormattingService
 
@@ -444,6 +444,34 @@
    - сохранить/reload;
    - проверить координаты, fog и presentation sync.
 3. После стабилизации карты перейти к desktop app spike: проверить Tauri/Electron как оболочку для локального приложения.
+
+## 2026-05-25: Editor History 4.2-4.5
+
+### Что сделано
+
+- `editorHistory.js` переведен на page-scoped undo/redo stacks.
+- Добавлен `redoEditorHistory()` и поддержка `Ctrl+Y` / `Ctrl+Shift+Z`.
+- История теперь хранит persistent snapshots через `serializePersistentEditorHTML()` для карточек, а runtime UI восстанавливается после undo/redo.
+- Добавлен transaction API: `beginHistoryTransaction()`, `commitHistoryTransaction()`, `runHistoryTransaction()`.
+- Paste, toolbar formatting/link actions, block add/delete/drag, table row/width/alignment/paste и wiki-link connect теперь пишут историю через общий слой.
+- Добавлен browser regression `editor-history-undo-redo-restores-persistent-html-without-runtime-ui`.
+
+### Что стало лучше
+
+- `Ctrl+Z` и `Ctrl+Y` больше не являются смесью случайного браузерного undo и ручных DOM-патчей для основных действий приложения.
+- Undo/redo привязаны к текущей странице и не должны переносить снимки между карточками.
+- Persistent snapshot защищен от runtime controls: UI может восстановиться после undo, но сохраненный HTML остается чистым.
+
+### Оставшиеся риски
+
+- История все еще snapshot-based, а не diff/model-based. Для больших страниц это может быть тяжелее, чем будущая модель документа.
+- Обычный набор текста пока сохраняется через snapshots на `beforeinput`; группировка по паузам еще не сделана.
+- Некоторые редкие подсистемы вроде image crop и variables могут потребовать отдельного подключения к transaction API при следующей работе с ними.
+
+### Следующее развитие из этой работы
+
+1. Перейти к пункту 5.2: описать и закрепить правила FormattingService.
+2. Позже добавить дополнительные browser regression tests на реальные UI-сценарии: удалить блок -> undo, resize таблицы -> undo, wiki-link connect -> undo.
 
 ## 2026-05-25: Editor History Contract
 

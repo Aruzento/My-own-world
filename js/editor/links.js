@@ -6,6 +6,10 @@ import {
   positionPopupAtPoint
 } from '../ui/popupPosition.js';
 
+import {
+  pushEditorHistorySnapshot
+} from './editorHistory.js';
+
 
 let savedLinkRange =
   null;
@@ -244,6 +248,10 @@ async function applyLinkFromPopup() {
   link.textContent =
     text;
 
+  pushEditorHistorySnapshot(
+    document.getElementById('editorArea'),
+    'Создание ссылки'
+  );
 
   savedLinkRange.deleteContents();
 

@@ -1,13 +1,17 @@
 import { state } from '../state.js';
 
-// Временный слой истории редактора до полноценного Editor History Contract.
-// Сейчас он хранит snapshots для действий, где приложение само меняет DOM.
+import {
+  serializePersistentEditorHTML
+} from './blocks/blockContract.js';
+
+// Управляемая история редактора хранит persistent snapshots по page.id.
+// Runtime UI не записывается в историю и восстанавливается после undo/redo.
 
 const MAX_HISTORY_ITEMS =
   60;
 
-const historyItems =
-  [];
+const pageHistory =
+  new Map();
 
 let isHistorySetup =
   false;
@@ -58,60 +62,77 @@ export function pushEditorHistorySnapshot(
   if (!editor) return;
 
   const pageId =
-    state.currentPage?.id || '';
+    getCurrentPageId();
 
   const html =
-    editor.innerHTML;
+    getPersistentSnapshot(
+      editor
+    );
 
-  const previous =
-    historyItems.at(-1);
+  const history =
+    getPageHistory(
+      pageId
+    );
 
   if (
-    previous?.pageId === pageId &&
-    previous?.html === html
+    history.undo.at(-1)?.html === html
   ) return;
 
-  historyItems.push({
+  history.undo.push({
     pageId,
     html,
     label
   });
 
+  history.redo.length =
+    0;
+
   if (
-    historyItems.length > MAX_HISTORY_ITEMS
+    history.undo.length > MAX_HISTORY_ITEMS
   ) {
 
-    historyItems.shift();
+    history.undo.shift();
   }
 }
 
 
-export function undoEditorHistory(
+export async function undoEditorHistory(
   editor
 ) {
 
   if (!editor) return false;
 
-  const currentPageId =
-    state.currentPage?.id || '';
+  const pageId =
+    getCurrentPageId();
+
+  const history =
+    getPageHistory(
+      pageId
+    );
 
   while (
-    historyItems.length > 0
+    history.undo.length > 0
   ) {
 
     const snapshot =
-      historyItems.pop();
+      history.undo.pop();
 
     if (
       snapshot.pageId &&
-      snapshot.pageId !== currentPageId
+      snapshot.pageId !== pageId
     ) continue;
 
-    editor.innerHTML =
-      snapshot.html;
+    history.redo.push({
+      pageId,
+      html: getPersistentSnapshot(
+        editor
+      ),
+      label: 'Redo point'
+    });
 
-    focusFirstEditable(
-      editor
+    await applyHistorySnapshot(
+      editor,
+      snapshot
     );
 
     return true;
@@ -121,10 +142,224 @@ export function undoEditorHistory(
 }
 
 
+export async function redoEditorHistory(
+  editor
+) {
+
+  if (!editor) return false;
+
+  const pageId =
+    getCurrentPageId();
+
+  const history =
+    getPageHistory(
+      pageId
+    );
+
+  const snapshot =
+    history.redo.pop();
+
+  if (!snapshot) return false;
+
+  history.undo.push({
+    pageId,
+    html: getPersistentSnapshot(
+      editor
+    ),
+    label: 'Undo point'
+  });
+
+  await applyHistorySnapshot(
+    editor,
+    snapshot
+  );
+
+  return true;
+}
+
+
+export function beginHistoryTransaction(
+  editor,
+  label = 'Изменение'
+) {
+
+  pushEditorHistorySnapshot(
+    editor,
+    label
+  );
+
+  return {
+    pageId: getCurrentPageId(),
+    label
+  };
+}
+
+
+export function commitHistoryTransaction(
+  editor,
+  transaction
+) {
+
+  if (
+    !editor ||
+    !transaction
+  ) return;
+
+  const history =
+    getPageHistory(
+      transaction.pageId
+    );
+
+  const current =
+    getPersistentSnapshot(
+      editor
+    );
+
+  if (
+    history.undo.at(-1)?.html === current
+  ) {
+
+    history.undo.pop();
+  }
+}
+
+
+export function runHistoryTransaction(
+  editor,
+  label,
+  callback
+) {
+
+  const transaction =
+    beginHistoryTransaction(
+      editor,
+      label
+    );
+
+  const result =
+    callback?.();
+
+  commitHistoryTransaction(
+    editor,
+    transaction
+  );
+
+  return result;
+}
+
+
 export function clearEditorHistory() {
 
-  historyItems.length =
-    0;
+  pageHistory.clear();
+}
+
+
+function getPageHistory(
+  pageId
+) {
+
+  const key =
+    pageId || '__no_page__';
+
+  if (
+    !pageHistory.has(key)
+  ) {
+
+    pageHistory.set(
+      key,
+      {
+        undo: [],
+        redo: []
+      }
+    );
+  }
+
+  return pageHistory.get(
+    key
+  );
+}
+
+
+function getCurrentPageId() {
+
+  return state.currentPage?.id || '';
+}
+
+
+function getPersistentSnapshot(
+  editor
+) {
+
+  if (!editor) return '';
+
+  if (
+    state.currentPage?.template === 'card' ||
+    state.currentPage?.template === '' ||
+    !state.currentPage?.template
+  ) {
+
+    return serializePersistentEditorHTML(
+      editor
+    );
+  }
+
+  return editor.innerHTML;
+}
+
+
+async function applyHistorySnapshot(
+  editor,
+  snapshot
+) {
+
+  editor.innerHTML =
+    snapshot.html;
+
+  await restoreRuntimeAfterHistory(
+    editor
+  );
+
+  focusFirstEditable(
+    editor
+  );
+}
+
+
+async function restoreRuntimeAfterHistory(
+  editor
+) {
+
+  const [
+    contenteditablePolicy,
+    blockContract,
+    customBlocks,
+    wikiLinks
+  ] = await Promise.all([
+    import('./contenteditablePolicy.js'),
+    import('./blocks/blockContract.js'),
+    import('./customBlocks.js'),
+    import('./wikiLinks.js')
+  ]);
+
+  contenteditablePolicy.applyContenteditablePolicy(
+    editor
+  );
+
+  blockContract.applyBlockSystemContract(
+    editor
+  );
+
+  contenteditablePolicy.applyContenteditablePolicy(
+    editor
+  );
+
+  customBlocks.renderCustomBlocks(
+    editor
+  );
+
+  wikiLinks.refreshWikiLinks(
+    editor
+  );
 }
 
 

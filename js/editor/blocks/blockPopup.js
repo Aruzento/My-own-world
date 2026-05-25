@@ -24,6 +24,10 @@ import {
   registerPopup
 } from '../../ui/popupManager.js';
 
+import {
+  runHistoryTransaction
+} from '../editorHistory.js';
+
 
 let popupState = null;
 let activeAnchor = null;
@@ -295,7 +299,12 @@ async function applyPopupAction() {
 
     if (!block) return;
 
-    block.remove();
+    runHistoryTransaction(
+      document.getElementById('editorArea'),
+      'Удаление блока',
+      () => block.remove()
+    );
+
     saveCurrentPage();
     closeBlockPopup();
     return;
@@ -342,8 +351,15 @@ function addImageBlock(
       ''
     );
 
-  main.appendChild(
-    block
+  runHistoryTransaction(
+    document.getElementById('editorArea'),
+    'Добавление блока картинки',
+    () => {
+
+      main.appendChild(
+        block
+      );
+    }
   );
 
   applyBlockSystemContract(
@@ -383,8 +399,15 @@ function addNamedBlock(
       value
     );
 
-  main.appendChild(
-    block
+  runHistoryTransaction(
+    document.getElementById('editorArea'),
+    `Добавление блока ${state.type}`,
+    () => {
+
+      main.appendChild(
+        block
+      );
+    }
   );
 
   applyBlockSystemContract(
@@ -436,8 +459,15 @@ function addConfiguredTable(
       }
     );
 
-  main.appendChild(
-    block
+  runHistoryTransaction(
+    document.getElementById('editorArea'),
+    'Добавление таблицы',
+    () => {
+
+      main.appendChild(
+        block
+      );
+    }
   );
 
   applyBlockSystemContract(

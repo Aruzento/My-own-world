@@ -1,4 +1,5 @@
 import {
+  redoEditorHistory,
   undoEditorHistory
 } from './editorHistory.js';
 
@@ -11,31 +12,31 @@ export function setupEditorKeyboard(
     async event => {
 
       if (
+        isRedoShortcut(
+          event
+        )
+      ) {
+
+        await handleHistoryShortcut(
+          event,
+          redoEditorHistory,
+          saveCurrentPage
+        );
+
+        return;
+      }
+
+      if (
         isUndoShortcut(
           event
         )
       ) {
 
-        const editor =
-          document.getElementById(
-            'editorArea'
-          );
-
-        if (
-          undoEditorHistory(
-            editor
-          )
-        ) {
-
-          event.preventDefault();
-          event.stopPropagation();
-          event.stopImmediatePropagation();
-
-          if (typeof saveCurrentPage === 'function') {
-
-            await saveCurrentPage();
-          }
-        }
+        await handleHistoryShortcut(
+          event,
+          undoEditorHistory,
+          saveCurrentPage
+        );
 
         return;
       }
@@ -76,7 +77,6 @@ export function setupEditorKeyboard(
 
       event.preventDefault();
 
-
       const fields = [
         ...document.querySelectorAll(
           '.singleline-field'
@@ -99,6 +99,58 @@ export function setupEditorKeyboard(
         nextField
       );
     }
+  );
+}
+
+
+async function handleHistoryShortcut(
+  event,
+  historyAction,
+  saveCurrentPage
+) {
+
+  const editor =
+    document.getElementById(
+      'editorArea'
+    );
+
+  if (
+    await historyAction(
+      editor
+    )
+  ) {
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    if (typeof saveCurrentPage === 'function') {
+
+      await saveCurrentPage();
+    }
+  }
+}
+
+
+function isRedoShortcut(
+  event
+) {
+
+  return (
+    (
+      event.code === 'KeyY' ||
+      event.key?.toLowerCase() === 'y' ||
+      event.key?.toLowerCase() === 'н'
+    ) &&
+    (event.ctrlKey || event.metaKey)
+  ) || (
+    (
+      event.code === 'KeyZ' ||
+      event.key?.toLowerCase() === 'z' ||
+      event.key?.toLowerCase() === 'я'
+    ) &&
+    (event.ctrlKey || event.metaKey) &&
+    event.shiftKey
   );
 }
 

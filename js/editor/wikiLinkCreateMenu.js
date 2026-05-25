@@ -24,6 +24,10 @@ import {
   hasCampaignMapAncestor
 } from './campaignMapTreeIntegration.js';
 
+import {
+  pushEditorHistorySnapshot
+} from './editorHistory.js';
+
 
 const menu =
   document.createElement('div');
@@ -316,6 +320,11 @@ async function connectMissingLinkToPage(
 
 
   if (sourceLink) {
+
+    pushEditorHistorySnapshot(
+      document.getElementById('editorArea'),
+      'Связь wiki-link с карточкой'
+    );
 
     sourceLink.dataset.pageId =
       updatedTarget.id;

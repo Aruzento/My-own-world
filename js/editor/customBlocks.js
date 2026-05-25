@@ -14,6 +14,10 @@ import {
   markRuntime
 } from './blocks/blockContract.js';
 
+import {
+  pushEditorHistorySnapshot
+} from './editorHistory.js';
+
 
 let draggedBlock = null;
 let blockDropPlaceholder = null;
@@ -203,6 +207,11 @@ function setupBlockDragAndDrop(
       ) return;
 
       event.preventDefault();
+
+      pushEditorHistorySnapshot(
+        editor,
+        'Перемещение блока'
+      );
 
       placeholder.before(
         draggedBlock

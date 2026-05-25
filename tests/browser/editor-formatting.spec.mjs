@@ -122,3 +122,128 @@ test(
     );
   }
 );
+
+
+test(
+  'editor-history-undo-redo-restores-persistent-html-without-runtime-ui',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            pushEditorHistorySnapshot,
+            redoEditorHistory,
+            undoEditorHistory
+          } = await import('/js/editor/editorHistory.js');
+
+          const {
+            serializePersistentEditorHTML
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          state.currentPage = {
+            id: 'history-page',
+            template: 'card',
+            type: 'note'
+          };
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <div class="entity-layout card-shell" contenteditable="false">
+              <section class="entity-main" contenteditable="false">
+                <div class="template-block" data-block-type="text" data-block-version="1" contenteditable="false">
+                  <button data-runtime="true" type="button">runtime</button>
+                  <div
+                    class="rich-text-field"
+                    contenteditable="true"
+                    data-persistent-editable="true"
+                  >alpha</div>
+                </div>
+              </section>
+            </div>
+          `;
+
+          const field =
+            editor.querySelector('.rich-text-field');
+
+          pushEditorHistorySnapshot(
+            editor,
+            'before edit'
+          );
+
+          field.textContent =
+            'beta';
+
+          const undoResult =
+            await undoEditorHistory(
+              editor
+            );
+
+          const afterUndoText =
+            editor.querySelector('.rich-text-field')?.textContent;
+
+          const persistentAfterUndo =
+            serializePersistentEditorHTML(
+              editor
+            );
+
+          const redoResult =
+            await redoEditorHistory(
+              editor
+            );
+
+          const afterRedoText =
+            editor.querySelector('.rich-text-field')?.textContent;
+
+          return {
+            undoResult,
+            redoResult,
+            afterUndoText,
+            afterRedoText,
+            persistentAfterUndo
+          };
+        }
+      );
+
+    expect(
+      result.undoResult
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.redoResult
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.afterUndoText
+    ).toBe(
+      'alpha'
+    );
+
+    expect(
+      result.afterRedoText
+    ).toBe(
+      'beta'
+    );
+
+    expect(
+      result.persistentAfterUndo
+    ).not.toContain(
+      'data-runtime'
+    );
+  }
+);

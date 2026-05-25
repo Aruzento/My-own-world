@@ -234,12 +234,13 @@ P1:
 
 ## Текущий Статус
 
-На момент фиксации этого контракта в проекте есть промежуточный `editorHistory.js`. Он уже перехватывает часть операций и делает snapshots, но еще не является полным контрактом:
+На момент выполнения пунктов 4.2-4.5 в проекте есть управляемый `editorHistory.js`. Он уже перехватывает основные операции и делает page-scoped persistent snapshots:
 
-- нет полноценного redo;
-- нет page-scoped undo/redo stacks;
-- ввод текста частично зависит от браузерного undo;
+- есть `Ctrl+Z` и `Ctrl+Y` / `Ctrl+Shift+Z`;
+- есть page-scoped undo/redo stacks;
+- paste, toolbar formatting, блоки, таблицы и wiki-link connect подключены к history layer;
+- runtime UI не записывается в persistent snapshot;
 - selection bookmark пока примитивный;
-- block/table/wiki actions еще не все проходят через единый transaction API.
+- обычный набор текста пока snapshot-based и без группировки по паузам.
 
-Следующий шаг по плану — `4.2`: перевести `Ctrl+Z / Ctrl+Y` на управляемую историю.
+Следующий шаг по плану — закрепить FormattingService правила и затем постепенно добавлять более тонкие regression tests для history-сценариев.
