@@ -23,6 +23,10 @@ import {
 } from './toolbar.js';
 
 import {
+  insertPlainTextFallback
+} from './formattingService.js';
+
+import {
   setupAutosave,
   saveCurrentPage as saveCurrentPageWithEditor
 } from './autosave.js';
@@ -308,21 +312,12 @@ function insertPlainTextAtSelection(
     'Вставка текста'
   );
 
-  // insertText участвует в нативной истории браузера лучше, чем ручная вставка DOM-узлов.
-  try {
-
-    if (
-      document.execCommand(
-        'insertText',
-        false,
-        text
-      )
-    ) return;
-
-  } catch {
-
-    // Ниже остается ручной fallback для браузеров, где insertText недоступен.
-  }
+  // Deprecated insertText спрятан в formattingService; ниже остается ручной DOM fallback.
+  if (
+    insertPlainTextFallback(
+      text
+    )
+  ) return;
 
   const selection =
     window.getSelection();

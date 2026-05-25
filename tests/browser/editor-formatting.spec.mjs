@@ -20,6 +20,9 @@ test(
 
           const {
             clearInlineFormatting,
+            formatSelectedBlockWithHistory,
+            isSupportedInlineFormattingCommand,
+            queryInlineFormattingState,
             runInlineFormattingCommand
           } = await import('/js/editor/formattingService.js');
 
@@ -68,6 +71,11 @@ test(
               'bold'
             );
 
+          const boldState =
+            queryInlineFormattingState(
+              'bold'
+            );
+
           const htmlAfterBold =
             field.innerHTML;
 
@@ -76,8 +84,52 @@ test(
           const outsideApplied =
             clearInlineFormatting();
 
+          editor.innerHTML = `
+            <div class="entity-layout card-shell" contenteditable="false">
+              <div
+                class="rich-text-field"
+                contenteditable="true"
+                data-persistent-editable="true"
+              >
+                <p>first block</p>
+                <p>second block</p>
+              </div>
+            </div>
+          `;
+
+          const secondBlock =
+            editor.querySelectorAll('p')[1];
+
+          const blockRange =
+            document.createRange();
+
+          blockRange.selectNodeContents(
+            secondBlock
+          );
+
+          selection.removeAllRanges();
+          selection.addRange(
+            blockRange
+          );
+
+          const blockApplied =
+            formatSelectedBlockWithHistory(
+              'h2'
+            );
+
+          const blockTags =
+            [
+              ...editor.querySelector('.rich-text-field').children
+            ].map(element =>
+              element.tagName.toLowerCase()
+            );
+
           return {
             applied,
+            blockApplied,
+            blockTags,
+            boldState,
+            unknownSupported: isSupportedInlineFormattingCommand('unknown-command'),
             outsideApplied,
             htmlAfterBold,
             text: field.textContent
@@ -90,6 +142,31 @@ test(
     ).toBe(
       true
     );
+
+    expect(
+      typeof result.boldState
+    ).toBe(
+      'boolean'
+    );
+
+    expect(
+      result.unknownSupported
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.blockApplied
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.blockTags
+    ).toEqual([
+      'p',
+      'h2'
+    ]);
 
     expect(
       result.outsideApplied

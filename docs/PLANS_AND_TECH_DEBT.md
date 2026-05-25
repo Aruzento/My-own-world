@@ -9,7 +9,7 @@
 ### 1. Smoke / Regression Tests
 
 - Статус: **в работе**.
-- Текущий активный подпункт: **5.2 Описать правила форматирования**.
+- Текущий активный подпункт: **6.1 Игроки на карте без дубля в дереве**.
 
 1.1. Smoke app shell: **сделано**.
 
@@ -79,13 +79,13 @@
 
 ### 5. FormattingService
 
-- Статус: **частично сделано**.
+- Статус: **архитектурно сделано, deprecated fallback еще нужно заменить собственной реализацией позже**.
 
-5.1. Изолировать `execCommand` как fallback: **частично сделано**.
+5.1. Изолировать `execCommand` как fallback: **сделано**.
 
-5.2. Описать правила форматирования: **не завершено**.
+5.2. Описать правила форматирования: **сделано**.
 
-5.3. Убрать прямую зависимость toolbar от deprecated API: **частично сделано**.
+5.3. Убрать прямую зависимость toolbar от deprecated API: **сделано**.
 
 ### 6. Campaign Map Tactical Features
 
@@ -473,6 +473,83 @@
    - сохранить/reload;
    - проверить координаты, fog и presentation sync.
 3. После стабилизации карты перейти к desktop app spike: проверить Tauri/Electron как оболочку для локального приложения.
+
+## 2026-05-25: FormattingService 5.3
+
+### Что сделано
+
+- Закрыт пункт 5.3: toolbar больше не записывает history snapshots для formatting actions напрямую.
+- Inline-команды, reset format и применение цвета проходят через history-aware методы `formattingService.js`.
+- Block formatting (`p`, `h1`-`h4`) перенесен из `toolbar.js` в `formattingService.js`.
+- Логика выбора block targets, замены тега, восстановления выделения и нормализации вложенных заголовков теперь находится рядом с остальными правилами форматирования.
+- `toolbar.js` стал тоньше: он восстанавливает selection, вызывает сервис и обновляет UI.
+
+### Что стало лучше
+
+- FormattingService теперь отвечает не только за deprecated fallback, но и за единое поведение форматирования.
+- Следующие изменения toolbar меньше рискуют сломать историю редактора или границы persistent editable.
+- Block formatting стало проще тестировать и заменять независимо от UI.
+
+### Оставшиеся риски
+
+- Inline formatting все еще использует `execCommand` как fallback внутри сервиса.
+- Нужны дополнительные browser regression tests на цвет, reset format, списки и заголовки.
+
+### Следующее развитие из этой работы
+
+1. По основному плану можно переходить к `6.1`: игроки на карте без дубля в дереве.
+2. Внутри блока тестов добавить отдельные regression tests для FormattingService, когда снова будем расширять редактор.
+
+## 2026-05-25: FormattingService 5.2
+
+### Что сделано
+
+- Закрыт пункт 5.2: добавлен `docs/FORMATTING_SERVICE_CONTRACT.md`.
+- В контракте зафиксированы правила для persistent editable-зон, inline formatting, block formatting, цвета, reset format, paste и состояния toolbar.
+- `formattingService.js` получил allowlist поддерживаемых inline-команд, чтобы неизвестные команды не уходили в deprecated fallback.
+- `queryInlineFormattingState()` и `insertPlainTextFallback()` теперь также проверяют persistent selection.
+- README ссылается на новый контракт форматирования.
+
+### Что стало лучше
+
+- Правила форматирования больше не живут только в памяти и в поведении toolbar.
+- Следующая замена `execCommand` сможет сохранить public API сервиса и не переписывать UI.
+- Риск случайно применить форматирование вне editable-зоны стал ниже.
+
+### Оставшиеся риски
+
+- Block formatting (`p`, `h1`-`h4`) пока физически остается в `toolbar.js`.
+- Deprecated fallback все еще используется внутри `formattingService.js`, пока не появится собственная Range/DOM-реализация.
+
+### Следующее развитие из этой работы
+
+1. Закрыть пункт 5.3: перенести block formatting и историю formatting actions из toolbar в сервисный слой.
+2. После этого расширить browser regression tests на цвет, reset format, списки и заголовки.
+
+## 2026-05-25: FormattingService 5.1
+
+### Что сделано
+
+- Закрыт пункт 5.1: прямые обращения к deprecated command API из редактора убраны.
+- `document.execCommand()` и `document.queryCommandState()` теперь находятся только внутри `formattingService.js`.
+- `toolbar.js` получает состояние форматирования через `queryInlineFormattingState()`.
+- `editor.js` использует `insertPlainTextFallback()` для paste, а ручной DOM fallback остается ниже.
+- Browser formatting regression расширен проверкой public API состояния форматирования.
+
+### Что стало лучше
+
+- Deprecated API теперь изолирован в одном сервисе, его будет проще заменить на собственный formatting layer.
+- Toolbar и editor больше не знают, каким браузерным механизмом выполняется inline formatting или paste fallback.
+
+### Оставшиеся риски
+
+- Само форматирование все еще выполняется через browser fallback, а не через собственную модель.
+- Правила форматирования еще нужно формально описать в пункте 5.2.
+
+### Следующее развитие из этой работы
+
+1. Делать пункт 5.2: описать правила FormattingService для заголовков, обычного текста, списков, цвета и reset format.
+2. Затем закрывать 5.3: убрать оставшуюся архитектурную зависимость toolbar от деталей форматирования.
 
 ## 2026-05-25: приоритизация новых доработок карты
 
