@@ -1,7 +1,7 @@
 import {
-  commitShapeModelToElement,
-  commitTokenModelToElement
-} from './campaignMapModel.js';
+  applyShapeRecordToElement,
+  applyTokenRecordToElement
+} from './campaignMapRenderAdapter.js';
 
 import {
   setTokenFallbackText
@@ -12,8 +12,7 @@ import {
 // Здесь нет бизнес-логики: только минимальная разметка render-target.
 
 export function createMapTokenElement(
-  tokenData,
-  model
+  tokenData
 ) {
 
   const token =
@@ -28,9 +27,9 @@ export function createMapTokenElement(
   token.dataset.tokenId =
     tokenData.tokenId;
 
-  commitTokenModelToElement(
+  applyTokenRecordToElement(
     token,
-    model
+    tokenData
   );
 
   setTokenFallbackText(
@@ -43,8 +42,7 @@ export function createMapTokenElement(
 
 
 export function createMapShapeElement(
-  shapeData,
-  model
+  shapeData
 ) {
 
   const shape =
@@ -56,9 +54,9 @@ export function createMapShapeElement(
   shape.dataset.shapeId =
     shapeData.shapeId;
 
-  commitShapeModelToElement(
+  applyShapeRecordToElement(
     shape,
-    model
+    shapeData
   );
 
   return shape;

@@ -42,9 +42,9 @@ import {
 } from './campaignMapRenderer.js';
 
 import {
-  commitShapeModelToElement,
-  commitTokenModelToElement
-} from './campaignMapModel.js';
+  applyShapeRecordToElement,
+  applyTokenRecordToElement
+} from './campaignMapRenderAdapter.js';
 
 import {
   getCampaignMapStore
@@ -327,9 +327,9 @@ export async function toggleMapItemPresentationVisibility(
       }
     );
 
-    commitShapeModelToElement(
+    applyShapeRecordFromStore(
       item,
-      store?.getModel()
+      store
     );
 
   } else {
@@ -341,9 +341,9 @@ export async function toggleMapItemPresentationVisibility(
       }
     );
 
-    commitTokenModelToElement(
+    applyTokenRecordFromStore(
       item,
-      store?.getModel()
+      store
     );
   }
 
@@ -357,6 +357,44 @@ export async function toggleMapItemPresentationVisibility(
   );
 
   await deps.saveAndSync();
+}
+
+
+function applyTokenRecordFromStore(
+  token,
+  store
+) {
+
+  const record =
+    store
+      ?.getModel()
+      ?.getToken(
+        token?.dataset.tokenId
+      );
+
+  applyTokenRecordToElement(
+    token,
+    record
+  );
+}
+
+
+function applyShapeRecordFromStore(
+  shape,
+  store
+) {
+
+  const record =
+    store
+      ?.getModel()
+      ?.getShape(
+        shape?.dataset.shapeId
+      );
+
+  applyShapeRecordToElement(
+    shape,
+    record
+  );
 }
 
 

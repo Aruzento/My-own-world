@@ -21,8 +21,8 @@ import {
 } from './campaignMapPresentationSync.js';
 
 import {
-  commitTokenModelToElement
-} from './campaignMapModel.js';
+  applyTokenRecordToElement
+} from './campaignMapRenderAdapter.js';
 
 import {
   getCampaignMapStore
@@ -418,9 +418,9 @@ function rotateTokenToPointer(
     rotation
   );
 
-  commitTokenModelToElement(
+  applyTokenRecordFromStore(
     rotatedToken.token,
-    store?.getModel()
+    store
   );
 
   applyTokenRotation(
@@ -501,9 +501,9 @@ function resizeTokenToPointer(
     nextSize
   );
 
-  commitTokenModelToElement(
+  applyTokenRecordFromStore(
     resizedToken.token,
-    store?.getModel()
+    store
   );
 
   applyTokenSize(
@@ -640,9 +640,9 @@ function moveTokenToPointer(
     }
   );
 
-  commitTokenModelToElement(
+  applyTokenRecordFromStore(
     token,
-    store?.getModel()
+    store
   );
 
   positionToken(
@@ -665,5 +665,24 @@ function moveTokenToPointer(
       ...measure,
       map: draggedToken.map
     }
+  );
+}
+
+
+function applyTokenRecordFromStore(
+  token,
+  store
+) {
+
+  const record =
+    store
+      ?.getModel()
+      ?.getToken(
+        token?.dataset.tokenId
+      );
+
+  applyTokenRecordToElement(
+    token,
+    record
   );
 }

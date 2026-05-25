@@ -41,11 +41,11 @@
 
 2.3. Тесты расчетов drop intent и move planner: **сделано**.
 
-2.4. Дополнительные browser regression tests дерева: **частично не сделано**.
+2.4. Дополнительные browser regression tests дерева: **сделано**.
 
 ### 3. Campaign Map Data-First Save
 
-- Статус: **основной архитектурный пункт сделан, остались укрепляющие подпункты**.
+- Статус: **архитектурно сделано**.
 
 3.1. `CampaignMapModel`: **сделано**.
 
@@ -59,9 +59,9 @@
 
 3.6. Browser save/reload regression: **сделано**.
 
-3.7. Render adapter `CampaignMapModel -> DOM`: **не сделано**.
+3.7. Render adapter `CampaignMapModel -> DOM`: **сделано**.
 
-3.8. Убрать compatibility helpers `commitTokenModelToElement()` / `commitShapeModelToElement()`: **не сделано**.
+3.8. Убрать compatibility helpers `commitTokenModelToElement()` / `commitShapeModelToElement()`: **сделано**.
 
 ### 4. Editor History Contract
 
@@ -444,6 +444,32 @@
    - сохранить/reload;
    - проверить координаты, fog и presentation sync.
 3. После стабилизации карты перейти к desktop app spike: проверить Tauri/Electron как оболочку для локального приложения.
+
+## 2026-05-24: tree regression и render adapter карты
+
+### Что сделано
+
+- Закрыт пункт 2.4: добавлен browser regression test `tree-pointer-dnd-planner-keeps-stable-drop-intents-and-order`.
+- Тест проверяет drop-intent дерева в браузере и сценарии `before`, `inside`, `after`, `root`, сортировку на одном уровне.
+- Закрыт пункт 3.7: создан `campaignMapRenderAdapter.js`, который отражает записи `CampaignMapModel` в DOM токенов и фигур.
+- Закрыт пункт 3.8: `CampaignMapModel` больше не экспортирует `commitTokenModelToElement()` и `commitShapeModelToElement()`.
+- Token/shape drag и token actions теперь получают запись из `CampaignMapStore` и передают ее в render adapter.
+
+### Что стало лучше
+
+- `CampaignMapModel` снова отвечает только за данные карты, а не за DOM-разметку.
+- DOM стал отображением model/store snapshot, что упрощает следующий переход к render adapter для всей карты.
+- Browser regression дерева теперь прикрывает не только unit-расчеты, но и browser import/runtime слой.
+
+### Оставшиеся риски
+
+- Render adapter пока точечный: он обновляет dataset токенов и фигур, а полный `CampaignMapModel -> DOM` renderer для пересборки всей object-layer еще не выделен.
+- Для треугольников resize вершин всё еще использует DOM-helper `getTrianglePoints(shape)`, потому что вершины физически редактируются в DOM.
+
+### Следующее развитие из этой работы
+
+1. Перейти к пункту 4.1: описать единый Editor History Contract.
+2. Позже расширить render adapter до полного renderer-а object-layer, чтобы карта могла пересобираться из модели без ручных DOM-патчей.
 
 ## 2026-05-24: data-first save карты
 

@@ -18,8 +18,8 @@ import {
 } from './campaignMapPresentationSync.js';
 
 import {
-  commitShapeModelToElement
-} from './campaignMapModel.js';
+  applyShapeRecordToElement
+} from './campaignMapRenderAdapter.js';
 
 import {
   getCampaignMapStore
@@ -364,9 +364,9 @@ function resizeShapeBox(
     }
   );
 
-  commitShapeModelToElement(
+  applyShapeRecordFromStore(
     shape,
-    store?.getModel()
+    store
   );
 }
 
@@ -487,9 +487,9 @@ function moveShapeToPointer(
     }
   );
 
-  commitShapeModelToElement(
+  applyShapeRecordFromStore(
     draggedShape.shape,
-    store?.getModel()
+    store
   );
 
   applyShapeGeometry(
@@ -502,6 +502,25 @@ function moveShapeToPointer(
       itemType: 'shape',
       itemId: draggedShape.shape.dataset.shapeId
     }
+  );
+}
+
+
+function applyShapeRecordFromStore(
+  shape,
+  store
+) {
+
+  const record =
+    store
+      ?.getModel()
+      ?.getShape(
+        shape?.dataset.shapeId
+      );
+
+  applyShapeRecordToElement(
+    shape,
+    record
   );
 }
 
