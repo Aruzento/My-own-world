@@ -19,6 +19,10 @@ import {
 } from '../ui/ui.js';
 
 import {
+  notifyPageUpdated
+} from '../repository/pageRepository.js';
+
+import {
   isCampaignMapRecord
 } from './campaignMapContract.js';
 
@@ -666,6 +670,8 @@ aliases: [${(page.aliases || []).join(', ')}]
     page,
     page.content
   );
+
+  notifyPageUpdated();
 }
 
 

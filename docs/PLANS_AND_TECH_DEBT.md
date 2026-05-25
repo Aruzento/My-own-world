@@ -126,8 +126,8 @@
 6.2. Создать `PageIndex`: **сделано**.
 Индексы: по `id`, `title`, `aliases`, `parent`, `type`, `tags`.
 
-6.3. Сделать lifecycle индекса: **не сделано**.
-`rebuild` после load, `update` после create, rename, move, delete, tag/type change.
+6.3. Сделать lifecycle индекса: **сделано**.
+Добавлен runtime `PageRepository`, который подписывается на `setPages`, пересобирает `PageIndex` после загрузки и явно обновляется после create, rename, move, delete, alias/tag/type change. На первом этапе update-операции безопасно идут через полный rebuild.
 
 6.4. Перевести wiki-links на `PageIndex`: **не сделано**.
 
@@ -140,7 +140,7 @@
 6.8. Перевести шаблоны и будущий graph lookup на `PageIndex`: **не сделано**.
 
 6.9. Добавить unit/browser regression для `PageIndex`: **частично сделано**.
-Unit-тесты базового `PageIndex` добавлены. Browser regression нужны после перевода первых UI-подсистем на repository.
+Unit-тесты базового `PageIndex` и lifecycle `PageRepository` добавлены. Browser regression нужны после перевода первых UI-подсистем на repository.
 
 ### 7. Safe HTML Boundary / Sanitizer
 
@@ -468,6 +468,6 @@ Render time, sync time, number of visible objects, background load.
 
 ## Текущий Следующий Шаг
 
-Следующий рекомендуемый пункт: **6.3. Сделать lifecycle индекса**.
+Следующий рекомендуемый пункт: **6.4. Перевести wiki-links на PageIndex**.
 
-Причина: базовый `PageIndex` уже создан и покрыт unit-тестами. Теперь нужно связать его с жизненным циклом `state.pages`: rebuild после load и обновление после create/rename/move/delete/tag/type change.
+Причина: `PageRepository` уже подключен к runtime lifecycle. Wiki-links первыми выиграют от единого поиска по title/aliases и перестанут дублировать lookup-логику поверх `state.pages`.

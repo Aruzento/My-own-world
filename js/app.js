@@ -3,6 +3,9 @@ import {
   state
 } from './state.js';
 
+// Подключает живой индекс страниц: он подписывается на изменения state.pages.
+import './repository/pageRepository.js';
+
 
 /* Импорт функций работы с workspace и страницами */
 import {

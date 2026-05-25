@@ -21,6 +21,10 @@ import {
   positionPopupNearAnchor
 } from './popupPosition.js';
 
+import {
+  notifyPageUpdated
+} from '../repository/pageRepository.js';
+
 
 let activeSetList = null;
 let activeSetKind = 'items';
@@ -622,6 +626,8 @@ async function createItemFromPicker() {
     page,
     page.content
   );
+
+  notifyPageUpdated();
 
   renderTree();
 

@@ -33,6 +33,10 @@ import {
   updateOpenPageTitleWarning
 } from './pageTitleWarning.js';
 
+import {
+  notifyPageUpdated
+} from '../repository/pageRepository.js';
+
 
 export function setupAutosave(
   editor
@@ -164,6 +168,8 @@ ${getSerializedEditorHTML(editor)}
 
   state.currentPage.content =
     content;
+
+  notifyPageUpdated();
 
   setStatus(
     'Сохранено'

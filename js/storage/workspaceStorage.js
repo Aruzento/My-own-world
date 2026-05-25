@@ -128,4 +128,9 @@ export async function loadWorkspace() {
     pagesDir,
     '/pages'
   );
+
+  /* Фиксирует результат загрузки единым событием, чтобы PageRepository пересобрал индексы. */
+  setPages(
+    [...state.pages]
+  );
 }

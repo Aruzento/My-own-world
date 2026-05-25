@@ -19,6 +19,12 @@ import {
   writeTextFile
 } from './writeQueue.js';
 
+import {
+  notifyPageCreated,
+  notifyPageMoved,
+  notifyPageUpdated
+} from '../repository/pageRepository.js';
+
 
 export async function createPage(
   templateKey,
@@ -181,9 +187,14 @@ async function writePageFile(
     content
   };
 
-  state.pages.push(
-    page
+  setPages(
+    [
+      ...state.pages,
+      page
+    ]
   );
+
+  notifyPageCreated();
 
   return page;
 }
@@ -368,6 +379,8 @@ export async function updatePageParent(
 
   page.content =
     updatedContent;
+
+  notifyPageMoved();
 }
 
 
@@ -439,6 +452,8 @@ export async function updatePageTreePosition(
 
   page.content =
     updatedContent;
+
+  notifyPageMoved();
 }
 
 export async function updatePageAliases(
@@ -483,6 +498,8 @@ export async function updatePageAliases(
 
   page.content =
     updatedContent;
+
+  notifyPageUpdated();
 }
 
 export async function scanDirectory(

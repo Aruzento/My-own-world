@@ -90,6 +90,10 @@ import {
 } from './pageTitleWarning.js';
 
 import {
+  notifyPageUpdated
+} from '../repository/pageRepository.js';
+
+import {
   setupEditorHistory,
   pushEditorHistorySnapshot
 } from './editorHistory.js';
@@ -911,6 +915,8 @@ ${serializeTaskTrackerHTML(editor)}
   state.currentPage.content =
     content;
 
+  notifyPageUpdated();
+
   setStatus(
     'Сохранено'
   );
@@ -964,6 +970,8 @@ ${serializeCampaignMapHTML(editor)}
 
   state.currentPage.content =
     content;
+
+  notifyPageUpdated();
 
   setStatus(
     'Сохранено'
