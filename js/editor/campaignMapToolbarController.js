@@ -16,6 +16,10 @@ import {
 } from './campaignMapToolbar.js';
 
 import {
+  openInitiativePopup
+} from './campaignMapInitiativePopup.js';
+
+import {
   toggleGrid,
   updateGridSize
 } from './campaignMapViewport.js';
@@ -162,6 +166,29 @@ export async function handleCampaignMapToolbarClick(
     ) return true;
 
     openFogPopup(
+      map,
+      anchor,
+      deps
+    );
+
+    return true;
+  }
+
+  if (
+    event.target.closest('.campaign-initiative-btn')
+  ) {
+
+    const anchor =
+      event.target.closest('.campaign-initiative-btn');
+
+    if (
+      toggleMapPopupForAnchor(
+        anchor,
+        'initiative'
+      )
+    ) return true;
+
+    openInitiativePopup(
       map,
       anchor,
       deps

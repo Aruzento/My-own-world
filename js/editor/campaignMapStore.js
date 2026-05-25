@@ -314,6 +314,22 @@ export class CampaignMapStore {
 
     return nextView;
   }
+
+
+  setInitiative(
+    initiative
+  ) {
+
+    const nextInitiative =
+      this.model.setInitiative(
+        initiative
+      );
+
+    this.markDirty();
+    this.commitToDOM();
+
+    return nextInitiative;
+  }
 }
 
 

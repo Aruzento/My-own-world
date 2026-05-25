@@ -29,6 +29,21 @@ export function getMapControlsHTML() {
     <div class="campaign-map-control-group">
       <button class="campaign-shapes-btn" type="button" title="Фигуры">Фигуры</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
+      <button class="campaign-initiative-btn" type="button" title="Инициатива">Иниц.</button>
+    </div>
+  `;
+}
+
+
+export function getInitiativePopupHTML() {
+
+  return `
+    <div class="campaign-map-popup-title">Инициатива</div>
+    <div class="campaign-initiative-list"></div>
+    <div class="campaign-map-popup-actions campaign-initiative-actions">
+      <button class="campaign-initiative-save-btn" type="button">Применить</button>
+      <button class="campaign-initiative-roll-btn" type="button">Roll d20</button>
+      <button class="campaign-initiative-close-btn" type="button">Закрыть</button>
     </div>
   `;
 }

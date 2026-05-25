@@ -11,6 +11,10 @@ import {
   getStageView
 } from './campaignMapGeometry.js';
 
+import {
+  CampaignMapInitiativeModel
+} from './campaignMapInitiativeModel.js';
+
 
 // CampaignMapModel — единый слой данных карты.
 // DOM может быть источником входного снимка, но сохранение и синхронизация
@@ -57,6 +61,11 @@ export class CampaignMapModel {
       (data.shapes || []).map(
         normalizeShape
       );
+
+    this.initiative =
+      new CampaignMapInitiativeModel(
+        data.initiative || {}
+      ).toJSON();
   }
 
 
@@ -94,7 +103,11 @@ export class CampaignMapModel {
         ? getStageView(stage)
         : null,
       tokens,
-      shapes
+      shapes,
+      initiative:
+        readInitiativeState(
+          stage
+        )
     });
   }
 
@@ -156,6 +169,13 @@ export class CampaignMapModel {
       stage.dataset.brushSize =
         String(this.fog.brushSize);
     }
+
+    stage.dataset.initiativeState =
+      encodeURIComponent(
+        JSON.stringify(
+          this.initiative
+        )
+      );
   }
 
 
@@ -433,6 +453,19 @@ export class CampaignMapModel {
   }
 
 
+  setInitiative(
+    initiative
+  ) {
+
+    this.initiative =
+      new CampaignMapInitiativeModel(
+        initiative
+      ).toJSON();
+
+    return this.initiative;
+  }
+
+
   toJSON() {
 
     return {
@@ -443,7 +476,8 @@ export class CampaignMapModel {
       fog: this.fog,
       view: this.view,
       tokens: this.tokens,
-      shapes: this.shapes
+      shapes: this.shapes,
+      initiative: this.initiative
     };
   }
 }
@@ -574,6 +608,30 @@ function readAssetSettings(
 
       return settings;
     }, {});
+}
+
+
+function readInitiativeState(
+  stage
+) {
+
+  const raw =
+    stage?.dataset.initiativeState || '';
+
+  if (!raw) return {};
+
+  try {
+
+    return JSON.parse(
+      decodeURIComponent(
+        raw
+      )
+    );
+
+  } catch {
+
+    return {};
+  }
 }
 
 

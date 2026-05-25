@@ -290,7 +290,8 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 12.3. Учесть `sourceMode="original"` для игроков: **сделано на уровне модели**.
 `createParticipantFromToken()` сохраняет `sourceMode`, чтобы будущий UI мог отличать игроков, привязанных к оригинальной карточке.
 
-12.4. Сделать popup выбора участников: **не сделано**.
+12.4. Сделать popup выбора участников: **сделано MVP**.
+Добавлен `js/editor/campaignMapInitiativePopup.js`, кнопка `Иниц.` в toolbar карты и popup выбора существ с действиями `Применить`, `Roll d20`, `Закрыть`.
 
 12.5. Добавить `roll d20`: **сделано на уровне модели**.
 Добавлены `rollD20()`, `rollParticipant()` и `rollAll()`.
@@ -304,9 +305,11 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 12.8. Сделать active turn / next / previous: **сделано на уровне модели**.
 Добавлены `setActive()`, `nextTurn()` и `previousTurn()`.
 
-12.9. Сохранение/восстановление инициативы: **не сделано**.
+12.9. Сохранение/восстановление инициативы: **сделано**.
+`CampaignMapModel` хранит `initiative`, пишет состояние в `data-initiative-state`, восстанавливает его из HTML и сериализует через data-first save.
 
-12.10. Browser regression initiative: **не сделано**.
+12.10. Browser regression initiative: **сделано**.
+Добавлен `tests/browser/campaign-map-initiative.spec.mjs`.
 
 ### 13. Campaign Map Layers
 
@@ -508,6 +511,6 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 
 ## Текущий Следующий Шаг
 
-Следующий рекомендуемый пункт: **12.1. Спроектировать InitiativeModel**.
+Следующий рекомендуемый пункт: **13.1. Спроектировать LayerModel**.
 
-Причина: release process закрыт на уровне документации и checklist. Следующий пункт плана - Campaign Map Initiative.
+Причина: Campaign Map Initiative закрыта на уровне MVP model + popup + persistence + browser regression. Следующий пункт плана - Campaign Map Layers.

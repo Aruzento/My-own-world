@@ -91,6 +91,20 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'campaign-map-initiative-popup',
+    priority: 'P1',
+    area: 'campaign-map',
+    title: 'Инициатива выбирает участников и сохраняется в карте',
+    description:
+      'Открыть popup инициативы, выбрать живое существо, выполнить roll d20 и проверить, что состояние записано в CampaignMapModel и persistent dataset карты.',
+    automationStatus:
+      'automated: campaign-map-initiative-popup-selects-rolls-and-persists-participants',
+    automatesChecklist: [
+      'Карта Кампании: initiative',
+      'Карта Кампании: persistence'
+    ]
+  },
+  {
     id: 'toolbar-formatting-boundary',
     priority: 'P1',
     area: 'editor',

@@ -170,3 +170,61 @@ test(
     );
   }
 );
+
+
+test(
+  'CampaignMapModel сохраняет и восстанавливает инициативу карты',
+  () => {
+
+    const model =
+      new CampaignMapModel({
+        initiative: {
+          participants: [
+            {
+              participantId: 'token:a',
+              tokenId: 'a',
+              name: 'А',
+              roll: 12,
+              modifier: 3,
+              total: 15
+            }
+          ],
+          activeParticipantId: 'token:a'
+        }
+      });
+
+    const stage =
+      {
+        dataset: {}
+      };
+
+    const container =
+      {
+        querySelector:
+          selector => selector === '.campaign-map-stage'
+            ? stage
+            : null,
+        querySelectorAll:
+          () => []
+      };
+
+    model.commitToElement(
+      container
+    );
+
+    const restored =
+      CampaignMapModel.fromElement(
+        container
+      );
+
+    assert.equal(
+      restored.initiative.activeParticipantId,
+      'token:a'
+    );
+
+    assert.equal(
+      restored.initiative.participants[0].total,
+      15
+    );
+  }
+);

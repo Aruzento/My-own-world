@@ -293,6 +293,12 @@ Wiki-links, sidebar search, проверка дублей названий, ча
 
 В коде есть первый измерительный слой `js/editor/campaignMapPerformance.js`: он собирает snapshot по render/sync time, видимым токенам/фигурам, fog canvas, zoom и сравнивает его со стартовыми budgets. Это база для будущих performance smoke и оптимизации presentation full-sync.
 
+## Campaign Map Initiative
+
+Карта получила MVP инициативы: кнопка `Иниц.` открывает popup выбора существ на карте. Выбранных участников можно применить или бросить через `Roll d20`.
+
+Данные инициативы хранятся в `CampaignMapModel.initiative`, сохраняются в `data-initiative-state` и восстанавливаются при открытии карты. Логика инициативы находится в `js/editor/campaignMapInitiativeModel.js`, popup UI — в `js/editor/campaignMapInitiativePopup.js`.
+
 ## CI
 
 GitHub Actions workflow лежит в `.github/workflows/verify.yml`.

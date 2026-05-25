@@ -1826,3 +1826,25 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Закрыть `12.4`: сделать popup выбора участников инициативы, затем `12.9`: сохранить и восстановить состояние инициативы в карте.
+
+---
+
+## 2026-05-25: Campaign Map Initiative UI 12.4, 12.9-12.10
+
+### Что сделано
+
+- Добавлена кнопка `Иниц.` в toolbar карты.
+- Добавлен `js/editor/campaignMapInitiativePopup.js`: popup выбора существ, `Применить`, `Roll d20`, `Закрыть`.
+- `CampaignMapModel` теперь хранит `initiative`, пишет его в `data-initiative-state` и восстанавливает из HTML.
+- `CampaignMapStore` получил `setInitiative()`.
+- Data-first serializer сохраняет состояние инициативы.
+- Добавлен browser regression `tests/browser/campaign-map-initiative.spec.mjs`.
+
+### Что стало лучше
+
+- Инициатива стала видимой пользовательской MVP-фичей карты, но боевые данные все еще остаются в модели, а не в DOM-popup.
+- Состояние инициативы переживает save/reload карты.
+
+### Следующее развитие
+
+- Перейти к `13.1`: спроектировать LayerModel для карты.
