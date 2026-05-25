@@ -126,6 +126,7 @@ function serializeToken(
                     'data-size': formatNumber(token.size, 3),
                     'data-rotation': token.rotation,
                     'data-image-asset': token.imageAsset,
+                    'data-source-mode': token.sourceMode,
                     'data-presentation-hidden': token.presentationHidden ? 'true' : 'false'
                   })}
                 ></button>

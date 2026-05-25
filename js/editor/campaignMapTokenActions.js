@@ -69,7 +69,12 @@ export async function deleteTokenAndPage(
 
   deps.closeTokenPopup();
 
-  if (page) {
+  if (
+    page &&
+    !isOriginalLinkedToken(
+      token
+    )
+  ) {
 
     try {
 
@@ -263,15 +268,26 @@ export async function duplicateTokenAndPage(
     }
 
     const duplicate =
-      await duplicatePageAsChild(
-        page,
-        page.parent
-      );
+      isOriginalLinkedToken(
+        token
+      )
+        ? page
+        : await duplicatePageAsChild(
+          page,
+          page.parent
+        );
 
-    await normalizeDuplicatedTokenPage(
-      duplicate,
-      tokenType
-    );
+    if (
+      !isOriginalLinkedToken(
+        token
+      )
+    ) {
+
+      await normalizeDuplicatedTokenPage(
+        duplicate,
+        tokenType
+      );
+    }
 
     const map =
       token.closest('.campaign-map-document');
@@ -283,7 +299,15 @@ export async function duplicateTokenAndPage(
       deps
     );
 
-    renderTree();
+    if (
+      !isOriginalLinkedToken(
+        token
+      )
+    ) {
+
+      renderTree();
+    }
+
     await deps.saveAndSync();
 
   } catch (error) {
@@ -533,7 +557,10 @@ async function addMapTokenFromExisting(
       ),
       size: sourceToken.dataset.size || '1',
       rotation: sourceToken.dataset.rotation || '0',
-      imageAsset: sourceToken.dataset.imageAsset || ''
+      imageAsset: sourceToken.dataset.imageAsset || '',
+      sourceMode: sourceToken.dataset.sourceMode === 'original'
+        ? 'original'
+        : 'copy'
     });
 
   const token =
@@ -552,6 +579,14 @@ async function addMapTokenFromExisting(
       applyHealth: deps.applyTokenHealthState
     }
   );
+}
+
+
+function isOriginalLinkedToken(
+  token
+) {
+
+  return token?.dataset.sourceMode === 'original';
 }
 
 

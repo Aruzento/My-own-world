@@ -144,6 +144,14 @@ ${body}
               tags: ['card', 'creature']
             });
 
+          const player =
+            createPageRecord({
+              id: 'player-character',
+              title: 'Лазарь',
+              type: 'character',
+              tags: ['card', 'character', 'player']
+            });
+
           const mapChild =
             createPageRecord({
               id: 'map-child-creature',
@@ -157,6 +165,7 @@ ${body}
             [
               mapPage,
               source,
+              player,
               mapChild
             ];
 
@@ -206,7 +215,7 @@ ${body}
               map,
               source,
               {
-                async addMapToken(nextMap, kind, pageRecord) {
+                async addMapToken(nextMap, kind, pageRecord, spawnIndex, options = {}) {
 
                   const store =
                     refreshCampaignMapStore(
@@ -220,7 +229,8 @@ ${body}
                       type: kind,
                       name: pageRecord.title,
                       x: 50,
-                      y: 50
+                      y: 50,
+                      sourceMode: options.sourceMode || 'copy'
                     });
 
                   nextMap
@@ -235,6 +245,41 @@ ${body}
                 async saveAndSync() {}
               }
             );
+
+          await addPageToMap(
+            map,
+            player,
+            {
+              async addMapToken(nextMap, kind, pageRecord, spawnIndex, options = {}) {
+
+                const store =
+                  refreshCampaignMapStore(
+                    nextMap
+                  );
+
+                const tokenData =
+                  store.addToken({
+                    tokenId: `token-${pageRecord.id}`,
+                    pageId: pageRecord.id,
+                    type: kind,
+                    name: pageRecord.title,
+                    x: 52,
+                    y: 52,
+                    sourceMode: options.sourceMode || 'copy'
+                  });
+
+                nextMap
+                  .querySelector('.campaign-map-object-layer')
+                  .appendChild(
+                    createMapTokenElement(
+                      tokenData,
+                      store.getModel()
+                    )
+                  );
+              },
+              async saveAndSync() {}
+            }
+          );
 
           const bucket =
             state.pages.find(candidate =>
@@ -258,6 +303,9 @@ ${body}
             duplicateParent: duplicate?.parent || '',
             tokenPageId: tokens[0]?.pageId || '',
             tokenName: tokens[0]?.name || '',
+            playerTokenPageId: tokens[1]?.pageId || '',
+            playerTokenSourceMode: tokens[1]?.sourceMode || '',
+            playerParentAfterAdd: player.parent || '',
             writtenFiles: state.__testWrittenFiles
           };
         }
@@ -309,6 +357,24 @@ ${body}
       result.tokenName
     ).toBe(
       'Гоблин - сущность.Пещера'
+    );
+
+    expect(
+      result.playerTokenPageId
+    ).toBe(
+      'player-character'
+    );
+
+    expect(
+      result.playerTokenSourceMode
+    ).toBe(
+      'original'
+    );
+
+    expect(
+      result.playerParentAfterAdd
+    ).toBe(
+      ''
     );
   }
 );

@@ -115,7 +115,10 @@ export async function addMapToken(
             : `Объект ${index}`
         ),
       size: 1,
-      rotation: 0
+      rotation: 0,
+      sourceMode: options.sourceMode === 'original'
+        ? 'original'
+        : 'copy'
     });
 
   const token =

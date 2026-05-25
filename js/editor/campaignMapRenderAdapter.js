@@ -53,6 +53,11 @@ export function applyTokenRecordToElement(
     tokenRecord.imageAsset
   );
 
+  tokenElement.dataset.sourceMode =
+    tokenRecord.sourceMode === 'original'
+      ? 'original'
+      : 'copy';
+
   tokenElement.dataset.presentationHidden =
     tokenRecord.presentationHidden
       ? 'true'

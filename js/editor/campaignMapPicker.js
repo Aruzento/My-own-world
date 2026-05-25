@@ -174,7 +174,9 @@ function renderCardPickerList(
     );
 
   const allowedTypes =
-    kind === 'creature'
+    kind === 'player'
+      ? new Set(['character', 'creature'])
+      : kind === 'creature'
       ? new Set(['character', 'creature'])
       : new Set(['object']);
 
@@ -182,6 +184,11 @@ function renderCardPickerList(
     state.pages
       .filter(page =>
         allowedTypes.has(page.type) &&
+        (
+          kind === 'player'
+            ? hasPlayerTag(page)
+            : !hasPlayerTag(page)
+        ) &&
         !hasCampaignMapAncestor(page, lookup)
       )
       .filter(page => {
@@ -246,6 +253,17 @@ export function getMapTokenKindForPage(
 ) {
 
   if (
+    hasPlayerTag(page) &&
+    (
+      page?.type === 'character' ||
+      page?.type === 'creature'
+    )
+  ) {
+
+    return 'creature';
+  }
+
+  if (
     page?.type === 'object'
   ) {
 
@@ -302,6 +320,26 @@ export async function addPageToMap(
       page
     );
 
+  if (
+    hasPlayerTag(page)
+  ) {
+
+    await deps.addMapToken(
+      map,
+      'creature',
+      page,
+      options.spawnIndex || 0,
+      {
+        worldPoint: options.worldPoint || null,
+        sourceMode: 'original'
+      }
+    );
+
+    await deps.saveAndSync();
+
+    return page;
+  }
+
   const bucket =
     await ensureMapBucket(
       kind
@@ -345,17 +383,21 @@ async function addSelectedPagesToMap(
   if (selectedIds.length === 0) return;
 
   const bucket =
-    await ensureMapBucket(
-      kind
-    );
+    kind === 'player'
+      ? null
+      : await ensureMapBucket(
+        kind
+      );
 
   const duplicates = [];
   let copyIndex =
-    getNextMapEntityIndex(
-      kind,
-      state.currentPage?.title,
-      bucket.id
-    );
+    bucket
+      ? getNextMapEntityIndex(
+        kind,
+        state.currentPage?.title,
+        bucket.id
+      )
+      : 1;
 
   for (const pageId of selectedIds) {
 
@@ -363,6 +405,15 @@ async function addSelectedPagesToMap(
       state.pages.find(page => page.id === pageId);
 
     if (!source) continue;
+
+    if (kind === 'player') {
+
+      duplicates.push(
+        source
+      );
+
+      continue;
+    }
 
     for (let index = 0; index < copies; index += 1) {
 
@@ -389,14 +440,39 @@ async function addSelectedPagesToMap(
 
     await deps.addMapToken(
       map,
-      kind,
+      kind === 'player'
+        ? 'creature'
+        : kind,
       page,
-      index
+      index,
+      {
+        sourceMode: kind === 'player'
+          ? 'original'
+          : 'copy'
+      }
     );
   }
 
-  renderTree();
+  if (kind !== 'player') {
+
+    renderTree();
+  }
+
   await deps.saveAndSync();
+}
+
+
+export function hasPlayerTag(
+  page
+) {
+
+  return (page?.tags || [])
+    .map(tag =>
+      String(tag || '').toLowerCase()
+    )
+    .includes(
+      'player'
+    );
 }
 
 

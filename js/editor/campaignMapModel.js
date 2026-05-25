@@ -509,6 +509,7 @@ function readTokenElement(
     height: token.dataset.h,
     rotation: token.dataset.rotation,
     imageAsset: token.dataset.imageAsset || '',
+    sourceMode: token.dataset.sourceMode || '',
     presentationHidden: token.dataset.presentationHidden === 'true'
   };
 }
@@ -676,6 +677,9 @@ function normalizeToken(
       ? Number(token.rotation)
       : 0,
     imageAsset: String(token.imageAsset || ''),
+    sourceMode: token.sourceMode === 'original'
+      ? 'original'
+      : 'copy',
     presentationHidden: Boolean(token.presentationHidden)
   };
 }

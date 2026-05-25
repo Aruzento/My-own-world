@@ -38,6 +38,7 @@ export function getAddKindPopupHTML() {
 
   return `
     <div class="campaign-map-popup-title">Добавить</div>
+    <button class="campaign-map-popup-option" type="button" data-kind="player">Игрок</button>
     <button class="campaign-map-popup-option" type="button" data-kind="creature">Существо</button>
     <button class="campaign-map-popup-option" type="button" data-kind="object">Объект</button>
   `;
@@ -49,18 +50,27 @@ export function getCardPickerPopupHTML(
 ) {
 
   const title =
-    kind === 'creature'
+    kind === 'player'
+      ? 'Выбери игроков'
+      : kind === 'creature'
       ? 'Выбери существ'
       : 'Выбери объекты';
+
+  const copiesField =
+    kind === 'player'
+      ? ''
+      : `
+    <label class="campaign-map-copies-label">
+      <span>Число копий</span>
+      <input class="campaign-map-copies-input" type="number" min="1" max="99" value="1">
+    </label>
+  `;
 
   return `
     <div class="campaign-map-popup-title">${title}</div>
     <input class="campaign-map-picker-search" type="search" placeholder="Поиск">
     <div class="campaign-map-picker-list"></div>
-    <label class="campaign-map-copies-label">
-      <span>Число копий</span>
-      <input class="campaign-map-copies-input" type="number" min="1" max="99" value="1">
-    </label>
+    ${copiesField}
     <div class="campaign-map-popup-actions">
       <button class="campaign-map-popup-cancel" type="button">Отмена</button>
       <button class="campaign-map-popup-add" type="button">Добавить</button>
