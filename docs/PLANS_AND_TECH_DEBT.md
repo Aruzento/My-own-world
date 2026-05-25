@@ -185,6 +185,7 @@ CI устанавливает зависимости строго по `package-
 
 8.3. Запускать `npm run verify`: **сделано**.
 Workflow запускает базовую проверку синтаксиса, unit tests, `git diff --check` и проверку docx.
+Для проверки docx workflow явно ставит Python 3.12 через `actions/setup-python@v5`, потому что `tools/run_checks.mjs` вызывает `python -m zipfile -t`.
 
 8.4. Запускать browser tests: **сделано**.
 CI устанавливает Chromium через `npx playwright install --with-deps chromium` и запускает `npm run test:browser`.

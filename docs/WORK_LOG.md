@@ -1848,3 +1848,20 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Перейти к `13.1`: спроектировать LayerModel для карты.
+
+---
+
+## 2026-05-25: CI Fix - Python Setup
+
+### Что сделано
+
+- В `.github/workflows/verify.yml` добавлен `actions/setup-python@v5` с Python 3.12 перед `npm run verify`.
+- README и план обновлены: CI теперь явно поднимает Python для проверки docx.
+
+### Причина
+
+- Локально `npm run verify` использует команду `python -m zipfile -t docs/MY_OWN_WORLD_FULL_MANUAL.docx`. На GitHub Actions наличие команды `python` лучше не предполагать неявно, поэтому workflow должен устанавливать Python явно.
+
+### Следующее развитие
+
+- После push проверить, что GitHub Actions `Verify` стал зеленым.

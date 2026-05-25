@@ -303,7 +303,7 @@ Wiki-links, sidebar search, проверка дублей названий, ча
 
 GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
 
-Сейчас CI запускается на push в `main` и pull request, ставит зависимости через `npm ci`, выполняет `npm run verify`, устанавливает Chromium для Playwright и запускает `npm run test:browser`.
+Сейчас CI запускается на push в `main` и pull request, ставит Node.js 22 и Python 3.12, устанавливает зависимости через `npm ci`, выполняет `npm run verify`, устанавливает Chromium для Playwright и запускает `npm run test:browser`.
 
 Если browser smoke падает, workflow сохраняет `playwright-report/`, `test-results/` и `debug.log` как artifact `browser-smoke-artifacts`. Перед merge/push целевой ветки CI должен быть зеленым: локальные проверки не заменяют GitHub Actions, а только ускоряют обратную связь.
 
