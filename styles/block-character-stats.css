@@ -1,0 +1,107 @@
+﻿/* Ownership: extracted from styles/block-special.css. */
+
+/* =========================================
+   CHARACTER STATS BLOCK
+========================================= */
+
+.character-stats-grid {
+
+  /* Сетка полей */
+  display:
+    grid;
+
+  /* 5 адаптивных колонок */
+  grid-template-columns:
+    repeat(5, minmax(0, 1fr));
+
+  /* Расстояние между полями */
+  gap:
+    8px;
+}
+
+
+.character-stat-field {
+
+  /* Контейнер поля */
+  display:
+    flex;
+
+  /* Вертикальное расположение label + input */
+  flex-direction:
+    column;
+
+  /* Расстояние между label и input */
+  gap:
+    4px;
+}
+
+
+.character-stat-field span {
+
+  /* Мелкая подпись */
+  color:
+    rgba(255,255,255,0.34);
+
+  /* Размер подписи */
+  font-size:
+    11px;
+
+  /* Жирность подписи */
+  font-weight:
+    600;
+
+  /* Uppercase-подобный вид */
+  letter-spacing:
+    0;
+}
+
+
+.character-stat-field input {
+
+  /* Высота поля */
+  height:
+    28px;
+
+  /* Внутренние отступы */
+  padding:
+    0 8px;
+
+  /* Без стандартной рамки */
+  border:
+    none;
+
+  /* Скругление */
+  border-radius:
+    8px;
+
+  /* Фон */
+  background:
+    rgba(255,255,255,0.045);
+
+  /* Цвет текста */
+  color:
+    rgba(255,255,255,0.86);
+
+  /* Размер текста */
+  font-size:
+    13px;
+
+  /* Убирает outline */
+  outline:
+    none;
+}
+
+
+.character-stat-field input:focus {
+
+  /* Focus ring */
+  box-shadow:
+    0 0 0 1px
+    rgba(241,211,142,0.22);
+}
+
+
+/* =========================================
+   DND STATS BLOCK
+========================================= */
+

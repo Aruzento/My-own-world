@@ -7,6 +7,7 @@ export const BLOCK_VERSIONS = {
   items: 1,
   spells: 1,
   skills: 1,
+  properties: 1,
   variables: 1,
   image: 1,
   characterStats: 2,

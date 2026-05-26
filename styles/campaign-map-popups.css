@@ -1,0 +1,708 @@
+﻿/* Ownership: extracted from styles/campaign-map.css. */
+
+.campaign-map-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    10008;
+
+  width:
+    280px;
+
+  padding:
+    12px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    8px;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.97),
+      rgba(14,15,16,0.95)
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+
+.campaign-map-popup[data-popup-key="fog"] {
+
+  width:
+    300px;
+
+  padding:
+    14px;
+
+  gap:
+    12px;
+}
+
+
+.campaign-map-popup-title {
+
+  color:
+    rgba(255,248,230,0.82);
+
+  font-size:
+    11px;
+
+  font-weight:
+    760;
+
+  line-height:
+    1;
+
+  text-transform:
+    uppercase;
+}
+
+
+.campaign-map-popup-option,
+.campaign-shape-option,
+.campaign-fog-mode-row button,
+.campaign-map-popup-actions button {
+
+  min-height:
+    32px;
+
+  padding:
+    0 10px;
+
+  border:
+    none;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.76);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-popup-option:hover,
+.campaign-shape-option:hover,
+.campaign-fog-mode-row button:hover,
+.campaign-map-popup-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.campaign-map-picker-search,
+.campaign-map-range {
+
+  width:
+    100%;
+}
+
+
+.campaign-map-range {
+
+  accent-color:
+    rgb(241,211,142);
+}
+
+
+.campaign-map-range-label,
+.campaign-map-color-label,
+.campaign-map-copies-label {
+  display:
+    grid;
+
+  gap:
+    7px;
+
+  color:
+    rgba(255,255,255,0.62);
+
+  font-size:
+    12px;
+}
+
+
+.campaign-map-color-label input {
+  width:
+    100%;
+
+  height:
+    34px;
+
+  padding:
+    3px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-copies-label input {
+  width:
+    100%;
+
+  height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    var(--text);
+}
+
+
+.campaign-map-picker-search {
+
+  height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  outline:
+    none;
+
+  border-radius:
+    11px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    var(--text);
+}
+
+
+.campaign-map-picker-list {
+
+  max-height:
+    260px;
+
+  overflow-y:
+    auto;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    4px;
+}
+
+
+.campaign-map-picker-row {
+
+  min-height:
+    32px;
+
+  padding:
+    0 8px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  border-radius:
+    9px;
+
+  color:
+    rgba(255,255,255,0.72);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-picker-row:hover {
+
+  background:
+    rgba(241,211,142,0.10);
+
+  color:
+    white;
+}
+
+
+.campaign-map-popup-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.campaign-fog-mode-row,
+.campaign-fog-fill-row {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    8px;
+}
+
+
+.campaign-fog-mode-btn {
+
+  min-height:
+    58px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  gap:
+    4px;
+
+  padding:
+    8px;
+}
+
+
+.campaign-fog-mode-btn span {
+
+  width:
+    24px;
+
+  height:
+    24px;
+
+  display:
+    inline-grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.92);
+
+  font-size:
+    15px;
+}
+
+
+.campaign-fog-mode-btn strong {
+
+  font-size:
+    12px;
+
+  font-weight:
+    680;
+}
+
+
+.campaign-fog-mode-row button.is-active {
+
+  background:
+    rgba(241,211,142,0.2);
+
+  color:
+    rgba(255,248,230,0.98);
+}
+
+
+.campaign-fog-fill-row button {
+
+  min-height:
+    34px;
+}
+
+
+.campaign-shape-picker {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap:
+    6px;
+}
+
+
+.campaign-shape-option {
+
+  min-height:
+    52px;
+
+  display:
+    grid;
+
+  grid-template-rows:
+    20px auto;
+
+  align-items:
+    center;
+
+  justify-items:
+    center;
+
+  gap:
+    3px;
+
+  padding:
+    7px 4px;
+}
+
+
+.campaign-shape-icon {
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  display:
+    inline-block;
+
+  box-sizing:
+    border-box;
+
+  color:
+    currentColor;
+}
+
+
+.campaign-shape-icon.is-square {
+
+  border:
+    2px solid currentColor;
+}
+
+
+.campaign-shape-icon.is-circle {
+
+  border:
+    2px solid currentColor;
+
+  border-radius:
+    999px;
+}
+
+
+.campaign-shape-icon.is-triangle {
+
+  width:
+    0;
+
+  height:
+    0;
+
+  border-left:
+    9px solid transparent;
+
+  border-right:
+    9px solid transparent;
+
+  border-bottom:
+    17px solid currentColor;
+}
+
+
+.campaign-shape-option span {
+
+  font-size:
+    19px;
+
+  line-height:
+    1;
+}
+
+
+.campaign-shape-option strong {
+
+  font-size:
+    9px;
+
+  font-weight:
+    740;
+
+  line-height:
+    1.1;
+
+  white-space:
+    normal;
+
+  max-width:
+    100%;
+
+  overflow-wrap:
+    anywhere;
+
+  text-align:
+    center;
+}
+
+
+.campaign-map-popup[data-popup-key="shapes"] {
+
+  width:
+    208px;
+
+  padding:
+    10px;
+
+  gap:
+    7px;
+
+  border-radius:
+    14px;
+}
+
+
+.campaign-map-popup[data-popup-key="layers"] {
+
+  width:
+    260px;
+
+  padding:
+    10px;
+
+  border-radius:
+    14px;
+}
+
+
+.campaign-layer-list {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+
+.campaign-layer-row {
+
+  min-height:
+    38px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  padding:
+    5px 6px 5px 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(255,255,255,0.045);
+}
+
+
+.campaign-layer-toggle {
+
+  min-width:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,248,230,0.86);
+
+  font-size:
+    12px;
+
+  font-weight:
+    760;
+}
+
+
+.campaign-layer-toggle input {
+
+  width:
+    10px;
+
+  height:
+    10px;
+
+  appearance:
+    none;
+
+  border:
+    1px solid rgba(241,211,142,0.56);
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,255,255,0.08);
+}
+
+
+.campaign-layer-toggle input:checked {
+
+  background:
+    var(--accent);
+
+  box-shadow:
+    0 0 0 3px rgba(241,211,142,0.14);
+}
+
+
+.campaign-layer-actions {
+
+  display:
+    flex;
+
+  gap:
+    4px;
+}
+
+
+.campaign-layer-actions button {
+
+  width:
+    26px;
+
+  height:
+    26px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,248,230,0.86);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-layer-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.14);
+}
+
+
+.campaign-map-range-label {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,255,255,0.7);
+
+  font-size:
+    12px;
+}
+
+
+.campaign-map-picker-empty {
+
+  padding:
+    8px;
+
+  color:
+    rgba(255,255,255,0.38);
+
+  font-size:
+    12px;
+}
+
+

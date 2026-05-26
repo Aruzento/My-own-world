@@ -70,6 +70,29 @@ test(
       3
     );
 
+    await page.locator('#appToolsBtn').click();
+
+    await page
+      .getByRole(
+        'button',
+        {
+          name: 'Быстрый старт'
+        }
+      )
+      .click();
+
+    await expect(
+      page.locator('#onboardingTitle')
+    ).toHaveText(
+      'Быстрый старт'
+    );
+
+    await expect(
+      page.locator('.onboarding-card')
+    ).toHaveCount(
+      4
+    );
+
     expect(
       pageErrors
     ).toEqual(

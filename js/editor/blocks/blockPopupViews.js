@@ -1,5 +1,11 @@
+import {
+  hasPropertyBlockDefinition
+} from '../../templates/propertyBlockDefinitions.js';
+
+
 export function renderTypePicker(
-  popup
+  popup,
+  cardType
 ) {
 
   popup.querySelector('.block-popup-title').textContent =
@@ -38,6 +44,15 @@ export function renderTypePicker(
         title: 'Навыки',
         description: 'Список связанных навыков'
       })}
+
+      ${hasPropertyBlockDefinition(cardType)
+        ? createTypeOptionHTML({
+          type: 'properties',
+          icon: 'P',
+          title: 'Свойства',
+          description: `Поля для типа "${getCardTypeLabel(cardType)}"`
+        })
+        : ''}
 
       ${createTypeOptionHTML({
         type: 'image',
@@ -188,6 +203,7 @@ export function getBlockPopupTitle(
     items: 'Название блока с предметами',
     spells: 'Название блока с заклинаниями',
     skills: 'Название блока с навыками',
+    properties: 'Название блока свойств',
     characterStats: 'Название блока статистики персонажа',
     dndStats: 'Название DnD stat block',
     text: 'Название текстового блока'
@@ -206,6 +222,7 @@ export function getDefaultBlockTitle(
     items: 'Набор',
     spells: 'Заклинания',
     skills: 'Навыки',
+    properties: 'Свойства',
     characterStats: 'Статистика персонажа',
     dndStats: 'Стат. блок DnD',
     text: 'Новый блок'
@@ -232,6 +249,21 @@ function createTypeOptionHTML({
       </span>
     </button>
   `;
+}
+
+
+function getCardTypeLabel(
+  cardType
+) {
+
+  const labels = {
+    character: 'Персонаж',
+    skill: 'Навык',
+    magic: 'Магия',
+    item: 'Предмет'
+  };
+
+  return labels[cardType] || cardType || 'карточка';
 }
 
 

@@ -1,0 +1,375 @@
+﻿/* Ownership: extracted from styles/popup.css. */
+
+.confirm-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    10006;
+
+  width:
+    270px;
+
+  padding:
+    12px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    8px;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.97),
+      rgba(14,15,16,0.95)
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  animation:
+    popupFade 0.14s ease;
+}
+
+
+.confirm-popup-title {
+
+  color:
+    rgba(255,255,255,0.88);
+
+  font-size:
+    13px;
+
+  font-weight:
+    680;
+}
+
+
+.confirm-popup-message {
+
+  color:
+    rgba(255,255,255,0.56);
+
+  font-size:
+    13px;
+
+  line-height:
+    1.45;
+}
+
+
+.confirm-popup-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.confirm-popup-actions button {
+
+  min-height:
+    28px;
+
+  padding:
+    0 10px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  font-size:
+    12px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.confirm-popup-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.confirm-popup-confirm {
+
+  background:
+    var(--danger-soft) !important;
+
+  color:
+    var(--danger) !important;
+}
+
+
+.confirm-popup-confirm:hover {
+
+  background:
+    rgba(255,154,154,0.20) !important;
+
+  color:
+    white !important;
+}
+
+/* =========================================
+   WIKI PREVIEW
+========================================= */
+
+.wiki-preview-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    10005;
+
+  width:
+    min(300px, calc(100vw - 24px));
+
+  padding:
+    12px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    7px;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.97),
+      rgba(14,15,16,0.95)
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  pointer-events:
+    auto;
+
+  animation:
+    popupFade 0.14s ease;
+}
+
+
+.wiki-preview-title {
+
+  color:
+    rgba(255,255,255,0.90);
+
+  font-size:
+    14px;
+
+  font-weight:
+    700;
+
+  line-height:
+    1.25;
+}
+
+
+.wiki-preview-description {
+
+  display:
+    -webkit-box;
+
+  overflow:
+    hidden;
+
+  -webkit-line-clamp:
+    4;
+
+  -webkit-box-orient:
+    vertical;
+
+  color:
+    rgba(255,255,255,0.58);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.45;
+}
+
+/* =========================================
+   PROFILE POPUP
+========================================= */
+
+.profile-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    10007;
+
+  width:
+    300px;
+
+  height:
+    220px;
+
+  border-radius:
+    20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.97),
+      rgba(14,15,16,0.95)
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  animation:
+    popupFade 0.14s ease;
+}
+
+
+.profile-popup-close {
+
+  position:
+    absolute;
+
+  top:
+    10px;
+
+  right:
+    10px;
+
+  width:
+    auto;
+
+  height:
+    28px;
+
+  padding:
+    0 10px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border:
+    none;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.66);
+
+  font-size:
+    12px;
+
+  line-height:
+    1;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.profile-popup-close:hover {
+
+  background:
+    rgba(255,154,154,0.18);
+
+  color:
+    white;
+}
+
+
+.profile-popup-close:active {
+
+  transform:
+    scale(0.94);
+}
+
+/* =========================================
+   BLOCK TYPE PICKER
+========================================= */
+

@@ -1,0 +1,110 @@
+﻿/* Ownership: extracted from styles/block-special.css. */
+
+/* =========================================
+   ITEM SET INLINE VIEW
+========================================= */
+
+.item-set-block .item-set-list {
+
+  /* Делает список предметов похожим на теги/алиасы */
+  display:
+    inline-flex;
+
+  /* Выравнивает предметы по центру */
+  align-items:
+    center;
+
+  /* Разрешает перенос предметов */
+  flex-wrap:
+    wrap;
+
+  /* Расстояние между предметами */
+  gap:
+    6px;
+
+  /* Убирает ощущение отдельной строки */
+  margin:
+    4px 6px 4px 0;
+
+  /* Минимальная высота строки */
+  min-height:
+    24px;
+}
+
+
+.item-set-block .item-set-add-btn {
+
+  /* Делаем кнопку inline, как у тегов/алиасов */
+  display:
+    inline-flex;
+
+  /* Выравниваем текст по центру */
+  align-items:
+    center;
+
+  /* Высота как у маленьких chips */
+  height:
+    22px;
+
+  /* Минимальная высота */
+  min-height:
+    22px;
+
+  /* Компактный padding */
+  padding:
+    0 8px;
+
+  /* Убираем крупную кнопку */
+  border:
+    none;
+
+  /* Скругление как у alias/tag */
+  border-radius:
+    7px;
+
+  /* Мягкий фон */
+  background:
+    rgba(255,255,255,0.05);
+
+  /* Приглушённый цвет */
+  color:
+    rgba(255,255,255,0.46);
+
+  /* Размер текста */
+  font-size:
+    11px;
+
+  /* Курсор кнопки */
+  cursor:
+    pointer;
+}
+
+
+.item-set-block .item-set-add-btn:hover {
+
+  /* Фон при наведении */
+  background:
+    rgba(255,255,255,0.09);
+
+  /* Цвет при наведении */
+  color:
+    white;
+}
+
+
+.item-set-block .item-set-chip {
+
+  /* Высота как у tag/alias */
+  height:
+    22px;
+
+  /* Компактный padding */
+  padding:
+    0 7px;
+
+  /* Размер текста */
+  font-size:
+    11px;
+}
+
+

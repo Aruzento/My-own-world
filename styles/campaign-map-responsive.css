@@ -1,0 +1,35 @@
+﻿/* Ownership: extracted from styles/campaign-map.css. */
+
+@media (max-width: 1180px) {
+
+  .campaign-map-topbar {
+
+    grid-template-columns:
+      1fr;
+  }
+
+  .campaign-map-controls {
+
+    grid-template-columns:
+      repeat(2, minmax(140px, 1fr));
+  }
+}
+
+
+@media (max-width: 760px) {
+
+  .campaign-map-document {
+
+    height:
+      calc(100vh - 48px);
+
+    min-height:
+      560px;
+  }
+
+  .campaign-map-controls {
+
+    grid-template-columns:
+      1fr;
+  }
+}

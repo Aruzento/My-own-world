@@ -1,0 +1,203 @@
+﻿/* Ownership: extracted from styles/popup.css. */
+
+.block-popup {
+
+  position:
+    fixed;
+
+  z-index:
+    10003;
+
+  width:
+    260px;
+
+  padding:
+    12px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    8px;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  animation:
+    popupFade 0.14s ease;
+}
+
+
+.block-popup-title {
+
+  color:
+    rgba(255,255,255,0.86);
+
+  font-size:
+    13px;
+
+  font-weight:
+    650;
+}
+
+
+.block-popup-input {
+
+  width:
+    100%;
+
+  height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  outline:
+    none;
+
+  border-radius:
+    11px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    var(--text);
+
+  font-size:
+    13px;
+}
+
+
+.block-popup-input::placeholder {
+
+  color:
+    rgba(255,255,255,0.30);
+}
+
+
+.block-popup-message {
+
+  color:
+    rgba(255,255,255,0.52);
+
+  font-size:
+    13px;
+
+  line-height:
+    1.5;
+}
+
+
+.block-popup-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.block-popup-actions button {
+
+  min-height:
+    28px;
+
+  padding:
+    0 10px;
+
+  border:
+    none;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  font-size:
+    12px;
+
+  cursor:
+    pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.block-popup-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.block-popup-actions button:active {
+
+  transform:
+    scale(0.96);
+}
+
+
+.block-popup-confirm.danger {
+
+  background:
+    var(--danger-soft);
+
+  color:
+    var(--danger);
+}
+
+
+.block-popup-confirm.danger:hover {
+
+  background:
+    rgba(255,154,154,0.20);
+
+  color:
+    white;
+}
+
+/* =========================================
+   ITEM SET PICKER
+========================================= */
+

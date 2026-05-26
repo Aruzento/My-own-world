@@ -1,0 +1,308 @@
+﻿/* Ownership: extracted from styles/popup.css. */
+
+/* =========================================
+   CREATE MENU
+========================================= */
+
+.create-menu {
+  position: fixed;
+  z-index: 10000;
+
+  width: 220px;
+
+  padding: 10px;
+
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28,29,27,0.96),
+      rgba(14,15,16,0.94)
+    );
+
+  backdrop-filter:
+    blur(18px);
+
+  -webkit-backdrop-filter:
+    blur(18px);
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  box-shadow:
+    0 22px 70px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  animation:
+    popupFade 0.14s ease;
+}
+
+
+@keyframes popupFade {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(4px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+
+/* =========================================
+   CREATE OPTION
+========================================= */
+
+.create-option {
+  min-width: 0;
+
+  height: 66px;
+
+  padding: 8px 6px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(255,255,255,0.66);
+
+  cursor: pointer;
+
+  transition:
+    background 0.12s,
+    color 0.12s,
+    transform 0.12s;
+}
+
+
+.create-option:hover {
+  background:
+    rgba(241,211,142,0.10);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.create-option:active {
+  transform:
+    scale(0.97);
+}
+
+
+
+/* =========================================
+   OPTION ICON
+========================================= */
+
+.create-option-icon {
+  width: 18px;
+  height: 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color:
+    currentColor;
+}
+
+
+.create-option-icon svg {
+  width: 18px;
+  height: 18px;
+
+  fill: none;
+
+  stroke:
+    currentColor;
+
+  stroke-width: 2;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
+}
+
+
+
+/* =========================================
+   OPTION TITLE
+========================================= */
+
+.create-option-title {
+  width: 100%;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+  text-align: center;
+
+  font-size: 11px;
+
+  line-height: 1.2;
+
+  font-weight: 500;
+}
+
+
+
+/* =========================================
+   FUTURE / DISABLED OPTIONS
+========================================= */
+
+.create-option.is-disabled {
+  opacity: 0.36;
+
+  pointer-events: none;
+}
+
+
+.create-picker-header {
+  grid-column:
+    1 / -1;
+
+  min-height:
+    34px;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,255,255,0.86);
+
+  font-size:
+    12px;
+
+  font-weight:
+    650;
+}
+
+
+.create-picker-back,
+.create-template-delete {
+  width:
+    26px;
+
+  height:
+    26px;
+
+  border:
+    none;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  cursor:
+    pointer;
+}
+
+
+.create-picker-option {
+  grid-column:
+    1 / -1;
+
+  height:
+    auto;
+
+  min-height:
+    36px;
+
+  align-items:
+    flex-start;
+
+  padding:
+    9px 10px;
+
+  text-align:
+    left;
+}
+
+
+.create-template-row {
+  grid-column:
+    1 / -1;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) 28px;
+
+  gap:
+    6px;
+}
+
+
+.create-template-row .create-picker-option {
+  grid-column:
+    auto;
+}
+
+
+.create-template-delete:hover {
+  background:
+    rgba(255,154,154,0.12);
+
+  color:
+    var(--danger);
+}
+
+
+.create-picker-empty {
+  grid-column:
+    1 / -1;
+
+  padding:
+    12px;
+
+  color:
+    rgba(255,255,255,0.48);
+
+  font-size:
+    12px;
+}
+
+/* =========================================

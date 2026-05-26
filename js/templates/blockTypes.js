@@ -2,6 +2,11 @@ import {
   createTableRowControlsHTML
 } from '../editor/blocks/blockContract.js';
 
+import {
+  getPropertyBlockDefinition,
+  PROPERTY_SHAPE_OPTIONS
+} from './propertyBlockDefinitions.js';
+
 
 export function createTextBlock({
   title,
@@ -108,6 +113,48 @@ export function createSkillsBlock({
 }
 
 
+export function createPropertiesBlock({
+  title,
+  cardType
+}) {
+
+  const definition =
+    getPropertyBlockDefinition(
+      cardType
+    );
+
+  if (!definition) {
+
+    return createTextBlock({
+      title: title || 'Свойства',
+      placeholder: 'Для этого типа карточки нет отдельной схемы свойств.'
+    });
+  }
+
+  return `
+    <div
+      class="template-block card-properties-block card-properties-${cardType}"
+      data-block-type="properties"
+      data-block-version="1"
+      data-card-type="${cardType}"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title || definition.title}</h2>
+
+      <div class="card-properties-grid">
+        ${definition.fields
+          .map(field =>
+            createPropertyFieldHTML(
+              field
+            )
+          )
+          .join('')}
+      </div>
+    </div>
+  `;
+}
+
+
 export function createVariablesBlock({
   title = 'Переменные'
 }) {
@@ -154,6 +201,62 @@ export function createImageBlock() {
         </button>
       </div>
     </div>
+  `;
+}
+
+
+function createPropertyFieldHTML(
+  field
+) {
+
+  const [
+    name,
+    label,
+    type,
+    placeholder
+  ] = field;
+
+  if (type === 'textarea') {
+
+    return `
+      <label class="card-property-field card-property-field-wide">
+        <span>${label}</span>
+        <div
+          class="card-property-textarea rich-text-field"
+          contenteditable="true"
+          data-persistent-editable="true"
+          data-property-name="${name}"
+          data-placeholder="${placeholder || ''}"
+        ></div>
+      </label>
+    `;
+  }
+
+  if (type === 'select') {
+
+    return `
+      <label class="card-property-field">
+        <span>${label}</span>
+        <select data-property-name="${name}">
+          ${PROPERTY_SHAPE_OPTIONS
+            .map(option =>
+              `<option value="${option}">${option}</option>`
+            )
+            .join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="card-property-field">
+      <span>${label}</span>
+      <input
+        type="${type || 'text'}"
+        data-property-name="${name}"
+        placeholder="${placeholder || ''}"
+      >
+    </label>
   `;
 }
 

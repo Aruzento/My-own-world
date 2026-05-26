@@ -1,0 +1,73 @@
+﻿/* Ownership: extracted from styles/popup.css. */
+
+.image-crop-popup {
+  position:
+    fixed;
+
+  z-index:
+    10020;
+
+  width:
+    260px;
+
+  padding:
+    14px;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    12px;
+
+  animation:
+    popupFade 0.14s ease;
+}
+
+
+.image-crop-title {
+  color:
+    rgba(255,255,255,0.92);
+
+  font-size:
+    13px;
+
+  font-weight:
+    680;
+}
+
+
+.image-crop-field {
+  display:
+    grid;
+
+  gap:
+    7px;
+
+  color:
+    rgba(255,255,255,0.64);
+
+  font-size:
+    12px;
+}
+
+
+.image-crop-field input {
+  width:
+    100%;
+
+  accent-color:
+    var(--accent);
+}
+
+
+.image-crop-actions {
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+}
+

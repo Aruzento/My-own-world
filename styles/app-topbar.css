@@ -125,7 +125,7 @@
 .app-tools-popup {
 
   width:
-    150px;
+    178px;
 
   padding:
     8px;
@@ -155,7 +155,7 @@
 
 .app-tools-popup button {
 
-  height:
+  min-height:
     30px;
 
   border:
@@ -173,6 +173,15 @@
 
   cursor:
     pointer;
+
+  font-size:
+    13px;
+
+  text-align:
+    left;
+
+  padding:
+    0 10px;
 }
 
 

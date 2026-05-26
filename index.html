@@ -198,9 +198,26 @@
     </div>
 
     <div id="appToolsPopup" class="app-tools-popup hidden ui-panel" data-runtime="true">
-      <button type="button">Кнопка1</button>
-      <button type="button">Кнопка2</button>
-      <button type="button">Кнопка3</button>
+      <button type="button" data-onboarding-open="quickstart">Быстрый старт</button>
+      <button type="button" data-onboarding-open="product">Как устроено</button>
+      <button type="button" data-onboarding-open="checklist">Checklist</button>
+    </div>
+
+    <div id="onboardingPopup" class="onboarding-popup hidden ui-panel" data-runtime="true">
+      <div class="onboarding-popup-header">
+        <div>
+          <div class="onboarding-popup-kicker">Помощь</div>
+          <h2 id="onboardingTitle">Быстрый старт</h2>
+        </div>
+
+        <button id="onboardingCloseBtn" class="app-popup-close" type="button" title="Закрыть">
+          <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <use href="./assets/icons/rpg-ui.svg#icon-x"></use>
+          </svg>
+        </button>
+      </div>
+
+      <div id="onboardingBody" class="onboarding-popup-body"></div>
     </div>
 
     <div id="linkPopup" class="link-popup hidden"> <!-- Popup создания обычной внешней ссылки -->

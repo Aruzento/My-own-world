@@ -83,6 +83,10 @@ import {
   setupAppTopbar
 } from './ui/appTopbar.js';
 
+import {
+  setupOnboardingGuide
+} from './ui/onboardingGuide.js';
+
 
 
 document
@@ -124,6 +128,9 @@ setupEditor();
 
 /* Инициализация верхней панели приложения */
 setupAppTopbar();
+
+/* Запускает встроенную справку и стартовый onboarding. */
+setupOnboardingGuide();
 
 /* Инициализация поиска */
 setupSearch();

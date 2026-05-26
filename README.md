@@ -235,6 +235,8 @@ contenteditable="false"
 
 ## Tables Runtime
 
+Правила таблиц описаны в `docs/TABLES_CONTRACT.md`.
+
 Таблицы подключаются через `js/ui/tables.js`, но сама логика разделена на маленькие подсистемы:
 
 - `js/ui/tables/tableRows.js` — добавление, удаление и фокус строк;
@@ -246,6 +248,45 @@ contenteditable="false"
 - `js/ui/tables/tableCells.js` и `tableConstants.js` — общие helper-функции и константы.
 
 Persistent HTML таблицы хранит только содержимое, структуру строк/ячеек и размеры `col`. Runtime-кнопки строк, toolbar выделения и transient selection не должны попадать в сохраненный HTML.
+
+## Card Properties Blocks
+
+Блок `Свойства` создается с учетом текущего типа карточки. Пользователь не выбирает схему вручную: popup добавления блока показывает `Свойства` только для поддержанных типов.
+
+Текущие варианты:
+
+- `skill` - урон, диапазон, размер, форма, эффект;
+- `magic` - урон, диапазон, размер, форма;
+- `item` - стоимость в ЗМ/СМ/ММ и эффект;
+- `character` - использует существующий `Стат. блок DnD` как свойства персонажа.
+
+Схемы свойств описаны в `js/templates/propertyBlockDefinitions.js`, HTML создается через `createPropertiesBlock()` в `js/templates/blockTypes.js`, а выбор текущего типа карточки выполняется в `js/editor/blocks/blockPopup.js`.
+
+Правило: нельзя создавать блок свойств одного типа карточки на карточке другого типа. Если понадобится новый вариант, сначала добавляется схема в `propertyBlockDefinitions.js`, затем тест.
+
+## CSS Ownership
+
+Большие CSS-файлы разделены на entrypoint-файлы и ownership-файлы:
+
+- `styles/campaign-map.css` импортирует `campaign-map-*.css`;
+- `styles/popup.css` импортирует `popup-*.css`;
+- `styles/block-special.css` импортирует специализированные `block-*.css`;
+- `styles/block-properties.css` отвечает за type-aware блоки свойств.
+
+Правило: новые стили добавляются в самый узкий ownership-файл. EntryPoint-файлы должны оставаться короткими списками imports.
+
+## UX / Onboarding
+
+Правила onboarding описаны в `docs/UX_ONBOARDING_CHECKLIST.md`.
+
+В приложении есть встроенная справка:
+
+- верхняя кнопка `Инструменты` открывает popup;
+- `Быстрый старт` объясняет первый сценарий;
+- `Как устроено` объясняет карточки, карту, task tracker и runtime UI;
+- `Checklist` напоминает, что проверять перед изменениями.
+
+Пример workspace находится в `docs/sample-workspace`. Его можно открыть через кнопку папки в sidebar как обычный workspace.
 
 ## Wiki-links
 

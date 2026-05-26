@@ -3,6 +3,7 @@ import {
   createItemsBlock,
   createSpellsBlock,
   createSkillsBlock,
+  createPropertiesBlock,
   createImageBlock,
   createCharacterStatsBlock,
   createDndStatsBlock,
@@ -31,6 +32,21 @@ const BLOCK_CREATORS = {
     createSkillsBlock({
       title
     }),
+
+  properties: (title, options = {}) => {
+
+    if (options.cardType === 'character') {
+
+      return createDndStatsBlock({
+        title: title || 'Свойства персонажа'
+      });
+    }
+
+    return createPropertiesBlock({
+      title,
+      cardType: options.cardType
+    });
+  },
 
   image: () =>
     createImageBlock(),

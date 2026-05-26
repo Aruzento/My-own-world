@@ -1,0 +1,432 @@
+﻿/* Ownership: extracted from styles/block-special.css. */
+
+
+.dnd-stats-block {
+
+  padding:
+    16px 0 18px;
+}
+
+
+.dnd-stats-block,
+.dnd-stats-block * {
+
+  min-width:
+    0;
+
+  box-sizing:
+    border-box;
+}
+
+
+.dnd-stats-block > h2 {
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  min-height:
+    30px;
+
+  margin:
+    0 0 14px;
+
+  padding:
+    0 12px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.2);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.08);
+
+  color:
+    rgba(255,246,218,0.88);
+
+  font-size:
+    13px;
+
+  font-weight:
+    750;
+}
+
+
+.dnd-combat-grid,
+.dnd-secondary-grid,
+.dnd-stats-list,
+.dnd-checks-list {
+
+  position:
+    relative;
+}
+
+
+.dnd-combat-grid {
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(min(220px, 100%), 1fr)
+    );
+
+  gap:
+    10px;
+
+  margin-bottom:
+    10px;
+}
+
+
+.dnd-secondary-grid {
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(min(160px, 100%), 1fr)
+    );
+
+  gap:
+    10px;
+
+  margin-bottom:
+    14px;
+}
+
+
+.dnd-combat-field {
+
+  min-height:
+    74px;
+
+  justify-content:
+    space-between;
+
+  padding:
+    10px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.13);
+
+  border-radius:
+    12px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.055),
+      rgba(255,255,255,0.026)
+    );
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255,255,255,0.04);
+}
+
+
+.dnd-combat-field span,
+.dnd-checks-title {
+
+  color:
+    rgba(241,211,142,0.78);
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    0;
+}
+
+
+.dnd-combat-field input,
+.dnd-analysis-input {
+
+  width:
+    100%;
+
+  max-width:
+    100%;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.075);
+
+  background:
+    rgba(5,7,11,0.28);
+}
+
+
+.dnd-hitpoints-inputs {
+
+  width:
+    100%;
+
+  gap:
+    8px;
+}
+
+
+.dnd-stats-list {
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(min(82px, 100%), 1fr)
+    );
+
+  gap:
+    8px;
+
+  margin:
+    4px 0 14px;
+}
+
+
+.dnd-stat-row {
+
+  min-height:
+    100px;
+
+  grid-template-rows:
+    auto
+    minmax(38px, auto)
+    auto;
+
+  gap:
+    6px;
+
+  padding:
+    9px 8px 8px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.15);
+
+  border-radius:
+    14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(241,211,142,0.075),
+      rgba(255,255,255,0.03)
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+
+.dnd-stat-label {
+
+  color:
+    rgba(241,211,142,0.82);
+
+  font-size:
+    12px;
+
+  letter-spacing:
+    0;
+}
+
+
+.dnd-stat-score {
+
+  width:
+    100%;
+
+  max-width:
+    100%;
+
+  height:
+    38px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  background:
+    rgba(5,7,11,0.3);
+
+  font-size:
+    20px;
+
+  font-weight:
+    780;
+}
+
+
+.dnd-stat-modifier {
+
+  min-height:
+    24px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  justify-self:
+    center;
+
+  min-width:
+    38px;
+
+  padding:
+    0 8px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,0.045);
+
+  color:
+    rgba(255,255,255,0.82);
+
+  font-size:
+    12px;
+}
+
+
+.dnd-checks-section {
+
+  margin-top:
+    14px;
+
+  padding-top:
+    12px;
+
+  border-top:
+    1px solid
+    rgba(255,255,255,0.065);
+}
+
+
+.dnd-checks-title {
+
+  margin:
+    0 0 10px;
+
+  font-size:
+    12px;
+}
+
+
+.dnd-checks-list {
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(min(180px, 100%), 1fr)
+    );
+
+  gap:
+    10px;
+}
+
+
+.dnd-check-group {
+
+  padding:
+    10px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.11);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(255,255,255,0.028);
+}
+
+
+.dnd-check-group-title {
+
+  color:
+    rgba(241,211,142,0.78);
+
+  font-size:
+    12px;
+}
+
+
+.dnd-check-row {
+
+  grid-template-columns:
+    18px
+    minmax(0, 1fr)
+    minmax(42px, 48px);
+
+  min-height:
+    28px;
+
+  border:
+    1px solid
+    transparent;
+
+  background:
+    rgba(5,7,11,0.18);
+}
+
+
+.dnd-check-row:hover {
+
+  border-color:
+    rgba(241,211,142,0.12);
+
+  background:
+    rgba(241,211,142,0.045);
+}
+
+
+.dnd-check-value {
+
+  width:
+    100%;
+
+  max-width:
+    100%;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.075);
+
+  background:
+    rgba(5,7,11,0.26);
+}
+
+
+@media (max-width: 920px) {
+
+  .dnd-combat-grid,
+  .dnd-secondary-grid,
+  .dnd-checks-list {
+
+    grid-template-columns:
+      1fr;
+  }
+
+  .dnd-stats-list {
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+}
+

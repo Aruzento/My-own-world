@@ -1,0 +1,327 @@
+﻿/* Ownership: extracted from styles/campaign-map.css. */
+
+.campaign-map-controls .campaign-shapes-btn {
+
+  width:
+    auto;
+
+  min-width:
+    62px;
+
+  padding:
+    0 9px;
+
+  font-size:
+    12px;
+
+  font-weight:
+    760;
+
+  line-height:
+    1;
+}
+
+
+.campaign-map-stage {
+
+  position:
+    relative;
+
+  min-height:
+    0;
+
+  overflow:
+    hidden;
+
+  border-radius:
+    18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,255,255,0.035),
+      rgba(255,255,255,0.015)
+    );
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  touch-action:
+    none;
+
+  --campaign-grid-size:
+    48px;
+}
+
+
+.campaign-map-stage[data-tool="pan"] {
+
+  cursor:
+    grab;
+}
+
+
+.campaign-map-stage[data-tool="draw"],
+.campaign-map-stage[data-tool="erase"] {
+
+  cursor:
+    none;
+}
+
+
+.campaign-map-stage.is-panning {
+
+  cursor:
+    grabbing;
+}
+
+
+.campaign-map-stage.is-tree-card-over {
+
+  border-color:
+    rgba(241,211,142,0.48);
+
+  box-shadow:
+    inset 0 0 0 2px rgba(241,211,142,0.18),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+
+.campaign-map-stage.is-tree-card-over::after {
+
+  content:
+    "Отпустите, чтобы добавить на карту";
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    18px;
+
+  transform:
+    translateX(-50%);
+
+  z-index:
+    8;
+
+  padding:
+    8px 12px;
+
+  border:
+    1px solid rgba(241,211,142,0.24);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(10,13,20,0.86);
+
+  color:
+    var(--accent);
+
+  font-size:
+    12px;
+
+  font-weight:
+    760;
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-viewport {
+
+  position:
+    absolute;
+
+  left:
+    0;
+
+  top:
+    0;
+
+  transform-origin:
+    0 0;
+
+  z-index:
+    1;
+}
+
+
+.campaign-map-background,
+.campaign-map-object-layer,
+.campaign-map-fog-canvas {
+
+  position:
+    absolute;
+
+  inset:
+    0;
+}
+
+
+.campaign-brush-preview {
+
+  position:
+    absolute;
+
+  left:
+    0;
+
+  top:
+    0;
+
+  z-index:
+    8;
+
+  border:
+    1px solid
+    rgba(255,248,230,0.9);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.08);
+
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.28),
+    0 0 18px rgba(241,211,142,0.16);
+
+  pointer-events:
+    none;
+
+  transform:
+    translate(-50%, -50%);
+}
+
+
+.campaign-brush-preview.hidden {
+
+  display:
+    none;
+}
+
+
+.campaign-map-fog-canvas {
+
+  width:
+    100%;
+
+  height:
+    100%;
+}
+
+
+.campaign-map-background {
+
+  background-size:
+    contain;
+
+  background-position:
+    center;
+
+  background-repeat:
+    no-repeat;
+
+  z-index:
+    1;
+}
+
+
+.campaign-map-stage::before {
+
+  content:
+    "Смени карту, чтобы добавить изображение";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  color:
+    rgba(255,255,255,0.28);
+
+  font-size:
+    13px;
+
+  pointer-events:
+    none;
+
+  z-index:
+    0;
+}
+
+
+.campaign-map-stage[data-map-asset]::before {
+
+  content:
+    "";
+}
+
+
+.campaign-map-stage[data-grid="true"] .campaign-map-viewport::after {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  background-image:
+    linear-gradient(var(--campaign-grid-color, rgba(255,255,255,0.12)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--campaign-grid-color, rgba(255,255,255,0.12)) 1px, transparent 1px);
+
+  background-size:
+    var(--campaign-grid-size)
+    var(--campaign-grid-size);
+
+  pointer-events:
+    none;
+
+  z-index:
+    3;
+}
+
+
+.campaign-map-object-layer {
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-fog-canvas {
+
+  z-index:
+    5;
+
+  opacity:
+    0.2;
+
+  pointer-events:
+    none;
+}
+
+

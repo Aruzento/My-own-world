@@ -28,6 +28,10 @@ import {
   runHistoryTransaction
 } from '../editorHistory.js';
 
+import {
+  state
+} from '../../state.js';
+
 
 let popupState = null;
 let activeAnchor = null;
@@ -106,7 +110,10 @@ export function openTypePicker(
   }
 
   renderTypePicker(
-    popup
+    popup,
+    getCurrentCardType(
+      button
+    )
   );
 
   popup
@@ -193,7 +200,19 @@ function openAddBlockPopup({
     return;
   }
 
-  /* Таблице нужны дополнительные параметры, поэтому у неё отдельная форма. */
+  if (type === 'properties') {
+
+    addPropertiesBlock(
+      button,
+      saveCurrentPage
+    );
+
+    closeBlockPopup();
+
+    return;
+  }
+
+  /* Таблице нужны дополнительные параметры, поэтому у нее отдельная форма. */
   if (type === 'table') {
 
     openTableConfigPopup({
@@ -332,6 +351,53 @@ async function applyPopupAction() {
   }
 
   closeBlockPopup();
+}
+
+
+function addPropertiesBlock(
+  button,
+  saveCurrentPage
+) {
+
+  const main =
+    button.closest('.entity-main');
+
+  if (!main) return;
+
+  const cardType =
+    getCurrentCardType(
+      button
+    );
+
+  const block =
+    createTypedBlock(
+      'properties',
+      'Свойства',
+      {
+        cardType
+      }
+    );
+
+  runHistoryTransaction(
+    document.getElementById('editorArea'),
+    `Добавление блока свойств ${cardType}`,
+    () => {
+
+      main.appendChild(
+        block
+      );
+    }
+  );
+
+  applyBlockSystemContract(
+    block
+  );
+
+  ensureBlockControls(
+    block
+  );
+
+  saveCurrentPage();
 }
 
 
@@ -512,6 +578,19 @@ function showPopupNearButton(
       fallbackHeight: 320
     }
   );
+}
+
+
+function getCurrentCardType(
+  anchor
+) {
+
+  return anchor
+    ?.closest('.card-shell')
+    ?.querySelector('.card-type-select')
+    ?.value ||
+    state.currentPage?.type ||
+    'note';
 }
 
 

@@ -6,6 +6,89 @@
 
 ---
 
+## 2026-05-27: UX / Onboarding Layer
+
+### Что сделано
+
+- Добавлен `docs/UX_ONBOARDING_CHECKLIST.md`.
+- Добавлен пример workspace в `docs/sample-workspace` со стартовой карточкой, учебной картой, учебным task tracker и пустой папкой assets.
+- Верхний popup `Инструменты` заменен с временных кнопок на `Быстрый старт`, `Как устроено`, `Checklist`.
+- Добавлен `js/ui/onboardingGuide.js` с отдельной встроенной справкой.
+- Добавлен `styles/onboarding.css` для мягкого onboarding-popup.
+- `README.md` и `docs/PLANS_AND_TECH_DEBT.md` обновлены: пункт 16 закрыт базово, следующим пунктом стал `17. Workspace Templates`.
+
+### Что стало лучше
+
+- У пользователя появился встроенный путь входа без чтения истории разработки.
+- Product onboarding отделен от редактора, карты и дерева, поэтому его можно развивать или удалить как самостоятельный слой.
+- Sample workspace дает безопасную папку для знакомства с основными сущностями.
+
+### Проверки
+
+- Добавлен browser smoke на открытие onboarding из верхнего popup.
+
+### Следующее развитие
+
+- Пункт 17: перенести шаблоны из `localStorage` в workspace-файл, чтобы шаблоны были частью мира.
+
+---
+
+## 2026-05-26: CSS Separation и type-aware блоки свойств
+
+### Что сделано
+
+- `campaign-map.css` превращен в entrypoint, а стили карты вынесены в `campaign-map-layout.css`, `campaign-map-initiative.css`, `campaign-map-stage.css`, `campaign-map-tokens.css`, `campaign-map-shapes.css`, `campaign-map-token-popup.css`, `campaign-map-popups.css`, `campaign-map-responsive.css`.
+- `popup.css` превращен в entrypoint, а popup-семейства вынесены в `popup-create.css`, `popup-link.css`, `popup-wiki.css`, `popup-block.css`, `popup-item-picker.css`, `popup-confirm-profile.css`, `popup-block-type.css`, `popup-image-crop.css`.
+- `block-special.css` превращен в entrypoint, а стили специальных блоков вынесены в `block-items-inline.css`, `block-character-stats.css`, `block-dnd-stats-legacy.css`, `block-dnd-stats.css`.
+- Добавлен `styles/block-properties.css` для нового блока `Свойства`.
+- Добавлен `js/templates/propertyBlockDefinitions.js` со схемами свойств по типам карточек.
+- Добавлен type-aware блок `Свойства`: `skill`, `magic`, `item` получают свои поля; `character` создает существующий DnD stat block как свойства персонажа.
+- Popup добавления блока показывает `Свойства` только для поддержанных типов карточек.
+- Добавлен unit test `tests/propertyBlocks.test.mjs`.
+
+### Что стало лучше
+
+- CSS больше не требует открывать один огромный файл карты или popup-системы ради маленькой правки.
+- Стили получили ownership-комментарии и короткие entrypoint-файлы.
+- Свойства карточек теперь зависят от типа карточки, а не выбираются пользователем как чужая схема.
+
+### Проверки
+
+- `npm run verify` — успешно, 52 unit/model tests passed.
+- `npm run test:browser` — успешно, 19 browser tests passed.
+
+### Следующее развитие
+
+- Пункт 16: UX / Onboarding Layer, потому что техническая основа стала крепче, а вход пользователя в систему все еще слишком резкий.
+
+---
+
+## 2026-05-26: Tables Contract и regression tests
+
+### Что сделано
+
+- Добавлен `docs/TABLES_CONTRACT.md`.
+- В контракте зафиксированы persistent/runtime правила таблиц, resize колонок, selection, paste, keyboard navigation и save/load boundary.
+- Добавлен browser regression `tests/browser/tables.spec.mjs`.
+- Тест проверяет resize одной колонки без изменения соседней, пересчет общей ширины таблицы, выделение диапазона 2x2, plain-text paste из tab/newline текста и Enter-переход с созданием новой строки.
+- `docs/PLANS_AND_TECH_DEBT.md` обновлен: пункт 15 закрыт, следующим рекомендуемым шагом выбран CSS Separation.
+
+### Что стало лучше
+
+- Таблицы теперь не просто разрезаны по файлам, а имеют формальный контракт поведения.
+- Следующие изменения таблиц должны расширять один конкретный browser regression, а не проверяться только вручную.
+- Persistent HTML таблиц отделен от runtime UI на уровне документации и тестового ожидания.
+
+### Проверки
+
+- `npm run test:browser` — успешно, 19 browser tests passed.
+
+### Следующее развитие
+
+- Пункт 21: разрезать крупные CSS-файлы и ввести ownership-комментарии для визуальных подсистем.
+
+---
+
 ## 2026-05-26: Завершение пункта 14 — разрез крупных JS-файлов
 
 ### Что сделано

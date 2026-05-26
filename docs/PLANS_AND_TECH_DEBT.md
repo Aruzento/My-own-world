@@ -201,7 +201,7 @@ CI устанавливает Chromium через `npx playwright install --with
 
 ### 9. Asset Lifecycle Contract
 
-- Статус: **не сделано**.
+- Статус: **сделано, расширять при развитии assets**.
 - Приоритет: **P1**.
 - Зачем: картинки уже активно используются, а новая идея про музыку локаций добавляет audio/playlist assets.
 
@@ -369,37 +369,47 @@ Popup доработан: показывает результаты броско
 
 ### 15. Tables Contract И Укрепление Таблиц
 
-- Статус: **не сделано**.
+- Статус: **сделано, расширять при развитии таблиц**.
 - Приоритет: **P1/P2**.
 - Зачем: таблицы стали сложной подсистемой с resize, selection, toolbar, paste и keyboard behavior.
 
-15.1. Описать `TABLES_CONTRACT.md`: **не сделано**.
+15.1. Описать `TABLES_CONTRACT.md`: **сделано**.
+Результат: добавлен `docs/TABLES_CONTRACT.md` с правилами persistent HTML, runtime UI, resize, selection, paste, keyboard navigation и save/load boundary.
 
-15.2. Зафиксировать model/persistent/runtime правила таблиц: **не сделано**.
+15.2. Зафиксировать model/persistent/runtime правила таблиц: **сделано**.
+Результат: зафиксировано, что сохраняются структура таблицы, содержимое ячеек, `colgroup`, ширины колонок и выравнивание; runtime toolbar, selection state и resize state не сохраняются.
 
-15.3. Добавить tests для resize столбцов: **не сделано**.
+15.3. Добавить tests для resize столбцов: **сделано**.
+Результат: `tests/browser/tables.spec.mjs` проверяет изменение только выбранной колонки, неизменность соседней и пересчет общей ширины таблицы.
 
-15.4. Добавить tests для выделения ячеек: **не сделано**.
+15.4. Добавить tests для выделения ячеек: **сделано**.
+Результат: browser regression проверяет диапазон 2x2, нормализацию координат и DOM-классы выделенных ячеек.
 
-15.5. Добавить tests для paste/plain text и keyboard navigation: **не сделано**.
+15.5. Добавить tests для paste/plain text и keyboard navigation: **сделано**.
+Результат: browser regression проверяет вставку `A/B/C/D` из tab/newline plain text и Enter-переход с созданием новой строки.
 
 15.6. Разнести `js/ui/tables.js` на подсистемы: **сделано в рамках 14.6**.
 
 ### 16. UX / Onboarding Layer
 
-- Статус: **не сделано**.
+- Статус: **сделано на базовом уровне, расширять по мере UX-исследований**.
 - Приоритет: **P2**.
 - Зачем: продукт становится мощным, но новому пользователю нужна входная траектория.
 
-16.1. Создать sample workspace: **не сделано**.
+16.1. Создать sample workspace: **сделано**.
+Результат: добавлен `docs/sample-workspace` со стартовой карточкой, учебной картой, учебным task tracker и пустой папкой assets.
 
-16.2. Сделать стартовый tutorial: **не сделано**.
+16.2. Сделать стартовый tutorial: **сделано**.
+Результат: верхний popup `Инструменты -> Быстрый старт` объясняет workspace, первую сущность, дерево и wiki-links.
 
-16.3. Добавить "как устроен продукт" внутри приложения: **не сделано**.
+16.3. Добавить "как устроен продукт" внутри приложения: **сделано**.
+Результат: popup `Инструменты -> Как устроено` объясняет карточки, карту кампании, task tracker и runtime UI.
 
-16.4. Добавить onboarding для карточек, дерева, wiki-links, карты, task tracker: **не сделано**.
+16.4. Добавить onboarding для карточек, дерева, wiki-links, карты, task tracker: **сделано базово**.
+Результат: основные системы описаны в `docs/UX_ONBOARDING_CHECKLIST.md` и частично во встроенной справке.
 
-16.5. Добавить UX checklist: **не сделано**.
+16.5. Добавить UX checklist: **сделано**.
+Результат: добавлен `docs/UX_ONBOARDING_CHECKLIST.md`, а краткий checklist доступен из popup `Инструменты`.
 
 ### 17. Workspace Templates
 
@@ -469,19 +479,24 @@ Popup доработан: показывает результаты броско
 
 ### 21. CSS Separation
 
-- Статус: **не сделано**.
+- Статус: **сделано на первом крупном срезе, расширять при росте UI**.
 - Приоритет: **P2**.
 - Зачем: CSS уже разросся, но лучше резать после стабилизации core-архитектуры.
 
-21.1. Разрезать `campaign-map.css`: **не сделано**.
+21.1. Разрезать `campaign-map.css`: **сделано**.
+Результат: файл стал entrypoint с imports в `campaign-map-layout.css`, `campaign-map-initiative.css`, `campaign-map-stage.css`, `campaign-map-tokens.css`, `campaign-map-shapes.css`, `campaign-map-token-popup.css`, `campaign-map-popups.css`, `campaign-map-responsive.css`.
 
-21.2. Разрезать `popup.css`: **не сделано**.
+21.2. Разрезать `popup.css`: **сделано**.
+Результат: файл стал entrypoint с imports в `popup-create.css`, `popup-link.css`, `popup-wiki.css`, `popup-block.css`, `popup-item-picker.css`, `popup-confirm-profile.css`, `popup-block-type.css`, `popup-image-crop.css`.
 
-21.3. Разрезать `block-special.css`: **не сделано**.
+21.3. Разрезать `block-special.css`: **сделано**.
+Результат: файл стал entrypoint с imports в `block-items-inline.css`, `block-character-stats.css`, `block-dnd-stats-legacy.css`, `block-dnd-stats.css`.
 
-21.4. Ввести CSS ownership comments: **не сделано**.
+21.4. Ввести CSS ownership comments: **сделано**.
+Результат: новые CSS-файлы получили ownership-комментарии, entrypoint-файлы описывают, куда добавлять новые стили.
 
-21.5. Проверить visual regression: **не сделано**.
+21.5. Проверить visual regression: **сделано базово**.
+Результат: `npm run test:browser` прошел после разреза CSS. Отдельного screenshot visual regression пока нет.
 
 ### 22. Campaign Map UX-Доработки
 
@@ -529,6 +544,6 @@ Popup доработан: показывает результаты броско
 
 ## Текущий Следующий Шаг
 
-Следующий рекомендуемый пункт: **15. Tables Contract И Укрепление Таблиц**.
+Следующий рекомендуемый пункт: **17. Workspace Templates**.
 
-Причина: крупный JS-разрез пункта 14 завершен, а таблицы уже выделены в подсистемы. Теперь им нужен явный контракт поведения, persistent/runtime правила и regression tests на resize, selection, paste и keyboard navigation.
+Причина: UX/onboarding получил базовый слой. Следующий первый несделанный пункт по плану - перенос шаблонов из `localStorage` в workspace, чтобы шаблоны жили вместе с миром и переносились между устройствами.

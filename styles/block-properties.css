@@ -1,0 +1,143 @@
+/* Ownership: styles for type-aware card property blocks. */
+
+.card-properties-block {
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.045),
+      rgba(255,255,255,0.025)
+    );
+}
+
+
+.card-properties-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap:
+    10px;
+}
+
+
+.card-property-field {
+
+  min-width:
+    0;
+
+  display:
+    grid;
+
+  gap:
+    5px;
+}
+
+
+.card-property-field-wide {
+
+  grid-column:
+    1 / -1;
+}
+
+
+.card-property-field span {
+
+  color:
+    rgba(255,255,255,0.48);
+
+  font-size:
+    11px;
+
+  font-weight:
+    720;
+}
+
+
+.card-property-field input,
+.card-property-field select,
+.card-property-textarea {
+
+  width:
+    100%;
+
+  min-width:
+    0;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.045);
+
+  color:
+    rgba(255,255,255,0.86);
+
+  outline:
+    none;
+}
+
+
+.card-property-field input,
+.card-property-field select {
+
+  height:
+    32px;
+
+  padding:
+    0 9px;
+}
+
+
+.card-property-textarea {
+
+  min-height:
+    72px;
+
+  padding:
+    9px 10px;
+
+  line-height:
+    1.45;
+}
+
+
+.card-property-field input:focus,
+.card-property-field select:focus,
+.card-property-textarea:focus {
+
+  border-color:
+    rgba(241,211,142,0.34);
+
+  box-shadow:
+    0 0 0 3px rgba(241,211,142,0.08);
+}
+
+
+@media (max-width: 860px) {
+
+  .card-properties-grid {
+
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 560px) {
+
+  .card-properties-grid {
+
+    grid-template-columns:
+      1fr;
+  }
+}
