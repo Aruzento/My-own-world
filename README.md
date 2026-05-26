@@ -352,6 +352,12 @@ Wiki-links, sidebar search, проверка дублей названий, ча
 
 На переходном этапе прямой доступ к `state.pages` допускается только в storage, тестах, `stateActions.js` и legacy-модулях, которые еще не переведены на repository.
 
+## Workspace Templates
+
+Шаблоны страниц хранятся в workspace-файле `.my-own-world-templates.json`.
+
+`js/templates/pageTemplateStorage.js` отвечает за загрузку шаблонов из workspace, миграцию старых шаблонов из `localStorage`, сериализацию, поиск по названию/типу/тегам и создание карточки из шаблона.
+
 ## Safe HTML Boundary
 
 Граница безопасного HTML описана в `docs/SAFE_HTML_CONTRACT.md`.
@@ -386,6 +392,12 @@ Wiki-links, sidebar search, проверка дублей названий, ча
 
 В toolbar карты есть кнопка `Слои`: popup позволяет включать/выключать слой и менять его порядок вверх/вниз. Состояние сохраняется в `data-layer-state`, восстанавливается через `CampaignMapModel` и применяется через `data-layer-hidden` и `style.zIndex`.
 
+## Knowledge Graph
+
+Правила графа описаны в `docs/KNOWLEDGE_GRAPH_MODEL.md`.
+
+Первый foundation находится в `js/wiki/knowledgeGraph.js`: он строит nodes по страницам, typed relationships `treeParent` и `wikiLink`, а также список orphan pages.
+
 ## CI
 
 GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
@@ -401,6 +413,14 @@ GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
 История изменений ведется в `CHANGELOG.md`, а правила релиза описаны в `docs/RELEASE_PROCESS.md`.
 
 Перед релизом нужно обновить changelog, manual, план/журнал работ, запустить `npm run verify`, `npm run test:browser` и дождаться зеленого GitHub Actions `Verify`.
+
+## AI Onboarding
+
+Для будущих AI-заходов есть `docs/AI_ONBOARDING.md`: там описана архитектура, что нельзя ломать, обязательные проверки и формат задач для Codex.
+
+## Desktop Adapter
+
+Desktop-направление описано в `docs/DESKTOP_ADAPTER_PLAN.md`. Первый рекомендуемый spike - Tauri, но до prototype нужно выделить `StorageAdapter` и `AssetAdapter`.
 
 ## Sidebar Profile
 

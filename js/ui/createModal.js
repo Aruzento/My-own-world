@@ -23,7 +23,8 @@ import {
 import {
   createPageFromTemplate,
   deletePageTemplate,
-  getPageTemplates
+  loadPageTemplates,
+  searchPageTemplates
 } from '../templates/pageTemplateStorage.js';
 
 import {
@@ -335,15 +336,47 @@ function openTaskCreatePicker() {
 }
 
 
-function openTemplateCreatePicker() {
+async function openTemplateCreatePicker(
+  query = ''
+) {
 
   menu.innerHTML =
     getPickerHeaderHTML(
       'Выберите шаблон'
     );
 
+  await loadPageTemplates();
+
+  const searchInput =
+    document.createElement('input');
+
+  searchInput.className =
+    'create-template-search';
+
+  searchInput.type =
+    'text';
+
+  searchInput.placeholder =
+    'Найти шаблон...';
+
+  searchInput.value =
+    query;
+
+  searchInput.addEventListener(
+    'input',
+    () => openTemplateCreatePicker(
+      searchInput.value
+    )
+  );
+
+  menu.appendChild(
+    searchInput
+  );
+
   const pageTemplates =
-    getPageTemplates();
+    searchPageTemplates(
+      query
+    );
 
   if (pageTemplates.length === 0) {
 
@@ -408,15 +441,17 @@ function openTemplateCreatePicker() {
 
     deleteButton.addEventListener(
       'click',
-      event => {
+      async event => {
 
         event.stopPropagation();
 
-        deletePageTemplate(
+        await deletePageTemplate(
           pageTemplate.id
         );
 
-        openTemplateCreatePicker();
+        openTemplateCreatePicker(
+          searchInput.value
+        );
       }
     );
 

@@ -110,7 +110,7 @@ export function openTreeContextMenu(
   /* Обработчик клика по удалению */
   remove.addEventListener(
     'click',
-    event => {
+    async event => {
 
       /* Не даёт клику всплыть выше */
       event.stopPropagation();
@@ -187,13 +187,13 @@ export function openTreeContextMenu(
 
   saveTemplate.addEventListener(
     'click',
-    event => {
+    async event => {
 
       event.stopPropagation();
 
       closeTreeContextMenu();
 
-      savePageAsTemplate(
+      await savePageAsTemplate(
         page
       );
 

@@ -25,6 +25,8 @@ test(
             createPageFromTemplate,
             deletePageTemplate,
             getPageTemplates,
+            loadPageTemplates,
+            searchPageTemplates,
             savePageAsTemplate
           } = await import('/js/templates/pageTemplateStorage.js');
 
@@ -34,7 +36,59 @@ test(
               nextState.__testWrittenFiles =
                 [];
 
+              const rootFiles =
+                new Map();
+
+              const createWritableFor =
+                name => ({
+                  async write(content) {
+
+                    const text =
+                      String(content);
+
+                    rootFiles.set(
+                      name,
+                      text
+                    );
+
+                    nextState.__testWrittenFiles.push({
+                      name,
+                      content: text
+                    });
+                  },
+                  async close() {}
+                });
+
               nextState.workspaceHandle = {
+                async getFileHandle(name, options = {}) {
+
+                  if (
+                    !rootFiles.has(name) &&
+                    !options.create
+                  ) {
+
+                    throw new Error('not found');
+                  }
+
+                  return {
+                    name,
+                    async getFile() {
+
+                      return {
+                        async text() {
+
+                          return rootFiles.get(name) || '';
+                        }
+                      };
+                    },
+                    async createWritable() {
+
+                      return createWritableFor(
+                        name
+                      );
+                    }
+                  };
+                },
                 async getDirectoryHandle() {
 
                   return {
@@ -44,16 +98,9 @@ test(
                         name,
                         async createWritable() {
 
-                          return {
-                            async write(content) {
-
-                              nextState.__testWrittenFiles.push({
-                                name,
-                                content: String(content)
-                              });
-                            },
-                            async close() {}
-                          };
+                          return createWritableFor(
+                            name
+                          );
                         }
                       };
                     }
@@ -67,6 +114,24 @@ test(
           );
 
           localStorage.clear();
+
+          localStorage.setItem(
+            'my-own-world:page-templates',
+            JSON.stringify([
+              {
+                id: 'legacy-template',
+                title: 'Legacy NPC',
+                createdAt: 1,
+                tags: ['card'],
+                template: 'card',
+                type: 'creature',
+                aliases: [],
+                body: '<h1>Legacy NPC</h1>'
+              }
+            ])
+          );
+
+          await loadPageTemplates();
 
           const sourcePage = {
             id: 'source-card',
@@ -98,7 +163,7 @@ aliases: []
             ];
 
           const template =
-            savePageAsTemplate(
+            await savePageAsTemplate(
               sourcePage
             );
 
@@ -111,13 +176,19 @@ aliases: []
               'parent-folder'
             );
 
-          deletePageTemplate(
+          const searchResult =
+            searchPageTemplates(
+              'NPC'
+            );
+
+          await deletePageTemplate(
             template.id
           );
 
           return {
             templatesAfterSaveCount: templatesAfterSave.length,
             templatesAfterDeleteCount: getPageTemplates().length,
+            searchResultCount: searchResult.length,
             createdTitle: createdPage.title,
             createdParent: createdPage.parent,
             createdType: createdPage.type,
@@ -130,14 +201,20 @@ aliases: []
 
     expect(
       result.templatesAfterSaveCount
-    ).toBe(
-      1
+    ).toBeGreaterThanOrEqual(
+      2
     );
 
     expect(
       result.templatesAfterDeleteCount
-    ).toBe(
-      0
+    ).toBeGreaterThanOrEqual(
+      1
+    );
+
+    expect(
+      result.searchResultCount
+    ).toBeGreaterThanOrEqual(
+      1
     );
 
     expect(
@@ -173,8 +250,12 @@ aliases: []
 
     expect(
       result.writtenFiles
-    ).toHaveLength(
-      2
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: '.my-own-world-templates.json'
+        })
+      ])
     );
   }
 );

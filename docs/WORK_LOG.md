@@ -6,6 +6,37 @@
 
 ---
 
+## 2026-05-27: Пункты 17-20 — шаблоны, граф, AI onboarding и desktop plan
+
+### Что сделано
+
+- Шаблоны страниц перенесены на workspace-level файл `.my-own-world-templates.json`.
+- Добавлены serializer/parser шаблонов, migration из `localStorage`, поиск по шаблонам и browser regression.
+- Добавлен `docs/KNOWLEDGE_GRAPH_MODEL.md`.
+- Добавлен foundation `js/wiki/knowledgeGraph.js` с typed relationships `treeParent` и `wikiLink`, а также orphan detection.
+- Добавлен `tests/knowledgeGraph.test.mjs`.
+- Добавлен `docs/AI_ONBOARDING.md`.
+- Добавлен `docs/DESKTOP_ADAPTER_PLAN.md` с выбором Tauri для первого spike, планом `StorageAdapter`, `AssetAdapter` и desktop smoke checklist.
+- `README.md`, `docs/PLANS_AND_TECH_DEBT.md` и manual обновлены.
+
+### Что стало лучше
+
+- Шаблоны теперь переносятся вместе с миром, а не привязаны к браузеру.
+- Knowledge Graph получил первый тестируемый model-слой, на который позже можно посадить UI.
+- AI-вход в проект стал менее зависим от длинной истории переписки.
+- Desktop-направление больше не абстрактная идея, а план adapter-first миграции.
+
+### Проверки
+
+- `npm run verify`.
+- `npm run test:browser`.
+
+### Следующее развитие
+
+- Пункт 22: Campaign Map UX-доработки.
+
+---
+
 ## 2026-05-27: UX / Onboarding Layer
 
 ### Что сделано

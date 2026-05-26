@@ -87,6 +87,10 @@ import {
   setupOnboardingGuide
 } from './ui/onboardingGuide.js';
 
+import {
+  loadPageTemplates
+} from './templates/pageTemplateStorage.js';
+
 
 
 document
@@ -108,6 +112,8 @@ document
 
       /* Загружает все страницы workspace */
       await loadWorkspace();
+
+      await loadPageTemplates();
 
       await restoreWorkspaceTreeExpansionState();
 
@@ -178,6 +184,8 @@ renderEmptyEditor();
 
   /* Загружает страницы */
   await loadWorkspace();
+
+  await loadPageTemplates();
 
   await restoreWorkspaceTreeExpansionState();
 
