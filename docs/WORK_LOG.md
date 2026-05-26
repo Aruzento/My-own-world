@@ -6,6 +6,151 @@
 
 ---
 
+## 2026-05-26: Завершение пункта 14 — разрез крупных JS-файлов
+
+### Что сделано
+
+- `blockContract.js` стал фасадом контракта блоков.
+- Runtime selectors, runtime marking, table contract, selective upgrades, runtime controls и persistent serializer вынесены в отдельные файлы внутри `js/editor/blocks/`.
+- `campaignMapPresentation.js` уменьшен: стили презентации вынесены в `campaignMapPresentationStyle.js`, а точечная синхронизация token/shape — в `campaignMapPresentationItemSync.js`.
+- `js/ui/tables.js` стал точкой подключения событий таблиц.
+- Табличная логика разнесена по модулям: `tableCells.js`, `tableColumns.js`, `tableResize.js`, `tableSelectionState.js`, `tableToolbar.js`, `tableConstants.js`, `tableRows.js`, `tableClipboard.js`.
+- План `docs/PLANS_AND_TECH_DEBT.md` обновлен: 14.4, 14.5 и 14.6 отмечены как выполненные, следующим шагом выбран Tables Contract.
+
+### Что стало лучше
+
+- Крупные файлы на границе persistent/runtime стали проще читать и безопаснее менять.
+- Таблицы получили инженерную основу для будущего `TABLES_CONTRACT.md` и regression tests.
+- Презентация карты стала меньше зависеть от одного большого файла, поэтому следующие изменения sync-логики легче локализовать.
+
+### Проверки
+
+- `npm run verify` — успешно после разреза `blockContract.js`.
+- `npm run verify` — успешно после разреза `campaignMapPresentation.js`.
+- `npm run verify` — успешно после разреза `tables.js`.
+- `npm run test:browser` — успешно, 18 browser tests passed.
+- Проверка типичных UTF-8/mojibake-маркеров — совпадений нет.
+
+### Следующее развитие
+
+- Пункт 15: описать контракт таблиц и добавить regression tests для resize, selection, paste и keyboard navigation.
+
+---
+
+## 2026-05-26: Исправление Task Tracker и инициативы
+
+### Что сделано
+
+- Старые таск-трекеры снова открывают сохраненные задачи: sanitizer теперь считает безопасным legacy `<script class="task-tracker-data" type="application/json">`.
+- Новые и пересохраненные таск-трекеры получают явный атрибут `data-task-tracker-data`.
+- Добавлен browser regression, который открывает legacy task tracker через настоящий `openPage()` и проверяет, что задача не пропадает.
+- Popup инициативы карты разделен на два окна: выбор/ручной ввод значений и отдельный `Порядок ходов`.
+- Значение инициативы теперь можно редактировать вручную; `Roll d20` просто заполняет поля.
+- После `Применить` открывается порядок ходов с активным участником и кнопками предыдущий/следующий.
+
+### Проверки
+
+- `npm run verify` — успешно.
+- `npm run test:browser` — успешно, 18 browser tests passed.
+
+### Следующее развитие
+
+- Следующий плановый пункт остается `14.4`: разрезать `blockContract.js`.
+
+---
+
+## 2026-05-26: Разрез editor.js и toolbar.js
+
+### Что сделано
+
+- `editor.js` сокращен до фасада публичного API: `setupEditor()`, `openPage()`, `renderEmptyEditor()`, `saveCurrentPage()`, `insertImage()`.
+- Открытие страниц вынесено в `js/editor/editorOpenPage.js`.
+- Сохранение спец-сущностей карты и таск-трекера вынесено в `js/editor/editorSpecialSave.js`.
+- Пустой экран и действия его кнопок вынесены в `js/editor/editorEmptyPage.js`.
+- Навигационная панель карточки с "Назад" и "Найти в дереве" вынесена в `js/editor/editorNavigation.js`.
+- Paste/plain-text логика вынесена в `js/editor/editorPastePlainText.js`.
+- Отложенная нормализация wiki-links вынесена в `js/editor/editorWikiLinkNormalization.js`.
+- Открытие обычных внешних ссылок вынесено в `js/editor/editorLinksRuntime.js`.
+- Очистка asset images перед render вынесена в `js/editor/editorAssetSanitizer.js`.
+- `toolbar.js` стал контроллером событий toolbar.
+- Позиционирование toolbar/color-popup вынесено в `js/editor/toolbarPosition.js`.
+- Подсветка активных кнопок toolbar вынесена в `js/editor/toolbarActiveState.js`.
+- Работа с последними цветами и применением цвета вынесена в `js/editor/toolbarTextColor.js`.
+
+### Что стало лучше
+
+- Редактор больше не является единым комбайном для setup, open, save, paste, пустого экрана и навигации.
+- Toolbar стало проще развивать: геометрия, состояние и цветовой слой разделены.
+- Публичные импорты `editor.js` сохранены, поэтому остальные подсистемы не требуют массовой перепривязки.
+
+### Проверки
+
+- `npm run verify` — успешно.
+- `npm run test:browser` — успешно, 17 browser tests passed.
+
+### Следующее развитие
+
+- Продолжить пункт `14.4`: разрезать `blockContract.js`, потому что это следующий крупный файл на границе persistent/runtime HTML.
+
+---
+
+## 2026-05-26: Доработка инициативы карты
+
+### Что сделано
+
+- Popup инициативы стал показывать результаты броска: итог, d20 и модификатор.
+- Добавлено отображение активного хода и кнопки предыдущий/следующий участник.
+- Повторное применение участников больше не стирает уже сделанные броски выбранных участников.
+- Токены карты получили persistent поле `initiativeModifier` / `data-initiative-modifier`.
+- Browser regression инициативы расширен: проверяет видимые строки, результаты и переключение активного хода.
+
+### Что стало лучше
+
+- Инициатива теперь работает как полезный боевой popup, а не как скрытая запись состояния в модель.
+- Состояние боя понятнее мастеру: видно, чей ход, и можно двигаться по очереди.
+
+### Риски / Что осталось
+
+- Модификатор инициативы пока хранится на токене и не вычисляется автоматически из характеристик персонажа.
+- Нет отдельного режима "начать/закончить бой" и ручного редактирования модификатора прямо в popup.
+
+### Следующее развитие
+
+- Позже связать `initiativeModifier` с будущей CharacterModel / DnD stats layer.
+
+---
+
+## 2026-05-26: Campaign Map Layers 13.1-13.2
+
+### Что сделано
+
+- Добавлен `js/editor/campaignMapLayerModel.js`.
+- Введены базовые слои карты: `Объекты`, `Существа`, `Фигуры`.
+- `CampaignMapModel` теперь хранит `layers`, а токены и фигуры получают `layerId` и `zIndex`.
+- Data-first serializer сохраняет `data-layer-state`, `data-layer-id` и `data-z-index`.
+- Render adapter применяет `style.zIndex`, чтобы порядок слоев начал работать визуально без будущего UI.
+- В toolbar карты добавлена кнопка `Слои`.
+- Popup слоев умеет включать/выключать слой и менять порядок слоя вверх/вниз.
+- Видимость слоя применяется через `data-layer-hidden`.
+- Добавлены unit-тесты `tests/campaignMapLayerModel.test.mjs` и расширены тесты модели/сериализатора карты.
+- Добавлен browser regression `campaign-map-layers-control-visibility-and-z-order`.
+
+### Что стало лучше
+
+- У карты появился model-first контракт слоев, на который можно опереться при UI управления слоями, массовом выделении и будущей настройке видимости.
+- Порядок объектов больше не является только CSS-договоренностью: он сохраняется в данных карты.
+
+### Риски / Что осталось
+
+- Visibility отдельного объекта/токена пока остается через существующие `presentationHidden` и будущий layer/object UI.
+- Lock на уровне слоя описан в модели, но пока не подключен к pointer-контроллерам.
+
+### Следующее развитие
+
+- Следующий крупный долг по плану: `14.2` разрезать `editor.js`.
+
+---
+
 ## 2026-05-26: CI fix для Linux import path case
 
 ### Что сделано

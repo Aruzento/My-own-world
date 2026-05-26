@@ -1,0 +1,3 @@
+export const TABLE_RESIZE_EDGE = 6;
+export const TABLE_MIN_COLUMN_WIDTH = 10;
+export const TABLE_DEFAULT_COLUMN_WIDTH = 160;

@@ -163,3 +163,93 @@ test(
     });
   }
 );
+
+test(
+  'task-tracker-open-page-keeps-legacy-json-script',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            openPage
+          } = await import('/js/editor/editor.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          const taskData = {
+            version: 1,
+            columns: [
+              {
+                id: 'ideas',
+                title: 'ИДЕИ',
+                taskIds: ['task-1']
+              }
+            ],
+            tasks: [
+              {
+                id: 'task-1',
+                title: 'Старая задача',
+                description: 'Должна пережить sanitizer',
+                checklist: []
+              }
+            ]
+          };
+
+          openPage(
+            {
+              id: 'tracker-page',
+              name: 'Трекер',
+              title: 'Трекер',
+              content: `---
+id: tracker-page
+parent: null
+order: 1
+tags: [task-tracker]
+template: taskTracker
+type: taskTracker
+aliases: []
+---
+
+<div class="task-tracker-document" data-task-tracker="v1" contenteditable="false">
+  <h1 class="task-tracker-title">Трекер</h1>
+  <script class="task-tracker-data" type="application/json">${JSON.stringify(taskData)}</script>
+</div>`
+            }
+          );
+
+          return {
+            taskTitle: editor.querySelector('.task-card-title')?.value,
+            scriptKept: Boolean(editor.querySelector('.task-tracker-data')),
+            upgraded: editor
+              .querySelector('.task-tracker-data')
+              ?.hasAttribute('data-task-tracker-data')
+          };
+        }
+      );
+
+    expect(
+      result.taskTitle
+    ).toBe(
+      'Старая задача'
+    );
+
+    expect(
+      result.scriptKept
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.upgraded
+    ).toBe(
+      true
+    );
+  }
+);

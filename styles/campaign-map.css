@@ -200,6 +200,7 @@
 
 .campaign-map-controls .campaign-fog-btn,
 .campaign-map-controls .campaign-grid-btn,
+.campaign-map-controls .campaign-layers-btn,
 .campaign-map-controls .campaign-initiative-btn {
 
   width:
@@ -226,7 +227,8 @@
 }
 
 
-.campaign-initiative-list {
+.campaign-initiative-list,
+.campaign-initiative-order-list {
 
   max-height:
     280px;
@@ -242,6 +244,97 @@
 }
 
 
+.campaign-initiative-turn {
+
+  min-height:
+    34px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    32px minmax(0, 1fr) 32px;
+
+  align-items:
+    center;
+
+  gap:
+    6px;
+
+  padding:
+    6px;
+
+  border:
+    1px solid rgba(241,211,142,0.16);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(241,211,142,0.08);
+}
+
+
+.campaign-initiative-turn button {
+
+  width:
+    28px;
+
+  height:
+    28px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.065);
+
+  color:
+    rgba(255,248,230,0.9);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-initiative-turn button:hover {
+
+  background:
+    rgba(241,211,142,0.18);
+}
+
+
+.campaign-initiative-active {
+
+  min-width:
+    0;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  color:
+    rgba(255,248,230,0.92);
+
+  font-size:
+    12px;
+
+  font-weight:
+    780;
+
+  text-align:
+    center;
+}
+
+
 .campaign-initiative-row {
 
   min-height:
@@ -254,7 +347,7 @@
     grid;
 
   grid-template-columns:
-    auto minmax(0, 1fr) auto;
+    auto minmax(0, 1fr) auto auto;
 
   gap:
     8px;
@@ -270,6 +363,70 @@
 
   color:
     rgba(255,248,230,0.9);
+}
+
+
+.campaign-initiative-value {
+
+  width:
+    58px;
+
+  min-width:
+    0;
+
+  padding:
+    6px 8px;
+
+  border:
+    1px solid rgba(241,211,142,0.22);
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  color:
+    rgba(255,248,230,0.94);
+
+  font:
+    inherit;
+
+  font-size:
+    12px;
+
+  font-weight:
+    780;
+
+  text-align:
+    center;
+}
+
+
+.campaign-initiative-value:focus {
+
+  outline:
+    2px solid rgba(241,211,142,0.38);
+
+  border-color:
+    rgba(241,211,142,0.48);
+}
+
+
+.campaign-initiative-order-row {
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+}
+
+
+.campaign-initiative-row.is-active {
+
+  outline:
+    1px solid rgba(241,211,142,0.46);
+
+  background:
+    rgba(241,211,142,0.13);
 }
 
 
@@ -303,6 +460,7 @@
 
 
 .campaign-initiative-meta,
+.campaign-initiative-result,
 .campaign-initiative-empty {
 
   color:
@@ -310,6 +468,22 @@
 
   font-size:
     12px;
+}
+
+
+.campaign-initiative-result {
+
+  min-width:
+    58px;
+
+  color:
+    rgba(255,248,230,0.84);
+
+  font-weight:
+    800;
+
+  text-align:
+    right;
 }
 
 
@@ -998,6 +1172,14 @@
 
   opacity:
     0.2;
+}
+
+
+.campaign-map-token[data-layer-hidden="true"],
+.campaign-map-shape[data-layer-hidden="true"] {
+
+  display:
+    none;
 }
 
 
@@ -2402,6 +2584,159 @@
 
   border-radius:
     14px;
+}
+
+
+.campaign-map-popup[data-popup-key="layers"] {
+
+  width:
+    260px;
+
+  padding:
+    10px;
+
+  border-radius:
+    14px;
+}
+
+
+.campaign-layer-list {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+
+.campaign-layer-row {
+
+  min-height:
+    38px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  padding:
+    5px 6px 5px 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(255,255,255,0.045);
+}
+
+
+.campaign-layer-toggle {
+
+  min-width:
+    0;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,248,230,0.86);
+
+  font-size:
+    12px;
+
+  font-weight:
+    760;
+}
+
+
+.campaign-layer-toggle input {
+
+  width:
+    10px;
+
+  height:
+    10px;
+
+  appearance:
+    none;
+
+  border:
+    1px solid rgba(241,211,142,0.56);
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(255,255,255,0.08);
+}
+
+
+.campaign-layer-toggle input:checked {
+
+  background:
+    var(--accent);
+
+  box-shadow:
+    0 0 0 3px rgba(241,211,142,0.14);
+}
+
+
+.campaign-layer-actions {
+
+  display:
+    flex;
+
+  gap:
+    4px;
+}
+
+
+.campaign-layer-actions button {
+
+  width:
+    26px;
+
+  height:
+    26px;
+
+  border:
+    none;
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,248,230,0.86);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-layer-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.14);
 }
 
 

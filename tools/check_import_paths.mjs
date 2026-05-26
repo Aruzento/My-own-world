@@ -18,7 +18,10 @@ const trackedFiles =
   execFileSync(
     'git',
     [
-      'ls-files'
+      'ls-files',
+      '--cached',
+      '--others',
+      '--exclude-standard'
     ],
     {
       encoding: 'utf8'

@@ -383,3 +383,136 @@ ${body}
     );
   }
 );
+
+
+test(
+  'campaign-map-layers-control-visibility-and-z-order',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement,
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            applyCampaignMapLayers,
+            moveCampaignMapLayer,
+            setCampaignMapLayerVisibility
+          } = await import('/js/editor/campaignMapLayers.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const layer =
+            map.querySelector('.campaign-map-object-layer');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const token =
+            store.addToken({
+              tokenId: 'token-hero',
+              type: 'creature',
+              name: 'Герой'
+            });
+
+          const shape =
+            store.addShape({
+              shapeId: 'shape-zone',
+              type: 'square',
+              width: 120,
+              height: 120
+            });
+
+          layer.append(
+            createMapTokenElement(
+              token
+            ),
+            createMapShapeElement(
+              shape
+            )
+          );
+
+          applyCampaignMapLayers(
+            map
+          );
+
+          setCampaignMapLayerVisibility(
+            map,
+            'map-shapes',
+            false
+          );
+
+          moveCampaignMapLayer(
+            map,
+            'map-shapes',
+            'down'
+          );
+
+          const nextModel =
+            refreshCampaignMapStore(
+              map
+            ).getModel();
+
+          return {
+            shapeHidden:
+              map.querySelector('.campaign-map-shape').dataset.layerHidden,
+            shapeZ:
+              map.querySelector('.campaign-map-shape').dataset.zIndex,
+            tokenZ:
+              map.querySelector('.campaign-map-token').dataset.zIndex,
+            savedLayers:
+              nextModel.layers.map(item => ({
+                layerId: item.layerId,
+                visible: item.visible,
+                zIndex: item.zIndex
+              }))
+          };
+        }
+      );
+
+    expect(
+      result.shapeHidden
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      Number(result.shapeZ)
+    ).toBeLessThan(
+      Number(result.tokenZ)
+    );
+
+    expect(
+      result.savedLayers.find(layer => layer.layerId === 'map-shapes').visible
+    ).toBe(
+      false
+    );
+  }
+);

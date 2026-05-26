@@ -180,7 +180,9 @@ function isSafeJsonScript(
 
   return (
     element.getAttribute('type') === 'application/json' &&
-    element.hasAttribute('data-task-tracker-data')
+    isTaskTrackerJsonScript(
+      element
+    )
   );
 }
 
@@ -253,6 +255,22 @@ function sanitizeAttributes(
         );
       }
     });
+
+  if (
+    tagName === 'script' &&
+    isTaskTrackerJsonScript(
+      element
+    )
+  ) {
+
+    element.className =
+      'task-tracker-data';
+
+    element.setAttribute(
+      'data-task-tracker-data',
+      ''
+    );
+  }
 
   hardenExternalLink(
     element,
@@ -350,7 +368,19 @@ function isAllowedJsonScriptAttribute(
 
   return (
     name === 'type' ||
+    name === 'class' ||
     name === 'data-task-tracker-data'
+  );
+}
+
+
+function isTaskTrackerJsonScript(
+  element
+) {
+
+  return (
+    element.hasAttribute('data-task-tracker-data') ||
+    element.classList.contains('task-tracker-data')
   );
 }
 

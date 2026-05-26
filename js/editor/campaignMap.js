@@ -74,6 +74,10 @@ import {
 } from './campaignMapStore.js';
 
 import {
+  applyCampaignMapLayers
+} from './campaignMapLayers.js';
+
+import {
   clearDraggedToken,
   finishTokenInteractions,
   hasActiveTokenInteraction,
@@ -258,6 +262,10 @@ export async function renderCampaignMap(
   );
 
   refreshCampaignMapStore(
+    map
+  );
+
+  applyCampaignMapLayers(
     map
   );
 

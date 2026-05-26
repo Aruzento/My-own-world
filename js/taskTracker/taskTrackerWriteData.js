@@ -24,6 +24,17 @@ export function writeTaskTrackerData(
     );
   }
 
+  script.type =
+    'application/json';
+
+  script.className =
+    'task-tracker-data';
+
+  script.setAttribute(
+    'data-task-tracker-data',
+    ''
+  );
+
   script.textContent =
     JSON.stringify(
       data

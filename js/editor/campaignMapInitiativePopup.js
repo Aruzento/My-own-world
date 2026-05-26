@@ -13,12 +13,7 @@ import {
   showMapPopup
 } from './campaignMapPopupController.js';
 
-import {
-  getInitiativePopupHTML
-} from './campaignMapToolbar.js';
-
-
-// Popup инициативы остается тонким UI над CampaignMapInitiativeModel.
+// Popup инициативы разделен на выбор/ввод значений и отдельное окно порядка ходов.
 export function openInitiativePopup(
   map,
   anchor,
@@ -38,13 +33,45 @@ export function openInitiativePopup(
   const popup =
     getMapPopup();
 
-  popup.innerHTML =
-    getInitiativePopupHTML();
-
-  renderInitiativeList(
+  renderPickerPopup(
     popup,
     model
   );
+
+  bindPickerActions(
+    popup,
+    store,
+    deps,
+    anchor
+  );
+
+  showMapPopup(
+    popup,
+    anchor,
+    'initiative'
+  );
+}
+
+function renderPickerPopup(
+  popup,
+  model
+) {
+
+  popup.innerHTML =
+    getPickerHTML();
+
+  renderPickerList(
+    popup,
+    model
+  );
+}
+
+function bindPickerActions(
+  popup,
+  store,
+  deps,
+  anchor
+) {
 
   popup
     .querySelector('.campaign-initiative-save-btn')
@@ -60,6 +87,13 @@ export function openInitiativePopup(
         );
 
         await deps.saveAndSync?.();
+
+        renderOrderPopup(
+          popup,
+          store,
+          deps,
+          anchor
+        );
       }
     );
 
@@ -67,28 +101,13 @@ export function openInitiativePopup(
     .querySelector('.campaign-initiative-roll-btn')
     .addEventListener(
       'click',
-      async event => {
+      event => {
 
         event.preventDefault();
 
-        const initiative =
-          applySelectedParticipants(
-            popup,
-            store
-          );
-
-        initiative.rollAll();
-
-        store.setInitiative(
-          initiative.toJSON()
+        fillRolls(
+          popup
         );
-
-        renderInitiativeList(
-          popup,
-          store.getModel()
-        );
-
-        await deps.saveAndSync?.();
       }
     );
 
@@ -102,16 +121,9 @@ export function openInitiativePopup(
         closeMapPopup();
       }
     );
-
-  showMapPopup(
-    popup,
-    anchor,
-    'initiative'
-  );
 }
 
-
-function renderInitiativeList(
+function renderPickerList(
   popup,
   model
 ) {
@@ -146,45 +158,87 @@ function renderInitiativeList(
 
   list.innerHTML =
     tokens
-      .map(token =>
-        getTokenRowHTML(
+      .map(token => {
+
+        const participantId =
+          `token:${token.tokenId}`;
+
+        return getPickerRowHTML(
           token,
-          selectedIds.has(
-            token.tokenId
-          )
-        )
-      )
+          initiative.getParticipant(
+            participantId
+          ),
+          {
+            selected:
+              selectedIds.has(
+                token.tokenId
+              )
+          }
+        );
+      })
       .join('');
 }
 
+function fillRolls(
+  popup
+) {
+
+  popup
+    .querySelectorAll('.campaign-initiative-row')
+    .forEach(row => {
+
+      const checkbox =
+        row.querySelector('.campaign-initiative-checkbox');
+
+      const input =
+        row.querySelector('.campaign-initiative-value');
+
+      const modifier =
+        Number(
+          input?.dataset.modifier || 0
+        );
+
+      if (!checkbox?.checked || !input) return;
+
+      input.value =
+        String(
+          rollD20() + modifier
+        );
+    });
+}
 
 function applySelectedParticipants(
   popup,
   store
 ) {
 
-  const model =
-    store.getModel();
-
-  const selectedTokenIds =
-    new Set(
-      [...popup.querySelectorAll('.campaign-initiative-checkbox:checked')]
-        .map(input =>
-          input.value
-        )
+  const previous =
+    new CampaignMapInitiativeModel(
+      store.getModel().initiative
     );
+
+  const participants =
+    [...popup.querySelectorAll('.campaign-initiative-row')]
+      .map(row =>
+        createParticipantFromRow(
+          row,
+          store.getModel(),
+          previous
+        )
+      )
+      .filter(Boolean);
 
   const initiative =
     new CampaignMapInitiativeModel({
-      participants:
-        model.tokens
-          .filter(token =>
-            selectedTokenIds.has(
-              token.tokenId
-            )
-          )
-          .map(createParticipantFromToken)
+      participants,
+      activeParticipantId:
+        getNextActiveParticipantId(
+          previous.activeParticipantId,
+          participants
+        )
     });
+
+  initiative.sortByInitiative();
 
   store.setInitiative(
     initiative.toJSON()
@@ -193,13 +247,297 @@ function applySelectedParticipants(
   return initiative;
 }
 
-
-function getTokenRowHTML(
-  token,
-  isSelected
+function createParticipantFromRow(
+  row,
+  model,
+  previous
 ) {
 
-  const participant =
+  const checkbox =
+    row.querySelector('.campaign-initiative-checkbox');
+
+  if (!checkbox?.checked) return null;
+
+  const token =
+    model.tokens.find(item =>
+      item.tokenId === checkbox.value
+    );
+
+  if (!token) return null;
+
+  const next =
+    createParticipantFromToken(
+      token
+    );
+
+  const existing =
+    previous.getParticipant(
+      next.participantId
+    );
+
+  const input =
+    row.querySelector('.campaign-initiative-value');
+
+  const total =
+    normalizeNumber(
+      input?.value,
+      existing?.total ?? next.total
+    );
+
+  return {
+    ...next,
+    roll:
+      total - next.modifier,
+    total
+  };
+}
+
+function renderOrderPopup(
+  popup,
+  store,
+  deps,
+  anchor
+) {
+
+  popup.innerHTML =
+    getOrderHTML();
+
+  renderOrderList(
+    popup,
+    store.getModel()
+  );
+
+  bindOrderActions(
+    popup,
+    store,
+    deps,
+    anchor
+  );
+}
+
+function bindOrderActions(
+  popup,
+  store,
+  deps,
+  anchor
+) {
+
+  popup
+    .querySelector('.campaign-initiative-prev-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        shiftInitiativeTurn(
+          popup,
+          store,
+          -1
+        );
+
+        await deps.saveAndSync?.();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-initiative-next-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        shiftInitiativeTurn(
+          popup,
+          store,
+          1
+        );
+
+        await deps.saveAndSync?.();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-initiative-edit-btn')
+    .addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+
+        renderPickerPopup(
+          popup,
+          store.getModel()
+        );
+
+        bindPickerActions(
+          popup,
+          store,
+          deps,
+          anchor
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-initiative-close-btn')
+    .addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        closeMapPopup();
+      }
+    );
+}
+
+function renderOrderList(
+  popup,
+  model
+) {
+
+  const initiative =
+    new CampaignMapInitiativeModel(
+      model.initiative
+    );
+
+  renderActiveTurn(
+    popup,
+    initiative
+  );
+
+  const list =
+    popup.querySelector('.campaign-initiative-order-list');
+
+  if (!initiative.participants.length) {
+
+    list.innerHTML =
+      '<div class="campaign-initiative-empty">Участники не выбраны</div>';
+
+    return;
+  }
+
+  list.innerHTML =
+    initiative.participants
+      .map(participant =>
+        getOrderRowHTML(
+          participant,
+          {
+            active:
+              initiative.activeParticipantId === participant.participantId
+          }
+        )
+      )
+      .join('');
+}
+
+function renderActiveTurn(
+  popup,
+  initiative
+) {
+
+  const label =
+    popup.querySelector('.campaign-initiative-active');
+
+  const active =
+    initiative.getParticipant(
+      initiative.activeParticipantId
+    );
+
+  if (!label) return;
+
+  label.textContent =
+    active
+      ? `Ход: ${active.name}`
+      : 'Нет активного хода';
+}
+
+function shiftInitiativeTurn(
+  popup,
+  store,
+  direction
+) {
+
+  const initiative =
+    new CampaignMapInitiativeModel(
+      store.getModel().initiative
+    );
+
+  if (direction > 0) {
+
+    initiative.nextTurn();
+
+  } else {
+
+    initiative.previousTurn();
+  }
+
+  store.setInitiative(
+    initiative.toJSON()
+  );
+
+  renderOrderList(
+    popup,
+    store.getModel()
+  );
+}
+
+function getNextActiveParticipantId(
+  currentActiveId,
+  participants
+) {
+
+  if (
+    participants.some(participant =>
+      participant.participantId === currentActiveId
+    )
+  ) {
+
+    return currentActiveId;
+  }
+
+  return participants[0]?.participantId || '';
+}
+
+function getPickerHTML() {
+
+  return `
+    <div class="campaign-map-popup-title">Инициатива</div>
+    <div class="campaign-initiative-list"></div>
+    <div class="campaign-map-popup-actions campaign-initiative-actions">
+      <button class="campaign-initiative-save-btn" type="button">Применить</button>
+      <button class="campaign-initiative-roll-btn" type="button">Roll d20</button>
+      <button class="campaign-initiative-close-btn" type="button">Закрыть</button>
+    </div>
+  `;
+}
+
+function getOrderHTML() {
+
+  return `
+    <div class="campaign-map-popup-title">Порядок ходов</div>
+    <div class="campaign-initiative-turn">
+      <button class="campaign-initiative-prev-btn" type="button">←</button>
+      <span class="campaign-initiative-active">Нет активного хода</span>
+      <button class="campaign-initiative-next-btn" type="button">→</button>
+    </div>
+    <div class="campaign-initiative-order-list"></div>
+    <div class="campaign-map-popup-actions campaign-initiative-actions">
+      <button class="campaign-initiative-edit-btn" type="button">Изменить</button>
+      <button class="campaign-initiative-close-btn" type="button">Закрыть</button>
+    </div>
+  `;
+}
+
+function getPickerRowHTML(
+  token,
+  participant,
+  options = {}
+) {
+
+  const nextParticipant =
+    participant ||
     createParticipantFromToken(
       token
     );
@@ -210,14 +548,98 @@ function getTokenRowHTML(
         class="campaign-initiative-checkbox"
         type="checkbox"
         value="${escapeAttribute(token.tokenId)}"
-        ${isSelected ? 'checked' : ''}
+        ${options.selected ? 'checked' : ''}
       >
-      <span class="campaign-initiative-name">${escapeHTML(participant.name)}</span>
-      <span class="campaign-initiative-meta">${participant.sourceMode === 'original' ? 'игрок' : 'дубль'}</span>
+      <span class="campaign-initiative-name">${escapeHTML(nextParticipant.name)}</span>
+      <span class="campaign-initiative-meta">${escapeHTML(getParticipantMetaText(nextParticipant))}</span>
+      <input
+        class="campaign-initiative-value"
+        type="number"
+        value="${escapeAttribute(getParticipantTotal(nextParticipant))}"
+        data-modifier="${escapeAttribute(nextParticipant.modifier)}"
+        title="Инициатива"
+      >
     </label>
   `;
 }
 
+function getOrderRowHTML(
+  participant,
+  options = {}
+) {
+
+  return `
+    <div class="${getOrderRowClass(options)}">
+      <span class="campaign-initiative-name">${escapeHTML(participant.name)}</span>
+      <span class="campaign-initiative-result">${escapeHTML(getParticipantResultText(participant))}</span>
+    </div>
+  `;
+}
+
+function getOrderRowClass(
+  options
+) {
+
+  return [
+    'campaign-initiative-row',
+    'campaign-initiative-order-row',
+    options.active
+      ? 'is-active'
+      : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
+function getParticipantMetaText(
+  participant
+) {
+
+  return participant.sourceMode === 'original'
+    ? 'игрок'
+    : 'дубль';
+}
+
+function getParticipantTotal(
+  participant
+) {
+
+  return participant?.total || '';
+}
+
+function getParticipantResultText(
+  participant
+) {
+
+  const modifier =
+    participant.modifier >= 0
+      ? `+${participant.modifier}`
+      : String(participant.modifier);
+
+  return `${participant.total} (${participant.roll}${modifier})`;
+}
+
+function rollD20() {
+
+  return Math.floor(
+    Math.random() * 20
+  ) + 1;
+}
+
+function normalizeNumber(
+  value,
+  fallback = 0
+) {
+
+  const number =
+    Number(value);
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : fallback;
+}
 
 function escapeHTML(
   value
@@ -228,7 +650,6 @@ function escapeHTML(
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
 }
-
 
 function escapeAttribute(
   value

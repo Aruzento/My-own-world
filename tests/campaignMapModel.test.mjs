@@ -228,3 +228,109 @@ test(
     );
   }
 );
+
+
+test(
+  'CampaignMapModel назначает слои и z-order токенам и фигурам',
+  () => {
+
+    const model =
+      new CampaignMapModel({
+        layers: [
+          {
+            layerId: 'map-creatures',
+            zIndex: 140
+          },
+          {
+            layerId: 'map-shapes',
+            zIndex: 240
+          }
+        ],
+        tokens: [
+          {
+            tokenId: 'hero',
+            type: 'creature'
+          },
+          {
+            tokenId: 'chest',
+            type: 'object'
+          }
+        ],
+        shapes: [
+          {
+            shapeId: 'zone',
+            type: 'circle'
+          }
+        ]
+      });
+
+    assert.equal(
+      model.tokens[0].layerId,
+      'map-creatures'
+    );
+
+    assert.equal(
+      model.tokens[0].zIndex,
+      140
+    );
+
+    assert.equal(
+      model.tokens[1].layerId,
+      'map-objects'
+    );
+
+    assert.equal(
+      model.shapes[0].layerId,
+      'map-shapes'
+    );
+
+    assert.equal(
+      model.shapes[0].zIndex,
+      240
+    );
+  }
+);
+
+
+test(
+  'CampaignMapModel обновляет z-order сущностей при изменении слоев',
+  () => {
+
+    const model =
+      new CampaignMapModel({
+        tokens: [
+          {
+            tokenId: 'hero',
+            type: 'creature'
+          }
+        ],
+        shapes: [
+          {
+            shapeId: 'zone',
+            type: 'square'
+          }
+        ]
+      });
+
+    model.setLayers([
+      {
+        layerId: 'map-creatures',
+        zIndex: 300
+      },
+      {
+        layerId: 'map-shapes',
+        zIndex: 100
+      }
+    ]);
+
+    assert.equal(
+      model.getToken('hero').zIndex,
+      300
+    );
+
+    assert.equal(
+      model.getShape('zone').zIndex,
+      100
+    );
+  }
+);

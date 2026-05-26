@@ -12,6 +12,7 @@ import {
 import {
   getFogPopupHTML,
   getGridPopupHTML,
+  getLayersPopupHTML,
   getShapesPopupHTML
 } from './campaignMapToolbar.js';
 
@@ -37,6 +38,12 @@ import {
 import {
   getCampaignMapStore
 } from './campaignMapStore.js';
+
+import {
+  applyCampaignMapLayers,
+  moveCampaignMapLayer,
+  setCampaignMapLayerVisibility
+} from './campaignMapLayers.js';
 
 
 // Controller тулбара карты: маршрутизирует клики по кнопкам и управляет
@@ -175,6 +182,29 @@ export async function handleCampaignMapToolbarClick(
   }
 
   if (
+    event.target.closest('.campaign-layers-btn')
+  ) {
+
+    const anchor =
+      event.target.closest('.campaign-layers-btn');
+
+    if (
+      toggleMapPopupForAnchor(
+        anchor,
+        'layers'
+      )
+    ) return true;
+
+    openLayersPopup(
+      map,
+      anchor,
+      deps
+    );
+
+    return true;
+  }
+
+  if (
     event.target.closest('.campaign-initiative-btn')
   ) {
 
@@ -198,6 +228,122 @@ export async function handleCampaignMapToolbarClick(
   }
 
   return false;
+}
+
+
+function openLayersPopup(
+  map,
+  anchor,
+  deps
+) {
+
+  const popup =
+    getMapPopup();
+
+  const render =
+    () => {
+
+      const model =
+        getCampaignMapStore(
+          map
+        )?.getModel();
+
+      popup.innerHTML =
+        getLayersPopupHTML(
+          model?.layers || []
+        );
+
+      bindLayerPopupEvents(
+        popup,
+        map,
+        deps,
+        render
+      );
+    };
+
+  render();
+
+  showMapPopup(
+    popup,
+    anchor,
+    'layers'
+  );
+}
+
+
+function bindLayerPopupEvents(
+  popup,
+  map,
+  deps,
+  render
+) {
+
+  popup
+    .querySelectorAll('.campaign-layer-row')
+    .forEach(row => {
+
+      row
+        .querySelector('.campaign-layer-visible')
+        ?.addEventListener(
+          'change',
+          async event => {
+
+            setCampaignMapLayerVisibility(
+              map,
+              row.dataset.layerId,
+              event.target.checked
+            );
+
+            await deps.saveAndSync();
+          }
+        );
+
+      row
+        .querySelector('.campaign-layer-up')
+        ?.addEventListener(
+          'click',
+          async event => {
+
+            event.preventDefault();
+
+            moveCampaignMapLayer(
+              map,
+              row.dataset.layerId,
+              'up'
+            );
+
+            applyCampaignMapLayers(
+              map
+            );
+
+            render();
+            await deps.saveAndSync();
+          }
+        );
+
+      row
+        .querySelector('.campaign-layer-down')
+        ?.addEventListener(
+          'click',
+          async event => {
+
+            event.preventDefault();
+
+            moveCampaignMapLayer(
+              map,
+              row.dataset.layerId,
+              'down'
+            );
+
+            applyCampaignMapLayers(
+              map
+            );
+
+            render();
+            await deps.saveAndSync();
+          }
+        );
+    });
 }
 
 

@@ -330,6 +330,22 @@ export class CampaignMapStore {
 
     return nextInitiative;
   }
+
+
+  setLayers(
+    layers
+  ) {
+
+    const nextLayers =
+      this.model.setLayers(
+        layers
+      );
+
+    this.markDirty();
+    this.commitToDOM();
+
+    return nextLayers;
+  }
 }
 
 

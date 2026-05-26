@@ -7,10 +7,8 @@ import {
 } from './links.js';
 
 import {
-  applyTextColorWithHistory,
   clearInlineFormattingWithHistory,
   formatSelectedBlockWithHistory,
-  queryInlineFormattingState,
   runInlineFormattingCommandWithHistory
 } from './formattingService.js';
 
@@ -18,11 +16,19 @@ import {
   isSelectionInsidePersistentEditable
 } from './contenteditablePolicy.js';
 
-const RECENT_TEXT_COLORS_KEY =
-  'myOwnWorld.recentTextColors';
+import {
+  positionToolbar,
+  positionColorPopup
+} from './toolbarPosition.js';
 
-const MAX_RECENT_TEXT_COLORS =
-  5;
+import {
+  updateToolbarActiveState
+} from './toolbarActiveState.js';
+
+import {
+  applyToolbarColor,
+  renderRecentColors
+} from './toolbarTextColor.js';
 
 let lastSelectionRange =
   null;
@@ -32,7 +38,6 @@ let isPointerSelectingText =
 
 let hasDeferredSelectionUpdate =
   false;
-
 
 export function setupFloatingToolbar() {
 
@@ -63,6 +68,44 @@ export function setupFloatingToolbar() {
       'toolbarColorButton'
     );
 
+  moveColorPopupToBody(
+    colorPopup
+  );
+
+  renderRecentColors(
+    recentColors,
+    colorPicker
+  );
+
+  setupSelectionTracking(
+    toolbar
+  );
+
+  setupToolbarClicks(
+    toolbar,
+    {
+      colorPicker,
+      recentColors,
+      colorPopup,
+      colorButton
+    }
+  );
+
+  setupColorPopupClicks(
+    toolbar,
+    {
+      colorPicker,
+      recentColors,
+      colorPopup,
+      colorButton
+    }
+  );
+}
+
+function moveColorPopupToBody(
+  colorPopup
+) {
+
   if (
     colorPopup &&
     colorPopup.parentElement !== document.body
@@ -72,12 +115,11 @@ export function setupFloatingToolbar() {
       colorPopup
     );
   }
+}
 
-  renderRecentColors(
-    recentColors,
-    colorPicker
-  );
-
+function setupSelectionTracking(
+  toolbar
+) {
 
   document.addEventListener(
     'pointerdown',
@@ -100,8 +142,7 @@ export function setupFloatingToolbar() {
         hasDeferredSelectionUpdate =
           false;
 
-        /* Toolbar не должен всплывать посреди протягивания мышью:
-           показываем его только после pointerup. */
+        // Toolbar показывается только после pointerup, чтобы не мешать выделению.
         toolbar.classList.add(
           'hidden'
         );
@@ -109,7 +150,6 @@ export function setupFloatingToolbar() {
     },
     true
   );
-
 
   document.addEventListener(
     'pointerup',
@@ -133,7 +173,6 @@ export function setupFloatingToolbar() {
     true
   );
 
-
   document.addEventListener(
     'selectionchange',
     () => {
@@ -155,7 +194,12 @@ export function setupFloatingToolbar() {
       );
     }
   );
+}
 
+function setupToolbarClicks(
+  toolbar,
+  colorControls
+) {
 
   toolbar.addEventListener(
     'mousedown',
@@ -170,7 +214,6 @@ export function setupFloatingToolbar() {
       event.preventDefault();
     }
   );
-
 
   toolbar.addEventListener(
     'pointerdown',
@@ -187,12 +230,11 @@ export function setupFloatingToolbar() {
       event.stopPropagation();
 
       toggleColorPopup(
-        colorPopup,
-        colorButton
+        colorControls.colorPopup,
+        colorControls.colorButton
       );
     }
   );
-
 
   toolbar.addEventListener(
     'click',
@@ -205,77 +247,93 @@ export function setupFloatingToolbar() {
 
       if (!button) return;
 
-
-      const command =
-        button.dataset.command;
-
-      const block =
-        button.dataset.block;
-
-      const action =
-        button.dataset.action;
-
-
-      if (command) {
-
-        runInlineFormattingCommandWithHistory(
-          command
-        );
-      }
-
-
-      if (block) {
-
-        restoreLastSelection();
-
-        formatSelectedBlockWithHistory(
-          block
-        );
-      }
-
-
-      if (action === 'link') {
-
-        restoreLastSelection();
-
-        createLinkFromSelection();
-      }
-
-      if (action === 'clear-format') {
-
-        restoreLastSelection();
-
-        clearInlineFormattingWithHistory();
-      }
-
-      if (action === 'color-popup') {
-
-        return;
-      }
-
-      if (action === 'apply-color') {
-
-        restoreLastSelection();
-
-        applyToolbarColor(
-          colorPicker,
-          recentColors,
-          colorPicker?.value,
-          colorButton
-        );
-
-        colorPopup?.classList.add(
-          'hidden'
-        );
-      }
-
-      await saveCurrentPage();
-
-      updateToolbarActiveState(
-        toolbar
+      await handleToolbarButtonClick(
+        toolbar,
+        button,
+        colorControls
       );
     }
   );
+}
+
+async function handleToolbarButtonClick(
+  toolbar,
+  button,
+  colorControls
+) {
+
+  const command =
+    button.dataset.command;
+
+  const block =
+    button.dataset.block;
+
+  const action =
+    button.dataset.action;
+
+  if (command) {
+
+    runInlineFormattingCommandWithHistory(
+      command
+    );
+  }
+
+  if (block) {
+
+    restoreLastSelection();
+
+    formatSelectedBlockWithHistory(
+      block
+    );
+  }
+
+  if (action === 'link') {
+
+    restoreLastSelection();
+
+    createLinkFromSelection();
+  }
+
+  if (action === 'clear-format') {
+
+    restoreLastSelection();
+
+    clearInlineFormattingWithHistory();
+  }
+
+  if (action === 'color-popup') {
+
+    return;
+  }
+
+  if (action === 'apply-color') {
+
+    await applySelectedColor(
+      toolbar,
+      colorControls
+    );
+
+    return;
+  }
+
+  await saveCurrentPage();
+
+  updateToolbarActiveState(
+    toolbar
+  );
+}
+
+function setupColorPopupClicks(
+  toolbar,
+  colorControls
+) {
+
+  const {
+    colorPicker,
+    recentColors,
+    colorPopup,
+    colorButton
+  } = colorControls;
 
   colorPopup
     ?.addEventListener(
@@ -292,46 +350,24 @@ export function setupFloatingToolbar() {
         event.preventDefault();
         event.stopPropagation();
 
-        restoreLastSelection();
-
-        applyToolbarColor(
-          colorPicker,
-          recentColors,
-          colorPicker?.value,
-          colorButton
-        );
-
-        colorPopup.classList.add(
-          'hidden'
-        );
-
-        await saveCurrentPage();
-
-        updateToolbarActiveState(
-          toolbar
+        await applySelectedColor(
+          toolbar,
+          colorControls
         );
       }
     );
-
 
   colorPicker
     ?.addEventListener(
       'change',
       async event => {
 
-        restoreLastSelection();
-
-        applyToolbarColor(
-          colorPicker,
-          recentColors,
-          event.target.value,
-          colorButton
-        );
-
-        await saveCurrentPage();
-
-        updateToolbarActiveState(
-          toolbar
+        await applySelectedColor(
+          toolbar,
+          {
+            ...colorControls,
+            color: event.target.value
+          }
         );
       }
     );
@@ -348,29 +384,18 @@ export function setupFloatingToolbar() {
 
         if (!button) return;
 
-        restoreLastSelection();
-
         if (colorPicker) {
 
           colorPicker.value =
             button.dataset.color;
         }
 
-        applyToolbarColor(
-          colorPicker,
-          recentColors,
-          button.dataset.color,
-          colorButton
-        );
-
-        colorPopup?.classList.add(
-          'hidden'
-        );
-
-        await saveCurrentPage();
-
-        updateToolbarActiveState(
-          toolbar
+        await applySelectedColor(
+          toolbar,
+          {
+            ...colorControls,
+            color: button.dataset.color
+          }
         );
       }
     );
@@ -392,6 +417,30 @@ export function setupFloatingToolbar() {
   );
 }
 
+async function applySelectedColor(
+  toolbar,
+  colorControls
+) {
+
+  restoreLastSelection();
+
+  applyToolbarColor(
+    colorControls.colorPicker,
+    colorControls.recentColors,
+    colorControls.color || colorControls.colorPicker?.value,
+    colorControls.colorButton
+  );
+
+  colorControls.colorPopup?.classList.add(
+    'hidden'
+  );
+
+  await saveCurrentPage();
+
+  updateToolbarActiveState(
+    toolbar
+  );
+}
 
 function updateToolbarForSelection(
   toolbar
@@ -401,8 +450,7 @@ function updateToolbarForSelection(
     window.getSelection();
 
   if (
-    !selection
-    ||
+    !selection ||
     selection.rangeCount === 0
   ) {
 
@@ -452,168 +500,6 @@ function updateToolbarForSelection(
   );
 }
 
-
-function positionToolbar(
-  toolbar,
-  rect
-) {
-
-  const margin =
-    8;
-
-  const width =
-    toolbar.offsetWidth || 320;
-
-  const height =
-    toolbar.offsetHeight || 44;
-
-  const center =
-    rect.left + rect.width / 2;
-
-  const left =
-    clamp(
-      center,
-      margin + width / 2,
-      window.innerWidth - margin - width / 2
-    );
-
-  let top =
-    rect.top - height - 10;
-
-  if (top < margin) {
-
-    top =
-      rect.bottom + 10;
-  }
-
-  top =
-    clamp(
-      top,
-      margin,
-      window.innerHeight - margin - height
-    );
-
-  toolbar.style.left =
-    `${left}px`;
-
-  toolbar.style.top =
-    `${top}px`;
-}
-
-
-function updateToolbarActiveState(
-  toolbar,
-  selection = window.getSelection()
-) {
-
-  toolbar
-    .querySelectorAll('button.active')
-    .forEach(button => {
-
-      button.classList.remove(
-        'active'
-      );
-    });
-
-  if (
-    !selection ||
-    selection.rangeCount === 0
-  ) return;
-
-  const commandStates = {
-    bold: queryInlineFormattingState('bold'),
-    italic: queryInlineFormattingState('italic'),
-    underline: queryInlineFormattingState('underline'),
-    insertUnorderedList: queryInlineFormattingState('insertUnorderedList'),
-    insertOrderedList: queryInlineFormattingState('insertOrderedList')
-  };
-
-  Object
-    .entries(commandStates)
-    .forEach(([command, active]) => {
-
-      if (!active) return;
-
-      toolbar
-        .querySelector(`[data-command="${command}"]`)
-        ?.classList.add(
-          'active'
-        );
-    });
-
-  const blockName =
-    getSelectionBlockName(
-      selection
-    );
-
-  if (blockName) {
-
-    toolbar
-      .querySelector(`[data-block="${blockName}"]`)
-      ?.classList.add(
-        'active'
-      );
-  }
-
-  if (
-    getSelectionElement(selection)
-      ?.closest('a')
-  ) {
-
-    toolbar
-      .querySelector('[data-action="link"]')
-      ?.classList.add(
-        'active'
-      );
-  }
-}
-
-
-function getSelectionBlockName(
-  selection
-) {
-
-  const element =
-    getSelectionElement(
-      selection
-    );
-
-  const block =
-    element?.closest(
-      'h1, h2, h3, h4, p, li'
-    );
-
-  if (!block) return '';
-
-  if (
-    block.tagName.toLowerCase() === 'li'
-  ) {
-
-    return '';
-  }
-
-  return block.tagName.toLowerCase();
-}
-
-
-function getSelectionElement(
-  selection
-) {
-
-  if (
-    !selection ||
-    selection.rangeCount === 0
-  ) return null;
-
-  const node =
-    selection.getRangeAt(0).commonAncestorContainer;
-
-  return node.nodeType === Node.ELEMENT_NODE
-    ? node
-    : node.parentElement;
-}
-
-
 function restoreLastSelection() {
 
   if (!lastSelectionRange) return false;
@@ -630,43 +516,6 @@ function restoreLastSelection() {
 
   return true;
 }
-
-
-function applyToolbarColor(
-  colorPicker,
-  recentColors,
-  color = colorPicker?.value,
-  colorButton = null
-) {
-
-  if (!color) return false;
-
-  const applied =
-    applyTextColorWithHistory(
-      color
-    );
-
-  if (!applied) return false;
-
-  const nextColors =
-    rememberRecentColor(
-      color
-    );
-
-  renderRecentColors(
-    recentColors,
-    colorPicker,
-    nextColors
-  );
-
-  updateColorButton(
-    colorButton,
-    color
-  );
-
-  return true;
-}
-
 
 function toggleColorPopup(
   popup,
@@ -692,204 +541,4 @@ function toggleColorPopup(
       button
     );
   }
-}
-
-
-function positionColorPopup(
-  popup,
-  button
-) {
-
-  const rect =
-    button.getBoundingClientRect();
-
-  const margin =
-    8;
-
-  const width =
-    popup.offsetWidth || 172;
-
-  const height =
-    popup.offsetHeight || 86;
-
-  const left =
-    clamp(
-      rect.left + rect.width / 2 - width / 2,
-      margin,
-      window.innerWidth - margin - width
-    );
-
-  let top =
-    rect.bottom + 8;
-
-  if (top + height > window.innerHeight - margin) {
-
-    top =
-      rect.top - height - 8;
-  }
-
-  popup.style.left =
-    `${left}px`;
-
-  popup.style.top =
-    `${clamp(top, margin, window.innerHeight - margin - height)}px`;
-}
-
-
-function updateColorButton(
-  button,
-  color
-) {
-
-  button
-    ?.querySelector('.toolbar-color-button-swatch')
-    ?.style.setProperty(
-      '--current-text-color',
-      color
-    );
-}
-
-
-function rememberRecentColor(
-  color
-) {
-
-  const normalized =
-    normalizeColor(
-      color
-    );
-
-  const colors =
-    getRecentColors()
-      .filter(item =>
-        item !== normalized
-      );
-
-  colors.unshift(
-    normalized
-  );
-
-  const nextColors =
-    colors.slice(
-      0,
-      MAX_RECENT_TEXT_COLORS
-    );
-
-  localStorage.setItem(
-    RECENT_TEXT_COLORS_KEY,
-    JSON.stringify(nextColors)
-  );
-
-  return nextColors;
-}
-
-
-function renderRecentColors(
-  container,
-  colorPicker,
-  colors = getRecentColors()
-) {
-
-  if (!container) return;
-
-  container.innerHTML =
-    '';
-
-  colors
-    .slice(
-      0,
-      MAX_RECENT_TEXT_COLORS
-    )
-    .forEach(color => {
-
-      const button =
-        document.createElement(
-          'button'
-        );
-
-      button.type =
-        'button';
-
-      button.className =
-        'toolbar-color-swatch';
-
-      button.dataset.color =
-        color;
-
-      button.title =
-        `Применить ${color}`;
-
-      button.style.setProperty(
-        '--swatch-color',
-        color
-      );
-
-      if (
-        colorPicker?.value?.toLowerCase() === color
-      ) {
-
-        button.classList.add(
-          'is-current'
-        );
-      }
-
-      container.appendChild(
-        button
-      );
-    });
-}
-
-
-function getRecentColors() {
-
-  try {
-
-    const parsed =
-      JSON.parse(
-        localStorage.getItem(
-          RECENT_TEXT_COLORS_KEY
-        ) || '[]'
-      );
-
-    return Array.isArray(parsed)
-      ? parsed
-        .map(normalizeColor)
-        .filter(Boolean)
-      : [];
-
-  } catch {
-
-    return [];
-  }
-}
-
-
-function normalizeColor(
-  color
-) {
-
-  const value =
-    String(color || '')
-      .trim()
-      .toLowerCase();
-
-  return /^#[0-9a-f]{6}$/.test(value)
-    ? value
-    : '';
-}
-
-
-function clamp(
-  value,
-  min,
-  max
-) {
-
-  return Math.min(
-    max,
-    Math.max(
-      min,
-      value
-    )
-  );
 }

@@ -97,6 +97,11 @@ function serializeStageAttributes(
     'data-fog-mode': data.fog.mode,
     'data-fog-image': data.fog.image,
     'data-brush-size': data.fog.brushSize,
+    'data-layer-state': encodeURIComponent(
+      JSON.stringify(
+        data.layers || []
+      )
+    ),
     'data-initiative-state': encodeURIComponent(
       JSON.stringify(
         data.initiative || {}
@@ -131,7 +136,10 @@ function serializeToken(
                     'data-size': formatNumber(token.size, 3),
                     'data-rotation': token.rotation,
                     'data-image-asset': token.imageAsset,
+                    'data-initiative-modifier': token.initiativeModifier,
                     'data-source-mode': token.sourceMode,
+                    'data-layer-id': token.layerId,
+                    'data-z-index': token.zIndex,
                     'data-presentation-hidden': token.presentationHidden ? 'true' : 'false'
                   })}
                 ></button>
@@ -154,6 +162,8 @@ function serializeShape(
                     'data-w': Math.round(shape.width),
                     'data-h': Math.round(shape.height),
                     'data-points': shape.points,
+                    'data-layer-id': shape.layerId,
+                    'data-z-index': shape.zIndex,
                     'data-presentation-hidden': shape.presentationHidden ? 'true' : 'false'
                   })}
                 ></div>

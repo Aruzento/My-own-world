@@ -53,10 +53,22 @@ export function applyTokenRecordToElement(
     tokenRecord.imageAsset
   );
 
+  tokenElement.dataset.initiativeModifier =
+    String(tokenRecord.initiativeModifier);
+
   tokenElement.dataset.sourceMode =
     tokenRecord.sourceMode === 'original'
       ? 'original'
       : 'copy';
+
+  tokenElement.dataset.layerId =
+    tokenRecord.layerId;
+
+  tokenElement.dataset.zIndex =
+    String(tokenRecord.zIndex);
+
+  tokenElement.style.zIndex =
+    String(tokenRecord.zIndex);
 
   tokenElement.dataset.presentationHidden =
     tokenRecord.presentationHidden
@@ -98,6 +110,15 @@ export function applyShapeRecordToElement(
     'points',
     shapeRecord.points
   );
+
+  shapeElement.dataset.layerId =
+    shapeRecord.layerId;
+
+  shapeElement.dataset.zIndex =
+    String(shapeRecord.zIndex);
+
+  shapeElement.style.zIndex =
+    String(shapeRecord.zIndex);
 
   shapeElement.dataset.presentationHidden =
     shapeRecord.presentationHidden

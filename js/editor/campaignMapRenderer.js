@@ -18,6 +18,10 @@ export async function renderMapTokenElement(
   options = {}
 ) {
 
+  applyLayerZIndex(
+    token
+  );
+
   positionToken(
     token
   );
@@ -45,7 +49,29 @@ export function renderMapShapeElement(
   shape
 ) {
 
+  applyLayerZIndex(
+    shape
+  );
+
   renderMapShape(
     shape
   );
+}
+
+
+function applyLayerZIndex(
+  element
+) {
+
+  const zIndex =
+    Number(
+      element?.dataset?.zIndex
+    );
+
+  if (!Number.isFinite(zIndex)) return;
+
+  element.style.zIndex =
+    String(
+      Math.round(zIndex)
+    );
 }

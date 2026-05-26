@@ -4,8 +4,7 @@ import {
 } from '@playwright/test';
 
 
-// P1 smoke: popup инициативы должен записывать выбранных участников в model/save state карты.
-
+// P1 smoke: инициатива должна принимать ручные значения и открывать отдельный порядок ходов.
 test(
   'campaign-map-initiative-popup-selects-rolls-and-persists-participants',
   async ({ page }) => {
@@ -65,7 +64,17 @@ test(
             name: 'Hero',
             x: 10,
             y: 10,
-            initiativeModifier: 2
+            modifier: 2
+          });
+
+          store.addToken({
+            tokenId: 'initiative-enemy',
+            pageId: 'enemy-page',
+            type: 'creature',
+            name: 'Enemy',
+            x: 12,
+            y: 12,
+            modifier: -1
           });
 
           store.addToken({
@@ -95,20 +104,55 @@ test(
             document.querySelector('.campaign-map-popup');
 
           popup
-            .querySelector('.campaign-initiative-checkbox')
-            .checked =
-              true;
+            .querySelectorAll('.campaign-initiative-checkbox')
+            .forEach(input => {
+
+              input.checked =
+                true;
+            });
+
+          const values =
+            popup.querySelectorAll('.campaign-initiative-value');
+
+          values[0].value =
+            '17';
+
+          values[1].value =
+            '12';
 
           popup
-            .querySelector('.campaign-initiative-roll-btn')
+            .querySelector('.campaign-initiative-save-btn')
             .click();
 
           await Promise.resolve();
+          await new Promise(resolve => setTimeout(resolve));
+
+          const activeBefore =
+            popup
+              .querySelector('.campaign-initiative-active')
+              .textContent;
+
+          popup
+            .querySelector('.campaign-initiative-next-btn')
+            .click();
+
+          await Promise.resolve();
+          await new Promise(resolve => setTimeout(resolve));
 
           return {
             saveCount,
             initiative:
               store.getModel().initiative,
+            popupTitle:
+              popup.querySelector('.campaign-map-popup-title').textContent,
+            visibleRows:
+              [...popup.querySelectorAll('.campaign-initiative-order-row')]
+                .map(row => row.textContent.replace(/\s+/g, ' ').trim()),
+            activeBefore,
+            activeAfter:
+              popup
+                .querySelector('.campaign-initiative-active')
+                .textContent,
             decoded:
               decodeURIComponent(
                 map.querySelector('.campaign-map-stage').dataset.initiativeState
@@ -119,19 +163,41 @@ test(
 
     expect(
       result.saveCount
-    ).toBe(1);
+    ).toBe(2);
+
+    expect(
+      result.popupTitle
+    ).toBe(
+      'Порядок ходов'
+    );
 
     expect(
       result.initiative.participants
-    ).toHaveLength(1);
+    ).toHaveLength(2);
 
     expect(
-      result.initiative.participants[0].tokenId
-    ).toBe('initiative-hero');
+      result.visibleRows[0]
+    ).toContain(
+      '17'
+    );
 
     expect(
-      result.initiative.participants[0].roll
-    ).toBeGreaterThanOrEqual(1);
+      result.activeBefore
+    ).toContain(
+      'Ход:'
+    );
+
+    expect(
+      result.activeAfter
+    ).toContain(
+      'Ход:'
+    );
+
+    expect(
+      result.activeAfter
+    ).not.toBe(
+      result.activeBefore
+    );
 
     expect(
       result.decoded

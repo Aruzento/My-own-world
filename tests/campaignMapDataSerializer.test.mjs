@@ -103,6 +103,21 @@ test(
 
     assert.match(
       html,
+      /data-layer-state=/
+    );
+
+    assert.match(
+      html,
+      /data-layer-id="map-creatures"/
+    );
+
+    assert.match(
+      html,
+      /data-z-index="40"/
+    );
+
+    assert.match(
+      html,
       /data-name="Герой &quot;А&quot;"/
     );
 

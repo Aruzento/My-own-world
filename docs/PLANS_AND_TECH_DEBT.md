@@ -296,12 +296,14 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 
 12.4. Сделать popup выбора участников: **сделано MVP**.
 Добавлен `js/editor/campaignMapInitiativePopup.js`, кнопка `Иниц.` в toolbar карты и popup выбора существ с действиями `Применить`, `Roll d20`, `Закрыть`.
+Popup доработан: показывает результаты бросков, формулу `d20 + modifier`, активный ход и переключение предыдущий/следующий участник.
 
 12.5. Добавить `roll d20`: **сделано на уровне модели**.
 Добавлены `rollD20()`, `rollParticipant()` и `rollAll()`.
 
 12.6. Добавить initiative modifier: **сделано на уровне модели**.
 Участник хранит `modifier`, а `total = roll + modifier`.
+Токен карты хранит `initiativeModifier`, значение сохраняется в persistent HTML через `data-initiative-modifier`.
 
 12.7. Сделать сортировку порядка: **сделано на уровне модели**.
 `sortByInitiative()` сортирует по total, modifier и имени.
@@ -317,39 +319,51 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 
 ### 13. Campaign Map Layers
 
-- Статус: **не сделано**.
+- Статус: **в работе**.
 - Приоритет: **P1**.
 - Зачем: слои нужны перед массовым select и сложными fog/object сценариями.
 
-13.1. Спроектировать `LayerModel`: **не сделано**.
+13.1. Спроектировать `LayerModel`: **сделано**.
+Добавлен `js/editor/campaignMapLayerModel.js`: базовые слои `Объекты`, `Существа`, `Фигуры`, нормализация, назначение default layer и z-index.
 
-13.2. Ввести z-order для token/shape/object: **не сделано**.
+13.2. Ввести z-order для token/shape/object: **сделано на уровне модели и render adapter**.
+`CampaignMapModel` хранит `layers`, `layerId` и `zIndex` у токенов/фигур; serializer пишет `data-layer-state`, `data-layer-id`, `data-z-index`, render adapter применяет `style.zIndex`.
 
-13.3. UI управления слоями: **не сделано**.
+13.3. UI управления слоями: **сделано MVP**.
+В toolbar карты добавлена кнопка `Слои`; popup показывает базовые слои, переключатель видимости и кнопки поднять/опустить слой.
 
-13.4. Visibility per layer/object: **не сделано**.
+13.4. Visibility per layer/object: **сделано на уровне слоя**.
+Видимость слоя хранится в `layers.visible` и применяется к токенам/фигурам через `data-layer-hidden`. Видимость отдельного объекта остается будущим расширением.
 
-13.5. Serializer/restore layers: **не сделано**.
+13.5. Serializer/restore layers: **сделано**.
+Состояние слоев сохраняется в `data-layer-state`, восстанавливается в `CampaignMapModel` и применяется при render карты.
 
-13.6. Browser regression layers: **не сделано**.
+13.6. Browser regression layers: **сделано**.
+Добавлен browser regression `campaign-map-layers-control-visibility-and-z-order`.
 
 ### 14. Разрез Крупных Файлов
 
-- Статус: **в работе**.
+- Статус: **сделано на текущий крупный JS-срез, продолжать точечно при росте файлов**.
 - Приоритет: **P1**.
 - Зачем: крупные файлы повышают риск регрессий и мешают человеку понимать проект.
 
 14.1. Разрезать `campaignMap.js`: **сделано частично / сильно продвинулось**.
+Результат: основная карта уже разнесена по model/store/render/pointer/token/shape/fog/toolbar/presentation/layers/initiative подсистемам. Оставшийся долг — не добавлять новые большие сценарии обратно в главный файл.
 
-14.2. Разрезать `editor.js`: **не сделано**.
+14.2. Разрезать `editor.js`: **сделано**.
+Результат: `editor.js` стал фасадом setup/open/save, а логика вынесена в `editorOpenPage.js`, `editorSpecialSave.js`, `editorEmptyPage.js`, `editorNavigation.js`, `editorPastePlainText.js`, `editorWikiLinkNormalization.js`, `editorLinksRuntime.js`, `editorAssetSanitizer.js`, `editorDom.js`.
 
-14.3. Разрезать `toolbar.js`: **не сделано**.
+14.3. Разрезать `toolbar.js`: **сделано**.
+Результат: геометрия toolbar вынесена в `toolbarPosition.js`, активные состояния — в `toolbarActiveState.js`, память и применение цветов — в `toolbarTextColor.js`. `toolbar.js` остался контроллером событий.
 
-14.4. Разрезать `blockContract.js`: **не сделано**.
+14.4. Разрезать `blockContract.js`: **сделано**.
+Результат: runtime selectors, runtime marking, table contract, selective upgrades, runtime controls и serializer вынесены в `js/editor/blocks/blockRuntimeSelectors.js`, `blockRuntime.js`, `blockTableContract.js`, `blockUpgrades.js`, `blockRuntimeControls.js`, `blockSerializer.js`. `blockContract.js` остался фасадом контракта блоков.
 
-14.5. Разрезать `campaignMapPresentation.js`: **не сделано**.
+14.5. Разрезать `campaignMapPresentation.js`: **сделано**.
+Результат: CSS презентации вынесен в `campaignMapPresentationStyle.js`, синхронизация отдельных token/shape — в `campaignMapPresentationItemSync.js`; главный файл отвечает за окно презентации, full-sync, viewport и fog cache.
 
-14.6. Разрезать `tables.js`: **не сделано**.
+14.6. Разрезать `tables.js`: **сделано**.
+Результат: логика таблиц разделена на `tableCells.js`, `tableColumns.js`, `tableResize.js`, `tableSelectionState.js`, `tableToolbar.js`, `tableConstants.js`, `tableRows.js`, `tableClipboard.js`. `tables.js` остался точкой подключения событий.
 
 14.7. После каждого разреза запускать full regression: **постоянное правило**.
 
@@ -369,7 +383,7 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 
 15.5. Добавить tests для paste/plain text и keyboard navigation: **не сделано**.
 
-15.6. Разнести `js/ui/tables.js` на подсистемы: **не сделано**.
+15.6. Разнести `js/ui/tables.js` на подсистемы: **сделано в рамках 14.6**.
 
 ### 16. UX / Onboarding Layer
 
@@ -515,6 +529,6 @@ Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
 
 ## Текущий Следующий Шаг
 
-Следующий рекомендуемый пункт: **13.1. Спроектировать LayerModel**.
+Следующий рекомендуемый пункт: **15. Tables Contract И Укрепление Таблиц**.
 
-Причина: Campaign Map Initiative закрыта на уровне MVP model + popup + persistence + browser regression. Следующий пункт плана - Campaign Map Layers.
+Причина: крупный JS-разрез пункта 14 завершен, а таблицы уже выделены в подсистемы. Теперь им нужен явный контракт поведения, persistent/runtime правила и regression tests на resize, selection, paste и keyboard navigation.

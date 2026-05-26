@@ -15,6 +15,11 @@ import {
   CampaignMapInitiativeModel
 } from './campaignMapInitiativeModel.js';
 
+import {
+  CampaignMapLayerModel,
+  normalizeZIndex
+} from './campaignMapLayerModel.js';
+
 
 // CampaignMapModel — единый слой данных карты.
 // DOM может быть источником входного снимка, но сохранение и синхронизация
@@ -52,14 +57,25 @@ export class CampaignMapModel {
         data.view
       );
 
+    this.layers =
+      new CampaignMapLayerModel(
+        data.layers || []
+      ).toJSON();
+
     this.tokens =
-      (data.tokens || []).map(
-        normalizeToken
+      (data.tokens || []).map(token =>
+        normalizeToken(
+          token,
+          this.layers
+        )
       );
 
     this.shapes =
-      (data.shapes || []).map(
-        normalizeShape
+      (data.shapes || []).map(shape =>
+        normalizeShape(
+          shape,
+          this.layers
+        )
       );
 
     this.initiative =
@@ -104,6 +120,10 @@ export class CampaignMapModel {
         : null,
       tokens,
       shapes,
+      layers:
+        readLayerState(
+          stage
+        ),
       initiative:
         readInitiativeState(
           stage
@@ -176,6 +196,13 @@ export class CampaignMapModel {
           this.initiative
         )
       );
+
+    stage.dataset.layerState =
+      encodeURIComponent(
+        JSON.stringify(
+          this.layers
+        )
+      );
   }
 
 
@@ -197,7 +224,8 @@ export class CampaignMapModel {
       normalizeToken({
         ...data,
         tokenId: data.tokenId || crypto.randomUUID()
-      });
+      },
+      this.layers);
 
     this.tokens.push(
       token
@@ -267,7 +295,8 @@ export class CampaignMapModel {
       normalizeToken({
         ...current,
         ...patch
-      })
+      },
+      this.layers)
     );
 
     return current;
@@ -295,8 +324,11 @@ export class CampaignMapModel {
   ) {
 
     this.tokens =
-      tokens.map(
-        normalizeToken
+      tokens.map(token =>
+        normalizeToken(
+          token,
+          this.layers
+        )
       );
 
     return this.tokens;
@@ -321,7 +353,8 @@ export class CampaignMapModel {
       normalizeShape({
         ...data,
         shapeId: data.shapeId || crypto.randomUUID()
-      });
+      },
+      this.layers);
 
     this.shapes.push(
       shape
@@ -375,7 +408,8 @@ export class CampaignMapModel {
       normalizeShape({
         ...current,
         ...patch
-      })
+      },
+      this.layers)
     );
 
     return current;
@@ -403,8 +437,11 @@ export class CampaignMapModel {
   ) {
 
     this.shapes =
-      shapes.map(
-        normalizeShape
+      shapes.map(shape =>
+        normalizeShape(
+          shape,
+          this.layers
+        )
       );
 
     return this.shapes;
@@ -466,6 +503,41 @@ export class CampaignMapModel {
   }
 
 
+  setLayers(
+    layers
+  ) {
+
+    this.layers =
+      new CampaignMapLayerModel(
+        layers
+      ).toJSON();
+
+    this.tokens =
+      this.tokens.map(token =>
+        normalizeToken(
+          {
+            ...token,
+            zIndex: undefined
+          },
+          this.layers
+        )
+      );
+
+    this.shapes =
+      this.shapes.map(shape =>
+        normalizeShape(
+          {
+            ...shape,
+            zIndex: undefined
+          },
+          this.layers
+        )
+      );
+
+    return this.layers;
+  }
+
+
   toJSON() {
 
     return {
@@ -475,6 +547,7 @@ export class CampaignMapModel {
       grid: this.grid,
       fog: this.fog,
       view: this.view,
+      layers: this.layers,
       tokens: this.tokens,
       shapes: this.shapes,
       initiative: this.initiative
@@ -544,6 +617,9 @@ function readTokenElement(
     rotation: token.dataset.rotation,
     imageAsset: token.dataset.imageAsset || '',
     sourceMode: token.dataset.sourceMode || '',
+    initiativeModifier: token.dataset.initiativeModifier,
+    layerId: token.dataset.layerId || '',
+    zIndex: token.dataset.zIndex,
     presentationHidden: token.dataset.presentationHidden === 'true'
   };
 }
@@ -566,6 +642,8 @@ function readShapeElement(
     width: shape.dataset.w,
     height: shape.dataset.h,
     points: shape.dataset.points || '',
+    layerId: shape.dataset.layerId || '',
+    zIndex: shape.dataset.zIndex,
     presentationHidden: shape.dataset.presentationHidden === 'true'
   };
 }
@@ -608,6 +686,30 @@ function readAssetSettings(
 
       return settings;
     }, {});
+}
+
+
+function readLayerState(
+  stage
+) {
+
+  const raw =
+    stage?.dataset.layerState || '';
+
+  if (!raw) return [];
+
+  try {
+
+    return JSON.parse(
+      decodeURIComponent(
+        raw
+      )
+    );
+
+  } catch {
+
+    return [];
+  }
 }
 
 
@@ -716,15 +818,31 @@ function normalizeView(
 
 
 function normalizeToken(
-  token = {}
+  token = {},
+  layers = []
 ) {
+
+  const layerModel =
+    new CampaignMapLayerModel(
+      layers
+    );
+
+  const type =
+    token.type === 'object'
+      ? 'object'
+      : 'creature';
+
+  const layer =
+    layerModel.assignItem(
+      'token',
+      type,
+      token
+    );
 
   return {
     tokenId: String(token.tokenId || ''),
     pageId: String(token.pageId || ''),
-    type: token.type === 'object'
-      ? 'object'
-      : 'creature',
+    type,
     name: String(token.name || ''),
     x: clampPercent(token.x, 50),
     y: clampPercent(token.y, 50),
@@ -735,17 +853,39 @@ function normalizeToken(
       ? Number(token.rotation)
       : 0,
     imageAsset: String(token.imageAsset || ''),
+    initiativeModifier: normalizeNumber(
+      token.initiativeModifier ?? token.modifier,
+      0
+    ),
     sourceMode: token.sourceMode === 'original'
       ? 'original'
       : 'copy',
+    layerId: layer.layerId,
+    zIndex: normalizeZIndex(
+      token.zIndex,
+      layer.zIndex
+    ),
     presentationHidden: Boolean(token.presentationHidden)
   };
 }
 
 
 function normalizeShape(
-  shape = {}
+  shape = {},
+  layers = []
 ) {
+
+  const layerModel =
+    new CampaignMapLayerModel(
+      layers
+    );
+
+  const layer =
+    layerModel.assignItem(
+      'shape',
+      'shape',
+      shape
+    );
 
   return {
     shapeId: String(shape.shapeId || ''),
@@ -757,6 +897,11 @@ function normalizeShape(
     width: clampNumber(shape.width, 1, WORLD_WIDTH, DEFAULT_GRID_SIZE),
     height: clampNumber(shape.height, 1, WORLD_HEIGHT, DEFAULT_GRID_SIZE),
     points: String(shape.points || ''),
+    layerId: layer.layerId,
+    zIndex: normalizeZIndex(
+      shape.zIndex,
+      layer.zIndex
+    ),
     presentationHidden: Boolean(shape.presentationHidden)
   };
 }
@@ -793,6 +938,22 @@ function clampNumber(
     min,
     max
   );
+}
+
+
+function normalizeNumber(
+  value,
+  fallback = 0
+) {
+
+  const number =
+    Number(value);
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : fallback;
 }
 
 

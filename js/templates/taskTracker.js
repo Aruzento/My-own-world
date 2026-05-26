@@ -41,6 +41,7 @@ export function createTaskTrackerTemplate() {
         <script
           class="task-tracker-data"
           type="application/json"
+          data-task-tracker-data
         >${JSON.stringify(createDefaultTaskTrackerData())}</script>
       </div>
     `

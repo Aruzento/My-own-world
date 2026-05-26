@@ -28,6 +28,7 @@ export function getMapControlsHTML() {
 
     <div class="campaign-map-control-group">
       <button class="campaign-shapes-btn" type="button" title="Фигуры">Фигуры</button>
+      <button class="campaign-layers-btn" type="button" title="Слои">Слои</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
       <button class="campaign-initiative-btn" type="button" title="Инициатива">Иниц.</button>
     </div>
@@ -39,6 +40,11 @@ export function getInitiativePopupHTML() {
 
   return `
     <div class="campaign-map-popup-title">Инициатива</div>
+    <div class="campaign-initiative-turn">
+      <button class="campaign-initiative-prev-btn" type="button">←</button>
+      <span class="campaign-initiative-active">Нет активного хода</span>
+      <button class="campaign-initiative-next-btn" type="button">→</button>
+    </div>
     <div class="campaign-initiative-list"></div>
     <div class="campaign-map-popup-actions campaign-initiative-actions">
       <button class="campaign-initiative-save-btn" type="button">Применить</button>
@@ -162,4 +168,63 @@ export function getShapesPopupHTML() {
       </button>
     </div>
   `;
+}
+
+
+export function getLayersPopupHTML(
+  layers = []
+) {
+
+  const rows =
+    [...layers]
+      .sort((left, right) =>
+        right.zIndex - left.zIndex
+      )
+      .map(layer => `
+        <div class="campaign-layer-row" data-layer-id="${escapeAttribute(layer.layerId)}">
+          <label class="campaign-layer-toggle">
+            <input
+              class="campaign-layer-visible"
+              type="checkbox"
+              ${layer.visible !== false ? 'checked' : ''}
+            >
+            <span>${escapeHTML(layer.title)}</span>
+          </label>
+
+          <div class="campaign-layer-actions">
+            <button class="campaign-layer-up" type="button" title="Выше">↑</button>
+            <button class="campaign-layer-down" type="button" title="Ниже">↓</button>
+          </div>
+        </div>
+      `)
+      .join('');
+
+  return `
+    <div class="campaign-map-popup-title">Слои</div>
+    <div class="campaign-layer-list">
+      ${rows}
+    </div>
+  `;
+}
+
+
+function escapeHTML(
+  value
+) {
+
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHTML(
+    value
+  )
+    .replaceAll('"', '&quot;');
 }
