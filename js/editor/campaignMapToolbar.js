@@ -141,10 +141,15 @@ export function getFogPopupHTML(
       <span>Размер кисти</span>
       <input class="campaign-map-range" type="range" min="12" max="120" step="2" value="${stage.dataset.brushSize || DEFAULT_BRUSH_SIZE}">
     </label>
+    <div class="campaign-fog-shape-row">
+      <button class="campaign-fog-circle-btn campaign-fog-shape-btn ${stage.dataset.brushShape !== 'square' ? 'is-active' : ''}" type="button">Круг</button>
+      <button class="campaign-fog-square-btn campaign-fog-shape-btn ${stage.dataset.brushShape === 'square' ? 'is-active' : ''}" type="button">Квадрат</button>
+    </div>
     <div class="campaign-map-popup-actions campaign-fog-fill-row">
       <button class="campaign-fog-fill-btn" type="button">Fog all</button>
       <button class="campaign-fog-clear-btn" type="button">Unfog all</button>
     </div>
+    <button class="campaign-fog-lock-zone-btn campaign-map-popup-option" type="button">Добавить запретную зону</button>
   `;
 }
 

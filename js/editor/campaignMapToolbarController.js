@@ -26,8 +26,10 @@ import {
 } from './campaignMapViewport.js';
 
 import {
+  addLockedFogZone,
   clearFog,
   fillFog,
+  renderLockedFogZones,
   updateFogButtons
 } from './campaignMapFog.js';
 
@@ -508,6 +510,74 @@ function openFogPopup(
         store?.updateFog({
           brushSize: event.target.value
         });
+
+        await deps.saveAndSync();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-fog-circle-btn')
+    ?.addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        getCampaignMapStore(
+          map
+        )?.updateFog({
+          brushShape: 'circle'
+        });
+
+        openFogPopup(
+          map,
+          anchor,
+          deps
+        );
+
+        await deps.saveAndSync();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-fog-square-btn')
+    ?.addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        getCampaignMapStore(
+          map
+        )?.updateFog({
+          brushShape: 'square'
+        });
+
+        openFogPopup(
+          map,
+          anchor,
+          deps
+        );
+
+        await deps.saveAndSync();
+      }
+    );
+
+  popup
+    .querySelector('.campaign-fog-lock-zone-btn')
+    ?.addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        addLockedFogZone(
+          map
+        );
+
+        renderLockedFogZones(
+          map
+        );
 
         await deps.saveAndSync();
       }

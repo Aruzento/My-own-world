@@ -276,18 +276,29 @@ export function applyTokenHealthState(
 
 
 export function selectMapToken(
-  token
+  token,
+  options = {}
 ) {
 
   const map =
     token.closest('.campaign-map-document');
 
-  clearSelectedMapTokens(
-    map
-  );
+  if (!options.additive) {
 
-  token.classList.add(
-    'is-selected'
+    clearSelectedMapTokens(
+      map
+    );
+
+    clearSelectedMapShapes(
+      map
+    );
+  }
+
+  token.classList.toggle(
+    'is-selected',
+    options.additive
+      ? !token.classList.contains('is-selected')
+      : true
   );
 }
 
@@ -415,22 +426,29 @@ export function addMapShape(
 
 
 export function selectMapShape(
-  shape
+  shape,
+  options = {}
 ) {
 
   const map =
     shape.closest('.campaign-map-document');
 
-  clearSelectedMapTokens(
-    map
-  );
+  if (!options.additive) {
 
-  clearSelectedMapShapes(
-    map
-  );
+    clearSelectedMapTokens(
+      map
+    );
 
-  shape.classList.add(
-    'is-selected'
+    clearSelectedMapShapes(
+      map
+    );
+  }
+
+  shape.classList.toggle(
+    'is-selected',
+    options.additive
+      ? !shape.classList.contains('is-selected')
+      : true
   );
 }
 

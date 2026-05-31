@@ -113,7 +113,11 @@ export class CampaignMapModel {
       fog: {
         image: stage?.dataset.fogImage || '',
         mode: stage?.dataset.fogMode || 'draw',
-        brushSize: stage?.dataset.brushSize || ''
+        brushSize: stage?.dataset.brushSize || '',
+        brushShape: stage?.dataset.brushShape || '',
+        lockedZones: readFogLockedZones(
+          stage
+        )
       },
       view: stage
         ? getStageView(stage)
@@ -189,6 +193,16 @@ export class CampaignMapModel {
       stage.dataset.brushSize =
         String(this.fog.brushSize);
     }
+
+    stage.dataset.brushShape =
+      this.fog.brushShape;
+
+    stage.dataset.fogLockedZones =
+      encodeURIComponent(
+        JSON.stringify(
+          this.fog.lockedZones
+        )
+      );
 
     stage.dataset.initiativeState =
       encodeURIComponent(
@@ -737,6 +751,30 @@ function readInitiativeState(
 }
 
 
+function readFogLockedZones(
+  stage
+) {
+
+  const raw =
+    stage?.dataset.fogLockedZones || '';
+
+  if (!raw) return [];
+
+  try {
+
+    return JSON.parse(
+      decodeURIComponent(
+        raw
+      )
+    );
+
+  } catch {
+
+    return [];
+  }
+}
+
+
 function normalizeGrid(
   grid = {}
 ) {
@@ -786,6 +824,12 @@ function normalizeFog(
     mode: fog.mode === 'erase'
       ? 'erase'
       : 'draw',
+    brushShape: fog.brushShape === 'square'
+      ? 'square'
+      : 'circle',
+    lockedZones: normalizeLockedFogZones(
+      fog.lockedZones
+    ),
     brushSize: clampNumber(
       fog.brushSize,
       4,
@@ -793,6 +837,24 @@ function normalizeFog(
       DEFAULT_BRUSH_SIZE
     )
   };
+}
+
+
+function normalizeLockedFogZones(
+  zones
+) {
+
+  if (!Array.isArray(zones)) return [];
+
+  return zones
+    .filter(Boolean)
+    .map(zone => ({
+      id: String(zone.id || crypto.randomUUID()),
+      x: clampNumber(zone.x, 0, WORLD_WIDTH, 0),
+      y: clampNumber(zone.y, 0, WORLD_HEIGHT, 0),
+      width: clampNumber(zone.width, 8, WORLD_WIDTH, DEFAULT_GRID_SIZE),
+      height: clampNumber(zone.height, 8, WORLD_HEIGHT, DEFAULT_GRID_SIZE)
+    }));
 }
 
 

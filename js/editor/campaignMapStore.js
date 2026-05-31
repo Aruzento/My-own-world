@@ -300,6 +300,35 @@ export class CampaignMapStore {
   }
 
 
+  addLockedFogZone(
+    zone
+  ) {
+
+    const zones =
+      [
+        ...(this.model.fog.lockedZones || []),
+        zone
+      ];
+
+    return this.updateFog({
+      lockedZones: zones
+    });
+  }
+
+
+  removeLockedFogZone(
+    zoneId
+  ) {
+
+    return this.updateFog({
+      lockedZones: (this.model.fog.lockedZones || [])
+        .filter(zone =>
+          zone.id !== zoneId
+        )
+    });
+  }
+
+
   setView(
     view
   ) {

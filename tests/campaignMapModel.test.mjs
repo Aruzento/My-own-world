@@ -56,8 +56,52 @@ test(
     );
 
     assert.equal(
+      model.fog.brushShape,
+      'circle'
+    );
+
+    assert.equal(
       model.view.zoom,
       8
+    );
+  }
+);
+
+
+test(
+  'CampaignMapModel сохраняет квадратную кисть и locked fog zones',
+  () => {
+
+    const model =
+      new CampaignMapModel({
+        fog: {
+          brushShape: 'square',
+          lockedZones: [
+            {
+              id: 'lock-1',
+              x: 20,
+              y: 30,
+              width: 40,
+              height: 50
+            }
+          ]
+        }
+      });
+
+    assert.equal(
+      model.fog.brushShape,
+      'square'
+    );
+
+    assert.deepEqual(
+      model.fog.lockedZones[0],
+      {
+        id: 'lock-1',
+        x: 20,
+        y: 30,
+        width: 40,
+        height: 50
+      }
     );
   }
 );

@@ -96,6 +96,7 @@ import {
 } from './campaignMapShapeDrag.js';
 
 import {
+  renderLockedFogZones,
   setFogMode as setCampaignFogMode,
   setMapTool as setCampaignMapTool,
   updateFogButtons,
@@ -195,6 +196,14 @@ export function setupCampaignMaps(
     handleMapInput
   );
 
+  editor.addEventListener(
+    'campaign-map-save-request',
+    async () => {
+
+      await saveAndSync();
+    }
+  );
+
   document.addEventListener(
     'pointermove',
     pointerController.handleDocumentPointerMove
@@ -262,6 +271,10 @@ export async function renderCampaignMap(
   );
 
   refreshCampaignMapStore(
+    map
+  );
+
+  renderLockedFogZones(
     map
   );
 
@@ -409,18 +422,26 @@ async function handleMapClick(
   const shape =
     event.target.closest('.campaign-map-shape');
 
-  if (
-    token &&
-    token.dataset.tokenType === 'object'
-  ) {
+  const additiveSelection =
+    event.shiftKey ||
+    event.ctrlKey ||
+    event.metaKey;
+
+  if (token) {
 
     selectMapToken(
-      token
+      token,
+      {
+        additive: additiveSelection
+      }
     );
   } else if (shape) {
 
     selectMapShape(
-      shape
+      shape,
+      {
+        additive: additiveSelection
+      }
     );
   } else if (
     !event.target.closest('.campaign-map-controls') &&

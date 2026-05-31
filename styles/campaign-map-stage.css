@@ -204,6 +204,13 @@
 }
 
 
+.campaign-map-stage[data-brush-shape="square"] .campaign-brush-preview {
+
+  border-radius:
+    8px;
+}
+
+
 .campaign-brush-preview.hidden {
 
   display:
@@ -218,6 +225,71 @@
 
   height:
     100%;
+}
+
+
+.campaign-fog-locked-zone {
+
+  position:
+    absolute;
+
+  z-index:
+    9;
+
+  border:
+    2px dashed rgba(218,72,72,0.72);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(218,72,72,0.10);
+
+  cursor:
+    pointer;
+
+  pointer-events:
+    auto;
+}
+
+
+.campaign-fog-locked-zone::after {
+
+  content:
+    "×";
+
+  position:
+    absolute;
+
+  right:
+    -8px;
+
+  top:
+    -8px;
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  border-radius:
+    50%;
+
+  background:
+    rgba(68,28,24,0.96);
+
+  color:
+    rgba(255,220,210,0.96);
+
+  font:
+    900 13px/1 system-ui, sans-serif;
 }
 
 

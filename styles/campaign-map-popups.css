@@ -380,6 +380,55 @@
 }
 
 
+.campaign-fog-shape-row {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:
+    6px;
+}
+
+
+.campaign-fog-shape-btn {
+
+  min-height:
+    30px;
+
+  border:
+    1px solid rgba(241,211,142,0.12);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color:
+    rgba(255,248,230,0.78);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-fog-shape-btn.is-active,
+.campaign-fog-shape-btn:hover {
+
+  border-color:
+    rgba(241,211,142,0.3);
+
+  background:
+    rgba(241,211,142,0.12);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
 .campaign-shape-picker {
 
   display:

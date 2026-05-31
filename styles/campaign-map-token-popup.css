@@ -18,7 +18,7 @@
     grid;
 
   grid-template-columns:
-    repeat(3, 34px);
+    repeat(4, 34px);
 
   gap:
     6px;
@@ -51,7 +51,8 @@
 
 
 .campaign-token-popup-menu,
-.campaign-token-popup-hp {
+.campaign-token-popup-hp,
+.campaign-token-popup-image-preview {
 
   width:
     190px;
@@ -61,6 +62,45 @@
 
   flex-direction:
     column;
+}
+
+
+.campaign-token-popup-image-preview {
+
+  width:
+    280px;
+
+  gap:
+    8px;
+}
+
+
+.campaign-token-image-title {
+
+  color:
+    rgba(255,248,230,0.9);
+
+  font:
+    800 13px/1.2 system-ui, sans-serif;
+}
+
+
+.campaign-token-popup-image-preview img {
+
+  width:
+    100%;
+
+  max-height:
+    260px;
+
+  object-fit:
+    contain;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.04);
 }
 
 

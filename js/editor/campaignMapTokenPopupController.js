@@ -138,6 +138,7 @@ export function openTokenPopup(
       ${getTokenVisibilityIcon(hidden)}
     </button>
     <button class="campaign-token-popup-icon campaign-token-popup-duplicate" type="button" title="Дублировать">${iconSvg('copy')}</button>
+    <button class="campaign-token-popup-icon campaign-token-popup-image" type="button" title="Открыть изображение">${iconSvg('image')}</button>
   `;
 
   popup
@@ -205,6 +206,21 @@ export function openTokenPopup(
             deps.getTokenActionDeps()
           );
         }
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-popup-image')
+    .addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        openTokenImagePopup(
+          token
+        );
       }
     );
 
@@ -324,6 +340,7 @@ function openCreatureTokenActionsPopup(
 
   popup.innerHTML = `
     <button type="button" data-action="duplicate">Дублировать</button>
+    <button type="button" data-action="image">Открыть изображение</button>
     <button type="button" data-action="hp">Изменить хиты</button>
     <button type="button" data-action="delete">Удалить</button>
     <button type="button" data-action="open">Открыть карточку</button>
@@ -357,6 +374,14 @@ function openCreatureTokenActionsPopup(
             openTokenHpPopup(
               token,
               deps
+            );
+            return;
+          }
+
+          if (action === 'image') {
+
+            openTokenImagePopup(
+              token
             );
             return;
           }
@@ -617,6 +642,45 @@ function getTokenPopup() {
 }
 
 
+function openTokenImagePopup(
+  token
+) {
+
+  const image =
+    token.querySelector('.campaign-map-token-image');
+
+  const popup =
+    getTokenPopup();
+
+  popup.className =
+    'campaign-token-popup campaign-token-popup-image-preview hidden';
+
+  popup.innerHTML =
+    image?.src
+      ? `
+        <div class="campaign-token-image-title">${escapeHtml(token.dataset.name || 'Изображение')}</div>
+        <img src="${image.src}" alt="">
+      `
+      : `
+        <div class="campaign-token-image-title">Изображение не найдено</div>
+      `;
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  positionPopupNearAnchor(
+    popup,
+    token,
+    {
+      gap: 10,
+      fallbackWidth: 280,
+      fallbackHeight: 320
+    }
+  );
+}
+
+
 function getTokenVisibilityIcon(
   hidden
 ) {
@@ -644,4 +708,16 @@ function getHpPopupTempValue(
       Math.floor(value)
     )
     : 0;
+}
+
+
+function escapeHtml(
+  value
+) {
+
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 }

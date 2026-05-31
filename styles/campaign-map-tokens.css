@@ -179,6 +179,14 @@
 }
 
 
+.campaign-map-token.is-selected {
+
+  box-shadow:
+    0 0 0 3px rgba(218,72,72,0.58),
+    0 12px 30px rgba(0,0,0,0.36);
+}
+
+
 .campaign-map-token.is-object:hover {
 
   box-shadow:
@@ -256,6 +264,46 @@
 
   opacity:
     0.4;
+}
+
+
+.campaign-map-token[data-presentation-hidden="true"]::before {
+
+  content:
+    "скрыт";
+
+  position:
+    absolute;
+
+  right:
+    -2px;
+
+  top:
+    -2px;
+
+  z-index:
+    3;
+
+  padding:
+    2px 5px;
+
+  border:
+    1px solid rgba(218,72,72,0.65);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(36,25,22,0.92);
+
+  color:
+    rgba(255,220,210,0.96);
+
+  font:
+    800 9px/1 system-ui, sans-serif;
+
+  pointer-events:
+    none;
 }
 
 

@@ -18,6 +18,7 @@ const RUNTIME_SELECTOR = [
   '.campaign-map-popup',
   '.campaign-map-drag-measure',
   '.campaign-map-selection',
+  '.campaign-fog-locked-zone',
   '.task-tracker-board',
   '.task-add-btn',
   '.task-column-delete',

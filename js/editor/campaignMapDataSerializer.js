@@ -97,6 +97,12 @@ function serializeStageAttributes(
     'data-fog-mode': data.fog.mode,
     'data-fog-image': data.fog.image,
     'data-brush-size': data.fog.brushSize,
+    'data-brush-shape': data.fog.brushShape,
+    'data-fog-locked-zones': encodeURIComponent(
+      JSON.stringify(
+        data.fog.lockedZones || []
+      )
+    ),
     'data-layer-state': encodeURIComponent(
       JSON.stringify(
         data.layers || []
