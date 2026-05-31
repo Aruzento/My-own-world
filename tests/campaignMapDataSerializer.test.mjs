@@ -52,6 +52,7 @@ test(
       size: 1.5,
       rotation: 15,
       imageAsset: 'hero.png',
+      isPlayerToken: true,
       presentationHidden: true
     });
 
@@ -109,6 +110,11 @@ test(
     assert.match(
       html,
       /data-layer-id="map-creatures"/
+    );
+
+    assert.match(
+      html,
+      /data-player-token="true"/
     );
 
     assert.match(

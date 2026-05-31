@@ -181,3 +181,283 @@ test(
     await popup.close();
   }
 );
+
+
+test(
+  'campaign-map-presentation-keeps-hidden-player-token-visible',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const popupPromise =
+      page.waitForEvent(
+        'popup'
+      );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          openPresentationWindow,
+          syncPresentation
+        } = await import('/js/editor/campaignMapPresentation.js');
+
+        const {
+          getCampaignMapStore
+        } = await import('/js/editor/campaignMapStore.js');
+
+        const {
+          createMapTokenElement
+        } = await import('/js/editor/campaignMapElementFactory.js');
+
+        document.querySelector('#editorArea').innerHTML = `
+          <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+            <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+              <div class="campaign-map-viewport">
+                <div class="campaign-map-background"></div>
+                <div class="campaign-map-object-layer"></div>
+                <canvas class="campaign-map-fog-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const map =
+          document.querySelector('.campaign-map-document');
+
+        const layer =
+          map.querySelector('.campaign-map-object-layer');
+
+        const store =
+          getCampaignMapStore(
+            map
+          );
+
+        const playerToken =
+          store.addToken({
+            tokenId: 'hidden-player',
+            type: 'creature',
+            name: 'Игрок',
+            isPlayerToken: true,
+            presentationHidden: true
+          });
+
+        const npcToken =
+          store.addToken({
+            tokenId: 'hidden-npc',
+            type: 'creature',
+            name: 'NPC',
+            presentationHidden: true
+          });
+
+        layer.append(
+          createMapTokenElement(
+            playerToken
+          ),
+          createMapTokenElement(
+            npcToken
+          )
+        );
+
+        store.commitToDOM();
+
+        openPresentationWindow();
+        syncPresentation();
+      }
+    );
+
+    const popup =
+      await popupPromise;
+
+    await popup.waitForLoadState(
+      'domcontentloaded'
+    );
+
+    const state =
+      await popup.evaluate(
+        () => ({
+          playerExists:
+            Boolean(document.querySelector('[data-token-id="hidden-player"]')),
+          playerHidden:
+            document.querySelector('[data-token-id="hidden-player"]')?.dataset.presentationHidden,
+          playerFlag:
+            document.querySelector('[data-token-id="hidden-player"]')?.dataset.playerToken,
+          npcExists:
+            Boolean(document.querySelector('[data-token-id="hidden-npc"]'))
+        })
+      );
+
+    expect(
+      state
+    ).toEqual({
+      playerExists: true,
+      playerHidden: 'true',
+      playerFlag: 'true',
+      npcExists: false
+    });
+
+    await popup.close();
+  }
+);
+
+
+test(
+  'campaign-map-presentation-renders-fog-above-tokens-and-locked-zones-as-fog',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const popupPromise =
+      page.waitForEvent(
+        'popup'
+      );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          openPresentationWindow,
+          syncPresentation
+        } = await import('/js/editor/campaignMapPresentation.js');
+
+        const {
+          getCampaignMapStore
+        } = await import('/js/editor/campaignMapStore.js');
+
+        const {
+          createMapTokenElement
+        } = await import('/js/editor/campaignMapElementFactory.js');
+
+        const {
+          fillFog
+        } = await import('/js/editor/campaignMapFog.js');
+
+        document.querySelector('#editorArea').innerHTML = `
+          <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+            <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+              <div class="campaign-map-viewport">
+                <div class="campaign-map-background"></div>
+                <div class="campaign-map-object-layer"></div>
+                <canvas class="campaign-map-fog-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const map =
+          document.querySelector('.campaign-map-document');
+
+        const layer =
+          map.querySelector('.campaign-map-object-layer');
+
+        const store =
+          getCampaignMapStore(
+            map
+          );
+
+        store.addLockedFogZone({
+          id: 'locked-fog-zone',
+          x: 120,
+          y: 140,
+          width: 90,
+          height: 70
+        });
+
+        const token =
+          store.addToken({
+            tokenId: 'fog-covered-token',
+            type: 'creature',
+            name: 'В тумане',
+            x: 10,
+            y: 10
+          });
+
+        layer.appendChild(
+          createMapTokenElement(
+            token
+          )
+        );
+
+        fillFog(
+          map
+        );
+
+        openPresentationWindow();
+        syncPresentation();
+      }
+    );
+
+    const popup =
+      await popupPromise;
+
+    await popup.waitForLoadState(
+      'domcontentloaded'
+    );
+
+    const state =
+      await popup.evaluate(
+        () => {
+
+          const token =
+            document.querySelector('[data-token-id="fog-covered-token"]');
+
+          const fog =
+            document.querySelector('.campaign-map-fog-image');
+
+          const lockedFog =
+            document.querySelector('.campaign-presentation-locked-fog-zone');
+
+          return {
+            tokenZ:
+              Number(getComputedStyle(token).zIndex),
+            fogZ:
+              Number(getComputedStyle(fog).zIndex),
+            fogSrcLength:
+              fog?.getAttribute('src')?.length || 0,
+            lockedFogExists:
+              Boolean(lockedFog),
+            lockedFogZ:
+              Number(getComputedStyle(lockedFog).zIndex),
+            lockedFogBackground:
+              getComputedStyle(lockedFog).backgroundColor
+          };
+        }
+      );
+
+    expect(
+      state.fogZ
+    ).toBeGreaterThan(
+      state.tokenZ
+    );
+
+    expect(
+      state.fogSrcLength
+    ).toBeGreaterThan(
+      100
+    );
+
+    expect(
+      state.lockedFogExists
+    ).toBe(
+      true
+    );
+
+    expect(
+      state.lockedFogZ
+    ).toBeGreaterThan(
+      state.tokenZ
+    );
+
+    expect(
+      state.lockedFogBackground
+    ).toBe(
+      'rgb(0, 0, 0)'
+    );
+
+    await popup.close();
+  }
+);

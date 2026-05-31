@@ -172,7 +172,10 @@ export function syncPresentationItemById(
 
   if (
     !record ||
-    record.presentationHidden
+    (
+      record.presentationHidden &&
+      !isPlayerPresentationToken(record)
+    )
   ) {
 
     targetItem?.remove();
@@ -276,6 +279,11 @@ function preparePresentationClone(
     fogImageSrc
   );
 
+  renderPresentationLockedFogZones(
+    clone,
+    model
+  );
+
   return clone;
 }
 
@@ -349,6 +357,112 @@ function replaceFogCanvasWithImage(
     });
 }
 
+
+function renderPresentationLockedFogZones(
+  clone,
+  model
+) {
+
+  const viewport =
+    clone.querySelector('.campaign-map-viewport');
+
+  if (!viewport) return;
+
+  (model?.fog?.lockedZones || [])
+    .forEach(zone => {
+
+      const element =
+        document.createElement('div');
+
+      element.className =
+        'campaign-presentation-locked-fog-zone';
+
+      element.style.left =
+        `${Number(zone.x || 0)}px`;
+
+      element.style.top =
+        `${Number(zone.y || 0)}px`;
+
+      element.style.width =
+        `${Number(zone.width || 0)}px`;
+
+      element.style.height =
+        `${Number(zone.height || 0)}px`;
+
+      viewport.appendChild(
+        element
+      );
+    });
+}
+
+
+export function openPresentationImagePreview(
+  imageSrc,
+  title
+) {
+
+  if (
+    !imageSrc
+  ) return false;
+
+  if (
+    !presentationWindow ||
+    presentationWindow.closed
+  ) {
+
+    openPresentationWindow();
+    syncPresentation();
+  }
+
+  const document =
+    presentationWindow.document;
+
+  const existingPreview =
+    document.querySelector('.presentation-image-preview');
+
+  if (
+    existingPreview?.dataset.imageSrc === imageSrc
+  ) {
+
+    existingPreview.remove();
+    presentationWindow.focus();
+
+    return false;
+  }
+
+  existingPreview?.remove();
+
+  const preview =
+    document.createElement('div');
+
+  preview.className =
+    'presentation-image-preview';
+
+  preview.dataset.imageSrc =
+    imageSrc;
+
+  preview.innerHTML = `
+    <button class="presentation-image-preview-close" type="button">×</button>
+    <div class="presentation-image-preview-title">${escapeHtml(title || 'Изображение')}</div>
+    <img src="${imageSrc}" alt="">
+  `;
+
+  preview
+    .querySelector('button')
+    .addEventListener(
+      'click',
+      () => preview.remove()
+    );
+
+  document.body.appendChild(
+    preview
+  );
+
+  presentationWindow.focus();
+
+  return true;
+}
+
 function ensurePresentationStyle() {
 
   const style =
@@ -367,6 +481,27 @@ function ensurePresentationStyle() {
   presentationWindow.document.head.appendChild(
     style
   );
+}
+
+
+function isPlayerPresentationToken(
+  token
+) {
+
+  return token?.sourceMode === 'original' ||
+    token?.isPlayerToken === true;
+}
+
+
+function escapeHtml(
+  value
+) {
+
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 }
 
 function getPresentationFogImage(

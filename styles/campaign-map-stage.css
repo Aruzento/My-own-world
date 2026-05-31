@@ -246,10 +246,41 @@
     rgba(218,72,72,0.10);
 
   cursor:
-    pointer;
+    move;
 
   pointer-events:
     auto;
+}
+
+
+.campaign-fog-locked-zone-resize {
+
+  position:
+    absolute;
+
+  right:
+    -6px;
+
+  bottom:
+    -6px;
+
+  width:
+    16px;
+
+  height:
+    16px;
+
+  border:
+    2px solid rgba(255,220,210,0.94);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(68,28,24,0.96);
+
+  cursor:
+    nwse-resize;
 }
 
 
@@ -290,6 +321,37 @@
 
   font:
     900 13px/1 system-ui, sans-serif;
+}
+
+
+.campaign-fog-locked-zone.is-presentation::after {
+
+  content:
+    "locked fog";
+
+  right:
+    auto;
+
+  top:
+    8px;
+
+  left:
+    8px;
+
+  width:
+    auto;
+
+  height:
+    auto;
+
+  padding:
+    3px 7px;
+
+  border-radius:
+    999px;
+
+  font:
+    800 11px/1 system-ui, sans-serif;
 }
 
 
@@ -387,12 +449,19 @@
 .campaign-map-fog-canvas {
 
   z-index:
-    5;
+    120;
 
   opacity:
     0.2;
 
   pointer-events:
+    none;
+}
+
+
+.campaign-map-fog-canvas[data-layer-hidden="true"] {
+
+  display:
     none;
 }
 

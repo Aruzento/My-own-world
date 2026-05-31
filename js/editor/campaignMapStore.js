@@ -329,6 +329,25 @@ export class CampaignMapStore {
   }
 
 
+  updateLockedFogZone(
+    zoneId,
+    patch
+  ) {
+
+    return this.updateFog({
+      lockedZones: (this.model.fog.lockedZones || [])
+        .map(zone =>
+          zone.id === zoneId
+            ? {
+                ...zone,
+                ...patch
+              }
+            : zone
+        )
+    });
+  }
+
+
   setView(
     view
   ) {

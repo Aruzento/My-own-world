@@ -109,6 +109,10 @@ export async function addMapToken(
       )
       : '';
 
+  const isPlayerToken =
+    Array.isArray(page?.tags) &&
+    page.tags.includes('player');
+
   const tokenData =
     store.addToken({
       type,
@@ -126,7 +130,8 @@ export async function addMapToken(
       rotation: 0,
       sourceMode: options.sourceMode === 'original'
         ? 'original'
-        : 'copy'
+        : 'copy',
+      isPlayerToken
     });
 
   const token =
@@ -166,14 +171,17 @@ export async function restoreMapTokens(
   const tokens =
     [...map.querySelectorAll('.campaign-map-token')];
 
+  let playerTokenStateChanged =
+    false;
+
   for (const token of tokens) {
 
-    if (!token.dataset.imageAsset) {
+    const page =
+      pageLookup.get(
+        token.dataset.pageId
+      );
 
-      const page =
-        pageLookup.get(
-          token.dataset.pageId
-        );
+    if (!token.dataset.imageAsset) {
 
       const imageAsset =
         page
@@ -187,12 +195,35 @@ export async function restoreMapTokens(
       }
     }
 
+    const isPlayerToken =
+      Array.isArray(page?.tags) &&
+      page.tags.includes('player');
+
+    if (
+      isPlayerToken &&
+      token.dataset.playerToken !== 'true'
+    ) {
+
+      token.dataset.playerToken =
+        'true';
+
+      playerTokenStateChanged =
+        true;
+    }
+
     await renderMapTokenElement(
       token,
       {
         applyHealth: applyTokenHealthState,
         pageLookup
       }
+    );
+  }
+
+  if (playerTokenStateChanged) {
+
+    refreshCampaignMapStore(
+      map
     );
   }
 }

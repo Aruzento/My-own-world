@@ -25,6 +25,14 @@ export const DEFAULT_CAMPAIGN_MAP_LAYERS = [
     zIndex: 80,
     visible: true,
     locked: false
+  },
+  {
+    layerId: 'map-fog',
+    title: 'Туман',
+    kind: 'fog',
+    zIndex: 120,
+    visible: true,
+    locked: true
   }
 ];
 
@@ -225,6 +233,7 @@ function normalizeLayerKind(
     kind === 'object' ||
     kind === 'creature' ||
     kind === 'shape' ||
+    kind === 'fog' ||
     kind === 'custom'
   ) {
 

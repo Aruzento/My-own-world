@@ -121,6 +121,32 @@ export function getPresentationCSS() {
       display: none;
     }
 
+    .campaign-map-token[data-source-mode="original"][data-presentation-hidden="true"] {
+      display: grid;
+      opacity: 0.72;
+    }
+
+    .campaign-map-token[data-player-token="true"][data-presentation-hidden="true"] {
+      display: grid;
+      opacity: 0.72;
+    }
+
+    .campaign-map-token[data-source-mode="original"][data-presentation-hidden="true"]::before,
+    .campaign-map-token[data-player-token="true"][data-presentation-hidden="true"]::before {
+      content: "скрыт";
+      position: absolute;
+      right: -10px;
+      top: -12px;
+      z-index: 6;
+      padding: 4px 8px;
+      border: 1px solid rgba(218,72,72,0.72);
+      border-radius: 999px;
+      background: rgba(36,25,22,0.96);
+      color: rgba(255,220,210,0.98);
+      font: 900 12px/1 system-ui, sans-serif;
+      pointer-events: none;
+    }
+
     .campaign-map-token[data-layer-hidden="true"],
     .campaign-map-shape[data-layer-hidden="true"] {
       display: none;
@@ -145,6 +171,46 @@ export function getPresentationCSS() {
       position: absolute;
       z-index: 8;
       pointer-events: none;
+    }
+
+    .presentation-image-preview {
+      position: fixed;
+      inset: 28px;
+      z-index: 20000;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid rgba(241,211,142,0.22);
+      border-radius: 18px;
+      background: rgba(10,10,10,0.94);
+      box-shadow: 0 28px 90px rgba(0,0,0,0.62);
+    }
+
+    .presentation-image-preview-title {
+      color: rgba(255,248,230,0.96);
+      font: 900 22px/1.15 system-ui, sans-serif;
+    }
+
+    .presentation-image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      min-height: 0;
+    }
+
+    .presentation-image-preview-close {
+      position: absolute;
+      right: 14px;
+      top: 14px;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(218,72,72,0.2);
+      color: rgba(255,230,222,0.96);
+      font: 900 22px/1 system-ui, sans-serif;
+      cursor: pointer;
     }
 
     .campaign-map-shape-svg {
@@ -220,8 +286,15 @@ export function getPresentationCSS() {
       width: 100%;
       height: 100%;
       object-fit: fill;
-      z-index: 5;
+      z-index: 10000;
       opacity: 1 !important;
+      pointer-events: none;
+    }
+
+    .campaign-presentation-locked-fog-zone {
+      position: absolute;
+      z-index: 10001;
+      background: rgba(0,0,0,1);
       pointer-events: none;
     }
   `;

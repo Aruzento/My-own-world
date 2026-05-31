@@ -15,6 +15,10 @@ import {
 } from './blocks/blockContract.js';
 
 import {
+  openPresentationImagePreview
+} from './campaignMapPresentation.js';
+
+import {
   changeTokenHp,
   deleteMapShape,
   deleteTokenAndPage,
@@ -660,10 +664,33 @@ function openTokenImagePopup(
       ? `
         <div class="campaign-token-image-title">${escapeHtml(token.dataset.name || 'Изображение')}</div>
         <img src="${image.src}" alt="">
+        <button class="campaign-token-image-present" type="button">Показать/скрыть</button>
       `
       : `
         <div class="campaign-token-image-title">Изображение не найдено</div>
       `;
+
+  popup
+    .querySelector('.campaign-token-image-present')
+    ?.addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isShown =
+          openPresentationImagePreview(
+            image.src,
+            token.dataset.name || 'Изображение'
+          );
+
+        event.currentTarget.textContent =
+          isShown
+            ? 'Скрыть у игроков'
+            : 'Показать игрокам';
+      }
+    );
 
   popup.classList.remove(
     'hidden'
@@ -674,12 +701,11 @@ function openTokenImagePopup(
     token,
     {
       gap: 10,
-      fallbackWidth: 280,
-      fallbackHeight: 320
+      fallbackWidth: 430,
+      fallbackHeight: 520
     }
   );
 }
-
 
 function getTokenVisibilityIcon(
   hidden

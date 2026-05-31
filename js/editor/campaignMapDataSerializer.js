@@ -144,6 +144,7 @@ function serializeToken(
                     'data-image-asset': token.imageAsset,
                     'data-initiative-modifier': token.initiativeModifier,
                     'data-source-mode': token.sourceMode,
+                    'data-player-token': token.isPlayerToken ? 'true' : 'false',
                     'data-layer-id': token.layerId,
                     'data-z-index': token.zIndex,
                     'data-presentation-hidden': token.presentationHidden ? 'true' : 'false'

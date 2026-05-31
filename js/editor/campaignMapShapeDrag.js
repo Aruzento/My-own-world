@@ -103,7 +103,8 @@ export function startShapeResize(
 export function startShapeDrag(
   event,
   shape,
-  deps
+  deps,
+  options = {}
 ) {
 
   if (!shape) return;
@@ -114,8 +115,16 @@ export function startShapeDrag(
   deps.closeTokenPopup();
   deps.clearTokenPopupTimer();
   deps.selectMapShape(
-    shape
+    shape,
+    {
+      additive: options.additiveSelection
+    }
   );
+
+  if (options.additiveSelection) {
+
+    return;
+  }
 
   const record =
     getShapeRecord(

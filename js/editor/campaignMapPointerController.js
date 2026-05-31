@@ -15,7 +15,10 @@ import {
 
 import {
   createFogDrawing,
-  drawFogAtPointer as drawFogAtPointerOnCanvas
+  drawFogAtPointer as drawFogAtPointerOnCanvas,
+  finishLockedFogZoneEdit,
+  flushLiveFogPresentationSync,
+  moveLockedFogZoneEdit
 } from './campaignMapFog.js';
 
 import {
@@ -136,7 +139,12 @@ export function createCampaignMapPointerController(
       deps.startShapeDrag(
         event,
         shape,
-        deps.getShapeDragDeps()
+        deps.getShapeDragDeps(),
+        {
+          additiveSelection: isAdditiveSelectionEvent(
+            event
+          )
+        }
       );
 
       return;
@@ -163,7 +171,12 @@ export function createCampaignMapPointerController(
       deps.startTokenDrag(
         event,
         token,
-        deps.getTokenDragDeps()
+        deps.getTokenDragDeps(),
+        {
+          additiveSelection: isAdditiveSelectionEvent(
+            event
+          )
+        }
       );
 
       return;
@@ -398,6 +411,10 @@ export function createCampaignMapPointerController(
       event
     );
 
+    moveLockedFogZoneEdit(
+      event
+    );
+
     if (fogDrawing) {
 
       drawFogAtPointer(
@@ -416,6 +433,8 @@ export function createCampaignMapPointerController(
 
   async function handleDocumentPointerUp() {
 
+    finishLockedFogZoneEdit();
+
     await deps.finishTokenInteractions(
       deps.getTokenDragDeps()
     );
@@ -432,6 +451,8 @@ export function createCampaignMapPointerController(
 
       fogDrawing =
         null;
+
+      flushLiveFogPresentationSync();
 
       await deps.saveAndSync();
     }
@@ -513,3 +534,14 @@ function isFogTool(
   );
 }
 
+
+function isAdditiveSelectionEvent(
+  event
+) {
+
+  return Boolean(
+    event.shiftKey ||
+    event.ctrlKey ||
+    event.metaKey
+  );
+}

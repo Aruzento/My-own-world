@@ -32,6 +32,19 @@ import {
 // Fog of war держится отдельно от token/shape логики:
 // здесь только canvas, режим кисти и UI-состояние fog-кнопок.
 
+const LOCKED_ZONE_MIN_SIZE =
+  32;
+
+let editedLockedFogZone =
+  null;
+
+let liveFogSyncTimeout =
+  null;
+
+let liveFogSyncFrame =
+  null;
+
+
 export function fillFog(
   map
 ) {
@@ -65,13 +78,16 @@ export function fillFog(
     canvas.height
   );
 
+  markFogCanvasChanged(
+    map
+  );
+
   persistFogCanvas(
     map
   );
 
   schedulePresentationSync();
 }
-
 
 export function clearFog(
   map
@@ -94,6 +110,10 @@ export function clearFog(
       canvas.width,
       canvas.height
     );
+
+  markFogCanvasChanged(
+    map
+  );
 
   persistFogCanvas(
     map
@@ -137,6 +157,7 @@ export function drawFogAtPointer(
   if (!fogDrawing) return;
 
   const {
+    map,
     stage,
     context,
     mode
@@ -192,12 +213,29 @@ export function drawFogAtPointer(
   }
   context.restore();
 
+  markFogCanvasChanged(
+    map
+  );
+
+  // Презентацию обновляем редко: так игроки видят свежий туман,
+  // но большой canvas не сериализуется на каждом pointermove.
+  scheduleLiveFogPresentationSync();
+}
+
+
+function markFogCanvasChanged(
+  map
+) {
+
+  const stage =
+    map?.querySelector('.campaign-map-stage');
+
+  if (!stage) return;
+
   stage.dataset.fogVersion =
     String(
       Number(stage.dataset.fogVersion || 0) + 1
     );
-
-  schedulePresentationSync();
 }
 
 
@@ -271,6 +309,11 @@ export function renderLockedFogZones(
       map
     )?.getModel().fog.lockedZones || [];
 
+  applyLockedFogZonesToStage(
+    stage,
+    zones
+  );
+
   zones.forEach(zone => {
 
     const element =
@@ -302,10 +345,25 @@ export function renderLockedFogZones(
       `${zone.height}px`;
 
     element.title =
-      'Удалить запретную зону тумана';
+      'Запретная зона тумана. Перетащите, потяните угол или дважды кликните для удаления';
+
+    element.innerHTML =
+      '<span class="campaign-fog-locked-zone-resize" data-runtime="true"></span>';
 
     element.addEventListener(
-      'click',
+      'pointerdown',
+      event => {
+
+        startLockedFogZoneEdit(
+          event,
+          map,
+          zone
+        );
+      }
+    );
+
+    element.addEventListener(
+      'dblclick',
       async event => {
 
         event.preventDefault();
@@ -340,6 +398,109 @@ export function renderLockedFogZones(
   });
 }
 
+
+export function moveLockedFogZoneEdit(
+  event
+) {
+
+  if (!editedLockedFogZone) return;
+
+  const view =
+    getStageView(
+      editedLockedFogZone.stage
+    );
+
+  const dx =
+    (event.clientX - editedLockedFogZone.startX) / view.zoom;
+
+  const dy =
+    (event.clientY - editedLockedFogZone.startY) / view.zoom;
+
+  const patch =
+    editedLockedFogZone.mode === 'resize'
+      ? getLockedFogZoneResizePatch(
+          dx,
+          dy
+        )
+      : getLockedFogZoneMovePatch(
+          dx,
+          dy
+        );
+
+  const store =
+    getCampaignMapStore(
+      editedLockedFogZone.map
+    );
+
+  store?.updateLockedFogZone(
+    editedLockedFogZone.zone.id,
+    patch
+  );
+
+  const zones =
+    store?.getModel().fog.lockedZones || [];
+
+  applyLockedFogZonesToStage(
+    editedLockedFogZone.stage,
+    zones
+  );
+
+  renderLockedFogZones(
+    editedLockedFogZone.map
+  );
+}
+
+
+export function finishLockedFogZoneEdit() {
+
+  if (!editedLockedFogZone) return false;
+
+  const map =
+    editedLockedFogZone.map;
+
+  editedLockedFogZone =
+    null;
+
+  map.dispatchEvent(
+    new CustomEvent(
+      'campaign-map-save-request',
+      {
+        bubbles: true
+      }
+    )
+  );
+
+  schedulePresentationSync();
+
+  return true;
+}
+
+
+export function flushLiveFogPresentationSync() {
+
+  if (liveFogSyncTimeout) {
+
+    clearTimeout(
+      liveFogSyncTimeout
+    );
+
+    liveFogSyncTimeout =
+      null;
+  }
+
+  if (liveFogSyncFrame) return;
+
+  liveFogSyncFrame =
+    requestAnimationFrame(
+      () => {
+
+        liveFogSyncFrame =
+          null;
+
+        schedulePresentationSync();
+      }
+    );
+}
 
 export function setFogMode(
   map,
@@ -468,6 +629,9 @@ function isPointInsideLockedFogZone(
 ) {
 
   const zones =
+    getCampaignMapStore(
+      stage.closest('.campaign-map-document')
+    )?.getModel().fog.lockedZones ||
     readLockedZones(
       stage
     );
@@ -478,6 +642,135 @@ function isPointInsideLockedFogZone(
     point.y >= zone.y &&
     point.y <= zone.y + zone.height
   );
+}
+
+
+function startLockedFogZoneEdit(
+  event,
+  map,
+  zone
+) {
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const stage =
+    map.querySelector('.campaign-map-stage');
+
+  if (!stage) return;
+
+  editedLockedFogZone =
+    {
+      map,
+      stage,
+      zone,
+      mode: event.target.closest('.campaign-fog-locked-zone-resize')
+        ? 'resize'
+        : 'move',
+      startX: event.clientX,
+      startY: event.clientY,
+      startZone: {
+        ...zone
+      }
+    };
+}
+
+
+function scheduleLiveFogPresentationSync() {
+
+  if (
+    liveFogSyncTimeout ||
+    liveFogSyncFrame
+  ) return;
+
+  liveFogSyncTimeout =
+    setTimeout(
+      () => {
+
+        liveFogSyncTimeout =
+          null;
+
+        liveFogSyncFrame =
+          requestAnimationFrame(
+            () => {
+
+              liveFogSyncFrame =
+                null;
+
+              schedulePresentationSync();
+            }
+          );
+      },
+      180
+    );
+}
+
+
+function getLockedFogZoneMovePatch(
+  dx,
+  dy
+) {
+
+  const zone =
+    editedLockedFogZone.startZone;
+
+  return {
+    x: Math.round(
+      clamp(
+        zone.x + dx,
+        0,
+        WORLD_WIDTH - zone.width
+      )
+    ),
+    y: Math.round(
+      clamp(
+        zone.y + dy,
+        0,
+        WORLD_HEIGHT - zone.height
+      )
+    )
+  };
+}
+
+
+function getLockedFogZoneResizePatch(
+  dx,
+  dy
+) {
+
+  const zone =
+    editedLockedFogZone.startZone;
+
+  return {
+    width: Math.round(
+      clamp(
+        zone.width + dx,
+        LOCKED_ZONE_MIN_SIZE,
+        WORLD_WIDTH - zone.x
+      )
+    ),
+    height: Math.round(
+      clamp(
+        zone.height + dy,
+        LOCKED_ZONE_MIN_SIZE,
+        WORLD_HEIGHT - zone.y
+      )
+    )
+  };
+}
+
+
+function applyLockedFogZonesToStage(
+  stage,
+  zones
+) {
+
+  stage.dataset.fogLockedZones =
+    encodeURIComponent(
+      JSON.stringify(
+        zones || []
+      )
+    );
 }
 
 

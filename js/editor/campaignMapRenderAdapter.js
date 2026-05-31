@@ -61,6 +61,11 @@ export function applyTokenRecordToElement(
       ? 'original'
       : 'copy';
 
+  tokenElement.dataset.playerToken =
+    tokenRecord.isPlayerToken
+      ? 'true'
+      : 'false';
+
   tokenElement.dataset.layerId =
     tokenRecord.layerId;
 

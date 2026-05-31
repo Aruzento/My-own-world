@@ -58,7 +58,8 @@ export function hasActiveTokenInteraction() {
 export function startTokenDrag(
   event,
   token,
-  deps
+  deps,
+  options = {}
 ) {
 
   event.preventDefault();
@@ -75,6 +76,18 @@ export function startTokenDrag(
   }
 
   deps.clearTokenPopupTimer();
+
+  deps.selectMapToken(
+    token,
+    {
+      additive: options.additiveSelection
+    }
+  );
+
+  if (options.additiveSelection) {
+
+    return;
+  }
 
   const record =
     getTokenRecord(

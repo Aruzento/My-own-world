@@ -16,7 +16,12 @@ export function removeHiddenPresentationItems(
   const hiddenTokenIds =
     new Set(
       (model?.tokens || [])
-        .filter(token => token.presentationHidden)
+        .filter(token =>
+          token.presentationHidden &&
+          !isPlayerPresentationToken(
+            token
+          )
+        )
         .map(token => token.tokenId)
     );
 
@@ -54,6 +59,15 @@ export function removeHiddenPresentationItems(
         shape.remove();
       }
     });
+}
+
+
+function isPlayerPresentationToken(
+  token
+) {
+
+  return token?.sourceMode === 'original' ||
+    token?.isPlayerToken === true;
 }
 
 export function getPresentationItemSelector(
@@ -164,6 +178,16 @@ function applyTokenRecord(
 
   targetItem.dataset.tokenType =
     record.type;
+
+  targetItem.dataset.sourceMode =
+    record.sourceMode === 'original'
+      ? 'original'
+      : 'copy';
+
+  targetItem.dataset.playerToken =
+    isPlayerPresentationToken(record)
+      ? 'true'
+      : 'false';
 
   targetItem.classList.toggle(
     'is-creature',

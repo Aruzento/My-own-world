@@ -22,7 +22,8 @@ test(
       [
         'map-objects',
         'map-creatures',
-        'map-shapes'
+        'map-shapes',
+        'map-fog'
       ]
     );
 

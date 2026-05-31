@@ -726,6 +726,16 @@
 }
 
 
+.campaign-layer-actions button:disabled {
+
+  opacity:
+    0.35;
+
+  cursor:
+    default;
+}
+
+
 .campaign-map-range-label {
 
   display:

@@ -631,6 +631,7 @@ function readTokenElement(
     rotation: token.dataset.rotation,
     imageAsset: token.dataset.imageAsset || '',
     sourceMode: token.dataset.sourceMode || '',
+    isPlayerToken: token.dataset.playerToken === 'true',
     initiativeModifier: token.dataset.initiativeModifier,
     layerId: token.dataset.layerId || '',
     zIndex: token.dataset.zIndex,
@@ -922,6 +923,9 @@ function normalizeToken(
     sourceMode: token.sourceMode === 'original'
       ? 'original'
       : 'copy',
+    isPlayerToken: Boolean(
+      token.isPlayerToken
+    ),
     layerId: layer.layerId,
     zIndex: normalizeZIndex(
       token.zIndex,

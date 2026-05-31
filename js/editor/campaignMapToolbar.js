@@ -197,8 +197,8 @@ export function getLayersPopupHTML(
           </label>
 
           <div class="campaign-layer-actions">
-            <button class="campaign-layer-up" type="button" title="Выше">↑</button>
-            <button class="campaign-layer-down" type="button" title="Ниже">↓</button>
+            <button class="campaign-layer-up" type="button" title="Выше" ${layer.locked ? 'disabled' : ''}>↑</button>
+            <button class="campaign-layer-down" type="button" title="Ниже" ${layer.locked ? 'disabled' : ''}>↓</button>
           </div>
         </div>
       `)

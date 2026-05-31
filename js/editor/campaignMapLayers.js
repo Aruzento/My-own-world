@@ -38,6 +38,25 @@ export function applyCampaignMapLayers(
           ? 'false'
           : 'true';
     });
+
+  const fogLayer =
+    model.layers.find(layer =>
+      layer.layerId === 'map-fog'
+    );
+
+  const fogCanvas =
+    map.querySelector('.campaign-map-fog-canvas');
+
+  if (fogCanvas && fogLayer) {
+
+    fogCanvas.dataset.layerHidden =
+      fogLayer.visible === false
+        ? 'true'
+        : 'false';
+
+    fogCanvas.style.zIndex =
+      String(fogLayer.zIndex);
+  }
 }
 
 
@@ -109,7 +128,9 @@ export function moveCampaignMapLayer(
   if (
     index < 0 ||
     targetIndex < 0 ||
-    targetIndex >= layers.length
+    targetIndex >= layers.length ||
+    layers[index].locked ||
+    layers[targetIndex].locked
   ) {
 
     return model.layers;
