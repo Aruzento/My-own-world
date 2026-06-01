@@ -2373,3 +2373,26 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - После push проверить, что GitHub Actions `Verify` стал зеленым.
+
+---
+
+## 2026-06-01: Visual Regression / UX Safety 4.1-4.5
+
+### Что сделано
+
+- Создан browser smoke `tests/browser/visual-regression.spec.mjs`.
+- Добавлены screenshot attachments для app shell, card editor, campaign map и task tracker.
+- Добавлены layout guards: popup должен оставаться внутри viewport, floating toolbar сохраняет фиксированную ширину, selection-box карты выделяет токены и фигуры, туман находится выше токенов и locked fog zone, badge `скрыт` имеет ограниченный размер.
+- Создан `docs/VISUAL_REGRESSION_CHECKLIST.md` с ручным review перед push.
+- `tests/browser/scenarios.mjs` и `tests/browser/README.md` обновлены новым visual-сценарием.
+- `docs/PROJECT_PLAN.md` обновлен: пункт 4 закрыт базово, а полный pointer-based group drag оставлен как расширение.
+
+### Что стало лучше
+
+- Визуальные баги теперь ловятся не только глазами после факта, но и browser smoke слоем.
+- CI получает быстрые проверки самых болезненных UI-инвариантов: popup, toolbar, selection, fog layering и hidden badge.
+- Screenshot attachments дают материал для расследования, если визуальный smoke упадет на GitHub Actions.
+
+### Следующее развитие
+
+- Перейти к `5. Popup Lifecycle Standardization`: унифицировать popup lifecycle и расширить boundary tests уже по конкретным popup-типам.

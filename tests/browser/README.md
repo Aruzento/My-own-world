@@ -42,6 +42,7 @@ npm run test:browser
 Первый тест:
 
 - `app-shell.spec.mjs` — проверяет, что приложение открывается без workspace, показывает пустой стартовый экран и не пишет ошибки в console/pageerror.
+- `visual-regression.spec.mjs` — сохраняет screenshot attachments ключевых поверхностей и проверяет базовые visual guards: popup в viewport, фиксированную ширину toolbar, selection-box карты, слой тумана и badge `скрыт`.
 
 ## Первые сценарии для автоматизации
 
@@ -53,6 +54,7 @@ npm run test:browser
 6. `task-tracker-dnd-persistence` — перенос задач/колонок и сохранение.
 7. `popup-viewport-fit` — popup не выходит за видимую область.
 8. `template-create-card` — создание карточки по шаблону.
+9. `visual-core-surfaces` — screenshots app shell, card editor, campaign map и task tracker плюс layout guards.
 
 ## Правила
 

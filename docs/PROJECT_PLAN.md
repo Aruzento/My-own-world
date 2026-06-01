@@ -115,19 +115,24 @@ Budgets вынесены в scenario-based contract: small map, large drag, fog 
 
 ### 4. Visual Regression / UX Safety
 
-Статус: **не сделано**.
+Статус: **сделано базово, расширять при новых UI-регрессиях**.
 Приоритет: **P1**.
 Зачем: визуальные баги уже много раз ломали drag/drop, popup, toolbar, badges, fog layers и selection.
 
-4.1. Добавить Playwright screenshots для app shell, card editor, campaign map, presentation, task tracker.
+4.1. Добавить Playwright screenshots для app shell, card editor, campaign map, presentation, task tracker: **сделано базово**.
+Добавлен `tests/browser/visual-regression.spec.mjs`: тест сохраняет screenshot attachments для app shell, card editor, campaign map и task tracker. Presentation покрывается отдельным browser regression `campaign-map-presentation-renders-fog-above-tokens-and-locked-zones-as-fog`; если понадобится pixel-baseline, его нужно вводить отдельным устойчивым слоем.
 
-4.2. Добавить smoke-проверки размеров: popup в viewport, toolbar не сжимается, badge не выходит за token.
+4.2. Добавить smoke-проверки размеров: popup в viewport, toolbar не сжимается, badge не выходит за token: **сделано базово**.
+Visual smoke проверяет popup boundary, фиксированную ширину floating toolbar и размер скрытого badge у токена.
 
-4.3. Добавить checklist визуального review перед push.
+4.3. Добавить checklist визуального review перед push: **сделано**.
+Создан `docs/VISUAL_REGRESSION_CHECKLIST.md`.
 
-4.4. Добавить тесты для Shift selection на карте и группового drag.
+4.4. Добавить тесты для Shift selection на карте и группового drag: **частично сделано**.
+Добавлена browser-проверка selection-box: рамка выделяет токены и фигуры внутри области и не выделяет сущности вне области. Полный pointer-drag выбранной группы остается будущим расширением, потому что требует отдельного устойчивого UI-сценария с pointermove/pointerup.
 
-4.5. Добавить visual checks для тумана над всеми слоями и locked fog zones в presentation.
+4.5. Добавить visual checks для тумана над всеми слоями и locked fog zones в presentation: **сделано базово**.
+Существующий presentation smoke проверяет z-index тумана и вид locked fog zone в режиме презентации. Новый visual smoke дополнительно проверяет, что fog canvas выше токенов и locked fog zone на карте мастера.
 
 ### 5. Popup Lifecycle Standardization
 

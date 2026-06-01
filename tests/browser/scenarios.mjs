@@ -156,6 +156,8 @@ export const browserSmokeScenarios = [
     title: 'Popup-ы не выходят за видимую область',
     description:
       'Открыть create menu, block popup, wiki popup, toolbar color popup и profile popup возле краев экрана.',
+    automationStatus:
+      'partly-automated: visual-layout-guards-common-regressions проверяет общий popup boundary и toolbar width; конкретные popup по типам остаются для Popup Lifecycle Standardization.',
     automatesChecklist: [
       'Popup И UI: 1',
       'Popup И UI: 2',
@@ -163,6 +165,23 @@ export const browserSmokeScenarios = [
       'Popup И UI: 4',
       'Popup И UI: 5',
       'Popup И UI: 6'
+    ]
+  },
+  {
+    id: 'visual-core-surfaces',
+    priority: 'P1',
+    area: 'ui',
+    title: 'Ключевые поверхности сохраняются как визуальные smoke-артефакты',
+    description:
+      'Открыть app shell, карточку, карту и task tracker, сделать screenshot attachments и проверить базовые layout-инварианты.',
+    automationStatus:
+      'automated: visual-safety-captures-core-surfaces и visual-layout-guards-common-regressions',
+    automatesChecklist: [
+      'Visual Regression: 4.1',
+      'Visual Regression: 4.2',
+      'Visual Regression: 4.3',
+      'Visual Regression: 4.4',
+      'Visual Regression: 4.5'
     ]
   },
   {
