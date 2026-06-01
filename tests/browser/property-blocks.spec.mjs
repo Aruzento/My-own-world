@@ -47,9 +47,19 @@ test(
             [...popup.querySelectorAll('.block-type-option')]
               .map(option => option.dataset.blockType);
 
+          renderTypePicker(
+            popup,
+            'note'
+          );
+
+          const noteTypes =
+            [...popup.querySelectorAll('.block-type-option')]
+              .map(option => option.dataset.blockType);
+
           return {
             itemTypes,
-            locationTypes
+            locationTypes,
+            noteTypes
           };
         }
       );
@@ -62,6 +72,12 @@ test(
 
     expect(
       result.locationTypes
+    ).toContain(
+      'properties'
+    );
+
+    expect(
+      result.noteTypes
     ).not.toContain(
       'properties'
     );

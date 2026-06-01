@@ -2441,3 +2441,29 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Перейти к `6. Properties Model / Character Calculations` или, если появятся UI-баги popup, расширить `popup-lifecycle.spec.mjs` конкретными сценариями block/wiki/item/template popup.
+
+---
+
+## 2026-06-01: Properties Model / Character Calculations 6.1-6.6
+
+### Что сделано
+
+- Создан `docs/PROPERTIES_MODEL_CONTRACT.md`.
+- Добавлен каталог схем `js/properties/propertySchemas.js` для `character`, `creature`, `object`, `location`, `region`, `magic`, `skill`, `item`.
+- Добавлен `js/properties/propertiesModel.js`: нормализация блока `Свойства` в стабильную модель данных.
+- Добавлен `js/properties/characterCalculations.js`: модификаторы DnD, бонус мастерства, расчет проверок, чтение источников персонажа и хитов.
+- `js/templates/propertyBlockDefinitions.js` превращен в совместимый re-export нового слоя.
+- `js/templates/blockTypes.js` теперь рендерит поля `Свойств` из схем, включая select options, min/max и новые поля навыков.
+- `js/editor/campaignMapHealth.js` подключен к расчетному слою: карта сначала читает хиты из `PropertiesModel`, затем из legacy `Стат. блок DnD`.
+- `styles/block-properties.css` обновлен: блоки стали мягче, компактнее и ближе к визуальному языку проекта.
+- `tests/propertyBlocks.test.mjs` расширен проверками схем, модели и правил DnD-расчетов.
+
+### Что стало лучше
+
+- Блок `Свойства` больше не является просто HTML-формой: у него появился слой схем и модель данных.
+- Будущий `CharacterModel` получил точку входа, не завязанную на верстку.
+- Карта начала использовать расчетный слой для хитов, поэтому новые свойства существ можно будет развивать без переписывания логики карты.
+
+### Следующее развитие
+
+- Следующий крупный шаг по этой линии: `CharacterModel`, который объединит свойства, legacy DnD, навыки, инвентарь, классы и расы в одну модель персонажа.

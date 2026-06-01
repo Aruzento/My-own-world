@@ -209,12 +209,20 @@ function createPropertyFieldHTML(
   field
 ) {
 
-  const [
+  const normalizedField =
+    normalizePropertyField(
+      field
+    );
+
+  const {
     name,
     label,
     type,
-    placeholder
-  ] = field;
+    placeholder,
+    options = [],
+    min,
+    max
+  } = normalizedField;
 
   if (type === 'textarea') {
 
@@ -237,8 +245,8 @@ function createPropertyFieldHTML(
     return `
       <label class="card-property-field">
         <span>${label}</span>
-        <select data-property-name="${name}">
-          ${PROPERTY_SHAPE_OPTIONS
+        <select class="card-property-select" data-property-name="${name}">
+          ${(options.length > 0 ? options : PROPERTY_SHAPE_OPTIONS)
             .map(option =>
               `<option value="${option}">${option}</option>`
             )
@@ -255,9 +263,33 @@ function createPropertyFieldHTML(
         type="${type || 'text'}"
         data-property-name="${name}"
         placeholder="${placeholder || ''}"
+        ${min !== undefined ? `min="${min}"` : ''}
+        ${max !== undefined ? `max="${max}"` : ''}
       >
     </label>
   `;
+}
+
+
+function normalizePropertyField(
+  field
+) {
+
+  if (!Array.isArray(field)) return field;
+
+  const [
+    name,
+    label,
+    type,
+    placeholder
+  ] = field;
+
+  return {
+    name,
+    label,
+    type,
+    placeholder
+  };
 }
 
 

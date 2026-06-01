@@ -2,10 +2,22 @@ import {
   createDndStatsBlock
 } from '../templates/blockTypes.js';
 
+import {
+  getPageCharacterHealth,
+  updatePageCharacterHealth
+} from '../properties/characterCalculations.js';
+
 
 export function getPageDndHealth(
   page
 ) {
+
+  const modelHealth =
+    getPageCharacterHealth(
+      page
+    );
+
+  if (modelHealth) return modelHealth;
 
   if (!page?.content) return null;
 
@@ -126,6 +138,18 @@ export function updatePageDndHealth(
     mode = 'delta'
   } = {}
 ) {
+
+  const modelResult =
+    updatePageCharacterHealth(
+      page,
+      {
+        delta,
+        temp,
+        mode
+      }
+    );
+
+  if (modelResult) return modelResult;
 
   const wrapper =
     parsePageBody(
