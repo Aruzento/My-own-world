@@ -112,10 +112,10 @@
 .app-settings-popup {
 
   width:
-    220px;
+    340px;
 
   min-height:
-    120px;
+    160px;
 
   padding:
     8px;
@@ -189,4 +189,256 @@
 
   background:
     rgba(241,211,142,0.10);
+}
+
+
+.app-backup-panel {
+
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  color:
+    rgba(255,248,230,0.88);
+}
+
+
+.app-backup-panel h3 {
+
+  margin:
+    0;
+
+  font-size:
+    14px;
+
+  font-weight:
+    700;
+}
+
+
+.app-backup-panel p {
+
+  margin:
+    0;
+
+  color:
+    rgba(255,248,230,0.62);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.4;
+}
+
+
+.app-backup-primary,
+.app-backup-restore,
+.app-backup-confirm-actions button {
+
+  min-height:
+    30px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.18);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color:
+    rgba(255,248,230,0.9);
+
+  cursor:
+    pointer;
+
+  font-size:
+    12px;
+
+  padding:
+    0 10px;
+}
+
+
+.app-backup-primary:hover,
+.app-backup-restore:hover,
+.app-backup-confirm-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.10);
+}
+
+
+.app-backup-primary:disabled,
+.app-backup-restore:disabled,
+.app-backup-confirm-actions button:disabled {
+
+  cursor:
+    default;
+
+  opacity:
+    0.55;
+}
+
+
+.app-backup-list {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  max-height:
+    220px;
+
+  overflow:
+    auto;
+
+  color:
+    rgba(255,248,230,0.66);
+
+  font-size:
+    12px;
+}
+
+
+.app-backup-item {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  gap:
+    8px;
+
+  align-items:
+    center;
+
+  padding:
+    7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.12);
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.035);
+}
+
+
+.app-backup-meta {
+
+  min-width:
+    0;
+
+  display:
+    grid;
+
+  gap:
+    2px;
+}
+
+
+.app-backup-meta strong,
+.app-backup-meta span {
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.app-backup-meta strong {
+
+  color:
+    rgba(255,248,230,0.92);
+
+  font-size:
+    12px;
+}
+
+
+.app-backup-meta span {
+
+  color:
+    rgba(255,248,230,0.56);
+
+  font-size:
+    11px;
+}
+
+
+.app-backup-confirm {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  padding:
+    8px;
+
+  border:
+    1px solid
+    rgba(220,110,100,0.22);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(220,110,100,0.08);
+}
+
+
+.app-backup-confirm.hidden {
+
+  display:
+    none;
+}
+
+
+.app-backup-confirm-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.app-backup-danger {
+
+  border-color:
+    rgba(220,110,100,0.32) !important;
+
+  background:
+    rgba(220,110,100,0.12) !important;
+}
+
+
+.app-backup-danger:hover {
+
+  background:
+    rgba(220,110,100,0.20) !important;
 }

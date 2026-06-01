@@ -22,7 +22,7 @@
 Ближайшие P0/P1 задачи, которые должны идти поверх текущего backlog:
 
 1. **Schema Validation / Recovery Layer**: контракт схем workspace/page/map/task/assets, валидаторы, recovery flow и tests. Статус: **в работе**, первый слой валидаторов и `WORKSPACE_SCHEMA_CONTRACT.md` добавлены.
-2. **Storage / Backup / Restore**: ручные и автоматические snapshots перед рискованными операциями, restore flow. Статус: **частично сделано**, добавлен backup-сервис, контракт и auto snapshot перед удалением/переносом страниц.
+2. **Storage / Backup / Restore**: ручные и автоматические snapshots перед рискованными операциями, restore flow. Статус: **частично сделано**, добавлен backup-сервис, контракт, auto snapshot перед удалением/переносом страниц, ручная команда создания backup и UI-список restore-точек.
 3. **Campaign Map Performance Gate**: вынести стресс карты в тест, добавить browser performance smoke, budgets для fog/render/sync и оптимизацию dirty regions.
 4. **Visual Regression / UX Safety**: screenshots и проверки popup/toolbar/badge/selection/layers.
 5. **Popup Lifecycle Standardization**: общий contract create/open/close/destroy/position/z-index и постепенный уход от static popup в `index.html`.

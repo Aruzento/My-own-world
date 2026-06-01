@@ -14,6 +14,8 @@
 - Backup сохраняет snapshot в `.my-own-world-backups/<snapshot-id>/`.
 - Snapshot содержит `manifest.json` и копии markdown-страниц в `pages/`.
 - Добавлен осторожный restore helper: он восстанавливает страницы из backup, но не удаляет новые файлы, созданные после backup.
+- В popup настроек добавлена ручная команда "Создать резервную копию".
+- В popup настроек добавлен список restore-точек и inline-диалог подтверждения восстановления.
 - Auto snapshot подключен перед удалением ветки страниц и перед переносом страниц в дереве.
 - Добавлены unit-тесты manifest/id для backup-сервиса.
 
@@ -25,8 +27,6 @@
 
 ### Что осталось
 
-- Нужна UI-команда "Создать резервную копию workspace".
-- Нужен UI-список backup и безопасный restore dialog.
 - Нужно добавить backup assets по `AssetReference`.
 - Нужны browser/storage regression tests на реальное удаление/перенос с проверкой snapshot.
 
