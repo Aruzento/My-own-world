@@ -21,6 +21,7 @@ import {
 } from './campaignMapGeometry.js';
 
 import {
+  schedulePresentationFogSync,
   schedulePresentationSync
 } from './campaignMapPresentationSync.js';
 
@@ -42,6 +43,9 @@ let liveFogSyncTimeout =
   null;
 
 let liveFogSyncFrame =
+  null;
+
+let liveFogSyncMap =
   null;
 
 
@@ -129,7 +133,9 @@ export function clearFog(
     map
   );
 
-  schedulePresentationSync();
+  schedulePresentationFogSync(
+    map
+  );
 }
 
 
@@ -229,7 +235,9 @@ export function drawFogAtPointer(
 
   // Презентацию обновляем редко: так игроки видят свежий туман,
   // но большой canvas не сериализуется на каждом pointermove.
-  scheduleLiveFogPresentationSync();
+  scheduleLiveFogPresentationSync(
+    map
+  );
 }
 
 
@@ -509,7 +517,9 @@ export function finishLockedFogZoneEdit() {
     )
   );
 
-  schedulePresentationSync();
+  schedulePresentationFogSync(
+    map
+  );
 
   return true;
 }
@@ -536,7 +546,12 @@ export function flushLiveFogPresentationSync() {
         liveFogSyncFrame =
           null;
 
-        schedulePresentationSync();
+        schedulePresentationFogSync(
+          liveFogSyncMap
+        );
+
+        liveFogSyncMap =
+          null;
       }
     );
 }
@@ -723,7 +738,12 @@ function startLockedFogZoneEdit(
 }
 
 
-function scheduleLiveFogPresentationSync() {
+function scheduleLiveFogPresentationSync(
+  map
+) {
+
+  liveFogSyncMap =
+    map;
 
   if (
     liveFogSyncTimeout ||
@@ -744,7 +764,12 @@ function scheduleLiveFogPresentationSync() {
               liveFogSyncFrame =
                 null;
 
-              schedulePresentationSync();
+              schedulePresentationFogSync(
+                liveFogSyncMap
+              );
+
+              liveFogSyncMap =
+                null;
             }
           );
       },

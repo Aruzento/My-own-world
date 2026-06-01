@@ -58,6 +58,13 @@
 - лишние update для скрытых объектов;
 - drag-measure overlay может синхронизироваться слишком часто.
 
+Текущая защита:
+
+- live token/shape sync идет по `tokenId` / `shapeId`;
+- несколько item updates в одном кадре батчатся по карте;
+- если один из item отсутствует в презентации, выполняется один fallback full-sync;
+- fog paint обновляет только fog image в презентации, а не всю карту.
+
 ### Zoom/Pan
 
 Zoom и pan меняют transform сцены.
@@ -175,6 +182,6 @@ localStorage.removeItem('myOwnWorld.debug.performance');
 
 1. Добавить stress smoke с реальным pointer drag на большой карте.
 2. Добавить stress smoke с реальным pointer painting тумана, а не только synthetic canvas paint.
-3. Перевести fog save/sync на настоящие dirty regions.
-4. Усилить presentation sync: batch updates и diff by id для нескольких операций за кадр.
+3. Перевести fog save на настоящие dirty regions.
+4. Усилить presentation sync: diff by id для слоев, locked fog zones и редких structural changes.
 5. Добавить UI/CLI отчет performance diagnostics для CI artifacts.

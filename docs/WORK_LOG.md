@@ -5,6 +5,32 @@
 Новые подробные записи после крупных изменений добавлять сюда, а в `docs/PROJECT_PLAN.md` менять только статусы и следующие задачи.
 
 ---
+## 2026-06-01: Campaign Map Performance Tail 3.5-3.7
+
+### Что сделано
+
+- `syncPresentationItemsById()` батчит item-level обновления по карте.
+- Missing item в презентации теперь вызывает один fallback full-sync, а не серию полных перерисовок.
+- Добавлен `syncPresentationFog()` и `schedulePresentationFogSync()`: при рисовании/очистке тумана presentation обновляет только fog image.
+- `flushLiveFogPresentationSync()` теперь отправляет fog-only sync.
+- Повторный drag locked fog zone исправлен: старт drag перечитывает актуальную зону из модели, а не stale-объект из старого render.
+
+### Что стало лучше
+
+- `3.5` закрыт базово: presentation live sync стал batch/fallback-aware.
+- `3.7` закрыт базово: fog paint больше не требует полного sync всей карты в live-режиме.
+- Поведение запретных зон стало устойчивее после нескольких переносов подряд.
+
+### Что осталось
+
+- Настоящий dirty-region save для тумана: сейчас dirty regions считаются и используются для diagnostics, но persistent fog image все еще сохраняется целиком на завершении рисования.
+- Diff by id для структурных изменений слоев и locked fog zones можно усилить позже, когда начнем развивать слои карты.
+
+### Следующее развитие
+
+- Следующий пункт плана: `4. Visual Regression / UX Safety`.
+
+---
 ## 2026-06-01: Campaign Map Performance Gate 3.4-3.8
 
 ### Что сделано

@@ -129,7 +129,8 @@ export function syncPresentation() {
 export function syncPresentationItemById(
   sourceMap,
   itemType,
-  itemId
+  itemId,
+  options = {}
 ) {
 
   if (
@@ -184,7 +185,11 @@ export function syncPresentationItemById(
 
   if (!targetItem) {
 
-    syncPresentation();
+    if (options.fallbackFullSync !== false) {
+
+      syncPresentation();
+    }
+
     return false;
   }
 
@@ -193,6 +198,82 @@ export function syncPresentationItemById(
     itemType,
     record
   );
+
+  return true;
+}
+
+
+export function syncPresentationItemsById(
+  sourceMap,
+  items = []
+) {
+
+  if (!items.length) return true;
+
+  let needsFullSync =
+    false;
+
+  items.forEach(item => {
+
+    const synced =
+      syncPresentationItemById(
+        sourceMap,
+        item.itemType,
+        item.itemId,
+        {
+          fallbackFullSync:
+            false
+        }
+      );
+
+    if (!synced) {
+
+      needsFullSync =
+        true;
+    }
+  });
+
+  if (needsFullSync) {
+
+    syncPresentation();
+  }
+
+  return !needsFullSync;
+}
+
+
+export function syncPresentationFog(
+  sourceMap
+) {
+
+  if (
+    !sourceMap ||
+    !presentationWindow ||
+    presentationWindow.closed
+  ) return false;
+
+  const sourceStage =
+    sourceMap.querySelector('.campaign-map-stage') ||
+    sourceMap;
+
+  const sourceCanvas =
+    sourceStage.querySelector('.campaign-map-fog-canvas');
+
+  const targetFog =
+    presentationWindow.document.querySelector('.campaign-map-fog-image');
+
+  if (!sourceCanvas || !targetFog) {
+
+    syncPresentation();
+
+    return false;
+  }
+
+  targetFog.src =
+    getPresentationFogImage(
+      sourceStage,
+      sourceCanvas
+    );
 
   return true;
 }

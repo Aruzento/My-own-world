@@ -1,7 +1,8 @@
 import {
   syncPresentation,
   syncPresentationDragMeasure,
-  syncPresentationItemById
+  syncPresentationFog,
+  syncPresentationItemsById
 } from './campaignMapPresentation.js';
 
 
@@ -13,6 +14,7 @@ let lastPresentationSyncAt = 0;
 let livePresentationFrame = null;
 const pendingPresentationItems = new Map();
 let pendingPresentationMeasure = null;
+let pendingPresentationFogMap = null;
 
 
 // Синхронизация презентации вынесена отдельно, чтобы drag/resize не запускали
@@ -60,31 +62,32 @@ export function scheduleLivePresentationSync(
         livePresentationFrame =
           null;
 
-        const items =
-          [...pendingPresentationItems.values()];
+        flushPendingLivePresentation();
+      }
+    );
+}
 
-        const measure =
-          pendingPresentationMeasure;
 
-        pendingPresentationItems.clear();
-        pendingPresentationMeasure =
+export function schedulePresentationFogSync(
+  map
+) {
+
+  if (map) {
+
+    pendingPresentationFogMap =
+      map;
+  }
+
+  if (livePresentationFrame) return;
+
+  livePresentationFrame =
+    requestAnimationFrame(
+      () => {
+
+        livePresentationFrame =
           null;
 
-        items.forEach(nextItem => {
-
-          syncPresentationItemById(
-            nextItem.map,
-            nextItem.itemType,
-            nextItem.itemId
-          );
-        });
-
-        if (measure) {
-
-          syncPresentationDragMeasure(
-            measure
-          );
-        }
+        flushPendingLivePresentation();
       }
     );
 }
@@ -106,6 +109,80 @@ function normalizeLiveSyncPayload(
   }
 
   return null;
+}
+
+
+function groupPresentationItemsByMap(
+  items
+) {
+
+  const grouped =
+    new Map();
+
+  items.forEach(item => {
+
+    const list =
+      grouped.get(
+        item.map
+      ) || [];
+
+    list.push(
+      item
+    );
+
+    grouped.set(
+      item.map,
+      list
+    );
+  });
+
+  return grouped;
+}
+
+
+function flushPendingLivePresentation() {
+
+  const items =
+    [...pendingPresentationItems.values()];
+
+  const measure =
+    pendingPresentationMeasure;
+
+  const fogMap =
+    pendingPresentationFogMap;
+
+  pendingPresentationItems.clear();
+  pendingPresentationMeasure =
+    null;
+  pendingPresentationFogMap =
+    null;
+
+  const itemsByMap =
+    groupPresentationItemsByMap(
+      items
+    );
+
+  itemsByMap.forEach((nextItems, map) => {
+
+    syncPresentationItemsById(
+      map,
+      nextItems
+    );
+  });
+
+  if (fogMap) {
+
+    syncPresentationFog(
+      fogMap
+    );
+  }
+
+  if (measure) {
+
+    syncPresentationDragMeasure(
+      measure
+    );
+  }
 }
 
 
