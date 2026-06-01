@@ -14,6 +14,11 @@ import {
   scanDirectory
 } from './pageStorage.js';
 
+import {
+  logWorkspaceValidationResult,
+  validateWorkspaceSnapshot
+} from '../schema/workspaceSchema.js';
+
 
 /* Импорт persistence-слоя */
 import {
@@ -132,5 +137,14 @@ export async function loadWorkspace() {
   /* Фиксирует результат загрузки единым событием, чтобы PageRepository пересобрал индексы. */
   setPages(
     [...state.pages]
+  );
+
+  const validation =
+    validateWorkspaceSnapshot({
+      pages: state.pages
+    });
+
+  logWorkspaceValidationResult(
+    validation
   );
 }

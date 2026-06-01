@@ -20,6 +20,10 @@ import {
 } from './writeQueue.js';
 
 import {
+  createWorkspaceBackupBeforeRiskyOperation
+} from './backupService.js';
+
+import {
   notifyPageCreated,
   notifyPageMoved,
   notifyPageUpdated
@@ -235,6 +239,10 @@ export async function deletePageBranch(
 
   await ensureWorkspaceCanWrite();
 
+  await createWorkspaceBackupBeforeRiskyOperation(
+    'delete-page-branch'
+  );
+
   const deletedPages =
     [];
 
@@ -363,6 +371,10 @@ export async function updatePageParent(
   parentId
 ) {
 
+  await createWorkspaceBackupBeforeRiskyOperation(
+    'move-page-parent'
+  );
+
   page.parent =
     parentId;
 
@@ -389,6 +401,10 @@ export async function updatePageTreePosition(
   parentId,
   order
 ) {
+
+  await createWorkspaceBackupBeforeRiskyOperation(
+    'move-page-tree-position'
+  );
 
   page.parent =
     parentId;

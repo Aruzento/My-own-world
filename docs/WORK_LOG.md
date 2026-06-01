@@ -5,6 +5,56 @@
 Новые подробные записи после крупных изменений добавлять сюда, а в `docs/PLANS_AND_TECH_DEBT.md` менять только статусы и следующие задачи.
 
 ---
+## 2026-06-01: Backup / Restore, первый слой
+
+### Что сделано
+
+- Добавлен `docs/BACKUP_AND_RECOVERY_CONTRACT.md`.
+- Добавлен `js/storage/backupService.js`.
+- Backup сохраняет snapshot в `.my-own-world-backups/<snapshot-id>/`.
+- Snapshot содержит `manifest.json` и копии markdown-страниц в `pages/`.
+- Добавлен осторожный restore helper: он восстанавливает страницы из backup, но не удаляет новые файлы, созданные после backup.
+- Auto snapshot подключен перед удалением ветки страниц и перед переносом страниц в дереве.
+- Добавлены unit-тесты manifest/id для backup-сервиса.
+
+### Что стало лучше
+
+- Schema recovery теперь получает обязательную базу: перед будущей автоматической починкой можно будет создавать snapshot.
+- Рискованные операции удаления/переноса получили первый защитный слой.
+- Backup слой не зависит от DOM и работает на storage/page data.
+
+### Что осталось
+
+- Нужна UI-команда "Создать резервную копию workspace".
+- Нужен UI-список backup и безопасный restore dialog.
+- Нужно добавить backup assets по `AssetReference`.
+- Нужны browser/storage regression tests на реальное удаление/перенос с проверкой snapshot.
+
+---
+## 2026-06-01: Schema Validation / Recovery, первый слой
+
+### Что сделано
+
+- Изучен бриф `MY_OWN_WORLD_AI_ARCHITECTURE_RISK_BRIEF_01_06_2026_UPDATED.docx`.
+- План развития скорректирован: backup/recovery поставлен сразу после schema validation, popup lifecycle выделен отдельным приоритетом.
+- Добавлен `docs/WORKSPACE_SCHEMA_CONTRACT.md`.
+- Добавлены чистые валидаторы: workspace/page, campaign map, task tracker и JSON helper.
+- `loadWorkspace()` подключает validation в warning-only режиме: старые workspace не блокируются, но проблемы схемы выводятся в консоль.
+- Добавлены unit-тесты на missing id, broken parent, duplicated title, broken map token, broken task reference и invalid JSON.
+
+### Что стало лучше
+
+- Появился первый слой защиты от поврежденных workspace-данных.
+- Валидаторы не чинят данные молча, а возвращают явные `error` и `warning`.
+- Следующий recovery layer теперь можно строить поверх диагностики, а не поверх догадок.
+
+### Что осталось
+
+- Нужен UI-экран диагностики workspace.
+- Нужен backup/snapshot перед любым автоматическим recovery.
+- Нужно расширить validation на templates и asset references как обязательный gate.
+
+---
 ## 2026-05-31: Исправления UX карты после пункта 22
 
 ### Что сделано
