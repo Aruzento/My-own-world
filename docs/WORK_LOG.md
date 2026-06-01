@@ -2467,3 +2467,26 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Следующий крупный шаг по этой линии: `CharacterModel`, который объединит свойства, legacy DnD, навыки, инвентарь, классы и расы в одну модель персонажа.
+
+---
+
+## 2026-06-01: FormattingService 12.7-12.8 и Desktop-план
+
+### Что сделано
+
+- `js/editor/formattingService.js` получил собственные Range/DOM-операции для `bold`, `italic`, `underline`, списков, цвета, reset format и plain-text insertion.
+- `document.execCommand()` оставлен только как аварийный fallback внутри `formattingService.js`.
+- `tests/browser/editor-formatting.spec.mjs` расширен проверками списков, цвета, reset format и plain-text insertion.
+- `docs/FORMATTING_SERVICE_CONTRACT.md` обновлен: deprecated API больше не является основным механизмом форматирования.
+- `docs/Новые идеи к адаптации.txt` разобран и встроен в `docs/PROJECT_PLAN.md`.
+- В план добавлены будущие направления: audio/playlist assets, музыка локаций, rule tree, аккаунты/роли/admin, CharacterModel, Inventory, Effects, performance hardening, graph relationships, AI/collaboration/web.
+- Переход на desktop подробно разложен в `docs/PROJECT_PLAN.md` и `docs/DESKTOP_ADAPTER_PLAN.md`: 20.4-20.11.
+
+### Что стало лучше
+
+- Редактор меньше зависит от deprecated browser API и стал предсказуемее для будущего desktop/WebView.
+- Desktop-направление стало не абстрактным желанием, а очередью конкретных шагов: окружение, adapters, Tauri FS commands, prototype, backup/restore gate, presentation window и packaging smoke.
+
+### Следующее развитие
+
+- Следующий рабочий пункт: `20.4. Подготовить окружение Desktop Spike`.

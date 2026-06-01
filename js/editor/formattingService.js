@@ -20,6 +20,12 @@ const INLINE_FORMATTING_COMMANDS =
 const TEXT_INSERT_COMMAND =
   'insertText';
 
+const INLINE_COMMAND_TAGS = {
+  bold: 'strong',
+  italic: 'em',
+  underline: 'u'
+};
+
 const BLOCK_FORMAT_TAGS =
   new Set([
     'p',
@@ -43,10 +49,14 @@ export function runInlineFormattingCommand(
     return false;
   }
 
-  return runDeprecatedDocumentCommand(
+  return runNativeInlineFormattingCommand(
     command,
     value
-  );
+  ) ||
+    runDeprecatedDocumentCommand(
+      command,
+      value
+    );
 }
 
 
@@ -125,7 +135,10 @@ export function queryInlineFormattingState(
 
   return queryDeprecatedDocumentCommandState(
     command
-  );
+  ) ||
+    queryNativeInlineFormattingState(
+      command
+    );
 }
 
 
@@ -224,10 +237,13 @@ export function insertPlainTextFallback(
     !isSelectionInsidePersistentEditable()
   ) return false;
 
-  return runDeprecatedDocumentCommand(
-    TEXT_INSERT_COMMAND,
+  return insertTextAtSelection(
     text
-  );
+  ) ||
+    runDeprecatedDocumentCommand(
+      TEXT_INSERT_COMMAND,
+      text
+    );
 }
 
 
@@ -273,6 +289,444 @@ function formatSelectedFragmentWithHistory(
   ]);
 
   return true;
+}
+
+
+function runNativeInlineFormattingCommand(
+  command,
+  value
+) {
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0
+  ) return false;
+
+  if (command === 'removeFormat') {
+
+    return removeFormatFromSelection(
+      selection
+    );
+  }
+
+  if (command === 'foreColor') {
+
+    return wrapSelectionWithInlineElement(
+      selection,
+      'span',
+      element => {
+
+        element.style.color =
+          value || '#000000';
+      }
+    );
+  }
+
+  if (
+    command === 'insertUnorderedList' ||
+    command === 'insertOrderedList'
+  ) {
+
+    return toggleListForSelection(
+      selection,
+      command === 'insertOrderedList'
+        ? 'ol'
+        : 'ul'
+    );
+  }
+
+  const tagName =
+    INLINE_COMMAND_TAGS[command];
+
+  if (!tagName) return false;
+
+  return wrapSelectionWithInlineElement(
+    selection,
+    tagName
+  );
+}
+
+
+function wrapSelectionWithInlineElement(
+  selection,
+  tagName,
+  configure = null
+) {
+
+  const range =
+    selection.getRangeAt(0);
+
+  if (range.collapsed) return false;
+
+  const wrapper =
+    document.createElement(
+      tagName
+    );
+
+  configure?.(
+    wrapper
+  );
+
+  try {
+
+    wrapper.appendChild(
+      range.extractContents()
+    );
+
+    range.insertNode(
+      wrapper
+    );
+
+    restoreSelectionAroundInline(
+      wrapper
+    );
+
+    mergeAdjacentInlineElements(
+      wrapper
+    );
+
+    return true;
+
+  } catch {
+
+    return false;
+  }
+}
+
+
+function removeFormatFromSelection(
+  selection
+) {
+
+  const range =
+    selection.getRangeAt(0);
+
+  if (range.collapsed) return false;
+
+  const fragment =
+    range.extractContents();
+
+  stripInlineFormatting(
+    fragment
+  );
+
+  const markerStart =
+    document.createTextNode('');
+
+  const markerEnd =
+    document.createTextNode('');
+
+  const container =
+    document.createDocumentFragment();
+
+  container.appendChild(
+    markerStart
+  );
+
+  container.appendChild(
+    fragment
+  );
+
+  container.appendChild(
+    markerEnd
+  );
+
+  range.insertNode(
+    container
+  );
+
+  const nextRange =
+    document.createRange();
+
+  nextRange.setStartAfter(
+    markerStart
+  );
+
+  nextRange.setEndBefore(
+    markerEnd
+  );
+
+  selection.removeAllRanges();
+  selection.addRange(
+    nextRange
+  );
+
+  markerStart.remove();
+  markerEnd.remove();
+
+  return true;
+}
+
+
+function toggleListForSelection(
+  selection,
+  listTagName
+) {
+
+  const range =
+    selection.getRangeAt(0);
+
+  const editableRoot =
+    getSelectionEditableRoot(
+      range
+    );
+
+  const blocks =
+    getSelectedFormatTargets(
+      range,
+      editableRoot
+    );
+
+  if (blocks.length === 0) return false;
+
+  const list =
+    document.createElement(
+      listTagName
+    );
+
+  blocks.forEach(block => {
+
+    const item =
+      document.createElement('li');
+
+    item.innerHTML =
+      block.innerHTML;
+
+    list.appendChild(
+      item
+    );
+  });
+
+  blocks[0].before(
+    list
+  );
+
+  blocks.forEach(block =>
+    block.remove()
+  );
+
+  restoreSelectionAroundBlocks([
+    list
+  ]);
+
+  return true;
+}
+
+
+function insertTextAtSelection(
+  text
+) {
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0
+  ) return false;
+
+  const range =
+    selection.getRangeAt(0);
+
+  range.deleteContents();
+
+  const textNode =
+    document.createTextNode(
+      text
+    );
+
+  range.insertNode(
+    textNode
+  );
+
+  range.setStartAfter(
+    textNode
+  );
+
+  range.collapse(
+    true
+  );
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
+
+  return true;
+}
+
+
+function queryNativeInlineFormattingState(
+  command
+) {
+
+  const selection =
+    window.getSelection();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0
+  ) return false;
+
+  const element =
+    getSelectionElement(
+      selection
+    );
+
+  if (!element) return false;
+
+  if (command === 'bold') {
+
+    return Boolean(
+      element.closest('strong, b')
+    );
+  }
+
+  if (command === 'italic') {
+
+    return Boolean(
+      element.closest('em, i')
+    );
+  }
+
+  if (command === 'underline') {
+
+    return Boolean(
+      element.closest('u')
+    );
+  }
+
+  if (command === 'insertUnorderedList') {
+
+    return Boolean(
+      element.closest('ul')
+    );
+  }
+
+  if (command === 'insertOrderedList') {
+
+    return Boolean(
+      element.closest('ol')
+    );
+  }
+
+  return false;
+}
+
+
+function stripInlineFormatting(
+  root
+) {
+
+  root
+    .querySelectorAll?.(
+      'strong, b, em, i, u, span[style]'
+    )
+    .forEach(element => {
+
+      element.replaceWith(
+        ...element.childNodes
+      );
+    });
+}
+
+
+function restoreSelectionAroundInline(
+  element
+) {
+
+  const range =
+    document.createRange();
+
+  const selection =
+    window.getSelection();
+
+  range.selectNodeContents(
+    element
+  );
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
+}
+
+
+function mergeAdjacentInlineElements(
+  element
+) {
+
+  const previous =
+    element.previousSibling;
+
+  const next =
+    element.nextSibling;
+
+  if (
+    previous?.nodeType === Node.ELEMENT_NODE &&
+    canMergeInlineElements(
+      previous,
+      element
+    )
+  ) {
+
+    while (element.firstChild) {
+
+      previous.appendChild(
+        element.firstChild
+      );
+    }
+
+    element.remove();
+    element =
+      previous;
+  }
+
+  if (
+    next?.nodeType === Node.ELEMENT_NODE &&
+    canMergeInlineElements(
+      element,
+      next
+    )
+  ) {
+
+    while (next.firstChild) {
+
+      element.appendChild(
+        next.firstChild
+      );
+    }
+
+    next.remove();
+  }
+}
+
+
+function canMergeInlineElements(
+  left,
+  right
+) {
+
+  return (
+    left.tagName === right.tagName &&
+    left.getAttribute('style') === right.getAttribute('style')
+  );
+}
+
+
+function getSelectionElement(
+  selection
+) {
+
+  const node =
+    selection.getRangeAt(0).commonAncestorContainer;
+
+  return node.nodeType === Node.ELEMENT_NODE
+    ? node
+    : node.parentElement;
 }
 
 

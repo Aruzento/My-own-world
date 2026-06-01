@@ -286,7 +286,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 ### 12. Editor History / Formatting
 
-Статус: **сделано базово, deprecated fallback остается долгом**.
+Статус: **сделано базово, deprecated fallback оставлен только как аварийный хвост**.
 Приоритет: **P1/P2**.
 
 12.1. Описать единый контракт истории: **сделано**.
@@ -301,9 +301,11 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 12.6. Изолировать `execCommand` как fallback: **сделано**.
 
-12.7. Заменить deprecated fallback собственной реализацией основных операций: **не сделано**.
+12.7. Заменить deprecated fallback собственной реализацией основных операций: **сделано базово**.
+`formattingService.js` получил собственные Range/DOM-операции для `bold`, `italic`, `underline`, списков, цвета, reset format и plain-text insertion. `execCommand` остался только аварийным fallback внутри сервиса.
 
-12.8. Добавить дополнительные browser regression для mixed selection, headings, lists, colors, reset format: **не сделано**.
+12.8. Добавить дополнительные browser regression для mixed selection, headings, lists, colors, reset format: **сделано базово**.
+`tests/browser/editor-formatting.spec.mjs` расширен проверками списков, цвета, reset format и plain-text insertion. Дальше добавлять более тонкие сценарии nested/mixed selection при каждом новом баге форматирования.
 
 ### 13. CI / Release Process
 
@@ -346,6 +348,12 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 14.8. UI проверки broken/orphan assets: **не сделано**.
 
 14.9. Безопасное удаление orphan assets после подтверждения: **не сделано**.
+
+14.10. Audio / Playlist Assets: **позже, нужно для музыки локаций**.
+Задача: расширить `AssetReference` и asset lifecycle под аудио и плейлисты как first-class media. Это должно работать одинаково в browser и desktop через будущий `AssetAdapter`.
+
+14.11. Music by Location System: **позже, зависит от 14.10 и Desktop/AssetAdapter**.
+Идея из `docs/Новые идеи к адаптации.txt`: проигрывать музыку из workspace с привязкой к локации; плейлист крутится по кругу. Нужны: audio assets, playlist model, настройка связи `location -> playlist`, управление play/pause/next, сохранение состояния и browser/desktop compatibility.
 
 ### 15. Campaign Map Initiative / Layers / UX
 
@@ -437,6 +445,12 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 18.6. Task tracker next level: дедлайны, приоритет, фильтры, архив, связь задачи с карточкой: **позже**.
 
+18.7. Rule Tree / Rules Knowledge Base: **позже, после Account/Role foundation**.
+Идея из `docs/Новые идеи к адаптации.txt`: отдельное древо правил в корне приложения, доступное для ссылок как обычные карточки, но редактируемое только `admin`. Нужно отделить базу правил DnD/других НРИ от лора мира и карт кампании.
+
+18.8. Expanded Graph Relationships: **позже**.
+Расширить `KnowledgeGraph` за пределы `treeParent/wikiLink`: фракции, владение, происхождение, отношения, принадлежность предметов и richer lore model.
+
 ### 19. UX / Onboarding / AI Onboarding
 
 Статус: **сделано базово, поддерживать**.
@@ -457,10 +471,14 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 19.7. Разделить editor на две рабочие области: **позже**.
 Идея: дать возможность работать в двух карточках одновременно. Перед реализацией нужны четкий state contract для двух открытых страниц, отдельные save contexts и понятное поведение toolbar/history/wiki-links.
 
+19.8. Extended Onboarding и sample workspace expansion: **позже**.
+Идея из `docs/Новые идеи к адаптации.txt`: расширить демонстрационный workspace и onboarding под реальные сценарии карточек, карт, свойств, backup, task tracker, rule tree и будущий desktop.
+
 ### 20. Desktop Adapter / Internet Resource Strategy
 
-Статус: **план, реализация позже**.
-Приоритет: **P3**.
+Статус: **следующий стратегический рабочий блок**.
+Приоритет: **P1/P2**.
+Зачем: проект уже local-first, а desktop-версия снимет ограничения браузерного File System Access API, сделает workspace стабильнее и подготовит путь к большим ассетам, музыке и офлайн-кампаниям.
 
 20.1. Desktop target и `DESKTOP_ADAPTER_PLAN.md`: **сделано**.
 
@@ -468,33 +486,159 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 20.3. StorageAdapter / AssetAdapter design: **сделано**.
 
-20.4. Desktop prototype: **позже**.
-Причина: сначала нужно стабилизировать schema validation, backup/restore и storage boundaries.
+20.4. Подготовить окружение Desktop Spike: **следующий пункт**.
+Что сделать:
+- установить Rust stable;
+- установить системные зависимости Tauri для Windows;
+- добавить dev dependency `@tauri-apps/cli`;
+- создать минимальную конфигурацию Tauri без изменения workspace-формата;
+- зафиксировать команды запуска в README и `DESKTOP_ADAPTER_PLAN.md`.
 
-20.5. Cloud threat model: **позже**.
+20.5. Создать `StorageAdapter` interface в JS: **следующий пункт после 20.4**.
+Шаги:
+- описать `pickWorkspace`, `restoreWorkspace`, `readText`, `writeText`, `listFiles`, `removeFile`, `ensureDirectory`;
+- сделать `BrowserStorageAdapter`, который оборачивает текущий File System Access API;
+- заменить прямые обращения storage-модулей на adapter facade постепенно;
+- добавить unit tests на adapter contract.
 
-20.6. Backend storage API, auth, ownership, sync/conflict resolution: **позже**.
+20.6. Создать `AssetAdapter` interface в JS: **после 20.5**.
+Шаги:
+- описать `importFile`, `resolveUrl`, `exists`, `remove`, `findOrphans`;
+- сделать browser implementation поверх текущего `assets/`;
+- подготовить desktop implementation contract без полной реализации;
+- связать с `AssetReference`.
 
-20.7. Перевод в Desktop-приложение: **позже, стратегический путь**.
-Desktop остается перспективным направлением после стабилизации storage adapters, backup/restore, schema validation и asset lifecycle. Первый кандидат для spike уже указан в `DESKTOP_ADAPTER_PLAN.md`: Tauri.
+20.7. Tauri FS commands: **после 20.5/20.6**.
+Шаги:
+- добавить Rust-команды чтения/записи текстовых файлов;
+- добавить команды list/remove/ensure directory;
+- добавить безопасное ограничение на выбранный workspace root;
+- не позволять командам писать за пределы workspace;
+- вернуть ошибки в структурированном виде для recovery layer.
 
-### 21. Documentation Maintenance
+20.8. Desktop prototype: **после 20.7**.
+Шаги:
+- открыть существующий workspace;
+- создать карточку;
+- сохранить и перезапустить приложение;
+- открыть карту;
+- загрузить/показать asset;
+- проверить task tracker;
+- проверить UTF-8.
+
+20.9. Desktop Backup / Restore Gate: **после 20.8**.
+Шаги:
+- прогнать backup/restore внутри desktop;
+- проверить, что `.my-own-world-backups/` создается в workspace;
+- проверить восстановление карточки, карты, task tracker и assets;
+- добавить desktop smoke checklist.
+
+20.10. Desktop Presentation Window Spike: **после 20.8**.
+Шаги:
+- проверить, можно ли открыть отдельное окно презентации в Tauri;
+- убедиться, что live-sync карты работает между окнами;
+- отдельно проверить fullscreen/second monitor сценарий.
+
+20.11. Desktop Packaging Smoke: **после 20.9/20.10**.
+Шаги:
+- собрать dev build;
+- собрать production build;
+- проверить запуск на чистой папке workspace;
+- зафиксировать минимальные системные требования;
+- обновить release checklist.
+
+20.12. Cloud threat model: **позже, не смешивать с desktop spike**.
+
+20.13. Backend storage API, auth, ownership, sync/conflict resolution: **позже, после desktop и role foundation**.
+
+20.14. Перевод в Desktop-приложение: **стратегический путь после spike**.
+Desktop становится следующим большим направлением, но идти нужно через adapter boundary, а не через переписывание приложения. Первый кандидат для spike остается Tauri; Electron остается fallback, если Tauri упрется в WebView, презентационные окна или работу с assets.
+
+### 22. Character Domain Model
+
+Статус: **будущий P1 после desktop foundation или параллельно малыми кусками**.
+Приоритет: **P1/P2**.
+
+22.1. CharacterModel: **позже, но высокий приоритет**.
+Единая модель персонажа: характеристики, навыки, эффекты, инвентарь, раса/класс, вычисления. Нужна для отказа от legacy stat block и превращения персонажа в доменную сущность.
+
+22.2. Inventory System: **позже**.
+Инвентарь персонажа и существ: предметы, вес, экипировка, связь с карточками предметов и будущей игровой логикой.
+
+22.3. Effects / Conditions System: **позже**.
+Эффекты, баффы, дебаффы и состояния, которые могут влиять на персонажей, карту, инициативу и свойства.
+
+22.4. Full Character Sheet UX: **позже**.
+Полноценный лист персонажа поверх `PropertiesModel` и будущего `CharacterModel`, без возврата к HTML-экспериментам `DnD v2` / `Переменные`.
+
+### 23. Account / Roles / Permissions
+
+Статус: **будущий стратегический блок, нужен перед Rule Tree и web/cloud**.
+Приоритет: **P2/P3**.
+
+23.1. Account System: **позже**.
+Упрощенные локальные аккаунты как подготовка к ролям и будущей web/cloud модели.
+
+23.2. Role System: **позже**.
+Роли: `user`, `PRO user`, `admin`.
+
+23.3. Admin Permission Layer: **позже**.
+Ограничения редактирования защищенных зон, rule tree и будущих системных действий.
+
+23.4. Rule Tree permissions: **после 18.7 и 23.3**.
+Редактирование rule tree доступно только `admin`; чтение и ссылки доступны обычным сценариям.
+
+### 24. Performance / Visual Hardening Future
+
+Статус: **расширять после Desktop Spike и при новых лагах**.
+Приоритет: **P2**.
+
+24.1. Large Workspace E2E Tests: **позже**.
+Реальные end-to-end сценарии на больших workspace.
+
+24.2. Screenshot Baseline Visual Regression: **позже**.
+Настоящее screenshot comparison поверх текущих visual guards.
+
+24.3. Campaign Map Dirty Region Fog Save: **позже**.
+Частичное сохранение тумана войны.
+
+24.4. Presentation Sync Optimization: **позже**.
+Дальнейшая оптимизация синхронизации окна презентации.
+
+24.5. Campaign Map Stress Tests: **позже**.
+Стресс-тесты pointer painting и больших карт.
+
+### 25. Future AI / Collaboration / Web
+
+Статус: **долгосрочно**.
+Приоритет: **P3**.
+
+25.1. Threat Model for Web/Cloud: **позже**.
+CSP, auth, permissions, validation, server-side boundary.
+
+25.2. Shared / Collaborative Workspace Foundation: **позже**.
+Основа совместной работы после аккаунтов и permissions.
+
+25.3. AI Integration Layer: **позже**.
+AI-возможности поверх архитектурных контрактов и AI onboarding.
+
+### 26. Documentation Maintenance
 
 Статус: **постоянная задача**.
 Приоритет: **P1**.
 
-21.1. Обновлять `README.md` после архитектурных изменений.
+26.1. Обновлять `README.md` после архитектурных изменений.
 
-21.2. Обновлять `docs/MY_OWN_WORLD_FULL_MANUAL.docx` после изменения функций.
+26.2. Обновлять `docs/MY_OWN_WORLD_FULL_MANUAL.docx` после изменения функций.
 
-21.3. Обновлять contract-файлы при изменении правил подсистем.
+26.3. Обновлять contract-файлы при изменении правил подсистем.
 
-21.4. Поддерживать `docs/WORK_LOG.md` как исторический журнал.
+26.4. Поддерживать `docs/WORK_LOG.md` как исторический журнал.
 
-21.5. Поддерживать `docs/PROJECT_FILE_AUDIT.md` после крупных перемещений/разрезов.
+26.5. Поддерживать `docs/PROJECT_FILE_AUDIT.md` после крупных перемещений/разрезов.
 
 ## Следующий Рекомендуемый Шаг
 
-Следующий рабочий пункт: **6. Properties Model / Character Calculations**.
+Следующий рабочий пункт: **20.4. Подготовить окружение Desktop Spike**.
 
-Пункты 3, 4 и 5 закрыты базово. Дальше логично перейти к `Properties Model / Character Calculations`, потому что будущие навыки существ на карте, улучшенные блоки свойств и расчетные данные карточек должны опираться на model-first слой, а не на чтение произвольного HTML.
+Пункты 6 и 12 закрыты базово. Дальше логично идти в Desktop по шагам 20.4-20.11: сначала окружение и adapter boundary, затем маленький Tauri spike, затем desktop smoke/backup/presentation checks.

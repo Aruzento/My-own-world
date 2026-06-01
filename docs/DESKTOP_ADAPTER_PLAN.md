@@ -1,32 +1,54 @@
 # Desktop Adapter Plan
 
-Desktop-версия естественно подходит My own world, потому что продукт уже local-first и работает с папкой workspace.
+Дата обновления: 01.06.2026
 
-## Desktop Target
+Desktop-версия естественно подходит My own world, потому что продукт уже local-first и работает с папкой workspace. Следующий этап проекта — не переписывание приложения, а аккуратный desktop spike через adapter boundary.
 
-Цель desktop-версии:
+## Цель Desktop-Версии
 
-- убрать ограничения File System Access API в браузере;
-- сделать стабильную работу с локальными файлами;
-- подготовить удобный доступ к assets;
-- сохранить совместимость текущего workspace-формата.
+- убрать ограничения браузерного File System Access API;
+- сделать стабильную работу с локальными файлами без повторных permission-запросов;
+- подготовить надежную работу с большими assets: изображения, карты, музыка, плейлисты;
+- сохранить текущий workspace-формат;
+- использовать существующие schema validation, backup/restore и tests;
+- проверить отдельное окно презентации для второго монитора.
 
 Desktop не должен менять формат данных мира без отдельной миграции.
 
 ## Выбор Для Spike
 
-Первый spike стоит делать на Tauri.
+Первый spike делаем на **Tauri**.
 
 Причины:
 
 - приложение уже frontend-first;
 - Tauri легче Electron по размеру;
-- Rust backend может дать аккуратный доступ к файловой системе;
-- local-first продукту не нужен тяжелый Chromium-дубликат, если можно использовать системный WebView.
+- Rust backend дает аккуратный доступ к файловой системе;
+- local-first продукту не нужен тяжелый Chromium-дубликат, если можно использовать системный WebView;
+- desktop spike можно сделать без изменения основного UI.
 
 Electron остается fallback, если Tauri упрется в WebView-совместимость, drag and drop assets или презентационный режим.
 
-## StorageAdapter
+## Пошаговый План
+
+### 20.4. Подготовить Окружение Desktop Spike
+
+Задачи:
+
+1. Установить Rust stable.
+2. Установить системные зависимости Tauri для Windows.
+3. Добавить dev dependency `@tauri-apps/cli`.
+4. Добавить минимальную конфигурацию Tauri.
+5. Проверить запуск текущего frontend внутри Tauri WebView.
+6. Зафиксировать команды запуска в README.
+
+Критерий готовности:
+
+- `npm run tauri dev` или согласованная команда запускает приложение;
+- текущая browser-версия продолжает работать;
+- `npm run verify` и `npm run test:browser` остаются зелеными.
+
+### 20.5. Создать StorageAdapter
 
 `StorageAdapter` должен спрятать различия между browser и desktop.
 
@@ -52,9 +74,16 @@ Desktop implementation:
 
 - хранит абсолютный путь workspace;
 - читает и пишет через backend command;
-- не требует user activation для каждого permission-запроса.
+- не требует user activation для каждого permission-запроса;
+- запрещает выход за пределы workspace root.
 
-## AssetAdapter
+Критерий готовности:
+
+- storage-модули идут через adapter facade;
+- есть unit tests adapter contract;
+- старый browser flow не сломан.
+
+### 20.6. Создать AssetAdapter
 
 `AssetAdapter` отвечает за изображения, фоны карт, будущую музыку и плейлисты.
 
@@ -76,28 +105,102 @@ Browser implementation:
 
 Desktop implementation:
 
-- может использовать native file copy;
+- использует native file copy;
 - может отдавать `asset://` или локальный безопасный URL;
 - должен сохранять тот же `AssetReference`.
 
-## Desktop Smoke Checklist
+Критерий готовности:
 
-- Открыть workspace.
-- Создать карточку.
-- Создать карту.
-- Загрузить изображение в карточку.
-- Загрузить фон карты.
-- Перетащить токен.
-- Сохранить и перезапустить приложение.
-- Проверить, что tree, card, map, assets и task tracker восстановились.
-- Проверить presentation window.
-- Проверить отсутствие потери UTF-8.
+- карточные изображения, фон карты и object PNG работают через adapter;
+- asset references остаются совместимыми;
+- broken/orphan checks продолжают проходить.
 
-## Prototype Later
+### 20.7. Tauri FS Commands
 
-Prototype не начинается, пока:
+Нужны backend-команды:
 
-- `StorageAdapter` не описан и не имеет browser implementation;
-- `AssetAdapter` не описан и не имеет browser implementation;
-- browser regression остается зеленым;
-- release checklist включает desktop smoke.
+- read text file;
+- write text file;
+- list directory;
+- create directory;
+- remove file;
+- copy/import asset;
+- check exists.
+
+Правила безопасности:
+
+- все операции только внутри выбранного workspace;
+- путь нормализуется до выполнения операции;
+- ошибки возвращаются структурированно: code, message, path, operation;
+- UTF-8 используется явно для текстовых файлов.
+
+### 20.8. Desktop Prototype
+
+Минимальный ручной сценарий:
+
+1. Открыть существующий workspace.
+2. Создать карточку.
+3. Изменить карточку и сохранить.
+4. Перезапустить desktop-приложение.
+5. Проверить, что карточка восстановилась.
+6. Создать карту.
+7. Добавить токен.
+8. Загрузить изображение в карточку.
+9. Загрузить фон карты.
+10. Проверить task tracker.
+11. Проверить UTF-8 в русских строках.
+
+### 20.9. Desktop Backup / Restore Gate
+
+Проверки:
+
+- создать backup;
+- проверить manifest;
+- восстановить карточку;
+- восстановить карту;
+- восстановить task tracker;
+- восстановить assets;
+- проверить, что `.my-own-world-backups/` находится внутри workspace.
+
+### 20.10. Desktop Presentation Window Spike
+
+Проверки:
+
+- открыть отдельное окно презентации;
+- синхронизировать токены, фигуры, туман и фон карты;
+- проверить скрытые player-токены;
+- проверить fullscreen/second monitor сценарий;
+- убедиться, что закрытие презентации не ломает карту мастера.
+
+### 20.11. Desktop Packaging Smoke
+
+Проверки:
+
+- dev build запускается;
+- production build собирается;
+- приложение открывается после установки/распаковки;
+- workspace можно открыть без dev server;
+- README содержит инструкции запуска;
+- release checklist содержит desktop smoke.
+
+## Что Не Делаем На Первом Spike
+
+- не меняем workspace format;
+- не добавляем аккаунты;
+- не делаем cloud sync;
+- не переносим всю storage-архитектуру за один коммит;
+- не добавляем музыку до появления `AssetAdapter`;
+- не удаляем browser mode.
+
+## Что Нужно Скачать Для Проверки
+
+Для проверки desktop-направления пользователю понадобится:
+
+1. **Node.js LTS** — уже нужен проекту для `npm`.
+2. **Git** — для получения обновлений и проверки ветки.
+3. **Rust stable + Cargo** — требуется Tauri backend.
+4. **Microsoft Visual Studio Build Tools 2022** с компонентом **Desktop development with C++** — требуется для сборки Tauri на Windows.
+5. **Microsoft Edge WebView2 Runtime** — обычно уже установлен в Windows 10/11, но для Tauri нужен актуальный runtime.
+6. **Playwright Chromium** — ставится через `npx playwright install chromium`, нужен для browser smoke.
+
+Точные команды будут добавлены после 20.4, когда появится реальная Tauri-конфигурация проекта.

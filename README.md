@@ -430,7 +430,9 @@ GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
 
 ## Desktop Adapter
 
-Desktop-направление описано в `docs/DESKTOP_ADAPTER_PLAN.md`. Первый рекомендуемый spike - Tauri, но до prototype нужно выделить `StorageAdapter` и `AssetAdapter`.
+Desktop-направление описано в `docs/DESKTOP_ADAPTER_PLAN.md`. Следующий большой маршрут проекта — Tauri spike через `StorageAdapter` и `AssetAdapter`, без изменения workspace-формата и без удаления browser mode.
+
+Для будущей проверки desktop-сборки понадобятся Node.js LTS, Git, Rust stable/Cargo, Microsoft Visual Studio Build Tools 2022 с `Desktop development with C++`, Microsoft Edge WebView2 Runtime и Playwright Chromium.
 
 ## Sidebar Profile
 
@@ -438,7 +440,7 @@ Desktop-направление описано в `docs/DESKTOP_ADAPTER_PLAN.md`.
 
 ## Formatting
 
-Toolbar больше не вызывает `document.execCommand()` напрямую и не записывает history snapshots для форматирования сам. Deprecated API, inline formatting, block formatting и состояние команд изолированы в `js/editor/formattingService.js`, чтобы позже заменить browser fallback собственным formatting layer без переписывания toolbar.
+Toolbar больше не вызывает `document.execCommand()` напрямую и не записывает history snapshots для форматирования сам. Основные операции форматирования (`bold`, `italic`, `underline`, списки, цвет, сброс формата и plain-text insertion) выполняются через собственные Range/DOM-операции в `js/editor/formattingService.js`. Deprecated API остался только как аварийный fallback внутри этого сервиса.
 
 Правила форматирования описаны в `docs/FORMATTING_SERVICE_CONTRACT.md`. Коротко: форматирование работает только внутри persistent editable-зон, неизвестные команды игнорируются, paste вставляет plain text, reset format снимает только inline-формат, а toolbar обращается к состоянию форматирования через public API сервиса.
 

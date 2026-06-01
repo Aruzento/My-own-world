@@ -20,7 +20,9 @@ test(
 
           const {
             clearInlineFormatting,
+            applyTextColor,
             formatSelectedBlockWithHistory,
+            insertPlainTextFallback,
             isSupportedInlineFormattingCommand,
             queryInlineFormattingState,
             runInlineFormattingCommand
@@ -93,6 +95,7 @@ test(
               >
                 <p>first block</p>
                 <p>second block</p>
+                <p>third block</p>
               </div>
             </div>
           `;
@@ -124,11 +127,123 @@ test(
               element.tagName.toLowerCase()
             );
 
+          const thirdBlock =
+            editor.querySelectorAll('p')[0];
+
+          const listRange =
+            document.createRange();
+
+          listRange.selectNodeContents(
+            thirdBlock
+          );
+
+          selection.removeAllRanges();
+          selection.addRange(
+            listRange
+          );
+
+          const listApplied =
+            runInlineFormattingCommand(
+              'insertUnorderedList'
+            );
+
+          const listHtml =
+            editor.querySelector('.rich-text-field').innerHTML;
+
+          editor.innerHTML = `
+            <div class="entity-layout card-shell" contenteditable="false">
+              <div
+                class="rich-text-field"
+                contenteditable="true"
+                data-persistent-editable="true"
+              >red plain insert</div>
+            </div>
+          `;
+
+          const colorField =
+            editor.querySelector('.rich-text-field');
+
+          const colorNode =
+            colorField.firstChild;
+
+          const colorRange =
+            document.createRange();
+
+          colorRange.setStart(
+            colorNode,
+            0
+          );
+
+          colorRange.setEnd(
+            colorNode,
+            3
+          );
+
+          selection.removeAllRanges();
+          selection.addRange(
+            colorRange
+          );
+
+          const colorApplied =
+            applyTextColor(
+              '#ff0000'
+            );
+
+          const colorHtml =
+            colorField.innerHTML;
+
+          const clearRange =
+            document.createRange();
+
+          clearRange.selectNodeContents(
+            colorField
+          );
+
+          selection.removeAllRanges();
+          selection.addRange(
+            clearRange
+          );
+
+          const clearApplied =
+            clearInlineFormatting();
+
+          const clearedHtml =
+            colorField.innerHTML;
+
+          const insertRange =
+            document.createRange();
+
+          insertRange.selectNodeContents(
+            colorField
+          );
+
+          insertRange.collapse(
+            false
+          );
+
+          selection.removeAllRanges();
+          selection.addRange(
+            insertRange
+          );
+
+          const insertApplied =
+            insertPlainTextFallback(
+              ' tail'
+            );
+
           return {
             applied,
             blockApplied,
             blockTags,
             boldState,
+            clearApplied,
+            clearedHtml,
+            colorApplied,
+            colorHtml,
+            insertApplied,
+            insertedText: colorField.textContent,
+            listApplied,
+            listHtml,
             unknownSupported: isSupportedInlineFormattingCommand('unknown-command'),
             outsideApplied,
             htmlAfterBold,
@@ -165,7 +280,8 @@ test(
       result.blockTags
     ).toEqual([
       'p',
-      'h2'
+      'h2',
+      'p'
     ]);
 
     expect(
@@ -196,6 +312,54 @@ test(
       result.htmlAfterBold
     ).toMatch(
       /<(b|strong)>beta<\/(b|strong)>/
+    );
+
+    expect(
+      result.listApplied
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.listHtml
+    ).toContain(
+      '<ul>'
+    );
+
+    expect(
+      result.colorApplied
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.colorHtml
+    ).toContain(
+      'color: rgb(255, 0, 0)'
+    );
+
+    expect(
+      result.clearApplied
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.clearedHtml
+    ).toBe(
+      'red plain insert'
+    );
+
+    expect(
+      result.insertApplied
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.insertedText
+    ).toBe(
+      'red plain insert tail'
     );
   }
 );
