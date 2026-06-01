@@ -5,6 +5,33 @@
 Новые подробные записи после крупных изменений добавлять сюда, а в `docs/PROJECT_PLAN.md` менять только статусы и следующие задачи.
 
 ---
+## 2026-06-01: Schema gate и Backup / Restore 1.7, 1.8, 2.5-2.7
+
+### Что сделано
+
+- Добавлен `js/schema/schemaUpgradeGate.js`: будущие schema upgrades теперь должны проходить через gate с успешной validation и backup manifest.
+- Добавлен browser smoke `tests/browser/schema-recovery.spec.mjs` для fallback-экрана recovery.
+- `backupService` расширен: manifest хранит `assets` / `assetCount`, backup копирует persistent assets по `AssetReference`, restore возвращает assets обратно в workspace.
+- Добавлена retention-политика backup: по умолчанию сохраняются 20 последних точек, старые удаляются через `cleanupWorkspaceBackups()`.
+- `tests/backupService.test.mjs` теперь проверяет восстановление карточки, карты, task tracker, assets и очистку старых backup.
+- Обновлены `docs/PROJECT_PLAN.md`, `docs/BACKUP_AND_RECOVERY_CONTRACT.md` и `docs/WORKSPACE_SCHEMA_CONTRACT.md`.
+
+### Что стало лучше
+
+- P0 data safety стал заметно крепче: есть диагностика схемы, gate перед будущими upgrade и реальный backup/restore страниц с ассетами.
+- Recovery остается осторожным: данные не чинятся автоматически, а destructive rollback по-прежнему не включен.
+
+### Что осталось
+
+- Для будущих repair-actions нужны отдельные browser/storage сценарии на каждое действие.
+- Backup assets нужно усилить для больших файлов, audio/playlist и missing/fallback policy.
+- Нужен UI для настройки retention-лимита и ручной очистки backup.
+
+### Следующее развитие
+
+- Следующий пункт плана: `3. Campaign Map Performance Gate`.
+
+---
 ## 2026-06-01: Schema Validation / Recovery 1.2-1.5
 
 ### Что сделано

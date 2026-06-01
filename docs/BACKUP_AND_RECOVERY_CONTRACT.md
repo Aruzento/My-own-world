@@ -28,6 +28,9 @@ Backups хранятся внутри workspace в папке:
 manifest.json
 pages/
   original-page-file.md
+assets/
+  portraits/
+    hero.png
 ```
 
 ## Manifest
@@ -39,7 +42,9 @@ pages/
 - `createdAt` - дата создания;
 - `reason` - причина создания;
 - `pages` - список сохраненных страниц;
-- `pageCount` - количество страниц.
+- `pageCount` - количество страниц;
+- `assets` - список asset references, найденных в persistent HTML страниц;
+- `assetCount` - количество файлов assets, которые удалось скопировать в snapshot.
 
 ## Что входит в первый слой backup
 
@@ -49,8 +54,9 @@ pages/
 - имя файла страницы;
 - id, title, parent, type, template;
 - persistent markdown content страницы.
+- persistent assets по `AssetReference`, если файл найден в `assets/`.
 
-Первый слой пока не сохраняет assets физически. Это осознанное ограничение: для assets нужен отдельный Asset Lifecycle / Backup этап, чтобы не копировать тяжелые файлы без политики хранения.
+Assets копируются в папку `assets/` внутри snapshot. Пути нормализуются относительно workspace `assets/`, поэтому `data-asset="portraits/hero.png"` и `data-asset="assets/portraits/hero.png"` приводятся к одному формату.
 
 ## Рискованные операции
 
@@ -67,6 +73,7 @@ Snapshot должен создаваться перед:
 Restore первого слоя работает осторожно:
 
 - восстанавливает файлы страниц из snapshot;
+- восстанавливает файлы assets из snapshot;
 - создает отсутствующие файлы;
 - перезаписывает файлы с тем же именем;
 - не удаляет новые файлы, которых не было в snapshot.
@@ -80,10 +87,19 @@ Restore первого слоя работает осторожно:
 - Нельзя делать destructive rollback без явного подтверждения.
 - Нельзя скрывать ошибки backup: если snapshot не создан, risky operation должна хотя бы вывести предупреждение.
 
+## Очистка старых backup
+
+По умолчанию после создания новой точки сохраняются 20 последних backup. Более старые snapshot удаляются через `cleanupWorkspaceBackups()`.
+
+Правила:
+
+- нельзя очищать все backup полностью одной автоматической операцией;
+- минимум одна точка должна оставаться;
+- будущий UI может позволить менять лимит, но должен показывать пользователю, какие snapshot будут удалены.
+
 ## Следующий этап
 
-- UI-команда "Создать резервную копию workspace".
-- UI-список backups и кнопка restore.
-- Backup assets по `AssetReference`.
 - Автоматический snapshot перед schema recovery.
 - Browser regression на delete/move с созданием backup.
+- UI-настройки retention-лимита и ручная очистка старых backup.
+- Hardening backup assets для больших файлов, audio, playlist, missing/fallback state.

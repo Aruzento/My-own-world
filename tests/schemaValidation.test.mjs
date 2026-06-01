@@ -28,6 +28,11 @@ import {
 } from '../js/schema/schemaRecovery.js';
 
 import {
+  assertSchemaUpgradeAllowed,
+  createSchemaUpgradeGateResult
+} from '../js/schema/schemaUpgradeGate.js';
+
+import {
   validateJSONText
 } from '../js/schema/schemaJson.js';
 
@@ -56,6 +61,78 @@ test(
     assert.equal(
       result.errors[0].code,
       'page.missing_id'
+    );
+  }
+);
+
+
+test(
+  'schema upgrade gate требует чистую validation и backup',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            id: 'page-1',
+            title: 'Карточка',
+            parent: null,
+            tags: [],
+            aliases: []
+          }
+        ]
+      });
+
+    const withoutBackup =
+      createSchemaUpgradeGateResult({
+        validation
+      });
+
+    assert.equal(
+      withoutBackup.allowed,
+      false
+    );
+
+    const withBackup =
+      assertSchemaUpgradeAllowed({
+        validation,
+        backupManifest: {
+          id: 'backup-1'
+        }
+      });
+
+    assert.equal(
+      withBackup.allowed,
+      true
+    );
+  }
+);
+
+
+test(
+  'schema upgrade gate блокирует критичные ошибки данных',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            title: 'Без id',
+            parent: null,
+            tags: [],
+            aliases: []
+          }
+        ]
+      });
+
+    assert.throws(
+      () => assertSchemaUpgradeAllowed({
+        validation,
+        backupManifest: {
+          id: 'backup-1'
+        }
+      }),
+      /page\.missing_id/
     );
   }
 );
