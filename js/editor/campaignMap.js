@@ -135,6 +135,10 @@ import {
   createCampaignMapPointerController
 } from './campaignMapPointerController.js';
 
+import {
+  renderCampaignMapPerformanceDiagnostics
+} from './campaignMapPerformanceDiagnostics.js';
+
 export {
   isCampaignMapPage,
   serializeCampaignMapHTML
@@ -289,6 +293,10 @@ export async function renderCampaignMap(
   );
 
   applyCampaignMapLayers(
+    map
+  );
+
+  renderCampaignMapPerformanceDiagnostics(
     map
   );
 

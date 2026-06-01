@@ -331,10 +331,12 @@ export class CampaignMapStore {
 
   updateLockedFogZone(
     zoneId,
-    patch
+    patch,
+    options = {}
   ) {
 
-    return this.updateFog({
+    const fog =
+      this.model.updateFog({
       lockedZones: (this.model.fog.lockedZones || [])
         .map(zone =>
           zone.id === zoneId
@@ -345,6 +347,15 @@ export class CampaignMapStore {
             : zone
         )
     });
+
+    this.markDirty();
+
+    if (options.commit !== false) {
+
+      this.commitToDOM();
+    }
+
+    return fog;
   }
 
 

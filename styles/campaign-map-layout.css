@@ -2,6 +2,9 @@
 
 .campaign-map-document {
 
+  position:
+    relative;
+
   width:
     100%;
 
@@ -73,6 +76,63 @@
 
   line-height:
     1.25;
+}
+
+
+.campaign-map-performance-diagnostics {
+
+  position:
+    absolute;
+
+  right:
+    16px;
+
+  bottom:
+    16px;
+
+  z-index:
+    60;
+
+  display:
+    grid;
+
+  gap:
+    4px;
+
+  min-width:
+    150px;
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.18);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(20,20,20,0.82);
+
+  color:
+    rgba(255,255,255,0.88);
+
+  font-size:
+    11px;
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-performance-diagnostics strong {
+
+  color:
+    #f2d675;
+
+  font-size:
+    12px;
 }
 
 

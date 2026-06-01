@@ -91,6 +91,20 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'campaign-map-fog-performance-smoke',
+    priority: 'P1',
+    area: 'campaign-map',
+    title: 'Большой туман войны остается в performance budget',
+    description:
+      'Создать большой canvas тумана, выполнить серию операций рисования и проверить scenario budget fog-paint-large.',
+    automationStatus:
+      'automated: campaign-map-fog-paint-large-stays-inside-budget',
+    automatesChecklist: [
+      'Карта Кампании: fog paint',
+      'Карта Кампании: performance'
+    ]
+  },
+  {
     id: 'campaign-map-initiative-popup',
     priority: 'P1',
     area: 'campaign-map',

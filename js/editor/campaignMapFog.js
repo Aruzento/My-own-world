@@ -112,7 +112,17 @@ export function clearFog(
     );
 
   markFogCanvasChanged(
-    map
+    map,
+    {
+      x:
+        point.x - size,
+      y:
+        point.y - size,
+      width:
+        size * 2,
+      height:
+        size * 2
+    }
   );
 
   persistFogCanvas(
@@ -224,7 +234,8 @@ export function drawFogAtPointer(
 
 
 function markFogCanvasChanged(
-  map
+  map,
+  dirtyRegion = null
 ) {
 
   const stage =
@@ -235,6 +246,27 @@ function markFogCanvasChanged(
   stage.dataset.fogVersion =
     String(
       Number(stage.dataset.fogVersion || 0) + 1
+    );
+
+  if (!dirtyRegion) return;
+
+  stage.dataset.fogDirtyRegionCount =
+    String(
+      Number(stage.dataset.fogDirtyRegionCount || 0) + 1
+    );
+
+  stage.dataset.fogDirtyRegion =
+    encodeURIComponent(
+      JSON.stringify({
+        x:
+          Math.round(dirtyRegion.x),
+        y:
+          Math.round(dirtyRegion.y),
+        width:
+          Math.round(dirtyRegion.width),
+        height:
+          Math.round(dirtyRegion.height)
+      })
     );
 }
 
@@ -434,7 +466,10 @@ export function moveLockedFogZoneEdit(
 
   store?.updateLockedFogZone(
     editedLockedFogZone.zone.id,
-    patch
+    patch,
+    {
+      commit: false
+    }
   );
 
   const zones =
@@ -445,7 +480,7 @@ export function moveLockedFogZoneEdit(
     zones
   );
 
-  renderLockedFogZones(
+  updateLockedFogZoneElement(
     editedLockedFogZone.map
   );
 }
@@ -457,6 +492,10 @@ export function finishLockedFogZoneEdit() {
 
   const map =
     editedLockedFogZone.map;
+
+  getCampaignMapStore(
+    map
+  )?.commitToDOM();
 
   editedLockedFogZone =
     null;
@@ -659,18 +698,26 @@ function startLockedFogZoneEdit(
 
   if (!stage) return;
 
+  const currentZone =
+    getLockedFogZoneById(
+      map,
+      zone.id
+    ) ||
+    zone;
+
   editedLockedFogZone =
     {
       map,
       stage,
-      zone,
+      zone:
+        currentZone,
       mode: event.target.closest('.campaign-fog-locked-zone-resize')
         ? 'resize'
         : 'move',
       startX: event.clientX,
       startY: event.clientY,
       startZone: {
-        ...zone
+        ...currentZone
       }
     };
 }
@@ -703,6 +750,59 @@ function scheduleLiveFogPresentationSync() {
       },
       180
     );
+}
+
+
+function updateLockedFogZoneElement(
+  map
+) {
+
+  const zone =
+    getLockedFogZoneById(
+      map,
+      editedLockedFogZone.zone.id
+    );
+
+  const element =
+    map.querySelector(
+      `[data-locked-fog-zone-id="${editedLockedFogZone.zone.id}"]`
+    );
+
+  if (!zone || !element) {
+
+    renderLockedFogZones(
+      map
+    );
+
+    return;
+  }
+
+  element.style.left =
+    `${zone.x}px`;
+
+  element.style.top =
+    `${zone.y}px`;
+
+  element.style.width =
+    `${zone.width}px`;
+
+  element.style.height =
+    `${zone.height}px`;
+}
+
+
+function getLockedFogZoneById(
+  map,
+  zoneId
+) {
+
+  return getCampaignMapStore(
+    map
+  )?.getModel().fog.lockedZones
+    .find(nextZone =>
+      nextZone.id === zoneId
+    ) ||
+    null;
 }
 
 

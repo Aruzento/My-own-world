@@ -237,3 +237,161 @@ test(
     await popup.close();
   }
 );
+
+
+test(
+  'campaign-map-fog-paint-large-stays-inside-budget',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            assertCampaignMapPerformanceBudget,
+            createCampaignMapPerformanceReport
+          } = await import('/js/editor/campaignMapPerformance.js');
+
+          const canvas =
+            document.createElement('canvas');
+
+          canvas.width =
+            2400;
+
+          canvas.height =
+            1800;
+
+          const context =
+            canvas.getContext('2d');
+
+          context.fillStyle =
+            '#000000';
+
+          const startedAt =
+            performance.now();
+
+          for (let index = 0; index < 120; index += 1) {
+
+            context.beginPath();
+            context.arc(
+              80 + (index % 30) * 72,
+              80 + Math.floor(index / 30) * 72,
+              36,
+              0,
+              Math.PI * 2
+            );
+            context.fill();
+          }
+
+          const fogDrawTimeMs =
+            performance.now() - startedAt;
+
+          const report =
+            createCampaignMapPerformanceReport({
+              scenarioId:
+                'fogPaintLarge',
+              measurements: {
+                fogDrawTimeMs,
+                fogCanvasPixels:
+                  canvas.width * canvas.height,
+                dirtyFogRegionCount:
+                  120
+              }
+            });
+
+          assertCampaignMapPerformanceBudget(
+            report
+          );
+
+          return report;
+        }
+      );
+
+    expect(
+      result.ok
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.snapshot.fogCanvasPixels
+    ).toBe(
+      4_320_000
+    );
+  }
+);
+
+
+test(
+  'campaign-map-performance-diagnostics-render-only-in-debug-mode',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            renderCampaignMapPerformanceDiagnostics
+          } = await import('/js/editor/campaignMapPerformanceDiagnostics.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            '<div class="campaign-map-document"><div class="campaign-map-stage"></div></div>';
+
+          const map =
+            editor.querySelector('.campaign-map-document');
+
+          renderCampaignMapPerformanceDiagnostics(
+            map
+          );
+
+          const hidden =
+            !map.querySelector('.campaign-map-performance-diagnostics');
+
+          localStorage.setItem(
+            'myOwnWorld.debug.performance',
+            'true'
+          );
+
+          const report =
+            renderCampaignMapPerformanceDiagnostics(
+              map
+            );
+
+          const visible =
+            Boolean(
+              map.querySelector('.campaign-map-performance-diagnostics')
+            );
+
+          localStorage.removeItem(
+            'myOwnWorld.debug.performance'
+          );
+
+          return {
+            hidden,
+            visible,
+            ok:
+              report.ok
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      hidden: true,
+      visible: true,
+      ok: true
+    });
+  }
+);

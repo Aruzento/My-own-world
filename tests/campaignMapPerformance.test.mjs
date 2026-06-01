@@ -2,9 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  assertCampaignMapPerformanceBudget,
   CAMPAIGN_MAP_PERFORMANCE_BUDGETS,
+  CAMPAIGN_MAP_PERFORMANCE_SCENARIOS,
+  createCampaignMapPerformanceReport,
   createCampaignMapPerformanceSnapshot,
-  findCampaignMapBudgetWarnings
+  findCampaignMapBudgetWarnings,
+  getCampaignMapScenarioBudgets
 } from '../js/editor/campaignMapPerformance.js';
 
 
@@ -64,6 +68,11 @@ test(
       snapshot.zoom,
       2
     );
+
+    assert.equal(
+      snapshot.dirtyFogRegionCount,
+      0
+    );
   }
 );
 
@@ -90,6 +99,57 @@ test(
         'renderTimeMs',
         'visibleTokenCount'
       ]
+    );
+  }
+);
+
+
+test(
+  'campaign map performance scenarios задают обязательные budgets',
+  () => {
+
+    assert.ok(
+      CAMPAIGN_MAP_PERFORMANCE_SCENARIOS.fogPaintLarge
+    );
+
+    assert.equal(
+      getCampaignMapScenarioBudgets(
+        'fogPaintLarge'
+      ).fogDrawTimeMs,
+      80
+    );
+  }
+);
+
+
+test(
+  'campaign map performance report падает при превышении scenario budget',
+  () => {
+
+    const report =
+      createCampaignMapPerformanceReport({
+        scenarioId:
+          'fogPaintLarge',
+        measurements: {
+          fogDrawTimeMs:
+            120,
+          dirtyFogRegionCount:
+            10,
+          fogCanvasPixels:
+            100
+        }
+      });
+
+    assert.equal(
+      report.ok,
+      false
+    );
+
+    assert.throws(
+      () => assertCampaignMapPerformanceBudget(
+        report
+      ),
+      /fogDrawTimeMs/
     );
   }
 );

@@ -5,6 +5,35 @@
 Новые подробные записи после крупных изменений добавлять сюда, а в `docs/PROJECT_PLAN.md` менять только статусы и следующие задачи.
 
 ---
+## 2026-06-01: Campaign Map Performance Gate 3.4-3.8
+
+### Что сделано
+
+- `campaignMapPerformance.js` расширен scenario budgets: `smallMapBaseline`, `largeMapDrag`, `fogPaintLarge`, `presentationLiveSync`, `zoomPanHeavy`.
+- Добавлены `createCampaignMapPerformanceReport()` и `assertCampaignMapPerformanceBudget()` для обязательных performance checks в тестах.
+- Browser smoke карты расширен: теперь есть отдельный сценарий `campaign-map-fog-paint-large-stays-inside-budget`.
+- Добавлен dev-only diagnostics panel `campaignMapPerformanceDiagnostics.js`, включается через `localStorage.setItem('myOwnWorld.debug.performance','true')`.
+- Туман получил dirty-region counters для diagnostics.
+- Locked fog zone drag оптимизирован: больше не пересобирает все зоны и не коммитит DOM на каждом pointermove.
+- Обновлены `docs/PROJECT_PLAN.md`, `docs/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`, browser scenarios и мануал.
+
+### Что стало лучше
+
+- Performance gate теперь проверяет не только presentation sync, но и fog paint.
+- У карты появился включаемый debug-инструмент без шума в обычном интерфейсе.
+- Один из источников лагов на fog zones убран: движение зоны стало дешевле для DOM.
+
+### Что осталось
+
+- `3.5`: нужен batch/diff layer для presentation sync, чтобы несколько изменений за кадр не превращались в лишние операции.
+- `3.7`: нужны настоящие dirty-region save/sync для fog image, а не только counters.
+- Нужен stress smoke с реальным pointer drag/painting на большой карте.
+
+### Следующее развитие
+
+- Следующий пункт плана: `4. Visual Regression / UX Safety`, если не продолжаем углублять подпункты `3.5` и `3.7`.
+
+---
 ## 2026-06-01: Schema gate и Backup / Restore 1.7, 1.8, 2.5-2.7
 
 ### Что сделано
