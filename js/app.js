@@ -26,7 +26,12 @@ import {
 import {
   setupEditor,
   renderEmptyEditor,
+  renderWorkspaceRecoveryEditor,
 } from './editor/editor.js';
+
+import {
+  shouldShowWorkspaceRecovery
+} from './schema/schemaRecovery.js';
 
 
 /* Импорт поиска */
@@ -120,6 +125,19 @@ document
       /* Перерисовывает дерево */
       renderTree();
 
+      if (
+        shouldShowWorkspaceRecovery(
+          state.workspaceRecoveryReport
+        )
+      ) {
+
+        renderWorkspaceRecoveryEditor(
+          state.workspaceRecoveryReport
+        );
+
+        return;
+      }
+
       if (state.pages.length === 0) {
 
         renderEmptyEditor();
@@ -191,6 +209,19 @@ renderEmptyEditor();
 
   /* Рендерит дерево */
   renderTree();
+
+  if (
+    shouldShowWorkspaceRecovery(
+      state.workspaceRecoveryReport
+    )
+  ) {
+
+    renderWorkspaceRecoveryEditor(
+      state.workspaceRecoveryReport
+    );
+
+    return;
+  }
 
   if (state.pages.length === 0) {
 

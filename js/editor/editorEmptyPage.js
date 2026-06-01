@@ -101,3 +101,63 @@ export function renderEmptyEditorContent(
     'Пустая страница'
   );
 }
+
+
+export function renderWorkspaceRecoveryEditorContent(
+  editor,
+  report
+) {
+
+  setCurrentPage(
+    null
+  );
+
+  const actions =
+    Array.isArray(report?.actions)
+      ? report.actions
+      : [];
+
+  editor.innerHTML = `
+    <section class="empty-editor-page" contenteditable="false">
+      <div class="empty-editor-inner">
+        <p class="empty-editor-kicker">Диагностика workspace</p>
+        <h1>Найдены ошибки данных</h1>
+
+        <p class="empty-editor-note">
+          Приложение не исправляет эти ошибки автоматически. Сначала создайте
+          резервную копию workspace, затем исправьте источник проблемы.
+        </p>
+
+        <div class="workspace-recovery-list">
+          ${actions
+            .map(action => `
+              <article class="workspace-recovery-item">
+                <strong>${escapeHTML(action.code)}</strong>
+                <span>${escapeHTML(action.message)}</span>
+              </article>
+            `)
+            .join('')}
+        </div>
+      </div>
+    </section>
+  `;
+
+  renderTree();
+
+  setStatus(
+    'Найдены ошибки схемы workspace'
+  );
+}
+
+
+function escapeHTML(
+  value
+) {
+
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}

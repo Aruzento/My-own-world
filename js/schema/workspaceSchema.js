@@ -8,6 +8,14 @@ import {
   validatePageCollection
 } from './pageSchema.js';
 
+import {
+  validatePageTemplatesData
+} from './templateSchema.js';
+
+import {
+  validateAssetReferences
+} from './assetSchema.js';
+
 
 export function validateWorkspaceSnapshot(
   snapshot = {}
@@ -27,10 +35,32 @@ export function validateWorkspaceSnapshot(
     ]);
   }
 
-  return mergeValidationResults(
+  const results = [
     validatePageCollection(
       pages
     )
+  ];
+
+  if (snapshot.templates !== undefined) {
+
+    results.push(
+      validatePageTemplatesData(
+        snapshot.templates
+      )
+    );
+  }
+
+  if (snapshot.assetReferences !== undefined) {
+
+    results.push(
+      validateAssetReferences(
+        snapshot.assetReferences
+      )
+    );
+  }
+
+  return mergeValidationResults(
+    ...results
   );
 }
 

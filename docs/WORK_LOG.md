@@ -1,8 +1,57 @@
 # Журнал работ
 
-Этот файл хранит исторический лог выполненных задач, старые фрагменты планов, решения, риски и заметки "что сделано". Актуальный единый backlog находится в `docs/PLANS_AND_TECH_DEBT.md`.
+Этот файл хранит исторический лог выполненных задач, старые фрагменты планов, решения, риски и заметки "что сделано". Актуальный единый backlog находится в `docs/PROJECT_PLAN.md`.
 
-Новые подробные записи после крупных изменений добавлять сюда, а в `docs/PLANS_AND_TECH_DEBT.md` менять только статусы и следующие задачи.
+Новые подробные записи после крупных изменений добавлять сюда, а в `docs/PROJECT_PLAN.md` менять только статусы и следующие задачи.
+
+---
+## 2026-06-01: Schema Validation / Recovery 1.2-1.5
+
+### Что сделано
+
+- Добавлен `js/schema/templateSchema.js` для проверки `.my-own-world-templates.json`.
+- Добавлен `js/schema/assetSchema.js` для проверки `AssetReference`.
+- `validateWorkspaceSnapshot()` теперь умеет принимать `templates` и `assetReferences`.
+- `loadWorkspace()` собирает asset references из страниц и включает их в workspace validation.
+- Добавлен `js/schema/schemaRecovery.js` с `WorkspaceRecoveryReport`.
+- При критичных ошибках workspace приложение показывает fallback-экран диагностики в editor вместо молчаливого продолжения.
+- `docs/WORKSPACE_SCHEMA_CONTRACT.md` обновлен: описаны templates, assets и текущий recovery flow.
+- Unit tests расширены на templates, assets и recovery report.
+
+### Что стало лучше
+
+- Пункты `1.2-1.5` теперь закрыты базовым слоем, а не только page/map/task проверками.
+- Поврежденный workspace получает понятное диагностическое состояние.
+- Recovery остается безопасным: данные не исправляются автоматически без backup и явного действия.
+
+### Что осталось
+
+- Добавить browser/storage tests для recovery fallback.
+- Подключить validation gate перед будущими schema upgrades.
+- Сделать безопасные repair-actions после backup.
+
+---
+## 2026-06-01: Объединение планов проекта
+
+### Что сделано
+
+- Создан единый актуальный план `docs/PROJECT_PLAN.md`.
+- Старые плановые документы перенесены в `docs/archive/`:
+  - `PLANS_AND_TECH_DEBT.md`;
+  - `PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md`.
+- В новый план сведены рабочий backlog, оценка зрелости, техдолг, частично сделанные задачи и будущие отложенные пункты.
+- Зафиксировано правило: частично сделанная задача остается в плане до полного закрытия, а отложенная важная задача остается в будущем плане с причиной.
+- Ссылки в onboarding/release документации переведены на `docs/PROJECT_PLAN.md`.
+
+### Что стало лучше
+
+- У проекта снова один источник правды по плану.
+- Старые документы сохранены как архив, но больше не конкурируют с актуальным backlog.
+- Частичные задачи вроде schema validation, backup/restore, performance gate и locked fog zones явно не теряются.
+
+### Следующее развитие
+
+- Продолжать P0 data safety: пункты `1.2-1.5` и `2.5-2.7` в `docs/PROJECT_PLAN.md`.
 
 ---
 ## 2026-06-01: Backup / Restore, первый слой

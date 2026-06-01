@@ -48,7 +48,7 @@ Experimental-фичи можно вести без повышения верси
 
 ## Release Checklist
 
-1. Проверить `docs/PLANS_AND_TECH_DEBT.md`: статусы актуальны.
+1. Проверить `docs/PROJECT_PLAN.md`: статусы актуальны.
 2. Проверить `docs/WORK_LOG.md`: крупные изменения описаны.
 3. Обновить `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
 4. Обновить `README.md`, если изменились команды, архитектура или пользовательский flow.

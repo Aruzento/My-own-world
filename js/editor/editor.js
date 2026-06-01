@@ -60,7 +60,8 @@ import {
 
 import {
   setupEmptyEditorActions,
-  renderEmptyEditorContent
+  renderEmptyEditorContent,
+  renderWorkspaceRecoveryEditorContent
 } from './editorEmptyPage.js';
 
 import {
@@ -184,6 +185,16 @@ export function renderEmptyEditor() {
 
   renderEmptyEditorContent(
     editor
+  );
+}
+
+export function renderWorkspaceRecoveryEditor(
+  report
+) {
+
+  renderWorkspaceRecoveryEditorContent(
+    editor,
+    report
   );
 }
 

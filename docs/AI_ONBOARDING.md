@@ -48,14 +48,14 @@ npm run test:browser
 Если менялась архитектура или публичные правила подсистем:
 
 - обновить `README.md`;
-- обновить `docs/PLANS_AND_TECH_DEBT.md`;
+- обновить `docs/PROJECT_PLAN.md`;
 - обновить `docs/WORK_LOG.md`;
 - обновить `docs/MY_OWN_WORLD_FULL_MANUAL.docx` через `python tools/generate_manual_docx.py`.
 
 ## Где Смотреть
 
 - `README.md` - обзор текущей архитектуры.
-- `docs/PLANS_AND_TECH_DEBT.md` - актуальный план.
+- `docs/PROJECT_PLAN.md` - актуальный единый план.
 - `docs/WORK_LOG.md` - история решений.
 - `docs/BLOCK_SYSTEM_CONTRACT.md` - правила блоков.
 - `docs/SAFE_HTML_CONTRACT.md` - граница безопасного HTML.

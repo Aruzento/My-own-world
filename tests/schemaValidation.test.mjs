@@ -16,6 +16,18 @@ import {
 } from '../js/schema/workspaceSchema.js';
 
 import {
+  validatePageTemplatesData
+} from '../js/schema/templateSchema.js';
+
+import {
+  validateAssetReferences
+} from '../js/schema/assetSchema.js';
+
+import {
+  createWorkspaceRecoveryReport
+} from '../js/schema/schemaRecovery.js';
+
+import {
   validateJSONText
 } from '../js/schema/schemaJson.js';
 
@@ -219,6 +231,154 @@ test(
     assert.equal(
       result.validation.errors[0].code,
       'json.invalid'
+    );
+  }
+);
+
+
+test(
+  'template schema находит шаблон без id',
+  () => {
+
+    const result =
+      validatePageTemplatesData({
+        version: 1,
+        templates: [
+          {
+            title: 'Шаблон персонажа',
+            tags: [],
+            aliases: [],
+            body: '<section></section>'
+          }
+        ]
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.errors[0].code,
+      'template.missing_id'
+    );
+  }
+);
+
+
+test(
+  'asset schema находит ссылку без пути',
+  () => {
+
+    const result =
+      validateAssetReferences([
+        {
+          id: 'asset-1',
+          type: 'image',
+          owner: {
+            pageId: 'page-1'
+          }
+        }
+      ]);
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.errors[0].code,
+      'asset.missing_path'
+    );
+  }
+);
+
+
+test(
+  'workspace schema проверяет templates и asset references',
+  () => {
+
+    const result =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            id: 'page-1',
+            title: 'Карточка',
+            parent: null,
+            tags: [],
+            aliases: []
+          }
+        ],
+        templates: {
+          version: 1,
+          templates: [
+            {
+              id: 'template-1',
+              title: 'Шаблон',
+              tags: 'broken',
+              body: '<section></section>'
+            }
+          ]
+        },
+        assetReferences: [
+          {
+            id: 'asset-1',
+            type: 'unknown',
+            path: 'assets/image.png',
+            owner: {
+              pageId: 'page-1'
+            }
+          }
+        ]
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.errors[0].code,
+      'template.invalid_tags'
+    );
+
+    assert.equal(
+      result.warnings[0].code,
+      'asset.unknown_type'
+    );
+  }
+);
+
+
+test(
+  'workspace recovery report предлагает действия для критичных ошибок',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            title: 'Без id',
+            parent: null,
+            tags: [],
+            aliases: []
+          }
+        ]
+      });
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validation
+      );
+
+    assert.equal(
+      report.blocking,
+      true
+    );
+
+    assert.equal(
+      report.actions[0].code,
+      'page.missing_id'
     );
   }
 );

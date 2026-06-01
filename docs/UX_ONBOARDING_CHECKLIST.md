@@ -69,4 +69,4 @@
 - Есть встроенный быстрый старт.
 - Есть встроенное описание основных частей продукта.
 - Есть checklist для карточек, дерева, wiki-links, карты и task tracker.
-- `README.md`, `PLANS_AND_TECH_DEBT.md`, `WORK_LOG.md` и manual обновлены.
+- `README.md`, `PROJECT_PLAN.md`, `WORK_LOG.md` и manual обновлены.

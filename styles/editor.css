@@ -419,3 +419,84 @@ a:hover {
     26px;
 }
 
+
+.empty-editor-note {
+
+  margin:
+    0 auto 18px;
+
+  max-width:
+    520px;
+
+  color:
+    rgba(255,255,255,0.68);
+
+  font-size:
+    14px;
+
+  line-height:
+    1.55;
+}
+
+
+.workspace-recovery-list {
+
+  display:
+    grid;
+
+  gap:
+    10px;
+
+  text-align:
+    left;
+}
+
+
+.workspace-recovery-item {
+
+  padding:
+    12px 14px;
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  border:
+    1px solid
+    rgba(238,123,111,0.26);
+
+  border-radius:
+    12px;
+
+  background:
+    rgba(238,123,111,0.08);
+
+  color:
+    rgba(255,244,240,0.88);
+}
+
+
+.workspace-recovery-item strong {
+
+  color:
+    rgba(255,206,199,0.96);
+
+  font-size:
+    12px;
+
+  letter-spacing:
+    0;
+}
+
+
+.workspace-recovery-item span {
+
+  font-size:
+    13px;
+
+  line-height:
+    1.45;
+}
+

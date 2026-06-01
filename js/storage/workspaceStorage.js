@@ -19,6 +19,14 @@ import {
   validateWorkspaceSnapshot
 } from '../schema/workspaceSchema.js';
 
+import {
+  createWorkspaceRecoveryReport
+} from '../schema/schemaRecovery.js';
+
+import {
+  collectAssetReferencesFromPages
+} from './assetReferenceScanner.js';
+
 
 /* Импорт persistence-слоя */
 import {
@@ -141,8 +149,20 @@ export async function loadWorkspace() {
 
   const validation =
     validateWorkspaceSnapshot({
-      pages: state.pages
+      pages: state.pages,
+      assetReferences:
+        collectAssetReferencesFromPages(
+          state.pages
+        )
     });
+
+  state.workspaceValidation =
+    validation;
+
+  state.workspaceRecoveryReport =
+    createWorkspaceRecoveryReport(
+      validation
+    );
 
   logWorkspaceValidationResult(
     validation
