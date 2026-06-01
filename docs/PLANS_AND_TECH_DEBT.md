@@ -10,6 +10,22 @@
 - подробный лог "что сделано / что стало лучше / какие риски остались" добавлять в `docs/WORK_LOG.md`;
 - после крупных изменений обновлять `README.md`, `docs/MY_OWN_WORLD_FULL_MANUAL.docx` и релевантные contract-файлы.
 
+## Фокус После Оценки 01.06.2026
+
+- Текущая оценка зрелости: **3.8 / 5**.
+- Полная оценка: `Тех. зрелость/01.06.2026 - оценка.md`.
+- Новый план развития зрелости: `docs/PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md`.
+- Стресс-проверки: `npm run test` 3 раза, `npm run test:browser` 3 раза, `npm run verify` 1 раз. Все проверки прошли.
+- Модельный стресс карты с 250 токенами и 120 фигурами подтвердил быструю сериализацию, но показал превышение performance budgets по числу видимых объектов.
+
+Ближайшие P0/P1 задачи, которые должны идти поверх текущего backlog:
+
+1. **Schema Validation / Recovery Layer**: контракт схем workspace/page/map/task/assets, валидаторы, recovery flow и tests.
+2. **Campaign Map Performance Gate**: вынести стресс карты в тест, добавить browser performance smoke, budgets для fog/render/sync и оптимизацию dirty regions.
+3. **Storage / Backup / Restore**: ручные и автоматические snapshots перед рискованными операциями, restore flow.
+4. **Visual Regression / UX Safety**: screenshots и проверки popup/toolbar/badge/selection/layers.
+5. **Разрез крупных файлов и CSS**: продолжать дробить `toolbar.js`, `editor.js`, `campaignMapPresentation.js`, `campaign-map.css`, `popup.css`.
+
 ## Актуальный Приоритетный План
 
 ### 1. Smoke / Regression Tests
