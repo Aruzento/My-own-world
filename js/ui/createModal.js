@@ -42,10 +42,11 @@ import {
 } from './popupManager.js';
 
 
-const menu =
-  document.getElementById(
-    'createMenu'
-  );
+let menu =
+  null;
+
+let createMenuBackHandlerReady =
+  false;
 
 const button =
   document.getElementById(
@@ -57,6 +58,11 @@ const menuAnchors =
 
 
 export function setupCreateModal() {
+
+  menu =
+    ensureCreateMenu();
+
+  setupCreateMenuBackHandler();
 
   renderMenu();
 
@@ -107,6 +113,9 @@ export function openCreateMenu(
   anchor = null
 ) {
 
+  menu =
+    ensureCreateMenu();
+
   menu.dataset.parentId =
     parentId ?? '';
 
@@ -147,13 +156,67 @@ export function openCreateMenu(
 
 function closeMenu() {
 
-  menu.classList.add(
+  ensureCreateMenu().classList.add(
     'hidden'
   );
 
   menuAnchors.splice(
     0,
     menuAnchors.length
+  );
+}
+
+
+function ensureCreateMenu() {
+
+  if (menu) return menu;
+
+  menu =
+    document.getElementById(
+      'createMenu'
+    );
+
+  if (!menu) {
+
+    menu =
+      document.createElement('div');
+
+    menu.id =
+      'createMenu';
+
+    menu.className =
+      'create-menu hidden';
+
+    document.body.appendChild(
+      menu
+    );
+  }
+
+  return menu;
+}
+
+
+function setupCreateMenuBackHandler() {
+
+  if (createMenuBackHandlerReady) return;
+
+  createMenuBackHandlerReady =
+    true;
+
+  ensureCreateMenu().addEventListener(
+    'click',
+    event => {
+
+      if (
+        !event.target.classList.contains(
+          'create-picker-back'
+        )
+      ) return;
+
+      event.stopPropagation();
+
+      renderMenu();
+    }
   );
 }
 
@@ -520,20 +583,3 @@ function renderPickerEmpty(
     empty
   );
 }
-
-
-menu.addEventListener(
-  'click',
-  event => {
-
-    if (
-      !event.target.classList.contains(
-        'create-picker-back'
-      )
-    ) return;
-
-    event.stopPropagation();
-
-    renderMenu();
-  }
-);

@@ -157,7 +157,7 @@ export const browserSmokeScenarios = [
     description:
       'Открыть create menu, block popup, wiki popup, toolbar color popup и profile popup возле краев экрана.',
     automationStatus:
-      'partly-automated: visual-layout-guards-common-regressions проверяет общий popup boundary и toolbar width; конкретные popup по типам остаются для Popup Lifecycle Standardization.',
+      'automated базово: popup-manager-closes-by-escape-outside-and-keeps-popup-in-viewport и visual-layout-guards-common-regressions проверяют общий boundary; конкретные popup-типы расширять при новых регрессиях.',
     automatesChecklist: [
       'Popup И UI: 1',
       'Popup И UI: 2',
@@ -165,6 +165,22 @@ export const browserSmokeScenarios = [
       'Popup И UI: 4',
       'Popup И UI: 5',
       'Popup И UI: 6'
+    ]
+  },
+  {
+    id: 'popup-trigger-toggle-lifecycle',
+    priority: 'P1',
+    area: 'ui',
+    title: 'Popup закрывается повторным кликом, Escape и outside click',
+    description:
+      'Проверить общий PopupManager: trigger toggle, Escape, outside click, z-index и popup карты.',
+    automationStatus:
+      'automated: popup-triggers-toggle-create-menu-tools-and-campaign-map-popup',
+    automatesChecklist: [
+      'Popup Lifecycle: 5.1',
+      'Popup Lifecycle: 5.2',
+      'Popup Lifecycle: 5.4',
+      'Popup Lifecycle: 5.5'
     ]
   },
   {

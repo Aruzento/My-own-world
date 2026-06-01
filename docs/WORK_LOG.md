@@ -2414,3 +2414,30 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Рабочий фокус плана остается `5. Popup Lifecycle Standardization`.
+
+---
+
+## 2026-06-01: Popup Lifecycle Standardization 5.1-5.5
+
+### Что сделано
+
+- Создан `docs/POPUP_LIFECYCLE_CONTRACT.md`.
+- `js/ui/popupManager.js` расширен до общего lifecycle-слоя: register, open, toggle, close, destroy, z-index, Escape, outside click и controller API.
+- `js/ui/popupPosition.js` получил совместимость `offset` как alias для `gap`.
+- `js/ui/createModal.js` теперь создает `createMenu` в JS, если контейнера нет в `index.html`.
+- `js/tree/treeContextMenu.js` теперь создает `treeContextMenu` в JS и закрывается через общий `PopupManager`.
+- `index.html` очищен от static containers `createMenu` и `treeContextMenu`.
+- `js/editor/links.js` переведен на общий popup lifecycle вместо собственного document click listener.
+- `js/editor/campaignMapPopupController.js` переведен на общий `PopupManager` с динамическими anchors.
+- Добавлен browser regression `tests/browser/popup-lifecycle.spec.mjs`.
+- Обновлены `tests/browser/scenarios.mjs`, `tests/browser/README.md` и единый план.
+
+### Что стало лучше
+
+- Popup-ы получили единый базовый закон поведения: открытие, повторный trigger, Escape, outside click, viewport boundary и z-index.
+- Часть legacy static UI убрана из `index.html`, не ломая существующий app shell.
+- Новые popup-регрессии теперь можно ловить через один focused browser spec.
+
+### Следующее развитие
+
+- Перейти к `6. Properties Model / Character Calculations` или, если появятся UI-баги popup, расширить `popup-lifecycle.spec.mjs` конкретными сценариями block/wiki/item/template popup.

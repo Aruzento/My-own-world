@@ -1,6 +1,7 @@
 import {
-  positionPopupNearAnchor
-} from '../ui/popupPosition.js';
+  openPopupNearAnchor,
+  registerPopup
+} from '../ui/popupManager.js';
 
 import {
   markRuntime
@@ -9,6 +10,12 @@ import {
 
 // Общий controller для popup-ов карты. Он отвечает только за контейнер,
 // позиционирование, повторный клик по кнопке и закрытие по клику снаружи.
+
+let popupController =
+  null;
+
+const mapPopupAnchors =
+  [];
 
 export function toggleMapPopupForAnchor(
   anchor,
@@ -56,20 +63,6 @@ export function getMapPopup() {
     popup
   );
 
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        popup.classList.contains('hidden') ||
-        popup.contains(event.target) ||
-        event.target.closest('.campaign-map-controls')
-      ) return;
-
-      closeMapPopup();
-    }
-  );
-
   popup.addEventListener(
     'click',
     event => {
@@ -77,6 +70,14 @@ export function getMapPopup() {
       event.stopPropagation();
     }
   );
+
+  popupController =
+    registerPopup({
+      popup,
+      close: closeMapPopup,
+      anchors: mapPopupAnchors,
+      key: 'campaign-map-popup'
+    });
 
   return popup;
 }
@@ -96,14 +97,22 @@ export function showMapPopup(
       anchor
     );
 
-  popup.classList.remove(
-    'hidden'
+  mapPopupAnchors.splice(
+    0,
+    mapPopupAnchors.length
   );
+
+  if (anchor) {
+
+    mapPopupAnchors.push(
+      anchor
+    );
+  }
 
   requestAnimationFrame(
     () => {
 
-      positionPopupNearAnchor(
+      openPopupNearAnchor(
         popup,
         anchor,
         {
@@ -132,6 +141,11 @@ export function closeMapPopup() {
 
   popup.dataset.anchorKey =
     '';
+
+  mapPopupAnchors.splice(
+    0,
+    mapPopupAnchors.length
+  );
 }
 
 

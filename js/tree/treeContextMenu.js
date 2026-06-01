@@ -31,8 +31,9 @@ import {
 } from '../ui/ui.js';
 
 import {
-  positionPopupAtPoint
-} from '../ui/popupPosition.js';
+  openPopupAtPoint,
+  registerPopup
+} from '../ui/popupManager.js';
 
 import {
   getUniqueCopyTitle
@@ -43,11 +44,8 @@ import {
 } from '../templates/pageTemplateStorage.js';
 
 
-/* Находит DOM-элемент контекстного меню дерева */
-const contextMenu =
-  document.getElementById(
-    'treeContextMenu'
-  );
+let contextMenu =
+  null;
 
 
 /* Открывает контекстное меню дерева для конкретной страницы */
@@ -56,6 +54,9 @@ export function openTreeContextMenu(
   page,
   renderTree
 ) {
+
+  contextMenu =
+    ensureTreeContextMenu();
 
   /* Очищает старые кнопки меню */
   contextMenu.innerHTML = '';
@@ -234,15 +235,10 @@ export function openTreeContextMenu(
   );
 
 
-  /* Показывает меню */
-  contextMenu.classList.remove(
-    'hidden'
-  );
-
   requestAnimationFrame(
     () => {
 
-      positionPopupAtPoint(
+      openPopupAtPoint(
         contextMenu,
         event.clientX,
         event.clientY,
@@ -436,9 +432,44 @@ async function openPageInFolder(
 export function closeTreeContextMenu() {
 
   /* Прячет меню */
-  contextMenu.classList.add(
+  ensureTreeContextMenu().classList.add(
     'hidden'
   );
+}
+
+
+function ensureTreeContextMenu() {
+
+  if (contextMenu) return contextMenu;
+
+  contextMenu =
+    document.getElementById(
+      'treeContextMenu'
+    );
+
+  if (!contextMenu) {
+
+    contextMenu =
+      document.createElement('div');
+
+    contextMenu.id =
+      'treeContextMenu';
+
+    contextMenu.className =
+      'tree-context-menu hidden';
+
+    document.body.appendChild(
+      contextMenu
+    );
+  }
+
+  registerPopup({
+    popup: contextMenu,
+    close: closeTreeContextMenu,
+    key: 'tree-context-menu'
+  });
+
+  return contextMenu;
 }
 
 
@@ -469,20 +500,3 @@ async function ensureWorkspaceWritePermission() {
   /* Возвращает true только если права выданы */
   return requestedPermission === 'granted';
 }
-
-
-/* Закрывает меню при клике вне него */
-document.addEventListener(
-  'click',
-  event => {
-
-    /* Если клик был не внутри меню */
-    if (
-      !contextMenu.contains(event.target)
-    ) {
-
-      /* Закрываем меню */
-      closeTreeContextMenu();
-    }
-  }
-);

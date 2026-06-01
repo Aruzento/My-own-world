@@ -3,8 +3,9 @@ import {
 } from './editor.js';
 
 import {
-  positionPopupAtPoint
-} from '../ui/popupPosition.js';
+  openPopupAtPoint,
+  registerPopup
+} from '../ui/popupManager.js';
 
 import {
   pushEditorHistorySnapshot
@@ -102,14 +103,10 @@ export function createLinkFromSelection() {
     '';
 
 
-  popup.classList.remove(
-    'hidden'
-  );
-
   requestAnimationFrame(
     () => {
 
-      positionPopupAtPoint(
+      openPopupAtPoint(
         popup,
         rect.left,
         rect.bottom + 8,
@@ -181,35 +178,16 @@ function setupLinkPopup() {
     }
   );
 
-
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        popup.classList.contains(
-          'hidden'
-        )
-      ) return;
-
-      if (
-        popup.contains(event.target)
-      ) return;
-
-      const toolbar =
-        document.getElementById(
-          'floatingToolbar'
-        );
-
-      if (
-        toolbar
-        &&
-        toolbar.contains(event.target)
-      ) return;
-
-      closeLinkPopup();
-    }
-  );
+  registerPopup({
+    popup,
+    close: closeLinkPopup,
+    anchors: [
+      document.getElementById(
+        'floatingToolbar'
+      )
+    ],
+    key: 'link-popup'
+  });
 }
 
 

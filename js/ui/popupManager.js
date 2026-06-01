@@ -5,27 +5,51 @@ import {
 
 
 const managedPopups =
-  new Set();
+  new Map();
+
+let popupZIndex =
+  10_000;
 
 let isListening =
   false;
 
 
+// PopupManager задает общий lifecycle для popup-ов приложения:
+// register -> open/toggle -> close -> destroy. Старые helper-функции оставлены
+// совместимыми, но новые popup лучше подключать через controller.
+
 export function registerPopup({
   popup,
   close,
-  anchors = []
+  anchors = [],
+  key = '',
+  modal = false
 }) {
 
-  if (!popup || !close) return;
+  if (!popup) return null;
 
-  managedPopups.add({
+  const popupKey =
+    key || popup.id || `popup-${managedPopups.size + 1}`;
+
+  const entry = {
     popup,
-    close,
-    anchors
-  });
+    close:
+      close || (() => closePopup(popup)),
+    anchors,
+    key: popupKey,
+    modal
+  };
+
+  managedPopups.set(
+    popupKey,
+    entry
+  );
 
   ensurePopupManagerListeners();
+
+  return createPopupController(
+    entry
+  );
 }
 
 
@@ -35,7 +59,7 @@ export function openPopupNearAnchor(
   options = {}
 ) {
 
-  showPopup(
+  openPopup(
     popup
   );
 
@@ -54,7 +78,7 @@ export function openPopupAtPoint(
   options = {}
 ) {
 
-  showPopup(
+  openPopup(
     popup
   );
 
@@ -71,9 +95,34 @@ export function closePopup(
   popup
 ) {
 
-  popup?.classList.add(
+  if (!popup) return;
+
+  popup.classList.add(
     'hidden'
   );
+
+  popup.dataset.popupOpen =
+    'false';
+}
+
+
+export function openPopup(
+  popup
+) {
+
+  if (!popup) return;
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  popup.dataset.popupOpen =
+    'true';
+
+  popup.style.zIndex =
+    String(
+      ++popupZIndex
+    );
 }
 
 
@@ -105,12 +154,84 @@ export function togglePopupNearAnchor(
 }
 
 
-function showPopup(
+export function togglePopupAtPoint(
+  popup,
+  x,
+  y,
+  options = {}
+) {
+
+  if (
+    popup &&
+    !popup.classList.contains('hidden')
+  ) {
+
+    closePopup(
+      popup
+    );
+
+    return false;
+  }
+
+  openPopupAtPoint(
+    popup,
+    x,
+    y,
+    options
+  );
+
+  return true;
+}
+
+
+export function closeAllPopups(
+  exceptPopup = null
+) {
+
+  managedPopups.forEach(entry => {
+
+    if (entry.popup === exceptPopup) return;
+
+    if (
+      !entry.popup.classList.contains('hidden')
+    ) {
+
+      entry.close();
+    }
+  });
+}
+
+
+export function destroyPopup(
+  popupOrKey
+) {
+
+  const entry =
+    getPopupEntry(
+      popupOrKey
+    );
+
+  if (!entry) return;
+
+  closePopup(
+    entry.popup
+  );
+
+  entry.popup.remove();
+
+  managedPopups.delete(
+    entry.key
+  );
+}
+
+
+export function isPopupOpen(
   popup
 ) {
 
-  popup?.classList.remove(
-    'hidden'
+  return Boolean(
+    popup &&
+    !popup.classList.contains('hidden')
   );
 }
 
@@ -164,4 +285,89 @@ function ensurePopupManagerListeners() {
       });
     }
   );
+}
+
+
+function createPopupController(
+  entry
+) {
+
+  return {
+    openNearAnchor(anchor, options = {}) {
+
+      openPopupNearAnchor(
+        entry.popup,
+        anchor,
+        options
+      );
+    },
+
+    openAtPoint(x, y, options = {}) {
+
+      openPopupAtPoint(
+        entry.popup,
+        x,
+        y,
+        options
+      );
+    },
+
+    toggleNearAnchor(anchor, options = {}) {
+
+      return togglePopupNearAnchor(
+        entry.popup,
+        anchor,
+        options
+      );
+    },
+
+    toggleAtPoint(x, y, options = {}) {
+
+      return togglePopupAtPoint(
+        entry.popup,
+        x,
+        y,
+        options
+      );
+    },
+
+    close() {
+
+      entry.close();
+    },
+
+    destroy() {
+
+      destroyPopup(
+        entry.key
+      );
+    },
+
+    isOpen() {
+
+      return isPopupOpen(
+        entry.popup
+      );
+    }
+  };
+}
+
+
+function getPopupEntry(
+  popupOrKey
+) {
+
+  if (typeof popupOrKey === 'string') {
+
+    return managedPopups.get(
+      popupOrKey
+    );
+  }
+
+  for (const entry of managedPopups.values()) {
+
+    if (entry.popup === popupOrKey) return entry;
+  }
+
+  return null;
 }

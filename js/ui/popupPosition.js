@@ -6,6 +6,7 @@ export function positionPopupNearAnchor(
   anchor,
   {
     gap = 8,
+    offset,
     preferred = 'bottom',
     fallbackWidth = 280,
     fallbackHeight = 180
@@ -17,6 +18,11 @@ export function positionPopupNearAnchor(
   const rect =
     anchor.getBoundingClientRect();
 
+  const distance =
+    Number.isFinite(offset)
+      ? offset
+      : gap;
+
   const size =
     getPopupSize(
       popup,
@@ -25,10 +31,10 @@ export function positionPopupNearAnchor(
     );
 
   const below =
-    rect.bottom + gap;
+    rect.bottom + distance;
 
   const above =
-    rect.top - size.height - gap;
+    rect.top - size.height - distance;
 
   const top =
     preferred === 'top'
