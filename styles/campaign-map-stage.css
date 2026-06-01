@@ -204,6 +204,39 @@
 }
 
 
+.campaign-map-stage.is-selection-mode {
+
+  cursor:
+    crosshair;
+}
+
+
+.campaign-map-selection {
+
+  position:
+    absolute;
+
+  z-index:
+    130;
+
+  border:
+    1px solid rgba(218,72,72,0.86);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(218,72,72,0.12);
+
+  box-shadow:
+    0 0 0 1px rgba(255,248,230,0.26),
+    0 12px 28px rgba(0,0,0,0.24);
+
+  pointer-events:
+    none;
+}
+
+
 .campaign-map-stage[data-brush-shape="square"] .campaign-brush-preview {
 
   border-radius:

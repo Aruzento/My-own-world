@@ -1,5 +1,7 @@
 import {
-  DEFAULT_SHAPE_SIZE
+  DEFAULT_SHAPE_SIZE,
+  WORLD_HEIGHT,
+  WORLD_WIDTH
 } from './campaignMapConstants.js';
 
 import {
@@ -14,11 +16,16 @@ import {
 } from './campaignMapShapes.js';
 
 import {
+  positionToken
+} from './campaignMapTokens.js';
+
+import {
   scheduleLivePresentationSync
 } from './campaignMapPresentationSync.js';
 
 import {
-  applyShapeRecordToElement
+  applyShapeRecordToElement,
+  applyTokenRecordToElement
 } from './campaignMapRenderAdapter.js';
 
 import {
@@ -114,16 +121,26 @@ export function startShapeDrag(
 
   deps.closeTokenPopup();
   deps.clearTokenPopupTimer();
-  deps.selectMapShape(
-    shape,
-    {
-      additive: options.additiveSelection
-    }
-  );
 
   if (options.additiveSelection) {
 
+    deps.selectMapShape(
+      shape,
+      {
+        additive: true
+      }
+    );
+
     return;
+  }
+
+  if (
+    !shape.classList.contains('is-selected')
+  ) {
+
+    deps.selectMapShape(
+      shape
+    );
   }
 
   const record =
@@ -139,6 +156,12 @@ export function startShapeDrag(
     startY: event.clientY,
     startLeft: record.x,
     startTop: record.y,
+    selectedTokens: getSelectedTokenRecords(
+      shape.closest('.campaign-map-document')
+    ),
+    selectedShapes: getSelectedShapeRecords(
+      shape.closest('.campaign-map-document')
+    ),
     moved: false
   };
 
@@ -484,26 +507,55 @@ function moveShapeToPointer(
       draggedShape.map
     );
 
-  store?.moveShape(
-    draggedShape.shape.dataset.shapeId,
-    {
-      x: Math.round(
-        draggedShape.startLeft + delta.x
-      ),
-      y: Math.round(
-        draggedShape.startTop + delta.y
-      )
-    }
-  );
+  draggedShape.selectedShapes
+    .forEach(item => {
 
-  applyShapeRecordFromStore(
-    draggedShape.shape,
-    store
-  );
+      store?.moveShape(
+        item.shape.dataset.shapeId,
+        {
+          x: Math.round(
+            item.startX + delta.x
+          ),
+          y: Math.round(
+            item.startY + delta.y
+          )
+        }
+      );
 
-  applyShapeGeometry(
-    draggedShape.shape
-  );
+      applyShapeRecordFromStore(
+        item.shape,
+        store
+      );
+
+      applyShapeGeometry(
+        item.shape
+      );
+    });
+
+  draggedShape.selectedTokens
+    .forEach(item => {
+
+      store?.moveToken(
+        item.token.dataset.tokenId,
+        {
+          x: clampPercent(
+            item.startX + delta.x / WORLD_WIDTH * 100
+          ),
+          y: clampPercent(
+            item.startY + delta.y / WORLD_HEIGHT * 100
+          )
+        }
+      );
+
+      applyTokenRecordFromStore(
+        item.token,
+        store
+      );
+
+      positionToken(
+        item.token
+      );
+    });
 
   scheduleLivePresentationSync(
     {
@@ -512,6 +564,48 @@ function moveShapeToPointer(
       itemId: draggedShape.shape.dataset.shapeId
     }
   );
+}
+
+
+function clampPercent(
+  value
+) {
+
+  return Math.min(
+    100,
+    Math.max(
+      0,
+      value
+    )
+  );
+}
+
+
+function getSelectedShapeRecords(
+  map
+) {
+
+  return [
+    ...map.querySelectorAll('.campaign-map-shape.is-selected')
+  ].map(shape => ({
+    shape,
+    startX: Number(shape.dataset.x || 0),
+    startY: Number(shape.dataset.y || 0)
+  }));
+}
+
+
+function getSelectedTokenRecords(
+  map
+) {
+
+  return [
+    ...map.querySelectorAll('.campaign-map-token.is-selected')
+  ].map(token => ({
+    token,
+    startX: Number(token.dataset.x || 50),
+    startY: Number(token.dataset.y || 50)
+  }));
 }
 
 
@@ -529,6 +623,25 @@ function applyShapeRecordFromStore(
 
   applyShapeRecordToElement(
     shape,
+    record
+  );
+}
+
+
+function applyTokenRecordFromStore(
+  token,
+  store
+) {
+
+  const record =
+    store
+      ?.getModel()
+      ?.getToken(
+        token?.dataset.tokenId
+      );
+
+  applyTokenRecordToElement(
+    token,
     record
   );
 }

@@ -21,12 +21,17 @@ import {
 } from './campaignMapPresentationSync.js';
 
 import {
+  applyShapeRecordToElement,
   applyTokenRecordToElement
 } from './campaignMapRenderAdapter.js';
 
 import {
   getCampaignMapStore
 } from './campaignMapStore.js';
+
+import {
+  applyShapeGeometry
+} from './campaignMapShapes.js';
 
 import {
   removeDragMeasure,
@@ -77,21 +82,36 @@ export function startTokenDrag(
 
   deps.clearTokenPopupTimer();
 
-  deps.selectMapToken(
-    token,
-    {
-      additive: options.additiveSelection
-    }
-  );
-
   if (options.additiveSelection) {
 
+    deps.selectMapToken(
+      token,
+      {
+        additive: true
+      }
+    );
+
     return;
+  }
+
+  if (
+    !token.classList.contains('is-selected')
+  ) {
+
+    deps.selectMapToken(
+      token
+    );
   }
 
   const record =
     getTokenRecord(
       token
+    );
+
+  const startPointer =
+    getWorldPointFromEvent(
+      event,
+      token.closest('.campaign-map-stage')
     );
 
   draggedToken = {
@@ -100,8 +120,16 @@ export function startTokenDrag(
     map: token.closest('.campaign-map-document'),
     startX: event.clientX,
     startY: event.clientY,
+    startPointerX: startPointer.x,
+    startPointerY: startPointer.y,
     startWorldX: record.x / 100 * WORLD_WIDTH,
     startWorldY: record.y / 100 * WORLD_HEIGHT,
+    selectedTokens: getSelectedTokenRecords(
+      token.closest('.campaign-map-document')
+    ),
+    selectedShapes: getSelectedShapeRecords(
+      token.closest('.campaign-map-document')
+    ),
     measure: null,
     moved: false
   };
@@ -626,32 +654,75 @@ function moveTokenToPointer(
       stage
     );
 
-  const x =
-    clamp(
-      (point.x / WORLD_WIDTH) * 100,
-      0,
-      100
-    );
-
-  const y =
-    clamp(
-      (point.y / WORLD_HEIGHT) * 100,
-      0,
-      100
-    );
+  const delta = {
+    x: point.x - draggedToken.startPointerX,
+    y: point.y - draggedToken.startPointerY
+  };
 
   const store =
     getCampaignMapStore(
       draggedToken.map
     );
 
-  store?.moveToken(
-    token.dataset.tokenId,
-    {
-      x,
-      y
-    }
-  );
+  draggedToken.selectedTokens
+    .forEach(item => {
+
+      const x =
+        clamp(
+          item.startX + (delta.x / WORLD_WIDTH) * 100,
+          0,
+          100
+        );
+
+      const y =
+        clamp(
+          item.startY + (delta.y / WORLD_HEIGHT) * 100,
+          0,
+          100
+        );
+
+      store?.moveToken(
+        item.token.dataset.tokenId,
+        {
+          x,
+          y
+        }
+      );
+
+      applyTokenRecordFromStore(
+        item.token,
+        store
+      );
+
+      positionToken(
+        item.token
+      );
+    });
+
+  draggedToken.selectedShapes
+    .forEach(item => {
+
+      store?.moveShape(
+        item.shape.dataset.shapeId,
+        {
+          x: Math.round(
+            item.startX + delta.x
+          ),
+          y: Math.round(
+            item.startY + delta.y
+          )
+        }
+      );
+
+      applyShapeRecordFromStore(
+        item.shape,
+        store
+      );
+
+      applyShapeGeometry(
+        item.shape
+      );
+    });
 
   applyTokenRecordFromStore(
     token,
@@ -682,6 +753,42 @@ function moveTokenToPointer(
 }
 
 
+function getSelectedTokenRecords(
+  map
+) {
+
+  return [
+    ...map.querySelectorAll('.campaign-map-token.is-selected')
+  ].map(selectedToken => {
+
+    const record =
+      getTokenRecord(
+        selectedToken
+      );
+
+    return {
+      token: selectedToken,
+      startX: record.x,
+      startY: record.y
+    };
+  });
+}
+
+
+function getSelectedShapeRecords(
+  map
+) {
+
+  return [
+    ...map.querySelectorAll('.campaign-map-shape.is-selected')
+  ].map(shape => ({
+    shape,
+    startX: Number(shape.dataset.x || 0),
+    startY: Number(shape.dataset.y || 0)
+  }));
+}
+
+
 function applyTokenRecordFromStore(
   token,
   store
@@ -696,6 +803,25 @@ function applyTokenRecordFromStore(
 
   applyTokenRecordToElement(
     token,
+    record
+  );
+}
+
+
+function applyShapeRecordFromStore(
+  shape,
+  store
+) {
+
+  const record =
+    store
+      ?.getModel()
+      ?.getShape(
+        shape?.dataset.shapeId
+      );
+
+  applyShapeRecordToElement(
+    shape,
     record
   );
 }

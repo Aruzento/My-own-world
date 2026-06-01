@@ -214,6 +214,16 @@ export function setupCampaignMaps(
     pointerController.handleDocumentPointerUp
   );
 
+  document.addEventListener(
+    'keydown',
+    pointerController.handleDocumentKeyDown
+  );
+
+  document.addEventListener(
+    'keyup',
+    pointerController.handleDocumentKeyUp
+  );
+
   editor.addEventListener(
     'wheel',
     pointerController.handleMapWheel,
@@ -415,6 +425,12 @@ async function handleMapClick(
     event.target.closest('.campaign-map-document');
 
   if (!map) return;
+
+  if (map.dataset.selectionJustFinished === 'true') {
+
+    delete map.dataset.selectionJustFinished;
+    return;
+  }
 
   const token =
     event.target.closest('.campaign-map-token');

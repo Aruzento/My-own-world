@@ -33,6 +33,14 @@ import {
   clearDraggedToken
 } from './campaignMapTokenDrag.js';
 
+import {
+  finishCampaignMapSelectionBox,
+  hasActiveCampaignMapSelectionBox,
+  moveCampaignMapSelectionBox,
+  setCampaignMapSelectionMode,
+  startCampaignMapSelectionBox
+} from './campaignMapSelectionBox.js';
+
 
 // Pointer controller — единый маршрутизатор мыши/пера для карты.
 // Он выбирает сценарий, а реальные drag/fog/pan операции делегирует модулям.
@@ -53,6 +61,8 @@ export function createCampaignMapPointerController(
     hideBrushPreview,
     handleDocumentPointerMove,
     handleDocumentPointerUp,
+    handleDocumentKeyDown,
+    handleDocumentKeyUp,
     handleMapWheel
   };
 
@@ -63,6 +73,25 @@ export function createCampaignMapPointerController(
 
     const shapeHandle =
       event.target.closest('.campaign-map-shape-handle');
+
+    const stage =
+      event.target.closest('.campaign-map-stage');
+
+    if (
+      event.button === 0 &&
+      event.shiftKey &&
+      stage &&
+      !event.target.closest('.campaign-map-controls') &&
+      !event.target.closest('.campaign-map-popup')
+    ) {
+
+      startCampaignMapSelectionBox(
+        event,
+        stage
+      );
+
+      return;
+    }
 
     if (
       shapeHandle &&
@@ -182,21 +211,21 @@ export function createCampaignMapPointerController(
       return;
     }
 
-    const stage =
+    const targetStage =
       event.target.closest('.campaign-map-stage');
 
     if (
-      !stage ||
+      !targetStage ||
       event.button !== 0
     ) return;
 
     if (
-      stage.dataset.tool === 'pan'
+      targetStage.dataset.tool === 'pan'
     ) {
 
       deps.startMapPan(
         event,
-        stage,
+        targetStage,
         {
           setMapInteractionQuality: deps.setMapInteractionQuality
         }
@@ -207,7 +236,7 @@ export function createCampaignMapPointerController(
 
     startFogDraw(
       event,
-      stage
+      targetStage
     );
   }
 
@@ -415,6 +444,15 @@ export function createCampaignMapPointerController(
       event
     );
 
+    if (
+      hasActiveCampaignMapSelectionBox()
+    ) {
+
+      moveCampaignMapSelectionBox(
+        event
+      );
+    }
+
     if (fogDrawing) {
 
       drawFogAtPointer(
@@ -431,9 +469,15 @@ export function createCampaignMapPointerController(
   }
 
 
-  async function handleDocumentPointerUp() {
+  async function handleDocumentPointerUp(
+    event
+  ) {
 
     finishLockedFogZoneEdit();
+
+    finishCampaignMapSelectionBox(
+      event
+    );
 
     await deps.finishTokenInteractions(
       deps.getTokenDragDeps()
@@ -490,6 +534,30 @@ export function createCampaignMapPointerController(
         x: event.clientX - rect.left,
         y: event.clientY - rect.top
       }
+    );
+  }
+
+
+  function handleDocumentKeyDown(
+    event
+  ) {
+
+    if (event.key !== 'Shift') return;
+
+    setCampaignMapSelectionMode(
+      true
+    );
+  }
+
+
+  function handleDocumentKeyUp(
+    event
+  ) {
+
+    if (event.key !== 'Shift') return;
+
+    setCampaignMapSelectionMode(
+      false
     );
   }
 

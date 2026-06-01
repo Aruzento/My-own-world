@@ -135,15 +135,23 @@ export function getPresentationCSS() {
     .campaign-map-token[data-player-token="true"][data-presentation-hidden="true"]::before {
       content: "скрыт";
       position: absolute;
-      right: -10px;
-      top: -12px;
+      left: 50%;
+      right: auto;
+      top: auto;
+      bottom: 3px;
+      transform: translateX(-50%);
+      max-width: calc(100% - 6px);
       z-index: 6;
-      padding: 4px 8px;
+      padding: 2px 4px;
       border: 1px solid rgba(218,72,72,0.72);
       border-radius: 999px;
       background: rgba(36,25,22,0.96);
       color: rgba(255,220,210,0.98);
-      font: 900 12px/1 system-ui, sans-serif;
+      box-sizing: border-box;
+      overflow: hidden;
+      text-align: center;
+      white-space: nowrap;
+      font: 900 clamp(5px, calc(var(--campaign-grid-size, 48px) * var(--token-size, 1) * 0.13), 9px)/1 system-ui, sans-serif;
       pointer-events: none;
     }
 
