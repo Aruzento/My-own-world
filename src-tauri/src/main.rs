@@ -12,6 +12,7 @@ struct DirectoryEntry {
 fn main() {
     // Пока desktop-spike не добавляет native-команды: WebView открывает текущую web-версию.
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             ensure_directory,
             list_directory,

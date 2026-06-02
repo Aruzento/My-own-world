@@ -452,7 +452,13 @@ Storage/asset boundary уже вынесен в отдельные модули:
 - `js/storage/assetAdapter.js` — facade будущего asset lifecycle;
 - `src-tauri/src/main.rs` — минимальные команды `read_text_file`, `write_text_file`, `list_directory`, `ensure_directory`, `remove_file`, `path_exists`, `resolve_asset_url`.
 
-Desktop-команды ограничивают операции выбранным workspace root. До появления desktop dialog adapter путь workspace в desktop-режиме будет подключаться отдельным шагом.
+Desktop-команды ограничивают операции выбранным workspace root. В desktop-режиме `DesktopStorageAdapter` выбирает workspace через Tauri dialog plugin и сохраняет путь в `localStorage`.
+
+Проверки desktop foundation:
+
+- `npm run desktop:check` — проверяет Node/npm/Tauri CLI/Rust/Cargo/rustup/Build Tools/Windows SDK;
+- `cargo check` из папки `src-tauri` — проверяет Rust/Tauri-код;
+- `npm run desktop:info` может долго не завершаться на текущей машине после вывода отчета, поэтому сейчас reliable gate — `desktop:check` + `cargo check`.
 
 ## Sidebar Profile
 

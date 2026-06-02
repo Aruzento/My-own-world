@@ -508,11 +508,13 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - добавлены `storageAdapterContract.js`, `storageAdapter.js`, `browserStorageAdapter.js`, `desktopStorageAdapter.js`;
 - описаны методы `pickWorkspace`, `restoreWorkspace`, `readText`, `writeText`, `listFiles`, `removeFile`, `ensureDirectory`;
 - `openWorkspace`, `restoreWorkspace` и создание базовых папок переведены на adapter facade;
+- desktop adapter умеет выбирать workspace через Tauri dialog plugin и сохранять root в `localStorage`;
+- desktop load/create/delete page получили adapter bridge через lightweight file handles;
 - добавлены unit tests на contract.
 
 Что остается:
-- постепенно перевести `pageStorage`, `writeQueue`, `backupService`, `assetStorage`, `images`, `campaignMapRuntime` с прямого `state.workspaceHandle` на adapter facade;
-- добавить desktop dialog adapter для выбора workspace root.
+- постепенно перевести `writeQueue`, `backupService`, `assetStorage`, `images`, `campaignMapRuntime` с прямого `state.workspaceHandle` на adapter facade;
+- заменить временные lightweight file handles полноценным adapter-backed write layer.
 
 20.6. Создать `AssetAdapter` interface в JS: **сделано foundation**.
 Что сделано:
@@ -537,6 +539,12 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - после установки Rust/Cargo и Visual Studio Build Tools проверить компиляцию Tauri;
 - добавить структурированные error objects вместо строковых ошибок, когда recovery layer будет готов их принимать;
 - добавить desktop storage tests после появления тестового runner для Tauri.
+
+Состояние окружения 02.06.2026:
+- Rust/Cargo/rustup установлены и видны `desktop:check`;
+- Visual Studio Build Tools C++ и Windows SDK установлены и видны `desktop:check`;
+- `cargo check` в `src-tauri` проходит;
+- `desktop:info` выводит зеленый отчет, но может не завершаться в текущем shell, поэтому не используется как обязательный gate.
 
 20.8. Desktop prototype: **после 20.7**.
 Шаги:

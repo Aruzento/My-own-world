@@ -2,6 +2,9 @@ import {
   normalizeWorkspacePath
 } from './storageAdapterContract.js';
 
+const DESKTOP_WORKSPACE_ROOT_KEY =
+  'myOwnWorld.desktop.workspaceRoot';
+
 
 export function isTauriRuntime() {
 
@@ -17,7 +20,11 @@ export function createDesktopStorageAdapter(
 ) {
 
   let workspaceRoot =
-    options.workspaceRoot || '';
+    options.workspaceRoot ||
+    localStorage.getItem(
+      DESKTOP_WORKSPACE_ROOT_KEY
+    ) ||
+    '';
 
   return {
     kind: 'desktop',
@@ -37,9 +44,32 @@ export function createDesktopStorageAdapter(
 
     async pickWorkspace() {
 
-      throw new Error(
-        'Desktop pickWorkspace будет подключен после dialog adapter'
+      const {
+        open
+      } =
+        await import('@tauri-apps/plugin-dialog');
+
+      const selectedPath =
+        await open({
+          directory: true,
+          multiple: false,
+          title: 'Выберите workspace MyOwnWorld'
+        });
+
+      if (!selectedPath) {
+
+        return null;
+      }
+
+      workspaceRoot =
+        String(selectedPath);
+
+      localStorage.setItem(
+        DESKTOP_WORKSPACE_ROOT_KEY,
+        workspaceRoot
       );
+
+      return workspaceRoot;
     },
 
     async restoreWorkspace() {

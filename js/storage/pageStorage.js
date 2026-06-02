@@ -24,6 +24,10 @@ import {
 } from './backupService.js';
 
 import {
+  getStorageAdapter
+} from './storageAdapter.js';
+
+import {
   notifyPageCreated,
   notifyPageMoved,
   notifyPageUpdated
@@ -149,6 +153,17 @@ async function writePageFile(
   content
 ) {
 
+  const storageAdapter =
+    getStorageAdapter();
+
+  if (storageAdapter.kind === 'desktop') {
+
+    return writePageFileByAdapter(
+      content,
+      storageAdapter
+    );
+  }
+
   const pagesDir =
     await state.workspaceHandle
       .getDirectoryHandle(
@@ -190,6 +205,56 @@ async function writePageFile(
     handle: fileHandle,
     content
   };
+
+  setPages(
+    [
+      ...state.pages,
+      page
+    ]
+  );
+
+  notifyPageCreated();
+
+  return page;
+}
+
+
+async function writePageFileByAdapter(
+  content,
+  storageAdapter
+) {
+
+  const fileName =
+    `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.md`;
+
+  const path =
+    `/pages/${fileName}`;
+
+  await storageAdapter.writeText(
+    path,
+    content
+  );
+
+  const parsed =
+    parseMarkdown(
+      content
+    );
+
+  const page =
+    createPageRecord({
+      parsed,
+      name: fileName,
+      path,
+      content,
+      handle: createAdapterFileHandle(
+        storageAdapter,
+        path
+      ),
+      parentDirHandle: createAdapterDirectoryHandle(
+        storageAdapter,
+        'pages'
+      )
+    });
 
   setPages(
     [
@@ -321,6 +386,18 @@ async function ensureWorkspaceCanWrite() {
 async function deletePageFile(
   targetPage
 ) {
+
+  const storageAdapter =
+    getStorageAdapter();
+
+  if (storageAdapter.kind === 'desktop') {
+
+    await storageAdapter.removeFile(
+      targetPage.path
+    );
+
+    return;
+  }
 
   if (!targetPage.handle) {
 
@@ -601,6 +678,167 @@ export async function scanDirectory(
       content,
     });
   }
+}
+
+
+export async function scanWorkspacePagesByAdapter(
+  storageAdapter
+) {
+
+  await scanAdapterDirectory(
+    storageAdapter,
+    'pages',
+    '/pages'
+  );
+}
+
+
+async function scanAdapterDirectory(
+  storageAdapter,
+  adapterPath,
+  displayPath
+) {
+
+  const entries =
+    await storageAdapter.listFiles(
+      adapterPath
+    );
+
+  for (const entry of entries) {
+
+    const currentAdapterPath =
+      `${adapterPath}/${entry.name}`;
+
+    const currentDisplayPath =
+      `${displayPath}/${entry.name}`;
+
+    if (entry.kind === 'directory') {
+
+      await scanAdapterDirectory(
+        storageAdapter,
+        currentAdapterPath,
+        currentDisplayPath
+      );
+
+      continue;
+    }
+
+    if (!entry.name.endsWith('.md')) {
+
+      continue;
+    }
+
+    const content =
+      await storageAdapter.readText(
+        currentAdapterPath
+      );
+
+    const parsed =
+      parseMarkdown(
+        content
+      );
+
+    state.pages.push(
+      createPageRecord({
+        parsed,
+        name: entry.name,
+        path: currentDisplayPath,
+        content,
+        handle: createAdapterFileHandle(
+          storageAdapter,
+          currentAdapterPath
+        ),
+        parentDirHandle: createAdapterDirectoryHandle(
+          storageAdapter,
+          adapterPath
+        )
+      })
+    );
+  }
+}
+
+
+function createPageRecord({
+  parsed,
+  name,
+  path,
+  handle,
+  parentDirHandle,
+  content
+}) {
+
+  return {
+    id: parsed.id,
+    parent: parsed.parent,
+    order: parsed.order,
+    name,
+    title: parsed.title,
+    type: parsed.type,
+    tags: parsed.tags,
+    template: parsed.template,
+    aliases: parsed.aliases,
+    path,
+    handle,
+    parentDirHandle,
+    content
+  };
+}
+
+
+function createAdapterFileHandle(
+  storageAdapter,
+  path
+) {
+
+  return {
+    name:
+      path.split('/').pop(),
+
+    async createWritable() {
+
+      let pendingContent =
+        '';
+
+      return {
+        async write(
+          content
+        ) {
+
+          pendingContent =
+            String(content);
+        },
+
+        async close() {
+
+          await storageAdapter.writeText(
+            path,
+            pendingContent
+          );
+        }
+      };
+    }
+  };
+}
+
+
+function createAdapterDirectoryHandle(
+  storageAdapter,
+  path
+) {
+
+  return {
+    kind: 'directory',
+    path,
+
+    async removeEntry(
+      name
+    ) {
+
+      await storageAdapter.removeFile(
+        `${path}/${name}`
+      );
+    }
+  };
 }
 
 function applyInitialTitle(

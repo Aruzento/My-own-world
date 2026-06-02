@@ -120,7 +120,9 @@ Desktop implementation:
 - создан `BrowserStorageAdapter`;
 - создан `DesktopStorageAdapter`;
 - workspace open/restore и базовые папки переведены на adapter;
-- глубокий перенос всех storage-модулей остается следующим hardening-этапом.
+- desktop workspace root выбирается через Tauri dialog plugin;
+- desktop pages load/create/delete получили adapter bridge через lightweight file handles;
+- глубокий перенос backup/assets/writeQueue остается следующим hardening-этапом.
 
 ### 20.6. Создать AssetAdapter
 
@@ -192,6 +194,7 @@ Desktop implementation:
 - `..` в относительном пути запрещен;
 - текстовые операции используют UTF-8 через Rust `read_to_string` / `write`;
 - ошибки пока возвращаются строками, структурированные error objects остаются следующим hardening-пунктом.
+- `cargo check` проходит после установки Rust/Cargo/rustup, Visual Studio Build Tools C++ и Windows SDK.
 
 ### 20.8. Desktop Prototype
 

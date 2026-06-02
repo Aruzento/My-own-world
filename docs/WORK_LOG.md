@@ -2528,6 +2528,12 @@ Render time, sync time, number of visible objects, background load.
 - В `src-tauri/src/main.rs` добавлены FS-команды: чтение/запись UTF-8 текста, список папки, создание папки, удаление файла, проверка существования и resolution asset URL.
 - Rust-команды ограничивают путь workspace root и запрещают `..` в относительных путях.
 - Добавлены unit tests для adapter contracts.
+- Добавлен Tauri dialog plugin: desktop adapter теперь выбирает workspace root через native dialog и сохраняет путь в `localStorage`.
+- Desktop page load/create/delete получили adapter bridge через lightweight file handles.
+- Rust/Cargo/rustup установлены через официальный `rustup-init.exe`.
+- Visual Studio Build Tools 2022 C++ и Windows SDK установлены и обнаруживаются через `desktop:check`.
+- Добавлена `src-tauri/icons/icon.ico`, без которой Tauri build script не проходил Windows resource generation.
+- `cargo check` в `src-tauri` проходит.
 
 ### Что стало лучше
 
@@ -2537,10 +2543,10 @@ Render time, sync time, number of visible objects, background load.
 
 ### Ограничения
 
-- Системная установка Rust/Rustup/Cargo и Visual Studio Build Tools через `winget` не завершилась в доступный таймаут. На текущей машине `desktop:check` все еще должен показывать отсутствие Rust/Cargo.
-- Tauri-команды пока не скомпилированы локально из-за отсутствия Rust toolchain.
-- Глубокий перевод всех storage-модулей на adapter остается следующим hardening-этапом.
+- `npm run desktop:info` выводит зеленый отчет, но в текущем shell может не завершаться сам; обязательным gate считаем `npm run desktop:check` и `cargo check`.
+- Глубокий перевод backup/assets/writeQueue на adapter остается следующим hardening-этапом.
+- Структурированные Rust error objects пока не введены: команды возвращают строки.
 
 ### Следующее развитие
 
-- Следующий пункт: продолжить desktop foundation с dialog adapter / workspace root selection и постепенным переводом `pageStorage`, `writeQueue`, `backupService`, `assetStorage` на adapter.
+- Следующий пункт: продолжить desktop foundation с переносом `writeQueue`, `backupService`, `assetStorage`, `images` и `campaignMapRuntime` на adapter-backed storage.

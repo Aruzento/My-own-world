@@ -8,7 +8,8 @@ import {
 } from '../stateActions.js';
 
 import {
-  scanDirectory
+  scanDirectory,
+  scanWorkspacePagesByAdapter
 } from './pageStorage.js';
 
 import {
@@ -101,7 +102,21 @@ export async function loadWorkspace() {
 
   if (!state.workspaceHandle) return;
 
+  const storageAdapter =
+    getStorageAdapter();
+
   setPages([]);
+
+  if (storageAdapter.kind === 'desktop') {
+
+    await scanWorkspacePagesByAdapter(
+      storageAdapter
+    );
+
+    finishWorkspaceLoad();
+
+    return;
+  }
 
   const pagesDir =
     await state.workspaceHandle
@@ -114,6 +129,12 @@ export async function loadWorkspace() {
     pagesDir,
     '/pages'
   );
+
+  finishWorkspaceLoad();
+}
+
+
+function finishWorkspaceLoad() {
 
   setPages(
     [...state.pages]
