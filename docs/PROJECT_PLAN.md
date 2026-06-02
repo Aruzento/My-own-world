@@ -353,7 +353,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 Задача: расширить `AssetReference` и asset lifecycle под аудио и плейлисты как first-class media. Это должно работать одинаково в browser и desktop через будущий `AssetAdapter`.
 
 14.11. Music by Location System: **позже, зависит от 14.10 и Desktop/AssetAdapter**.
-Идея из `docs/Новые идеи к адаптации.txt`: проигрывать музыку из workspace с привязкой к локации; плейлист крутится по кругу. Нужны: audio assets, playlist model, настройка связи `location -> playlist`, управление play/pause/next, сохранение состояния и browser/desktop compatibility.
+Идея из разобранного файла адаптации: проигрывать музыку из workspace с привязкой к локации; плейлист крутится по кругу. Нужны: audio assets, playlist model, настройка связи `location -> playlist`, управление play/pause/next, сохранение состояния и browser/desktop compatibility.
 
 ### 15. Campaign Map Initiative / Layers / UX
 
@@ -446,7 +446,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 18.6. Task tracker next level: дедлайны, приоритет, фильтры, архив, связь задачи с карточкой: **позже**.
 
 18.7. Rule Tree / Rules Knowledge Base: **позже, после Account/Role foundation**.
-Идея из `docs/Новые идеи к адаптации.txt`: отдельное древо правил в корне приложения, доступное для ссылок как обычные карточки, но редактируемое только `admin`. Нужно отделить базу правил DnD/других НРИ от лора мира и карт кампании.
+Идея из разобранного файла адаптации: отдельное древо правил в корне приложения, доступное для ссылок как обычные карточки, но редактируемое только `admin`. Нужно отделить базу правил DnD/других НРИ от лора мира и карт кампании.
 
 18.8. Expanded Graph Relationships: **позже**.
 Расширить `KnowledgeGraph` за пределы `treeParent/wikiLink`: фракции, владение, происхождение, отношения, принадлежность предметов и richer lore model.
@@ -472,7 +472,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 Идея: дать возможность работать в двух карточках одновременно. Перед реализацией нужны четкий state contract для двух открытых страниц, отдельные save contexts и понятное поведение toolbar/history/wiki-links.
 
 19.8. Extended Onboarding и sample workspace expansion: **позже**.
-Идея из `docs/Новые идеи к адаптации.txt`: расширить демонстрационный workspace и onboarding под реальные сценарии карточек, карт, свойств, backup, task tracker, rule tree и будущий desktop.
+Идея из разобранного файла адаптации: расширить демонстрационный workspace и onboarding под реальные сценарии карточек, карт, свойств, backup, task tracker, rule tree и будущий desktop.
 
 ### 20. Desktop Adapter / Internet Resource Strategy
 
@@ -486,35 +486,57 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 20.3. StorageAdapter / AssetAdapter design: **сделано**.
 
-20.4. Подготовить окружение Desktop Spike: **следующий пункт**.
-Что сделать:
-- установить Rust stable;
-- установить системные зависимости Tauri для Windows;
-- добавить dev dependency `@tauri-apps/cli`;
-- создать минимальную конфигурацию Tauri без изменения workspace-формата;
-- зафиксировать команды запуска в README и `DESKTOP_ADAPTER_PLAN.md`.
+20.4. Подготовить окружение Desktop Spike: **сделано базово**.
+Что сделано:
+- добавлен dev dependency `@tauri-apps/cli`;
+- добавлены отдельные npm-команды `dev:web`, `desktop:check`, `desktop:dev`, `desktop:info`, `desktop:build`;
+- создана минимальная папка `src-tauri/` с `tauri.conf.json`, Rust entrypoint и минимальными capabilities;
+- desktop-spike открывает текущий web UI через Tauri WebView и не меняет browser mode;
+- `src-tauri/target/` добавлен в `.gitignore`;
+- команды и требования зафиксированы в README и `DESKTOP_ADAPTER_PLAN.md`.
 
-20.5. Создать `StorageAdapter` interface в JS: **следующий пункт после 20.4**.
-Шаги:
-- описать `pickWorkspace`, `restoreWorkspace`, `readText`, `writeText`, `listFiles`, `removeFile`, `ensureDirectory`;
-- сделать `BrowserStorageAdapter`, который оборачивает текущий File System Access API;
-- заменить прямые обращения storage-модулей на adapter facade постепенно;
-- добавить unit tests на adapter contract.
+Ограничение окружения на текущей машине:
+- `@tauri-apps/cli` установлен;
+- WebView2 найден через `tauri info`;
+- Rust/Cargo/rustup не установлены;
+- Visual Studio Build Tools с MSVC/Windows SDK не обнаружены.
 
-20.6. Создать `AssetAdapter` interface в JS: **после 20.5**.
-Шаги:
-- описать `importFile`, `resolveUrl`, `exists`, `remove`, `findOrphans`;
-- сделать browser implementation поверх текущего `assets/`;
-- подготовить desktop implementation contract без полной реализации;
-- связать с `AssetReference`.
+Пока эти системные компоненты не установлены, `desktop:check` ожидаемо падает, а `desktop:dev`/`desktop:build` не являются обязательными проверками перед push.
 
-20.7. Tauri FS commands: **после 20.5/20.6**.
-Шаги:
-- добавить Rust-команды чтения/записи текстовых файлов;
-- добавить команды list/remove/ensure directory;
-- добавить безопасное ограничение на выбранный workspace root;
-- не позволять командам писать за пределы workspace;
-- вернуть ошибки в структурированном виде для recovery layer.
+20.5. Создать `StorageAdapter` interface в JS: **сделано foundation**.
+Что сделано:
+- добавлены `storageAdapterContract.js`, `storageAdapter.js`, `browserStorageAdapter.js`, `desktopStorageAdapter.js`;
+- описаны методы `pickWorkspace`, `restoreWorkspace`, `readText`, `writeText`, `listFiles`, `removeFile`, `ensureDirectory`;
+- `openWorkspace`, `restoreWorkspace` и создание базовых папок переведены на adapter facade;
+- добавлены unit tests на contract.
+
+Что остается:
+- постепенно перевести `pageStorage`, `writeQueue`, `backupService`, `assetStorage`, `images`, `campaignMapRuntime` с прямого `state.workspaceHandle` на adapter facade;
+- добавить desktop dialog adapter для выбора workspace root.
+
+20.6. Создать `AssetAdapter` interface в JS: **сделано foundation**.
+Что сделано:
+- добавлены `assetAdapterContract.js`, `assetAdapter.js`, `browserAssetAdapter.js`, `desktopAssetAdapter.js`;
+- описаны методы `importFile`, `resolveUrl`, `exists`, `remove`, `findOrphans`;
+- browser adapter умеет базово резолвить asset URL и проверять наличие;
+- desktop adapter подготовлен к Tauri-командам `resolve_asset_url`, `path_exists`, `remove_file`;
+- добавлены unit tests на contract.
+
+Что остается:
+- перевести текущие image/media flows на `AssetAdapter`;
+- реализовать native import/copy asset после desktop file picker.
+
+20.7. Tauri FS commands: **сделано foundation**.
+Что сделано:
+- добавлены Rust-команды `read_text_file`, `write_text_file`, `list_directory`, `ensure_directory`, `remove_file`, `path_exists`, `resolve_asset_url`;
+- команды ограничивают операции workspace root и блокируют `..`;
+- добавлена зависимость `serde`;
+- JS desktop adapter вызывает команды через `@tauri-apps/api/core`.
+
+Что остается:
+- после установки Rust/Cargo и Visual Studio Build Tools проверить компиляцию Tauri;
+- добавить структурированные error objects вместо строковых ошибок, когда recovery layer будет готов их принимать;
+- добавить desktop storage tests после появления тестового runner для Tauri.
 
 20.8. Desktop prototype: **после 20.7**.
 Шаги:

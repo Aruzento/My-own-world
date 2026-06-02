@@ -432,7 +432,27 @@ GitHub Actions workflow лежит в `.github/workflows/verify.yml`.
 
 Desktop-направление описано в `docs/DESKTOP_ADAPTER_PLAN.md`. Следующий большой маршрут проекта — Tauri spike через `StorageAdapter` и `AssetAdapter`, без изменения workspace-формата и без удаления browser mode.
 
-Для будущей проверки desktop-сборки понадобятся Node.js LTS, Git, Rust stable/Cargo, Microsoft Visual Studio Build Tools 2022 с `Desktop development with C++`, Microsoft Edge WebView2 Runtime и Playwright Chromium.
+Desktop-подготовка живет отдельно от браузерной версии:
+
+- `npm run dev:web` — запускает текущую browser-версию через локальный static server на `http://127.0.0.1:5173/`;
+- `npm run desktop:check` — проверяет, установлены ли Node.js, npm, Tauri CLI, Rust/Cargo и rustup;
+- `npm run desktop:dev` — запускает Tauri WebView поверх текущего web UI;
+- `npm run desktop:info` — показывает диагностику Tauri;
+- `npm run desktop:build` — будущая desktop-сборка.
+
+Для проверки desktop-сборки понадобятся Node.js LTS, Git, Rust stable/Cargo, Microsoft Visual Studio Build Tools 2022 с `Desktop development with C++`, Microsoft Edge WebView2 Runtime и Playwright Chromium. На Windows также нужен Windows SDK, который ставится через Visual Studio Build Tools.
+
+Важно: пока `StorageAdapter` и `AssetAdapter` не введены, desktop-spike открывает ту же browser-версию приложения в WebView. Это безопасная оболочка для проверки окружения, а не перенос storage-логики.
+
+Storage/asset boundary уже вынесен в отдельные модули:
+
+- `js/storage/storageAdapter.js` — facade выбора browser/desktop storage adapter;
+- `js/storage/browserStorageAdapter.js` — обертка над текущим File System Access API;
+- `js/storage/desktopStorageAdapter.js` — JS-мост к Tauri FS commands;
+- `js/storage/assetAdapter.js` — facade будущего asset lifecycle;
+- `src-tauri/src/main.rs` — минимальные команды `read_text_file`, `write_text_file`, `list_directory`, `ensure_directory`, `remove_file`, `path_exists`, `resolve_asset_url`.
+
+Desktop-команды ограничивают операции выбранным workspace root. До появления desktop dialog adapter путь workspace в desktop-режиме будет подключаться отдельным шагом.
 
 ## Sidebar Profile
 

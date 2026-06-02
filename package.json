@@ -4,12 +4,21 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev:web": "node tools/static_server.mjs --port 5173",
+    "desktop:check": "node tools/check_desktop_environment.mjs",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "desktop:info": "tauri info",
     "test": "node --test \"tests/*.test.mjs\"",
     "test:browser": "node tools/run_browser_smoke.mjs",
     "check:js": "node tools/run_checks.mjs --js-only",
     "verify": "node tools/run_checks.mjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0"
+    "@playwright/test": "^1.60.0",
+    "@tauri-apps/cli": "^2.11.2"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.11.0"
   }
 }

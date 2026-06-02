@@ -1,0 +1,16 @@
+[package]
+name = "my-own-world"
+version = "0.0.0"
+description = "Local-first desktop shell for MyOwnWorld"
+authors = ["MyOwnWorld"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
+
+[features]
+default = []

@@ -1,0 +1,32 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "MyOwnWorld",
+  "version": "0.0.0",
+  "identifier": "com.myownworld.app",
+  "build": {
+    "beforeDevCommand": "npm run dev:web",
+    "devUrl": "http://127.0.0.1:5173",
+    "beforeBuildCommand": "",
+    "frontendDist": "../"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "MyOwnWorld",
+        "label": "main",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 1100,
+        "minHeight": 720,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false,
+    "targets": "all"
+  }
+}

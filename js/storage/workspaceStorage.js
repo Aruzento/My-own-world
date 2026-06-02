@@ -1,4 +1,3 @@
-/* Импорт глобального состояния */
 import {
   state
 } from '../state.js';
@@ -8,8 +7,6 @@ import {
   setWorkspaceHandle
 } from '../stateActions.js';
 
-
-/* Импорт рекурсивного сканирования страниц */
 import {
   scanDirectory
 } from './pageStorage.js';
@@ -27,45 +24,34 @@ import {
   collectAssetReferencesFromPages
 } from './assetReferenceScanner.js';
 
-
-/* Импорт persistence-слоя */
 import {
-  saveWorkspaceHandle, /* Сохраняет доступ к workspace */
-  loadWorkspaceHandle /* Загружает сохранённый доступ */
-} from './persistence.js';
+  getStorageAdapter
+} from './storageAdapter.js';
 
 
-
-/* Открытие workspace вручную */
+// Открывает workspace через активный storage adapter.
 export async function openWorkspace() {
 
   try {
 
-    /* Открывает системный picker папки */
-    const handle =
-      await window.showDirectoryPicker();
+    const storageAdapter =
+      getStorageAdapter();
 
-    /* Сохраняет handle в global state */
+    const handle =
+      await storageAdapter.pickWorkspace();
+
     setWorkspaceHandle(
       handle
     );
 
-    /* Сохраняет доступ в persistent storage браузера */
-    await saveWorkspaceHandle(
-      handle
-    );
-
-    /* Создаёт необходимые папки */
     await ensureFolders();
 
-    /* Сообщает об успехе */
     return true;
 
   } catch (err) {
 
-    /* Пользователь отменил выбор папки */
     console.log(
-      'Выбор папки отменён'
+      'Выбор папки отменен'
     );
 
     return false;
@@ -73,62 +59,50 @@ export async function openWorkspace() {
 }
 
 
-
-/* Восстановление последнего workspace */
+// Восстанавливает последний workspace через активный storage adapter.
 export async function restoreWorkspace() {
 
-  /* Загружает сохранённый handle */
-  const handle =
-    await loadWorkspaceHandle();
+  const storageAdapter =
+    getStorageAdapter();
 
-  /* Если доступа нет — выходим */
+  const handle =
+    await storageAdapter.restoreWorkspace();
+
   if (!handle) return false;
 
-  /* Кладёт handle в state */
   setWorkspaceHandle(
     handle
   );
 
-  /* Проверяет наличие нужных папок */
   await ensureFolders();
 
   return true;
 }
 
 
-
-/* Создаёт базовые папки workspace */
+// Создает базовые папки workspace. Для browser это FileSystemHandle, для desktop - backend command.
 async function ensureFolders() {
 
-  /* Проверяет/создаёт папку pages */
-  await state.workspaceHandle
-    .getDirectoryHandle(
-      'pages',
-      { create: true }
-    );
+  const storageAdapter =
+    getStorageAdapter();
 
-  /* Проверяет/создаёт папку assets */
-  await state.workspaceHandle
-    .getDirectoryHandle(
-      'assets',
-      { create: true }
-    );
+  await storageAdapter.ensureDirectory(
+    'pages'
+  );
+
+  await storageAdapter.ensureDirectory(
+    'assets'
+  );
 }
 
 
-
-/* Полная загрузка workspace */
+// Полностью загружает workspace в память и запускает schema validation.
 export async function loadWorkspace() {
 
-  /* Если workspace не выбран — ничего не делаем */
-  if (
-    !state.workspaceHandle
-  ) return;
+  if (!state.workspaceHandle) return;
 
-  /* Очищает текущий массив страниц */
   setPages([]);
 
-  /* Получает handle папки pages */
   const pagesDir =
     await state.workspaceHandle
       .getDirectoryHandle(
@@ -136,13 +110,11 @@ export async function loadWorkspace() {
         { create: true }
       );
 
-  /* Рекурсивно сканирует pages/ */
   await scanDirectory(
     pagesDir,
     '/pages'
   );
 
-  /* Фиксирует результат загрузки единым событием, чтобы PageRepository пересобрал индексы. */
   setPages(
     [...state.pages]
   );

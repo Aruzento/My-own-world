@@ -13,6 +13,32 @@ export {
 } from './workspaceStorage.js';
 
 
+export {
+  getStorageAdapter,
+  setStorageAdapter
+} from './storageAdapter.js';
+
+
+export {
+  assertStorageAdapterContract,
+  normalizeWorkspacePath,
+  REQUIRED_STORAGE_ADAPTER_METHODS,
+  STORAGE_ADAPTER_KIND
+} from './storageAdapterContract.js';
+
+
+export {
+  getAssetAdapter,
+  setAssetAdapter
+} from './assetAdapter.js';
+
+
+export {
+  assertAssetAdapterContract,
+  REQUIRED_ASSET_ADAPTER_METHODS
+} from './assetAdapterContract.js';
+
+
 
 /* Реэкспорт функций работы со страницами */
 export {

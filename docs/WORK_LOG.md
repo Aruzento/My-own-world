@@ -2490,3 +2490,57 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Следующий рабочий пункт: `20.4. Подготовить окружение Desktop Spike`.
+
+---
+
+## 2026-06-02: Desktop Adapter 20.4
+
+### Что сделано
+
+- Добавлен `@tauri-apps/cli` в devDependencies.
+- Добавлены npm-команды `dev:web`, `desktop:check`, `desktop:dev`, `desktop:info`, `desktop:build`.
+- Создана минимальная Tauri-оболочка в `src-tauri/`: конфигурация, Rust entrypoint, build script и default capability.
+- Desktop-spike настроен так, чтобы открывать текущий web UI через `tools/static_server.mjs` на `127.0.0.1:5173`.
+- `src-tauri/target/` добавлен в `.gitignore`.
+- Добавлен `tools/check_desktop_environment.mjs`, чтобы быстро видеть, чего не хватает для desktop-сборки.
+- README, `docs/PROJECT_PLAN.md` и `docs/DESKTOP_ADAPTER_PLAN.md` обновлены под реальные команды.
+
+### Что стало лучше
+
+- Desktop-направление перестало быть только планом: теперь в репозитории есть минимальная Tauri-структура.
+- Browser mode не затронут: текущий `index.html`, smoke tests и `verify` остаются основной рабочей веткой.
+- Ограничение окружения стало явным: на текущей машине есть Node/npm/Tauri CLI/WebView2, но пока нет Rust/Cargo/rustup и Visual Studio Build Tools с MSVC/Windows SDK.
+
+### Следующее развитие
+
+- Следующий пункт: `20.5. Создать StorageAdapter interface в JS`.
+
+---
+
+## 2026-06-02: Desktop Adapter 20.5-20.7
+
+### Что сделано
+
+- Добавлен `StorageAdapter` foundation: contract, facade, browser implementation и desktop implementation.
+- `openWorkspace`, `restoreWorkspace` и создание базовых папок workspace переведены на `StorageAdapter`.
+- Добавлен `AssetAdapter` foundation: contract, facade, browser implementation и desktop implementation.
+- Добавлен `@tauri-apps/api` для вызова backend-команд из desktop WebView.
+- В `src-tauri/src/main.rs` добавлены FS-команды: чтение/запись UTF-8 текста, список папки, создание папки, удаление файла, проверка существования и resolution asset URL.
+- Rust-команды ограничивают путь workspace root и запрещают `..` в относительных путях.
+- Добавлены unit tests для adapter contracts.
+
+### Что стало лучше
+
+- Browser и desktop storage получили первую общую границу, поэтому дальнейший перенос можно делать постепенно, без резкого переписывания `pageStorage`, backup и assets.
+- Desktop backend перестал быть пустой оболочкой: появилась первая безопасная файловая поверхность для будущего `StorageAdapter`.
+- Asset lifecycle получил отдельный adapter facade, к которому можно подключить изображения, карты, музыку и плейлисты.
+
+### Ограничения
+
+- Системная установка Rust/Rustup/Cargo и Visual Studio Build Tools через `winget` не завершилась в доступный таймаут. На текущей машине `desktop:check` все еще должен показывать отсутствие Rust/Cargo.
+- Tauri-команды пока не скомпилированы локально из-за отсутствия Rust toolchain.
+- Глубокий перевод всех storage-модулей на adapter остается следующим hardening-этапом.
+
+### Следующее развитие
+
+- Следующий пункт: продолжить desktop foundation с dialog adapter / workspace root selection и постепенным переводом `pageStorage`, `writeQueue`, `backupService`, `assetStorage` на adapter.
