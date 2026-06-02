@@ -29,6 +29,10 @@ import {
   getStorageAdapter
 } from './storageAdapter.js';
 
+import {
+  syncAssetAdapterWorkspaceRoot
+} from './assetAdapter.js';
+
 
 // Открывает workspace через активный storage adapter.
 export async function openWorkspace() {
@@ -42,6 +46,11 @@ export async function openWorkspace() {
       await storageAdapter.pickWorkspace();
 
     setWorkspaceHandle(
+      handle
+    );
+
+    syncAssetAdapterWorkspaceRoot(
+      storageAdapter.getWorkspaceRoot?.() ||
       handle
     );
 
@@ -72,6 +81,11 @@ export async function restoreWorkspace() {
   if (!handle) return false;
 
   setWorkspaceHandle(
+    handle
+  );
+
+  syncAssetAdapterWorkspaceRoot(
+    storageAdapter.getWorkspaceRoot?.() ||
     handle
   );
 

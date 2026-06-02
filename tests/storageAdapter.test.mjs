@@ -25,6 +25,11 @@ import {
 } from '../js/storage/storageAdapter.js';
 
 import {
+  setAssetAdapter,
+  syncAssetAdapterWorkspaceRoot
+} from '../js/storage/assetAdapter.js';
+
+import {
   writePageContent
 } from '../js/storage/writeQueue.js';
 
@@ -356,6 +361,82 @@ test(
 
       globalThis.__TAURI_INTERNALS__ =
         previousInternals;
+    }
+  }
+);
+
+
+test(
+  'DesktopAssetAdapter обновляет workspace root после выбора desktop workspace',
+  async () => {
+
+    const previousTauri =
+      globalThis.__TAURI__;
+
+    const invokedPayloads =
+      [];
+
+    globalThis.__TAURI__ = {
+      core: {
+        async invoke(command, payload) {
+
+          invokedPayloads.push(
+            payload
+          );
+
+          assert.equal(
+            command,
+            'resolve_asset_url'
+          );
+
+          return `${payload.workspaceRoot}\\${payload.path.replaceAll('/', '\\')}`;
+        },
+
+        convertFileSrc(path, protocol) {
+
+          assert.equal(
+            protocol,
+            'asset'
+          );
+
+          return `asset:${path}`;
+        }
+      }
+    };
+
+    try {
+
+      setStorageAdapter(
+        createMemoryStorageAdapter()
+      );
+
+      const adapter =
+        createDesktopAssetAdapter({
+          workspaceRoot: 'C:/OldWorld'
+        });
+
+      setAssetAdapter(
+        adapter
+      );
+
+      syncAssetAdapterWorkspaceRoot.call(
+        null,
+        'C:/NewWorld'
+      );
+
+      await adapter.resolveUrl(
+        'portraits/hero.png'
+      );
+
+      assert.equal(
+        invokedPayloads.at(-1).workspaceRoot,
+        'C:/NewWorld'
+      );
+
+    } finally {
+
+      globalThis.__TAURI__ =
+        previousTauri;
     }
   }
 );

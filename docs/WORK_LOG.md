@@ -1,5 +1,38 @@
 # Журнал работ
 
+## 2026-06-02: Desktop image parity и детализация пункта 20.14
+
+### Что сделано
+
+- Исправлен сценарий, где фон карты в Tauri отображался, а картинки карточек и токенов карты не появлялись.
+- `openPageInEditor()` теперь ожидает завершения рендера специальных страниц и карточек.
+- `renderCampaignMap()` теперь реально дожидается восстановления background, tokens и fog до завершения открытия страницы карты.
+- В карточках `restoreAssetImages()` перенесен после runtime-render блоков, чтобы `src` ставился на финальные DOM-элементы, а не на старые узлы до `renderCustomBlocks()`.
+- `AssetAdapter` получил `syncAssetAdapterWorkspaceRoot()`.
+- `workspaceStorage.js` синхронизирует asset adapter с выбранным workspace root после `openWorkspace()` и `restoreWorkspace()`.
+- Добавлен regression test `DesktopAssetAdapter обновляет workspace root после выбора desktop workspace`.
+- В `docs/PROJECT_PLAN.md` добавлены явные подпункты `20.14.1`-`20.14.8`.
+
+### Проверки
+
+- `npm run verify`: прошел, 87 unit-тестов.
+- `npm run test:browser`: прошел, 29 browser-тестов.
+- `npm run desktop:packaging-smoke`: прошел.
+- `npm run desktop:check`: прошел.
+- `cargo check`: прошел.
+
+### Что это меняет
+
+- Карточки, image blocks, portrait images и токены карты в desktop-режиме должны восстанавливать изображения через `AssetAdapter` так же надежно, как background карты.
+- Пункт `20.14` перестал быть общим направлением и стал рабочей дорожной картой desktop-перехода.
+
+### Следующее развитие
+
+- **20.14.2**: перевести desktop presentation transport с HTML snapshot на JSON payload из `CampaignMapModel`.
+- **20.14.3**: закрепить privacy rules презентации поверх model-first renderer.
+
+---
+
 ## 2026-06-02: Desktop presentation transport 20.10.1 и packaging smoke 20.11
 
 ### Что сделано

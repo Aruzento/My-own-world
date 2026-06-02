@@ -16,8 +16,8 @@
 
 ## Текущая Картина
 
-- Текущая оценка зрелости: **4.1 / 5**.
-- Последняя полная оценка: `Тех. зрелость/01.06.2026 - оценка после пункта 6.md`.
+- Текущая оценка зрелости: **4.15 / 5**.
+- Последняя полная оценка: `Тех. зрелость/02.06.2026 - оценка после desktop image parity.md`.
 - Цель ближайшего этапа: поднять проект к **4.2 / 5** через надежность данных, backup/recovery, performance gate карты и визуальные regression checks.
 - Бриф `MY_OWN_WORLD_AI_ARCHITECTURE_RISK_BRIEF_01_06_2026_UPDATED.docx` подтвердил главный порядок рисков: schema validation, backup/recovery, performance gate, visual regression, popup lifecycle.
 
@@ -607,6 +607,30 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 20.14. Перевод в Desktop-приложение: **сделано как стратегия, работа продолжается подпунктами**.
 Добавлен `docs/DESKTOP_TRANSITION_STRATEGY.md`. Desktop остается основным практическим путем, но через adapter boundary и без удаления browser mode. Следующий desktop-фокус: hardened `CampaignMapModel` renderer для презентации и ручной smoke реального Tauri-окна на workspace с картинками.
+
+20.14.1. Desktop image runtime parity: **сделано базово**.
+Карточки, image blocks, portrait images и токены карты должны восстанавливать `img[data-asset]` через `AssetAdapter` после финального runtime-render. `AssetAdapter` синхронизируется с выбранным workspace root после `openWorkspace()` и `restoreWorkspace()`.
+
+20.14.2. Desktop presentation model-first renderer: **следующий крупный desktop hardening**.
+Заменить HTML snapshot презентации на JSON payload из `CampaignMapModel`: background, tokens, objects, shapes, fog, locked zones, layers, viewport и drag measure.
+
+20.14.3. Desktop presentation privacy rules: **следующий после 20.14.2**.
+Закрепить правила, что видит игрок: туман над всеми слоями, скрытые non-player сущности не видны, скрытые player-токены видны с badge, locked fog zones выглядят как обычный туман.
+
+20.14.4. Desktop manual smoke checklist: **сделано базово, расширять после 20.14.2**.
+Проверять в Tauri-окне: открыть workspace, открыть карточку с портретом, открыть image block, открыть карту с background и токенами, открыть презентацию, показать изображение игрокам, создать backup/restore.
+
+20.14.5. Desktop automated UI runner: **позже**.
+Подключить автоматизированный запуск Tauri UI, когда prototype стабилизируется. До этого reliable gate: `npm run verify`, `npm run test:browser`, `npm run desktop:check`, `npm run desktop:packaging-smoke`, `cargo check`.
+
+20.14.6. Production desktop frontend output: **позже, перед installer**.
+Подготовить отдельную production-директорию для Tauri `frontendDist`, чтобы packaging не забирал сырой workspace проекта.
+
+20.14.7. Desktop installer / portable build: **позже, после 20.14.6**.
+Включить `bundle.active`, собрать installer/portable build и пройти release smoke на чистом workspace.
+
+20.14.8. Desktop release policy: **позже, перед первым desktop-релизом**.
+Описать desktop release checklist, rollback, backup-before-upgrade и compatibility notes.
 
 ### 22. Character Domain Model
 

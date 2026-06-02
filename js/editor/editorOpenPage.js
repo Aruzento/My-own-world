@@ -78,7 +78,7 @@ import {
   sanitizeAssetImagesBeforeRender
 } from './editorAssetSanitizer.js';
 
-export function openPageInEditor(
+export async function openPageInEditor(
   editor,
   page,
   options
@@ -108,14 +108,14 @@ export function openPageInEditor(
     );
 
   if (
-    renderSpecialPageIfNeeded(
+    await renderSpecialPageIfNeeded(
       editor,
       page,
       parsed
     )
   ) return;
 
-  renderCardPage(
+  await renderCardPage(
     editor,
     page,
     parsed,
@@ -143,7 +143,7 @@ function applyParsedMetadataToCurrentPage(
     parsed.schemaVersion;
 }
 
-function renderSpecialPageIfNeeded(
+async function renderSpecialPageIfNeeded(
   editor,
   page,
   parsed
@@ -155,7 +155,7 @@ function renderSpecialPageIfNeeded(
     )
   ) {
 
-    renderCampaignMap(
+    await renderCampaignMap(
       editor
     );
 
@@ -186,7 +186,7 @@ function renderSpecialPageIfNeeded(
   return false;
 }
 
-function renderCardPage(
+async function renderCardPage(
   editor,
   page,
   parsed,
@@ -208,10 +208,6 @@ function renderCardPage(
     );
 
   applyContenteditablePolicy(
-    editor
-  );
-
-  restoreAssetImagesWithEditor(
     editor
   );
 
@@ -249,6 +245,10 @@ function renderCardPage(
   );
 
   renderDndStats();
+
+  await restoreAssetImagesWithEditor(
+    editor
+  );
 
   options.renderBackButtonIfNeeded(
     parsed

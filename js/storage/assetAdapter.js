@@ -42,6 +42,22 @@ export function setAssetAdapter(
 }
 
 
+export function syncAssetAdapterWorkspaceRoot(
+  root
+) {
+
+  if (!activeAssetAdapter) return;
+
+  if (
+    typeof activeAssetAdapter.setWorkspaceRoot !== 'function'
+  ) return;
+
+  activeAssetAdapter.setWorkspaceRoot(
+    root
+  );
+}
+
+
 export function createDefaultAssetAdapter() {
 
   if (isTauriRuntime()) {
