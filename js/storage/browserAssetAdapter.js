@@ -1,6 +1,10 @@
 import {
-  state
-} from '../state.js';
+  getStorageAdapter
+} from './storageAdapter.js';
+
+import {
+  normalizeWorkspacePath
+} from './storageAdapterContract.js';
 
 
 export function createBrowserAssetAdapter() {
@@ -8,32 +12,67 @@ export function createBrowserAssetAdapter() {
   return {
     kind: 'browser',
 
-    async importFile() {
+    async importFile(
+      file,
+      options = {}
+    ) {
 
-      throw new Error(
-        'BrowserAssetAdapter importFile будет подключен после переноса assetStorage'
+      const storageAdapter =
+        getStorageAdapter();
+
+      const filename =
+        options.filename || file?.name;
+
+      if (!filename) {
+
+        throw new Error(
+          'Для asset нужен filename.'
+        );
+      }
+
+      const path =
+        normalizeAssetPath(
+          filename
+        );
+
+      await storageAdapter.writeBinary(
+        `assets/${path}`,
+        await file.arrayBuffer()
       );
+
+      return {
+        path,
+        url:
+          await this.resolveUrl(
+            path
+          )
+      };
     },
 
     async resolveUrl(
       assetReference
     ) {
 
-      const assetsDir =
-        await state.workspaceHandle.getDirectoryHandle(
-          'assets'
-        );
+      const storageAdapter =
+        getStorageAdapter();
 
-      const fileHandle =
-        await assetsDir.getFileHandle(
+      const path =
+        normalizeAssetPath(
           assetReference.path || assetReference
         );
 
-      const file =
-        await fileHandle.getFile();
+      const buffer =
+        await storageAdapter.readBinary(
+          `assets/${path}`
+        );
 
       return URL.createObjectURL(
-        file
+        new Blob(
+          [buffer],
+          {
+            type: getMimeType(path)
+          }
+        )
       );
     },
 
@@ -43,13 +82,13 @@ export function createBrowserAssetAdapter() {
 
       try {
 
-        const assetsDir =
-          await state.workspaceHandle.getDirectoryHandle(
-            'assets'
-          );
+        const storageAdapter =
+          getStorageAdapter();
 
-        await assetsDir.getFileHandle(
-          assetReference.path || assetReference
+        await storageAdapter.readBinary(
+          `assets/${normalizeAssetPath(
+            assetReference.path || assetReference
+          )}`
         );
 
         return true;
@@ -60,10 +99,17 @@ export function createBrowserAssetAdapter() {
       }
     },
 
-    async remove() {
+    async remove(
+      assetReference
+    ) {
 
-      throw new Error(
-        'BrowserAssetAdapter remove будет подключен после AssetAdapter migration'
+      const storageAdapter =
+        getStorageAdapter();
+
+      await storageAdapter.removeFile(
+        `assets/${normalizeAssetPath(
+          assetReference.path || assetReference
+        )}`
       );
     },
 
@@ -72,4 +118,35 @@ export function createBrowserAssetAdapter() {
       return [];
     }
   };
+}
+
+
+function normalizeAssetPath(
+  path
+) {
+
+  return normalizeWorkspacePath(
+    path
+  )
+    .replace(/^assets\//, '');
+}
+
+
+function getMimeType(
+  path
+) {
+
+  const extension =
+    String(path)
+      .split('.')
+      .pop()
+      .toLowerCase();
+
+  if (extension === 'png') return 'image/png';
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+  if (extension === 'webp') return 'image/webp';
+  if (extension === 'gif') return 'image/gif';
+  if (extension === 'svg') return 'image/svg+xml';
+
+  return 'application/octet-stream';
 }

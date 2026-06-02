@@ -2,6 +2,21 @@ const writeQueues =
   new Map();
 
 
+let storageAdapterProvider =
+  null;
+
+
+export function setWriteQueueStorageAdapterProvider(
+  provider
+) {
+
+  storageAdapterProvider =
+    typeof provider === 'function'
+      ? provider
+      : null;
+}
+
+
 export function getPageWriteKey(
   page
 ) {
@@ -75,6 +90,39 @@ export function writeFile(
     key,
     async () => {
 
+      if (
+        handle?.adapterPath &&
+        storageAdapterProvider
+      ) {
+
+        const storageAdapter =
+          storageAdapterProvider();
+
+        if (!canUseStorageAdapter(storageAdapter)) {
+
+          throw new Error(
+            'StorageAdapter недоступен для записи файла.'
+          );
+        }
+
+        if (content instanceof ArrayBuffer) {
+
+          await storageAdapter.writeBinary(
+            handle.adapterPath,
+            content
+          );
+
+          return;
+        }
+
+        await storageAdapter.writeText(
+          handle.adapterPath,
+          String(content)
+        );
+
+        return;
+      }
+
       const writable =
         await handle.createWritable();
 
@@ -91,9 +139,62 @@ export function writePageContent(
   content
 ) {
 
+  if (
+    page?.path &&
+    storageAdapterProvider
+  ) {
+
+    const storageAdapter =
+      storageAdapterProvider();
+
+    if (!canUseStorageAdapter(storageAdapter)) {
+
+      return writeTextFile(
+        page.handle,
+        content,
+        getPageWriteKey(page)
+      );
+    }
+
+    return queueWrite(
+      getPageWriteKey(page),
+      async () => {
+
+        await storageAdapter.writeText(
+          page.path,
+          String(content)
+        );
+      }
+    );
+  }
+
   return writeTextFile(
     page.handle,
     content,
     getPageWriteKey(page)
   );
+}
+
+
+function canUseStorageAdapter(
+  storageAdapter
+) {
+
+  if (!storageAdapter) return false;
+
+  if (storageAdapter.kind === 'desktop') {
+
+    return Boolean(
+      storageAdapter.getWorkspaceRoot?.()
+    );
+  }
+
+  if (storageAdapter.kind === 'browser') {
+
+    return Boolean(
+      storageAdapter.getWorkspaceHandle?.()
+    );
+  }
+
+  return true;
 }

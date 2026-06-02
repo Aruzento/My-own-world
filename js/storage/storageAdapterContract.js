@@ -12,8 +12,11 @@ export const REQUIRED_STORAGE_ADAPTER_METHODS = Object.freeze([
   'getDirectoryHandle',
   'readText',
   'writeText',
+  'readBinary',
+  'writeBinary',
   'listFiles',
-  'removeFile'
+  'removeFile',
+  'removeDirectory'
 ]);
 
 

@@ -128,6 +128,43 @@ export function createDesktopStorageAdapter(
       );
     },
 
+    async readBinary(
+      path
+    ) {
+
+      const bytes =
+        await invokeFsCommand(
+          'read_binary_file',
+          {
+            workspaceRoot,
+            path: normalizeWorkspacePath(path)
+          }
+        );
+
+      return Uint8Array.from(
+        bytes
+      ).buffer;
+    },
+
+    async writeBinary(
+      path,
+      content
+    ) {
+
+      await invokeFsCommand(
+        'write_binary_file',
+        {
+          workspaceRoot,
+          path: normalizeWorkspacePath(path),
+          content: Array.from(
+            new Uint8Array(
+              content
+            )
+          )
+        }
+      );
+    },
+
     async listFiles(
       path = ''
     ) {
@@ -147,6 +184,19 @@ export function createDesktopStorageAdapter(
 
       await invokeFsCommand(
         'remove_file',
+        {
+          workspaceRoot,
+          path: normalizeWorkspacePath(path)
+        }
+      );
+    },
+
+    async removeDirectory(
+      path
+    ) {
+
+      await invokeFsCommand(
+        'remove_directory',
         {
           workspaceRoot,
           path: normalizeWorkspacePath(path)

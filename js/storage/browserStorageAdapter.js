@@ -116,6 +116,44 @@ export function createBrowserStorageAdapter() {
       await writable.close();
     },
 
+    async readBinary(
+      path
+    ) {
+
+      const fileHandle =
+        await getFileHandleByPath(
+          workspaceHandle,
+          path
+        );
+
+      const file =
+        await fileHandle.getFile();
+
+      return file.arrayBuffer();
+    },
+
+    async writeBinary(
+      path,
+      content
+    ) {
+
+      const fileHandle =
+        await getFileHandleByPath(
+          workspaceHandle,
+          path,
+          true
+        );
+
+      const writable =
+        await fileHandle.createWritable();
+
+      await writable.write(
+        content
+      );
+
+      await writable.close();
+    },
+
     async listFiles(
       path = ''
     ) {
@@ -163,6 +201,35 @@ export function createBrowserStorageAdapter() {
 
       await directoryHandle.removeEntry(
         name
+      );
+    },
+
+    async removeDirectory(
+      path
+    ) {
+
+      const normalizedPath =
+        normalizeWorkspacePath(
+          path
+        );
+
+      const parts =
+        normalizedPath.split('/');
+
+      const name =
+        parts.pop();
+
+      const directoryHandle =
+        await getDirectoryByPath(
+          workspaceHandle,
+          parts.join('/')
+        );
+
+      await directoryHandle.removeEntry(
+        name,
+        {
+          recursive: true
+        }
       );
     }
   };

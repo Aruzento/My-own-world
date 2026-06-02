@@ -1,8 +1,7 @@
-import { state } from '../state.js';
-
 import {
-  writeFile
-} from '../storage/storage.js';
+  saveAssetFile,
+  getImageURL
+} from '../storage/assetStorage.js';
 
 import {
   saveCurrentPage
@@ -113,27 +112,20 @@ async function uploadImage(
   container
 ) {
 
-  if (!state.workspaceHandle) return;
-
   const imageFile =
     await pickImageFile();
 
   if (!imageFile) return;
 
-  const targetHandle =
+  const asset =
     await writeAssetFile(
       imageFile
     );
 
-  const imageURL =
-    URL.createObjectURL(
-      await targetHandle.getFile()
-    );
-
   renderUploadedImage(
     container,
-    imageURL,
-    imageFile.name
+    asset.url,
+    asset.path
   );
 
   await saveCurrentPage();
@@ -178,25 +170,9 @@ async function writeAssetFile(
   imageFile
 ) {
 
-  const assetsDir =
-    await state.workspaceHandle
-      .getDirectoryHandle(
-        'assets'
-      );
-
-  const targetHandle =
-    await assetsDir.getFileHandle(
-      imageFile.name,
-      { create: true }
-    );
-
-  await writeFile(
-    targetHandle,
-    await imageFile.arrayBuffer(),
-    `asset:${imageFile.name}`
+  return saveAssetFile(
+    imageFile
   );
-
-  return targetHandle;
 }
 
 
@@ -301,21 +277,9 @@ export async function restoreAssetImages(
 
     try {
 
-      const assetsDir =
-        await state.workspaceHandle
-          .getDirectoryHandle(
-            'assets'
-          );
-
-      const fileHandle =
-        await assetsDir
-          .getFileHandle(
-            filename
-          );
-
       img.src =
-        URL.createObjectURL(
-          await fileHandle.getFile()
+        await getImageURL(
+          filename
         );
 
       applyImageCrop(
@@ -343,34 +307,27 @@ export async function insertImage(
   editor
 ) {
 
-  if (!state.workspaceHandle) return;
-
   const imageFile =
     await pickImageFile();
 
   if (!imageFile) return;
 
-  const targetHandle =
+  const asset =
     await writeAssetFile(
       imageFile
-    );
-
-  const imageURL =
-    URL.createObjectURL(
-      await targetHandle.getFile()
     );
 
   const img =
     document.createElement('img');
 
   img.src =
-    imageURL;
+    asset.url;
 
   img.alt =
     imageFile.name;
 
   img.dataset.asset =
-    imageFile.name;
+    asset.path;
 
   img.dataset.cropX =
     '50';

@@ -11,6 +11,10 @@ import {
   assertStorageAdapterContract
 } from './storageAdapterContract.js';
 
+import {
+  setWriteQueueStorageAdapterProvider
+} from './writeQueue.js';
+
 
 let activeStorageAdapter =
   null;
@@ -52,3 +56,8 @@ export function createDefaultStorageAdapter() {
     createBrowserStorageAdapter()
   );
 }
+
+
+setWriteQueueStorageAdapterProvider(
+  getStorageAdapter
+);

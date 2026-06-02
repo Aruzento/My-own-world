@@ -15,8 +15,7 @@ import {
 } from '../templates/templates.js';
 
 import {
-  writePageContent,
-  writeTextFile
+  writePageContent
 } from './writeQueue.js';
 
 import {
@@ -47,12 +46,12 @@ export async function createPage(
     crypto.randomUUID();
 
   const templateContent =
-  applyInitialTitle(
-    template.content,
-    initialTitle
-  );
+    applyInitialTitle(
+      template.content,
+      initialTitle
+    );
 
-const content =
+  const content =
 `---
 id: ${pageId}
 parent: ${parentId ?? 'null'}
@@ -154,75 +153,11 @@ async function writePageFile(
 ) {
 
   const storageAdapter =
-    getStorageAdapter();
+    getReadyStorageAdapter();
 
-  if (storageAdapter.kind === 'desktop') {
-
-    return writePageFileByAdapter(
-      content,
-      storageAdapter
-    );
-  }
-
-  const pagesDir =
-    await state.workspaceHandle
-      .getDirectoryHandle(
-        'pages'
-      );
-
-  const fileName =
-    `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.md`;
-
-  const fileHandle =
-    await pagesDir.getFileHandle(
-      fileName,
-      { create: true }
-    );
-
-  await writeTextFile(
-    fileHandle,
-    content,
-    fileName
+  await storageAdapter.ensureDirectory(
+    'pages'
   );
-
-  const parsed =
-    parseMarkdown(
-      content
-    );
-
-  const page = {
-    id: parsed.id,
-    parent: parsed.parent,
-    order: parsed.order,
-    name: fileName,
-    title: parsed.title,
-    type: parsed.type,
-    tags: parsed.tags,
-    template: parsed.template,
-    aliases: parsed.aliases,
-    path: `/pages/${fileName}`,
-    parentDirHandle: pagesDir,
-    handle: fileHandle,
-    content
-  };
-
-  setPages(
-    [
-      ...state.pages,
-      page
-    ]
-  );
-
-  notifyPageCreated();
-
-  return page;
-}
-
-
-async function writePageFileByAdapter(
-  content,
-  storageAdapter
-) {
 
   const fileName =
     `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.md`;
@@ -245,15 +180,7 @@ async function writePageFileByAdapter(
       parsed,
       name: fileName,
       path,
-      content,
-      handle: createAdapterFileHandle(
-        storageAdapter,
-        path
-      ),
-      parentDirHandle: createAdapterDirectoryHandle(
-        storageAdapter,
-        'pages'
-      )
+      content
     });
 
   setPages(
@@ -294,13 +221,15 @@ ${body}
 }
 
 
-/* Удаляет страницу и все дочерние страницы */
+// Удаляет страницу и все дочерние страницы.
 export async function deletePageBranch(
   page
 ) {
 
   const pagesToDelete =
-    collectPageBranch(page);
+    collectPageBranch(
+      page
+    );
 
   await ensureWorkspaceCanWrite();
 
@@ -360,6 +289,11 @@ export async function deletePageBranch(
 
 async function ensureWorkspaceCanWrite() {
 
+  const storageAdapter =
+    getReadyStorageAdapter();
+
+  if (storageAdapter.kind === 'desktop') return;
+
   if (!state.workspaceHandle) {
 
     throw new Error(
@@ -388,9 +322,9 @@ async function deletePageFile(
 ) {
 
   const storageAdapter =
-    getStorageAdapter();
+    getReadyStorageAdapter();
 
-  if (storageAdapter.kind === 'desktop') {
+  if (targetPage.path) {
 
     await storageAdapter.removeFile(
       targetPage.path
@@ -435,7 +369,9 @@ function collectPageBranch(
   children.forEach(child => {
 
     result.push(
-      ...collectPageBranch(child)
+      ...collectPageBranch(
+        child
+      )
     );
   });
 
@@ -492,7 +428,6 @@ export async function updatePageTreePosition(
   let updatedContent =
     page.content;
 
-
   if (
     /parent:\s*(.*)/i.test(
       updatedContent
@@ -513,7 +448,6 @@ export async function updatePageTreePosition(
         `---\nparent: ${parentId ?? 'null'}`
       );
   }
-
 
   if (
     /order:\s*(.*)/i.test(
@@ -537,7 +471,6 @@ export async function updatePageTreePosition(
       );
   }
 
-
   await writePageContent(
     page,
     updatedContent
@@ -549,6 +482,7 @@ export async function updatePageTreePosition(
   notifyPageMoved();
 }
 
+
 export async function updatePageAliases(
   page,
   aliases
@@ -559,7 +493,6 @@ export async function updatePageAliases(
 
   let updatedContent =
     page.content;
-
 
   if (
     /aliases:\s*\[(.*?)\]/i.test(
@@ -583,7 +516,6 @@ export async function updatePageAliases(
       );
   }
 
-
   await writePageContent(
     page,
     updatedContent
@@ -595,22 +527,18 @@ export async function updatePageAliases(
   notifyPageUpdated();
 }
 
+
 export async function scanDirectory(
   dirHandle,
   path = ''
 ) {
 
-  for await (
-    const entry
-    of dirHandle.values()
-  ) {
+  for await (const entry of dirHandle.values()) {
 
     const currentPath =
       `${path}/${entry.name}`;
 
-    if (
-      entry.kind === 'directory'
-    ) {
+    if (entry.kind === 'directory') {
 
       await scanDirectory(
         entry,
@@ -620,9 +548,7 @@ export async function scanDirectory(
       continue;
     }
 
-    if (
-      !entry.name.endsWith('.md')
-    ) {
+    if (!entry.name.endsWith('.md')) {
 
       continue;
     }
@@ -638,45 +564,16 @@ export async function scanDirectory(
         content
       );
 
-    state.pages.push({
-
-      id: parsed.id,
-
-      parent:
-        parsed.parent,
-
-      order:
-        parsed.order,
-
-      name:
-        entry.name,
-
-      title:
-        parsed.title,
-      
-      type:
-  parsed.type,
-
-      tags:
-        parsed.tags,
-
-      template:
-  parsed.template,
-
-      aliases:
-        parsed.aliases,
-
-      path:
-        currentPath,
-
-      handle:
-        entry,
-
-      parentDirHandle:
-        dirHandle,
-
-      content,
-    });
+    state.pages.push(
+      createPageRecord({
+        parsed,
+        name: entry.name,
+        path: currentPath,
+        handle: entry,
+        parentDirHandle: dirHandle,
+        content
+      })
+    );
   }
 }
 
@@ -743,15 +640,7 @@ async function scanAdapterDirectory(
         parsed,
         name: entry.name,
         path: currentDisplayPath,
-        content,
-        handle: createAdapterFileHandle(
-          storageAdapter,
-          currentAdapterPath
-        ),
-        parentDirHandle: createAdapterDirectoryHandle(
-          storageAdapter,
-          adapterPath
-        )
+        content
       })
     );
   }
@@ -762,8 +651,8 @@ function createPageRecord({
   parsed,
   name,
   path,
-  handle,
-  parentDirHandle,
+  handle = null,
+  parentDirHandle = null,
   content
 }) {
 
@@ -785,61 +674,25 @@ function createPageRecord({
 }
 
 
-function createAdapterFileHandle(
-  storageAdapter,
-  path
-) {
+function getReadyStorageAdapter() {
 
-  return {
-    name:
-      path.split('/').pop(),
+  const storageAdapter =
+    getStorageAdapter();
 
-    async createWritable() {
+  if (
+    storageAdapter.kind === 'browser' &&
+    !storageAdapter.getWorkspaceHandle?.() &&
+    state.workspaceHandle
+  ) {
 
-      let pendingContent =
-        '';
+    storageAdapter.setWorkspaceHandle(
+      state.workspaceHandle
+    );
+  }
 
-      return {
-        async write(
-          content
-        ) {
-
-          pendingContent =
-            String(content);
-        },
-
-        async close() {
-
-          await storageAdapter.writeText(
-            path,
-            pendingContent
-          );
-        }
-      };
-    }
-  };
+  return storageAdapter;
 }
 
-
-function createAdapterDirectoryHandle(
-  storageAdapter,
-  path
-) {
-
-  return {
-    kind: 'directory',
-    path,
-
-    async removeEntry(
-      name
-    ) {
-
-      await storageAdapter.removeFile(
-        `${path}/${name}`
-      );
-    }
-  };
-}
 
 function applyInitialTitle(
   html,

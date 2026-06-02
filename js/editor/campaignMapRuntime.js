@@ -1,12 +1,7 @@
-import { state } from '../state.js';
-
 import {
-  getImageURL
+  getImageURL,
+  saveAssetFile
 } from '../storage/assetStorage.js';
-
-import {
-  writeFile
-} from '../storage/storage.js';
 
 import {
   clearMapBackgroundCache,
@@ -488,8 +483,6 @@ export async function changeMapImage(
   map
 ) {
 
-  if (!state.workspaceHandle) return;
-
   const [fileHandle] =
     await window.showOpenFilePicker({
       types: [{
@@ -508,25 +501,15 @@ export async function changeMapImage(
   const imageFile =
     await fileHandle.getFile();
 
-  const assetsDir =
-    await state.workspaceHandle
-      .getDirectoryHandle('assets');
-
-  const targetHandle =
-    await assetsDir.getFileHandle(
-      imageFile.name,
-      { create: true }
+  const asset =
+    await saveAssetFile(
+      imageFile
     );
 
-  await writeFile(
-    targetHandle,
-    await imageFile.arrayBuffer(),
-    `asset:${imageFile.name}`
+  clearMapBackgroundCache(
+    asset.path
   );
 
-  clearMapBackgroundCache(
-    imageFile.name
-  );
 
   const stage =
     map.querySelector('.campaign-map-stage');
@@ -536,7 +519,7 @@ export async function changeMapImage(
   );
 
   stage.dataset.mapAsset =
-    imageFile.name;
+    asset.path;
 
   restoreMapAssetSettings(
     stage

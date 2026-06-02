@@ -672,3 +672,40 @@ AI-возможности поверх архитектурных контрак
 Следующий рабочий пункт: **20.4. Подготовить окружение Desktop Spike**.
 
 Пункты 6 и 12 закрыты базово. Дальше логично идти в Desktop по шагам 20.4-20.11: сначала окружение и adapter boundary, затем маленький Tauri spike, затем desktop smoke/backup/presentation checks.
+# Актуальный верхний блок: Desktop hardening и prototype
+
+## 20.7.1. Desktop Storage Hardening
+
+Статус: **сделано базово 02.06.2026**.
+
+20.7.1.1. Adapter-backed write layer: **сделано**. `writeQueue.js` теперь умеет писать страницы через `StorageAdapter` по `page.path`; прямой `createWritable()` оставлен только как fallback для старых browser/test handles.
+
+20.7.1.2. PageStorage без pseudo-handles: **сделано**. `pageStorage.js` больше не создает desktop lightweight file handles; desktop/browser запись идет через adapter path.
+
+20.7.1.3. BackupService через StorageAdapter: **сделано**. `backupService.js` создает manifest, страницы и assets через `readText/writeText/readBinary/writeBinary`; cleanup удаляет snapshot-папки через `removeDirectory`.
+
+20.7.1.4. AssetStorage через AssetAdapter: **сделано базово**. `assetStorage.js`, `browserAssetAdapter.js`, `desktopAssetAdapter.js` получили `importFile`, `resolveUrl`, `exists`, `remove` через storage facade.
+
+20.7.1.5. CampaignMap asset flow через adapter: **сделано базово**. Загрузка фона карты и восстановление фоновых изображений больше не идут напрямую через `state.workspaceHandle`.
+
+20.7.1.6. Desktop storage regression tests: **сделано**. `tests/storageAdapter.test.mjs` проверяет adapter-backed `writePageContent()` и backup/restore без FileSystemHandle.
+
+20.7.1.7. Documentation/manual update: **сделано в рамках этапа**. Обновлены план, desktop-план, work log, manual и летопись.
+
+20.7.1.8. Verification gate: **сделано**. Обязательные проверки: `npm run verify`, `npm run test:browser`, `npm run desktop:check`, `cargo check`.
+
+Следующее развитие: убрать оставшиеся прямые `state.workspaceHandle` из template storage, tree open-in-folder permissions и будущих media-flow, но это уже отдельные подпункты после desktop prototype.
+
+## 20.8. Desktop Prototype
+
+Статус: **сделано как engineering smoke foundation 02.06.2026**.
+
+20.8.1. Desktop prototype checklist: **сделано**. В `docs/DESKTOP_ADAPTER_PLAN.md` зафиксирован ручной сценарий: открыть workspace, создать/изменить карточку, перезапустить, проверить карту, assets, task tracker и UTF-8.
+
+20.8.2. Native compile smoke: **сделано**. `cargo check` проходит в `src-tauri`.
+
+20.8.3. Desktop environment smoke: **сделано**. `npm run desktop:check` подтверждает Node/npm/Tauri CLI/Rust/Cargo/rustup/VS Build Tools/Windows SDK.
+
+20.8.4. Browser compatibility gate: **сделано**. Browser suite остается зеленым, desktop hardening не ломает web-версию.
+
+Оставшийся ручной UX-хвост: запустить `npm run desktop:dev`, выбрать реальный workspace в окне Tauri и вручную пройти checklist. Автоматизировать реальный Tauri UI-runner лучше отдельным пунктом после стабилизации desktop prototype.

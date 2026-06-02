@@ -1,4 +1,8 @@
 import {
+  getStorageAdapter
+} from './storageAdapter.js';
+
+import {
   normalizeWorkspacePath
 } from './storageAdapterContract.js';
 
@@ -25,27 +29,62 @@ export function createDesktopAssetAdapter(
         String(root || '');
     },
 
-    async importFile() {
+    async importFile(
+      file,
+      options = {}
+    ) {
 
-      throw new Error(
-        'DesktopAssetAdapter importFile будет подключен после native file picker'
+      const storageAdapter =
+        getStorageAdapter();
+
+      const filename =
+        options.filename || file?.name;
+
+      if (!filename) {
+
+        throw new Error(
+          'Для asset нужен filename.'
+        );
+      }
+
+      const path =
+        normalizeAssetPath(
+          filename
+        );
+
+      await storageAdapter.writeBinary(
+        `assets/${path}`,
+        await file.arrayBuffer()
       );
+
+      return {
+        path,
+        url:
+          await this.resolveUrl(
+            path
+          )
+      };
     },
 
     async resolveUrl(
       assetReference
     ) {
 
-      const path =
-        normalizeWorkspacePath(
-          assetReference.path || assetReference
-        );
+      const storageAdapter =
+        getStorageAdapter();
+
+      const root =
+        workspaceRoot ||
+        storageAdapter.getWorkspaceRoot?.() ||
+        '';
 
       return invokeFsCommand(
         'resolve_asset_url',
         {
-          workspaceRoot,
-          path
+          workspaceRoot: root,
+          path: `assets/${normalizeAssetPath(
+            assetReference.path || assetReference
+          )}`
         }
       );
     },
@@ -54,13 +93,21 @@ export function createDesktopAssetAdapter(
       assetReference
     ) {
 
+      const storageAdapter =
+        getStorageAdapter();
+
+      const root =
+        workspaceRoot ||
+        storageAdapter.getWorkspaceRoot?.() ||
+        '';
+
       return invokeFsCommand(
         'path_exists',
         {
-          workspaceRoot,
-          path: normalizeWorkspacePath(
+          workspaceRoot: root,
+          path: `assets/${normalizeAssetPath(
             assetReference.path || assetReference
-          )
+          )}`
         }
       );
     },
@@ -69,14 +116,13 @@ export function createDesktopAssetAdapter(
       assetReference
     ) {
 
-      return invokeFsCommand(
-        'remove_file',
-        {
-          workspaceRoot,
-          path: normalizeWorkspacePath(
-            assetReference.path || assetReference
-          )
-        }
+      const storageAdapter =
+        getStorageAdapter();
+
+      await storageAdapter.removeFile(
+        `assets/${normalizeAssetPath(
+          assetReference.path || assetReference
+        )}`
       );
     },
 
@@ -85,6 +131,17 @@ export function createDesktopAssetAdapter(
       return [];
     }
   };
+}
+
+
+function normalizeAssetPath(
+  path
+) {
+
+  return normalizeWorkspacePath(
+    path
+  )
+    .replace(/^assets\//, '');
 }
 
 

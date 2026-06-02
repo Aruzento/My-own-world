@@ -3,12 +3,16 @@ import {
 } from '../state.js';
 
 import {
-  writeTextFile
-} from './writeQueue.js';
-
-import {
   collectAssetReferencesFromPages
 } from './assetReferenceScanner.js';
+
+import {
+  getStorageAdapter
+} from './storageAdapter.js';
+
+import {
+  normalizeWorkspacePath
+} from './storageAdapterContract.js';
 
 
 export const BACKUP_ROOT_DIR =
@@ -74,16 +78,11 @@ export function createBackupManifest({
     assetCount: assetReferences.length,
     assets:
       assetReferences.map(reference => ({
-        id:
-          reference.id || null,
-        path:
-          reference.path || '',
-        type:
-          reference.type || '',
-        owner:
-          reference.owner || null,
-        fallback:
-          reference.fallback || null
+        id: reference.id || null,
+        path: reference.path || '',
+        type: reference.type || '',
+        owner: reference.owner || null,
+        fallback: reference.fallback || null
       })),
     pages: pageRecords
   };
@@ -94,15 +93,10 @@ export async function createWorkspaceBackup(
   options = {}
 ) {
 
-  const workspaceHandle =
-    options.workspaceHandle || state.workspaceHandle;
-
-  if (!workspaceHandle) {
-
-    throw new Error(
-      'Workspace не выбран, backup невозможен.'
+  const storageAdapter =
+    getBackupStorageAdapter(
+      options
     );
-  }
 
   const pages =
     options.pages || state.pages || [];
@@ -121,37 +115,16 @@ export async function createWorkspaceBackup(
       reason
     );
 
-  const rootDir =
-    await workspaceHandle.getDirectoryHandle(
-      BACKUP_ROOT_DIR,
-      {
-        create: true
-      }
-    );
+  const snapshotPath =
+    `${BACKUP_ROOT_DIR}/${id}`;
 
-  const snapshotDir =
-    await rootDir.getDirectoryHandle(
-      id,
-      {
-        create: true
-      }
-    );
+  await storageAdapter.ensureDirectory(
+    `${snapshotPath}/${BACKUP_PAGES_DIR}`
+  );
 
-  const pagesDir =
-    await snapshotDir.getDirectoryHandle(
-      BACKUP_PAGES_DIR,
-      {
-        create: true
-      }
-    );
-
-  const assetsDir =
-    await snapshotDir.getDirectoryHandle(
-      BACKUP_ASSETS_DIR,
-      {
-        create: true
-      }
-    );
+  await storageAdapter.ensureDirectory(
+    `${snapshotPath}/${BACKUP_ASSETS_DIR}`
+  );
 
   const manifest =
     createBackupManifest({
@@ -168,56 +141,38 @@ export async function createWorkspaceBackup(
         page
       );
 
-    const fileHandle =
-      await pagesDir.getFileHandle(
-        fileName,
-        {
-          create: true
-        }
-      );
-
-    await writeTextFile(
-      fileHandle,
+    await storageAdapter.writeText(
+      `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`,
       await readPageBackupContent(
-        page
-      ),
-      `backup:${id}:${fileName}`
+        page,
+        storageAdapter
+      )
     );
   }
 
   const copiedAssets =
     await copyAssetsToBackup({
-      workspaceHandle,
-      backupAssetsDir: assetsDir,
-      assetReferences,
-      backupId: id
+      storageAdapter,
+      snapshotPath,
+      assetReferences
     });
 
   manifest.assetCount =
     copiedAssets;
 
-  const manifestHandle =
-    await snapshotDir.getFileHandle(
-      'manifest.json',
-      {
-        create: true
-      }
-    );
-
-  await writeTextFile(
-    manifestHandle,
+  await storageAdapter.writeText(
+    `${snapshotPath}/manifest.json`,
     JSON.stringify(
       manifest,
       null,
       2
-    ),
-    `backup:${id}:manifest`
+    )
   );
 
   if (options.cleanup !== false) {
 
     await cleanupWorkspaceBackups({
-      workspaceHandle,
+      storageAdapter,
       keepLatest:
         options.keepLatest ?? BACKUP_DEFAULT_RETENTION
     });
@@ -250,17 +205,30 @@ export async function createWorkspaceBackupBeforeRiskyOperation(
 
 
 export async function listWorkspaceBackups(
-  workspaceHandle = state.workspaceHandle
+  storageAdapterOrHandle = null
 ) {
 
-  if (!workspaceHandle) return [];
+  const isAdapter =
+    isStorageAdapter(
+      storageAdapterOrHandle
+    );
 
-  let rootDir;
+  const storageAdapter =
+    getBackupStorageAdapter({
+      storageAdapter: isAdapter
+        ? storageAdapterOrHandle
+        : null,
+      workspaceHandle: isAdapter
+        ? null
+        : storageAdapterOrHandle
+    });
+
+  let entries;
 
   try {
 
-    rootDir =
-      await workspaceHandle.getDirectoryHandle(
+    entries =
+      await storageAdapter.listFiles(
         BACKUP_ROOT_DIR
       );
 
@@ -269,15 +237,17 @@ export async function listWorkspaceBackups(
     return [];
   }
 
-  const backups = [];
+  const backups =
+    [];
 
-  for await (const entry of rootDir.values()) {
+  for (const entry of entries) {
 
     if (entry.kind !== 'directory') continue;
 
     const manifest =
       await readBackupManifest(
-        entry
+        storageAdapter,
+        `${BACKUP_ROOT_DIR}/${entry.name}`
       );
 
     if (manifest) {
@@ -301,29 +271,31 @@ export async function listWorkspaceBackups(
 
 export async function restoreWorkspaceBackup(
   backupId,
-  workspaceHandle = state.workspaceHandle
+  storageAdapterOrHandle = null
 ) {
 
-  if (!workspaceHandle) {
-
-    throw new Error(
-      'Workspace не выбран, restore невозможен.'
-    );
-  }
-
-  const rootDir =
-    await workspaceHandle.getDirectoryHandle(
-      BACKUP_ROOT_DIR
+  const isAdapter =
+    isStorageAdapter(
+      storageAdapterOrHandle
     );
 
-  const snapshotDir =
-    await rootDir.getDirectoryHandle(
-      backupId
-    );
+  const storageAdapter =
+    getBackupStorageAdapter({
+      storageAdapter: isAdapter
+        ? storageAdapterOrHandle
+        : null,
+      workspaceHandle: isAdapter
+        ? null
+        : storageAdapterOrHandle
+    });
+
+  const snapshotPath =
+    `${BACKUP_ROOT_DIR}/${backupId}`;
 
   const manifest =
     await readBackupManifest(
-      snapshotDir
+      storageAdapter,
+      snapshotPath
     );
 
   if (!manifest) {
@@ -333,18 +305,9 @@ export async function restoreWorkspaceBackup(
     );
   }
 
-  const backupPagesDir =
-    await snapshotDir.getDirectoryHandle(
-      BACKUP_PAGES_DIR
-    );
-
-  const workspacePagesDir =
-    await workspaceHandle.getDirectoryHandle(
-      'pages',
-      {
-        create: true
-      }
-    );
+  await storageAdapter.ensureDirectory(
+    'pages'
+  );
 
   let restoredPages =
     0;
@@ -356,29 +319,14 @@ export async function restoreWorkspaceBackup(
 
     if (!fileName) continue;
 
-    const backupPageHandle =
-      await backupPagesDir.getFileHandle(
-        fileName
-      );
-
-    const backupFile =
-      await backupPageHandle.getFile();
-
     const content =
-      await backupFile.text();
-
-    const targetHandle =
-      await workspacePagesDir.getFileHandle(
-        fileName,
-        {
-          create: true
-        }
+      await storageAdapter.readText(
+        `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`
       );
 
-    await writeTextFile(
-      targetHandle,
-      content,
-      `restore:${backupId}:${fileName}`
+    await storageAdapter.writeText(
+      `pages/${fileName}`,
+      content
     );
 
     restoredPages += 1;
@@ -386,10 +334,9 @@ export async function restoreWorkspaceBackup(
 
   const restoredAssets =
     await restoreBackupAssets({
-      workspaceHandle,
-      snapshotDir,
-      manifest,
-      backupId
+      storageAdapter,
+      snapshotPath,
+      manifest
     });
 
   return {
@@ -401,14 +348,16 @@ export async function restoreWorkspaceBackup(
 
 
 export async function cleanupWorkspaceBackups({
-  workspaceHandle = state.workspaceHandle,
+  storageAdapter = null,
+  workspaceHandle = null,
   keepLatest = BACKUP_DEFAULT_RETENTION
 } = {}) {
 
-  if (!workspaceHandle) return {
-    removed: 0,
-    kept: 0
-  };
+  const adapter =
+    getBackupStorageAdapter({
+      storageAdapter,
+      workspaceHandle
+    });
 
   if (!Number.isFinite(keepLatest) || keepLatest < 1) {
 
@@ -417,26 +366,9 @@ export async function cleanupWorkspaceBackups({
     );
   }
 
-  let rootDir;
-
-  try {
-
-    rootDir =
-      await workspaceHandle.getDirectoryHandle(
-        BACKUP_ROOT_DIR
-      );
-
-  } catch (error) {
-
-    return {
-      removed: 0,
-      kept: 0
-    };
-  }
-
   const backups =
     await listWorkspaceBackups(
-      workspaceHandle
+      adapter
     );
 
   const toRemove =
@@ -451,11 +383,8 @@ export async function cleanupWorkspaceBackups({
 
     try {
 
-      await rootDir.removeEntry(
-        backup.id,
-        {
-          recursive: true
-        }
+      await adapter.removeDirectory(
+        `${BACKUP_ROOT_DIR}/${backup.id}`
       );
 
       removed += 1;
@@ -479,21 +408,16 @@ export async function cleanupWorkspaceBackups({
 
 
 async function readBackupManifest(
-  snapshotDir
+  storageAdapter,
+  snapshotPath
 ) {
 
   try {
 
-    const manifestHandle =
-      await snapshotDir.getFileHandle(
-        'manifest.json'
-      );
-
-    const file =
-      await manifestHandle.getFile();
-
     return JSON.parse(
-      await file.text()
+      await storageAdapter.readText(
+        `${snapshotPath}/manifest.json`
+      )
     );
 
   } catch (error) {
@@ -518,12 +442,20 @@ function getBackupPageFileName(
 
 
 async function readPageBackupContent(
-  page
+  page,
+  storageAdapter
 ) {
 
   if (typeof page?.content === 'string') {
 
     return page.content;
+  }
+
+  if (page?.path) {
+
+    return storageAdapter.readText(
+      page.path
+    );
   }
 
   if (page?.handle?.getFile) {
@@ -539,10 +471,9 @@ async function readPageBackupContent(
 
 
 async function copyAssetsToBackup({
-  workspaceHandle,
-  backupAssetsDir,
-  assetReferences,
-  backupId
+  storageAdapter,
+  snapshotPath,
+  assetReferences
 }) {
 
   let copied =
@@ -554,30 +485,19 @@ async function copyAssetsToBackup({
 
     try {
 
-      const sourceHandle =
-        await getWorkspaceAssetFileHandle(
-          workspaceHandle,
+      const normalizedPath =
+        normalizeAssetPath(
           reference.path
         );
 
-      const sourceFile =
-        await sourceHandle.getFile();
-
-      const targetHandle =
-        await getNestedFileHandle(
-          backupAssetsDir,
-          normalizeBackupAssetPath(
-            reference.path
-          ),
-          {
-            create: true
-          }
+      const buffer =
+        await storageAdapter.readBinary(
+          `assets/${normalizedPath}`
         );
 
-      await writeFileFromBlob(
-        targetHandle,
-        sourceFile,
-        `backup:${backupId}:asset:${reference.path}`
+      await storageAdapter.writeBinary(
+        `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`,
+        buffer
       );
 
       copied += 1;
@@ -597,33 +517,10 @@ async function copyAssetsToBackup({
 
 
 async function restoreBackupAssets({
-  workspaceHandle,
-  snapshotDir,
-  manifest,
-  backupId
+  storageAdapter,
+  snapshotPath,
+  manifest
 }) {
-
-  let backupAssetsDir;
-
-  try {
-
-    backupAssetsDir =
-      await snapshotDir.getDirectoryHandle(
-        BACKUP_ASSETS_DIR
-      );
-
-  } catch (error) {
-
-    return 0;
-  }
-
-  const assetsDir =
-    await workspaceHandle.getDirectoryHandle(
-      'assets',
-      {
-        create: true
-      }
-    );
 
   let restored =
     0;
@@ -634,32 +531,19 @@ async function restoreBackupAssets({
 
     try {
 
-      const backupAssetHandle =
-        await getNestedFileHandle(
-          backupAssetsDir,
-          normalizeBackupAssetPath(
-            reference.path
-          )
+      const normalizedPath =
+        normalizeAssetPath(
+          reference.path
         );
 
-      const backupFile =
-        await backupAssetHandle.getFile();
-
-      const targetHandle =
-        await getNestedFileHandle(
-          assetsDir,
-          normalizeWorkspaceAssetPath(
-            reference.path
-          ),
-          {
-            create: true
-          }
+      const buffer =
+        await storageAdapter.readBinary(
+          `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
         );
 
-      await writeFileFromBlob(
-        targetHandle,
-        backupFile,
-        `restore:${backupId}:asset:${reference.path}`
+      await storageAdapter.writeBinary(
+        `assets/${normalizedPath}`,
+        buffer
       );
 
       restored += 1;
@@ -678,125 +562,76 @@ async function restoreBackupAssets({
 }
 
 
-async function getWorkspaceAssetFileHandle(
-  workspaceHandle,
-  assetPath
-) {
-
-  const assetsDir =
-    await workspaceHandle.getDirectoryHandle(
-      'assets'
-    );
-
-  return getNestedFileHandle(
-    assetsDir,
-    normalizeWorkspaceAssetPath(
-      assetPath
-    )
-  );
-}
-
-
-async function getNestedFileHandle(
-  rootDir,
-  path,
-  options = {}
-) {
-
-  const parts =
-    String(path || '')
-      .split('/')
-      .filter(Boolean);
-
-  if (parts.length === 0) {
-
-    throw new Error(
-      'Пустой путь файла.'
-    );
-  }
-
-  let currentDir =
-    rootDir;
-
-  for (const part of parts.slice(0, -1)) {
-
-    currentDir =
-      await currentDir.getDirectoryHandle(
-        part,
-        {
-          create:
-            Boolean(options.create)
-        }
-      );
-  }
-
-  return currentDir.getFileHandle(
-    parts.at(-1),
-    options
-  );
-}
-
-
-function normalizeWorkspaceAssetPath(
+function normalizeAssetPath(
   path
 ) {
 
-  const normalized =
-    normalizeBackupAssetPath(
-      path
-    );
-
-  return normalized.startsWith('assets/')
-    ? normalized.slice('assets/'.length)
-    : normalized;
-}
-
-
-function normalizeBackupAssetPath(
-  path
-) {
-
-  return String(path || '')
-    .replaceAll('\\', '/')
-    .replace(/^\/+/, '')
-    .replace(/\.\.(\/|$)/g, '')
+  return normalizeWorkspacePath(
+    path
+  )
     .replace(/^assets\//, '');
 }
 
 
-async function writeFileFromBlob(
-  handle,
-  file,
-  key
-) {
+function getBackupStorageAdapter({
+  storageAdapter = null,
+  workspaceHandle = null
+} = {}) {
 
-  const buffer =
-    file?.arrayBuffer
-      ? await file.arrayBuffer()
-      : new TextEncoder().encode(
-        await file.text()
-      ).buffer;
+  const adapter =
+    storageAdapter || getStorageAdapter();
 
-  await writeBinaryFile(
-    handle,
-    buffer,
-    key
-  );
+  if (
+    adapter.kind === 'browser' &&
+    workspaceHandle &&
+    adapter.setWorkspaceHandle
+  ) {
+
+    adapter.setWorkspaceHandle(
+      workspaceHandle
+    );
+  }
+
+  if (
+    adapter.kind === 'browser' &&
+    !adapter.getWorkspaceHandle?.()
+  ) {
+
+    const handle =
+      state.workspaceHandle;
+
+    if (handle && adapter.setWorkspaceHandle) {
+
+      adapter.setWorkspaceHandle(
+        handle
+      );
+    }
+  }
+
+  const hasWorkspace =
+    adapter.kind === 'desktop'
+      ? Boolean(adapter.getWorkspaceRoot?.())
+      : Boolean(adapter.getWorkspaceHandle?.());
+
+  if (!hasWorkspace) {
+
+    throw new Error(
+      'Workspace не выбран, backup невозможен.'
+    );
+  }
+
+  return adapter;
 }
 
 
-async function writeBinaryFile(
-  handle,
-  buffer,
-  key
+function isStorageAdapter(
+  value
 ) {
 
-  const writable =
-    await handle.createWritable();
-
-  await writable.write(
-    buffer
+  return Boolean(
+    value &&
+    typeof value.readText === 'function' &&
+    typeof value.writeText === 'function' &&
+    typeof value.listFiles === 'function'
   );
-
-  await writable.close();
 }
