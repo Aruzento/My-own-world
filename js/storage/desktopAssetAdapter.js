@@ -10,6 +10,10 @@ import {
   isTauriRuntime
 } from './desktopStorageAdapter.js';
 
+import {
+  invokeTauriCommand
+} from './tauriBridge.js';
+
 
 export function createDesktopAssetAdapter(
   options = {}
@@ -157,12 +161,7 @@ async function invokeFsCommand(
     );
   }
 
-  const {
-    invoke
-  } =
-    await import('@tauri-apps/api/core');
-
-  return invoke(
+  return invokeTauriCommand(
     command,
     payload
   );

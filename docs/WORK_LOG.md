@@ -1,3 +1,29 @@
+# Журнал работ
+
+## 2026-06-02: Desktop workspace picker и 20.9 Backup / Restore Gate
+
+### Что сделано
+
+- Исправлен выбор workspace в Tauri: добавлен `js/storage/tauriBridge.js`, который использует глобальный `window.__TAURI__` в desktop WebView и оставляет dynamic import как fallback.
+- В `src-tauri/tauri.conf.json` включен `withGlobalTauri`, чтобы desktop-прототип без bundler мог открывать системный dialog.
+- `desktopStorageAdapter.js` переведен на `openTauriDirectoryDialog()` и `invokeTauriCommand()`.
+- `desktopAssetAdapter.js` переведен на `invokeTauriCommand()`.
+- Добавлен regression test на выбор workspace через глобальный Tauri dialog API.
+- Добавлен `docs/DESKTOP_BACKUP_RESTORE_GATE.md`.
+- `docs/DESKTOP_PROTOTYPE_SMOKE.md` расширен шагами restore.
+- `docs/PROJECT_PLAN.md`, `docs/DESKTOP_ADAPTER_PLAN.md` и README обновлены по статусам 20.8 и 20.9.
+
+### Что это меняет
+
+- В desktop-прототипе кнопка выбора workspace больше не зависит от browser-only API и должна открывать Tauri dialog.
+- Backup/restore подтвержден как adapter-backed gate: автоматические тесты проверяют страницы и assets без `FileSystemHandle`, а реальный desktop-click остается ручным smoke до появления Tauri UI-runner.
+
+### Следующий пункт
+
+- **20.10 Desktop Presentation Window Spike**: проверить отдельное Tauri-окно презентации и live-sync карты между окнами.
+
+---
+
 # ?????? ?????
 
 ## 2026-06-02: Desktop Storage Hardening 20.7.1 ? Desktop Prototype 20.8

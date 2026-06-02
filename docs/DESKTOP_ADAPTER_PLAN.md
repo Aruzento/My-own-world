@@ -1,5 +1,29 @@
 # Desktop Adapter Plan
 
+## Актуальный статус на 02.06.2026
+
+### 20.8 Desktop Prototype
+
+Статус: **сделано базово**.
+
+- В Tauri включен `withGlobalTauri`, чтобы приложение без bundler могло обращаться к desktop API через `window.__TAURI__`.
+- Добавлен `js/storage/tauriBridge.js`: он выбирает глобальный Tauri API в desktop WebView и оставляет dynamic import как fallback для будущей bundler-сборки.
+- Выбор workspace в desktop больше не зависит от browser-only `showDirectoryPicker` и bare import `@tauri-apps/plugin-dialog`.
+- `desktopStorageAdapter.js` использует Tauri dialog через bridge.
+- `desktopAssetAdapter.js` использует Tauri invoke через bridge.
+- Добавлен unit regression на выбор workspace через глобальный Tauri dialog API.
+
+### 20.9 Desktop Backup / Restore Gate
+
+Статус: **сделано базово**.
+
+- Backup/restore уже идет через `StorageAdapter`, поэтому desktop-сценарий не требует `FileSystemHandle`.
+- Добавлен `docs/DESKTOP_BACKUP_RESTORE_GATE.md`.
+- `docs/DESKTOP_PROTOTYPE_SMOKE.md` расширен ручным сценарием restore.
+- Storage tests проверяют backup/restore страницы и assets через desktop-style adapter.
+
+Оставшийся хвост: пройти ручной smoke в реальном Tauri-окне и позже подключить automated Tauri UI-runner.
+
 ## ?????????? ?????? ?? 02.06.2026
 
 ### 20.7.1. Desktop Storage Hardening: ??????? ??????

@@ -2,16 +2,19 @@ import {
   normalizeWorkspacePath
 } from './storageAdapterContract.js';
 
+import {
+  invokeTauriCommand,
+  isTauriRuntime as detectTauriRuntime,
+  openTauriDirectoryDialog
+} from './tauriBridge.js';
+
 const DESKTOP_WORKSPACE_ROOT_KEY =
   'myOwnWorld.desktop.workspaceRoot';
 
 
 export function isTauriRuntime() {
 
-  return Boolean(
-    globalThis.__TAURI_INTERNALS__ ||
-    globalThis.__TAURI__
-  );
+  return detectTauriRuntime();
 }
 
 
@@ -44,13 +47,8 @@ export function createDesktopStorageAdapter(
 
     async pickWorkspace() {
 
-      const {
-        open
-      } =
-        await import('@tauri-apps/plugin-dialog');
-
       const selectedPath =
-        await open({
+        await openTauriDirectoryDialog({
           directory: true,
           multiple: false,
           title: 'Выберите workspace MyOwnWorld'
@@ -219,12 +217,7 @@ async function invokeFsCommand(
     );
   }
 
-  const {
-    invoke
-  } =
-    await import('@tauri-apps/api/core');
-
-  return invoke(
+  return invokeTauriCommand(
     command,
     payload
   );

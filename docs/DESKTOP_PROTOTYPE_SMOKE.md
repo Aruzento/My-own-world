@@ -36,7 +36,10 @@
 14. Открыть task tracker и убедиться, что задачи читаются.
 15. Создать ручной backup через UI настроек.
 16. Проверить, что `.my-own-world-backups/` появился внутри workspace.
-17. Проверить русские названия карточек и текст: mojibake быть не должно.
+17. Изменить карточку после backup.
+18. Восстановить созданный backup через UI настроек.
+19. Проверить, что карточка вернулась к состоянию backup.
+20. Проверить русские названия карточек и текст: mojibake быть не должно.
 
 ## Критерий успеха
 
@@ -44,9 +47,11 @@
 - Tauri backend проходит `cargo check`.
 - Desktop-окно открывает workspace, сохраняет страницы и показывает assets.
 - Backup создается внутри выбранного workspace.
+- Restore возвращает страницы и assets через desktop storage adapter.
 
 ## Известные ограничения
 
 - Реальный automated Tauri UI-runner пока не подключен.
 - Presentation window внутри desktop еще не выделено отдельным spike.
 - Template storage и некоторые редкие сценарии дерева еще могут напрямую использовать `state.workspaceHandle`; это будущий hardening после 20.8.
+- Подробный gate для backup/restore описан в `docs/DESKTOP_BACKUP_RESTORE_GATE.md`.

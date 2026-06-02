@@ -106,6 +106,86 @@ test(
 
 
 test(
+  'DesktopStorageAdapter выбирает workspace через глобальный Tauri dialog API',
+  async () => {
+
+    const previousTauri =
+      globalThis.__TAURI__;
+
+    const previousLocalStorage =
+      globalThis.localStorage;
+
+    const storage =
+      new Map();
+
+    globalThis.localStorage = {
+      getItem(key) {
+
+        return storage.get(key) || null;
+      },
+
+      setItem(key, value) {
+
+        storage.set(
+          key,
+          String(value)
+        );
+      }
+    };
+
+    globalThis.__TAURI__ = {
+      dialog: {
+        async open(options) {
+
+          assert.equal(
+            options.directory,
+            true
+          );
+
+          return 'C:/World/Desktop';
+        }
+      },
+      core: {
+        async invoke() {
+
+          throw new Error(
+            'Файловые команды не нужны для выбора workspace.'
+          );
+        }
+      }
+    };
+
+    try {
+
+      const adapter =
+        createDesktopStorageAdapter();
+
+      const selected =
+        await adapter.pickWorkspace();
+
+      assert.equal(
+        selected,
+        'C:/World/Desktop'
+      );
+
+      assert.equal(
+        adapter.getWorkspaceRoot(),
+        'C:/World/Desktop'
+      );
+
+    } finally {
+
+      globalThis.__TAURI__ =
+        previousTauri;
+
+      globalThis.localStorage =
+        previousLocalStorage;
+    }
+  }
+);
+
+
+test(
   'AssetAdapter contract requires asset lifecycle methods',
   () => {
 

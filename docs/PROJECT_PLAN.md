@@ -495,13 +495,12 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - `src-tauri/target/` добавлен в `.gitignore`;
 - команды и требования зафиксированы в README и `DESKTOP_ADAPTER_PLAN.md`.
 
-Ограничение окружения на текущей машине:
+Состояние окружения на 02.06.2026:
 - `@tauri-apps/cli` установлен;
-- WebView2 найден через `tauri info`;
-- Rust/Cargo/rustup не установлены;
-- Visual Studio Build Tools с MSVC/Windows SDK не обнаружены.
-
-Пока эти системные компоненты не установлены, `desktop:check` ожидаемо падает, а `desktop:dev`/`desktop:build` не являются обязательными проверками перед push.
+- Rust/Cargo/rustup установлены;
+- Visual Studio Build Tools C++ и Windows SDK установлены;
+- `npm run desktop:check` проходит;
+- `cargo check` в `src-tauri` проходит.
 
 20.5. Создать `StorageAdapter` interface в JS: **сделано foundation**.
 Что сделано:
@@ -513,8 +512,8 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - добавлены unit tests на contract.
 
 Что остается:
-- постепенно перевести `writeQueue`, `backupService`, `assetStorage`, `images`, `campaignMapRuntime` с прямого `state.workspaceHandle` на adapter facade;
-- заменить временные lightweight file handles полноценным adapter-backed write layer.
+- убрать оставшиеся прямые `state.workspaceHandle` из template storage, tree open-in-folder permissions и редких future-media flows;
+- добавить настоящий automated Tauri UI-runner, когда desktop prototype стабилизируется.
 
 20.6. Создать `AssetAdapter` interface в JS: **сделано foundation**.
 Что сделано:
@@ -525,8 +524,8 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - добавлены unit tests на contract.
 
 Что остается:
-- перевести текущие image/media flows на `AssetAdapter`;
-- реализовать native import/copy asset после desktop file picker.
+- реализовать native desktop file picker для картинок, если WebView ограничит browser file input;
+- расширить `AssetAdapter` под будущие audio/playlist assets.
 
 20.7. Tauri FS commands: **сделано foundation**.
 Что сделано:
@@ -546,22 +545,28 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - `cargo check` в `src-tauri` проходит;
 - `desktop:info` выводит зеленый отчет, но может не завершаться в текущем shell, поэтому не используется как обязательный gate.
 
-20.8. Desktop prototype: **после 20.7**.
-Шаги:
-- открыть существующий workspace;
-- создать карточку;
-- сохранить и перезапустить приложение;
-- открыть карту;
-- загрузить/показать asset;
-- проверить task tracker;
-- проверить UTF-8.
+20.8. Desktop prototype: **сделано базово**.
+Что сделано:
+- desktop WebView запускается через `npm run desktop:dev`;
+- включен `withGlobalTauri`, чтобы приложение без bundler могло использовать Tauri API;
+- добавлен `tauriBridge.js`: Tauri dialog/invoke доступны через `window.__TAURI__`, а dynamic import остается fallback для будущей сборки;
+- выбор workspace в desktop больше не зависит от browser-only `showDirectoryPicker`;
+- добавлен `docs/DESKTOP_PROTOTYPE_SMOKE.md`.
 
-20.9. Desktop Backup / Restore Gate: **после 20.8**.
-Шаги:
-- прогнать backup/restore внутри desktop;
-- проверить, что `.my-own-world-backups/` создается в workspace;
-- проверить восстановление карточки, карты, task tracker и assets;
-- добавить desktop smoke checklist.
+Что остается:
+- пройти ручной smoke на реальном workspace в Tauri-окне;
+- при найденных ограничениях WebView добавить native file picker для image/map asset flows.
+
+20.9. Desktop Backup / Restore Gate: **сделано базово**.
+Что сделано:
+- добавлен `docs/DESKTOP_BACKUP_RESTORE_GATE.md`;
+- backup/restore идет через `StorageAdapter`, без прямой зависимости от `FileSystemHandle`;
+- storage tests проверяют backup/restore страницы и assets через desktop-style adapter;
+- desktop smoke checklist расширен проверкой restore.
+
+Что остается:
+- вручную пройти backup/restore в реальном Tauri-окне;
+- позже подключить automated Tauri UI-runner, чтобы проверять реальные клики по desktop popup.
 
 20.10. Desktop Presentation Window Spike: **после 20.8**.
 Шаги:
