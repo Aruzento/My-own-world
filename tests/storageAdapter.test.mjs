@@ -247,7 +247,7 @@ test(
             'C:\\World\\assets\\portraits\\hero.png'
           );
 
-          return 'asset://localhost/C:/World/assets/portraits/hero.png';
+          return 'http://asset.localhost/C%3A%5CWorld%5Cassets%5Cportraits%5Chero.png';
         }
       }
     };
@@ -270,7 +270,7 @@ test(
 
       assert.equal(
         url,
-        'asset://localhost/C:/World/assets/portraits/hero.png'
+        'http://asset.localhost/C%3A%5CWorld%5Cassets%5Cportraits%5Chero.png'
       );
 
     } finally {
