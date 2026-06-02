@@ -569,22 +569,32 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - вручную пройти backup/restore в реальном Tauri-окне;
 - позже подключить automated Tauri UI-runner, чтобы проверять реальные клики по desktop popup.
 
-20.10. Desktop Presentation Window Spike: **сделано как архитектурный spike, реализация transport вынесена в 20.10.1**.
+20.10. Desktop Presentation Window Spike: **сделано**.
 Что сделано:
 - добавлен `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md`;
 - в `tauriBridge.js` подготовлен `openTauriWebviewWindow()`;
 - подтверждено, что текущая browser-презентация через `window.open` зависит от прямого DOM-доступа и не переносится один-в-один на native Tauri window.
 
-Что остается:
-- **20.10.1. Presentation runtime transport**: отдельная `presentation.html`, data-first snapshot карты, channel master -> presentation, renderer из `CampaignMapModel`, затем подключение Tauri `WebviewWindow`.
+20.10.1. Presentation runtime transport: **сделано базово**.
+Что сделано:
+- добавлены `presentation.html` и `js/presentation/presentationEntry.js`;
+- desktop-презентация открывается через Tauri `WebviewWindow`;
+- master-окно отправляет snapshot карты через `BroadcastChannel`;
+- presentation runtime поддерживает собственные zoom/pan, показ карты и popup просмотра изображения;
+- browser fallback через старый `window.open` сохранен.
 
-20.11. Desktop Packaging Smoke: **сделано как packaging checklist, production package позже**.
+Что остается как следующий hardening, не блокирующий 20.10.1:
+- заменить HTML snapshot на полноценный JSON renderer из `CampaignMapModel`;
+- добавить automated Tauri UI-runner, когда desktop prototype стабилизируется.
+
+20.11. Desktop Packaging Smoke: **сделано**.
 Что сделано:
 - добавлен `docs/DESKTOP_PACKAGING_SMOKE.md`;
-- зафиксировано, что `desktop:check`, `cargo check` и `desktop:dev` являются текущим gate;
-- production bundle пока не включен, потому что нужен отдельный frontend output и package policy.
+- добавлена команда `npm run desktop:packaging-smoke`;
+- smoke проверяет desktop scripts, Tauri config, asset protocol, `protocol-asset` feature и наличие desktop-документов;
+- production bundle пока не включен намеренно: текущий пункт закрывает smoke-gate, а не выпуск installer.
 
-Что остается:
+Будущий production packaging:
 - **20.11.1. Production frontend output**;
 - **20.11.2. Включить Tauri bundle**;
 - **20.11.3. Проверить installer/portable build**.
@@ -596,7 +606,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 Добавлен `docs/BACKEND_STORAGE_API_PLAN.md`. BackendStorageAdapter остается будущим направлением после desktop и role foundation.
 
 20.14. Перевод в Desktop-приложение: **сделано как стратегия, работа продолжается подпунктами**.
-Добавлен `docs/DESKTOP_TRANSITION_STRATEGY.md`. Desktop остается основным практическим путем, но через adapter boundary и без удаления browser mode.
+Добавлен `docs/DESKTOP_TRANSITION_STRATEGY.md`. Desktop остается основным практическим путем, но через adapter boundary и без удаления browser mode. Следующий desktop-фокус: hardened `CampaignMapModel` renderer для презентации и ручной smoke реального Tauri-окна на workspace с картинками.
 
 ### 22. Character Domain Model
 

@@ -1,5 +1,31 @@
 # Журнал работ
 
+## 2026-06-02: Desktop presentation transport 20.10.1 и packaging smoke 20.11
+
+### Что сделано
+
+- Исправлен реальный путь отображения картинок в Tauri: `convertTauriFileSrc()` теперь использует `__TAURI__.core.convertFileSrc`, `__TAURI_INTERNALS__.convertFileSrc` и явно передает protocol `asset`.
+- Добавлен regression test на fallback через `__TAURI_INTERNALS__.convertFileSrc`, чтобы desktop WebView не терял картинки, если публичный global API отличается от runtime internals.
+- Добавлены `presentation.html` и `js/presentation/presentationEntry.js`.
+- `campaignMapPresentation.js` научен открывать отдельное Tauri `WebviewWindow` для режима презентации.
+- Между окном мастера и окном презентации добавлен `BroadcastChannel`.
+- Presentation runtime поддерживает собственные zoom/pan и popup просмотра изображения.
+- Добавлена команда `npm run desktop:packaging-smoke`.
+- Обновлены `docs/PROJECT_PLAN.md`, `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md`, `docs/DESKTOP_PACKAGING_SMOKE.md`, `docs/DESKTOP_TRANSITION_STRATEGY.md` и README.
+
+### Что это меняет
+
+- Картинки в desktop-режиме больше не должны зависеть от прямого `file://` и должны проходить через Tauri asset protocol.
+- Презентация получила первый самостоятельный desktop runtime вместо попытки писать напрямую в DOM второго окна.
+- 20.11 теперь проверяется командой, а не только текстовым checklist.
+
+### Следующее развитие
+
+- Следующий desktop hardening: заменить HTML snapshot презентации на JSON payload из `CampaignMapModel`.
+- После этого можно двигаться к Tauri UI-runner или production frontend output для настоящего installer.
+
+---
+
 ## 2026-06-02: Desktop assets fix и пункты 20.10-20.14
 
 ### Что сделано

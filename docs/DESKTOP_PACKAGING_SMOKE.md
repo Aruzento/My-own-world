@@ -13,6 +13,7 @@
 Desktop-прототип уже компилируется как Tauri backend:
 
 - `npm run desktop:check` проходит;
+- `npm run desktop:packaging-smoke` проходит и проверяет desktop packaging prerequisites;
 - `cargo check` в `src-tauri` проходит;
 - `npm run desktop:dev` запускает desktop-прототип через dev server;
 - `bundle.active` пока `false`, поэтому полноценный installer/release package еще не является обязательным gate.
@@ -29,6 +30,7 @@ npm run test:browser
 2. Проверить desktop окружение:
 
 ```powershell
+npm run desktop:packaging-smoke
 npm run desktop:check
 cd src-tauri
 C:\Users\Aruko\.cargo\bin\cargo.exe check

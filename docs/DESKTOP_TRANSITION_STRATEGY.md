@@ -45,6 +45,19 @@ Desktop — основной практический путь развития 
 
 ### Этап 3. Desktop Packaging
 
+### 20.10.1. Presentation Transport Foundation
+
+Статус: **сделано базово**.
+
+- Добавлена отдельная страница `presentation.html`.
+- Добавлен runtime `js/presentation/presentationEntry.js`.
+- Tauri открывает отдельное окно презентации через `WebviewWindow`.
+- Master window отправляет snapshot карты через `BroadcastChannel`.
+- Presentation window имеет собственные zoom/pan.
+- Popup "Открыть изображение" умеет показывать картинку в presentation window.
+
+Следующее развитие: заменить HTML snapshot на JSON payload из `CampaignMapModel` и перевести presentation renderer на model-first отрисовку.
+
 Статус: **позже**.
 
 Нужно:

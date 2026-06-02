@@ -21,8 +21,20 @@ import {
   removeHiddenPresentationItems
 } from './campaignMapPresentationItemSync.js';
 
+import {
+  isTauriRuntime,
+  openTauriWebviewWindow
+} from '../storage/tauriBridge.js';
+
 let presentationWindow = null;
+let presentationMode = 'browser';
+let presentationChannel = null;
+let pendingTauriPresentationRender = false;
+let pendingTauriImagePreview = null;
 const fogImageCache = new WeakMap();
+
+const PRESENTATION_CHANNEL_NAME =
+  'my-own-world-campaign-map-presentation';
 
 const presentationState = {
   x: 0,
@@ -34,6 +46,12 @@ const presentationState = {
 };
 
 export function openPresentationWindow() {
+
+  if (isTauriRuntime()) {
+
+    openTauriPresentationWindow();
+    return;
+  }
 
   if (
     presentationWindow &&
@@ -88,6 +106,12 @@ export function openPresentationWindow() {
 
 export function syncPresentation() {
 
+  if (presentationMode === 'tauri') {
+
+    sendTauriPresentationRender();
+    return;
+  }
+
   if (
     !presentationWindow ||
     presentationWindow.closed
@@ -132,6 +156,12 @@ export function syncPresentationItemById(
   itemId,
   options = {}
 ) {
+
+  if (presentationMode === 'tauri') {
+
+    syncPresentation();
+    return true;
+  }
 
   if (
     !sourceMap ||
@@ -246,6 +276,12 @@ export function syncPresentationFog(
   sourceMap
 ) {
 
+  if (presentationMode === 'tauri') {
+
+    syncPresentation();
+    return true;
+  }
+
   if (
     !sourceMap ||
     !presentationWindow ||
@@ -282,6 +318,12 @@ export function syncPresentationDragMeasure(
   payload
 ) {
 
+  if (presentationMode === 'tauri') {
+
+    syncPresentation();
+    return true;
+  }
+
   if (
     !presentationWindow ||
     presentationWindow.closed
@@ -297,6 +339,191 @@ export function syncPresentationDragMeasure(
     targetViewport,
     payload
   );
+}
+
+
+function openTauriPresentationWindow() {
+
+  presentationMode =
+    'tauri';
+
+  ensureTauriPresentationChannel();
+
+  if (presentationWindow) {
+
+    presentationWindow.setFocus?.();
+    sendTauriPresentationRender();
+    return;
+  }
+
+  openTauriWebviewWindow(
+    'campaign-map-presentation',
+    {
+      url: '/presentation.html',
+      title: 'Карта кампании',
+      width: 1280,
+      height: 720,
+      resizable: true
+    }
+  )
+    .then(windowHandle => {
+
+      presentationWindow =
+        windowHandle;
+
+      windowHandle.once?.(
+        'tauri://destroyed',
+        () => {
+
+          presentationWindow =
+            null;
+
+          pendingTauriPresentationRender =
+            false;
+        }
+      );
+
+      setTimeout(
+        sendTauriPresentationRender,
+        250
+      );
+    })
+    .catch(error => {
+
+      console.error(
+        'Не удалось открыть Tauri-окно презентации.',
+        error
+      );
+
+      presentationMode =
+        'browser';
+
+      presentationWindow =
+        null;
+    });
+}
+
+
+function ensureTauriPresentationChannel() {
+
+  if (presentationChannel) return presentationChannel;
+
+  presentationChannel =
+    new BroadcastChannel(
+      PRESENTATION_CHANNEL_NAME
+    );
+
+  presentationChannel.addEventListener(
+    'message',
+    event => {
+
+      if (event.data?.type === 'ready') {
+
+        pendingTauriPresentationRender =
+          false;
+
+        sendTauriPresentationRender();
+
+        if (pendingTauriImagePreview) {
+
+          postTauriPresentationImagePreview(
+            pendingTauriImagePreview
+          );
+        }
+      }
+    }
+  );
+
+  return presentationChannel;
+}
+
+
+function sendTauriPresentationRender() {
+
+  if (presentationMode !== 'tauri') return false;
+
+  const channel =
+    ensureTauriPresentationChannel();
+
+  const payload =
+    createPresentationRenderPayload();
+
+  if (!payload) return false;
+
+  channel.postMessage(
+    payload
+  );
+
+  pendingTauriPresentationRender =
+    true;
+
+  return true;
+}
+
+
+function sendTauriPresentationImagePreview(
+  imageSrc,
+  title
+) {
+
+  if (presentationMode !== 'tauri') return false;
+
+  pendingTauriImagePreview = {
+    imageSrc,
+    title: title || 'Изображение'
+  };
+
+  return postTauriPresentationImagePreview(
+    pendingTauriImagePreview
+  );
+}
+
+
+function postTauriPresentationImagePreview(
+  payload
+) {
+
+  const channel =
+    ensureTauriPresentationChannel();
+
+  channel.postMessage({
+    type: 'image-preview',
+    imageSrc: payload.imageSrc,
+    title: payload.title
+  });
+
+  return true;
+}
+
+
+function createPresentationRenderPayload() {
+
+  const source =
+    document.querySelector(
+      '.campaign-map-stage'
+    );
+
+  if (!source) return null;
+
+  const store =
+    getCampaignMapStore(
+      source.closest('.campaign-map-document')
+    );
+
+  const model =
+    store?.getModel();
+
+  const clone =
+    preparePresentationClone(
+      source,
+      model
+    );
+
+  return {
+    type: 'render',
+    html: clone.outerHTML,
+    css: getPresentationCSS()
+  };
 }
 
 function bindPresentationViewportEvents(
@@ -485,6 +712,20 @@ export function openPresentationImagePreview(
   if (
     !imageSrc
   ) return false;
+
+  if (presentationMode === 'tauri') {
+
+    if (!presentationWindow) {
+
+      openPresentationWindow();
+      syncPresentation();
+    }
+
+    return sendTauriPresentationImagePreview(
+      imageSrc,
+      title
+    );
+  }
 
   if (
     !presentationWindow ||

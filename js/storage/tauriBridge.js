@@ -72,12 +72,22 @@ export async function convertTauriFileSrc(
   const globalConvert =
     globalThis.__TAURI__?.core?.convertFileSrc;
 
+  const internalConvert =
+    globalThis.__TAURI_INTERNALS__?.convertFileSrc;
+
   if (typeof globalConvert === 'function') {
 
     return globalConvert(
-      normalizeFilePathForTauri(
-        filePath
-      )
+      normalizeFilePathForTauri(filePath),
+      'asset'
+    );
+  }
+
+  if (typeof internalConvert === 'function') {
+
+    return internalConvert(
+      normalizeFilePathForTauri(filePath),
+      'asset'
     );
   }
 
@@ -87,9 +97,8 @@ export async function convertTauriFileSrc(
     await import('@tauri-apps/api/core');
 
   return convertFileSrc(
-    normalizeFilePathForTauri(
-      filePath
-    )
+    normalizeFilePathForTauri(filePath),
+    'asset'
   );
 }
 

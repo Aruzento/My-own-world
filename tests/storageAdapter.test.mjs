@@ -240,11 +240,16 @@ test(
           return 'C:\\World\\assets\\portraits\\hero.png';
         },
 
-        convertFileSrc(path) {
+        convertFileSrc(path, protocol) {
 
           assert.equal(
             path,
             'C:\\World\\assets\\portraits\\hero.png'
+          );
+
+          assert.equal(
+            protocol,
+            'asset'
           );
 
           return 'http://asset.localhost/C%3A%5CWorld%5Cassets%5Cportraits%5Chero.png';
@@ -277,6 +282,80 @@ test(
 
       globalThis.__TAURI__ =
         previousTauri;
+    }
+  }
+);
+
+
+test(
+  'DesktopAssetAdapter использует внутренний Tauri asset converter, если global API не отдал convertFileSrc',
+  async () => {
+
+    const previousTauri =
+      globalThis.__TAURI__;
+
+    const previousInternals =
+      globalThis.__TAURI_INTERNALS__;
+
+    globalThis.__TAURI__ = {
+      core: {
+        async invoke(command) {
+
+          assert.equal(
+            command,
+            'resolve_asset_url'
+          );
+
+          return 'C:\\World\\assets\\maps\\castle.png';
+        }
+      }
+    };
+
+    globalThis.__TAURI_INTERNALS__ = {
+      convertFileSrc(path, protocol) {
+
+        assert.equal(
+          path,
+          'C:\\World\\assets\\maps\\castle.png'
+        );
+
+        assert.equal(
+          protocol,
+          'asset'
+        );
+
+        return 'http://asset.localhost/C%3A%5CWorld%5Cassets%5Cmaps%5Ccastle.png';
+      }
+    };
+
+    try {
+
+      setStorageAdapter(
+        createMemoryStorageAdapter()
+      );
+
+      const adapter =
+        createDesktopAssetAdapter({
+          workspaceRoot: 'C:/World'
+        });
+
+      const url =
+        await adapter.resolveUrl(
+          'maps/castle.png'
+        );
+
+      assert.equal(
+        url,
+        'http://asset.localhost/C%3A%5CWorld%5Cassets%5Cmaps%5Ccastle.png'
+      );
+
+    } finally {
+
+      globalThis.__TAURI__ =
+        previousTauri;
+
+      globalThis.__TAURI_INTERNALS__ =
+        previousInternals;
     }
   }
 );
