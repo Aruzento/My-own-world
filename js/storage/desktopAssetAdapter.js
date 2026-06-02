@@ -11,6 +11,7 @@ import {
 } from './desktopStorageAdapter.js';
 
 import {
+  convertTauriFileSrc,
   invokeTauriCommand
 } from './tauriBridge.js';
 
@@ -71,6 +72,34 @@ export function createDesktopAssetAdapter(
     },
 
     async resolveUrl(
+      assetReference
+    ) {
+
+      const storageAdapter =
+        getStorageAdapter();
+
+      const root =
+        workspaceRoot ||
+        storageAdapter.getWorkspaceRoot?.() ||
+        '';
+
+      const filePath =
+        await invokeFsCommand(
+          'resolve_asset_url',
+          {
+            workspaceRoot: root,
+            path: `assets/${normalizeAssetPath(
+              assetReference.path || assetReference
+            )}`
+          }
+        );
+
+      return convertTauriFileSrc(
+        filePath
+      );
+    },
+
+    async resolveFilePath(
       assetReference
     ) {
 

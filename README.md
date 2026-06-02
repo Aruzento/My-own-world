@@ -33,6 +33,8 @@ npm run desktop:dev
 
 - `docs/DESKTOP_PROTOTYPE_SMOKE.md` — общий desktop smoke.
 - `docs/DESKTOP_BACKUP_RESTORE_GATE.md` — проверка backup/restore в desktop.
+- `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md` — решение по отдельному окну презентации.
+- `docs/DESKTOP_PACKAGING_SMOKE.md` — будущий smoke packaged-сборки.
 
 ### Storage / Backup / Assets
 
@@ -42,6 +44,7 @@ npm run desktop:dev
 - `AssetAdapter` отвечает за импорт файлов, URL изображений и будущую проверку missing/orphan assets.
 - `backupService` сохраняет страницы и assets через `StorageAdapter`, поэтому browser и desktop используют один контракт.
 - `tauriBridge.js` изолирует доступ к Tauri API: в desktop WebView используется `window.__TAURI__`, а dynamic import остается fallback для будущей сборки.
+- В desktop картинки и фоны карты должны отображаться через Tauri asset URL (`convertFileSrc`), а не через прямой `file://`.
 
 ---
 

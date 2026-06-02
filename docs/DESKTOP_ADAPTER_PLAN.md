@@ -24,6 +24,18 @@
 
 Оставшийся хвост: пройти ручной smoke в реальном Tauri-окне и позже подключить automated Tauri UI-runner.
 
+### 20.10-20.14 Desktop strategy package
+
+Статус: **сделано как spike/checklist/strategy**.
+
+- `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md` фиксирует, почему текущую DOM-презентацию нельзя напрямую перенести в native `WebviewWindow`.
+- `docs/DESKTOP_PACKAGING_SMOKE.md` описывает packaging gate и почему production bundle пока не включен.
+- `docs/CLOUD_THREAT_MODEL.md` отделяет будущую cloud-модель от desktop-spike.
+- `docs/BACKEND_STORAGE_API_PLAN.md` описывает будущий серверный storage/auth/sync contract.
+- `docs/DESKTOP_TRANSITION_STRATEGY.md` фиксирует desktop как основной практический путь без удаления browser mode.
+
+Дополнительно: desktop assets теперь должны отображаться через Tauri asset URL (`convertFileSrc`), а не через прямой `file://`.
+
 ## ?????????? ?????? ?? 02.06.2026
 
 ### 20.7.1. Desktop Storage Hardening: ??????? ??????

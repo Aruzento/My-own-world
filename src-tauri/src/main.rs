@@ -141,7 +141,7 @@ fn resolve_asset_url(workspace_root: String, path: String) -> Result<String, Str
         return Err("Asset не найден".to_string());
     }
 
-    Ok(format!("file://{}", file_path.to_string_lossy().replace('\\', "/")))
+    Ok(file_path.to_string_lossy().to_string())
 }
 
 fn resolve_workspace_path(workspace_root: &str, path: &str) -> Result<PathBuf, String> {

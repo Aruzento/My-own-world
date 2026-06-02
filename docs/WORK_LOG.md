@@ -1,5 +1,33 @@
 # Журнал работ
 
+## 2026-06-02: Desktop assets fix и пункты 20.10-20.14
+
+### Что сделано
+
+- Исправлен desktop asset URL: `resolve_asset_url` в Rust теперь возвращает абсолютный путь, а `DesktopAssetAdapter` превращает его в Tauri asset URL через `convertFileSrc`.
+- Добавлен тест, который проверяет, что desktop asset path превращается в `asset://...`, а не остается прямым `file://`.
+- В `tauriBridge.js` добавлены `convertTauriFileSrc()` и `openTauriWebviewWindow()` как foundation для desktop assets и будущего native presentation window.
+- В Tauri capabilities добавлен label `campaign-map-presentation`.
+- Добавлены документы:
+  - `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md`;
+  - `docs/DESKTOP_PACKAGING_SMOKE.md`;
+  - `docs/CLOUD_THREAT_MODEL.md`;
+  - `docs/BACKEND_STORAGE_API_PLAN.md`;
+  - `docs/DESKTOP_TRANSITION_STRATEGY.md`.
+- `docs/PROJECT_PLAN.md` обновлен по пунктам 20.8-20.14.
+
+### Что это меняет
+
+- Картинки и фоны карты в desktop теперь должны отображаться через безопасный Tauri asset URL.
+- 20.10 закрыт как честный spike: текущую browser-презентацию нельзя просто перенести в Tauri `WebviewWindow`; нужен data-first transport.
+- 20.11-20.14 получили документы-решения и дальнейшую декомпозицию.
+
+### Следующий пункт
+
+- **20.10.1. Presentation runtime transport**: отдельная presentation page, snapshot карты, message channel и renderer из модели.
+
+---
+
 ## 2026-06-02: Desktop workspace picker и 20.9 Backup / Restore Gate
 
 ### Что сделано

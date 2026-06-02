@@ -63,3 +63,70 @@ export async function openTauriDirectoryDialog(
     options
   );
 }
+
+
+export async function convertTauriFileSrc(
+  filePath
+) {
+
+  const globalConvert =
+    globalThis.__TAURI__?.core?.convertFileSrc;
+
+  if (typeof globalConvert === 'function') {
+
+    return globalConvert(
+      normalizeFilePathForTauri(
+        filePath
+      )
+    );
+  }
+
+  const {
+    convertFileSrc
+  } =
+    await import('@tauri-apps/api/core');
+
+  return convertFileSrc(
+    normalizeFilePathForTauri(
+      filePath
+    )
+  );
+}
+
+
+export async function openTauriWebviewWindow(
+  label,
+  options = {}
+) {
+
+  const GlobalWebviewWindow =
+    globalThis.__TAURI__?.webviewWindow?.WebviewWindow;
+
+  if (typeof GlobalWebviewWindow === 'function') {
+
+    return new GlobalWebviewWindow(
+      label,
+      options
+    );
+  }
+
+  const {
+    WebviewWindow
+  } =
+    await import('@tauri-apps/api/webviewWindow');
+
+  return new WebviewWindow(
+    label,
+    options
+  );
+}
+
+
+function normalizeFilePathForTauri(
+  value
+) {
+
+  return String(value || '')
+    .replace(/^file:\/\//, '')
+    .replace(/\//g, '\\');
+}

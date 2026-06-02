@@ -551,6 +551,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - включен `withGlobalTauri`, чтобы приложение без bundler могло использовать Tauri API;
 - добавлен `tauriBridge.js`: Tauri dialog/invoke доступны через `window.__TAURI__`, а dynamic import остается fallback для будущей сборки;
 - выбор workspace в desktop больше не зависит от browser-only `showDirectoryPicker`;
+- desktop assets переводятся в Tauri asset URL через `convertFileSrc`, поэтому сохраненные картинки и фоны карты должны отображаться в Tauri WebView;
 - добавлен `docs/DESKTOP_PROTOTYPE_SMOKE.md`.
 
 Что остается:
@@ -568,26 +569,34 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - вручную пройти backup/restore в реальном Tauri-окне;
 - позже подключить automated Tauri UI-runner, чтобы проверять реальные клики по desktop popup.
 
-20.10. Desktop Presentation Window Spike: **после 20.8**.
-Шаги:
-- проверить, можно ли открыть отдельное окно презентации в Tauri;
-- убедиться, что live-sync карты работает между окнами;
-- отдельно проверить fullscreen/second monitor сценарий.
+20.10. Desktop Presentation Window Spike: **сделано как архитектурный spike, реализация transport вынесена в 20.10.1**.
+Что сделано:
+- добавлен `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md`;
+- в `tauriBridge.js` подготовлен `openTauriWebviewWindow()`;
+- подтверждено, что текущая browser-презентация через `window.open` зависит от прямого DOM-доступа и не переносится один-в-один на native Tauri window.
 
-20.11. Desktop Packaging Smoke: **после 20.9/20.10**.
-Шаги:
-- собрать dev build;
-- собрать production build;
-- проверить запуск на чистой папке workspace;
-- зафиксировать минимальные системные требования;
-- обновить release checklist.
+Что остается:
+- **20.10.1. Presentation runtime transport**: отдельная `presentation.html`, data-first snapshot карты, channel master -> presentation, renderer из `CampaignMapModel`, затем подключение Tauri `WebviewWindow`.
 
-20.12. Cloud threat model: **позже, не смешивать с desktop spike**.
+20.11. Desktop Packaging Smoke: **сделано как packaging checklist, production package позже**.
+Что сделано:
+- добавлен `docs/DESKTOP_PACKAGING_SMOKE.md`;
+- зафиксировано, что `desktop:check`, `cargo check` и `desktop:dev` являются текущим gate;
+- production bundle пока не включен, потому что нужен отдельный frontend output и package policy.
 
-20.13. Backend storage API, auth, ownership, sync/conflict resolution: **позже, после desktop и role foundation**.
+Что остается:
+- **20.11.1. Production frontend output**;
+- **20.11.2. Включить Tauri bundle**;
+- **20.11.3. Проверить installer/portable build**.
 
-20.14. Перевод в Desktop-приложение: **стратегический путь после spike**.
-Desktop становится следующим большим направлением, но идти нужно через adapter boundary, а не через переписывание приложения. Первый кандидат для spike остается Tauri; Electron остается fallback, если Tauri упрется в WebView, презентационные окна или работу с assets.
+20.12. Cloud threat model: **сделано как стратегический документ, реализация позже**.
+Добавлен `docs/CLOUD_THREAT_MODEL.md`. Cloud нельзя начинать до Safe HTML, ownership, role model, asset access policy и presentation privacy.
+
+20.13. Backend storage API, auth, ownership, sync/conflict resolution: **сделано как API plan, реализация позже**.
+Добавлен `docs/BACKEND_STORAGE_API_PLAN.md`. BackendStorageAdapter остается будущим направлением после desktop и role foundation.
+
+20.14. Перевод в Desktop-приложение: **сделано как стратегия, работа продолжается подпунктами**.
+Добавлен `docs/DESKTOP_TRANSITION_STRATEGY.md`. Desktop остается основным практическим путем, но через adapter boundary и без удаления browser mode.
 
 ### 22. Character Domain Model
 

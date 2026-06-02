@@ -17,6 +17,10 @@ import {
 } from '../js/storage/desktopStorageAdapter.js';
 
 import {
+  createDesktopAssetAdapter
+} from '../js/storage/desktopAssetAdapter.js';
+
+import {
   setStorageAdapter
 } from '../js/storage/storageAdapter.js';
 
@@ -208,6 +212,72 @@ test(
       () => assertAssetAdapterContract({}),
       /importFile/
     );
+  }
+);
+
+
+test(
+  'DesktopAssetAdapter превращает absolute path в Tauri asset URL',
+  async () => {
+
+    const previousTauri =
+      globalThis.__TAURI__;
+
+    globalThis.__TAURI__ = {
+      core: {
+        async invoke(command, payload) {
+
+          assert.equal(
+            command,
+            'resolve_asset_url'
+          );
+
+          assert.equal(
+            payload.path,
+            'assets/portraits/hero.png'
+          );
+
+          return 'C:\\World\\assets\\portraits\\hero.png';
+        },
+
+        convertFileSrc(path) {
+
+          assert.equal(
+            path,
+            'C:\\World\\assets\\portraits\\hero.png'
+          );
+
+          return 'asset://localhost/C:/World/assets/portraits/hero.png';
+        }
+      }
+    };
+
+    try {
+
+      setStorageAdapter(
+        createMemoryStorageAdapter()
+      );
+
+      const adapter =
+        createDesktopAssetAdapter({
+          workspaceRoot: 'C:/World'
+        });
+
+      const url =
+        await adapter.resolveUrl(
+          'portraits/hero.png'
+        );
+
+      assert.equal(
+        url,
+        'asset://localhost/C:/World/assets/portraits/hero.png'
+      );
+
+    } finally {
+
+      globalThis.__TAURI__ =
+        previousTauri;
+    }
   }
 );
 

@@ -3,7 +3,8 @@
   "identifier": "default",
   "description": "Минимальные права desktop-spike: только базовое окно приложения без доступа к файловой системе.",
   "windows": [
-    "main"
+    "main",
+    "campaign-map-presentation"
   ],
   "permissions": [
     "core:default",
