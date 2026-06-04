@@ -476,7 +476,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 
 ### 20. Desktop Adapter / Internet Resource Strategy
 
-Статус: **следующий стратегический рабочий блок**.
+Статус: **закрыт как desktop foundation**.
 Приоритет: **P1/P2**.
 Зачем: проект уже local-first, а desktop-версия снимет ограничения браузерного File System Access API, сделает workspace стабильнее и подготовит путь к большим ассетам, музыке и офлайн-кампаниям.
 
@@ -511,9 +511,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - desktop load/create/delete page получили adapter bridge через lightweight file handles;
 - добавлены unit tests на contract.
 
-Что остается:
-- убрать оставшиеся прямые `state.workspaceHandle` из template storage, tree open-in-folder permissions и редких future-media flows;
-- добавить настоящий automated Tauri UI-runner, когда desktop prototype стабилизируется.
+Хвосты вынесены из блока 20 в будущий desktop hardening backlog: template storage, open-in-folder permissions, future-media flows и настоящий automated Tauri UI-runner.
 
 20.6. Создать `AssetAdapter` interface в JS: **сделано foundation**.
 Что сделано:
@@ -523,9 +521,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - desktop adapter подготовлен к Tauri-командам `resolve_asset_url`, `path_exists`, `remove_file`;
 - добавлены unit tests на contract.
 
-Что остается:
-- реализовать native desktop file picker для картинок, если WebView ограничит browser file input;
-- расширить `AssetAdapter` под будущие audio/playlist assets.
+Хвосты вынесены из блока 20 в будущий asset/media backlog: native image picker при реальном ограничении WebView и расширение `AssetAdapter` под audio/playlist assets.
 
 20.7. Tauri FS commands: **сделано foundation**.
 Что сделано:
@@ -534,10 +530,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - добавлена зависимость `serde`;
 - JS desktop adapter вызывает команды через `@tauri-apps/api/core`.
 
-Что остается:
-- после установки Rust/Cargo и Visual Studio Build Tools проверить компиляцию Tauri;
-- добавить структурированные error objects вместо строковых ошибок, когда recovery layer будет готов их принимать;
-- добавить desktop storage tests после появления тестового runner для Tauri.
+Хвосты вынесены из блока 20 в будущий storage hardening backlog: структурированные error objects и настоящий Tauri storage runner.
 
 Состояние окружения 02.06.2026:
 - Rust/Cargo/rustup установлены и видны `desktop:check`;
@@ -554,9 +547,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - desktop assets переводятся в Tauri asset URL через `convertFileSrc`, поэтому сохраненные картинки и фоны карты должны отображаться в Tauri WebView;
 - добавлен `docs/DESKTOP_PROTOTYPE_SMOKE.md`.
 
-Что остается:
-- пройти ручной smoke на реальном workspace в Tauri-окне;
-- при найденных ограничениях WebView добавить native file picker для image/map asset flows.
+Ручной smoke на реальном workspace проводится как release checklist, а native picker остается будущим пунктом только при подтвержденном ограничении WebView.
 
 20.9. Desktop Backup / Restore Gate: **сделано базово**.
 Что сделано:
@@ -565,9 +556,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - storage tests проверяют backup/restore страницы и assets через desktop-style adapter;
 - desktop smoke checklist расширен проверкой restore.
 
-Что остается:
-- вручную пройти backup/restore в реальном Tauri-окне;
-- позже подключить automated Tauri UI-runner, чтобы проверять реальные клики по desktop popup.
+Ручной backup/restore smoke остается частью release checklist. Automated Tauri UI-runner вынесен в будущий desktop test backlog.
 
 20.10. Desktop Presentation Window Spike: **сделано**.
 Что сделано:
@@ -583,9 +572,7 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 - presentation runtime поддерживает собственные zoom/pan, показ карты и popup просмотра изображения;
 - browser fallback через старый `window.open` сохранен.
 
-Что остается как следующий hardening, не блокирующий 20.10.1:
-- заменить HTML snapshot на полноценный JSON renderer из `CampaignMapModel`;
-- добавить automated Tauri UI-runner, когда desktop prototype стабилизируется.
+Hardening после 20.10.1 выполнен в рамках 20.14.2: HTML snapshot заменен на model-first JSON renderer из `CampaignMapModel`. Automated Tauri UI-runner вынесен в будущий desktop test backlog.
 
 20.11. Desktop Packaging Smoke: **сделано**.
 Что сделано:
@@ -620,7 +607,7 @@ Tauri-презентация теперь получает `render-model` payloa
 20.14.4. Desktop manual smoke checklist: **сделано базово**.
 Расширен `docs/DESKTOP_PROTOTYPE_SMOKE.md`: проверяются background map image, presentation privacy, image fallback, backup/restore и desktop assets после перезапуска.
 
-20.14.5. Desktop automated UI runner: **сделано как automated desktop gate, настоящий UI-runner позже**.
+20.14.5. Desktop automated UI runner: **сделано как automated desktop gate**.
 Добавлен `npm run desktop:gate`, который последовательно запускает verify, browser smoke, desktop prepare, packaging smoke, desktop environment и `cargo check`. Полноценный Tauri UI click-runner остается будущим подпунктом после стабилизации installer.
 
 20.14.6. Production desktop frontend output: **сделано базово**.
@@ -633,13 +620,17 @@ Tauri-презентация теперь получает `render-model` payloa
 20.14.8. Desktop release policy: **сделано базово**.
 Добавлен `docs/DESKTOP_RELEASE_POLICY.md`: gate, build, ручной release smoke, rollback и правило версий.
 
-20.14.9. Desktop map performance optimization: **сделано базово, нужен следующий fog-hardening этап**.
+20.14.9. Desktop map performance optimization: **сделано**.
 Документ `docs/DESKTOP_MAP_PERFORMANCE_NOTES.md` фиксирует причины медленного рендера карты в desktop: asset fallback, base64/data URL для больших background, canvas low-detail, fog canvas, model-first presentation payload и WebView/IPC overhead. Следующие работы: cache renderable asset URL, diff-sync presentation, dirty-region fog и desktop performance scenario на большом workspace.
 Обновление 04.06.2026: **частично сделано**. Добавлен cache `getRenderableImageURL()`, desktop-презентация получила delta-sync для токенов/фигур, тумана и drag-measure вместо полного render-model на каждое движение. Сетка в model-first презентации приглушает hex-цвета до alpha, чтобы не становиться непрозрачной. Следующий хвост: реальный desktop performance scenario на большом workspace и dirty-region fog.
 Обновление 04.06.2026: **desktop performance scenario добавлен**. `desktopPresentationLargeWorkspace` разделяет budget полного render и `deltaSyncTimeMs`, тест закрепляет, что быстрые частичные обновления не должны деградировать. Стрелка расстояния в презентации поднята выше тумана (`z-index: 10002`).
+Обновление 04.06.2026: **dirty-region fog sync добавлен**. Кисть тумана записывает измененный прямоугольник, presentation payload отправляет `fogPatch` без полной сериализации canvas, renderer презентации дорисовывает patch в canvas-поверхность.
 
-20.14.10. Dirty-region fog sync: **следующий desktop performance этап**.
-Сейчас туман уже синхронизируется отдельным сообщением, но все еще передается как целое изображение canvas. Следующий шаг - хранить dirty regions и обновлять только измененные области тумана, особенно для больших карт.
+20.14.10. Dirty-region fog sync: **сделано**.
+Туман уже синхронизируется отдельным сообщением. Для кисти добавлен patch-режим: передается только измененная область. Fog all / Unfog all остаются full-image fallback, потому что в этих действиях меняется весь canvas.
+
+Итог блока 20: **закрыт как desktop foundation**.
+Desktop-версия имеет Tauri shell, storage/asset adapters, native FS commands, backup/restore gate, presentation window, model-first presentation renderer, production frontend output, installer, release policy, performance notes, delta-sync и dirty-region fog sync. Следующие desktop-работы больше не входят в блок 20 и должны планироваться как отдельные future hardening задачи.
 
 ### 22. Character Domain Model
 

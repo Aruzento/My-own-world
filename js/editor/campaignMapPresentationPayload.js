@@ -110,13 +110,22 @@ export function createCampaignMapPresentationFogPayload(
 
   if (!stage || !model) return null;
 
+  const fogPatch =
+    createPresentationFogPatch(
+      stage,
+      stage.querySelector('.campaign-map-fog-canvas')
+    );
+
   return {
     type: 'update-fog',
     fogImage:
-      getPresentationFogImage(
-        stage,
-        stage.querySelector('.campaign-map-fog-canvas')
-      ),
+      fogPatch
+        ? ''
+        : getPresentationFogImage(
+          stage,
+          stage.querySelector('.campaign-map-fog-canvas')
+        ),
+    fogPatch,
     model: {
       fog: model.fog
     }
@@ -239,4 +248,142 @@ function getPresentationFogImage(
   );
 
   return url;
+}
+
+
+function createPresentationFogPatch(
+  source,
+  canvas
+) {
+
+  // Patch отправляется только для кисти. Fog all / clear fog остаются полным
+  // изображением, потому что там меняется весь canvas и dirty-region не выгоден.
+  if (!source || !canvas) return null;
+
+  const region =
+    readFogDirtyRegion(
+      source
+    );
+
+  if (!region) return null;
+
+  const x =
+    Math.max(
+      0,
+      Math.min(
+        canvas.width - 1,
+        region.x
+      )
+    );
+
+  const y =
+    Math.max(
+      0,
+      Math.min(
+        canvas.height - 1,
+        region.y
+      )
+    );
+
+  const width =
+    Math.max(
+      1,
+      Math.min(
+        canvas.width - x,
+        region.width
+      )
+    );
+
+  const height =
+    Math.max(
+      1,
+      Math.min(
+        canvas.height - y,
+        region.height
+      )
+    );
+
+  const patch =
+    document.createElement(
+      'canvas'
+    );
+
+  patch.width =
+    width;
+
+  patch.height =
+    height;
+
+  patch
+    .getContext('2d')
+    .drawImage(
+      canvas,
+      x,
+      y,
+      width,
+      height,
+      0,
+      0,
+      width,
+      height
+    );
+
+  return {
+    x,
+    y,
+    width,
+    height,
+    image:
+      patch.toDataURL(
+        'image/png'
+      )
+  };
+}
+
+
+function readFogDirtyRegion(
+  source
+) {
+
+  const raw =
+    source.dataset.fogDirtyRegion;
+
+  if (!raw) return null;
+
+  try {
+
+    const region =
+      JSON.parse(
+        decodeURIComponent(
+          raw
+        )
+      );
+
+    return {
+      x:
+        Math.max(
+          0,
+          Number(region.x || 0)
+        ),
+      y:
+        Math.max(
+          0,
+          Number(region.y || 0)
+        ),
+      width:
+        Math.max(
+          1,
+          Number(region.width || 1)
+        ),
+      height:
+        Math.max(
+          1,
+          Number(region.height || 1)
+        )
+    };
+
+  } catch {
+
+    return null;
+  }
 }

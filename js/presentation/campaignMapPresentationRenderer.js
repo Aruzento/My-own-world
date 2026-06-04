@@ -232,6 +232,27 @@ function updatePresentationFog(
       '.campaign-map-fog-image'
     );
 
+  if (payload.fogPatch) {
+
+    fog =
+      ensureFogCanvas(
+        viewport,
+        fog
+      );
+
+    applyFogPatchToCanvas(
+      fog,
+      payload.fogPatch
+    );
+
+    renderLockedFogZones(
+      viewport,
+      payload.model || {}
+    );
+
+    return true;
+  }
+
   if (!fog) {
 
     fog =
@@ -244,6 +265,21 @@ function updatePresentationFog(
     );
   }
 
+  if (fog.tagName === 'CANVAS') {
+
+    const image =
+      createFogImage(
+        ''
+      );
+
+    fog.replaceWith(
+      image
+    );
+
+    fog =
+      image;
+  }
+
   fog.src =
     payload.fogImage || '';
 
@@ -253,6 +289,118 @@ function updatePresentationFog(
   );
 
   return true;
+}
+
+
+function ensureFogCanvas(
+  viewport,
+  fog
+) {
+
+  if (
+    fog &&
+    fog.tagName === 'CANVAS'
+  ) {
+
+    return fog;
+  }
+
+  const canvas =
+    document.createElement(
+      'canvas'
+    );
+
+  canvas.className =
+    'campaign-map-fog-image';
+
+  canvas.width =
+    WORLD_WIDTH;
+
+  canvas.height =
+    WORLD_HEIGHT;
+
+  if (fog) {
+
+    const currentSrc =
+      fog.getAttribute(
+        'src'
+      );
+
+    fog.replaceWith(
+      canvas
+    );
+
+    if (currentSrc) {
+
+      drawImageOnFogCanvas(
+        canvas,
+        currentSrc,
+        0,
+        0,
+        WORLD_WIDTH,
+        WORLD_HEIGHT
+      );
+    }
+
+    return canvas;
+  }
+
+  viewport.appendChild(
+    canvas
+  );
+
+  return canvas;
+}
+
+
+function applyFogPatchToCanvas(
+  canvas,
+  patch
+) {
+
+  if (!canvas || !patch?.image) return;
+
+  drawImageOnFogCanvas(
+    canvas,
+    patch.image,
+    Number(patch.x || 0),
+    Number(patch.y || 0),
+    Number(patch.width || 1),
+    Number(patch.height || 1)
+  );
+}
+
+
+function drawImageOnFogCanvas(
+  canvas,
+  imageSrc,
+  x,
+  y,
+  width,
+  height
+) {
+
+  // Рисование асинхронное, потому что patch приходит как маленький PNG.
+  // Это не блокирует pointermove мастера и не требует полного render-model.
+  const image =
+    new Image();
+
+  image.onload =
+    () => {
+
+      canvas
+        .getContext('2d')
+        .drawImage(
+          image,
+          x,
+          y,
+          width,
+          height
+        );
+    };
+
+  image.src =
+    imageSrc;
 }
 
 

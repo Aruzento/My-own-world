@@ -1,5 +1,26 @@
 ﻿# Журнал работ
 
+## 2026-06-04: Закрыт блок 20 Desktop Foundation
+
+### Что сделано
+
+- Закрыт пункт `20.14.10 Dirty-region fog sync`: кисть тумана теперь помечает измененную область canvas, presentation payload отправляет `fogPatch`, а renderer презентации дорисовывает только эту область.
+- Исправлена видимость стрелки расстояния в презентации: overlay поднят выше слоя тумана.
+- Пункт `20` в `docs/PROJECT_PLAN.md` отмечен как закрытый desktop foundation.
+- `docs/DESKTOP_ADAPTER_PLAN.md` переписан в чистом UTF-8 и больше не содержит устаревших или битых фрагментов.
+- `docs/DESKTOP_MAP_PERFORMANCE_NOTES.md` обновлен: dirty-region fog sync перенесен из будущих оптимизаций в сделанные.
+
+### Проверки
+
+- `node --test tests\campaignMapPerformance.test.mjs`
+- `npm run test:browser -- tests/browser/campaign-map-presentation.spec.mjs`
+
+### Следующее развитие
+
+- Desktop foundation завершен. Дальнейшие desktop-задачи нужно вести отдельными future hardening пунктами: Tauri UI click-runner, native picker при необходимости, audio/playlist assets, updater/signing и реальные desktop measurements.
+
+---
+
 ## 2026-06-04: Исправлен фон карты и закрыт пункт 20.14.3
 
 ### Что сделано

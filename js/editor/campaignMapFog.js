@@ -205,6 +205,12 @@ export function drawFogAtPointer(
   const size =
     Number(stage.dataset.brushSize || DEFAULT_BRUSH_SIZE);
 
+  const dirtyRegion =
+    getFogBrushDirtyRegion(
+      point,
+      size
+    );
+
   if (stage.dataset.brushShape === 'square') {
 
     context.fillRect(
@@ -230,7 +236,8 @@ export function drawFogAtPointer(
   context.restore();
 
   markFogCanvasChanged(
-    map
+    map,
+    dirtyRegion
   );
 
   // Презентацию обновляем редко: так игроки видят свежий туман,
@@ -276,6 +283,32 @@ function markFogCanvasChanged(
           Math.round(dirtyRegion.height)
       })
     );
+}
+
+
+function getFogBrushDirtyRegion(
+  point,
+  size
+) {
+
+  // Dirty-region нужен desktop-презентации: вместо пересылки всего fog canvas
+  // можно отправить только область, которую реально изменила кисть.
+  const radius =
+    Math.max(
+      1,
+      Number(size || DEFAULT_BRUSH_SIZE)
+    );
+
+  return {
+    x:
+      point.x - radius - 2,
+    y:
+      point.y - radius - 2,
+    width:
+      radius * 2 + 4,
+    height:
+      radius * 2 + 4
+  };
 }
 
 

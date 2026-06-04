@@ -428,6 +428,160 @@ test(
 
 
 test(
+  'campaign-map-presentation-applies-dirty-fog-region-patch',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            applyCampaignMapPresentationPatch,
+            renderCampaignMapPresentationModel
+          } = await import('/js/presentation/campaignMapPresentationRenderer.js');
+
+          const {
+            getPresentationCSS
+          } = await import('/js/editor/campaignMapPresentationStyle.js');
+
+          const style =
+            document.createElement(
+              'style'
+            );
+
+          style.textContent =
+            getPresentationCSS();
+
+          document.head.appendChild(
+            style
+          );
+
+          const root =
+            document.createElement(
+              'div'
+            );
+
+          document.body.appendChild(
+            root
+          );
+
+          renderCampaignMapPresentationModel(
+            root,
+            {
+              model: {
+                grid: {
+                  enabled: false,
+                  size: 40
+                },
+                layers: [],
+                tokens: [],
+                shapes: [],
+                fog: {
+                  lockedZones: []
+                }
+              },
+              assets: {
+                background: '',
+                tokens: {}
+              },
+              fogImage: '',
+              tokenView: {}
+            }
+          );
+
+          const patchCanvas =
+            document.createElement(
+              'canvas'
+            );
+
+          patchCanvas.width =
+            4;
+
+          patchCanvas.height =
+            4;
+
+          const patchContext =
+            patchCanvas.getContext(
+              '2d'
+            );
+
+          patchContext.fillStyle =
+            'rgba(0,0,0,1)';
+
+          patchContext.fillRect(
+            0,
+            0,
+            4,
+            4
+          );
+
+          applyCampaignMapPresentationPatch(
+            root,
+            {
+              type: 'update-fog',
+              fogPatch: {
+                x: 8,
+                y: 9,
+                width: 4,
+                height: 4,
+                image:
+                  patchCanvas.toDataURL(
+                    'image/png'
+                  )
+              },
+              model: {
+                fog: {
+                  lockedZones: []
+                }
+              }
+            }
+          );
+
+          await new Promise(resolve => setTimeout(resolve, 50));
+
+          const fog =
+            root.querySelector(
+              '.campaign-map-fog-image'
+            );
+
+          const pixel =
+            fog
+              .getContext('2d')
+              .getImageData(
+                9,
+                10,
+                1,
+                1
+              )
+              .data;
+
+          return {
+            tagName:
+              fog.tagName,
+            alpha:
+              pixel[3],
+            srcAttribute:
+              fog.getAttribute('src')
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      tagName: 'CANVAS',
+      alpha: 255,
+      srcAttribute: null
+    });
+  }
+);
+
+
+test(
   'campaign-map-presentation-syncs-token-and-shape-by-id',
   async ({ page }) => {
 

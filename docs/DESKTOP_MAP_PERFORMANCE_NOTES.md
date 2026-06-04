@@ -87,15 +87,16 @@
 - Hex-цвет сетки в презентации приглушается до alpha, чтобы сетка не выглядела ярче мастерской карты.
 - Стрелка расстояния в презентации поднята выше тумана, чтобы движение было видно игрокам.
 - Добавлен scenario `desktopPresentationLargeWorkspace`, который разделяет `fullSyncTimeMs` и `deltaSyncTimeMs`.
+- Добавлен dirty-region fog sync: кисть отправляет `fogPatch`, а презентация дорисовывает только измененную область.
 
 ## Следующие Оптимизации
 
 1. Для background использовать отдельный persistent cache low-detail preview.
 2. Довести desktop presentation diff-sync до layer visibility и background-only changes.
-3. Для fog обновлять dirty region, а не весь canvas.
-4. Для больших background не переводить fallback в base64, если Tauri asset protocol уже стабилен.
-5. Подключить реальные desktop measurements из Tauri-окна, а не только model-level scenario.
+3. Для больших background не переводить fallback в base64, если Tauri asset protocol уже стабилен.
+4. Подключить реальные desktop measurements из Tauri-окна, а не только model-level scenario.
+5. Сделать persistent low-detail cache для уже открытых больших карт.
 
 ## Практический Вывод
 
-Сейчас desktop рендер медленнее браузера, потому что мы выбрали надежность отображения assets и переносимость workspace. Следующий этап оптимизации должен уменьшить повторные чтения assets и сделать presentation sync дифференциальным.
+Desktop рендер стал устойчивее: основные движения карты больше не требуют полного render-model, а туман при кисти больше не обязан пересылать весь canvas. Следующий этап оптимизации должен уменьшить повторные чтения больших background assets и добавить реальные desktop measurements из Tauri-окна.
