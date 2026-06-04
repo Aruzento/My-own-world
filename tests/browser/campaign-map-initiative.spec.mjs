@@ -204,3 +204,130 @@ test(
     ).toContain('initiative-hero');
   }
 );
+
+
+test(
+  'campaign-map-token-initiative-uses-character-model-dex-modifier',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            addMapToken
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          const {
+            openInitiativePopup
+          } = await import('/js/editor/campaignMapInitiativePopup.js');
+
+          const {
+            getCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const creaturePage = {
+            id: 'dex-creature',
+            title: 'Fast Creature',
+            type: 'creature',
+            template: 'card',
+            tags: ['card', 'creature'],
+            aliases: [],
+            content: `
+              <div class="entity-layout card-shell">
+                <section class="entity-main">
+                  <div class="template-block card-properties-block card-properties-creature"
+                    data-block-type="properties"
+                    data-card-type="creature"
+                    contenteditable="false">
+                    <input data-property-name="hpCurrent" value="7">
+                    <input data-property-name="hpMax" value="12">
+                    <input data-property-name="dex" value="16">
+                  </div>
+                </section>
+              </div>
+            `
+          };
+
+          setPages([
+            creaturePage
+          ]);
+
+          document.querySelector('#editorArea').innerHTML = `
+            <button id="initiativeAnchor" type="button">initiative</button>
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          await addMapToken(
+            map,
+            'creature',
+            creaturePage
+          );
+
+          const token =
+            map.querySelector('.campaign-map-token');
+
+          openInitiativePopup(
+            map,
+            document.querySelector('#initiativeAnchor'),
+            {
+              saveAndSync:
+                async () => {}
+            }
+          );
+
+          const initiativeInput =
+            document.querySelector('.campaign-initiative-value');
+
+          return {
+            tokenModifier:
+              token.dataset.initiativeModifier,
+            modelModifier:
+              getCampaignMapStore(map)
+                .getModel()
+                .tokens[0]
+                .initiativeModifier,
+            popupModifier:
+              initiativeInput.dataset.modifier
+          };
+        }
+      );
+
+    expect(
+      result.tokenModifier
+    ).toBe(
+      '3'
+    );
+
+    expect(
+      result.modelModifier
+    ).toBe(
+      3
+    );
+
+    expect(
+      result.popupModifier
+    ).toBe(
+      '3'
+    );
+  }
+);

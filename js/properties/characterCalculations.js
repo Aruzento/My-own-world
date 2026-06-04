@@ -4,6 +4,7 @@ import {
 } from './propertiesModel.js';
 
 import {
+  applyCharacterHealthChange,
   calculateAbilityModifier,
   calculateDndCheckValue,
   calculateProficiencyBonus,
@@ -192,86 +193,34 @@ function updatePropertyHealth(
       '[data-property-name="hpTemp"]'
     );
 
-  const current =
-    readNumberFromField(
-      currentInput
-    );
-
-  const max =
-    readNumberFromField(
-      maxInput
-    );
-
   if (
     !currentInput ||
-    current === null ||
-    max === null ||
-    max <= 0
+    !maxInput
   ) {
 
     return false;
   }
 
-  let nextCurrent =
-    current;
-
-  let nextTemp =
-    temp === null
-      ? readNumberFromField(tempInput) || 0
-      : Math.max(
-        0,
-        Math.floor(Number(temp) || 0)
-      );
-
-  if (mode === 'restore') {
-
-    nextCurrent =
-      max;
-
-  } else if (mode === 'kill') {
-
-    nextCurrent =
-      0;
-
-  } else if (delta < 0) {
-
-    const damage =
-      Math.abs(delta);
-
-    const absorbed =
-      Math.min(
-        nextTemp,
-        damage
-      );
-
-    nextTemp -=
-      absorbed;
-
-    nextCurrent =
-      clamp(
-        current - (damage - absorbed),
-        0,
-        max
-      );
-
-  } else {
-
-    nextCurrent =
-      clamp(
-        current + delta,
-        0,
-        max
-      );
-  }
+  const nextModel =
+    applyCharacterHealthChange(
+      readCharacterModelFromPage(
+        page
+      ),
+      {
+        delta,
+        temp,
+        mode
+      }
+    );
 
   writeFieldValue(
     currentInput,
-    nextCurrent
+    nextModel.health.current
   );
 
   writeFieldValue(
     tempInput,
-    nextTemp
+    nextModel.health.temp
   );
 
   page.content =
@@ -441,20 +390,4 @@ function replaceMarkdownBody(
   if (!frontMatter) return body;
 
   return `${frontMatter[0]}\n\n${body}\n`;
-}
-
-
-function clamp(
-  value,
-  min,
-  max
-) {
-
-  return Math.min(
-    max,
-    Math.max(
-      min,
-      value
-    )
-  );
 }

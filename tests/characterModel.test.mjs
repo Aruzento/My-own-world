@@ -8,6 +8,7 @@ import {
   calculateProficiencyBonus,
   createCharacterModel,
   createCharacterModelFromSources,
+  getCharacterInitiativeModifier,
   getCharacterHealth
 } from '../js/character/characterModel.js';
 
@@ -72,6 +73,13 @@ test(
 
     assert.equal(
       model.abilities.dex.modifier,
+      3
+    );
+
+    assert.equal(
+      getCharacterInitiativeModifier(
+        model
+      ),
       3
     );
 

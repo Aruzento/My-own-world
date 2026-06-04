@@ -193,6 +193,22 @@ export function getCharacterHealth(
 }
 
 
+export function getCharacterInitiativeModifier(
+  model
+) {
+
+  if (
+    !model ||
+    model.source === 'empty'
+  ) {
+
+    return 0;
+  }
+
+  return model.abilities?.dex?.modifier || 0;
+}
+
+
 export function applyCharacterHealthChange(
   model,
   {

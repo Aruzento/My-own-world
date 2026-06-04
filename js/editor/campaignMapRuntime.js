@@ -48,9 +48,13 @@ import {
 } from '../repository/pageRepository.js';
 
 import {
-  getHealthColor,
-  getPageDndHealth
+  getHealthColor
 } from './campaignMapHealth.js';
+
+import {
+  getCampaignMapCharacterHealth,
+  getCampaignMapCharacterInitiativeModifier
+} from './campaignMapCharacterBridge.js';
 
 import {
   getPagePortraitAsset
@@ -108,6 +112,14 @@ export async function addMapToken(
     Array.isArray(page?.tags) &&
     page.tags.includes('player');
 
+  const initiativeModifier =
+    page
+      ? getCampaignMapCharacterInitiativeModifier(
+        page,
+        0
+      )
+      : 0;
+
   const tokenData =
     store.addToken({
       type,
@@ -126,7 +138,8 @@ export async function addMapToken(
       sourceMode: options.sourceMode === 'original'
         ? 'original'
         : 'copy',
-      isPlayerToken
+      isPlayerToken,
+      initiativeModifier
     });
 
   const token =
@@ -248,14 +261,23 @@ export function applyTokenHealthState(
       );
 
   const health =
-    getPageDndHealth(
+    getCampaignMapCharacterHealth(
       page
     );
 
+  const initiativeModifier =
+    getCampaignMapCharacterInitiativeModifier(
+      page,
+      Number(token.dataset.initiativeModifier || 0)
+    );
+
   const cacheKey =
-    health
-      ? `${health.current}/${health.max}/${health.temp || 0}`
-      : 'none';
+    [
+      health
+        ? `${health.current}/${health.max}/${health.temp || 0}`
+        : 'none',
+      initiativeModifier
+    ].join('|');
 
   if (
     tokenHealthCache.get(token) === cacheKey
@@ -264,6 +286,11 @@ export function applyTokenHealthState(
   tokenHealthCache.set(
     token,
     cacheKey
+  );
+
+  syncTokenInitiativeModifier(
+    token,
+    initiativeModifier
   );
 
   if (!health) {
@@ -297,6 +324,42 @@ export function applyTokenHealthState(
     getHealthColor(
       percent
     )
+  );
+}
+
+
+function syncTokenInitiativeModifier(
+  token,
+  initiativeModifier
+) {
+
+  const normalized =
+    Number.isFinite(
+      Number(initiativeModifier)
+    )
+      ? Number(initiativeModifier)
+      : 0;
+
+  if (
+    Number(token.dataset.initiativeModifier || 0) === normalized
+  ) return;
+
+  token.dataset.initiativeModifier =
+    String(
+      normalized
+    );
+
+  const store =
+    getCampaignMapStore(
+      token.closest('.campaign-map-document')
+    );
+
+  store?.updateToken(
+    token.dataset.tokenId,
+    {
+      initiativeModifier:
+        normalized
+    }
   );
 }
 

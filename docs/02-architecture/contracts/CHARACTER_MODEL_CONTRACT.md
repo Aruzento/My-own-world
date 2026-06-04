@@ -27,6 +27,7 @@ owner_zone: "architecture"
 - `js/properties/propertiesModel.js` - чтение блока `Свойства`.
 - `js/properties/propertySchemas.js` - стабильные ключи полей свойств.
 - `js/editor/campaignMapHealth.js` - карта пока вызывает старый фасад, но получает данные уже через модельный слой.
+- `js/editor/campaignMapCharacterBridge.js` - мост карты к `CharacterModel`: здоровье, DEX-модификатор инициативы и команда изменения HP.
 
 ## Public API
 
@@ -37,6 +38,7 @@ createCharacterModel(options)
 createCharacterModelFromSources({ page, propertiesModels, legacyDndHealth })
 readCharacterModelFromPage(page)
 getCharacterHealth(model)
+getCharacterInitiativeModifier(model)
 applyCharacterHealthChange(model, options)
 calculateAbilityModifier(score)
 calculateProficiencyBonus(level)
@@ -90,6 +92,7 @@ calculateDndCheckValue(options)
 3. Если `PropertiesModel` нет, `CharacterModel` может быть построен из legacy `Стат. блок DnD`.
 4. Если нет ни одного источника, создается пустая модель с безопасными defaults, но она не должна сама записывать карточку.
 5. Карта не должна читать HP напрямую из HTML, если может обратиться к `getPageCharacterHealth()` / `CharacterModel`.
+6. Карта должна получать модификатор инициативы через `CharacterModel`, а не через ручной `modifier`, если токен создан из карточки персонажа или существа.
 
 ## DnD 5e Расчеты
 
