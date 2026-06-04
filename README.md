@@ -47,6 +47,33 @@ npm run desktop:dev
 - `tauriBridge.js` изолирует доступ к Tauri API: в desktop WebView используется `window.__TAURI__`, а dynamic import остается fallback для будущей сборки.
 - В desktop картинки и фоны карты должны отображаться через Tauri asset URL (`convertFileSrc`), а не через прямой `file://`.
 
+### AI / Codex Workflow
+
+Перед задачей Codex должен прочитать `AGENTS.md`.
+
+Типовые сценарии лежат в `.agents/skills/`.
+
+Документация должна иметь metadata:
+
+- `summary`;
+- `read_when`;
+- `owner_zone`.
+
+Проверки agent workflow:
+
+```powershell
+npm run docs:index
+npm run agents:validate
+```
+
+Для безопасного commit использовать:
+
+```powershell
+node tools/safe_commit.mjs --message "commit message" file1 file2
+```
+
+`tools/safe_commit.mjs` не делает commit без `--confirm` и запрещает случайный `git add .`.
+
 ---
 
 # My own world

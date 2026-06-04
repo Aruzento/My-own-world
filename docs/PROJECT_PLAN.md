@@ -1,759 +1,679 @@
-﻿# Единый план проекта
+# Единый план проекта
 
-Дата обновления: 01.06.2026
+Дата обновления: 04.06.2026
 
-Этот файл является единственным актуальным источником плана работ, техдолга и развития технической зрелости проекта. Старые плановые документы перенесены в `docs/archive/` и больше не обновляются.
+Этот файл является единственным актуальным источником плана работ, техдолга и направления развития проекта.
 
-## Правила Ведения
+План ведется как **версионная дорожная карта**:
 
-- В проекте должен быть один живой план: `docs/PROJECT_PLAN.md`.
-- `docs/WORK_LOG.md` хранит историю выполненных работ, решения и подробные заметки.
-- Техдолг записывается не отдельной кучей, а как конкретные задачи внутри плана.
-- Частично сделанная задача остается в плане до полного закрытия. Если часть работы уже выполнена, это пишется в статусе подпункта.
-- Если задачу пока рано делать, но она важна, она остается в будущем плане с причиной отложенности.
-- После крупных изменений обновляются `README.md`, `docs/MY_OWN_WORLD_FULL_MANUAL.docx`, релевантные contract-файлы и этот план.
-- В ответах пользователю указывать номер текущего пункта плана, чтобы было понятно, где мы находимся.
+- каждый пункт плана получает номер в формате версии;
+- первый актуальный пункт начинается с `0.0.0.1`;
+- сделанные задачи не держатся наверху, а уходят в архив внизу файла;
+- частично сделанные задачи остаются в активном плане, пока не закрыты полностью;
+- если задача сейчас рано реализуется, но важна, она остается в активном плане как будущая версия.
 
-## Текущая Картина
+## Философия Развития Продукта
 
-- Текущая оценка зрелости: **4.15 / 5**.
-- Последняя полная оценка: `Тех. зрелость/02.06.2026 - оценка после desktop image parity.md`.
-- Цель ближайшего этапа: поднять проект к **4.2 / 5** через надежность данных, backup/recovery, performance gate карты и визуальные regression checks.
-- Бриф `MY_OWN_WORLD_AI_ARCHITECTURE_RISK_BRIEF_01_06_2026_UPDATED.docx` подтвердил главный порядок рисков: schema validation, backup/recovery, performance gate, visual regression, popup lifecycle.
+Проект развивается не как набор независимых функций, а как единая операционная система для ведения НРИ-мира.
 
-## Приоритеты Сейчас
+Каждая новая подсистема должна отвечать минимум одному из вопросов:
 
-1. **Schema Validation / Recovery Layer** - главный слой защиты данных.
-2. **Backup / Restore** - защита перед любым recovery и рискованными операциями.
-3. **Campaign Map Performance Gate** - карта уже тяжелая, лаги надо ловить тестами и метриками.
-4. **Visual Regression / UX Safety** - базовый слой сделан, расширять при новых UI-регрессиях.
-5. **Popup Lifecycle Standardization** - следующий рабочий фокус: popup-система разрослась и требует единого жизненного цикла.
-6. **Properties Model / Character Calculations** - первый крупный продуктовый слой после стабилизации данных и popup lifecycle.
+- помогает хранить знания мира;
+- помогает проводить кампанию;
+- помогает управлять игровыми сущностями;
+- помогает управлять правилами;
+- помогает переиспользовать контент между мирами.
 
-## План Работ
+Если новая подсистема не усиливает ни одну из этих областей, ее приоритет должен быть пересмотрен.
 
-### 1. Schema Validation / Recovery Layer
+## Текущее Состояние Проекта
 
-Статус: **частично сделано**.
+Текущая оценка технической зрелости: **4.35 / 5**.
+
+Последняя оценка:
+
+`Тех. зрелость/04.06.2026 - оценка после закрытия Desktop Foundation.md`
+
+Проект сейчас - это local-first приложение для ведения DnD/НРИ-мира. Оно умеет работать как web-приложение в браузере и как desktop-приложение через Tauri. Данные мира лежат в workspace-папке: карточки, карты, task tracker, assets, backup и служебные файлы.
+
+## Куда Идем Дальше
+
+Практический следующий фокус:
+
+1. создать `CharacterModel`;
+2. отделить продуктовые, релизные, тестовые и инженерные материалы через `Project Structure & Release Handoff Reorganization`;
+3. связать свойства карточек, хиты, навыки, инвентарь и карту через модель, а не через HTML;
+4. поднять `Knowledge Graph` и `Rule Tree` как вторую доменную опору после `CharacterModel`;
+5. добавить `World Package Foundation` как базу будущего экспорта, импорта, fork-модели и Workshop;
+6. усилить assets, recovery и storage hardening;
+7. продолжать добавлять regression tests к каждому P0/P1 изменению;
+8. развивать карту, task tracker и UX уже поверх устойчивых моделей.
+
+## Продуктовое Видение
+
+MyOwnWorld - это local-first операционная система для НРИ-мира.
+
+Цель проекта - объединить в одной модели мира:
+
+- знания;
+- карту;
+- персонажей;
+- игровые правила;
+- игровые объекты;
+- кампании;
+- связи между сущностями.
+
+Ключевой принцип:
+
+Карта, карточки, персонажи, правила и игровые данные должны существовать как единая доменная модель, а не как отдельные несвязанные инструменты.
+
+## Продуктовые Опоры
+
+У проекта есть четыре ключевые доменные опоры:
+
+1. `CharacterModel` - персонажи, существа, хиты, навыки, инвентарь, эффекты и игровые состояния.
+2. `Rule Tree` - правила, справочники, системные знания, homebrew и канонические базы.
+3. `Knowledge Graph` - связи между сущностями мира.
+4. `World Package System` - экспорт, импорт, переиспользование и будущий Workshop.
+
+Перед добавлением любой крупной системы нужно проверить:
+
+1. Усиливает ли она `CharacterModel`?
+2. Усиливает ли она `Rule Tree`?
+3. Усиливает ли она `Knowledge Graph`?
+4. Усиливает ли она `World Package System`?
+
+Если ответ "нет" на все четыре вопроса, задача должна проходить дополнительную проверку необходимости.
+
+## Структура Проекта Простыми Словами
+
+`index.html` - главный HTML-каркас приложения.
+
+`presentation.html` - отдельная страница режима презентации карты.
+
+`js/app.js` - точка входа приложения.
+
+`js/editor/` - редактор карточек и карт: toolbar, форматирование, карта кампании, туман, слои, токены, фигуры, презентация, свойства и сохранение.
+
+`js/editor/blocks/` - система блоков карточки: runtime/persistent, сериализация, controls и upgrades.
+
+`js/properties/` - свойства карточек и расчеты; мост к будущему `CharacterModel`.
+
+`js/storage/` - workspace, файлы, assets, backup/restore и adapter layer.
+
+`js/schema/` - проверка данных workspace.
+
+`js/repository/` - `PageRepository` и `PageIndex`.
+
+`js/tree/` - дерево сущностей, контекстное меню, drag and drop и move planner.
+
+`js/taskTracker/` - отдельная подсистема таск-трекера.
+
+`js/templates/` - генераторы HTML для карточек, карт, task tracker и блоков.
+
+`js/ui/` - общие UI-подсистемы.
+
+`js/presentation/` - runtime отдельного окна презентации карты.
+
+`styles/` - CSS приложения.
+
+`assets/` - встроенные ассеты приложения.
+
+`src-tauri/` - desktop-оболочка Tauri.
+
+`tools/` - служебные скрипты проверок, сборок и agent workflow.
+
+`tests/` - unit tests и browser tests.
+
+`docs/` - документация проекта. После реструктуризации должна быть разделена на продуктовую, delivery, архитектурную, тестовую и пользовательско-релизную зоны.
+
+`docs/00-product/` - продуктовая зона для владельца продукта: vision, strategy, roadmap, PO discovery и personas.
+
+`docs/01-delivery/` - зона управления разработкой: project plan, work log, changelog и release process.
+
+`docs/02-architecture/` - инженерная зона Codex: contracts, adapters, storage, desktop, security и другие технические решения.
+
+`docs/03-testing/` - зона тестирования: smoke tests, visual regression, desktop smoke и тестовые сценарии.
+
+`docs/04-user-release/` - материалы для внешнего тестирования: installation guide, tester readme, known issues и test scenarios.
+
+`release/` - будущая зона релизной передачи: installer, portable build, release notes, tester instructions и known issues.
+
+`.agents/skills/` - agent workflow маршруты для типовых задач Codex.
+
+`Тех. зрелость/` - оценки зрелости проекта.
+
+`Лог особенный/` - художественная летопись проекта.
+
+## План
+
+### 0.0.0.1. Character Domain Model
+
+Статус: **не сделано, есть подготовка через PropertiesModel**.
+Приоритет: **P0/P1**.
+
+Зачем: персонажи, существа, хиты, навыки, инвентарь, эффекты и карта должны опираться на одну модель, а не на чтение HTML-блоков.
+
+0.0.0.1.1. Спроектировать `CharacterModel`.
+
+0.0.0.1.2. Описать `CHARACTER_MODEL_CONTRACT.md`.
+
+0.0.0.1.3. Сделать чтение базовых характеристик из `PropertiesModel`.
+
+0.0.0.1.4. Сделать чтение legacy `Стат. блок DnD` как fallback.
+
+0.0.0.1.5. Вынести HP, временные HP, смерть/нокаут и proficiency в model-first API.
+
+0.0.0.1.6. Связать карту с `CharacterModel`: рамки здоровья, изменение хитов, инициатива.
+
+0.0.0.1.7. Добавить Inventory System.
+
+0.0.0.1.8. Добавить Effects / Conditions System.
+
+0.0.0.1.9. Сделать Full Character Sheet UX.
+
+0.0.0.1.10. Решить судьбу архивных экспериментов `DnD v2` и `Переменные`.
+
+0.0.0.1.11. Подготовить API интеграции `CharacterModel` с `Rule Tree`.
+
+0.0.0.1.12. Подготовить API интеграции `CharacterModel` с `Effects System`.
+
+0.0.0.1.13. Подготовить API интеграции `CharacterModel` с `World Packages`.
+
+### 0.0.0.2. Project Structure & Release Handoff Reorganization
+
+Статус: **частично сделано: agent workflow layer добавлен, полная реструктуризация docs/release не сделана**.
 Приоритет: **P0**.
-Зачем: данные workspace должны проверяться явно, без молчаливой порчи и догадок.
 
-1.1. Описать `WORKSPACE_SCHEMA_CONTRACT.md`: **сделано**.
+Зачем: проект уже стал понятен Codex как инженерная система, но становится сложным для владельца продукта. Нужно отделить продуктовые артефакты, релизные материалы, тестовые материалы, инженерную документацию и внутренние рабочие файлы.
 
-1.2. Ввести версии схем для page metadata, campaign map data, task tracker data, template data и asset references: **сделано базово**.
-Сделан первый слой для page, campaign map, task tracker, template data и asset references. В план остается расширение версий под будущие schema upgrades.
+0.0.0.2.1. Пересобрать структуру `docs/`.
 
-1.3. Сделать валидаторы с понятными ошибками: **сделано базово**.
-Есть чистые валидаторы для workspace/page, campaign map, task tracker, templates, asset references и JSON helper. Нужно расширять их при новых storage-форматах.
+Целевая структура:
 
-1.4. Добавить recovery screen или fallback для поврежденных страниц: **сделано базово**.
-Добавлен `WorkspaceRecoveryReport` и fallback-экран editor при критичных ошибках workspace. В план остаются безопасные repair-actions.
+```text
+docs/
+├── 00-product/
+├── 01-delivery/
+├── 02-architecture/
+├── 03-testing/
+├── 04-user-release/
+└── archive/
+```
 
-1.5. Добавить tests: invalid JSON, missing id, broken parent, duplicated title, broken map token, broken task data: **сделано базово**.
-Добавлены проверки templates, asset references и recovery report. Нужны browser/storage tests для recovery UI.
+0.0.0.2.2. Создать продуктовую зону `docs/00-product/`.
 
-1.6. Подключить validation к загрузке workspace в warning-only режиме: **сделано**.
+Минимум: `PRODUCT_VISION.md`, `PRODUCT_STRATEGY.md`, `ROADMAP.md`, `PO_DISCOVERY.md`, `USER_PERSONAS.md`.
 
-1.7. Добавить validation gate перед будущими schema upgrades: **сделано базово**.
-Добавлен `schemaUpgradeGate`: будущие upgrade-операции должны запускаться только после успешной validation и при наличии manifest резервной копии. При критичных ошибках gate блокирует upgrade.
+0.0.0.2.3. Создать delivery-зону `docs/01-delivery/`.
 
-1.8. Добавить browser/storage tests для recovery fallback, templates/assets validation и будущих repair-actions: **сделано базово**.
-Добавлен browser smoke для recovery fallback и unit/storage coverage для templates/assets validation. Когда появятся настоящие repair-actions, сюда нужно добавить отдельные сценарии на каждое действие.
+Минимум: `PROJECT_PLAN.md`, `WORK_LOG.md`, `CHANGELOG.md`, `RELEASE_PROCESS.md`.
 
-### 2. Backup / Restore
+0.0.0.2.4. Создать инженерную зону `docs/02-architecture/`.
 
-Статус: **частично сделано**.
-Приоритет: **P0**.
-Зачем: recovery нельзя включать без возможности безопасно откатиться к snapshot.
+Минимум: `contracts/`, `desktop/`, `storage/`, `security/`, `adapters/`.
 
-2.1. Описать `BACKUP_AND_RECOVERY_CONTRACT.md`: **сделано**.
+0.0.0.2.5. Создать тестовую зону `docs/03-testing/`.
 
-2.2. Добавить ручную команду "Создать резервную копию workspace": **сделано**.
-Команда находится в popup настроек.
+Минимум: `SMOKE_TESTS.md`, `VISUAL_REGRESSION.md`, `DESKTOP_SMOKE.md`.
 
-2.3. Добавить автоматический lightweight snapshot перед рискованными операциями: **частично сделано**.
-Snapshot подключен перед удалением ветки страниц и переносом страниц в дереве. В план остаются import, schema upgrade, bulk operations и потенциальные asset operations.
+0.0.0.2.6. Создать пользовательско-релизную зону `docs/04-user-release/`.
 
-2.4. Добавить restore flow: **частично сделано**.
-Есть осторожный restore helper, UI-список backup и безопасный restore dialog. В план остаются browser/storage regression и восстановление assets.
+Минимум: `README_FOR_TESTERS.md`, `HOW_TO_INSTALL.md`, `KNOWN_ISSUES.md`, `TEST_SCENARIOS.md`.
 
-2.5. Добавить tests на восстановление карты, карточки и таск-трекера: **сделано базово**.
-Покрыты manifest/id, backup/restore карточки, карты и task tracker через storage-level in-memory workspace. Browser UI restore уже есть как smoke-слой настроек; при расширении restore UI добавлять отдельные browser-сценарии.
+0.0.0.2.7. Создать отдельную папку `release/`.
 
-2.6. Добавить backup assets по `AssetReference`: **сделано базово**.
-Backup собирает persistent asset references из страниц, копирует файлы из `assets/` в snapshot и восстанавливает их обратно. Нужен будущий hardening для больших файлов, audio/playlist и missing/fallback policy.
+Целевая структура:
 
-2.7. Добавить политику очистки старых backup: **сделано базово**.
-Добавлена retention-политика: по умолчанию сохраняется 20 последних backup, старые точки удаляются через `cleanupWorkspaceBackups()`. Нужен будущий UI для настройки лимита и ручной очистки.
+```text
+release/
+├── latest/
+├── candidates/
+└── archive/
+```
 
-### 3. Campaign Map Performance Gate
+0.0.0.2.8. Создать структуру `release/latest/`.
 
-Статус: **сделано базово, требуется дальнейшее stress-усиление**.
-Приоритет: **P1**.
-Зачем: карта является самой тяжелой runtime-системой проекта.
+Целевая структура:
 
-3.1. Описать performance risks карты: **сделано**.
+```text
+release/latest/
+├── installer/
+├── portable/
+├── release-notes.md
+├── tester-instructions.md
+└── known-issues.md
+```
 
-3.2. Ввести performance scenarios: **сделано**.
+0.0.0.2.9. Создать `release/candidates/`.
 
-3.3. Добавить измерения render time, sync time, number of visible objects, background load: **сделано**.
+0.0.0.2.10. Создать `release/archive/`.
 
-3.4. Ввести performance budgets: **сделано**.
-Budgets вынесены в scenario-based contract: small map, large drag, fog paint, presentation live sync, zoom/pan heavy. Добавлен `assertCampaignMapPerformanceBudget()`, чтобы тесты могли падать при превышении.
+0.0.0.2.11. Ввести Release Handoff Rules.
 
-3.5. Оптимизировать presentation full-sync: **сделано базово**.
-Убрано лишнее чтение модели из DOM во время sync, live-sync идет item-level по id, несколько item updates в одном кадре батчатся по карте, а missing item вызывает один fallback full-sync вместо серии full repaint. Performance smoke проверяет bounded full-sync и item sync. В план остается дальнейший diff by id для слоев/fog/locked zones и запрет full repaint без причины в новых фичах.
+После каждой задачи, влияющей на релиз или тестирование, Codex должен обновлять `PROJECT_PLAN.md`, `WORK_LOG.md`, `release-notes.md`, `tester-instructions.md`. Если меняется пользовательское поведение, также обновлять `KNOWN_ISSUES.md`, `TEST_SCENARIOS.md`, `README_FOR_TESTERS.md`.
 
-3.6. Добавить performance regression smoke: **сделано**.
-Есть browser smoke для большой сцены с presentation sync и отдельный smoke для `fog-paint-large`.
+0.0.0.2.12. Создать Product Visibility Layer.
 
-3.7. Оптимизировать туман: throttling, dirty regions, меньше sync при рисовании: **сделано базово**.
-Туман получил dirty-region counters для diagnostics, live presentation sync остается throttled и обновляет только fog image в presentation, а не всю карту. Locked fog zone drag больше не пересобирает все runtime-зоны и не коммитит DOM на каждом pointermove. В план остаются настоящие dirty-region save и stress-тест с реальным pointer painting.
+Минимум: `PRODUCT_DASHBOARD.md`, `ROADMAP.md`, `CURRENT_MILESTONE.md`.
 
-3.8. Добавить diagnostics UI только для dev/debug режима: **сделано базово**.
-Добавлен dev-only diagnostics panel, включается через `localStorage.setItem('myOwnWorld.debug.performance','true')`.
+0.0.0.2.13. Провести аудит `docs/` и разложить файлы по зонам.
 
-### 4. Visual Regression / UX Safety
+0.0.0.2.14. Обновить ссылки в README, AI onboarding, release process и plan после перемещения документов.
 
-Статус: **сделано базово, расширять при новых UI-регрессиях**.
-Приоритет: **P1**.
-Зачем: визуальные баги уже много раз ломали drag/drop, popup, toolbar, badges, fog layers и selection.
+0.0.0.2.15. Добавить правило: новые документы нельзя класть напрямую в корень `docs/`, если для них есть целевая зона.
 
-4.1. Добавить Playwright screenshots для app shell, card editor, campaign map, presentation, task tracker: **сделано базово**.
-Добавлен `tests/browser/visual-regression.spec.mjs`: тест сохраняет screenshot attachments для app shell, card editor, campaign map и task tracker. Presentation покрывается отдельным browser regression `campaign-map-presentation-renders-fog-above-tokens-and-locked-zones-as-fog`; если понадобится pixel-baseline, его нужно вводить отдельным устойчивым слоем.
+0.0.0.2.16. Добавить agent workflow layer: **сделано базово**.
 
-4.2. Добавить smoke-проверки размеров: popup в viewport, toolbar не сжимается, badge не выходит за token: **сделано базово**.
-Visual smoke проверяет popup boundary, фиксированную ширину floating toolbar и размер скрытого badge у токена.
+Создано:
 
-4.3. Добавить checklist визуального review перед push: **сделано**.
-Создан `docs/VISUAL_REGRESSION_CHECKLIST.md`.
+- `AGENTS.md`;
+- `.agents/skills/`;
+- `tools/docs_index.mjs`;
+- `tools/validate_agent_skills.mjs`;
+- `tools/safe_commit.mjs`;
+- `docs/03-testing/CODE_REVIEW_TEMPLATE.md`.
 
-4.4. Добавить тесты для Shift selection на карте и группового drag: **частично сделано**.
-Добавлена browser-проверка selection-box: рамка выделяет токены и фигуры внутри области и не выделяет сущности вне области. Полный pointer-drag выбранной группы остается будущим расширением, потому что требует отдельного устойчивого UI-сценария с pointermove/pointerup.
+Зачем: Codex должен работать по стабильным правилам проекта, читать нужные документы перед изменениями, не коммитить лишние файлы, обновлять release handoff и оставлять понятное доказательство выполненной задачи.
 
-4.5. Добавить visual checks для тумана над всеми слоями и locked fog zones в presentation: **сделано базово**.
-Существующий presentation smoke проверяет z-index тумана и вид locked fog zone в режиме презентации. Новый visual smoke дополнительно проверяет, что fog canvas выше токенов и locked fog zone на карте мастера.
+0.0.0.2.17. Добавить metadata для docs.
 
-### 5. Popup Lifecycle Standardization
+Для каждого markdown-документа добавить `summary`, `read_when`, `owner_zone`.
 
-Статус: **сделано базово, расширять при новых popup-сценариях**.
-Приоритет: **P1**.
-Зачем: popup-система создавалась постепенно, поэтому разные popup живут по разным правилам.
+### 0.0.0.3. Asset Lifecycle UI И Media Foundation
 
-5.1. Описать popup lifecycle contract: create, open, close, destroy, position, outside click, Escape, z-index: **сделано**.
-Создан `docs/POPUP_LIFECYCLE_CONTRACT.md`.
-
-5.2. Перевести новые popup на общий contract: **сделано базово**.
-`popupManager` теперь поддерживает controller lifecycle, `open/close/toggle/destroy`, z-index, Escape, outside click и старый совместимый API. На общий lifecycle переведены/подтянуты create menu, tree context menu, link popup и campaign map popup; app topbar, confirm, block, wiki preview и image crop уже используют общий manager.
-
-5.3. Постепенно убрать static modal UI из `index.html`, где это безопасно: **частично сделано**.
-`createMenu` и `treeContextMenu` теперь создаются JS-модулями, если их нет в DOM. В `index.html` пока остаются toolbar color popup, app settings/tools/onboarding и link popup, потому что их перенос лучше делать вместе с дальнейшим app shell cleanup.
-
-5.4. Добавить browser regression для popup boundary и повторного клика по trigger: **сделано**.
-Добавлен `tests/browser/popup-lifecycle.spec.mjs`: проверяет viewport boundary, Escape, outside click, z-index, повторный trigger для create menu/tools и campaign map popup.
-
-5.5. Проверить popup карты, инициативы, тумана, слоев, шаблонов и backup UI: **сделано базово**.
-Browser suite покрывает campaign map popup, initiative, layers, page templates, settings/backup через app shell и новые popup lifecycle guards. При добавлении новых popup-типов расширять `popup-lifecycle.spec.mjs`.
-
-### 6. Properties Model / Character Calculations
-
-Статус: **сделано базово, развивать в сторону `CharacterModel`**.
-Приоритет: **P1/P2**.
-Зачем: DnD v2 и блок переменных были отложены, а практичный путь теперь идет через type-aware свойства и model-first расчеты.
-
-6.1. Описать `PropertiesModel`: **сделано**.
-Создан `docs/PROPERTIES_MODEL_CONTRACT.md`, где закреплены роли схем, модели, расчетного слоя и правило стабильных ключей.
-
-6.2. Спроектировать calculation layer отдельно от HTML: **сделано базово**.
-Добавлен `js/properties/characterCalculations.js`: модификаторы характеристик, бонус мастерства DnD 5e, расчет проверок и единая точка чтения хитов.
-
-6.3. Научить расчетный слой читать блоки `Свойства`, legacy `Стат. блок DnD` и будущую character-модель: **сделано базово**.
-`characterCalculations.js` читает `PropertiesModel`, legacy `Стат. блок DnD` и оставляет явный слот `futureCharacterModel`. Карта при чтении/изменении хитов теперь сначала обращается к расчетному слою.
-
-6.4. Добавить schemas для новых типов `Свойства`: `creature`, `object`, `location`, `region`, `magic`, `skill`, `item`, `character`: **сделано**.
-Схемы вынесены в `js/properties/propertySchemas.js`; шаблон блока `Свойства` строится из этих схем.
-
-6.5. Сделать migration path для архивных экспериментов `DnD v2` / `Переменные`: **позже**.
-Причина: сначала нужен model-first слой расчетов, иначе эксперимент снова станет HTML-блоком без архитектуры.
-
-6.6. Улучшить UX блоков `Свойства`: **сделано базово**.
-Селекторы получили единый вид, у навыков добавлены уровень навыка и вид действия (`действие`, `бонусное действие`, `реакция`, `отдых`, `пассивно`), блоки визуально подтянуты под стиль проекта. Дальше можно улучшать конкретные property-схемы вместе с `CharacterModel`.
-
-### 7. PageRepository / PageIndex
-
-Статус: **сделано, расширять при новых lookup-сценариях**.
-Приоритет: **P1**.
-Зачем: новый код не должен хаотично искать страницы по `state.pages`.
-
-7.1. Спроектировать `PageRepository`: **сделано**.
-
-7.2. Создать `PageIndex`: **сделано**.
-
-7.3. Сделать lifecycle индекса: **сделано**.
-
-7.4. Перевести wiki-links на `PageIndex`: **сделано**.
-
-7.5. Перевести поиск на `PageIndex`: **сделано**.
-
-7.6. Перевести проверку дублей на `PageIndex`: **сделано**.
-
-7.7. Перевести campaign map picker/player lookup на `PageIndex`: **сделано**.
-
-7.8. Перевести шаблоны и graph lookup на `PageIndex`: **сделано**.
-
-7.9. Добавлять PageIndex regression при каждом новом lookup-сценарии: **постоянное правило**.
-
-### 8. Safe HTML Boundary / Sanitizer
-
-Статус: **сделано базово, усиливать перед web/cloud**.
-Приоритет: **P1**.
-Зачем: это граница безопасности между persistent HTML и runtime UI.
-
-8.1. Описать `SAFE_HTML_CONTRACT.md`: **сделано**.
-
-8.2. Составить allowlist HTML: **сделано**.
-
-8.3. Реализовать sanitizer на save: **сделано**.
-
-8.4. Реализовать sanitizer на load/open: **сделано**.
-
-8.5. Реализовать paste sanitization: **сделано**.
-
-8.6. Добавить security regression tests: **сделано базово**.
-
-8.7. Расширить sanitizer под future web/cloud threat model: **позже**.
-
-### 9. Smoke / Regression Tests
-
-Статус: **сделано базово, расширять постоянно**.
+Статус: **частично сделано: contract/checkers/tests есть, UI не сделан**.
 Приоритет: **P1**.
 
-9.1. Smoke app shell: **сделано**.
+0.0.0.3.1. Сделать UI проверки broken assets.
 
-9.2. Unit-тесты дерева: drop intent / move planner: **сделано**.
+0.0.0.3.2. Сделать UI проверки orphan assets.
 
-9.3. Unit-тесты карты: model / serializer / store: **сделано**.
+0.0.0.3.3. Сделать безопасное удаление orphan assets после подтверждения.
 
-9.4. Browser smoke карты save/reload: **сделано**.
+0.0.0.3.4. Добавить missing/fallback UI для картинок, которые не найдены.
 
-9.5. Browser regression удаления токена через дочернюю карточку дерева: **сделано**.
+0.0.0.3.5. Расширить `AssetReference` под audio и playlist как first-class assets.
 
-9.6. Browser UI flow карты через кнопку `+`: **сделано**.
+0.0.0.3.6. Сделать Music by Location System.
 
-9.7. Browser smoke presentation sync: **сделано**.
+0.0.0.3.7. Проверить asset lifecycle одинаково в browser и desktop.
 
-9.8. Browser tests форматирования текста, task tracker, шаблонов, sanitizer, layers, initiative: **сделано базово**.
+### 0.0.0.4. Campaign Map v2 Hardening
 
-9.9. Добавлять regression tests для каждого нового P0/P1 изменения: **постоянное правило**.
-
-### 10. Tree Pointer-Based DnD
-
-Статус: **сделано**.
+Статус: **частично сделано: карта функциональна, но много будущего UX/physics/performance**.
 Приоритет: **P1**.
 
-10.1. Pointer DnD вместо HTML5 DnD: **сделано**.
+0.0.0.4.1. Добавить stress tests для больших карт, большого количества токенов, фигур, слоев и fog operations.
 
-10.2. Preview / placeholder / stable drop intent: **сделано**.
+0.0.0.4.2. Добавить real pointer painting stress для тумана.
 
-10.3. Тесты расчетов drop intent и move planner: **сделано**.
+0.0.0.4.3. Довести locked fog zones.
 
-10.4. Browser regression tests дерева: **сделано**.
+0.0.0.4.4. Добавить dirty-region save для тумана, если это окажется выгоднее текущего full image save.
 
-10.5. При изменениях дерева расширять сценарии root, внутрь, выше, ниже и сортировку на одном уровне: **постоянное правило**.
+0.0.0.4.5. Довести mass select.
 
-### 11. Campaign Map Data-First Save
+0.0.0.4.6. Улучшить инициативу.
 
-Статус: **сделано, развивать как основу карты**.
+0.0.0.4.7. Добавить рисование поверх карты.
+
+0.0.0.4.8. Добавить выбор навыков/способностей существа на карте.
+
+0.0.0.4.9. Продолжить оптимизацию presentation sync.
+
+### 0.0.0.5. Data Recovery И Storage Hardening
+
+Статус: **частично сделано: validation/recovery/backup есть, repair-actions и structured errors не сделаны**.
 Приоритет: **P1**.
 
-11.1. `CampaignMapModel`: **сделано**.
+0.0.0.5.1. Добавить безопасные repair-actions для recovery screen.
 
-11.2. `CampaignMapStore`: **сделано**.
+0.0.0.5.2. Добавить browser/storage tests для каждого repair-action.
 
-11.3. Data-first serializer: **сделано**.
+0.0.0.5.3. Расширить schema versions под будущие upgrades.
 
-11.4. Drag стартует из store, не из `dataset`: **сделано**.
+0.0.0.5.4. Добавить structured error objects в desktop/Rust commands.
 
-11.5. Закрытые карты патчатся через model/data-first путь: **сделано**.
+0.0.0.5.5. Убрать оставшиеся прямые `state.workspaceHandle`.
 
-11.6. Browser save/reload regression: **сделано**.
+0.0.0.5.6. Добавить automatic lightweight snapshots перед рискованными операциями.
 
-11.7. Render adapter `CampaignMapModel -> DOM`: **сделано**.
+0.0.0.5.7. Добавить UI настройки backup retention.
 
-11.8. Убрать compatibility helpers `commitTokenModelToElement()` / `commitShapeModelToElement()`: **сделано**.
+### 0.0.0.6. Knowledge Graph И Rule Tree
 
-11.9. Игроки на карте без дубля в дереве через `sourceMode="original"`: **сделано**.
+Статус: **частично сделано: KnowledgeGraph foundation есть, graph UI и rule tree не сделаны**.
+Приоритет: **P1**.
 
-### 12. Editor History / Formatting
+Зачем: Knowledge Graph и Rule Tree являются ключевыми доменными системами продукта. Graph показывает связи мира, а Rule Tree превращает правила и справочники в структурированную базу знаний, которую смогут использовать CharacterModel, карта, кампании и будущие пакеты мира.
 
-Статус: **сделано базово, deprecated fallback оставлен только как аварийный хвост**.
+0.0.0.6.1. Добавить отдельную сущность "граф связей".
+
+0.0.0.6.2. Сделать graph view.
+
+0.0.0.6.3. Расширить typed relationships.
+
+0.0.0.6.4. Сделать orphan pages view.
+
+0.0.0.6.5. Сделать Rule Tree / Rules Knowledge Base.
+
+0.0.0.6.6. Связать Rule Tree с будущими ролями и правами.
+
+0.0.0.6.7. Поддержать отображение связей персонажей.
+
+0.0.0.6.8. Поддержать отображение связей предметов.
+
+0.0.0.6.9. Поддержать отображение связей организаций.
+
+0.0.0.6.10. Поддержать отображение связей между правилами и сущностями.
+
+0.0.0.6.11. Подготовить foundation для визуального исследования мира.
+
+### 0.0.0.7. World Package Foundation
+
+Статус: **не сделано**.
+Приоритет: **P1**.
+
+Зачем: это будущая система переиспользования контента и одна из главных продуктовых ценностей. Пользователь должен иметь возможность экспортировать и импортировать связанные наборы данных любого масштаба: персонажа, город, регион, карту, кампанию, rule module или полноценный мир.
+
+0.0.0.7.1. Спроектировать формат `World Package`.
+
+0.0.0.7.2. Описать `WORLD_PACKAGE_CONTRACT.md`.
+
+0.0.0.7.3. Добавить экспорт пакетов мира.
+
+0.0.0.7.4. Добавить импорт пакетов мира.
+
+0.0.0.7.5. Добавить metadata пакетов.
+
+0.0.0.7.6. Добавить проверку зависимостей пакетов.
+
+0.0.0.7.7. Подготовить foundation для fork-модели миров.
+
+0.0.0.7.8. Подготовить foundation для будущего Workshop.
+
+0.0.0.7.9. Подготовить безопасный import preview перед записью в workspace.
+
+0.0.0.7.10. Добавить backup/snapshot перед импортом пакета.
+
+0.0.0.7.11. Добавить tests на export/import маленького пакета, кампании и полного мира.
+
+### 0.0.0.8. Desktop Release Hardening
+
+Статус: **частично сделано: desktop foundation закрыт, release hardening не сделан**.
+Приоритет: **P2**.
+
+Зачем: desktop foundation уже закрыт, desktop build и installer существуют. Дальнейшее desktop-направление важно, но текущий главный риск продукта находится не в desktop, а в доменной модели, управляемости проекта и подготовке контента к переиспользованию.
+
+0.0.0.8.1. Добавить настоящий Tauri UI click-runner.
+
+0.0.0.8.2. Добавить desktop storage runner поверх реального Tauri окна.
+
+0.0.0.8.3. Проверить manual desktop smoke на большом workspace.
+
+0.0.0.8.4. Добавить platform matrix.
+
+0.0.0.8.5. Добавить signing plan.
+
+0.0.0.8.6. Добавить updater/update flow.
+
+0.0.0.8.7. Добавить native image/audio picker только если WebView file input подтвердит ограничения.
+
+0.0.0.8.8. Уточнить package version и git tags.
+
+### 0.0.0.9. Properties UX И Игровые Данные
+
+Статус: **частично сделано: блоки свойств есть, UX и игровые поля требуют развития**.
 Приоритет: **P1/P2**.
 
-12.1. Описать единый контракт истории: **сделано**.
+0.0.0.9.1. Улучшить селекторы в блоках `Свойства`.
 
-12.2. Ctrl+Z / Ctrl+Y через управляемую историю: **сделано**.
+0.0.0.9.2. Доработать схемы свойств.
 
-12.3. Вставка текста как history action: **сделано**.
+0.0.0.9.3. Добавить уровни навыка, тип действия, дистанцию, область, форму, эффект и scaling.
 
-12.4. Форматирование как history action: **сделано**.
+0.0.0.9.4. Перевести расчеты инициативы, здоровья и способностей на `CharacterModel`.
 
-12.5. Блоки / таблицы / wiki-links как structural actions: **сделано**.
+0.0.0.9.5. Сделать migration path от property blocks к полноценному character sheet.
 
-12.6. Изолировать `execCommand` как fallback: **сделано**.
+### 0.0.0.10. Visual Regression И Large Workspace E2E
 
-12.7. Заменить deprecated fallback собственной реализацией основных операций: **сделано базово**.
-`formattingService.js` получил собственные Range/DOM-операции для `bold`, `italic`, `underline`, списков, цвета, reset format и plain-text insertion. `execCommand` остался только аварийным fallback внутри сервиса.
+Статус: **частично сделано: smoke/guards есть, baseline и большие E2E не сделаны**.
+Приоритет: **P1/P2**.
 
-12.8. Добавить дополнительные browser regression для mixed selection, headings, lists, colors, reset format: **сделано базово**.
-`tests/browser/editor-formatting.spec.mjs` расширен проверками списков, цвета, reset format и plain-text insertion. Дальше добавлять более тонкие сценарии nested/mixed selection при каждом новом баге форматирования.
+0.0.0.10.1. Добавить screenshot baseline approval flow.
 
-### 13. CI / Release Process
+0.0.0.10.2. Добавить large workspace E2E tests.
 
-Статус: **сделано базово**.
+0.0.0.10.3. Добавить visual baseline для presentation window.
+
+0.0.0.10.4. Добавить визуальные проверки для новых popup, map controls, property blocks и character sheet.
+
+0.0.0.10.5. Поддерживать правило: каждое P0/P1 UI-изменение получает regression или visual guard.
+
+### 0.0.0.11. Task Tracker И Templates v2
+
+Статус: **частично сделано: MVP есть, расширение не сделано**.
 Приоритет: **P2**.
 
-13.1. GitHub Actions `Verify`: **сделано**.
+0.0.0.11.1. Task tracker: дедлайны.
 
-13.2. `npm ci`, `npm run verify`, browser tests: **сделано**.
+0.0.0.11.2. Task tracker: приоритет.
 
-13.3. Artifact/logs при падении Playwright: **сделано**.
+0.0.0.11.3. Task tracker: фильтры и поиск.
 
-13.4. Проверка регистра import-путей для Linux CI: **сделано**.
+0.0.0.11.4. Task tracker: архив задач.
 
-13.5. `CHANGELOG.md`: **сделано**.
+0.0.0.11.5. Task tracker: связь задачи с карточкой.
 
-13.6. `RELEASE_PROCESS.md`, checklist, version rules, rollback guide: **сделано**.
+0.0.0.11.6. Templates: улучшить поиск, категории и preview.
 
-13.7. Согласовать `package.json.version` с будущими git tags: **позже**.
+0.0.0.11.7. Templates: добавить tests на edge cases и workspace migration.
 
-### 14. Asset Lifecycle
+### 0.0.0.12. UX / Workspace / Multi-Panel
 
-Статус: **сделано как foundation, UI automation не сделан**.
-Приоритет: **P2**.
-
-14.1. `ASSET_LIFECYCLE_CONTRACT.md`: **сделано**.
-
-14.2. Типы assets: image, portrait, map background, object PNG, audio, playlist: **сделано**.
-
-14.3. `AssetReference`: **сделано**.
-
-14.4. Broken asset checker: **сделано**.
-
-14.5. Orphan asset detection: **сделано**.
-
-14.6. Основа под музыку локаций: **сделано**.
-
-14.7. Asset tests: **сделано**.
-
-14.8. UI проверки broken/orphan assets: **не сделано**.
-
-14.9. Безопасное удаление orphan assets после подтверждения: **не сделано**.
-
-14.10. Audio / Playlist Assets: **позже, нужно для музыки локаций**.
-Задача: расширить `AssetReference` и asset lifecycle под аудио и плейлисты как first-class media. Это должно работать одинаково в browser и desktop через будущий `AssetAdapter`.
-
-14.11. Music by Location System: **позже, зависит от 14.10 и Desktop/AssetAdapter**.
-Идея из разобранного файла адаптации: проигрывать музыку из workspace с привязкой к локации; плейлист крутится по кругу. Нужны: audio assets, playlist model, настройка связи `location -> playlist`, управление play/pause/next, сохранение состояния и browser/desktop compatibility.
-
-### 15. Campaign Map Initiative / Layers / UX
-
-Статус: **сделано MVP, развивать после performance/visual safety**.
-Приоритет: **P2**.
-
-15.1. InitiativeModel: **сделано**.
-
-15.2. Popup выбора участников, ручной ввод, roll d20, порядок ходов: **сделано**.
-
-15.3. Сохранение/восстановление инициативы: **сделано**.
-
-15.4. LayerModel, z-order, UI слоев, serializer/restore: **сделано MVP**.
-
-15.5. Mass select: **сделано базово**.
-
-15.6. Context menu "открыть изображение": **сделано**.
-
-15.7. Hidden player token visibility badge: **сделано с правками, нужен visual regression**.
-
-15.8. Square fog brush: **сделано**.
-
-15.9. Locked fog zones: **сделано MVP**.
-Следующее развитие: изменение формы, стабильное поведение в презентации и visual regression.
-
-15.10. Инициатива: добавить modifiers из Properties/Character calculations: **позже**.
-
-15.11. Карта: добавить рисование поверх карты: **позже, после Popup Lifecycle и следующего performance pass**.
-Идея: рядом с "Добавить изображение" добавить "Добавить полотно"; создать раздел `Рисование`; инструменты `Карандаш`, `Перо` как в Figma, `Ластик`, `Заливка`; для всех инструментов добавить selector цвета и последние цвета. Нужен отдельный model/data слой, чтобы рисунки сохранялись не как случайный DOM/canvas state.
-
-15.12. Карта: контекстное меню существ с выбором навыков карточки: **позже, зависит от Properties Model**.
-Идея: у существа на карте можно выбрать навык/способность из карточки, затем задать зону действия и расстояние. Это должно использовать `PropertiesModel`, а не читать произвольный HTML напрямую.
-
-### 16. Разрез Крупных Файлов И CSS
-
-Статус: **сделано на первом крупном срезе, продолжать точечно**.
-Приоритет: **P2**.
-
-16.1. Разрезать `campaignMap.js`: **сделано сильно, не возвращать новые сценарии обратно в главный файл**.
-
-16.2. Разрезать `editor.js`: **сделано**.
-
-16.3. Разрезать `toolbar.js`: **сделано**.
-
-16.4. Разрезать `blockContract.js`: **сделано**.
-
-16.5. Разрезать `campaignMapPresentation.js`: **сделано**.
-
-16.6. Разрезать `tables.js`: **сделано**.
-
-16.7. Разрезать `campaign-map.css`, `popup.css`, `block-special.css`: **сделано**.
-
-16.8. Вводить ownership comments в новых CSS-файлах: **постоянное правило**.
-
-16.9. После каждого разреза запускать full regression: **постоянное правило**.
-
-### 17. Tables Contract
-
-Статус: **сделано базово**.
-Приоритет: **P2**.
-
-17.1. `TABLES_CONTRACT.md`: **сделано**.
-
-17.2. Persistent/runtime правила таблиц: **сделано**.
-
-17.3. Tests resize столбцов: **сделано**.
-
-17.4. Tests выделения ячеек: **сделано**.
-
-17.5. Tests paste/plain text и keyboard navigation: **сделано**.
-
-17.6. Расширить tables v2 под сложные таблицы и merged cells: **позже**.
-
-### 18. Workspace Templates / Task Tracker / Knowledge Graph
-
-Статус: **сделано базово, развивать по продуктовой необходимости**.
+Статус: **частично сделано: onboarding есть, будущие UX-системы не сделаны**.
 Приоритет: **P2/P3**.
 
-18.1. Workspace-level templates в `.my-own-world-templates.json`: **сделано**.
+0.0.0.12.1. Расширить sample workspace.
 
-18.2. Template serializer/parser/migration/search/browser tests: **сделано**.
+0.0.0.12.2. Сделать разделенный editor на две рабочие области.
 
-18.3. Task tracker model-first MVP, pointer DnD, колонки, задачи: **сделано**.
+0.0.0.12.3. Добавить recent workspaces.
 
-18.4. Knowledge graph model, typed relationships, orphan model, backlinks contract: **сделано foundation**.
+0.0.0.12.4. Добавить system menu для desktop.
 
-18.5. Graph entity / graph view: **позже**.
-Идея: добавить отдельный тип сущности "граф связей" для визуального управления отношениями. Это не просто карточка, а будущая отдельная система поверх `KnowledgeGraph`.
+0.0.0.12.5. Добавить отдельное reference-card window в desktop.
 
-18.6. Task tracker next level: дедлайны, приоритет, фильтры, архив, связь задачи с карточкой: **позже**.
+0.0.0.12.6. Поддерживать onboarding при добавлении новых систем.
 
-18.7. Rule Tree / Rules Knowledge Base: **позже, после Account/Role foundation**.
-Идея из разобранного файла адаптации: отдельное древо правил в корне приложения, доступное для ссылок как обычные карточки, но редактируемое только `admin`. Нужно отделить базу правил DnD/других НРИ от лора мира и карт кампании.
+### 0.0.0.13. Tables v2
 
-18.8. Expanded Graph Relationships: **позже**.
-Расширить `KnowledgeGraph` за пределы `treeParent/wikiLink`: фракции, владение, происхождение, отношения, принадлежность предметов и richer lore model.
-
-### 19. UX / Onboarding / AI Onboarding
-
-Статус: **сделано базово, поддерживать**.
+Статус: **частично сделано: базовые таблицы стабильны, сложные таблицы не сделаны**.
 Приоритет: **P2/P3**.
 
-19.1. Sample workspace: **сделано**.
+0.0.0.13.1. Поддержать сложные таблицы.
 
-19.2. Встроенный быстрый старт: **сделано**.
+0.0.0.13.2. Поддержать merged cells.
 
-19.3. "Как устроен продукт" внутри приложения: **сделано**.
+0.0.0.13.3. Добавить tests для сложных таблиц.
 
-19.4. Onboarding checklist: **сделано**.
+0.0.0.13.4. Проверить save/load вложенного форматирования.
 
-19.5. `AI_ONBOARDING.md`: **сделано**.
+### 0.0.0.14. Release И Versioning
 
-19.6. Обновлять onboarding при добавлении новых систем: **постоянное правило**.
-
-19.7. Разделить editor на две рабочие области: **позже**.
-Идея: дать возможность работать в двух карточках одновременно. Перед реализацией нужны четкий state contract для двух открытых страниц, отдельные save contexts и понятное поведение toolbar/history/wiki-links.
-
-19.8. Extended Onboarding и sample workspace expansion: **позже**.
-Идея из разобранного файла адаптации: расширить демонстрационный workspace и onboarding под реальные сценарии карточек, карт, свойств, backup, task tracker, rule tree и будущий desktop.
-
-### 20. Desktop Adapter / Internet Resource Strategy
-
-Статус: **закрыт как desktop foundation**.
-Приоритет: **P1/P2**.
-Зачем: проект уже local-first, а desktop-версия снимет ограничения браузерного File System Access API, сделает workspace стабильнее и подготовит путь к большим ассетам, музыке и офлайн-кампаниям.
-
-20.1. Desktop target и `DESKTOP_ADAPTER_PLAN.md`: **сделано**.
-
-20.2. Выбор Tauri для первого spike: **сделано**.
-
-20.3. StorageAdapter / AssetAdapter design: **сделано**.
-
-20.4. Подготовить окружение Desktop Spike: **сделано базово**.
-Что сделано:
-- добавлен dev dependency `@tauri-apps/cli`;
-- добавлены отдельные npm-команды `dev:web`, `desktop:check`, `desktop:dev`, `desktop:info`, `desktop:build`;
-- создана минимальная папка `src-tauri/` с `tauri.conf.json`, Rust entrypoint и минимальными capabilities;
-- desktop-spike открывает текущий web UI через Tauri WebView и не меняет browser mode;
-- `src-tauri/target/` добавлен в `.gitignore`;
-- команды и требования зафиксированы в README и `DESKTOP_ADAPTER_PLAN.md`.
-
-Состояние окружения на 02.06.2026:
-- `@tauri-apps/cli` установлен;
-- Rust/Cargo/rustup установлены;
-- Visual Studio Build Tools C++ и Windows SDK установлены;
-- `npm run desktop:check` проходит;
-- `cargo check` в `src-tauri` проходит.
-
-20.5. Создать `StorageAdapter` interface в JS: **сделано foundation**.
-Что сделано:
-- добавлены `storageAdapterContract.js`, `storageAdapter.js`, `browserStorageAdapter.js`, `desktopStorageAdapter.js`;
-- описаны методы `pickWorkspace`, `restoreWorkspace`, `readText`, `writeText`, `listFiles`, `removeFile`, `ensureDirectory`;
-- `openWorkspace`, `restoreWorkspace` и создание базовых папок переведены на adapter facade;
-- desktop adapter умеет выбирать workspace через Tauri dialog plugin и сохранять root в `localStorage`;
-- desktop load/create/delete page получили adapter bridge через lightweight file handles;
-- добавлены unit tests на contract.
-
-Хвосты вынесены из блока 20 в будущий desktop hardening backlog: template storage, open-in-folder permissions, future-media flows и настоящий automated Tauri UI-runner.
-
-20.6. Создать `AssetAdapter` interface в JS: **сделано foundation**.
-Что сделано:
-- добавлены `assetAdapterContract.js`, `assetAdapter.js`, `browserAssetAdapter.js`, `desktopAssetAdapter.js`;
-- описаны методы `importFile`, `resolveUrl`, `exists`, `remove`, `findOrphans`;
-- browser adapter умеет базово резолвить asset URL и проверять наличие;
-- desktop adapter подготовлен к Tauri-командам `resolve_asset_url`, `path_exists`, `remove_file`;
-- добавлены unit tests на contract.
-
-Хвосты вынесены из блока 20 в будущий asset/media backlog: native image picker при реальном ограничении WebView и расширение `AssetAdapter` под audio/playlist assets.
-
-20.7. Tauri FS commands: **сделано foundation**.
-Что сделано:
-- добавлены Rust-команды `read_text_file`, `write_text_file`, `list_directory`, `ensure_directory`, `remove_file`, `path_exists`, `resolve_asset_url`;
-- команды ограничивают операции workspace root и блокируют `..`;
-- добавлена зависимость `serde`;
-- JS desktop adapter вызывает команды через `@tauri-apps/api/core`.
-
-Хвосты вынесены из блока 20 в будущий storage hardening backlog: структурированные error objects и настоящий Tauri storage runner.
-
-Состояние окружения 02.06.2026:
-- Rust/Cargo/rustup установлены и видны `desktop:check`;
-- Visual Studio Build Tools C++ и Windows SDK установлены и видны `desktop:check`;
-- `cargo check` в `src-tauri` проходит;
-- `desktop:info` выводит зеленый отчет, но может не завершаться в текущем shell, поэтому не используется как обязательный gate.
-
-20.8. Desktop prototype: **сделано базово**.
-Что сделано:
-- desktop WebView запускается через `npm run desktop:dev`;
-- включен `withGlobalTauri`, чтобы приложение без bundler могло использовать Tauri API;
-- добавлен `tauriBridge.js`: Tauri dialog/invoke доступны через `window.__TAURI__`, а dynamic import остается fallback для будущей сборки;
-- выбор workspace в desktop больше не зависит от browser-only `showDirectoryPicker`;
-- desktop assets переводятся в Tauri asset URL через `convertFileSrc`, поэтому сохраненные картинки и фоны карты должны отображаться в Tauri WebView;
-- добавлен `docs/DESKTOP_PROTOTYPE_SMOKE.md`.
-
-Ручной smoke на реальном workspace проводится как release checklist, а native picker остается будущим пунктом только при подтвержденном ограничении WebView.
-
-20.9. Desktop Backup / Restore Gate: **сделано базово**.
-Что сделано:
-- добавлен `docs/DESKTOP_BACKUP_RESTORE_GATE.md`;
-- backup/restore идет через `StorageAdapter`, без прямой зависимости от `FileSystemHandle`;
-- storage tests проверяют backup/restore страницы и assets через desktop-style adapter;
-- desktop smoke checklist расширен проверкой restore.
-
-Ручной backup/restore smoke остается частью release checklist. Automated Tauri UI-runner вынесен в будущий desktop test backlog.
-
-20.10. Desktop Presentation Window Spike: **сделано**.
-Что сделано:
-- добавлен `docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md`;
-- в `tauriBridge.js` подготовлен `openTauriWebviewWindow()`;
-- подтверждено, что текущая browser-презентация через `window.open` зависит от прямого DOM-доступа и не переносится один-в-один на native Tauri window.
-
-20.10.1. Presentation runtime transport: **сделано базово**.
-Что сделано:
-- добавлены `presentation.html` и `js/presentation/presentationEntry.js`;
-- desktop-презентация открывается через Tauri `WebviewWindow`;
-- master-окно отправляет snapshot карты через `BroadcastChannel`;
-- presentation runtime поддерживает собственные zoom/pan, показ карты и popup просмотра изображения;
-- browser fallback через старый `window.open` сохранен.
-
-Hardening после 20.10.1 выполнен в рамках 20.14.2: HTML snapshot заменен на model-first JSON renderer из `CampaignMapModel`. Automated Tauri UI-runner вынесен в будущий desktop test backlog.
-
-20.11. Desktop Packaging Smoke: **сделано**.
-Что сделано:
-- добавлен `docs/DESKTOP_PACKAGING_SMOKE.md`;
-- добавлена команда `npm run desktop:packaging-smoke`;
-- smoke проверяет desktop scripts, Tauri config, asset protocol, `protocol-asset` feature и наличие desktop-документов;
-- production bundle пока не включен намеренно: текущий пункт закрывает smoke-gate, а не выпуск installer.
-
-Будущий production packaging:
-- **20.11.1. Production frontend output**;
-- **20.11.2. Включить Tauri bundle**;
-- **20.11.3. Проверить installer/portable build**.
-
-20.12. Cloud threat model: **сделано как стратегический документ, реализация позже**.
-Добавлен `docs/CLOUD_THREAT_MODEL.md`. Cloud нельзя начинать до Safe HTML, ownership, role model, asset access policy и presentation privacy.
-
-20.13. Backend storage API, auth, ownership, sync/conflict resolution: **сделано как API plan, реализация позже**.
-Добавлен `docs/BACKEND_STORAGE_API_PLAN.md`. BackendStorageAdapter остается будущим направлением после desktop и role foundation.
-
-20.14. Перевод в Desktop-приложение: **сделано как стратегия, работа продолжается подпунктами**.
-Добавлен `docs/DESKTOP_TRANSITION_STRATEGY.md`. Desktop остается основным практическим путем, но через adapter boundary и без удаления browser mode. Следующий desktop-фокус: hardened `CampaignMapModel` renderer для презентации и ручной smoke реального Tauri-окна на workspace с картинками.
-
-20.14.1. Desktop image runtime parity: **сделано базово**.
-Карточки, image blocks, portrait images и токены карты должны восстанавливать `img[data-asset]` через `AssetAdapter` после финального runtime-render. `AssetAdapter` синхронизируется с выбранным workspace root после `openWorkspace()` и `restoreWorkspace()`.
-
-20.14.2. Desktop presentation model-first renderer: **сделано базово**.
-Tauri-презентация теперь получает `render-model` payload из `CampaignMapModel`, а не HTML snapshot. Payload содержит модель карты, background asset, token image assets, fog image, locked zones, layers и runtime view state токенов. Отдельный renderer `js/presentation/campaignMapPresentationRenderer.js` строит DOM презентации из данных.
-
-20.14.3. Desktop presentation privacy rules: **сделано базово**.
-Правила приватности вынесены в `js/presentation/campaignMapPresentationPrivacy.js`: скрытые non-player токены и фигуры не попадают в model-first презентацию, скрытые player/original токены остаются видимыми с badge `скрыт`, туман и locked fog zones находятся над сущностями. Browser smoke закрепляет этот контракт.
-
-20.14.4. Desktop manual smoke checklist: **сделано базово**.
-Расширен `docs/DESKTOP_PROTOTYPE_SMOKE.md`: проверяются background map image, presentation privacy, image fallback, backup/restore и desktop assets после перезапуска.
-
-20.14.5. Desktop automated UI runner: **сделано как automated desktop gate**.
-Добавлен `npm run desktop:gate`, который последовательно запускает verify, browser smoke, desktop prepare, packaging smoke, desktop environment и `cargo check`. Полноценный Tauri UI click-runner остается будущим подпунктом после стабилизации installer.
-
-20.14.6. Production desktop frontend output: **сделано базово**.
-Добавлен `npm run desktop:prepare` и `tools/prepare_desktop_dist.mjs`. Tauri production build берет frontend из `dist-desktop`, а не из сырого корня проекта.
-
-20.14.7. Desktop installer / portable build: **сделано базово, artifact собирается**.
-`bundle.active` включен, target ограничен `nsis`, release `.exe` используется как portable-smoke артефакт. `npm run desktop:build` собирает `src-tauri/target/release/my-own-world.exe` и `src-tauri/target/release/bundle/nsis/MyOwnWorld_0.0.0_x64-setup.exe`. Перед build обязателен `npm run desktop:gate`; первый NSIS build может требовать сетевой доступ для скачивания bundler.
-Исправление 04.06.2026: desktop-презентация требует `core:webview:allow-create-webview-window`; permission добавлен в `src-tauri/capabilities/default.json` и проверяется `desktop:packaging-smoke`.
-
-20.14.8. Desktop release policy: **сделано базово**.
-Добавлен `docs/DESKTOP_RELEASE_POLICY.md`: gate, build, ручной release smoke, rollback и правило версий.
-
-20.14.9. Desktop map performance optimization: **сделано**.
-Документ `docs/DESKTOP_MAP_PERFORMANCE_NOTES.md` фиксирует причины медленного рендера карты в desktop: asset fallback, base64/data URL для больших background, canvas low-detail, fog canvas, model-first presentation payload и WebView/IPC overhead. Следующие работы: cache renderable asset URL, diff-sync presentation, dirty-region fog и desktop performance scenario на большом workspace.
-Обновление 04.06.2026: **частично сделано**. Добавлен cache `getRenderableImageURL()`, desktop-презентация получила delta-sync для токенов/фигур, тумана и drag-measure вместо полного render-model на каждое движение. Сетка в model-first презентации приглушает hex-цвета до alpha, чтобы не становиться непрозрачной. Следующий хвост: реальный desktop performance scenario на большом workspace и dirty-region fog.
-Обновление 04.06.2026: **desktop performance scenario добавлен**. `desktopPresentationLargeWorkspace` разделяет budget полного render и `deltaSyncTimeMs`, тест закрепляет, что быстрые частичные обновления не должны деградировать. Стрелка расстояния в презентации поднята выше тумана (`z-index: 10002`).
-Обновление 04.06.2026: **dirty-region fog sync добавлен**. Кисть тумана записывает измененный прямоугольник, presentation payload отправляет `fogPatch` без полной сериализации canvas, renderer презентации дорисовывает patch в canvas-поверхность.
-
-20.14.10. Dirty-region fog sync: **сделано**.
-Туман уже синхронизируется отдельным сообщением. Для кисти добавлен patch-режим: передается только измененная область. Fog all / Unfog all остаются full-image fallback, потому что в этих действиях меняется весь canvas.
-
-Итог блока 20: **закрыт как desktop foundation**.
-Desktop-версия имеет Tauri shell, storage/asset adapters, native FS commands, backup/restore gate, presentation window, model-first presentation renderer, production frontend output, installer, release policy, performance notes, delta-sync и dirty-region fog sync. Следующие desktop-работы больше не входят в блок 20 и должны планироваться как отдельные future hardening задачи.
-
-### 22. Character Domain Model
-
-Статус: **будущий P1 после desktop foundation или параллельно малыми кусками**.
-Приоритет: **P1/P2**.
-
-22.1. CharacterModel: **позже, но высокий приоритет**.
-Единая модель персонажа: характеристики, навыки, эффекты, инвентарь, раса/класс, вычисления. Нужна для отказа от legacy stat block и превращения персонажа в доменную сущность.
-
-22.2. Inventory System: **позже**.
-Инвентарь персонажа и существ: предметы, вес, экипировка, связь с карточками предметов и будущей игровой логикой.
-
-22.3. Effects / Conditions System: **позже**.
-Эффекты, баффы, дебаффы и состояния, которые могут влиять на персонажей, карту, инициативу и свойства.
-
-22.4. Full Character Sheet UX: **позже**.
-Полноценный лист персонажа поверх `PropertiesModel` и будущего `CharacterModel`, без возврата к HTML-экспериментам `DnD v2` / `Переменные`.
-
-### 23. Account / Roles / Permissions
-
-Статус: **будущий стратегический блок, нужен перед Rule Tree и web/cloud**.
-Приоритет: **P2/P3**.
-
-23.1. Account System: **позже**.
-Упрощенные локальные аккаунты как подготовка к ролям и будущей web/cloud модели.
-
-23.2. Role System: **позже**.
-Роли: `user`, `PRO user`, `admin`.
-
-23.3. Admin Permission Layer: **позже**.
-Ограничения редактирования защищенных зон, rule tree и будущих системных действий.
-
-23.4. Rule Tree permissions: **после 18.7 и 23.3**.
-Редактирование rule tree доступно только `admin`; чтение и ссылки доступны обычным сценариям.
-
-### 24. Performance / Visual Hardening Future
-
-Статус: **расширять после Desktop Spike и при новых лагах**.
+Статус: **частично сделано: release process есть, version/tag discipline и release handoff не закрыты**.
 Приоритет: **P2**.
 
-24.1. Large Workspace E2E Tests: **позже**.
-Реальные end-to-end сценарии на больших workspace.
+0.0.0.14.1. Согласовать `package.json.version` с git tags.
 
-24.2. Screenshot Baseline Visual Regression: **позже**.
-Настоящее screenshot comparison поверх текущих visual guards.
+0.0.0.14.2. Ввести правило: пункт плана закрывается коммитом с номером версии пункта.
 
-24.3. Campaign Map Dirty Region Fog Save: **позже**.
-Частичное сохранение тумана войны.
+0.0.0.14.3. Добавить changelog entries под новую версионность плана.
 
-24.4. Presentation Sync Optimization: **позже**.
-Дальнейшая оптимизация синхронизации окна презентации.
+0.0.0.14.4. Уточнить rollback guide для desktop installer.
 
-24.5. Campaign Map Stress Tests: **позже**.
-Стресс-тесты pointer painting и больших карт.
+0.0.0.14.5. Добавить release candidate checklist.
 
-### 25. Future AI / Collaboration / Web
+0.0.0.14.6. Связать release process с новой папкой `release/`.
 
-Статус: **долгосрочно**.
+0.0.0.14.7. Добавить правило подготовки `release/latest/` после успешного release candidate.
+
+0.0.0.14.8. Добавить release handoff checklist для владельца продукта.
+
+0.0.0.14.9. Добавить tester handoff checklist для передачи сборки другим людям.
+
+### 0.0.0.15. Account / Roles / Permissions
+
+Статус: **не сделано**.
 Приоритет: **P3**.
 
-25.1. Threat Model for Web/Cloud: **позже**.
-CSP, auth, permissions, validation, server-side boundary.
+Зачем: локальному продукту пока не требуется развитая ролевая система. Большинство ближайших сценариев использования остаются однопользовательскими. Роли и permissions нужны позже - перед Rule Tree hardening, protected canon data и web/cloud моделью.
 
-25.2. Shared / Collaborative Workspace Foundation: **позже**.
-Основа совместной работы после аккаунтов и permissions.
+0.0.0.15.1. Спроектировать локальную account system.
 
-25.3. AI Integration Layer: **позже**.
-AI-возможности поверх архитектурных контрактов и AI onboarding.
+0.0.0.15.2. Добавить роли: `user`, `PRO user`, `admin`.
 
-### 26. Documentation Maintenance
+0.0.0.15.3. Сделать permission layer.
+
+0.0.0.15.4. Ограничить редактирование защищенных зон, rule tree и будущих системных действий.
+
+0.0.0.15.5. Подготовить роли к web/cloud модели.
+
+### 0.0.0.16. Web / Cloud Readiness
+
+Статус: **описано стратегически, не реализовано**.
+Приоритет: **P3**.
+
+Зачем: web/cloud направление остается стратегически важным, но сначала нужно завершить основные доменные модели, package foundation, local-first ownership и release handoff.
+
+0.0.0.16.1. Расширить Safe HTML под cloud threat model.
+
+0.0.0.16.2. Спроектировать auth.
+
+0.0.0.16.3. Спроектировать ownership.
+
+0.0.0.16.4. Спроектировать server-side validation.
+
+0.0.0.16.5. Спроектировать BackendStorageAdapter.
+
+0.0.0.16.6. Спроектировать sync/conflict resolution.
+
+0.0.0.16.7. Подготовить CSP и security headers для web-версии.
+
+### 0.0.0.17. Documentation Maintenance
 
 Статус: **постоянная задача**.
 Приоритет: **P1**.
 
-26.1. Обновлять `README.md` после архитектурных изменений.
+Зачем: после Project Structure & Release Handoff Reorganization документация должна поддерживаться не только по факту изменений, но и по зонам ответственности: product, delivery, architecture, testing, user-release и archive.
 
-26.2. Обновлять `docs/MY_OWN_WORLD_FULL_MANUAL.docx` после изменения функций.
+0.0.0.17.1. Обновлять `README.md`.
 
-26.3. Обновлять contract-файлы при изменении правил подсистем.
+0.0.0.17.2. Обновлять `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
 
-26.4. Поддерживать `docs/WORK_LOG.md` как исторический журнал.
+0.0.0.17.3. Обновлять contract-файлы.
 
-26.5. Поддерживать `docs/PROJECT_FILE_AUDIT.md` после крупных перемещений/разрезов.
+0.0.0.17.4. Поддерживать `docs/WORK_LOG.md`.
 
-## Следующий Рекомендуемый Шаг
+0.0.0.17.5. Поддерживать `docs/PROJECT_FILE_AUDIT.md`.
 
-Следующий рабочий пункт: **20.4. Подготовить окружение Desktop Spike**.
+0.0.0.17.6. Поддерживать `Лог особенный/Летопись королевства My own world.md`.
 
-Пункты 6 и 12 закрыты базово. Дальше логично идти в Desktop по шагам 20.4-20.11: сначала окружение и adapter boundary, затем маленький Tauri spike, затем desktop smoke/backup/presentation checks.
-# Актуальный верхний блок: Desktop hardening и prototype
+0.0.0.17.7. Поддерживать `docs/00-product/`.
 
-## 20.7.1. Desktop Storage Hardening
+0.0.0.17.8. Поддерживать `docs/01-delivery/`.
 
-Статус: **сделано базово 02.06.2026**.
+0.0.0.17.9. Поддерживать `docs/02-architecture/`.
 
-20.7.1.1. Adapter-backed write layer: **сделано**. `writeQueue.js` теперь умеет писать страницы через `StorageAdapter` по `page.path`; прямой `createWritable()` оставлен только как fallback для старых browser/test handles.
+0.0.0.17.10. Поддерживать `docs/03-testing/`.
 
-20.7.1.2. PageStorage без pseudo-handles: **сделано**. `pageStorage.js` больше не создает desktop lightweight file handles; desktop/browser запись идет через adapter path.
+0.0.0.17.11. Поддерживать `docs/04-user-release/`.
 
-20.7.1.3. BackupService через StorageAdapter: **сделано**. `backupService.js` создает manifest, страницы и assets через `readText/writeText/readBinary/writeBinary`; cleanup удаляет snapshot-папки через `removeDirectory`.
+0.0.0.17.12. Поддерживать `release/latest/`.
 
-20.7.1.4. AssetStorage через AssetAdapter: **сделано базово**. `assetStorage.js`, `browserAssetAdapter.js`, `desktopAssetAdapter.js` получили `importFile`, `resolveUrl`, `exists`, `remove` через storage facade.
+## Рекомендуемый Следующий Пункт
 
-20.7.1.5. CampaignMap asset flow через adapter: **сделано базово**. Загрузка фона карты и восстановление фоновых изображений больше не идут напрямую через `state.workspaceHandle`.
+Следующий рабочий пункт: **0.0.0.1. Character Domain Model**.
 
-20.7.1.6. Desktop storage regression tests: **сделано**. `tests/storageAdapter.test.mjs` проверяет adapter-backed `writePageContent()` и backup/restore без FileSystemHandle.
+Сразу после закрытия первого слоя `Character Domain Model` следующим рабочим пунктом становится **0.0.0.2. Project Structure & Release Handoff Reorganization**.
 
-20.7.1.7. Documentation/manual update: **сделано в рамках этапа**. Обновлены план, desktop-план, work log, manual и летопись.
+Причина: проекту нужна не только новая доменная модель, но и управляемая структура, в которой владелец продукта видит релизные материалы, тестовые материалы, продуктовые решения и инженерную документацию отдельно.
 
-20.7.1.8. Verification gate: **сделано**. Обязательные проверки: `npm run verify`, `npm run test:browser`, `npm run desktop:check`, `cargo check`.
+## Product Owner Update Notes
 
-Следующее развитие: убрать оставшиеся прямые `state.workspaceHandle` из template storage, tree open-in-folder permissions и будущих media-flow, но это уже отдельные подпункты после desktop prototype.
+План обновлен с учетом Product Owner анализа:
 
-## 20.8. Desktop Prototype
+- добавлено продуктовое видение;
+- добавлена философия единой операционной системы НРИ-мира;
+- поднят приоритет доменных систем;
+- добавлен `Project Structure & Release Handoff Reorganization`;
+- добавлен `World Package Foundation`;
+- добавлен `agent workflow layer`;
+- понижен приоритет roles/web/cloud до завершения доменных моделей;
+- release handoff выделен как отдельная зона ответственности.
 
-Статус: **сделано как engineering smoke foundation 02.06.2026**.
+## Архив Сделанного
 
-20.8.1. Desktop prototype checklist: **сделано**. В `docs/DESKTOP_ADAPTER_PLAN.md` зафиксирован ручной сценарий: открыть workspace, создать/изменить карточку, перезапустить, проверить карту, assets, task tracker и UTF-8.
+Этот раздел содержит закрытые задачи. Они опущены вниз, чтобы верхний план показывал только будущую работу.
 
-20.8.2. Native compile smoke: **сделано**. `cargo check` проходит в `src-tauri`.
+### A. Block System Contract
 
-20.8.3. Desktop environment smoke: **сделано**. `npm run desktop:check` подтверждает Node/npm/Tauri CLI/Rust/Cargo/rustup/VS Build Tools/Windows SDK.
+Сделано: persistent/runtime разделение, сериализация форм, правила block types, selective upgrades, `data-runtime`.
 
-20.8.4. Browser compatibility gate: **сделано**. Browser suite остается зеленым, desktop hardening не ломает web-версию.
+### B. Drag and Drop
 
-Оставшийся ручной UX-хвост: запустить `npm run desktop:dev`, выбрать реальный workspace в окне Tauri и вручную пройти checklist. Автоматизировать реальный Tauri UI-runner лучше отдельным пунктом после стабилизации desktop prototype.
+Сделано: DnD блоков, дерева и task tracker; pointer-based tree DnD; tests drop intent/move planner.
+
+### C. UI И Popup
+
+Сделано: popup lifecycle contract, popup manager, viewport positioning, Escape/outside click, trigger toggle, popup regression.
+
+### D. Карточки И Редактор
+
+Сделано: card shell, типы карточек, tags/aliases, wiki-links, image upload/crop/delete, image block, properties foundation, editor history, formatting service.
+
+### E. Карта Кампании
+
+Сделано: отдельная сущность карты, `CampaignMapModel`, data-first save, tokens, objects, shapes, fog, layers, initiative MVP, selection MVP, presentation mode, model-first presentation, privacy, delta-sync, dirty-region fog sync.
+
+### F. Task Tracker
+
+Сделано: отдельная сущность, колонки, задачи, удаление, pointer DnD, model-first save/read, tests.
+
+### G. PageRepository / PageIndex
+
+Сделано: repository/index по id/title/aliases/parent/type/tags, lifecycle, wiki/search/duplicates/map picker/templates lookup, tests.
+
+### H. Safe HTML / Sanitizer
+
+Сделано: contract, allowlist, sanitizer save/load/paste, security regression.
+
+### I. Schema Validation / Recovery
+
+Сделано: schema contracts, validators, recovery report, fallback screen, validation gate, tests.
+
+### J. Backup / Restore
+
+Сделано: backup/recovery contract, manual backup, restore dialog, assets backup, retention policy, tests.
+
+### K. Tests / CI / Visual Safety
+
+Сделано: GitHub Actions Verify, unit/browser tests, visual guards, smoke checklist.
+
+### L. Tables
+
+Сделано: contract, column resize, selection, paste/plain text, keyboard navigation, table toolbar foundation.
+
+### M. Asset Lifecycle Foundation
+
+Сделано: contract, `AssetReference`, scanner, broken checker, orphan detector, renderable image fallback.
+
+### N. Desktop Foundation
+
+Сделано: Tauri shell, StorageAdapter/AssetAdapter, FS commands, workspace picker, backup/restore gate, presentation window, production dist, installer, release policy, packaging smoke, performance notes.
+
+### O. Documentation
+
+Сделано: единый план, work log, manual, AI onboarding, README updates, contracts, file audit, maturity assessments, летопись.

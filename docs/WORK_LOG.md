@@ -1,5 +1,40 @@
 ﻿# Журнал работ
 
+## 2026-06-04: Добавлен agent workflow layer и PO-приоритеты встроены в план
+
+### Что сделано
+
+- Создан `AGENTS.md` с правилами работы Codex/AI-агента.
+- Создана папка `.agents/skills/` с маршрутами для `character-model`, `docs-restructure`, `release-handoff`, `desktop-release`, `map-hardening`, `world-package`.
+- Добавлены инструменты `tools/docs_index.mjs`, `tools/validate_agent_skills.mjs`, `tools/safe_commit.mjs`.
+- Добавлен шаблон `docs/03-testing/CODE_REVIEW_TEMPLATE.md`.
+- Созданы стартовые routing-документы `docs/00-product/PRODUCT_DASHBOARD.md`, `docs/01-delivery/PROJECT_PLAN.md`, `docs/01-delivery/WORK_LOG.md`.
+- В `package.json` добавлены scripts `docs:index` и `agents:validate`.
+- В `README.md` добавлен раздел `AI / Codex Workflow`.
+- `docs/PROJECT_PLAN.md` обновлен по Product Owner инструкциям: добавлены продуктовая философия, продуктовые опоры, `Project Structure & Release Handoff Reorganization`, `World Package Foundation`, новый порядок приоритетов и подпункт `0.0.0.2.16`.
+
+### Следующее развитие
+
+- Следующий плановый пункт остается `0.0.0.1. Character Domain Model`.
+- После него высоким P0 идет `0.0.0.2. Project Structure & Release Handoff Reorganization`, где нужно полноценно разложить docs/release по зонам и добавить metadata всем markdown-документам.
+
+---
+
+## 2026-06-04: Пересобран план в версионную дорожную карту и обновлена оценка зрелости
+
+### Что сделано
+
+- `docs/PROJECT_PLAN.md` полностью пересобран: активный план теперь начинается с `0.0.0.1`, а выполненные задачи перенесены вниз в архив.
+- Частично сделанные задачи возвращены в активный план как будущие версии: `CharacterModel`, asset UI, desktop release hardening, recovery repair-actions, visual baseline, large workspace E2E, карта v2, roles, web/cloud.
+- В план добавлено простое описание текущего состояния проекта, направления развития и структуры папок.
+- Создана новая оценка зрелости: `Тех. зрелость/04.06.2026 - оценка после закрытия Desktop Foundation.md`.
+
+### Вывод
+
+Текущий следующий рабочий пункт плана: `0.0.0.1. Character Domain Model`.
+
+---
+
 ## 2026-06-04: Закрыт блок 20 Desktop Foundation
 
 ### Что сделано
