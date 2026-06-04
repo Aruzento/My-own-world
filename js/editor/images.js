@@ -1,6 +1,6 @@
 import {
   saveAssetFile,
-  getImageURL
+  getRenderableImageURL
 } from '../storage/assetStorage.js';
 
 import {
@@ -278,7 +278,7 @@ export async function restoreAssetImages(
     try {
 
       img.src =
-        await getImageURL(
+        await getRenderableImageURL(
           filename
         );
 

@@ -16,6 +16,12 @@ import {
 } from './campaignMapPresentationStyle.js';
 
 import {
+  createCampaignMapPresentationFogPayload,
+  createCampaignMapPresentationItemsPayload,
+  createCampaignMapPresentationPayload
+} from './campaignMapPresentationPayload.js';
+
+import {
   applyPresentationItemRecord,
   getPresentationItemSelector,
   removeHiddenPresentationItems
@@ -159,7 +165,16 @@ export function syncPresentationItemById(
 
   if (presentationMode === 'tauri') {
 
-    syncPresentation();
+    sendTauriPresentationItemsPatch(
+      sourceMap,
+      [
+        {
+          itemType,
+          itemId
+        }
+      ]
+    );
+
     return true;
   }
 
@@ -240,6 +255,16 @@ export function syncPresentationItemsById(
 
   if (!items.length) return true;
 
+  if (presentationMode === 'tauri') {
+
+    sendTauriPresentationItemsPatch(
+      sourceMap,
+      items
+    );
+
+    return true;
+  }
+
   let needsFullSync =
     false;
 
@@ -278,7 +303,10 @@ export function syncPresentationFog(
 
   if (presentationMode === 'tauri') {
 
-    syncPresentation();
+    sendTauriPresentationFogPatch(
+      sourceMap
+    );
+
     return true;
   }
 
@@ -320,7 +348,10 @@ export function syncPresentationDragMeasure(
 
   if (presentationMode === 'tauri') {
 
-    syncPresentation();
+    sendTauriPresentationMeasurePatch(
+      payload
+    );
+
     return true;
   }
 
@@ -370,6 +401,37 @@ function openTauriPresentationWindow() {
 
       presentationWindow =
         windowHandle;
+
+      windowHandle.once?.(
+        'tauri://created',
+        () => {
+
+          pendingTauriPresentationRender =
+            false;
+
+          sendTauriPresentationRender();
+        }
+      );
+
+      windowHandle.once?.(
+        'tauri://error',
+        event => {
+
+          console.error(
+            'Не удалось создать Tauri-окно презентации.',
+            event
+          );
+
+          presentationMode =
+            'browser';
+
+          presentationWindow =
+            null;
+
+          pendingTauriPresentationRender =
+            false;
+        }
+      );
 
       windowHandle.once?.(
         'tauri://destroyed',
@@ -445,17 +507,25 @@ function sendTauriPresentationRender() {
   const channel =
     ensureTauriPresentationChannel();
 
-  const payload =
-    createPresentationRenderPayload();
+  createPresentationRenderPayload()
+    .then(payload => {
 
-  if (!payload) return false;
+      if (!payload) return;
 
-  channel.postMessage(
-    payload
-  );
+      channel.postMessage(
+        payload
+      );
 
-  pendingTauriPresentationRender =
-    true;
+      pendingTauriPresentationRender =
+        true;
+    })
+    .catch(error => {
+
+      console.error(
+        'Не удалось подготовить model-first payload презентации.',
+        error
+      );
+    });
 
   return true;
 }
@@ -496,7 +566,112 @@ function postTauriPresentationImagePreview(
 }
 
 
-function createPresentationRenderPayload() {
+function sendTauriPresentationItemsPatch(
+  sourceMap,
+  items
+) {
+
+  if (
+    presentationMode !== 'tauri' ||
+    !items?.length
+  ) return false;
+
+  const sourceStage =
+    sourceMap?.querySelector?.('.campaign-map-stage') ||
+    sourceMap;
+
+  if (!sourceStage) return false;
+
+  const store =
+    getCampaignMapStore(
+      sourceStage.closest('.campaign-map-document')
+    );
+
+  const model =
+    store?.getModel();
+
+  if (!model) return false;
+
+  createCampaignMapPresentationItemsPayload(
+    sourceStage,
+    model,
+    items
+  )
+    .then(payload => {
+
+      if (!payload) return;
+
+      ensureTauriPresentationChannel()
+        .postMessage(
+          payload
+        );
+    })
+    .catch(error => {
+
+      console.error(
+        'Не удалось подготовить частичное обновление презентации.',
+        error
+      );
+    });
+
+  return true;
+}
+
+
+function sendTauriPresentationFogPatch(
+  sourceMap
+) {
+
+  if (presentationMode !== 'tauri') return false;
+
+  const sourceStage =
+    sourceMap?.querySelector?.('.campaign-map-stage') ||
+    sourceMap;
+
+  if (!sourceStage) return false;
+
+  const store =
+    getCampaignMapStore(
+      sourceStage.closest('.campaign-map-document')
+    );
+
+  const model =
+    store?.getModel();
+
+  const payload =
+    createCampaignMapPresentationFogPayload(
+      sourceStage,
+      model
+    );
+
+  if (!payload) return false;
+
+  ensureTauriPresentationChannel()
+    .postMessage(
+      payload
+    );
+
+  return true;
+}
+
+
+function sendTauriPresentationMeasurePatch(
+  measure
+) {
+
+  if (presentationMode !== 'tauri') return false;
+
+  ensureTauriPresentationChannel()
+    .postMessage({
+      type: 'drag-measure',
+      measure
+    });
+
+  return true;
+}
+
+
+async function createPresentationRenderPayload() {
 
   const source =
     document.querySelector(
@@ -512,6 +687,14 @@ function createPresentationRenderPayload() {
 
   const model =
     store?.getModel();
+
+  const modelPayload =
+    await createCampaignMapPresentationPayload(
+      source,
+      model
+    );
+
+  if (modelPayload) return modelPayload;
 
   const clone =
     preparePresentationClone(

@@ -7,6 +7,144 @@ import {
 // P0 smoke: карта должна переживать цикл model -> save HTML -> reload HTML.
 
 test(
+  'campaign-map-background-falls-back-to-renderable-data-url',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const state =
+      await page.evaluate(
+        async () => {
+
+          const {
+            restoreMapBackground
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          const {
+            setAssetAdapter
+          } = await import('/js/storage/assetAdapter.js');
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const PreviousImage =
+            window.Image;
+
+          window.Image =
+            class BrokenImage {
+
+              set src(
+                value
+              ) {
+
+                this.currentSrc =
+                  value;
+
+                queueMicrotask(
+                  () => this.onerror?.()
+                );
+              }
+            };
+
+          setStorageAdapter({
+            kind: 'browser',
+            async pickWorkspace() {},
+            async restoreWorkspace() {},
+            async ensureDirectory() {},
+            async getDirectoryHandle() {},
+            async readText() {
+
+              return '';
+            },
+            async writeText() {},
+            async readBinary() {
+
+              return new Uint8Array([
+                137,
+                80,
+                78,
+                71
+              ]).buffer;
+            },
+            async writeBinary() {},
+            async listFiles() {
+
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          });
+
+          setAssetAdapter({
+            kind: 'broken-primary',
+            async importFile() {},
+            async resolveUrl() {
+
+              return 'asset://broken/maps/castle.png';
+            },
+            async exists() {
+
+              return true;
+            },
+            async remove() {},
+            async findOrphans() {
+
+              return [];
+            }
+          });
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div
+                class="campaign-map-stage"
+                data-map-asset="maps/castle.png"
+                data-grid="false"
+                data-fog-mode="draw"
+                contenteditable="false"
+              >
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          try {
+
+            await restoreMapBackground(
+              document.querySelector('.campaign-map-document')
+            );
+
+            return {
+              backgroundImage:
+                document.querySelector('.campaign-map-background')
+                  .style
+                  .backgroundImage
+            };
+
+          } finally {
+
+            window.Image =
+              PreviousImage;
+          }
+        }
+      );
+
+    expect(
+      state.backgroundImage
+    ).toContain(
+      'data:image/png;base64,iVBORw=='
+    );
+  }
+);
+
+
+test(
   'campaign-map-data-first-save-reload',
   async ({ page }) => {
 

@@ -1,5 +1,19 @@
 # Desktop Transition Strategy
 
+## Обновление 04.06.2026
+
+Пункты `20.14.4-20.14.8` закрыты базово:
+
+- ручной smoke расширен под реальные desktop assets, карту и presentation privacy;
+- добавлен automated desktop gate `npm run desktop:gate`;
+- production frontend output вынесен в `dist-desktop`;
+- Tauri build больше не берет сырой корень проекта;
+- bundle включен, target ограничен `nsis`;
+- release policy описана в `docs/DESKTOP_RELEASE_POLICY.md`;
+- причины медленного desktop-рендера карты описаны в `docs/DESKTOP_MAP_PERFORMANCE_NOTES.md`.
+
+Следующий практический desktop-пункт: `20.14.9 Desktop map performance optimization`.
+
 Дата: 02.06.2026
 
 Пункт плана: **20.14 Перевод в Desktop-приложение**.

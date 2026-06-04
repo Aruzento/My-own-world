@@ -1,0 +1,120 @@
+# Desktop Release Policy
+
+Дата: 04.06.2026
+
+Пункты плана: **20.14.4-20.14.8**.
+
+## Статус
+
+Desktop-переход переведен из spike в управляемый release-контур:
+
+- есть ручной smoke checklist для реального Tauri-окна;
+- есть production frontend output `dist-desktop`;
+- Tauri build берет frontend из `dist-desktop`, а не из сырого корня проекта;
+- `bundle.active` включен;
+- installer target ограничен `nsis`, чтобы не требовать лишний MSI/WiX backend;
+- добавлен автоматический gate `npm run desktop:gate`;
+- `npm run desktop:build` успешно собирает release `.exe` и NSIS installer.
+- окно презентации разрешено через `core:webview:allow-create-webview-window` в `src-tauri/capabilities/default.json`.
+
+## Обязательный Gate Перед Desktop Build
+
+Перед `npm run desktop:build` выполнить:
+
+```powershell
+npm run desktop:gate
+```
+
+Команда последовательно запускает:
+
+1. `npm run verify`
+2. `npm run test:browser`
+3. `npm run desktop:prepare`
+4. `npm run desktop:packaging-smoke`
+5. `npm run desktop:check`
+6. `cargo check` в `src-tauri`
+
+Если gate красный, desktop build делать нельзя.
+
+## Production Frontend Output
+
+`npm run desktop:prepare` создает `dist-desktop/`.
+
+В dist попадают только runtime-файлы:
+
+- `index.html`
+- `presentation.html`
+- `assets/`
+- `js/`
+- `styles/`
+- `desktop-build-manifest.json`
+
+В dist не попадают:
+
+- `docs/`
+- `tests/`
+- `tools/`
+- `src-tauri/`
+- `node_modules/`
+- `test-results/`
+- workspace пользователя
+
+Это важно для скорости, размера installer и безопасности.
+
+## Build
+
+```powershell
+npm run desktop:build
+```
+
+Tauri сам вызывает `npm run desktop:prepare` через `beforeBuildCommand`.
+
+Проверенный результат:
+
+- release `.exe`: `src-tauri/target/release/my-own-world.exe`;
+- NSIS installer: `src-tauri/target/release/bundle/nsis/MyOwnWorld_0.0.0_x64-setup.exe`.
+
+Важно: первый NSIS build может скачать bundler из GitHub. В restricted sandbox это может падать с ошибкой сокета; вне sandbox сборка проходит.
+
+## Ручной Release Smoke
+
+После сборки:
+
+1. Запустить release `.exe` или installer build.
+2. Открыть существующий workspace.
+3. Проверить дерево, карточки, карту и task tracker.
+4. Открыть карточку с портретом.
+5. Открыть image block.
+6. Открыть карту с background.
+7. Открыть карту с токенами и объектами.
+8. Открыть presentation window.
+9. Проверить privacy: скрытые NPC не видны, hidden player виден с badge `скрыт`, туман поверх сущностей.
+10. Создать backup.
+11. Изменить карточку.
+12. Восстановить backup.
+13. Перезапустить приложение.
+14. Убедиться, что workspace и assets восстановились.
+
+## Rollback
+
+Если release build сломан:
+
+1. Не использовать новый installer.
+2. Вернуться к предыдущему git tag или commit.
+3. Запустить предыдущую desktop/dev версию.
+4. Перед любым ручным восстановлением сделать копию workspace.
+5. Если workspace уже менялся новой версией, восстановить snapshot из `.my-own-world-backups/`.
+
+## Правило Версий
+
+- `patch`: баги, совместимые фиксы, документация, тесты.
+- `minor`: новые пользовательские функции без изменения формата workspace.
+- `major`: изменение формата workspace, требующее migration/recovery.
+- `desktop-experimental`: desktop build, который еще не прошел полный ручной release smoke.
+
+## Что Еще Не Закрыто Полностью
+
+- Нет настоящего автоматизированного Tauri UI runner с кликами по нативному окну.
+- Installer smoke пока требует ручной проверки.
+- Production dist не минифицирует JS/CSS, потому что проект пока работает как static app без bundler.
+- Большие карты могут рендериться медленнее в desktop из-за asset fallback, canvas/fog нагрузки и WebView/IPC overhead.

@@ -1,75 +1,89 @@
 # Desktop Packaging Smoke
 
-Дата: 02.06.2026
+Дата: 04.06.2026
 
-Пункт плана: **20.11 Desktop Packaging Smoke**.
+Пункты плана: **20.14.4-20.14.8**.
 
 ## Цель
 
-Зафиксировать минимальный smoke для desktop-сборки, чтобы переход к packaged-приложению шел контролируемо и не ломал browser-версию.
+Зафиксировать минимальный контролируемый путь к desktop build, чтобы Tauri не собирал сырой корень проекта и чтобы browser-версия оставалась независимой.
 
-## Текущее состояние
+## Текущее Состояние
 
-Desktop-прототип уже компилируется как Tauri backend:
+- `npm run desktop:prepare` создает `dist-desktop/`.
+- `src-tauri/tauri.conf.json` использует `frontendDist: "../dist-desktop"`.
+- `beforeBuildCommand` вызывает `npm run desktop:prepare`.
+- `bundle.active` включен.
+- Bundle target ограничен `nsis`.
+- `npm run desktop:gate` является обязательным gate перед desktop build.
+- `npm run desktop:build` успешно собирает release `.exe` и NSIS installer.
 
-- `npm run desktop:check` проходит;
-- `npm run desktop:packaging-smoke` проходит и проверяет desktop packaging prerequisites;
-- `cargo check` в `src-tauri` проходит;
-- `npm run desktop:dev` запускает desktop-прототип через dev server;
-- `bundle.active` пока `false`, поэтому полноценный installer/release package еще не является обязательным gate.
+## Production Dist
 
-## Перед packaging
+В `dist-desktop/` попадают только runtime-файлы:
 
-1. Проверить browser:
+- `index.html`
+- `presentation.html`
+- `assets/`
+- `js/`
+- `styles/`
+- `desktop-build-manifest.json`
+
+В `dist-desktop/` не попадают docs, tests, tools, src-tauri, node_modules и workspace пользователя.
+
+## Команды
+
+Проверить production frontend:
 
 ```powershell
-npm run verify
-npm run test:browser
-```
-
-2. Проверить desktop окружение:
-
-```powershell
+npm run desktop:prepare
 npm run desktop:packaging-smoke
-npm run desktop:check
-cd src-tauri
-C:\Users\Aruko\.cargo\bin\cargo.exe check
 ```
 
-3. Проверить desktop dev:
+Полный desktop gate:
 
 ```powershell
-npm run desktop:dev
+npm run desktop:gate
 ```
 
-## Packaging Smoke Когда Включим Bundle
-
-1. Включить `bundle.active`.
-2. Убедиться, что `frontendDist` указывает на production-ready frontend, а не на сырую папку проекта.
-3. Выполнить:
+Production build:
 
 ```powershell
 npm run desktop:build
 ```
 
-4. Запустить собранное приложение.
-5. Открыть чистый workspace.
-6. Создать карточку.
-7. Добавить картинку.
-8. Открыть карту.
-9. Создать backup.
-10. Перезапустить приложение.
-11. Проверить, что карточка, картинка, карта и backup остались доступны.
+## Что Проверяет `desktop:packaging-smoke`
 
-## Почему bundle пока не включен
+- package scripts: `verify`, `test:browser`, `desktop:check`, `desktop:prepare`, `desktop:gate`, `desktop:dev`, `desktop:build`;
+- Tauri берет frontend из `dist-desktop`;
+- Tauri вызывает `desktop:prepare` перед build;
+- bundle включен;
+- asset protocol включен;
+- Cargo содержит feature `protocol-asset`;
+- capability содержит permission `core:webview:allow-create-webview-window`;
+- capability привязан к окну `campaign-map-presentation`;
+- в `dist-desktop` есть ключевые runtime-файлы;
+- существуют desktop docs.
 
-Текущий проект работает как static web app без production bundler. Если прямо сейчас включить packaging, Tauri может забрать слишком много файлов или нестабильно работать с dev-oriented структурой. Перед настоящим installer нужно отдельно подготовить frontend output.
+## Ручной Smoke После Build
 
-## Следующее развитие
+1. Запустить release `.exe` или NSIS installer.
+2. Открыть существующий workspace.
+3. Проверить дерево.
+4. Открыть карточку с портретом.
+5. Открыть image block.
+6. Открыть карту с background.
+7. Открыть карту с токенами/объектами.
+8. Открыть presentation window.
+9. Проверить privacy rules presentation.
+10. Создать backup.
+11. Восстановить backup.
+12. Перезапустить приложение.
+13. Убедиться, что workspace, assets, карта и backup доступны.
 
-Packaging нужно делать после:
+## Известные Ограничения
 
-- native/file-safe asset display;
-- desktop presentation runtime decision;
-- production frontend output;
-- release checklist с desktop smoke.
+- Нет настоящего автоматизированного Tauri UI click-runner.
+- Production dist пока не минифицирует JS/CSS.
+- Installer smoke требует ручной проверки.
+- Большие карты в desktop могут открываться медленнее из-за asset fallback, canvas/fog и WebView/IPC overhead.

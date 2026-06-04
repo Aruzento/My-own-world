@@ -264,7 +264,7 @@ export function getPresentationCSS() {
     .campaign-map-drag-measure {
       position: absolute;
       inset: 0;
-      z-index: 10;
+      z-index: 10002;
       overflow: visible;
       pointer-events: none;
     }

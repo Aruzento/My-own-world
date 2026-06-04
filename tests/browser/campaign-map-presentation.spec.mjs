@@ -7,6 +7,427 @@ import {
 // P0 smoke: презентация должна получать изменения token/shape по id из модели.
 
 test(
+  'campaign-map-presentation-model-renderer-builds-view-from-model-payload',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const state =
+      await page.evaluate(
+        async () => {
+
+          const {
+            renderCampaignMapPresentationModel
+          } = await import('/js/presentation/campaignMapPresentationRenderer.js');
+
+          const {
+            getPresentationCSS
+          } = await import('/js/editor/campaignMapPresentationStyle.js');
+
+          const style =
+            document.createElement(
+              'style'
+            );
+
+          style.textContent =
+            getPresentationCSS();
+
+          document.head.appendChild(
+            style
+          );
+
+          const root =
+            document.createElement(
+              'div'
+            );
+
+          document.body.appendChild(
+            root
+          );
+
+          renderCampaignMapPresentationModel(
+            root,
+            {
+              model: {
+                grid: {
+                  enabled: true,
+                  size: 50,
+                  color: '#ece392'
+                },
+                layers: [
+                  {
+                    layerId: 'map-creatures',
+                    visible: true
+                  }
+                ],
+                tokens: [
+                  {
+                    tokenId: 'player',
+                    type: 'creature',
+                    name: 'Player',
+                    x: 20,
+                    y: 30,
+                    size: 1,
+                    rotation: 0,
+                    layerId: 'map-creatures',
+                    zIndex: 40,
+                    sourceMode: 'original',
+                    isPlayerToken: true,
+                    presentationHidden: true
+                  },
+                  {
+                    tokenId: 'npc',
+                    type: 'creature',
+                    name: 'NPC',
+                    x: 40,
+                    y: 50,
+                    size: 1,
+                    rotation: 0,
+                    layerId: 'map-creatures',
+                    zIndex: 40,
+                    presentationHidden: true
+                  }
+                ],
+                shapes: [
+                  {
+                    shapeId: 'hidden-shape',
+                    type: 'square',
+                    x: 10,
+                    y: 12,
+                    width: 30,
+                    height: 40,
+                    layerId: 'map-creatures',
+                    zIndex: 80,
+                    presentationHidden: true
+                  }
+                ],
+                fog: {
+                  lockedZones: [
+                    {
+                      id: 'locked-zone',
+                      x: 120,
+                      y: 140,
+                      width: 90,
+                      height: 70
+                    }
+                  ]
+                }
+              },
+              assets: {
+                background: '',
+                tokens: {
+                  player: 'data:image/png;base64,iVBORw0KGgo='
+                }
+              },
+              fogImage: '',
+              tokenView: {
+                player: {
+                  hpPercent: '50',
+              hpState: 'alive',
+              healthColor: '#ece392'
+            }
+          },
+          fogImage: 'data:image/png;base64,iVBORw0KGgo='
+        }
+      );
+
+          const player =
+            root.querySelector('[data-token-id="player"]');
+
+          return {
+            playerExists:
+              Boolean(player),
+            playerImage:
+              player?.querySelector('img')?.getAttribute('src') || '',
+            playerHidden:
+              player?.dataset.presentationHidden || '',
+            playerHp:
+              player?.dataset.hpPercent || '',
+            playerBadge:
+              getComputedStyle(player, '::before').content,
+            npcExists:
+              Boolean(root.querySelector('[data-token-id="npc"]')),
+            hiddenShapeExists:
+              Boolean(root.querySelector('[data-shape-id="hidden-shape"]')),
+            fogZ:
+              Number(getComputedStyle(root.querySelector('.campaign-map-fog-image')).zIndex),
+            tokenZ:
+              Number(getComputedStyle(player).zIndex),
+            lockedFogExists:
+              Boolean(root.querySelector('.campaign-presentation-locked-fog-zone')),
+            lockedFogZ:
+              Number(getComputedStyle(root.querySelector('.campaign-presentation-locked-fog-zone')).zIndex)
+          };
+        }
+      );
+
+    expect(
+      state
+    ).toEqual({
+      playerExists: true,
+      playerImage: 'data:image/png;base64,iVBORw0KGgo=',
+      playerHidden: 'true',
+      playerHp: '50',
+      playerBadge: '"скрыт"',
+      npcExists: false,
+      hiddenShapeExists: false,
+      fogZ: 10000,
+      tokenZ: 40,
+      lockedFogExists: true,
+      lockedFogZ: 10001
+    });
+  }
+);
+
+
+test(
+  'campaign-map-presentation-applies-delta-patches-without-full-rerender',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            applyCampaignMapPresentationPatch,
+            renderCampaignMapPresentationModel
+          } = await import('/js/presentation/campaignMapPresentationRenderer.js');
+
+          const {
+            getPresentationCSS
+          } = await import('/js/editor/campaignMapPresentationStyle.js');
+
+          const style =
+            document.createElement(
+              'style'
+            );
+
+          style.textContent =
+            getPresentationCSS();
+
+          document.head.appendChild(
+            style
+          );
+
+          const root =
+            document.createElement(
+              'div'
+            );
+
+          document.body.appendChild(
+            root
+          );
+
+          renderCampaignMapPresentationModel(
+            root,
+            {
+              model: {
+                grid: {
+                  enabled: true,
+                  size: 40,
+                  color: '#ffffff'
+                },
+                layers: [
+                  {
+                    layerId: 'tokens',
+                    visible: true
+                  }
+                ],
+                tokens: [
+                  {
+                    tokenId: 'hero',
+                    type: 'creature',
+                    name: 'Hero',
+                    x: 20,
+                    y: 20,
+                    size: 1,
+                    rotation: 0,
+                    layerId: 'tokens',
+                    zIndex: 10
+                  }
+                ],
+                shapes: [],
+                fog: {
+                  lockedZones: []
+                }
+              },
+              assets: {
+                background: '',
+                tokens: {}
+              },
+              fogImage: '',
+              tokenView: {}
+            }
+          );
+
+          const stageBefore =
+            root.querySelector(
+              '.campaign-map-stage'
+            );
+
+          const tokenBefore =
+            root.querySelector(
+              '[data-token-id="hero"]'
+            );
+
+          const gridColorBefore =
+            getComputedStyle(stageBefore)
+              .getPropertyValue('--campaign-grid-color')
+              .trim();
+
+          applyCampaignMapPresentationPatch(
+            root,
+            {
+              type: 'update-items',
+              model: {
+                grid: {
+                  enabled: true,
+                  size: 52,
+                  color: '#ff0000'
+                },
+                layers: [
+                  {
+                    layerId: 'tokens',
+                    visible: true
+                  }
+                ]
+              },
+              assets: {
+                tokens: {}
+              },
+              tokenView: {
+                hero: {
+                  hpPercent: '25',
+                  hpState: 'alive',
+                  healthColor: '#ff0000'
+                }
+              },
+              items: [
+                {
+                  kind: 'token',
+                  itemId: 'hero',
+                  record: {
+                    tokenId: 'hero',
+                    type: 'creature',
+                    name: 'Hero',
+                    x: 45,
+                    y: 55,
+                    size: 2,
+                    rotation: 15,
+                    layerId: 'tokens',
+                    zIndex: 30
+                  }
+                }
+              ]
+            }
+          );
+
+          applyCampaignMapPresentationPatch(
+            root,
+            {
+              type: 'update-fog',
+              fogImage: 'data:image/png;base64,deltafog',
+              model: {
+                fog: {
+                  lockedZones: [
+                    {
+                      id: 'locked',
+                      x: 12,
+                      y: 14,
+                      width: 20,
+                      height: 22
+                    }
+                  ]
+                }
+              }
+            }
+          );
+
+          applyCampaignMapPresentationPatch(
+            root,
+            {
+              type: 'drag-measure',
+              measure: {
+                active: true,
+                x1: 0,
+                y1: 0,
+                x2: 100,
+                y2: 0,
+                labelX: 50,
+                labelY: -12,
+                label: '10 ft'
+              }
+            }
+          );
+
+          const stageAfter =
+            root.querySelector(
+              '.campaign-map-stage'
+            );
+
+          const tokenAfter =
+            root.querySelector(
+              '[data-token-id="hero"]'
+            );
+
+          return {
+            sameStage:
+              stageBefore === stageAfter,
+            tokenReplacedOnly:
+              tokenBefore !== tokenAfter,
+            tokenLeft:
+              tokenAfter.style.left,
+            tokenSize:
+              tokenAfter.style.getPropertyValue('--token-size'),
+            tokenHp:
+              tokenAfter.dataset.hpPercent,
+            gridSize:
+              stageAfter.style.getPropertyValue('--campaign-grid-size'),
+            gridColorBefore,
+            gridColorAfter:
+              stageAfter.style.getPropertyValue('--campaign-grid-color'),
+            fogSrc:
+              root.querySelector('.campaign-map-fog-image')?.getAttribute('src'),
+            lockedZones:
+              root.querySelectorAll('.campaign-presentation-locked-fog-zone').length,
+            measureText:
+              root.querySelector('.campaign-map-drag-measure text')?.textContent,
+            measureZ:
+              Number(getComputedStyle(root.querySelector('.campaign-map-drag-measure')).zIndex),
+            fogZ:
+              Number(getComputedStyle(root.querySelector('.campaign-map-fog-image')).zIndex)
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      sameStage: true,
+      tokenReplacedOnly: true,
+      tokenLeft: '45%',
+      tokenSize: '2',
+      tokenHp: '25',
+      gridSize: '52px',
+      gridColorBefore: 'rgba(255,255,255,0.22)',
+      gridColorAfter: 'rgba(255,0,0,0.22)',
+      fogSrc: 'data:image/png;base64,deltafog',
+      lockedZones: 1,
+      measureText: '10 ft',
+      measureZ: 10002,
+      fogZ: 10000
+    });
+  }
+);
+
+
+test(
   'campaign-map-presentation-syncs-token-and-shape-by-id',
   async ({ page }) => {
 

@@ -1,13 +1,14 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Минимальные права desktop-spike: только базовое окно приложения без доступа к файловой системе.",
+  "description": "Базовые права desktop-приложения: главное окно, окно презентации, диалог выбора workspace и создание webview-окна презентации.",
   "windows": [
     "main",
     "campaign-map-presentation"
   ],
   "permissions": [
     "core:default",
+    "core:webview:allow-create-webview-window",
     "dialog:default"
   ]
 }

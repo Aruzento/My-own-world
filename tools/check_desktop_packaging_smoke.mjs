@@ -1,11 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+
 const ROOT =
   process.cwd();
 
 const checks =
   [];
+
 
 main();
 
@@ -15,6 +17,8 @@ function main() {
   checkPackageScripts();
   checkTauriConfig();
   checkCargoFeatures();
+  checkCapabilities();
+  checkDesktopDist();
   checkDesktopDocs();
 
   const failed =
@@ -47,16 +51,15 @@ function checkPackageScripts() {
       'package.json'
     );
 
-  const requiredScripts =
-    [
-      'verify',
-      'test:browser',
-      'desktop:check',
-      'desktop:dev',
-      'desktop:build'
-    ];
-
-  requiredScripts.forEach(scriptName => {
+  [
+    'verify',
+    'test:browser',
+    'desktop:check',
+    'desktop:prepare',
+    'desktop:gate',
+    'desktop:dev',
+    'desktop:build'
+  ].forEach(scriptName => {
 
     addCheck(
       `package.json содержит script ${scriptName}`,
@@ -74,13 +77,18 @@ function checkTauriConfig() {
     );
 
   addCheck(
-    'Tauri использует текущий static frontendDist',
-    config.build?.frontendDist === '../'
+    'Tauri использует production frontendDist dist-desktop',
+    config.build?.frontendDist === '../dist-desktop'
   );
 
   addCheck(
-    'Tauri bundle пока отключен для безопасного spike',
-    config.bundle?.active === false
+    'Tauri готовит frontend перед production build',
+    config.build?.beforeBuildCommand === 'npm run desktop:prepare'
+  );
+
+  addCheck(
+    'Tauri bundle включен для installer/portable build',
+    config.bundle?.active === true
   );
 
   addCheck(
@@ -109,12 +117,66 @@ function checkCargoFeatures() {
 }
 
 
+function checkCapabilities() {
+
+  const capability =
+    readJson(
+      'src-tauri/capabilities/default.json'
+    );
+
+  const permissions =
+    new Set(
+      capability.permissions || []
+    );
+
+  const windows =
+    new Set(
+      capability.windows || []
+    );
+
+  addCheck(
+    'Tauri capability разрешает создание окна презентации',
+    permissions.has('core:webview:allow-create-webview-window')
+  );
+
+  addCheck(
+    'Tauri capability привязан к окну презентации',
+    windows.has('campaign-map-presentation')
+  );
+}
+
+
+function checkDesktopDist() {
+
+  [
+    'dist-desktop/index.html',
+    'dist-desktop/presentation.html',
+    'dist-desktop/js/app.js',
+    'dist-desktop/styles/main.css',
+    'dist-desktop/assets/icons/rpg-ui.svg',
+    'dist-desktop/desktop-build-manifest.json'
+  ].forEach(filePath => {
+
+    addCheck(
+      `Desktop dist содержит ${filePath}`,
+      fs.existsSync(
+        path.join(
+          ROOT,
+          filePath
+        )
+      )
+    );
+  });
+}
+
+
 function checkDesktopDocs() {
 
   [
     'docs/DESKTOP_PACKAGING_SMOKE.md',
     'docs/DESKTOP_TRANSITION_STRATEGY.md',
-    'docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md'
+    'docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md',
+    'docs/DESKTOP_RELEASE_POLICY.md'
   ].forEach(filePath => {
 
     addCheck(

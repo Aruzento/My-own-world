@@ -1,6 +1,12 @@
 // Entry point отдельного окна презентации.
 // Окно не знает про editor/sidebar и получает карту сообщениями от окна мастера.
 
+import {
+  applyCampaignMapPresentationPatch,
+  renderCampaignMapPresentationModel
+} from './campaignMapPresentationRenderer.js';
+
+
 const CHANNEL_NAME =
   'my-own-world-campaign-map-presentation';
 
@@ -73,6 +79,36 @@ function handlePresentationMessage(
     ensureStyle('');
 
     toggleImagePreview(
+      message
+    );
+
+    return;
+  }
+
+  if (message.type === 'render-model') {
+
+    ensureStyle(
+      message.css
+    );
+
+    renderCampaignMapPresentationModel(
+      map,
+      message
+    );
+
+    applyViewportTransform();
+
+    return;
+  }
+
+  if (
+    message.type === 'update-items' ||
+    message.type === 'update-fog' ||
+    message.type === 'drag-measure'
+  ) {
+
+    applyCampaignMapPresentationPatch(
+      map,
       message
     );
 

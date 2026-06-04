@@ -2,6 +2,7 @@ export const CAMPAIGN_MAP_PERFORMANCE_BUDGETS =
   Object.freeze({
     renderTimeMs: 16.7,
     syncTimeMs: 8,
+    deltaSyncTimeMs: 16,
     fullSyncTimeMs: 80,
     fogDrawTimeMs: 6,
     backgroundLoadMs: 1000,
@@ -42,9 +43,21 @@ export const CAMPAIGN_MAP_PERFORMANCE_SCENARIOS =
       id: 'presentation-live-sync',
       budgets: {
         fullSyncTimeMs: 1000,
+        deltaSyncTimeMs: 24,
         syncTimeMs: 50,
         visibleTokenCount: 250,
         visibleShapeCount: 120
+      }
+    },
+    desktopPresentationLargeWorkspace: {
+      id: 'desktop-presentation-large-workspace',
+      budgets: {
+        fullSyncTimeMs: 1200,
+        deltaSyncTimeMs: 32,
+        backgroundLoadMs: 1200,
+        visibleTokenCount: 300,
+        visibleShapeCount: 160,
+        fogCanvasPixels: 8_000_000
       }
     },
     zoomPanHeavy: {
@@ -92,6 +105,10 @@ export function createCampaignMapPerformanceSnapshot(
     fullSyncTimeMs:
       normalizeMetric(
         measurements.fullSyncTimeMs
+      ),
+    deltaSyncTimeMs:
+      normalizeMetric(
+        measurements.deltaSyncTimeMs
       ),
     fogDrawTimeMs:
       normalizeMetric(

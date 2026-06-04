@@ -1,4 +1,4 @@
-# Единый план проекта
+﻿# Единый план проекта
 
 Дата обновления: 01.06.2026
 
@@ -611,26 +611,35 @@ Browser suite покрывает campaign map popup, initiative, layers, page te
 20.14.1. Desktop image runtime parity: **сделано базово**.
 Карточки, image blocks, portrait images и токены карты должны восстанавливать `img[data-asset]` через `AssetAdapter` после финального runtime-render. `AssetAdapter` синхронизируется с выбранным workspace root после `openWorkspace()` и `restoreWorkspace()`.
 
-20.14.2. Desktop presentation model-first renderer: **следующий крупный desktop hardening**.
-Заменить HTML snapshot презентации на JSON payload из `CampaignMapModel`: background, tokens, objects, shapes, fog, locked zones, layers, viewport и drag measure.
+20.14.2. Desktop presentation model-first renderer: **сделано базово**.
+Tauri-презентация теперь получает `render-model` payload из `CampaignMapModel`, а не HTML snapshot. Payload содержит модель карты, background asset, token image assets, fog image, locked zones, layers и runtime view state токенов. Отдельный renderer `js/presentation/campaignMapPresentationRenderer.js` строит DOM презентации из данных.
 
-20.14.3. Desktop presentation privacy rules: **следующий после 20.14.2**.
-Закрепить правила, что видит игрок: туман над всеми слоями, скрытые non-player сущности не видны, скрытые player-токены видны с badge, locked fog zones выглядят как обычный туман.
+20.14.3. Desktop presentation privacy rules: **сделано базово**.
+Правила приватности вынесены в `js/presentation/campaignMapPresentationPrivacy.js`: скрытые non-player токены и фигуры не попадают в model-first презентацию, скрытые player/original токены остаются видимыми с badge `скрыт`, туман и locked fog zones находятся над сущностями. Browser smoke закрепляет этот контракт.
 
-20.14.4. Desktop manual smoke checklist: **сделано базово, расширять после 20.14.2**.
-Проверять в Tauri-окне: открыть workspace, открыть карточку с портретом, открыть image block, открыть карту с background и токенами, открыть презентацию, показать изображение игрокам, создать backup/restore.
+20.14.4. Desktop manual smoke checklist: **сделано базово**.
+Расширен `docs/DESKTOP_PROTOTYPE_SMOKE.md`: проверяются background map image, presentation privacy, image fallback, backup/restore и desktop assets после перезапуска.
 
-20.14.5. Desktop automated UI runner: **позже**.
-Подключить автоматизированный запуск Tauri UI, когда prototype стабилизируется. До этого reliable gate: `npm run verify`, `npm run test:browser`, `npm run desktop:check`, `npm run desktop:packaging-smoke`, `cargo check`.
+20.14.5. Desktop automated UI runner: **сделано как automated desktop gate, настоящий UI-runner позже**.
+Добавлен `npm run desktop:gate`, который последовательно запускает verify, browser smoke, desktop prepare, packaging smoke, desktop environment и `cargo check`. Полноценный Tauri UI click-runner остается будущим подпунктом после стабилизации installer.
 
-20.14.6. Production desktop frontend output: **позже, перед installer**.
-Подготовить отдельную production-директорию для Tauri `frontendDist`, чтобы packaging не забирал сырой workspace проекта.
+20.14.6. Production desktop frontend output: **сделано базово**.
+Добавлен `npm run desktop:prepare` и `tools/prepare_desktop_dist.mjs`. Tauri production build берет frontend из `dist-desktop`, а не из сырого корня проекта.
 
-20.14.7. Desktop installer / portable build: **позже, после 20.14.6**.
-Включить `bundle.active`, собрать installer/portable build и пройти release smoke на чистом workspace.
+20.14.7. Desktop installer / portable build: **сделано базово, artifact собирается**.
+`bundle.active` включен, target ограничен `nsis`, release `.exe` используется как portable-smoke артефакт. `npm run desktop:build` собирает `src-tauri/target/release/my-own-world.exe` и `src-tauri/target/release/bundle/nsis/MyOwnWorld_0.0.0_x64-setup.exe`. Перед build обязателен `npm run desktop:gate`; первый NSIS build может требовать сетевой доступ для скачивания bundler.
+Исправление 04.06.2026: desktop-презентация требует `core:webview:allow-create-webview-window`; permission добавлен в `src-tauri/capabilities/default.json` и проверяется `desktop:packaging-smoke`.
 
-20.14.8. Desktop release policy: **позже, перед первым desktop-релизом**.
-Описать desktop release checklist, rollback, backup-before-upgrade и compatibility notes.
+20.14.8. Desktop release policy: **сделано базово**.
+Добавлен `docs/DESKTOP_RELEASE_POLICY.md`: gate, build, ручной release smoke, rollback и правило версий.
+
+20.14.9. Desktop map performance optimization: **сделано базово, нужен следующий fog-hardening этап**.
+Документ `docs/DESKTOP_MAP_PERFORMANCE_NOTES.md` фиксирует причины медленного рендера карты в desktop: asset fallback, base64/data URL для больших background, canvas low-detail, fog canvas, model-first presentation payload и WebView/IPC overhead. Следующие работы: cache renderable asset URL, diff-sync presentation, dirty-region fog и desktop performance scenario на большом workspace.
+Обновление 04.06.2026: **частично сделано**. Добавлен cache `getRenderableImageURL()`, desktop-презентация получила delta-sync для токенов/фигур, тумана и drag-measure вместо полного render-model на каждое движение. Сетка в model-first презентации приглушает hex-цвета до alpha, чтобы не становиться непрозрачной. Следующий хвост: реальный desktop performance scenario на большом workspace и dirty-region fog.
+Обновление 04.06.2026: **desktop performance scenario добавлен**. `desktopPresentationLargeWorkspace` разделяет budget полного render и `deltaSyncTimeMs`, тест закрепляет, что быстрые частичные обновления не должны деградировать. Стрелка расстояния в презентации поднята выше тумана (`z-index: 10002`).
+
+20.14.10. Dirty-region fog sync: **следующий desktop performance этап**.
+Сейчас туман уже синхронизируется отдельным сообщением, но все еще передается как целое изображение canvas. Следующий шаг - хранить dirty regions и обновлять только измененные области тумана, особенно для больших карт.
 
 ### 22. Character Domain Model
 

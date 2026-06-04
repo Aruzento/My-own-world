@@ -38,6 +38,10 @@ import {
   restoreWorkspaceBackup
 } from '../js/storage/backupService.js';
 
+import {
+  getRenderableImageURL
+} from '../js/storage/assetStorage.js';
+
 
 test(
   'StorageAdapter contract requires the full public API',
@@ -437,6 +441,90 @@ test(
 
       globalThis.__TAURI__ =
         previousTauri;
+    }
+  }
+);
+
+
+test(
+  'getRenderableImageURL возвращает data URL, если primary asset URL не отрисовался',
+  async () => {
+
+    const previousImage =
+      globalThis.Image;
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    await adapter.writeBinary(
+      'assets/portraits/hero.png',
+      new Uint8Array([
+        137,
+        80,
+        78,
+        71
+      ]).buffer
+    );
+
+    setStorageAdapter(
+      adapter
+    );
+
+    setAssetAdapter({
+      kind: 'broken-primary',
+
+      async importFile() {},
+
+      async resolveUrl() {
+
+        return 'asset://broken/portraits/hero.png';
+      },
+
+      async exists() {
+
+        return true;
+      },
+
+      async remove() {},
+
+      async findOrphans() {
+
+        return [];
+      }
+    });
+
+    globalThis.Image =
+      class BrokenImage {
+
+        set src(
+          value
+        ) {
+
+          this.currentSrc =
+            value;
+
+          queueMicrotask(
+            () => this.onerror?.()
+          );
+        }
+      };
+
+    try {
+
+      const url =
+        await getRenderableImageURL(
+          'portraits/hero.png'
+        );
+
+      assert.equal(
+        url,
+        'data:image/png;base64,iVBORw=='
+      );
+
+    } finally {
+
+      globalThis.Image =
+        previousImage;
     }
   }
 );

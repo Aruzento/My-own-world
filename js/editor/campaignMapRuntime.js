@@ -1,5 +1,5 @@
 import {
-  getImageURL,
+  getRenderableImageURL,
   saveAssetFile
 } from '../storage/assetStorage.js';
 
@@ -553,7 +553,7 @@ export async function restoreMapBackground(
   try {
 
     const url =
-      await getImageURL(
+      await getRenderableImageURL(
         asset
       );
 

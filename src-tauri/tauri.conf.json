@@ -6,8 +6,8 @@
   "build": {
     "beforeDevCommand": "npm run dev:web",
     "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "",
-    "frontendDist": "../"
+    "beforeBuildCommand": "npm run desktop:prepare",
+    "frontendDist": "../dist-desktop"
   },
   "app": {
     "withGlobalTauri": true,
@@ -33,7 +33,7 @@
     }
   },
   "bundle": {
-    "active": false,
-    "targets": "all"
+    "active": true,
+    "targets": "nsis"
   }
 }

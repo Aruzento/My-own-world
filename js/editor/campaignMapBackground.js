@@ -1,5 +1,5 @@
 import {
-  getImageURL
+  getRenderableImageURL
 } from '../storage/assetStorage.js';
 
 import {
@@ -204,7 +204,7 @@ async function getFullDetailBackgroundURL(
 
     fullDetailBackgroundCache.set(
       asset,
-      getImageURL(
+      getRenderableImageURL(
         asset
       )
     );

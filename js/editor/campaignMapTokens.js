@@ -1,5 +1,5 @@
 import {
-  getImageURL
+  getRenderableImageURL
 } from '../storage/assetStorage.js';
 
 import {
@@ -50,7 +50,7 @@ export async function restoreTokenImage(
   try {
 
     const url =
-      await getImageURL(
+      await getRenderableImageURL(
         asset
       );
 

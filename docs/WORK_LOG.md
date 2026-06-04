@@ -1,4 +1,51 @@
-# Журнал работ
+﻿# Журнал работ
+
+## 2026-06-04: Исправлен фон карты и закрыт пункт 20.14.3
+
+### Что сделано
+
+- Фон карты переведен на `getRenderableImageURL()` в `campaignMapBackground.js` и `campaignMapRuntime.js`, поэтому background map image теперь получает тот же fallback, что портреты, image blocks и токены.
+- Добавлен browser regression `campaign-map-background-falls-back-to-renderable-data-url`: если primary asset URL не отрисовался, фон карты ставится через `data:image/...`.
+- Privacy rules desktop-презентации вынесены в `js/presentation/campaignMapPresentationPrivacy.js`.
+- Model-first renderer презентации теперь использует единый контракт приватности: скрытые non-player сущности не показываются, скрытые player/original токены остаются с badge `скрыт`, locked fog и fog остаются выше токенов.
+- Browser smoke для model-first renderer усилен проверками badge, скрытых NPC/фигур и z-index тумана.
+
+### Проверки
+
+- `npm run check:js`: прошло.
+- `npm run test:browser`: прошло, 31 browser-тест.
+- `npm test`: прошло, 88 unit-тестов.
+
+### Следующее развитие
+
+- **20.14.4**: расширить ручной desktop smoke checklist по реальному Tauri-окну после исправлений фона и privacy.
+- **20.14.5**: готовить automated Tauri UI runner, когда ручной desktop smoke станет стабильным.
+
+---
+
+## 2026-06-02: Надежное восстановление картинок и 20.14.2 model-first presentation
+
+### Что сделано
+
+- Добавлен `getRenderableImageURL()` в `js/storage/assetStorage.js`: сначала он пробует основной asset URL, а если браузер/WebView не может отрисовать картинку, восстанавливает изображение из workspace как `data:` URL.
+- Портреты карточек, image blocks и токены карты теперь используют renderable image URL, поэтому они не зависят только от Tauri asset protocol.
+- Добавлен regression test на fallback: если primary asset URL не загрузился, возвращается `data:image/...`.
+- Desktop-презентация переведена с HTML snapshot на `render-model` payload из `CampaignMapModel`.
+- Добавлены `js/editor/campaignMapPresentationPayload.js` и `js/presentation/campaignMapPresentationRenderer.js`.
+- В browser smoke добавлен тест `campaign-map-presentation-model-renderer-builds-view-from-model-payload`.
+- `docs/PROJECT_PLAN.md` обновлен: пункт `20.14.2` отмечен как сделанный базово, следующим остается `20.14.3`.
+
+### Проверки
+
+- `npm test`: прошло, 88 unit-тестов.
+- `npm run test:browser`: прошло, 30 browser-тестов.
+
+### Следующее развитие
+
+- **20.14.3**: закрепить privacy rules desktop-презентации уже поверх model-first renderer.
+- После этого двигаться к **20.14.4/20.14.5**: расширенный ручной smoke и будущий Tauri UI-runner.
+
+---
 
 ## 2026-06-02: Desktop image parity и детализация пункта 20.14
 
@@ -2696,3 +2743,82 @@ Render time, sync time, number of visible objects, background load.
 ### Следующее развитие
 
 - Следующий пункт: продолжить desktop foundation с переносом `writeQueue`, `backupService`, `assetStorage`, `images` и `campaignMapRuntime` на adapter-backed storage.
+
+---
+
+## 2026-06-04: Desktop hardening 20.14.4-20.14.8
+
+### Что сделано
+
+- Добавлен production frontend output `dist-desktop/` через `npm run desktop:prepare` и `tools/prepare_desktop_dist.mjs`.
+- Tauri production build переведен на `frontendDist: "../dist-desktop"` и `beforeBuildCommand: "npm run desktop:prepare"`.
+- Включен Tauri bundle, target ограничен `nsis`.
+- Добавлен полный desktop release gate `npm run desktop:gate`: `verify`, browser smoke, desktop prepare, packaging smoke, desktop environment и `cargo check`.
+- Расширен `desktop:packaging-smoke`: он проверяет scripts, Tauri config, asset protocol, dist-файлы и desktop docs.
+- Добавлены `docs/DESKTOP_RELEASE_POLICY.md` и `docs/DESKTOP_MAP_PERFORMANCE_NOTES.md`.
+- `npm run desktop:build` успешно собрал `src-tauri/target/release/my-own-world.exe` и `src-tauri/target/release/bundle/nsis/MyOwnWorld_0.0.0_x64-setup.exe`.
+
+### Что стало лучше
+
+- Desktop-сборка больше не тянет сырой корень проекта, тесты, docs и служебные файлы в production frontend.
+- Перед desktop build появился один понятный gate, который одновременно защищает browser-версию и Tauri-цепочку.
+- Пункт 20.14.7 теперь закрыт не только конфигурацией, но и фактической сборкой release `.exe` и installer.
+
+### Ограничения
+
+- Первый NSIS build может скачивать bundler из GitHub; в restricted sandbox он падает по сетевому доступу, вне sandbox сборка проходит.
+- Настоящий автоматизированный Tauri UI click-runner еще не сделан.
+- Большие карты в desktop могут открываться медленнее из-за asset fallback, base64/data URL, canvas/fog и WebView/IPC overhead.
+
+### Следующее развитие
+
+- Следующий пункт плана: `20.14.9. Desktop map performance optimization`.
+
+---
+
+## 2026-06-04: Исправление desktop-презентации
+
+### Что сделано
+
+- Исправлен `src-tauri/capabilities/default.json`: добавлен permission `core:webview:allow-create-webview-window`.
+- `tools/check_desktop_packaging_smoke.mjs` теперь проверяет, что permission создания окна презентации есть и capability привязан к `campaign-map-presentation`.
+- `docs/DESKTOP_PACKAGING_SMOKE.md`, `docs/DESKTOP_RELEASE_POLICY.md` и `docs/PROJECT_PLAN.md` обновлены, чтобы причина не потерялась.
+
+### Почему ломалось
+
+Tauri v2 требует явного разрешения на создание нового `WebviewWindow`. Окно `campaign-map-presentation` было перечислено в capability, но сама команда `create_webview_window` не была разрешена. Поэтому кнопка презентации могла не открыть отдельное окно в desktop.
+
+---
+
+## 2026-06-04: Стабилизация режима презентации карты
+
+### Что сделано
+
+- `getRenderableImageURL()` получил cache, чтобы большие изображения карты и токенов не перечитывались при каждом полном payload.
+- Tauri-презентация больше не делает полный render-model при каждом движении токена/фигуры.
+- Добавлены delta-сообщения `update-items`, `update-fog` и `drag-measure`.
+- `js/presentation/campaignMapPresentationRenderer.js` умеет применять эти patch-сообщения без пересоздания всей сцены.
+- Сетка в presentation renderer теперь превращает hex-цвета в полупрозрачный `rgba(..., 0.22)`, чтобы она не становилась яркой непрозрачной сеткой.
+- Добавлен browser regression `campaign-map-presentation-applies-delta-patches-without-full-rerender`.
+
+### Что стало лучше
+
+- Перемещение сущностей и фигур в desktop-презентации должно обновляться легче и быстрее.
+- Туман синхронизируется отдельным сообщением, без пересборки background и всех токенов.
+- Вектор движения отправляется отдельным маленьким payload.
+- Переключение карты все еще требует полного render-model, но повторные обновления после открытия стали дешевле.
+
+### Следующее развитие
+
+- Следующий хвост пункта `20.14.9`: сделать desktop performance scenario на большом workspace и перейти к dirty-region fog, чтобы рисование/стирание тумана не отправляло весь canvas целиком.
+
+### Дополнение
+
+- Добавлен scenario `desktopPresentationLargeWorkspace` в `campaignMapPerformance.js`.
+- Тест `desktop presentation scenario separates full render and delta sync budgets` проверяет отдельный budget `deltaSyncTimeMs`.
+- Стрелка расстояния в презентации поднята выше тумана: `.campaign-map-drag-measure` теперь использует `z-index: 10002`.
+- Browser regression дополнен проверкой, что стрелка находится выше `.campaign-map-fog-image`.
+
+### Следующее развитие
+
+- Следующий пункт плана: `20.14.10. Dirty-region fog sync`.

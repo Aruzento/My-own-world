@@ -153,3 +153,78 @@ test(
     );
   }
 );
+test(
+  'desktop presentation scenario separates full render and delta sync budgets',
+  () => {
+
+    const budgets =
+      getCampaignMapScenarioBudgets(
+        'desktopPresentationLargeWorkspace'
+      );
+
+    assert.equal(
+      budgets.deltaSyncTimeMs,
+      32
+    );
+
+    const report =
+      createCampaignMapPerformanceReport({
+        scenarioId:
+          'desktopPresentationLargeWorkspace',
+        modelData: {
+          tokens:
+            Array.from(
+              {
+                length: 240
+              },
+              (_, index) => ({
+                tokenId: `token-${index}`
+              })
+            ),
+          shapes:
+            Array.from(
+              {
+                length: 120
+              },
+              (_, index) => ({
+                shapeId: `shape-${index}`
+              })
+            ),
+          fog: {
+            canvasPixels:
+              6_500_000
+          }
+        },
+        measurements: {
+          fullSyncTimeMs:
+            900,
+          deltaSyncTimeMs:
+            18,
+          backgroundLoadMs:
+            900
+        }
+      });
+
+    assert.equal(
+      report.ok,
+      true
+    );
+
+    const failedReport =
+      createCampaignMapPerformanceReport({
+        scenarioId:
+          'desktopPresentationLargeWorkspace',
+        measurements: {
+          deltaSyncTimeMs:
+            64
+        }
+      });
+
+    assert.throws(
+      () => assertCampaignMapPerformanceBudget(
+        failedReport
+      ),
+      /deltaSyncTimeMs/
+    );
+  }
+);
