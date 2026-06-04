@@ -7,6 +7,31 @@ owner_zone: "delivery"
 ---
 ﻿# Журнал работ
 
+## 2026-06-04: CharacterModel foundation
+
+### Что сделано
+
+- Создан контракт `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md`.
+- Добавлен новый слой `js/character/characterModel.js`.
+- `CharacterModel` нормализует `level`, `proficiencyBonus`, `armorClass`, `speed`, базовые характеристики, HP, temp HP и death saves.
+- `CharacterModel` строится из `PropertiesModel`, а если свойств нет - может использовать legacy `Стат. блок DnD`.
+- `js/properties/characterCalculations.js` оставлен как совместимый facade, но теперь читает здоровье через `CharacterModel`.
+- `PropertiesModel` для `character` и `creature` получил стабильные ключи характеристик `str`, `dex`, `con`, `int`, `wis`, `cha`.
+- Добавлены unit tests `tests/characterModel.test.mjs`.
+
+### Что стало лучше
+
+- Карта и будущие подсистемы получают единый путь к HP/характеристикам, а не читают произвольный HTML.
+- Legacy stat block пока поддерживается как fallback, поэтому старые карточки не ломаются.
+- Пустая карточка больше не получает выдуманные `10/10 HP`: facade возвращает `null`, если источника данных нет.
+
+### Что осталось
+
+- Подключить карту глубже к `CharacterModel`: изменение хитов, инициатива и рамки здоровья должны постепенно уходить от legacy facade.
+- Сделать Inventory System.
+- Сделать Effects / Conditions System.
+- Решить судьбу archived `DnD v2` и `Variables` через модель.
+
 ## 2026-06-04: Project Structure & Release Handoff Reorganization
 
 ### Что сделано

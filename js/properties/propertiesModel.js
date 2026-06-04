@@ -159,6 +159,15 @@ export function normalizePropertyValue(
 
   if (field?.type === 'number') {
 
+    if (
+      value === '' ||
+      value === null ||
+      value === undefined
+    ) {
+
+      return '';
+    }
+
     const number =
       Number(value);
 

@@ -33,7 +33,16 @@ export const PROPERTY_BLOCK_SCHEMAS = {
       numberField('hpCurrent', 'Хиты факт', '10'),
       numberField('hpMax', 'Хиты макс.', '10'),
       numberField('hpTemp', 'Временные хиты', '0'),
-      numberField('speed', 'Скорость', '30')
+      numberField('speed', 'Скорость', '30'),
+      ...abilityFields(),
+      numberField('deathSaveSuccesses', 'Хиты от смерти: успехи', '0', {
+        min: 0,
+        max: 3
+      }),
+      numberField('deathSaveFailures', 'Хиты от смерти: провалы', '0', {
+        min: 0,
+        max: 3
+      })
     ]
   },
 
@@ -51,6 +60,7 @@ export const PROPERTY_BLOCK_SCHEMAS = {
       numberField('hpMax', 'Хиты макс.', '10'),
       numberField('hpTemp', 'Временные хиты', '0'),
       numberField('speed', 'Скорость', '30'),
+      ...abilityFields(),
       textField('senses', 'Чувства', 'Темное зрение 60 фт.'),
       textareaField('effect', 'Особенности', 'Что важно помнить мастеру')
     ]
@@ -236,4 +246,35 @@ function selectField(
     type: 'select',
     options
   };
+}
+
+
+function abilityFields() {
+
+  return [
+    numberField('str', 'СИЛ', '10', {
+      min: 1,
+      max: 30
+    }),
+    numberField('dex', 'ЛОВ', '10', {
+      min: 1,
+      max: 30
+    }),
+    numberField('con', 'ТЛС', '10', {
+      min: 1,
+      max: 30
+    }),
+    numberField('int', 'ИНТ', '10', {
+      min: 1,
+      max: 30
+    }),
+    numberField('wis', 'МДР', '10', {
+      min: 1,
+      max: 30
+    }),
+    numberField('cha', 'ХАР', '10', {
+      min: 1,
+      max: 30
+    })
+  ];
 }

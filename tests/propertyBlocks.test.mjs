@@ -171,6 +171,32 @@ test(
 
 
 test(
+  'PropertiesModel keeps empty number fields empty instead of converting them to zero',
+  () => {
+
+    const model =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          hpCurrent: '',
+          str: ''
+        }
+      });
+
+    assert.equal(
+      model.values.hpCurrent,
+      ''
+    );
+
+    assert.equal(
+      model.values.str,
+      ''
+    );
+  }
+);
+
+
+test(
   'character calculation layer follows DnD modifier and proficiency rules',
   () => {
 

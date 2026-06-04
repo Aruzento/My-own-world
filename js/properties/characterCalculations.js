@@ -3,6 +3,14 @@ import {
   readPropertiesModelsFromHTML
 } from './propertiesModel.js';
 
+import {
+  calculateAbilityModifier,
+  calculateDndCheckValue,
+  calculateProficiencyBonus,
+  getCharacterHealth,
+  readCharacterModelFromPage
+} from '../character/characterModel.js';
+
 
 export const DND_ABILITY_KEYS = [
   'str',
@@ -14,67 +22,26 @@ export const DND_ABILITY_KEYS = [
 ];
 
 
-export function calculateAbilityModifier(
-  score
-) {
-
-  const value =
-    Number(score);
-
-  if (!Number.isFinite(value)) return 0;
-
-  return Math.floor(
-    (Math.max(1, Math.min(30, value)) - 10) / 2
-  );
-}
-
-
-export function calculateProficiencyBonus(
-  level
-) {
-
-  const value =
-    Math.max(
-      1,
-      Math.min(
-        20,
-        Math.floor(Number(level) || 1)
-      )
-    );
-
-  // DnD 5e: 1-4 = +2, 5-8 = +3, 9-12 = +4, 13-16 = +5, 17-20 = +6.
-  return 2 + Math.floor(
-    (value - 1) / 4
-  );
-}
-
-
-export function calculateDndCheckValue(
-  {
-    score = 10,
-    proficient = false,
-    proficiencyBonus = 2
-  } = {}
-) {
-
-  return calculateAbilityModifier(score) +
-    (proficient ? Number(proficiencyBonus) || 0 : 0);
-}
+export {
+  calculateAbilityModifier,
+  calculateDndCheckValue,
+  calculateProficiencyBonus
+};
 
 
 export function getPageCharacterHealth(
   page
 ) {
 
-  const propertyHealth =
-    getPropertyHealth(
+  const model =
+    readCharacterModelFromPage(
       page
     );
 
-  if (propertyHealth) return propertyHealth;
+  if (model.source === 'empty') return null;
 
-  return getLegacyDndHealth(
-    page
+  return getCharacterHealth(
+    model
   );
 }
 
@@ -104,17 +71,23 @@ export function readCharacterCalculationSources(
   page
 ) {
 
+  const properties =
+    readPropertiesModelsFromHTML(
+      page?.content
+    );
+
+  const legacyDnd =
+    getLegacyDndHealth(
+      page
+    );
+
   return {
-    properties:
-      readPropertiesModelsFromHTML(
-        page?.content
-      ),
-    legacyDnd:
-      getLegacyDndHealth(
-        page
-      ),
+    properties,
+    legacyDnd,
     futureCharacterModel:
-      null
+      readCharacterModelFromPage(
+        page
+      )
   };
 }
 
