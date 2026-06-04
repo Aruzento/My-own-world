@@ -8,7 +8,7 @@ import {
 
 
 // Архивный эксперимент: DnD stat block v2 временно не подключен в app/editor.
-// Причина описана в docs/ARCHIVED_EXPERIMENTS.md.
+// Причина описана в docs/02-architecture/ARCHIVED_EXPERIMENTS.md.
 
 const ABILITY_ORDER = [
   'str',

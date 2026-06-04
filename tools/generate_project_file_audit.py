@@ -88,7 +88,7 @@ def classify(path):
             "Нет.",
         )
 
-    if path_text.startswith("docs/sample-workspace/"):
+    if path_text.startswith("docs/03-testing/sample-workspace/"):
         return (
             "Пример workspace для onboarding и ручных проверок.",
             "Нет: обновлять только при изменении демонстрационных сценариев.",

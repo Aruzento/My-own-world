@@ -1,12 +1,10 @@
 ---
-summary: "Шаблон проверки задачи перед handoff, review или коммитом."
+summary: "Task verification and code review template."
 read_when:
-  - "После выполнения задачи"
-  - "Перед code review"
-  - "Перед release handoff"
+  - "Before verification"
+  - "When adding or changing tests"
 owner_zone: "testing"
 ---
-
 # Code Review / Task Verification Template
 
 ## Ref

@@ -14,15 +14,15 @@ description: "Desktop/Tauri build, installer, storage adapters, presentation win
 - `AGENTS.md`
 - `docs/01-delivery/PROJECT_PLAN.md`
 - `docs/01-delivery/WORK_LOG.md`
-- `docs/DESKTOP_ADAPTER_PLAN.md`
-- `docs/DESKTOP_RELEASE_POLICY.md`
-- `docs/DESKTOP_PACKAGING_SMOKE.md`
-- `docs/DESKTOP_TRANSITION_STRATEGY.md`
+- `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md`
+- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`
+- `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md`
+- `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md`
 
 ## Что Обновить После Задачи
 
-- `docs/DESKTOP_ADAPTER_PLAN.md`
-- `docs/DESKTOP_RELEASE_POLICY.md`
+- `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md`
+- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`
 - `docs/01-delivery/WORK_LOG.md`
 - release notes / tester instructions, если меняется сборка или установка
 

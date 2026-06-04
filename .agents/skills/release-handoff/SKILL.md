@@ -14,8 +14,8 @@ description: "Подготовка release notes, tester instructions, known iss
 - `AGENTS.md`
 - `docs/01-delivery/PROJECT_PLAN.md`
 - `docs/01-delivery/WORK_LOG.md`
-- `docs/RELEASE_PROCESS.md`
-- `docs/DESKTOP_RELEASE_POLICY.md`
+- `docs/01-delivery/RELEASE_PROCESS.md`
+- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`
 
 ## Что Обновить После Задачи
 

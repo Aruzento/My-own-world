@@ -1,13 +1,20 @@
+---
+summary: "archive document for PLANS_AND_TECH_DEBT.md."
+read_when:
+  - "When historical context is needed"
+  - "Do not update as active source"
+owner_zone: "archive"
+---
 ﻿# Планы и техдолг
 
-Этот файл теперь является **единым рабочим backlog-планом** проекта. Исторический лог выполненных работ вынесен в `docs/WORK_LOG.md`.
+Этот файл теперь является **единым рабочим backlog-планом** проекта. Исторический лог выполненных работ вынесен в `docs/01-delivery/WORK_LOG.md`.
 
 Правила ведения:
 
 - держать здесь один список задач, без параллельных старых планов;
 - техдолг не писать отдельной кучей, а превращать в конкретные задачи внутри плана;
 - после выполнения менять статус пункта на **сделано** и добавлять короткий результат;
-- подробный лог "что сделано / что стало лучше / какие риски остались" добавлять в `docs/WORK_LOG.md`;
+- подробный лог "что сделано / что стало лучше / какие риски остались" добавлять в `docs/01-delivery/WORK_LOG.md`;
 - после крупных изменений обновлять `README.md`, `docs/MY_OWN_WORLD_FULL_MANUAL.docx` и релевантные contract-файлы.
 
 ## Фокус После Оценки 01.06.2026
@@ -224,7 +231,7 @@ CI устанавливает Chromium через `npx playwright install --with
 - Зачем: картинки уже активно используются, а новая идея про музыку локаций добавляет audio/playlist assets.
 
 9.1. Описать `ASSET_LIFECYCLE_CONTRACT.md`: **сделано**.
-Контракт создан в `docs/ASSET_LIFECYCLE_CONTRACT.md`: описывает цели, правила сохранения/загрузки, `AssetReference`, broken assets и orphan assets.
+Контракт создан в `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md`: описывает цели, правила сохранения/загрузки, `AssetReference`, broken assets и orphan assets.
 
 9.2. Определить типы assets: **сделано**.
 `image`, `portrait`, `map background`, `audio`, `playlist`, future media.
@@ -254,7 +261,7 @@ CI устанавливает Chromium через `npx playwright install --with
 
 10.1. Описать performance risks карты: **сделано**.
 Много токенов, много фигур, большой background, fog, presentation sync, zoom/pan.
-Риски описаны в `docs/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`.
+Риски описаны в `docs/02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`.
 
 10.2. Ввести performance scenarios: **сделано**.
 В strategy-документ добавлены сценарии `small-map-baseline`, `large-map-drag`, `fog-paint-large`, `presentation-live-sync`, `zoom-pan-heavy`.
@@ -278,24 +285,24 @@ Render time, sync time, number of visible objects, background load.
 - Приоритет: **P1**.
 - Зачем: версии уже используются в коммитах, но релизный процесс не формализован.
 
-11.1. Создать `CHANGELOG.md`: **сделано**.
+11.1. Создать `docs/01-delivery/CHANGELOG.md`: **сделано**.
 Файл создан, добавлен раздел `Unreleased` и шаблон release notes.
 
 11.2. Описать release checklist: **сделано**.
-Checklist описан в `docs/RELEASE_PROCESS.md`.
+Checklist описан в `docs/01-delivery/RELEASE_PROCESS.md`.
 
 11.3. Согласовать `package.json` version с git tags: **сделано на уровне правила**.
-В `docs/RELEASE_PROCESS.md` зафиксировано: при формальном релизном цикле `package.json.version`, git tag `vX.Y.Z` и раздел changelog должны совпадать.
+В `docs/01-delivery/RELEASE_PROCESS.md` зафиксировано: при формальном релизном цикле `package.json.version`, git tag `vX.Y.Z` и раздел changelog должны совпадать.
 
 11.4. Ввести правило версий: **сделано**.
 `patch`, `minor`, `major`, `experimental`.
-Правила описаны в `docs/RELEASE_PROCESS.md`.
+Правила описаны в `docs/01-delivery/RELEASE_PROCESS.md`.
 
 11.5. Добавить rollback guide: **сделано**.
-Rollback guide добавлен в `docs/RELEASE_PROCESS.md`.
+Rollback guide добавлен в `docs/01-delivery/RELEASE_PROCESS.md`.
 
 11.6. Добавить release notes template: **сделано**.
-Шаблон добавлен в `CHANGELOG.md` и `docs/RELEASE_PROCESS.md`.
+Шаблон добавлен в `docs/01-delivery/CHANGELOG.md` и `docs/01-delivery/RELEASE_PROCESS.md`.
 
 ### 12. Campaign Map Initiative
 
@@ -392,7 +399,7 @@ Popup доработан: показывает результаты броско
 - Зачем: таблицы стали сложной подсистемой с resize, selection, toolbar, paste и keyboard behavior.
 
 15.1. Описать `TABLES_CONTRACT.md`: **сделано**.
-Результат: добавлен `docs/TABLES_CONTRACT.md` с правилами persistent HTML, runtime UI, resize, selection, paste, keyboard navigation и save/load boundary.
+Результат: добавлен `docs/02-architecture/contracts/TABLES_CONTRACT.md` с правилами persistent HTML, runtime UI, resize, selection, paste, keyboard navigation и save/load boundary.
 
 15.2. Зафиксировать model/persistent/runtime правила таблиц: **сделано**.
 Результат: зафиксировано, что сохраняются структура таблицы, содержимое ячеек, `colgroup`, ширины колонок и выравнивание; runtime toolbar, selection state и resize state не сохраняются.
@@ -415,7 +422,7 @@ Popup доработан: показывает результаты броско
 - Зачем: продукт становится мощным, но новому пользователю нужна входная траектория.
 
 16.1. Создать sample workspace: **сделано**.
-Результат: добавлен `docs/sample-workspace` со стартовой карточкой, учебной картой, учебным task tracker и пустой папкой assets.
+Результат: добавлен `docs/03-testing/sample-workspace` со стартовой карточкой, учебной картой, учебным task tracker и пустой папкой assets.
 
 16.2. Сделать стартовый tutorial: **сделано**.
 Результат: верхний popup `Инструменты -> Быстрый старт` объясняет workspace, первую сущность, дерево и wiki-links.
@@ -424,10 +431,10 @@ Popup доработан: показывает результаты броско
 Результат: popup `Инструменты -> Как устроено` объясняет карточки, карту кампании, task tracker и runtime UI.
 
 16.4. Добавить onboarding для карточек, дерева, wiki-links, карты, task tracker: **сделано базово**.
-Результат: основные системы описаны в `docs/UX_ONBOARDING_CHECKLIST.md` и частично во встроенной справке.
+Результат: основные системы описаны в `docs/03-testing/UX_ONBOARDING_CHECKLIST.md` и частично во встроенной справке.
 
 16.5. Добавить UX checklist: **сделано**.
-Результат: добавлен `docs/UX_ONBOARDING_CHECKLIST.md`, а краткий checklist доступен из popup `Инструменты`.
+Результат: добавлен `docs/03-testing/UX_ONBOARDING_CHECKLIST.md`, а краткий checklist доступен из popup `Инструменты`.
 
 ### 17. Workspace Templates
 
@@ -457,7 +464,7 @@ Popup доработан: показывает результаты броско
 - Зачем: wiki-links и backlinks уже есть, но мир пока больше tree-first, чем graph-first.
 
 18.1. Описать graph model: **сделано**.
-Результат: добавлен `docs/KNOWLEDGE_GRAPH_MODEL.md`.
+Результат: добавлен `docs/02-architecture/KNOWLEDGE_GRAPH_MODEL.md`.
 
 18.2. Добавить typed relationships: **сделано базово**.
 Результат: `js/wiki/knowledgeGraph.js` строит `treeParent` и `wikiLink` relationships.
@@ -582,7 +589,7 @@ Popup доработан: показывает результаты броско
 
 24.3. Обновлять contract-файлы при изменении правил подсистем: **постоянное правило**.
 
-24.4. Поддерживать `docs/WORK_LOG.md` как исторический журнал: **постоянное правило**.
+24.4. Поддерживать `docs/01-delivery/WORK_LOG.md` как исторический журнал: **постоянное правило**.
 
 ## Текущий Следующий Шаг
 

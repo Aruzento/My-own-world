@@ -1,12 +1,10 @@
 ---
-summary: "Краткая точка входа для владельца продукта: где проект сейчас, что делается дальше и какие риски открыты."
+summary: "Product dashboard with current project focus and links."
 read_when:
-  - "Перед любой задачей Codex"
-  - "Когда нужно понять текущее состояние продукта"
-  - "Когда планируется следующий milestone"
+  - "Before product planning"
+  - "When changing product direction"
 owner_zone: "product"
 ---
-
 # Product Dashboard
 
 ## Сейчас

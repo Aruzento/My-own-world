@@ -173,10 +173,10 @@ function checkDesktopDist() {
 function checkDesktopDocs() {
 
   [
-    'docs/DESKTOP_PACKAGING_SMOKE.md',
-    'docs/DESKTOP_TRANSITION_STRATEGY.md',
-    'docs/DESKTOP_PRESENTATION_WINDOW_SPIKE.md',
-    'docs/DESKTOP_RELEASE_POLICY.md'
+    'docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md',
+    'docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md',
+    'docs/02-architecture/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md',
+    'docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md'
   ].forEach(filePath => {
 
     addCheck(

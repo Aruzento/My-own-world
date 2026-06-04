@@ -59,7 +59,7 @@ const ZONE_BY_PATH =
 const SKIPPED_PATH_PREFIXES =
   [
     normalizePath(
-      path.join('docs', 'sample-workspace', 'pages')
+      path.join('docs', '03-testing', 'sample-workspace', 'pages')
     )
   ];
 

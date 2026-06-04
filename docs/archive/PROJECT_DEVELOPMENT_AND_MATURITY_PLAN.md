@@ -1,3 +1,10 @@
+---
+summary: "archive document for PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md."
+read_when:
+  - "When historical context is needed"
+  - "Do not update as active source"
+owner_zone: "archive"
+---
 # План развития проекта и технической зрелости
 
 Дата обновления: 01.06.2026

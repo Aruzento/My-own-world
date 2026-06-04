@@ -15,8 +15,8 @@ description: "Реструктуризация документации, metadat
 - `docs/00-product/PRODUCT_DASHBOARD.md`
 - `docs/01-delivery/PROJECT_PLAN.md`
 - `docs/01-delivery/WORK_LOG.md`
-- `docs/AI_ONBOARDING.md`
-- `docs/RELEASE_PROCESS.md`
+- `docs/02-architecture/AI_ONBOARDING.md`
+- `docs/01-delivery/RELEASE_PROCESS.md`
 
 ## Что Обновить После Задачи
 
