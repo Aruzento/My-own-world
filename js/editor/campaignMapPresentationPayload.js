@@ -200,6 +200,11 @@ function readTokenViewState(
       state[tokenId] = {
         hpPercent: token.dataset.hpPercent || '',
         hpState: token.dataset.hpState || '',
+        conditionCount: token.dataset.conditionCount || '',
+        effectCount: token.dataset.effectCount || '',
+        effectsSummary: token.dataset.effectsSummary || '',
+        incapacitated: token.dataset.incapacitated || '',
+        speedZero: token.dataset.speedZero || '',
         healthColor:
           token.style.getPropertyValue(
             '--token-health-color'

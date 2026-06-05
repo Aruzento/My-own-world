@@ -202,6 +202,69 @@
 }
 
 
+.campaign-map-token.is-creature[data-condition-count]:not([data-condition-count="0"])::before {
+
+  content:
+    attr(data-condition-count);
+
+  position:
+    absolute;
+
+  right:
+    -5px;
+
+  top:
+    -5px;
+
+  z-index:
+    4;
+
+  display:
+    grid;
+
+  place-items:
+    center;
+
+  width:
+    clamp(14px, calc(var(--campaign-grid-size, 48px) * var(--token-size, 1) * 0.34), 22px);
+
+  height:
+    clamp(14px, calc(var(--campaign-grid-size, 48px) * var(--token-size, 1) * 0.34), 22px);
+
+  border:
+    1px solid rgba(255,255,255,0.86);
+
+  border-radius:
+    50%;
+
+  color:
+    #fff;
+
+  background:
+    #b6473f;
+
+  box-shadow:
+    0 2px 7px rgba(73,38,31,0.28);
+
+  font:
+    800 clamp(8px, calc(var(--campaign-grid-size, 48px) * var(--token-size, 1) * 0.16), 11px)/1 system-ui, sans-serif;
+}
+
+
+.campaign-map-token.is-creature[data-incapacitated="true"] {
+
+  filter:
+    saturate(0.62);
+}
+
+
+.campaign-map-token.is-creature[data-speed-zero="true"] .campaign-map-token-image {
+
+  box-shadow:
+    inset 0 0 0 2px rgba(108,92,63,0.55);
+}
+
+
 .campaign-map-token.is-object:hover {
 
   box-shadow:

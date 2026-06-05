@@ -49,6 +49,14 @@ import {
 } from './customBlocks.js';
 
 import {
+  renderCharacterEffectsBlocks
+} from './characterEffectsBlock.js';
+
+import {
+  renderCharacterSheetBlocks
+} from './characterSheetBlock.js';
+
+import {
   applyBlockSystemContract
 } from './blocks/blockContract.js';
 
@@ -241,6 +249,14 @@ async function renderCardPage(
   renderBacklinks();
 
   renderCustomBlocks(
+    editor
+  );
+
+  renderCharacterEffectsBlocks(
+    editor
+  );
+
+  renderCharacterSheetBlocks(
     editor
   );
 

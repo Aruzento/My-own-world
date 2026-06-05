@@ -32,6 +32,14 @@ import {
   state
 } from '../../state.js';
 
+import {
+  renderCharacterEffectsBlocks
+} from '../characterEffectsBlock.js';
+
+import {
+  renderCharacterSheetBlocks
+} from '../characterSheetBlock.js';
+
 
 let popupState = null;
 let activeAnchor = null;
@@ -481,6 +489,14 @@ function addNamedBlock(
   );
 
   ensureBlockControls(
+    block
+  );
+
+  renderCharacterEffectsBlocks(
+    block
+  );
+
+  renderCharacterSheetBlocks(
     block
   );
 

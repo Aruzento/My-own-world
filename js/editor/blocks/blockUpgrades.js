@@ -13,6 +13,8 @@ export const BLOCK_VERSIONS = {
   characterStats: 2,
   dndStats: 3,
   dndStatsV2: 1,
+  characterEffects: 1,
+  characterSheet: 1,
   table: 2
 };
 

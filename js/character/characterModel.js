@@ -8,6 +8,18 @@ import {
   readInventoryModelFromHTML
 } from './inventoryModel.js';
 
+import {
+  createEffectsModel,
+  getCharacterEffectsSummary,
+  hasCharacterCondition as hasEffectCondition,
+  readEffectsModelFromHTML
+} from './effectsModel.js';
+
+import {
+  createEffectsFromInventory,
+  mergeEffectsModels
+} from './effectSourceResolver.js';
+
 
 export const CHARACTER_ABILITY_KEYS = [
   'str',
@@ -34,6 +46,7 @@ export function createCharacterModel(
     health = {},
     deathSaves = {},
     inventory = {},
+    effects = {},
     sources = {}
   } = {}
 ) {
@@ -95,6 +108,10 @@ export function createCharacterModel(
       createInventoryModel(
         inventory
       ),
+    effects:
+      createEffectsModel(
+        effects
+      ),
     sources: {
       properties:
         Boolean(
@@ -112,11 +129,20 @@ export function createCharacterModel(
 export function createCharacterModelFromSources(
   {
     page = null,
+    pages = [],
     propertiesModels = [],
     legacyDndHealth = null,
-    inventoryModel = null
+    inventoryModel = null,
+    effectsModel = null
   } = {}
 ) {
+
+  const combinedEffectsModel =
+    createCombinedEffectsModel({
+      inventoryModel,
+      effectsModel,
+      pages
+    });
 
   const propertyModel =
     propertiesModels.find(model =>
@@ -130,7 +156,9 @@ export function createCharacterModelFromSources(
       page,
       propertyModel,
       legacyDndHealth,
-      inventoryModel
+      inventoryModel,
+      effectsModel:
+        combinedEffectsModel
     });
   }
 
@@ -149,6 +177,8 @@ export function createCharacterModelFromSources(
         legacyDndHealth,
       inventory:
         inventoryModel,
+      effects:
+        combinedEffectsModel,
       sources: {
         legacyDnd: true
       }
@@ -163,13 +193,18 @@ export function createCharacterModelFromSources(
         page?.type
       ),
     inventory:
-      inventoryModel
+      inventoryModel,
+    effects:
+      combinedEffectsModel
   });
 }
 
 
 export function readCharacterModelFromPage(
-  page
+  page,
+  {
+    pages = []
+  } = {}
 ) {
 
   return createCharacterModelFromSources({
@@ -185,7 +220,12 @@ export function readCharacterModelFromPage(
     inventoryModel:
       readInventoryModelFromHTML(
         page?.content
-      )
+      ),
+    effectsModel:
+      readEffectsModelFromHTML(
+        page?.content
+      ),
+    pages
   });
 }
 
@@ -219,13 +259,65 @@ export function getCharacterInitiativeModifier(
 
   if (
     !model ||
-    model.source === 'empty'
+    (
+      model.source === 'empty' &&
+      !hasMeaningfulCharacterData(
+        model
+      )
+    )
   ) {
 
     return 0;
   }
 
-  return model.abilities?.dex?.modifier || 0;
+  return (
+    model.abilities?.dex?.modifier || 0
+  ) + (
+    model.effects?.modifiers?.initiative || 0
+  );
+}
+
+
+function hasMeaningfulCharacterData(
+  model
+) {
+
+  return Boolean(
+    model?.abilities?.dex?.score !== 10 ||
+    model?.effects?.conditions?.length ||
+    model?.effects?.effects?.length ||
+    model?.effects?.modifiers?.initiative
+  );
+}
+
+
+export function getCharacterEffectiveArmorClass(
+  model
+) {
+
+  if (!model) return 10;
+
+  return Math.max(
+    0,
+    (model.armorClass || 10) +
+    (model.effects?.modifiers?.armorClass || 0)
+  );
+}
+
+
+export function getCharacterEffectiveSpeed(
+  model
+) {
+
+  if (!model) return 30;
+
+  if (model.effects?.flags?.speedIsZero) return 0;
+
+  return Math.max(
+    0,
+    (model.speed || 30) +
+    (model.effects?.modifiers?.speed || 0)
+  );
 }
 
 
@@ -235,6 +327,38 @@ export function getCharacterInventory(
 
   return createInventoryModel(
     model?.inventory
+  );
+}
+
+
+export function getCharacterEffects(
+  model
+) {
+
+  return createEffectsModel(
+    model?.effects
+  );
+}
+
+
+export function getCharacterEffectsCombatSummary(
+  model
+) {
+
+  return getCharacterEffectsSummary(
+    model?.effects
+  );
+}
+
+
+export function hasCharacterCondition(
+  model,
+  conditionKey
+) {
+
+  return hasEffectCondition(
+    model?.effects,
+    conditionKey
   );
 }
 
@@ -448,12 +572,35 @@ export function readLegacyDndHealthFromPage(
 }
 
 
+function createCombinedEffectsModel(
+  {
+    inventoryModel,
+    effectsModel,
+    pages
+  }
+) {
+
+  // Здесь находится будущая точка подключения Rule Tree:
+  // сейчас модель автоматически берет эффекты экипированных предметов,
+  // позже сюда добавится provider правил без изменения карты и инициативы.
+  return mergeEffectsModels(
+    effectsModel,
+    createEffectsFromInventory({
+      inventory:
+        inventoryModel,
+      pages
+    })
+  );
+}
+
+
 function createCharacterModelFromProperties(
   {
     page,
     propertyModel,
     legacyDndHealth,
-    inventoryModel
+    inventoryModel,
+    effectsModel
   }
 ) {
 
@@ -525,6 +672,8 @@ function createCharacterModelFromProperties(
     },
     inventory:
       inventoryModel,
+    effects:
+      effectsModel,
     sources: {
       properties: true,
       legacyDnd:

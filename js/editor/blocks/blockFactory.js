@@ -3,6 +3,8 @@ import {
   createItemsBlock,
   createSpellsBlock,
   createSkillsBlock,
+  createCharacterEffectsBlock,
+  createCharacterSheetBlock,
   createPropertiesBlock,
   createImageBlock,
   createCharacterStatsBlock,
@@ -30,6 +32,16 @@ const BLOCK_CREATORS = {
 
   skills: title =>
     createSkillsBlock({
+      title
+    }),
+
+  characterEffects: title =>
+    createCharacterEffectsBlock({
+      title
+    }),
+
+  characterSheet: title =>
+    createCharacterSheetBlock({
       title
     }),
 

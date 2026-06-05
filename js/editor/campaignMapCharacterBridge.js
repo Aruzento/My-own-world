@@ -1,4 +1,7 @@
 import {
+  getCharacterEffectiveArmorClass,
+  getCharacterEffectiveSpeed,
+  getCharacterEffectsCombatSummary,
   getCharacterHealth,
   getCharacterInitiativeModifier,
   readCharacterModelFromPage
@@ -7,6 +10,10 @@ import {
 import {
   updatePageCharacterHealth
 } from '../properties/characterCalculations.js';
+
+import {
+  state
+} from '../state.js';
 
 
 // Мост карты к CharacterModel. Карта не должна сама разбирать HTML карточки:
@@ -18,7 +25,11 @@ export function getCampaignMapCharacterState(
 
   const model =
     readCharacterModelFromPage(
-      page
+      page,
+      {
+        pages:
+          state.pages
+      }
     );
 
   if (model.source === 'empty') return null;
@@ -33,9 +44,31 @@ export function getCampaignMapCharacterState(
       getCharacterInitiativeModifier(
         model
       ),
+    armorClass:
+      getCharacterEffectiveArmorClass(
+        model
+      ),
+    speed:
+      getCharacterEffectiveSpeed(
+        model
+      ),
+    effects:
+      getCharacterEffectsCombatSummary(
+        model
+      ),
     source:
       model.source
   };
+}
+
+
+export function getCampaignMapCharacterEffects(
+  page
+) {
+
+  return getCampaignMapCharacterState(
+    page
+  )?.effects || null;
 }
 
 

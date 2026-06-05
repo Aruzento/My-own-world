@@ -147,3 +147,498 @@ test(
     ]);
   }
 );
+
+
+test(
+  'character-model-reads-effects-data-from-persistent-json',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            getCharacterEffects,
+            hasCharacterCondition,
+            readCharacterModelFromPage
+          } = await import('/js/character/characterModel.js');
+
+          const model =
+            readCharacterModelFromPage({
+              id: 'hero',
+              type: 'character',
+              content: `
+                <div class="entity-layout card-shell">
+                  <script type="application/json" data-character-effects>
+                    {
+                      "conditions": [
+                        "restrained"
+                      ],
+                      "effects": [
+                        {
+                          "id": "haste",
+                          "title": "Ускорение",
+                          "sourceType": "spell",
+                          "modifiers": {
+                            "armorClass": 2,
+                            "speed": 30
+                          }
+                        }
+                      ]
+                    }
+                  </script>
+                </div>
+              `
+            });
+
+          const effects =
+            getCharacterEffects(
+              model
+            );
+
+          return {
+            hasRestrained:
+              hasCharacterCondition(
+                model,
+                'restrained'
+              ),
+            speed:
+              effects.modifiers.speed,
+            armorClass:
+              effects.modifiers.armorClass,
+            attackersHaveAdvantage:
+              effects.flags.attackersHaveAdvantage
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      hasRestrained: true,
+      speed: 30,
+      armorClass: 2,
+      attackersHaveAdvantage: true
+    });
+  }
+);
+
+
+test(
+  'character-effects-block-ui-updates-persistent-json',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createCharacterEffectsBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCharacterEffectsBlocks,
+            setupCharacterEffectsBlocks
+          } = await import('/js/editor/characterEffectsBlock.js');
+
+          const editor =
+            document.createElement('div');
+
+          editor.innerHTML =
+            createCharacterEffectsBlock({
+              title: 'Эффекты'
+            });
+
+          let saves =
+            0;
+
+          setupCharacterEffectsBlocks(
+            editor,
+            () => {
+              saves += 1;
+            }
+          );
+
+          renderCharacterEffectsBlocks(
+            editor
+          );
+
+          editor
+            .querySelector('.character-effects-condition-select')
+            .value =
+              'poisoned';
+
+          editor
+            .querySelector('.character-effects-add-condition')
+            .click();
+
+          editor
+            .querySelector('.character-effects-effect-title')
+            .value =
+              'Ускорение';
+
+          editor
+            .querySelector('.character-effects-initiative')
+            .value =
+              '2';
+
+          editor
+            .querySelector('.character-effects-add-effect')
+            .click();
+
+          const data =
+            JSON.parse(
+              editor.querySelector('[data-character-effects]').textContent
+            );
+
+          return {
+            saves,
+            condition:
+              data.conditions[0].key,
+            effectTitle:
+              data.effects[0].title,
+            initiative:
+              data.effects[0].modifiers.initiative,
+            visible:
+              editor.querySelector('.character-effects-summary').textContent
+          };
+        }
+      );
+
+    expect(
+      result.saves
+    ).toBe(
+      2
+    );
+
+    expect(
+      result.condition
+    ).toBe(
+      'poisoned'
+    );
+
+    expect(
+      result.effectTitle
+    ).toBe(
+      'Ускорение'
+    );
+
+    expect(
+      result.initiative
+    ).toBe(
+      2
+    );
+
+    expect(
+      result.visible
+    ).toContain(
+      'Отравлен'
+    );
+  }
+);
+
+
+test(
+  'character-effects-block-can-link-effect-from-source-card',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            createCharacterEffectsBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCharacterEffectsBlocks,
+            setupCharacterEffectsBlocks
+          } = await import('/js/editor/characterEffectsBlock.js');
+
+          state.currentPage = {
+            id: 'hero',
+            type: 'character'
+          };
+
+          state.pages = [
+            state.currentPage,
+            {
+              id: 'boots',
+              title: 'Сапоги скорости',
+              name: 'Сапоги скорости',
+              type: 'item',
+              content: `
+                <script type="application/json" data-character-effects>
+                  {
+                    "effects": [
+                      {
+                        "id": "speed",
+                        "title": "Быстрый шаг",
+                        "sourceType": "item",
+                        "modifiers": {
+                          "speed": 10,
+                          "initiative": 1
+                        }
+                      }
+                    ]
+                  }
+                </script>
+              `
+            }
+          ];
+
+          const editor =
+            document.createElement('div');
+
+          editor.innerHTML =
+            createCharacterEffectsBlock({
+              title: 'Эффекты'
+            });
+
+          setupCharacterEffectsBlocks(
+            editor,
+            () => {}
+          );
+
+          renderCharacterEffectsBlocks(
+            editor
+          );
+
+          editor.querySelector(
+            '.character-effects-source-page'
+          ).value =
+            'boots';
+
+          editor.querySelector(
+            '.character-effects-add-effect'
+          ).click();
+
+          const data =
+            JSON.parse(
+              editor.querySelector('[data-character-effects]').textContent
+            );
+
+          return {
+            title:
+              data.effects[0].title,
+            sourcePageId:
+              data.effects[0].sourcePageId,
+            speed:
+              data.effects[0].modifiers.speed
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      title: 'Сапоги скорости: Быстрый шаг',
+      sourcePageId: 'boots',
+      speed: 10
+    });
+  }
+);
+
+
+test(
+  'character-model-auto-applies-effects-from-inventory-items',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            getCharacterEffectiveSpeed,
+            getCharacterInitiativeModifier,
+            readCharacterModelFromPage
+          } = await import('/js/character/characterModel.js');
+
+          const itemPage = {
+            id: 'boots',
+            title: 'Сапоги скорости',
+            type: 'item',
+            content: `
+              <script type="application/json" data-character-effects>
+                {
+                  "effects": [
+                    {
+                      "id": "speed",
+                      "title": "Быстрый шаг",
+                      "sourceType": "item",
+                      "modifiers": {
+                        "speed": 10,
+                        "initiative": 2
+                      }
+                    }
+                  ]
+                }
+              </script>
+            `
+          };
+
+          const heroPage = {
+            id: 'hero',
+            type: 'character',
+            content: `
+              <div class="entity-layout card-shell">
+                <div class="template-block item-set-block" data-block-type="items">
+                  <div class="item-set-list">
+                    <button class="item-set-chip" data-page-id="boots">
+                      <span class="item-set-title">Сапоги скорости</span>
+                      <input class="item-set-quantity" value="1">
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `
+          };
+
+          const model =
+            readCharacterModelFromPage(
+              heroPage,
+              {
+                pages: [
+                  heroPage,
+                  itemPage
+                ]
+              }
+            );
+
+          return {
+            speed:
+              getCharacterEffectiveSpeed(
+                model
+              ),
+            initiative:
+              getCharacterInitiativeModifier(
+                model
+              ),
+            effectTitle:
+              model.effects.effects[0].title
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      speed: 40,
+      initiative: 2,
+      effectTitle: 'Сапоги скорости: Быстрый шаг'
+    });
+  }
+);
+
+
+test(
+  'character-sheet-block-renders-character-model-summary',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            createCharacterSheetBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCharacterSheetBlocks
+          } = await import('/js/editor/characterSheetBlock.js');
+
+          state.currentPage = {
+            id: 'hero',
+            type: 'character',
+            content: `
+              <div class="entity-layout card-shell">
+                <div class="template-block card-properties-block" data-block-type="properties" data-card-type="character">
+                  <input data-property-name="level" value="5">
+                  <input data-property-name="armorClass" value="15">
+                  <input data-property-name="speed" value="30">
+                  <input data-property-name="hpCurrent" value="12">
+                  <input data-property-name="hpMax" value="20">
+                  <input data-property-name="dex" value="16">
+                </div>
+                <script type="application/json" data-character-effects>
+                  {
+                    "effects": [
+                      {
+                        "id": "shield",
+                        "title": "Щит",
+                        "modifiers": {
+                          "armorClass": 2
+                        }
+                      }
+                    ]
+                  }
+                </script>
+              </div>
+            `
+          };
+
+          state.pages = [
+            state.currentPage
+          ];
+
+          const editor =
+            document.createElement('div');
+
+          editor.innerHTML =
+            createCharacterSheetBlock();
+
+          renderCharacterSheetBlocks(
+            editor
+          );
+
+          return editor.textContent;
+        }
+      );
+
+    expect(
+      result
+    ).toContain(
+      'КЗ'
+    );
+
+    expect(
+      result
+    ).toContain(
+      '17'
+    );
+
+    expect(
+      result
+    ).toContain(
+      'Щит'
+    );
+  }
+);

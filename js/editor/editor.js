@@ -31,6 +31,10 @@ import {
 } from './customBlocks.js';
 
 import {
+  setupCharacterEffectsBlocks
+} from './characterEffectsBlock.js';
+
+import {
   setupCampaignMaps
 } from './campaignMap.js';
 
@@ -114,6 +118,11 @@ export function setupEditor() {
   );
 
   setupCustomBlocks(
+    editor,
+    saveCurrentPage
+  );
+
+  setupCharacterEffectsBlocks(
     editor,
     saveCurrentPage
   );

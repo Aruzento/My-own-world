@@ -45,6 +45,20 @@ export function renderTypePicker(
         description: 'Список связанных навыков'
       })}
 
+      ${createTypeOptionHTML({
+        type: 'characterEffects',
+        icon: '!',
+        title: 'Эффекты и состояния',
+        description: 'Активные состояния DnD и временные модификаторы'
+      })}
+
+      ${createTypeOptionHTML({
+        type: 'characterSheet',
+        icon: '☷',
+        title: 'Лист персонажа',
+        description: 'Расчетная сводка персонажа из свойств, эффектов и инвентаря'
+      })}
+
       ${hasPropertyBlockDefinition(cardType)
         ? createTypeOptionHTML({
           type: 'properties',
@@ -199,6 +213,16 @@ export function getBlockPopupTitle(
   type
 ) {
 
+  if (type === 'characterEffects') {
+
+    return 'Название блока эффектов и состояний';
+  }
+
+  if (type === 'characterSheet') {
+
+    return 'Название листа персонажа';
+  }
+
   const titles = {
     items: 'Название блока с предметами',
     spells: 'Название блока с заклинаниями',
@@ -217,6 +241,16 @@ export function getBlockPopupTitle(
 export function getDefaultBlockTitle(
   type
 ) {
+
+  if (type === 'characterEffects') {
+
+    return 'Эффекты и состояния';
+  }
+
+  if (type === 'characterSheet') {
+
+    return 'Лист персонажа';
+  }
 
   const titles = {
     items: 'Набор',

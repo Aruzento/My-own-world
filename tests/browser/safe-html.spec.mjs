@@ -5,7 +5,7 @@ import {
 
 
 test(
-  'safe-html-sanitizer-removes-forbidden-tags-and-keeps-task-json',
+  'safe-html-sanitizer-removes-forbidden-tags-and-keeps-json-data-blocks',
   async ({ page }) => {
 
     await page.goto('/');
@@ -17,6 +17,7 @@ test(
           <div>
             <script>alert(1)</script>
             <script type="application/json" data-task-tracker-data data-extra="x">{"ok":true}</script>
+            <script type="application/json" data-character-effects data-extra="x">{"conditions":["poisoned"]}</script>
             <iframe src="https://example.com"></iframe>
             <object data="x"></object>
             <embed src="x">
@@ -38,6 +39,8 @@ test(
     expect(result.saved).not.toContain('<form');
     expect(result.saved).toContain('type="application/json"');
     expect(result.saved).toContain('data-task-tracker-data');
+    expect(result.saved).toContain('data-character-effects');
+    expect(result.saved).toContain('character-effects-data');
     expect(result.saved).not.toContain('data-extra');
   }
 );

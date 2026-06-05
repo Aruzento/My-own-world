@@ -52,8 +52,8 @@ import {
 } from './campaignMapHealth.js';
 
 import {
-  getCampaignMapCharacterHealth,
-  getCampaignMapCharacterInitiativeModifier
+  getCampaignMapCharacterInitiativeModifier,
+  getCampaignMapCharacterState
 } from './campaignMapCharacterBridge.js';
 
 import {
@@ -260,23 +260,36 @@ export function applyTokenHealthState(
         token.dataset.pageId
       );
 
-  const health =
-    getCampaignMapCharacterHealth(
+  const characterState =
+    getCampaignMapCharacterState(
       page
     );
 
+  const health =
+    characterState?.health || null;
+
   const initiativeModifier =
-    getCampaignMapCharacterInitiativeModifier(
-      page,
-      Number(token.dataset.initiativeModifier || 0)
-    );
+    characterState
+      ? characterState.initiativeModifier
+      : Number(token.dataset.initiativeModifier || 0);
+
+  const effectsKey =
+    characterState?.effects
+      ? [
+        ...(characterState.effects.conditionLabels || []),
+        ...(characterState.effects.effectTitles || []),
+        characterState.effects.flags?.isIncapacitated ? 'incapacitated' : '',
+        characterState.effects.flags?.speedIsZero ? 'speed-zero' : ''
+      ].join(',')
+      : 'none';
 
   const cacheKey =
     [
       health
         ? `${health.current}/${health.max}/${health.temp || 0}`
         : 'none',
-      initiativeModifier
+      initiativeModifier,
+      effectsKey
     ].join('|');
 
   if (
@@ -291,6 +304,11 @@ export function applyTokenHealthState(
   syncTokenInitiativeModifier(
     token,
     initiativeModifier
+  );
+
+  syncTokenEffectsState(
+    token,
+    characterState?.effects
   );
 
   if (!health) {
@@ -325,6 +343,65 @@ export function applyTokenHealthState(
       percent
     )
   );
+}
+
+
+function syncTokenEffectsState(
+  token,
+  effectsSummary
+) {
+
+  const conditionLabels =
+    effectsSummary?.conditionLabels || [];
+
+  const effectTitles =
+    effectsSummary?.effectTitles || [];
+
+  const flags =
+    effectsSummary?.flags || {};
+
+  token.dataset.conditionCount =
+    String(
+      conditionLabels.length
+    );
+
+  token.dataset.effectCount =
+    String(
+      effectTitles.length
+    );
+
+  token.dataset.incapacitated =
+    flags.isIncapacitated
+      ? 'true'
+      : 'false';
+
+  token.dataset.speedZero =
+    flags.speedIsZero
+      ? 'true'
+      : 'false';
+
+  const summary =
+    [
+      ...conditionLabels,
+      ...effectTitles
+    ].join(', ');
+
+  if (summary) {
+
+    token.dataset.effectsSummary =
+      summary;
+
+    token.title =
+      `${token.dataset.name || ''}: ${summary}`;
+
+  } else {
+
+    delete token.dataset.effectsSummary;
+
+    token.removeAttribute(
+      'title'
+    );
+  }
 }
 
 

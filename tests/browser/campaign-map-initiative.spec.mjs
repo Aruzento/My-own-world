@@ -244,6 +244,20 @@ test(
             content: `
               <div class="entity-layout card-shell">
                 <section class="entity-main">
+                  <script type="application/json" data-character-effects>
+                    {
+                      "conditions": ["restrained"],
+                      "effects": [
+                        {
+                          "id": "alert",
+                          "title": "Alert",
+                          "modifiers": {
+                            "initiative": 2
+                          }
+                        }
+                      ]
+                    }
+                  </script>
                   <div class="template-block card-properties-block card-properties-creature"
                     data-block-type="properties"
                     data-card-type="creature"
@@ -307,7 +321,11 @@ test(
                 .tokens[0]
                 .initiativeModifier,
             popupModifier:
-              initiativeInput.dataset.modifier
+              initiativeInput.dataset.modifier,
+            conditionCount:
+              token.dataset.conditionCount,
+            effectsSummary:
+              token.dataset.effectsSummary
           };
         }
       );
@@ -315,19 +333,31 @@ test(
     expect(
       result.tokenModifier
     ).toBe(
-      '3'
+      '5'
     );
 
     expect(
       result.modelModifier
     ).toBe(
-      3
+      5
     );
 
     expect(
       result.popupModifier
     ).toBe(
-      '3'
+      '5'
+    );
+
+    expect(
+      result.conditionCount
+    ).toBe(
+      '1'
+    );
+
+    expect(
+      result.effectsSummary
+    ).toContain(
+      'Опутан'
     );
   }
 );

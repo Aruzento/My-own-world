@@ -24,6 +24,8 @@ owner_zone: "architecture"
 
 - `js/character/characterModel.js` - нормализация модели, DnD-расчеты, HP/temp HP/death state.
 - `js/character/inventoryModel.js` - нормализация инвентаря из блока `Предметы` и будущие чистые операции add/update/remove.
+- `js/character/effectsModel.js` - нормализация активных состояний DnD, эффектов, модификаторов и флагов боевого состояния.
+- `js/character/effectSourceResolver.js` - связывание эффектов с карточками-источниками: предметами, заклинаниями, навыками и будущими правилами.
 - `js/properties/characterCalculations.js` - совместимый фасад старого кода, который теперь должен опираться на `CharacterModel`.
 - `js/properties/propertiesModel.js` - чтение блока `Свойства`.
 - `js/properties/propertySchemas.js` - стабильные ключи полей свойств.
@@ -36,11 +38,16 @@ owner_zone: "architecture"
 
 ```js
 createCharacterModel(options)
-createCharacterModelFromSources({ page, propertiesModels, legacyDndHealth })
-readCharacterModelFromPage(page)
+createCharacterModelFromSources({ page, pages, propertiesModels, legacyDndHealth })
+readCharacterModelFromPage(page, { pages })
 getCharacterHealth(model)
 getCharacterInitiativeModifier(model)
+getCharacterEffectiveArmorClass(model)
+getCharacterEffectiveSpeed(model)
 getCharacterInventory(model)
+getCharacterEffects(model)
+getCharacterEffectsCombatSummary(model)
+hasCharacterCondition(model, conditionKey)
 applyCharacterHealthChange(model, options)
 calculateAbilityModifier(score)
 calculateProficiencyBonus(level)
@@ -94,6 +101,30 @@ calculateDndCheckValue(options)
     ],
     totalQuantity: 1
   },
+  effects: {
+    kind: 'EffectsModel',
+    version: 1,
+    source: 'manual' | 'effects-data' | 'empty',
+    conditions: [],
+    effects: [],
+    modifiers: {
+      armorClass: 0,
+      speed: 0,
+      initiative: 0,
+      proficiencyBonus: 0,
+      abilityScores: {},
+      abilityChecks: {},
+      savingThrows: {},
+      skills: {}
+    },
+    flags: {
+      isIncapacitated: false,
+      speedIsZero: false,
+      hasDisadvantageOnAttacks: false,
+      attackersHaveAdvantage: false,
+      exhaustionLevel: 0
+    }
+  },
   sources: {
     properties: true,
     legacyDnd: false
@@ -110,6 +141,66 @@ calculateDndCheckValue(options)
 5. Карта не должна читать HP напрямую из HTML, если может обратиться к `getPageCharacterHealth()` / `CharacterModel`.
 6. Карта должна получать модификатор инициативы через `CharacterModel`, а не через ручной `modifier`, если токен создан из карточки персонажа или существа.
 7. Инвентарь читается из существующего блока `Предметы`, но расчетные подсистемы должны обращаться к `InventoryModel`, а не к `.item-set-chip` напрямую.
+8. Автоэффекты от предметов применяются только при явном блоке `Эффекты и состояния` на карточке предмета.
+9. Описание предмета, заклинания или навыка не является формулой и не должно автоматически парситься как правило.
+
+
+## Effects / Conditions
+
+`EffectsModel` - foundation-слой для активных состояний и эффектов персонажа. Он нужен, чтобы карта, инициатива, инвентарь, заклинания, навыки и будущий Rule Tree читали игровые модификаторы из одной модели, а не из HTML или русских подписей.
+
+Foundation поддерживает:
+
+- DnD-состояния: `blinded`, `charmed`, `deafened`, `frightened`, `grappled`, `incapacitated`, `invisible`, `paralyzed`, `petrified`, `poisoned`, `prone`, `restrained`, `stunned`, `unconscious`, `exhaustion`;
+- операции `addCharacterCondition`, `removeCharacterCondition`, `toggleCharacterCondition`, `addCharacterEffect`, `removeCharacterEffect`;
+- суммирование модификаторов `armorClass`, `speed`, `initiative`, `proficiencyBonus`, `abilityScores`, `abilityChecks`, `savingThrows`, `skills`;
+- флаги `isIncapacitated`, `speedIsZero`, `hasDisadvantageOnAttacks`, `attackersHaveAdvantage`, `exhaustionLevel`;
+- чтение будущего persistent JSON-источника `[data-character-effects]`.
+
+UI для эффектов создан как foundation-блок карточки `Эффекты и состояния`. Он редактирует только persistent JSON `[data-character-effects]`, а расчетные подсистемы читают эффекты через `CharacterModel` / `EffectsModel`.
+
+### Effects UI / Map Bridge
+
+- Блок карточки `Эффекты и состояния` хранит persistent JSON в `[data-character-effects]`.
+- Runtime UI блока не сохраняется как контент карточки и восстанавливается при открытии.
+- Safe HTML boundary разрешает только `script type="application/json"` с `data-character-effects`; обычные `<script>` остаются запрещенными.
+- Карта, инициатива и будущие проверки не читают `.character-effects-block` напрямую. Они обращаются к `CharacterModel` / `EffectsModel`.
+- `sourceType`, `sourcePageId`, `sourcePackageId` и `ruleId` являются мостом к инвентарю, Rule Tree и World Packages.
+
+### Effect Sources / Auto Effects
+
+`effectSourceResolver.js` отвечает за выбор и связывание эффектов из внешних карточек.
+
+Поддержанные источники foundation:
+
+- `item` - карточки типа `Предмет`;
+- `spell` - карточки типа `Магия`;
+- `skill` - карточки типа `Навык`;
+- `rule` - future placeholder для `Rule Tree`;
+- `world-package` - future placeholder для импортированных пакетов мира.
+
+Правила:
+
+1. UI блока `Эффекты и состояния` может добавить эффекты из карточки-источника.
+2. Если источник содержит `[data-character-effects]`, эффекты копируются как linked effects с `sourcePageId`.
+3. Если источник не содержит явного блока эффектов, ручное добавление может создать информационный эффект, но автоматические расчеты его не используют.
+4. `CharacterModel` автоматически объединяет собственные эффекты карточки и эффекты предметов из `InventoryModel`.
+5. После появления `Rule Tree` его provider должен подключиться к тому же pipeline через `ruleId`, не меняя карту и инициативу напрямую.
+
+### Full Character Sheet UX
+
+Блок `Лист персонажа` (`data-block-type="characterSheet"`) является runtime-витриной `CharacterModel`.
+
+Он показывает:
+
+- уровень и бонус мастерства;
+- эффективную КЗ, скорость, инициативу;
+- HP, максимум HP и временные HP;
+- характеристики и модификаторы;
+- инвентарь;
+- активные состояния и эффекты.
+
+На foundation-этапе лист не хранит собственные игровые значения и не заменяет блок `Свойства`. Если нужен редактируемый лист, он должен стать отдельным model-first этапом.
 
 ## DnD 5e Расчеты
 
@@ -147,6 +238,7 @@ calculateDndCheckValue(options)
 После foundation нужно:
 
 1. расширить Inventory System до экипировки, веса, валюты и связи с эффектами;
-2. добавить Effects / Conditions System;
+2. подключить Rule Tree provider к pipeline автоэффектов;
 3. определить судьбу archived `DnD v2` и `Variables` через модель, а не через HTML-блок;
-4. подготовить интеграцию с `Rule Tree` и `World Packages`.
+4. расширить Full Character Sheet UX до редактируемого листа;
+5. подготовить интеграцию с `World Packages`.

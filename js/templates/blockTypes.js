@@ -113,6 +113,55 @@ export function createSkillsBlock({
 }
 
 
+export function createCharacterEffectsBlock({
+  title = 'Эффекты и состояния'
+} = {}) {
+
+  return `
+    <div
+      class="template-block character-effects-block"
+      data-block-type="characterEffects"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <script
+        type="application/json"
+        class="character-effects-data"
+        data-character-effects
+      >{"version":1,"conditions":[],"effects":[]}</script>
+
+      <div class="character-effects-summary" data-runtime="true"></div>
+      <div class="character-effects-controls" data-runtime="true"></div>
+    </div>
+  `;
+}
+
+
+export function createCharacterSheetBlock({
+  title = 'Лист персонажа'
+} = {}) {
+
+  return `
+    <div
+      class="template-block character-sheet-block"
+      data-block-type="characterSheet"
+      data-block-version="1"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <div
+        class="character-sheet-runtime"
+        data-runtime="true"
+        contenteditable="false"
+      ></div>
+    </div>
+  `;
+}
+
+
 export function createPropertiesBlock({
   title,
   cardType

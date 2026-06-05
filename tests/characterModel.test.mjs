@@ -8,8 +8,11 @@ import {
   calculateProficiencyBonus,
   createCharacterModel,
   createCharacterModelFromSources,
+  getCharacterEffectiveArmorClass,
+  getCharacterEffectiveSpeed,
   getCharacterInitiativeModifier,
   getCharacterInventory,
+  getCharacterEffects,
   getCharacterHealth
 } from '../js/character/characterModel.js';
 
@@ -107,6 +110,66 @@ test(
       getCharacterInventory(
         model
       ).items.length,
+      0
+    );
+
+    assert.equal(
+      getCharacterEffects(
+        model
+      ).conditions.length,
+      0
+    );
+  }
+);
+
+
+test(
+  'CharacterModel applies EffectsModel modifiers to initiative, AC and speed',
+  () => {
+
+    const model =
+      createCharacterModel({
+        armorClass: 14,
+        speed: 30,
+        abilities: {
+          dex: 16
+        },
+        effects: {
+          conditions: [
+            'grappled'
+          ],
+          effects: [
+            {
+              id: 'haste',
+              title: 'Ускорение',
+              modifiers: {
+                armorClass: 2,
+                speed: 30,
+                initiative: 1
+              }
+            }
+          ]
+        }
+      });
+
+    assert.equal(
+      getCharacterInitiativeModifier(
+        model
+      ),
+      4
+    );
+
+    assert.equal(
+      getCharacterEffectiveArmorClass(
+        model
+      ),
+      16
+    );
+
+    assert.equal(
+      getCharacterEffectiveSpeed(
+        model
+      ),
       0
     );
   }

@@ -916,6 +916,39 @@ function applyTokenHealth(
       view.hpState;
   }
 
+  if (view.conditionCount) {
+
+    element.dataset.conditionCount =
+      view.conditionCount;
+  }
+
+  if (view.effectCount) {
+
+    element.dataset.effectCount =
+      view.effectCount;
+  }
+
+  if (view.effectsSummary) {
+
+    element.dataset.effectsSummary =
+      view.effectsSummary;
+
+    element.title =
+      view.effectsSummary;
+  }
+
+  if (view.incapacitated) {
+
+    element.dataset.incapacitated =
+      view.incapacitated;
+  }
+
+  if (view.speedZero) {
+
+    element.dataset.speedZero =
+      view.speedZero;
+  }
+
   if (view.healthColor) {
 
     element.style.setProperty(

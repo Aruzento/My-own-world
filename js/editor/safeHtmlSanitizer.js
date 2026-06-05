@@ -181,8 +181,13 @@ function isSafeJsonScript(
 
   return (
     element.getAttribute('type') === 'application/json' &&
-    isTaskTrackerJsonScript(
-      element
+    (
+      isTaskTrackerJsonScript(
+        element
+      ) ||
+      isCharacterEffectsJsonScript(
+        element
+      )
     )
   );
 }
@@ -269,6 +274,22 @@ function sanitizeAttributes(
 
     element.setAttribute(
       'data-task-tracker-data',
+      ''
+    );
+  }
+
+  if (
+    tagName === 'script' &&
+    isCharacterEffectsJsonScript(
+      element
+    )
+  ) {
+
+    element.className =
+      'character-effects-data';
+
+    element.setAttribute(
+      'data-character-effects',
       ''
     );
   }
@@ -370,7 +391,8 @@ function isAllowedJsonScriptAttribute(
   return (
     name === 'type' ||
     name === 'class' ||
-    name === 'data-task-tracker-data'
+    name === 'data-task-tracker-data' ||
+    name === 'data-character-effects'
   );
 }
 
@@ -382,6 +404,17 @@ function isTaskTrackerJsonScript(
   return (
     element.hasAttribute('data-task-tracker-data') ||
     element.classList.contains('task-tracker-data')
+  );
+}
+
+
+function isCharacterEffectsJsonScript(
+  element
+) {
+
+  return (
+    element.hasAttribute('data-character-effects') ||
+    element.classList.contains('character-effects-data')
   );
 }
 
