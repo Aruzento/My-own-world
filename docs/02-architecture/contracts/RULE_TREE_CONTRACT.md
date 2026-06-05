@@ -35,6 +35,8 @@ Persistent оболочка Rule Tree:
 
 Runtime UI (`.rule-tree-board`, кнопки, списки импорта, checkbox controls) всегда помечается как runtime и не должен попадать в `.md`.
 
+Runtime UI Rule Tree может редактировать группу, категорию, `inheritsRuleIds`, `sourcePackageId`, условия и JSON-пакет, но источником истины после каждого действия остается только JSON в `data-rule-tree-data`.
+
 ## Data Model
 
 ```js
@@ -109,6 +111,14 @@ Runtime UI (`.rule-tree-board`, кнопки, списки импорта, check
 
 Эффекты правил превращаются в обычные `EffectsModel`-эффекты с `sourceType: "rule"` и идут в тот же pipeline, что предметы, заклинания и навыки.
 
+## Rule Package Foundation
+
+Rule Tree поддерживает foundation import/export JSON-пакета через `RuleTreeModel.importPackage()` и `RuleTreeModel.exportPackage()`.
+
+Правила, импортированные из пакета без явного `sourceType`, получают `sourceType: "rulePackage"`. Это нужно, чтобы будущий World Package слой мог отличать локальные правила мира от переносимых пакетов.
+
+На текущем этапе пакет является JSON в UI, а не отдельным workspace-файлом. Следующая архитектурная версия должна вынести package-хранение в отдельный файл и добавить валидацию схемы.
+
 ## Что Нельзя Делать
 
 - Не создавать Rule Tree как обычную карточку с типом `lore`.
@@ -120,6 +130,7 @@ Runtime UI (`.rule-tree-board`, кнопки, списки импорта, check
 
 ## Следующее Развитие
 
-- Добавить полноценный редактор условий применения правила.
-- Подготовить Rule Package import/export.
-- Добавить UI наследования правил и предпросмотр итоговых эффектов.
+- Усилить условия до исполняемого rule engine: валидировать `level/state/card-variable/formula`, вычислять применимость правила и объяснять, почему правило сработало или не сработало.
+- Реализовать расчет наследования правил, чтобы `inheritsRuleIds` не были только metadata.
+- Вынести Rule Package import/export из textarea в workspace-файлы и связать с будущим World Package System.
+- Добавить browser regression на ошибочный JSON пакета, конфликт id и импорт пакета с несколькими группами.

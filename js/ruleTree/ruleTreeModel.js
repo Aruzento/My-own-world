@@ -134,6 +134,172 @@ export class RuleTreeModel {
   }
 
 
+  updateRule(
+    ruleId,
+    patch
+  ) {
+
+    const current =
+      this.getRule(
+        ruleId
+      );
+
+    if (!current) return null;
+
+    const updated =
+      normalizeRule({
+        ...current,
+        ...patch,
+        id:
+          current.id
+      });
+
+    if (!updated) return null;
+
+    this.data.rules =
+      this.data.rules.map(rule =>
+        rule.id === ruleId
+          ? updated
+          : rule
+      );
+
+    return updated;
+  }
+
+
+  addCondition(
+    ruleId,
+    condition
+  ) {
+
+    const rule =
+      this.getRule(
+        ruleId
+      );
+
+    if (!rule) return null;
+
+    return this.updateRule(
+      ruleId,
+      {
+        conditions: [
+          ...rule.conditions,
+          condition
+        ]
+      }
+    );
+  }
+
+
+  removeCondition(
+    ruleId,
+    conditionIndex
+  ) {
+
+    const rule =
+      this.getRule(
+        ruleId
+      );
+
+    if (!rule) return null;
+
+    return this.updateRule(
+      ruleId,
+      {
+        conditions:
+          rule.conditions.filter((_, index) =>
+            index !== Number(conditionIndex)
+          )
+      }
+    );
+  }
+
+
+  importPackage(
+    packageData
+  ) {
+
+    const imported =
+      normalizeRuleTreeData(
+        packageData
+      );
+
+    imported.groups.forEach(group => {
+
+      if (
+        !this.data.groups.some(item => item.id === group.id)
+      ) {
+
+        this.data.groups.push(
+          group
+        );
+      }
+    });
+
+    imported.rules.forEach(rule => {
+
+      const sourceType =
+        !rule.sourceType || rule.sourceType === 'ruleTree'
+          ? 'rulePackage'
+          : rule.sourceType;
+
+      this.importRule({
+        ...rule,
+        sourceType
+      });
+    });
+
+    this.data.activeRuleIds =
+      [
+        ...new Set([
+          ...this.data.activeRuleIds,
+          ...imported.activeRuleIds
+        ])
+      ]
+        .filter(id =>
+          this.getRule(
+            id
+          )
+        );
+  }
+
+
+  exportPackage() {
+
+    return {
+      version:
+        this.data.version,
+      groups:
+        this.data.groups.map(group => ({
+          ...group
+        })),
+      activeRuleIds:
+        [
+          ...this.data.activeRuleIds
+        ],
+      rules:
+        this.data.rules.map(rule => ({
+          ...rule,
+          conditions:
+            rule.conditions.map(condition => ({
+              ...condition
+            })),
+          inheritsRuleIds:
+            [
+              ...rule.inheritsRuleIds
+            ],
+          effects:
+            rule.effects.map(effect => ({
+              ...effect,
+              modifiers: {
+                ...(effect.modifiers || {})
+              }
+            }))
+        }))
+    };
+  }
+
+
   removeRule(
     ruleId
   ) {

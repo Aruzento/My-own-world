@@ -126,3 +126,126 @@ test(
     );
   }
 );
+
+
+test(
+  'RuleTreeModel edits conditions and imports exports rule packages',
+  () => {
+
+    const model =
+      new RuleTreeModel();
+
+    model.importRule({
+      id: 'rule-defense',
+      title: 'Защита',
+      effects: [
+        {
+          id: 'armor',
+          title: 'КЗ +1',
+          modifiers: {
+            armorClass: 1
+          }
+        }
+      ]
+    });
+
+    model.updateRule(
+      'rule-defense',
+      {
+        category:
+          'Бой',
+        inheritsRuleIds: [
+          'rule-base'
+        ],
+        sourcePackageId:
+          'core-pack'
+      }
+    );
+
+    model.addCondition(
+      'rule-defense',
+      {
+        type: 'level',
+        value: '>=3',
+        note: 'С третьего уровня'
+      }
+    );
+
+    model.toggleActiveRule(
+      'rule-defense',
+      true
+    );
+
+    const exported =
+      model.exportPackage();
+
+    assert.equal(
+      exported.rules[0].category,
+      'Бой'
+    );
+
+    assert.deepEqual(
+      exported.rules[0].conditions,
+      [
+        {
+          type: 'level',
+          value: '>=3',
+          note: 'С третьего уровня'
+        }
+      ]
+    );
+
+    model.removeCondition(
+      'rule-defense',
+      0
+    );
+
+    assert.deepEqual(
+      model.getRule('rule-defense').conditions,
+      []
+    );
+
+    model.importPackage({
+      version: 1,
+      groups: [
+        {
+          id: 'package',
+          title: 'Пакет',
+          parentId: null
+        }
+      ],
+      activeRuleIds: [
+        'rule-speed'
+      ],
+      rules: [
+        {
+          id: 'rule-speed',
+          title: 'Быстрый шаг',
+          groupId: 'package',
+          effects: [
+            {
+              id: 'speed',
+              title: 'Скорость +5',
+              modifiers: {
+                speed: 5
+              }
+            }
+          ]
+        }
+      ]
+    });
+
+    assert.equal(
+      model.getRule('rule-speed').sourceType,
+      'rulePackage'
+    );
+
+    assert.deepEqual(
+      model.data.activeRuleIds,
+      [
+        'rule-defense',
+        'rule-speed'
+      ]
+    );
+  }
+);

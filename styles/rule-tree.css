@@ -192,6 +192,172 @@
   margin-top: 5px;
 }
 
+.rule-tree-rule-editor {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.rule-tree-rule-editor label,
+.rule-tree-condition-form {
+  min-width: 0;
+}
+
+.rule-tree-rule-editor span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rule-tree-rule-editor input,
+.rule-tree-rule-editor select,
+.rule-tree-condition-form input,
+.rule-tree-condition-form select,
+.rule-tree-package-json {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-soft);
+  color: var(--text);
+  font: inherit;
+}
+
+.rule-tree-rule-editor input,
+.rule-tree-rule-editor select,
+.rule-tree-condition-form input,
+.rule-tree-condition-form select {
+  padding: 7px 8px;
+  font-size: 12px;
+}
+
+.rule-tree-conditions {
+  display: grid;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.rule-tree-condition {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(80px, auto) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-soft);
+}
+
+.rule-tree-condition span,
+.rule-tree-condition small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.rule-tree-condition strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-tree-condition-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rule-tree-condition-form {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) minmax(0, 1fr) 30px;
+  gap: 7px;
+}
+
+.rule-tree-add-condition,
+.rule-tree-remove-condition,
+.rule-tree-package-actions button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-soft);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.rule-tree-add-condition,
+.rule-tree-remove-condition {
+  width: 30px;
+  height: 30px;
+}
+
+.rule-tree-add-condition:hover,
+.rule-tree-package-actions button:hover {
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+}
+
+.rule-tree-remove-condition:hover {
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+}
+
+.rule-tree-preview,
+.rule-tree-package {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.rule-tree-effect-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(120px, auto);
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel);
+}
+
+.rule-tree-effect-preview strong,
+.rule-tree-effect-preview span,
+.rule-tree-effect-preview small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-tree-effect-preview small {
+  color: var(--muted);
+}
+
+.rule-tree-package-json {
+  min-height: 150px;
+  resize: vertical;
+  padding: 9px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.rule-tree-package-json.is-error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger-soft) 32%, transparent);
+}
+
+.rule-tree-package-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.rule-tree-package-actions button {
+  padding: 7px 10px;
+}
+
 .rule-tree-import-rule,
 .rule-tree-remove-rule {
   border: 1px solid var(--border);
@@ -225,4 +391,22 @@
   padding: 10px;
   color: var(--muted);
   font-size: 13px;
+}
+
+@media (max-width: 900px) {
+
+  .rule-tree-rule-editor,
+  .rule-tree-effect-preview {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rule-tree-condition,
+  .rule-tree-condition-form {
+    grid-template-columns: 1fr;
+  }
+
+  .rule-tree-add-condition,
+  .rule-tree-remove-condition {
+    width: 100%;
+  }
 }
