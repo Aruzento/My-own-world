@@ -8,6 +8,10 @@ import {
   getRuleTreeRuleOptions
 } from '../js/rules/ruleTreeProvider.js';
 
+import {
+  getCharacterIntegrationEffects
+} from '../js/character/characterIntegrationApi.js';
+
 
 const RULE_PAGE = {
   id: 'rule-defense-style',
@@ -232,6 +236,81 @@ test(
 
 
 test(
+  'RuleTreeProvider applies only rules whose conditions match current page',
+  () => {
+
+    const pages =
+      [
+        {
+          id: 'rules',
+          type: 'ruleTree',
+          template: 'ruleTree',
+          content: `
+            <div data-rule-tree="v1">
+              <script type="application/json" data-rule-tree-data>
+                {
+                  "version": 1,
+                  "activeRuleIds": ["rule-level"],
+                  "rules": [
+                    {
+                      "id": "rule-level",
+                      "title": "Level Gate",
+                      "conditions": [
+                        {
+                          "type": "level",
+                          "value": ">=3"
+                        }
+                      ],
+                      "effects": [
+                        {
+                          "id": "initiative",
+                          "title": "Initiative +2",
+                          "modifiers": {
+                            "initiative": 2
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              </script>
+            </div>
+          `
+        }
+      ];
+
+    const lowLevel =
+      createRuleTreeCharacterIntegrations({
+        pages,
+        page:
+          createCharacterPageWithLevel(
+            1
+          )
+      });
+
+    const highLevel =
+      createRuleTreeCharacterIntegrations({
+        pages,
+        page:
+          createCharacterPageWithLevel(
+            5
+          )
+      });
+
+    assert.equal(
+      getCharacterIntegrationEffects(lowLevel).length,
+      0
+    );
+
+    assert.equal(
+      getCharacterIntegrationEffects(highLevel)[0].modifiers.initiative,
+      2
+    );
+  }
+);
+
+
+test(
   'RuleTreeProvider applies active ruleTree entity rules without character-local selection',
   () => {
 
@@ -271,3 +350,29 @@ test(
     );
   }
 );
+
+
+function createCharacterPageWithLevel(
+  level
+) {
+
+  return {
+    id: `character-level-${level}`,
+    type: 'character',
+    ruleContext: {
+      level
+    },
+    content: `
+      <section data-properties-block="v1">
+        <script type="application/json" data-properties-model>
+          {
+            "cardType": "character",
+            "values": {
+              "level": ${level}
+            }
+          }
+        </script>
+      </section>
+    `
+  };
+}

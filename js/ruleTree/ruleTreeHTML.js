@@ -2,6 +2,10 @@ import {
   escapeHTML
 } from '../taskTracker/taskTrackerEscapeHTML.js';
 
+import {
+  resolveRuleInheritance
+} from './ruleTreeEngine.js';
+
 
 // HTML Rule Tree намеренно компактный: пользователь управляет правилами, JSON остается persistent.
 
@@ -31,6 +35,11 @@ export function getRuleTreeBoardHTML(
       .filter(candidate => !importedIds.has(candidate.sourcePageId || candidate.id))
       .map(getCandidateHTML)
       .join('');
+
+  const diagnosticsHTML =
+    getDiagnosticsHTML(
+      data
+    );
 
   return `
     <section class="rule-tree-board" data-runtime="true" contenteditable="false">
@@ -69,6 +78,15 @@ export function getRuleTreeBoardHTML(
 
       <section class="rule-tree-panel">
         <div class="rule-tree-panel-header">
+          <h2>Диагностика правил</h2>
+        </div>
+        <div class="rule-tree-diagnostics">
+          ${diagnosticsHTML}
+        </div>
+      </section>
+
+      <section class="rule-tree-panel">
+        <div class="rule-tree-panel-header">
           <h2>Пакет правил</h2>
         </div>
         <div class="rule-tree-package">
@@ -76,6 +94,21 @@ export function getRuleTreeBoardHTML(
           <div class="rule-tree-package-actions">
             <button class="rule-tree-export-package" type="button">Обновить JSON</button>
             <button class="rule-tree-import-package" type="button">Импортировать JSON</button>
+          </div>
+          <div class="rule-tree-package-manager">
+            <div class="rule-tree-package-file-row">
+              <input class="rule-tree-package-id" type="text" placeholder="id пакета">
+              <button class="rule-tree-save-package-file" type="button">Сохранить файл</button>
+              <button class="rule-tree-refresh-packages" type="button">Обновить список</button>
+            </div>
+            <div class="rule-tree-package-file-row">
+              <select class="rule-tree-package-file-select">
+                <option value="">Нет загруженных package-файлов</option>
+              </select>
+              <button class="rule-tree-load-package-file" type="button">Импорт файла</button>
+              <button class="rule-tree-remove-package-file" type="button">Удалить файл</button>
+            </div>
+            <div class="rule-tree-package-status" aria-live="polite"></div>
           </div>
         </div>
       </section>
@@ -89,6 +122,104 @@ export function getRuleTreeBoardHTML(
         </div>
       </section>
     </section>
+  `;
+}
+
+
+function getDiagnosticsHTML(
+  data
+) {
+
+  const inheritance =
+    resolveRuleInheritance(
+      data.rules
+    );
+
+  const structuralDiagnostics =
+    inheritance.diagnostics || [];
+
+  const ruleRows =
+    data.rules.map(rule =>
+      getRuleDiagnosticHTML(
+        rule,
+        inheritance.rules.find(item =>
+          item.id === rule.id
+        )
+      )
+    ).join('');
+
+  return `
+    <div class="rule-tree-diagnostic-summary ${structuralDiagnostics.length ? 'is-warning' : 'is-ok'}">
+      ${structuralDiagnostics.length
+        ? `Найдено предупреждений: ${structuralDiagnostics.length}`
+        : 'Ошибок структуры правил нет.'}
+    </div>
+    ${structuralDiagnostics.map(getStructuralDiagnosticHTML).join('')}
+    <div class="rule-tree-diagnostic-rules">
+      ${ruleRows || '<div class="rule-tree-empty">Правил пока нет, диагностировать нечего.</div>'}
+    </div>
+  `;
+}
+
+
+function getStructuralDiagnosticHTML(
+  diagnostic
+) {
+
+  return `
+    <div class="rule-tree-diagnostic-item is-warning">
+      <strong>${escapeHTML(diagnostic.type || 'warning')}</strong>
+      <span>${escapeHTML(diagnostic.message || 'Проверьте правило')}</span>
+    </div>
+  `;
+}
+
+
+function getRuleDiagnosticHTML(
+  rule,
+  resolvedRule
+) {
+
+  const inheritedConditions =
+    Math.max(
+      0,
+      Number(resolvedRule?.conditions?.length || 0) - rule.conditions.length
+    );
+
+  const inheritedEffects =
+    Math.max(
+      0,
+      Number(resolvedRule?.effects?.length || 0) - rule.effects.length
+    );
+
+  return `
+    <div class="rule-tree-diagnostic-rule" data-diagnostic-rule-id="${escapeHTML(rule.id)}">
+      <div>
+        <strong>${escapeHTML(rule.title)}</strong>
+        <span>${escapeHTML(rule.id)}</span>
+      </div>
+      <div class="rule-tree-diagnostic-tags">
+        <span>${rule.conditions.length} своих условий</span>
+        <span>${inheritedConditions} унаследованных условий</span>
+        <span>${rule.effects.length} своих эффектов</span>
+        <span>${inheritedEffects} унаследованных эффектов</span>
+      </div>
+      ${rule.conditions.length
+        ? `<div class="rule-tree-diagnostic-conditions">${rule.conditions.map(getConditionDiagnosticHTML).join('')}</div>`
+        : '<small>Правило применяется вручную или без условий.</small>'}
+    </div>
+  `;
+}
+
+
+function getConditionDiagnosticHTML(
+  condition
+) {
+
+  return `
+    <span class="rule-tree-condition-chip">
+      ${escapeHTML(condition.type)}: ${escapeHTML(condition.value || condition.note || 'условие')}
+    </span>
   `;
 }
 

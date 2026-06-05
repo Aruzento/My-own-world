@@ -12,6 +12,11 @@ import {
   readRuleTreeDataFromHTML
 } from '../ruleTree/ruleTreeReadData.js';
 
+import {
+  createRuleEvaluationContext,
+  evaluateRuleTreeRules
+} from '../ruleTree/ruleTreeEngine.js';
+
 
 const RULE_TAGS = new Set([
   'rule',
@@ -95,7 +100,8 @@ export function createRuleTreeModelFromPages(
 export function createRuleTreeCharacterIntegrations(
   {
     pages = [],
-    selectedRuleIds = []
+    selectedRuleIds = [],
+    page = null
   } = {}
 ) {
 
@@ -105,24 +111,29 @@ export function createRuleTreeCharacterIntegrations(
     );
 
   const ids =
-    new Set(
-      [
-        ...model.activeRuleIds,
-        ...selectedRuleIds
-      ]
-        .map(id =>
-          String(id || '').trim()
-        )
-        .filter(Boolean)
-    );
+    [
+      ...model.activeRuleIds,
+      ...selectedRuleIds
+    ]
+      .map(id =>
+        String(id || '').trim()
+      )
+      .filter(Boolean);
+
+  const evaluation =
+    evaluateRuleTreeRules({
+      rules:
+        model.rules,
+      activeRuleIds:
+        ids,
+      context:
+        createRuleEvaluationContext({
+          page
+        })
+    });
 
   const ruleEffects =
-    model.rules
-      .filter(rule =>
-        ids.has(
-          rule.id
-        )
-      )
+    evaluation.applicableRules
       .map(rule =>
         createRuleEffectsModel(
           rule

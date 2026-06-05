@@ -165,6 +165,7 @@ export function createCharacterModelFromSources(
 
   const combinedIntegrations =
     createCombinedIntegrations({
+      page,
       pages,
       integrations,
       selectedRuleIds:
@@ -654,6 +655,7 @@ function createCombinedEffectsModel(
 
 function createCombinedIntegrations(
   {
+    page,
     pages,
     integrations,
     selectedRuleIds
@@ -662,6 +664,7 @@ function createCombinedIntegrations(
 
   const ruleTreeIntegrations =
     createRuleTreeCharacterIntegrations({
+      page,
       pages,
       selectedRuleIds
     });

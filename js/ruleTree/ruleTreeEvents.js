@@ -3,6 +3,10 @@ import {
 } from '../state.js';
 
 import {
+  getStorageAdapter
+} from '../storage/storageAdapter.js';
+
+import {
   getLegacyRulePageImports
 } from '../rules/ruleTreeProvider.js';
 
@@ -13,6 +17,13 @@ import {
 import {
   getRuleTreeModel
 } from './ruleTreeGetModel.js';
+
+import {
+  listRulePackageFiles,
+  loadRulePackageFile,
+  removeRulePackageFile,
+  saveRulePackageFile
+} from './ruleTreePackageStorage.js';
 
 import {
   renderRuleTree
@@ -208,6 +219,65 @@ async function handleRuleTreeClick(
   }
 
   if (
+    event.target.classList.contains('rule-tree-refresh-packages')
+  ) {
+
+    await refreshPackageFileList(
+      tree
+    );
+
+    return;
+  }
+
+  if (
+    event.target.classList.contains('rule-tree-save-package-file')
+  ) {
+
+    await savePackageFileFromTree(
+      tree,
+      model
+    );
+
+    return;
+  }
+
+  if (
+    event.target.classList.contains('rule-tree-load-package-file')
+  ) {
+
+    const packageData =
+      await loadSelectedPackageFile(
+        tree,
+        model
+      );
+
+    if (!packageData) return;
+
+    model.importPackage(
+      packageData
+    );
+
+    await commitRenderAndSave(
+      tree,
+      model,
+      saveCurrentPage
+    );
+
+    return;
+  }
+
+  if (
+    event.target.classList.contains('rule-tree-remove-package-file')
+  ) {
+
+    await removeSelectedPackageFile(
+      tree
+    );
+
+    return;
+  }
+
+  if (
     event.target.classList.contains('rule-tree-import-package')
   ) {
 
@@ -295,6 +365,273 @@ async function handleRuleTreeChange(
       saveCurrentPage
     );
   }
+}
+
+
+async function savePackageFileFromTree(
+  tree,
+  model
+) {
+
+  const packageId =
+    readPackageId(
+      tree
+    );
+
+  try {
+
+    const path =
+      await saveRulePackageFile(
+        getStorageAdapter(),
+        packageId,
+        model.exportPackage()
+      );
+
+    await refreshPackageFileList(
+      tree,
+      packageId
+    );
+
+    setPackageStatus(
+      tree,
+      `Пакет сохранен: ${path}`,
+      'ok'
+    );
+
+  } catch (error) {
+
+    setPackageStatus(
+      tree,
+      `Не удалось сохранить пакет: ${error?.message || error}`,
+      'error'
+    );
+  }
+}
+
+
+async function loadSelectedPackageFile(
+  tree,
+  model
+) {
+
+  const packageId =
+    tree.querySelector('.rule-tree-package-file-select')?.value;
+
+  if (!packageId) {
+
+    setPackageStatus(
+      tree,
+      'Выберите package-файл.',
+      'warning'
+    );
+
+    return null;
+  }
+
+  try {
+
+    const packageData =
+      await loadRulePackageFile(
+        getStorageAdapter(),
+        packageId
+      );
+
+    const conflicts =
+      findPackageConflicts(
+        model,
+        packageData
+      );
+
+    if (conflicts.length) {
+
+      setPackageStatus(
+        tree,
+        `Конфликт id: ${conflicts.join(', ')}`,
+        'error'
+      );
+
+      return null;
+    }
+
+    setPackageStatus(
+      tree,
+      `Пакет импортирован: ${packageId}`,
+      'ok'
+    );
+
+    return packageData;
+
+  } catch (error) {
+
+    setPackageStatus(
+      tree,
+      `Не удалось импортировать пакет: ${error?.message || error}`,
+      'error'
+    );
+
+    return null;
+  }
+}
+
+
+async function removeSelectedPackageFile(
+  tree
+) {
+
+  const packageId =
+    tree.querySelector('.rule-tree-package-file-select')?.value;
+
+  if (!packageId) {
+
+    setPackageStatus(
+      tree,
+      'Выберите package-файл для удаления.',
+      'warning'
+    );
+
+    return;
+  }
+
+  try {
+
+    await removeRulePackageFile(
+      getStorageAdapter(),
+      packageId
+    );
+
+    await refreshPackageFileList(
+      tree
+    );
+
+    setPackageStatus(
+      tree,
+      `Пакет удален: ${packageId}`,
+      'ok'
+    );
+
+  } catch (error) {
+
+    setPackageStatus(
+      tree,
+      `Не удалось удалить пакет: ${error?.message || error}`,
+      'error'
+    );
+  }
+}
+
+
+async function refreshPackageFileList(
+  tree,
+  selectedId = null
+) {
+
+  const select =
+    tree.querySelector('.rule-tree-package-file-select');
+
+  if (!select) return;
+
+  try {
+
+    const packages =
+      await listRulePackageFiles(
+        getStorageAdapter()
+      );
+
+    select.innerHTML =
+      packages.length
+        ? packages.map(file => `
+          <option value="${escapeAttribute(file.id)}" ${file.id === selectedId ? 'selected' : ''}>
+            ${escapeAttribute(file.name)}
+          </option>
+        `).join('')
+        : '<option value="">Нет загруженных package-файлов</option>';
+
+    if (packages.length) {
+
+      setPackageStatus(
+        tree,
+        `Найдено package-файлов: ${packages.length}`,
+        'ok'
+      );
+    }
+
+  } catch (error) {
+
+    setPackageStatus(
+      tree,
+      `Не удалось обновить список: ${error?.message || error}`,
+      'error'
+    );
+  }
+}
+
+
+function readPackageId(
+  tree
+) {
+
+  const explicitId =
+    tree.querySelector('.rule-tree-package-id')?.value?.trim();
+
+  if (explicitId) return explicitId;
+
+  return tree.querySelector('.rule-tree-title')?.textContent?.trim() ||
+    'rules';
+}
+
+
+function findPackageConflicts(
+  model,
+  packageData
+) {
+
+  const currentIds =
+    new Set(
+      model.data.rules.map(rule =>
+        rule.id
+      )
+    );
+
+  return (packageData.rules || [])
+    .map(rule =>
+      rule.id
+    )
+    .filter(id =>
+      currentIds.has(
+        id
+      )
+    );
+}
+
+
+function setPackageStatus(
+  tree,
+  message,
+  type = 'ok'
+) {
+
+  const status =
+    tree.querySelector('.rule-tree-package-status');
+
+  if (!status) return;
+
+  status.textContent =
+    message;
+
+  status.dataset.status =
+    type;
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 
