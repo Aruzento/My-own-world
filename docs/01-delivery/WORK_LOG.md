@@ -7,6 +7,30 @@ owner_zone: "delivery"
 ---
 ﻿# Журнал работ
 
+## 2026-06-05: Design System foundation и InventoryModel
+
+### Что сделано
+
+- По ТЗ дизайна проведен UI audit и создан `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md`.
+- Создан `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` с правилами токенов, popup, кнопок, карты, motion и accessibility.
+- Добавлен `styles/design-tokens.css` и подключен в `styles/main.css` без резкого изменения текущего визуала.
+- В план добавлен блок `0.0.0.10. Design System & UI Modernization`; старые активные пункты `10-17` сдвинуты на `11-18`, архив не изменялся.
+- Создан `js/character/inventoryModel.js`: foundation-модель инвентаря поверх существующего блока `Предметы`.
+- `CharacterModel` теперь содержит `inventory` и отдает его через `getCharacterInventory(model)`.
+- Добавлены tests `tests/inventoryModel.test.mjs` и browser regression на чтение `.item-set-chip` из карточки.
+
+### Что стало лучше
+
+- Дизайн больше не будет развиваться случайными CSS-правками: появился контракт, tokens и phased rollout.
+- Инвентарь перестал быть только HTML-чипами в блоке и получил модельный слой.
+- Существующий UI блока `Предметы` не сломан и остается источником данных для InventoryModel.
+
+### Что осталось
+
+- `0.0.0.1.8`: добавить Effects / Conditions System.
+- Для Inventory System позже нужны экипировка, вес, валюты, attunement/слоты и связь с эффектами.
+- Для дизайна следующий практический шаг: `0.0.0.10.6` Phase 2 - Popup & buttons refresh.
+
 ## 2026-06-04: Карта связана с CharacterModel для HP и инициативы
 
 ### Что сделано

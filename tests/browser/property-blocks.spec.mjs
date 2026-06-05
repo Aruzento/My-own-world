@@ -83,3 +83,67 @@ test(
     );
   }
 );
+
+
+test(
+  'character-model-reads-inventory-from-items-block',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            readCharacterModelFromPage
+          } = await import('/js/character/characterModel.js');
+
+          const model =
+            readCharacterModelFromPage({
+              id: 'hero',
+              type: 'character',
+              content: `
+                <div class="entity-layout card-shell">
+                  <section class="entity-main">
+                    <div class="template-block item-set-block" data-block-type="items">
+                      <div class="item-set-list">
+                        <button class="item-set-chip" data-page-id="rapier">
+                          <span class="item-set-title">Рапира</span>
+                          <label class="item-set-quantity-label">
+                            <input class="item-set-quantity" value="1">
+                          </label>
+                        </button>
+                        <button class="item-set-chip" data-page-id="arrows">
+                          <span class="item-set-title">Стрелы</span>
+                          <label class="item-set-quantity-label">
+                            <input class="item-set-quantity" value="20">
+                          </label>
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                </div>
+              `
+            });
+
+          return model.inventory;
+        }
+      );
+
+    expect(
+      result.totalQuantity
+    ).toBe(
+      21
+    );
+
+    expect(
+      result.items.map(item => item.pageId)
+    ).toEqual([
+      'rapier',
+      'arrows'
+    ]);
+  }
+);

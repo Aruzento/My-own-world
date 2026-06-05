@@ -9,6 +9,7 @@ import {
   createCharacterModel,
   createCharacterModelFromSources,
   getCharacterInitiativeModifier,
+  getCharacterInventory,
   getCharacterHealth
 } from '../js/character/characterModel.js';
 
@@ -100,6 +101,13 @@ test(
     assert.equal(
       model.deathSaves.failures,
       2
+    );
+
+    assert.equal(
+      getCharacterInventory(
+        model
+      ).items.length,
+      0
     );
   }
 );

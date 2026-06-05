@@ -1,0 +1,137 @@
+:root {
+
+  /* Базовые токены будущей дизайн-системы. Пока они не переписывают весь UI,
+     а дают единый словарь для следующих этапов редизайна. */
+
+  --color-bg-app:
+    #070a12;
+
+  --color-bg-panel:
+    rgba(14, 18, 26, 0.72);
+
+  --color-bg-panel-soft:
+    rgba(255, 255, 255, 0.055);
+
+  --color-bg-card:
+    rgba(16, 20, 28, 0.82);
+
+  --color-bg-elevated:
+    rgba(22, 27, 38, 0.94);
+
+  --color-text-main:
+    rgba(248, 250, 255, 0.96);
+
+  --color-text-muted:
+    rgba(248, 250, 255, 0.68);
+
+  --color-text-faint:
+    rgba(248, 250, 255, 0.48);
+
+  --color-accent:
+    #f1d38e;
+
+  --color-accent-soft:
+    rgba(241, 211, 142, 0.14);
+
+  --color-accent-strong:
+    rgba(241, 211, 142, 0.86);
+
+  --color-danger:
+    #ffb8b8;
+
+  --color-danger-soft:
+    rgba(255, 154, 154, 0.14);
+
+  --color-border-subtle:
+    rgba(255, 255, 255, 0.07);
+
+  --color-border-hover:
+    rgba(241, 211, 142, 0.24);
+
+  --color-focus-ring:
+    rgba(241, 211, 142, 0.38);
+
+  --space-1:
+    4px;
+
+  --space-2:
+    8px;
+
+  --space-3:
+    12px;
+
+  --space-4:
+    16px;
+
+  --space-5:
+    20px;
+
+  --space-6:
+    24px;
+
+  --radius-xs:
+    6px;
+
+  --radius-sm:
+    10px;
+
+  --radius-md:
+    16px;
+
+  --radius-lg:
+    22px;
+
+  --shadow-panel:
+    0 20px 60px rgba(0, 0, 0, 0.28);
+
+  --shadow-popup:
+    0 22px 70px rgba(0, 0, 0, 0.36);
+
+  --motion-fast:
+    120ms;
+
+  --motion-base:
+    180ms;
+
+  --motion-slow:
+    260ms;
+
+  --ease-standard:
+    cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --z-base:
+    1;
+
+  --z-dropdown:
+    50;
+
+  --z-popup:
+    100;
+
+  --z-modal:
+    200;
+
+  --z-toast:
+    300;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+
+    animation-duration:
+      0.01ms !important;
+
+    animation-iteration-count:
+      1 !important;
+
+    scroll-behavior:
+      auto !important;
+
+    transition-duration:
+      0.01ms !important;
+  }
+}

@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 # Character Model Contract
 
-Дата обновления: 04.06.2026
+Дата обновления: 05.06.2026
 
 ## Назначение
 
@@ -23,6 +23,7 @@ owner_zone: "architecture"
 ## Файлы
 
 - `js/character/characterModel.js` - нормализация модели, DnD-расчеты, HP/temp HP/death state.
+- `js/character/inventoryModel.js` - нормализация инвентаря из блока `Предметы` и будущие чистые операции add/update/remove.
 - `js/properties/characterCalculations.js` - совместимый фасад старого кода, который теперь должен опираться на `CharacterModel`.
 - `js/properties/propertiesModel.js` - чтение блока `Свойства`.
 - `js/properties/propertySchemas.js` - стабильные ключи полей свойств.
@@ -39,6 +40,7 @@ createCharacterModelFromSources({ page, propertiesModels, legacyDndHealth })
 readCharacterModelFromPage(page)
 getCharacterHealth(model)
 getCharacterInitiativeModifier(model)
+getCharacterInventory(model)
 applyCharacterHealthChange(model, options)
 calculateAbilityModifier(score)
 calculateProficiencyBonus(level)
@@ -78,6 +80,20 @@ calculateDndCheckValue(options)
     failures: 0,
     isDead: false
   },
+  inventory: {
+    kind: 'InventoryModel',
+    version: 1,
+    source: 'items-block' | 'manual' | 'empty',
+    items: [
+      {
+        pageId: 'item-page-id',
+        title: 'Рапира',
+        quantity: 1,
+        source: 'items-block'
+      }
+    ],
+    totalQuantity: 1
+  },
   sources: {
     properties: true,
     legacyDnd: false
@@ -93,6 +109,7 @@ calculateDndCheckValue(options)
 4. Если нет ни одного источника, создается пустая модель с безопасными defaults, но она не должна сама записывать карточку.
 5. Карта не должна читать HP напрямую из HTML, если может обратиться к `getPageCharacterHealth()` / `CharacterModel`.
 6. Карта должна получать модификатор инициативы через `CharacterModel`, а не через ручной `modifier`, если токен создан из карточки персонажа или существа.
+7. Инвентарь читается из существующего блока `Предметы`, но расчетные подсистемы должны обращаться к `InventoryModel`, а не к `.item-set-chip` напрямую.
 
 ## DnD 5e Расчеты
 
@@ -129,8 +146,7 @@ calculateDndCheckValue(options)
 
 После foundation нужно:
 
-1. подключить `CharacterModel` к карте глубже: рамки здоровья, изменение хитов, инициатива;
-2. добавить Inventory System;
-3. добавить Effects / Conditions System;
-4. определить судьбу archived `DnD v2` и `Variables` через модель, а не через HTML-блок;
-5. подготовить интеграцию с `Rule Tree` и `World Packages`.
+1. расширить Inventory System до экипировки, веса, валюты и связи с эффектами;
+2. добавить Effects / Conditions System;
+3. определить судьбу archived `DnD v2` и `Variables` через модель, а не через HTML-блок;
+4. подготовить интеграцию с `Rule Tree` и `World Packages`.

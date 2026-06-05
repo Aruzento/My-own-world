@@ -3,6 +3,11 @@ import {
   readPropertiesModelsFromHTML
 } from '../properties/propertiesModel.js';
 
+import {
+  createInventoryModel,
+  readInventoryModelFromHTML
+} from './inventoryModel.js';
+
 
 export const CHARACTER_ABILITY_KEYS = [
   'str',
@@ -28,6 +33,7 @@ export function createCharacterModel(
     abilities = {},
     health = {},
     deathSaves = {},
+    inventory = {},
     sources = {}
   } = {}
 ) {
@@ -82,9 +88,13 @@ export function createCharacterModel(
     abilities:
       normalizeAbilities(
         abilities
-      ),
+    ),
     health: normalizedHealth,
     deathSaves: normalizedDeathSaves,
+    inventory:
+      createInventoryModel(
+        inventory
+      ),
     sources: {
       properties:
         Boolean(
@@ -103,7 +113,8 @@ export function createCharacterModelFromSources(
   {
     page = null,
     propertiesModels = [],
-    legacyDndHealth = null
+    legacyDndHealth = null,
+    inventoryModel = null
   } = {}
 ) {
 
@@ -118,7 +129,8 @@ export function createCharacterModelFromSources(
     return createCharacterModelFromProperties({
       page,
       propertyModel,
-      legacyDndHealth
+      legacyDndHealth,
+      inventoryModel
     });
   }
 
@@ -135,6 +147,8 @@ export function createCharacterModelFromSources(
         'legacy-dnd',
       health:
         legacyDndHealth,
+      inventory:
+        inventoryModel,
       sources: {
         legacyDnd: true
       }
@@ -147,7 +161,9 @@ export function createCharacterModelFromSources(
     cardType:
       normalizeCardType(
         page?.type
-      )
+      ),
+    inventory:
+      inventoryModel
   });
 }
 
@@ -165,6 +181,10 @@ export function readCharacterModelFromPage(
     legacyDndHealth:
       readLegacyDndHealthFromPage(
         page
+      ),
+    inventoryModel:
+      readInventoryModelFromHTML(
+        page?.content
       )
   });
 }
@@ -206,6 +226,16 @@ export function getCharacterInitiativeModifier(
   }
 
   return model.abilities?.dex?.modifier || 0;
+}
+
+
+export function getCharacterInventory(
+  model
+) {
+
+  return createInventoryModel(
+    model?.inventory
+  );
 }
 
 
@@ -422,7 +452,8 @@ function createCharacterModelFromProperties(
   {
     page,
     propertyModel,
-    legacyDndHealth
+    legacyDndHealth,
+    inventoryModel
   }
 ) {
 
@@ -492,6 +523,8 @@ function createCharacterModelFromProperties(
           0
         )
     },
+    inventory:
+      inventoryModel,
     sources: {
       properties: true,
       legacyDnd:

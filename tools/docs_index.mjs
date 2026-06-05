@@ -248,7 +248,10 @@ function parseMetadata(
   let activeListKey =
     null;
 
-  for (const line of lines) {
+  for (const rawLine of lines) {
+
+    const line =
+      rawLine.trimEnd();
 
     const listMatch =
       line.match(/^\s*-\s+"?(.+?)"?\s*$/);
