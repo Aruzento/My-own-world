@@ -259,7 +259,9 @@ function isCardTemplateSource(
   return page?.template !== 'campaignMap' &&
     page?.type !== 'campaignMap' &&
     page?.template !== 'taskTracker' &&
-    page?.type !== 'taskTracker';
+    page?.type !== 'taskTracker' &&
+    page?.template !== 'ruleTree' &&
+    page?.type !== 'ruleTree';
 }
 
 

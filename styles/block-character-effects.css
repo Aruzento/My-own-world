@@ -57,6 +57,11 @@
   background: rgba(255, 237, 229, 0.72);
 }
 
+.character-effect-pill.is-rule {
+  border-color: rgba(107, 91, 47, 0.24);
+  background: rgba(246, 224, 151, 0.34);
+}
+
 .character-effect-pill small {
   color: #7b725f;
   font-size: 11px;
@@ -111,6 +116,10 @@
 
 .character-effects-add-panel.is-effect {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.character-effects-add-panel.is-rules {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .character-effects-add-panel label {

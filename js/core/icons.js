@@ -13,7 +13,8 @@ const pageIcons = {
   magic: 'magic',
   skill: 'skill',
   'campaign-map': 'campaign-map',
-  'task-tracker': 'task-tracker'
+  'task-tracker': 'task-tracker',
+  'rule-tree': 'lore'
 };
 
 

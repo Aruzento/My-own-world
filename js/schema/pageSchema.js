@@ -13,7 +13,8 @@ const KNOWN_TEMPLATES =
   new Set([
     'card',
     'campaignMap',
-    'taskTracker'
+    'taskTracker',
+    'ruleTree'
   ]);
 
 

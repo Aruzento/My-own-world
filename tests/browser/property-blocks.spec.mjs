@@ -457,6 +457,153 @@ test(
 
 
 test(
+  'character-effects-block-selects-rule-tree-rule-for-character-model',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            getCharacterEffectiveArmorClass,
+            readCharacterModelFromPage
+          } = await import('/js/character/characterModel.js');
+
+          const {
+            createCharacterEffectsBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCharacterEffectsBlocks,
+            setupCharacterEffectsBlocks
+          } = await import('/js/editor/characterEffectsBlock.js');
+
+          state.currentPage = {
+            id: 'hero',
+            title: 'Герой',
+            type: 'character'
+          };
+
+          state.pages = [
+            state.currentPage,
+            {
+              id: 'rule-tree',
+              title: 'Правила',
+              template: 'ruleTree',
+              type: 'ruleTree',
+              tags: [
+                'rule-tree'
+              ],
+              content: `
+                <div class="rule-tree-document">
+                  <script type="application/json" data-rule-tree-data>
+                    {
+                      "version": 1,
+                      "activeRuleIds": [],
+                      "rules": [
+                        {
+                          "id": "rule-defense",
+                          "title": "Боевой стиль: оборона",
+                          "effects": [
+                            {
+                              "id": "defense",
+                              "title": "Оборона",
+                              "modifiers": {
+                                "armorClass": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  </script>
+                </div>
+              `
+            }
+          ];
+
+          const editor =
+            document.createElement('div');
+
+          editor.innerHTML =
+            createCharacterEffectsBlock({
+              title: 'Эффекты'
+            });
+
+          setupCharacterEffectsBlocks(
+            editor,
+            () => {}
+          );
+
+          renderCharacterEffectsBlocks(
+            editor
+          );
+
+          editor.querySelector(
+            '.character-effects-rule-select'
+          ).value =
+            'rule-defense';
+
+          editor.querySelector(
+            '.character-effects-add-rule'
+          ).click();
+
+          const data =
+            JSON.parse(
+              editor.querySelector('[data-character-effects]').textContent
+            );
+
+          const pageModel =
+            {
+              ...state.currentPage,
+              content:
+                editor.innerHTML
+            };
+
+          const character =
+            readCharacterModelFromPage(
+              pageModel,
+              {
+                pages:
+                  state.pages
+              }
+            );
+
+          return {
+            selectedRuleIds:
+              data.selectedRuleIds,
+            armorClass:
+              getCharacterEffectiveArmorClass(
+                character
+              )
+          };
+        }
+      );
+
+    expect(
+      result.selectedRuleIds
+    ).toEqual([
+      'rule-defense'
+    ]);
+
+    expect(
+      result.armorClass
+    ).toBe(
+      11
+    );
+  }
+);
+
+
+test(
   'character-model-auto-applies-effects-from-inventory-items',
   async ({ page }) => {
 

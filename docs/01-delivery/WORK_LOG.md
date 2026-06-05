@@ -7,6 +7,118 @@ owner_zone: "delivery"
 ---
 ﻿# Журнал работ
 
+## 2026-06-05: Rule Tree стал персональным для персонажей и получил foundation-дерево
+
+### Что сделано
+
+- В блок `Эффекты и состояния` добавлен выбор правил из Rule Tree для конкретной карточки персонажа или существа.
+- Выбранные правила сохраняются в persistent JSON блока как `selectedRuleIds`.
+- `EffectsModel` сохраняет `selectedRuleIds`, не теряя их при добавлении состояний или эффектов.
+- `CharacterModel` объединяет глобальные активные правила Rule Tree и персональные правила карточки.
+- Rule Tree data model расширен до foundation-дерева: `groups`, `groupId`, `category`, `conditions`, `inheritsRuleIds`, `sourcePackageId`.
+- UI Rule Tree показывает правила по группам и позволяет добавить новую группу.
+- Добавлены regression tests для персонального выбора правила и tree metadata.
+
+### Что стало лучше
+
+- Правила теперь можно применять не только глобально через Rule Tree, но и точечно к конкретному персонажу.
+- Rule Tree перестал быть плоским списком: появилась основа для категорий, наследования, условий и будущих пакетов правил.
+
+### Что осталось
+
+- `0.0.0.1.14.7`: полноценный редактор условий применения правила.
+- `0.0.0.1.14.8`: Rule Package import/export и предпросмотр итоговых эффектов.
+
+## 2026-06-05: Rule Tree как отдельная сущность
+
+### Что сделано
+
+- Добавлена отдельная сущность `ruleTree`, которая создается через меню `+` и лежит в дереве рядом с карточками, картами и task tracker.
+- Создана подсистема `js/ruleTree/`: defaults, normalize, read/write data, model, render, events, contract и общий entrypoint.
+- Rule Tree сохраняет persistent JSON в `<script type="application/json" data-rule-tree-data>`, а runtime UI очищается перед сохранением.
+- `editorOpenPage.js` и `editorSpecialSave.js` теперь открывают и сохраняют Rule Tree как special entity, а не как карточку.
+- `safeHtmlSanitizer.js` разрешает безопасный JSON `data-rule-tree-data` и продолжает удалять runtime-панели.
+- `ruleTreeProvider.js` теперь читает правила из новых сущностей `ruleTree` и из legacy карточек с тегами `rule/rules/правило/правила`.
+- Добавлен bridge импорта: старые rule-карточки показываются в UI Rule Tree как кандидаты на перенос в новую модель.
+- Активные правила Rule Tree (`activeRuleIds`) подключены к CharacterModel через общий EffectsModel pipeline.
+- Добавлены tests для `RuleTreeModel`, provider-чтения ruleTree entity, legacy bridge и browser smoke Rule Tree.
+- Создан `docs/02-architecture/contracts/RULE_TREE_CONTRACT.md`.
+
+### Что стало лучше
+
+- Rule Tree перестал быть только набором карточек с тегом `rule`: появилась самостоятельная сущность с собственным контрактом, serializer и UI.
+- Старые rule-карточки не ломаются и не пропадают: они стали временным источником импорта.
+- CharacterModel теперь может получать эффекты не только из legacy rule-карточек, но и из настоящей Rule Tree сущности.
+
+### Что осталось
+
+- `0.0.0.1.14.5`: добавить персональный выбор правил для конкретной карточки персонажа.
+- `0.0.0.1.14.6`: развить Rule Tree до настоящего дерева с группами, условиями применения и Rule Package import/export.
+
+## 2026-06-05: Rule Tree Provider foundation
+
+### Что сделано
+
+- Добавлен `js/rules/ruleTreeProvider.js`.
+- Provider строит `RuleTreeModel` из страниц workspace с тегами `rule`, `rules`, `правило`, `правила`.
+- Если rule-страница содержит блок `Эффекты и состояния`, provider читает `[data-character-effects]`.
+- Добавлен API `createRuleTreeCharacterIntegrations({ pages, selectedRuleIds })`.
+- `CharacterModel` теперь принимает `selectedRuleIds` и автоматически подключает эффекты выбранных rule-страниц.
+- Добавлены tests `tests/ruleTreeProvider.test.mjs` и regression в `tests/characterIntegrationApi.test.mjs`.
+- В плане закрыт foundation-пункт `0.0.0.1.14`; UI выбора правил вынесен в `0.0.0.1.14.1`.
+
+### Что стало лучше
+
+- Rule Tree перестал быть только будущей абстракцией в плане: появился реальный provider, который уже умеет влиять на расчеты персонажа.
+- Карта, инициатива и лист персонажа по-прежнему читают итоговый `CharacterModel`, не зная, что бонус пришел из rule-страницы.
+
+### Что осталось
+
+- `0.0.0.1.14.1`: сделать пользовательский выбор правил из Rule Tree.
+- `0.0.0.1.16`: добавить расчетные переменные и зависимости между карточками.
+
+## 2026-06-05: CharacterModel Integration API
+
+### Что сделано
+
+- Добавлен `js/character/characterIntegrationApi.js` - явный слой подключения будущих доменных систем к `CharacterModel`.
+- Подготовлены helpers `createRuleTreeCharacterEffect()` и `createWorldPackageCharacterEffect()`.
+- `CharacterModel` теперь принимает параметр `integrations` в `createCharacterModelFromSources()` и `readCharacterModelFromPage()`.
+- Интеграционные эффекты объединяются с эффектами карточки и автоэффектами предметов в одном pipeline.
+- Добавлен unit test `tests/characterIntegrationApi.test.mjs`.
+- В плане закрыты foundation-пункты `0.0.0.1.11`, `0.0.0.1.12`, `0.0.0.1.13`.
+
+### Что стало лучше
+
+- Rule Tree и World Packages смогут влиять на КЗ, скорость, инициативу и будущие проверки через модельный API, а не через DOM.
+- Карта, инициатива и лист персонажа не должны знать источник эффекта: они читают итоговый `CharacterModel`.
+
+### Что осталось
+
+- `0.0.0.1.14`: подключить реальный Rule Tree provider.
+- `0.0.0.1.16`: добавить расчетные переменные и зависимости между карточками.
+
+## 2026-06-05: CardVariablesModel и решение судьбы DnD v2 / Variables
+
+### Что сделано
+
+- Принято архитектурное решение: старые эксперименты `DnD v2` и `Переменные` не возвращаются как отдельные активные блоки.
+- Идея переменных встроена в сущности карточек: переменные карточки задаются через блок `Свойства`.
+- Добавлен `js/properties/cardVariablesModel.js` - слой, который превращает `PropertiesModel` в единый список переменных карточки.
+- Для разных типов карточек остаются разные схемы свойств, но расчетные подсистемы получают единый API: `key`, `label`, `type`, `value`, `rawValue`.
+- Обновлены контракты `PROPERTIES_MODEL_CONTRACT.md`, `CHARACTER_MODEL_CONTRACT.md` и архив экспериментов.
+- Добавлены unit tests `tests/cardVariablesModel.test.mjs`.
+
+### Что стало лучше
+
+- Проект не плодит вторую систему переменных рядом со свойствами.
+- `CharacterModel`, будущий `Rule Tree` и `World Packages` смогут ссылаться на стабильные ключи свойств как на переменные сущности.
+- Старые идеи сохранены, но стали частью model-first архитектуры.
+
+### Что осталось
+
+- `0.0.0.1.16`: добавить расчетные переменные, формулы и зависимости между карточками после появления Rule Tree.
+
 ## 2026-06-05: Источники эффектов, автоэффекты предметов и Full Character Sheet UX
 
 ### Что сделано

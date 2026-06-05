@@ -75,6 +75,11 @@ import {
 } from '../taskTracker/taskTracker.js';
 
 import {
+  isRuleTreePage,
+  renderRuleTree
+} from '../ruleTree/ruleTree.js';
+
+import {
   updateOpenPageTitleWarning
 } from './pageTitleWarning.js';
 
@@ -181,6 +186,23 @@ async function renderSpecialPageIfNeeded(
   ) {
 
     renderTaskTracker(
+      editor
+    );
+
+    completeOpenPage(
+      page
+    );
+
+    return true;
+  }
+
+  if (
+    isRuleTreePage(
+      parsed
+    )
+  ) {
+
+    renderRuleTree(
       editor
     );
 

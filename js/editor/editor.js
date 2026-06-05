@@ -43,6 +43,10 @@ import {
 } from '../taskTracker/taskTracker.js';
 
 import {
+  setupRuleTrees
+} from '../ruleTree/ruleTree.js';
+
+import {
   updateOpenPageTitleWarning
 } from './pageTitleWarning.js';
 
@@ -134,6 +138,11 @@ export function setupEditor() {
 
   setupTaskTrackers(
     editor
+  );
+
+  setupRuleTrees(
+    editor,
+    saveCurrentPage
   );
 
   const wikiLinkController =

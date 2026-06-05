@@ -83,6 +83,7 @@ export function createEffectsModel(
   const {
     conditions = [],
     effects = [],
+    selectedRuleIds = [],
     source = 'empty'
   } = options || {};
 
@@ -108,6 +109,10 @@ export function createEffectsModel(
       normalizedConditions,
     effects:
       normalizedEffects,
+    selectedRuleIds:
+      normalizeIdList(
+        selectedRuleIds
+      ),
     modifiers:
       calculateEffectModifiers(
         normalizedEffects
@@ -198,6 +203,8 @@ export function addCharacterCondition(
     ],
     effects:
       model.effects,
+    selectedRuleIds:
+      model.selectedRuleIds,
     source:
       model.source === 'empty'
         ? 'manual'
@@ -227,6 +234,8 @@ export function removeCharacterCondition(
         ),
     effects:
       effectsModel?.effects || [],
+    selectedRuleIds:
+      effectsModel?.selectedRuleIds || [],
     source:
       effectsModel?.source || 'manual'
   });
@@ -288,6 +297,8 @@ export function addCharacterEffect(
       ),
       normalized
     ],
+    selectedRuleIds:
+      model.selectedRuleIds,
     source:
       model.source === 'empty'
         ? 'manual'
@@ -317,6 +328,8 @@ export function removeCharacterEffect(
         .filter(effect =>
           effect.id !== normalizedId
         ),
+    selectedRuleIds:
+      effectsModel?.selectedRuleIds || [],
     source:
       effectsModel?.source || 'manual'
   });
@@ -380,7 +393,11 @@ export function createSerializableEffectsData(
         flags: {
           ...effect.flags
         }
-      }))
+      })),
+    selectedRuleIds:
+      [
+        ...model.selectedRuleIds
+      ]
   };
 }
 
@@ -812,6 +829,24 @@ function normalizeNumericMap(
   return Object.fromEntries(
     entries
   );
+}
+
+
+function normalizeIdList(
+  values
+) {
+
+  return [
+    ...new Set(
+      (Array.isArray(values) ? values : [])
+        .map(value =>
+          normalizeText(
+            value
+          )
+        )
+        .filter(Boolean)
+    )
+  ];
 }
 
 

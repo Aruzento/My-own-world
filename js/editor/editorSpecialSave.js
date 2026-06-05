@@ -39,6 +39,10 @@ import {
   serializeTaskTrackerHTML
 } from '../taskTracker/taskTracker.js';
 
+import {
+  serializeRuleTreeHTML
+} from '../ruleTree/ruleTree.js';
+
 export async function saveCurrentSpecialPage(
   editor
 ) {
@@ -61,6 +65,18 @@ export async function saveCurrentSpecialPage(
   ) {
 
     await saveCurrentTaskTracker(
+      editor
+    );
+
+    return true;
+  }
+
+  if (
+    state.currentPage?.template === 'ruleTree' ||
+    state.currentPage?.type === 'ruleTree'
+  ) {
+
+    await saveCurrentRuleTree(
       editor
     );
 
@@ -192,6 +208,54 @@ ${sanitizePersistentHTMLOnSave(
   );
 
   syncCampaignMapPresentation();
+}
+
+async function saveCurrentRuleTree(
+  editor
+) {
+
+  if (!state.currentPage) return;
+
+  const tags =
+    state.currentPage.tags || ['rule-tree'];
+
+  const aliases =
+    state.currentPage.aliases || [];
+
+  const titleElement =
+    editor.querySelector('.rule-tree-title');
+
+  state.currentPage.title =
+    titleElement
+      ? titleElement.textContent.trim()
+      : 'Новое дерево правил';
+
+  if (
+    hasInvalidCurrentTitle(
+      editor,
+      state.currentPage.title
+    )
+  ) return;
+
+  const content =
+`---
+id: ${state.currentPage.id}
+parent: ${state.currentPage.parent ?? 'null'}
+order: ${state.currentPage.order ?? Date.now()}
+tags: [${tags.join(', ')}]
+template: ruleTree
+type: ruleTree
+aliases: [${aliases.join(', ')}]
+---
+
+${sanitizePersistentHTMLOnSave(
+  serializeRuleTreeHTML(editor)
+)}
+`;
+
+  await persistCurrentPage(
+    content
+  );
 }
 
 async function persistCurrentPage(

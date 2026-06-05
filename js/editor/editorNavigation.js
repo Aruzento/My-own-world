@@ -196,7 +196,9 @@ function isCardPageForBackButton(
     template === 'campaignMap' ||
     type === 'campaignMap' ||
     template === 'taskTracker' ||
-    type === 'taskTracker'
+    type === 'taskTracker' ||
+    template === 'ruleTree' ||
+    type === 'ruleTree'
   ) return false;
 
   return true;

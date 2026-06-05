@@ -18,6 +18,7 @@ test(
             <script>alert(1)</script>
             <script type="application/json" data-task-tracker-data data-extra="x">{"ok":true}</script>
             <script type="application/json" data-character-effects data-extra="x">{"conditions":["poisoned"]}</script>
+            <script type="application/json" data-rule-tree-data data-extra="x">{"rules":[]}</script>
             <iframe src="https://example.com"></iframe>
             <object data="x"></object>
             <embed src="x">
@@ -40,6 +41,7 @@ test(
     expect(result.saved).toContain('type="application/json"');
     expect(result.saved).toContain('data-task-tracker-data');
     expect(result.saved).toContain('data-character-effects');
+    expect(result.saved).toContain('data-rule-tree-data');
     expect(result.saved).toContain('character-effects-data');
     expect(result.saved).not.toContain('data-extra');
   }

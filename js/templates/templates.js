@@ -10,6 +10,10 @@ import {
   createTaskTrackerTemplate
 } from './taskTracker.js';
 
+import {
+  createRuleTreeTemplate
+} from './ruleTree.js';
+
 
 export const templates = {
   card:
@@ -19,5 +23,8 @@ export const templates = {
     createCampaignMapTemplate(),
 
   taskTracker:
-    createTaskTrackerTemplate()
+    createTaskTrackerTemplate(),
+
+  ruleTree:
+    createRuleTreeTemplate()
 };

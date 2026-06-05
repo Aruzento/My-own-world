@@ -1,0 +1,228 @@
+.rule-tree-document {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 22px;
+}
+
+.rule-tree-topbar {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+
+.rule-tree-title {
+  margin: 0;
+  color: var(--text);
+  font-size: 30px;
+  line-height: 1.15;
+}
+
+.rule-tree-board {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rule-tree-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rule-tree-summary > div,
+.rule-tree-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-strong);
+  box-shadow: var(--shadow);
+}
+
+.rule-tree-summary > div {
+  padding: 12px 14px;
+}
+
+.rule-tree-summary-label,
+.rule-tree-rule-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rule-tree-summary strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 24px;
+}
+
+.rule-tree-panel {
+  overflow: hidden;
+}
+
+.rule-tree-panel-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-soft);
+}
+
+.rule-tree-panel-header h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.rule-tree-list,
+.rule-tree-candidates {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.rule-tree-group-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rule-tree-group-form input {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-soft);
+  color: var(--text);
+  padding: 8px 10px;
+}
+
+.rule-tree-group-form button {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--accent-soft);
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 10px;
+}
+
+.rule-tree-group {
+  display: grid;
+  gap: 8px;
+}
+
+.rule-tree-group-title {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.rule-tree-group-rules {
+  display: grid;
+  gap: 8px;
+}
+
+.rule-tree-rule,
+.rule-tree-candidate {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.rule-tree-candidate {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.rule-tree-active {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+}
+
+.rule-tree-active input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rule-tree-active span {
+  width: 10px;
+  height: 10px;
+  border: 1px solid var(--border-hover);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.rule-tree-active input:checked + span {
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-soft) 24%, transparent);
+}
+
+.rule-tree-rule-body {
+  min-width: 0;
+}
+
+.rule-tree-rule-title {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-tree-rule-description {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.rule-tree-rule-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.rule-tree-import-rule,
+.rule-tree-remove-rule {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--panel-soft);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+
+.rule-tree-import-rule {
+  padding: 7px 10px;
+}
+
+.rule-tree-remove-rule {
+  width: 30px;
+  height: 30px;
+}
+
+.rule-tree-import-rule:hover {
+  border-color: var(--accent-soft);
+  background: var(--accent-soft);
+}
+
+.rule-tree-remove-rule:hover {
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+}
+
+.rule-tree-empty {
+  padding: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}

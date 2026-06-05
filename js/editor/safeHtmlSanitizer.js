@@ -22,7 +22,8 @@ const RUNTIME_SELECTOR = [
   '.task-tracker-board',
   '.task-add-btn',
   '.task-column-delete',
-  '.task-check-delete'
+  '.task-check-delete',
+  '.rule-tree-board'
 ].join(',');
 
 const FORBIDDEN_TAGS = new Set([
@@ -187,6 +188,9 @@ function isSafeJsonScript(
       ) ||
       isCharacterEffectsJsonScript(
         element
+      ) ||
+      isRuleTreeJsonScript(
+        element
       )
     )
   );
@@ -294,6 +298,22 @@ function sanitizeAttributes(
     );
   }
 
+  if (
+    tagName === 'script' &&
+    isRuleTreeJsonScript(
+      element
+    )
+  ) {
+
+    element.className =
+      'rule-tree-data';
+
+    element.setAttribute(
+      'data-rule-tree-data',
+      ''
+    );
+  }
+
   hardenExternalLink(
     element,
     tagName
@@ -392,7 +412,8 @@ function isAllowedJsonScriptAttribute(
     name === 'type' ||
     name === 'class' ||
     name === 'data-task-tracker-data' ||
-    name === 'data-character-effects'
+    name === 'data-character-effects' ||
+    name === 'data-rule-tree-data'
   );
 }
 
@@ -415,6 +436,17 @@ function isCharacterEffectsJsonScript(
   return (
     element.hasAttribute('data-character-effects') ||
     element.classList.contains('character-effects-data')
+  );
+}
+
+
+function isRuleTreeJsonScript(
+  element
+) {
+
+  return (
+    element.hasAttribute('data-rule-tree-data') ||
+    element.classList.contains('rule-tree-data')
   );
 }
 

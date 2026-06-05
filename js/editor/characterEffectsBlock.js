@@ -21,6 +21,10 @@ import {
   state
 } from '../state.js';
 
+import {
+  getRuleTreeRuleOptions
+} from '../rules/ruleTreeProvider.js';
+
 
 let saveCurrentPageRef = null;
 
@@ -66,6 +70,16 @@ export function setupCharacterEffectsBlocks(
           '[data-remove-effect]'
         );
 
+      const addRule =
+        event.target.closest(
+          '.character-effects-add-rule'
+        );
+
+      const removeRule =
+        event.target.closest(
+          '[data-remove-rule]'
+        );
+
       if (addCondition) {
 
         event.preventDefault();
@@ -79,6 +93,23 @@ export function setupCharacterEffectsBlocks(
         event.preventDefault();
         addEffectFromBlock(
           block
+        );
+      }
+
+      if (addRule) {
+
+        event.preventDefault();
+        addRuleFromBlock(
+          block
+        );
+      }
+
+      if (removeRule) {
+
+        event.preventDefault();
+        removeRuleFromBlock(
+          block,
+          removeRule.dataset.removeRule
         );
       }
 
@@ -344,6 +375,61 @@ function addEffectFromSelectedSource(
 }
 
 
+function addRuleFromBlock(
+  block
+) {
+
+  const ruleId =
+    block.querySelector(
+      '.character-effects-rule-select'
+    )?.value || '';
+
+  if (!ruleId) return;
+
+  const model =
+    readEffectsBlockModel(
+      block
+    );
+
+  updateEffectsBlockModel(
+    block,
+    {
+      ...model,
+      selectedRuleIds: [
+        ...new Set([
+          ...(model.selectedRuleIds || []),
+          ruleId
+        ])
+      ]
+    }
+  );
+}
+
+
+function removeRuleFromBlock(
+  block,
+  ruleId
+) {
+
+  const model =
+    readEffectsBlockModel(
+      block
+    );
+
+  updateEffectsBlockModel(
+    block,
+    {
+      ...model,
+      selectedRuleIds:
+        (model.selectedRuleIds || [])
+          .filter(id =>
+            id !== ruleId
+          )
+    }
+  );
+}
+
+
 function updateEffectsBlockModel(
   block,
   effectsModel
@@ -436,6 +522,11 @@ function getSummaryHTML(
       `).join('')
       : '<span class="character-effects-empty">Эффектов нет</span>';
 
+  const rules =
+    getSelectedRulesHTML(
+      model
+    );
+
   return `
     <div class="character-effects-row">
       <strong>Состояния</strong>
@@ -444,6 +535,10 @@ function getSummaryHTML(
     <div class="character-effects-row">
       <strong>Эффекты</strong>
       <div class="character-effects-pill-list">${effects}</div>
+    </div>
+    <div class="character-effects-row">
+      <strong>Правила</strong>
+      <div class="character-effects-pill-list">${rules}</div>
     </div>
     <div class="character-effects-flags">
       ${summary.flags.isIncapacitated ? '<span>Недееспособен</span>' : ''}
@@ -468,6 +563,13 @@ function getControlsHTML(
   const sourceOptions =
     getSourceOptionsHTML(
       block
+    );
+
+  const ruleOptions =
+    getRuleOptionsHTML(
+      readEffectsBlockModel(
+        block
+      )
     );
 
   return `
@@ -538,7 +640,91 @@ function getControlsHTML(
       </label>
       <button class="character-effects-add-effect ui-button" type="button">Добавить эффект</button>
     </div>
+
+    <div class="character-effects-add-panel is-rules">
+      <label class="is-wide">
+        <span>Правило из Rule Tree</span>
+        <select class="character-effects-rule-select">
+          ${ruleOptions}
+        </select>
+      </label>
+      <button class="character-effects-add-rule ui-button" type="button">Добавить правило</button>
+    </div>
   `;
+}
+
+
+function getSelectedRulesHTML(
+  model
+) {
+
+  const options =
+    new Map(
+      getRuleTreeRuleOptions(
+        state.pages
+      )
+        .map(option => [
+          option.id,
+          option
+        ])
+    );
+
+  const ids =
+    model.selectedRuleIds || [];
+
+  if (!ids.length) {
+
+    return '<span class="character-effects-empty">Правила не выбраны</span>';
+  }
+
+  return ids.map(id => {
+
+    const option =
+      options.get(id);
+
+    return `
+      <span class="character-effect-pill is-rule">
+        ${escapeHTML(option?.title || id)}
+        <small>${option?.effectCount || 0} эффектов</small>
+        <button type="button" data-remove-rule="${escapeAttribute(id)}">x</button>
+      </span>
+    `;
+  }).join('');
+}
+
+
+function getRuleOptionsHTML(
+  model
+) {
+
+  const selected =
+    new Set(
+      model.selectedRuleIds || []
+    );
+
+  const options =
+    getRuleTreeRuleOptions(
+      state.pages
+    )
+      .filter(option =>
+        !selected.has(
+          option.id
+        )
+      );
+
+  if (!options.length) {
+
+    return '<option value="">Нет доступных правил</option>';
+  }
+
+  return [
+    '<option value="">Выберите правило</option>',
+    ...options.map(option => `
+      <option value="${escapeAttribute(option.id)}">
+        ${escapeHTML(option.title)} (${option.effectCount})
+      </option>
+    `)
+  ].join('');
 }
 
 

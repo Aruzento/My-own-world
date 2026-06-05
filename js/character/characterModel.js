@@ -20,6 +20,15 @@ import {
   mergeEffectsModels
 } from './effectSourceResolver.js';
 
+import {
+  createCharacterIntegrations,
+  getCharacterIntegrationEffects
+} from './characterIntegrationApi.js';
+
+import {
+  createRuleTreeCharacterIntegrations
+} from '../rules/ruleTreeProvider.js';
+
 
 export const CHARACTER_ABILITY_KEYS = [
   'str',
@@ -47,6 +56,7 @@ export function createCharacterModel(
     deathSaves = {},
     inventory = {},
     effects = {},
+    integrations = {},
     sources = {}
   } = {}
 ) {
@@ -112,6 +122,10 @@ export function createCharacterModel(
       createEffectsModel(
         effects
       ),
+    integrations:
+      createCharacterIntegrations(
+        integrations
+      ),
     sources: {
       properties:
         Boolean(
@@ -120,6 +134,10 @@ export function createCharacterModel(
       legacyDnd:
         Boolean(
           sources.legacyDnd
+        ),
+      integrations:
+        Boolean(
+          sources.integrations
         )
     }
   };
@@ -133,15 +151,33 @@ export function createCharacterModelFromSources(
     propertiesModels = [],
     legacyDndHealth = null,
     inventoryModel = null,
-    effectsModel = null
+    effectsModel = null,
+    integrations = {},
+    selectedRuleIds = []
   } = {}
 ) {
+
+  const effectiveSelectedRuleIds =
+    [
+      ...(selectedRuleIds || []),
+      ...(effectsModel?.selectedRuleIds || [])
+    ];
+
+  const combinedIntegrations =
+    createCombinedIntegrations({
+      pages,
+      integrations,
+      selectedRuleIds:
+        effectiveSelectedRuleIds
+    });
 
   const combinedEffectsModel =
     createCombinedEffectsModel({
       inventoryModel,
       effectsModel,
-      pages
+      pages,
+      integrations:
+        combinedIntegrations
     });
 
   const propertyModel =
@@ -158,7 +194,9 @@ export function createCharacterModelFromSources(
       legacyDndHealth,
       inventoryModel,
       effectsModel:
-        combinedEffectsModel
+        combinedEffectsModel,
+      integrations:
+        combinedIntegrations
     });
   }
 
@@ -180,7 +218,11 @@ export function createCharacterModelFromSources(
       effects:
         combinedEffectsModel,
       sources: {
-        legacyDnd: true
+        legacyDnd: true,
+        integrations:
+          hasCharacterIntegrations(
+            combinedIntegrations
+          )
       }
     });
   }
@@ -195,7 +237,15 @@ export function createCharacterModelFromSources(
     inventory:
       inventoryModel,
     effects:
-      combinedEffectsModel
+      combinedEffectsModel,
+    integrations:
+      combinedIntegrations,
+    sources: {
+      integrations:
+        hasCharacterIntegrations(
+          combinedIntegrations
+        )
+    }
   });
 }
 
@@ -203,7 +253,9 @@ export function createCharacterModelFromSources(
 export function readCharacterModelFromPage(
   page,
   {
-    pages = []
+    pages = [],
+    integrations = {},
+    selectedRuleIds = []
   } = {}
 ) {
 
@@ -225,7 +277,9 @@ export function readCharacterModelFromPage(
       readEffectsModelFromHTML(
         page?.content
       ),
-    pages
+    pages,
+    integrations,
+    selectedRuleIds
   });
 }
 
@@ -576,20 +630,63 @@ function createCombinedEffectsModel(
   {
     inventoryModel,
     effectsModel,
-    pages
+    pages,
+    integrations
   }
 ) {
 
-  // Здесь находится будущая точка подключения Rule Tree:
-  // сейчас модель автоматически берет эффекты экипированных предметов,
-  // позже сюда добавится provider правил без изменения карты и инициативы.
+  // Точка подключения внешних доменных систем:
+  // инвентарь, Rule Tree и World Packages отдают EffectsModel,
+  // а CharacterModel объединяет их без чтения чужого HTML.
   return mergeEffectsModels(
     effectsModel,
     createEffectsFromInventory({
       inventory:
         inventoryModel,
       pages
-    })
+    }),
+    ...getCharacterIntegrationEffects(
+      integrations
+    )
+  );
+}
+
+
+function createCombinedIntegrations(
+  {
+    pages,
+    integrations,
+    selectedRuleIds
+  }
+) {
+
+  const ruleTreeIntegrations =
+    createRuleTreeCharacterIntegrations({
+      pages,
+      selectedRuleIds
+    });
+
+  return createCharacterIntegrations({
+    effects: [
+      ...getCharacterIntegrationEffects(
+        integrations
+      ),
+      ...getCharacterIntegrationEffects(
+        ruleTreeIntegrations
+      )
+    ]
+  });
+}
+
+
+function hasCharacterIntegrations(
+  integrations
+) {
+
+  return Boolean(
+    getCharacterIntegrationEffects(
+      integrations
+    ).length
   );
 }
 
@@ -600,7 +697,8 @@ function createCharacterModelFromProperties(
     propertyModel,
     legacyDndHealth,
     inventoryModel,
-    effectsModel
+    effectsModel,
+    integrations
   }
 ) {
 
@@ -674,11 +772,16 @@ function createCharacterModelFromProperties(
       inventoryModel,
     effects:
       effectsModel,
+    integrations,
     sources: {
       properties: true,
       legacyDnd:
         Boolean(
           legacyDndHealth
+        ),
+      integrations:
+        hasCharacterIntegrations(
+          integrations
         )
     }
   });
