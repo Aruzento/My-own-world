@@ -5,6 +5,98 @@ import {
 
 
 test(
+  'rule-tree-can-be-created-from-main-create-menu',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const files =
+          new Map();
+
+        setStorageAdapter({
+          kind: 'memory',
+          async pickWorkspace() {
+            return {};
+          },
+          async restoreWorkspace() {
+            return {};
+          },
+          async ensureDirectory() {},
+          async getDirectoryHandle() {
+            return {};
+          },
+          async readText(path) {
+            return files.get(path) || '';
+          },
+          async writeText(path, content) {
+            files.set(
+              path,
+              String(content)
+            );
+          },
+          async readBinary() {
+            return new ArrayBuffer(0);
+          },
+          async writeBinary() {},
+          async listFiles() {
+            return [];
+          },
+          async removeFile() {},
+          async removeDirectory() {}
+        });
+      }
+    );
+
+    await page.locator('#newPageBtn').click();
+    await page.locator('#createMenu [data-template="ruleTree"]').click();
+
+    await expect(
+      page.locator('.rule-tree-document')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.tree-item[data-page-id]')
+    ).toHaveCount(
+      1
+    );
+
+    const createdPage =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          return state.pages[0];
+        }
+      );
+
+    expect(
+      createdPage.template
+    ).toBe(
+      'ruleTree'
+    );
+
+    expect(
+      createdPage.type
+    ).toBe(
+      'ruleTree'
+    );
+  }
+);
+
+
+test(
   'rule-tree-special-entity-imports-legacy-rules-and-keeps-json',
   async ({ page }) => {
 

@@ -48,7 +48,7 @@ export function renderTypePicker(
       ${createTypeOptionHTML({
         type: 'characterEffects',
         icon: '!',
-        title: 'Эффекты и состояния',
+        title: 'Состояния и эффекты',
         description: 'Активные состояния DnD и временные модификаторы'
       })}
 
@@ -215,7 +215,7 @@ export function getBlockPopupTitle(
 
   if (type === 'characterEffects') {
 
-    return 'Название блока эффектов и состояний';
+    return 'Название блока состояний и эффектов';
   }
 
   if (type === 'characterSheet') {
@@ -244,7 +244,7 @@ export function getDefaultBlockTitle(
 
   if (type === 'characterEffects') {
 
-    return 'Эффекты и состояния';
+    return 'Состояния и эффекты';
   }
 
   if (type === 'characterSheet') {

@@ -59,7 +59,9 @@ test(
           return {
             itemTypes,
             locationTypes,
-            noteTypes
+            noteTypes,
+            characterEffectsLabel:
+              popup.querySelector('[data-block-type="characterEffects"] strong')?.textContent || ''
           };
         }
       );
@@ -80,6 +82,18 @@ test(
       result.noteTypes
     ).not.toContain(
       'properties'
+    );
+
+    expect(
+      result.itemTypes
+    ).toContain(
+      'characterEffects'
+    );
+
+    expect(
+      result.characterEffectsLabel
+    ).toBe(
+      'Состояния и эффекты'
     );
   }
 );

@@ -90,6 +90,15 @@ export function renderEmptyEditorContent(
             <span class="empty-create-icon">☑</span>
             <span>Таски</span>
           </button>
+
+          <button
+            class="empty-create-option"
+            type="button"
+            data-template="ruleTree"
+          >
+            <span class="empty-create-icon">§</span>
+            <span>Правила</span>
+          </button>
         </div>
       </div>
     </section>

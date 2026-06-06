@@ -114,7 +114,7 @@ export function createSkillsBlock({
 
 
 export function createCharacterEffectsBlock({
-  title = 'Эффекты и состояния'
+  title = 'Состояния и эффекты'
 } = {}) {
 
   return `

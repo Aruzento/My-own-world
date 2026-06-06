@@ -173,7 +173,7 @@ Foundation поддерживает:
 - флаги `isIncapacitated`, `speedIsZero`, `hasDisadvantageOnAttacks`, `attackersHaveAdvantage`, `exhaustionLevel`;
 - чтение будущего persistent JSON-источника `[data-character-effects]`.
 
-UI для эффектов создан как foundation-блок карточки `Эффекты и состояния`. Он редактирует только persistent JSON `[data-character-effects]`, а расчетные подсистемы читают эффекты через `CharacterModel` / `EffectsModel`.
+UI для эффектов создан как foundation-блок карточки `Состояния и эффекты` (`data-block-type="characterEffects"`). Он должен быть доступен пользователю через popup `Добавить блок` и редактирует только persistent JSON `[data-character-effects]`, а расчетные подсистемы читают эффекты через `CharacterModel` / `EffectsModel`.
 
 ### Effects UI / Map Bridge
 
