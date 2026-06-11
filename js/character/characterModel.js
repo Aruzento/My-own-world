@@ -4,6 +4,10 @@ import {
 } from '../properties/propertiesModel.js';
 
 import {
+  createPropertiesCalculationModel
+} from '../properties/propertiesCalculationEngine.js';
+
+import {
   createInventoryModel,
   readInventoryModelFromHTML
 } from './inventoryModel.js';
@@ -57,6 +61,7 @@ export function createCharacterModel(
     inventory = {},
     effects = {},
     integrations = {},
+    calculations = {},
     sources = {}
   } = {}
 ) {
@@ -125,6 +130,10 @@ export function createCharacterModel(
     integrations:
       createCharacterIntegrations(
         integrations
+      ),
+    calculations:
+      normalizeCharacterCalculations(
+        calculations
       ),
     sources: {
       properties:
@@ -705,6 +714,13 @@ function createCharacterModelFromProperties(
   }
 ) {
 
+  const calculations =
+    createPropertiesCalculationModel({
+      propertiesModel:
+        propertyModel,
+      effectsModel
+    });
+
   return createCharacterModel({
     pageId:
       page?.id || '',
@@ -776,6 +792,7 @@ function createCharacterModelFromProperties(
     effects:
       effectsModel,
     integrations,
+    calculations,
     sources: {
       properties: true,
       legacyDnd:
@@ -878,6 +895,26 @@ function normalizeAbilities(
       ];
     })
   );
+}
+
+
+function normalizeCharacterCalculations(
+  calculations
+) {
+
+  if (
+    calculations?.kind === 'PropertiesCalculationModel'
+  ) {
+
+    return calculations;
+  }
+
+  return {
+    kind: 'PropertiesCalculationModel',
+    version: 1,
+    source: 'empty',
+    byKey: {}
+  };
 }
 
 

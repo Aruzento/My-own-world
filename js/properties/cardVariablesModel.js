@@ -27,14 +27,22 @@ export function createCardVariablesModel(
     );
 
   const variables =
-    (schema?.fields || [])
+    [
+      ...(schema?.fields || []),
+      ...getCustomVariableFields(
+        propertiesModel
+      )
+    ]
       .map(field =>
         createCardVariable(
           field,
           getPropertyValue(
             propertiesModel,
-            field.name,
-            ''
+            field.name || field.key,
+            getCustomPropertyValue(
+              propertiesModel,
+              field.name || field.key
+            )
           )
         )
       );
@@ -57,6 +65,33 @@ export function createCardVariablesModel(
         ])
       )
   };
+}
+
+
+function getCustomVariableFields(
+  propertiesModel
+) {
+
+  return (propertiesModel?.customFields || [])
+    .map(field => ({
+      name:
+        field.key,
+      label:
+        field.label,
+      type:
+        field.type,
+      source:
+        'custom'
+    }));
+}
+
+
+function getCustomPropertyValue(
+  propertiesModel,
+  key
+) {
+
+  return propertiesModel?.customValues?.[key] ?? '';
 }
 
 
@@ -160,7 +195,7 @@ function createCardVariable(
     rawValue:
       String(rawValue ?? ''),
     source:
-      'properties-block'
+      field.source || 'properties-block'
   };
 }
 

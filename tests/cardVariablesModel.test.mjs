@@ -106,3 +106,47 @@ test(
     );
   }
 );
+
+
+test(
+  'CardVariablesModel includes custom properties as variables',
+  () => {
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'item',
+        values: {
+          customFields: {
+            'custom-radius': {
+              key: 'custom-radius',
+              label: 'Радиус',
+              type: 'number',
+              value: '15'
+            }
+          }
+        }
+      });
+
+    const variables =
+      createCardVariablesFromPropertiesModel({
+        propertiesModel:
+          properties
+      });
+
+    assert.equal(
+      getCardVariableValue(
+        variables,
+        'custom-radius'
+      ),
+      15
+    );
+
+    assert.equal(
+      getCardVariable(
+        variables,
+        'custom-radius'
+      ).source,
+      'custom'
+    );
+  }
+);

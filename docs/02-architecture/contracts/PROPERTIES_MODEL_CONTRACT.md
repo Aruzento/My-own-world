@@ -204,6 +204,29 @@ Runtime-элементы:
 
 В интерфейсе причина может показываться позже через подсказку или popup, но базовый экран не должен быть перегружен формулами.
 
+Текущий foundation-файл: `js/properties/propertiesCalculationEngine.js`.
+
+Поддержанные расчёты:
+
+- уровень;
+- бонус мастерства;
+- модификаторы характеристик;
+- инициатива;
+- КЗ;
+- скорость;
+- summary хитов.
+
+Каждый расчет возвращает:
+
+- `value` - итоговое значение;
+- `calculatedValue` - значение без ручного override;
+- `source` - `calculated` или `manual`;
+- `formula` - человеко-читаемая формула;
+- `parts` - составляющие расчёта;
+- `override` - состояние ручного значения.
+
+`CharacterModel` получает этот слой как `model.calculations`, но текущие публичные поля `level`, `armorClass`, `speed`, `abilities`, `health` остаются совместимыми.
+
 ## Связь С CharacterModel
 
 `CharacterModel` остается backend-слоем для персонажей и существ.
@@ -327,7 +350,7 @@ Legacy-блоки:
 1. Закрыть контракт и договориться о модели.
 2. Добавить шестеренку и пустой popup настроек.
 3. Добавить пользовательские параметры без расчетов: **сделано MVP**.
-4. Добавить manual override для calculated fields.
+4. Добавить manual override для calculated fields: **сделано foundation backend**.
 5. Подключить CharacterModel к новой модели свойств.
 6. Сделать editable character sheet как режим `Свойств`.
 7. Упростить список блоков.

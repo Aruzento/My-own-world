@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 # Character Model Contract
 
-Дата обновления: 05.06.2026
+Дата обновления: 11.06.2026
 
 ## Назначение
 
@@ -30,6 +30,7 @@ owner_zone: "architecture"
 - `js/rules/ruleTreeProvider.js` - provider Rule Tree: читает отдельные сущности `ruleTree`, legacy страницы-правила и отдает их эффекты в `CharacterModel`.
 - `js/ruleTree/` - отдельная подсистема Rule Tree: persistent JSON, runtime UI, model, renderer и serializer.
 - `js/properties/cardVariablesModel.js` - общий слой переменных карточки, построенный из блока `Свойства`.
+- `js/properties/propertiesCalculationEngine.js` - расчетный слой свойств: формулы, части расчета, manual override и backend-объяснения для UI.
 - `js/properties/characterCalculations.js` - совместимый фасад старого кода, который теперь должен опираться на `CharacterModel`.
 - `js/properties/propertiesModel.js` - чтение блока `Свойства`.
 - `js/properties/propertySchemas.js` - стабильные ключи полей свойств.
@@ -53,6 +54,7 @@ getCharacterEffects(model)
 getCharacterEffectsCombatSummary(model)
 hasCharacterCondition(model, conditionKey)
 applyCharacterHealthChange(model, options)
+model.calculations
 calculateAbilityModifier(score)
 calculateProficiencyBonus(level)
 calculateDndCheckValue(options)
@@ -135,6 +137,18 @@ calculateDndCheckValue(options)
     effects: [],
     sources: []
   },
+  calculations: {
+    kind: 'PropertiesCalculationModel',
+    version: 1,
+    level: {},
+    proficiencyBonus: {},
+    abilityModifiers: {},
+    armorClass: {},
+    speed: {},
+    initiative: {},
+    health: {},
+    byKey: {}
+  },
   sources: {
     properties: true,
     legacyDnd: false,
@@ -159,6 +173,7 @@ calculateDndCheckValue(options)
 12. Целевая модель правил - отдельная сущность `ruleTree`. Карточки с тегами `rule/rules/правило/правила` остаются только backward-compatible bridge и источником импорта.
 13. Активные правила `Rule Tree` (`activeRuleIds`) могут применяться глобально через provider.
 14. Персональный выбор правил для конкретной карточки персонажа хранится в persistent JSON блока `Эффекты и состояния` как `selectedRuleIds`. `CharacterModel` объединяет эти ids с глобальными активными правилами Rule Tree.
+15. `model.calculations` является backend-объяснением расчетов. UI может показывать формулу и части расчета из него, но не должен записывать изменения напрямую в этот объект.
 
 
 ## Effects / Conditions

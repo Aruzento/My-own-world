@@ -76,8 +76,18 @@ test(
     );
 
     assert.equal(
+      model.calculations.proficiencyBonus.value,
+      4
+    );
+
+    assert.equal(
       model.abilities.dex.modifier,
       3
+    );
+
+    assert.equal(
+      model.calculations.initiative.parts[0].label,
+      'ЛОВ'
     );
 
     assert.equal(

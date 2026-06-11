@@ -1,0 +1,203 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import {
+  createEffectsModel
+} from '../js/character/effectsModel.js';
+
+import {
+  createPropertiesCalculationModel,
+  createManualOverride,
+  resolveCalculatedProperty
+} from '../js/properties/propertiesCalculationEngine.js';
+
+import {
+  createPropertiesModel
+} from '../js/properties/propertiesModel.js';
+
+
+test(
+  'PropertiesCalculationModel explains DnD derived values from properties and effects',
+  () => {
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          level: '9',
+          armorClass: '15',
+          speed: '30',
+          hpCurrent: '12',
+          hpMax: '20',
+          hpTemp: '3',
+          dex: '16'
+        }
+      });
+
+    const effects =
+      createEffectsModel({
+        effects: [
+          {
+            id: 'haste',
+            title: 'Ускорение',
+            modifiers: {
+              armorClass: 2,
+              speed: 10,
+              initiative: 1
+            }
+          }
+        ]
+      });
+
+    const model =
+      createPropertiesCalculationModel({
+        propertiesModel:
+          properties,
+        effectsModel:
+          effects
+      });
+
+    assert.equal(
+      model.kind,
+      'PropertiesCalculationModel'
+    );
+
+    assert.equal(
+      model.proficiencyBonus.value,
+      4
+    );
+
+    assert.equal(
+      model.abilityModifiers.dex.value,
+      3
+    );
+
+    assert.equal(
+      model.initiative.value,
+      4
+    );
+
+    assert.equal(
+      model.armorClass.value,
+      17
+    );
+
+    assert.equal(
+      model.speed.value,
+      40
+    );
+
+    assert.equal(
+      model.health.value.percent,
+      0.6
+    );
+
+    assert.equal(
+      model.byKey.initiative.formula,
+      'dexModifier + effects.initiative'
+    );
+  }
+);
+
+
+test(
+  'calculated property uses manual override until override is cleared',
+  () => {
+
+    const manual =
+      resolveCalculatedProperty({
+        key: 'initiative',
+        calculatedValue: 3,
+        override:
+          createManualOverride(
+            '7'
+          )
+      });
+
+    assert.equal(
+      manual.value,
+      7
+    );
+
+    assert.equal(
+      manual.source,
+      'manual'
+    );
+
+    const automatic =
+      resolveCalculatedProperty({
+        key: 'initiative',
+        calculatedValue: 3,
+        override:
+          createManualOverride(
+            ''
+          )
+      });
+
+    assert.equal(
+      automatic.value,
+      3
+    );
+
+    assert.equal(
+      automatic.source,
+      'calculated'
+    );
+  }
+);
+
+
+test(
+  'PropertiesCalculationModel treats empty numeric properties as defaults',
+  () => {
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          level: '',
+          armorClass: '',
+          speed: '',
+          hpCurrent: '',
+          hpMax: '',
+          dex: ''
+        }
+      });
+
+    const model =
+      createPropertiesCalculationModel({
+        propertiesModel:
+          properties
+      });
+
+    assert.equal(
+      model.level.value,
+      1
+    );
+
+    assert.equal(
+      model.proficiencyBonus.value,
+      2
+    );
+
+    assert.equal(
+      model.armorClass.value,
+      10
+    );
+
+    assert.equal(
+      model.speed.value,
+      30
+    );
+
+    assert.equal(
+      model.abilityModifiers.dex.value,
+      0
+    );
+
+    assert.equal(
+      model.health.value.max,
+      10
+    );
+  }
+);
