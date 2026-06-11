@@ -73,6 +73,7 @@ contenteditable="false"
 - кнопки строк таблицы;
 - кнопку добавления предмета в item set;
 - кнопку удаления предмета из item set;
+- drag handles полей блока `Свойства`;
 - кастомный dropdown типа карты;
 - controls карты кампании;
 - окно презентации карты;
@@ -198,6 +199,18 @@ if (type === 'dndStats' && currentVersion < 2) {
 - ручной smoke-тест: создать, заполнить, сохранить, открыть заново.
 
 Image block использует `data-block-type="image"` и не имеет заголовка. Persistent HTML хранит только `.image-block-frame` и `img[data-asset]` с `data-crop-x`, `data-crop-y`, `data-crop-zoom`; кнопки загрузки, удаления и кадрирования являются runtime controls.
+
+Основной пользовательский список блоков после упрощения:
+
+- `text` - текстовый блок;
+- `list` - универсальный блок списка;
+- `table` - таблица;
+- `image` - картинка;
+- `properties` - свойства карточки.
+
+Legacy-блоки `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `characterStats`, `dndStats`, `dndStatsV2` остаются поддерживаемыми при открытии старых карточек, но не должны возвращаться в первый уровень popup `Добавить блок` без отдельного продуктового решения.
+
+Universal list block использует `data-block-type="list"` и `data-list-kind`. Его режимы меняют picker и подписи, но не меняют тип блока. Runtime-кнопка добавления удаляется при сохранении, а выбранный режим должен сохраняться в persistent HTML.
 
 ## Encoding Rule
 

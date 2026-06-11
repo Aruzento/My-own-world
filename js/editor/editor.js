@@ -35,6 +35,10 @@ import {
 } from './characterEffectsBlock.js';
 
 import {
+  setupCharacterSheetBlocks
+} from './characterSheetBlock.js';
+
+import {
   setupCampaignMaps
 } from './campaignMap.js';
 
@@ -127,6 +131,11 @@ export function setupEditor() {
   );
 
   setupCharacterEffectsBlocks(
+    editor,
+    saveCurrentPage
+  );
+
+  setupCharacterSheetBlocks(
     editor,
     saveCurrentPage
   );

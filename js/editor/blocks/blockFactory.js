@@ -1,5 +1,6 @@
 import {
   createTextBlock,
+  createListBlock,
   createItemsBlock,
   createSpellsBlock,
   createSkillsBlock,
@@ -18,6 +19,11 @@ const BLOCK_CREATORS = {
     createTextBlock({
       title,
       placeholder: 'Введите текст'
+    }),
+
+  list: title =>
+    createListBlock({
+      title
     }),
 
   items: title =>
@@ -46,14 +52,6 @@ const BLOCK_CREATORS = {
     }),
 
   properties: (title, options = {}) => {
-
-    if (options.cardType === 'character') {
-
-      return createDndStatsBlock({
-        title: title || 'Свойства персонажа'
-      });
-    }
-
     return createPropertiesBlock({
       title,
       cardType: options.cardType

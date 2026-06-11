@@ -113,6 +113,49 @@ export function createSkillsBlock({
 }
 
 
+export function createListBlock({
+  title = 'Блок списка',
+  kind = 'items'
+} = {}) {
+
+  const normalizedKind =
+    normalizeListKind(
+      kind
+    );
+
+  return `
+    <div
+      class="template-block universal-list-block item-set-block"
+      data-block-type="list"
+      data-block-version="1"
+      data-list-kind="${normalizedKind}"
+      contenteditable="false"
+    >
+      <h2 contenteditable="false">${title}</h2>
+
+      <label class="universal-list-kind-field">
+        <span>Тип списка</span>
+        <select class="universal-list-kind-select" data-list-kind-control>
+          ${createListKindOptionsHTML(
+            normalizedKind
+          )}
+        </select>
+      </label>
+
+      <div class="universal-list-list item-set-list"></div>
+
+      <button
+        class="item-set-add-btn universal-list-add-btn"
+        data-runtime="true"
+        type="button"
+      >
+        + Добавить
+      </button>
+    </div>
+  `;
+}
+
+
 export function createCharacterEffectsBlock({
   title = 'Состояния и эффекты'
 } = {}) {
@@ -339,6 +382,44 @@ function normalizePropertyField(
     type,
     placeholder
   };
+}
+
+
+function createListKindOptionsHTML(
+  selectedKind
+) {
+
+  return [
+    ['items', 'Предметы'],
+    ['spells', 'Заклинания'],
+    ['skills', 'Навыки'],
+    ['characters', 'Персонажи'],
+    ['creatures', 'Существа'],
+    ['objects', 'Объекты']
+  ]
+    .map(([value, label]) => `
+      <option value="${value}" ${value === selectedKind ? 'selected' : ''}>
+        ${label}
+      </option>
+    `)
+    .join('');
+}
+
+
+function normalizeListKind(
+  kind
+) {
+
+  return [
+    'items',
+    'spells',
+    'skills',
+    'characters',
+    'creatures',
+    'objects'
+  ].includes(kind)
+    ? kind
+    : 'items';
 }
 
 

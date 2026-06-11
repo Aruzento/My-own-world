@@ -31,6 +31,8 @@ owner_zone: "architecture"
 - `js/ruleTree/` - отдельная подсистема Rule Tree: persistent JSON, runtime UI, model, renderer и serializer.
 - `js/properties/cardVariablesModel.js` - общий слой переменных карточки, построенный из блока `Свойства`.
 - `js/properties/propertiesCalculationEngine.js` - расчетный слой свойств: формулы, части расчета, manual override и backend-объяснения для UI.
+- `js/properties/propertiesDomWriter.js` - запись изменений runtime UI обратно в блок `Свойства`.
+- `js/properties/propertiesLegacyBridge.js` - безопасное обнаружение legacy-блоков без автоматической миграции.
 - `js/properties/characterCalculations.js` - совместимый фасад старого кода, который теперь должен опираться на `CharacterModel`.
 - `js/properties/propertiesModel.js` - чтение блока `Свойства`.
 - `js/properties/propertySchemas.js` - стабильные ключи полей свойств.
@@ -265,9 +267,9 @@ Foundation-правила:
 4. `readCharacterModelFromPage(page, { pages, selectedRuleIds })` и `createCharacterModelFromSources(...)` подключают выбранные правила к итоговому `CharacterModel`.
 5. На foundation-этапе UI выбора правил еще не сделан. Выбор идет через API `selectedRuleIds`.
 
-### Full Character Sheet UX
+### Editable Character Sheet UX
 
-Блок `Лист персонажа` (`data-block-type="characterSheet"`) является runtime-витриной `CharacterModel`.
+Блок `Лист персонажа` (`data-block-type="characterSheet"`) является runtime-режимом просмотра и редактирования `CharacterModel`.
 
 Он показывает:
 
@@ -278,7 +280,16 @@ Foundation-правила:
 - инвентарь;
 - активные состояния и эффекты.
 
-На foundation-этапе лист не хранит собственные игровые значения и не заменяет блок `Свойства`. Если нужен редактируемый лист, он должен стать отдельным model-first этапом.
+Текущий MVP:
+
+1. лист не хранит собственные игровые значения;
+2. редактируемые поля листа записываются в блок `Свойства`;
+3. если блока `Свойства` на карточке еще нет, он создается при первом изменении значения;
+4. ручное изменение рассчитанных полей, например инициативы, КЗ или скорости, сохраняется как `override-*`;
+5. ручные override подсвечиваются в листе;
+6. старые `Стат. блок DnD` и `Состояния и эффекты` остаются fallback-источниками.
+
+Лист персонажа не должен напрямую менять legacy DnD-блоки.
 
 ### Entity Variables
 

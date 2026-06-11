@@ -2,8 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  createListBlock,
   createPropertiesBlock
 } from '../js/templates/blockTypes.js';
+
+import {
+  createLegacyPropertyReport
+} from '../js/properties/propertiesLegacyBridge.js';
 
 import {
   hasPropertyBlockDefinition
@@ -69,6 +74,67 @@ test(
 
 
 test(
+  'character properties block uses the properties system instead of legacy DnD block',
+  () => {
+
+    const html =
+      createPropertiesBlock({
+        title: 'Свойства персонажа',
+        cardType: 'character'
+      });
+
+    assert.match(
+      html,
+      /data-block-type="properties"/
+    );
+
+    assert.match(
+      html,
+      /data-card-type="character"/
+    );
+
+    assert.equal(
+      html.includes('dnd-stats-block'),
+      false
+    );
+
+    assert.match(
+      html,
+      /data-property-name="hpCurrent"/
+    );
+  }
+);
+
+
+test(
+  'universal list block stores selected list kind in persistent HTML',
+  () => {
+
+    const html =
+      createListBlock({
+        title: 'Связанные сущности',
+        kind: 'creatures'
+      });
+
+    assert.match(
+      html,
+      /data-block-type="list"/
+    );
+
+    assert.match(
+      html,
+      /data-list-kind="creatures"/
+    );
+
+    assert.match(
+      html,
+      /class="universal-list-list item-set-list"/
+    );
+  }
+);
+
+
+test(
   'property block definitions are available only for supported card types',
   () => {
 
@@ -94,6 +160,47 @@ test(
 
     assert.equal(
       hasPropertyBlockDefinition('unknown'),
+      false
+    );
+  }
+);
+
+
+test(
+  'legacy property bridge reports old specialized blocks without converting them',
+  () => {
+
+    const report =
+      createLegacyPropertyReport([
+        {
+          type: 'dndStats',
+          title: 'Стат. блок DnD',
+          target: 'properties',
+          canAutoConvert: false
+        },
+        {
+          type: 'spells',
+          title: 'Заклинания',
+          target: 'list',
+          canAutoConvert: false
+        }
+      ]);
+
+    assert.equal(
+      report.hasLegacy,
+      true
+    );
+
+    assert.deepEqual(
+      report.items.map(item => item.target),
+      [
+        'properties',
+        'list'
+      ]
+    );
+
+    assert.equal(
+      report.items[0].canAutoConvert,
       false
     );
   }

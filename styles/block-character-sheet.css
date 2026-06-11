@@ -66,6 +66,42 @@
   padding: 9px;
 }
 
+.character-sheet-editable {
+  position: relative;
+}
+
+.character-sheet-editable input {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  border: 1px solid rgba(148, 132, 92, 0.22);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #3e382d;
+  font: 800 14px/1 system-ui, sans-serif;
+  text-align: center;
+  outline: none;
+}
+
+.character-sheet-editable input:focus {
+  border-color: rgba(196, 164, 74, 0.52);
+  box-shadow: 0 0 0 3px rgba(246, 224, 151, 0.35);
+}
+
+.character-sheet-editable strong {
+  display: none;
+}
+
+.character-sheet-editable.is-manual-override {
+  border-color: rgba(170, 135, 221, 0.48);
+  background: rgba(232, 220, 255, 0.58);
+}
+
+.character-sheet-editable.is-manual-override input {
+  border-color: rgba(170, 135, 221, 0.52);
+  background: rgba(248, 244, 255, 0.9);
+}
+
 .character-sheet-metric span,
 .character-sheet-ability span {
   color: #766a55;

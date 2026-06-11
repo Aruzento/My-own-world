@@ -59,9 +59,7 @@ test(
           return {
             itemTypes,
             locationTypes,
-            noteTypes,
-            characterEffectsLabel:
-              popup.querySelector('[data-block-type="characterEffects"] strong')?.textContent || ''
+            noteTypes
           };
         }
       );
@@ -87,13 +85,31 @@ test(
     expect(
       result.itemTypes
     ).toContain(
+      'list'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
       'characterEffects'
     );
 
     expect(
-      result.characterEffectsLabel
-    ).toBe(
-      'Состояния и эффекты'
+      result.itemTypes
+    ).not.toContain(
+      'items'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'spells'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'skills'
     );
   }
 );
@@ -1051,5 +1067,194 @@ test(
     ).toContain(
       'Щит'
     );
+  }
+);
+
+
+test(
+  'character-sheet-edit-writes-values-to-properties-block',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            createCharacterSheetBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCharacterSheetBlocks,
+            setupCharacterSheetBlocks
+          } = await import('/js/editor/characterSheetBlock.js');
+
+          state.currentPage = {
+            id: 'hero',
+            type: 'character',
+            content: ''
+          };
+
+          state.pages = [
+            state.currentPage
+          ];
+
+          const editor =
+            document.createElement('div');
+
+          editor.id =
+            'editorArea';
+
+          editor.innerHTML = `
+            <section class="entity-main">
+              <div class="blocks-toolbar" data-runtime="true"></div>
+              ${createCharacterSheetBlock()}
+            </section>
+          `;
+
+          let saved =
+            false;
+
+          setupCharacterSheetBlocks(
+            editor,
+            async () => {
+
+              saved =
+                true;
+            }
+          );
+
+          renderCharacterSheetBlocks(
+            editor
+          );
+
+          const levelInput =
+            editor.querySelector(
+              '[data-character-sheet-field="level"]'
+            );
+
+          levelInput.value =
+            '7';
+
+          levelInput.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          await new Promise(resolve =>
+            setTimeout(resolve)
+          );
+
+          const propertiesBlock =
+            editor.querySelector(
+              '.card-properties-block[data-card-type="character"]'
+            );
+
+          return {
+            saved,
+            hasPropertiesBlock:
+              Boolean(propertiesBlock),
+            level:
+              propertiesBlock
+                ?.querySelector('[data-property-name="level"]')
+                ?.getAttribute('value')
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      saved: true,
+      hasPropertiesBlock: true,
+      level: '7'
+    });
+  }
+);
+
+
+test(
+  'universal-list-block-switches-kind-without-changing-block-type',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createListBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const wrapper =
+            document.createElement('div');
+
+          wrapper.innerHTML =
+            createListBlock({
+              title: 'Связи',
+              kind: 'items'
+            });
+
+          const block =
+            wrapper.firstElementChild;
+
+          document.body.appendChild(
+            block
+          );
+
+          const select =
+            block.querySelector(
+              '.universal-list-kind-select'
+            );
+
+          select.value =
+            'creatures';
+
+          select.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          await new Promise(resolve =>
+            setTimeout(resolve)
+          );
+
+          return {
+            blockType:
+              block.dataset.blockType,
+            listKind:
+              block.dataset.listKind,
+            selected:
+              block.querySelector('option[value="creatures"]')
+                ?.hasAttribute('selected')
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      blockType: 'list',
+      listKind: 'creatures',
+      selected: true
+    });
   }
 );

@@ -23,7 +23,6 @@ export const PROPERTY_BLOCK_SCHEMAS = {
     cardType: 'character',
     label: 'Персонаж',
     title: 'Свойства персонажа',
-    preferredBlockType: 'dndStats',
     fields: [
       numberField('level', 'Уровень', '1', {
         min: 1,
@@ -42,7 +41,9 @@ export const PROPERTY_BLOCK_SCHEMAS = {
       numberField('deathSaveFailures', 'Хиты от смерти: провалы', '0', {
         min: 0,
         max: 3
-      })
+      }),
+      textareaField('conditions', 'Состояния', 'Например: отравлен, сбит с ног, истощение 1'),
+      textareaField('effects', 'Эффекты', 'Например: +2 КЗ от щита, благословение, ускорение')
     ]
   },
 
@@ -62,6 +63,8 @@ export const PROPERTY_BLOCK_SCHEMAS = {
       numberField('speed', 'Скорость', '30'),
       ...abilityFields(),
       textField('senses', 'Чувства', 'Темное зрение 60 фт.'),
+      textareaField('conditions', 'Состояния', 'Например: испуган, опутан, оглушен'),
+      textareaField('effects', 'Эффекты', 'Временные бонусы, слабости, особенности боя'),
       textareaField('effect', 'Особенности', 'Что важно помнить мастеру')
     ]
   },

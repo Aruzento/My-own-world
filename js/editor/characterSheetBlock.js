@@ -11,6 +11,13 @@ import {
   state
 } from '../state.js';
 
+import {
+  ensurePropertiesBlockForPage,
+  notifyPropertiesInput,
+  setCalculatedPropertyOverride,
+  setPropertyFieldValue
+} from '../properties/propertiesDomWriter.js';
+
 
 const ABILITY_LABELS = {
   str: 'СИЛ',
@@ -21,10 +28,48 @@ const ABILITY_LABELS = {
   cha: 'ХАР'
 };
 
+let saveCurrentPageRef =
+  null;
+
 
 // Лист персонажа - runtime-витрина CharacterModel.
 // Он не хранит свои числа, а каждый раз собирает картину из свойств,
 // инвентаря, эффектов и старых DnD-блоков текущей карточки.
+export function setupCharacterSheetBlocks(
+  editor,
+  saveCurrentPage
+) {
+
+  saveCurrentPageRef =
+    saveCurrentPage;
+
+  editor.addEventListener(
+    'change',
+    async event => {
+
+      const control =
+        event.target.closest(
+          '[data-character-sheet-field], [data-character-sheet-override]'
+        );
+
+      if (!control) return;
+
+      const block =
+        control.closest(
+          '.character-sheet-block'
+        );
+
+      if (!block) return;
+
+      await updateCharacterSheetValue(
+        block,
+        control
+      );
+    }
+  );
+}
+
+
 export function renderCharacterSheetBlocks(
   editor
 ) {
@@ -103,16 +148,53 @@ function createCharacterSheetHTML(
         <span class="character-sheet-kicker">Сводка</span>
         <strong>${escapeHTML(model.cardType === 'creature' ? 'Существо' : 'Персонаж')}</strong>
       </div>
-      <div class="character-sheet-level">Ур. ${model.level}</div>
+      ${createEditableMetricHTML({
+        label: 'Уровень',
+        value: model.level,
+        field: 'level',
+        className: 'character-sheet-level'
+      })}
       <div class="character-sheet-pb">БМ ${formatSigned(model.proficiencyBonus)}</div>
     </section>
 
     <section class="character-sheet-combat">
-      ${createMetricHTML('КЗ', getCharacterEffectiveArmorClass(model))}
-      ${createMetricHTML('Скорость', `${getCharacterEffectiveSpeed(model)} фт.`)}
-      ${createMetricHTML('Инициатива', formatSigned(getCharacterInitiativeModifier(model)))}
-      ${createMetricHTML('Хиты', `${health.current}/${health.max}`)}
-      ${createMetricHTML('Врем.', health.temp)}
+      ${createEditableMetricHTML({
+        label: 'КЗ',
+        value: getCharacterEffectiveArmorClass(model),
+        field: 'armorClass',
+        override: 'armorClass',
+        calculation: model.calculations?.armorClass
+      })}
+      ${createEditableMetricHTML({
+        label: 'Скорость',
+        value: getCharacterEffectiveSpeed(model),
+        field: 'speed',
+        override: 'speed',
+        suffix: 'фт.',
+        calculation: model.calculations?.speed
+      })}
+      ${createEditableMetricHTML({
+        label: 'Инициатива',
+        value: getCharacterInitiativeModifier(model),
+        override: 'initiative',
+        calculation: model.calculations?.initiative,
+        signed: true
+      })}
+      ${createEditableMetricHTML({
+        label: 'Хиты',
+        value: health.current,
+        field: 'hpCurrent'
+      })}
+      ${createEditableMetricHTML({
+        label: 'Макс',
+        value: health.max,
+        field: 'hpMax'
+      })}
+      ${createEditableMetricHTML({
+        label: 'Врем.',
+        value: health.temp,
+        field: 'hpTemp'
+      })}
     </section>
 
     <section class="character-sheet-abilities">
@@ -146,17 +228,57 @@ function createMetricHTML(
 }
 
 
+function createEditableMetricHTML(
+  {
+    label,
+    value,
+    field = '',
+    override = '',
+    className = '',
+    suffix = '',
+    signed = false,
+    calculation = null
+  }
+) {
+
+  const isManual =
+    calculation?.source === 'manual';
+
+  return `
+    <label class="character-sheet-metric character-sheet-editable ${className} ${isManual ? 'is-manual-override' : ''}">
+      <span>${escapeHTML(label)}</span>
+      <input
+        type="number"
+        value="${escapeAttribute(value)}"
+        ${field ? `data-character-sheet-field="${escapeAttribute(field)}"` : ''}
+        ${override ? `data-character-sheet-override="${escapeAttribute(override)}"` : ''}
+        title="${escapeAttribute(calculation?.formula || '')}"
+      >
+      <strong>${escapeHTML(signed ? formatSigned(value) : value)}</strong>
+      ${suffix ? `<small>${escapeHTML(suffix)}</small>` : ''}
+    </label>
+  `;
+}
+
+
 function createAbilityHTML(
   key,
   ability
 ) {
 
   return `
-    <div class="character-sheet-ability">
+    <label class="character-sheet-ability character-sheet-editable">
       <span>${ABILITY_LABELS[key]}</span>
+      <input
+        type="number"
+        min="1"
+        max="30"
+        value="${escapeAttribute(ability.score)}"
+        data-character-sheet-field="${escapeAttribute(key)}"
+      >
       <strong>${ability.score}</strong>
       <small>${formatSigned(ability.modifier)}</small>
-    </div>
+    </label>
   `;
 }
 
@@ -278,6 +400,72 @@ function getCurrentPageSnapshot(
 }
 
 
+async function updateCharacterSheetValue(
+  block,
+  control
+) {
+
+  const editor =
+    block.closest(
+      '#editorArea'
+    );
+
+  if (!editor || !state.currentPage) return;
+
+  const propertiesBlock =
+    ensurePropertiesBlockForPage(
+      editor,
+      state.currentPage
+    );
+
+  if (!propertiesBlock) return;
+
+  const value =
+    control.value;
+
+  const field =
+    control.dataset.characterSheetField;
+
+  const override =
+    control.dataset.characterSheetOverride;
+
+  let changed =
+    false;
+
+  if (field) {
+
+    changed =
+      setPropertyFieldValue(
+        propertiesBlock,
+        field,
+        value
+      ) || changed;
+  }
+
+  if (override) {
+
+    changed =
+      setCalculatedPropertyOverride(
+        propertiesBlock,
+        override,
+        value
+      ) || changed;
+  }
+
+  if (!changed) return;
+
+  notifyPropertiesInput(
+    propertiesBlock
+  );
+
+  await saveCurrentPageRef?.();
+
+  renderCharacterSheetBlock(
+    block
+  );
+}
+
+
 function formatSigned(
   value
 ) {
@@ -299,4 +487,14 @@ function escapeHTML(
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHTML(
+    value
+  );
 }

@@ -25,38 +25,10 @@ export function renderTypePicker(
       })}
 
       ${createTypeOptionHTML({
-        type: 'items',
+        type: 'list',
         icon: '◆',
-        title: 'Предметы',
-        description: 'Список связанных предметов'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'spells',
-        icon: '✦',
-        title: 'Заклинания',
-        description: 'Список связанных заклинаний'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'skills',
-        icon: '✧',
-        title: 'Навыки',
-        description: 'Список связанных навыков'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'characterEffects',
-        icon: '!',
-        title: 'Состояния и эффекты',
-        description: 'Активные состояния DnD и временные модификаторы'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'characterSheet',
-        icon: '☷',
-        title: 'Лист персонажа',
-        description: 'Расчетная сводка персонажа из свойств, эффектов и инвентаря'
+        title: 'Блок списка',
+        description: 'Один блок для предметов, заклинаний, навыков и сущностей'
       })}
 
       ${hasPropertyBlockDefinition(cardType)
@@ -224,6 +196,7 @@ export function getBlockPopupTitle(
   }
 
   const titles = {
+    list: 'Название блока списка',
     items: 'Название блока с предметами',
     spells: 'Название блока с заклинаниями',
     skills: 'Название блока с навыками',
@@ -253,6 +226,7 @@ export function getDefaultBlockTitle(
   }
 
   const titles = {
+    list: 'Блок списка',
     items: 'Набор',
     spells: 'Заклинания',
     skills: 'Навыки',

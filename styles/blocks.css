@@ -463,6 +463,33 @@
   position: relative;
 }
 
+.universal-list-kind-field {
+  width: min(260px, 100%);
+  display: grid;
+  gap: 5px;
+  margin: 4px 0 8px;
+  color: rgba(255,248,230,0.72);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.universal-list-kind-select {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid rgba(241,211,142,0.18);
+  border-radius: 9px;
+  background: rgba(255,255,255,0.055);
+  color: rgba(255,248,230,0.92);
+  font: 700 13px/1 system-ui, sans-serif;
+  outline: none;
+}
+
+.universal-list-kind-select:focus {
+  border-color: rgba(241,211,142,0.36);
+  box-shadow: 0 0 0 3px rgba(241,211,142,0.08);
+}
+
 
 .item-set-list {
   display: flex;

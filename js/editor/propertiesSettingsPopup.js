@@ -26,11 +26,19 @@ export function ensurePropertySettingsControls(
     editor
   );
 
+  setupPropertyFieldLayoutDelegation(
+    editor
+  );
+
   editor
     .querySelectorAll?.('.card-properties-block')
     .forEach(block => {
 
       ensurePropertySettingsButton(
+        block
+      );
+
+      ensurePropertyFieldLayoutHandles(
         block
       );
     });
@@ -40,6 +48,10 @@ export function ensurePropertySettingsControls(
   ) {
 
     ensurePropertySettingsButton(
+      editor
+    );
+
+    ensurePropertyFieldLayoutHandles(
       editor
     );
   }
@@ -247,9 +259,32 @@ function bindPropertySettingsEvents(
           const fieldId =
             button.dataset.fieldId;
 
-          removeCustomPropertyField(
+      removeCustomPropertyField(
             block,
             fieldId,
+            editor
+          );
+
+          openPropertySettingsPopup(
+            block,
+            anchor,
+            editor
+          );
+        }
+      );
+    });
+
+  settingsPopup
+    .querySelectorAll('.property-settings-toggle-wide')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          togglePropertyFieldWide(
+            block,
+            button.dataset.fieldId,
             editor
           );
 
@@ -425,6 +460,10 @@ function getVisiblePropertyFields(
         custom:
           isCustomPropertyField(
             field
+          ),
+        wide:
+          field.classList.contains(
+            'card-property-field-wide'
           )
       };
     });
@@ -456,6 +495,15 @@ function createPropertySettingsFieldHTML(
           </button>
         `
         : ''}
+
+      <button
+        class="property-settings-toggle-wide"
+        type="button"
+        data-field-id="${escapeAttribute(field.id)}"
+        title="${field.wide ? 'Сделать обычным' : 'Сделать широким'}"
+      >
+        ${field.wide ? '1x' : '2x'}
+      </button>
     </article>
   `;
 }
@@ -573,6 +621,48 @@ function removeCustomPropertyField(
     editor,
     block
   );
+}
+
+
+function togglePropertyFieldWide(
+  block,
+  fieldId,
+  editor
+) {
+
+  if (!fieldId) return;
+
+  const field =
+    findPropertyFieldById(
+      block,
+      fieldId
+    );
+
+  if (!field) return;
+
+  field.classList.toggle(
+    'card-property-field-wide'
+  );
+
+  notifyPropertiesChanged(
+    editor,
+    block
+  );
+}
+
+
+function findPropertyFieldById(
+  block,
+  fieldId
+) {
+
+  return [
+    ...block.querySelectorAll('.card-property-field')
+  ].find(field =>
+    getPropertyFieldId(
+      field
+    ) === fieldId
+  ) || null;
 }
 
 
@@ -717,6 +807,170 @@ function notifyPropertiesChanged(
         bubbles: true
       }
     )
+  );
+}
+
+
+function ensurePropertyFieldLayoutHandles(
+  block
+) {
+
+  block
+    .querySelectorAll('.card-property-field')
+    .forEach(field => {
+
+      if (
+        field.querySelector(
+          '.card-property-drag-handle'
+        )
+      ) return;
+
+      const handle =
+        document.createElement('button');
+
+      handle.className =
+        'card-property-drag-handle';
+
+      handle.type =
+        'button';
+
+      handle.draggable =
+        true;
+
+      handle.title =
+        'Переместить поле';
+
+      handle.dataset.runtime =
+        'true';
+
+      handle.setAttribute(
+        'contenteditable',
+        'false'
+      );
+
+      handle.textContent =
+        '⋮⋮';
+
+      field.prepend(
+        handle
+      );
+    });
+}
+
+
+function setupPropertyFieldLayoutDelegation(
+  editor
+) {
+
+  if (
+    editor.dataset.propertiesLayoutReady === 'true'
+  ) return;
+
+  editor.dataset.propertiesLayoutReady =
+    'true';
+
+  let draggedField =
+    null;
+
+  editor.addEventListener(
+    'dragstart',
+    event => {
+
+      const handle =
+        event.target.closest(
+          '.card-property-drag-handle'
+        );
+
+      if (!handle) return;
+
+      draggedField =
+        handle.closest(
+          '.card-property-field'
+        );
+
+      if (!draggedField) return;
+
+      draggedField.classList.add(
+        'is-property-dragging'
+      );
+
+      event.dataTransfer.effectAllowed =
+        'move';
+
+      event.dataTransfer.setData(
+        'text/plain',
+        getPropertyFieldId(
+          draggedField
+        )
+      );
+    }
+  );
+
+  editor.addEventListener(
+    'dragover',
+    event => {
+
+      if (!draggedField) return;
+
+      const grid =
+        event.target.closest(
+          '.card-properties-grid'
+        );
+
+      if (!grid) return;
+
+      event.preventDefault();
+
+      const target =
+        event.target.closest(
+          '.card-property-field'
+        );
+
+      if (
+        !target ||
+        target === draggedField ||
+        !grid.contains(target)
+      ) return;
+
+      const rect =
+        target.getBoundingClientRect();
+
+      const insertAfter =
+        event.clientY >
+        rect.top + rect.height / 2;
+
+      grid.insertBefore(
+        draggedField,
+        insertAfter
+          ? target.nextSibling
+          : target
+      );
+    }
+  );
+
+  editor.addEventListener(
+    'dragend',
+    () => {
+
+      if (!draggedField) return;
+
+      const block =
+        draggedField.closest(
+          '.card-properties-block'
+        );
+
+      draggedField.classList.remove(
+        'is-property-dragging'
+      );
+
+      draggedField =
+        null;
+
+      notifyPropertiesChanged(
+        editor,
+        block
+      );
+    }
   );
 }
 

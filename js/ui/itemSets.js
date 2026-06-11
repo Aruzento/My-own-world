@@ -40,12 +40,12 @@ export function setupItemSets() {
 
       const addButton =
         event.target.closest(
-          '.item-set-add-btn, .spell-set-add-btn, .skill-set-add-btn'
+          '.item-set-add-btn, .spell-set-add-btn, .skill-set-add-btn, .universal-list-add-btn'
         );
 
       const chip =
         event.target.closest(
-          '.item-set-chip, .spell-set-chip, .skill-set-chip'
+          '.item-set-chip, .spell-set-chip, .skill-set-chip, .universal-list-chip'
         );
 
       const removeButton =
@@ -232,6 +232,7 @@ function setupItemSetPicker() {
       if (
         event.target.closest(
           '.item-set-add-btn, .spell-set-add-btn, .skill-set-add-btn'
+          + ', .universal-list-add-btn'
         )
       ) return;
 
@@ -247,7 +248,7 @@ function openItemSetPicker(
 
   const block =
     button.closest(
-      '.item-set-block, .spell-set-block, .skill-set-block'
+      '.universal-list-block, .item-set-block, .spell-set-block, .skill-set-block'
     );
 
   if (!block) return;
@@ -260,7 +261,8 @@ function openItemSetPicker(
   activeSetList =
     block.querySelector(
       getSetListSelector(
-        activeSetKind
+        activeSetKind,
+        block
       )
     );
 
@@ -306,6 +308,10 @@ function openItemSetPicker(
       activeSetKind
     );
 
+  updateUniversalListRuntimeText(
+    block
+  );
+
 
   picker.classList.remove(
     'hidden'
@@ -350,6 +356,44 @@ function closeItemSetPicker() {
 document.addEventListener(
   'change',
   async event => {
+
+    const kindSelect =
+      event.target.closest(
+        '.universal-list-kind-select'
+      );
+
+    if (kindSelect) {
+
+      const block =
+        kindSelect.closest(
+          '.universal-list-block'
+        );
+
+      if (!block) return;
+
+      block.dataset.listKind =
+        normalizeSetKind(
+          kindSelect.value
+        );
+
+      kindSelect
+        .querySelectorAll('option')
+        .forEach(option => {
+
+          option.toggleAttribute(
+            'selected',
+            option.value === block.dataset.listKind
+          );
+        });
+
+      updateUniversalListRuntimeText(
+        block
+      );
+
+      await saveCurrentPage();
+
+      return;
+    }
 
     const countInput =
       event.target.closest('.item-set-quantity');
@@ -403,6 +447,9 @@ function renderItemSetOptions() {
   const selectedIds =
     activeSetList
       ? [...activeSetList.querySelectorAll('.item-set-chip, .spell-set-chip, .skill-set-chip')]
+          .concat([
+            ...activeSetList.querySelectorAll('.universal-list-chip')
+          ])
           .map(chip => chip.dataset.pageId)
       : [];
 
@@ -530,7 +577,9 @@ async function addItemToSet(
     'button';
 
   chip.className =
-    activeSetKind === 'spells'
+    activeSetList.closest('.universal-list-block')
+      ? `universal-list-chip ${getChipClassForKind(activeSetKind)}`
+      : activeSetKind === 'spells'
       ? 'spell-set-chip'
       : activeSetKind === 'skills'
         ? 'skill-set-chip'
@@ -541,7 +590,10 @@ async function addItemToSet(
 
   chip.innerHTML =
     activeSetKind === 'spells' ||
-    activeSetKind === 'skills'
+    activeSetKind === 'skills' ||
+    activeSetKind === 'characters' ||
+    activeSetKind === 'creatures' ||
+    activeSetKind === 'objects'
       ? createSpellChipHTML(page)
       : `
         ${getPageIcon(page.tags)}
@@ -644,6 +696,7 @@ async function removeItemFromSet(
   const chip =
     button.closest(
       '.item-set-chip, .spell-set-chip, .skill-set-chip'
+      + ', .universal-list-chip'
     );
 
   if (!chip) return;
@@ -668,13 +721,35 @@ function getSetKindFromBlock(
 
   if (block.classList.contains('spell-set-block')) return 'spells';
   if (block.classList.contains('skill-set-block')) return 'skills';
+  if (block.classList.contains('universal-list-block')) {
+
+    const selected =
+      block.querySelector('.universal-list-kind-select')
+        ?.value ||
+      block.dataset.listKind;
+
+    return normalizeSetKind(
+      selected
+    );
+  }
+
   return 'items';
 }
 
 
 function getSetListSelector(
-  kind
+  kind,
+  block = null
 ) {
+
+  if (
+    block?.classList?.contains(
+      'universal-list-block'
+    )
+  ) {
+
+    return '.universal-list-list';
+  }
 
   if (kind === 'spells') return '.spell-set-list';
   if (kind === 'skills') return '.skill-set-list';
@@ -688,6 +763,9 @@ function getExpectedPageType(
 
   if (kind === 'spells') return 'magic';
   if (kind === 'skills') return 'skill';
+  if (kind === 'characters') return 'character';
+  if (kind === 'creatures') return 'creature';
+  if (kind === 'objects') return 'object';
   return 'item';
 }
 
@@ -698,6 +776,9 @@ function getSearchPlaceholder(
 
   if (kind === 'spells') return 'Найти заклинание...';
   if (kind === 'skills') return 'Найти навык...';
+  if (kind === 'characters') return 'Найти персонажа...';
+  if (kind === 'creatures') return 'Найти существо...';
+  if (kind === 'objects') return 'Найти объект...';
   return 'Найти предмет...';
 }
 
@@ -708,6 +789,9 @@ function getEmptyText(
 
   if (kind === 'spells') return 'Заклинания не найдены';
   if (kind === 'skills') return 'Навыки не найдены';
+  if (kind === 'characters') return 'Персонажи не найдены';
+  if (kind === 'creatures') return 'Существа не найдены';
+  if (kind === 'objects') return 'Объекты не найдены';
   return 'Предметы не найдены';
 }
 
@@ -716,7 +800,12 @@ function createSetOptionHTML(
   page
 ) {
 
-  if (activeSetKind === 'skills') {
+  if (
+    activeSetKind === 'skills' ||
+    activeSetKind === 'characters' ||
+    activeSetKind === 'creatures' ||
+    activeSetKind === 'objects'
+  ) {
 
     return `
       ${getPageIcon(page.tags)}
@@ -778,6 +867,78 @@ function createSpellChipHTML(
       ×
     </span>
   `;
+}
+
+
+function normalizeSetKind(
+  kind
+) {
+
+  return [
+    'items',
+    'spells',
+    'skills',
+    'characters',
+    'creatures',
+    'objects'
+  ].includes(kind)
+    ? kind
+    : 'items';
+}
+
+
+function getChipClassForKind(
+  kind
+) {
+
+  if (kind === 'spells') return 'spell-set-chip';
+  if (kind === 'skills') return 'skill-set-chip';
+  return 'item-set-chip';
+}
+
+
+function updateUniversalListRuntimeText(
+  block
+) {
+
+  if (
+    !block?.classList?.contains(
+      'universal-list-block'
+    )
+  ) return;
+
+  const kind =
+    getSetKindFromBlock(
+      block
+    );
+
+  const button =
+    block.querySelector(
+      '.universal-list-add-btn'
+    );
+
+  if (button) {
+
+    button.textContent =
+      `+ Добавить ${getAddButtonNoun(kind)}`;
+  }
+}
+
+
+function getAddButtonNoun(
+  kind
+) {
+
+  const nouns = {
+    items: 'предмет',
+    spells: 'заклинание',
+    skills: 'навык',
+    characters: 'персонажа',
+    creatures: 'существо',
+    objects: 'объект'
+  };
+
+  return nouns[kind] || 'элемент';
 }
 
 
