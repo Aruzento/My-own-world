@@ -3,17 +3,13 @@
 .card-properties-block {
 
   border:
-    1px solid rgba(241,211,142,0.16);
+    none;
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(241,211,142,0.105),
-      rgba(255,255,255,0.035)
-    );
+    transparent;
 
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06);
+    none;
 }
 
 
@@ -98,19 +94,7 @@
 .card-properties-block h2::before {
 
   content:
-    '';
-
-  width:
-    8px;
-
-  height:
-    8px;
-
-  border-radius:
-    50%;
-
-  background:
-    #f1d38e;
+    none;
 }
 
 
@@ -130,20 +114,11 @@
 
 
 .card-property-drag-handle {
-  position:
-    absolute;
-
-  top:
-    8px;
-
-  right:
-    8px;
-
   width:
-    22px;
+    20px;
 
   height:
-    22px;
+    20px;
 
   display:
     inline-grid;
@@ -152,49 +127,278 @@
     center;
 
   border:
-    1px solid rgba(241,211,142,0.12);
+    none;
 
   border-radius:
-    7px;
+    6px;
 
   background:
-    rgba(255,255,255,0.045);
+    rgba(255,255,255,0.028);
 
   color:
-    rgba(255,248,230,0.55);
+    rgba(255,255,255,0.30);
 
-  font:
-    800 11px/1 system-ui, sans-serif;
+  padding:
+    0;
 
   cursor:
     grab;
+
+  user-select:
+    none;
+
+  touch-action:
+    none;
+
+  align-self:
+    center;
+
+  transition:
+    background 0.12s ease,
+    color 0.12s ease,
+    transform 0.12s ease;
 }
 
 
 .card-property-drag-handle:hover {
-  border-color:
-    rgba(241,211,142,0.28);
-
   background:
-    rgba(241,211,142,0.10);
+    rgba(241,211,142,0.11);
 
   color:
-    rgba(255,248,230,0.92);
+    rgba(255,248,230,0.82);
+}
+
+
+.card-property-drag-handle:active {
+  cursor:
+    grabbing;
+
+  transform:
+    scale(0.94);
+}
+
+
+.card-property-drag-handle .app-icon {
+  width:
+    13px;
+
+  height:
+    13px;
 }
 
 
 .card-property-field {
   position:
     relative;
+
+  border:
+    1px solid transparent;
+
+  border-radius:
+    8px;
+
+  padding:
+    7px;
+
+  transition:
+    border-color 0.14s ease,
+    background 0.14s ease,
+    box-shadow 0.14s ease,
+    opacity 0.14s ease,
+    transform 0.14s ease;
+}
+
+
+.card-property-field:hover,
+.card-property-field:focus-within {
+  border-color:
+    rgba(241,211,142,0.24);
+
+  background:
+    rgba(255,255,255,0.018);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.025);
 }
 
 
 .card-property-field.is-property-dragging {
   opacity:
-    0.56;
+    0.55;
 
   outline:
-    1px dashed rgba(241,211,142,0.45);
+    1px solid rgba(241,211,142,0.38);
+
+  transform:
+    scale(0.985);
+}
+
+
+.card-property-field.is-property-resizing {
+  outline:
+    1px solid rgba(241,211,142,0.34);
+}
+
+
+.card-property-resize-dot {
+  position:
+    absolute;
+
+  width:
+    8px;
+
+  height:
+    8px;
+
+  padding:
+    0;
+
+  user-select:
+    none;
+
+  touch-action:
+    none;
+
+  border:
+    1px solid rgba(33,31,26,0.88);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(241,211,142,0.92);
+
+  opacity:
+    0;
+
+  z-index:
+    3;
+
+  transition:
+    opacity 0.12s ease,
+    transform 0.12s ease;
+}
+
+
+.card-property-resize-dot:hover {
+  transform:
+    scale(1.25);
+}
+
+
+.card-property-resize-dot-n {
+  top:
+    -5px;
+
+  left:
+    50%;
+
+  transform:
+    translateX(-50%);
+
+  cursor:
+    ns-resize;
+}
+
+
+.card-property-resize-dot-s {
+  bottom:
+    -5px;
+
+  left:
+    50%;
+
+  transform:
+    translateX(-50%);
+
+  cursor:
+    ns-resize;
+}
+
+
+.card-property-resize-dot-e {
+  top:
+    50%;
+
+  right:
+    -5px;
+
+  transform:
+    translateY(-50%);
+
+  cursor:
+    ew-resize;
+}
+
+
+.card-property-resize-dot-w {
+  top:
+    50%;
+
+  left:
+    -5px;
+
+  transform:
+    translateY(-50%);
+
+  cursor:
+    ew-resize;
+}
+
+
+.card-property-resize-dot-ne {
+  top:
+    -5px;
+
+  right:
+    -5px;
+
+  cursor:
+    nesw-resize;
+}
+
+
+.card-property-resize-dot-nw {
+  top:
+    -5px;
+
+  left:
+    -5px;
+
+  cursor:
+    nwse-resize;
+}
+
+
+.card-property-resize-dot-se {
+  right:
+    -5px;
+
+  bottom:
+    -5px;
+
+  cursor:
+    nwse-resize;
+}
+
+
+.card-property-resize-dot-sw {
+  left:
+    -5px;
+
+  bottom:
+    -5px;
+
+  cursor:
+    nesw-resize;
+}
+
+
+.card-property-field:hover .card-property-resize-dot,
+.card-property-field:focus-within .card-property-resize-dot,
+.card-property-field.is-property-resizing .card-property-resize-dot {
+  opacity:
+    1;
 }
 
 
@@ -750,7 +954,7 @@
     grid;
 
   grid-template-columns:
-    repeat(6, minmax(0, 1fr));
+    repeat(12, minmax(0, 1fr));
 
   gap:
     8px;
@@ -766,10 +970,16 @@
     grid;
 
   grid-column:
-    span 2;
+    span var(--property-field-span, 3);
+
+  min-height:
+    var(--property-field-min-height, 52px);
+
+  grid-template-columns:
+    auto minmax(0, 1fr);
 
   gap:
-    5px;
+    5px 6px;
 
   align-content:
     start;
@@ -781,53 +991,29 @@
   position:
     relative;
 
-  border:
-    1px solid rgba(241,211,142,0.12);
-
-  border-radius:
-    10px;
-
-  padding:
-    8px;
-
   background:
-    rgba(241,211,142,0.055);
+    rgba(255,255,255,0.026);
 }
 
 
 .card-property-custom-field::after {
 
   content:
-    'свой';
-
-  position:
-    absolute;
-
-  top:
-    6px;
-
-  right:
-    7px;
-
-  color:
-    rgba(241,211,142,0.62);
-
-  font-size:
-    9px;
-
-  text-transform:
-    uppercase;
+    none;
 }
 
 
 .card-property-field-wide {
 
   grid-column:
-    1 / -1;
+    span var(--property-field-span, 12);
 }
 
 
 .card-property-field span {
+
+  grid-column:
+    2;
 
   color:
     rgba(255,255,255,0.58);
@@ -847,6 +1033,9 @@
 .card-property-field select,
 .card-property-textarea {
 
+  grid-column:
+    1 / -1;
+
   width:
     100%;
 
@@ -860,7 +1049,7 @@
     8px;
 
   background:
-    rgba(17,17,18,0.26);
+    rgba(255,255,255,0.035);
 
   color:
     rgba(255,255,255,0.86);
@@ -881,16 +1070,63 @@
 }
 
 
+.card-property-field[data-property-rows="2"] input,
+.card-property-field[data-property-rows="2"] select,
+.card-property-field[data-property-rows="3"] input,
+.card-property-field[data-property-rows="3"] select,
+.card-property-field[data-property-rows="4"] input,
+.card-property-field[data-property-rows="4"] select,
+.card-property-field[data-property-rows="5"] input,
+.card-property-field[data-property-rows="5"] select,
+.card-property-field[data-property-rows="6"] input,
+.card-property-field[data-property-rows="6"] select,
+.card-property-field[data-property-rows="7"] input,
+.card-property-field[data-property-rows="7"] select,
+.card-property-field[data-property-rows="8"] input,
+.card-property-field[data-property-rows="8"] select {
+  height:
+    100%;
+
+  min-height:
+    34px;
+}
+
+
 .card-property-textarea {
 
   min-height:
-    78px;
+    max(78px, calc(var(--property-field-min-height, 78px) - 32px));
 
   padding:
     9px 10px;
 
   line-height:
     1.45;
+}
+
+
+.card-property-drop-placeholder {
+  grid-column:
+    span var(--property-field-span, 3);
+
+  min-height:
+    var(--property-field-min-height, 52px);
+
+  border:
+    1px dashed rgba(241,211,142,0.42);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(241,211,142,0.055);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.025);
+
+  transition:
+    min-height 0.14s ease,
+    background 0.14s ease;
 }
 
 
@@ -933,7 +1169,7 @@
   .card-properties-grid {
 
     grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+      repeat(6, minmax(0, 1fr));
   }
 }
 

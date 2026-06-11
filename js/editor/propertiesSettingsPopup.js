@@ -3,6 +3,10 @@ import {
 } from '../core/icons.js';
 
 import {
+  PROPERTY_BLOCK_SCHEMAS
+} from '../properties/propertySchemas.js';
+
+import {
   closePopup,
   registerPopup
 } from '../ui/popupManager.js';
@@ -16,6 +20,21 @@ let controller =
 
 const popupAnchors =
   [];
+
+const PROPERTY_FIELD_PRESETS =
+  buildPropertyFieldPresets();
+
+const PROPERTY_GRID_COLUMNS =
+  12;
+
+const PROPERTY_DEFAULT_SPAN =
+  3;
+
+const PROPERTY_MIN_ROWS =
+  1;
+
+const PROPERTY_MAX_ROWS =
+  8;
 
 
 export function ensurePropertySettingsControls(
@@ -213,6 +232,19 @@ function bindPropertySettingsEvents(
     );
 
   settingsPopup
+    .querySelector('.property-settings-preset')
+    ?.addEventListener(
+      'change',
+      event => {
+
+        applyPropertyPresetToNewField(
+          settingsPopup,
+          event.currentTarget.value
+        );
+      }
+    );
+
+  settingsPopup
     .querySelector('.property-settings-create')
     ?.addEventListener(
       'click',
@@ -259,7 +291,7 @@ function bindPropertySettingsEvents(
           const fieldId =
             button.dataset.fieldId;
 
-      removeCustomPropertyField(
+          removePropertyField(
             block,
             fieldId,
             editor
@@ -274,28 +306,6 @@ function bindPropertySettingsEvents(
       );
     });
 
-  settingsPopup
-    .querySelectorAll('.property-settings-toggle-wide')
-    .forEach(button => {
-
-      button.addEventListener(
-        'click',
-        () => {
-
-          togglePropertyFieldWide(
-            block,
-            button.dataset.fieldId,
-            editor
-          );
-
-          openPropertySettingsPopup(
-            block,
-            anchor,
-            editor
-          );
-        }
-      );
-    });
 }
 
 
@@ -396,6 +406,20 @@ function createPropertySettingsHTML(
 
       <div class="property-settings-new hidden">
         <label>
+          <span>Готовый параметр</span>
+          <select class="property-settings-preset">
+            <option value="">Свое название</option>
+            ${PROPERTY_FIELD_PRESETS
+              .map(preset => `
+                <option value="${escapeAttribute(preset.key)}">
+                  ${escapeHTML(preset.label)}
+                </option>
+              `)
+              .join('')}
+          </select>
+        </label>
+
+        <label>
           <span>Название</span>
           <input
             class="property-settings-new-label"
@@ -436,6 +460,11 @@ function getVisiblePropertyFields(
   return [
     ...block.querySelectorAll('.card-property-field')
   ]
+    .filter(field =>
+      !field.classList.contains(
+        'card-property-override-field'
+      )
+    )
     .map(field => {
 
       const label =
@@ -462,9 +491,7 @@ function getVisiblePropertyFields(
             field
           ),
         wide:
-          field.classList.contains(
-            'card-property-field-wide'
-          )
+          getPropertyFieldSpan(field) >= PROPERTY_GRID_COLUMNS
       };
     });
 }
@@ -483,27 +510,15 @@ function createPropertySettingsFieldHTML(
 
       <code>${escapeHTML(field.value || 'пусто')}</code>
 
-      ${field.custom
-        ? `
-          <button
-            class="property-settings-delete"
-            type="button"
-            data-field-id="${escapeAttribute(field.id)}"
-            title="Удалить параметр"
-          >
-            ${iconSvg('x')}
-          </button>
-        `
-        : ''}
-
       <button
-        class="property-settings-toggle-wide"
+        class="property-settings-delete"
         type="button"
         data-field-id="${escapeAttribute(field.id)}"
-        title="${field.wide ? 'Сделать обычным' : 'Сделать широким'}"
+        title="Удалить параметр"
       >
-        ${field.wide ? '1x' : '2x'}
+        ${iconSvg('x')}
       </button>
+
     </article>
   `;
 }
@@ -546,17 +561,30 @@ function addCustomPropertyFieldFromPopup(
       '.property-settings-new-label'
     );
 
+  const presetSelect =
+    settingsPopup.querySelector(
+      '.property-settings-preset'
+    );
+
   const typeSelect =
     settingsPopup.querySelector(
       '.property-settings-new-type'
     );
 
+  const preset =
+    findPropertyFieldPreset(
+      presetSelect?.value
+    );
+
   const label =
     String(labelInput?.value || '')
-      .trim();
+      .trim() ||
+    preset?.label ||
+    '';
 
   const type =
     normalizeCustomFieldType(
+      preset?.type ||
       typeSelect?.value
     );
 
@@ -577,10 +605,20 @@ function addCustomPropertyFieldFromPopup(
   if (!grid) return false;
 
   const fieldId =
-    createCustomPropertyId(
+    createPropertyFieldId(
       block,
-      label
+      label,
+      preset?.key
     );
+
+  if (!fieldId) {
+
+    labelInput?.classList.add(
+      'is-invalid'
+    );
+
+    return false;
+  }
 
   grid.insertAdjacentHTML(
     'beforeend',
@@ -589,6 +627,10 @@ function addCustomPropertyFieldFromPopup(
       label,
       type
     })
+  );
+
+  ensurePropertyFieldLayoutHandles(
+    block
   );
 
   notifyPropertiesChanged(
@@ -600,31 +642,7 @@ function addCustomPropertyFieldFromPopup(
 }
 
 
-function removeCustomPropertyField(
-  block,
-  fieldId,
-  editor
-) {
-
-  if (!fieldId) return;
-
-  const field =
-    block.querySelector(
-      `.card-property-field[data-property-custom="true"][data-property-id="${CSS.escape(fieldId)}"]`
-    );
-
-  if (!field) return;
-
-  field.remove();
-
-  notifyPropertiesChanged(
-    editor,
-    block
-  );
-}
-
-
-function togglePropertyFieldWide(
+function removePropertyField(
   block,
   fieldId,
   editor
@@ -640,9 +658,7 @@ function togglePropertyFieldWide(
 
   if (!field) return;
 
-  field.classList.toggle(
-    'card-property-field-wide'
-  );
+  field.remove();
 
   notifyPropertiesChanged(
     editor,
@@ -681,8 +697,8 @@ function createCustomPropertyFieldHTML(
     escapeHTML(label);
 
   const sharedAttributes = `
-    class="card-property-field card-property-custom-field"
-    data-property-custom="true"
+      class="card-property-field card-property-custom-field"
+      data-property-custom="true"
     data-property-id="${safeId}"
     data-property-label="${escapeAttribute(label)}"
   `;
@@ -735,10 +751,28 @@ function createCustomPropertyFieldHTML(
 }
 
 
-function createCustomPropertyId(
+function createPropertyFieldId(
   block,
-  label
+  label,
+  preferredKey
 ) {
+
+  const preferred =
+    String(preferredKey || '')
+      .trim();
+
+  if (
+    preferred &&
+    !block.querySelector(
+      `[data-property-name="${CSS.escape(preferred)}"]`
+    ) &&
+    !block.querySelector(
+      `.card-property-field[data-property-id="${CSS.escape(preferred)}"]`
+    )
+  ) {
+
+    return preferred;
+  }
 
   const base =
     slugifyPropertyLabel(
@@ -819,26 +853,38 @@ function ensurePropertyFieldLayoutHandles(
     .querySelectorAll('.card-property-field')
     .forEach(field => {
 
+      ensurePropertyFieldLayoutState(
+        field
+      );
+
+      markPropertyFieldLabel(
+        field
+      );
+
       if (
         field.querySelector(
           '.card-property-drag-handle'
         )
-      ) return;
+      ) {
+
+        ensurePropertyFieldResizeHandles(
+          field
+        );
+
+        return;
+      }
 
       const handle =
-        document.createElement('button');
+        document.createElement('span');
 
       handle.className =
         'card-property-drag-handle';
 
-      handle.type =
-        'button';
-
-      handle.draggable =
-        true;
-
       handle.title =
         'Переместить поле';
+
+      handle.role =
+        'button';
 
       handle.dataset.runtime =
         'true';
@@ -848,13 +894,89 @@ function ensurePropertyFieldLayoutHandles(
         'false'
       );
 
-      handle.textContent =
-        '⋮⋮';
+      handle.innerHTML =
+        iconSvg('grip');
 
       field.prepend(
         handle
       );
+
+      ensurePropertyFieldResizeHandles(
+        field
+      );
     });
+}
+
+
+function markPropertyFieldLabel(
+  field
+) {
+
+  const label =
+    Array.from(
+      field.children
+    ).find(child =>
+      child.tagName === 'SPAN' &&
+      !child.classList.contains('card-property-drag-handle') &&
+      !child.classList.contains('card-property-resize-dot')
+    );
+
+  if (!label) return;
+
+  label.classList.add(
+    'card-property-label'
+  );
+}
+
+
+function ensurePropertyFieldResizeHandles(
+  field
+) {
+
+  if (
+    field.querySelector(
+      '.card-property-resize-dot'
+    )
+  ) return;
+
+  [
+    'n',
+    'e',
+    's',
+    'w',
+    'ne',
+    'nw',
+    'se',
+    'sw'
+  ].forEach(edge => {
+
+    const handle =
+      document.createElement('span');
+
+    handle.className =
+      `card-property-resize-dot card-property-resize-dot-${edge}`;
+
+    handle.title =
+      'Изменить размер поля';
+
+    handle.role =
+      'button';
+
+    handle.dataset.runtime =
+      'true';
+
+    handle.dataset.resizeEdge =
+      edge;
+
+    handle.setAttribute(
+      'contenteditable',
+      'false'
+    );
+
+    field.appendChild(
+      handle
+    );
+  });
 }
 
 
@@ -869,101 +991,190 @@ function setupPropertyFieldLayoutDelegation(
   editor.dataset.propertiesLayoutReady =
     'true';
 
-  let draggedField =
+  let dragState =
+    null;
+
+  let resizeState =
     null;
 
   editor.addEventListener(
-    'dragstart',
+    'pointerdown',
     event => {
 
-      const handle =
+      const resizeHandle =
+        event.target.closest(
+          '.card-property-resize-dot'
+        );
+
+      if (resizeHandle) {
+
+        const field =
+          resizeHandle.closest(
+            '.card-property-field'
+          );
+
+        if (!field) return;
+
+        resizeState = {
+          field,
+          block:
+            field.closest(
+              '.card-properties-block'
+            ),
+          startX:
+            event.clientX,
+          startY:
+            event.clientY,
+          startSpan:
+            getPropertyFieldSpan(
+              field
+            ),
+          startRows:
+            getPropertyFieldRows(
+              field
+            ),
+        edge:
+            resizeHandle.dataset.resizeEdge || 'e',
+        cellWidth:
+            getPropertyGridCellWidth(
+              field
+            ),
+        rowHeight:
+            getPropertyGridRowHeight(),
+          appliedShiftX:
+            0,
+          appliedShiftY:
+            0
+        };
+
+        field.classList.add(
+          'is-property-resizing'
+        );
+
+        safelyCapturePointer(
+          resizeHandle,
+          event.pointerId
+        );
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        return;
+      }
+
+      const dragHandle =
         event.target.closest(
           '.card-property-drag-handle'
         );
 
-      if (!handle) return;
+      if (!dragHandle) return;
 
-      draggedField =
-        handle.closest(
+      const field =
+        dragHandle.closest(
           '.card-property-field'
-        );
+      );
 
-      if (!draggedField) return;
+      if (!field) return;
 
-      draggedField.classList.add(
+      dragState = {
+        field,
+        block:
+          field.closest(
+            '.card-properties-block'
+          ),
+        grid:
+          field.closest(
+            '.card-properties-grid'
+          ),
+        placeholder:
+          createPropertyDragPlaceholder(
+            field
+          )
+      };
+
+      field.classList.add(
         'is-property-dragging'
       );
 
-      event.dataTransfer.effectAllowed =
-        'move';
-
-      event.dataTransfer.setData(
-        'text/plain',
-        getPropertyFieldId(
-          draggedField
-        )
+      safelyCapturePointer(
+        dragHandle,
+        event.pointerId
       );
-    }
-  );
-
-  editor.addEventListener(
-    'dragover',
-    event => {
-
-      if (!draggedField) return;
-
-      const grid =
-        event.target.closest(
-          '.card-properties-grid'
-        );
-
-      if (!grid) return;
 
       event.preventDefault();
-
-      const target =
-        event.target.closest(
-          '.card-property-field'
-        );
-
-      if (
-        !target ||
-        target === draggedField ||
-        !grid.contains(target)
-      ) return;
-
-      const rect =
-        target.getBoundingClientRect();
-
-      const insertAfter =
-        event.clientY >
-        rect.top + rect.height / 2;
-
-      grid.insertBefore(
-        draggedField,
-        insertAfter
-          ? target.nextSibling
-          : target
-      );
+      event.stopPropagation();
     }
   );
 
   editor.addEventListener(
-    'dragend',
-    () => {
+    'pointermove',
+    event => {
 
-      if (!draggedField) return;
+      if (resizeState) {
 
-      const block =
-        draggedField.closest(
-          '.card-properties-block'
+        updatePropertyFieldResize(
+          resizeState,
+          event.clientX,
+          event.clientY
         );
 
-      draggedField.classList.remove(
+        event.preventDefault();
+        return;
+      }
+
+      if (!dragState) return;
+
+      updatePropertyFieldDrag(
+        dragState,
+        event.clientX,
+        event.clientY
+      );
+
+      event.preventDefault();
+    }
+  );
+
+  editor.addEventListener(
+    'pointerup',
+    () => {
+
+      if (resizeState) {
+
+        const {
+          field,
+          block
+        } = resizeState;
+
+        field.classList.remove(
+          'is-property-resizing'
+        );
+
+        resizeState =
+          null;
+
+        notifyPropertiesChanged(
+          editor,
+          block
+        );
+
+        return;
+      }
+
+      if (!dragState) return;
+
+      const {
+        field,
+        block,
+        placeholder
+      } = dragState;
+
+      placeholder?.remove();
+
+      field.classList.remove(
         'is-property-dragging'
       );
 
-      draggedField =
+      dragState =
         null;
 
       notifyPropertiesChanged(
@@ -975,11 +1186,655 @@ function setupPropertyFieldLayoutDelegation(
 }
 
 
+function updatePropertyFieldDrag(
+  dragState,
+  clientX,
+  clientY
+) {
+
+  const {
+    field,
+    grid
+  } = dragState;
+
+  if (!grid) return;
+
+  const previousPointerEvents =
+    field.style.pointerEvents;
+
+  field.style.pointerEvents =
+    'none';
+
+  const target =
+    document
+      .elementFromPoint(
+        clientX,
+        clientY
+      )
+      ?.closest(
+        '.card-property-field'
+      );
+
+  const gridTarget =
+    document
+      .elementFromPoint(
+        clientX,
+        clientY
+      )
+      ?.closest(
+        '.card-properties-grid'
+      );
+
+  field.style.pointerEvents =
+    previousPointerEvents;
+
+  if (
+    !target &&
+    gridTarget === grid
+  ) {
+
+    grid.appendChild(
+      dragState.placeholder
+    );
+
+    grid.insertBefore(
+      field,
+      dragState.placeholder
+    );
+
+    return;
+  }
+
+  if (
+    !target ||
+    target === field ||
+    target === dragState.placeholder ||
+    !grid.contains(target)
+  ) return;
+
+  const rect =
+    target.getBoundingClientRect();
+
+  const insertAfter =
+    clientY >
+    rect.top + rect.height / 2 ||
+    (
+      Math.abs(clientY - (rect.top + rect.height / 2)) < 8 &&
+      clientX > rect.left + rect.width / 2
+    );
+
+  grid.insertBefore(
+    dragState.placeholder,
+    insertAfter
+      ? target.nextSibling
+      : target
+  );
+
+  grid.insertBefore(
+    field,
+    dragState.placeholder
+  );
+}
+
+
+function updatePropertyFieldResize(
+  resizeState,
+  clientX,
+  clientY
+) {
+
+  const deltaX =
+    clientX - resizeState.startX;
+
+  const deltaY =
+    clientY - resizeState.startY;
+
+  let span =
+    resizeState.startSpan;
+
+  let rows =
+    resizeState.startRows;
+
+  if (
+    resizeState.edge.includes('e')
+  ) {
+
+    span += Math.round(
+      deltaX / resizeState.cellWidth
+    );
+  }
+
+  if (
+    resizeState.edge.includes('w')
+  ) {
+
+    const steps =
+      Math.round(
+        deltaX / resizeState.cellWidth
+      );
+
+    span -= steps;
+
+    shiftPropertyFieldBySteps(
+      resizeState,
+      steps,
+      'x'
+    );
+  }
+
+  if (
+    resizeState.edge.includes('s')
+  ) {
+
+    rows += Math.round(
+      deltaY / resizeState.rowHeight
+    );
+  }
+
+  if (
+    resizeState.edge.includes('n')
+  ) {
+
+    const steps =
+      Math.round(
+        deltaY / resizeState.rowHeight
+      );
+
+    rows -= steps;
+
+    shiftPropertyFieldBySteps(
+      resizeState,
+      steps,
+      'y'
+    );
+  }
+
+  setPropertyFieldLayout(
+    resizeState.field,
+    {
+      span,
+      rows
+    }
+  );
+}
+
+
+function shiftPropertyFieldBySteps(
+  resizeState,
+  steps,
+  axis
+) {
+
+  const key =
+    axis === 'x'
+      ? 'appliedShiftX'
+      : 'appliedShiftY';
+
+  const diff =
+    steps - resizeState[key];
+
+  if (!diff) return;
+
+  resizeState[key] =
+    steps;
+
+  movePropertyFieldInDom(
+    resizeState.field,
+    diff
+  );
+}
+
+
+function movePropertyFieldInDom(
+  field,
+  steps
+) {
+
+  const grid =
+    field.closest(
+      '.card-properties-grid'
+    );
+
+  if (!grid) return;
+
+  if (steps < 0) {
+
+    for (
+      let index = 0;
+      index < Math.abs(steps);
+      index += 1
+    ) {
+
+      const previous =
+        getPreviousPropertyField(
+          field
+        );
+
+      if (!previous) break;
+
+      grid.insertBefore(
+        field,
+        previous
+      );
+    }
+
+    return;
+  }
+
+  for (
+    let index = 0;
+    index < steps;
+    index += 1
+  ) {
+
+    const next =
+      getNextPropertyField(
+        field
+      );
+
+    if (!next) break;
+
+    grid.insertBefore(
+      field,
+      next.nextSibling
+    );
+  }
+}
+
+
+function getPreviousPropertyField(
+  field
+) {
+
+  let node =
+    field.previousElementSibling;
+
+  while (node) {
+
+    if (
+      node.classList?.contains(
+        'card-property-field'
+      )
+    ) return node;
+
+    node =
+      node.previousElementSibling;
+  }
+
+  return null;
+}
+
+
+function getNextPropertyField(
+  field
+) {
+
+  let node =
+    field.nextElementSibling;
+
+  while (node) {
+
+    if (
+      node.classList?.contains(
+        'card-property-field'
+      )
+    ) return node;
+
+    node =
+      node.nextElementSibling;
+  }
+
+  return null;
+}
+
+
+function createPropertyDragPlaceholder(
+  field
+) {
+
+  const placeholder =
+    document.createElement('div');
+
+  placeholder.className =
+    'card-property-drop-placeholder';
+
+  placeholder.dataset.runtime =
+    'true';
+
+  placeholder.style.setProperty(
+    '--property-field-span',
+    String(
+      getPropertyFieldSpan(field)
+    )
+  );
+
+  placeholder.style.setProperty(
+    '--property-field-min-height',
+    `${Math.max(
+      42,
+      field.getBoundingClientRect().height
+    )}px`
+  );
+
+  return placeholder;
+}
+
+
+function ensurePropertyFieldLayoutState(
+  field
+) {
+
+  const span =
+    field.dataset.propertySpan ||
+    (
+      field.classList.contains(
+        'card-property-field-wide'
+      )
+        ? PROPERTY_GRID_COLUMNS
+        : PROPERTY_DEFAULT_SPAN
+    );
+
+  const rows =
+    field.dataset.propertyRows ||
+    (
+      field.classList.contains(
+        'card-property-field-wide'
+      )
+        ? 2
+        : 1
+    );
+
+  setPropertyFieldLayout(
+    field,
+    {
+      span,
+      rows
+    }
+  );
+}
+
+
+function setPropertyFieldLayout(
+  field,
+  {
+    span,
+    rows
+  }
+) {
+
+  const normalizedSpan =
+    clampNumber(
+      Number(span),
+      1,
+      PROPERTY_GRID_COLUMNS
+    );
+
+  const normalizedRows =
+    clampNumber(
+      Number(rows),
+      PROPERTY_MIN_ROWS,
+      PROPERTY_MAX_ROWS
+    );
+
+  field.dataset.propertySpan =
+    String(normalizedSpan);
+
+  field.dataset.propertyRows =
+    String(normalizedRows);
+
+  field.style.setProperty(
+    '--property-field-span',
+    String(normalizedSpan)
+  );
+
+  field.style.setProperty(
+    '--property-field-rows',
+    String(normalizedRows)
+  );
+
+  field.style.setProperty(
+    '--property-field-min-height',
+    `${52 + (normalizedRows - 1) * getPropertyGridRowHeight()}px`
+  );
+
+  field.classList.toggle(
+    'card-property-field-wide',
+    normalizedSpan >= PROPERTY_GRID_COLUMNS
+  );
+}
+
+
+function getPropertyFieldSpan(
+  field
+) {
+
+  return clampNumber(
+    Number(
+      field.dataset.propertySpan ||
+      (
+        field.classList.contains(
+          'card-property-field-wide'
+        )
+          ? PROPERTY_GRID_COLUMNS
+          : PROPERTY_DEFAULT_SPAN
+      )
+    ),
+    1,
+    PROPERTY_GRID_COLUMNS
+  );
+}
+
+
+function getPropertyFieldRows(
+  field
+) {
+
+  return clampNumber(
+    Number(
+      field.dataset.propertyRows || 1
+    ),
+    PROPERTY_MIN_ROWS,
+    PROPERTY_MAX_ROWS
+  );
+}
+
+
+function getPropertyGridCellWidth(
+  field
+) {
+
+  const grid =
+    field.closest(
+      '.card-properties-grid'
+    );
+
+  if (!grid) return 64;
+
+  const rect =
+    grid.getBoundingClientRect();
+
+  return Math.max(
+    32,
+    rect.width / PROPERTY_GRID_COLUMNS
+  );
+}
+
+
+function getPropertyGridRowHeight() {
+
+  return 42;
+}
+
+
+function clampNumber(
+  value,
+  min,
+  max
+) {
+
+  if (
+    !Number.isFinite(value)
+  ) return min;
+
+  return Math.max(
+    min,
+    Math.min(
+      max,
+      Math.round(value)
+    )
+  );
+}
+
+
 function isCustomPropertyField(
   field
 ) {
 
   return field.dataset.propertyCustom === 'true';
+}
+
+
+function safelyCapturePointer(
+  element,
+  pointerId
+) {
+
+  try {
+
+    element.setPointerCapture?.(
+      pointerId
+    );
+  } catch {
+
+    // Синтетические pointer-события в тестах не всегда имеют активный pointer.
+  }
+}
+
+
+function buildPropertyFieldPresets() {
+
+  const map =
+    new Map();
+
+  Object.values(
+    PROPERTY_BLOCK_SCHEMAS
+  ).forEach(schema => {
+
+    schema.fields.forEach(field => {
+
+      if (
+        !field?.name ||
+        map.has(field.name)
+      ) return;
+
+      map.set(
+        field.name,
+        {
+          key:
+            field.name,
+          label:
+            field.label,
+          type:
+            normalizeCustomFieldType(
+              field.type
+            )
+        }
+      );
+    });
+  });
+
+  [
+    {
+      key: 'proficiencyBonus',
+      label: 'Бонус мастерства',
+      type: 'number'
+    },
+    {
+      key: 'initiative',
+      label: 'Инициатива',
+      type: 'number'
+    },
+    {
+      key: 'hitDice',
+      label: 'Кости хитов',
+      type: 'text'
+    },
+    {
+      key: 'temporaryModifier',
+      label: 'Временный модификатор',
+      type: 'number'
+    }
+  ].forEach(preset => {
+
+    if (!map.has(preset.key)) {
+
+      map.set(
+        preset.key,
+        preset
+      );
+    }
+  });
+
+  return [
+    ...map.values()
+  ].sort((left, right) =>
+    left.label.localeCompare(
+      right.label,
+      'ru'
+    )
+  );
+}
+
+
+function findPropertyFieldPreset(
+  key
+) {
+
+  return PROPERTY_FIELD_PRESETS.find(preset =>
+    preset.key === key
+  ) || null;
+}
+
+
+function applyPropertyPresetToNewField(
+  settingsPopup,
+  key
+) {
+
+  const preset =
+    findPropertyFieldPreset(
+      key
+    );
+
+  if (!preset) return;
+
+  const labelInput =
+    settingsPopup.querySelector(
+      '.property-settings-new-label'
+    );
+
+  const typeSelect =
+    settingsPopup.querySelector(
+      '.property-settings-new-type'
+    );
+
+  if (labelInput) {
+
+    labelInput.value =
+      preset.label;
+
+    labelInput.classList.remove(
+      'is-invalid'
+    );
+  }
+
+  if (typeSelect) {
+
+    typeSelect.value =
+      normalizeCustomFieldType(
+        preset.type
+      );
+  }
 }
 
 

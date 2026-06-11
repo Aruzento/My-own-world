@@ -540,7 +540,18 @@ test(
             customLabel:
               model.customFields[0]?.label,
             customValue:
-              model.customValues[model.customFields[0]?.key]
+              model.customValues[model.customFields[0]?.key],
+            hasCustomDragHandle:
+              Boolean(
+                customInput
+                  .closest('.card-property-field')
+                  .querySelector('.card-property-drag-handle')
+              ),
+            customResizeDots:
+              customInput
+                .closest('.card-property-field')
+                .querySelectorAll('.card-property-resize-dot')
+                .length
           };
         }
       );
@@ -551,8 +562,446 @@ test(
       htmlHasRuntimeGear: false,
       htmlHasCustomField: true,
       customLabel: 'Радиус',
-      customValue: '15'
+      customValue: '15',
+      hasCustomDragHandle: true,
+      customResizeDots: 8
     });
+  }
+);
+
+
+test(
+  'property-settings-can-remove-standard-field-and-add-calculated-preset',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'character'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          editor
+            .querySelector('.card-properties-settings-btn')
+            .click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          let popup =
+            document.querySelector('.property-settings-popup');
+
+          const deleteLevel =
+            popup.querySelector(
+              '.property-settings-delete[data-field-id="level"]'
+            );
+
+          deleteLevel.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          popup =
+            document.querySelector('.property-settings-popup');
+
+          popup
+            .querySelector('.property-settings-add')
+            .click();
+
+          const preset =
+            popup.querySelector('.property-settings-preset');
+
+          preset.value =
+            'initiative';
+
+          preset.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          popup
+            .querySelector('.property-settings-create')
+            .click();
+
+          return {
+            hasLevel:
+              Boolean(
+                editor.querySelector('[data-property-name="level"]')
+              ),
+            initiativeLabel:
+              editor
+                .querySelector(
+                  '.card-property-field[data-property-id="initiative"] .card-property-label'
+                )
+                ?.textContent
+                ?.trim(),
+            initiativeType:
+              editor
+                .querySelector('[data-property-name="initiative"]')
+                ?.getAttribute('type'),
+            popupText:
+              popup.textContent,
+            hasSizeButton:
+              Boolean(
+                popup.querySelector(
+                  '.property-settings-toggle-wide'
+                )
+              )
+          };
+        }
+      );
+
+    expect(
+      result.hasLevel
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.initiativeLabel
+    ).toBe(
+      'Инициатива'
+    );
+
+    expect(
+      result.initiativeType
+    ).toBe(
+      'number'
+    );
+
+    expect(
+      result.popupText
+    ).not.toContain(
+      'свой'
+    );
+
+    expect(
+      result.hasSizeButton
+    ).toBe(
+      false
+    );
+  }
+);
+
+
+test(
+  'property-fields-support-pointer-reorder-and-edge-resize',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          const firstField =
+            editor.querySelector('[data-property-name="gold"]')
+              .closest('.card-property-field');
+
+          const secondField =
+            editor.querySelector('[data-property-name="silver"]')
+              .closest('.card-property-field');
+
+          const dragHandle =
+            firstField.querySelector('.card-property-drag-handle');
+
+          const secondRect =
+            secondField.getBoundingClientRect();
+
+          dragHandle.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                clientX: secondRect.left + 4,
+                clientY: secondRect.top + 4,
+                pointerId: 1
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                clientX: secondRect.right - 4,
+                clientY: secondRect.bottom - 4,
+                pointerId: 1
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 1
+              }
+            )
+          );
+
+          const order =
+            [
+              ...editor.querySelectorAll('.card-property-field [data-property-name]')
+            ].map(control => control.dataset.propertyName);
+
+          const resizeHandle =
+            secondField.querySelector('.card-property-resize-dot-se');
+
+          resizeHandle.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                clientX: 10,
+                clientY: 10,
+                pointerId: 2
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                clientX: 80,
+                clientY: 70,
+                pointerId: 2
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 2
+              }
+            )
+          );
+
+          const westHandle =
+            firstField.querySelector('.card-property-resize-dot-w');
+
+          westHandle.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                clientX: 120,
+                clientY: 40,
+                pointerId: 3
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                clientX: 40,
+                clientY: 40,
+                pointerId: 3
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 3
+              }
+            )
+          );
+
+          const orderAfterWestResize =
+            [
+              ...editor.querySelectorAll('.card-property-field [data-property-name]')
+            ].map(control => control.dataset.propertyName);
+
+          const grid =
+            editor.querySelector('.card-properties-grid');
+
+          grid.style.minHeight =
+            '320px';
+
+          const gridRect =
+            grid.getBoundingClientRect();
+
+          dragHandle.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                clientX: gridRect.left + 4,
+                clientY: gridRect.top + 4,
+                pointerId: 4
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                clientX: gridRect.right - 8,
+                clientY: gridRect.bottom - 8,
+                pointerId: 4
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 4
+              }
+            )
+          );
+
+          const orderAfterEmptyDrop =
+            [
+              ...editor.querySelectorAll('.card-property-field [data-property-name]')
+            ].map(control => control.dataset.propertyName);
+
+          return {
+            order,
+            dragHandleTag:
+              dragHandle.tagName,
+            span:
+              secondField.dataset.propertySpan,
+            rows:
+              secondField.dataset.propertyRows,
+            westSpan:
+              firstField.dataset.propertySpan,
+            orderAfterWestResize,
+            orderAfterEmptyDrop,
+            resizeDots:
+              secondField.querySelectorAll('.card-property-resize-dot').length,
+            dragIcon:
+              Boolean(
+                dragHandle.querySelector('.app-icon')
+              )
+          };
+        }
+      );
+
+    expect(
+      result.order.slice(
+        0,
+        2
+      )
+    ).toEqual([
+      'silver',
+      'gold'
+    ]);
+
+    expect(
+      result.dragHandleTag
+    ).toBe(
+      'SPAN'
+    );
+
+    expect(
+      Number(result.span)
+    ).toBeGreaterThan(
+      3
+    );
+
+    expect(
+      Number(result.rows)
+    ).toBeGreaterThan(
+      1
+    );
+
+    expect(
+      Number(result.westSpan)
+    ).toBeGreaterThan(
+      3
+    );
+
+    expect(
+      result.orderAfterWestResize[0]
+    ).toBe(
+      'gold'
+    );
+
+    expect(
+      result.orderAfterEmptyDrop.at(-1)
+    ).toBe(
+      'gold'
+    );
+
+    expect(
+      result.resizeDots
+    ).toBe(
+      8
+    );
+
+    expect(
+      result.dragIcon
+    ).toBe(
+      true
+    );
   }
 );
 
