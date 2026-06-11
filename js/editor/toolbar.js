@@ -22,6 +22,10 @@ import {
 } from './toolbarPosition.js';
 
 import {
+  enablePopupDragging
+} from '../ui/popupManager.js';
+
+import {
   updateToolbarActiveState
 } from './toolbarActiveState.js';
 
@@ -69,6 +73,10 @@ export function setupFloatingToolbar() {
     );
 
   moveColorPopupToBody(
+    colorPopup
+  );
+
+  enablePopupDragging(
     colorPopup
   );
 

@@ -7,3 +7,13 @@
 @import url('./popup-confirm-profile.css');
 @import url('./popup-block-type.css');
 @import url('./popup-image-crop.css');
+
+
+[data-popup-drag-ready="true"].is-popup-dragging {
+
+  cursor:
+    grabbing;
+
+  user-select:
+    none;
+}

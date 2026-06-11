@@ -156,6 +156,175 @@ test(
 
 
 test(
+  'popup-manager-allows-dragging-popup-by-free-space-only',
+  async ({ page }) => {
+
+    await page.setViewportSize({
+      width: 800,
+      height: 560
+    });
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            registerPopup
+          } = await import('/js/ui/popupManager.js');
+
+          const popup =
+            document.createElement('div');
+
+          popup.className =
+            'ui-panel hidden';
+
+          popup.style.position =
+            'fixed';
+
+          popup.style.width =
+            '260px';
+
+          popup.style.height =
+            '180px';
+
+          popup.innerHTML = `
+            <div class="popup-test-title">Свободное место</div>
+            <button class="popup-test-button" type="button">Кнопка</button>
+          `;
+
+          document.body.appendChild(
+            popup
+          );
+
+          const controller =
+            registerPopup({
+              popup,
+              key: 'test-popup-drag'
+            });
+
+          controller.openAtPoint(
+            100,
+            100,
+            {
+              fallbackWidth: 260,
+              fallbackHeight: 180
+            }
+          );
+
+          const before =
+            popup.getBoundingClientRect();
+
+          popup.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                button: 0,
+                pointerId: 1,
+                clientX: before.left + 20,
+                clientY: before.top + 20
+              }
+            )
+          );
+
+          document.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                pointerId: 1,
+                clientX: before.left + 120,
+                clientY: before.top + 70
+              }
+            )
+          );
+
+          document.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 1
+              }
+            )
+          );
+
+          const afterFreeDrag =
+            popup.getBoundingClientRect();
+
+          const button =
+            popup.querySelector('.popup-test-button');
+
+          const buttonRect =
+            button.getBoundingClientRect();
+
+          button.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                button: 0,
+                pointerId: 2,
+                clientX: buttonRect.left + 4,
+                clientY: buttonRect.top + 4
+              }
+            )
+          );
+
+          document.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                pointerId: 2,
+                clientX: buttonRect.left + 140,
+                clientY: buttonRect.top + 90
+              }
+            )
+          );
+
+          document.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 2
+              }
+            )
+          );
+
+          const afterButtonDrag =
+            popup.getBoundingClientRect();
+
+          return {
+            movedByFreeSpace:
+              afterFreeDrag.left > before.left + 80 &&
+              afterFreeDrag.top > before.top + 30,
+            ignoredButtonDrag:
+              Math.round(afterButtonDrag.left) === Math.round(afterFreeDrag.left) &&
+              Math.round(afterButtonDrag.top) === Math.round(afterFreeDrag.top),
+            dragReady:
+              popup.dataset.popupDragReady
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      movedByFreeSpace: true,
+      ignoredButtonDrag: true,
+      dragReady: 'true'
+    });
+  }
+);
+
+
+test(
   'popup-triggers-toggle-create-menu-tools-and-campaign-map-popup',
   async ({ page }) => {
 

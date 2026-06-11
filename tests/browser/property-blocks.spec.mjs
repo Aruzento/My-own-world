@@ -793,7 +793,76 @@ test(
       result.armorClass
     ).toBe(
       11
+  );
+}
+);
+
+
+test(
+  'property-settings-gear-appears-when-contract-applies-to-new-block-root',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
     );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const wrapper =
+            document.createElement('div');
+
+          wrapper.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          const block =
+            wrapper.firstElementChild;
+
+          applyBlockSystemContract(
+            block
+          );
+
+          const button =
+            block.querySelector(
+              '.card-properties-settings-btn'
+            );
+
+          button?.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const popup =
+            document.querySelector('.property-settings-popup');
+
+          return {
+            hasButton:
+              Boolean(button),
+            popupVisible:
+              Boolean(popup) &&
+              !popup.classList.contains('hidden')
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      hasButton: true,
+      popupVisible: true
+    });
   }
 );
 

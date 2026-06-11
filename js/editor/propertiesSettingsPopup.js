@@ -27,13 +27,22 @@ export function ensurePropertySettingsControls(
   );
 
   editor
-    .querySelectorAll('.card-properties-block')
+    .querySelectorAll?.('.card-properties-block')
     .forEach(block => {
 
       ensurePropertySettingsButton(
         block
       );
     });
+
+  if (
+    editor.matches?.('.card-properties-block')
+  ) {
+
+    ensurePropertySettingsButton(
+      editor
+    );
+  }
 }
 
 

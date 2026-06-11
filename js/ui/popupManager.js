@@ -7,11 +7,24 @@ import {
 const managedPopups =
   new Map();
 
+const INTERACTIVE_POPUP_SELECTOR = [
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'a',
+  '[contenteditable="true"]',
+  '[data-popup-drag-ignore="true"]'
+].join(',');
+
 let popupZIndex =
   10_000;
 
 let isListening =
   false;
+
+let activeDrag =
+  null;
 
 
 // PopupManager задает общий lifecycle для popup-ов приложения:
@@ -45,10 +58,26 @@ export function registerPopup({
     entry
   );
 
+  enablePopupDragging(
+    popup
+  );
+
   ensurePopupManagerListeners();
 
   return createPopupController(
     entry
+  );
+}
+
+
+export function enablePopupDragging(
+  popup
+) {
+
+  if (!popup) return;
+
+  ensurePopupDragHandle(
+    popup
   );
 }
 
@@ -103,6 +132,13 @@ export function closePopup(
 
   popup.dataset.popupOpen =
     'false';
+
+  if (
+    activeDrag?.popup === popup
+  ) {
+
+    stopPopupDrag();
+  }
 }
 
 
@@ -284,6 +320,194 @@ function ensurePopupManagerListeners() {
         }
       });
     }
+  );
+
+  document.addEventListener(
+    'pointermove',
+    movePopupDrag
+  );
+
+  document.addEventListener(
+    'pointerup',
+    stopPopupDrag
+  );
+
+  document.addEventListener(
+    'pointercancel',
+    stopPopupDrag
+  );
+}
+
+
+function ensurePopupDragHandle(
+  popup
+) {
+
+  if (
+    popup.dataset.popupDragReady === 'true'
+  ) return;
+
+  popup.dataset.popupDragReady =
+    'true';
+
+  popup.addEventListener(
+    'pointerdown',
+    event => {
+
+      startPopupDrag(
+        popup,
+        event
+      );
+    }
+  );
+}
+
+
+function startPopupDrag(
+  popup,
+  event
+) {
+
+  if (
+    event.button !== 0 ||
+    popup.classList.contains('hidden') ||
+    shouldIgnorePopupDrag(
+      popup,
+      event.target
+    )
+  ) return;
+
+  const rect =
+    popup.getBoundingClientRect();
+
+  activeDrag = {
+    popup:
+      popup,
+    pointerId:
+      event.pointerId,
+    startX:
+      event.clientX,
+    startY:
+      event.clientY,
+    left:
+      rect.left,
+    top:
+      rect.top,
+    width:
+      rect.width,
+    height:
+      rect.height
+  };
+
+  popup.classList.add(
+    'is-popup-dragging'
+  );
+
+  popup.style.position =
+    'fixed';
+
+  popup.style.left =
+    `${rect.left}px`;
+
+  popup.style.top =
+    `${rect.top}px`;
+
+  popup.style.zIndex =
+    String(
+      ++popupZIndex
+    );
+
+  event.preventDefault();
+}
+
+
+function movePopupDrag(
+  event
+) {
+
+  if (!activeDrag) return;
+
+  if (
+    event.pointerId !== activeDrag.pointerId
+  ) return;
+
+  const nextLeft =
+    activeDrag.left +
+    event.clientX -
+    activeDrag.startX;
+
+  const nextTop =
+    activeDrag.top +
+    event.clientY -
+    activeDrag.startY;
+
+  activeDrag.popup.style.left =
+    `${clampToViewport(
+      nextLeft,
+      activeDrag.width,
+      window.innerWidth
+    )}px`;
+
+  activeDrag.popup.style.top =
+    `${clampToViewport(
+      nextTop,
+      activeDrag.height,
+      window.innerHeight
+    )}px`;
+
+  event.preventDefault();
+}
+
+
+function stopPopupDrag() {
+
+  if (!activeDrag) return;
+
+  activeDrag.popup.classList.remove(
+    'is-popup-dragging'
+  );
+
+  activeDrag =
+    null;
+}
+
+
+function shouldIgnorePopupDrag(
+  popup,
+  target
+) {
+
+  if (!target || !popup.contains(target)) {
+
+    return true;
+  }
+
+  return Boolean(
+    target.closest(
+      INTERACTIVE_POPUP_SELECTOR
+    )
+  );
+}
+
+
+function clampToViewport(
+  value,
+  size,
+  viewportSize
+) {
+
+  const padding =
+    12;
+
+  return Math.max(
+    padding,
+    Math.min(
+      value,
+      Math.max(
+        padding,
+        viewportSize - size - padding
+      )
+    )
   );
 }
 
