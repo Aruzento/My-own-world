@@ -18,6 +18,8 @@ export function createPropertiesModel(
     getPropertySchema(cardType);
 
   const normalizedValues = {};
+  const normalizedCustomFields =
+    [];
 
   (schema?.fields || [])
     .forEach(field => {
@@ -29,13 +31,39 @@ export function createPropertiesModel(
         );
     });
 
+  Object.values(
+    values.customFields || {}
+  )
+    .forEach(field => {
+
+      const normalizedField =
+        normalizeCustomPropertyField(
+          field
+        );
+
+      if (!normalizedField) return;
+
+      normalizedCustomFields.push(
+        normalizedField
+      );
+    });
+
   return {
     kind: 'PropertiesModel',
     version: 1,
     cardType,
     source,
     schema,
-    values: normalizedValues
+    values: normalizedValues,
+    customFields:
+      normalizedCustomFields,
+    customValues:
+      Object.fromEntries(
+        normalizedCustomFields.map(field => [
+          field.key,
+          field.value
+        ])
+      )
   };
 }
 
@@ -65,6 +93,11 @@ export function readPropertiesModelFromElement(
           field.name
         );
     });
+
+  values.customFields =
+    readCustomPropertyFields(
+      block
+    );
 
   return createPropertiesModel({
     cardType,
@@ -205,4 +238,186 @@ function readPropertyValue(
   }
 
   return field.textContent || '';
+}
+
+
+function readCustomPropertyFields(
+  block
+) {
+
+  const customFields = {};
+
+  block
+    .querySelectorAll(
+      '.card-property-field[data-property-custom="true"]'
+    )
+    .forEach(field => {
+
+      const control =
+        field.querySelector(
+          '[data-property-name]'
+        );
+
+      const key =
+        control?.dataset.propertyName ||
+        field.dataset.propertyId ||
+        '';
+
+      if (!key) return;
+
+      customFields[key] = {
+        key,
+        label:
+          field.dataset.propertyLabel ||
+          field.querySelector('span')?.textContent?.trim() ||
+          key,
+        type:
+          control?.dataset.propertyType ||
+          getControlType(
+            control
+          ),
+        value:
+          readControlValue(
+            control
+          ),
+        source:
+          'custom'
+      };
+    });
+
+  return customFields;
+}
+
+
+function normalizeCustomPropertyField(
+  field
+) {
+
+  if (!field?.key) return null;
+
+  const type =
+    normalizeCustomPropertyType(
+      field.type
+    );
+
+  return {
+    key:
+      String(field.key || '')
+        .trim(),
+    label:
+      String(field.label || field.key || '')
+        .trim(),
+    type,
+    value:
+      normalizeCustomPropertyValue(
+        type,
+        field.value
+      ),
+    source:
+      'custom'
+  };
+}
+
+
+function normalizeCustomPropertyType(
+  value
+) {
+
+  return [
+    'text',
+    'number',
+    'textarea',
+    'checkbox'
+  ].includes(value)
+    ? value
+    : 'text';
+}
+
+
+function normalizeCustomPropertyValue(
+  type,
+  value
+) {
+
+  if (type === 'checkbox') {
+
+    return Boolean(value);
+  }
+
+  if (type === 'number') {
+
+    if (
+      value === '' ||
+      value === null ||
+      value === undefined
+    ) {
+
+      return '';
+    }
+
+    const number =
+      Number(value);
+
+    return Number.isFinite(number)
+      ? String(number)
+      : '';
+  }
+
+  return String(value ?? '').trim();
+}
+
+
+function readControlValue(
+  control
+) {
+
+  if (!control) return '';
+
+  if (
+    control.type === 'checkbox'
+  ) {
+
+    return control.checked ||
+      control.hasAttribute('checked');
+  }
+
+  if (
+    control.matches('input, select, textarea')
+  ) {
+
+    return control.value ||
+      control.getAttribute('value') ||
+      '';
+  }
+
+  return control.textContent || '';
+}
+
+
+function getControlType(
+  control
+) {
+
+  if (!control) return 'text';
+
+  if (
+    control.dataset.propertyType
+  ) {
+
+    return control.dataset.propertyType;
+  }
+
+  if (
+    control.type === 'number'
+  ) return 'number';
+
+  if (
+    control.type === 'checkbox'
+  ) return 'checkbox';
+
+  if (
+    control.matches('[contenteditable="true"], textarea')
+  ) return 'textarea';
+
+  return 'text';
 }

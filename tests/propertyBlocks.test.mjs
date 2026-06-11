@@ -197,6 +197,46 @@ test(
 
 
 test(
+  'PropertiesModel reads custom user fields from properties block',
+  () => {
+
+    const model =
+      createPropertiesModel({
+        cardType: 'item',
+        values: {
+          customFields: {
+            'custom-radius': {
+              key: 'custom-radius',
+              label: 'Радиус',
+              type: 'number',
+              value: '15'
+            }
+          }
+        }
+      });
+
+    assert.deepEqual(
+      model.customFields,
+      [
+        {
+          key: 'custom-radius',
+          label: 'Радиус',
+          type: 'number',
+          value: '15',
+          source: 'custom'
+        }
+      ]
+    );
+
+    assert.equal(
+      model.customValues['custom-radius'],
+      '15'
+    );
+  }
+);
+
+
+test(
   'character calculation layer follows DnD modifier and proficiency rules',
   () => {
 

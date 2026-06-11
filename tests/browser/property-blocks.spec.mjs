@@ -100,6 +100,78 @@ test(
 
 
 test(
+  'property-settings-gear-opens-soft-settings-popup',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          const button =
+            editor.querySelector('.card-properties-settings-btn');
+
+          button.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const popup =
+            document.querySelector('.property-settings-popup');
+
+          return {
+            hasButton:
+              Boolean(button),
+            popupVisible:
+              Boolean(popup) &&
+              !popup.classList.contains('hidden'),
+            rowCount:
+              popup?.querySelectorAll('.property-settings-row').length || 0,
+            hasAddButton:
+              Boolean(
+                popup?.querySelector('.property-settings-add')
+              )
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      hasButton: true,
+      popupVisible: true,
+      rowCount: 5,
+      hasAddButton: true
+    });
+  }
+);
+
+
+test(
   'character-model-reads-inventory-from-items-block',
   async ({ page }) => {
 
@@ -355,7 +427,116 @@ test(
       result.visible
     ).toContain(
       'Отравлен'
+  );
+}
+);
+
+
+test(
+  'property-settings-adds-custom-field-and-model-keeps-it-after-serialization',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
     );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract,
+            serializePersistentEditorHTML
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            readPropertiesModelsFromHTML
+          } = await import('/js/properties/propertiesModel.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          editor
+            .querySelector('.card-properties-settings-btn')
+            .click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const popup =
+            document.querySelector('.property-settings-popup');
+
+          popup
+            .querySelector('.property-settings-add')
+            .click();
+
+          popup
+            .querySelector('.property-settings-new-label')
+            .value =
+              'Радиус';
+
+          popup
+            .querySelector('.property-settings-new-type')
+            .value =
+              'number';
+
+          popup
+            .querySelector('.property-settings-create')
+            .click();
+
+          const customInput =
+            editor.querySelector(
+              '[data-property-custom-value="true"]'
+            );
+
+          customInput.value =
+            '15';
+
+          const html =
+            serializePersistentEditorHTML(
+              editor
+            );
+
+          const model =
+            readPropertiesModelsFromHTML(
+              html
+            )[0];
+
+          return {
+            htmlHasRuntimeGear:
+              html.includes('card-properties-settings-btn'),
+            htmlHasCustomField:
+              html.includes('data-property-custom="true"'),
+            customLabel:
+              model.customFields[0]?.label,
+            customValue:
+              model.customValues[model.customFields[0]?.key]
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      htmlHasRuntimeGear: false,
+      htmlHasCustomField: true,
+      customLabel: 'Радиус',
+      customValue: '15'
+    });
   }
 );
 

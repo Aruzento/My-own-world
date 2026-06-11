@@ -3,6 +3,10 @@ import {
 } from './blockTableContract.js';
 
 import {
+  ensurePropertySettingsControls
+} from '../propertiesSettingsPopup.js';
+
+import {
   ensureRuntimeButton,
   ensureRuntimeInput,
   getMatchingElements,
@@ -30,6 +34,10 @@ export function ensureRuntimeControls(
   );
 
   ensureImageBlockControls(
+    editor
+  );
+
+  ensurePropertySettingsControls(
     editor
   );
 

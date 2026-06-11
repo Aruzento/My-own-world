@@ -169,6 +169,18 @@ test(
       page.locator('#createMenu')
     ).toBeVisible();
 
+    await expect(
+      page.locator('#createMenu .create-option')
+    ).toHaveCount(
+      4
+    );
+
+    await expect(
+      page.locator('#createMenu [data-template]')
+    ).toHaveCount(
+      4
+    );
+
     await page.locator('#newPageBtn').click();
 
     await expect(

@@ -225,18 +225,6 @@ function renderMenu() {
 
   menu.innerHTML = '';
 
-  renderSpecialCreateOption({
-    title: 'Задача',
-    icon: '+',
-    onClick: openTaskCreatePicker
-  });
-
-  renderSpecialCreateOption({
-    title: 'По шаблону',
-    icon: '◇',
-    onClick: openTemplateCreatePicker
-  });
-
   Object.entries(templates)
     .forEach(([key, template]) => {
 
