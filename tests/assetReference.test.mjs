@@ -6,7 +6,9 @@ import assert from 'node:assert/strict';
 import {
   ASSET_TYPES,
   createAssetReference,
+  isAudioAssetType,
   isAssetReference,
+  isFirstClassAssetType,
   normalizeAssetPath,
   normalizeAssetReference,
   normalizeAssetType
@@ -52,6 +54,48 @@ test(
         reference
       ),
       true
+    );
+  }
+);
+
+
+test(
+  'audio and playlist are first-class asset types',
+  () => {
+
+    assert.equal(
+      normalizeAssetType(
+        'audio'
+      ),
+      ASSET_TYPES.audio
+    );
+
+    assert.equal(
+      normalizeAssetType(
+        'playlist'
+      ),
+      ASSET_TYPES.playlist
+    );
+
+    assert.equal(
+      isAudioAssetType(
+        ASSET_TYPES.audio
+      ),
+      true
+    );
+
+    assert.equal(
+      isAudioAssetType(
+        ASSET_TYPES.playlist
+      ),
+      true
+    );
+
+    assert.equal(
+      isFirstClassAssetType(
+        ASSET_TYPES.futureMedia
+      ),
+      false
     );
   }
 );

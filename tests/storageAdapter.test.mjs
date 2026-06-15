@@ -39,6 +39,7 @@ import {
 } from '../js/storage/backupService.js';
 
 import {
+  createMissingAssetPlaceholderURL,
   getRenderableImageURL
 } from '../js/storage/assetStorage.js';
 
@@ -526,6 +527,94 @@ test(
       globalThis.Image =
         previousImage;
     }
+  }
+);
+
+
+test(
+  'getRenderableImageURL returns visible missing placeholder when asset file is absent',
+  async () => {
+
+    const previousImage =
+      globalThis.Image;
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    setAssetAdapter({
+      kind: 'broken-primary',
+
+      async importFile() {},
+
+      async resolveUrl() {
+
+        return 'asset://broken/portraits/missing.png';
+      },
+
+      async exists() {
+
+        return false;
+      },
+
+      async remove() {},
+
+      async findOrphans() {
+
+        return [];
+      }
+    });
+
+    globalThis.Image =
+      class BrokenImage {
+
+        set src(
+          value
+        ) {
+
+          this.currentSrc =
+            value;
+
+          queueMicrotask(
+            () => this.onerror?.()
+          );
+        }
+      };
+
+    try {
+
+      const url =
+        await getRenderableImageURL(
+          'portraits/missing.png'
+        );
+
+      assert.match(
+        url,
+        /^data:image\/svg\+xml;base64,/
+      );
+
+    } finally {
+
+      globalThis.Image =
+        previousImage;
+    }
+  }
+);
+
+
+test(
+  'createMissingAssetPlaceholderURL creates a renderable svg data url',
+  () => {
+
+    assert.match(
+      createMissingAssetPlaceholderURL(
+        'assets/missing.png'
+      ),
+      /^data:image\/svg\+xml;base64,/
+    );
   }
 );
 

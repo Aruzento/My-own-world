@@ -10,6 +10,24 @@ export const ASSET_TYPES =
   });
 
 
+export const FIRST_CLASS_ASSET_TYPES =
+  Object.freeze([
+    ASSET_TYPES.image,
+    ASSET_TYPES.portrait,
+    ASSET_TYPES.mapBackground,
+    ASSET_TYPES.mapObjectPng,
+    ASSET_TYPES.audio,
+    ASSET_TYPES.playlist
+  ]);
+
+
+export const AUDIO_ASSET_TYPES =
+  Object.freeze([
+    ASSET_TYPES.audio,
+    ASSET_TYPES.playlist
+  ]);
+
+
 const KNOWN_TYPES =
   new Set(
     Object.values(
@@ -105,6 +123,30 @@ export function normalizeAssetType(
   )
     ? normalized
     : ASSET_TYPES.futureMedia;
+}
+
+
+export function isFirstClassAssetType(
+  type
+) {
+
+  return FIRST_CLASS_ASSET_TYPES.includes(
+    normalizeAssetType(
+      type
+    )
+  );
+}
+
+
+export function isAudioAssetType(
+  type
+) {
+
+  return AUDIO_ASSET_TYPES.includes(
+    normalizeAssetType(
+      type
+    )
+  );
 }
 
 

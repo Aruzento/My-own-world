@@ -6,6 +6,383 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-06-16: Asset Lifecycle UI и Media Foundation
+
+### Что сделано
+
+- По плану закрыта пачка `0.0.0.3.2`-`0.0.0.3.7`.
+- Панель `Проверка ассетов` теперь показывает не только broken references, но и orphan-файлы из `assets/`.
+- Для orphan-файлов добавлено безопасное удаление: пользователь подтверждает действие, перед удалением создается backup workspace.
+- Для отсутствующих картинок добавлен видимый missing/fallback placeholder, чтобы карточка или карта не превращалась в “пустое место”.
+- `AssetReference` расширен: `audio` и `playlist` стали first-class asset types, scanner читает `data-audio-asset`, `data-playlist-asset` и asset-поля свойств.
+- Добавлен foundation для `Music by Location`: serializable model/helper, ссылки на audio/playlist, volume/loop/autoplay и поля музыки в `Свойствах локации`.
+- Asset lifecycle вынесен на общий adapter-level API, чтобы browser и desktop использовали одну точку входа для list/delete assets.
+
+### Проверки
+
+- `node --check js\ui\assetHealthPanel.js`
+- `node --check js\storage\assetWorkspaceService.js`
+- `node --check js\storage\locationMusic.js`
+- `node --check js\storage\assetReferenceScanner.js`
+- `node --check js\storage\assetStorage.js`
+- `npm run verify`
+- `npm run test:browser`
+- `npm run docs:index`
+
+## 2026-06-16: UI проверки broken assets
+
+### Что сделано
+
+- По плану закрыт пункт `0.0.0.3.1`: в окно настроек приложения добавлена панель `Проверка ассетов`.
+- Панель использует существующий `findBrokenAssetReferences`, читает папку `assets/` через активный storage adapter и показывает список persistent-ссылок на файлы, которых нет в workspace.
+- Проверка работает как безопасная диагностика: она не удаляет файлы, не переписывает карточки и не пытается автоматически чинить пути.
+- Добавлен browser-regression `asset-health-panel-reports-broken-references`, который проверяет, что UI показывает потерянный asset path.
+- Обновлены `PROJECT_PLAN.md`, `ASSET_LIFECYCLE_CONTRACT.md`, release notes и tester instructions.
+
+### Проверки
+
+- `node --check js\ui\assetHealthPanel.js`
+- `node --check js\ui\appTopbar.js`
+- `npm run verify`
+- `npm run test:browser`
+
+## 2026-06-15: Стандартная раскладка `Свойств` взята из пользовательского эталона
+
+### Что сделано
+
+- Из карточки `X:/ДНД/Мастер/База/pages/1781529905510-e2c14cf8.md` извлечены координаты `data-property-x/y/span/rows` для блока `Свойства`.
+- Стартовый layout персонажа/существа в `createPropertiesBlock` заменен на эту раскладку:
+  - верх: `Уровень`, `КЗ`, HP, временные HP и death saves;
+  - вторая строка: `Скорость` и `Доспех`;
+  - характеристики: `СИЛ`, `ЛОВ`, `ИНТ`, `МДР`, `ТЛС`, `ХАР`;
+  - навыки: узкими колонками под соответствующими характеристиками.
+- Regression-тест стартовой раскладки обновлен, чтобы защищать новый эталон и проверять layout skill-групп через `data-property-id`.
+
+### Проверки
+
+- `node --check js\templates\blockTypes.js`
+- `node --check tests\propertyBlocks.test.mjs`
+- `node --test tests\propertyBlocks.test.mjs`
+
+## 2026-06-15: UX-hotfix блока `Свойства`
+
+### Что сделано
+
+- Исправлено ощущение запаздывания при переносе полей: drop-позиция теперь считается от фактической точки захвата поля, а не от координаты курсора как от левого верхнего угла.
+- Убрана явная grid-кнопка переноса. Drag запускается с границы поля, а resize-точки продолжают отвечать только за изменение размера.
+- Поле `Доспех` переведено на select по карточкам типа `Предмет`, чтобы персонаж выбирал существующий предмет так же естественно, как в списочных блоках.
+- `Состояния` и `Эффекты` убраны из стартовых `Свойств` персонажа/существа, но оставлены как пресеты для ручного добавления через шестеренку.
+- Для навыков введено три состояния владения: нет, владение, экспертность. Экспертность учитывается в расчетах как двойной бонус мастерства и сохраняется в переменных карточки.
+- Исправлены подписи полей в popup шестеренки, адаптивность групп навыков при сужении и переполнение элементов ввода за рамки поля.
+
+### Проверки
+
+- `node --check js\editor\propertiesSettingsPopup.js`
+- `node --check js\templates\blockTypes.js`
+- `node --check js\editor\propertiesAutoCalculations.js`
+- `node --check js\properties\propertiesCalculationEngine.js`
+- `node --test tests\propertyBlocks.test.mjs`
+- `node --test tests\propertiesCalculationEngine.test.mjs`
+- `npm run test:browser`
+- `npm run verify`
+
+## 2026-06-15: Свободная сетка `Свойств` персонажа
+
+### Что сделано
+
+- `Свойства` переведены с DOM-перестановки на координатное размещение `x/y/w/h`: drag кладет поле в клетку под курсором, а не в индекс между соседями.
+- Если поле попадает на занятую область, конфликтующие поля сдвигаются вниз, поэтому свободная сетка не допускает визуального наложения.
+- `synchronizePropertyBlockLayout` больше не стягивает поля к началу сетки, поэтому пустые строки и разрывы сохраняются как пользовательский layout.
+- Resize слева/сверху теперь меняет соответствующую сторону поля через координаты, а не двигает поле в DOM.
+- Новые пользовательские поля получают ближайшее свободное место.
+- Для персонажа/существа задана стартовая раскладка: компактные боевые поля сверху, HP отдельной строкой, шесть характеристик на одной строке.
+
+### Проверки
+
+- `node --check js\editor\propertiesSettingsPopup.js`
+- `node --check js\templates\blockTypes.js`
+- `node --check js\properties\propertyLayoutModel.js`
+- `node --test tests\propertyBlocks.test.mjs`
+- `npm run test:browser`
+
+### Следующее развитие
+
+- Следующий плановый пункт остается в `docs/01-delivery/PROJECT_PLAN.md`; новых хвостов по свободной сетке не добавлено.
+
+## 2026-06-15: Добавлен skill минимального достаточного изменения
+
+### Что сделано
+
+- Изучен подход `Ponytail`: перед реализацией агент должен сначала проверить, можно ли не строить новую систему, использовать стандартную платформу, существующую зависимость или самый маленький безопасный патч.
+- Подход адаптирован под MyOwnWorld как собственный skill `.agents/skills/minimal-change/SKILL.md`, без копирования чужого репозитория и без подключения внешнего плагина.
+- Skill закрепляет проектную лестницу решения: `не строить` -> `существующий проектный слой` -> `платформа` -> `установленная зависимость` -> `маленький патч` -> `новая модель/сервис`.
+- В skill отдельно зафиксировано, что нельзя упрощать: validation, sanitizer, backup/recovery, storage adapters, accessibility, P0/P1 tests и release handoff.
+- `AGENTS.md` и `README.md` обновлены, чтобы будущий агент видел skill в обычном workflow.
+
+### Проверки
+
+- Запланированы `node tools/validate_agent_skills.mjs`, `node tools/docs_index.mjs` и `npm run verify`.
+
+### Следующее развитие
+
+- Использовать `minimal-change` перед крупными фичами и refactoring-задачами, особенно когда есть риск создать новый слой вместо расширения `PropertiesModel`, `CharacterModel`, `CampaignMapModel`, `StorageAdapter` или существующих popup/block contracts.
+
+## 2026-06-15: Лист персонажа получил DnD-организацию
+
+### Что сделано
+
+- `Лист персонажа` перестроен как runtime-витрина в духе бумажного DnD-листа: шапка персонажа, уровень/БМ, КЗ, хиты, death saves, строка инициативы/скорости/пассивного восприятия/состояний, затем характеристики с навыками.
+- Навыки и спасброски теперь выводятся прямо внутри карточек характеристик и читаются из `PropertiesModel`.
+- `Свойства` остались единственным persistent-источником игровых чисел: лист по-прежнему записывает редактируемые значения обратно в блок `Свойства`.
+- Исправлен fallback пустых числовых свойств: пустой навык в `Свойствах` не превращается в `0`, а наследует расчетный fallback от модификатора характеристики.
+- Browser regression `character-sheet-block-renders-character-model-summary` обновлен под новую полную подпись `Класс защиты`.
+
+### Проверки
+
+- `node --check js\editor\characterSheetBlock.js`
+- `node --test tests\characterModel.test.mjs tests\propertyBlocks.test.mjs tests\propertiesCalculationEngine.test.mjs`
+- `npm run test:browser`
+
+### Следующее развитие
+
+- Следующий плановый шаг остается в активном `PROJECT_PLAN.md`; новых хвостов по этой внеплановой UI-правке не добавлено.
+
+## 2026-06-15: Internal rules workspace content layer закрыт
+
+### Что сделано
+
+- Закрыт оставшийся хвост блока `0.0.0.1.17.3`, включая `0.0.0.1.17.3.6`.
+- Добавлен program-owned файл `assets/rules/internal-rules-workspace.json` с owner `admin`, version, rootId и стартовым DnD-справочником.
+- Добавлен `rulesWorkspaceContent.js`: загрузка JSON content layer через `fetch`, нормализация и fallback на JS seed при ошибке.
+- `rulesWorkspaceIndex.js` теперь читает текущий content layer, а не напрямую JS seed.
+- `rulesWorkspaceSeed.js` остается аварийным fallback, чтобы приложение открывалось даже при ошибке поставляемого файла.
+- Popup `Свойств` -> `Правила` получил поиск и открытие выбранного правила как read-only internal page.
+- Обновлены `PROJECT_PLAN.md`, `RULE_TREE_CONTRACT.md`, release notes, tester instructions и manual.
+
+### Проверки
+
+- Запланированы `npm run verify`, `npm run test:browser`, `docs:index`, `agents:validate`.
+
+### Следующее развитие
+
+- Следующий пункт плана после закрытого блока: `0.0.0.2` уже закрыт как foundation, поэтому переходить нужно к первому незакрытому пункту ниже по активному плану.
+
+## 2026-06-15: Полный визуальный редизайн Archive Hearth
+
+### Что сделано
+
+- Вне активного плана выполнен полный визуальный редизайн приложения по прямой задаче владельца продукта.
+- Обновлена базовая палитра в `styles/variables.css` и `styles/design-tokens.css`: основной стиль стал теплым темным, с parchment-текстом, candle gold акцентом, moss selected-состояниями и ruby danger-действиями.
+- Добавлен `styles/brand-system.css` как финальный общий слой оформления:
+  - единые hover/focus/active состояния;
+  - мягкие анимации кнопок и popup;
+  - единый вид input/select/textarea;
+  - общие поверхности для карточек, блоков, popup, tree, task tracker и toolbar;
+  - плавные DnD placeholder/preview без тряски;
+  - `prefers-reduced-motion` для пользователей, отключающих анимации.
+- Создан продуктовый брендбук `docs/00-product/BRANDBOOK.md`.
+- Обновлен дизайн-контракт `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`.
+- Обновлены README, release notes и tester instructions, чтобы будущие UI-изменения следовали новой системе.
+
+### Проверки
+
+- Запланированы `npm run verify`, `npm run test:browser`, `docs:index`, `agents:validate` и пересборка manual.
+
+### Следующее развитие
+
+- Если визуально все принято, следующий плановый пункт остается `0.0.0.1.17.3.6`: перевести internal rules workspace с JS seed на program-owned файловый content layer с admin-update.
+- Для UI следующим отдельным этапом стоит сделать visual baseline screenshots, чтобы редизайн можно было защищать автоматическими проверками.
+
+## 2026-06-15: Internal rules workspace foundation
+
+### Что сделано
+
+- Закрыты foundation/MVP подпункты `0.0.0.1.17.3.1` - `0.0.0.1.17.3.5`.
+- Добавлена подсистема `js/rulesWorkspace/`:
+  - `rulesWorkspaceSeed.js` - стартовое admin-owned наполнение DnD rules workspace;
+  - `rulesWorkspaceIndex.js` - lookup, tree, page-like adapter для внутренних правил;
+  - `internalRulePage.js` - read-only открытие внутренних правил.
+- `wikiLinkLookup` теперь ищет обычные страницы мира, а затем fallback-ом ищет внутренние правила по title/alias.
+- Внутренние правила открываются как read-only `internalRule`, не добавляются в дерево мира и не сохраняются в пользовательский workspace.
+- В popup шестеренки блока `Свойства` добавлена кнопка `Правила`, раскрывающая дерево internal rules workspace.
+- Добавлены стили для дерева правил в popup и read-only страницы внутреннего правила.
+- Добавлены unit/browser tests для seed lookup, wiki-link lookup и popup `Правила`.
+
+### Проверки
+
+- Запланированы `npm run verify`, `npm run test:browser`, `docs:index`, `agents:validate`.
+
+### Следующее развитие
+
+- `0.0.0.1.17.3.6`: перевести internal rules workspace с JS seed на program-owned файловый content layer с admin-update.
+- Добавить поиск и открытие выбранного правила прямо из popup `Свойств`.
+
+## 2026-06-14: Rule Tree переопределен как internal rules workspace
+
+### Что сделано
+
+- Закрыт пункт `0.0.0.1.17.3` как product/architecture decision.
+- Зафиксировано новое направление: правила DnD должны жить во внутреннем workspace правил внутри корня программы, заполняемом с ролью `admin`.
+- Обычный пользователь должен открывать правила через wiki-link или через `Свойства` -> шестеренка -> popup дерева правил.
+- Текущий Rule Tree остается compatibility/foundation-слоем до миграции во внутренний rules workspace.
+- Добавлен отдельный аудит-файл `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` для правил расчетов характеристик, бонуса мастерства, навыков, КЗ, хитов, инициативы и эффектов.
+
+### Проверки
+
+- Запланированы `docs:index` и `verify` после обновления документации.
+
+### Следующее развитие
+
+- Реализовать `0.0.0.1.17.3.1`: storage для internal rules workspace.
+- Затем `0.0.0.1.17.3.2`: подключить wiki-link lookup к внутреннему workspace правил.
+
+## 2026-06-14: Legacy `Стат. блок DnD` выведен из меню новых блоков
+
+### Что сделано
+
+- Закрыт пункт `0.0.0.1.17.2`.
+- Popup `Добавить блок` больше не предлагает новые блоки `Статистика персонажа` и `Стат. блок DnD`.
+- Старые генераторы, upgrades и runtime-поддержка этих блоков оставлены, чтобы существующие карточки не ломались.
+- Новый пользовательский путь для характеристик, навыков, КЗ, хитов и ручных значений закреплен за блоком `Свойства`.
+
+### Проверки
+
+- Добавлена browser regression проверка, что старые stat-блоки не возвращаются в список добавления блоков.
+
+### Следующее развитие
+
+- Подготовить ручную конвертацию старых stat-блоков в `Свойства` после отдельной проверки реальных `.md` карточек.
+
+## 2026-06-14: Калькулятивность навыков, КЗ и доспеха в `Свойствах`
+
+### Что сделано
+
+- Закрыт пункт `0.0.0.1.17.1`.
+- У персонажа и существа в `Свойствах` поле `КЗ` стало расчетным: без доспеха считается `10 + модификатор ЛОВ`, при выбранном доспехе берутся параметры карточки-предмета.
+- В `Свойства` персонажа/существа добавлено стандартное поле `Доспех`.
+- В `Свойства` предмета добавлены поля доспеха: `Тип доспеха`, `Базовая КЗ доспеха`, `Лимит ЛОВ к КЗ`.
+- Runtime блока `Свойства` теперь пересчитывает DnD-навыки и спасброски при изменении характеристики, уровня или checkbox владения.
+- Если пользователь вручную меняет расчетное поле навыка или КЗ, оно подсвечивается как ручное и больше не перезаписывается авторасчетом. Очистка поля возвращает авторасчет.
+- `PropertiesCalculationModel` и `CharacterModel` получили тот же расчетный слой, чтобы лист персонажа, карта и будущие проверки читали единые значения.
+- Legacy `Стат. блок DnD` и сущность `Правила` не удалены: они остаются совместимостью/advanced-слоем до отдельной миграционной задачи.
+
+### Проверки
+
+- `node --test tests\propertiesCalculationEngine.test.mjs tests\characterModel.test.mjs tests\propertyBlocks.test.mjs`
+- `npm run test:browser`
+
+### Следующее развитие
+
+- Сделать человеко-понятный picker доспеха вместо текстового поля id/title/alias.
+- Поддержать отдельный щит/экипировку, чтобы КЗ считалась из доспеха + щита + эффектов.
+- Запустить отдельную задачу безопасного вывода legacy `Стат. блок DnD` из меню и миграции старых карточек.
+
+## 2026-06-14: Навыки DnD в блоке `Свойства`
+
+### Что сделано
+
+- Закрыт foundation пункта `0.0.0.1.17`.
+- В схемы `Персонаж` и `Существо` добавлены мульти-поля навыков по характеристикам: СИЛ, ЛОВ, ТЛС, ИНТ, МДР, ХАР.
+- Внутри каждой группы есть строки навыков и спасбросков из legacy `Стат. блок DnD`.
+- Каждая строка сохраняет checkbox владения и числовое значение через стабильные ключи `PropertiesModel`.
+- `CardVariablesModel` теперь видит навыки как переменные карточки.
+
+### Проверки
+
+- `npm run check:js`
+- `node --test tests/propertyBlocks.test.mjs tests/cardVariablesModel.test.mjs`
+
+### Следующее развитие
+
+- Добавить авторасчет значений навыков по формуле `модификатор характеристики + бонус мастерства при владении`, с ручным override по тем же правилам, что у остальных расчетных полей.
+
+---
+
+## 2026-06-14: Расчетные переменные и зависимости между карточками
+
+### Что сделано
+
+- Закрыт foundation пункта `0.0.0.1.16`.
+- Добавлен `js/properties/cardVariableDependencies.js`.
+- Новый API строит контекст переменных карточки и зависимых карточек.
+- Поддержаны пути `self.key`, `race.key`, `class.key` и прямой lookup по id/title/alias карточки.
+- Добавлен безопасный расчет additive-формул без `eval`, с частями расчета и diagnostics.
+- Добавлены unit tests для зависимости персонажа от карточки расы и для missing-variable diagnostics.
+
+### Проверки
+
+- `npm run check:js`
+- `node --test tests/cardVariablesModel.test.mjs`
+
+### Следующее развитие
+
+- UI-конструктор формул в `Свойствах`.
+- Persistent-хранение формул в model-first формате.
+- Подключение расчетных зависимостей к `CharacterModel` и карте только после явного UI/contract этапа.
+
+---
+
+## 2026-06-14: Character Sheet UX foundation+
+
+### Что сделано
+
+- Доделан пункт `0.0.0.1.15`.
+- `Лист персонажа` получил редактируемые death saves: три успеха и три провала отображаются как DnD-трек и записываются в поля `Свойств`.
+- Расчетные метрики листа показывают источник `авто` / `ручн.` и формулу в подсказке.
+- Для ручных override добавлена кнопка очистки, которая возвращает поле к авторасчету.
+- Добавлен browser regression на death saves и очистку manual override.
+
+### Проверки
+
+- `npm run check:js`
+- `npm run test:browser -- tests/browser/property-blocks.spec.mjs`
+
+### Следующее развитие
+
+- Пункт `0.0.0.1.16`: формулы, зависимости от выбранных карточек race/class/rule и просмотр цепочки расчета.
+
+---
+
+## 2026-06-13: Model-first layout для `Свойств`
+
+### Что сделано
+
+- Доделан пункт `0.0.0.0.9` до model-first foundation.
+- Добавлен `js/properties/propertyLayoutModel.js`: единый формат layout поля `x/y/w/h/order/collapsed/groupId`.
+- Новые и существующие поля `Свойств` теперь получают persistent `data-property-layout`; старые `data-property-span` и `data-property-rows` остаются совместимыми производными.
+- Drag, resize, добавление и удаление поля синхронизируют layout всех полей блока.
+- `PropertiesModel` читает layout базовых и пользовательских полей в `model.layout`; custom-поля дополнительно несут свой layout внутри `customFields`.
+- Browser regression проверяет, что после pointer-drag/resize layout виден через `PropertiesModel`.
+
+### Проверки
+
+- `npm run check:js`
+- `npm test`
+- `npm run test:browser`
+
+### Следующее развитие
+
+- Пользовательский UI группировки и свертывания полей можно делать поверх уже существующих `groupId` и `collapsed`.
+
+---
+
+## 2026-06-12: Smooth DnD для layout-сетки `Свойств`
+
+### Что сделано
+
+- Убрана причина дергания при переносе полей `Свойств`: реальное поле больше не переставляется в DOM на каждом движении мыши.
+- Во время переноса поле временно скрывается в сетке, под курсором движется легкий runtime ghost, а место будущего drop показывает placeholder.
+- Перестройка placeholder теперь кадрируется через `requestAnimationFrame`, поэтому частые pointer-события не заставляют сетку перескакивать несколько раз за кадр.
+- Финальный persistent-порядок полей меняется только один раз при отпускании мыши.
+- Browser regression дополнен проверкой ghost/placeholder и очистки runtime-элементов после drop.
+
+### Проверки
+
+- `npm run check:js`
+- `npm run test:browser`
+
+---
+
 ## 2026-06-11: Hotfix layout-сетки `Свойств`
 
 ### Что сделано

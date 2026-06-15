@@ -18,6 +18,83 @@ export const PROPERTY_ACTION_OPTIONS = [
   'Пассивно'
 ];
 
+export const PROPERTY_ARMOR_KIND_OPTIONS = [
+  'Нет',
+  'Легкий',
+  'Средний',
+  'Тяжелый',
+  'Щит'
+];
+
+export const DND_SKILL_GROUPS = [
+  skillGroupField(
+    'strSkills',
+    'Навыки СИЛ',
+    'str',
+    [
+      skillCheck('saveStr', 'Спасбросок СИЛ'),
+      skillCheck('skillAthletics', 'Атлетика')
+    ]
+  ),
+  skillGroupField(
+    'dexSkills',
+    'Навыки ЛОВ',
+    'dex',
+    [
+      skillCheck('saveDex', 'Спасбросок ЛОВ'),
+      skillCheck('skillAcrobatics', 'Акробатика'),
+      skillCheck('skillSleightOfHand', 'Ловкость рук'),
+      skillCheck('skillStealth', 'Скрытность')
+    ]
+  ),
+  skillGroupField(
+    'conSkills',
+    'Навыки ТЛС',
+    'con',
+    [
+      skillCheck('saveCon', 'Спасбросок ТЛС')
+    ]
+  ),
+  skillGroupField(
+    'intSkills',
+    'Навыки ИНТ',
+    'int',
+    [
+      skillCheck('saveInt', 'Спасбросок ИНТ'),
+      skillCheck('skillInvestigation', 'Анализ'),
+      skillCheck('skillHistory', 'История'),
+      skillCheck('skillArcana', 'Магия'),
+      skillCheck('skillNature', 'Природа'),
+      skillCheck('skillReligion', 'Религия')
+    ]
+  ),
+  skillGroupField(
+    'wisSkills',
+    'Навыки МДР',
+    'wis',
+    [
+      skillCheck('saveWis', 'Спасбросок МДР'),
+      skillCheck('skillPerception', 'Внимательность'),
+      skillCheck('skillSurvival', 'Выживание'),
+      skillCheck('skillMedicine', 'Медицина'),
+      skillCheck('skillInsight', 'Проницательность'),
+      skillCheck('skillAnimalHandling', 'Уход за животными')
+    ]
+  ),
+  skillGroupField(
+    'chaSkills',
+    'Навыки ХАР',
+    'cha',
+    [
+      skillCheck('saveCha', 'Спасбросок ХАР'),
+      skillCheck('skillPerformance', 'Выступление'),
+      skillCheck('skillIntimidation', 'Запугивание'),
+      skillCheck('skillDeception', 'Обман'),
+      skillCheck('skillPersuasion', 'Убеждение')
+    ]
+  )
+];
+
 export const PROPERTY_BLOCK_SCHEMAS = {
   character: {
     cardType: 'character',
@@ -29,11 +106,13 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         max: 20
       }),
       numberField('armorClass', 'КЗ', '10'),
+      entityField('armorItem', 'Доспех', 'Название или id предмета-доспеха'),
       numberField('hpCurrent', 'Хиты факт', '10'),
       numberField('hpMax', 'Хиты макс.', '10'),
       numberField('hpTemp', 'Временные хиты', '0'),
       numberField('speed', 'Скорость', '30'),
       ...abilityFields(),
+      ...DND_SKILL_GROUPS,
       numberField('deathSaveSuccesses', 'Хиты от смерти: успехи', '0', {
         min: 0,
         max: 3
@@ -42,8 +121,6 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         min: 0,
         max: 3
       }),
-      textareaField('conditions', 'Состояния', 'Например: отравлен, сбит с ног, истощение 1'),
-      textareaField('effects', 'Эффекты', 'Например: +2 КЗ от щита, благословение, ускорение')
     ]
   },
 
@@ -57,14 +134,14 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         max: 30
       }),
       numberField('armorClass', 'КЗ', '10'),
+      entityField('armorItem', 'Доспех', 'Название или id предмета-доспеха'),
       numberField('hpCurrent', 'Хиты факт', '10'),
       numberField('hpMax', 'Хиты макс.', '10'),
       numberField('hpTemp', 'Временные хиты', '0'),
       numberField('speed', 'Скорость', '30'),
       ...abilityFields(),
+      ...DND_SKILL_GROUPS,
       textField('senses', 'Чувства', 'Темное зрение 60 фт.'),
-      textareaField('conditions', 'Состояния', 'Например: испуган, опутан, оглушен'),
-      textareaField('effects', 'Эффекты', 'Временные бонусы, слабости, особенности боя'),
       textareaField('effect', 'Особенности', 'Что важно помнить мастеру')
     ]
   },
@@ -90,6 +167,16 @@ export const PROPERTY_BLOCK_SCHEMAS = {
       textField('scale', 'Масштаб', 'Комната, деревня, город'),
       textField('climate', 'Климат', 'Холодный, влажный, сухой'),
       textField('danger', 'Опасность', 'Низкая, средняя, высокая'),
+      textField('musicAudioAsset', 'Музыка: audio asset', 'assets/audio/location.ogg', {
+        assetType: 'audio'
+      }),
+      textField('musicPlaylistAsset', 'Музыка: playlist asset', 'assets/playlists/location.json', {
+        assetType: 'playlist'
+      }),
+      numberField('musicVolume', 'Громкость музыки', '0.7', {
+        min: 0,
+        max: 1
+      }),
       textareaField('effect', 'Особенности', 'Слухи, правила места, угрозы')
     ]
   },
@@ -157,6 +244,13 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         min: 0
       }),
       textField('weight', 'Вес', '1 фнт.'),
+      selectField('armorKind', 'Тип доспеха', PROPERTY_ARMOR_KIND_OPTIONS),
+      numberField('armorBaseAc', 'Базовая КЗ доспеха', '', {
+        min: 0
+      }),
+      numberField('armorDexMax', 'Лимит ЛОВ к КЗ', '', {
+        min: 0
+      }),
       textareaField('effect', 'Эффект', 'Что делает предмет')
     ]
   }
@@ -189,17 +283,65 @@ export function getPropertyFields(
 }
 
 
+export function getPropertyValueFields(
+  cardType
+) {
+
+  return getSchemaValueFields(
+    getPropertySchema(
+      cardType
+    )
+  );
+}
+
+
+export function getSchemaValueFields(
+  schema
+) {
+
+  return (schema?.fields || [])
+    .flatMap(field => {
+
+      if (field.type !== 'skillGroup') {
+
+        return field;
+      }
+
+      return (field.items || [])
+        .flatMap(item => [
+          numberField(
+            item.name,
+            item.label,
+            '0'
+          ),
+          numberField(
+            item.proficientName,
+            `${item.label}: владение`,
+            '0',
+            {
+              min: 0,
+              max: 2
+            }
+          )
+        ]);
+    });
+}
+
+
 function textField(
   name,
   label,
-  placeholder = ''
+  placeholder = '',
+  options = {}
 ) {
 
   return {
     name,
     label,
     type: 'text',
-    placeholder
+    placeholder,
+    assetType:
+      options.assetType
   };
 }
 
@@ -248,6 +390,52 @@ function selectField(
     label,
     type: 'select',
     options
+  };
+}
+
+
+function entityField(
+  name,
+  label,
+  placeholder = ''
+) {
+
+  return {
+    name,
+    label,
+    type: 'entity',
+    placeholder
+  };
+}
+
+
+function skillGroupField(
+  name,
+  label,
+  ability,
+  items
+) {
+
+  return {
+    name,
+    label,
+    ability,
+    type: 'skillGroup',
+    items
+  };
+}
+
+
+function skillCheck(
+  name,
+  label
+) {
+
+  return {
+    name,
+    label,
+    proficientName:
+      `${name}Proficient`
   };
 }
 

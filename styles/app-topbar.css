@@ -192,7 +192,8 @@
 }
 
 
-.app-backup-panel {
+.app-backup-panel,
+.app-asset-health-panel {
 
   display:
     grid;
@@ -205,7 +206,8 @@
 }
 
 
-.app-backup-panel h3 {
+.app-backup-panel h3,
+.app-asset-health-panel h3 {
 
   margin:
     0;
@@ -218,7 +220,8 @@
 }
 
 
-.app-backup-panel p {
+.app-backup-panel p,
+.app-asset-health-panel p {
 
   margin:
     0;
@@ -236,7 +239,8 @@
 
 .app-backup-primary,
 .app-backup-restore,
-.app-backup-confirm-actions button {
+.app-backup-confirm-actions button,
+.app-asset-health-primary {
 
   min-height:
     30px;
@@ -267,7 +271,8 @@
 
 .app-backup-primary:hover,
 .app-backup-restore:hover,
-.app-backup-confirm-actions button:hover {
+.app-backup-confirm-actions button:hover,
+.app-asset-health-primary:hover {
 
   background:
     rgba(241,211,142,0.10);
@@ -276,13 +281,309 @@
 
 .app-backup-primary:disabled,
 .app-backup-restore:disabled,
-.app-backup-confirm-actions button:disabled {
+.app-backup-confirm-actions button:disabled,
+.app-asset-health-primary:disabled {
 
   cursor:
     default;
 
   opacity:
     0.55;
+}
+
+
+.app-asset-health-panel {
+
+  margin-top:
+    10px;
+
+  padding-top:
+    10px;
+
+  border-top:
+    1px solid
+    rgba(241,211,142,0.12);
+}
+
+
+.app-asset-health-result {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  color:
+    rgba(255,248,230,0.66);
+
+  font-size:
+    12px;
+}
+
+
+.app-asset-health-section {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+
+.app-asset-health-section h4 {
+
+  margin:
+    2px 0 0;
+
+  color:
+    rgba(255,248,230,0.78);
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+}
+
+
+.app-asset-health-summary {
+
+  padding:
+    7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.12);
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.035);
+}
+
+
+.app-asset-health-summary.is-ok {
+
+  border-color:
+    rgba(103,190,128,0.24);
+
+  background:
+    rgba(103,190,128,0.08);
+}
+
+
+.app-asset-health-summary.is-warning {
+
+  border-color:
+    rgba(220,110,100,0.26);
+
+  background:
+    rgba(220,110,100,0.09);
+}
+
+
+.app-asset-health-list {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  max-height:
+    180px;
+
+  overflow:
+    auto;
+}
+
+
+.app-asset-health-item {
+
+  min-width:
+    0;
+
+  display:
+    grid;
+
+  gap:
+    2px;
+
+  padding:
+    7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.12);
+
+  border-radius:
+    9px;
+
+  background:
+    rgba(255,255,255,0.035);
+}
+
+
+.app-asset-health-meta {
+
+  min-width:
+    0;
+
+  display:
+    grid;
+
+  gap:
+    2px;
+}
+
+
+.app-asset-health-item-with-action {
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  align-items:
+    center;
+}
+
+
+.app-asset-health-item strong,
+.app-asset-health-item span {
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.app-asset-health-delete,
+.app-asset-health-confirm-actions button {
+
+  min-height:
+    28px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.18);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  color:
+    rgba(255,248,230,0.86);
+
+  cursor:
+    pointer;
+
+  font-size:
+    12px;
+
+  padding:
+    0 9px;
+}
+
+
+.app-asset-health-delete:hover,
+.app-asset-health-confirm-actions button:hover {
+
+  background:
+    rgba(241,211,142,0.10);
+}
+
+
+.app-asset-health-confirm {
+
+  grid-column:
+    1 / -1;
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  padding:
+    8px;
+
+  border:
+    1px solid
+    rgba(220,110,100,0.22);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(220,110,100,0.08);
+}
+
+
+.app-asset-health-confirm p {
+
+  margin:
+    0;
+
+  color:
+    rgba(255,248,230,0.68);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.35;
+}
+
+
+.app-asset-health-confirm-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.app-asset-health-danger {
+
+  border-color:
+    rgba(220,110,100,0.32) !important;
+
+  background:
+    rgba(220,110,100,0.12) !important;
+}
+
+
+.app-asset-health-item strong {
+
+  color:
+    rgba(255,248,230,0.92);
+
+  font-size:
+    12px;
+}
+
+
+.app-asset-health-item span {
+
+  color:
+    rgba(255,248,230,0.56);
+
+  font-size:
+    11px;
 }
 
 

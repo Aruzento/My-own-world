@@ -66,9 +66,9 @@ export async function getRenderableImageURL(
   }
 
   const fallbackUrl =
-    await readAssetAsDataURL(
-    filename
-  );
+    await readAssetAsDataURLOrMissingPlaceholder(
+      filename
+    );
 
   renderableImageUrlCache.set(
     cacheKey,
@@ -140,6 +140,50 @@ async function readAssetAsDataURL(
 }
 
 
+export async function readAssetAsDataURLOrMissingPlaceholder(
+  filename
+) {
+
+  try {
+
+    return await readAssetAsDataURL(
+      filename
+    );
+
+  } catch (error) {
+
+    console.warn(
+      'Asset file is missing, using placeholder.',
+      filename
+    );
+
+    return createMissingAssetPlaceholderURL(
+      filename
+    );
+  }
+}
+
+
+export function createMissingAssetPlaceholderURL(
+  filename
+) {
+
+  const safeName =
+    String(filename || 'missing asset')
+      .replace(/[<>&"]/g, '');
+
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+      <rect width="640" height="360" fill="#211f1b"/>
+      <rect x="24" y="24" width="592" height="312" rx="18" fill="#332f28" stroke="#d6b35c" stroke-width="2" stroke-dasharray="10 8"/>
+      <text x="320" y="160" text-anchor="middle" fill="#f7ecd0" font-family="Arial, sans-serif" font-size="28" font-weight="700">Asset missing</text>
+      <text x="320" y="205" text-anchor="middle" fill="#d6b35c" font-family="Arial, sans-serif" font-size="18">${safeName}</text>
+    </svg>`;
+
+  return `data:image/svg+xml;base64,${encodeBase64(svg)}`;
+}
+
+
 function arrayBufferToBase64(
   buffer
 ) {
@@ -169,9 +213,33 @@ function arrayBufferToBase64(
     );
   }
 
-  return btoa(
+  return encodeBase64(
     binary
   );
+}
+
+
+function encodeBase64(
+  value
+) {
+
+  if (
+    typeof btoa === 'function'
+  ) {
+
+    return btoa(
+      value
+    );
+  }
+
+  return Buffer
+    .from(
+      value,
+      'utf8'
+    )
+    .toString(
+      'base64'
+    );
 }
 
 

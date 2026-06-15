@@ -87,9 +87,85 @@ export function collectAssetReferencesFromHTML(
     }
   }
 
+  references.push(
+    ...collectPropertyAssetReferencesFromHTML(
+      html,
+      owner,
+      references.length
+    )
+  );
+
   return references.filter(reference =>
     reference.path
   );
+}
+
+
+function collectPropertyAssetReferencesFromHTML(
+  html,
+  owner,
+  offset = 0
+) {
+
+  const references = [];
+  const tagMatcher =
+    /<[^>]*data-property-asset-type\s*=\s*["']([^"']+)["'][^>]*>/gi;
+
+  for (const match of html.matchAll(tagMatcher)) {
+
+    const type =
+      normalizePropertyAssetType(
+        decodeHTMLAttribute(
+          match[1]
+        )
+      );
+
+    const path =
+      extractAttributeValue(
+        match[0],
+        'value'
+      ) ||
+      extractAttributeValue(
+        match[0],
+        'data-asset-value'
+      );
+
+    if (!type || !path) {
+
+      continue;
+    }
+
+    references.push(
+      normalizeAssetReference({
+        id:
+          `${owner.pageId || 'page'}:property-asset:${offset + references.length}`,
+        path,
+        type,
+        owner: {
+          pageId:
+            owner.pageId || '',
+          entityId:
+            '',
+          scope:
+            owner.scope || 'page'
+        }
+      })
+    );
+  }
+
+  return references;
+}
+
+
+function normalizePropertyAssetType(
+  type
+) {
+
+  if (type === 'audio') return ASSET_TYPES.audio;
+  if (type === 'playlist') return ASSET_TYPES.playlist;
+  if (type === 'image') return ASSET_TYPES.image;
+
+  return '';
 }
 
 
@@ -113,4 +189,29 @@ function decodeHTMLAttribute(
     .replaceAll('&amp;', '&')
     .replaceAll('&lt;', '<')
     .replaceAll('&gt;', '>');
+}
+
+
+function extractAttributeValue(
+  tag,
+  attribute
+) {
+
+  const matcher =
+    new RegExp(
+      `${attribute}\\s*=\\s*["']([^"']+)["']`,
+      'i'
+    );
+
+  const match =
+    String(tag || '')
+      .match(
+        matcher
+      );
+
+  return match
+    ? decodeHTMLAttribute(
+      match[1]
+    )
+    : '';
 }

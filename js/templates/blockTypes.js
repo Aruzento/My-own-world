@@ -7,6 +7,10 @@ import {
   PROPERTY_SHAPE_OPTIONS
 } from './propertyBlockDefinitions.js';
 
+import {
+  serializePropertyLayout
+} from '../properties/propertyLayoutModel.js';
+
 
 export function createTextBlock({
   title,
@@ -223,6 +227,12 @@ export function createPropertiesBlock({
     });
   }
 
+  const layoutPlan =
+    createPropertyLayoutPlan(
+      definition.fields,
+      cardType
+    );
+
   return `
     <div
       class="template-block card-properties-block card-properties-${cardType}"
@@ -235,9 +245,15 @@ export function createPropertiesBlock({
 
       <div class="card-properties-grid">
         ${definition.fields
-          .map(field =>
+          .map((field, index) =>
             createPropertyFieldHTML(
-              field
+              field,
+              {
+                cardType,
+                index,
+                layout:
+                  layoutPlan[index]
+              }
             )
           )
           .join('')}
@@ -298,7 +314,8 @@ export function createImageBlock() {
 
 
 function createPropertyFieldHTML(
-  field
+  field,
+  context = {}
 ) {
 
   const normalizedField =
@@ -313,29 +330,70 @@ function createPropertyFieldHTML(
     placeholder,
     options = [],
     min,
-    max
+    max,
+    assetType
   } = normalizedField;
+
+  const layout =
+    createInitialPropertyLayout(
+      normalizedField,
+      context
+    );
+
+  const layoutAttributes =
+    createPropertyLayoutAttributes(
+      layout
+    );
+
+  const assetAttributes =
+    createPropertyAssetAttributes(
+      assetType
+    );
 
   if (type === 'textarea') {
 
     return `
-      <label class="card-property-field card-property-field-wide">
+      <label class="card-property-field card-property-field-wide" ${layoutAttributes}>
         <span>${label}</span>
         <div
           class="card-property-textarea rich-text-field"
           contenteditable="true"
           data-persistent-editable="true"
           data-property-name="${name}"
+          ${assetAttributes}
           data-placeholder="${placeholder || ''}"
         ></div>
       </label>
     `;
   }
 
+  if (type === 'skillGroup') {
+
+    return `
+      <section
+        class="card-property-field card-property-field-wide card-property-skill-group"
+        data-property-id="${name}"
+        data-property-group-name="${name}"
+        ${layoutAttributes}
+      >
+        <span>${label}</span>
+        <div class="card-property-skill-list">
+          ${(normalizedField.items || [])
+            .map(item =>
+              createPropertySkillRowHTML(
+                item
+              )
+            )
+            .join('')}
+        </div>
+      </section>
+    `;
+  }
+
   if (type === 'select') {
 
     return `
-      <label class="card-property-field">
+      <label class="card-property-field" ${layoutAttributes}>
         <span>${label}</span>
         <select class="card-property-select" data-property-name="${name}">
           ${(options.length > 0 ? options : PROPERTY_SHAPE_OPTIONS)
@@ -348,18 +406,346 @@ function createPropertyFieldHTML(
     `;
   }
 
+  if (
+    type === 'entity' &&
+    name === 'armorItem'
+  ) {
+
+    return `
+      <label class="card-property-field" ${layoutAttributes}>
+        <span>${label}</span>
+        <select
+          class="card-property-select card-property-entity-select"
+          data-property-name="${name}"
+          data-property-type="entity"
+          data-property-filter-type="item"
+          data-property-placeholder="${placeholder || ''}"
+        >
+          <option value="">Без доспеха</option>
+        </select>
+      </label>
+    `;
+  }
+
   return `
-    <label class="card-property-field">
+    <label class="card-property-field" ${layoutAttributes}>
       <span>${label}</span>
       <input
-        type="${type || 'text'}"
+        type="${type === 'entity' ? 'text' : type || 'text'}"
         data-property-name="${name}"
+        data-property-type="${type || 'text'}"
+        ${assetAttributes}
         placeholder="${placeholder || ''}"
         ${min !== undefined ? `min="${min}"` : ''}
         ${max !== undefined ? `max="${max}"` : ''}
       >
     </label>
   `;
+}
+
+
+function createPropertyAssetAttributes(
+  assetType
+) {
+
+  if (!assetType) {
+
+    return '';
+  }
+
+  return `data-property-asset-type="${assetType}"`;
+}
+
+
+function createPropertySkillRowHTML(
+  item
+) {
+
+  return `
+    <label class="card-property-skill-row">
+      <input
+        class="card-property-skill-proficiency"
+        type="hidden"
+        value="0"
+        data-property-name="${item.proficientName}"
+        data-property-type="number"
+        data-skill-proficiency-level="0"
+      >
+      <span>${item.label}</span>
+      <input
+        class="card-property-skill-value"
+        type="number"
+        value="0"
+        data-property-name="${item.name}"
+        data-property-type="number"
+      >
+    </label>
+  `;
+}
+
+
+function createInitialPropertyLayout(
+  field,
+  {
+    cardType,
+    index = 0,
+    layout
+  } = {}
+) {
+
+  if (layout) {
+
+    return {
+      ...layout,
+      order:
+        index
+    };
+  }
+
+  const preset =
+    getInitialPropertyLayoutPreset(
+      cardType,
+      field,
+      index
+    );
+
+  if (preset) {
+
+    return {
+      x:
+        preset.x,
+      y:
+        preset.y,
+      w:
+        preset.w,
+      h:
+        preset.h,
+      order:
+        index,
+      collapsed: false,
+      groupId: null
+    };
+  }
+
+  const wide =
+    field.type === 'textarea' ||
+    field.type === 'skillGroup';
+
+  return {
+    x: 0,
+    y: 0,
+    w:
+      wide
+        ? 12
+        : 3,
+    h:
+      field.type === 'skillGroup'
+        ? Math.max(
+          2,
+          Math.ceil(
+            (field.items?.length || 1) / 2
+          )
+        )
+      : wide
+        ? 2
+        : 1,
+    order: index,
+    collapsed: false,
+    groupId: null
+  };
+}
+
+
+function createPropertyLayoutPlan(
+  fields,
+  cardType
+) {
+
+  const layouts = [];
+  let cursorX =
+    0;
+  let cursorY =
+    0;
+  let rowHeight =
+    1;
+
+  fields
+    .map(normalizePropertyField)
+    .forEach((field, index) => {
+
+      const preset =
+        getInitialPropertyLayoutPreset(
+          cardType,
+          field,
+          index
+        );
+
+      if (preset) {
+
+        layouts[index] = {
+          ...preset,
+          order:
+            index
+        };
+
+        return;
+      }
+
+      const wide =
+        field.type === 'textarea' ||
+        field.type === 'skillGroup';
+
+      const width =
+        wide
+          ? 12
+          : 3;
+
+      const height =
+        field.type === 'skillGroup'
+          ? Math.max(
+            2,
+            Math.ceil(
+              (field.items?.length || 1) / 2
+            )
+          )
+          : wide
+          ? 2
+          : 1;
+
+      if (
+        cursorX > 0 &&
+        cursorX + width > 12
+      ) {
+
+        cursorX =
+          0;
+
+        cursorY +=
+          rowHeight;
+
+        rowHeight =
+          1;
+      }
+
+      layouts[index] = {
+        x:
+          cursorX,
+        y:
+          cursorY,
+        w:
+          width,
+        h:
+          height,
+        order:
+          index,
+        collapsed: false,
+        groupId: null
+      };
+
+      cursorX +=
+        width;
+
+      rowHeight =
+        Math.max(
+          rowHeight,
+          height
+        );
+
+      if (
+        wide ||
+        cursorX >= 12
+      ) {
+
+        cursorX =
+          0;
+
+        cursorY +=
+          rowHeight;
+
+        rowHeight =
+          1;
+      }
+    });
+
+  return layouts;
+}
+
+
+function getInitialPropertyLayoutPreset(
+  cardType,
+  field,
+  index
+) {
+
+  if (
+    cardType !== 'character' &&
+    cardType !== 'creature'
+  ) return null;
+
+  const compactTop = {
+    level: [0, 0, 1, 2],
+    armorClass: [1, 0, 1, 2],
+    hpCurrent: [3, 0, 1, 2],
+    hpMax: [4, 0, 1, 2],
+    hpTemp: [5, 0, 2, 2],
+    deathSaveSuccesses: [8, 0, 2, 2],
+    deathSaveFailures: [10, 0, 2, 2],
+    speed: [0, 2, 2, 2],
+    armorItem: [3, 2, 2, 2],
+    str: [0, 5, 2, 2],
+    dex: [2, 5, 2, 2],
+    int: [4, 5, 2, 2],
+    wis: [6, 5, 2, 2],
+    con: [8, 5, 2, 2],
+    cha: [10, 5, 2, 2],
+    strSkills: [0, 7, 2, 4],
+    dexSkills: [2, 7, 2, 6],
+    intSkills: [4, 7, 2, 6],
+    wisSkills: [6, 7, 2, 6],
+    conSkills: [8, 7, 2, 2],
+    chaSkills: [10, 7, 2, 6],
+    conditions: [0, 10, 6, 3],
+    effects: [6, 10, 6, 3],
+    senses: [0, 10, 4, 1],
+    effect: [4, 10, 8, 3]
+  };
+
+  const value =
+    compactTop[field.name];
+
+  if (!value) return null;
+
+  const [
+    x,
+    y,
+    w,
+    h
+  ] = value;
+
+  return {
+    x,
+    y,
+    w,
+    h,
+    order:
+      index
+  };
+}
+
+
+function createPropertyLayoutAttributes(
+  layout
+) {
+
+  return [
+    `data-property-layout='${serializePropertyLayout(layout)}'`,
+    `data-property-x="${layout.x}"`,
+    `data-property-y="${layout.y}"`,
+    `data-property-span="${layout.w}"`,
+    `data-property-rows="${layout.h}"`,
+    `data-property-order="${layout.order}"`,
+    'data-property-collapsed="false"'
+  ].join(' ');
 }
 
 

@@ -81,3 +81,34 @@ test(
     );
   }
 );
+
+
+test(
+  'asset scanner собирает audio и playlist из свойств локации',
+  () => {
+
+    const references =
+      collectAssetReferencesFromHTML(
+        `
+          <input data-property-name="musicAudioAsset" data-property-asset-type="audio" value="assets/audio/cave.ogg">
+          <input data-property-name="musicPlaylistAsset" data-property-asset-type="playlist" value="assets/playlists/cave.json">
+        `,
+        {
+          pageId: 'location-2',
+          scope: 'location'
+        }
+      );
+
+    assert.deepEqual(
+      references.map(reference => [
+        reference.path,
+        reference.type,
+        reference.owner.scope
+      ]),
+      [
+        ['assets/audio/cave.ogg', ASSET_TYPES.audio, 'location'],
+        ['assets/playlists/cave.json', ASSET_TYPES.playlist, 'location']
+      ]
+    );
+  }
+);

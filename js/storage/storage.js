@@ -75,7 +75,10 @@ export {
 export {
 
   /* Получение blob URL изображения */
-  getImageURL
+  createMissingAssetPlaceholderURL,
+  getImageURL,
+  getRenderableImageURL,
+  readAssetAsDataURLOrMissingPlaceholder
 
 } from './assetStorage.js';
 
@@ -109,6 +112,14 @@ export {
   findOrphanAssetPaths,
   findOrphanPaths
 } from './assetOrphanDetector.js';
+
+
+export {
+  createLocationMusicHTML,
+  createLocationMusicReferences,
+  normalizeLocationMusic,
+  readLocationMusicFromHTML
+} from './locationMusic.js';
 
 
 export {
