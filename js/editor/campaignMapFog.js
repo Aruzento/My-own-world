@@ -83,7 +83,17 @@ export function fillFog(
   );
 
   markFogCanvasChanged(
-    map
+    map,
+    {
+      x:
+        0,
+      y:
+        0,
+      width:
+        canvas.width,
+      height:
+        canvas.height
+    }
   );
 
   persistFogCanvas(
@@ -119,13 +129,13 @@ export function clearFog(
     map,
     {
       x:
-        point.x - size,
+        0,
       y:
-        point.y - size,
+        0,
       width:
-        size * 2,
+        canvas.width,
       height:
-        size * 2
+        canvas.height
     }
   );
 
@@ -185,9 +195,18 @@ export function drawFogAtPointer(
       stage
     );
 
-  if (
-    isPointInsideLockedFogZone(
+  const size =
+    Number(stage.dataset.brushSize || DEFAULT_BRUSH_SIZE);
+
+  const dirtyRegion =
+    getFogBrushDirtyRegion(
       point,
+      size
+    );
+
+  if (
+    isFogBrushInsideLockedFogZone(
+      dirtyRegion,
       stage
     )
   ) return;
@@ -201,15 +220,6 @@ export function drawFogAtPointer(
 
   context.fillStyle =
     FOG_PAINT_COLOR;
-
-  const size =
-    Number(stage.dataset.brushSize || DEFAULT_BRUSH_SIZE);
-
-  const dirtyRegion =
-    getFogBrushDirtyRegion(
-      point,
-      size
-    );
 
   if (stage.dataset.brushShape === 'square') {
 
@@ -270,19 +280,38 @@ function markFogCanvasChanged(
       Number(stage.dataset.fogDirtyRegionCount || 0) + 1
     );
 
+  const normalizedDirtyRegion = {
+    x:
+      Math.round(dirtyRegion.x),
+    y:
+      Math.round(dirtyRegion.y),
+    width:
+      Math.round(dirtyRegion.width),
+    height:
+      Math.round(dirtyRegion.height)
+  };
+
   stage.dataset.fogDirtyRegion =
     encodeURIComponent(
-      JSON.stringify({
-        x:
-          Math.round(dirtyRegion.x),
-        y:
-          Math.round(dirtyRegion.y),
-        width:
-          Math.round(dirtyRegion.width),
-        height:
-          Math.round(dirtyRegion.height)
-      })
+      JSON.stringify(
+        normalizedDirtyRegion
+      )
     );
+
+  getCampaignMapStore(
+    map
+  )?.updateFog(
+    {
+      dirtyRegionCount:
+        Number(stage.dataset.fogDirtyRegionCount || 0),
+      lastDirtyRegion:
+        normalizedDirtyRegion
+    },
+    {
+      commit:
+        false
+    }
+  );
 }
 
 
@@ -644,6 +673,13 @@ export function setMapTool(
     map
   );
 
+  map
+    .querySelector('.campaign-drawing-btn')
+    ?.classList.toggle(
+      'is-active',
+      String(tool || '').startsWith('drawing-')
+    );
+
   if (
     tool === 'pan'
   ) {
@@ -710,8 +746,8 @@ export function updatePanButton(
 }
 
 
-function isPointInsideLockedFogZone(
-  point,
+function isFogBrushInsideLockedFogZone(
+  dirtyRegion,
   stage
 ) {
 
@@ -724,10 +760,33 @@ function isPointInsideLockedFogZone(
     );
 
   return zones.some(zone =>
-    point.x >= zone.x &&
-    point.x <= zone.x + zone.width &&
-    point.y >= zone.y &&
-    point.y <= zone.y + zone.height
+    rectsOverlap(
+      dirtyRegion,
+      {
+        x:
+          zone.x,
+        y:
+          zone.y,
+        width:
+          zone.width,
+        height:
+          zone.height
+      }
+    )
+  );
+}
+
+
+function rectsOverlap(
+  left,
+  right
+) {
+
+  return !(
+    left.x + left.width < right.x ||
+    right.x + right.width < left.x ||
+    left.y + left.height < right.y ||
+    right.y + right.height < left.y
   );
 }
 

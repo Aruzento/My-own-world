@@ -244,6 +244,11 @@ function applySelectedParticipants(
     initiative.toJSON()
   );
 
+  syncActiveTokenHighlights(
+    store.map,
+    initiative
+  );
+
   return initiative;
 }
 
@@ -307,6 +312,13 @@ function renderOrderPopup(
     store.getModel()
   );
 
+  syncActiveTokenHighlights(
+    store.map,
+    new CampaignMapInitiativeModel(
+      store.getModel().initiative
+    )
+  );
+
   bindOrderActions(
     popup,
     store,
@@ -333,6 +345,8 @@ function bindOrderActions(
         shiftInitiativeTurn(
           popup,
           store,
+          deps,
+          anchor,
           -1
         );
 
@@ -351,12 +365,21 @@ function bindOrderActions(
         shiftInitiativeTurn(
           popup,
           store,
+          deps,
+          anchor,
           1
         );
 
         await deps.saveAndSync?.();
       }
     );
+
+  bindOrderRowActions(
+    popup,
+    store,
+    deps,
+    anchor
+  );
 
   popup
     .querySelector('.campaign-initiative-edit-btn')
@@ -456,6 +479,8 @@ function renderActiveTurn(
 function shiftInitiativeTurn(
   popup,
   store,
+  deps,
+  anchor,
   direction
 ) {
 
@@ -477,10 +502,76 @@ function shiftInitiativeTurn(
     initiative.toJSON()
   );
 
+  syncActiveTokenHighlights(
+    store.map,
+    initiative
+  );
+
   renderOrderList(
     popup,
     store.getModel()
   );
+
+  bindOrderRowActions(
+    popup,
+    store,
+    deps,
+    anchor
+  );
+}
+
+
+function bindOrderRowActions(
+  popup,
+  store,
+  deps,
+  anchor
+) {
+
+  popup
+    .querySelectorAll('.campaign-initiative-order-row')
+    .forEach(row => {
+
+      row.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+
+          const initiative =
+            new CampaignMapInitiativeModel(
+              store.getModel().initiative
+            );
+
+          initiative.setActive(
+            row.dataset.participantId
+          );
+
+          store.setInitiative(
+            initiative.toJSON()
+          );
+
+          renderOrderList(
+            popup,
+            store.getModel()
+          );
+
+          syncActiveTokenHighlights(
+            store.map,
+            initiative
+          );
+
+          bindOrderActions(
+            popup,
+            store,
+            deps,
+            anchor
+          );
+
+          await deps.saveAndSync?.();
+        }
+      );
+    });
 }
 
 function getNextActiveParticipantId(
@@ -569,7 +660,7 @@ function getOrderRowHTML(
 ) {
 
   return `
-    <div class="${getOrderRowClass(options)}">
+    <div class="${getOrderRowClass(options)}" data-participant-id="${escapeAttribute(participant.participantId)}">
       <span class="campaign-initiative-name">${escapeHTML(participant.name)}</span>
       <span class="campaign-initiative-result">${escapeHTML(getParticipantResultText(participant))}</span>
     </div>
@@ -617,6 +708,45 @@ function getParticipantResultText(
       : String(participant.modifier);
 
   return `${participant.total} (${participant.roll}${modifier})`;
+}
+
+
+function syncActiveTokenHighlights(
+  map,
+  initiative
+) {
+
+  map
+    ?.querySelectorAll('.campaign-map-token[data-initiative-active="true"]')
+    .forEach(token => {
+
+      delete token.dataset.initiativeActive;
+
+      token.classList.remove(
+        'is-initiative-active'
+      );
+    });
+
+  const active =
+    initiative.getParticipant(
+      initiative.activeParticipantId
+    );
+
+  if (!active?.tokenId) return;
+
+  const token =
+    map?.querySelector(
+      `.campaign-map-token[data-token-id="${CSS.escape(active.tokenId)}"]`
+    );
+
+  if (!token) return;
+
+  token.dataset.initiativeActive =
+    'true';
+
+  token.classList.add(
+    'is-initiative-active'
+  );
 }
 
 function rollD20() {

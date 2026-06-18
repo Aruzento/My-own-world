@@ -739,16 +739,9 @@ function moveTokenToPointer(
     point
   );
 
-  scheduleLivePresentationSync(
-    {
-      map: draggedToken.map,
-      itemType: 'token',
-      itemId: token.dataset.tokenId
-    },
-    {
-      ...measure,
-      map: draggedToken.map
-    }
+  scheduleMovedSelectionPresentationSync(
+    draggedToken,
+    measure
   );
 }
 
@@ -824,4 +817,73 @@ function applyShapeRecordFromStore(
     shape,
     record
   );
+}
+
+
+function scheduleMovedSelectionPresentationSync(
+  action,
+  measure
+) {
+
+  const items =
+    new Map();
+
+  action.selectedTokens
+    .forEach(item => {
+
+      if (item.token?.dataset.tokenId) {
+
+        items.set(
+          `token:${item.token.dataset.tokenId}`,
+          {
+            itemType:
+              'token',
+            itemId:
+              item.token.dataset.tokenId
+          }
+        );
+      }
+    });
+
+  action.selectedShapes
+    .forEach(item => {
+
+      if (item.shape?.dataset.shapeId) {
+
+        items.set(
+          `shape:${item.shape.dataset.shapeId}`,
+          {
+            itemType:
+              'shape',
+            itemId:
+              item.shape.dataset.shapeId
+          }
+        );
+      }
+    });
+
+  let first =
+    true;
+
+  items
+    .forEach(item => {
+
+      scheduleLivePresentationSync(
+        {
+          map:
+            action.map,
+          ...item
+        },
+        first
+          ? {
+            ...measure,
+            map:
+              action.map
+          }
+          : null
+      );
+
+      first =
+        false;
+    });
 }

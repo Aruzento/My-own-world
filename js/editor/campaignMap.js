@@ -104,6 +104,10 @@ import {
 } from './campaignMapFog.js';
 
 import {
+  updateDrawingButtons
+} from './campaignMapDrawing.js';
+
+import {
   openPresentationWindow,
   syncPresentation
 } from './campaignMapPresentation.js';
@@ -412,6 +416,10 @@ function ensureMapControls(
   );
 
   updateFogButtons(
+    map
+  );
+
+  updateDrawingButtons(
     map
   );
 

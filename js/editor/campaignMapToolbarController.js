@@ -11,6 +11,7 @@ import {
 
 import {
   getFogPopupHTML,
+  getDrawingPopupHTML,
   getGridPopupHTML,
   getLayersPopupHTML,
   getShapesPopupHTML
@@ -32,6 +33,12 @@ import {
   renderLockedFogZones,
   updateFogButtons
 } from './campaignMapFog.js';
+
+import {
+  setDrawingColor,
+  setDrawingTool,
+  updateDrawingButtons
+} from './campaignMapDrawing.js';
 
 import {
   rememberMapAssetSettings
@@ -184,6 +191,29 @@ export async function handleCampaignMapToolbarClick(
   }
 
   if (
+    event.target.closest('.campaign-drawing-btn')
+  ) {
+
+    const anchor =
+      event.target.closest('.campaign-drawing-btn');
+
+    if (
+      toggleMapPopupForAnchor(
+        anchor,
+        'drawing'
+      )
+    ) return true;
+
+    openDrawingPopup(
+      map,
+      anchor,
+      deps
+    );
+
+    return true;
+  }
+
+  if (
     event.target.closest('.campaign-layers-btn')
   ) {
 
@@ -230,6 +260,102 @@ export async function handleCampaignMapToolbarClick(
   }
 
   return false;
+}
+
+
+function openDrawingPopup(
+  map,
+  anchor,
+  deps
+) {
+
+  const stage =
+    map.querySelector('.campaign-map-stage');
+
+  const popup =
+    getMapPopup();
+
+  popup.innerHTML =
+    getDrawingPopupHTML(
+      stage
+    );
+
+  popup
+    .querySelectorAll('.campaign-drawing-tool-btn')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+
+          setDrawingTool(
+            map,
+            button.dataset.drawingTool
+          );
+
+          openDrawingPopup(
+            map,
+            anchor,
+            deps
+          );
+
+          await deps.saveAndSync();
+        }
+      );
+    });
+
+  popup
+    .querySelector('.campaign-drawing-color')
+    ?.addEventListener(
+      'input',
+      async event => {
+
+        setDrawingColor(
+          map,
+          event.target.value
+        );
+
+        await deps.saveAndSync();
+      }
+    );
+
+  popup
+    .querySelectorAll('.campaign-drawing-swatch')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+
+          setDrawingColor(
+            map,
+            button.dataset.color
+          );
+
+          openDrawingPopup(
+            map,
+            anchor,
+            deps
+          );
+
+          await deps.saveAndSync();
+        }
+      );
+    });
+
+  updateDrawingButtons(
+    map
+  );
+
+  showMapPopup(
+    popup,
+    anchor,
+    'drawing'
+  );
 }
 
 

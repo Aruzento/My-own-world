@@ -56,6 +56,19 @@
 }
 
 
+.campaign-map-popup[data-popup-key="drawing"] {
+
+  width:
+    300px;
+
+  padding:
+    14px;
+
+  gap:
+    12px;
+}
+
+
 .campaign-map-popup-title {
 
   color:
@@ -293,6 +306,7 @@
 
 
 .campaign-fog-mode-row,
+.campaign-drawing-tool-row,
 .campaign-fog-fill-row {
 
   display:
@@ -303,6 +317,103 @@
 
   gap:
     8px;
+}
+
+
+.campaign-drawing-tool-row {
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+}
+
+
+.campaign-drawing-tool-btn {
+
+  min-height:
+    54px;
+
+  padding:
+    8px 4px;
+
+  border:
+    1px solid rgba(241,211,142,0.12);
+
+  border-radius:
+    11px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,248,230,0.78);
+
+  cursor:
+    pointer;
+
+  font-size:
+    11px;
+
+  font-weight:
+    780;
+}
+
+
+.campaign-drawing-tool-btn.is-active,
+.campaign-drawing-tool-btn:hover {
+
+  border-color:
+    rgba(241,211,142,0.34);
+
+  background:
+    rgba(241,211,142,0.16);
+
+  color:
+    rgba(255,248,230,0.98);
+}
+
+
+.campaign-drawing-recent {
+
+  display:
+    flex;
+
+  gap:
+    7px;
+
+  flex-wrap:
+    wrap;
+}
+
+
+.campaign-drawing-swatch {
+
+  width:
+    24px;
+
+  height:
+    24px;
+
+  border:
+    2px solid rgba(255,248,230,0.18);
+
+  border-radius:
+    999px;
+
+  background:
+    var(--drawing-swatch);
+
+  box-shadow:
+    0 5px 12px rgba(0,0,0,0.22);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-drawing-swatch:hover {
+
+  border-color:
+    rgba(255,248,230,0.8);
 }
 
 

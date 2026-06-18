@@ -69,6 +69,83 @@ test(
 
 
 test(
+  'CampaignMapModel stores fog dirty-region metadata',
+  () => {
+
+    const model =
+      new CampaignMapModel({
+        fog: {
+          dirtyRegionCount: 3,
+          lastDirtyRegion: {
+            x: 10.4,
+            y: 20.6,
+            width: 30,
+            height: 40
+          }
+        }
+      });
+
+    assert.equal(
+      model.fog.dirtyRegionCount,
+      3
+    );
+
+    assert.deepEqual(
+      model.fog.lastDirtyRegion,
+      {
+        x: 10.4,
+        y: 20.6,
+        width: 30,
+        height: 40
+      }
+    );
+
+    const stage = {
+      dataset: {},
+      querySelectorAll() {
+        return [];
+      }
+    };
+
+    const map = {
+      querySelector(selector) {
+        return selector === '.campaign-map-stage'
+          ? stage
+          : null;
+      },
+      querySelectorAll() {
+        return [];
+      }
+    };
+
+    model.commitToElement(
+      map
+    );
+
+    const reloaded =
+      CampaignMapModel.fromElement(
+        map
+      );
+
+    assert.equal(
+      reloaded.fog.dirtyRegionCount,
+      3
+    );
+
+    assert.deepEqual(
+      reloaded.fog.lastDirtyRegion,
+      {
+        x: 10.4,
+        y: 20.6,
+        width: 30,
+        height: 40
+      }
+    );
+  }
+);
+
+
+test(
   'CampaignMapModel сохраняет квадратную кисть и locked fog zones',
   () => {
 

@@ -327,6 +327,376 @@ test(
 
 
 test(
+  'campaign-map-real-pointer-fog-paint-stays-inside-budget',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      () => {
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML = `
+          <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+            <div class="campaign-map-topbar" contenteditable="false">
+              <h1 class="campaign-map-title singleline-field" contenteditable="true">Pointer Fog Stress</h1>
+            </div>
+
+            <div class="campaign-map-stage" data-tool="draw" data-grid="true" data-grid-size="48" data-fog-mode="draw" data-brush-shape="square" data-brush-size="72" data-fog-image="" contenteditable="false" style="width: 960px; height: 640px;">
+              <div class="campaign-map-viewport">
+                <div class="campaign-map-background"></div>
+                <div class="campaign-map-object-layer"></div>
+                <canvas class="campaign-map-fog-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const stage =
+          editor.querySelector('.campaign-map-stage');
+
+        const canvas =
+          editor.querySelector('.campaign-map-fog-canvas');
+
+        canvas.width =
+          2600;
+
+        canvas.height =
+          2500;
+
+        stage.dataset.fogDirtyRegionCount =
+          '0';
+
+        stage.dataset.fogVersion =
+          '0';
+      }
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            assertCampaignMapPerformanceBudget,
+            createCampaignMapPerformanceReport
+          } = await import('/js/editor/campaignMapPerformance.js');
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const stage =
+            map.querySelector('.campaign-map-stage');
+
+          const canvas =
+            map.querySelector('.campaign-map-fog-canvas');
+
+          const rect =
+            stage.getBoundingClientRect();
+
+          const startX =
+            rect.left + 80;
+
+          const startY =
+            rect.top + 90;
+
+          const dispatchPointer =
+            (
+              target,
+              type,
+              x,
+              y
+            ) => {
+
+              target.dispatchEvent(
+                new PointerEvent(
+                  type,
+                  {
+                    bubbles:
+                      true,
+                    cancelable:
+                      true,
+                    pointerId:
+                      1,
+                    pointerType:
+                      'mouse',
+                    button:
+                      type === 'pointermove'
+                        ? -1
+                        : 0,
+                    buttons:
+                      type === 'pointerup'
+                        ? 0
+                        : 1,
+                    clientX:
+                      x,
+                    clientY:
+                      y
+                  }
+                )
+              );
+            };
+
+          const startedAt =
+            performance.now();
+
+          dispatchPointer(
+            stage,
+            'pointerdown',
+            startX,
+            startY
+          );
+
+          for (let index = 0; index < 90; index += 1) {
+
+            dispatchPointer(
+              document,
+              'pointermove',
+              startX + (index % 30) * 24,
+              startY + Math.floor(index / 30) * 80
+            );
+          }
+
+          dispatchPointer(
+            document,
+            'pointerup',
+            startX + 29 * 24,
+            startY + 2 * 80
+          );
+
+          const fogDrawTimeMs =
+            performance.now() - startedAt;
+
+          const dirtyFogRegionCount =
+            Number(stage.dataset.fogDirtyRegionCount || 0);
+
+          const report =
+            createCampaignMapPerformanceReport({
+              scenarioId:
+                'fogPointerPaintStress',
+              modelData: {
+                fog: {
+                  canvasPixels:
+                    canvas.width * canvas.height,
+                  dirtyRegionCount:
+                    dirtyFogRegionCount
+                }
+              },
+              measurements: {
+                fogDrawTimeMs:
+                  fogDrawTimeMs,
+                fogCanvasPixels:
+                  canvas.width * canvas.height,
+                dirtyFogRegionCount
+              }
+            });
+
+          assertCampaignMapPerformanceBudget(
+            report
+          );
+
+          return {
+            report,
+            fogVersion:
+              Number(stage.dataset.fogVersion || 0),
+            dirtyFogRegionCount
+          };
+        }
+      );
+
+    expect(
+      result.report.ok
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.fogVersion
+    ).toBeGreaterThanOrEqual(
+      80
+    );
+
+    expect(
+      result.dirtyFogRegionCount
+    ).toBeGreaterThanOrEqual(
+      80
+    );
+  }
+);
+
+
+test(
+  'campaign-map-large-map-stress-model-renders-within-budgets',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            CampaignMapModel
+          } = await import('/js/editor/campaignMapModel.js');
+
+          const {
+            createMapShapeElement,
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            assertCampaignMapPerformanceBudget,
+            createCampaignMapPerformanceReport,
+            createCampaignMapStressModelData
+          } = await import('/js/editor/campaignMapPerformance.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-topbar" contenteditable="false">
+                <h1 class="campaign-map-title singleline-field" contenteditable="true">Large Stress Map</h1>
+              </div>
+
+              <div class="campaign-map-stage" data-grid="true" data-grid-size="48" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            editor.querySelector('.campaign-map-document');
+
+          const layer =
+            map.querySelector('.campaign-map-object-layer');
+
+          const stressData =
+            createCampaignMapStressModelData({
+              tokenCount:
+                260,
+              shapeCount:
+                120,
+              layerCount:
+                10,
+              dirtyFogRegionCount:
+                180
+            });
+
+          const model =
+            new CampaignMapModel(
+              stressData
+            );
+
+          const startedAt =
+            performance.now();
+
+          for (const token of model.tokens) {
+
+            layer.appendChild(
+              createMapTokenElement(
+                token,
+                model
+              )
+            );
+          }
+
+          for (const shape of model.shapes) {
+
+            layer.appendChild(
+              createMapShapeElement(
+                shape,
+                model
+              )
+            );
+          }
+
+          const fogCanvas =
+            map.querySelector('.campaign-map-fog-canvas');
+
+          fogCanvas.width =
+            2600;
+
+          fogCanvas.height =
+            2500;
+
+          map.querySelector('.campaign-map-stage').dataset.fogMode =
+            model.fog.mode;
+
+          const renderTimeMs =
+            performance.now() - startedAt;
+
+          const report =
+            createCampaignMapPerformanceReport({
+              scenarioId:
+                'largeMapStress',
+              modelData:
+                model.toJSON(),
+              measurements: {
+                renderTimeMs,
+                syncTimeMs:
+                  12,
+                fogCanvasPixels:
+                  fogCanvas.width * fogCanvas.height,
+                dirtyFogRegionCount:
+                  180
+              }
+            });
+
+          assertCampaignMapPerformanceBudget(
+            report
+          );
+
+          return {
+            report,
+            domCounts: {
+              tokens:
+                map.querySelectorAll('.campaign-map-token').length,
+              shapes:
+                map.querySelectorAll('.campaign-map-shape').length
+            }
+          };
+        }
+      );
+
+    expect(
+      result.report.ok
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.domCounts
+    ).toEqual({
+      tokens: 260,
+      shapes: 120
+    });
+
+    expect(
+      result.report.snapshot.layerCount
+    ).toBe(
+      10
+    );
+
+    expect(
+      result.report.snapshot.dirtyFogRegionCount
+    ).toBe(
+      180
+    );
+  }
+);
+
+
+test(
   'campaign-map-performance-diagnostics-render-only-in-debug-mode',
   async ({ page }) => {
 

@@ -557,12 +557,8 @@ function moveShapeToPointer(
       );
     });
 
-  scheduleLivePresentationSync(
-    {
-      map: draggedShape.map,
-      itemType: 'shape',
-      itemId: draggedShape.shape.dataset.shapeId
-    }
+  scheduleMovedSelectionPresentationSync(
+    draggedShape
   );
 }
 
@@ -701,4 +697,57 @@ function getWorldDeltaFromPointer(
     x: (event.clientX - action.startX) / view.zoom,
     y: (event.clientY - action.startY) / view.zoom
   };
+}
+
+
+function scheduleMovedSelectionPresentationSync(
+  action
+) {
+
+  const items =
+    new Map();
+
+  action.selectedShapes
+    .forEach(item => {
+
+      if (item.shape?.dataset.shapeId) {
+
+        items.set(
+          `shape:${item.shape.dataset.shapeId}`,
+          {
+            itemType:
+              'shape',
+            itemId:
+              item.shape.dataset.shapeId
+          }
+        );
+      }
+    });
+
+  action.selectedTokens
+    .forEach(item => {
+
+      if (item.token?.dataset.tokenId) {
+
+        items.set(
+          `token:${item.token.dataset.tokenId}`,
+          {
+            itemType:
+              'token',
+            itemId:
+              item.token.dataset.tokenId
+          }
+        );
+      }
+    });
+
+  items
+    .forEach(item => {
+
+      scheduleLivePresentationSync({
+        map:
+          action.map,
+        ...item
+      });
+    });
 }

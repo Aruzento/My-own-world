@@ -667,6 +667,21 @@ function createShape(
   element.style.zIndex =
     String(shape.zIndex || 0);
 
+  element.style.setProperty(
+    '--campaign-shape-stroke',
+    shape.strokeColor || 'rgba(255,244,214,0.92)'
+  );
+
+  element.style.setProperty(
+    '--campaign-shape-fill',
+    shape.fillColor || 'rgba(241,211,142,0.15)'
+  );
+
+  element.style.setProperty(
+    '--campaign-shape-stroke-width',
+    `${Number(shape.strokeWidth || 3)}px`
+  );
+
   element.innerHTML =
     getShapeHTML(
       shape,
@@ -681,6 +696,27 @@ function getShapeHTML(
   shape,
   gridSize
 ) {
+
+  if (
+    shape.type === 'freehand' ||
+    shape.type === 'line'
+  ) {
+
+    return `
+      <svg class="campaign-map-shape-svg campaign-map-drawing-svg" viewBox="0 0 ${Math.max(1, Number(shape.width || 1))} ${Math.max(1, Number(shape.height || 1))}" preserveAspectRatio="none">
+        <polyline points="${escapeAttribute(normalizeLinePoints(shape.points))}"></polyline>
+      </svg>
+    `;
+  }
+
+  if (shape.type === 'fill') {
+
+    return `
+      <svg class="campaign-map-shape-svg campaign-map-drawing-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <rect x="0" y="0" width="100" height="100"></rect>
+      </svg>
+    `;
+  }
 
   if (shape.type === 'circle') {
 
@@ -710,6 +746,31 @@ function getShapeHTML(
     <span class="campaign-map-shape-label is-top">${getFeetLabel(shape.width, gridSize)}</span>
     <span class="campaign-map-shape-label is-right">${getFeetLabel(shape.height, gridSize)}</span>
   `;
+}
+
+
+function normalizeLinePoints(
+  value
+) {
+
+  const points =
+    String(value || '')
+      .trim()
+      .split(/\s+/)
+      .map(point => {
+
+        const [x, y] =
+          point.split(',').map(Number);
+
+        return Number.isFinite(x) && Number.isFinite(y)
+          ? `${x},${y}`
+          : '';
+      })
+      .filter(Boolean);
+
+  return points.length >= 2
+    ? points.join(' ')
+    : '0,0 1,1';
 }
 
 

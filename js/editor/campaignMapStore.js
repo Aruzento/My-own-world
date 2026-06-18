@@ -285,7 +285,8 @@ export class CampaignMapStore {
 
 
   updateFog(
-    patch
+    patch,
+    options = {}
   ) {
 
     const fog =
@@ -294,7 +295,11 @@ export class CampaignMapStore {
       );
 
     this.markDirty();
-    this.commitToDOM();
+
+    if (options.commit !== false) {
+
+      this.commitToDOM();
+    }
 
     return fog;
   }

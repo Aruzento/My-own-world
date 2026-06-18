@@ -116,6 +116,24 @@ export function applyShapeRecordToElement(
     shapeRecord.points
   );
 
+  syncOptionalDatasetValue(
+    shapeElement,
+    'strokeColor',
+    shapeRecord.strokeColor
+  );
+
+  syncOptionalDatasetValue(
+    shapeElement,
+    'fillColor',
+    shapeRecord.fillColor
+  );
+
+  syncOptionalDatasetValue(
+    shapeElement,
+    'strokeWidth',
+    shapeRecord.strokeWidth
+  );
+
   shapeElement.dataset.layerId =
     shapeRecord.layerId;
 

@@ -55,6 +55,13 @@ owner_zone: "architecture"
 - дорогое сохранение fog image;
 - рассинхрон презентации после смены background.
 
+Текущая защита:
+
+- `CampaignMapModel.fog` хранит `dirtyRegionCount` и `lastDirtyRegion` как foundation для patch-oriented save/sync;
+- полный `fogImage` пока остается главным persistent-источником, чтобы не терять данные при reload;
+- мазки тумана обновляют store с `commit: false`, чтобы не переписывать весь DOM на каждый pointer move;
+- locked fog zones блокируют stroke, если область кисти пересекает защищенную зону.
+
 ### Presentation Sync
 
 Презентация должна совпадать с мастер-картой, но full-sync дорогой.
@@ -102,6 +109,16 @@ Zoom и pan меняют transform сцены.
 
 Цель: первый захват и движение токена должны оставаться отзывчивыми.
 
+### `large-map-stress`
+
+- 260+ токенов;
+- 120+ фигур;
+- 10+ слоев;
+- большой fog canvas;
+- 180+ dirty fog regions.
+
+Цель: большая карта должна собираться из `CampaignMapModel`, сохранять измеримые counts по токенам, фигурам, слоям и fog operations, а regression должен падать, если сцена снова выходит за согласованные P1-бюджеты.
+
 ### `fog-paint-large`
 
 - большой background;
@@ -110,6 +127,16 @@ Zoom и pan меняют transform сцены.
 - активное рисование и стирание.
 
 Цель: кисть не должна отставать от курсора.
+
+### `fog-pointer-paint-stress`
+
+- карта открыта в DOM;
+- активен инструмент тумана;
+- pointer route проходит через `campaignMapPointerController`;
+- `pointerdown` идет по stage, `pointermove` и `pointerup` идут через document;
+- проверяются `fogVersion` и `dirtyFogRegionCount`.
+
+Цель: ловить регрессы реального маршрута рисования тумана, а не только скорость прямого canvas API.
 
 ### `presentation-live-sync`
 
@@ -137,6 +164,7 @@ Zoom и pan меняют transform сцены.
 - `visibleShapeCount` - число видимых фигур.
 - `hiddenTokenCount` - число скрытых токенов.
 - `hiddenShapeCount` - число скрытых фигур.
+- `layerCount` - количество слоев в модели карты.
 - `backgroundLoadMs` - время загрузки background.
 - `fogDrawTimeMs` - время серии операций рисования тумана.
 - `fogCanvasPixels` - площадь canvas тумана.
@@ -163,7 +191,9 @@ Budgets теперь заданы не только текстом, но и в `
 
 - `smallMapBaseline`;
 - `largeMapDrag`;
+- `largeMapStress`;
 - `fogPaintLarge`;
+- `fogPointerPaintStress`;
 - `presentationLiveSync`;
 - `zoomPanHeavy`.
 

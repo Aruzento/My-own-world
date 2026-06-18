@@ -7,6 +7,7 @@ import {
   CAMPAIGN_MAP_PERFORMANCE_SCENARIOS,
   createCampaignMapPerformanceReport,
   createCampaignMapPerformanceSnapshot,
+  createCampaignMapStressModelData,
   findCampaignMapBudgetWarnings,
   getCampaignMapScenarioBudgets
 } from '../js/editor/campaignMapPerformance.js';
@@ -112,11 +113,22 @@ test(
       CAMPAIGN_MAP_PERFORMANCE_SCENARIOS.fogPaintLarge
     );
 
+    assert.ok(
+      CAMPAIGN_MAP_PERFORMANCE_SCENARIOS.largeMapStress
+    );
+
     assert.equal(
       getCampaignMapScenarioBudgets(
         'fogPaintLarge'
       ).fogDrawTimeMs,
       80
+    );
+
+    assert.equal(
+      getCampaignMapScenarioBudgets(
+        'fogPointerPaintStress'
+      ).dirtyFogRegionCount,
+      220
     );
   }
 );
@@ -150,6 +162,85 @@ test(
         report
       ),
       /fogDrawTimeMs/
+    );
+  }
+);
+
+
+test(
+  'large map stress scenario covers tokens, shapes, layers and fog operations',
+  () => {
+
+    const modelData =
+      createCampaignMapStressModelData({
+        tokenCount:
+          260,
+        shapeCount:
+          120,
+        layerCount:
+          10,
+        dirtyFogRegionCount:
+          180
+      });
+
+    const report =
+      createCampaignMapPerformanceReport({
+        scenarioId:
+          'largeMapStress',
+        modelData,
+        measurements: {
+          renderTimeMs:
+            900,
+          syncTimeMs:
+            20,
+          fogCanvasPixels:
+            6_500_000,
+          dirtyFogRegionCount:
+            180
+        }
+      });
+
+    assert.equal(
+      report.ok,
+      true
+    );
+
+    assert.equal(
+      report.snapshot.visibleTokenCount,
+      260
+    );
+
+    assert.equal(
+      report.snapshot.visibleShapeCount,
+      120
+    );
+
+    assert.equal(
+      report.snapshot.layerCount,
+      10
+    );
+
+    assert.equal(
+      report.snapshot.dirtyFogRegionCount,
+      180
+    );
+
+    const failedReport =
+      createCampaignMapPerformanceReport({
+        scenarioId:
+          'largeMapStress',
+        modelData,
+        measurements: {
+          dirtyFogRegionCount:
+            260
+        }
+      });
+
+    assert.throws(
+      () => assertCampaignMapPerformanceBudget(
+        failedReport
+      ),
+      /dirtyFogRegionCount/
     );
   }
 );

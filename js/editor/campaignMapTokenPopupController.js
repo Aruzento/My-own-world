@@ -15,6 +15,14 @@ import {
 } from './blocks/blockContract.js';
 
 import {
+  DND_SKILL_GROUPS
+} from '../properties/propertySchemas.js';
+
+import {
+  getCampaignMapCharacterState
+} from './campaignMapCharacterBridge.js';
+
+import {
   openPresentationImagePreview
 } from './campaignMapPresentation.js';
 
@@ -351,6 +359,13 @@ function openCreatureTokenActionsPopup(
   `;
 
   popup
+    .querySelector('button[data-action="image"]')
+    ?.insertAdjacentHTML(
+      'afterend',
+      '<button type="button" data-action="skill">Навык / действие</button>'
+    );
+
+  popup
     .querySelectorAll('button[data-action]')
     .forEach(button => {
 
@@ -376,6 +391,15 @@ function openCreatureTokenActionsPopup(
           if (action === 'hp') {
 
             openTokenHpPopup(
+              token,
+              deps
+            );
+            return;
+          }
+
+          if (action === 'skill') {
+
+            openTokenSkillPopup(
               token,
               deps
             );
@@ -423,6 +447,223 @@ function openCreatureTokenActionsPopup(
       fallbackHeight: 170
     }
   );
+}
+
+
+function openTokenSkillPopup(
+  token,
+  deps
+) {
+
+  const page =
+    getTokenPage(
+      token
+    );
+
+  const characterState =
+    getCampaignMapCharacterState(
+      page
+    );
+
+  const skills =
+    getCharacterSkillOptions(
+      characterState
+    );
+
+  const popup =
+    getTokenPopup();
+
+  popup.className =
+    'campaign-token-popup campaign-token-popup-skill hidden';
+
+  popup.innerHTML =
+    getTokenSkillPopupHTML(
+      skills
+    );
+
+  popup
+    .querySelector('.campaign-token-skill-cancel')
+    ?.addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+
+        openCreatureTokenActionsPopup(
+          token,
+          deps
+        );
+      }
+    );
+
+  popup
+    .querySelector('.campaign-token-skill-apply')
+    ?.addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+
+        const selectedKey =
+          popup.querySelector('.campaign-token-skill-select')?.value || '';
+
+        const selected =
+          skills.find(skill =>
+            skill.key === selectedKey
+          );
+
+        if (!selected) {
+
+          openCreatureTokenActionsPopup(
+            token,
+            deps
+          );
+          return;
+        }
+
+        const payload = {
+          skillKey:
+            selected.key,
+          label:
+            selected.label,
+          value:
+            selected.value,
+          range:
+            popup.querySelector('.campaign-token-skill-range')?.value || '',
+          area:
+            popup.querySelector('.campaign-token-skill-area')?.value || '',
+          createdAt:
+            Date.now()
+        };
+
+        token.dataset.lastSkillAction =
+          encodeURIComponent(
+            JSON.stringify(
+              payload
+            )
+          );
+
+        setStatus(
+          `${selected.label}: ${formatSigned(selected.value)}`
+        );
+
+        openCreatureTokenActionsPopup(
+          token,
+          deps
+        );
+      }
+    );
+
+  popup.classList.remove(
+    'hidden'
+  );
+
+  positionPopupNearAnchor(
+    popup,
+    token,
+    {
+      gap: 10,
+      fallbackWidth: 286,
+      fallbackHeight: 260
+    }
+  );
+}
+
+
+function getTokenSkillPopupHTML(
+  skills
+) {
+
+  if (!skills.length) {
+
+    return `
+      <div class="campaign-token-skill-title">РќР°РІС‹РєРё РЅРµ РЅР°Р№РґРµРЅС‹</div>
+      <div class="campaign-token-skill-hint">Р”Р»СЏ СЌС‚РѕР№ РєР°СЂС‚РѕС‡РєРё РЅРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР±СЂР°С‚СЊ СЂР°СЃС‡РµС‚С‹ CharacterModel.</div>
+      <div class="campaign-token-skill-actions">
+        <button class="campaign-token-skill-cancel" type="button">РќР°Р·Р°Рґ</button>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="campaign-token-skill-title">РќР°РІС‹Рє / РґРµР№СЃС‚РІРёРµ</div>
+    <label class="campaign-token-skill-field">
+      <span>РќР°РІС‹Рє</span>
+      <select class="campaign-token-skill-select">
+        ${skills.map(skill => `
+          <option value="${escapeAttribute(skill.key)}">
+            ${escapeHtml(skill.label)} ${formatSigned(skill.value)}
+          </option>
+        `).join('')}
+      </select>
+    </label>
+    <div class="campaign-token-skill-row">
+      <label class="campaign-token-skill-field">
+        <span>Р”РёСЃС‚Р°РЅС†РёСЏ</span>
+        <input class="campaign-token-skill-range" type="text" value="5 ft">
+      </label>
+      <label class="campaign-token-skill-field">
+        <span>Р—РѕРЅР°</span>
+        <select class="campaign-token-skill-area">
+          <option value="single">Р¦РµР»СЊ</option>
+          <option value="line">Р›РёРЅРёСЏ</option>
+          <option value="cone">РљРѕРЅСѓСЃ</option>
+          <option value="circle">РљСЂСѓРі</option>
+        </select>
+      </label>
+    </div>
+    <div class="campaign-token-skill-actions">
+      <button class="campaign-token-skill-cancel" type="button">РќР°Р·Р°Рґ</button>
+      <button class="campaign-token-skill-apply" type="button">РџСЂРёРјРµРЅРёС‚СЊ</button>
+    </div>
+  `;
+}
+
+
+function getCharacterSkillOptions(
+  characterState
+) {
+
+  const checks =
+    characterState
+      ?.model
+      ?.calculations
+      ?.checks
+      ?.byKey || {};
+
+  return DND_SKILL_GROUPS
+    .flatMap(group => group.items || [])
+    .map(skill => {
+
+      const check =
+        checks[skill.name] || {};
+
+      return {
+        key:
+          skill.name,
+        label:
+          skill.label,
+        value:
+          Number.isFinite(
+            Number(check.value)
+          )
+            ? Number(check.value)
+            : 0
+      };
+    });
+}
+
+
+function formatSigned(
+  value
+) {
+
+  const number =
+    Number(value) || 0;
+
+  return number >= 0
+    ? `+${number}`
+    : String(number);
 }
 
 
@@ -746,4 +987,14 @@ function escapeHtml(
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  );
 }

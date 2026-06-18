@@ -148,6 +148,36 @@ function applyShapeRecord(
     delete targetItem.dataset.points;
   }
 
+  if (record.strokeColor) {
+
+    targetItem.dataset.strokeColor =
+      record.strokeColor;
+
+  } else {
+
+    delete targetItem.dataset.strokeColor;
+  }
+
+  if (record.fillColor) {
+
+    targetItem.dataset.fillColor =
+      record.fillColor;
+
+  } else {
+
+    delete targetItem.dataset.fillColor;
+  }
+
+  if (record.strokeWidth) {
+
+    targetItem.dataset.strokeWidth =
+      String(record.strokeWidth);
+
+  } else {
+
+    delete targetItem.dataset.strokeWidth;
+  }
+
   applySharedPresentationDataset(
     targetItem,
     record

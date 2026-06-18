@@ -8,6 +8,7 @@ export const CAMPAIGN_MAP_PERFORMANCE_BUDGETS =
     backgroundLoadMs: 1000,
     visibleTokenCount: 200,
     visibleShapeCount: 100,
+    layerCount: 8,
     fogCanvasPixels: 8_000_000,
     dirtyFogRegionCount: 120
   });
@@ -31,12 +32,32 @@ export const CAMPAIGN_MAP_PERFORMANCE_SCENARIOS =
         visibleShapeCount: 120
       }
     },
+    largeMapStress: {
+      id: 'large-map-stress',
+      budgets: {
+        renderTimeMs: 1500,
+        syncTimeMs: 32,
+        visibleTokenCount: 320,
+        visibleShapeCount: 180,
+        layerCount: 12,
+        fogCanvasPixels: 8_000_000,
+        dirtyFogRegionCount: 240
+      }
+    },
     fogPaintLarge: {
       id: 'fog-paint-large',
       budgets: {
         fogDrawTimeMs: 80,
         fogCanvasPixels: 8_000_000,
         dirtyFogRegionCount: 160
+      }
+    },
+    fogPointerPaintStress: {
+      id: 'fog-pointer-paint-stress',
+      budgets: {
+        fogDrawTimeMs: 2000,
+        fogCanvasPixels: 8_000_000,
+        dirtyFogRegionCount: 220
       }
     },
     presentationLiveSync: {
@@ -93,6 +114,13 @@ export function createCampaignMapPerformanceSnapshot(
   const fog =
     modelData.fog || {};
 
+  const layers =
+    Array.isArray(
+      modelData.layers
+    )
+      ? modelData.layers
+      : [];
+
   return {
     renderTimeMs:
       normalizeMetric(
@@ -126,6 +154,8 @@ export function createCampaignMapPerformanceSnapshot(
       tokens.filter(isHiddenMapItem).length,
     hiddenShapeCount:
       shapes.filter(isHiddenMapItem).length,
+    layerCount:
+      layers.length,
     fogCanvasPixels:
       normalizeMetric(
         measurements.fogCanvasPixels || fog.canvasPixels
@@ -222,6 +252,268 @@ export function assertCampaignMapPerformanceBudget(
   throw new Error(
     `Campaign map performance budget exceeded (${report?.scenarioId || 'custom'}): ${summary}`
   );
+}
+
+
+export function createCampaignMapStressModelData({
+  tokenCount = 260,
+  shapeCount = 120,
+  layerCount = 10,
+  dirtyFogRegionCount = 180,
+  fogCanvasPixels = 6_500_000
+} = {}) {
+
+  const layers =
+    Array.from(
+      {
+        length:
+          Math.max(
+            1,
+            layerCount
+          )
+      },
+      (_, index) =>
+        createStressLayer(
+          index
+        )
+    );
+
+  const tokens =
+    Array.from(
+      {
+        length:
+          Math.max(
+            0,
+            tokenCount
+          )
+      },
+      (_, index) => ({
+        tokenId:
+          `stress-token-${index}`,
+        pageId:
+          `stress-page-${index}`,
+        type:
+          index % 5 === 0
+            ? 'object'
+            : 'creature',
+        name:
+          `Stress Token ${index + 1}`,
+        x:
+          40 + (index % 26) * 44,
+        y:
+          56 + Math.floor(index / 26) * 44,
+        size:
+          index % 7 === 0
+            ? 2
+            : 1,
+        rotation:
+          (index % 8) * 45,
+        layerId:
+          layers[index % layers.length]?.layerId,
+        zIndex:
+          20 + index,
+        presentationHidden:
+          false
+      })
+    );
+
+  const shapes =
+    Array.from(
+      {
+        length:
+          Math.max(
+            0,
+            shapeCount
+          )
+      },
+      (_, index) => ({
+        shapeId:
+          `stress-shape-${index}`,
+        type:
+          index % 3 === 0
+            ? 'circle'
+            : index % 3 === 1
+              ? 'square'
+              : 'line',
+        x:
+          120 + (index % 18) * 72,
+        y:
+          520 + Math.floor(index / 18) * 64,
+        width:
+          54 + (index % 4) * 12,
+        height:
+          54 + (index % 3) * 10,
+        color:
+          index % 2 === 0
+            ? '#f59e0b'
+            : '#38bdf8',
+        layerId:
+          layers[(index + 3) % layers.length]?.layerId,
+        zIndex:
+          100 + index,
+        presentationHidden:
+          false
+      })
+    );
+
+  return {
+    title:
+      'Large Stress Map',
+    version:
+      1,
+    grid: {
+      enabled:
+        true,
+      size:
+        48,
+      color:
+        'rgba(255,255,255,0.22)'
+    },
+    view: {
+      zoom:
+        1.1,
+      x:
+        -240,
+      y:
+        -160
+    },
+    fog: {
+      enabled:
+        true,
+      mode:
+        'draw',
+      brushShape:
+        'square',
+      brushSize:
+        96,
+      canvasPixels:
+        fogCanvasPixels,
+      dirtyRegionCount:
+        dirtyFogRegionCount,
+      lockedZones:
+        [
+          {
+            id:
+              'stress-locked-zone-1',
+            x:
+              320,
+            y:
+              260,
+            width:
+              220,
+            height:
+              180,
+            visible:
+              true
+          },
+          {
+            id:
+              'stress-locked-zone-2',
+            x:
+              860,
+            y:
+              620,
+            width:
+              260,
+            height:
+              220,
+            visible:
+              true
+          }
+        ]
+    },
+    layers,
+    tokens,
+    shapes
+  };
+}
+
+
+function createStressLayer(
+  index
+) {
+
+  const defaults =
+    [
+      {
+        layerId:
+          'map-objects',
+        title:
+          'Objects',
+        kind:
+          'object',
+        zIndex:
+          20,
+        visible:
+          true,
+        locked:
+          false
+      },
+      {
+        layerId:
+          'map-creatures',
+        title:
+          'Creatures',
+        kind:
+          'creature',
+        zIndex:
+          40,
+        visible:
+          true,
+        locked:
+          false
+      },
+      {
+        layerId:
+          'map-shapes',
+        title:
+          'Shapes',
+        kind:
+          'shape',
+        zIndex:
+          80,
+        visible:
+          true,
+        locked:
+          false
+      },
+      {
+        layerId:
+          'map-fog',
+        title:
+          'Fog',
+        kind:
+          'fog',
+        zIndex:
+          120,
+        visible:
+          true,
+        locked:
+          true
+      }
+    ];
+
+  if (defaults[index]) {
+
+    return {
+      ...defaults[index]
+    };
+  }
+
+  return {
+    layerId:
+      `stress-layer-${index}`,
+    title:
+      `Stress Layer ${index + 1}`,
+    kind:
+      'custom',
+    zIndex:
+      140 + index * 20,
+    visible:
+      true,
+    locked:
+      false
+  };
 }
 
 

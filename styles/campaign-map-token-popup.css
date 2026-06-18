@@ -52,6 +52,7 @@
 
 .campaign-token-popup-menu,
 .campaign-token-popup-hp,
+.campaign-token-popup-skill,
 .campaign-token-popup-image-preview {
 
   width:
@@ -130,6 +131,136 @@
 
   width:
     250px;
+}
+
+
+.campaign-token-popup-skill {
+
+  width:
+    min(286px, calc(100vw - 28px));
+
+  gap:
+    9px;
+}
+
+
+.campaign-token-skill-title {
+
+  color:
+    rgba(255,248,230,0.94);
+
+  font:
+    800 13px/1.2 system-ui, sans-serif;
+}
+
+
+.campaign-token-skill-hint {
+
+  color:
+    rgba(255,248,230,0.68);
+
+  font:
+    600 12px/1.35 system-ui, sans-serif;
+}
+
+
+.campaign-token-skill-row {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) minmax(0, 1fr);
+
+  gap:
+    8px;
+}
+
+
+.campaign-token-skill-field {
+
+  display:
+    grid;
+
+  gap:
+    5px;
+
+  color:
+    rgba(255,248,230,0.72);
+
+  font:
+    700 11px/1.2 system-ui, sans-serif;
+}
+
+
+.campaign-token-skill-field select,
+.campaign-token-skill-field input {
+
+  width:
+    100%;
+
+  min-height:
+    34px;
+
+  padding:
+    0 10px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,248,230,0.94);
+
+  color-scheme:
+    dark;
+
+  font:
+    700 12px system-ui, sans-serif;
+}
+
+
+.campaign-token-skill-field option {
+
+  background:
+    rgb(28,29,27);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.campaign-token-skill-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    6px;
+}
+
+
+.campaign-token-skill-actions button {
+
+  width:
+    auto;
+
+  min-width:
+    84px;
+
+  padding:
+    0 12px;
+
+  justify-content:
+    center;
 }
 
 

@@ -56,16 +56,17 @@
 
 .campaign-map-shape-svg rect,
 .campaign-map-shape-svg polygon,
-.campaign-map-shape-svg ellipse {
+.campaign-map-shape-svg ellipse,
+.campaign-map-shape-svg polyline {
 
   fill:
-    rgba(241,211,142,0.15);
+    var(--campaign-shape-fill, rgba(241,211,142,0.15));
 
   stroke:
-    rgba(255,244,214,0.92);
+    var(--campaign-shape-stroke, rgba(255,244,214,0.92));
 
   stroke-width:
-    3;
+    var(--campaign-shape-stroke-width, 3px);
 
   vector-effect:
     non-scaling-stroke;
@@ -77,10 +78,24 @@
 
 .campaign-map-shape.is-selected .campaign-map-shape-svg rect,
 .campaign-map-shape.is-selected .campaign-map-shape-svg polygon,
-.campaign-map-shape.is-selected .campaign-map-shape-svg ellipse {
+.campaign-map-shape.is-selected .campaign-map-shape-svg ellipse,
+.campaign-map-shape.is-selected .campaign-map-shape-svg polyline {
 
   stroke:
     rgba(241,95,95,0.95);
+}
+
+
+.campaign-map-drawing-svg polyline {
+
+  fill:
+    none;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
 }
 
 

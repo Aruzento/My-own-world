@@ -37,6 +37,21 @@ export function renderMapShape(
       type
     );
 
+  shape.style.setProperty(
+    '--campaign-shape-stroke',
+    shape.dataset.strokeColor || 'rgba(255,244,214,0.92)'
+  );
+
+  shape.style.setProperty(
+    '--campaign-shape-fill',
+    shape.dataset.fillColor || 'rgba(241,211,142,0.15)'
+  );
+
+  shape.style.setProperty(
+    '--campaign-shape-stroke-width',
+    `${Number(shape.dataset.strokeWidth || 3)}px`
+  );
+
   shape
     .querySelectorAll('.campaign-map-shape-handle')
     .forEach(handle => markRuntime(handle));
@@ -77,6 +92,32 @@ function getShapeInnerHTML(
   shape,
   type
 ) {
+
+  if (
+    type === 'freehand' ||
+    type === 'line'
+  ) {
+
+    const points =
+      normalizeLinePoints(
+        shape.dataset.points
+      );
+
+    return `
+      <svg class="campaign-map-shape-svg campaign-map-drawing-svg" viewBox="0 0 ${Math.max(1, Number(shape.dataset.w || 1))} ${Math.max(1, Number(shape.dataset.h || 1))}" preserveAspectRatio="none">
+        <polyline points="${points}"></polyline>
+      </svg>
+    `;
+  }
+
+  if (type === 'fill') {
+
+    return `
+      <svg class="campaign-map-shape-svg campaign-map-drawing-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <rect x="0" y="0" width="100" height="100"></rect>
+      </svg>
+    `;
+  }
 
   if (type === 'triangle') {
 
@@ -128,4 +169,35 @@ function getShapeInnerHTML(
     <span class="campaign-map-shape-label is-top">${getFeetLabel(Number(shape.dataset.w || DEFAULT_SHAPE_SIZE))}</span>
     <span class="campaign-map-shape-label is-right">${getFeetLabel(Number(shape.dataset.h || DEFAULT_SHAPE_SIZE))}</span>
   `;
+}
+
+
+function normalizeLinePoints(
+  value
+) {
+
+  const points =
+    String(value || '')
+      .trim()
+      .split(/\s+/)
+      .map(point => {
+
+        const [x, y] =
+          point.split(',').map(Number);
+
+        if (
+          !Number.isFinite(x) ||
+          !Number.isFinite(y)
+        ) return '';
+
+        return `${x},${y}`;
+      })
+      .filter(Boolean);
+
+  if (points.length >= 2) {
+
+    return points.join(' ');
+  }
+
+  return '0,0 1,1';
 }

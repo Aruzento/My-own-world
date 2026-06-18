@@ -386,6 +386,393 @@ ${body}
 
 
 test(
+  'campaign-map-drawing-tools-create-fill-and-erase-map-shapes',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            setDrawingColor,
+            setDrawingTool,
+            startCampaignMapDrawing,
+            moveCampaignMapDrawing,
+            finishCampaignMapDrawing
+          } = await import('/js/editor/campaignMapDrawing.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <button class="campaign-drawing-btn" type="button"></button>
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 800px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const stage =
+            map.querySelector('.campaign-map-stage');
+
+          const rect =
+            stage.getBoundingClientRect();
+
+          const pointer =
+            (
+              type,
+              x,
+              y
+            ) => new PointerEvent(
+              type,
+              {
+                clientX:
+                  rect.left + x,
+                clientY:
+                  rect.top + y,
+                pointerId:
+                  11
+              }
+            );
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          setDrawingColor(
+            map,
+            '#aa33cc'
+          );
+
+          setDrawingTool(
+            map,
+            'pencil'
+          );
+
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              120,
+              140
+            ),
+            stage
+          );
+
+          moveCampaignMapDrawing(
+            pointer(
+              'pointermove',
+              190,
+              210
+            )
+          );
+
+          finishCampaignMapDrawing();
+
+          const hasPolylineBeforeErase =
+            Boolean(
+              map.querySelector('.campaign-map-drawing-svg polyline')
+            );
+
+          setDrawingTool(
+            map,
+            'fill'
+          );
+
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              20,
+              20
+            ),
+            stage
+          );
+
+          const beforeErase =
+            store.getModel().shapes.map(shape => ({
+              type:
+                shape.type,
+              color:
+                shape.strokeColor,
+              points:
+                shape.points
+            }));
+
+          setDrawingTool(
+            map,
+            'eraser'
+          );
+
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              150,
+              170
+            ),
+            stage
+          );
+
+          return {
+            beforeErase,
+            afterErase:
+              store.getModel().shapes.map(shape => shape.type),
+            hasPolylineBeforeErase,
+            activeButton:
+              map.querySelector('.campaign-drawing-btn')?.classList.contains('is-active') || false
+          };
+        }
+      );
+
+    expect(
+      result.beforeErase.map(item => item.type)
+    ).toEqual([
+      'freehand',
+      'fill'
+    ]);
+
+    expect(
+      result.beforeErase[0].color
+    ).toBe(
+      '#aa33cc'
+    );
+
+    expect(
+      result.beforeErase[0].points
+    ).toContain(
+      ' '
+    );
+
+    expect(
+      result.afterErase
+    ).toEqual([
+      'fill'
+    ]);
+
+    expect(
+      result.hasPolylineBeforeErase
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.activeButton
+    ).toBe(
+      true
+    );
+  }
+);
+
+
+test(
+  'campaign-map-token-skill-action-uses-character-model-checks',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            openTokenPopup
+          } = await import('/js/editor/campaignMapTokenPopupController.js');
+
+          const pageRecord = {
+            id:
+              'rogue-page',
+            parent:
+              null,
+            order:
+              1,
+            title:
+              'Rogue',
+            type:
+              'creature',
+            template:
+              'card',
+            tags:
+              [
+                'card',
+                'creature'
+              ],
+            aliases:
+              [],
+            content:
+              `---
+id: rogue-page
+parent: null
+order: 1
+tags: [card, creature]
+template: card
+type: creature
+aliases: []
+---
+
+<div class="template-block card-properties-block card-properties-creature" data-block-type="properties" data-card-type="creature">
+  <input data-property-name="level" value="5">
+  <input data-property-name="dex" value="16">
+  <input data-property-name="skillStealth" value="3">
+  <input data-property-name="skillStealthProficient" value="2">
+</div>`,
+            handle:
+              null
+          };
+
+          setPages([
+            pageRecord
+          ]);
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 800px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const tokenRecord =
+            store.addToken({
+              tokenId:
+                'rogue-token',
+              pageId:
+                'rogue-page',
+              type:
+                'creature',
+              name:
+                'Rogue',
+              x:
+                50,
+              y:
+                50
+            });
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              createMapTokenElement(
+                tokenRecord
+              )
+            );
+
+          const token =
+            map.querySelector('[data-token-id="rogue-token"]');
+
+          openTokenPopup(
+            token,
+            {
+              hasActiveTokenInteraction() {
+                return false;
+              },
+              hasActiveShapeInteraction() {
+                return false;
+              },
+              getTokenActionDeps() {
+                return {
+                  async saveAndSync() {}
+                };
+              }
+            }
+          );
+
+          document
+            .querySelector('.campaign-token-popup-more')
+            .click();
+
+          document
+            .querySelector('[data-action="skill"]')
+            .click();
+
+          const select =
+            document.querySelector('.campaign-token-skill-select');
+
+          select.value =
+            'skillStealth';
+
+          document.querySelector('.campaign-token-skill-range').value =
+            '30 ft';
+
+          document.querySelector('.campaign-token-skill-area').value =
+            'cone';
+
+          document
+            .querySelector('.campaign-token-skill-apply')
+            .click();
+
+          return JSON.parse(
+            decodeURIComponent(
+              token.dataset.lastSkillAction
+            )
+          );
+        }
+      );
+
+    expect(
+      result.skillKey
+    ).toBe(
+      'skillStealth'
+    );
+
+    expect(
+      result.value
+    ).toBeGreaterThanOrEqual(
+      6
+    );
+
+    expect(
+      result.range
+    ).toBe(
+      '30 ft'
+    );
+
+    expect(
+      result.area
+    ).toBe(
+      'cone'
+    );
+  }
+);
+
+
+test(
   'campaign-map-layers-control-visibility-and-z-order',
   async ({ page }) => {
 
@@ -513,6 +900,481 @@ test(
       result.savedLayers.find(layer => layer.layerId === 'map-shapes').visible
     ).toBe(
       false
+    );
+  }
+);
+
+
+test(
+  'campaign-map-locked-fog-zones-edit-and-protect-fog-paint',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createFogDrawing,
+            drawFogAtPointer,
+            finishLockedFogZoneEdit,
+            moveLockedFogZoneEdit,
+            renderLockedFogZones
+          } = await import('/js/editor/campaignMapFog.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" data-brush-size="30" contenteditable="false" style="position: relative; width: 900px; height: 700px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const stage =
+            map.querySelector('.campaign-map-stage');
+
+          const stageRect =
+            stage.getBoundingClientRect();
+
+          const pointer =
+            (
+              type,
+              x,
+              y,
+              options = {}
+            ) => new PointerEvent(
+              type,
+              {
+                ...options,
+                clientX: stageRect.left + x,
+                clientY: stageRect.top + y
+              }
+            );
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          store.addLockedFogZone({
+            id: 'lock-1',
+            x: 480,
+            y: 480,
+            width: 100,
+            height: 100
+          });
+
+          renderLockedFogZones(
+            map
+          );
+
+          const zoneElement =
+            map.querySelector('.campaign-fog-locked-zone');
+
+          zoneElement.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                clientX: stageRect.left + 500,
+                clientY: stageRect.top + 500,
+                pointerId: 1
+              }
+            )
+          );
+
+          moveLockedFogZoneEdit(
+            new PointerEvent(
+              'pointermove',
+              {
+                clientX: stageRect.left + 540,
+                clientY: stageRect.top + 530,
+                pointerId: 1
+              }
+            )
+          );
+
+          finishLockedFogZoneEdit();
+
+          const moved =
+            store.getModel().fog.lockedZones[0];
+
+          zoneElement
+            .querySelector('.campaign-fog-locked-zone-resize')
+            .dispatchEvent(
+              new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                  clientX: stageRect.left + 620,
+                  clientY: stageRect.top + 610,
+                  pointerId: 2
+              }
+            )
+            );
+
+          moveLockedFogZoneEdit(
+            new PointerEvent(
+              'pointermove',
+              {
+                clientX: stageRect.left + 660,
+                clientY: stageRect.top + 650,
+                pointerId: 2
+              }
+            )
+          );
+
+          finishLockedFogZoneEdit();
+
+          const resized =
+            store.getModel().fog.lockedZones[0];
+
+          const fogDrawing =
+            createFogDrawing(
+              stage
+            );
+
+          drawFogAtPointer(
+            pointer(
+              'pointermove',
+              resized.x + 20,
+              resized.y + 20
+            ),
+            fogDrawing
+          );
+
+          const countAfterLockedPaint =
+            Number(stage.dataset.fogDirtyRegionCount || 0);
+
+          drawFogAtPointer(
+            pointer(
+              'pointermove',
+              resized.x + resized.width + 100,
+              resized.y + resized.height + 100
+            ),
+            fogDrawing
+          );
+
+          const countAfterOpenPaint =
+            Number(stage.dataset.fogDirtyRegionCount || 0);
+
+          map
+            .querySelector('.campaign-fog-locked-zone')
+            .dispatchEvent(
+              new MouseEvent(
+                'dblclick',
+                {
+                  bubbles: true
+                }
+              )
+            );
+
+          return {
+            moved,
+            resized,
+            countAfterLockedPaint,
+            countAfterOpenPaint,
+            deletedCount:
+              store.getModel().fog.lockedZones.length,
+            savedDirtyRegion:
+              store.getModel().fog.lastDirtyRegion
+          };
+        }
+      );
+
+    expect(
+      result.moved
+    ).toMatchObject({
+      x: 520,
+      y: 510
+    });
+
+    expect(
+      result.resized.width
+    ).toBeGreaterThan(
+      100
+    );
+
+    expect(
+      result.resized.height
+    ).toBeGreaterThan(
+      100
+    );
+
+    expect(
+      result.countAfterLockedPaint
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.countAfterOpenPaint
+    ).toBe(
+      1
+    );
+
+    expect(
+      result.savedDirtyRegion
+    ).toEqual(
+      expect.objectContaining({
+        width: 64,
+        height: 64
+      })
+    );
+
+    expect(
+      result.deletedCount
+    ).toBe(
+      0
+    );
+  }
+);
+
+
+test(
+  'campaign-map-selection-box-selects-and-drags-token-shape-group',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement,
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            finishCampaignMapSelectionBox,
+            moveCampaignMapSelectionBox,
+            startCampaignMapSelectionBox
+          } = await import('/js/editor/campaignMapSelectionBox.js');
+
+          const {
+            finishTokenInteractions,
+            moveTokenInteractions,
+            startTokenDrag
+          } = await import('/js/editor/campaignMapTokenDrag.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 800px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const stage =
+            map.querySelector('.campaign-map-stage');
+
+          const stageRect =
+            stage.getBoundingClientRect();
+
+          const pointer =
+            (
+              type,
+              x,
+              y,
+              options = {}
+            ) => new PointerEvent(
+              type,
+              {
+                ...options,
+                clientX: stageRect.left + x,
+                clientY: stageRect.top + y
+              }
+            );
+
+          const layer =
+            map.querySelector('.campaign-map-object-layer');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const tokenA =
+            store.addToken({
+              tokenId: 'token-a',
+              type: 'creature',
+              name: 'A',
+              x: 30,
+              y: 50
+            });
+
+          const tokenB =
+            store.addToken({
+              tokenId: 'token-b',
+              type: 'creature',
+              name: 'B',
+              x: 32,
+              y: 52
+            });
+
+          const shape =
+            store.addShape({
+              shapeId: 'shape-a',
+              type: 'square',
+              x: 620,
+              y: 620,
+              width: 90,
+              height: 90
+            });
+
+          layer.append(
+            createMapTokenElement(
+              tokenA
+            ),
+            createMapTokenElement(
+              tokenB
+            ),
+            createMapShapeElement(
+              shape
+            )
+          );
+
+          startCampaignMapSelectionBox(
+            pointer(
+              'pointerdown',
+              560,
+              560
+            ),
+            stage
+          );
+
+          moveCampaignMapSelectionBox(
+            pointer(
+              'pointermove',
+              760,
+              720
+            )
+          );
+
+          finishCampaignMapSelectionBox(
+            pointer(
+              'pointerup',
+              760,
+              720
+            )
+          );
+
+          const selectedTokens =
+            [...map.querySelectorAll('.campaign-map-token.is-selected')]
+              .map(token => token.dataset.tokenId);
+
+          const selectedShapes =
+            [...map.querySelectorAll('.campaign-map-shape.is-selected')]
+              .map(nextShape => nextShape.dataset.shapeId);
+
+          const deps = {
+            clearTokenPopupTimer() {},
+            closeTokenPopup() {},
+            selectMapToken(token) {
+              token.classList.add('is-selected');
+            },
+            setMapInteractionQuality() {},
+            async saveAndSync() {}
+          };
+
+          startTokenDrag(
+            pointer(
+              'pointerdown',
+              600,
+              600,
+              {
+                pointerId: 3
+              }
+            ),
+            map.querySelector('[data-token-id="token-a"]'),
+            deps
+          );
+
+          moveTokenInteractions(
+            pointer(
+              'pointermove',
+              720,
+              750,
+              {
+                pointerId: 3
+              }
+            )
+          );
+
+          await finishTokenInteractions(
+            deps
+          );
+
+          return {
+            selectedTokens,
+            selectedShapes,
+            tokenA:
+              store.getModel().getToken('token-a'),
+            tokenB:
+              store.getModel().getToken('token-b'),
+            shape:
+              store.getModel().getShape('shape-a')
+          };
+        }
+      );
+
+    expect(
+      result.selectedTokens.sort()
+    ).toEqual([
+      'token-a',
+      'token-b'
+    ]);
+
+    expect(
+      result.selectedShapes
+    ).toEqual([
+      'shape-a'
+    ]);
+
+    expect(
+      result.tokenA.x
+    ).toBeGreaterThan(
+      30
+    );
+
+    expect(
+      result.tokenB.x
+    ).toBeGreaterThan(
+      32
+    );
+
+    expect(
+      result.shape.x
+    ).toBeGreaterThan(
+      620
     );
   }
 );

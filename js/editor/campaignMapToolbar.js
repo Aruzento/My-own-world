@@ -28,6 +28,7 @@ export function getMapControlsHTML() {
 
     <div class="campaign-map-control-group">
       <button class="campaign-shapes-btn" type="button" title="Фигуры">Фигуры</button>
+      <button class="campaign-drawing-btn" type="button" title="Рисование">Рисование</button>
       <button class="campaign-layers-btn" type="button" title="Слои">Слои</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
       <button class="campaign-initiative-btn" type="button" title="Инициатива">Иниц.</button>
@@ -121,6 +122,48 @@ export function getGridPopupHTML(
 }
 
 
+export function getDrawingPopupHTML(
+  stage
+) {
+
+  const color =
+    stage?.dataset.drawingColor || '#f1d38e';
+
+  const tool =
+    stage?.dataset.drawingTool || 'pencil';
+
+  const recent =
+    readRecentDrawingColors(
+      stage
+    );
+
+  return `
+    <div class="campaign-map-popup-title">Рисование</div>
+    <div class="campaign-drawing-tool-row">
+      ${getDrawingToolButton('pencil', 'Карандаш', tool)}
+      ${getDrawingToolButton('pen', 'Перо', tool)}
+      ${getDrawingToolButton('eraser', 'Ластик', tool)}
+      ${getDrawingToolButton('fill', 'Заливка', tool)}
+    </div>
+    <label class="campaign-map-color-label">
+      <span>Цвет</span>
+      <input class="campaign-drawing-color" type="color" value="${escapeAttribute(color)}">
+    </label>
+    <div class="campaign-drawing-recent" aria-label="Последние цвета">
+      ${recent.map(item => `
+        <button
+          class="campaign-drawing-swatch"
+          type="button"
+          data-color="${escapeAttribute(item)}"
+          style="--drawing-swatch:${escapeAttribute(item)}"
+          title="${escapeAttribute(item)}"
+        ></button>
+      `).join('')}
+    </div>
+  `;
+}
+
+
 export function getFogPopupHTML(
   stage
 ) {
@@ -151,6 +194,84 @@ export function getFogPopupHTML(
     </div>
     <button class="campaign-fog-lock-zone-btn campaign-map-popup-option" type="button">Добавить запретную зону</button>
   `;
+}
+
+
+function getDrawingToolButton(
+  value,
+  label,
+  activeTool
+) {
+
+  return `
+    <button
+      class="campaign-drawing-tool-btn ${activeTool === value ? 'is-active' : ''}"
+      type="button"
+      data-drawing-tool="${escapeAttribute(value)}"
+    >
+      ${escapeHTML(label)}
+    </button>
+  `;
+}
+
+
+function readRecentDrawingColors(
+  stage
+) {
+
+  const current =
+    stage?.dataset.drawingColor || '#f1d38e';
+
+  try {
+
+    const parsed =
+      JSON.parse(
+        decodeURIComponent(
+          stage?.dataset.drawingRecentColors || ''
+        )
+      );
+
+    if (Array.isArray(parsed)) {
+
+      return [
+        current,
+        ...parsed
+      ]
+        .filter(isHexColor)
+        .filter((item, index, list) =>
+          list.indexOf(item) === index
+        )
+        .slice(0, 6);
+    }
+
+  } catch {
+
+    // Empty or legacy data just falls back to the default palette.
+  }
+
+  return [
+    current,
+    '#f1d38e',
+    '#d84a4a',
+    '#7db6ff',
+    '#74c69d',
+    '#f7f7f2'
+  ]
+    .filter(isHexColor)
+    .filter((item, index, list) =>
+      list.indexOf(item) === index
+    )
+    .slice(0, 6);
+}
+
+
+function isHexColor(
+  value
+) {
+
+  return /^#[0-9a-f]{6}$/i.test(
+    String(value || '')
+  );
 }
 
 

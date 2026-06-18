@@ -41,6 +41,13 @@ import {
   startCampaignMapSelectionBox
 } from './campaignMapSelectionBox.js';
 
+import {
+  finishCampaignMapDrawing,
+  isDrawingTool,
+  moveCampaignMapDrawing,
+  startCampaignMapDrawing
+} from './campaignMapDrawing.js';
+
 
 // Pointer controller — единый маршрутизатор мыши/пера для карты.
 // Он выбирает сценарий, а реальные drag/fog/pan операции делегирует модулям.
@@ -155,6 +162,18 @@ export function createCampaignMapPointerController(
       const stage =
         shape.closest('.campaign-map-stage');
 
+      if (
+        isDrawingTool(stage)
+      ) {
+
+        startCampaignMapDrawing(
+          event,
+          stage
+        );
+
+        return;
+      }
+
       if (isFogTool(stage)) {
 
         startFogDraw(
@@ -187,6 +206,18 @@ export function createCampaignMapPointerController(
       const stage =
         token.closest('.campaign-map-stage');
 
+      if (
+        isDrawingTool(stage)
+      ) {
+
+        startCampaignMapDrawing(
+          event,
+          stage
+        );
+
+        return;
+      }
+
       if (isFogTool(stage)) {
 
         startFogDraw(
@@ -218,6 +249,20 @@ export function createCampaignMapPointerController(
       !targetStage ||
       event.button !== 0
     ) return;
+
+    if (
+      isDrawingTool(
+        targetStage
+      )
+    ) {
+
+      startCampaignMapDrawing(
+        event,
+        targetStage
+      );
+
+      return;
+    }
 
     if (
       targetStage.dataset.tool === 'pan'
@@ -460,6 +505,10 @@ export function createCampaignMapPointerController(
       );
     }
 
+    moveCampaignMapDrawing(
+      event
+    );
+
     if (deps.hasActiveMapPan()) {
 
       deps.moveMapPan(
@@ -497,6 +546,14 @@ export function createCampaignMapPointerController(
         null;
 
       flushLiveFogPresentationSync();
+
+      await deps.saveAndSync();
+    }
+
+    const drawingMap =
+      finishCampaignMapDrawing();
+
+    if (drawingMap) {
 
       await deps.saveAndSync();
     }

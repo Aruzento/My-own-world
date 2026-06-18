@@ -115,6 +115,10 @@ export class CampaignMapModel {
         mode: stage?.dataset.fogMode || 'draw',
         brushSize: stage?.dataset.brushSize || '',
         brushShape: stage?.dataset.brushShape || '',
+        dirtyRegionCount: stage?.dataset.fogDirtyRegionCount || 0,
+        lastDirtyRegion: readFogDirtyRegion(
+          stage
+        ),
         lockedZones: readFogLockedZones(
           stage
         )
@@ -203,6 +207,25 @@ export class CampaignMapModel {
           this.fog.lockedZones
         )
       );
+
+    stage.dataset.fogDirtyRegionCount =
+      String(
+        this.fog.dirtyRegionCount || 0
+      );
+
+    if (this.fog.lastDirtyRegion) {
+
+      stage.dataset.fogDirtyRegion =
+        encodeURIComponent(
+          JSON.stringify(
+            this.fog.lastDirtyRegion
+          )
+        );
+
+    } else {
+
+      delete stage.dataset.fogDirtyRegion;
+    }
 
     stage.dataset.initiativeState =
       encodeURIComponent(
@@ -657,6 +680,9 @@ function readShapeElement(
     width: shape.dataset.w,
     height: shape.dataset.h,
     points: shape.dataset.points || '',
+    strokeColor: shape.dataset.strokeColor || '',
+    fillColor: shape.dataset.fillColor || '',
+    strokeWidth: shape.dataset.strokeWidth || '',
     layerId: shape.dataset.layerId || '',
     zIndex: shape.dataset.zIndex,
     presentationHidden: shape.dataset.presentationHidden === 'true'
@@ -776,6 +802,30 @@ function readFogLockedZones(
 }
 
 
+function readFogDirtyRegion(
+  stage
+) {
+
+  const raw =
+    stage?.dataset.fogDirtyRegion || '';
+
+  if (!raw) return null;
+
+  try {
+
+    return JSON.parse(
+      decodeURIComponent(
+        raw
+      )
+    );
+
+  } catch {
+
+    return null;
+  }
+}
+
+
 function normalizeGrid(
   grid = {}
 ) {
@@ -828,6 +878,15 @@ function normalizeFog(
     brushShape: fog.brushShape === 'square'
       ? 'square'
       : 'circle',
+    dirtyRegionCount: clampNumber(
+      fog.dirtyRegionCount,
+      0,
+      Number.MAX_SAFE_INTEGER,
+      0
+    ),
+    lastDirtyRegion: normalizeDirtyFogRegion(
+      fog.lastDirtyRegion
+    ),
     lockedZones: normalizeLockedFogZones(
       fog.lockedZones
     ),
@@ -837,6 +896,49 @@ function normalizeFog(
       600,
       DEFAULT_BRUSH_SIZE
     )
+  };
+}
+
+
+function normalizeDirtyFogRegion(
+  region
+) {
+
+  if (!region || typeof region !== 'object') return null;
+
+  const width =
+    clampNumber(
+      region.width,
+      0,
+      WORLD_WIDTH,
+      0
+    );
+
+  const height =
+    clampNumber(
+      region.height,
+      0,
+      WORLD_HEIGHT,
+      0
+    );
+
+  if (!width || !height) return null;
+
+  return {
+    x: clampNumber(
+      region.x,
+      0,
+      WORLD_WIDTH,
+      0
+    ),
+    y: clampNumber(
+      region.y,
+      0,
+      WORLD_HEIGHT,
+      0
+    ),
+    width,
+    height
   };
 }
 
@@ -955,7 +1057,7 @@ function normalizeShape(
 
   return {
     shapeId: String(shape.shapeId || ''),
-    type: ['square', 'circle', 'triangle'].includes(shape.type)
+    type: ['square', 'circle', 'triangle', 'freehand', 'line', 'fill'].includes(shape.type)
       ? shape.type
       : 'square',
     x: clampNumber(shape.x, 0, WORLD_WIDTH, 0),
@@ -963,6 +1065,21 @@ function normalizeShape(
     width: clampNumber(shape.width, 1, WORLD_WIDTH, DEFAULT_GRID_SIZE),
     height: clampNumber(shape.height, 1, WORLD_HEIGHT, DEFAULT_GRID_SIZE),
     points: String(shape.points || ''),
+    strokeColor:
+      isHexColor(shape.strokeColor)
+        ? shape.strokeColor
+        : '',
+    fillColor:
+      shape.fillColor === 'transparent' || isHexColor(shape.fillColor)
+        ? shape.fillColor
+        : '',
+    strokeWidth:
+      clampNumber(
+        shape.strokeWidth,
+        1,
+        24,
+        3
+      ),
     layerId: layer.layerId,
     zIndex: normalizeZIndex(
       shape.zIndex,
