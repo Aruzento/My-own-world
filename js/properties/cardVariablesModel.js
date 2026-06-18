@@ -1,5 +1,6 @@
 import {
-  getPropertySchema
+  getPropertySchema,
+  getSchemaValueFields
 } from './propertySchemas.js';
 
 import {
@@ -28,7 +29,9 @@ export function createCardVariablesModel(
 
   const variables =
     [
-      ...(schema?.fields || []),
+      ...getSchemaValueFields(
+        schema
+      ),
       ...getCustomVariableFields(
         propertiesModel
       )
@@ -206,6 +209,13 @@ function normalizeVariableValue(
 ) {
 
   if (field.type !== 'number') {
+
+    if (field.type === 'checkbox') {
+
+      return Boolean(
+        rawValue
+      );
+    }
 
     return String(rawValue ?? '').trim();
   }

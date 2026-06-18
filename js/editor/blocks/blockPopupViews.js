@@ -48,20 +48,6 @@ export function renderTypePicker(
       })}
 
       ${createTypeOptionHTML({
-        type: 'characterStats',
-        icon: '★',
-        title: 'Статистика персонажа',
-        description: 'Уровень, опыт и деньги'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'dndStats',
-        icon: '6',
-        title: 'Стат. блок DnD',
-        description: 'Характеристики и модификаторы'
-      })}
-
-      ${createTypeOptionHTML({
         type: 'table',
         icon: '▦',
         title: 'Таблица',

@@ -78,6 +78,7 @@ node tools/validate_agent_skills.mjs
 - `release-handoff`;
 - `desktop-release`;
 - `map-hardening`;
+- `minimal-change`;
 - `world-package`.
 
 Проверка skills:

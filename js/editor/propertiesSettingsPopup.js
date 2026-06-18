@@ -7,9 +7,32 @@ import {
 } from '../properties/propertySchemas.js';
 
 import {
+  PROPERTY_LAYOUT_COLUMNS,
+  PROPERTY_LAYOUT_DEFAULT_WIDTH,
+  PROPERTY_LAYOUT_MAX_HEIGHT,
+  PROPERTY_LAYOUT_MIN_HEIGHT,
+  normalizePropertyLayout,
+  readPropertyLayoutFromField,
+  serializePropertyLayout,
+  writePropertyLayoutToField
+} from '../properties/propertyLayoutModel.js';
+
+import {
   closePopup,
   registerPopup
 } from '../ui/popupManager.js';
+
+import {
+  createInternalRulePage,
+  createInternalRulePageId,
+  findInternalRuleByPageId,
+  getInternalRuleEntries,
+  getInternalRulesWorkspaceMeta
+} from '../rulesWorkspace/rulesWorkspaceIndex.js';
+
+import {
+  state
+} from '../state.js';
 
 
 let popup =
@@ -25,16 +48,16 @@ const PROPERTY_FIELD_PRESETS =
   buildPropertyFieldPresets();
 
 const PROPERTY_GRID_COLUMNS =
-  12;
+  PROPERTY_LAYOUT_COLUMNS;
 
 const PROPERTY_DEFAULT_SPAN =
-  3;
+  PROPERTY_LAYOUT_DEFAULT_WIDTH;
 
 const PROPERTY_MIN_ROWS =
-  1;
+  PROPERTY_LAYOUT_MIN_HEIGHT;
 
 const PROPERTY_MAX_ROWS =
-  8;
+  PROPERTY_LAYOUT_MAX_HEIGHT;
 
 
 export function ensurePropertySettingsControls(
@@ -232,6 +255,51 @@ function bindPropertySettingsEvents(
     );
 
   settingsPopup
+    .querySelector('.property-settings-rules-toggle')
+    ?.addEventListener(
+      'click',
+      event => {
+
+        event.preventDefault();
+
+        settingsPopup
+          .querySelector('.property-settings-rules')
+          ?.classList
+          .toggle('hidden');
+      }
+    );
+
+  settingsPopup
+    .querySelector('.property-settings-rules-search')
+    ?.addEventListener(
+      'input',
+      event => {
+
+        filterInternalRulesTree(
+          settingsPopup,
+          event.currentTarget.value
+        );
+      }
+    );
+
+  settingsPopup
+    .querySelectorAll('.property-settings-rule-open')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+
+          await openInternalRuleFromSettings(
+            button.dataset.ruleId
+          );
+        }
+      );
+    });
+
+  settingsPopup
     .querySelector('.property-settings-preset')
     ?.addEventListener(
       'change',
@@ -382,6 +450,19 @@ function createPropertySettingsHTML(
         прямо в блоке.
       </p>
 
+      <section class="property-settings-rules-section">
+        <button
+          class="property-settings-rules-toggle"
+          type="button"
+        >
+          Правила
+        </button>
+
+        <div class="property-settings-rules hidden">
+          ${createInternalRulesTreeHTML()}
+        </div>
+      </section>
+
       <div class="property-settings-list">
         ${fields.length > 0
           ? fields
@@ -468,7 +549,20 @@ function getVisiblePropertyFields(
     .map(field => {
 
       const label =
-        field.querySelector('span')
+        field.querySelector('.card-property-label')
+          ?.textContent
+          ?.trim() ||
+        Array.from(
+          field.children
+        ).find(child =>
+          child.tagName === 'SPAN' &&
+          !child.classList.contains(
+            'card-property-drag-handle'
+          ) &&
+          !child.classList.contains(
+            'card-property-resize-dot'
+          )
+        )
           ?.textContent
           ?.trim() ||
         'Параметр';
@@ -521,6 +615,180 @@ function createPropertySettingsFieldHTML(
 
     </article>
   `;
+}
+
+
+function createInternalRulesTreeHTML() {
+
+  const meta =
+    getInternalRulesWorkspaceMeta();
+
+  const entries =
+    getInternalRuleEntries();
+
+  const childrenByParent =
+    new Map();
+
+  entries.forEach(entry => {
+
+    const key =
+      entry.parentId || '';
+
+    if (!childrenByParent.has(key)) {
+
+      childrenByParent.set(
+        key,
+        []
+      );
+    }
+
+    childrenByParent
+      .get(key)
+      .push(entry);
+  });
+
+  const roots =
+    childrenByParent.get('') || [];
+
+  return `
+    <div class="property-settings-rules-meta">
+      <span>workspace: internal</span>
+      <span>owner: ${escapeHTML(meta.owner)}</span>
+      <span>source: ${escapeHTML(meta.source)}</span>
+      <span>rules: ${meta.entries}</span>
+    </div>
+
+    <input
+      class="property-settings-rules-search"
+      type="search"
+      placeholder="Найти правило..."
+    >
+
+    <div class="property-settings-rules-tree">
+      ${roots
+        .map(entry =>
+          createInternalRuleNodeHTML(
+            entry,
+            childrenByParent,
+            0
+          )
+        )
+        .join('')}
+    </div>
+  `;
+}
+
+
+function createInternalRuleNodeHTML(
+  entry,
+  childrenByParent,
+  level
+) {
+
+  const children =
+    childrenByParent.get(
+      entry.id
+    ) || [];
+
+  return `
+    <article
+      class="property-settings-rule-node"
+      data-rule-search="${escapeAttribute(createRuleSearchText(entry))}"
+      style="--rule-level: ${level}"
+    >
+      <button
+        class="property-settings-rule-open"
+        type="button"
+        data-rule-id="${escapeAttribute(entry.id)}"
+        title="Открыть правило"
+      >
+        <strong>${escapeHTML(entry.title)}</strong>
+        <span>${escapeHTML(entry.summary || 'Справочный раздел')}</span>
+      </button>
+    </article>
+    ${children
+      .map(child =>
+        createInternalRuleNodeHTML(
+          child,
+          childrenByParent,
+          level + 1
+        )
+      )
+      .join('')}
+  `;
+}
+
+
+function createRuleSearchText(
+  entry
+) {
+
+  return [
+    entry.title,
+    entry.summary,
+    ...entry.aliases,
+    ...entry.tags
+  ]
+    .join(' ')
+    .toLowerCase();
+}
+
+
+function filterInternalRulesTree(
+  settingsPopup,
+  value
+) {
+
+  const query =
+    String(value || '')
+      .trim()
+      .toLowerCase();
+
+  settingsPopup
+    .querySelectorAll('.property-settings-rule-node')
+    .forEach(node => {
+
+      const matches =
+        !query ||
+        node.dataset.ruleSearch?.includes(
+          query
+        );
+
+      node.classList.toggle(
+        'hidden',
+        !matches
+      );
+    });
+}
+
+
+async function openInternalRuleFromSettings(
+  ruleId
+) {
+
+  const entry =
+    findInternalRuleByPageId(
+      createInternalRulePageId(
+        ruleId
+      )
+    );
+
+  const page =
+    createInternalRulePage(
+      entry
+    );
+
+  if (!page) return;
+
+  controller?.close();
+
+  const {
+    openPage
+  } = await import('./editor.js');
+
+  openPage(
+    page
+  );
 }
 
 
@@ -625,11 +893,19 @@ function addCustomPropertyFieldFromPopup(
     createCustomPropertyFieldHTML({
       id: fieldId,
       label,
-      type
+      type,
+      layout:
+        findNextPropertyFreeLayout(
+          block
+        )
     })
   );
 
   ensurePropertyFieldLayoutHandles(
+    block
+  );
+
+  synchronizePropertyBlockLayout(
     block
   );
 
@@ -660,6 +936,10 @@ function removePropertyField(
 
   field.remove();
 
+  synchronizePropertyBlockLayout(
+    block
+  );
+
   notifyPropertiesChanged(
     editor,
     block
@@ -686,7 +966,8 @@ function createCustomPropertyFieldHTML(
   {
     id,
     label,
-    type
+    type,
+    layout
   }
 ) {
 
@@ -701,6 +982,10 @@ function createCustomPropertyFieldHTML(
       data-property-custom="true"
     data-property-id="${safeId}"
     data-property-label="${escapeAttribute(label)}"
+    ${createPropertyLayoutAttributes(
+      layout ||
+      createDefaultPropertyLayout()
+    )}
   `;
 
   if (type === 'textarea') {
@@ -747,6 +1032,142 @@ function createCustomPropertyFieldHTML(
         placeholder="Значение"
       >
     </label>
+  `;
+}
+
+
+function createDefaultPropertyLayout() {
+
+  return normalizePropertyLayout({
+    x: 0,
+    y: 0,
+    w:
+      PROPERTY_DEFAULT_SPAN,
+    h:
+      1,
+    order:
+      0,
+    collapsed:
+      false,
+    groupId:
+      null
+  });
+}
+
+
+function findNextPropertyFreeLayout(
+  block
+) {
+
+  const width =
+    PROPERTY_DEFAULT_SPAN;
+
+  const height =
+    1;
+
+  const occupied =
+    [
+      ...block.querySelectorAll(
+        '.card-property-field'
+      )
+    ].map(field =>
+      readPropertyLayoutFromField(
+        field
+      )
+    );
+
+  const maxY =
+    occupied.reduce(
+      (max, layout) =>
+        Math.max(
+          max,
+          layout.y + layout.h
+        ),
+      0
+    ) + 8;
+
+  for (
+    let y = 0;
+    y <= maxY;
+    y += 1
+  ) {
+
+    for (
+      let x = 0;
+      x <= PROPERTY_GRID_COLUMNS - width;
+      x += 1
+    ) {
+
+      const candidate =
+        normalizePropertyLayout({
+          x,
+          y,
+          w:
+            width,
+          h:
+            height,
+          order:
+            occupied.length
+        });
+
+      if (
+        !occupied.some(layout =>
+          propertyLayoutsOverlap(
+            layout,
+            candidate
+          )
+        )
+      ) {
+
+        return candidate;
+      }
+    }
+  }
+
+  return normalizePropertyLayout({
+    x: 0,
+    y:
+      maxY + 1,
+    w:
+      width,
+    h:
+      height,
+    order:
+      occupied.length
+  });
+}
+
+
+function propertyLayoutsOverlap(
+  first,
+  second
+) {
+
+  return !(
+    first.x + first.w <= second.x ||
+    second.x + second.w <= first.x ||
+    first.y + first.h <= second.y ||
+    second.y + second.h <= first.y
+  );
+}
+
+
+function createPropertyLayoutAttributes(
+  layout
+) {
+
+  return `
+    data-property-layout='${escapeAttribute(
+      serializePropertyLayout(
+        layout
+      )
+    )}'
+    data-property-x="${layout.x}"
+    data-property-y="${layout.y}"
+    data-property-span="${layout.w}"
+    data-property-rows="${layout.h}"
+    data-property-order="${layout.order}"
+    data-property-collapsed="false"
   `;
 }
 
@@ -861,50 +1282,266 @@ function ensurePropertyFieldLayoutHandles(
         field
       );
 
-      if (
-        field.querySelector(
-          '.card-property-drag-handle'
-        )
-      ) {
-
-        ensurePropertyFieldResizeHandles(
-          field
+      field
+        .querySelectorAll('.card-property-drag-handle')
+        .forEach(handle =>
+          handle.remove()
         );
-
-        return;
-      }
-
-      const handle =
-        document.createElement('span');
-
-      handle.className =
-        'card-property-drag-handle';
-
-      handle.title =
-        'Переместить поле';
-
-      handle.role =
-        'button';
-
-      handle.dataset.runtime =
-        'true';
-
-      handle.setAttribute(
-        'contenteditable',
-        'false'
-      );
-
-      handle.innerHTML =
-        iconSvg('grip');
-
-      field.prepend(
-        handle
-      );
 
       ensurePropertyFieldResizeHandles(
         field
       );
     });
+
+  ensurePropertyEntitySelects(
+    block
+  );
+
+  ensurePropertySkillProficiencyControls(
+    block
+  );
+
+  synchronizePropertyBlockLayout(
+    block
+  );
+}
+
+
+function ensurePropertyEntitySelects(
+  block
+) {
+
+  block
+    .querySelectorAll(
+      'select[data-property-filter-type="item"]'
+    )
+    .forEach(select => {
+
+      let currentValue =
+        select.value ||
+        select.getAttribute('value') ||
+        '';
+
+      const itemPages =
+        state.pages
+          .filter(page =>
+            page.type === 'item'
+          )
+          .sort((left, right) =>
+            String(left.title || '')
+              .localeCompare(
+                String(right.title || ''),
+                'ru'
+              )
+          );
+
+      const currentPage =
+        itemPages.find(page =>
+          page.id === currentValue ||
+          page.title === currentValue
+        );
+
+      if (currentPage) {
+
+        currentValue =
+          currentPage.id;
+      }
+
+      const hasCurrent =
+        !currentValue ||
+        Boolean(currentPage);
+
+      select.innerHTML = [
+        '<option value="">Без доспеха</option>',
+        !hasCurrent
+          ? `<option value="${escapeAttribute(currentValue)}">${escapeHTML(currentValue)}</option>`
+          : '',
+        ...itemPages.map(page =>
+          `<option value="${escapeAttribute(page.id)}">${escapeHTML(page.title || page.id)}</option>`
+        )
+      ].join('');
+
+      select.value =
+        currentValue;
+
+      select.setAttribute(
+        'value',
+        currentValue
+      );
+    });
+}
+
+
+function ensurePropertySkillProficiencyControls(
+  block
+) {
+
+  block
+    .querySelectorAll(
+      '.card-property-skill-proficiency'
+    )
+    .forEach(input => {
+
+      if (
+        input.previousElementSibling?.classList?.contains(
+          'card-property-skill-proficiency-toggle'
+        )
+      ) {
+
+        updateSkillProficiencyToggle(
+          input.previousElementSibling,
+          input
+        );
+
+        return;
+      }
+
+      const button =
+        document.createElement('button');
+
+      button.className =
+        'card-property-skill-proficiency-toggle';
+
+      button.type =
+        'button';
+
+      button.dataset.runtime =
+        'true';
+
+      button.setAttribute(
+        'contenteditable',
+        'false'
+      );
+
+      button.addEventListener(
+        'click',
+        event => {
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          const nextLevel =
+            (readSkillProficiencyLevel(input) + 1) % 3;
+
+          writeSkillProficiencyLevel(
+            input,
+            nextLevel
+          );
+
+          updateSkillProficiencyToggle(
+            button,
+            input
+          );
+
+          input.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          input.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+        }
+      );
+
+      input.before(
+        button
+      );
+
+      updateSkillProficiencyToggle(
+        button,
+        input
+      );
+    });
+}
+
+
+function readSkillProficiencyLevel(
+  input
+) {
+
+  const level =
+    Number(
+      input.value ||
+      input.dataset.skillProficiencyLevel ||
+      0
+    );
+
+  return Number.isFinite(level)
+    ? clampNumber(
+      level,
+      0,
+      2
+    )
+    : 0;
+}
+
+
+function writeSkillProficiencyLevel(
+  input,
+  level
+) {
+
+  const normalized =
+    clampNumber(
+      Number(level) || 0,
+      0,
+      2
+    );
+
+  input.value =
+    String(normalized);
+
+  input.setAttribute(
+    'value',
+    String(normalized)
+  );
+
+  input.dataset.skillProficiencyLevel =
+    String(normalized);
+}
+
+
+function updateSkillProficiencyToggle(
+  button,
+  input
+) {
+
+  const level =
+    readSkillProficiencyLevel(
+      input
+    );
+
+  button.dataset.level =
+    String(level);
+
+  button.title =
+    level === 2
+      ? 'Экспертность'
+      : level === 1
+      ? 'Владение'
+      : 'Без владения';
+
+  button.setAttribute(
+    'aria-label',
+    button.title
+  );
+
+  button.textContent =
+    level === 2
+      ? '++'
+      : level === 1
+      ? '+'
+      : '';
 }
 
 
@@ -1033,6 +1670,10 @@ function setupPropertyFieldLayoutDelegation(
             getPropertyFieldRows(
               field
             ),
+          startLayout:
+            readPropertyLayoutFromField(
+              field
+            ),
         edge:
             resizeHandle.dataset.resizeEdge || 'e',
         cellWidth:
@@ -1062,17 +1703,10 @@ function setupPropertyFieldLayoutDelegation(
         return;
       }
 
-      const dragHandle =
-        event.target.closest(
-          '.card-property-drag-handle'
-        );
-
-      if (!dragHandle) return;
-
       const field =
-        dragHandle.closest(
-          '.card-property-field'
-      );
+        getPropertyBorderDragField(
+          event
+        );
 
       if (!field) return;
 
@@ -1089,15 +1723,61 @@ function setupPropertyFieldLayoutDelegation(
         placeholder:
           createPropertyDragPlaceholder(
             field
-          )
+          ),
+        ghost:
+          createPropertyDragGhost(
+            field
+          ),
+        pointerOffsetX:
+          event.clientX - field.getBoundingClientRect().left,
+        pointerOffsetY:
+          event.clientY - field.getBoundingClientRect().top,
+        currentIndex:
+          getPropertyFieldIndex(
+            field
+          ),
+        currentLayout:
+          readPropertyLayoutFromField(
+            field
+          ),
+        dropLayout:
+          readPropertyLayoutFromField(
+            field
+          ),
+        pendingIndex:
+          null,
+        animationFrame:
+          null,
+        originalDisplay:
+          field.style.display,
+        moved:
+          false
       };
+
+      dragState.grid?.insertBefore(
+        dragState.placeholder,
+        field
+      );
+
+      document.body.appendChild(
+        dragState.ghost
+      );
+
+      movePropertyDragGhost(
+        dragState,
+        event.clientX,
+        event.clientY
+      );
 
       field.classList.add(
         'is-property-dragging'
       );
 
+      field.style.display =
+        'none';
+
       safelyCapturePointer(
-        dragHandle,
+        field,
         event.pointerId
       );
 
@@ -1149,8 +1829,17 @@ function setupPropertyFieldLayoutDelegation(
           'is-property-resizing'
         );
 
+        resolvePropertyBlockLayoutCollisions(
+          block,
+          field
+        );
+
         resizeState =
           null;
+
+        synchronizePropertyBlockLayout(
+          block
+        );
 
         notifyPropertiesChanged(
           editor,
@@ -1165,13 +1854,54 @@ function setupPropertyFieldLayoutDelegation(
       const {
         field,
         block,
-        placeholder
+        grid,
+        placeholder,
+        ghost,
+        originalDisplay
       } = dragState;
 
+      if (dragState.animationFrame) {
+
+        cancelAnimationFrame(
+          dragState.animationFrame
+        );
+
+        dragState.animationFrame =
+          null;
+      }
+
+      flushPropertyPlaceholderMove(
+        dragState
+      );
+
+      field.style.display =
+        originalDisplay || '';
+
+      if (grid) {
+
+        setPropertyFieldLayout(
+          field,
+          {
+            layout:
+              dragState.dropLayout
+          }
+        );
+
+        resolvePropertyBlockLayoutCollisions(
+          block,
+          field
+        );
+      }
+
       placeholder?.remove();
+      ghost?.remove();
 
       field.classList.remove(
         'is-property-dragging'
+      );
+
+      synchronizePropertyBlockLayout(
+        block
       );
 
       dragState =
@@ -1183,6 +1913,52 @@ function setupPropertyFieldLayoutDelegation(
       );
     }
   );
+}
+
+
+function getPropertyBorderDragField(
+  event
+) {
+
+  if (
+    event.button !== undefined &&
+    event.button !== 0
+  ) return null;
+
+  if (
+    event.target.closest(
+      '.card-property-resize-dot'
+    )
+  ) return null;
+
+  if (
+    event.target.closest(
+      'input, select, textarea, button, [contenteditable="true"]'
+    )
+  ) return null;
+
+  const field =
+    event.target.closest(
+      '.card-property-field'
+    );
+
+  if (!field) return null;
+
+  const rect =
+    field.getBoundingClientRect();
+
+  const edgeSize =
+    12;
+
+  const nearEdge =
+    event.clientX - rect.left <= edgeSize ||
+    rect.right - event.clientX <= edgeSize ||
+    event.clientY - rect.top <= edgeSize ||
+    rect.bottom - event.clientY <= edgeSize;
+
+  return nearEdge
+    ? field
+    : null;
 }
 
 
@@ -1199,80 +1975,45 @@ function updatePropertyFieldDrag(
 
   if (!grid) return;
 
-  const previousPointerEvents =
-    field.style.pointerEvents;
-
-  field.style.pointerEvents =
-    'none';
-
-  const target =
-    document
-      .elementFromPoint(
-        clientX,
-        clientY
-      )
-      ?.closest(
-        '.card-property-field'
-      );
-
-  const gridTarget =
-    document
-      .elementFromPoint(
-        clientX,
-        clientY
-      )
-      ?.closest(
-        '.card-properties-grid'
-      );
-
-  field.style.pointerEvents =
-    previousPointerEvents;
-
-  if (
-    !target &&
-    gridTarget === grid
-  ) {
-
-    grid.appendChild(
-      dragState.placeholder
-    );
-
-    grid.insertBefore(
-      field,
-      dragState.placeholder
-    );
-
-    return;
-  }
-
-  if (
-    !target ||
-    target === field ||
-    target === dragState.placeholder ||
-    !grid.contains(target)
-  ) return;
-
-  const rect =
-    target.getBoundingClientRect();
-
-  const insertAfter =
-    clientY >
-    rect.top + rect.height / 2 ||
-    (
-      Math.abs(clientY - (rect.top + rect.height / 2)) < 8 &&
-      clientX > rect.left + rect.width / 2
-    );
-
-  grid.insertBefore(
-    dragState.placeholder,
-    insertAfter
-      ? target.nextSibling
-      : target
+  movePropertyDragGhost(
+    dragState,
+    clientX,
+    clientY
   );
 
-  grid.insertBefore(
-    field,
-    dragState.placeholder
+  const nextLayout =
+    getPropertyDropLayoutFromPoint(
+      grid,
+      field,
+      clientX - dragState.pointerOffsetX,
+      clientY - dragState.pointerOffsetY
+    );
+
+  const layoutChanged =
+    nextLayout.x !== dragState.dropLayout.x ||
+    nextLayout.y !== dragState.dropLayout.y;
+
+  if (
+    !layoutChanged
+  ) return;
+
+  dragState.dropLayout =
+    nextLayout;
+
+  dragState.moved =
+    true;
+
+  setPropertyFieldLayout(
+    dragState.placeholder,
+    {
+      layout:
+        nextLayout
+    }
+  );
+
+  applyPropertyFieldLayoutStyles(
+    dragState.placeholder,
+    nextLayout
   );
 }
 
@@ -1289,10 +2030,18 @@ function updatePropertyFieldResize(
   const deltaY =
     clientY - resizeState.startY;
 
+  let x =
+    resizeState.startLayout.x;
+
+  let y =
+    resizeState.startLayout.y;
+
   let span =
+    resizeState.startLayout.w ||
     resizeState.startSpan;
 
   let rows =
+    resizeState.startLayout.h ||
     resizeState.startRows;
 
   if (
@@ -1313,13 +2062,10 @@ function updatePropertyFieldResize(
         deltaX / resizeState.cellWidth
       );
 
-    span -= steps;
+    x +=
+      steps;
 
-    shiftPropertyFieldBySteps(
-      resizeState,
-      steps,
-      'x'
-    );
+    span -= steps;
   }
 
   if (
@@ -1340,22 +2086,433 @@ function updatePropertyFieldResize(
         deltaY / resizeState.rowHeight
       );
 
-    rows -= steps;
+    y +=
+      steps;
 
-    shiftPropertyFieldBySteps(
-      resizeState,
-      steps,
-      'y'
-    );
+    rows -= steps;
   }
+
+  const normalizedLayout =
+    normalizePropertyLayout(
+      {
+        ...resizeState.startLayout,
+        x,
+        y,
+        w:
+          span,
+        h:
+          rows
+      },
+      resizeState.startLayout
+    );
 
   setPropertyFieldLayout(
     resizeState.field,
     {
-      span,
-      rows
+      layout:
+        normalizedLayout
     }
   );
+}
+
+
+function createPropertyDragGhost(
+  field
+) {
+
+  const rect =
+    field.getBoundingClientRect();
+
+  const ghost =
+    field.cloneNode(
+      true
+    );
+
+  ghost.classList.add(
+    'card-property-drag-ghost'
+  );
+
+  ghost.dataset.runtime =
+    'true';
+
+  ghost.style.width =
+    `${rect.width}px`;
+
+  ghost.style.height =
+    `${rect.height}px`;
+
+  ghost
+    .querySelectorAll(
+      'input, select, textarea, [contenteditable="true"]'
+    )
+    .forEach(control => {
+
+      control.setAttribute(
+        'tabindex',
+        '-1'
+      );
+
+      control.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+    });
+
+  return ghost;
+}
+
+
+function movePropertyDragGhost(
+  dragState,
+  clientX,
+  clientY
+) {
+
+  const ghost =
+    dragState.ghost;
+
+  if (!ghost) return;
+
+  ghost.style.transform =
+    `translate3d(${clientX - dragState.pointerOffsetX}px, ${clientY - dragState.pointerOffsetY}px, 0)`;
+}
+
+
+function movePropertyPlaceholderToIndex(
+  dragState
+) {
+
+  const {
+    grid,
+    field,
+    placeholder
+  } = dragState;
+
+  if (
+    !grid ||
+    !placeholder
+  ) return;
+
+  const referenceNode =
+    getPropertyNodeAtIndex(
+      grid,
+      dragState.currentIndex,
+      field,
+      placeholder
+    );
+
+  animatePropertyGridReflow(
+    grid,
+    () => {
+
+      grid.insertBefore(
+        placeholder,
+        referenceNode
+      );
+    }
+  );
+}
+
+
+function schedulePropertyPlaceholderMove(
+  dragState
+) {
+
+  if (
+    dragState.animationFrame
+  ) return;
+
+  dragState.animationFrame =
+    requestAnimationFrame(
+      () => {
+
+        dragState.animationFrame =
+          null;
+
+        flushPropertyPlaceholderMove(
+          dragState
+        );
+      }
+    );
+}
+
+
+function flushPropertyPlaceholderMove(
+  dragState
+) {
+
+  if (
+    dragState.pendingIndex === null ||
+    dragState.pendingIndex === undefined
+  ) return;
+
+  dragState.currentIndex =
+    dragState.pendingIndex;
+
+  dragState.pendingIndex =
+    null;
+
+  movePropertyPlaceholderToIndex(
+    dragState
+  );
+}
+
+
+function getPropertyDropIndexFromPoint(
+  grid,
+  field,
+  placeholder,
+  clientX,
+  clientY
+) {
+
+  const fields =
+    getPropertyLayoutNodes(
+      grid,
+      field,
+      placeholder
+    );
+
+  if (fields.length === 0) return 0;
+
+  const gridRect =
+    grid.getBoundingClientRect();
+
+  if (clientY <= gridRect.top) return 0;
+
+  const ordered =
+    fields.map((node, index) => ({
+      index,
+      rect:
+        node.getBoundingClientRect()
+    }));
+
+  const rowTolerance =
+    Math.max(
+      10,
+      Math.min(
+        28,
+        gridRect.height / 12
+      )
+    );
+
+  for (const item of ordered) {
+
+    const sameRow =
+      clientY >= item.rect.top - rowTolerance &&
+      clientY <= item.rect.bottom + rowTolerance;
+
+    if (!sameRow) {
+
+      if (
+        clientY < item.rect.top + item.rect.height / 2
+      ) {
+
+        return item.index;
+      }
+
+      continue;
+    }
+
+    if (
+      clientX < item.rect.left + item.rect.width / 2
+    ) {
+
+      return item.index;
+    }
+  }
+
+  return fields.length;
+}
+
+
+function getPropertyDropLayoutFromPoint(
+  grid,
+  field,
+  fieldLeft,
+  fieldTop
+) {
+
+  const rect =
+    grid.getBoundingClientRect();
+
+  const current =
+    readPropertyLayoutFromField(
+      field
+    );
+
+  const cellWidth =
+    Math.max(
+      1,
+      rect.width / PROPERTY_GRID_COLUMNS
+    );
+
+  const rowHeight =
+    getPropertyGridRowHeight();
+
+  const x =
+    Math.floor(
+      (fieldLeft - rect.left) / cellWidth
+    );
+
+  const y =
+    Math.floor(
+      (fieldTop - rect.top) / rowHeight
+    );
+
+  return normalizePropertyLayout(
+    {
+      ...current,
+      x,
+      y
+    },
+    current
+  );
+}
+
+
+function getPropertyFieldIndex(
+  field
+) {
+
+  const grid =
+    field.closest(
+      '.card-properties-grid'
+    );
+
+  if (!grid) return 0;
+
+  return getPropertyLayoutNodes(
+    grid
+  ).indexOf(
+    field
+  );
+}
+
+
+function getPropertyFieldAtIndex(
+  grid,
+  index,
+  ignoredField,
+  ignoredPlaceholder
+) {
+
+  return getPropertyNodeAtIndex(
+    grid,
+    index,
+    ignoredField,
+    ignoredPlaceholder
+  );
+}
+
+
+function getPropertyNodeAtIndex(
+  grid,
+  index,
+  ignoredField,
+  ignoredPlaceholder
+) {
+
+  const nodes =
+    getPropertyLayoutNodes(
+      grid,
+      ignoredField,
+      ignoredPlaceholder
+    );
+
+  return nodes[
+    clampNumber(
+      index,
+      0,
+      nodes.length
+    )
+  ] || null;
+}
+
+
+function getPropertyLayoutNodes(
+  grid,
+  ignoredField,
+  ignoredPlaceholder
+) {
+
+  return [
+    ...grid.children
+  ].filter(node =>
+    node !== ignoredField &&
+    node !== ignoredPlaceholder &&
+    (
+      node.classList?.contains(
+        'card-property-field'
+      ) ||
+      node.classList?.contains(
+        'card-property-drop-placeholder'
+      )
+    )
+  );
+}
+
+
+function animatePropertyGridReflow(
+  grid,
+  mutate
+) {
+
+  const nodes =
+    getPropertyLayoutNodes(
+      grid
+    );
+
+  const previousRects =
+    new Map(
+      nodes.map(node => [
+        node,
+        node.getBoundingClientRect()
+      ])
+    );
+
+  mutate();
+
+  nodes.forEach(node => {
+
+    const previous =
+      previousRects.get(
+        node
+      );
+
+    if (!previous) return;
+
+    const next =
+      node.getBoundingClientRect();
+
+    const deltaX =
+      previous.left - next.left;
+
+    const deltaY =
+      previous.top - next.top;
+
+    if (
+      Math.abs(deltaX) < 1 &&
+      Math.abs(deltaY) < 1
+    ) return;
+
+    node.style.transition =
+      'none';
+
+    node.style.transform =
+      `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+
+    requestAnimationFrame(
+      () => {
+
+        node.style.transition =
+          '';
+
+        node.style.transform =
+          '';
+      }
+    );
+  });
 }
 
 
@@ -1516,6 +2673,13 @@ function createPropertyDragPlaceholder(
     )}px`
   );
 
+  applyPropertyFieldLayoutStyles(
+    placeholder,
+    readPropertyLayoutFromField(
+      field
+    )
+  );
+
   return placeholder;
 }
 
@@ -1524,31 +2688,33 @@ function ensurePropertyFieldLayoutState(
   field
 ) {
 
-  const span =
-    field.dataset.propertySpan ||
-    (
-      field.classList.contains(
-        'card-property-field-wide'
-      )
-        ? PROPERTY_GRID_COLUMNS
-        : PROPERTY_DEFAULT_SPAN
-    );
-
-  const rows =
-    field.dataset.propertyRows ||
-    (
-      field.classList.contains(
-        'card-property-field-wide'
-      )
-        ? 2
-        : 1
+  const layout =
+    readPropertyLayoutFromField(
+      field,
+      {
+        w:
+          field.classList.contains(
+            'card-property-field-wide'
+          )
+            ? PROPERTY_GRID_COLUMNS
+            : PROPERTY_DEFAULT_SPAN,
+        h:
+          field.classList.contains(
+            'card-property-field-wide'
+          )
+            ? 2
+            : 1
+      }
     );
 
   setPropertyFieldLayout(
     field,
     {
-      span,
-      rows
+      span:
+        layout.w,
+      rows:
+        layout.h,
+      layout
     }
   );
 }
@@ -1558,48 +2724,276 @@ function setPropertyFieldLayout(
   field,
   {
     span,
-    rows
+    rows,
+    layout
   }
 ) {
 
-  const normalizedSpan =
-    clampNumber(
-      Number(span),
-      1,
-      PROPERTY_GRID_COLUMNS
+  const nextLayout =
+    {
+      ...layout
+    };
+
+  if (span !== undefined) {
+
+    nextLayout.w =
+      span;
+  }
+
+  if (rows !== undefined) {
+
+    nextLayout.h =
+      rows;
+  }
+
+  const normalizedLayout =
+    normalizePropertyLayout(
+      nextLayout,
+      readPropertyLayoutFromField(
+        field
+      )
     );
 
-  const normalizedRows =
-    clampNumber(
-      Number(rows),
-      PROPERTY_MIN_ROWS,
-      PROPERTY_MAX_ROWS
+  writePropertyLayoutToField(
+    field,
+    normalizedLayout
+  );
+
+  applyPropertyFieldLayoutStyles(
+    field,
+    normalizedLayout
+  );
+}
+
+
+function synchronizePropertyBlockLayout(
+  block
+) {
+
+  const fields =
+    [
+      ...block.querySelectorAll(
+        '.card-property-field'
+      )
+    ];
+
+  const resolvedLayouts =
+    createResolvedPropertyLayouts(
+      fields
     );
 
-  field.dataset.propertySpan =
-    String(normalizedSpan);
+  fields.forEach((field, order) => {
 
-  field.dataset.propertyRows =
-    String(normalizedRows);
+    const current =
+      resolvedLayouts.get(
+        field
+      ) ||
+      readPropertyLayoutFromField(
+        field,
+        {
+          order
+        }
+      );
+
+    const nextLayout =
+      normalizePropertyLayout({
+        ...current,
+        order
+      });
+
+    writePropertyLayoutToField(
+      field,
+      nextLayout
+    );
+
+    applyPropertyFieldLayoutStyles(
+      field,
+      nextLayout
+    );
+
+  });
+}
+
+
+function resolvePropertyBlockLayoutCollisions(
+  block,
+  activeField
+) {
+
+  if (!block) return;
+
+  const fields =
+    [
+      ...block.querySelectorAll(
+        '.card-property-field'
+      )
+    ];
+
+  const resolvedLayouts =
+    createResolvedPropertyLayouts(
+      fields,
+      activeField
+    );
+
+  fields.forEach(field => {
+
+    const layout =
+      resolvedLayouts.get(
+        field
+      );
+
+    if (!layout) return;
+
+    writePropertyLayoutToField(
+      field,
+      layout
+    );
+
+    applyPropertyFieldLayoutStyles(
+      field,
+      layout
+    );
+  });
+}
+
+
+function createResolvedPropertyLayouts(
+  fields,
+  activeField = null
+) {
+
+  const original =
+    new Map(
+      fields.map((field, order) => [
+        field,
+        readPropertyLayoutFromField(
+          field,
+          {
+            order
+          }
+        )
+      ])
+    );
+
+  const ordered =
+    [
+      ...fields
+    ].sort((first, second) => {
+
+      if (first === activeField) return -1;
+      if (second === activeField) return 1;
+
+      const firstLayout =
+        original.get(
+          first
+        );
+
+      const secondLayout =
+        original.get(
+          second
+        );
+
+      return (
+        firstLayout.y - secondLayout.y ||
+        firstLayout.x - secondLayout.x ||
+        firstLayout.order - secondLayout.order
+      );
+    });
+
+  const placed =
+    [];
+
+  const resolved =
+    new Map();
+
+  ordered.forEach(field => {
+
+    let layout =
+      normalizePropertyLayout(
+        original.get(
+          field
+        )
+      );
+
+    let changed =
+      true;
+
+    while (changed) {
+
+      changed =
+        false;
+
+      for (const placedLayout of placed) {
+
+        if (
+          !propertyLayoutsOverlap(
+            layout,
+            placedLayout
+          )
+        ) continue;
+
+        layout =
+          normalizePropertyLayout(
+            {
+              ...layout,
+              y:
+                placedLayout.y + placedLayout.h
+            },
+            layout
+          );
+
+        changed =
+          true;
+      }
+    }
+
+    placed.push(
+      layout
+    );
+
+    resolved.set(
+      field,
+      layout
+    );
+  });
+
+  return resolved;
+}
+
+
+function applyPropertyFieldLayoutStyles(
+  field,
+  layout
+) {
 
   field.style.setProperty(
     '--property-field-span',
-    String(normalizedSpan)
+    String(
+      layout.w
+    )
   );
 
   field.style.setProperty(
     '--property-field-rows',
-    String(normalizedRows)
+    String(
+      layout.h
+    )
   );
 
   field.style.setProperty(
     '--property-field-min-height',
-    `${52 + (normalizedRows - 1) * getPropertyGridRowHeight()}px`
+    `${52 + (layout.h - 1) * getPropertyGridRowHeight()}px`
   );
+
+  field.style.gridColumn =
+    `${layout.x + 1} / span ${layout.w}`;
+
+  field.style.gridRow =
+    `${layout.y + 1} / span ${layout.h}`;
 
   field.classList.toggle(
     'card-property-field-wide',
-    normalizedSpan >= PROPERTY_GRID_COLUMNS
+    layout.w >= PROPERTY_GRID_COLUMNS
   );
 }
 
@@ -1763,6 +3157,16 @@ function buildPropertyFieldPresets() {
       key: 'temporaryModifier',
       label: 'Временный модификатор',
       type: 'number'
+    },
+    {
+      key: 'conditions',
+      label: 'Состояния',
+      type: 'textarea'
+    },
+    {
+      key: 'effects',
+      label: 'Эффекты',
+      type: 'textarea'
     }
   ].forEach(preset => {
 

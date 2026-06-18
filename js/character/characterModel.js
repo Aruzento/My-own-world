@@ -201,6 +201,7 @@ export function createCharacterModelFromSources(
     return createCharacterModelFromProperties({
       page,
       propertyModel,
+      pages,
       legacyDndHealth,
       inventoryModel,
       effectsModel:
@@ -334,6 +335,13 @@ export function getCharacterInitiativeModifier(
     return 0;
   }
 
+  if (
+    model.calculations?.initiative?.value !== undefined
+  ) {
+
+    return model.calculations.initiative.value;
+  }
+
   return (
     model.abilities?.dex?.modifier || 0
   ) + (
@@ -361,6 +369,16 @@ export function getCharacterEffectiveArmorClass(
 
   if (!model) return 10;
 
+  if (
+    model.calculations?.armorClass?.value !== undefined
+  ) {
+
+    return Math.max(
+      0,
+      model.calculations.armorClass.value
+    );
+  }
+
   return Math.max(
     0,
     (model.armorClass || 10) +
@@ -374,6 +392,16 @@ export function getCharacterEffectiveSpeed(
 ) {
 
   if (!model) return 30;
+
+  if (
+    model.calculations?.speed?.value !== undefined
+  ) {
+
+    return Math.max(
+      0,
+      model.calculations.speed.value
+    );
+  }
 
   if (model.effects?.flags?.speedIsZero) return 0;
 
@@ -707,6 +735,7 @@ function createCharacterModelFromProperties(
   {
     page,
     propertyModel,
+    pages,
     legacyDndHealth,
     inventoryModel,
     effectsModel,
@@ -718,7 +747,8 @@ function createCharacterModelFromProperties(
     createPropertiesCalculationModel({
       propertiesModel:
         propertyModel,
-      effectsModel
+      effectsModel,
+      pages
     });
 
   return createCharacterModel({
@@ -738,17 +768,9 @@ function createCharacterModelFromProperties(
         1
       ),
     armorClass:
-      getModelNumber(
-        propertyModel,
-        'armorClass',
-        10
-      ),
+      calculations.armorClass?.value ?? 10,
     speed:
-      getModelNumber(
-        propertyModel,
-        'speed',
-        30
-      ),
+      calculations.speed?.value ?? 30,
     abilities:
       readAbilitiesFromProperties(
         propertyModel

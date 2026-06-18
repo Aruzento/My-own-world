@@ -61,3 +61,36 @@ test(
     );
   }
 );
+
+
+test(
+  'wiki-link lookup находит внутренние правила DnD как read-only page',
+  () => {
+
+    setPages(
+      []
+    );
+
+    const rulePage =
+      findPageByTitle(
+        'КЗ'
+      );
+
+    assert.equal(
+      rulePage.template,
+      'internalRule'
+    );
+
+    assert.equal(
+      rulePage.source,
+      'internalRulesWorkspace'
+    );
+
+    assert.equal(
+      findPageByWikiLinkId(
+        rulePage.id
+      ).title,
+      'Класс доспеха'
+    );
+  }
+);

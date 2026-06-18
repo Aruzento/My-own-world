@@ -43,9 +43,26 @@ import {
   serializeRuleTreeHTML
 } from '../ruleTree/ruleTree.js';
 
+import {
+  isInternalRulePage
+} from '../rulesWorkspace/internalRulePage.js';
+
 export async function saveCurrentSpecialPage(
   editor
 ) {
+
+  if (
+    isInternalRulePage(
+      state.currentPage
+    )
+  ) {
+
+    setStatus(
+      'Внутренние правила доступны только для чтения'
+    );
+
+    return true;
+  }
 
   if (
     state.currentPage?.template === 'campaignMap' ||

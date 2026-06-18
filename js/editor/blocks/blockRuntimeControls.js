@@ -7,6 +7,11 @@ import {
 } from '../propertiesSettingsPopup.js';
 
 import {
+  refreshPropertiesAutoCalculations,
+  setupPropertiesAutoCalculations
+} from '../propertiesAutoCalculations.js';
+
+import {
   ensureRuntimeButton,
   ensureRuntimeInput,
   getMatchingElements,
@@ -38,6 +43,14 @@ export function ensureRuntimeControls(
   );
 
   ensurePropertySettingsControls(
+    editor
+  );
+
+  setupPropertiesAutoCalculations(
+    editor
+  );
+
+  refreshPropertiesAutoCalculations(
     editor
   );
 

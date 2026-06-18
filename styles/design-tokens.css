@@ -4,52 +4,67 @@
      а дают единый словарь для следующих этапов редизайна. */
 
   --color-bg-app:
-    #070a12;
+    #12100d;
 
   --color-bg-panel:
-    rgba(14, 18, 26, 0.72);
+    rgba(35, 31, 25, 0.78);
 
   --color-bg-panel-soft:
-    rgba(255, 255, 255, 0.055);
+    rgba(255, 246, 222, 0.06);
 
   --color-bg-card:
-    rgba(16, 20, 28, 0.82);
+    rgba(40, 35, 27, 0.86);
 
   --color-bg-elevated:
-    rgba(22, 27, 38, 0.94);
+    rgba(48, 40, 30, 0.96);
 
   --color-text-main:
-    rgba(248, 250, 255, 0.96);
+    rgba(255, 248, 232, 0.96);
 
   --color-text-muted:
-    rgba(248, 250, 255, 0.68);
+    rgba(226, 209, 178, 0.70);
 
   --color-text-faint:
-    rgba(248, 250, 255, 0.48);
+    rgba(226, 209, 178, 0.50);
 
   --color-accent:
-    #f1d38e;
+    #f4ca76;
 
   --color-accent-soft:
-    rgba(241, 211, 142, 0.14);
+    rgba(244, 202, 118, 0.16);
 
   --color-accent-strong:
-    rgba(241, 211, 142, 0.86);
+    rgba(244, 202, 118, 0.90);
+
+  --color-accent-secondary:
+    #8fae84;
+
+  --color-accent-secondary-soft:
+    rgba(143, 174, 132, 0.16);
 
   --color-danger:
-    #ffb8b8;
+    #e88980;
 
   --color-danger-soft:
-    rgba(255, 154, 154, 0.14);
+    rgba(202, 91, 88, 0.18);
 
   --color-border-subtle:
-    rgba(255, 255, 255, 0.07);
+    rgba(247, 220, 164, 0.13);
 
   --color-border-hover:
-    rgba(241, 211, 142, 0.24);
+    rgba(244, 202, 118, 0.38);
 
   --color-focus-ring:
-    rgba(241, 211, 142, 0.38);
+    rgba(244, 202, 118, 0.42);
+
+  --color-surface-veil:
+    rgba(18, 16, 13, 0.62);
+
+  --color-surface-engraved:
+    rgba(255, 246, 222, 0.035);
+
+  --color-rune:
+    rgba(244, 202, 118, 0.58);
 
   --space-1:
     4px;
@@ -73,31 +88,34 @@
     6px;
 
   --radius-sm:
-    10px;
+    9px;
 
   --radius-md:
-    16px;
+    14px;
 
   --radius-lg:
-    22px;
+    18px;
 
   --shadow-panel:
-    0 20px 60px rgba(0, 0, 0, 0.28);
+    0 24px 70px rgba(0, 0, 0, 0.36);
 
   --shadow-popup:
-    0 22px 70px rgba(0, 0, 0, 0.36);
+    0 26px 80px rgba(0, 0, 0, 0.44);
 
   --motion-fast:
-    120ms;
+    110ms;
 
   --motion-base:
-    180ms;
+    190ms;
 
   --motion-slow:
-    260ms;
+    320ms;
 
   --ease-standard:
-    cubic-bezier(0.2, 0.8, 0.2, 1);
+    cubic-bezier(0.22, 1, 0.36, 1);
+
+  --ease-emphasized:
+    cubic-bezier(0.16, 1, 0.3, 1);
 
   --z-base:
     1;

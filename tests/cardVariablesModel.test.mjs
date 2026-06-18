@@ -11,6 +11,12 @@ import {
   getCardVariableValue
 } from '../js/properties/cardVariablesModel.js';
 
+import {
+  calculateCardVariableFormula,
+  createCardVariableDependencyContext,
+  resolveCardVariablePath
+} from '../js/properties/cardVariableDependencies.js';
+
 
 test(
   'CardVariablesModel treats PropertiesModel fields as entity variables',
@@ -147,6 +153,189 @@ test(
         'custom-radius'
       ).source,
       'custom'
+    );
+  }
+);
+
+
+test(
+  'CardVariablesModel exposes grouped DnD skill values',
+  () => {
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          skillStealth: '4',
+          skillStealthProficient: '2'
+        }
+      });
+
+    const variables =
+      createCardVariablesFromPropertiesModel({
+        propertiesModel:
+          properties
+      });
+
+    assert.equal(
+      getCardVariableValue(
+        variables,
+        'skillStealth'
+      ),
+      4
+    );
+
+    assert.equal(
+      getCardVariableValue(
+        variables,
+        'skillStealthProficient'
+      ),
+      2
+    );
+  }
+);
+
+
+test(
+  'card variable dependencies resolve referenced card properties',
+  () => {
+
+    const racePage = {
+      id: 'human',
+      title: 'Человек',
+      type: 'character',
+      aliases: [
+        'human'
+      ]
+    };
+
+    const heroPage = {
+      id: 'hero',
+      title: 'Герой',
+      type: 'character',
+      content: ''
+    };
+
+    racePage.variablesModel =
+      createCardVariablesFromPropertiesModel({
+        pageId:
+          racePage.id,
+        cardType:
+          racePage.type,
+        propertiesModel:
+          createPropertiesModel({
+            cardType: 'character',
+            values: {
+              str: '1',
+              dex: '2'
+            }
+          })
+      });
+
+    heroPage.variablesModel =
+      createCardVariablesFromPropertiesModel({
+        pageId:
+          heroPage.id,
+        cardType:
+          heroPage.type,
+        propertiesModel:
+          createPropertiesModel({
+            cardType: 'character',
+            values: {
+              str: '10',
+              customFields: {
+                race: {
+                  key: 'race',
+                  label: 'Раса',
+                  type: 'text',
+                  value: 'human'
+                }
+              }
+            }
+          })
+      });
+
+    const context =
+      createCardVariableDependencyContext({
+        page:
+          heroPage,
+        pages: [
+          heroPage,
+          racePage
+        ]
+      });
+
+    const raceStrength =
+      resolveCardVariablePath(
+        context,
+        'race.str'
+      );
+
+    assert.equal(
+      raceStrength.value,
+      1
+    );
+
+    assert.equal(
+      raceStrength.sourcePageId,
+      'human'
+    );
+
+    const calculation =
+      calculateCardVariableFormula({
+        key: 'totalStr',
+        label: 'Итоговая СИЛ',
+        formula: 'self.str + race.str + 2',
+        context
+      });
+
+    assert.equal(
+      calculation.value,
+      13
+    );
+
+    assert.equal(
+      calculation.parts.length,
+      3
+    );
+
+    assert.deepEqual(
+      calculation.diagnostics,
+      []
+    );
+  }
+);
+
+
+test(
+  'card variable dependency calculation reports missing variables',
+  () => {
+
+    const context =
+      createCardVariableDependencyContext({
+        page: {
+          id: 'hero',
+          type: 'character',
+          content: ''
+        },
+        pages: []
+      });
+
+    const calculation =
+      calculateCardVariableFormula({
+        key: 'broken',
+        formula: 'self.str + race.str',
+        context
+      });
+
+    assert.equal(
+      calculation.source,
+      'partial'
+    );
+
+    assert.equal(
+      calculation.diagnostics.length,
+      2
     );
   }
 );

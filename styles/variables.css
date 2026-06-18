@@ -11,49 +11,55 @@
 :root {
 
   --bg:
-    #070a12;
+    #12100d;
 
   --panel:
-    rgba(14,18,26,0.42);
+    rgba(35, 31, 25, 0.58);
 
   --panel-strong:
-    rgba(16,20,28,0.78);
+    rgba(42, 36, 28, 0.88);
 
   --panel-soft:
-    rgba(255,255,255,0.05);
+    rgba(255, 246, 222, 0.055);
 
   --border:
-    rgba(255,255,255,0.07);
+    rgba(247, 220, 164, 0.13);
 
   --border-hover:
-    rgba(241,211,142,0.24);
+    rgba(244, 202, 118, 0.38);
 
   --hover:
-    rgba(255,255,255,0.09);
+    rgba(244, 202, 118, 0.12);
 
   --text:
-    rgba(248,250,255,0.96);
+    rgba(255, 248, 232, 0.96);
 
   --muted:
-    rgba(248,250,255,0.68);
+    rgba(226, 209, 178, 0.70);
 
   --accent:
-    #f1d38e;
+    #f4ca76;
 
   --accent-soft:
-    rgba(241,211,142,0.14);
+    rgba(244, 202, 118, 0.16);
 
   --accent-strong:
-    rgba(241,211,142,0.84);
+    rgba(244, 202, 118, 0.90);
+
+  --accent-2:
+    #8fae84;
+
+  --accent-2-soft:
+    rgba(143, 174, 132, 0.16);
 
   --danger-soft:
-    rgba(255,154,154,0.14);
+    rgba(202, 91, 88, 0.18);
 
   --danger:
-    #ffb8b8;
+    #e88980;
 
   --shadow:
-    0 20px 60px rgba(0,0,0,0.28);
+    0 24px 70px rgba(0,0,0,0.36);
 
   --radius-sm: 10px;
   --radius-md: 16px;
@@ -103,8 +109,8 @@ body::before {
 
   background-image:
     linear-gradient(
-      rgba(4,7,12,0.54),
-      rgba(4,7,12,0.72)
+      rgba(18, 16, 13, 0.62),
+      rgba(18, 16, 13, 0.82)
     ),
     url("../assets/background.jpg");
 
@@ -115,8 +121,9 @@ body::before {
     center;
 
   filter:
-    blur(4px)
-    saturate(1.02);
+    blur(5px)
+    saturate(0.88)
+    sepia(0.12);
 
   transform:
     scale(1.02);
@@ -136,12 +143,12 @@ body::after {
   background:
     radial-gradient(
       circle at top left,
-      rgba(241,211,142,0.09),
+      rgba(244, 202, 118, 0.11),
       transparent 42%
     ),
     radial-gradient(
       circle at bottom right,
-      rgba(255,255,255,0.045),
+      rgba(143, 174, 132, 0.09),
       transparent 46%
     );
 

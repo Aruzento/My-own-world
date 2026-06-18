@@ -96,6 +96,16 @@ import {
   loadPageTemplates
 } from './templates/pageTemplateStorage.js';
 
+import {
+  loadInternalRulesWorkspaceContent
+} from './rulesWorkspace/rulesWorkspaceIndex.js';
+
+
+// Внутренние правила - program-owned content. Загружаем JSON из assets,
+// но оставляем JS seed как fallback, чтобы пользовательский workspace
+// открывался даже при ошибке поставляемого файла.
+void loadInternalRulesWorkspaceContent();
+
 
 
 document

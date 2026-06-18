@@ -1,6 +1,12 @@
 import {
-  getPropertySchema
+  getPropertySchema,
+  getSchemaValueFields
 } from './propertySchemas.js';
+
+import {
+  normalizePropertyLayout,
+  readPropertyLayoutFromField
+} from './propertyLayoutModel.js';
 
 
 // PropertiesModel — легкая модель данных блока "Свойства".
@@ -21,7 +27,9 @@ export function createPropertiesModel(
   const normalizedCustomFields =
     [];
 
-  (schema?.fields || [])
+  getSchemaValueFields(
+    schema
+  )
     .forEach(field => {
 
       normalizedValues[field.name] =
@@ -55,6 +63,10 @@ export function createPropertiesModel(
     source,
     schema,
     values: normalizedValues,
+    layout:
+      normalizePropertiesLayout(
+        values.layout || {}
+      ),
     customFields:
       normalizedCustomFields,
     customValues:
@@ -83,12 +95,21 @@ export function readPropertiesModelFromElement(
   if (!schema) return null;
 
   const values = {};
+  const layout = {};
 
-  schema.fields
+  getSchemaValueFields(
+    schema
+  )
     .forEach(field => {
 
       values[field.name] =
         readPropertyValue(
+          block,
+          field.name
+        );
+
+      layout[field.name] =
+        readPropertyFieldLayout(
           block,
           field.name
         );
@@ -98,6 +119,14 @@ export function readPropertiesModelFromElement(
     readCustomPropertyFields(
       block
     );
+
+  values.layout =
+    {
+      ...layout,
+      ...readCustomPropertyLayout(
+        block
+      )
+    };
 
   return createPropertiesModel({
     cardType,
@@ -190,6 +219,13 @@ export function normalizePropertyValue(
   value
 ) {
 
+  if (field?.type === 'checkbox') {
+
+    return Boolean(
+      value
+    );
+  }
+
   if (field?.type === 'number') {
 
     if (
@@ -228,16 +264,9 @@ function readPropertyValue(
 
   if (!field) return '';
 
-  if (
-    field.matches('input, select, textarea')
-  ) {
-
-    return field.value ||
-      field.getAttribute('value') ||
-      '';
-  }
-
-  return field.textContent || '';
+  return readControlValue(
+    field
+  );
 }
 
 
@@ -280,12 +309,117 @@ function readCustomPropertyFields(
           readControlValue(
             control
           ),
+        layout:
+          readPropertyLayoutFromField(
+            field
+          ),
         source:
           'custom'
       };
     });
 
   return customFields;
+}
+
+
+function readCustomPropertyLayout(
+  block
+) {
+
+  const layout = {};
+
+  block
+    .querySelectorAll(
+      '.card-property-field[data-property-custom="true"]'
+    )
+    .forEach((field, order) => {
+
+      const key =
+        field.querySelector('[data-property-name]')
+          ?.dataset
+          ?.propertyName ||
+        field.dataset.propertyId ||
+        '';
+
+      if (!key) return;
+
+      layout[key] =
+        readPropertyLayoutFromField(
+          field,
+          {
+            order
+          }
+        );
+    });
+
+  return layout;
+}
+
+
+function readPropertyFieldLayout(
+  block,
+  name
+) {
+
+  const control =
+    block.querySelector(
+      `[data-property-name="${CSS.escape(name)}"]`
+    );
+
+  const field =
+    control?.closest(
+      '.card-property-field'
+    );
+
+  return readPropertyLayoutFromField(
+    field,
+    {
+      order:
+        getPropertyFieldOrder(
+          field
+        )
+    }
+  );
+}
+
+
+function normalizePropertiesLayout(
+  layout
+) {
+
+  return Object.fromEntries(
+    Object.entries(
+      layout || {}
+    )
+      .filter(([
+        key
+      ]) => key)
+      .map(([
+        key,
+        value
+      ]) => [
+        key,
+        normalizePropertyLayout(
+          value
+        )
+      ])
+  );
+}
+
+
+function getPropertyFieldOrder(
+  field
+) {
+
+  if (!field?.parentElement) return 0;
+
+  return [
+    ...field.parentElement.querySelectorAll(
+      '.card-property-field'
+    )
+  ].indexOf(
+    field
+  );
 }
 
 
@@ -312,6 +446,10 @@ function normalizeCustomPropertyField(
       normalizeCustomPropertyValue(
         type,
         field.value
+      ),
+    layout:
+      normalizePropertyLayout(
+        field.layout || {}
       ),
     source:
       'custom'
@@ -384,6 +522,14 @@ function readControlValue(
   if (
     control.matches('input, select, textarea')
   ) {
+
+    if (control.type === 'checkbox') {
+
+      return Boolean(
+        control.checked ||
+        control.hasAttribute('checked')
+      );
+    }
 
     return control.value ||
       control.getAttribute('value') ||

@@ -1,0 +1,99 @@
+/* Ownership: read-only internal DnD rules workspace pages. */
+
+.internal-rule-document {
+
+  max-width:
+    760px;
+
+  margin:
+    0 auto;
+
+  padding:
+    34px 0 56px;
+
+  color:
+    rgba(255,255,255,0.86);
+}
+
+
+.internal-rule-kicker {
+
+  margin:
+    0 0 8px;
+
+  color:
+    rgba(241,211,142,0.78);
+
+  font-size:
+    12px;
+
+  font-weight:
+    780;
+
+  text-transform:
+    uppercase;
+}
+
+
+.internal-rule-document h1 {
+
+  margin:
+    0 0 12px;
+
+  color:
+    rgba(255,255,255,0.94);
+
+  font-size:
+    34px;
+
+  line-height:
+    1.1;
+}
+
+
+.internal-rule-summary {
+
+  margin:
+    0 0 18px;
+
+  color:
+    rgba(255,255,255,0.68);
+
+  font-size:
+    16px;
+
+  line-height:
+    1.5;
+}
+
+
+.internal-rule-body {
+
+  padding:
+    18px;
+
+  border:
+    1px solid rgba(241,211,142,0.16);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.035);
+
+  line-height:
+    1.6;
+}
+
+
+.internal-rule-note {
+
+  margin:
+    16px 0 0;
+
+  color:
+    rgba(255,255,255,0.48);
+
+  font-size:
+    12px;
+}

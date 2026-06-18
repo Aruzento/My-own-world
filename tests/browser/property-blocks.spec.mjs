@@ -111,6 +111,356 @@ test(
     ).not.toContain(
       'skills'
     );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'characterStats'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'dndStats'
+    );
+  }
+);
+
+
+test(
+  'character-properties-render-grouped-dnd-skills',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            getPropertyNumber,
+            getPropertyValue,
+            readPropertiesModelFromElement
+          } = await import('/js/properties/propertiesModel.js');
+
+          const host =
+            document.createElement('div');
+
+          host.innerHTML =
+            createPropertiesBlock({
+              cardType: 'character'
+            });
+
+          const block =
+            host.querySelector('[data-block-type="properties"]');
+
+          block.querySelector('[data-property-name="skillAthletics"]').value =
+            '5';
+
+          block.querySelector('[data-property-name="skillAthleticsProficient"]').value =
+            '1';
+
+          const model =
+            readPropertiesModelFromElement(
+              block
+            );
+
+          return {
+            groups:
+              [...block.querySelectorAll('[data-property-group-name]')]
+                .map(group => group.dataset.propertyGroupName),
+            labels:
+              [...block.querySelectorAll('.card-property-skill-row span')]
+                .map(label => label.textContent.trim()),
+            skillAthletics:
+              getPropertyNumber(
+                model,
+                'skillAthletics',
+                0
+              ),
+            skillAthleticsProficient:
+              getPropertyValue(
+                model,
+                'skillAthleticsProficient',
+                false
+              )
+          };
+        }
+      );
+
+    expect(
+      result.groups
+    ).toEqual(
+      [
+        'strSkills',
+        'dexSkills',
+        'conSkills',
+        'intSkills',
+        'wisSkills',
+        'chaSkills'
+      ]
+    );
+
+    expect(
+      result.labels
+    ).toContain(
+      'Атлетика'
+    );
+
+    expect(
+      result.labels
+    ).toContain(
+      'Скрытность'
+    );
+
+    expect(
+      result.skillAthletics
+    ).toBe(
+      5
+    );
+
+    expect(
+      result.skillAthleticsProficient
+    ).toBe(
+      '1'
+    );
+  }
+);
+
+
+test(
+  'property-block-auto-calculates-skills-and-armor-class',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            setupPropertiesAutoCalculations
+          } = await import('/js/editor/propertiesAutoCalculations.js');
+
+          const {
+            ensurePropertySettingsControls
+          } = await import('/js/editor/propertiesSettingsPopup.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          state.pages = [
+            {
+              id: 'studded-leather',
+              title: 'Проклепанная кожа',
+              type: 'item',
+              content: `
+                <div class="template-block card-properties-block" data-block-type="properties" data-card-type="item">
+                  <label class="card-property-field">
+                    <span>Тип доспеха</span>
+                    <select data-property-name="armorKind">
+                      <option value="Легкий" selected>Легкий</option>
+                    </select>
+                  </label>
+                  <label class="card-property-field">
+                    <span>Базовая КЗ доспеха</span>
+                    <input data-property-name="armorBaseAc" value="12">
+                  </label>
+                </div>
+              `
+            }
+          ];
+
+          const host =
+            document.createElement('div');
+
+          document.body.appendChild(
+            host
+          );
+
+          host.innerHTML =
+            createPropertiesBlock({
+              cardType: 'character'
+            });
+
+          setupPropertiesAutoCalculations(
+            host
+          );
+
+          ensurePropertySettingsControls(
+            host
+          );
+
+          const str =
+            host.querySelector('[data-property-name="str"]');
+
+          const athletics =
+            host.querySelector('[data-property-name="skillAthletics"]');
+
+          const athleticsProficient =
+            host.querySelector('[data-property-name="skillAthleticsProficient"]');
+
+          const dex =
+            host.querySelector('[data-property-name="dex"]');
+
+          const armorItem =
+            host.querySelector('[data-property-name="armorItem"]');
+
+          const armorClass =
+            host.querySelector('[data-property-name="armorClass"]');
+
+          str.value =
+            '18';
+
+          str.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const athleticsWithoutProficiency =
+            athletics.value;
+
+          athleticsProficient.value =
+            '1';
+
+          athleticsProficient.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const athleticsWithProficiency =
+            athletics.value;
+
+          athletics.value =
+            '99';
+
+          athletics.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const manualClass =
+            athletics.closest('.card-property-skill-row')
+              .classList
+              .contains('is-manual-override');
+
+          str.value =
+            '10';
+
+          str.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const manualStillProtected =
+            athletics.value;
+
+          athletics.value =
+            '';
+
+          athletics.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const automaticAfterClear =
+            athletics.value;
+
+          dex.value =
+            '16';
+
+          armorItem.value =
+            'studded-leather';
+
+          armorItem.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          return {
+            athleticsWithoutProficiency,
+            athleticsWithProficiency,
+            manualClass,
+            manualStillProtected,
+            automaticAfterClear,
+            armorClass:
+              armorClass.value
+          };
+        }
+      );
+
+    expect(
+      result.athleticsWithoutProficiency
+    ).toBe(
+      '4'
+    );
+
+    expect(
+      result.athleticsWithProficiency
+    ).toBe(
+      '6'
+    );
+
+    expect(
+      result.manualClass
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.manualStillProtected
+    ).toBe(
+      '99'
+    );
+
+    expect(
+      result.automaticAfterClear
+    ).toBe(
+      '2'
+    );
+
+    expect(
+      result.armorClass
+    ).toBe(
+      '15'
+    );
   }
 );
 
@@ -134,6 +484,10 @@ test(
           const {
             applyBlockSystemContract
           } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            readPropertiesModelFromElement
+          } = await import('/js/properties/propertiesModel.js');
 
           const editor =
             document.querySelector('#editorArea');
@@ -159,18 +513,80 @@ test(
           const popup =
             document.querySelector('.property-settings-popup');
 
+          popup
+            ?.querySelector('.property-settings-rules-toggle')
+            ?.click();
+
+          const popupVisibleBeforeOpen =
+            Boolean(popup) &&
+            !popup.classList.contains('hidden');
+
+          const search =
+            popup?.querySelector('.property-settings-rules-search');
+
+          if (search) {
+
+            search.value =
+              'КЗ';
+
+            search.dispatchEvent(
+              new Event(
+                'input',
+                {
+                  bubbles:
+                    true
+                }
+              )
+            );
+          }
+
+          const hiddenAfterSearch =
+            popup?.querySelectorAll(
+              '.property-settings-rule-node.hidden'
+            ).length || 0;
+
+          popup
+            ?.querySelector('[data-rule-id="armor-class"]')
+            ?.click();
+
+          await new Promise(resolve =>
+            setTimeout(
+              resolve,
+              50
+            )
+          );
+
           return {
             hasButton:
               Boolean(button),
             popupVisible:
-              Boolean(popup) &&
-              !popup.classList.contains('hidden'),
+              popupVisibleBeforeOpen,
             rowCount:
               popup?.querySelectorAll('.property-settings-row').length || 0,
             hasAddButton:
               Boolean(
                 popup?.querySelector('.property-settings-add')
-              )
+              ),
+            rulesVisible:
+              Boolean(
+                popup?.querySelector('.property-settings-rules') &&
+                !popup
+                  .querySelector('.property-settings-rules')
+                  .classList
+                  .contains('hidden')
+              ),
+            rulesText:
+              popup
+                ?.querySelector('.property-settings-rules')
+                ?.textContent || '',
+            hasSearch:
+              Boolean(search),
+            hiddenAfterSearch,
+            openedRule:
+              editor
+                ?.querySelector('.internal-rule-document')
+                ?.dataset
+                ?.internalRuleId || ''
           };
         }
       );
@@ -180,9 +596,25 @@ test(
     ).toEqual({
       hasButton: true,
       popupVisible: true,
-      rowCount: 5,
-      hasAddButton: true
+      rowCount: 8,
+      hasAddButton: true,
+      rulesVisible: true,
+      rulesText:
+        expect.stringContaining(
+          'Класс доспеха'
+        ),
+      hasSearch: true,
+      hiddenAfterSearch:
+        expect.any(Number),
+      openedRule:
+        'armor-class'
     });
+
+    expect(
+      result.hiddenAfterSearch
+    ).toBeGreaterThan(
+      0
+    );
   }
 );
 
@@ -541,12 +973,11 @@ test(
               model.customFields[0]?.label,
             customValue:
               model.customValues[model.customFields[0]?.key],
-            hasCustomDragHandle:
-              Boolean(
-                customInput
-                  .closest('.card-property-field')
-                  .querySelector('.card-property-drag-handle')
-              ),
+            customDragHandleCount:
+              customInput
+                .closest('.card-property-field')
+                .querySelectorAll('.card-property-drag-handle')
+                .length,
             customResizeDots:
               customInput
                 .closest('.card-property-field')
@@ -563,7 +994,7 @@ test(
       htmlHasCustomField: true,
       customLabel: 'Радиус',
       customValue: '15',
-      hasCustomDragHandle: true,
+      customDragHandleCount: 0,
       customResizeDots: 8
     });
   }
@@ -589,6 +1020,10 @@ test(
           const {
             applyBlockSystemContract
           } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            readPropertiesModelFromElement
+          } = await import('/js/properties/propertiesModel.js');
 
           const editor =
             document.querySelector('#editorArea');
@@ -731,6 +1166,10 @@ test(
             applyBlockSystemContract
           } = await import('/js/editor/blocks/blockContract.js');
 
+          const {
+            readPropertiesModelFromElement
+          } = await import('/js/properties/propertiesModel.js');
+
           const editor =
             document.querySelector('#editorArea');
 
@@ -751,19 +1190,19 @@ test(
             editor.querySelector('[data-property-name="silver"]')
               .closest('.card-property-field');
 
-          const dragHandle =
-            firstField.querySelector('.card-property-drag-handle');
-
           const secondRect =
             secondField.getBoundingClientRect();
 
-          dragHandle.dispatchEvent(
+          const firstRect =
+            firstField.getBoundingClientRect();
+
+          firstField.dispatchEvent(
             new PointerEvent(
               'pointerdown',
               {
                 bubbles: true,
-                clientX: secondRect.left + 4,
-                clientY: secondRect.top + 4,
+                clientX: firstRect.left + 2,
+                clientY: firstRect.top + 12,
                 pointerId: 1
               }
             )
@@ -774,12 +1213,29 @@ test(
               'pointermove',
               {
                 bubbles: true,
-                clientX: secondRect.right - 4,
-                clientY: secondRect.bottom - 4,
+                clientX: secondRect.left + 12,
+                clientY: secondRect.top + 12,
                 pointerId: 1
               }
             )
           );
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const hasGhostDuringDrag =
+            Boolean(
+              document.querySelector('.card-property-drag-ghost')
+            );
+
+          const hasPlaceholderDuringDrag =
+            Boolean(
+              editor.querySelector('.card-property-drop-placeholder')
+            );
+
+          const fieldHiddenDuringDrag =
+            firstField.style.display === 'none';
 
           editor.dispatchEvent(
             new PointerEvent(
@@ -791,10 +1247,19 @@ test(
             )
           );
 
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
           const order =
             [
               ...editor.querySelectorAll('.card-property-field [data-property-name]')
             ].map(control => control.dataset.propertyName);
+
+          const modelAfterOccupiedDrop =
+            readPropertiesModelFromElement(
+              editor.querySelector('.card-properties-block')
+            );
 
           const resizeHandle =
             secondField.querySelector('.card-property-resize-dot-se');
@@ -816,8 +1281,8 @@ test(
               'pointermove',
               {
                 bubbles: true,
-                clientX: 80,
-                clientY: 70,
+                clientX: 420,
+                clientY: 160,
                 pointerId: 2
               }
             )
@@ -853,7 +1318,7 @@ test(
               'pointermove',
               {
                 bubbles: true,
-                clientX: 40,
+                clientX: -260,
                 clientY: 40,
                 pointerId: 3
               }
@@ -884,13 +1349,13 @@ test(
           const gridRect =
             grid.getBoundingClientRect();
 
-          dragHandle.dispatchEvent(
+          firstField.dispatchEvent(
             new PointerEvent(
               'pointerdown',
               {
                 bubbles: true,
-                clientX: gridRect.left + 4,
-                clientY: gridRect.top + 4,
+                clientX: firstField.getBoundingClientRect().left + 2,
+                clientY: firstField.getBoundingClientRect().top + 12,
                 pointerId: 4
               }
             )
@@ -918,15 +1383,37 @@ test(
             )
           );
 
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
           const orderAfterEmptyDrop =
             [
               ...editor.querySelectorAll('.card-property-field [data-property-name]')
             ].map(control => control.dataset.propertyName);
 
+          const propertiesModel =
+            readPropertiesModelFromElement(
+              editor.querySelector('.card-properties-block')
+            );
+
           return {
             order,
-            dragHandleTag:
-              dragHandle.tagName,
+            layoutAfterOccupiedDrop:
+              modelAfterOccupiedDrop.layout,
+            hasGhostDuringDrag,
+            hasPlaceholderDuringDrag,
+            fieldHiddenDuringDrag,
+            hasGhostAfterDrop:
+              Boolean(
+                document.querySelector('.card-property-drag-ghost')
+              ),
+            hasPlaceholderAfterDrop:
+              Boolean(
+                editor.querySelector('.card-property-drop-placeholder')
+              ),
+            dragHandleCount:
+              firstField.querySelectorAll('.card-property-drag-handle').length,
             span:
               secondField.dataset.propertySpan,
             rows:
@@ -935,12 +1422,12 @@ test(
               firstField.dataset.propertySpan,
             orderAfterWestResize,
             orderAfterEmptyDrop,
+            layoutAfterEmptyDrop:
+              propertiesModel.layout,
             resizeDots:
               secondField.querySelectorAll('.card-property-resize-dot').length,
-            dragIcon:
-              Boolean(
-                dragHandle.querySelector('.app-icon')
-              )
+            supportsBorderDrag:
+              firstField.matches('.card-property-field')
           };
         }
       );
@@ -951,14 +1438,50 @@ test(
         2
       )
     ).toEqual([
-      'silver',
-      'gold'
+      'gold',
+      'silver'
     ]);
 
     expect(
-      result.dragHandleTag
+      result.layoutAfterOccupiedDrop.silver.y
+    ).toBeGreaterThan(
+      result.layoutAfterOccupiedDrop.gold.y
+    );
+
+    expect(
+      result.hasGhostDuringDrag
     ).toBe(
-      'SPAN'
+      true
+    );
+
+    expect(
+      result.hasPlaceholderDuringDrag
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.fieldHiddenDuringDrag
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.hasGhostAfterDrop
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.hasPlaceholderAfterDrop
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.dragHandleCount
+    ).toBe(
+      0
     );
 
     expect(
@@ -986,9 +1509,34 @@ test(
     );
 
     expect(
-      result.orderAfterEmptyDrop.at(-1)
+      result.orderAfterEmptyDrop[0]
     ).toBe(
       'gold'
+    );
+
+    expect(
+      result.layoutAfterEmptyDrop.gold.order
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.layoutAfterEmptyDrop.gold.y
+    ).toBeGreaterThan(
+      0
+    );
+
+    expect(
+      result.layoutAfterEmptyDrop.gold
+    ).toEqual(
+      expect.objectContaining({
+        w:
+          Number(result.westSpan),
+        h:
+          1,
+        collapsed:
+          false
+      })
     );
 
     expect(
@@ -998,7 +1546,7 @@ test(
     );
 
     expect(
-      result.dragIcon
+      result.supportsBorderDrag
     ).toBe(
       true
     );
@@ -1502,7 +2050,7 @@ test(
     expect(
       result
     ).toContain(
-      'КЗ'
+      'Класс защиты'
     );
 
     expect(
@@ -1629,6 +2177,164 @@ test(
       hasPropertiesBlock: true,
       level: '7'
     });
+  }
+);
+
+
+test(
+  'character-sheet-edits-death-saves-and-clears-manual-override',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            createCharacterSheetBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCharacterSheetBlocks,
+            setupCharacterSheetBlocks
+          } = await import('/js/editor/characterSheetBlock.js');
+
+          state.currentPage = {
+            id: 'hero',
+            type: 'character',
+            content: ''
+          };
+
+          state.pages = [
+            state.currentPage
+          ];
+
+          const editor =
+            document.createElement('div');
+
+          editor.id =
+            'editorArea';
+
+          editor.innerHTML = `
+            <section class="entity-main">
+              <div class="blocks-toolbar" data-runtime="true"></div>
+              ${createCharacterSheetBlock()}
+            </section>
+          `;
+
+          let saves =
+            0;
+
+          setupCharacterSheetBlocks(
+            editor,
+            async () => {
+
+              saves += 1;
+            }
+          );
+
+          renderCharacterSheetBlocks(
+            editor
+          );
+
+          const failureInputs =
+            [
+              ...editor.querySelectorAll(
+                '[data-character-sheet-death-field="deathSaveFailures"]'
+              )
+            ];
+
+          failureInputs[0].checked =
+            true;
+
+          failureInputs[0].dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          await new Promise(resolve =>
+            setTimeout(resolve)
+          );
+
+          const speedInput =
+            editor.querySelector(
+              '[data-character-sheet-override="speed"]'
+            );
+
+          speedInput.value =
+            '45';
+
+          speedInput.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          await new Promise(resolve =>
+            setTimeout(resolve)
+          );
+
+          const clearButton =
+            editor.querySelector(
+              '[data-character-sheet-clear-override="speed"]'
+            );
+
+          clearButton.click();
+
+          await new Promise(resolve =>
+            setTimeout(resolve)
+          );
+
+          const propertiesBlock =
+            editor.querySelector(
+              '.card-properties-block[data-card-type="character"]'
+            );
+
+          return {
+            saves,
+            deathFailures:
+              propertiesBlock
+                ?.querySelector('[data-property-name="deathSaveFailures"]')
+                ?.getAttribute('value'),
+            speedOverride:
+              propertiesBlock
+                ?.querySelector('[data-property-name="override-speed"]')
+                ?.getAttribute('value') || ''
+          };
+        }
+      );
+
+    expect(
+      result.deathFailures
+    ).toBe(
+      '1'
+    );
+
+    expect(
+      result.speedOverride
+    ).toBe(
+      ''
+    );
+
+    expect(
+      result.saves
+    ).toBeGreaterThanOrEqual(
+      3
+    );
   }
 );
 

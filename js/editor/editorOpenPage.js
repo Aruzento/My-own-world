@@ -80,6 +80,11 @@ import {
 } from '../ruleTree/ruleTree.js';
 
 import {
+  isInternalRulePage,
+  renderInternalRulePage
+} from '../rulesWorkspace/internalRulePage.js';
+
+import {
   updateOpenPageTitleWarning
 } from './pageTitleWarning.js';
 
@@ -161,6 +166,26 @@ async function renderSpecialPageIfNeeded(
   page,
   parsed
 ) {
+
+  if (
+    isInternalRulePage(
+      parsed
+    ) ||
+    isInternalRulePage(
+      page
+    )
+  ) {
+
+    renderInternalRulePage(
+      editor
+    );
+
+    completeOpenPage(
+      page
+    );
+
+    return true;
+  }
 
   if (
     isCampaignMapPage(

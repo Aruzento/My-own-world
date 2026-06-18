@@ -7,6 +7,7 @@ import {
 
 import {
   createPropertiesCalculationModel,
+  calculateDndArmorClass,
   createManualOverride,
   resolveCalculatedProperty
 } from '../js/properties/propertiesCalculationEngine.js';
@@ -95,6 +96,95 @@ test(
     assert.equal(
       model.byKey.initiative.formula,
       'dexModifier + effects.initiative'
+    );
+  }
+);
+
+
+test(
+  'PropertiesCalculationModel calculates DnD skills and armor from properties',
+  () => {
+
+    const armorPage = {
+      id: 'studded-leather',
+      title: 'Проклепанная кожа',
+      type: 'item',
+      propertiesModels: [
+        createPropertiesModel({
+          cardType: 'item',
+          values: {
+            armorKind: 'Легкий',
+            armorBaseAc: '12'
+          }
+        })
+      ]
+    };
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          level: '5',
+          dex: '16',
+          armorItem: 'Проклепанная кожа',
+          skillStealthProficient: true
+        }
+      });
+
+    const model =
+      createPropertiesCalculationModel({
+        propertiesModel:
+          properties,
+        pages: [
+          armorPage
+        ]
+      });
+
+    assert.equal(
+      model.armorClass.value,
+      15
+    );
+
+    assert.equal(
+      model.checks.byKey.skillStealth.value,
+      6
+    );
+
+    assert.equal(
+      model.byKey.skillStealth.value,
+      6
+    );
+  }
+);
+
+
+test(
+  'calculateDndArmorClass follows basic DnD armor rules',
+  () => {
+
+    assert.equal(
+      calculateDndArmorClass({
+        dexModifier: 4
+      }),
+      14
+    );
+
+    assert.equal(
+      calculateDndArmorClass({
+        dexModifier: 4,
+        armorKind: 'Средний',
+        armorBaseAc: 14
+      }),
+      16
+    );
+
+    assert.equal(
+      calculateDndArmorClass({
+        dexModifier: 4,
+        armorKind: 'Тяжелый',
+        armorBaseAc: 18
+      }),
+      18
     );
   }
 );

@@ -22,11 +22,13 @@ import {
 
 import {
   createPropertiesModel,
+  getPropertyValue,
   getPropertyNumber
 } from '../js/properties/propertiesModel.js';
 
 import {
-  getPropertySchema
+  getPropertySchema,
+  getPropertyValueFields
 } from '../js/properties/propertySchemas.js';
 
 
@@ -101,6 +103,283 @@ test(
     assert.match(
       html,
       /data-property-name="hpCurrent"/
+    );
+
+    assert.match(
+      html,
+      /data-property-group-name="strSkills"/
+    );
+
+    assert.match(
+      html,
+      /data-property-name="skillAthletics"/
+    );
+
+    assert.match(
+      html,
+      /data-property-name="skillStealthProficient"/
+    );
+  }
+);
+
+
+test(
+  'character properties block starts with compact combat fields and one-row abilities',
+  () => {
+
+    const html =
+      createPropertiesBlock({
+        title: 'РЎРІРѕР№СЃС‚РІР° РїРµСЂСЃРѕРЅР°Р¶Р°',
+        cardType: 'character'
+      });
+
+    const layoutByName = {};
+
+    [
+      ...html.matchAll(
+        /<(label|section)\b[^>]*class="[^"]*card-property-field[^"]*"[^>]*>/g
+      )
+    ].forEach(match => {
+
+      const tag =
+        match[0];
+
+      const layoutMatch =
+        tag.match(
+          /data-property-layout='([^']+)'/
+        );
+
+      if (!layoutMatch) return;
+
+      const idMatch =
+        tag.match(
+          /data-property-id="([^"]+)"/
+        );
+
+      let key =
+        idMatch?.[1];
+
+      if (!key) {
+
+        const after =
+          html.slice(
+            match.index + tag.length,
+            match.index + tag.length + 900
+          );
+
+        key =
+          after.match(
+            /data-property-name="([^"]+)"/
+          )?.[1];
+      }
+
+      if (!key) return;
+
+      layoutByName[key] =
+        JSON.parse(
+          layoutMatch[1]
+        );
+    });
+
+    assert.equal(
+      layoutByName.level.w,
+      1
+    );
+
+    assert.equal(
+      layoutByName.armorClass.w,
+      1
+    );
+
+    assert.equal(
+      layoutByName.hpCurrent.w,
+      1
+    );
+
+    assert.equal(
+      layoutByName.hpTemp.w,
+      2
+    );
+
+    assert.deepEqual(
+      {
+        x:
+          layoutByName.deathSaveSuccesses.x,
+        y:
+          layoutByName.deathSaveSuccesses.y,
+        w:
+          layoutByName.deathSaveSuccesses.w
+      },
+      {
+        x: 8,
+        y: 0,
+        w: 2
+      }
+    );
+
+    assert.deepEqual(
+      {
+        x:
+          layoutByName.armorItem.x,
+        y:
+          layoutByName.armorItem.y,
+        w:
+          layoutByName.armorItem.w
+      },
+      {
+        x: 3,
+        y: 2,
+        w: 2
+      }
+    );
+
+    const abilityColumns = {
+      str: 0,
+      dex: 2,
+      int: 4,
+      wis: 6,
+      con: 8,
+      cha: 10
+    };
+
+    Object
+      .entries(
+        abilityColumns
+      )
+      .forEach(([name, x]) => {
+
+      assert.equal(
+        layoutByName[name].y,
+        5
+      );
+
+      assert.equal(
+        layoutByName[name].x,
+        x
+      );
+
+      assert.equal(
+        layoutByName[name].w,
+        2
+      );
+    });
+
+    assert.deepEqual(
+      Object.fromEntries(
+        [
+          'strSkills',
+          'dexSkills',
+          'intSkills',
+          'wisSkills',
+          'conSkills',
+          'chaSkills'
+        ].map(name => [
+          name,
+          {
+            x:
+              layoutByName[name].x,
+            y:
+              layoutByName[name].y,
+            w:
+              layoutByName[name].w
+          }
+        ])
+      ),
+      {
+        strSkills: {
+          x: 0,
+          y: 7,
+          w: 2
+        },
+        dexSkills: {
+          x: 2,
+          y: 7,
+          w: 2
+        },
+        intSkills: {
+          x: 4,
+          y: 7,
+          w: 2
+        },
+        wisSkills: {
+          x: 6,
+          y: 7,
+          w: 2
+        },
+        conSkills: {
+          x: 8,
+          y: 7,
+          w: 2
+        },
+        chaSkills: {
+          x: 10,
+          y: 7,
+          w: 2
+        }
+      }
+    );
+  }
+);
+
+
+test(
+  'character properties schema exposes grouped DnD skills as model values',
+  () => {
+
+    const fields =
+      getPropertyValueFields(
+        'character'
+      );
+
+    assert.ok(
+      fields.some(field =>
+        field.name === 'skillAthletics' &&
+        field.type === 'number'
+      )
+    );
+
+    assert.ok(
+      fields.some(field =>
+        field.name === 'skillAthleticsProficient' &&
+        field.type === 'number'
+      )
+    );
+
+    const model =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          skillAthletics: '5',
+          skillAthleticsProficient: '2',
+          skillStealth: '2'
+        }
+      });
+
+    assert.equal(
+      getPropertyNumber(
+        model,
+        'skillAthletics',
+        0
+      ),
+      5
+    );
+
+    assert.equal(
+      getPropertyValue(
+        model,
+        'skillAthleticsProficient',
+        '0'
+      ),
+      '2'
+    );
+
+    assert.equal(
+      getPropertyNumber(
+        model,
+        'skillStealth',
+        0
+      ),
+      2
     );
   }
 );
@@ -330,6 +609,15 @@ test(
           label: 'Радиус',
           type: 'number',
           value: '15',
+          layout: {
+            x: 0,
+            y: 0,
+            w: 3,
+            h: 1,
+            order: 0,
+            collapsed: false,
+            groupId: null
+          },
           source: 'custom'
         }
       ]
@@ -338,6 +626,84 @@ test(
     assert.equal(
       model.customValues['custom-radius'],
       '15'
+    );
+  }
+);
+
+
+test(
+  'PropertiesModel keeps model-first layout in normalized data',
+  () => {
+
+    const model =
+      createPropertiesModel({
+        cardType: 'item',
+        values: {
+          gold: '10',
+          layout: {
+            gold: {
+              x: 3,
+              y: 2,
+              w: 4,
+              h: 2,
+              order: 1,
+              collapsed: false,
+              groupId: null
+            },
+            'custom-radius': {
+              x: 0,
+              y: 3,
+              w: 6,
+              h: 1,
+              order: 2,
+              collapsed: false,
+              groupId: 'combat'
+            }
+          },
+          customFields: {
+            'custom-radius': {
+              key: 'custom-radius',
+              label: 'Радиус',
+              type: 'number',
+              value: '15',
+              layout: {
+                x: 0,
+                y: 3,
+                w: 6,
+                h: 1,
+                order: 2,
+                collapsed: false,
+                groupId: 'combat'
+              }
+            }
+          }
+        }
+      });
+
+    assert.deepEqual(
+      model.layout.gold,
+      {
+        x: 3,
+        y: 2,
+        w: 4,
+        h: 2,
+        order: 1,
+        collapsed: false,
+        groupId: null
+      }
+    );
+
+    assert.deepEqual(
+      model.customFields[0].layout,
+      {
+        x: 0,
+        y: 3,
+        w: 6,
+        h: 1,
+        order: 2,
+        collapsed: false,
+        groupId: 'combat'
+      }
     );
   }
 );

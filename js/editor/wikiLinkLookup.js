@@ -3,6 +3,12 @@ import {
   getPageById
 } from '../repository/pageRepository.js';
 
+import {
+  createInternalRulePage,
+  findInternalRuleByPageId,
+  findInternalRuleByTitleOrAlias
+} from '../rulesWorkspace/rulesWorkspaceIndex.js';
+
 
 export function findPageByTitle(
   title
@@ -10,7 +16,12 @@ export function findPageByTitle(
 
   return findPageByTitleOrAlias(
     title
-  );
+  ) ||
+    createInternalRulePage(
+      findInternalRuleByTitleOrAlias(
+        title
+      )
+    );
 }
 
 
@@ -20,7 +31,12 @@ export function findPageByWikiLinkId(
 
   return getPageById(
     pageId
-  );
+  ) ||
+    createInternalRulePage(
+      findInternalRuleByPageId(
+        pageId
+      )
+    );
 }
 
 

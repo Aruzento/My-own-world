@@ -31,6 +31,10 @@ import {
   restoreWorkspaceTreeExpansionState
 } from '../tree/tree.js';
 
+import {
+  renderAssetHealthPanel
+} from './assetHealthPanel.js';
+
 
 export function setupAppTopbar() {
 
@@ -81,6 +85,10 @@ export function setupAppTopbar() {
       closeTools();
 
       await renderBackupPanel(
+        settingsPopup
+      );
+
+      await renderAssetHealthPanel(
         settingsPopup
       );
 
