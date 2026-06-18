@@ -20,6 +20,9 @@ export async function createCampaignMapPresentationPayload(
 
   if (!stage || !model) return null;
 
+  stage.dataset.presentationFogPatchReady =
+    'false';
+
   const data =
     model.toJSON();
 
@@ -111,10 +114,15 @@ export function createCampaignMapPresentationFogPayload(
   if (!stage || !model) return null;
 
   const fogPatch =
-    createPresentationFogPatch(
-      stage,
-      stage.querySelector('.campaign-map-fog-canvas')
-    );
+    stage.dataset.presentationFogPatchReady === 'true'
+      ? createPresentationFogPatch(
+        stage,
+        stage.querySelector('.campaign-map-fog-canvas')
+      )
+      : null;
+
+  stage.dataset.presentationFogPatchReady =
+    'true';
 
   return {
     type: 'update-fog',

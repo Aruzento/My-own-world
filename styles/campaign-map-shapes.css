@@ -99,6 +99,29 @@
 }
 
 
+.campaign-map-drawing-svg.is-filled polyline {
+
+  fill:
+    color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 42%, transparent);
+}
+
+
+.campaign-map-shape[data-shape-type="fill"] .campaign-map-shape-svg rect {
+
+  fill:
+    color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 34%, transparent);
+
+  stroke:
+    color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 72%, white);
+
+  stroke-width:
+    1px;
+
+  filter:
+    none;
+}
+
+
 .campaign-map-shape-handle {
 
   position:

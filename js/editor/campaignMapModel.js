@@ -1048,18 +1048,29 @@ function normalizeShape(
       layers
     );
 
+  const type =
+    ['square', 'circle', 'triangle', 'freehand', 'line', 'fill'].includes(shape.type)
+      ? shape.type
+      : 'square';
+
   const layer =
     layerModel.assignItem(
+      ['freehand', 'line', 'fill'].includes(type)
+        ? 'drawing'
+        : 'shape',
       'shape',
-      'shape',
-      shape
+      ['freehand', 'line', 'fill'].includes(type) &&
+      shape.layerId === 'map-shapes'
+        ? {
+          ...shape,
+          layerId: ''
+        }
+        : shape
     );
 
   return {
     shapeId: String(shape.shapeId || ''),
-    type: ['square', 'circle', 'triangle', 'freehand', 'line', 'fill'].includes(shape.type)
-      ? shape.type
-      : 'square',
+    type,
     x: clampNumber(shape.x, 0, WORLD_WIDTH, 0),
     y: clampNumber(shape.y, 0, WORLD_HEIGHT, 0),
     width: clampNumber(shape.width, 1, WORLD_WIDTH, DEFAULT_GRID_SIZE),

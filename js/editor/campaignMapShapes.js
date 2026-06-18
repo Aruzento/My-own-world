@@ -103,8 +103,13 @@ function getShapeInnerHTML(
         shape.dataset.points
       );
 
+    const isFilled =
+      type === 'freehand' &&
+      shape.dataset.fillColor &&
+      shape.dataset.fillColor !== 'transparent';
+
     return `
-      <svg class="campaign-map-shape-svg campaign-map-drawing-svg" viewBox="0 0 ${Math.max(1, Number(shape.dataset.w || 1))} ${Math.max(1, Number(shape.dataset.h || 1))}" preserveAspectRatio="none">
+      <svg class="campaign-map-shape-svg campaign-map-drawing-svg ${isFilled ? 'is-filled' : ''}" viewBox="0 0 ${Math.max(1, Number(shape.dataset.w || 1))} ${Math.max(1, Number(shape.dataset.h || 1))}" preserveAspectRatio="none">
         <polyline points="${points}"></polyline>
       </svg>
     `;

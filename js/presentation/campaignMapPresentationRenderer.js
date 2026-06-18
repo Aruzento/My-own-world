@@ -702,8 +702,13 @@ function getShapeHTML(
     shape.type === 'line'
   ) {
 
+    const isFilled =
+      shape.type === 'freehand' &&
+      shape.fillColor &&
+      shape.fillColor !== 'transparent';
+
     return `
-      <svg class="campaign-map-shape-svg campaign-map-drawing-svg" viewBox="0 0 ${Math.max(1, Number(shape.width || 1))} ${Math.max(1, Number(shape.height || 1))}" preserveAspectRatio="none">
+      <svg class="campaign-map-shape-svg campaign-map-drawing-svg ${isFilled ? 'is-filled' : ''}" viewBox="0 0 ${Math.max(1, Number(shape.width || 1))} ${Math.max(1, Number(shape.height || 1))}" preserveAspectRatio="none">
         <polyline points="${escapeAttribute(normalizeLinePoints(shape.points))}"></polyline>
       </svg>
     `;

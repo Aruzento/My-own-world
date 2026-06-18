@@ -257,12 +257,30 @@ export function getPresentationCSS() {
 
     .campaign-map-shape-svg rect,
     .campaign-map-shape-svg polygon,
-    .campaign-map-shape-svg ellipse {
-      fill: rgba(241,211,142,0.15);
-      stroke: rgba(255,244,214,0.92);
-      stroke-width: 3;
+    .campaign-map-shape-svg ellipse,
+    .campaign-map-shape-svg polyline {
+      fill: var(--campaign-shape-fill, rgba(241,211,142,0.15));
+      stroke: var(--campaign-shape-stroke, rgba(255,244,214,0.92));
+      stroke-width: var(--campaign-shape-stroke-width, 3px);
       vector-effect: non-scaling-stroke;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.32));
+    }
+
+    .campaign-map-drawing-svg polyline {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .campaign-map-drawing-svg.is-filled polyline {
+      fill: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 42%, transparent);
+    }
+
+    .campaign-map-shape[data-shape-type="fill"] .campaign-map-shape-svg rect {
+      fill: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 34%, transparent);
+      stroke: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 72%, white);
+      stroke-width: 1px;
+      filter: none;
     }
 
     .campaign-map-shape-label {

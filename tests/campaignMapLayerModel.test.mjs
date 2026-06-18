@@ -23,6 +23,7 @@ test(
         'map-objects',
         'map-creatures',
         'map-shapes',
+        'map-drawing',
         'map-fog'
       ]
     );
@@ -41,6 +42,14 @@ test(
         'circle'
       ),
       'map-shapes'
+    );
+
+    assert.equal(
+      getDefaultLayerIdForMapItem(
+        'drawing',
+        'freehand'
+      ),
+      'map-drawing'
     );
   }
 );

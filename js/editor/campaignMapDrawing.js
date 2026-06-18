@@ -38,8 +38,17 @@ const DEFAULT_DRAWING_COLOR =
 const DRAWING_POINT_THRESHOLD =
   3;
 
+const PEN_CONTINUE_DISTANCE =
+  320;
+
 let activeDrawing =
   null;
+
+const lastPenShapeByMap =
+  new WeakMap();
+
+let lastPenShapeId =
+  '';
 
 
 export function setDrawingTool(
@@ -179,6 +188,19 @@ export function startCampaignMapDrawing(
 
   if (tool === 'fill') {
 
+    if (
+      fillDrawingAtPointer(
+        event,
+        stage,
+        map,
+        store,
+        color
+      )
+    ) {
+
+      return true;
+    }
+
     addFillShape(
       map,
       store,
@@ -186,6 +208,51 @@ export function startCampaignMapDrawing(
     );
 
     return true;
+  }
+
+  if (tool === 'pen') {
+
+    const continuation =
+      findPenContinuationTarget(
+        map,
+        store,
+        point
+      ) ||
+      findLastPenContinuationTarget(
+        map,
+        store
+      ) ||
+      findAnyPenContinuationTarget(
+        map,
+        store
+      );
+
+    if (continuation) {
+
+      activeDrawing = {
+        map,
+        stage,
+        store,
+        element:
+          continuation.element,
+        shapeId:
+          continuation.element.dataset.shapeId,
+        tool,
+        color,
+        points: [
+          ...continuation.points,
+          point
+        ],
+        moved:
+          false
+      };
+
+      updateDrawingShapeFromPoints(
+        activeDrawing
+      );
+
+      return true;
+    }
   }
 
   const shape =
@@ -271,7 +338,7 @@ export function moveCampaignMapDrawing(
 
     activeDrawing.points =
       [
-        activeDrawing.points[0],
+        ...activeDrawing.points.slice(0, -1),
         point
       ];
 
@@ -313,7 +380,108 @@ export function finishCampaignMapDrawing() {
   activeDrawing =
     null;
 
+  if (finished.tool === 'pen') {
+
+    mergePenLineShapes(
+      finished
+    );
+
+    lastPenShapeByMap.set(
+      finished.map,
+      finished.shapeId
+    );
+
+    lastPenShapeId =
+      finished.shapeId;
+  }
+
   return finished.map;
+}
+
+
+function mergePenLineShapes(
+  drawing
+) {
+
+  const lines =
+    [
+      ...(drawing.store?.getModel()?.shapes || [])
+    ]
+      .filter(shape =>
+        shape.type === 'line'
+      );
+
+  if (lines.length < 2) return;
+
+  const primary =
+    lines[0];
+
+  const worldPoints =
+    lines.flatMap(shape =>
+      getWorldPointsFromShapeRecord(
+        shape
+      )
+    );
+
+  if (worldPoints.length < 2) return;
+
+  const patch =
+    createDrawingShapePatch(
+      'pen',
+      primary.strokeColor || drawing.color,
+      worldPoints
+    );
+
+  const record =
+    drawing.store.updateShape(
+      primary.shapeId,
+      patch
+    );
+
+  const primaryElement =
+    getShapeElementById(
+      drawing.map,
+      primary.shapeId
+    );
+
+  if (primaryElement) {
+
+    applyShapeRecordToElement(
+      primaryElement,
+      record
+    );
+
+    renderMapShapeElement(
+      primaryElement
+    );
+  }
+
+  lines.slice(1).forEach(shape => {
+
+    drawing.store.removeShape(
+      shape.shapeId
+    );
+
+    getShapeElementById(
+      drawing.map,
+      shape.shapeId
+    )?.remove();
+  });
+
+  drawing.shapeId =
+    primary.shapeId;
+
+  drawing.element =
+    primaryElement || drawing.element;
+
+  scheduleLivePresentationSync({
+    map:
+      drawing.map,
+    itemType:
+      'shape',
+    itemId:
+      primary.shapeId
+  });
 }
 
 
@@ -332,7 +500,7 @@ function addFillShape(
       height: WORLD_HEIGHT,
       strokeColor: color,
       fillColor: color,
-      strokeWidth: 1
+      strokeWidth: 0
     });
 
   const element =
@@ -359,6 +527,65 @@ function addFillShape(
     itemType: 'shape',
     itemId: shape.shapeId
   });
+}
+
+
+function fillDrawingAtPointer(
+  event,
+  stage,
+  map,
+  store,
+  color
+) {
+
+  const point =
+    getWorldPointFromEvent(
+      event,
+      stage
+    );
+
+  const target =
+    [
+      ...map.querySelectorAll('.campaign-map-shape[data-shape-type="freehand"]')
+    ]
+      .reverse()
+      .find(shape =>
+        pointInsideShapeBox(
+          point,
+          shape
+        )
+      );
+
+  if (!target) return false;
+
+  const shapeId =
+    target.dataset.shapeId;
+
+  const record =
+    store.updateShape(
+      shapeId,
+      {
+        fillColor:
+          color
+      }
+    );
+
+  applyShapeRecordToElement(
+    target,
+    record
+  );
+
+  renderMapShapeElement(
+    target
+  );
+
+  scheduleLivePresentationSync({
+    map,
+    itemType: 'shape',
+    itemId: shapeId
+  });
+
+  return true;
 }
 
 
@@ -438,6 +665,236 @@ function findEraserTarget(
         shape
       )
     );
+}
+
+
+function findPenContinuationTarget(
+  map,
+  store,
+  point
+) {
+
+  const candidates =
+    [
+      ...(store?.getModel()?.shapes || [])
+    ]
+      .filter(shape =>
+        shape.type === 'line'
+      )
+      .reverse();
+
+  for (const record of candidates) {
+
+    const points =
+      getWorldPointsFromShapeRecord(
+        record
+      );
+
+    if (points.length < 2) continue;
+
+    const first =
+      points[0];
+
+    const last =
+      points.at(-1);
+
+    if (
+      getPointDistance(
+        point,
+        last
+      ) <= PEN_CONTINUE_DISTANCE
+    ) {
+
+      return createContinuationResult(
+        map,
+        record,
+        points
+      );
+    }
+
+    if (
+      getPointDistance(
+        point,
+        first
+      ) <= PEN_CONTINUE_DISTANCE
+    ) {
+
+      return createContinuationResult(
+        map,
+        record,
+        [...points].reverse()
+      );
+    }
+  }
+
+  return null;
+}
+
+
+function findLastPenContinuationTarget(
+  map,
+  store
+) {
+
+  const shapeId =
+    lastPenShapeByMap.get(
+      map
+    ) ||
+    lastPenShapeId;
+
+  if (!shapeId) return null;
+
+  const record =
+    store?.getModel()?.getShape?.(
+      shapeId
+    );
+
+  if (
+    !record ||
+    record.type !== 'line'
+  ) return null;
+
+  const points =
+    getWorldPointsFromShapeRecord(
+      record
+    );
+
+  if (points.length < 2) return null;
+
+  return createContinuationResult(
+    map,
+    record,
+    points
+  );
+}
+
+
+function findAnyPenContinuationTarget(
+  map,
+  store
+) {
+
+  const record =
+    [
+      ...(store?.getModel()?.shapes || [])
+    ]
+      .filter(shape =>
+        shape.type === 'line'
+      )
+      .at(-1);
+
+  if (!record) return null;
+
+  const points =
+    getWorldPointsFromShapeRecord(
+      record
+    );
+
+  if (points.length < 2) return null;
+
+  return createContinuationResult(
+    map,
+    record,
+    points
+  );
+}
+
+
+function createContinuationResult(
+  map,
+  record,
+  points
+) {
+
+  let element =
+    getShapeElementById(
+      map,
+      record.shapeId
+    );
+
+  if (!element) {
+
+    element =
+      createMapShapeElement(
+        record
+      );
+
+    map
+      .querySelector('.campaign-map-object-layer')
+      ?.appendChild(
+        element
+      );
+
+    renderMapShapeElement(
+      element
+    );
+  }
+
+  return {
+    element,
+    points
+  };
+}
+
+
+function getWorldPointsFromShapeRecord(
+  shape
+) {
+
+  const x =
+    Number(shape.x || 0);
+
+  const y =
+    Number(shape.y || 0);
+
+  return String(shape.points || '')
+    .trim()
+    .split(/\s+/)
+    .map(point => {
+
+      const [localX, localY] =
+        point.split(',').map(Number);
+
+      if (
+        !Number.isFinite(localX) ||
+        !Number.isFinite(localY)
+      ) return null;
+
+      return {
+        x:
+          x + localX,
+        y:
+          y + localY
+      };
+    })
+    .filter(Boolean);
+}
+
+
+function getShapeElementById(
+  map,
+  shapeId
+) {
+
+  if (!shapeId) return null;
+
+  return map.querySelector(
+    `.campaign-map-shape[data-shape-id="${CSS.escape(shapeId)}"]`
+  );
+}
+
+
+function getPointDistance(
+  left,
+  right
+) {
+
+  if (!left || !right) return Infinity;
+
+  return Math.hypot(
+    left.x - right.x,
+    left.y - right.y
+  );
 }
 
 

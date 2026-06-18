@@ -377,13 +377,17 @@ test(
             type: 'object'
           }
         ],
-        shapes: [
-          {
-            shapeId: 'zone',
-            type: 'circle'
-          }
-        ]
-      });
+    shapes: [
+      {
+        shapeId: 'zone',
+        type: 'circle'
+      },
+      {
+        shapeId: 'sketch',
+        type: 'freehand'
+      }
+    ]
+  });
 
     assert.equal(
       model.tokens[0].layerId,
@@ -405,10 +409,22 @@ test(
       'map-shapes'
     );
 
-    assert.equal(
-      model.shapes[0].zIndex,
-      240
-    );
+  assert.equal(
+    model.shapes[0].zIndex,
+    240
+  );
+
+  assert.equal(
+    model.shapes[1].layerId,
+    'map-drawing'
+  );
+
+  assert.equal(
+    model.layers.some(layer =>
+      layer.layerId === 'map-drawing'
+    ),
+    true
+  );
   }
 );
 

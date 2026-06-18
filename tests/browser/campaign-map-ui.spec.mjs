@@ -489,7 +489,64 @@ test(
 
           setDrawingTool(
             map,
+            'pen'
+          );
+
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              300,
+              300
+            ),
+            stage
+          );
+
+          moveCampaignMapDrawing(
+            pointer(
+              'pointermove',
+              360,
+              320
+            )
+          );
+
+          finishCampaignMapDrawing();
+
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              360,
+              320
+            ),
+            stage
+          );
+
+          moveCampaignMapDrawing(
+            pointer(
+              'pointermove',
+              420,
+              360
+            )
+          );
+
+          finishCampaignMapDrawing();
+
+          const penShapesBeforeFill =
+            store.getModel().shapes
+              .filter(shape => shape.type === 'line')
+              .map(shape => shape.points);
+
+          setDrawingTool(
+            map,
             'fill'
+          );
+
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              150,
+              170
+            ),
+            stage
           );
 
           startCampaignMapDrawing(
@@ -507,6 +564,10 @@ test(
                 shape.type,
               color:
                 shape.strokeColor,
+              fillColor:
+                shape.fillColor,
+              layerId:
+                shape.layerId,
               points:
                 shape.points
             }));
@@ -527,6 +588,7 @@ test(
 
           return {
             beforeErase,
+            penShapesBeforeFill,
             afterErase:
               store.getModel().shapes.map(shape => shape.type),
             hasPolylineBeforeErase,
@@ -540,13 +602,34 @@ test(
       result.beforeErase.map(item => item.type)
     ).toEqual([
       'freehand',
+      'line',
       'fill'
     ]);
+
+    expect(
+      result.penShapesBeforeFill.length
+    ).toBe(
+      1
+    );
 
     expect(
       result.beforeErase[0].color
     ).toBe(
       '#aa33cc'
+    );
+
+    expect(
+      result.beforeErase[0].fillColor
+    ).toBe(
+      '#aa33cc'
+    );
+
+    expect(
+      result.beforeErase.every(item =>
+        item.layerId === 'map-drawing'
+      )
+    ).toBe(
+      true
     );
 
     expect(
@@ -558,6 +641,7 @@ test(
     expect(
       result.afterErase
     ).toEqual([
+      'line',
       'fill'
     ]);
 
@@ -572,6 +656,119 @@ test(
     ).toBe(
       true
     );
+  }
+);
+
+
+test(
+  'campaign-map-delete-removes-selected-map-items',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapShapeElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            removeSelectedCampaignMapItems
+          } = await import('/js/editor/campaignMap.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const record =
+            store.addShape({
+              shapeId:
+                'delete-me',
+              type:
+                'square',
+              x:
+                10,
+              y:
+                20,
+              width:
+                80,
+              height:
+                80
+            });
+
+          const shape =
+            createMapShapeElement(
+              record,
+              store.getModel()
+            );
+
+          shape.classList.add(
+            'is-selected'
+          );
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              shape
+            );
+
+          renderMapShapeElement(
+            shape
+          );
+
+          const deleted =
+            removeSelectedCampaignMapItems(
+              map
+            );
+
+          return {
+            deleted,
+            domShapes:
+              map.querySelectorAll('.campaign-map-shape').length,
+            modelShapes:
+              store.getModel().shapes.length
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      deleted:
+        1,
+      domShapes:
+        0,
+      modelShapes:
+        0
+    });
   }
 );
 

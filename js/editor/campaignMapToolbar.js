@@ -28,7 +28,7 @@ export function getMapControlsHTML() {
 
     <div class="campaign-map-control-group">
       <button class="campaign-shapes-btn" type="button" title="Фигуры">Фигуры</button>
-      <button class="campaign-drawing-btn" type="button" title="Рисование">Рисование</button>
+      <button class="campaign-drawing-btn" type="button" title="Рисование">${iconSvg('brush')}</button>
       <button class="campaign-layers-btn" type="button" title="Слои">Слои</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
       <button class="campaign-initiative-btn" type="button" title="Инициатива">Иниц.</button>

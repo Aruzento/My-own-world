@@ -1,10 +1,10 @@
-// CampaignMapLayerModel описывает порядок слоев карты без привязки к DOM.
-// UI управления слоями появится позже, а модель уже дает единый контракт.
+// CampaignMapLayerModel РѕРїРёСЃС‹РІР°РµС‚ РїРѕСЂСЏРґРѕРє СЃР»РѕРµРІ РєР°СЂС‚С‹ Р±РµР· РїСЂРёРІСЏР·РєРё Рє DOM.
+// UI СѓРїСЂР°РІР»РµРЅРёСЏ СЃР»РѕСЏРјРё РїРѕСЏРІРёС‚СЃСЏ РїРѕР·Р¶Рµ, Р° РјРѕРґРµР»СЊ СѓР¶Рµ РґР°РµС‚ РµРґРёРЅС‹Р№ РєРѕРЅС‚СЂР°РєС‚.
 
 export const DEFAULT_CAMPAIGN_MAP_LAYERS = [
   {
     layerId: 'map-objects',
-    title: 'Объекты',
+    title: '\u041e\u0431\u044a\u0435\u043a\u0442\u044b',
     kind: 'object',
     zIndex: 20,
     visible: true,
@@ -12,7 +12,7 @@ export const DEFAULT_CAMPAIGN_MAP_LAYERS = [
   },
   {
     layerId: 'map-creatures',
-    title: 'Существа',
+    title: '\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0430',
     kind: 'creature',
     zIndex: 40,
     visible: true,
@@ -20,22 +20,29 @@ export const DEFAULT_CAMPAIGN_MAP_LAYERS = [
   },
   {
     layerId: 'map-shapes',
-    title: 'Фигуры',
+    title: '\u0424\u0438\u0433\u0443\u0440\u044b',
     kind: 'shape',
     zIndex: 80,
     visible: true,
     locked: false
   },
   {
+    layerId: 'map-drawing',
+    title: '\u0420\u0438\u0441\u043e\u0432\u0430\u043d\u0438\u0435',
+    kind: 'drawing',
+    zIndex: 90,
+    visible: true,
+    locked: false
+  },
+  {
     layerId: 'map-fog',
-    title: 'Туман',
+    title: '\u0422\u0443\u043c\u0430\u043d',
     kind: 'fog',
     zIndex: 120,
     visible: true,
     locked: true
   }
 ];
-
 
 export class CampaignMapLayerModel {
 
@@ -158,6 +165,8 @@ export function getDefaultLayerIdForMapItem(
   itemType
 ) {
 
+  if (itemKind === 'drawing') return 'map-drawing';
+
   if (itemKind === 'shape') return 'map-shapes';
 
   if (itemType === 'object') return 'map-objects';
@@ -233,6 +242,7 @@ function normalizeLayerKind(
     kind === 'object' ||
     kind === 'creature' ||
     kind === 'shape' ||
+    kind === 'drawing' ||
     kind === 'fog' ||
     kind === 'custom'
   ) {

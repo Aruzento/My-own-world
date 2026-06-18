@@ -224,6 +224,11 @@ export function setupCampaignMaps(
 
   document.addEventListener(
     'keydown',
+    handleMapKeyDown
+  );
+
+  document.addEventListener(
+    'keydown',
     pointerController.handleDocumentKeyDown
   );
 
@@ -243,6 +248,110 @@ export function setupCampaignMaps(
     {
       getMapPickerDeps
     }
+  );
+}
+
+
+async function handleMapKeyDown(
+  event
+) {
+
+  if (
+    event.key !== 'Delete' &&
+    event.key !== 'Backspace'
+  ) return;
+
+  if (
+    isEditableKeyTarget(
+      event.target
+    )
+  ) return;
+
+  const map =
+    document.querySelector(
+      '.campaign-map-document'
+    );
+
+  if (!map) return;
+
+  const deletedCount =
+    removeSelectedCampaignMapItems(
+      map
+    );
+
+  if (!deletedCount) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  closeTokenPopup();
+  closeMapPopup();
+
+  await saveAndSync();
+}
+
+
+export function removeSelectedCampaignMapItems(
+  map
+) {
+
+  const selectedTokens =
+    [
+      ...map.querySelectorAll('.campaign-map-token.is-selected')
+    ];
+
+  const selectedShapes =
+    [
+      ...map.querySelectorAll('.campaign-map-shape.is-selected')
+    ];
+
+  if (
+    selectedTokens.length === 0 &&
+    selectedShapes.length === 0
+  ) return 0;
+
+  const store =
+    refreshCampaignMapStore(
+      map
+    );
+
+  selectedTokens.forEach(token => {
+
+    store?.removeToken(
+      token.dataset.tokenId
+    );
+
+    token.remove();
+  });
+
+  selectedShapes.forEach(shape => {
+
+    store?.removeShape(
+      shape.dataset.shapeId
+    );
+
+    shape.remove();
+  });
+
+  return selectedTokens.length + selectedShapes.length;
+}
+
+
+function isEditableKeyTarget(
+  target
+) {
+
+  const element =
+    target instanceof Element
+      ? target
+      : null;
+
+  if (!element) return false;
+
+  return Boolean(
+    element.closest(
+      'input, textarea, select, [contenteditable="true"], [data-persistent-editable="true"]'
+    )
   );
 }
 
