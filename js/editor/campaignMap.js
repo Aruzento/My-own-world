@@ -143,6 +143,10 @@ import {
   renderCampaignMapPerformanceDiagnostics
 } from './campaignMapPerformanceDiagnostics.js';
 
+import {
+  playFirstCampaignMapMusicForMapSwitch
+} from './campaignMapMusic.js';
+
 export {
   isCampaignMapPage,
   serializeCampaignMapHTML
@@ -410,6 +414,10 @@ export async function renderCampaignMap(
   );
 
   renderCampaignMapPerformanceDiagnostics(
+    map
+  );
+
+  await playFirstCampaignMapMusicForMapSwitch(
     map
   );
 

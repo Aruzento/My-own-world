@@ -258,6 +258,13 @@ function getMimeType(
   if (extension === 'webp') return 'image/webp';
   if (extension === 'gif') return 'image/gif';
   if (extension === 'svg') return 'image/svg+xml';
+  if (extension === 'mp3') return 'audio/mpeg';
+  if (extension === 'wav') return 'audio/wav';
+  if (extension === 'ogg') return 'audio/ogg';
+  if (extension === 'm4a') return 'audio/mp4';
+  if (extension === 'aac') return 'audio/aac';
+  if (extension === 'flac') return 'audio/flac';
+  if (extension === 'webm') return 'audio/webm';
 
   return 'application/octet-stream';
 }

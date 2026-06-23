@@ -35,6 +35,18 @@ export function createBrowserAssetAdapter() {
           filename
         );
 
+      const parentPath =
+        getParentPath(
+          path
+        );
+
+      if (parentPath) {
+
+        await storageAdapter.ensureDirectory(
+          `assets/${parentPath}`
+        );
+      }
+
       await storageAdapter.writeBinary(
         `assets/${path}`,
         await file.arrayBuffer()
@@ -43,9 +55,11 @@ export function createBrowserAssetAdapter() {
       return {
         path,
         url:
-          await this.resolveUrl(
-            path
-          )
+          options.resolveUrl === false
+            ? ''
+            : await this.resolveUrl(
+              path
+            )
       };
     },
 
@@ -132,6 +146,20 @@ function normalizeAssetPath(
 }
 
 
+function getParentPath(
+  path
+) {
+
+  const parts =
+    String(path || '')
+      .split('/');
+
+  parts.pop();
+
+  return parts.join('/');
+}
+
+
 function getMimeType(
   path
 ) {
@@ -147,6 +175,13 @@ function getMimeType(
   if (extension === 'webp') return 'image/webp';
   if (extension === 'gif') return 'image/gif';
   if (extension === 'svg') return 'image/svg+xml';
+  if (extension === 'mp3') return 'audio/mpeg';
+  if (extension === 'wav') return 'audio/wav';
+  if (extension === 'ogg') return 'audio/ogg';
+  if (extension === 'm4a') return 'audio/mp4';
+  if (extension === 'aac') return 'audio/aac';
+  if (extension === 'flac') return 'audio/flac';
+  if (extension === 'webm') return 'audio/webm';
 
   return 'application/octet-stream';
 }

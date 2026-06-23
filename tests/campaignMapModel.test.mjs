@@ -352,6 +352,91 @@ test(
 
 
 test(
+  'CampaignMapModel сохраняет два плейлиста музыки карты',
+  () => {
+
+    const model =
+      new CampaignMapModel({
+        music: {
+          activeMode: 'battle',
+          normal: {
+            title: 'Город',
+            tracks: [
+              {
+                trackId: 'track-town',
+                title: 'Таверна',
+                path: 'assets/music/tavern.mp3'
+              }
+            ]
+          },
+          battle: {
+            title: 'Бой у ворот',
+            order: 'shuffle',
+            loop: true,
+            tracks: [
+              {
+                trackId: 'track-battle',
+                title: 'Битва',
+                path: 'assets/music/battle.ogg'
+              }
+            ]
+          }
+        }
+      });
+
+    const stage =
+      {
+        dataset: {}
+      };
+
+    const container =
+      {
+        querySelector:
+          selector => selector === '.campaign-map-stage'
+            ? stage
+            : null,
+        querySelectorAll:
+          () => []
+      };
+
+    model.commitToElement(
+      container
+    );
+
+    const restored =
+      CampaignMapModel.fromElement(
+        container
+      );
+
+    assert.equal(
+      restored.music.activeMode,
+      'battle'
+    );
+
+    assert.equal(
+      restored.music.normal.title,
+      'Город'
+    );
+
+    assert.equal(
+      restored.music.battle.order,
+      'shuffle'
+    );
+
+    assert.equal(
+      restored.music.battle.loop,
+      true
+    );
+
+    assert.equal(
+      restored.music.battle.tracks[0].path,
+      'assets/music/battle.ogg'
+    );
+  }
+);
+
+
+test(
   'CampaignMapModel назначает слои и z-order токенам и фигурам',
   () => {
 

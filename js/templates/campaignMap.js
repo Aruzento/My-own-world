@@ -33,6 +33,7 @@ export function createCampaignMapTemplate() {
           data-grid="false"
           data-fog-mode="draw"
           data-fog-image=""
+          data-map-music-state=""
           contenteditable="false"
         >
           <div class="campaign-map-viewport">

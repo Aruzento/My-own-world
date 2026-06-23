@@ -112,3 +112,54 @@ test(
     );
   }
 );
+
+
+test(
+  'asset scanner собирает audio из плейлистов карты',
+  () => {
+
+    const music =
+      encodeURIComponent(
+        JSON.stringify({
+          normal: {
+            tracks: [
+              {
+                trackId: 'normal-1',
+                path: 'assets/music/town.mp3'
+              }
+            ]
+          },
+          battle: {
+            tracks: [
+              {
+                trackId: 'battle-1',
+                path: 'assets/music/battle.ogg'
+              }
+            ]
+          }
+        })
+      );
+
+    const references =
+      collectAssetReferencesFromHTML(
+        `<div class="campaign-map-stage" data-map-music-state="${music}"></div>`,
+        {
+          pageId: 'map-1',
+          scope: 'campaignMap'
+        }
+      );
+
+    assert.deepEqual(
+      references.map(reference => reference.path).sort(),
+      [
+        'assets/music/battle.ogg',
+        'assets/music/town.mp3'
+      ]
+    );
+
+    assert.equal(
+      references[0].type,
+      'audio'
+    );
+  }
+);

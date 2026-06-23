@@ -16,7 +16,7 @@ test(
 
     const result =
       await page.evaluate(
-        async () => {
+      async () => {
 
           const { state } =
             await import('/js/state.js');
@@ -768,6 +768,556 @@ test(
         0,
       modelShapes:
         0
+    });
+  }
+);
+
+
+test(
+  'campaign-map-music-popup-manages-normal-and-battle-playlists',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            openCampaignMapMusicPopup
+          } = await import('/js/editor/campaignMapMusic.js');
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          class TestAudio {
+
+            constructor() {
+
+              this.dataset = {};
+              this.currentTime = 0;
+              this.src = '';
+              window.__campaignMapMusicAudio = this;
+            }
+
+            play() {
+
+              this.dataset.played = 'true';
+              return Promise.resolve();
+            }
+
+            pause() {
+
+              this.dataset.paused = 'true';
+            }
+          }
+
+          window.Audio =
+            TestAudio;
+
+          const adapter = {
+            kind: 'test',
+            writtenBinaryPaths: [],
+            async pickWorkspace() {},
+            async restoreWorkspace() {},
+            async ensureDirectory() {},
+            async getDirectoryHandle() {},
+            async readText() {
+              return '';
+            },
+            async writeText() {},
+            async readBinary() {
+              return new ArrayBuffer(8);
+            },
+            async writeBinary(path) {
+              this.writtenBinaryPaths.push(
+                path
+              );
+            },
+            async removeFile() {},
+            async removeDirectory() {},
+            async listFiles(path) {
+
+              if (path === 'assets') {
+
+                return [
+                  {
+                    name: 'music',
+                    kind: 'directory'
+                  }
+                ];
+              }
+
+              if (path === 'assets/music') {
+
+                return [
+                  {
+                    name: 'town.mp3',
+                    kind: 'file'
+                  },
+                  {
+                    name: 'battle.ogg',
+                    kind: 'file'
+                  }
+                ];
+              }
+
+              return [];
+            }
+          };
+
+          setStorageAdapter(
+            adapter
+          );
+
+          const copiedMusic =
+            encodeURIComponent(
+              JSON.stringify({
+                normal: {
+                  title: 'Старый город',
+                  tracks: [
+                    {
+                      trackId: 'copy-track',
+                      title: 'Старый город',
+                      path: 'assets/music/town.mp3'
+                    }
+                  ]
+                }
+              })
+            );
+
+          setPages([
+            {
+              id: 'other-map',
+              title: 'Город',
+              type: 'campaignMap',
+              template: 'campaignMap',
+              content: `<div class="campaign-map-stage" data-map-music-state="${copiedMusic}"></div>`
+            }
+          ]);
+
+          document.body.innerHTML =
+            `
+              <button class="anchor" type="button">music</button>
+              <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+                <div class="campaign-map-topbar" contenteditable="false">
+                  <h1 class="campaign-map-title singleline-field" contenteditable="true">Лес</h1>
+                </div>
+                <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                  <div class="campaign-map-viewport">
+                    <div class="campaign-map-background"></div>
+                    <div class="campaign-map-object-layer"></div>
+                    <canvas class="campaign-map-fog-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            `;
+
+          const map =
+            document.querySelector(
+              '.campaign-map-document'
+            );
+
+          refreshCampaignMapStore(
+            map
+          );
+
+          const testState =
+            {
+              saveCount:
+                0,
+              adapter,
+              map
+            };
+
+          window.__campaignMapMusicTest =
+            testState;
+
+          await openCampaignMapMusicPopup(
+            map,
+            document.querySelector('.anchor'),
+            {
+              async saveAndSync() {
+                testState.saveCount += 1;
+              }
+            }
+          );
+        }
+      );
+
+    await page
+      .locator('.campaign-music-upload-input')
+      .setInputFiles({
+        name:
+          'uploaded.mp3',
+        mimeType:
+          'audio/mpeg',
+        buffer:
+          Buffer.from([
+            1,
+            2,
+            3
+          ])
+      });
+
+    await expect(
+      page.locator('.campaign-music-upload-pending')
+    ).toContainText(
+      'Выбрано файлов: 1'
+    );
+
+    await page
+      .locator('.campaign-music-upload-add-btn')
+      .click();
+
+    await expect(
+      page.locator('.campaign-music-track-list')
+    ).toContainText(
+      'uploaded'
+    );
+
+    await page
+      .locator('.campaign-music-play-btn')
+      .click();
+
+    await expect(
+      page.locator('.campaign-music-playback-status')
+    ).toContainText(
+      'Играет'
+    );
+
+    await page
+      .locator('.campaign-music-mode-btn[data-music-mode="battle"]')
+      .click();
+
+    await page
+      .locator('.campaign-music-upload-input')
+      .setInputFiles({
+        name:
+          'battle-upload.ogg',
+        mimeType:
+          'audio/ogg',
+        buffer:
+          Buffer.from([
+            4,
+            5,
+            6
+          ])
+      });
+
+    await expect(
+      page.locator('.campaign-music-upload-pending')
+    ).toContainText(
+      'Выбрано файлов: 1'
+    );
+
+    await page
+      .locator('.campaign-music-upload-add-btn')
+      .click();
+
+    await expect(
+      page.locator('.campaign-music-track-list')
+    ).toContainText(
+      'battle upload'
+    );
+
+    await page
+      .locator('.campaign-music-copy-select')
+      .selectOption(
+        'other-map:normal'
+      );
+
+    await page
+      .locator('.campaign-music-copy-btn')
+      .click();
+
+    const result =
+      await page.evaluate(
+        () => {
+
+          const testState =
+            window.__campaignMapMusicTest;
+
+          const music =
+            testState.map.campaignMapModel.music;
+
+          return {
+            saveCount:
+              testState.saveCount,
+            activeMode:
+              music.activeMode,
+            writtenBinaryPaths:
+              testState.adapter.writtenBinaryPaths,
+            normalTracks:
+              music.normal.tracks.map(track => track.path),
+            battleTitle:
+              music.battle.title,
+            battleTracks:
+              music.battle.tracks.map(track => track.path),
+            audioPlayed:
+              window.__campaignMapMusicAudio?.dataset?.played || ''
+          };
+        }
+      );
+
+    expect(
+      result.saveCount
+    ).toBeGreaterThanOrEqual(
+      4
+    );
+
+    expect(
+      result.activeMode
+    ).toBe(
+      'battle'
+    );
+
+    expect(
+      result.writtenBinaryPaths
+    ).toEqual([
+      'assets/music/uploaded.mp3',
+      'assets/music/battle-upload.ogg'
+    ]);
+
+    expect(
+      result.normalTracks
+    ).toContain(
+      'assets/music/uploaded.mp3'
+    );
+
+    expect(
+      result.battleTitle
+    ).toBe(
+      'Старый город'
+    );
+
+    expect(
+      result.battleTracks
+    ).toEqual([
+      'assets/music/town.mp3'
+    ]);
+
+    expect(
+      result.audioPlayed
+    ).toBe(
+      'true'
+    );
+  }
+);
+
+
+test(
+  'campaign-map-music-starts-first-active-playlist-track-on-map-switch',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            playFirstCampaignMapMusicForMapSwitch
+          } = await import('/js/editor/campaignMapMusic.js');
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const audioInstances =
+            [];
+
+          class TestAudio {
+
+            constructor() {
+
+              this.dataset = {};
+              this.currentTime = 0;
+              this.src = '';
+              this.paused = false;
+
+              audioInstances.push(
+                this
+              );
+            }
+
+            play() {
+
+              this.dataset.played = 'true';
+              return Promise.resolve();
+            }
+
+            pause() {
+
+              this.paused =
+                true;
+
+              this.dataset.paused =
+                'true';
+            }
+          }
+
+          window.Audio =
+            TestAudio;
+
+          setStorageAdapter({
+            kind:
+              'test',
+            async pickWorkspace() {},
+            async restoreWorkspace() {},
+            async ensureDirectory() {},
+            async getDirectoryHandle() {},
+            async readText() {
+              return '';
+            },
+            async writeText() {},
+            async readBinary() {
+              return new ArrayBuffer(8);
+            },
+            async writeBinary() {},
+            async removeFile() {},
+            async removeDirectory() {},
+            async listFiles() {
+              return [];
+            }
+          });
+
+          document.body.innerHTML =
+            `
+              <div class="campaign-map-document map-a" data-campaign-map="v1" contenteditable="false">
+                <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                  <div class="campaign-map-viewport">
+                    <div class="campaign-map-background"></div>
+                    <div class="campaign-map-object-layer"></div>
+                    <canvas class="campaign-map-fog-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div class="campaign-map-document map-b" data-campaign-map="v1" contenteditable="false">
+                <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                  <div class="campaign-map-viewport">
+                    <div class="campaign-map-background"></div>
+                    <div class="campaign-map-object-layer"></div>
+                    <canvas class="campaign-map-fog-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            `;
+
+          const mapA =
+            document.querySelector('.map-a');
+
+          const mapB =
+            document.querySelector('.map-b');
+
+          refreshCampaignMapStore(
+            mapA
+          )
+            .setMusic({
+              activeMode:
+                'normal',
+              normal: {
+                tracks: [
+                  {
+                    trackId:
+                      'a-first',
+                    title:
+                      'A First',
+                    path:
+                      'assets/music/a-first.mp3'
+                  },
+                  {
+                    trackId:
+                      'a-second',
+                    title:
+                      'A Second',
+                    path:
+                      'assets/music/a-second.mp3'
+                  }
+                ]
+              }
+            });
+
+          refreshCampaignMapStore(
+            mapB
+          )
+            .setMusic({
+              activeMode:
+                'battle',
+              battle: {
+                tracks: [
+                  {
+                    trackId:
+                      'b-first',
+                    title:
+                      'B First',
+                    path:
+                      'assets/music/b-first.mp3'
+                  },
+                  {
+                    trackId:
+                      'b-second',
+                    title:
+                      'B Second',
+                    path:
+                      'assets/music/b-second.mp3'
+                  }
+                ]
+              }
+            });
+
+          await playFirstCampaignMapMusicForMapSwitch(
+            mapA
+          );
+
+          await playFirstCampaignMapMusicForMapSwitch(
+            mapB
+          );
+
+          return {
+            firstTrack:
+              audioInstances[0]?.dataset?.trackId || '',
+            firstPaused:
+              audioInstances[0]?.dataset?.paused || '',
+            secondTrack:
+              audioInstances[1]?.dataset?.trackId || '',
+            secondPlayed:
+              audioInstances[1]?.dataset?.played || ''
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      firstTrack:
+        'a-first',
+      firstPaused:
+        'true',
+      secondTrack:
+        'b-first',
+      secondPlayed:
+        'true'
     });
   }
 );

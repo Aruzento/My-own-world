@@ -36,6 +36,13 @@ const mimeTypes =
     ['.jpg', 'image/jpeg'],
     ['.jpeg', 'image/jpeg'],
     ['.png', 'image/png'],
+    ['.mp3', 'audio/mpeg'],
+    ['.wav', 'audio/wav'],
+    ['.ogg', 'audio/ogg'],
+    ['.m4a', 'audio/mp4'],
+    ['.aac', 'audio/aac'],
+    ['.flac', 'audio/flac'],
+    ['.webm', 'audio/webm'],
     ['.json', 'application/json; charset=utf-8']
   ]);
 

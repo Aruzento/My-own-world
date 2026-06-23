@@ -396,6 +396,22 @@ export class CampaignMapStore {
   }
 
 
+  setMusic(
+    music
+  ) {
+
+    const nextMusic =
+      this.model.setMusic(
+        music
+      );
+
+    this.markDirty();
+    this.commitToDOM();
+
+    return nextMusic;
+  }
+
+
   setLayers(
     layers
   ) {

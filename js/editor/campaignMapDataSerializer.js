@@ -113,6 +113,11 @@ function serializeStageAttributes(
         data.initiative || {}
       )
     ),
+    'data-map-music-state': encodeURIComponent(
+      JSON.stringify(
+        data.music || {}
+      )
+    ),
     ...serializeAssetSettings(
       data.assetSettings
     )

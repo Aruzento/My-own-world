@@ -57,6 +57,18 @@ export function createDesktopAssetAdapter(
           filename
         );
 
+      const parentPath =
+        getParentPath(
+          path
+        );
+
+      if (parentPath) {
+
+        await storageAdapter.ensureDirectory(
+          `assets/${parentPath}`
+        );
+      }
+
       await storageAdapter.writeBinary(
         `assets/${path}`,
         await file.arrayBuffer()
@@ -65,9 +77,11 @@ export function createDesktopAssetAdapter(
       return {
         path,
         url:
-          await this.resolveUrl(
-            path
-          )
+          options.resolveUrl === false
+            ? ''
+            : await this.resolveUrl(
+              path
+            )
       };
     },
 
@@ -175,6 +189,20 @@ function normalizeAssetPath(
     path
   )
     .replace(/^assets\//, '');
+}
+
+
+function getParentPath(
+  path
+) {
+
+  const parts =
+    String(path || '')
+      .split('/');
+
+  parts.pop();
+
+  return parts.join('/');
 }
 
 

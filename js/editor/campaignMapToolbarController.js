@@ -22,6 +22,10 @@ import {
 } from './campaignMapInitiativePopup.js';
 
 import {
+  openCampaignMapMusicPopup
+} from './campaignMapMusic.js';
+
+import {
   toggleGrid,
   updateGridSize
 } from './campaignMapViewport.js';
@@ -251,6 +255,29 @@ export async function handleCampaignMapToolbarClick(
     ) return true;
 
     openInitiativePopup(
+      map,
+      anchor,
+      deps
+    );
+
+    return true;
+  }
+
+  if (
+    event.target.closest('.campaign-music-btn')
+  ) {
+
+    const anchor =
+      event.target.closest('.campaign-music-btn');
+
+    if (
+      toggleMapPopupForAnchor(
+        anchor,
+        'music'
+      )
+    ) return true;
+
+    await openCampaignMapMusicPopup(
       map,
       anchor,
       deps

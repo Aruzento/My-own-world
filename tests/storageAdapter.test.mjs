@@ -21,6 +21,10 @@ import {
 } from '../js/storage/desktopAssetAdapter.js';
 
 import {
+  createBrowserAssetAdapter
+} from '../js/storage/browserAssetAdapter.js';
+
+import {
   setStorageAdapter
 } from '../js/storage/storageAdapter.js';
 
@@ -443,6 +447,75 @@ test(
       globalThis.__TAURI__ =
         previousTauri;
     }
+  }
+);
+
+
+test(
+  'AssetAdapter importFile can skip immediate URL resolving for audio playlist imports',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const assetAdapter =
+      createBrowserAssetAdapter();
+
+    const file =
+      new File(
+        [
+          new Uint8Array([
+            1,
+            2,
+            3
+          ])
+        ],
+        'battle.mp3',
+        {
+          type:
+            'audio/mpeg'
+        }
+      );
+
+    const asset =
+      await assetAdapter.importFile(
+        file,
+        {
+          filename:
+            'music/battle.mp3',
+          resolveUrl:
+            false
+        }
+      );
+
+    assert.equal(
+      asset.path,
+      'music/battle.mp3'
+    );
+
+    assert.equal(
+      asset.url,
+      ''
+    );
+
+    assert.deepEqual(
+      Array.from(
+        new Uint8Array(
+          await adapter.readBinary(
+            'assets/music/battle.mp3'
+          )
+        )
+      ),
+      [
+        1,
+        2,
+        3
+      ]
+    );
   }
 );
 

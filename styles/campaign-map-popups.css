@@ -69,6 +69,25 @@
 }
 
 
+.campaign-map-popup[data-popup-key="music"] {
+
+  width:
+    min(440px, calc(100vw - 24px));
+
+  max-height:
+    min(720px, calc(100vh - 32px));
+
+  overflow:
+    auto;
+
+  padding:
+    14px;
+
+  gap:
+    12px;
+}
+
+
 .campaign-map-popup-title {
 
   color:
@@ -844,6 +863,476 @@
 
   cursor:
     default;
+}
+
+
+.campaign-music-mode-row,
+.campaign-music-controls,
+.campaign-music-upload-row,
+.campaign-music-copy-row {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+}
+
+
+.campaign-music-controls {
+
+  justify-content:
+    center;
+
+  gap:
+    6px;
+}
+
+
+.campaign-music-mode-btn {
+
+  flex:
+    1;
+
+  min-height:
+    34px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.055);
+
+  color:
+    rgba(255,248,230,0.86);
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-music-mode-btn.is-active,
+.campaign-music-mode-btn:hover {
+
+  border-color:
+    rgba(241,211,142,0.55);
+
+  background:
+    rgba(241,211,142,0.14);
+}
+
+
+.campaign-music-title-label,
+.campaign-music-upload {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  color:
+    rgba(255,248,230,0.62);
+
+  font-size:
+    12px;
+}
+
+
+.campaign-music-title-input,
+.campaign-music-copy-select {
+
+  min-height:
+    34px;
+
+  min-width:
+    0;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  padding:
+    0 10px;
+
+  background:
+    rgba(0,0,0,0.22);
+
+  color:
+    rgba(255,248,230,0.92);
+}
+
+
+.campaign-music-controls button,
+.campaign-music-copy-btn,
+.campaign-music-upload-add-btn,
+.campaign-music-remove-track {
+
+  min-width:
+    32px;
+
+  min-height:
+    32px;
+
+  border:
+    none;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.065);
+
+  color:
+    rgba(255,248,230,0.88);
+
+  cursor:
+    pointer;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+}
+
+
+.campaign-music-controls button {
+
+  width:
+    34px;
+
+  height:
+    34px;
+
+  min-width:
+    34px;
+
+  min-height:
+    34px;
+
+  padding:
+    0;
+
+  line-height:
+    0;
+}
+
+
+.campaign-music-controls button.is-active,
+.campaign-music-controls button:hover,
+.campaign-music-copy-btn:hover,
+.campaign-music-upload-add-btn:hover,
+.campaign-music-remove-track:hover {
+
+  background:
+    rgba(241,211,142,0.15);
+}
+
+
+.campaign-music-controls button:disabled,
+.campaign-music-copy-btn:disabled,
+.campaign-music-upload-add-btn:disabled,
+.campaign-music-remove-track:disabled {
+
+  opacity:
+    0.45;
+
+  cursor:
+    default;
+}
+
+
+.campaign-music-controls .app-icon {
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  display:
+    block;
+
+  flex:
+    none;
+}
+
+
+.campaign-music-section {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  padding:
+    10px 0;
+
+  border-top:
+    1px solid rgba(255,255,255,0.08);
+}
+
+
+.campaign-music-section strong {
+
+  color:
+    rgba(255,248,230,0.86);
+
+  font-size:
+    12px;
+}
+
+
+.campaign-music-upload-row {
+
+  align-items:
+    end;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+}
+
+
+.campaign-music-upload {
+
+  flex:
+    1;
+
+  min-width:
+    0;
+
+  min-height:
+    34px;
+
+  position:
+    relative;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  padding:
+    0 12px;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.065);
+
+  color:
+    rgba(255,248,230,0.88);
+
+  cursor:
+    pointer;
+
+  font-size:
+    12px;
+
+  font-weight:
+    680;
+}
+
+
+.campaign-music-upload:hover {
+
+  background:
+    rgba(241,211,142,0.15);
+}
+
+
+.campaign-music-upload input {
+
+  position:
+    absolute;
+
+  width:
+    1px;
+
+  height:
+    1px;
+
+  opacity:
+    0;
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-music-upload-add-btn {
+
+  padding:
+    0 12px;
+
+  white-space:
+    nowrap;
+}
+
+
+.campaign-music-upload-hint,
+.campaign-music-upload-pending,
+.campaign-music-upload-status,
+.campaign-music-playback-status {
+
+  padding:
+    7px 8px;
+
+  border:
+    1px dashed rgba(255,255,255,0.12);
+
+  border-radius:
+    10px;
+
+  color:
+    rgba(255,248,230,0.56);
+
+  font-size:
+    11px;
+}
+
+
+.campaign-music-upload-status.is-success,
+.campaign-music-playback-status.is-success {
+
+  border-style:
+    solid;
+
+  border-color:
+    rgba(106,205,140,0.32);
+
+  background:
+    rgba(106,205,140,0.10);
+
+  color:
+    rgba(208,255,220,0.90);
+}
+
+
+.campaign-music-upload-status.is-error,
+.campaign-music-playback-status.is-error {
+
+  border-style:
+    solid;
+
+  border-color:
+    rgba(255,111,111,0.36);
+
+  background:
+    rgba(255,111,111,0.10);
+
+  color:
+    rgba(255,218,218,0.94);
+}
+
+
+.campaign-music-track-list {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  max-height:
+    180px;
+
+  overflow:
+    auto;
+}
+
+
+.campaign-music-track-row {
+
+  min-height:
+    34px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  padding:
+    6px 8px;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(255,255,255,0.045);
+}
+
+
+.campaign-music-track-row span {
+
+  min-width:
+    0;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.campaign-music-empty {
+
+  padding:
+    8px;
+
+  border:
+    1px dashed rgba(255,255,255,0.14);
+
+  border-radius:
+    10px;
+
+  color:
+    rgba(255,248,230,0.55);
+}
+
+
+.campaign-music-copy-select {
+
+  flex:
+    1;
 }
 
 

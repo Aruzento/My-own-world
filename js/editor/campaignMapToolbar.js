@@ -32,6 +32,7 @@ export function getMapControlsHTML() {
       <button class="campaign-layers-btn" type="button" title="Слои">Слои</button>
       <button class="campaign-fog-btn" type="button" title="Туман">Туман</button>
       <button class="campaign-initiative-btn" type="button" title="Инициатива">Иниц.</button>
+      <button class="campaign-music-btn" type="button" title="Музыка карты">${iconSvg('music')}</button>
     </div>
   `;
 }

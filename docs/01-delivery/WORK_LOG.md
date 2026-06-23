@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-06-23: Campaign Map Music Autostart On Map Switch
+
+### Что сделано
+
+- При открытии карты запускается первая песня активного плейлиста этой карты.
+- При переключении с одной карты на другую предыдущая карта останавливает свой audio перед стартом музыки новой карты.
+- Autoplay-ошибка не ломает открытие карты: исключение перехватывается и выводится в консоль.
+- Добавлен browser regression на сценарий переключения карт и запуск первого трека активного плейлиста.
+
+### Проверки
+
+- `node --check js\editor\campaignMapMusic.js`
+- `node --check js\editor\campaignMap.js`
+- `node --check tests\browser\campaign-map-ui.spec.mjs`
+- `npm run test:browser`
+
+## 2026-06-19: Campaign Map Music Popup Polish
+
+### Что сделано
+
+- Убран второй список песен под блоком добавления: popup больше не сканирует `assets/music` при каждом render и показывает только активный плейлист.
+- Выбранные файлы теперь отображаются одной компактной строкой `Выбрано файлов: N`, без длинного списка под кнопкой добавления.
+- Play/previous/next/mode switch больше не глотают ошибку запуска аудио молча: popup показывает статус `Играет`, `Остановлено`, пустой плейлист или конкретную ошибку воспроизведения.
+- Элемент `Audio` прикрепляется к DOM в браузерном окружении, а кнопки управления музыкой выровнены как одинаковые квадратные icon buttons.
+
+### Проверки
+
+- `node --check js\editor\campaignMapMusic.js`
+- `node --check tests\browser\campaign-map-ui.spec.mjs`
+- `npm run test:browser` (после исправления regression ожидания)
+- `npm run verify`
+
+## 2026-06-19: Campaign Map Music Playlists
+
+### Что сделано
+
+- В план добавлен и закрыт пункт `0.0.0.4.10`.
+- У карты появился model-first music state: два плейлиста `Обычная музыка` и `Боевая музыка`, активный режим, порядок `по списку/случайно`, loop и список треков.
+- Popup `Музыка карты` показывает песни из `assets/music`, позволяет выбрать новые audio-файлы, увидеть их в очереди, кнопкой `Добавить` сохранить их в workspace/активный плейлист, удалить треки, переименовать плейлист и скопировать плейлист с другой карты.
+- Переключатель `Обычная / Бой` сразу меняет активный плейлист и запускает первую песню; добавлены кнопки play, stop, previous, next, shuffle и repeat.
+- `assetReferenceScanner` теперь собирает `audio` references из `data-map-music-state`, чтобы broken/orphan assets учитывали музыку карты.
+
+### Проверки
+
+- `node --test tests/campaignMapModel.test.mjs tests/assetReferenceScanner.test.mjs`
+
 ## 2026-06-18: Campaign Map v2 Hardening - initiative, drawing, token skills, presentation sync
 
 ### ??? ???????

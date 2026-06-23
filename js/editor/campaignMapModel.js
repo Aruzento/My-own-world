@@ -20,6 +20,10 @@ import {
   normalizeZIndex
 } from './campaignMapLayerModel.js';
 
+import {
+  normalizeCampaignMapMusic
+} from './campaignMapMusicModel.js';
+
 
 // CampaignMapModel — единый слой данных карты.
 // DOM может быть источником входного снимка, но сохранение и синхронизация
@@ -82,6 +86,11 @@ export class CampaignMapModel {
       new CampaignMapInitiativeModel(
         data.initiative || {}
       ).toJSON();
+
+    this.music =
+      normalizeCampaignMapMusic(
+        data.music || {}
+      );
   }
 
 
@@ -134,6 +143,10 @@ export class CampaignMapModel {
         ),
       initiative:
         readInitiativeState(
+          stage
+        ),
+      music:
+        readMusicState(
           stage
         )
     });
@@ -231,6 +244,13 @@ export class CampaignMapModel {
       encodeURIComponent(
         JSON.stringify(
           this.initiative
+        )
+      );
+
+    stage.dataset.mapMusicState =
+      encodeURIComponent(
+        JSON.stringify(
+          this.music
         )
       );
 
@@ -540,6 +560,19 @@ export class CampaignMapModel {
   }
 
 
+  setMusic(
+    music
+  ) {
+
+    this.music =
+      normalizeCampaignMapMusic(
+        music
+      );
+
+    return this.music;
+  }
+
+
   setLayers(
     layers
   ) {
@@ -587,7 +620,8 @@ export class CampaignMapModel {
       layers: this.layers,
       tokens: this.tokens,
       shapes: this.shapes,
-      initiative: this.initiative
+      initiative: this.initiative,
+      music: this.music
     };
   }
 }
@@ -760,6 +794,30 @@ function readInitiativeState(
 
   const raw =
     stage?.dataset.initiativeState || '';
+
+  if (!raw) return {};
+
+  try {
+
+    return JSON.parse(
+      decodeURIComponent(
+        raw
+      )
+    );
+
+  } catch {
+
+    return {};
+  }
+}
+
+
+function readMusicState(
+  stage
+) {
+
+  const raw =
+    stage?.dataset.mapMusicState || '';
 
   if (!raw) return {};
 

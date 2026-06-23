@@ -95,6 +95,14 @@ export function collectAssetReferencesFromHTML(
     )
   );
 
+  references.push(
+    ...collectCampaignMapMusicReferencesFromHTML(
+      html,
+      owner,
+      references.length
+    )
+  );
+
   return references.filter(reference =>
     reference.path
   );
@@ -166,6 +174,73 @@ function normalizePropertyAssetType(
   if (type === 'image') return ASSET_TYPES.image;
 
   return '';
+}
+
+
+function collectCampaignMapMusicReferencesFromHTML(
+  html,
+  owner,
+  offset = 0
+) {
+
+  const references = [];
+  const matcher =
+    createAttributeMatcher(
+      'data-map-music-state'
+    );
+
+  for (const match of html.matchAll(matcher)) {
+
+    let data =
+      null;
+
+    try {
+
+      data =
+        JSON.parse(
+          decodeURIComponent(
+            decodeHTMLAttribute(
+              match[1]
+            )
+          )
+        );
+
+    } catch {
+
+      data =
+        null;
+    }
+
+    [
+      ...(data?.normal?.tracks || []),
+      ...(data?.battle?.tracks || [])
+    ]
+      .forEach(track => {
+
+        if (!track?.path) return;
+
+        references.push(
+          normalizeAssetReference({
+            id:
+              `${owner.pageId || 'page'}:campaign-map-music:${offset + references.length}`,
+            path:
+              track.path,
+            type:
+              ASSET_TYPES.audio,
+            owner: {
+              pageId:
+                owner.pageId || '',
+              entityId:
+                track.trackId || '',
+              scope:
+                'campaignMapMusic'
+            }
+          })
+        );
+      });
+  }
+
+  return references;
 }
 
 
