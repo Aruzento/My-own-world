@@ -15,6 +15,15 @@
   height: 100vh;
 
   padding: 10px;
+
+  font-family:
+    var(--mow-font-ui);
+
+  background:
+    var(--mow-bg-texture);
+
+  color:
+    var(--mow-text-main);
 }
 
 
@@ -48,7 +57,11 @@
 
   border:
     1px solid
-    var(--border);
+    var(--mow-border-medium);
+
+  box-shadow:
+    var(--mow-shadow-panel),
+    inset 0 1px 0 rgba(255, 232, 183, 0.05);
 }
 
 
@@ -84,7 +97,11 @@
 
   border:
     1px solid
-    rgba(255,255,255,0.05);
+    var(--mow-border-soft);
+
+  box-shadow:
+    var(--mow-shadow-panel),
+    inset 0 1px 0 rgba(255, 232, 183, 0.04);
 }
 
 
@@ -119,15 +136,15 @@
 
   border-top:
     1px solid
-    rgba(255,255,255,0.05);
+    var(--mow-border-soft);
 
   color:
-    var(--muted);
+    var(--mow-text-muted);
 
   font-size: 11px;
 
   background:
-    rgba(255,255,255,0.02);
+    rgba(5, 7, 6, 0.52);
 }
 
 

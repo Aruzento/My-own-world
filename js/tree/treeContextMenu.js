@@ -36,6 +36,10 @@ import {
 } from '../ui/popupManager.js';
 
 import {
+  requestWorkspaceWritePermission
+} from '../storage/storageAdapter.js';
+
+import {
   getUniqueCopyTitle
 } from '../validation/pageTitleValidation.js';
 
@@ -475,30 +479,8 @@ function ensureTreeContextMenu() {
 }
 
 
-/* Проверяет права workspace на запись */
+/* ��������� ����� workspace �� ������ */
 async function ensureWorkspaceWritePermission() {
 
-  /* Если workspace не выбран — прав нет */
-  if (!state.workspaceHandle) return false;
-
-  /* Если браузер не поддерживает permissions API для handle — считаем, что можно пробовать */
-  if (!state.workspaceHandle.queryPermission) return true;
-
-  /* Проверяет текущие права */
-  const currentPermission =
-    await state.workspaceHandle.queryPermission({
-      mode: 'readwrite'
-    });
-
-  /* Если права уже есть — всё хорошо */
-  if (currentPermission === 'granted') return true;
-
-  /* Запрашивает права на запись */
-  const requestedPermission =
-    await state.workspaceHandle.requestPermission({
-      mode: 'readwrite'
-    });
-
-  /* Возвращает true только если права выданы */
-  return requestedPermission === 'granted';
+  return requestWorkspaceWritePermission();
 }

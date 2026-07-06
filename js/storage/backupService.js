@@ -27,6 +27,15 @@ export const BACKUP_ASSETS_DIR =
 export const BACKUP_DEFAULT_RETENTION =
   20;
 
+export const BACKUP_MIN_RETENTION =
+  1;
+
+export const BACKUP_MAX_RETENTION =
+  200;
+
+export const BACKUP_RETENTION_STORAGE_KEY =
+  'myOwnWorld.backup.retentionLimit';
+
 
 export function createBackupId(
   reason = 'manual',
@@ -174,7 +183,7 @@ export async function createWorkspaceBackup(
     await cleanupWorkspaceBackups({
       storageAdapter,
       keepLatest:
-        options.keepLatest ?? BACKUP_DEFAULT_RETENTION
+        options.keepLatest ?? getBackupRetentionLimit()
     });
   }
 
@@ -183,12 +192,14 @@ export async function createWorkspaceBackup(
 
 
 export async function createWorkspaceBackupBeforeRiskyOperation(
-  reason
+  reason,
+  options = {}
 ) {
 
   try {
 
     return await createWorkspaceBackup({
+      ...options,
       reason
     });
 
@@ -201,6 +212,87 @@ export async function createWorkspaceBackupBeforeRiskyOperation(
 
     return null;
   }
+}
+
+
+export async function requireWorkspaceBackupBeforeRiskyOperation(
+  reason,
+  options = {}
+) {
+
+  const manifest =
+    await createWorkspaceBackupBeforeRiskyOperation(
+      reason,
+      options
+    );
+
+  if (!manifest) {
+
+    throw new Error(
+      'Risky operation blocked: backup was not created.'
+    );
+  }
+
+  return manifest;
+}
+
+
+export function getBackupRetentionLimit(
+  storage = globalThis.localStorage
+) {
+
+  const rawValue =
+    storage?.getItem?.(
+      BACKUP_RETENTION_STORAGE_KEY
+    );
+
+  return normalizeBackupRetentionLimit(
+    rawValue
+  );
+}
+
+
+export function setBackupRetentionLimit(
+  value,
+  storage = globalThis.localStorage
+) {
+
+  const limit =
+    normalizeBackupRetentionLimit(
+      value
+    );
+
+  storage?.setItem?.(
+    BACKUP_RETENTION_STORAGE_KEY,
+    String(limit)
+  );
+
+  return limit;
+}
+
+
+export function normalizeBackupRetentionLimit(
+  value
+) {
+
+  const number =
+    Number.parseInt(
+      value,
+      10
+    );
+
+  if (!Number.isFinite(number)) {
+
+    return BACKUP_DEFAULT_RETENTION;
+  }
+
+  return Math.min(
+    BACKUP_MAX_RETENTION,
+    Math.max(
+      BACKUP_MIN_RETENTION,
+      number
+    )
+  );
 }
 
 
@@ -359,7 +451,7 @@ export async function cleanupWorkspaceBackups({
       workspaceHandle
     });
 
-  if (!Number.isFinite(keepLatest) || keepLatest < 1) {
+  if (!Number.isFinite(keepLatest) || keepLatest < BACKUP_MIN_RETENTION) {
 
     throw new Error(
       'Нельзя очищать backup без хотя бы одной сохраняемой точки.'
@@ -592,21 +684,6 @@ function getBackupStorageAdapter({
     );
   }
 
-  if (
-    adapter.kind === 'browser' &&
-    !adapter.getWorkspaceHandle?.()
-  ) {
-
-    const handle =
-      state.workspaceHandle;
-
-    if (handle && adapter.setWorkspaceHandle) {
-
-      adapter.setWorkspaceHandle(
-        handle
-      );
-    }
-  }
 
   const hasWorkspace =
     adapter.kind === 'desktop'

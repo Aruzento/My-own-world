@@ -22,10 +22,19 @@ export async function invokeTauriCommand(
 
   if (typeof globalInvoke === 'function') {
 
-    return globalInvoke(
-      command,
-      payload
-    );
+    try {
+
+      return await globalInvoke(
+        command,
+        payload
+      );
+
+    } catch (error) {
+
+      throw normalizeTauriCommandError(
+        error
+      );
+    }
   }
 
   const {
@@ -33,10 +42,50 @@ export async function invokeTauriCommand(
   } =
     await import('@tauri-apps/api/core');
 
-  return invoke(
-    command,
-    payload
-  );
+  try {
+
+    return await invoke(
+      command,
+      payload
+    );
+
+  } catch (error) {
+
+    throw normalizeTauriCommandError(
+      error
+    );
+  }
+}
+
+
+export function normalizeTauriCommandError(
+  error
+) {
+
+  if (
+    error &&
+    typeof error === 'object' &&
+    typeof error.code === 'string'
+  ) {
+
+    const normalized =
+      new Error(
+        error.message || error.code
+      );
+
+    normalized.code =
+      error.code;
+
+    normalized.path =
+      error.path || null;
+
+    normalized.raw =
+      error;
+
+    return normalized;
+  }
+
+  return error;
 }
 
 

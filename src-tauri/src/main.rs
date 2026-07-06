@@ -9,8 +9,16 @@ struct DirectoryEntry {
     kind: String,
 }
 
+#[derive(Debug, serde::Serialize)]
+struct DesktopCommandError {
+    code: String,
+    message: String,
+    path: Option<String>,
+}
+
+type DesktopResult<T> = Result<T, DesktopCommandError>;
+
 fn main() {
-    // Desktop-spike пока открывает текущую web-версию, но файловые операции уже идут через Tauri commands.
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
@@ -30,32 +38,32 @@ fn main() {
 }
 
 #[tauri::command]
-fn read_text_file(workspace_root: String, path: String) -> Result<String, String> {
+fn read_text_file(workspace_root: String, path: String) -> DesktopResult<String> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
-    fs::read_to_string(file_path)
-        .map_err(|error| format!("Не удалось прочитать UTF-8 файл: {error}"))
+    fs::read_to_string(&file_path)
+        .map_err(|error| io_error("desktop.read_text_failed", &file_path, error))
 }
 
 #[tauri::command]
-fn write_text_file(workspace_root: String, path: String, content: String) -> Result<(), String> {
+fn write_text_file(workspace_root: String, path: String, content: String) -> DesktopResult<()> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
     if let Some(parent) = file_path.parent() {
         fs::create_dir_all(parent)
-            .map_err(|error| format!("Не удалось создать папку для файла: {error}"))?;
+            .map_err(|error| io_error("desktop.create_parent_failed", parent, error))?;
     }
 
-    fs::write(file_path, content)
-        .map_err(|error| format!("Не удалось записать UTF-8 файл: {error}"))
+    fs::write(&file_path, content)
+        .map_err(|error| io_error("desktop.write_text_failed", &file_path, error))
 }
 
 #[tauri::command]
-fn read_binary_file(workspace_root: String, path: String) -> Result<Vec<u8>, String> {
+fn read_binary_file(workspace_root: String, path: String) -> DesktopResult<Vec<u8>> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
-    fs::read(file_path)
-        .map_err(|error| format!("Не удалось прочитать бинарный файл: {error}"))
+    fs::read(&file_path)
+        .map_err(|error| io_error("desktop.read_binary_failed", &file_path, error))
 }
 
 #[tauri::command]
@@ -63,31 +71,32 @@ fn write_binary_file(
     workspace_root: String,
     path: String,
     content: Vec<u8>,
-) -> Result<(), String> {
+) -> DesktopResult<()> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
     if let Some(parent) = file_path.parent() {
         fs::create_dir_all(parent)
-            .map_err(|error| format!("Не удалось создать папку для файла: {error}"))?;
+            .map_err(|error| io_error("desktop.create_parent_failed", parent, error))?;
     }
 
-    fs::write(file_path, content)
-        .map_err(|error| format!("Не удалось записать бинарный файл: {error}"))
+    fs::write(&file_path, content)
+        .map_err(|error| io_error("desktop.write_binary_failed", &file_path, error))
 }
 
 #[tauri::command]
-fn list_directory(workspace_root: String, path: String) -> Result<Vec<DirectoryEntry>, String> {
+fn list_directory(workspace_root: String, path: String) -> DesktopResult<Vec<DirectoryEntry>> {
     let directory_path = resolve_workspace_path(&workspace_root, &path)?;
-    let entries = fs::read_dir(directory_path)
-        .map_err(|error| format!("Не удалось прочитать папку: {error}"))?;
+    let entries = fs::read_dir(&directory_path)
+        .map_err(|error| io_error("desktop.list_directory_failed", &directory_path, error))?;
 
     let mut result = Vec::new();
 
     for entry in entries {
-        let entry = entry.map_err(|error| format!("Не удалось прочитать элемент папки: {error}"))?;
+        let entry = entry
+            .map_err(|error| io_error("desktop.read_directory_entry_failed", &directory_path, error))?;
         let metadata = entry
             .metadata()
-            .map_err(|error| format!("Не удалось прочитать metadata файла: {error}"))?;
+            .map_err(|error| io_error("desktop.read_metadata_failed", &entry.path(), error))?;
 
         result.push(DirectoryEntry {
             name: entry.file_name().to_string_lossy().to_string(),
@@ -103,60 +112,68 @@ fn list_directory(workspace_root: String, path: String) -> Result<Vec<DirectoryE
 }
 
 #[tauri::command]
-fn ensure_directory(workspace_root: String, path: String) -> Result<(), String> {
+fn ensure_directory(workspace_root: String, path: String) -> DesktopResult<()> {
     let directory_path = resolve_workspace_path(&workspace_root, &path)?;
 
-    fs::create_dir_all(directory_path)
-        .map_err(|error| format!("Не удалось создать папку: {error}"))
+    fs::create_dir_all(&directory_path)
+        .map_err(|error| io_error("desktop.ensure_directory_failed", &directory_path, error))
 }
 
 #[tauri::command]
-fn remove_file(workspace_root: String, path: String) -> Result<(), String> {
+fn remove_file(workspace_root: String, path: String) -> DesktopResult<()> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
-    fs::remove_file(file_path)
-        .map_err(|error| format!("Не удалось удалить файл: {error}"))
+    fs::remove_file(&file_path)
+        .map_err(|error| io_error("desktop.remove_file_failed", &file_path, error))
 }
 
 #[tauri::command]
-fn remove_directory(workspace_root: String, path: String) -> Result<(), String> {
+fn remove_directory(workspace_root: String, path: String) -> DesktopResult<()> {
     let directory_path = resolve_workspace_path(&workspace_root, &path)?;
 
-    fs::remove_dir_all(directory_path)
-        .map_err(|error| format!("Не удалось удалить папку: {error}"))
+    fs::remove_dir_all(&directory_path)
+        .map_err(|error| io_error("desktop.remove_directory_failed", &directory_path, error))
 }
 
 #[tauri::command]
-fn path_exists(workspace_root: String, path: String) -> Result<bool, String> {
+fn path_exists(workspace_root: String, path: String) -> DesktopResult<bool> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
     Ok(file_path.exists())
 }
 
 #[tauri::command]
-fn resolve_asset_url(workspace_root: String, path: String) -> Result<String, String> {
+fn resolve_asset_url(workspace_root: String, path: String) -> DesktopResult<String> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
     if !file_path.exists() {
-        return Err("Asset не найден".to_string());
+        return Err(desktop_error(
+            "desktop.asset_not_found",
+            "Asset file was not found.",
+            Some(file_path),
+        ));
     }
 
     Ok(file_path.to_string_lossy().to_string())
 }
 
-fn resolve_workspace_path(workspace_root: &str, path: &str) -> Result<PathBuf, String> {
+fn resolve_workspace_path(workspace_root: &str, path: &str) -> DesktopResult<PathBuf> {
     let root = fs::canonicalize(Path::new(workspace_root))
-        .map_err(|error| format!("Workspace root недоступен: {error}"))?;
+        .map_err(|error| io_error("desktop.workspace_root_unavailable", Path::new(workspace_root), error))?;
 
     let clean_path = normalize_relative_path(path)?;
     let joined_path = root.join(clean_path);
 
     if joined_path.exists() {
         let canonical_path = fs::canonicalize(&joined_path)
-            .map_err(|error| format!("Путь внутри workspace недоступен: {error}"))?;
+            .map_err(|error| io_error("desktop.path_unavailable", &joined_path, error))?;
 
         if !canonical_path.starts_with(&root) {
-            return Err("Путь выходит за пределы workspace".to_string());
+            return Err(desktop_error(
+                "desktop.path_outside_workspace",
+                "Path points outside the selected workspace.",
+                Some(canonical_path),
+            ));
         }
 
         return Ok(canonical_path);
@@ -164,25 +181,56 @@ fn resolve_workspace_path(workspace_root: &str, path: &str) -> Result<PathBuf, S
 
     let parent = joined_path
         .parent()
-        .ok_or_else(|| "У пути нет родительской папки".to_string())?;
+        .ok_or_else(|| desktop_error(
+            "desktop.path_without_parent",
+            "Path has no parent directory.",
+            Some(joined_path.clone()),
+        ))?;
     let canonical_parent = fs::canonicalize(parent)
-        .map_err(|error| format!("Родительская папка недоступна: {error}"))?;
+        .map_err(|error| io_error("desktop.parent_unavailable", parent, error))?;
 
     if !canonical_parent.starts_with(&root) {
-        return Err("Путь выходит за пределы workspace".to_string());
+        return Err(desktop_error(
+            "desktop.path_outside_workspace",
+            "Path points outside the selected workspace.",
+            Some(joined_path),
+        ));
     }
 
     Ok(joined_path)
 }
 
-fn normalize_relative_path(path: &str) -> Result<PathBuf, String> {
+fn normalize_relative_path(path: &str) -> DesktopResult<PathBuf> {
     let normalized = path.replace('\\', "/");
 
-    if normalized.contains("..") {
-        return Err("Путь не должен содержать ..".to_string());
+    if normalized
+        .split('/')
+        .any(|part| part == "..")
+    {
+        return Err(desktop_error(
+            "desktop.invalid_relative_path",
+            "Path must stay inside workspace and must not contain .. segments.",
+            Some(PathBuf::from(path)),
+        ));
     }
 
     let trimmed = normalized.trim_start_matches('/');
 
     Ok(PathBuf::from(trimmed))
+}
+
+fn io_error(code: &str, path: &Path, error: std::io::Error) -> DesktopCommandError {
+    desktop_error(
+        code,
+        &format!("{error}"),
+        Some(path.to_path_buf()),
+    )
+}
+
+fn desktop_error(code: &str, message: &str, path: Option<PathBuf>) -> DesktopCommandError {
+    DesktopCommandError {
+        code: code.to_string(),
+        message: message.to_string(),
+        path: path.map(|value| value.to_string_lossy().to_string()),
+    }
 }

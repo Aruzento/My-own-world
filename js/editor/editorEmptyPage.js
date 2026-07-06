@@ -143,6 +143,9 @@ export function renderWorkspaceRecoveryEditorContent(
               <article class="workspace-recovery-item">
                 <strong>${escapeHTML(action.code)}</strong>
                 <span>${escapeHTML(action.message)}</span>
+                ${getRecoveryRepairHTML(
+                  action.repairAction
+                )}
               </article>
             `)
             .join('')}
@@ -156,6 +159,27 @@ export function renderWorkspaceRecoveryEditorContent(
   setStatus(
     'Найдены ошибки схемы workspace'
   );
+}
+
+
+function getRecoveryRepairHTML(
+  repairAction
+) {
+
+  if (!repairAction) return '';
+
+  const isManual =
+    repairAction.safety === 'manual';
+
+  return `
+    <div class="workspace-recovery-repair ${isManual ? 'is-manual' : 'is-safe'}">
+      <span class="workspace-recovery-repair-label">${escapeHTML(repairAction.label)}</span>
+      <span class="workspace-recovery-repair-description">${escapeHTML(repairAction.description)}</span>
+      <span class="workspace-recovery-repair-note">
+        ${repairAction.requiresBackup ? 'Требует backup перед применением.' : 'Backup не требуется.'}
+      </span>
+    </div>
+  `;
 }
 
 

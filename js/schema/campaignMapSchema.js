@@ -6,6 +6,10 @@ import {
   isPlainObject
 } from './schemaValidation.js';
 
+import {
+  createSchemaVersionState
+} from './schemaVersions.js';
+
 
 export function validateCampaignMapData(
   data
@@ -23,6 +27,11 @@ export function validateCampaignMapData(
       )
     ]);
   }
+
+  validateVersion(
+    data.version,
+    issues
+  );
 
   if (!isFiniteNumber(data.version)) {
 
@@ -68,6 +77,32 @@ export function validateCampaignMapData(
   return createValidationResult(
     issues
   );
+}
+
+
+function validateVersion(
+  version,
+  issues
+) {
+
+  const versionState =
+    createSchemaVersionState({
+      area:
+        'campaignMap',
+      version
+    });
+
+  if (versionState.isFuture) {
+
+    issues.push(
+      createSchemaIssue(
+        'error',
+        'map.future_schema_version',
+        'Campaign map uses a newer schema version.',
+        versionState
+      )
+    );
+  }
 }
 
 

@@ -100,6 +100,14 @@ function checkTauriConfig() {
     'Tauri включает asset protocol для картинок',
     config.app?.security?.assetProtocol?.enable === true
   );
+  const csp =
+    config.app?.security?.csp || '';
+
+  addCheck(
+    'Tauri CSP allows audio/media through asset protocol',
+    /media-src[^;]*asset:/.test(csp) &&
+    /media-src[^;]*http:\/\/asset\.localhost/.test(csp)
+  );
 }
 
 

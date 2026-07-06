@@ -1,8 +1,9 @@
 import { state } from '../state.js';
 
 import {
-  writeTextFile
-} from '../storage/storage.js';
+  getStorageAdapter,
+  hasWorkspaceAccess
+} from '../storage/storageAdapter.js';
 
 
 /* Импорт из деревьев */
@@ -292,21 +293,18 @@ export async function restoreWorkspaceTreeExpansionState() {
 
   loadTreeExpansionState();
 
-  if (!state.workspaceHandle) return;
+  const storageAdapter =
+    getStorageAdapter();
+
+  if (!hasWorkspaceAccess(storageAdapter)) return;
 
   try {
 
-    const fileHandle =
-      await state.workspaceHandle.getFileHandle(
-        WORKSPACE_UI_STATE_FILE
-      );
-
-    const file =
-      await fileHandle.getFile();
-
     const uiState =
       JSON.parse(
-        await file.text() || '{}'
+        await storageAdapter.readText(
+          WORKSPACE_UI_STATE_FILE
+        ) || '{}'
       );
 
     addValuesToSet(
@@ -330,7 +328,7 @@ export async function restoreWorkspaceTreeExpansionState() {
 
 function scheduleWorkspaceTreeExpansionStateSave() {
 
-  if (!state.workspaceHandle) return;
+  if (!hasWorkspaceAccess(getStorageAdapter())) return;
 
   clearTimeout(
     workspaceSaveTimer
@@ -349,26 +347,22 @@ function scheduleWorkspaceTreeExpansionStateSave() {
 
 async function saveWorkspaceTreeExpansionState() {
 
-  if (!state.workspaceHandle) return;
+  const storageAdapter =
+    getStorageAdapter();
+
+  if (!hasWorkspaceAccess(storageAdapter)) return;
 
   try {
-
-    const fileHandle =
-      await state.workspaceHandle.getFileHandle(
-        WORKSPACE_UI_STATE_FILE,
-        { create: true }
-      );
 
     let uiState = {};
 
     try {
 
-      const file =
-        await fileHandle.getFile();
-
       uiState =
         JSON.parse(
-          await file.text() || '{}'
+          await storageAdapter.readText(
+            WORKSPACE_UI_STATE_FILE
+          ) || '{}'
         );
 
     } catch (error) {
@@ -381,14 +375,13 @@ async function saveWorkspaceTreeExpansionState() {
       collapsed: [...collapsedPages]
     };
 
-    await writeTextFile(
-      fileHandle,
+    await storageAdapter.writeText(
+      WORKSPACE_UI_STATE_FILE,
       JSON.stringify(
         uiState,
         null,
         2
-      ),
-      WORKSPACE_UI_STATE_FILE
+      )
     );
 
   } catch (error) {

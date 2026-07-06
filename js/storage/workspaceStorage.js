@@ -8,7 +8,6 @@ import {
 } from '../stateActions.js';
 
 import {
-  scanDirectory,
   scanWorkspacePagesByAdapter
 } from './pageStorage.js';
 
@@ -118,34 +117,29 @@ async function ensureFolders() {
 // Полностью загружает workspace в память и запускает schema validation.
 export async function loadWorkspace() {
 
-  if (!state.workspaceHandle) return;
-
   const storageAdapter =
     getStorageAdapter();
 
-  setPages([]);
-
-  if (storageAdapter.kind === 'desktop') {
-
-    await scanWorkspacePagesByAdapter(
-      storageAdapter
-    );
-
-    finishWorkspaceLoad();
+  if (
+    storageAdapter.kind === 'desktop' &&
+    !storageAdapter.getWorkspaceRoot?.()
+  ) {
 
     return;
   }
 
-  const pagesDir =
-    await state.workspaceHandle
-      .getDirectoryHandle(
-        'pages',
-        { create: true }
-      );
+  if (
+    storageAdapter.kind === 'browser' &&
+    !storageAdapter.getWorkspaceHandle?.()
+  ) {
 
-  await scanDirectory(
-    pagesDir,
-    '/pages'
+    return;
+  }
+
+  setPages([]);
+
+  await scanWorkspacePagesByAdapter(
+    storageAdapter
   );
 
   finishWorkspaceLoad();

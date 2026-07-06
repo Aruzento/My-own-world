@@ -7,9 +7,12 @@ import {
 } from '../core/icons.js';
 
 import {
-  getImageURL,
   saveAssetFile
 } from '../storage/assetStorage.js';
+
+import {
+  getStorageAdapter
+} from '../storage/storageAdapter.js';
 
 import {
   getMapPopup,
@@ -140,6 +143,10 @@ export function stopCampaignMapMusic(
   audio.pause();
   audio.currentTime =
     0;
+
+  releaseAudioObjectURL(
+    audio
+  );
 }
 
 
@@ -416,6 +423,39 @@ async function bindCampaignMapMusicPopup(
           );
 
           await render();
+        }
+      );
+    });
+
+  popup
+    .querySelectorAll('.campaign-music-track-play')
+    .forEach(button => {
+
+      button.addEventListener(
+        'click',
+        async event => {
+
+          event.preventDefault();
+
+          const playlist =
+            getActivePlaylist(
+              map
+            );
+
+          const track =
+            playlist.tracks.find(item =>
+              item.trackId === button.dataset.trackId
+            );
+
+          if (!track) return;
+
+          await playCampaignMapMusicAndReport(
+            map,
+            {
+              track
+            },
+            render
+          );
         }
       );
     });
@@ -858,10 +898,17 @@ async function playTrack(
       }
     };
 
+  releaseAudioObjectURL(
+    audio
+  );
+
   audio.src =
-    await getImageURL(
+    await createAudioObjectURL(
       track.path
     );
+
+  audio.dataset.objectUrl =
+    audio.src;
 
   audio.dataset.trackId =
     track.trackId;
@@ -870,6 +917,114 @@ async function playTrack(
     track.title;
 
   await audio.play();
+}
+
+
+async function createAudioObjectURL(
+  path
+) {
+
+  if (typeof Blob !== 'function') {
+
+    throw new Error(
+      'Audio Blob API недоступен в текущей среде.'
+    );
+  }
+
+  if (
+    typeof URL === 'undefined' ||
+    typeof URL.createObjectURL !== 'function'
+  ) {
+
+    throw new Error(
+      'Audio Object URL API недоступен в текущей среде.'
+    );
+  }
+
+  const normalizedPath =
+    normalizeAudioWorkspacePath(
+      path
+    );
+
+  const buffer =
+    await getStorageAdapter()
+      .readBinary(
+        normalizedPath
+      );
+
+  return URL.createObjectURL(
+    new Blob(
+      [buffer],
+      {
+        type:
+          getAudioMimeType(
+            normalizedPath
+          )
+      }
+    )
+  );
+}
+
+
+function normalizeAudioWorkspacePath(
+  path
+) {
+
+  const normalized =
+    String(path || '')
+      .replaceAll('\\', '/')
+      .replace(/^\/+/, '');
+
+  return normalized.startsWith('assets/')
+    ? normalized
+    : `assets/${normalized}`;
+}
+
+
+function getAudioMimeType(
+  path
+) {
+
+  const extension =
+    String(path || '')
+      .split('.')
+      .pop()
+      .toLowerCase();
+
+  if (extension === 'mp3') return 'audio/mpeg';
+  if (extension === 'wav') return 'audio/wav';
+  if (extension === 'ogg') return 'audio/ogg';
+  if (extension === 'm4a') return 'audio/mp4';
+  if (extension === 'aac') return 'audio/aac';
+  if (extension === 'flac') return 'audio/flac';
+  if (extension === 'webm') return 'audio/webm';
+
+  return 'audio/mpeg';
+}
+
+
+function releaseAudioObjectURL(
+  audio
+) {
+
+  const objectUrl =
+    audio?.dataset?.objectUrl || '';
+
+  if (
+    objectUrl &&
+    typeof URL !== 'undefined' &&
+    typeof URL.revokeObjectURL === 'function'
+  ) {
+
+    URL.revokeObjectURL(
+      objectUrl
+    );
+  }
+
+  if (audio?.dataset) {
+
+    delete audio.dataset.objectUrl;
+  }
 }
 
 
@@ -1085,7 +1240,19 @@ function getCampaignMapMusicPopupHTML({
       mode
     );
 
+  const playback =
+    getPlaybackState(
+      playlist,
+      playbackStatus
+    );
+
   return `
+    <div class="campaign-music-player">
+      <div class="campaign-music-now">
+        <span class="campaign-music-now-kicker">${escapeHTML(playback.kicker)}</span>
+        <strong>${escapeHTML(playback.title)}</strong>
+      </div>
+    </div>
     <div class="campaign-map-popup-title">Музыка карты</div>
 
     <div class="campaign-music-mode-row">
@@ -1113,7 +1280,12 @@ function getCampaignMapMusicPopupHTML({
       <strong>Плейлист</strong>
       <div class="campaign-music-track-list">
         ${playlist.tracks.length > 0
-          ? playlist.tracks.map(getPlaylistTrackHTML).join('')
+          ? playlist.tracks.map(track =>
+            getPlaylistTrackHTML(
+              track,
+              playback.trackId
+            )
+          ).join('')
           : '<div class="campaign-music-empty">Пока нет песен</div>'}
       </div>
     </div>
@@ -1146,6 +1318,44 @@ function getCampaignMapMusicPopupHTML({
       </div>
     </div>
   `;
+}
+
+
+function getPlaybackState(
+  playlist,
+  playbackStatus = {}
+) {
+
+  const currentTrackId =
+    String(playbackStatus.trackId || '');
+
+  const statusMessage =
+    String(playbackStatus.message || '');
+
+  const currentTrack =
+    playlist.tracks.find(track =>
+      track.trackId === currentTrackId
+    ) ||
+    playlist.tracks.find(track =>
+      statusMessage.includes(
+        track.title
+      )
+    ) || null;
+
+  return {
+    trackId:
+      currentTrack?.trackId || '',
+    title:
+      currentTrack?.title ||
+      playlist.tracks[0]?.title ||
+      'Плейлист пуст',
+    kicker:
+      currentTrack
+        ? 'Сейчас играет'
+        : playlist.tracks.length > 0
+        ? 'Готово к запуску'
+        : 'Нет треков'
+  };
 }
 
 
@@ -1242,12 +1452,19 @@ function getModeButton(
 
 
 function getPlaylistTrackHTML(
-  track
+  track,
+  currentTrackId = ''
 ) {
 
+  const isCurrent =
+    track.trackId === currentTrackId;
+
   return `
-    <div class="campaign-music-track-row" data-track-id="${escapeAttribute(track.trackId)}">
-      <span>${escapeHTML(track.title)}</span>
+    <div class="campaign-music-track-row ${isCurrent ? 'is-playing' : ''}" data-track-id="${escapeAttribute(track.trackId)}">
+      <button class="campaign-music-track-play" type="button" data-track-id="${escapeAttribute(track.trackId)}" title="Играть этот трек">
+        <span class="campaign-music-track-index">${isCurrent ? '▶' : '♪'}</span>
+        <span class="campaign-music-track-title">${escapeHTML(track.title)}</span>
+      </button>
       <button class="campaign-music-remove-track" type="button" data-track-id="${escapeAttribute(track.trackId)}" title="Убрать">×</button>
     </div>
   `;
@@ -1320,7 +1537,8 @@ async function playCampaignMapMusicAndReport(
         : 'info',
       track
         ? `Играет: ${track.title}`
-        : 'В активном плейлисте нет песен'
+        : 'В активном плейлисте нет песен',
+      track?.trackId || ''
     );
 
   } catch (error) {
@@ -1349,14 +1567,16 @@ async function playCampaignMapMusicAndReport(
 function setPlaybackStatus(
   map,
   state,
-  message
+  message,
+  trackId = ''
 ) {
 
   playbackStatusByMap.set(
     map,
     {
       state,
-      message
+      message,
+      trackId
     }
   );
 }

@@ -68,6 +68,18 @@ npm run docs:index
 npm run agents:validate
 ```
 
+### UI / Design System Workflow
+
+Визуальные изменения проходят через `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`.
+
+Базовые токены лежат в `styles/design-tokens.css` и используют namespace `--mow-*`.
+
+Общий dark fantasy слой подключен через `styles/brand-system.css`.
+
+Сценарии для Codex лежат в `.agents/skills/design-system/SKILL.md`.
+
+В настройках приложения есть первая версия appearance panel: accent color, фон и плотность интерфейса.
+
 Для безопасного commit использовать:
 
 ```powershell

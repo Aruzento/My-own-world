@@ -22,6 +22,10 @@ test(
             await import('/js/state.js');
 
           const {
+            setWorkspaceHandle
+          } = await import('/js/stateActions.js');
+
+          const {
             setCurrentPage,
             setPages
           } = await import('/js/stateActions.js');
@@ -94,7 +98,7 @@ ${body}
               nextState.__testWrittenFiles =
                 [];
 
-              nextState.workspaceHandle = {
+              setWorkspaceHandle({
                 async getDirectoryHandle() {
 
                   return {
@@ -125,7 +129,7 @@ ${body}
                     }
                   };
                 }
-              };
+              });
             };
 
           setupFakeWorkspace(
@@ -832,6 +836,7 @@ test(
           const adapter = {
             kind: 'test',
             writtenBinaryPaths: [],
+            readBinaryPaths: [],
             async pickWorkspace() {},
             async restoreWorkspace() {},
             async ensureDirectory() {},
@@ -840,7 +845,11 @@ test(
               return '';
             },
             async writeText() {},
-            async readBinary() {
+            async readBinary(path) {
+              this.readBinaryPaths.push(
+                path
+              );
+
               return new ArrayBuffer(8);
             },
             async writeBinary(path) {
@@ -991,6 +1000,22 @@ test(
     );
 
     await page
+      .locator('.campaign-music-track-play')
+      .click();
+
+    await expect(
+      page.locator('.campaign-music-track-row.is-playing')
+    ).toContainText(
+      'uploaded'
+    );
+
+    await expect(
+      page.locator('.campaign-music-now')
+    ).toContainText(
+      'uploaded'
+    );
+
+    await page
       .locator('.campaign-music-play-btn')
       .click();
 
@@ -1062,6 +1087,8 @@ test(
               music.activeMode,
             writtenBinaryPaths:
               testState.adapter.writtenBinaryPaths,
+            readBinaryPaths:
+              testState.adapter.readBinaryPaths,
             normalTracks:
               music.normal.tracks.map(track => track.path),
             battleTitle:
@@ -1069,7 +1096,9 @@ test(
             battleTracks:
               music.battle.tracks.map(track => track.path),
             audioPlayed:
-              window.__campaignMapMusicAudio?.dataset?.played || ''
+              window.__campaignMapMusicAudio?.dataset?.played || '',
+            audioSrc:
+              window.__campaignMapMusicAudio?.src || ''
           };
         }
       );
@@ -1094,6 +1123,12 @@ test(
     ]);
 
     expect(
+      result.readBinaryPaths
+    ).toContain(
+      'assets/music/uploaded.mp3'
+    );
+
+    expect(
       result.normalTracks
     ).toContain(
       'assets/music/uploaded.mp3'
@@ -1115,6 +1150,12 @@ test(
       result.audioPlayed
     ).toBe(
       'true'
+    );
+
+    expect(
+      result.audioSrc
+    ).toMatch(
+      /^blob:/
     );
   }
 );

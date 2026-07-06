@@ -22,6 +22,10 @@ test(
             await import('/js/state.js');
 
           const {
+            setWorkspaceHandle
+          } = await import('/js/stateActions.js');
+
+          const {
             createPageFromTemplate,
             deletePageTemplate,
             getPageTemplates,
@@ -59,7 +63,7 @@ test(
                   async close() {}
                 });
 
-              nextState.workspaceHandle = {
+              setWorkspaceHandle({
                 async getFileHandle(name, options = {}) {
 
                   if (
@@ -106,7 +110,7 @@ test(
                     }
                   };
                 }
-              };
+              });
             };
 
           setupFakeWorkspace(

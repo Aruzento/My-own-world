@@ -19,11 +19,12 @@ import {
 } from './writeQueue.js';
 
 import {
-  createWorkspaceBackupBeforeRiskyOperation
+  requireWorkspaceBackupBeforeRiskyOperation
 } from './backupService.js';
 
 import {
-  getStorageAdapter
+  getStorageAdapter,
+  requestWorkspaceWritePermission
 } from './storageAdapter.js';
 
 import {
@@ -233,7 +234,7 @@ export async function deletePageBranch(
 
   await ensureWorkspaceCanWrite();
 
-  await createWorkspaceBackupBeforeRiskyOperation(
+  await requireWorkspaceBackupBeforeRiskyOperation(
     'delete-page-branch'
   );
 
@@ -292,26 +293,15 @@ async function ensureWorkspaceCanWrite() {
   const storageAdapter =
     getReadyStorageAdapter();
 
-  if (storageAdapter.kind === 'desktop') return;
-
-  if (!state.workspaceHandle) {
-
-    throw new Error(
-      'Workspace РЅРµ РІС‹Р±СЂР°РЅ'
+  const canWrite =
+    await requestWorkspaceWritePermission(
+      storageAdapter
     );
-  }
 
-  if (!state.workspaceHandle.queryPermission) return;
-
-  const permission =
-    await state.workspaceHandle.queryPermission({
-      mode: 'readwrite'
-    });
-
-  if (permission !== 'granted') {
+  if (!canWrite) {
 
     throw new Error(
-      'РќРµС‚ РїСЂР°РІ РЅР° РёР·РјРµРЅРµРЅРёРµ workspace'
+      'Workspace не выбран или нет прав на запись'
     );
   }
 }
@@ -342,7 +332,7 @@ async function deletePageFile(
 
   const parentDir =
     targetPage.parentDirHandle ||
-    await state.workspaceHandle.getDirectoryHandle(
+    await storageAdapter.getDirectoryHandle(
       'pages'
     );
 
@@ -384,7 +374,7 @@ export async function updatePageParent(
   parentId
 ) {
 
-  await createWorkspaceBackupBeforeRiskyOperation(
+  await requireWorkspaceBackupBeforeRiskyOperation(
     'move-page-parent'
   );
 
@@ -415,7 +405,7 @@ export async function updatePageTreePosition(
   order
 ) {
 
-  await createWorkspaceBackupBeforeRiskyOperation(
+  await requireWorkspaceBackupBeforeRiskyOperation(
     'move-page-tree-position'
   );
 
@@ -676,21 +666,7 @@ function createPageRecord({
 
 function getReadyStorageAdapter() {
 
-  const storageAdapter =
-    getStorageAdapter();
-
-  if (
-    storageAdapter.kind === 'browser' &&
-    !storageAdapter.getWorkspaceHandle?.() &&
-    state.workspaceHandle
-  ) {
-
-    storageAdapter.setWorkspaceHandle(
-      state.workspaceHandle
-    );
-  }
-
-  return storageAdapter;
+  return getStorageAdapter();
 }
 
 

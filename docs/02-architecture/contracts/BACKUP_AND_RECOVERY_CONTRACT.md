@@ -110,3 +110,15 @@ Restore первого слоя работает осторожно:
 - Browser regression на delete/move с созданием backup.
 - UI-настройки retention-лимита и ручная очистка старых backup.
 - Hardening backup assets для больших файлов, audio, playlist, missing/fallback state.
+
+## Automatic Snapshots And Retention UI
+
+`requireWorkspaceBackupBeforeRiskyOperation()` is the required gate for risky operations that mutate or delete workspace data. If the snapshot cannot be created, the operation must stop before changing files or in-memory page metadata.
+
+Current automatic snapshot points:
+
+- page branch deletion;
+- page parent move;
+- tree reorder / move.
+
+The settings popup exposes a retention limit control. The limit is persisted in local storage as `myOwnWorld.backup.retentionLimit`, clamped to `1..200`, and used by `createWorkspaceBackup()` cleanup. Manual cleanup from the settings popup must use the same limit and must never remove every backup.

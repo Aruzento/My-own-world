@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {
+  readFileSync
+} from 'node:fs';
 
 import {
   assertStorageAdapterContract,
@@ -19,6 +22,10 @@ import {
 import {
   createDesktopAssetAdapter
 } from '../js/storage/desktopAssetAdapter.js';
+
+import {
+  normalizeTauriCommandError
+} from '../js/storage/tauriBridge.js';
 
 import {
   createBrowserAssetAdapter
@@ -70,6 +77,38 @@ test(
     assert.throws(
       () => assertStorageAdapterContract({}),
       /pickWorkspace/
+    );
+  }
+);
+
+
+test(
+  'Tauri structured command errors keep code and path on JS Error',
+  () => {
+
+    const error =
+      normalizeTauriCommandError({
+        code:
+          'desktop.path_outside_workspace',
+        message:
+          'Path points outside workspace.',
+        path:
+          'C:/World/../secret.md'
+      });
+
+    assert.equal(
+      error.message,
+      'Path points outside workspace.'
+    );
+
+    assert.equal(
+      error.code,
+      'desktop.path_outside_workspace'
+    );
+
+    assert.equal(
+      error.path,
+      'C:/World/../secret.md'
     );
   }
 );
@@ -447,6 +486,37 @@ test(
       globalThis.__TAURI__ =
         previousTauri;
     }
+  }
+);
+
+
+test(
+  'Tauri CSP allows audio playback from asset protocol',
+  () => {
+
+    const config =
+      JSON.parse(
+        readFileSync(
+          new URL(
+            '../src-tauri/tauri.conf.json',
+            import.meta.url
+          ),
+          'utf8'
+        )
+      );
+
+    const csp =
+      config.app?.security?.csp || '';
+
+    assert.match(
+      csp,
+      /media-src[^;]*asset:/
+    );
+
+    assert.match(
+      csp,
+      /media-src[^;]*http:\/\/asset\.localhost/
+    );
   }
 );
 

@@ -2,6 +2,10 @@ import {
   state
 } from './state.js';
 
+import {
+  getStorageAdapter
+} from './storage/storageAdapter.js';
+
 const stateListeners =
   new Map();
 
@@ -16,11 +20,41 @@ export function setWorkspaceHandle(
   state.workspaceHandle =
     handle;
 
+  syncWorkspaceHandleToStorageAdapter(
+    handle
+  );
+
   emitStateChange(
     'workspaceHandle',
     handle,
     previous
   );
+}
+
+
+function syncWorkspaceHandleToStorageAdapter(
+  handle
+) {
+
+  const storageAdapter =
+    getStorageAdapter();
+
+  if (storageAdapter.kind === 'browser') {
+
+    storageAdapter.setWorkspaceHandle?.(
+      handle
+    );
+  }
+
+  if (
+    storageAdapter.kind === 'desktop' &&
+    typeof handle === 'string'
+  ) {
+
+    storageAdapter.setWorkspaceRoot?.(
+      handle
+    );
+  }
 }
 
 

@@ -5,6 +5,10 @@ import {
   isPlainObject
 } from './schemaValidation.js';
 
+import {
+  createSchemaVersionState
+} from './schemaVersions.js';
+
 
 export function validateTaskTrackerData(
   data
@@ -22,6 +26,11 @@ export function validateTaskTrackerData(
       )
     ]);
   }
+
+  validateVersion(
+    data.version,
+    issues
+  );
 
   if (!Array.isArray(data.columns)) {
 
@@ -68,6 +77,32 @@ export function validateTaskTrackerData(
   return createValidationResult(
     issues
   );
+}
+
+
+function validateVersion(
+  version,
+  issues
+) {
+
+  const versionState =
+    createSchemaVersionState({
+      area:
+        'taskTracker',
+      version
+    });
+
+  if (versionState.isFuture) {
+
+    issues.push(
+      createSchemaIssue(
+        'error',
+        'task.future_schema_version',
+        'Task tracker uses a newer schema version.',
+        versionState
+      )
+    );
+  }
 }
 
 

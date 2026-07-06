@@ -500,3 +500,63 @@ a:hover {
     1.45;
 }
 
+
+.workspace-recovery-repair {
+
+  margin-top:
+    4px;
+
+  padding:
+    10px 12px;
+
+  display:
+    grid;
+
+  gap:
+    4px;
+
+  border:
+    1px solid
+    rgba(99,196,132,0.28);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(99,196,132,0.08);
+}
+
+
+.workspace-recovery-repair.is-manual {
+
+  border-color:
+    rgba(214,180,92,0.28);
+
+  background:
+    rgba(214,180,92,0.08);
+}
+
+
+.workspace-recovery-repair-label {
+
+  color:
+    rgba(230,255,235,0.96);
+
+  font-weight:
+    700;
+}
+
+
+.workspace-recovery-repair.is-manual .workspace-recovery-repair-label {
+
+  color:
+    rgba(255,236,187,0.96);
+}
+
+
+.workspace-recovery-repair-note {
+
+  color:
+    rgba(255,255,255,0.58);
+}
+

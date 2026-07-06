@@ -12,6 +12,11 @@ import {
 } from '../storage/backupService.js';
 
 import {
+  getStorageAdapter,
+  hasWorkspaceAccess
+} from '../storage/storageAdapter.js';
+
+import {
   deleteWorkspaceAssetPath,
   listWorkspaceAssetPaths
 } from '../storage/assetWorkspaceService.js';
@@ -80,7 +85,9 @@ export async function renderAssetHealthPanel(
 
   const hasWorkspace =
     options.hasWorkspace ??
-    Boolean(state.workspaceHandle);
+    hasWorkspaceAccess(
+      getStorageAdapter()
+    );
 
   if (!hasWorkspace) {
 

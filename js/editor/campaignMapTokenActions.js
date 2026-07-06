@@ -11,6 +11,10 @@ import {
 } from '../storage/storage.js';
 
 import {
+  requestWorkspaceWritePermission
+} from '../storage/storageAdapter.js';
+
+import {
   renderTree
 } from '../tree/tree.js';
 
@@ -678,23 +682,5 @@ aliases: [${(page.aliases || []).join(', ')}]
 
 async function ensureWorkspaceWritePermission() {
 
-  if (!state.workspaceHandle) return false;
-
-  if (!state.workspaceHandle.queryPermission) return true;
-
-  const currentPermission =
-    await state.workspaceHandle.queryPermission({
-      mode: 'readwrite'
-    });
-
-  if (currentPermission === 'granted') return true;
-
-  if (!state.workspaceHandle.requestPermission) return false;
-
-  const requestedPermission =
-    await state.workspaceHandle.requestPermission({
-      mode: 'readwrite'
-    });
-
-  return requestedPermission === 'granted';
+  return requestWorkspaceWritePermission();
 }

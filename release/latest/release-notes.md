@@ -1,5 +1,25 @@
 # Release Notes
 
+## 2026-06-30: Desktop Audio Playback Fix
+
+- Исправлена ошибка desktop-плейлиста карты `Failed to load because no supported source was found`.
+- Причина была в Tauri CSP: изображения через asset protocol были разрешены, а audio/media источники нет. Теперь `media-src` разрешает `asset:` и `http://asset.localhost`.
+- Дополнительно playback карты переведен на runtime `blob:` из `StorageAdapter.readBinary()`, чтобы музыка работала даже для workspace вне `$HOME` и не зависела от Tauri asset scope.
+- Desktop packaging smoke и storage tests теперь проверяют, что audio playback через asset protocol не забыли в конфигурации.
+
+## 2026-06-30: Campaign Map Music AIMP-Like Player
+
+- Popup музыки карты стал компактнее: сверху теперь mini-player с текущим треком, ниже плотные controls и активный normal/battle playlist.
+- Список плейлиста стал динамическим: клик по треку запускает его, активная строка подсвечивается.
+- Import flow упрощен: лишний список под добавлением убран, итоговые треки видны в основном плейлисте.
+- Сохранены два плейлиста на карту, copy from other map, loop/shuffle/order, play/stop/previous/next и autostart первой песни при открытии/переключении карты.
+
+## 2026-06-23: Recovery Screen Repair-Action Foundation
+
+- Экран диагностики workspace теперь показывает, есть ли для ошибки безопасное исправление после backup или нужна ручная правка.
+- Безопасные действия пока только описываются в UI и не применяются автоматически.
+- Подготовлены первые repair-action типы: broken parent, сломанный токен карты с отсутствующей карточкой, ссылка task tracker на отсутствующую задачу.
+
 ## 2026-06-23: Campaign Map Music Starts On Map Switch
 
 - При открытии или переключении на карту приложение пытается запустить первую песню активного плейлиста этой карты.
@@ -182,3 +202,21 @@
 - Rule Tree теперь позволяет редактировать условия правила, менять группу/категорию/package id, экспортировать и импортировать JSON-пакет правил и видеть предпросмотр активных эффектов.
 - Rule Tree получил первый исполняемый engine: условия `level`, `state`, `card-variable`, `manual`, `formula` теперь фильтруют применимость правил, наследование подтягивает эффекты, а переносимые пакеты могут храниться в `rule-packages/*.rule-package.json`.
 - Rule Tree получил пользовательский package manager и диагностику: из UI можно сохранить package-файл, обновить список, импортировать или удалить пакет, а конфликт rule id останавливает импорт с понятным статусом.
+
+## 2026-06-23 - Data Recovery And Storage Hardening
+
+- Recovery safe actions can now be applied at the model layer after a backup manifest exists.
+- Schema versions are centralized, and future workspace/map/task schema versions now block unsafe reads.
+- Desktop file commands return structured errors (`code`, `message`, `path`) for safer diagnostics.
+- UI/tree/templates/page loading now rely on `StorageAdapter` helpers instead of direct browser-only workspace handles.
+
+## 2026-07-06: Backup Retention And Risky Operation Snapshots
+
+- Risky tree operations now require a backup snapshot before changing workspace files. If the snapshot cannot be created, delete/move stops instead of continuing unprotected.
+- Settings now include a backup retention control: choose how many snapshots to keep and manually clean old backups with the same safe limit.
+
+## 2026-07-06: Dark Fantasy Design Foundation
+
+- Добавлен фундамент нового dark fantasy визуального слоя: MOW design tokens, glass panels, old-gold accents и theme attributes.
+- В настройках появилась панель оформления для выбора акцента, фонового пресета и плотности интерфейса.
+- Изменение не копирует чужие ассеты, портреты, карты, логотипы или названия из референса.

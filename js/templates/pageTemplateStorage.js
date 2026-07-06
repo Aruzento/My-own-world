@@ -8,12 +8,9 @@ import {
 } from '../storage/storage.js';
 
 import {
-  writeTextFile
-} from '../storage/writeQueue.js';
-
-import {
-  state
-} from '../state.js';
+  getStorageAdapter,
+  hasWorkspaceAccess
+} from '../storage/storageAdapter.js';
 
 import {
   getUniqueCopyTitle
@@ -37,7 +34,7 @@ const WORKSPACE_TEMPLATES_FILE =
 let templateCache =
   null;
 
-let templateWorkspaceHandle =
+let templateWorkspaceKey =
   null;
 
 
@@ -57,9 +54,12 @@ export function getPageTemplates() {
 
 export async function loadPageTemplates() {
 
-  if (!state.workspaceHandle) {
+  const storageAdapter =
+    getStorageAdapter();
 
-    templateWorkspaceHandle =
+  if (!hasWorkspaceAccess(storageAdapter)) {
+
+    templateWorkspaceKey =
       null;
 
     templateCache =
@@ -69,15 +69,15 @@ export async function loadPageTemplates() {
   }
 
   if (
-    templateWorkspaceHandle === state.workspaceHandle &&
+    templateWorkspaceKey === getTemplateWorkspaceKey(storageAdapter) &&
     templateCache
   ) {
 
     return getPageTemplates();
   }
 
-  templateWorkspaceHandle =
-    state.workspaceHandle;
+  templateWorkspaceKey =
+    getTemplateWorkspaceKey(storageAdapter);
 
   const workspaceTemplates =
     await readWorkspaceTemplates();
@@ -279,7 +279,10 @@ async function persistPageTemplates(
   templates
 ) {
 
-  if (!state.workspaceHandle) {
+  const storageAdapter =
+    getStorageAdapter();
+
+  if (!hasWorkspaceAccess(storageAdapter)) {
 
     localStorage.setItem(
       PAGE_TEMPLATES_KEY,
@@ -291,20 +294,11 @@ async function persistPageTemplates(
     return;
   }
 
-  const fileHandle =
-    await state.workspaceHandle.getFileHandle(
-      WORKSPACE_TEMPLATES_FILE,
-      {
-        create: true
-      }
-    );
-
-  await writeTextFile(
-    fileHandle,
+  await storageAdapter.writeText(
+    WORKSPACE_TEMPLATES_FILE,
     serializePageTemplates(
       templates
-    ),
-    WORKSPACE_TEMPLATES_FILE
+    )
   );
 }
 
@@ -313,22 +307,27 @@ async function readWorkspaceTemplates() {
 
   try {
 
-    const fileHandle =
-      await state.workspaceHandle.getFileHandle(
-        WORKSPACE_TEMPLATES_FILE
-      );
-
-    const file =
-      await fileHandle.getFile();
-
     return parsePageTemplatesFile(
-      await file.text()
+      await getStorageAdapter()
+        .readText(
+          WORKSPACE_TEMPLATES_FILE
+        )
     );
 
   } catch {
 
     return null;
   }
+}
+
+
+function getTemplateWorkspaceKey(
+  storageAdapter
+) {
+
+  return storageAdapter.getWorkspaceRoot?.() ||
+    storageAdapter.getWorkspaceHandle?.() ||
+    null;
 }
 
 

@@ -24,8 +24,13 @@ import {
 } from '../js/schema/assetSchema.js';
 
 import {
+  applyWorkspaceRepairActions,
   createWorkspaceRecoveryReport
 } from '../js/schema/schemaRecovery.js';
+
+import {
+  createSchemaVersionState
+} from '../js/schema/schemaVersions.js';
 
 import {
   assertSchemaUpgradeAllowed,
@@ -456,6 +461,360 @@ test(
     assert.equal(
       report.actions[0].code,
       'page.missing_id'
+    );
+
+    assert.equal(
+      report.actions[0].repairAction.id,
+      'manual-review'
+    );
+  }
+);
+
+
+test(
+  'workspace recovery report marks safe repair actions',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            id:
+              'orphan-child',
+            title:
+              'Orphan Child',
+            parent:
+              'missing-parent',
+            tags:
+              [],
+            aliases:
+              [],
+            body:
+              ''
+          }
+        ]
+      });
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validation
+      );
+
+    assert.equal(
+      report.actions[0].code,
+      'page.broken_parent'
+    );
+
+    assert.equal(
+      report.actions[0].repairAction.id,
+      'detach-page-parent-to-root'
+    );
+
+    assert.equal(
+      report.actions[0].repairAction.requiresBackup,
+      true
+    );
+  }
+);
+
+
+test(
+  'workspace repair actions require backup manifest',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            id:
+              'orphan-child',
+            title:
+              'Orphan Child',
+            parent:
+              'missing-parent',
+            tags:
+              [],
+            aliases:
+              []
+          }
+        ]
+      });
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validation
+      );
+
+    assert.throws(
+      () => applyWorkspaceRepairActions(
+        {
+          pages: [
+            {
+              id:
+                'orphan-child',
+              title:
+                'Orphan Child',
+              parent:
+                'missing-parent',
+              tags:
+                [],
+              aliases:
+                []
+            }
+          ]
+        },
+        report.actions
+      ),
+      /резервная копия/
+    );
+  }
+);
+
+
+test(
+  'workspace repair action detaches broken parent to root',
+  () => {
+
+    const snapshot = {
+      pages: [
+        {
+          id:
+            'orphan-child',
+          title:
+            'Orphan Child',
+          parent:
+            'missing-parent',
+          tags:
+            [],
+          aliases:
+            []
+        }
+      ]
+    };
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validateWorkspaceSnapshot(
+          snapshot
+        )
+      );
+
+    const result =
+      applyWorkspaceRepairActions(
+        snapshot,
+        report.actions,
+        {
+          backupManifest: {
+            id:
+              'backup-1'
+          }
+        }
+      );
+
+    assert.equal(
+      result.repairedSnapshot.pages[0].parent,
+      null
+    );
+
+    assert.equal(
+      result.validation.ok,
+      true
+    );
+  }
+);
+
+
+test(
+  'workspace repair action removes missing map token',
+  () => {
+
+    const result =
+      applyWorkspaceRepairActions(
+        {
+          pages: [
+            {
+              id:
+                'map-page',
+              title:
+                'Map',
+              parent:
+                null,
+              tags:
+                [],
+              aliases:
+                [],
+              mapData: {
+                tokens: [
+                  {
+                    tokenId:
+                      'broken-token',
+                    pageId:
+                      '',
+                    size:
+                      50
+                  },
+                  {
+                    tokenId:
+                      'good-token',
+                    pageId:
+                      'hero',
+                    size:
+                      50
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        [
+          {
+            code:
+              'map.token_missing_page',
+            details: {
+              tokenId:
+                'broken-token'
+            },
+            repairAction: {
+              id:
+                'remove-map-token-with-missing-page',
+              safety:
+                'safe-after-backup',
+              requiresBackup:
+                true
+            }
+          }
+        ],
+        {
+          backupManifest: {
+            id:
+              'backup-1'
+          }
+        }
+      );
+
+    assert.deepEqual(
+      result.repairedSnapshot.pages[0].mapData.tokens.map(token => token.tokenId),
+      [
+        'good-token'
+      ]
+    );
+  }
+);
+
+
+test(
+  'workspace repair action removes missing task reference',
+  () => {
+
+    const result =
+      applyWorkspaceRepairActions(
+        {
+          pages: [
+            {
+              id:
+                'tasks-page',
+              title:
+                'Tasks',
+              parent:
+                null,
+              tags:
+                [],
+              aliases:
+                [],
+              taskTrackerData: {
+                columns: [
+                  {
+                    id:
+                      'todo',
+                    taskIds:
+                      [
+                        'existing',
+                        'missing'
+                      ]
+                  }
+                ],
+                tasks: [
+                  {
+                    id:
+                      'existing',
+                    title:
+                      'Existing'
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        [
+          {
+            code:
+              'task.column_broken_task_ref',
+            details: {
+              columnId:
+                'todo',
+              taskId:
+                'missing'
+            },
+            repairAction: {
+              id:
+                'remove-missing-task-reference',
+              safety:
+                'safe-after-backup',
+              requiresBackup:
+                true
+            }
+          }
+        ],
+        {
+          backupManifest: {
+            id:
+              'backup-1'
+          }
+        }
+      );
+
+    assert.deepEqual(
+      result.repairedSnapshot.pages[0].taskTrackerData.columns[0].taskIds,
+      [
+        'existing'
+      ]
+    );
+  }
+);
+
+
+test(
+  'schema versions expose current legacy and future states',
+  () => {
+
+    assert.equal(
+      createSchemaVersionState({
+        area:
+          'workspace',
+        version:
+          1
+      }).isCurrent,
+      true
+    );
+
+    assert.equal(
+      createSchemaVersionState({
+        area:
+          'workspace',
+        version:
+          999
+      }).isFuture,
+      true
+    );
+
+    assert.equal(
+      validateWorkspaceSnapshot({
+        schemaVersion:
+          999,
+        pages:
+          []
+      }).errors[0].code,
+      'workspace.future_schema_version'
     );
   }
 );

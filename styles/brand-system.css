@@ -7,10 +7,31 @@
 }
 
 
+html,
+body {
+
+  background:
+    var(--mow-bg-app);
+
+  color:
+    var(--mow-text-main);
+
+  font-family:
+    var(--mow-font-ui);
+}
+
+
+body {
+
+  font-size:
+    calc(14px * var(--mow-ui-scale));
+}
+
+
 * {
 
   scrollbar-color:
-    rgba(244, 202, 118, 0.38)
+    var(--mow-accent-border)
     rgba(18, 16, 13, 0.32);
 }
 
@@ -102,15 +123,15 @@ textarea:focus-visible,
   background:
     linear-gradient(
       180deg,
-      rgba(39, 34, 27, 0.70),
-      rgba(25, 22, 18, 0.58)
+      var(--mow-bg-panel),
+      var(--mow-bg-panel-soft)
     );
 
   border-color:
-    rgba(247, 220, 164, 0.14);
+    var(--mow-border-medium);
 
   box-shadow:
-    0 20px 70px rgba(0, 0, 0, 0.24),
+    var(--mow-shadow-panel),
     inset 0 1px 0 rgba(255, 246, 222, 0.06);
 }
 
@@ -118,7 +139,7 @@ textarea:focus-visible,
 .app-topbar {
 
   color:
-    var(--color-text-muted);
+    var(--mow-text-muted);
 }
 
 
@@ -140,7 +161,7 @@ textarea:focus-visible,
 .internal-rule-document h1 {
 
   color:
-    var(--color-text-main);
+    var(--mow-text-main);
 
   text-shadow:
     0 1px 0 rgba(0, 0, 0, 0.24);
@@ -164,10 +185,10 @@ textarea:focus-visible,
     1px solid rgba(247, 220, 164, 0.13);
 
   background:
-    rgba(18, 16, 13, 0.34);
+    var(--mow-bg-input);
 
   color:
-    var(--color-text-main);
+    var(--mow-text-main);
 
   box-shadow:
     inset 0 1px 0 rgba(255, 246, 222, 0.04);
@@ -187,10 +208,10 @@ textarea:focus-visible,
 .table-config-field input:focus {
 
   border-color:
-    rgba(244, 202, 118, 0.42);
+    var(--mow-accent-border);
 
   box-shadow:
-    0 0 0 3px rgba(244, 202, 118, 0.11),
+    0 0 0 3px var(--mow-accent-bg),
     inset 0 1px 0 rgba(255, 246, 222, 0.05);
 }
 
@@ -227,21 +248,21 @@ textarea::placeholder,
     opacity;
 
   border-color:
-    rgba(247, 220, 164, 0.18);
+    var(--mow-border-medium);
 
   background:
     linear-gradient(
       180deg,
-      rgba(52, 43, 31, 0.98),
-      rgba(27, 23, 18, 0.97)
+      rgba(24, 25, 22, 0.98),
+      rgba(5, 7, 6, 0.97)
     );
 
   box-shadow:
-    0 26px 80px rgba(0, 0, 0, 0.46),
+    var(--mow-shadow-popup),
     inset 0 1px 0 rgba(255, 246, 222, 0.08);
 
   animation:
-    myow-popup-in var(--motion-slow) var(--ease-emphasized);
+    mow-popover-in var(--mow-motion-slow) var(--mow-ease-emphasized);
 }
 
 
@@ -527,6 +548,30 @@ textarea::placeholder,
 
   color:
     rgba(255, 252, 242, 0.98);
+}
+
+
+@keyframes mow-popover-in {
+
+  from {
+
+    opacity:
+      0;
+
+    transform:
+      translateY(6px)
+      scale(0.985);
+  }
+
+  to {
+
+    opacity:
+      1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
 }
 
 

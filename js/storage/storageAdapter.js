@@ -58,6 +58,86 @@ export function createDefaultStorageAdapter() {
 }
 
 
+export function hasWorkspaceAccess(
+  storageAdapter = getStorageAdapter()
+) {
+
+  if (storageAdapter.kind === 'desktop') {
+
+    return Boolean(
+      storageAdapter.getWorkspaceRoot?.()
+    );
+  }
+
+  return Boolean(
+    storageAdapter.getWorkspaceHandle?.()
+  );
+}
+
+
+export async function queryWorkspaceWritePermission(
+  storageAdapter = getStorageAdapter()
+) {
+
+  if (storageAdapter.kind === 'desktop') {
+
+    return hasWorkspaceAccess(
+      storageAdapter
+    );
+  }
+
+  const handle =
+    storageAdapter.getWorkspaceHandle?.();
+
+  if (!handle) return false;
+
+  if (!handle.queryPermission) return true;
+
+  const permission =
+    await handle.queryPermission({
+      mode: 'readwrite'
+    });
+
+  return permission === 'granted';
+}
+
+
+export async function requestWorkspaceWritePermission(
+  storageAdapter = getStorageAdapter()
+) {
+
+  if (storageAdapter.kind === 'desktop') {
+
+    return hasWorkspaceAccess(
+      storageAdapter
+    );
+  }
+
+  const handle =
+    storageAdapter.getWorkspaceHandle?.();
+
+  if (!handle) return false;
+
+  if (!handle.queryPermission) return true;
+
+  const currentPermission =
+    await handle.queryPermission({
+      mode: 'readwrite'
+    });
+
+  if (currentPermission === 'granted') return true;
+
+  if (!handle.requestPermission) return false;
+
+  const requestedPermission =
+    await handle.requestPermission({
+      mode: 'readwrite'
+    });
+
+  return requestedPermission === 'granted';
+}
+
+
 setWriteQueueStorageAdapterProvider(
   getStorageAdapter
 );

@@ -7,8 +7,12 @@ import {
   cleanupWorkspaceBackups,
   createBackupId,
   createBackupManifest,
+  getBackupRetentionLimit,
+  normalizeBackupRetentionLimit,
+  requireWorkspaceBackupBeforeRiskyOperation,
   createWorkspaceBackup,
-  restoreWorkspaceBackup
+  restoreWorkspaceBackup,
+  setBackupRetentionLimit
 } from '../js/storage/backupService.js';
 
 
@@ -301,6 +305,70 @@ test(
     await getBackupDirectory(
       workspace,
       'backup-3'
+    );
+  }
+);
+
+
+test(
+  'backup retention settings normalize and persist the user limit',
+  () => {
+
+    const storage =
+      new MemoryKeyValueStorage();
+
+    assert.equal(
+      normalizeBackupRetentionLimit(
+        'bad'
+      ),
+      20
+    );
+
+    assert.equal(
+      normalizeBackupRetentionLimit(
+        0
+      ),
+      1
+    );
+
+    assert.equal(
+      normalizeBackupRetentionLimit(
+        999
+      ),
+      200
+    );
+
+    assert.equal(
+      setBackupRetentionLimit(
+        7,
+        storage
+      ),
+      7
+    );
+
+    assert.equal(
+      getBackupRetentionLimit(
+        storage
+      ),
+      7
+    );
+  }
+);
+
+
+test(
+  'required risky-operation backup blocks when snapshot cannot be created',
+  async () => {
+
+    await assert.rejects(
+      () => requireWorkspaceBackupBeforeRiskyOperation(
+        'delete-page-branch',
+        {
+          storageAdapter:
+            createFailingStorageAdapter()
+        }
+      ),
+      /Risky operation blocked/
     );
   }
 );
@@ -640,4 +708,86 @@ class MemoryFileHandle {
         async () => {}
     };
   }
+}
+
+
+class MemoryKeyValueStorage {
+
+  constructor() {
+
+    this.values =
+      new Map();
+  }
+
+  getItem(
+    key
+  ) {
+
+    return this.values.has(
+      key
+    )
+      ? this.values.get(
+        key
+      )
+      : null;
+  }
+
+  setItem(
+    key,
+    value
+  ) {
+
+    this.values.set(
+      key,
+      String(value)
+    );
+  }
+}
+
+
+function createFailingStorageAdapter() {
+
+  return {
+    kind:
+      'desktop',
+    getWorkspaceRoot:
+      () => 'X:/world',
+    async ensureDirectory() {
+
+      throw new Error(
+        'disk full'
+      );
+    },
+    async listFiles() {
+
+      return [];
+    },
+    async readText() {
+
+      throw new Error(
+        'not implemented'
+      );
+    },
+    async writeText() {
+
+      throw new Error(
+        'not implemented'
+      );
+    },
+    async readBinary() {
+
+      throw new Error(
+        'not implemented'
+      );
+    },
+    async writeBinary() {
+
+      throw new Error(
+        'not implemented'
+      );
+    },
+    async removeFile() {},
+    async removeDirectory() {},
+    async restoreWorkspace() {}
+  };
 }

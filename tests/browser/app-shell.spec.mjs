@@ -70,6 +70,31 @@ test(
       4
     );
 
+    await page.locator('#appSettingsBtn').click();
+
+    await expect(
+      page.locator('.app-backup-retention input')
+    ).toHaveValue(
+      '20'
+    );
+
+    await expect(
+      page.locator('.app-appearance-panel')
+    ).toBeVisible();
+
+    await page
+      .locator('.app-appearance-swatch[data-accent="blue"]')
+      .click();
+
+    await expect(
+      page.locator('body')
+    ).toHaveAttribute(
+      'data-accent',
+      'blue'
+    );
+
+    await page.locator('#appSettingsCloseBtn').click();
+
     await page.locator('#appToolsBtn').click();
 
     await page

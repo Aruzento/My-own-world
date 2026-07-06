@@ -1,5 +1,28 @@
 # Tester Instructions
 
+## 2026-06-30: Проверка desktop audio playback
+
+1. Запустить свежий desktop build: `src-tauri\target\release\my-own-world.exe` или установить свежий `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+2. Открыть workspace, карту и popup музыки карты.
+3. Добавить mp3/ogg/wav трек в плейлист и нажать на строку трека или кнопку play.
+4. Ошибка `Failed to load because no supported source was found` не должна появляться; если файл сам по себе неподдерживаемый, проверить тот же файл в системном плеере.
+
+## 2026-06-30: Проверка AIMP-like плейлиста карты
+
+1. Открыть карту и popup музыки карты.
+2. Проверить, что сверху виден компактный mini-player: текущий трек или пустое состояние, ниже кнопки play/stop/previous/next/shuffle/loop и переключатель normal/battle.
+3. Выбрать 1-2 audio-файла и нажать `Добавить`: треки должны появиться в основном списке плейлиста без отдельного списка под import flow.
+4. Кликнуть по строке трека: трек должен запуститься, строка должна подсветиться, а mini-player должен показать название текущего трека.
+5. Переключить normal/battle: активный плейлист должен смениться и попытаться запустить первый трек выбранного режима.
+6. Проверить stop, play, previous, next, loop/shuffle/order и copy playlist from other map.
+
+## 2026-06-23: Проверка recovery screen repair-actions
+
+1. Открыть workspace с критичной ошибкой схемы или запустить browser smoke `schema-recovery`.
+2. Проверить, что экран диагностики показывает код ошибки и описание.
+3. Проверить, что под ошибкой есть блок repair-action: безопасное действие после backup или пометка ручной правки.
+4. Убедиться, что действие не применяет изменения автоматически без отдельной команды пользователя.
+
 ## 2026-06-23: Проверка музыки при переключении карт
 
 1. Подготовить две карты с разными треками в активных плейлистах.
@@ -237,3 +260,25 @@
 1. Запустить приложение и убедиться, что резкого изменения визуала не произошло.
 2. Проверить основные поверхности: sidebar, editor, popup создания, карту и task tracker.
 3. Убедиться, что popup и toolbar не получили новых синих focus/hover состояний.
+
+## 2026-06-23 - Data Recovery And Storage Hardening Checks
+
+1. Open a normal workspace in browser and desktop; pages and tree expansion state should load normally.
+2. Trigger backup list in the topbar; it should be available only when a workspace is selected.
+3. Run schema recovery browser smoke; safe repair action must apply only with a backup manifest.
+4. In desktop, invalid workspace file paths should surface structured errors with stable codes in logs/devtools.
+
+## 2026-07-06: Проверка Backup Retention
+
+1. Открыть Settings через верхнюю кнопку шестеренки.
+2. В блоке backup изменить лимит хранения, нажать `Применить` и закрыть/открыть Settings снова: значение должно сохраниться.
+3. Создать несколько backup и нажать `Очистить старые`: старые точки удаляются только сверх указанного лимита.
+4. Проверить перенос/удаление страницы в дереве: перед операцией должна создаваться точка в `.my-own-world-backups/`.
+
+## 2026-07-06: Проверка Dark Fantasy Appearance Panel
+
+1. Откройте приложение.
+2. Нажмите кнопку настроек в верхней панели.
+3. Убедитесь, что сверху popup есть блок `Оформление`.
+4. Переключите accent color, фон и размер интерфейса.
+5. Проверьте, что shell/sidebar/editor визуально остаются читаемыми, popup не ломается, backup panel ниже продолжает работать.

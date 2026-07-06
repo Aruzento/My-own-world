@@ -1,155 +1,192 @@
 :root {
+  color-scheme: dark;
 
-  /* Базовые токены будущей дизайн-системы. Пока они не переписывают весь UI,
-     а дают единый словарь для следующих этапов редизайна. */
+  --mow-font-ui: Inter, Manrope, "Segoe UI", sans-serif;
+  --mow-font-title: Cinzel, "Cormorant Garamond", Georgia, serif;
 
-  --color-bg-app:
-    #12100d;
+  --mow-bg-app: #050706;
+  --mow-bg-app-2: #080b0a;
+  --mow-bg-panel: rgba(13, 16, 15, 0.88);
+  --mow-bg-panel-soft: rgba(18, 21, 19, 0.78);
+  --mow-bg-card: rgba(24, 25, 22, 0.82);
+  --mow-bg-card-hover: rgba(38, 34, 26, 0.9);
+  --mow-bg-card-active: rgba(53, 43, 27, 0.95);
+  --mow-bg-input: rgba(5, 7, 6, 0.55);
+  --mow-bg-toolbar: rgba(11, 13, 12, 0.74);
 
-  --color-bg-panel:
-    rgba(35, 31, 25, 0.78);
+  --mow-text-main: #efe6d2;
+  --mow-text-soft: #c9bea8;
+  --mow-text-muted: #8b8374;
+  --mow-text-disabled: #5f594e;
 
-  --color-bg-panel-soft:
-    rgba(255, 246, 222, 0.06);
+  --mow-accent: #c9a45c;
+  --mow-accent-soft: #8f7140;
+  --mow-accent-bright: #f0cf82;
+  --mow-accent-bg: rgba(201, 164, 92, 0.14);
+  --mow-accent-border: rgba(201, 164, 92, 0.48);
 
-  --color-bg-card:
-    rgba(40, 35, 27, 0.86);
+  --mow-success: #6faf5d;
+  --mow-danger: #b65045;
+  --mow-warning: #d6a84f;
+  --mow-info: #4d83bd;
 
-  --color-bg-elevated:
-    rgba(48, 40, 30, 0.96);
+  --mow-border-soft: rgba(255, 232, 183, 0.08);
+  --mow-border-medium: rgba(255, 232, 183, 0.14);
+  --mow-border-strong: rgba(201, 164, 92, 0.42);
 
-  --color-text-main:
-    rgba(255, 248, 232, 0.96);
+  --mow-shadow-panel: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --mow-shadow-card: 0 10px 24px rgba(0, 0, 0, 0.32);
+  --mow-shadow-popup: 0 26px 80px rgba(0, 0, 0, 0.5);
+  --mow-glow-accent: 0 0 24px rgba(201, 164, 92, 0.22);
 
-  --color-text-muted:
-    rgba(226, 209, 178, 0.70);
+  --mow-radius-xs: 6px;
+  --mow-radius-sm: 8px;
+  --mow-radius-md: 12px;
+  --mow-radius-lg: 16px;
+  --mow-radius-xl: 22px;
 
-  --color-text-faint:
-    rgba(226, 209, 178, 0.50);
+  --mow-space-1: 4px;
+  --mow-space-2: 8px;
+  --mow-space-3: 12px;
+  --mow-space-4: 16px;
+  --mow-space-5: 20px;
+  --mow-space-6: 24px;
 
-  --color-accent:
-    #f4ca76;
+  --mow-motion-fast: 120ms;
+  --mow-motion-base: 170ms;
+  --mow-motion-slow: 220ms;
+  --mow-ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --mow-ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --color-accent-soft:
-    rgba(244, 202, 118, 0.16);
+  --mow-bg-texture:
+    radial-gradient(circle at 50% 0%, rgba(240, 207, 130, 0.08), transparent 34%),
+    linear-gradient(180deg, var(--mow-bg-app-2), var(--mow-bg-app));
 
-  --color-accent-strong:
-    rgba(244, 202, 118, 0.90);
+  --mow-ui-scale: 1;
 
-  --color-accent-secondary:
-    #8fae84;
+  /* Compatibility aliases for the existing CSS layer. */
+  --color-bg-app: var(--mow-bg-app);
+  --color-bg-panel: var(--mow-bg-panel);
+  --color-bg-panel-soft: var(--mow-bg-panel-soft);
+  --color-bg-card: var(--mow-bg-card);
+  --color-bg-elevated: var(--mow-bg-card-active);
+  --color-text-main: var(--mow-text-main);
+  --color-text-muted: var(--mow-text-soft);
+  --color-text-faint: var(--mow-text-muted);
+  --color-accent: var(--mow-accent-bright);
+  --color-accent-soft: var(--mow-accent-bg);
+  --color-accent-strong: var(--mow-accent);
+  --color-accent-secondary: var(--mow-success);
+  --color-accent-secondary-soft: rgba(111, 175, 93, 0.16);
+  --color-danger: var(--mow-danger);
+  --color-danger-soft: rgba(182, 80, 69, 0.18);
+  --color-border-subtle: var(--mow-border-soft);
+  --color-border-hover: var(--mow-accent-border);
+  --color-focus-ring: rgba(201, 164, 92, 0.42);
+  --color-surface-veil: rgba(18, 16, 13, 0.62);
+  --color-surface-engraved: rgba(255, 246, 222, 0.035);
+  --color-rune: rgba(201, 164, 92, 0.58);
 
-  --color-accent-secondary-soft:
-    rgba(143, 174, 132, 0.16);
+  --space-1: var(--mow-space-1);
+  --space-2: var(--mow-space-2);
+  --space-3: var(--mow-space-3);
+  --space-4: var(--mow-space-4);
+  --space-5: var(--mow-space-5);
+  --space-6: var(--mow-space-6);
+  --radius-xs: var(--mow-radius-xs);
+  --radius-sm: var(--mow-radius-sm);
+  --radius-md: var(--mow-radius-md);
+  --radius-lg: var(--mow-radius-lg);
+  --shadow-panel: var(--mow-shadow-panel);
+  --shadow-popup: var(--mow-shadow-popup);
+  --motion-fast: var(--mow-motion-fast);
+  --motion-base: var(--mow-motion-base);
+  --motion-slow: var(--mow-motion-slow);
+  --ease-standard: var(--mow-ease-standard);
+  --ease-emphasized: var(--mow-ease-emphasized);
 
-  --color-danger:
-    #e88980;
-
-  --color-danger-soft:
-    rgba(202, 91, 88, 0.18);
-
-  --color-border-subtle:
-    rgba(247, 220, 164, 0.13);
-
-  --color-border-hover:
-    rgba(244, 202, 118, 0.38);
-
-  --color-focus-ring:
-    rgba(244, 202, 118, 0.42);
-
-  --color-surface-veil:
-    rgba(18, 16, 13, 0.62);
-
-  --color-surface-engraved:
-    rgba(255, 246, 222, 0.035);
-
-  --color-rune:
-    rgba(244, 202, 118, 0.58);
-
-  --space-1:
-    4px;
-
-  --space-2:
-    8px;
-
-  --space-3:
-    12px;
-
-  --space-4:
-    16px;
-
-  --space-5:
-    20px;
-
-  --space-6:
-    24px;
-
-  --radius-xs:
-    6px;
-
-  --radius-sm:
-    9px;
-
-  --radius-md:
-    14px;
-
-  --radius-lg:
-    18px;
-
-  --shadow-panel:
-    0 24px 70px rgba(0, 0, 0, 0.36);
-
-  --shadow-popup:
-    0 26px 80px rgba(0, 0, 0, 0.44);
-
-  --motion-fast:
-    110ms;
-
-  --motion-base:
-    190ms;
-
-  --motion-slow:
-    320ms;
-
-  --ease-standard:
-    cubic-bezier(0.22, 1, 0.36, 1);
-
-  --ease-emphasized:
-    cubic-bezier(0.16, 1, 0.3, 1);
-
-  --z-base:
-    1;
-
-  --z-dropdown:
-    50;
-
-  --z-popup:
-    100;
-
-  --z-modal:
-    200;
-
-  --z-toast:
-    300;
+  --z-base: 1;
+  --z-dropdown: 50;
+  --z-popup: 100;
+  --z-modal: 200;
+  --z-toast: 300;
 }
 
+[data-accent="blue"] {
+  --mow-accent: #4d83bd;
+  --mow-accent-soft: #355a82;
+  --mow-accent-bright: #7db7ff;
+  --mow-accent-bg: rgba(77, 131, 189, 0.16);
+  --mow-accent-border: rgba(125, 183, 255, 0.45);
+  --color-focus-ring: rgba(125, 183, 255, 0.38);
+}
+
+[data-accent="red"] {
+  --mow-accent: #b65045;
+  --mow-accent-soft: #7d3832;
+  --mow-accent-bright: #ff8a75;
+  --mow-accent-bg: rgba(182, 80, 69, 0.16);
+  --mow-accent-border: rgba(255, 138, 117, 0.45);
+  --color-focus-ring: rgba(255, 138, 117, 0.38);
+}
+
+[data-accent="purple"] {
+  --mow-accent: #8f6ac8;
+  --mow-accent-soft: #60478a;
+  --mow-accent-bright: #c5a4ff;
+  --mow-accent-bg: rgba(143, 106, 200, 0.16);
+  --mow-accent-border: rgba(197, 164, 255, 0.45);
+  --color-focus-ring: rgba(197, 164, 255, 0.36);
+}
+
+[data-accent="green"] {
+  --mow-accent: #6faf5d;
+  --mow-accent-soft: #47743f;
+  --mow-accent-bright: #a7dd90;
+  --mow-accent-bg: rgba(111, 175, 93, 0.16);
+  --mow-accent-border: rgba(167, 221, 144, 0.45);
+  --color-focus-ring: rgba(167, 221, 144, 0.36);
+}
+
+[data-bg="stone"] {
+  --mow-bg-app: #030403;
+  --mow-bg-app-2: #070907;
+  --mow-bg-texture:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05), transparent 35%),
+    linear-gradient(180deg, #070907, #030403);
+}
+
+[data-bg="forest"] {
+  --mow-bg-app: #040806;
+  --mow-bg-app-2: #07110c;
+  --mow-bg-texture:
+    radial-gradient(circle at 20% 0%, rgba(111, 175, 93, 0.1), transparent 36%),
+    linear-gradient(180deg, #07110c, #030503);
+}
+
+[data-bg="arcane"] {
+  --mow-bg-app: #07050a;
+  --mow-bg-app-2: #0e0a14;
+  --mow-bg-texture:
+    radial-gradient(circle at 80% 0%, rgba(143, 106, 200, 0.12), transparent 36%),
+    linear-gradient(180deg, #0e0a14, #040305);
+}
+
+[data-ui-scale="compact"] {
+  --mow-ui-scale: 0.92;
+}
+
+[data-ui-scale="large"] {
+  --mow-ui-scale: 1.08;
+}
 
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {
-
-    animation-duration:
-      0.01ms !important;
-
-    animation-iteration-count:
-      1 !important;
-
-    scroll-behavior:
-      auto !important;
-
-    transition-duration:
-      0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
