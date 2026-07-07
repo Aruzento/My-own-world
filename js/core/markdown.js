@@ -29,6 +29,9 @@ export function parseMarkdown(content) {
   const aliasesMatch =
   frontMatter.match(/^aliases:\s*\[(.*?)\]/im);
 
+  const relationshipsJsonMatch =
+  frontMatter.match(/^relationshipsJson:\s*(.*)$/im);
+
   const template =
   templateMatch
     ? templateMatch[1].trim()
@@ -94,6 +97,13 @@ if (
     .filter(Boolean);
 }
 
+  const relationships =
+    parseRelationshipsJson(
+      relationshipsJsonMatch
+        ? relationshipsJsonMatch[1]
+        : ''
+    );
+
   const body =
     content
       .replace(/^---[\s\S]*?---/, '')
@@ -120,8 +130,108 @@ if (
   title,
   tags,
   aliases,
+  relationships,
   template,
   type,
   body,
 };
+}
+
+
+export function formatRelationshipsFrontMatter(
+  relationships
+) {
+
+  const normalized =
+    normalizeRelationships(
+      relationships
+    );
+
+  if (normalized.length === 0) return '';
+
+  return `relationshipsJson: ${JSON.stringify(normalized)}\n`;
+}
+
+
+function parseRelationshipsJson(
+  value
+) {
+
+  if (!value) return [];
+
+  try {
+
+    return normalizeRelationships(
+      JSON.parse(
+        value
+      )
+    );
+  } catch (error) {
+
+    console.warn(
+      'Invalid relationshipsJson front matter skipped.',
+      error
+    );
+
+    return [];
+  }
+}
+
+
+function normalizeRelationships(
+  relationships
+) {
+
+  if (!Array.isArray(relationships)) return [];
+
+  return relationships
+    .map(relationship =>
+      normalizeRelationship(
+        relationship
+      )
+    )
+    .filter(relationship =>
+      relationship.targetId ||
+      relationship.targetTitle
+    );
+}
+
+
+function normalizeRelationship(
+  relationship
+) {
+
+  const normalized = {
+    type:
+      String(relationship?.type || 'related').trim() || 'related'
+  };
+
+  const targetId =
+    String(relationship?.targetId || relationship?.pageId || '').trim();
+
+  const targetTitle =
+    String(relationship?.targetTitle || relationship?.target || '').trim();
+
+  const label =
+    String(relationship?.label || '').trim();
+
+  if (targetId) {
+
+    normalized.targetId =
+      targetId;
+  }
+
+  if (targetTitle) {
+
+    normalized.targetTitle =
+      targetTitle;
+  }
+
+  if (label) {
+
+    normalized.label =
+      label;
+  }
+
+  return normalized;
 }

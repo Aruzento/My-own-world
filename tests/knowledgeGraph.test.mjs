@@ -3,9 +3,17 @@ import assert from 'node:assert/strict';
 
 import {
   buildKnowledgeGraph,
+  getKnowledgeGraphDomainEdges,
+  getKnowledgeGraphDomainSummary,
+  getKnowledgeGraphSummary,
   getOrphanGraphPages,
   getTypedRelationships
 } from '../js/wiki/knowledgeGraph.js';
+
+import {
+  formatRelationshipsFrontMatter,
+  parseMarkdown
+} from '../js/core/markdown.js';
 
 
 test(
@@ -64,6 +72,245 @@ test(
           label: 'Герой'
         }
       ]
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph supports explicit typed relationships',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'hero',
+          title: 'Hero',
+          relationships: [
+            {
+              type: 'ally',
+              targetId: 'mentor',
+              label: 'Teacher'
+            },
+            {
+              type: 'rival faction',
+              targetTitle: 'Guild'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'mentor',
+          title: 'Mentor',
+          content: ''
+        },
+        {
+          id: 'guild',
+          title: 'Guild',
+          content: ''
+        }
+      ]);
+
+    assert.deepEqual(
+      getTypedRelationships(
+        graph,
+        'ally'
+      ),
+      [
+        {
+          type: 'ally',
+          from: 'hero',
+          to: 'mentor',
+          label: 'Teacher',
+          source: 'manual'
+        }
+      ]
+    );
+
+    assert.equal(
+      getTypedRelationships(
+        graph,
+        'rival-faction'
+      )[0].to,
+      'guild'
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph stores explicit relationships in page front matter',
+  () => {
+
+    const relationships =
+      [
+        {
+          type: 'ally',
+          targetId: 'mentor',
+          label: 'Teacher'
+        }
+      ];
+
+    const parsed =
+      parseMarkdown(
+`---
+id: hero
+parent: null
+order: 1
+tags: [card, character]
+template: card
+type: character
+aliases: []
+${formatRelationshipsFrontMatter(relationships)}---
+
+<h1>Hero</h1>`
+      );
+
+    assert.deepEqual(
+      parsed.relationships,
+      relationships
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph groups relationships by readable domains',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'hero',
+          title: 'Hero',
+          type: 'character',
+          relationships: [
+            {
+              type: 'equipped',
+              targetId: 'sword',
+              label: 'Main hand'
+            },
+            {
+              type: 'ruleEffect',
+              targetId: 'rules',
+              label: 'Rage'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'sword',
+          title: 'Sword',
+          type: 'item',
+          content: ''
+        },
+        {
+          id: 'guild',
+          title: 'Guild',
+          type: 'note',
+          tags: [
+            'organization'
+          ],
+          content: ''
+        },
+        {
+          id: 'rules',
+          title: 'Rules',
+          template: 'ruleTree',
+          type: 'ruleTree',
+          content: ''
+        }
+      ]);
+
+    assert.equal(
+      getKnowledgeGraphDomainEdges(
+        graph,
+        'character'
+      ).length,
+      2
+    );
+
+    assert.equal(
+      getKnowledgeGraphDomainEdges(
+        graph,
+        'item'
+      ).length,
+      1
+    );
+
+    assert.equal(
+      getKnowledgeGraphDomainEdges(
+        graph,
+        'rule'
+      ).length,
+      1
+    );
+
+    assert.deepEqual(
+      getKnowledgeGraphDomainSummary(
+        graph
+      ).map(item => [
+        item.key,
+        item.nodeCount
+      ]),
+      [
+        [
+          'character',
+          1
+        ],
+        [
+          'item',
+          1
+        ],
+        [
+          'organization',
+          1
+        ],
+        [
+          'rule',
+          1
+        ]
+      ]
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph summary counts nodes edges and orphans',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'root',
+          title: 'Root',
+          content: '[[Child]]'
+        },
+        {
+          id: 'child',
+          title: 'Child',
+          content: ''
+        },
+        {
+          id: 'draft',
+          title: 'Draft',
+          content: ''
+        }
+      ]);
+
+    assert.deepEqual(
+      getKnowledgeGraphSummary(
+        graph
+      ),
+      {
+        nodeCount: 3,
+        edgeCount: 1,
+        orphanCount: 1,
+        typeCounts: {
+          wikiLink: 1
+        }
+      }
     );
   }
 );

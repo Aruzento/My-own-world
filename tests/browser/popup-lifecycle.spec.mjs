@@ -341,13 +341,13 @@ test(
     await expect(
       page.locator('#createMenu .create-option')
     ).toHaveCount(
-      4
+      5
     );
 
     await expect(
       page.locator('#createMenu [data-template]')
     ).toHaveCount(
-      4
+      5
     );
 
     await page.locator('#newPageBtn').click();

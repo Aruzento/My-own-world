@@ -14,7 +14,8 @@ const KNOWN_TEMPLATES =
     'card',
     'campaignMap',
     'taskTracker',
-    'ruleTree'
+    'ruleTree',
+    'knowledgeGraph'
   ]);
 
 

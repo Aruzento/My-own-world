@@ -198,7 +198,9 @@ function isCardPageForBackButton(
     template === 'taskTracker' ||
     type === 'taskTracker' ||
     template === 'ruleTree' ||
-    type === 'ruleTree'
+    type === 'ruleTree' ||
+    template === 'knowledgeGraph' ||
+    type === 'knowledgeGraph'
   ) return false;
 
   return true;

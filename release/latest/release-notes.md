@@ -220,3 +220,24 @@
 - Добавлен фундамент нового dark fantasy визуального слоя: MOW design tokens, glass panels, old-gold accents и theme attributes.
 - В настройках появилась панель оформления для выбора акцента, фонового пресета и плотности интерфейса.
 - Изменение не копирует чужие ассеты, портреты, карты, логотипы или названия из референса.
+
+## 2026-07-07: Граф связей
+
+- В меню `+` добавлена сущность `Граф связей`.
+- Граф показывает понятную сводку мира: сколько страниц, сколько связей и какие страницы пока ни с чем не связаны.
+- Внутри графа есть вкладки `Связи` и `Одинокие страницы`; из списка можно открыть страницу.
+- Связи строятся из дерева, wiki-links и подготовленного typed relationships foundation.
+- В `Связях` появились фокусы: `Все связи`, `Персонажи`, `Предметы`, `Организации`, `Правила`.
+## 2026-07-07: Knowledge Graph relationships
+
+- `Граф связей` получил readable graph view: первая вкладка показывает компактную карту узлов мира.
+- Во вкладке `Связи` теперь можно вручную добавить typed relationship между двумя существующими страницами.
+- Ручные связи сохраняются в metadata исходной карточки как `relationshipsJson` и затем отображаются в графе вместе с деревом и wiki-links.
+- В контракте `KNOWLEDGE_GRAPH_ENTITY_CONTRACT.md` закреплен формат связей и правило: readable view остается обязательным fallback перед будущим canvas/explorer.
+
+## 2026-07-07 - World Package Foundation
+
+- Added the first safe foundation for World Packages: portable package model, workspace storage, metadata, dependencies, fork fields and import preview.
+- World packages are stored in `world-packages/*.world-package.json`.
+- Import preview detects page conflicts before any future workspace write and marks import as backup-required.
+- No user-facing bulk import button is exposed yet; this release only prepares the safe data layer.

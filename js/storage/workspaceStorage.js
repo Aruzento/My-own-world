@@ -111,6 +111,10 @@ async function ensureFolders() {
   await storageAdapter.ensureDirectory(
     'rule-packages'
   );
+
+  await storageAdapter.ensureDirectory(
+    'world-packages'
+  );
 }
 
 

@@ -67,7 +67,7 @@ test(
     await expect(
       page.locator('.empty-create-option')
     ).toHaveCount(
-      4
+      5
     );
 
     await page.locator('#appSettingsBtn').click();

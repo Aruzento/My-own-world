@@ -20,6 +20,10 @@ import {
   createSchemaVersionState
 } from './schemaVersions.js';
 
+import {
+  validateWorldPackagesData
+} from './worldPackageSchema.js';
+
 
 export function validateWorkspaceSnapshot(
   snapshot = {}
@@ -68,6 +72,15 @@ export function validateWorkspaceSnapshot(
     results.push(
       validateAssetReferences(
         snapshot.assetReferences
+      )
+    );
+  }
+
+  if (snapshot.worldPackages !== undefined) {
+
+    results.push(
+      validateWorldPackagesData(
+        snapshot.worldPackages
       )
     );
   }

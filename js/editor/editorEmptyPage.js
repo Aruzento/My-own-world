@@ -99,6 +99,15 @@ export function renderEmptyEditorContent(
             <span class="empty-create-icon">§</span>
             <span>Правила</span>
           </button>
+
+          <button
+            class="empty-create-option"
+            type="button"
+            data-template="knowledgeGraph"
+          >
+            <span class="empty-create-icon">◎</span>
+            <span>Граф связей</span>
+          </button>
         </div>
       </div>
     </section>

@@ -6,6 +6,77 @@ import {
 const WIKI_LINK_PATTERN =
   /\[\[([^\]]+)\]\]/g;
 
+const DOMAIN_DEFINITIONS = {
+  character: {
+    label: 'Персонажи',
+    types: [
+      'character',
+      'creature'
+    ],
+    tags: [
+      'character',
+      'creature',
+      'player',
+      'персонаж',
+      'существо',
+      'игрок'
+    ]
+  },
+  item: {
+    label: 'Предметы',
+    types: [
+      'item',
+      'object',
+      'magic',
+      'skill'
+    ],
+    tags: [
+      'item',
+      'object',
+      'magic',
+      'skill',
+      'предмет',
+      'объект',
+      'магия',
+      'навык'
+    ]
+  },
+  organization: {
+    label: 'Организации',
+    types: [
+      'organization',
+      'faction',
+      'guild'
+    ],
+    tags: [
+      'organization',
+      'faction',
+      'guild',
+      'организация',
+      'фракция',
+      'гильдия'
+    ]
+  },
+  rule: {
+    label: 'Правила',
+    types: [
+      'ruletree',
+      'rule',
+      'rules'
+    ],
+    templates: [
+      'ruletree'
+    ],
+    tags: [
+      'rule',
+      'rules',
+      'rule-tree',
+      'правило',
+      'правила'
+    ]
+  }
+};
+
 
 export function buildKnowledgeGraph(
   pages
@@ -19,7 +90,8 @@ export function buildKnowledgeGraph(
   const edges =
     [
       ...createTreeEdges(nodes),
-      ...createWikiLinkEdges(nodes)
+      ...createWikiLinkEdges(nodes),
+      ...createManualRelationshipEdges(nodes)
     ];
 
   return {
@@ -68,6 +140,109 @@ export function getTypedRelationships(
 }
 
 
+export function getKnowledgeGraphSummary(
+  graph
+) {
+
+  return {
+    nodeCount:
+      graph.nodes.length,
+    edgeCount:
+      graph.edges.length,
+    orphanCount:
+      getOrphanGraphPages(
+        graph
+      ).length,
+    typeCounts:
+      graph.edges.reduce(
+        (counts, edge) => {
+          counts[edge.type] =
+            (counts[edge.type] || 0) + 1;
+
+          return counts;
+        },
+        {}
+      )
+  };
+}
+
+
+export function getKnowledgeGraphDomainDefinitions() {
+
+  return Object.entries(
+    DOMAIN_DEFINITIONS
+  )
+    .map(([key, definition]) => ({
+      key,
+      label:
+        definition.label
+    }));
+}
+
+
+export function getKnowledgeGraphDomainSummary(
+  graph
+) {
+
+  return getKnowledgeGraphDomainDefinitions()
+    .map(domain => ({
+      ...domain,
+      nodeCount:
+        getKnowledgeGraphDomainNodes(
+          graph,
+          domain.key
+        ).length,
+      edgeCount:
+        getKnowledgeGraphDomainEdges(
+          graph,
+          domain.key
+        ).length
+    }));
+}
+
+
+export function getKnowledgeGraphDomainNodes(
+  graph,
+  domain
+) {
+
+  return (graph?.nodes || [])
+    .filter(node =>
+      nodeBelongsToDomain(
+        node,
+        domain
+      )
+    );
+}
+
+
+export function getKnowledgeGraphDomainEdges(
+  graph,
+  domain
+) {
+
+  const nodesById =
+    new Map(
+      (graph?.nodes || []).map(node => [
+        node.id,
+        node
+      ])
+    );
+
+  return (graph?.edges || [])
+    .filter(edge =>
+      nodeBelongsToDomain(
+        nodesById.get(edge.from),
+        domain
+      ) ||
+      nodeBelongsToDomain(
+        nodesById.get(edge.to),
+        domain
+      )
+    );
+}
+
+
 function normalizePages(
   pages
 ) {
@@ -86,8 +261,51 @@ function normalizePages(
       aliases: Array.isArray(page.aliases)
         ? page.aliases
         : [],
+      relationships: Array.isArray(page.relationships)
+        ? page.relationships
+        : [],
       content: page.content || ''
     }));
+}
+
+
+function nodeBelongsToDomain(
+  node,
+  domain
+) {
+
+  if (!node) return false;
+
+  const definition =
+    DOMAIN_DEFINITIONS[domain];
+
+  if (!definition) return false;
+
+  const type =
+    normalizeLookupText(
+      node.type
+    );
+
+  const template =
+    normalizeLookupText(
+      node.template
+    );
+
+  const tags =
+    (node.tags || [])
+      .map(tag =>
+        normalizeLookupText(
+          tag
+        )
+      );
+
+  return (
+    (definition.types || []).includes(type) ||
+    (definition.templates || []).includes(template) ||
+    tags.some(tag =>
+      (definition.tags || []).includes(tag)
+    )
+  );
 }
 
 
@@ -156,6 +374,63 @@ function createWikiLinkEdges(
 }
 
 
+function createManualRelationshipEdges(
+  nodes
+) {
+
+  const lookup =
+    createRelationshipLookup(
+      nodes
+    );
+
+  return nodes.flatMap(node =>
+    node.relationships
+      .map(relationship =>
+        createManualRelationshipEdge(
+          node,
+          relationship,
+          lookup
+        )
+      )
+      .filter(Boolean)
+  );
+}
+
+
+function createManualRelationshipEdge(
+  node,
+  relationship,
+  lookup
+) {
+
+  const target =
+    findRelationshipTarget(
+      relationship,
+      lookup
+    );
+
+  if (!target) return null;
+
+  return {
+    type:
+      normalizeRelationshipType(
+        relationship.type
+      ),
+    from:
+      node.id,
+    to:
+      target.id,
+    label:
+      relationship.label ||
+      relationship.title ||
+      relationship.type ||
+      'Связь',
+    source:
+      'manual'
+  };
+}
+
+
 function extractWikiLinkTargets(
   html
 ) {
@@ -207,6 +482,75 @@ function createTitleIndex(
   });
 
   return index;
+}
+
+
+function createRelationshipLookup(
+  nodes
+) {
+
+  return {
+    byId:
+      new Map(
+        nodes.map(node => [
+          node.id,
+          node
+        ])
+      ),
+    byTitle:
+      createTitleIndex(
+        nodes
+      )
+  };
+}
+
+
+function findRelationshipTarget(
+  relationship,
+  lookup
+) {
+
+  const targetId =
+    relationship.targetId ||
+    relationship.pageId ||
+    relationship.id;
+
+  if (
+    targetId &&
+    lookup.byId.has(targetId)
+  ) {
+
+    return lookup.byId.get(
+      targetId
+    );
+  }
+
+  const targetTitle =
+    relationship.targetTitle ||
+    relationship.target ||
+    relationship.title;
+
+  if (!targetTitle) return null;
+
+  return lookup.byTitle.get(
+    normalizeLookupText(
+      targetTitle
+    )
+  );
+}
+
+
+function normalizeRelationshipType(
+  value
+) {
+
+  const normalized =
+    String(value || '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .toLowerCase();
+
+  return normalized || 'manualRelation';
 }
 
 

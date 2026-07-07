@@ -27,6 +27,10 @@ import {
 } from './pageTitleWarning.js';
 
 import {
+  formatRelationshipsFrontMatter
+} from '../core/markdown.js';
+
+import {
   sanitizePersistentHTMLOnSave
 } from './safeHtmlSanitizer.js';
 
@@ -42,6 +46,10 @@ import {
 import {
   serializeRuleTreeHTML
 } from '../ruleTree/ruleTree.js';
+
+import {
+  serializeKnowledgeGraphHTML
+} from '../wiki/knowledgeGraphPage.js';
 
 import {
   isInternalRulePage
@@ -94,6 +102,18 @@ export async function saveCurrentSpecialPage(
   ) {
 
     await saveCurrentRuleTree(
+      editor
+    );
+
+    return true;
+  }
+
+  if (
+    state.currentPage?.template === 'knowledgeGraph' ||
+    state.currentPage?.type === 'knowledgeGraph'
+  ) {
+
+    await saveCurrentKnowledgeGraph(
       editor
     );
 
@@ -165,6 +185,7 @@ tags: [${tags.join(', ')}]
 template: taskTracker
 type: taskTracker
 aliases: [${aliases.join(', ')}]
+${formatRelationshipsFrontMatter(state.currentPage.relationships)}
 ---
 
 ${sanitizePersistentHTMLOnSave(
@@ -213,6 +234,7 @@ tags: [${tags.join(', ')}]
 template: campaignMap
 type: campaignMap
 aliases: [${aliases.join(', ')}]
+${formatRelationshipsFrontMatter(state.currentPage.relationships)}
 ---
 
 ${sanitizePersistentHTMLOnSave(
@@ -263,10 +285,61 @@ tags: [${tags.join(', ')}]
 template: ruleTree
 type: ruleTree
 aliases: [${aliases.join(', ')}]
+${formatRelationshipsFrontMatter(state.currentPage.relationships)}
 ---
 
 ${sanitizePersistentHTMLOnSave(
   serializeRuleTreeHTML(editor)
+)}
+`;
+
+  await persistCurrentPage(
+    content
+  );
+}
+
+
+async function saveCurrentKnowledgeGraph(
+  editor
+) {
+
+  if (!state.currentPage) return;
+
+  const tags =
+    state.currentPage.tags || ['knowledge-graph'];
+
+  const aliases =
+    state.currentPage.aliases || [];
+
+  const titleElement =
+    editor.querySelector('.knowledge-graph-title');
+
+  state.currentPage.title =
+    titleElement
+      ? titleElement.textContent.trim()
+      : 'Граф связей';
+
+  if (
+    hasInvalidCurrentTitle(
+      editor,
+      state.currentPage.title
+    )
+  ) return;
+
+  const content =
+`---
+id: ${state.currentPage.id}
+parent: ${state.currentPage.parent ?? 'null'}
+order: ${state.currentPage.order ?? Date.now()}
+tags: [${tags.join(', ')}]
+template: knowledgeGraph
+type: knowledgeGraph
+aliases: [${aliases.join(', ')}]
+${formatRelationshipsFrontMatter(state.currentPage.relationships)}
+---
+
+${sanitizePersistentHTMLOnSave(
+  serializeKnowledgeGraphHTML(editor)
 )}
 `;
 

@@ -80,6 +80,11 @@ import {
 } from '../ruleTree/ruleTree.js';
 
 import {
+  isKnowledgeGraphPage,
+  renderKnowledgeGraphPage
+} from '../wiki/knowledgeGraphPage.js';
+
+import {
   isInternalRulePage,
   renderInternalRulePage
 } from '../rulesWorkspace/internalRulePage.js';
@@ -150,6 +155,9 @@ function applyParsedMetadataToCurrentPage(
 
   state.currentPage.aliases =
     parsed.aliases;
+
+  state.currentPage.relationships =
+    parsed.relationships || [];
 
   state.currentPage.template =
     parsed.template;
@@ -228,6 +236,23 @@ async function renderSpecialPageIfNeeded(
   ) {
 
     renderRuleTree(
+      editor
+    );
+
+    completeOpenPage(
+      page
+    );
+
+    return true;
+  }
+
+  if (
+    isKnowledgeGraphPage(
+      parsed
+    )
+  ) {
+
+    renderKnowledgeGraphPage(
       editor
     );
 

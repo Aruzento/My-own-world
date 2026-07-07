@@ -14,6 +14,10 @@ import {
   createRuleTreeTemplate
 } from './ruleTree.js';
 
+import {
+  createKnowledgeGraphTemplate
+} from './knowledgeGraph.js';
+
 
 export const templates = {
   card:
@@ -26,5 +30,8 @@ export const templates = {
     createTaskTrackerTemplate(),
 
   ruleTree:
-    createRuleTreeTemplate()
+    createRuleTreeTemplate(),
+
+  knowledgeGraph:
+    createKnowledgeGraphTemplate()
 };

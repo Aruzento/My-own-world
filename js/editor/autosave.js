@@ -13,6 +13,10 @@ import {
 } from '../ui/ui.js';
 
 import {
+  formatRelationshipsFrontMatter
+} from '../core/markdown.js';
+
+import {
   serializePersistentEditorHTML
 } from './blocks/blockContract.js';
 
@@ -24,6 +28,10 @@ import {
 import {
   serializeTaskTrackerHTML
 } from '../taskTracker/taskTracker.js';
+
+import {
+  serializeKnowledgeGraphHTML
+} from '../wiki/knowledgeGraphPage.js';
 
 import {
   hasDuplicatePageTitle
@@ -104,6 +112,19 @@ export async function saveCurrentPage(
     return;
   }
 
+  if (
+    isKnowledgeGraphEditorMismatch(
+      editor
+    )
+  ) {
+
+    console.warn(
+      'Autosave skipped: current page and knowledge graph editor state are out of sync.'
+    );
+
+    return;
+  }
+
   const tags =
     state.currentPage.tags || [];
 
@@ -160,6 +181,7 @@ tags: [${tags.join(', ')}]
 template: ${template}
 type: ${type}
 aliases: [${aliases.join(', ')}]
+${formatRelationshipsFrontMatter(state.currentPage.relationships)}
 ---
 
 ${getSerializedEditorHTML(editor)}
@@ -219,6 +241,23 @@ function isTaskTrackerEditorMismatch(
 }
 
 
+function isKnowledgeGraphEditorMismatch(
+  editor
+) {
+
+  const editorHasGraph =
+    Boolean(
+      editor.querySelector('.knowledge-graph-document')
+    );
+
+  const currentIsGraph =
+    state.currentPage?.template === 'knowledgeGraph' ||
+    state.currentPage?.type === 'knowledgeGraph';
+
+  return editorHasGraph !== currentIsGraph;
+}
+
+
 function getSerializedEditorHTML(
   editor
 ) {
@@ -242,6 +281,18 @@ function getSerializedEditorHTML(
 
     return sanitizePersistentHTMLOnSave(
       serializeTaskTrackerHTML(
+        editor
+      )
+    );
+  }
+
+  if (
+    state.currentPage?.template === 'knowledgeGraph' ||
+    state.currentPage?.type === 'knowledgeGraph'
+  ) {
+
+    return sanitizePersistentHTMLOnSave(
+      serializeKnowledgeGraphHTML(
         editor
       )
     );
