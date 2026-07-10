@@ -123,8 +123,15 @@ fn ensure_directory(workspace_root: String, path: String) -> DesktopResult<()> {
 fn remove_file(workspace_root: String, path: String) -> DesktopResult<()> {
     let file_path = resolve_workspace_path(&workspace_root, &path)?;
 
-    fs::remove_file(&file_path)
-        .map_err(|error| io_error("desktop.remove_file_failed", &file_path, error))
+    match fs::remove_file(&file_path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Err(desktop_error(
+            "desktop.file_not_found",
+            "File was not found.",
+            Some(file_path),
+        )),
+        Err(error) => Err(io_error("desktop.remove_file_failed", &file_path, error)),
+    }
 }
 
 #[tauri::command]
@@ -179,17 +186,7 @@ fn resolve_workspace_path(workspace_root: &str, path: &str) -> DesktopResult<Pat
         return Ok(canonical_path);
     }
 
-    let parent = joined_path
-        .parent()
-        .ok_or_else(|| desktop_error(
-            "desktop.path_without_parent",
-            "Path has no parent directory.",
-            Some(joined_path.clone()),
-        ))?;
-    let canonical_parent = fs::canonicalize(parent)
-        .map_err(|error| io_error("desktop.parent_unavailable", parent, error))?;
-
-    if !canonical_parent.starts_with(&root) {
+    if !joined_path.starts_with(&root) {
         return Err(desktop_error(
             "desktop.path_outside_workspace",
             "Path points outside the selected workspace.",
@@ -215,8 +212,28 @@ fn normalize_relative_path(path: &str) -> DesktopResult<PathBuf> {
     }
 
     let trimmed = normalized.trim_start_matches('/');
+    let relative_path = PathBuf::from(trimmed);
 
-    Ok(PathBuf::from(trimmed))
+    if relative_path.is_absolute() ||
+        relative_path
+            .components()
+            .any(|component| {
+                matches!(
+                    component,
+                    std::path::Component::Prefix(_) |
+                        std::path::Component::RootDir |
+                        std::path::Component::ParentDir
+                )
+            })
+    {
+        return Err(desktop_error(
+            "desktop.invalid_relative_path",
+            "Path must be a relative workspace path.",
+            Some(PathBuf::from(path)),
+        ));
+    }
+
+    Ok(relative_path)
 }
 
 fn io_error(code: &str, path: &Path, error: std::io::Error) -> DesktopCommandError {

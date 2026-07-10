@@ -29,6 +29,7 @@ import {
 
 import {
   notifyPageCreated,
+  notifyPageDeleted,
   notifyPageMoved,
   notifyPageUpdated
 } from '../repository/pageRepository.js';
@@ -227,9 +228,16 @@ export async function deletePageBranch(
   page
 ) {
 
+  const livePage =
+    getLivePage(
+      page
+    ) || page;
+
+  if (!livePage?.id) return;
+
   const pagesToDelete =
     collectPageBranch(
-      page
+      livePage
     );
 
   await ensureWorkspaceCanWrite();
@@ -270,14 +278,23 @@ export async function deletePageBranch(
     }
   }
 
+  const deletedPageIds =
+    new Set(
+      deletedPages.map(
+        deletedPage => deletedPage.id
+      )
+    );
+
   setPages(
     state.pages.filter(
       existingPage =>
-        !deletedPages.includes(
-          existingPage
+        !deletedPageIds.has(
+          existingPage.id
         )
     )
   );
+
+  notifyPageDeleted();
 
   if (failedPages.length > 0) {
 
@@ -316,9 +333,30 @@ async function deletePageFile(
 
   if (targetPage.path) {
 
-    await storageAdapter.removeFile(
-      targetPage.path
-    );
+    try {
+
+      await storageAdapter.removeFile(
+        targetPage.path
+      );
+
+    } catch (error) {
+
+      if (
+        isMissingFileDeleteError(
+          error
+        )
+      ) {
+
+        console.warn(
+          'Page file was already missing during delete.',
+          targetPage.path
+        );
+
+        return;
+      }
+
+      throw error;
+    }
 
     return;
   }
@@ -339,6 +377,29 @@ async function deletePageFile(
   await parentDir.removeEntry(
     targetPage.name
   );
+}
+
+
+function isMissingFileDeleteError(
+  error
+) {
+
+  const name =
+    String(error?.name || '');
+
+  const code =
+    String(error?.code || '');
+
+  const message =
+    String(error?.message || error || '')
+      .toLowerCase();
+
+  return name === 'NotFoundError' ||
+    code === 'ENOENT' ||
+    code === 'desktop.file_not_found' ||
+    message.includes('not found') ||
+    message.includes('cannot find') ||
+    message.includes('no such file');
 }
 
 
@@ -368,31 +429,46 @@ function collectPageBranch(
   return result;
 }
 
+function getLivePage(
+  page
+) {
+
+  if (!page?.id) return null;
+
+  return state.pages.find(candidate =>
+    candidate.id === page.id
+  ) || null;
+}
 
 export async function updatePageParent(
   page,
   parentId
 ) {
 
+  const livePage =
+    getLivePage(
+      page
+    ) || page;
+
   await requireWorkspaceBackupBeforeRiskyOperation(
     'move-page-parent'
   );
 
-  page.parent =
+  livePage.parent =
     parentId;
 
   const updatedContent =
-    page.content.replace(
+    livePage.content.replace(
       /parent:\s*(.*)/i,
       `parent: ${parentId ?? 'null'}`
     );
 
   await writePageContent(
-    page,
+    livePage,
     updatedContent
   );
 
-  page.content =
+  livePage.content =
     updatedContent;
 
   notifyPageMoved();
@@ -405,18 +481,23 @@ export async function updatePageTreePosition(
   order
 ) {
 
+  const livePage =
+    getLivePage(
+      page
+    ) || page;
+
   await requireWorkspaceBackupBeforeRiskyOperation(
     'move-page-tree-position'
   );
 
-  page.parent =
+  livePage.parent =
     parentId;
 
-  page.order =
+  livePage.order =
     order;
 
   let updatedContent =
-    page.content;
+    livePage.content;
 
   if (
     /parent:\s*(.*)/i.test(
@@ -462,11 +543,11 @@ export async function updatePageTreePosition(
   }
 
   await writePageContent(
-    page,
+    livePage,
     updatedContent
   );
 
-  page.content =
+  livePage.content =
     updatedContent;
 
   notifyPageMoved();

@@ -1555,6 +1555,129 @@ test(
 
 
 test(
+  'property-field-drag-drops-to-cursor-grid-cell',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            readPropertiesModelFromElement
+          } = await import('/js/properties/propertiesModel.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.style.width =
+            '720px';
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          const field =
+            editor.querySelector('[data-property-name="gold"]')
+              .closest('.card-property-field');
+
+          const grid =
+            editor.querySelector('.card-properties-grid');
+
+          grid.style.minHeight =
+            '520px';
+
+          const fieldRect =
+            field.getBoundingClientRect();
+
+          field.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles: true,
+                clientX: fieldRect.right - 2,
+                clientY: fieldRect.top + 10,
+                pointerId: 41
+              }
+            )
+          );
+
+          const gridRect =
+            grid.getBoundingClientRect();
+
+          const cellWidth =
+            gridRect.width / 12;
+
+          const rowHeight =
+            42;
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles: true,
+                clientX: gridRect.left + cellWidth * 7 + 2,
+                clientY: gridRect.top + rowHeight * 5 + 2,
+                pointerId: 41
+              }
+            )
+          );
+
+          editor.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles: true,
+                pointerId: 41
+              }
+            )
+          );
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const model =
+            readPropertiesModelFromElement(
+              editor.querySelector('.card-properties-block')
+            );
+
+          return model.layout.gold;
+        }
+      );
+
+    expect(
+      result.x
+    ).toBe(
+      7
+    );
+
+    expect(
+      result.y
+    ).toBe(
+      5
+    );
+  }
+);
+
+
+test(
   'character-effects-block-can-link-effect-from-source-card',
   async ({ page }) => {
 

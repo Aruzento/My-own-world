@@ -307,13 +307,6 @@ async function removePageBranch(
       page
     );
 
-    const campaignMapModule =
-      await import('../editor/campaignMap.js');
-
-    await campaignMapModule.removeDeletedCampaignMapTokens(
-      deletedIds
-    );
-
     if (deletedCurrentPage) {
 
       openFallbackPageAfterDelete(
@@ -325,8 +318,15 @@ async function removePageBranch(
     renderTree();
     refreshCurrentEditorWikiLinks();
 
+    const tokensCleanupSucceeded =
+      await cleanupDeletedMapTokens(
+        deletedIds
+      );
+
     setStatus(
-      'Элемент удалён'
+      tokensCleanupSucceeded
+        ? 'Элемент удалён'
+        : 'Элемент удалён. Токены карты будут очищены после переоткрытия workspace.'
     );
 
   } catch (error) {
@@ -344,6 +344,31 @@ async function removePageBranch(
   }
 }
 
+async function cleanupDeletedMapTokens(
+  deletedIds
+) {
+
+  try {
+
+    const campaignMapModule =
+      await import('../editor/campaignMap.js');
+
+    await campaignMapModule.removeDeletedCampaignMapTokens(
+      deletedIds
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.warn(
+      'Элемент удален, но токены карты не удалось очистить:',
+      error
+    );
+
+    return false;
+  }
+}
 
 function collectBranchIds(
   rootPage

@@ -1985,8 +1985,8 @@ function updatePropertyFieldDrag(
     getPropertyDropLayoutFromPoint(
       grid,
       field,
-      clientX - dragState.pointerOffsetX,
-      clientY - dragState.pointerOffsetY
+      clientX,
+      clientY
     );
 
   const layoutChanged =
@@ -2329,8 +2329,8 @@ function getPropertyDropIndexFromPoint(
 function getPropertyDropLayoutFromPoint(
   grid,
   field,
-  fieldLeft,
-  fieldTop
+  clientX,
+  clientY
 ) {
 
   const rect =
@@ -2352,12 +2352,12 @@ function getPropertyDropLayoutFromPoint(
 
   const x =
     Math.floor(
-      (fieldLeft - rect.left) / cellWidth
+      (clientX - rect.left) / cellWidth
     );
 
   const y =
     Math.floor(
-      (fieldTop - rect.top) / rowHeight
+      (clientY - rect.top) / rowHeight
     );
 
   return normalizePropertyLayout(

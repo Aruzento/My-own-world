@@ -36,9 +36,18 @@ import {
 } from '../js/storage/storageAdapter.js';
 
 import {
+  setPages
+} from '../js/stateActions.js';
+
+import {
   setAssetAdapter,
   syncAssetAdapterWorkspaceRoot
 } from '../js/storage/assetAdapter.js';
+
+import {
+  deletePageBranch,
+  updatePageTreePosition
+} from '../js/storage/pageStorage.js';
 
 import {
   writePageContent
@@ -793,6 +802,250 @@ test(
   }
 );
 
+
+test(
+  'deletePageBranch removes stale page records when file is already missing',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    adapter.removeFile =
+      async () => {
+
+        const error =
+          new Error('File was not found.');
+
+        error.code =
+          'desktop.file_not_found';
+
+        throw error;
+      };
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page =
+      {
+        id: 'stale-page',
+        path: '/pages/missing.md',
+        name: 'missing.md',
+        parent: null,
+        title: 'Stale Page',
+        type: 'note',
+        template: 'card',
+        tags: [],
+        aliases: [],
+        content: '<h1>Stale Page</h1>'
+      };
+
+    setPages([
+      page
+    ]);
+
+    await deletePageBranch(
+      page
+    );
+
+    const {
+      state
+    } =
+      await import('../js/state.js');
+
+    assert.deepEqual(
+      state.pages,
+      []
+    );
+  }
+);
+
+
+test(
+  'deletePageBranch removes page record by id even when caller has stale object',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    await adapter.writeText(
+      '/pages/stale-object.md',
+      '<h1>Old Object</h1>'
+    );
+
+    const statePage =
+      {
+        id: 'stale-object-page',
+        path: '/pages/stale-object.md',
+        name: 'stale-object.md',
+        parent: null,
+        title: 'Old Object',
+        type: 'note',
+        template: 'card',
+        tags: [],
+        aliases: [],
+        content: '<h1>Old Object</h1>'
+      };
+
+    const menuPageSnapshot =
+      {
+        ...statePage
+      };
+
+    setPages([
+      statePage
+    ]);
+
+    await deletePageBranch(
+      menuPageSnapshot
+    );
+
+    const {
+      state
+    } =
+      await import('../js/state.js');
+
+    assert.deepEqual(
+      state.pages,
+      []
+    );
+  }
+);
+
+
+test(
+  'updatePageTreePosition writes through the live page when caller has stale object',
+  async () => {
+
+    const writes =
+      [];
+
+    setStorageAdapter({
+      kind: 'browser',
+      getWorkspaceHandle() {
+        return {};
+      },
+      setWorkspaceHandle() {},
+      async pickWorkspace() {
+        return {};
+      },
+      async restoreWorkspace() {
+        return {};
+      },
+      async ensureDirectory() {},
+      async getDirectoryHandle() {
+        return {};
+      },
+      async readText() {
+        return '';
+      },
+      async writeText(path, content) {
+        writes.push({
+          path,
+          content:
+            String(content)
+        });
+      },
+      async readBinary() {
+        return new ArrayBuffer(0);
+      },
+      async writeBinary() {},
+      async listFiles() {
+        return [];
+      },
+      async removeFile() {},
+      async removeDirectory() {}
+    });
+
+    setPages([
+      {
+        id: 'move-me',
+        name: 'move-me.md',
+        path: '/pages/move-me.md',
+        order: 1,
+        parent: null,
+        title: 'Move me',
+        template: 'card',
+        type: 'note',
+        tags: ['card'],
+        aliases: [],
+        content: `---
+id: move-me
+parent: null
+order: 1
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Move me</h1>
+`
+      }
+    ]);
+
+    const {
+      state
+    } = await import('../js/state.js');
+
+    const staleSnapshot = {
+      ...state.pages[0],
+      path: '/pages/stale.md',
+      content: `---
+id: move-me
+parent: stale-parent
+order: 999
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Stale</h1>
+`
+    };
+
+    await updatePageTreePosition(
+      staleSnapshot,
+      'new-parent',
+      42
+    );
+
+    const pageWrites =
+      writes.filter(write =>
+        write.path === '/pages/move-me.md'
+      );
+
+    assert.equal(
+      pageWrites.length,
+      1
+    );
+
+    assert.match(
+      pageWrites[0].content,
+      /parent:\s*new-parent/
+    );
+
+    assert.match(
+      pageWrites[0].content,
+      /order:\s*42/
+    );
+
+    assert.equal(
+      state.pages[0].parent,
+      'new-parent'
+    );
+
+    assert.equal(
+      state.pages[0].order,
+      42
+    );
+  }
+);
 
 test(
   'backup и restore работают через чистый StorageAdapter без FileSystemHandle',

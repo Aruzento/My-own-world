@@ -6,6 +6,47 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-11: Entity Create Move Delete Lifecycle Hardening
+
+- Audited the full entity lifecycle: creation writes the page into `state.pages`, tree move writes through `updatePageTreePosition()`, map drop creates a duplicate/token from the current page index, and deletion removes the branch plus cleans map tokens.
+- Fixed stale page-object handling: delete and tree move now resolve the live page from `state.pages` by id before mutating or writing, so context menus/popups/desktop shell snapshots cannot write through an old object.
+- Decoupled page deletion from campaign-map token cleanup: if token cleanup fails after the page file is already deleted, the tree deletion remains successful and shows a partial cleanup status instead of the misleading generic delete failure.
+- Added regression coverage for missing page files, stale delete snapshots, stale move snapshots, context-menu delete, map-token cleanup failure, and cursor-based Properties field placement.
+- Checks: `node --test tests/storageAdapter.test.mjs`, full `npm run test:browser`, `npm run verify`.
+
+## 2026-07-11: Delete And Properties Drag Fix
+
+### Что сделано
+
+- Удаление страницы теперь чистит `state.pages` по `id`, а не по ссылке на объект. Это закрывает случай, когда контекстное меню держит старый snapshot страницы после перерендера/обновления индекса.
+- Сохранен предыдущий hardening удаления: отсутствующий `.md` файл больше не блокирует удаление записи из дерева.
+- DnD полей блока `Свойства` теперь рассчитывает целевую ячейку по координате курсора внутри сетки, а не по левому верхнему углу перетаскиваемого поля. При перетаскивании за правый/нижний край поле больше не "отстает" от точки сброса.
+- Добавлены regression-тесты: удаление по stale object и точный drop поля в указанную ячейку сетки.
+
+### Проверки
+
+- `node --test tests\storageAdapter.test.mjs`
+- `npm run test:browser -- --grep "property-field-drag-drops-to-cursor-grid-cell|tree-context-delete"` (runner выполнил полный browser smoke: 70 passed)
+- `npm run verify`
+
+## 2026-07-10: Delete Flow Hardening
+
+### Что сделано
+
+- Исправлен крайний случай удаления: если карточка осталась в дереве/`state.pages`, но ее `.md` файл уже отсутствует в workspace после частичной операции или ручного удаления, повторное удаление больше не блокируется.
+- `deletePageBranch()` теперь считает missing file успешным удалением записи, но продолжает пробрасывать реальные ошибки доступа/записи.
+- Добавлен browser regression на пользовательский сценарий дерева: `... -> Удалить -> подтвердить`, включая создание backup и удаление всей ветки.
+- Добавлен unit regression на stale page record без файла.
+
+### Проверки
+
+- `node --test tests\storageAdapter.test.mjs`
+- `cargo check` в `src-tauri`
+- `npm run verify`
+- `npm run test:browser`
+- `npm run desktop:build`
+- `node tools\check_desktop_packaging_smoke.mjs`
+
 ## 2026-07-10: Knowledge Graph 0.0.0.6.6-0.0.0.6.11 Completion
 
 ### Что сделано
