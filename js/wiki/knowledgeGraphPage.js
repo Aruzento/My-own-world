@@ -24,9 +24,12 @@ import {
 
 import {
   buildKnowledgeGraph,
+  getKnowledgeGraphAccessPolicy,
   getKnowledgeGraphDomainDefinitions,
   getKnowledgeGraphDomainEdges,
+  getKnowledgeGraphDomainInsights,
   getKnowledgeGraphDomainSummary,
+  getKnowledgeGraphExplorationHints,
   getKnowledgeGraphSummary,
   getOrphanGraphPages
 } from './knowledgeGraph.js';
@@ -194,7 +197,10 @@ function getKnowledgeGraphHTML(
       </div>
 
       <section class="knowledge-graph-panel is-active" data-knowledge-graph-panel="visual">
+        ${getExplorationFoundationHTML(graph)}
         ${getVisualGraphHTML(graph)}
+        ${getDomainScenarioHTML(graph)}
+        ${getRuleAccessPolicyHTML()}
       </section>
 
       <section class="knowledge-graph-panel" data-knowledge-graph-panel="relationships" hidden>
@@ -249,6 +255,41 @@ function getDomainSummaryHTML(
 }
 
 
+function getExplorationFoundationHTML(
+  graph
+) {
+
+  const hints =
+    getKnowledgeGraphExplorationHints(
+      graph
+    );
+
+  return `
+    <section class="knowledge-graph-exploration">
+      <div class="knowledge-graph-exploration-header">
+        <div>
+          <h3>Быстрое исследование мира</h3>
+          <p>${escapeHTML(hints.nextAction)}</p>
+        </div>
+        <span>${escapeHTML(hints.orphanCount)} одиноких</span>
+      </div>
+      <div class="knowledge-graph-hubs">
+        ${hints.hubs.length > 0
+          ? hints.hubs
+            .map(hub => `
+              <button class="knowledge-graph-hub" type="button" data-page-id="${escapeHTML(hub.id)}">
+                <strong>${escapeHTML(hub.title || hub.id)}</strong>
+                <span>${escapeHTML(hub.edgeCount)} связей</span>
+              </button>
+            `)
+            .join('')
+          : '<div class="knowledge-graph-empty-inline">Связанные центры появятся после wiki-link или ручных связей.</div>'}
+      </div>
+    </section>
+  `;
+}
+
+
 function getVisualGraphHTML(
   graph
 ) {
@@ -296,6 +337,128 @@ function getVisualGraphHTML(
         `)
         .join('')}
     </div>
+  `;
+}
+
+
+function getDomainScenarioHTML(
+  graph
+) {
+
+  const insights =
+    getKnowledgeGraphDomainInsights(
+      graph
+    );
+
+  return `
+    <section class="knowledge-graph-scenarios">
+      <h3>Что можно посмотреть</h3>
+      <div class="knowledge-graph-scenario-grid">
+        ${insights
+          .map(insight =>
+            getDomainScenarioCardHTML(
+              insight
+            )
+          )
+          .join('')}
+      </div>
+    </section>
+  `;
+}
+
+
+function getDomainScenarioCardHTML(
+  insight
+) {
+
+  return `
+    <article class="knowledge-graph-scenario-card">
+      <header>
+        <span>${escapeHTML(insight.label)}</span>
+        <strong>${escapeHTML(insight.nodeCount)}</strong>
+      </header>
+      <p>${escapeHTML(insight.question || insight.description || '')}</p>
+      ${getDomainScenarioNodesHTML(insight)}
+      ${getDomainScenarioRelationshipsHTML(insight)}
+      <button class="knowledge-graph-domain-shortcut" type="button" data-knowledge-graph-domain-shortcut="${escapeHTML(insight.key)}">
+        Открыть связи
+      </button>
+    </article>
+  `;
+}
+
+
+function getDomainScenarioNodesHTML(
+  insight
+) {
+
+  if (!insight.nodes.length) {
+
+    return '<div class="knowledge-graph-empty-inline">Пока нет карточек этого типа.</div>';
+  }
+
+  return `
+    <div class="knowledge-graph-mini-list">
+      ${insight.nodes
+        .map(node => `
+          <button type="button" data-page-id="${escapeHTML(node.id)}">
+            ${escapeHTML(node.title || node.id)}
+          </button>
+        `)
+        .join('')}
+    </div>
+  `;
+}
+
+
+function getDomainScenarioRelationshipsHTML(
+  insight
+) {
+
+  if (!insight.relationships.length) return '';
+
+  return `
+    <ul class="knowledge-graph-mini-edges">
+      ${insight.relationships
+        .slice(0, 3)
+        .map(edge => `
+          <li>
+            <span>${escapeHTML(getRelationshipLabel(edge.type))}</span>
+            ${escapeHTML(edge.fromTitle)} → ${escapeHTML(edge.toTitle)}
+          </li>
+        `)
+        .join('')}
+    </ul>
+  `;
+}
+
+
+function getRuleAccessPolicyHTML() {
+
+  const policy =
+    getKnowledgeGraphAccessPolicy().ruleTree;
+
+  return `
+    <section class="knowledge-graph-access-policy">
+      <div>
+        <h3>Rule Tree и будущие права</h3>
+        <p>${escapeHTML(policy.note)}</p>
+      </div>
+      <dl>
+        <div>
+          <dt>Владелец</dt>
+          <dd>${escapeHTML(policy.ownerRole)}</dd>
+        </div>
+        <div>
+          <dt>Чтение</dt>
+          <dd>${escapeHTML(policy.readRoles.join(', '))}</dd>
+        </div>
+        <div>
+          <dt>Редактирование</dt>
+          <dd>${escapeHTML(policy.editRoles.join(', '))}</dd>
+        </div>
+      </dl>
+    </section>
   `;
 }
 
@@ -549,6 +712,26 @@ function setupKnowledgeGraphEvents(
         activateDomain(
           documentElement,
           domainTab.dataset.knowledgeGraphDomain
+        );
+
+        return;
+      }
+
+      const domainShortcut =
+        event.target.closest(
+          '[data-knowledge-graph-domain-shortcut]'
+        );
+
+      if (domainShortcut) {
+
+        activateTab(
+          documentElement,
+          'relationships'
+        );
+
+        activateDomain(
+          documentElement,
+          domainShortcut.dataset.knowledgeGraphDomainShortcut
         );
 
         return;

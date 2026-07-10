@@ -9,6 +9,8 @@ const WIKI_LINK_PATTERN =
 const DOMAIN_DEFINITIONS = {
   character: {
     label: 'Персонажи',
+    description: 'Кто участвует в истории, бою и сценах.',
+    question: 'С кем связан персонаж?',
     types: [
       'character',
       'creature'
@@ -24,6 +26,8 @@ const DOMAIN_DEFINITIONS = {
   },
   item: {
     label: 'Предметы',
+    description: 'Что принадлежит героям, лежит в мире или влияет на правила.',
+    question: 'Кто владеет предметом или использует его?',
     types: [
       'item',
       'object',
@@ -43,6 +47,8 @@ const DOMAIN_DEFINITIONS = {
   },
   organization: {
     label: 'Организации',
+    description: 'Фракции, гильдии, дома и любые группы мира.',
+    question: 'С кем дружит, спорит или конфликтует организация?',
     types: [
       'organization',
       'faction',
@@ -59,6 +65,8 @@ const DOMAIN_DEFINITIONS = {
   },
   rule: {
     label: 'Правила',
+    description: 'Правила, источники расчетов и будущая база знаний.',
+    question: 'На кого влияет правило?',
     types: [
       'ruletree',
       'rule',
@@ -74,6 +82,23 @@ const DOMAIN_DEFINITIONS = {
       'правило',
       'правила'
     ]
+  }
+};
+
+const KNOWLEDGE_GRAPH_ACCESS_POLICY = {
+  ruleTree: {
+    label: 'Правила',
+    ownerRole: 'admin',
+    readRoles: [
+      'admin',
+      'player',
+      'viewer'
+    ],
+    editRoles: [
+      'admin'
+    ],
+    note:
+      'Сейчас роли еще не включены в интерфейс, но Rule Tree уже помечен как зона будущего admin-редактирования.'
   }
 };
 
@@ -175,7 +200,11 @@ export function getKnowledgeGraphDomainDefinitions() {
     .map(([key, definition]) => ({
       key,
       label:
-        definition.label
+        definition.label,
+      description:
+        definition.description,
+      question:
+        definition.question
     }));
 }
 
@@ -196,8 +225,133 @@ export function getKnowledgeGraphDomainSummary(
         getKnowledgeGraphDomainEdges(
           graph,
           domain.key
-        ).length
+        ).length,
+      nodes:
+        getKnowledgeGraphDomainNodes(
+          graph,
+          domain.key
+        )
+          .slice(0, 6)
     }));
+}
+
+
+export function getKnowledgeGraphDomainInsights(
+  graph
+) {
+
+  const nodesById =
+    createNodeLookup(
+      graph
+    );
+
+  return getKnowledgeGraphDomainDefinitions()
+    .map(domain => {
+
+      const nodes =
+        getKnowledgeGraphDomainNodes(
+          graph,
+          domain.key
+        );
+
+      const edges =
+        getKnowledgeGraphDomainEdges(
+          graph,
+          domain.key
+        );
+
+      return {
+        ...domain,
+        nodeCount:
+          nodes.length,
+        edgeCount:
+          edges.length,
+        nodes:
+          nodes.slice(0, 6),
+        relationships:
+          edges
+            .slice(0, 6)
+            .map(edge => ({
+              ...edge,
+              fromTitle:
+                nodesById.get(edge.from)?.title || edge.from,
+              toTitle:
+                nodesById.get(edge.to)?.title || edge.to
+            }))
+      };
+    });
+}
+
+
+export function getKnowledgeGraphExplorationHints(
+  graph
+) {
+
+  const edgeCounts =
+    createEdgeCountMap(
+      graph
+    );
+
+  const hubs =
+    (graph?.nodes || [])
+      .filter(node =>
+        node.type !== 'knowledgeGraph' &&
+        node.template !== 'knowledgeGraph'
+      )
+      .map(node => ({
+        id:
+          node.id,
+        title:
+          node.title,
+        type:
+          node.type || node.template || 'note',
+        edgeCount:
+          edgeCounts.get(node.id) || 0
+      }))
+      .sort((left, right) =>
+        right.edgeCount - left.edgeCount ||
+        String(left.title || '').localeCompare(
+          String(right.title || ''),
+          'ru'
+        )
+      )
+      .slice(0, 5);
+
+  const orphans =
+    getOrphanGraphPages(
+      graph
+    )
+      .filter(node =>
+        node.type !== 'knowledgeGraph' &&
+        node.template !== 'knowledgeGraph'
+      );
+
+  return {
+    hubs,
+    orphanCount:
+      orphans.length,
+    nextAction:
+      orphans.length > 0
+        ? 'Есть одинокие страницы: их стоит связать wiki-link или ручной связью.'
+        : 'Мир связан. Дальше можно исследовать домены персонажей, предметов, организаций и правил.'
+  };
+}
+
+
+export function getKnowledgeGraphAccessPolicy() {
+
+  return {
+    ...KNOWLEDGE_GRAPH_ACCESS_POLICY,
+    ruleTree: {
+      ...KNOWLEDGE_GRAPH_ACCESS_POLICY.ruleTree,
+      readRoles: [
+        ...KNOWLEDGE_GRAPH_ACCESS_POLICY.ruleTree.readRoles
+      ],
+      editRoles: [
+        ...KNOWLEDGE_GRAPH_ACCESS_POLICY.ruleTree.editRoles
+      ]
+    }
+  };
 }
 
 
@@ -482,6 +636,43 @@ function createTitleIndex(
   });
 
   return index;
+}
+
+
+function createNodeLookup(
+  graph
+) {
+
+  return new Map(
+    (graph?.nodes || []).map(node => [
+      node.id,
+      node
+    ])
+  );
+}
+
+
+function createEdgeCountMap(
+  graph
+) {
+
+  const edgeCounts =
+    new Map();
+
+  (graph?.edges || []).forEach(edge => {
+
+    edgeCounts.set(
+      edge.from,
+      (edgeCounts.get(edge.from) || 0) + 1
+    );
+
+    edgeCounts.set(
+      edge.to,
+      (edgeCounts.get(edge.to) || 0) + 1
+    );
+  });
+
+  return edgeCounts;
 }
 
 

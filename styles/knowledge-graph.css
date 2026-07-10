@@ -145,6 +145,92 @@
   overflow: hidden;
 }
 
+.knowledge-graph-exploration,
+.knowledge-graph-scenarios,
+.knowledge-graph-access-policy {
+  margin: 14px;
+  padding: 14px;
+  border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
+  border-radius: 8px;
+  background: var(--mow-surface-raised, rgba(255, 252, 244, 0.72));
+}
+
+.knowledge-graph-exploration h3,
+.knowledge-graph-scenarios h3,
+.knowledge-graph-access-policy h3 {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.knowledge-graph-exploration p,
+.knowledge-graph-scenarios p,
+.knowledge-graph-access-policy p {
+  margin: 6px 0 0;
+  color: var(--mow-text-muted, #665f55);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.knowledge-graph-exploration-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.knowledge-graph-exploration-header > span {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--mow-accent-soft, rgba(143, 93, 42, 0.14));
+  color: var(--mow-accent-strong, #654018);
+  font-size: 12px;
+}
+
+.knowledge-graph-hubs,
+.knowledge-graph-scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.knowledge-graph-hub,
+.knowledge-graph-mini-list button,
+.knowledge-graph-domain-shortcut {
+  min-height: 34px;
+  border: 1px solid var(--mow-border, rgba(120, 106, 82, 0.28));
+  border-radius: 7px;
+  background: var(--mow-surface, #fffaf0);
+  color: var(--mow-text, #211a13);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease;
+}
+
+.knowledge-graph-hub {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  text-align: left;
+}
+
+.knowledge-graph-hub:hover,
+.knowledge-graph-mini-list button:hover,
+.knowledge-graph-domain-shortcut:hover {
+  transform: translateY(-1px);
+  border-color: var(--mow-accent, #8f5d2a);
+}
+
+.knowledge-graph-hub span,
+.knowledge-graph-empty-inline {
+  color: var(--mow-text-muted, #665f55);
+  font-size: 12px;
+}
+
 .knowledge-graph-list {
   display: grid;
 }
@@ -188,6 +274,100 @@
 .knowledge-graph-node small {
   color: var(--mow-text-muted, #665f55);
   font-size: 12px;
+}
+
+.knowledge-graph-scenarios h3 {
+  margin-bottom: 12px;
+}
+
+.knowledge-graph-scenario-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
+  border-radius: 8px;
+  background: var(--mow-surface, #fffaf0);
+}
+
+.knowledge-graph-scenario-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.knowledge-graph-scenario-card header span {
+  color: var(--mow-text-muted, #665f55);
+  font-size: 12px;
+}
+
+.knowledge-graph-scenario-card header strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.knowledge-graph-mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.knowledge-graph-mini-list button,
+.knowledge-graph-domain-shortcut {
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.knowledge-graph-mini-edges {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--mow-text-muted, #665f55);
+  font-size: 12px;
+}
+
+.knowledge-graph-mini-edges span {
+  display: inline-block;
+  margin-right: 5px;
+  color: var(--mow-accent-strong, #654018);
+  font-weight: 700;
+}
+
+.knowledge-graph-domain-shortcut {
+  justify-self: start;
+  background: var(--mow-accent-soft, rgba(143, 93, 42, 0.14));
+}
+
+.knowledge-graph-access-policy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+  align-items: start;
+  gap: 14px;
+}
+
+.knowledge-graph-access-policy dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.knowledge-graph-access-policy dl div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.knowledge-graph-access-policy dt {
+  color: var(--mow-text-muted, #665f55);
+  font-size: 12px;
+}
+
+.knowledge-graph-access-policy dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .knowledge-graph-relationship-form {
@@ -299,6 +479,10 @@
   .knowledge-graph-row {
     grid-template-columns: 1fr;
     align-items: start;
+  }
+
+  .knowledge-graph-access-policy {
+    grid-template-columns: 1fr;
   }
 
   .knowledge-graph-relationship-form {

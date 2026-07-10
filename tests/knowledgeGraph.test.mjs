@@ -3,8 +3,11 @@ import assert from 'node:assert/strict';
 
 import {
   buildKnowledgeGraph,
+  getKnowledgeGraphAccessPolicy,
   getKnowledgeGraphDomainEdges,
+  getKnowledgeGraphDomainInsights,
   getKnowledgeGraphDomainSummary,
+  getKnowledgeGraphExplorationHints,
   getKnowledgeGraphSummary,
   getOrphanGraphPages,
   getTypedRelationships
@@ -271,6 +274,153 @@ test(
           1
         ]
       ]
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph exposes domain insights for readable world exploration',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'hero',
+          title: 'Hero',
+          type: 'character',
+          relationships: [
+            {
+              type: 'ally',
+              targetId: 'guild',
+              label: 'Member'
+            },
+            {
+              type: 'equipped',
+              targetId: 'sword',
+              label: 'Main hand'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'guild',
+          title: 'Guild',
+          type: 'note',
+          tags: [
+            'organization'
+          ],
+          content: ''
+        },
+        {
+          id: 'sword',
+          title: 'Sword',
+          type: 'item',
+          content: ''
+        },
+        {
+          id: 'rules',
+          title: 'Rules',
+          template: 'ruleTree',
+          type: 'ruleTree',
+          relationships: [
+            {
+              type: 'ruleEffect',
+              targetId: 'hero',
+              label: 'Rage'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'loose',
+          title: 'Loose note',
+          type: 'note',
+          content: ''
+        }
+      ]);
+
+    const insights =
+      getKnowledgeGraphDomainInsights(
+        graph
+      );
+
+    assert.deepEqual(
+      insights.map(item => [
+        item.key,
+        item.nodeCount,
+        item.edgeCount
+      ]),
+      [
+        [
+          'character',
+          1,
+          3
+        ],
+        [
+          'item',
+          1,
+          1
+        ],
+        [
+          'organization',
+          1,
+          1
+        ],
+        [
+          'rule',
+          1,
+          1
+        ]
+      ]
+    );
+
+    const hints =
+      getKnowledgeGraphExplorationHints(
+        graph
+      );
+
+    assert.equal(
+      hints.hubs[0].id,
+      'hero'
+    );
+
+    assert.equal(
+      hints.orphanCount,
+      1
+    );
+
+    assert.match(
+      hints.nextAction,
+      /одинокие/i
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph declares Rule Tree access policy foundation',
+  () => {
+
+    const policy =
+      getKnowledgeGraphAccessPolicy();
+
+    assert.equal(
+      policy.ruleTree.ownerRole,
+      'admin'
+    );
+
+    assert.deepEqual(
+      policy.ruleTree.editRoles,
+      [
+        'admin'
+      ]
+    );
+
+    assert.ok(
+      policy.ruleTree.readRoles.includes(
+        'player'
+      )
     );
   }
 );

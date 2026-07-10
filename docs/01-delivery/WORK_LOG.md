@@ -6,6 +6,30 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-10: Knowledge Graph 0.0.0.6.6-0.0.0.6.11 Completion
+
+### Что сделано
+
+- Закрыт остаток блока `0.0.0.6`.
+- В `Граф связей` добавлен readable foundation исследования мира: быстрые центры мира, количество одиноких страниц и подсказка следующего действия.
+- Добавлены человеко-читаемые доменные сценарии: `Персонажи`, `Предметы`, `Организации`, `Правила`.
+- У каждого домена есть быстрый переход в отфильтрованный список связей.
+- Rule Tree связан с будущей моделью ролей и прав через явную access policy: owner `admin`, чтение `admin/player/viewer`, редактирование `admin`.
+- Модель графа получила `getKnowledgeGraphDomainInsights()`, `getKnowledgeGraphExplorationHints()` и `getKnowledgeGraphAccessPolicy()`.
+- Unit/browser regression расширены проверками доменных сценариев, организаций и Rule Tree access foundation.
+
+### Проверки
+
+- `node --test tests\knowledgeGraph.test.mjs`
+- `npm run test:browser -- --grep knowledge-graph` запускал весь browser smoke; первый прогон нашел ошибку тестового ожидания после доменного shortcut, тест исправлен.
+- `npm run verify`
+- `node tools\docs_index.mjs`
+- `node tools\validate_agent_skills.mjs`
+
+### Следующий пункт
+
+После финального полного прогона проверок можно переходить к следующему активному блоку плана после `0.0.0.6`.
+
 ## 2026-07-10: Knowledge Graph 0.0.0.6.1-0.0.0.6.5 Recheck
 
 ### Что сделано

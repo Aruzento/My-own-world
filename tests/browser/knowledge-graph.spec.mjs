@@ -103,6 +103,11 @@ aliases: []
                 type: 'ruleEffect',
                 targetId: 'rules',
                 label: 'Rage'
+              },
+              {
+                type: 'ally',
+                targetId: 'guild',
+                label: 'Faction'
               }
             ],
             content: `---
@@ -141,10 +146,35 @@ aliases: []
 <h1>Sword</h1>`
           },
           {
+            id: 'guild',
+            name: 'guild.md',
+            path: '/pages/guild.md',
+            order: 4,
+            title: 'Guild',
+            parent: null,
+            template: 'card',
+            type: 'note',
+            tags: [
+              'organization'
+            ],
+            aliases: [],
+            content: `---
+id: guild
+parent: null
+order: 4
+tags: [organization]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Guild</h1>`
+          },
+          {
             id: 'rules',
             name: 'rules.md',
             path: '/pages/rules.md',
-            order: 4,
+            order: 5,
             title: 'Rules',
             parent: null,
             template: 'ruleTree',
@@ -167,7 +197,7 @@ aliases: []
             id: 'orphan',
             name: 'orphan.md',
             path: '/pages/orphan.md',
-            order: 5,
+            order: 6,
             title: 'Orphan',
             parent: null,
             template: 'card',
@@ -246,7 +276,40 @@ aliases: []
       })
     ).toBeVisible();
 
+    await expect(
+      page.locator('.knowledge-graph-exploration').filter({
+        hasText: 'Быстрое исследование мира'
+      })
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.knowledge-graph-scenario-card').filter({
+        hasText: 'Персонажи'
+      })
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.knowledge-graph-scenario-card').filter({
+        hasText: 'Организации'
+      })
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.knowledge-graph-access-policy').filter({
+        hasText: 'admin'
+      })
+    ).toBeVisible();
+
+    await page.locator('[data-knowledge-graph-domain-shortcut="organization"]').click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-domain-panel="organization"] .knowledge-graph-row').filter({
+        hasText: 'Faction'
+      })
+    ).toBeVisible();
+
     await page.locator('[data-knowledge-graph-tab="relationships"]').click();
+    await page.locator('[data-knowledge-graph-domain="all"]').click();
 
     await expect(
       page.locator('[data-knowledge-graph-domain-panel="all"] .knowledge-graph-row').filter({
