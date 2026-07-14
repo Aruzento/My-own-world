@@ -61,6 +61,8 @@ export {
   /* Обновление позиции страницы в дереве */
   updatePageTreePosition,
 
+  updatePageTreePositions,
+
   /* Обновление aliases */
   updatePageAliases,
 

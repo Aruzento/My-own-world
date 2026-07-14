@@ -186,9 +186,10 @@ normalizeTitle(value)
 Текущая реализация:
 
 - `js/repository/pageRepository.js` создает единый runtime `PageIndex`;
-- repository подписывается на `setPages`, поэтому загрузка workspace, создание и удаление страниц автоматически пересобирают индекс;
-- storage/editor точки, которые мутируют существующую страницу без замены массива, вызывают `notifyPageUpdated()` или `notifyPageMoved()`;
-- update-операции пока пересобирают индекс целиком. Это осознанный переходный вариант: он защищает от рассинхронизации, пока legacy-код еще может менять объект страницы напрямую.
+- repository подписывается на `setPages`, поэтому загрузка workspace и полная замена массива страниц автоматически пересобирают индекс;
+- `PageIndex` поддерживает точечные операции `addPage()`, `updatePage()`, `deletePage()` и `deletePages()`;
+- storage/editor точки, которые мутируют существующую страницу без замены массива, должны вызывать `notifyPageUpdated(previousPage, nextPage)` или `notifyPageMoved(previousPage, nextPage)`;
+- если legacy-код вызывает notify без аргументов, repository оставляет fallback на полный rebuild. Это переходный защитный слой, а не желательное поведение для новых операций.
 
 ## Правила Для Нового Кода
 

@@ -12,8 +12,8 @@ import {
 
 
 // Живой read-only репозиторий страниц.
-// Сейчас он пересобирает индекс целиком: это проще и безопаснее,
-// чем частичные обновления, пока все старые места мутаций не переведены на API.
+// Load/setPages пересобирает индекс целиком, а известные lifecycle events
+// обновляют только затронутые страницы, чтобы большие workspace не подвисали.
 const pageIndex =
   new PageIndex(
     state.pages
@@ -49,25 +49,82 @@ export function rebuildPageRepository(
 }
 
 
-export function notifyPageCreated() {
+export function notifyPageCreated(
+  page
+) {
+
+  if (page?.id) {
+
+    pageIndex.addPage(
+      page
+    );
+
+    return pageIndex;
+  }
 
   return rebuildPageRepository();
 }
 
 
-export function notifyPageUpdated() {
+export function notifyPageUpdated(
+  previousPage,
+  nextPage
+) {
+
+  if (nextPage?.id) {
+
+    pageIndex.updatePage(
+      previousPage,
+      nextPage
+    );
+
+    return pageIndex;
+  }
 
   return rebuildPageRepository();
 }
 
 
-export function notifyPageMoved() {
+export function notifyPageMoved(
+  previousPage,
+  nextPage
+) {
+
+  if (nextPage?.id) {
+
+    pageIndex.updatePage(
+      previousPage,
+      nextPage
+    );
+
+    return pageIndex;
+  }
 
   return rebuildPageRepository();
 }
 
 
-export function notifyPageDeleted() {
+export function notifyPageDeleted(
+  pageOrPages
+) {
+
+  if (Array.isArray(pageOrPages)) {
+
+    pageIndex.deletePages(
+      pageOrPages
+    );
+
+    return pageIndex;
+  }
+
+  if (pageOrPages?.id) {
+
+    pageIndex.deletePage(
+      pageOrPages
+    );
+
+    return pageIndex;
+  }
 
   return rebuildPageRepository();
 }

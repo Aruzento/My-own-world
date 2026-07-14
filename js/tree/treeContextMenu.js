@@ -31,6 +31,10 @@ import {
 } from '../ui/ui.js';
 
 import {
+  createProgressMessage
+} from '../performance/workspacePerformance.js';
+
+import {
   openPopupAtPoint,
   registerPopup
 } from '../ui/popupManager.js';
@@ -303,8 +307,20 @@ async function removePageBranch(
 
   try {
 
+    setStatus(
+      `РЈРґР°Р»РµРЅРёРµ: РїРѕРґРіРѕС‚РѕРІРєР° ${deletedIds.size} СЃС‚СЂ.`
+    );
+
     await deletePageBranch(
-      page
+      page,
+      {
+        onProgress:
+          progress => setStatus(
+            createProgressMessage(
+              progress
+            )
+          )
+      }
     );
 
     if (deletedCurrentPage) {
@@ -504,7 +520,7 @@ function ensureTreeContextMenu() {
 }
 
 
-/* Проверяет права workspace на запись */
+/* РџСЂРѕРІРµСЂСЏРµС‚ РїСЂР°РІР° workspace РЅР° Р·Р°РїРёСЃСЊ */
 async function ensureWorkspaceWritePermission() {
 
   return requestWorkspaceWritePermission();

@@ -331,6 +331,123 @@ export class PageIndex {
   }
 
 
+  addPage(
+    page
+  ) {
+
+    if (!page?.id) return this;
+
+    const existingIndex =
+      this.pages.findIndex(candidate =>
+        candidate?.id === page.id
+      );
+
+    if (existingIndex >= 0) {
+
+      this.updatePage(
+        this.pages[existingIndex],
+        page
+      );
+
+      return this;
+    }
+
+    this.pages.push(
+      page
+    );
+
+    this.addToIndexes(
+      page
+    );
+
+    return this;
+  }
+
+
+  updatePage(
+    previousPage,
+    nextPage
+  ) {
+
+    if (!nextPage?.id) return this;
+
+    const pageId =
+      normalizeId(
+        nextPage.id
+      );
+
+    if (!pageId) return this;
+
+    this.removeFromIndexes(
+      previousPage || nextPage,
+      pageId
+    );
+
+    const existingIndex =
+      this.pages.findIndex(page =>
+        normalizeId(page?.id) === pageId
+      );
+
+    if (existingIndex >= 0) {
+
+      this.pages[existingIndex] =
+        nextPage;
+
+    } else {
+
+      this.pages.push(
+        nextPage
+      );
+    }
+
+    this.addToIndexes(
+      nextPage
+    );
+
+    return this;
+  }
+
+
+  deletePage(
+    page
+  ) {
+
+    const pageId =
+      normalizeId(
+        page?.id
+      );
+
+    if (!pageId) return this;
+
+    this.removeFromIndexes(
+      page,
+      pageId
+    );
+
+    this.pages =
+      this.pages.filter(candidate =>
+        normalizeId(candidate?.id) !== pageId
+      );
+
+    return this;
+  }
+
+
+  deletePages(
+    pages = []
+  ) {
+
+    pages.forEach(page => {
+
+      this.deletePage(
+        page
+      );
+    });
+
+    return this;
+  }
+
+
   addToIndexes(
     page
   ) {
@@ -381,6 +498,61 @@ export class PageIndex {
         this.byTag,
         normalizeLookupValue(tag),
         page
+      );
+    });
+  }
+
+
+  removeFromIndexes(
+    page,
+    pageId = normalizeId(page?.id)
+  ) {
+
+    if (!pageId) return;
+
+    this.byId.delete(
+      pageId
+    );
+
+    removeFromMapSet(
+      this.byTitle,
+      normalizePageTitle(page?.title),
+      pageId
+    );
+
+    (page?.aliases || []).forEach(alias => {
+
+      removeFromMapSet(
+        this.byAlias,
+        normalizePageTitle(alias),
+        pageId
+      );
+    });
+
+    removeFromMapSet(
+      this.byParent,
+      normalizeParentId(page?.parent || null),
+      pageId
+    );
+
+    removeFromMapSet(
+      this.byTemplate,
+      normalizeLookupValue(page?.template),
+      pageId
+    );
+
+    removeFromMapSet(
+      this.byType,
+      normalizeLookupValue(page?.type),
+      pageId
+    );
+
+    (page?.tags || []).forEach(tag => {
+
+      removeFromMapSet(
+        this.byTag,
+        normalizeLookupValue(tag),
+        pageId
       );
     });
   }
@@ -449,6 +621,38 @@ function addToMapSet(
   map.get(key).add(
     page
   );
+}
+
+
+function removeFromMapSet(
+  map,
+  key,
+  pageId
+) {
+
+  if (!key || !map.has(key)) return;
+
+  const set =
+    map.get(key);
+
+  for (const page of set) {
+
+    if (
+      normalizeId(page?.id) === pageId
+    ) {
+
+      set.delete(
+        page
+      );
+    }
+  }
+
+  if (set.size === 0) {
+
+    map.delete(
+      key
+    );
+  }
 }
 
 

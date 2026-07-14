@@ -11,7 +11,9 @@
 1. `docs/00-product/PRODUCT_DASHBOARD.md`;
 2. `docs/01-delivery/PROJECT_PLAN.md`;
 3. `docs/01-delivery/WORK_LOG.md`;
-4. релевантные contract-файлы из `docs/` или будущей зоны `docs/02-architecture/`.
+4. `docs/README.md`, если задача касается документации, навигации по файлам или release handoff;
+5. релевантные contract-файлы из `docs/02-architecture/`;
+6. `docs/archive/README.md` только если задача прямо просит восстановить или проверить старую идею.
 
 Если нужного contract-файла нет, сначала создать или обновить contract, затем менять код.
 
@@ -24,6 +26,8 @@
 - Не делать destructive operations без явного разрешения владельца.
 - Не удалять и не перемещать крупные зоны `docs/` и `release/` без отдельной задачи.
 - Не коммитить `dist-desktop/`, `src-tauri/target/`, `node_modules/`, временные файлы, случайные логи и большие бинарники.
+- Не возвращать файлы из `docs/archive/` в активные зоны без отдельной задачи и обновления ссылок.
+- Не добавлять `debug.log`, временные отчеты, старые generated artifacts и локальные test outputs в commit.
 - Для безопасной подготовки коммита использовать `node tools/safe_commit.mjs`.
 
 ## Тесты И Проверки
@@ -32,6 +36,8 @@
 - Если меняется пользовательское поведение, обновлять release notes и tester instructions.
 - Если меняется подсистема, сначала проверить ее contract.
 - Если меняется документация, проверить `node tools/docs_index.mjs`.
+- Если меняется структура файлов или docs, проверить `node tools/audit_project_files.mjs`.
+- Если меняется текстовая документация или пользовательские строки, проверить `npm run check:encoding`.
 - Если меняются skills, проверить `node tools/validate_agent_skills.mjs`.
 
 Базовые проверки:
@@ -40,6 +46,7 @@
 npm run verify
 npm run test:browser
 node tools/docs_index.mjs
+node tools/audit_project_files.mjs
 node tools/validate_agent_skills.mjs
 ```
 

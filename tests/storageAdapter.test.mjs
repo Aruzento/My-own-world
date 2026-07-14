@@ -46,7 +46,8 @@ import {
 
 import {
   deletePageBranch,
-  updatePageTreePosition
+  updatePageTreePosition,
+  updatePageTreePositions
 } from '../js/storage/pageStorage.js';
 
 import {
@@ -62,6 +63,11 @@ import {
   createMissingAssetPlaceholderURL,
   getRenderableImageURL
 } from '../js/storage/assetStorage.js';
+
+import {
+  clearWorkspacePerformanceEvents,
+  getWorkspacePerformanceEvents
+} from '../js/performance/workspacePerformance.js';
 
 
 test(
@@ -918,6 +924,122 @@ test(
 
 
 test(
+  'deletePageBranch removes a large nested branch without quadratic tree scan',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const pages =
+      [];
+
+    const pageCount =
+      750;
+
+    for (
+      let index = 0;
+      index < pageCount;
+      index += 1
+    ) {
+
+      const id =
+        `large-branch-${index}`;
+
+      const parent =
+        index === 0
+          ? null
+          : `large-branch-${index - 1}`;
+
+      const path =
+        `/pages/${id}.md`;
+
+      const content =
+        `---
+id: ${id}
+parent: ${parent ?? 'null'}
+order: ${index}
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>${id}</h1>
+`;
+
+      await adapter.writeText(
+        path,
+        content
+      );
+
+      pages.push({
+        id,
+        path,
+        name: `${id}.md`,
+        parent,
+        order: index,
+        title: id,
+        type: 'note',
+        template: 'card',
+        tags: ['card'],
+        aliases: [],
+        content
+      });
+    }
+
+    setPages(
+      pages
+    );
+
+    const progressEvents =
+      [];
+
+    clearWorkspacePerformanceEvents();
+
+    await deletePageBranch(
+      {
+        ...pages[0]
+      },
+      {
+        onProgress:
+          progressEvents.push.bind(
+            progressEvents
+          )
+      }
+    );
+
+    const {
+      state
+    } =
+      await import('../js/state.js');
+
+    assert.deepEqual(
+      state.pages,
+      []
+    );
+
+    assert.ok(
+      progressEvents.some(progress =>
+        progress.label === 'Удаление' &&
+        progress.current === pageCount
+      )
+    );
+
+    assert.ok(
+      getWorkspacePerformanceEvents().some(event =>
+        event.operation === 'tree.deleteBranch' &&
+        event.counts.pages === pageCount
+      )
+    );
+  }
+);
+
+
+test(
   'updatePageTreePosition writes through the live page when caller has stale object',
   async () => {
 
@@ -1043,6 +1165,147 @@ aliases: []
     assert.equal(
       state.pages[0].order,
       42
+    );
+  }
+);
+
+
+test(
+  'updatePageTreePositions batches tree writes behind one risky-operation backup',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const pages =
+      [
+        {
+          id: 'batch-a',
+          name: 'batch-a.md',
+          path: '/pages/batch-a.md',
+          parent: null,
+          order: 1,
+          title: 'Batch A',
+          template: 'card',
+          type: 'note',
+          tags: ['card'],
+          aliases: [],
+          content: `---
+id: batch-a
+parent: null
+order: 1
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Batch A</h1>
+`
+        },
+        {
+          id: 'batch-b',
+          name: 'batch-b.md',
+          path: '/pages/batch-b.md',
+          parent: null,
+          order: 2,
+          title: 'Batch B',
+          template: 'card',
+          type: 'note',
+          tags: ['card'],
+          aliases: [],
+          content: `---
+id: batch-b
+parent: null
+order: 2
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Batch B</h1>
+`
+        }
+      ];
+
+    for (const page of pages) {
+
+      await adapter.writeText(
+        page.path,
+        page.content
+      );
+    }
+
+    setPages(
+      pages
+    );
+
+    const progressEvents =
+      [];
+
+    clearWorkspacePerformanceEvents();
+
+    await updatePageTreePositions(
+      [
+        {
+          page: pages[0],
+          parentId: 'new-parent',
+          order: 10
+        },
+        {
+          page: pages[1],
+          parentId: 'new-parent',
+          order: 20
+        }
+      ],
+      {
+        onProgress:
+          progressEvents.push.bind(
+            progressEvents
+          )
+      }
+    );
+
+    const backupEntries =
+      await adapter.listFiles(
+        '.my-own-world-backups'
+      );
+
+    assert.equal(
+      backupEntries.filter(entry =>
+        entry.kind === 'directory'
+      ).length,
+      1
+    );
+
+    assert.match(
+      await adapter.readText('/pages/batch-a.md'),
+      /parent:\s*new-parent/
+    );
+
+    assert.match(
+      await adapter.readText('/pages/batch-b.md'),
+      /order:\s*20/
+    );
+
+    assert.ok(
+      progressEvents.some(progress =>
+        progress.label === 'Перенос' &&
+        progress.current === 2 &&
+        progress.total === 2
+      )
+    );
+
+    assert.ok(
+      getWorkspacePerformanceEvents().some(event =>
+        event.operation === 'tree.moveBatch' &&
+        event.counts.changedPages === 2
+      )
     );
   }
 );

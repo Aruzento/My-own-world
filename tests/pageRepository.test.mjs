@@ -8,9 +8,12 @@ import {
 import {
   findPageByTitleOrAlias,
   getChildren,
+  getPageIndex,
   getPageById,
   getPagesByTag,
   getPagesByType,
+  notifyPageMoved,
+  notifyPageUpdated,
   queryPages,
   rebuildPageRepository
 } from '../js/repository/pageRepository.js';
@@ -195,5 +198,143 @@ test(
       getPageById('moving-child'),
       null
     );
+  }
+);
+
+
+test(
+  'PageRepository updates moved and changed pages without full rebuild',
+  () => {
+
+    const root =
+      makePage({
+        id: 'root',
+        title: 'Root'
+      });
+
+    const oldParent =
+      makePage({
+        id: 'old-parent',
+        title: 'Old Parent'
+      });
+
+    const nextParent =
+      makePage({
+        id: 'next-parent',
+        title: 'Next Parent'
+      });
+
+    const movingPage =
+      makePage({
+        id: 'moving-page',
+        parent: 'old-parent',
+        title: 'Old Title',
+        aliases: ['Old Alias'],
+        type: 'note',
+        tags: ['old-tag']
+      });
+
+    setPages([
+      root,
+      oldParent,
+      nextParent,
+      movingPage
+    ]);
+
+    const index =
+      getPageIndex();
+
+    const originalRebuild =
+      index.rebuild;
+
+    index.rebuild =
+      () => {
+
+        throw new Error(
+          'full rebuild should not run during incremental lifecycle update'
+        );
+      };
+
+    try {
+
+      const beforeMove =
+        {
+          ...movingPage,
+          tags: [...movingPage.tags],
+          aliases: [...movingPage.aliases]
+        };
+
+      movingPage.parent =
+        'next-parent';
+
+      movingPage.order =
+        10;
+
+      notifyPageMoved(
+        beforeMove,
+        movingPage
+      );
+
+      assert.deepEqual(
+        getChildren('old-parent'),
+        []
+      );
+
+      assert.deepEqual(
+        getChildren('next-parent'),
+        [movingPage]
+      );
+
+      const beforeUpdate =
+        {
+          ...movingPage,
+          tags: [...movingPage.tags],
+          aliases: [...movingPage.aliases]
+        };
+
+      movingPage.title =
+        'New Title';
+
+      movingPage.aliases =
+        ['New Alias'];
+
+      movingPage.type =
+        'character';
+
+      movingPage.tags =
+        ['player'];
+
+      notifyPageUpdated(
+        beforeUpdate,
+        movingPage
+      );
+
+      assert.equal(
+        findPageByTitleOrAlias('Old Alias'),
+        null
+      );
+
+      assert.equal(
+        findPageByTitleOrAlias('New Alias'),
+        movingPage
+      );
+
+      assert.deepEqual(
+        getPagesByType('character'),
+        [movingPage]
+      );
+
+      assert.deepEqual(
+        getPagesByTag('player'),
+        [movingPage]
+      );
+
+    } finally {
+
+      index.rebuild =
+        originalRebuild;
+
+      rebuildPageRepository();
+    }
   }
 );

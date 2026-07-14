@@ -129,7 +129,7 @@ test(
 
     const html =
       createPropertiesBlock({
-        title: 'РЎРІРѕР№СЃС‚РІР° РїРµСЂСЃРѕРЅР°Р¶Р°',
+        title: 'Свойства персонажа',
         cardType: 'character'
       });
 

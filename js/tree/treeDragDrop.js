@@ -5,9 +5,16 @@ import {
 } from '../stateActions.js';
 
 import {
-  loadWorkspace,
-  updatePageTreePosition
+  updatePageTreePositions
 } from '../storage/storage.js';
+
+import {
+  createProgressMessage
+} from '../performance/workspacePerformance.js';
+
+import {
+  setStatus
+} from '../ui/ui.js';
 
 import {
   canMovePage
@@ -457,14 +464,23 @@ async function commitTreePointerDrop(
       mode: intent.mode
     });
 
-  for (const item of plan) {
+  if (!plan.length) return;
 
-    await updatePageTreePosition(
-      item.page,
-      item.parentId,
-      item.order
-    );
-  }
+  setStatus(
+    `Перенос в дереве: подготовка ${plan.length} стр.`
+  );
+
+  await updatePageTreePositions(
+    plan,
+    {
+      onProgress:
+        progress => setStatus(
+          createProgressMessage(
+            progress
+          )
+        )
+    }
+  );
 
   if (intent.mode === 'inside') {
 
@@ -473,8 +489,12 @@ async function commitTreePointerDrop(
     );
   }
 
-  await reloadTreeAfterMove(
+  refreshTreeAfterMove(
     stateToCommit.renderTree
+  );
+
+  setStatus(
+    `Перенос завершен: ${plan.length} стр.`
   );
 }
 
@@ -641,14 +661,12 @@ function getItemLevel(
 }
 
 
-async function reloadTreeAfterMove(
+function refreshTreeAfterMove(
   renderTree
 ) {
 
   const currentPageId =
     state.currentPage?.id;
-
-  await loadWorkspace();
 
   if (currentPageId) {
 

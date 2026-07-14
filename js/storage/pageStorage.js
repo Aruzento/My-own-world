@@ -23,6 +23,10 @@ import {
 } from './backupService.js';
 
 import {
+  measureWorkspaceOperation
+} from '../performance/workspacePerformance.js';
+
+import {
   getStorageAdapter,
   requestWorkspaceWritePermission
 } from './storageAdapter.js';
@@ -192,7 +196,9 @@ async function writePageFile(
     ]
   );
 
-  notifyPageCreated();
+  notifyPageCreated(
+    page
+  );
 
   return page;
 }
@@ -225,7 +231,31 @@ ${body}
 
 // Удаляет страницу и все дочерние страницы.
 export async function deletePageBranch(
-  page
+  page,
+  options = {}
+) {
+
+  return measureWorkspaceOperation(
+    'tree.deleteBranch',
+    () => deletePageBranchMeasured(
+      page,
+      options
+    ),
+    {
+      counts: result => ({
+        pages:
+          result?.deletedPages || 0,
+        failed:
+          result?.failedPages || 0
+      })
+    }
+  );
+}
+
+
+async function deletePageBranchMeasured(
+  page,
+  options = {}
 ) {
 
   const livePage =
@@ -243,7 +273,11 @@ export async function deletePageBranch(
   await ensureWorkspaceCanWrite();
 
   await requireWorkspaceBackupBeforeRiskyOperation(
-    'delete-page-branch'
+    'delete-page-branch',
+    {
+      onProgress:
+        options.onProgress
+    }
   );
 
   const deletedPages =
@@ -252,7 +286,14 @@ export async function deletePageBranch(
   const failedPages =
     [];
 
-  for (const targetPage of pagesToDelete) {
+  for (
+    let index = 0;
+    index < pagesToDelete.length;
+    index += 1
+  ) {
+
+    const targetPage =
+      pagesToDelete[index];
 
     try {
 
@@ -263,6 +304,13 @@ export async function deletePageBranch(
       deletedPages.push(
         targetPage
       );
+
+      options.onProgress?.({
+        label: 'Удаление',
+        stage: 'страницы',
+        current: index + 1,
+        total: pagesToDelete.length
+      });
 
     } catch (error) {
 
@@ -294,7 +342,9 @@ export async function deletePageBranch(
     )
   );
 
-  notifyPageDeleted();
+  notifyPageDeleted(
+    deletedPages
+  );
 
   if (failedPages.length > 0) {
 
@@ -302,6 +352,13 @@ export async function deletePageBranch(
       `Не удалось удалить файлов: ${failedPages.length}`
     );
   }
+
+  return {
+    deletedPages:
+      deletedPages.length,
+    failedPages:
+      failedPages.length
+  };
 }
 
 
@@ -318,7 +375,7 @@ async function ensureWorkspaceCanWrite() {
   if (!canWrite) {
 
     throw new Error(
-      'Workspace �� ������ ��� ��� ���� �� ������'
+      'Workspace не выбран или нет прав на запись'
     );
   }
 }
@@ -407,24 +464,48 @@ function collectPageBranch(
   rootPage
 ) {
 
+  const childrenByParent =
+    new Map();
+
+  state.pages.forEach(page => {
+
+    if (!page?.parent) return;
+
+    if (!childrenByParent.has(page.parent)) {
+
+      childrenByParent.set(
+        page.parent,
+        []
+      );
+    }
+
+    childrenByParent.get(page.parent).push(
+      page
+    );
+  });
+
   const result = [
     rootPage
   ];
 
-  const children =
-    state.pages.filter(
-      page =>
-        page.parent === rootPage.id
-    );
+  for (
+    let index = 0;
+    index < result.length;
+    index += 1
+  ) {
 
-  children.forEach(child => {
+    const currentPage =
+      result[index];
+
+    const children =
+      childrenByParent.get(
+        currentPage.id
+      ) || [];
 
     result.push(
-      ...collectPageBranch(
-        child
-      )
+      ...children
     );
-  });
+  }
 
   return result;
 }
@@ -450,6 +531,11 @@ export async function updatePageParent(
       page
     ) || page;
 
+  const previousPage =
+    snapshotPageForIndex(
+      livePage
+    );
+
   await requireWorkspaceBackupBeforeRiskyOperation(
     'move-page-parent'
   );
@@ -471,7 +557,10 @@ export async function updatePageParent(
   livePage.content =
     updatedContent;
 
-  notifyPageMoved();
+  notifyPageMoved(
+    previousPage,
+    livePage
+  );
 }
 
 
@@ -481,14 +570,131 @@ export async function updatePageTreePosition(
   order
 ) {
 
+  const change =
+    preparePageTreePositionChange({
+      page,
+      parentId,
+      order
+    });
+
+  if (!change) return;
+
+  await requireWorkspaceBackupBeforeRiskyOperation(
+    'move-page-tree-position'
+  );
+
+  await applyPageTreePositionChange(
+    change
+  );
+}
+
+
+export async function updatePageTreePositions(
+  updates = [],
+  options = {}
+) {
+
+  return measureWorkspaceOperation(
+    'tree.moveBatch',
+    () => updatePageTreePositionsMeasured(
+      updates,
+      options
+    ),
+    {
+      counts: result => ({
+        changedPages:
+          result?.changedPages || 0
+      })
+    }
+  );
+}
+
+
+async function updatePageTreePositionsMeasured(
+  updates = [],
+  options = {}
+) {
+
+  const changes =
+    updates
+      .map(update =>
+        preparePageTreePositionChange(
+          update
+        )
+      )
+      .filter(Boolean);
+
+  if (changes.length === 0) return;
+
+  await requireWorkspaceBackupBeforeRiskyOperation(
+    'move-page-tree-position',
+    {
+      onProgress:
+        options.onProgress
+    }
+  );
+
+  for (
+    let index = 0;
+    index < changes.length;
+    index += 1
+  ) {
+
+    const change =
+      changes[index];
+
+    await applyPageTreePositionChange(
+      change
+    );
+
+    options.onProgress?.({
+      label: 'Перенос',
+      stage: 'страницы',
+      current: index + 1,
+      total: changes.length
+    });
+  }
+
+  return {
+    changedPages:
+      changes.length
+  };
+}
+
+
+function preparePageTreePositionChange({
+  page,
+  parentId,
+  order
+}) {
+
   const livePage =
     getLivePage(
       page
     ) || page;
 
-  await requireWorkspaceBackupBeforeRiskyOperation(
-    'move-page-tree-position'
-  );
+  if (!livePage?.id) return null;
+
+  const previousPage =
+    snapshotPageForIndex(
+      livePage
+    );
+
+  return {
+    livePage,
+    previousPage,
+    parentId,
+    order
+  };
+}
+
+
+async function applyPageTreePositionChange({
+  livePage,
+  previousPage,
+  parentId,
+  order
+}) {
 
   livePage.parent =
     parentId;
@@ -550,7 +756,10 @@ export async function updatePageTreePosition(
   livePage.content =
     updatedContent;
 
-  notifyPageMoved();
+  notifyPageMoved(
+    previousPage,
+    livePage
+  );
 }
 
 
@@ -558,6 +767,11 @@ export async function updatePageAliases(
   page,
   aliases
 ) {
+
+  const previousPage =
+    snapshotPageForIndex(
+      page
+    );
 
   page.aliases =
     aliases;
@@ -595,7 +809,33 @@ export async function updatePageAliases(
   page.content =
     updatedContent;
 
-  notifyPageUpdated();
+  notifyPageUpdated(
+    previousPage,
+    page
+  );
+}
+
+
+function snapshotPageForIndex(
+  page
+) {
+
+  if (!page) return null;
+
+  return {
+    id: page.id,
+    parent: page.parent,
+    order: page.order,
+    title: page.title,
+    template: page.template,
+    type: page.type,
+    tags: Array.isArray(page.tags)
+      ? [...page.tags]
+      : [],
+    aliases: Array.isArray(page.aliases)
+      ? [...page.aliases]
+      : []
+  };
 }
 
 

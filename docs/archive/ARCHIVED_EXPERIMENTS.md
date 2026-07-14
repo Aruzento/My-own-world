@@ -1,9 +1,9 @@
 ---
-summary: "Archived experiments and deferred ideas."
+summary: "Архив экспериментов и отложенных идей, которые больше не являются активным архитектурным контрактом."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
-owner_zone: "architecture"
+  - "Когда нужно понять, почему старые блоки или подходы были отложены"
+  - "Когда возвращаемся к идеям DnD v2 или старого блока переменных"
+owner_zone: "archive"
 ---
 # Архив экспериментов
 

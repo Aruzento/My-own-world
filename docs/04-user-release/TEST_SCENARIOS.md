@@ -7,6 +7,14 @@ owner_zone: "user-release"
 ---
 # Test Scenarios
 
+## Проверка Навигации По Документации
+
+1. Открыть `docs/README.md` и убедиться, что понятно, где лежат product, delivery, architecture, testing, user-release и archive документы.
+2. Открыть `docs/archive/README.md` и убедиться, что архивные документы имеют причину архивации и ссылку на актуальный рабочий источник.
+3. Запустить `npm run docs:index`: проверка должна завершиться без документов без metadata и без документов вне своей зоны.
+4. Запустить `npm run check:encoding`: проверка должна завершиться без mojibake/UTF-8 ошибок.
+5. Запустить `node tools/audit_project_files.mjs`: в отчете не должно быть случайных `debug.log`, временных файлов или старых generated artifacts.
+
 ## Минимальный пользовательский проход
 
 1. Открыть workspace.

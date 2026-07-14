@@ -9,9 +9,11 @@ import {
 } from '../state.js';
 
 import {
+  cleanupIncompleteWorkspaceBackups,
   cleanupWorkspaceBackups,
   createWorkspaceBackup,
   getBackupRetentionLimit,
+  listIncompleteWorkspaceBackups,
   listWorkspaceBackups,
   restoreWorkspaceBackup,
   setBackupRetentionLimit
@@ -42,6 +44,10 @@ import {
 import {
   renderAssetHealthPanel
 } from './assetHealthPanel.js';
+
+import {
+  createProgressMessage
+} from '../performance/workspacePerformance.js';
 
 const APPEARANCE_STORAGE_KEY =
   'myOwnWorld.appearance';
@@ -589,6 +595,12 @@ async function renderBackupPanel(
   confirm.className =
     'app-backup-confirm hidden';
 
+  const incomplete =
+    document.createElement('div');
+
+  incomplete.className =
+    'app-backup-incomplete';
+
   const retention =
     createBackupRetentionControls({
       onCleanup:
@@ -598,11 +610,31 @@ async function renderBackupPanel(
         )
     });
 
+  const incompleteControls =
+    createIncompleteBackupControls({
+      container:
+        incomplete,
+      onCleanup:
+        async () => {
+
+          await renderBackupList(
+            list,
+            confirm
+          );
+
+          await renderIncompleteBackupList(
+            incomplete
+          );
+        }
+    });
+
   panel.append(
     title,
     description,
     createButton,
     retention,
+    incompleteControls,
+    incomplete,
     list,
     confirm
   );
@@ -618,6 +650,14 @@ async function renderBackupPanel(
 
     list.textContent =
       'Workspace не выбран.';
+
+    incompleteControls
+      .querySelectorAll('button')
+      .forEach(button => {
+
+        button.disabled =
+          true;
+      });
 
     return;
   }
@@ -637,7 +677,13 @@ async function renderBackupPanel(
 
         const manifest =
           await createWorkspaceBackup({
-            reason: 'manual'
+            reason: 'manual',
+            onProgress:
+              progress => setStatus(
+                createProgressMessage(
+                  progress
+                )
+              )
           });
 
         setStatus(
@@ -689,7 +735,7 @@ function createBackupRetentionControls({
     document.createElement('label');
 
   label.textContent =
-    'РҐСЂР°РЅРёС‚СЊ backup';
+    'Хранить backup';
 
   const input =
     document.createElement('input');
@@ -718,7 +764,7 @@ function createBackupRetentionControls({
     'button';
 
   saveButton.textContent =
-    'РџСЂРёРјРµРЅРёС‚СЊ';
+    'Применить';
 
   const cleanupButton =
     document.createElement('button');
@@ -727,7 +773,7 @@ function createBackupRetentionControls({
     'button';
 
   cleanupButton.textContent =
-    'РћС‡РёСЃС‚РёС‚СЊ СЃС‚Р°СЂС‹Рµ';
+    'Очистить старые';
 
   saveButton.addEventListener(
     'click',
@@ -754,7 +800,7 @@ function createBackupRetentionControls({
         true;
 
       setStatus(
-        'РћС‡РёС‰Р°СЋ СЃС‚Р°СЂС‹Рµ backup...'
+        'Очищаю старые backup...'
       );
 
       try {
@@ -762,11 +808,17 @@ function createBackupRetentionControls({
         const result =
           await cleanupWorkspaceBackups({
             keepLatest:
-              getBackupRetentionLimit()
+              getBackupRetentionLimit(),
+            onProgress:
+              progress => setStatus(
+                createProgressMessage(
+                  progress
+                )
+              )
           });
 
         setStatus(
-          `Backup cleanup: СѓРґР°Р»РµРЅРѕ ${result.removed}`
+          `Backup cleanup: удалено ${result.removed}`
         );
 
         await onCleanup?.();
@@ -774,12 +826,12 @@ function createBackupRetentionControls({
       } catch (error) {
 
         console.error(
-          'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‡РёСЃС‚РёС‚СЊ backup.',
+          'Не удалось очистить backup.',
           error
         );
 
         setStatus(
-          'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‡РёСЃС‚РёС‚СЊ backup'
+          'Не удалось очистить backup'
         );
 
       } finally {
@@ -801,6 +853,263 @@ function createBackupRetentionControls({
   );
 
   return wrapper;
+}
+
+
+function createIncompleteBackupControls({
+  container,
+  onCleanup
+}) {
+
+  const wrapper =
+    document.createElement('div');
+
+  wrapper.className =
+    'app-backup-retention';
+
+  const scanButton =
+    document.createElement('button');
+
+  scanButton.type =
+    'button';
+
+  scanButton.textContent =
+    'Проверить недособранные';
+
+  const cleanupButton =
+    document.createElement('button');
+
+  cleanupButton.type =
+    'button';
+
+  cleanupButton.className =
+    'app-backup-danger';
+
+  cleanupButton.textContent =
+    'Удалить найденные';
+
+  cleanupButton.disabled =
+    true;
+
+  scanButton.addEventListener(
+    'click',
+    async () => {
+
+      scanButton.disabled =
+        true;
+
+      setStatus(
+        'Проверяю недособранные backup...'
+      );
+
+      try {
+
+        const incomplete =
+          await renderIncompleteBackupList(
+            container
+          );
+
+        cleanupButton.disabled =
+          incomplete.length === 0;
+
+        setStatus(
+          `Недособранные backup: ${incomplete.length}`
+        );
+
+      } catch (error) {
+
+        console.error(
+          'Не удалось проверить недособранные backup.',
+          error
+        );
+
+        setStatus(
+          'Не удалось проверить недособранные backup'
+        );
+
+      } finally {
+
+        scanButton.disabled =
+          false;
+      }
+    }
+  );
+
+  cleanupButton.addEventListener(
+    'click',
+    async () => {
+
+      const ids =
+        getRenderedIncompleteBackupIds(
+          container
+        );
+
+      if (ids.length === 0) return;
+
+      const confirmed =
+        window.confirm(
+          `Удалить недособранные backup (${ids.length})? Валидные backup не будут затронуты.`
+        );
+
+      if (!confirmed) return;
+
+      cleanupButton.disabled =
+        true;
+
+      setStatus(
+        'Удаляю недособранные backup...'
+      );
+
+      try {
+
+        const result =
+          await cleanupIncompleteWorkspaceBackups({
+            backupIds:
+              ids,
+            onProgress:
+              progress => setStatus(
+                createProgressMessage(
+                  progress
+                )
+              )
+          });
+
+        setStatus(
+          `Недособранные backup удалены: ${result.removed}`
+        );
+
+        await onCleanup?.();
+
+      } catch (error) {
+
+        console.error(
+          'Не удалось удалить недособранные backup.',
+          error
+        );
+
+        setStatus(
+          'Не удалось удалить недособранные backup'
+        );
+
+      } finally {
+
+        cleanupButton.disabled =
+          false;
+      }
+    }
+  );
+
+  wrapper.append(
+    scanButton,
+    cleanupButton
+  );
+
+  return wrapper;
+}
+
+
+async function renderIncompleteBackupList(
+  container
+) {
+
+  container.textContent =
+    'Проверка...';
+
+  const incomplete =
+    await listIncompleteWorkspaceBackups({
+      onProgress:
+        progress => setStatus(
+          createProgressMessage(
+            progress
+          )
+        )
+    });
+
+  container.replaceChildren();
+
+  if (incomplete.length === 0) {
+
+    container.textContent =
+      'Недособранных backup не найдено.';
+
+    return incomplete;
+  }
+
+  const title =
+    document.createElement('strong');
+
+  title.textContent =
+    'Недособранные backup';
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-backup-list';
+
+  incomplete.forEach(backup => {
+
+    const item =
+      document.createElement('div');
+
+    item.className =
+      'app-backup-item';
+
+    item.dataset.backupId =
+      backup.id;
+
+    const meta =
+      document.createElement('div');
+
+    meta.className =
+      'app-backup-meta';
+
+    const name =
+      document.createElement('strong');
+
+    name.textContent =
+      backup.id;
+
+    const details =
+      document.createElement('span');
+
+    details.textContent =
+      `${backup.fileCount || 0} файлов · ${formatBytes(backup.sizeBytes || 0)}`;
+
+    meta.append(
+      name,
+      details
+    );
+
+    item.appendChild(
+      meta
+    );
+
+    list.appendChild(
+      item
+    );
+  });
+
+  container.append(
+    title,
+    list
+  );
+
+  return incomplete;
+}
+
+
+function getRenderedIncompleteBackupIds(
+  container
+) {
+
+  return [
+    ...container.querySelectorAll('[data-backup-id]')
+  ]
+    .map(item =>
+      item.dataset.backupId
+    )
+    .filter(Boolean);
 }
 
 
@@ -963,7 +1272,16 @@ function renderRestoreConfirm(
 
         const result =
           await restoreWorkspaceBackup(
-            backup.id
+            backup.id,
+            null,
+            {
+              onProgress:
+                progress => setStatus(
+                  createProgressMessage(
+                    progress
+                  )
+                )
+            }
           );
 
         await reloadWorkspaceAfterRestore();
@@ -1043,6 +1361,27 @@ function formatBackupDate(
   return date.toLocaleString(
     'ru-RU'
   );
+}
+
+
+function formatBytes(
+  value
+) {
+
+  const bytes =
+    Number(value || 0);
+
+  if (bytes < 1024) {
+
+    return `${bytes} Б`;
+  }
+
+  if (bytes < 1024 * 1024) {
+
+    return `${(bytes / 1024).toFixed(1)} КБ`;
+  }
+
+  return `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
 }
 
 

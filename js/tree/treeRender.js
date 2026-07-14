@@ -37,6 +37,69 @@ export function renderTreePage(
 ) {
 
   const item =
+    createTreePageElement(
+      page,
+      level,
+      collapsedPages,
+      draggedPageState,
+      renderTree,
+      saveTreeExpansionState,
+      duplicateTitleIds
+    );
+
+  container.appendChild(
+    item
+  );
+
+  const hasChildren =
+    page.children
+    &&
+    page.children.length > 0;
+
+  const pageKeys =
+    getTreePageKeys(
+      page
+    );
+
+  const isCollapsed =
+    pageKeys.some(pageKey =>
+      collapsedPages.has(pageKey)
+    );
+
+  if (
+    hasChildren
+    &&
+    !isCollapsed
+  ) {
+
+    page.children.forEach(child => {
+
+      renderTreePage(
+        child,
+        container,
+        level + 1,
+        collapsedPages,
+        draggedPageState,
+        renderTree,
+        saveTreeExpansionState,
+        duplicateTitleIds
+      );
+    });
+  }
+}
+
+
+export function createTreePageElement(
+  page,
+  level,
+  collapsedPages,
+  draggedPageState,
+  renderTree,
+  saveTreeExpansionState,
+  duplicateTitleIds = getDuplicatePageTitleIds()
+) {
+
+  const item =
     document.createElement('div');
 
   item.className =
@@ -204,29 +267,5 @@ export function renderTreePage(
     );
 
 
-  container.appendChild(
-    item
-  );
-
-
-  if (
-    hasChildren
-    &&
-    !isCollapsed
-  ) {
-
-    page.children.forEach(child => {
-
-      renderTreePage(
-        child,
-        container,
-        level + 1,
-        collapsedPages,
-        draggedPageState,
-        renderTree,
-        saveTreeExpansionState,
-        duplicateTitleIds
-      );
-    });
-  }
+  return item;
 }

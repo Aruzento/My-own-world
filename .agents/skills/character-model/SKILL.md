@@ -17,7 +17,7 @@ description: "Работа с CharacterModel, характеристиками, 
 - `docs/01-delivery/WORK_LOG.md`
 - `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md`
 - `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md`
-- `docs/02-architecture/ARCHIVED_EXPERIMENTS.md`
+- `docs/archive/ARCHIVED_EXPERIMENTS.md`
 
 ## Что Обновить После Задачи
 

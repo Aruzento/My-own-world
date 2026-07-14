@@ -190,6 +190,40 @@
     rgba(255,248,230,0.96);
 }
 
+.tree.is-virtualized {
+
+  overflow-y:
+    auto;
+}
+
+.tree-virtual-viewport,
+.tree-virtual-items {
+
+  display:
+    block;
+}
+
+.tree-virtual-spacer {
+
+  height:
+    0;
+
+  pointer-events:
+    none;
+}
+
+.tree.is-virtualized .tree-item {
+
+  height:
+    38px;
+
+  min-height:
+    38px;
+
+  box-sizing:
+    border-box;
+}
+
 .tree-item.is-linked-token {
 
   background:

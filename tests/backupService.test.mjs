@@ -4,10 +4,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  cleanupIncompleteWorkspaceBackups,
   cleanupWorkspaceBackups,
   createBackupId,
   createBackupManifest,
   getBackupRetentionLimit,
+  listIncompleteWorkspaceBackups,
   normalizeBackupRetentionLimit,
   requireWorkspaceBackupBeforeRiskyOperation,
   createWorkspaceBackup,
@@ -258,6 +260,65 @@ test(
 
 
 test(
+  'risky-operation backup stores pages without blocking on assets',
+  async () => {
+
+    const workspace =
+      new MemoryDirectoryHandle();
+
+    const page =
+      {
+        id: 'map',
+        title: 'Map',
+        type: 'campaignMap',
+        template: 'campaignMap',
+        name: 'map.md',
+        content: '<section data-map-asset="missing-huge-map.png"></section>'
+      };
+
+    await writeWorkspacePage(
+      workspace,
+      page.name,
+      page.content
+    );
+
+    const manifest =
+      await requireWorkspaceBackupBeforeRiskyOperation(
+        'move-page-tree-position',
+        {
+          workspaceHandle:
+            workspace,
+          pages:
+            [page],
+          id:
+            'risky-pages-only'
+        }
+      );
+
+    assert.equal(
+      manifest.pageCount,
+      1
+    );
+
+    assert.equal(
+      manifest.assetCount,
+      0
+    );
+
+    const backupDir =
+      await getBackupDirectory(
+        workspace,
+        'risky-pages-only'
+      );
+
+    await backupDir.getFileHandle(
+      'manifest.json'
+    );
+  }
+);
+
+
+test(
   'cleanupWorkspaceBackups оставляет последние backup',
   async () => {
 
@@ -305,6 +366,81 @@ test(
     await getBackupDirectory(
       workspace,
       'backup-3'
+    );
+  }
+);
+
+
+test(
+  'cleanupIncompleteWorkspaceBackups удаляет только backup без manifest',
+  async () => {
+
+    const workspace =
+      new MemoryDirectoryHandle();
+
+    await createWorkspaceBackup({
+      workspaceHandle:
+        workspace,
+      pages:
+        [],
+      id:
+        'backup-valid',
+      cleanup:
+        false
+    });
+
+    await createIncompleteBackupDirectory(
+      workspace,
+      'backup-broken'
+    );
+
+    const incomplete =
+      await listIncompleteWorkspaceBackups({
+        workspaceHandle:
+          workspace
+      });
+
+    assert.deepEqual(
+      incomplete.map(backup => backup.id),
+      ['backup-broken']
+    );
+
+    assert.equal(
+      incomplete[0].fileCount,
+      1
+    );
+
+    const result =
+      await cleanupIncompleteWorkspaceBackups({
+        workspaceHandle:
+          workspace,
+        backupIds:
+          [
+            'backup-valid',
+            'backup-broken'
+          ]
+      });
+
+    assert.equal(
+      result.removed,
+      1
+    );
+
+    assert.equal(
+      result.skipped,
+      1
+    );
+
+    await getBackupDirectory(
+      workspace,
+      'backup-valid'
+    );
+
+    await assert.rejects(
+      () => getBackupDirectory(
+        workspace,
+        'backup-broken'
+      )
     );
   }
 );
@@ -485,6 +621,47 @@ async function getBackupDirectory(
 
   return root.getDirectoryHandle(
     id
+  );
+}
+
+
+async function createIncompleteBackupDirectory(
+  workspace,
+  id
+) {
+
+  const root =
+    await workspace.getDirectoryHandle(
+      '.my-own-world-backups',
+      {
+        create: true
+      }
+    );
+
+  const backupDir =
+    await root.getDirectoryHandle(
+      id,
+      {
+        create: true
+      }
+    );
+
+  const pagesDir =
+    await backupDir.getDirectoryHandle(
+      'pages',
+      {
+        create: true
+      }
+    );
+
+  await writeMemoryFile(
+    await pagesDir.getFileHandle(
+      'partial.md',
+      {
+        create: true
+      }
+    ),
+    'partial backup'
   );
 }
 

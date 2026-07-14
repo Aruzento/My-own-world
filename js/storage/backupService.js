@@ -14,6 +14,10 @@ import {
   normalizeWorkspacePath
 } from './storageAdapterContract.js';
 
+import {
+  measureWorkspaceOperation
+} from '../performance/workspacePerformance.js';
+
 
 export const BACKUP_ROOT_DIR =
   '.my-own-world-backups';
@@ -102,6 +106,27 @@ export async function createWorkspaceBackup(
   options = {}
 ) {
 
+  return measureWorkspaceOperation(
+    'backup.create',
+    () => createWorkspaceBackupMeasured(
+      options
+    ),
+    {
+      counts: result => ({
+        pages:
+          result?.pageCount || 0,
+        assets:
+          result?.assetCount || 0
+      })
+    }
+  );
+}
+
+
+async function createWorkspaceBackupMeasured(
+  options = {}
+) {
+
   const storageAdapter =
     getBackupStorageAdapter(
       options
@@ -110,11 +135,18 @@ export async function createWorkspaceBackup(
   const pages =
     options.pages || state.pages || [];
 
+  const includeAssets =
+    options.includeAssets !== false;
+
   const assetReferences =
-    options.assetReferences ||
-    collectAssetReferencesFromPages(
-      pages
-    );
+    includeAssets
+      ? (
+        options.assetReferences ||
+        collectAssetReferencesFromPages(
+          pages
+        )
+      )
+      : [];
 
   const reason =
     options.reason || 'manual';
@@ -126,6 +158,16 @@ export async function createWorkspaceBackup(
 
   const snapshotPath =
     `${BACKUP_ROOT_DIR}/${id}`;
+
+  reportProgress(
+    options,
+    {
+      label: 'Backup',
+      stage: 'подготовка',
+      current: 0,
+      total: pages.length
+    }
+  );
 
   await storageAdapter.ensureDirectory(
     `${snapshotPath}/${BACKUP_PAGES_DIR}`
@@ -143,7 +185,14 @@ export async function createWorkspaceBackup(
       assetReferences
     });
 
-  for (const page of pages) {
+  for (
+    let index = 0;
+    index < pages.length;
+    index += 1
+  ) {
+
+    const page =
+      pages[index];
 
     const fileName =
       getBackupPageFileName(
@@ -157,13 +206,28 @@ export async function createWorkspaceBackup(
         storageAdapter
       )
     );
+
+    reportProgress(
+      options,
+      {
+        label: 'Backup',
+        stage: 'страницы',
+        current: index + 1,
+        total: pages.length
+      }
+    );
   }
 
   const copiedAssets =
     await copyAssetsToBackup({
       storageAdapter,
       snapshotPath,
-      assetReferences
+      assetReferences,
+      onProgress:
+        progress => reportProgress(
+          options,
+          progress
+        )
     });
 
   manifest.assetCount =
@@ -223,7 +287,11 @@ export async function requireWorkspaceBackupBeforeRiskyOperation(
   const manifest =
     await createWorkspaceBackupBeforeRiskyOperation(
       reason,
-      options
+      {
+        includeAssets:
+          false,
+        ...options
+      }
     );
 
   if (!manifest) {
@@ -363,7 +431,280 @@ export async function listWorkspaceBackups(
 
 export async function restoreWorkspaceBackup(
   backupId,
-  storageAdapterOrHandle = null
+  storageAdapterOrHandle = null,
+  options = {}
+) {
+
+  return measureWorkspaceOperation(
+    'backup.restore',
+    () => restoreWorkspaceBackupMeasured(
+      backupId,
+      storageAdapterOrHandle,
+      options
+    ),
+    {
+      counts: result => ({
+        pages:
+          result?.restoredPages || 0,
+        assets:
+          result?.restoredAssets || 0
+      })
+    }
+  );
+}
+
+
+export async function listIncompleteWorkspaceBackups({
+  storageAdapter = null,
+  workspaceHandle = null,
+  onProgress = null
+} = {}) {
+
+  return measureWorkspaceOperation(
+    'backup.listIncomplete',
+    () => listIncompleteWorkspaceBackupsMeasured({
+      storageAdapter,
+      workspaceHandle,
+      onProgress
+    }),
+    {
+      counts: result => ({
+        incomplete:
+          result?.length || 0
+      })
+    }
+  );
+}
+
+
+async function listIncompleteWorkspaceBackupsMeasured({
+  storageAdapter = null,
+  workspaceHandle = null,
+  onProgress = null
+} = {}) {
+
+  const adapter =
+    getBackupStorageAdapter({
+      storageAdapter,
+      workspaceHandle
+    });
+
+  let entries;
+
+  try {
+
+    entries =
+      await adapter.listFiles(
+        BACKUP_ROOT_DIR
+      );
+
+  } catch (error) {
+
+    return [];
+  }
+
+  const directories =
+    entries.filter(entry =>
+      entry.kind === 'directory'
+    );
+
+  const incomplete =
+    [];
+
+  for (
+    let index = 0;
+    index < directories.length;
+    index += 1
+  ) {
+
+    const entry =
+      directories[index];
+
+    const backupPath =
+      `${BACKUP_ROOT_DIR}/${entry.name}`;
+
+    const manifest =
+      await readBackupManifestSilent(
+        adapter,
+        backupPath
+      );
+
+    reportProgress(
+      {
+        onProgress
+      },
+      {
+        label: 'Backup scan',
+        stage: 'проверка',
+        current: index + 1,
+        total: directories.length
+      }
+    );
+
+    if (manifest) continue;
+
+    const stats =
+      await collectDirectoryStats(
+        adapter,
+        backupPath
+      );
+
+    incomplete.push({
+      id:
+        entry.name,
+      path:
+        backupPath,
+      fileCount:
+        stats.fileCount,
+      directoryCount:
+        stats.directoryCount,
+      sizeBytes:
+        stats.sizeBytes,
+      sizeUnknown:
+        stats.sizeUnknown,
+      reason:
+        'manifest-missing'
+    });
+  }
+
+  return incomplete.sort((a, b) =>
+    String(b.id).localeCompare(
+      String(a.id)
+    )
+  );
+}
+
+
+export async function cleanupIncompleteWorkspaceBackups({
+  storageAdapter = null,
+  workspaceHandle = null,
+  backupIds = [],
+  onProgress = null
+} = {}) {
+
+  return measureWorkspaceOperation(
+    'backup.cleanupIncomplete',
+    () => cleanupIncompleteWorkspaceBackupsMeasured({
+      storageAdapter,
+      workspaceHandle,
+      backupIds,
+      onProgress
+    }),
+    {
+      counts: result => ({
+        removed:
+          result?.removed || 0,
+        skipped:
+          result?.skipped || 0
+      })
+    }
+  );
+}
+
+
+async function cleanupIncompleteWorkspaceBackupsMeasured({
+  storageAdapter = null,
+  workspaceHandle = null,
+  backupIds = [],
+  onProgress = null
+} = {}) {
+
+  const adapter =
+    getBackupStorageAdapter({
+      storageAdapter,
+      workspaceHandle
+    });
+
+  const requestedIds =
+    new Set(
+      backupIds.map(id =>
+        String(id || '')
+      ).filter(Boolean)
+    );
+
+  if (requestedIds.size === 0) {
+
+    return {
+      removed: 0,
+      skipped: 0
+    };
+  }
+
+  const incomplete =
+    await listIncompleteWorkspaceBackupsMeasured({
+      storageAdapter:
+        adapter
+    });
+
+  const allowed =
+    new Map(
+      incomplete.map(backup => [
+        backup.id,
+        backup
+      ])
+    );
+
+  let removed =
+    0;
+
+  let skipped =
+    0;
+
+  const ids =
+    [
+      ...requestedIds
+    ];
+
+  for (
+    let index = 0;
+    index < ids.length;
+    index += 1
+  ) {
+
+    const id =
+      ids[index];
+
+    const backup =
+      allowed.get(
+        id
+      );
+
+    if (!backup) {
+
+      skipped += 1;
+      continue;
+    }
+
+    await adapter.removeDirectory(
+      backup.path
+    );
+
+    removed += 1;
+
+    reportProgress(
+      {
+        onProgress
+      },
+      {
+        label: 'Backup cleanup',
+        stage: 'недособранные',
+        current: index + 1,
+        total: ids.length
+      }
+    );
+  }
+
+  return {
+    removed,
+    skipped
+  };
+}
+
+
+async function restoreWorkspaceBackupMeasured(
+  backupId,
+  storageAdapterOrHandle = null,
+  options = {}
 ) {
 
   const isAdapter =
@@ -404,7 +745,17 @@ export async function restoreWorkspaceBackup(
   let restoredPages =
     0;
 
-  for (const page of manifest.pages || []) {
+  const pages =
+    manifest.pages || [];
+
+  for (
+    let index = 0;
+    index < pages.length;
+    index += 1
+  ) {
+
+    const page =
+      pages[index];
 
     const fileName =
       page.name;
@@ -422,13 +773,28 @@ export async function restoreWorkspaceBackup(
     );
 
     restoredPages += 1;
+
+    reportProgress(
+      options,
+      {
+        label: 'Restore',
+        stage: 'страницы',
+        current: index + 1,
+        total: pages.length
+      }
+    );
   }
 
   const restoredAssets =
     await restoreBackupAssets({
       storageAdapter,
       snapshotPath,
-      manifest
+      manifest,
+      onProgress:
+        progress => reportProgress(
+          options,
+          progress
+        )
     });
 
   return {
@@ -442,7 +808,35 @@ export async function restoreWorkspaceBackup(
 export async function cleanupWorkspaceBackups({
   storageAdapter = null,
   workspaceHandle = null,
-  keepLatest = BACKUP_DEFAULT_RETENTION
+  keepLatest = BACKUP_DEFAULT_RETENTION,
+  onProgress = null
+} = {}) {
+
+  return measureWorkspaceOperation(
+    'backup.cleanup',
+    () => cleanupWorkspaceBackupsMeasured({
+      storageAdapter,
+      workspaceHandle,
+      keepLatest,
+      onProgress
+    }),
+    {
+      counts: result => ({
+        removed:
+          result?.removed || 0,
+        kept:
+          result?.kept || 0
+      })
+    }
+  );
+}
+
+
+async function cleanupWorkspaceBackupsMeasured({
+  storageAdapter = null,
+  workspaceHandle = null,
+  keepLatest = BACKUP_DEFAULT_RETENTION,
+  onProgress = null
 } = {}) {
 
   const adapter =
@@ -471,7 +865,14 @@ export async function cleanupWorkspaceBackups({
   let removed =
     0;
 
-  for (const backup of toRemove) {
+  for (
+    let index = 0;
+    index < toRemove.length;
+    index += 1
+  ) {
+
+    const backup =
+      toRemove[index];
 
     try {
 
@@ -480,6 +881,18 @@ export async function cleanupWorkspaceBackups({
       );
 
       removed += 1;
+
+      reportProgress(
+        {
+          onProgress
+        },
+        {
+          label: 'Backup cleanup',
+          stage: 'удаление',
+          current: index + 1,
+          total: toRemove.length
+        }
+      );
 
     } catch (error) {
 
@@ -520,6 +933,138 @@ async function readBackupManifest(
     );
 
     return null;
+  }
+}
+
+
+async function readBackupManifestSilent(
+  storageAdapter,
+  snapshotPath
+) {
+
+  try {
+
+    return JSON.parse(
+      await storageAdapter.readText(
+        `${snapshotPath}/manifest.json`
+      )
+    );
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+async function collectDirectoryStats(
+  storageAdapter,
+  path
+) {
+
+  const stats =
+    {
+      fileCount: 0,
+      directoryCount: 0,
+      sizeBytes: 0,
+      sizeUnknown: false
+    };
+
+  await collectDirectoryStatsInto(
+    storageAdapter,
+    path,
+    stats
+  );
+
+  return stats;
+}
+
+
+async function collectDirectoryStatsInto(
+  storageAdapter,
+  path,
+  stats
+) {
+
+  let entries;
+
+  try {
+
+    entries =
+      await storageAdapter.listFiles(
+        path
+      );
+
+  } catch {
+
+    stats.sizeUnknown =
+      true;
+
+    return;
+  }
+
+  for (const entry of entries) {
+
+    const childPath =
+      `${path}/${entry.name}`;
+
+    if (entry.kind === 'directory') {
+
+      stats.directoryCount += 1;
+
+      await collectDirectoryStatsInto(
+        storageAdapter,
+        childPath,
+        stats
+      );
+
+      continue;
+    }
+
+    stats.fileCount += 1;
+
+    stats.sizeBytes +=
+      await readFileSize(
+        storageAdapter,
+        childPath
+      );
+  }
+}
+
+
+async function readFileSize(
+  storageAdapter,
+  path
+) {
+
+  try {
+
+    const text =
+      await storageAdapter.readText(
+        path
+      );
+
+    return new TextEncoder()
+      .encode(
+        text
+      )
+      .byteLength;
+
+  } catch {
+
+    try {
+
+      const buffer =
+        await storageAdapter.readBinary(
+          path
+        );
+
+      return buffer?.byteLength || 0;
+
+    } catch {
+
+      return 0;
+    }
   }
 }
 
@@ -565,13 +1110,21 @@ async function readPageBackupContent(
 async function copyAssetsToBackup({
   storageAdapter,
   snapshotPath,
-  assetReferences
+  assetReferences,
+  onProgress = null
 }) {
 
   let copied =
     0;
 
-  for (const reference of assetReferences) {
+  for (
+    let index = 0;
+    index < assetReferences.length;
+    index += 1
+  ) {
+
+    const reference =
+      assetReferences[index];
 
     if (!reference?.path) continue;
 
@@ -594,6 +1147,13 @@ async function copyAssetsToBackup({
 
       copied += 1;
 
+      onProgress?.({
+        label: 'Backup',
+        stage: 'assets',
+        current: index + 1,
+        total: assetReferences.length
+      });
+
     } catch (error) {
 
       console.warn(
@@ -611,13 +1171,24 @@ async function copyAssetsToBackup({
 async function restoreBackupAssets({
   storageAdapter,
   snapshotPath,
-  manifest
+  manifest,
+  onProgress = null
 }) {
 
   let restored =
     0;
 
-  for (const reference of manifest.assets || []) {
+  const assets =
+    manifest.assets || [];
+
+  for (
+    let index = 0;
+    index < assets.length;
+    index += 1
+  ) {
+
+    const reference =
+      assets[index];
 
     if (!reference?.path) continue;
 
@@ -640,6 +1211,13 @@ async function restoreBackupAssets({
 
       restored += 1;
 
+      onProgress?.({
+        label: 'Restore',
+        stage: 'assets',
+        current: index + 1,
+        total: assets.length
+      });
+
     } catch (error) {
 
       console.warn(
@@ -651,6 +1229,19 @@ async function restoreBackupAssets({
   }
 
   return restored;
+}
+
+
+function reportProgress(
+  options,
+  progress
+) {
+
+  if (typeof options?.onProgress !== 'function') return;
+
+  options.onProgress(
+    progress
+  );
 }
 
 

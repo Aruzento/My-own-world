@@ -9,20 +9,28 @@ import {
 /* Импорт из деревьев */
 
 import {
-  sortTreePages
-} from './treeUtils.js';
-
-import {
   renderRootDropZone
 } from './treeRootDropZone.js';
 
 import {
+  createTreePageElement,
   renderTreePage
 } from './treeRender.js';
 
 import {
   getTreePageKeys
 } from './treeKeys.js';
+
+import {
+  buildVisibleTreeRows,
+  getVirtualTreeRange,
+  shouldVirtualizeTree,
+  TREE_VIRTUAL_ROW_HEIGHT
+} from './treeVirtualization.js';
+
+import {
+  getDuplicatePageTitleIds
+} from '../validation/pageTitleValidation.js';
 
 /* --------------- */
 
@@ -46,6 +54,12 @@ const collapsedPages =
   new Set();
 
 let workspaceSaveTimer =
+  null;
+
+let treeVirtualScrollHandler =
+  null;
+
+let treeVirtualState =
   null;
 
 loadTreeExpansionState();
@@ -87,6 +101,10 @@ export function revealPageInTree(
   requestAnimationFrame(
     () => {
 
+      scrollVirtualTreePageIntoView(
+        pageId
+      );
+
       const item =
         document.querySelector(
           `.tree-item[data-page-id="${CSS.escape(pageId)}"]`
@@ -122,64 +140,274 @@ export function renderFilteredTree(
 
   loadTreeExpansionState();
 
+  const previousScrollTop =
+    tree.scrollTop;
+
+  detachTreeVirtualization(
+    tree
+  );
+
   tree.innerHTML = '';
 
   renderRootDropZone(
-  tree
-);
+    tree
+  );
 
-
-  const pageMap =
-    new Map();
-
-  pages.forEach(page => {
-
-    page.children = [];
-
-    pageMap.set(
-      page.id,
-      page
+  const {
+    rootPages,
+    rows
+  } =
+    buildVisibleTreeRows(
+      pages,
+      collapsedPages
     );
-  });
 
-  const rootPages = [];
+  if (
+    shouldVirtualizeTree(
+      rows.length
+    )
+  ) {
 
+    renderVirtualizedTree(
+      tree,
+      rows,
+      previousScrollTop
+    );
 
-  pages.forEach(page => {
-
-    if (
-      page.parent
-      &&
-      pageMap.has(page.parent)
-    ) {
-
-      pageMap
-        .get(page.parent)
-        .children
-        .push(page);
-
-    } else {
-
-      rootPages.push(page);
-    }
-  });
-
-  sortTreePages(
-  rootPages
-);
+    return;
+  }
 
   rootPages.forEach(page => {
 
     renderTreePage(
-  page,
-  tree,
-  0,
-  collapsedPages,
-  draggedPageState,
-  renderTree,
-  saveTreeExpansionState
-);
+      page,
+      tree,
+      0,
+      collapsedPages,
+      draggedPageState,
+      renderTree,
+      saveTreeExpansionState
+    );
   });
+
+  tree.scrollTop =
+    previousScrollTop;
+}
+
+
+function renderVirtualizedTree(
+  tree,
+  rows,
+  initialScrollTop = 0
+) {
+
+  tree.classList.add(
+    'is-virtualized'
+  );
+
+  const viewport =
+    document.createElement('div');
+
+  viewport.className =
+    'tree-virtual-viewport';
+
+  const topSpacer =
+    document.createElement('div');
+
+  topSpacer.className =
+    'tree-virtual-spacer';
+
+  const items =
+    document.createElement('div');
+
+  items.className =
+    'tree-virtual-items';
+
+  const bottomSpacer =
+    document.createElement('div');
+
+  bottomSpacer.className =
+    'tree-virtual-spacer';
+
+  viewport.append(
+    topSpacer,
+    items,
+    bottomSpacer
+  );
+
+  tree.appendChild(
+    viewport
+  );
+
+  const duplicateTitleIds =
+    getDuplicatePageTitleIds();
+
+  treeVirtualState = {
+    tree,
+    rows,
+    topSpacer,
+    items,
+    bottomSpacer,
+    duplicateTitleIds,
+    lastStart: -1,
+    lastEnd: -1
+  };
+
+  treeVirtualScrollHandler =
+    () => {
+
+      renderVirtualTreeWindow();
+    };
+
+  tree.addEventListener(
+    'scroll',
+    treeVirtualScrollHandler,
+    {
+      passive: true
+    }
+  );
+
+  tree.scrollTop =
+    initialScrollTop;
+
+  renderVirtualTreeWindow();
+}
+
+
+function renderVirtualTreeWindow() {
+
+  if (!treeVirtualState) return;
+
+  const {
+    tree,
+    rows,
+    topSpacer,
+    items,
+    bottomSpacer,
+    duplicateTitleIds
+  } =
+    treeVirtualState;
+
+  const range =
+    getVirtualTreeRange({
+      rowCount: rows.length,
+      scrollTop: tree.scrollTop,
+      viewportHeight: tree.clientHeight,
+      rootOffset: getTreeRootOffset(
+        tree
+      )
+    });
+
+  if (
+    range.start === treeVirtualState.lastStart &&
+    range.end === treeVirtualState.lastEnd
+  ) {
+
+    return;
+  }
+
+  treeVirtualState.lastStart =
+    range.start;
+
+  treeVirtualState.lastEnd =
+    range.end;
+
+  topSpacer.style.height =
+    `${range.padTop}px`;
+
+  bottomSpacer.style.height =
+    `${range.padBottom}px`;
+
+  const fragment =
+    document.createDocumentFragment();
+
+  rows
+    .slice(
+      range.start,
+      range.end
+    )
+    .forEach(row => {
+
+      fragment.appendChild(
+        createTreePageElement(
+          row.page,
+          row.level,
+          collapsedPages,
+          draggedPageState,
+          renderTree,
+          saveTreeExpansionState,
+          duplicateTitleIds
+        )
+      );
+    });
+
+  items.replaceChildren(
+    fragment
+  );
+}
+
+
+function detachTreeVirtualization(
+  tree
+) {
+
+  tree.classList.remove(
+    'is-virtualized'
+  );
+
+  if (treeVirtualScrollHandler) {
+
+    tree.removeEventListener(
+      'scroll',
+      treeVirtualScrollHandler
+    );
+  }
+
+  treeVirtualScrollHandler =
+    null;
+
+  treeVirtualState =
+    null;
+}
+
+
+function scrollVirtualTreePageIntoView(
+  pageId
+) {
+
+  if (!treeVirtualState || !pageId) return;
+
+  const index =
+    treeVirtualState.rows.findIndex(row =>
+      row.page.id === pageId
+    );
+
+  if (index < 0) return;
+
+  treeVirtualState.tree.scrollTo({
+    top:
+      getTreeRootOffset(
+        treeVirtualState.tree
+      ) + index * TREE_VIRTUAL_ROW_HEIGHT,
+    behavior: 'smooth'
+  });
+
+  renderVirtualTreeWindow();
+}
+
+
+function getTreeRootOffset(
+  tree
+) {
+
+  const rootDropZone =
+    tree.querySelector(
+      '.tree-root-drop-zone'
+    );
+
+  if (!rootDropZone) return 0;
+
+  return rootDropZone.offsetHeight + 4;
 }
 
 

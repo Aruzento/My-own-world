@@ -577,18 +577,18 @@ function getTokenSkillPopupHTML(
   if (!skills.length) {
 
     return `
-      <div class="campaign-token-skill-title">РќР°РІС‹РєРё РЅРµ РЅР°Р№РґРµРЅС‹</div>
-      <div class="campaign-token-skill-hint">Р”Р»СЏ СЌС‚РѕР№ РєР°СЂС‚РѕС‡РєРё РЅРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР±СЂР°С‚СЊ СЂР°СЃС‡РµС‚С‹ CharacterModel.</div>
+      <div class="campaign-token-skill-title">Навыки не найдены</div>
+      <div class="campaign-token-skill-hint">Для этой карточки не удалось собрать расчеты CharacterModel.</div>
       <div class="campaign-token-skill-actions">
-        <button class="campaign-token-skill-cancel" type="button">РќР°Р·Р°Рґ</button>
+        <button class="campaign-token-skill-cancel" type="button">Назад</button>
       </div>
     `;
   }
 
   return `
-    <div class="campaign-token-skill-title">РќР°РІС‹Рє / РґРµР№СЃС‚РІРёРµ</div>
+    <div class="campaign-token-skill-title">Навык / действие</div>
     <label class="campaign-token-skill-field">
-      <span>РќР°РІС‹Рє</span>
+      <span>Навык</span>
       <select class="campaign-token-skill-select">
         ${skills.map(skill => `
           <option value="${escapeAttribute(skill.key)}">
@@ -599,22 +599,22 @@ function getTokenSkillPopupHTML(
     </label>
     <div class="campaign-token-skill-row">
       <label class="campaign-token-skill-field">
-        <span>Р”РёСЃС‚Р°РЅС†РёСЏ</span>
+        <span>Дистанция</span>
         <input class="campaign-token-skill-range" type="text" value="5 ft">
       </label>
       <label class="campaign-token-skill-field">
-        <span>Р—РѕРЅР°</span>
+        <span>Зона</span>
         <select class="campaign-token-skill-area">
-          <option value="single">Р¦РµР»СЊ</option>
-          <option value="line">Р›РёРЅРёСЏ</option>
-          <option value="cone">РљРѕРЅСѓСЃ</option>
-          <option value="circle">РљСЂСѓРі</option>
+          <option value="single">Цель</option>
+          <option value="line">Линия</option>
+          <option value="cone">Конус</option>
+          <option value="circle">Круг</option>
         </select>
       </label>
     </div>
     <div class="campaign-token-skill-actions">
-      <button class="campaign-token-skill-cancel" type="button">РќР°Р·Р°Рґ</button>
-      <button class="campaign-token-skill-apply" type="button">РџСЂРёРјРµРЅРёС‚СЊ</button>
+      <button class="campaign-token-skill-cancel" type="button">Назад</button>
+      <button class="campaign-token-skill-apply" type="button">Применить</button>
     </div>
   `;
 }

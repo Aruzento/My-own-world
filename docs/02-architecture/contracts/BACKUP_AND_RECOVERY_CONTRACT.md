@@ -115,10 +115,44 @@ Restore первого слоя работает осторожно:
 
 `requireWorkspaceBackupBeforeRiskyOperation()` is the required gate for risky operations that mutate or delete workspace data. If the snapshot cannot be created, the operation must stop before changing files or in-memory page metadata.
 
+Risky-operation snapshots are page-first by default: they store page files and a manifest, but skip asset copying unless explicitly requested. This keeps tree delete/move reliable on large legacy workspaces where missing or heavy media files can make full manual backups slow or fragile. Manual backups may still include assets.
+
 Current automatic snapshot points:
 
 - page branch deletion;
 - page parent move;
 - tree reorder / move.
 
+Tree reorder/move must create one risky-operation snapshot per user drop, not one snapshot per changed sibling. Use batch tree-position writes for DnD plans so large sibling lists do not create multiple backups for a single visible action.
+
+Long-running backup and restore operations should accept an optional `onProgress(progress)` callback. The callback payload is intentionally simple and UI-neutral:
+
+- `label` - visible operation label, for example `Backup`;
+- `stage` - current phase, for example `страницы`, `assets`, `cleanup`;
+- `current` - completed item count;
+- `total` - total item count when known.
+
+The current UI may render this in the statusbar through `createProgressMessage()`. Future modal progress UI should reuse the same callback shape instead of inventing another contract.
+
+Backup create/restore/cleanup should also be wrapped with workspace performance measurement so large workspace work can be diagnosed after the fact. Performance events are diagnostic runtime data, not persistent workspace content.
+
 The settings popup exposes a retention limit control. The limit is persisted in local storage as `myOwnWorld.backup.retentionLimit`, clamped to `1..200`, and used by `createWorkspaceBackup()` cleanup. Manual cleanup from the settings popup must use the same limit and must never remove every backup.
+
+## Incomplete Backup Cleanup
+
+An incomplete backup is a directory inside `.my-own-world-backups/` that does not have a readable `manifest.json`.
+
+Cleanup rules:
+
+- incomplete backup cleanup must scan first and show the candidate list to the user;
+- the UI must show at least id, file count and approximate size;
+- deletion requires a separate confirmation after the list is visible;
+- cleanup must re-check candidates before deleting and must not delete valid backups even if their ids are passed accidentally;
+- this cleanup is separate from retention cleanup for valid backups.
+
+The current API is:
+
+- `listIncompleteWorkspaceBackups()` - scan only, no writes;
+- `cleanupIncompleteWorkspaceBackups({ backupIds })` - delete only confirmed incomplete candidates.
+
+Large workspace probe results from 2026-07-14 showed that tree move/delete file writes are fast on `X:\ДНД\Мастер\База`, while full page read/parse is expensive. Tree DnD should not call full workspace reload after a successful drop.

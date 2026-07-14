@@ -128,6 +128,13 @@ function checkJavaScriptSyntax() {
 }
 
 
+run(
+  process.execPath,
+  [
+    'tools/check_text_encoding.mjs'
+  ]
+);
+
 checkJavaScriptSyntax();
 
 run(

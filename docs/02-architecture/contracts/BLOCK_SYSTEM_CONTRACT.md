@@ -223,4 +223,4 @@ Universal list block использует `data-block-type="list"` и `data-list
 - не делать `Buffer -> string` без явного encoding;
 - не добавлять runtime auto-fix encoding в приложение;
 - если текст сломался, исправлять источник, а не декодировать его во время работы;
-- перед merge/review проверять diff на mojibake-маркеры из пользовательского чеклиста: `Рќ` + `Р°`, `СЃ` + `Рї` + `Р°`.
+- перед merge/review проверять diff на mojibake-маркеры через `npm run check:encoding` и не добавлять примеры битой кодировки прямо в документацию.
