@@ -1,22 +1,24 @@
 ---
-summary: "Реестр архивных документов проекта."
+summary: "Registry of archived project documents."
 read_when:
-  - "Когда нужно понять, почему документ убран из активной документации"
-  - "Когда проверяем, можно ли восстановить старую идею"
+  - "When investigating why a document was removed from active docs"
+  - "When checking whether an old idea can be restored"
 owner_zone: "archive"
 ---
-# Архив документации
 
-Здесь лежат документы, которые больше не являются рабочим источником правды. Их нельзя удалять без отдельного решения: они нужны для истории, трассировки решений и возврата к старым идеям.
+# Documentation Archive
 
-## Документы
+This folder stores documents that are no longer the active source of truth. Do not delete or restore them without a separate task: they preserve history, decisions, and old ideas.
 
-| Документ | Причина архивации | Что читать вместо него |
+## Documents
+
+| Document | Why archived | Active source instead |
 | --- | --- | --- |
-| `PLANS_AND_TECH_DEBT.md` | Старый объединенный план заменен версионным планом проекта. | `docs/01-delivery/PROJECT_PLAN.md` |
-| `PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md` | Старый план зрелости объединен с основным планом. | `docs/01-delivery/PROJECT_PLAN.md` и `docs/00-product/PRODUCT_DASHBOARD.md` |
-| `ARCHIVED_EXPERIMENTS.md` | Сам документ является архивом старых экспериментов и не должен лежать в активной архитектурной зоне. | `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md`, `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md`, `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` |
+| `PLANS_AND_TECH_DEBT.md` | Old combined plan replaced by the versioned project plan. | `docs/01-delivery/PROJECT_PLAN.md` |
+| `PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md` | Old maturity plan merged into the active project plan and product dashboard. | `docs/01-delivery/PROJECT_PLAN.md`, `docs/00-product/PRODUCT_DASHBOARD.md` |
+| `ARCHIVED_EXPERIMENTS.md` | The document itself is an archive of old experiments and should not live in active architecture docs. | `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md`, `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md`, `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` |
+| `PROJECT_PLAN_BEFORE_0.0.1.0.0_2026-07-14.md` | Previous active plan archived before starting version 1 numbering from `0.0.1.0.0`. | `docs/01-delivery/PROJECT_PLAN.md` |
 
-## Правило
+## Rule
 
-Если документ частично нужен в будущем, его не удаляем. Переносим сюда, добавляем причину и ссылку на актуальный рабочий документ.
+If part of an archived document is still useful, copy only the relevant idea into the active plan or a contract. Do not move archived files back into active docs without updating references and metadata.

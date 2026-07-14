@@ -1,5 +1,5 @@
 ---
-summary: "Single active project plan, backlog, priorities, and technical debt."
+summary: "Active project plan for MyOwnWorld version 1 work."
 read_when:
   - "Before choosing the next task"
   - "When updating delivery status"
@@ -8,259 +8,217 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Дата обновления: 2026-07-11
+Updated: 2026-07-14
 
-Этот файл содержит один активный план работ. Выполненное уходит в архив внизу файла и подробно фиксируется в [WORK_LOG.md](./WORK_LOG.md). Если задача сделана частично, незакрытая часть остается в активном плане отдельным подпунктом.
+Planning version: 1
 
-## Правила Ведения Плана
+Numbering starts at `0.0.1.0.0`.
 
-- Нумерация идет как версия: `0.0.0.X`, подпункты расширяют номер.
-- Пункты отмечаются как **сделано** только после реализации и проверки.
-- P0/P1 задачи должны иметь автотест или явное объяснение, почему тест невозможен.
-- Если задача меняет пользовательское поведение, обновляются release notes, manual или tester instructions.
-- Если задача выявляет будущую работу, она добавляется как подпункт, а не теряется в комментариях.
+This file contains only active and unfinished work. Completed history lives in [WORK_LOG.md](./WORK_LOG.md) and archived plans in [docs/archive](../archive/README.md).
 
-## Активный План
+## Rules
 
-### 0.0.0.7. Workspace Scale & Performance Gate
+- Bugs and broken user flows have priority over new features.
+- Completed work moves to `WORK_LOG.md` or an archive, not to the active plan.
+- Partially completed work stays here as a smaller unfinished task.
+- P0/P1 work needs an automated test or a clear note explaining why automation is not possible yet.
+- If user-visible behavior changes, update release notes, tester instructions, or the manual.
+- Future work is allowed here only when it is still actionable and should not be forgotten.
 
-Статус: **P0, следующий крупный блок**.
+## Active Plan
 
-Цель: MyOwnWorld должен уверенно работать как worldbuild OS на больших workspace: сотни и тысячи страниц, много картинок, большие карты, старые backup-и и крупные деревья не должны превращать операции в “кажется зависло”.
+### 0.0.1.0.0. P0 Bug Triage & Stabilization
 
-0.0.0.7.1. Измерить операции большого workspace.
+Goal: restore confidence in the core product before adding more features. MyOwnWorld must feel predictable in browser and desktop on both small and large workspaces.
 
-Описание: добавить сценарии и метрики для workspace масштаба `X:\ДНД\Мастер\База`: загрузка, построение дерева, поиск, перенос, удаление, backup gate, cleanup, открытие карты.
+0.0.1.0.1. Build a current bug inventory.
 
-Статус: **частично сделано 2026-07-14**. Добавлен общий performance layer `js/performance/workspacePerformance.js`: операции tree delete, batch tree move, backup create, backup restore и backup cleanup записывают duration/count/status в bounded in-memory history. Добавлены unit regression для successful/failed events, ограничения истории, batch move/delete метрик. Добавлен real-workspace probe `tools/probe_large_workspace_tree_performance.mjs`; на `X:\ДНД\Мастер\База` замерены 691 страница, чтение/parse ~5.3 сек, move/delete временных probe-страниц ~0 мс. Осталось: встроить постоянный desktop/browser smoke на загрузку/поиск/wiki lookup/карту.
+Description: list broken or suspicious user flows from recent work: tree operations, delete, drag and drop, map presentation, drawing, music playlists, properties grid, desktop assets, graph view, and large workspace latency.
 
-0.0.0.7.2. Добавить progress UI для долгих операций.
+0.0.1.0.2. Run a manual smoke pass in browser and desktop.
 
-Описание: перенос, удаление, backup, restore, asset scan и cleanup должны показывать понятный прогресс, текущий этап и итог. Пользователь должен понимать, что программа работает.
+Description: check workspace open, page create, rename, move, delete, search, wiki-link, card edit, save/reload, map open, map presentation, properties block, backup/restore, and playlist playback.
 
-Статус: **частично сделано 2026-07-14**. Статусбар теперь получает progress callbacks для переноса в дереве, удаления ветки, ручного backup, restore и cleanup backup: показывается этап и счетчик страниц/assets/backups. Осталось: progress UI для asset scan/asset cleanup и более заметная desktop-индикация для очень долгих операций, если статусбара будет недостаточно.
+0.0.1.0.3. Fix P0/P1 broken flows before new features.
 
-0.0.0.7.3. Ускорить auto-backup перед рискованными операциями.
+Description: fix any flow that blocks normal work, corrupts data, loses user edits, prevents opening a workspace, or makes a main feature unusable.
 
-Описание: page-first auto-backup уже введен для tree delete/move. Нужно закрепить это в UI и тестах на реальном сценарии большого workspace, а полный asset-backup оставить ручной операцией.
+0.0.1.0.4. Add regression coverage for fixed P0/P1 bugs.
 
-Статус: **сделано 2026-07-14**. `includeAssets: false` для risky-operation backup закреплен для tree delete/move, UI показывает progress, а DnD дерева больше не делает полный `loadWorkspace()` после drop. Реальный probe на `X:\ДНД\Мастер\База` подтвердил, что файловый move/delete быстрый, а основной старый тормоз был в перечитывании всех markdown-страниц.
+Description: every fixed critical bug should get a unit, browser, or desktop smoke scenario. If automation is not practical, document the manual check in tester instructions.
 
-0.0.0.7.4. Сделать cleanup недособранных backup.
+0.0.1.0.5. Update tester instructions and known issues.
 
-Описание: добавить безопасный инструмент, который находит `.my-own-world-backups/*` без `manifest.json`, показывает список и размер, затем удаляет только после подтверждения пользователя.
+Description: keep the human testing path short and understandable: what to open, what to click, what result proves the fix.
 
-Статус: **сделано 2026-07-14**. Добавлены `listIncompleteWorkspaceBackups()` и `cleanupIncompleteWorkspaceBackups()`, UI-кнопки в настройках backup, повторная защита от удаления валидных backup и unit regression. В реальном workspace `X:\ДНД\Мастер\База` найдено и после подтверждения удалено 12 недособранных backup без `manifest.json`; контрольный скан пустой.
+### 0.0.1.1.0. Large Workspace Performance & Reliability
 
-0.0.0.7.5. Сделать batch delete/move для дерева.
+Goal: the real large workspace must not feel frozen. Tree rendering, moving, deleting, search, and map opening should stay understandable and responsive.
 
-Описание: операции дерева должны писать минимальный набор файлов, не пересобирать лишнее, не блокироваться на карте/asset cleanup и не держать UI в подвешенном состоянии.
+0.0.1.1.1. Run a real desktop smoke on the known large GM workspace.
 
-Статус: **частично сделано 2026-07-14**. Сбор удаляемой ветки переведен с рекурсивного `state.pages.filter(...)` на parent-index за один проход. DnD дерева теперь применяет `updatePageTreePositions()` пачкой: один risky backup на весь drop и затем минимальные записи измененных страниц; после drop дерево обновляется локально без полной перезагрузки workspace. Реальный probe на `X:\ДНД\Мастер\База` показал, что write/delete быстрые, а дорогое место - полный read/parse всех страниц. Осталось: виртуализация дерева и desktop smoke с настоящим UI-drag.
+Description: open the workspace in the desktop app, scroll the virtual tree, use search, find in tree, create a test page, move it, delete it, open a map, and start presentation mode. Measure visible delays.
 
-0.0.0.7.6. Виртуализировать дерево для больших workspace.
+0.0.1.1.2. Add permanent performance smoke for large workspaces.
 
-Описание: дерево не должно перерисовывать сотни DOM-узлов без нужды. Нужны lazy render, стабильный selection, сохранение раскрытых веток и быстрый DnD target calculation.
+Description: cover load, tree render, search, wiki lookup, move, delete, and map open with repeatable metrics and budgets.
 
-Статус: **сделано 2026-07-14**. Добавлен `js/tree/treeVirtualization.js`: дерево строит полный плоский список видимых строк, но при больших workspace рендерит в DOM только окно вокруг текущего scroll. Порог включения - 250 видимых строк; маленькие деревья остаются в старом полном рендере. `renderTree()` сохраняет collapsed state, active selection, context menu, open-page и pointer DnD через общий `createTreePageElement()`. `revealPageInTree()` умеет прокручивать виртуальное дерево к карточке, которой еще нет в DOM. Добавлены unit tests `tests/treeVirtualization.test.mjs` и browser smoke `tests/browser/tree-virtualization.spec.mjs` на 520 страниц: DOM остается коротким, дальняя страница раскрывается и видна.
+0.0.1.1.3. Finish progress UI for long operations.
 
-0.0.0.7.7. Ускорить PageRepository / PageIndex на больших данных.
+Description: asset scan, asset cleanup, large delete, large move, backup, and restore should show clear progress, not just a vague statusbar message.
 
-Описание: индексы должны обновляться инкрементально после create/rename/move/delete/tag/type change, а не пересобираться полностью там, где это не нужно.
+0.0.1.1.4. Validate batch tree move/delete through real UI drag.
 
-Статус: **сделано 2026-07-14**. `PageIndex` получил `addPage/updatePage/deletePage/deletePages`, а `notifyPageMoved()` и `notifyPageUpdated()` обновляют индекс точечно, когда caller передает состояние страницы до/после изменения. Fallback на полный rebuild оставлен для старого кода, который пока вызывает notify без аргументов.
+Description: verify that optimized batch operations work from actual drag and context-menu delete, not only from unit probes.
 
-0.0.0.7.8. Добавить performance regression.
+0.0.1.1.5. Add workspace diagnostics for heavy workspaces.
 
-Описание: unit/browser сценарии на 1k+ страниц, глубокое дерево, map tokens, asset refs, search/wiki lookup, move/delete с backup gate.
+Description: show pages count, assets count, broken refs, backup health, schema status, and recent slow operations in a readable diagnostics view.
 
-Статус: **частично сделано 2026-07-14**. Добавлены unit regression: инкрементальный PageRepository без полного rebuild, удаление глубокой ветки на 750 страниц, batch tree move с одним risky backup, performance event history и progress callbacks для tree move/delete. Добавлен browser regression для виртуализации дерева на 520 страниц. Осталось: desktop сценарий на реальном большом workspace, поиск/wiki lookup и карта.
+### 0.0.1.2.0. Desktop Product Hardening
 
-### 0.0.0.6. Knowledge Graph: Real Visual Graph
+Goal: desktop should feel like a real app, not a fragile wrapper around the browser build.
 
-Статус: **P0, исправление ожидания продукта**.
+0.0.1.2.1. Finalize desktop install and update flow.
 
-Цель: “Граф связей” должен быть визуальной картой мира, а не списком. Список связей остается вспомогательным режимом.
+Description: document which `.exe` to run, when to use the installer, where data lives, and how to update without losing a workspace.
 
-0.0.0.6.12. Спроектировать настоящий graph canvas.
+0.0.1.2.2. Add desktop workspace diagnostics.
 
-Описание: визуальные узлы и ребра, zoom/pan, fit-to-view, выделение узла, открытие карточки в 1 клик.
+Description: expose permissions, selected workspace path, schema status, asset availability, backup location, and last operation status.
 
-0.0.0.6.13. Сделать readable graph layout.
+0.0.1.2.3. Add desktop large workspace smoke.
 
-Описание: кластеризация по доменам: персонажи, предметы, организации, правила, карты, локации. Первичный layout должен быть понятным без ручной настройки.
+Description: automate or document a repeatable desktop scenario for the real large workspace, including tree, map, images, music, and backup.
 
-0.0.0.6.14. Добавить фильтры графа.
+0.0.1.2.4. Harden desktop release gate.
 
-Описание: фильтр по типам сущностей, типам связей, тегам, “только связанные с текущей карточкой”, “одинокие страницы”.
+Description: before building an installer, run verify, browser smoke, packaging smoke, desktop smoke, and update tester instructions.
 
-0.0.0.6.15. Добавить интерактивность графа.
+### 0.0.1.3.0. Campaign Map Stabilization & UX
 
-Описание: hover preview, click open, drag node, pin node, focus neighborhood, breadcrumbs назад к общему графу.
+Goal: map tools must be simple, fast, and usable during a live game.
 
-0.0.0.6.16. Добавить режим “исследование мира”.
+0.0.1.3.1. Stabilize presentation mode.
 
-Описание: показать центры мира, плотность связей, изолированные области, важные узлы, потенциальные пробелы.
+Description: presentation must sync map changes quickly, preserve correct fog/layer order, show distance arrows while moving, and avoid long blank loading.
 
-0.0.0.6.17. Добавить graph performance gate.
+0.0.1.3.2. Finish drawing tools.
 
-Описание: граф должен оставаться быстрым на больших workspace; если узлов слишком много, нужен level-of-detail и ограничение видимой области.
+Description: canvas, pencil, Figma-like pen, eraser, fill, color picker, recent colors, deletion with `Del`, and drawing layers must work cleanly and predictably.
 
-0.0.0.6.18. Добавить regression tests для graph model и graph UI.
+0.0.1.3.3. Finish map layers.
 
-Описание: typed relationships, orphan view, фильтры, focus mode, открытие карточки, сохранение связей.
+Description: objects, creatures, drawings, fog, and locked fog zones should appear in layer controls and render in the correct order in editor and presentation.
 
-### 0.0.0.8. Project File Cleanup & Documentation Order
+0.0.1.3.4. Stabilize music playlists.
 
-Статус: **P0, следующий организационный блок после фикса производительности**.
+Description: each map has normal and battle playlists with clear names, AIMP-like compact UI, play/stop/next/previous, shuffle, loop, copy from another map, and reliable autostart of the first track when opening a map.
 
-Цель: навести порядок в файлах проекта, убрать мусор, восстановить читаемость документации и снизить риск случайных правок не туда.
+0.0.1.3.5. Finish initiative UX.
 
-0.0.0.8.1. Провести полный аудит файлов.
+Description: live participants, manual initiative values, roll d20, separate turn window, next/previous controls, and persistence should be easy to use in one or two clicks.
 
-Описание: для каждого файла указать назначение, владельца подсистемы, актуальность, можно ли удалить, нужно ли оптимизировать.
+0.0.1.3.6. Add map regression coverage.
 
-Статус: **сделано 2026-07-11**. Обновлен `docs/01-delivery/PROJECT_FILE_AUDIT.md`, добавлен повторяемый инструмент `tools/audit_project_files.mjs`, аудит выполнен двумя независимыми проходами: механическая инвентаризация и смысловая сверка по ссылкам/import-цепочкам, крупным файлам, untracked/debug-файлам и признакам mojibake.
+Description: cover save/reload, presentation sync, fog, layers, drawing, playlist playback where possible, and initiative persistence.
 
-0.0.0.8.2. Починить кодировки в документации.
+### 0.0.1.4.0. Properties & Character UX
 
-Описание: найти документы с mojibake, восстановить или переписать читаемо. Добавить проверку, чтобы новые повреждения кодировки не проходили незамеченными.
+Goal: character properties should feel like a clear editable character sheet, while staying flexible for homebrew.
 
-Статус: **сделано 2026-07-11**. Восстановлены mojibake/не-UTF-8 строки в документации и пользовательских JS-строках, добавлен `tools/check_text_encoding.mjs`, команда `npm run check:encoding`, и проверка подключена в `npm run verify`.
+0.0.1.4.1. Finish the Properties block constructor.
 
-0.0.0.8.2.1. Переписать старые необратимые question-mark фрагменты.
+Description: fields can be placed freely, never overlap unintentionally, resize from any edge, keep inputs inside borders, and preserve empty grid gaps when the user wants them.
 
-Описание: часть старых release/work-log/летописных строк была не перекодирована, а уже заменена вопросительными знаками. Это нельзя восстановить автоматически как mojibake; нужно вручную переписать смысловые фрагменты или архивировать их как поврежденные заметки при следующем проходе по docs.
+0.0.1.4.2. Improve standard character layout.
 
-Статус: **сделано 2026-07-11**. Переписаны поврежденные фрагменты в `release/latest`, `docs/01-delivery/WORK_LOG.md` и `Лог особенный/Летопись королевства My own world.md`; поиск `rg "\?{4,}"` больше не находит поврежденные фрагменты, кроме отсутствующих.
+Description: make small fields like level, AC, and HP compact; keep abilities on one readable row; use the user-sorted layout from the real character card as the default.
 
-0.0.0.8.3. Разложить docs по зонам.
+0.0.1.4.3. Finish DnD calculations.
 
-Описание: `00-product`, `01-delivery`, `02-architecture`, `03-testing`, `04-user-release`, `archive`. Проверить metadata `summary/read_when/owner_zone`.
+Description: abilities, modifiers, skills, proficiency, expertise, AC from armor and Dexterity, HP, initiative, and manual overrides should calculate predictably. Manual values should be visibly marked.
 
-Статус: **сделано 2026-07-11**. Проверена текущая раскладка docs по зонам, добавлен `docs/README.md` как карта документации, `node tools/docs_index.mjs` подтверждает metadata и соответствие owner_zone.
+0.0.1.4.4. Make armor selection use item picker behavior.
 
-0.0.0.8.4. Архивировать устаревшие документы.
+Description: the armor field should select an existing item like item list blocks do, then feed AC calculations.
 
-Описание: не удалять без подтверждения. Переносить в `docs/archive/` с краткой причиной.
+0.0.1.4.5. Connect Properties/CharacterModel to the map.
 
-Статус: **сделано 2026-07-11**. `docs/02-architecture/ARCHIVED_EXPERIMENTS.md` перенесен в `docs/archive/ARCHIVED_EXPERIMENTS.md`, потому что это архив старых экспериментов, а не активный архитектурный контракт. Добавлен `docs/archive/README.md` с реестром архивных документов, причинами архивации и ссылками на актуальные источники.
+Description: map tokens should read HP, AC, initiative, effects, and statuses from the model, not from random HTML fields.
 
-0.0.0.8.5. Убрать временные и debug-файлы.
+0.0.1.4.6. Simplify block creation.
 
-Описание: найти `debug.log`, временные отчеты, старые dist/target артефакты вне ожидаемых мест. Перед удалением показать список пользователю.
+Description: keep the block menu human-readable: text, list, table, image, properties. Specialized behavior should live as modes inside these blocks.
 
-Статус: **сделано 2026-07-11**. Перед удалением проверены кандидаты: `debug.log` и старый `tools/generate_project_file_audit.py`. `debug.log` удален как локальный лог, старый Python-аудитор удален из активной зоны, потому что его заменил `tools/audit_project_files.mjs`. Повторный аудит показывает `Delete candidates: 0`, временные/debug-файлы по шаблонам не найдены.
+### 0.0.1.5.0. Knowledge Graph Visual Graph
 
-0.0.0.8.6. Обновить AGENTS.md и skills после уборки.
+Goal: "Graph of relationships" should become a real visual map of the world, not just a list.
 
-Описание: правила для Codex должны ссылаться на актуальные документы и не вести в архив.
+0.0.1.5.1. Design a real graph canvas.
 
-Статус: **сделано 2026-07-11**. Обновлены `AGENTS.md`, `.agents/skills/docs-restructure/SKILL.md`, `.agents/skills/release-handoff/SKILL.md`: правила теперь ведут к `docs/README.md`, `docs/archive/README.md`, `tools/audit_project_files.mjs`, `npm run check:encoding` и запрещают тащить архив/мусор обратно в активную зону без отдельной задачи.
+Description: visual nodes and edges, zoom/pan, fit to view, selected node, and one-click open page.
 
-0.0.0.8.7. Обновить manual и tester instructions.
+0.0.1.5.2. Add readable graph layout.
 
-Описание: после reorganize пользовательские инструкции должны объяснять, где что лежит и как проверять desktop/browser.
+Description: cluster by domain: characters, items, organizations, rules, maps, and locations. Default layout should be useful without manual setup.
 
-Статус: **сделано 2026-07-11**. Обновлены `README.md`, `docs/04-user-release/README_FOR_TESTERS.md`, `docs/04-user-release/TEST_SCENARIOS.md`, `release/latest/tester-instructions.md`, `release/latest/release-notes.md`. Полный `docs/MY_OWN_WORLD_FULL_MANUAL.docx` не пересобирался намеренно: генератор `tools/generate_manual_docx.py` требует отдельной чистки старых строк перед безопасной регенерацией.
+0.0.1.5.3. Add graph filters.
 
-### 0.0.0.9. Desktop Product Hardening
+Description: filter by entity type, relationship type, tags, current-card neighborhood, and orphan pages.
 
-Статус: **P1**.
+0.0.1.5.4. Add graph interaction.
 
-0.0.0.9.1. Довести desktop install flow.
+Description: hover preview, click open, drag node, pin node, focus neighborhood, and breadcrumbs.
 
-Описание: понятная инструкция: какой `.exe` запускать, когда нужен installer, где workspace, где backups, как обновляться без удаления данных.
+0.0.1.5.5. Add graph performance gate.
 
-0.0.0.9.2. Desktop workspace diagnostics.
+Description: large worlds should render graph slices, not freeze on a huge all-world graph.
 
-Описание: экран диагностики выбранного workspace: pages count, assets count, broken refs, invalid backups, write permission, schema status.
+0.0.1.5.6. Add graph regression tests.
 
-0.0.0.9.3. Desktop large workspace smoke.
+Description: typed relationships, orphan view, visual graph data generation, and opening pages from graph.
 
-Описание: сценарий запуска на большом workspace: открыть, найти страницу, перенести, удалить тестовую страницу, открыть карту, запустить презентацию.
+### 0.0.1.6.0. Data Safety & Recovery
 
-0.0.0.9.4. Desktop release gate.
+Goal: protect user content while the product grows.
 
-Описание: перед сборкой installer прогонять verify, browser smoke, packaging smoke, desktop-specific checks и сохранять tester instructions.
+0.0.1.6.1. Finish Safe HTML boundary.
 
-### 0.0.0.10. Properties & Character UX Continuation
+Description: define and enforce allowed persistent HTML for cards, tables, wiki-links, task tracker, and campaign map shells.
 
-Статус: **P1**.
+0.0.1.6.2. Finish paste sanitization.
 
-0.0.0.10.1. Довести блок “Свойства” до удобного конструктора.
+Description: pasted text and HTML must not bring scripts, runtime UI, unsafe links, or dangerous attributes.
 
-Описание: поля можно свободно располагать, они не накладываются, resizing стабилен, сетка понятная, стандартные layouts аккуратные.
+0.0.1.6.3. Finish schema recovery UI.
 
-0.0.0.10.2. Улучшить DnD character calculations.
+Description: show workspace validation issues and allow safe repair actions only after backup.
 
-Описание: характеристики, навыки, владение/экспертность, КЗ, хиты, доспех, ручные overrides и подсветка ручных значений.
+0.0.1.6.4. Add recovery fallback tests.
 
-0.0.0.10.3. Упростить список блоков.
+Description: test invalid schema, partial data, malformed pages, missing assets, and backup-before-repair behavior.
 
-Описание: оставить понятные базовые блоки: текст, список, таблица, картинка, свойства. Специализированные блоки должны быть режимами внутри этих блоков, а не отдельной россыпью.
+### 0.0.1.7.0. Documentation, Manual & Release
 
-0.0.0.10.4. Связать свойства с картой.
+Goal: the owner and testers should understand what changed and how to verify it.
 
-Описание: карта должна брать HP, AC, initiative, effects и статус из CharacterModel/PropertiesModel, а не из случайных HTML-полей.
+0.0.1.7.1. Regenerate the full manual safely.
 
-### 0.0.0.11. Campaign Map UX Continuation
+Description: clean `tools/generate_manual_docx.py` if needed, then regenerate `docs/MY_OWN_WORLD_FULL_MANUAL.docx` without broken encoding.
 
-Статус: **P1**.
+0.0.1.7.2. Keep docs encoding protected.
 
-0.0.0.11.1. Довести drawing tools.
+Description: keep `npm run check:encoding` green and extend it when new mojibake patterns appear.
 
-Описание: полотно, карандаш, перо как в Figma, ластик, заливка, выбор цвета, последние цвета, слои для рисунков.
+0.0.1.7.3. Maintain GitHub Actions verify and browser smoke.
 
-0.0.0.11.2. Довести music playlists.
+Description: keep CI green, update Node/action versions when needed, and preserve useful artifacts on failure.
 
-Описание: минималистичный AIMP-like playlist: обычная/боевая музыка, play/stop/next/prev, shuffle, loop, автозапуск первой песни карты, быстрый список треков.
+0.0.1.7.4. Finish release notes and tester instructions.
 
-0.0.0.11.3. Довести initiative UX.
+Description: release handoff should tell what changed, what to test, known risks, and which desktop/browser build to run.
 
-Описание: живые участники карты, ручной ввод инициативы, roll d20, отдельное окно ходов, next/previous, сохранение состояния.
+0.0.1.7.5. Preserve old plans as archives only.
 
-0.0.0.11.4. Довести map layers.
-
-Описание: слои объектов, существ, рисунков, тумана, locked fog zones и presentation order должны быть понятны и управляемы.
-
-### 0.0.0.12. Data Safety & Sanitizer
-
-Статус: **P1**.
-
-0.0.0.12.1. Safe HTML boundary.
-
-Описание: явно описать и проверить, какой HTML разрешен в карточках, таблицах, wiki-links, task tracker, campaign map.
-
-0.0.0.12.2. Paste sanitization.
-
-Описание: вставка текста/HTML не должна приносить скрипты, runtime UI и опасные атрибуты.
-
-0.0.0.12.3. Schema recovery UI.
-
-Описание: пользователь видит проблемы workspace и может применить безопасные repair actions после backup.
-
-### 0.0.0.13. Release & CI
-
-Статус: **P2**.
-
-0.0.0.13.1. Поддерживать GitHub Actions verify/browser smoke.
-
-0.0.0.13.2. Добавить artifacts/logs при падении Playwright.
-
-0.0.0.13.3. Довести changelog/release notes/tester instructions.
-
-0.0.0.13.4. Зафиксировать правило: перед push/merge проверки зеленые.
-
-## Архив Выполненного
-
-Подробности находятся в [WORK_LOG.md](./WORK_LOG.md).
-
-- `0.0.0.1`: CharacterModel, Effects, Rule Tree integration foundation.
-- `0.0.0.2`: Project structure, docs, release handoff, agent workflow layer.
-- `0.0.0.3`: Desktop transition foundation.
-- `0.0.0.4`: Campaign map drawing and map UX foundation.
-- `0.0.0.5`: Backup / Restore foundation, page-first risky backup added.
-- `0.0.0.6.1-0.0.0.6.11`: Knowledge Graph readable foundation, typed relationships, orphan pages view, domain lists.
-
-Важно: `0.0.0.6` не считается полностью завершенным как продуктовая идея, потому что пользователь ожидает настоящую визуальную карту связей. Поэтому визуальная часть вынесена в активные подпункты `0.0.0.6.12-0.0.0.6.18`.
+Description: active plan stays clean; history and completed details go to `docs/archive` and `WORK_LOG.md`.
