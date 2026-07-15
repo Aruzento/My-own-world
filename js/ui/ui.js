@@ -1,3 +1,13 @@
+import {
+  createProgressMessage
+} from '../performance/workspacePerformance.js';
+
+import {
+  finishOperationProgress,
+  showOperationProgress
+} from './operationProgress.js';
+
+
 export function renderTags(tags = []) {
 
   // OLD SIDEBAR TAGS
@@ -85,4 +95,45 @@ export function setStatus(text) {
 
   statusbar.textContent =
     text;
+}
+
+
+export function setProgressStatus(
+  progress
+) {
+
+  const message =
+    showOperationProgress(
+      progress
+    ) ||
+    createProgressMessage(
+      progress
+    );
+
+  setStatus(
+    message
+  );
+}
+
+
+export function finishProgressStatus(
+  message,
+  options = {}
+) {
+
+  if (message) {
+
+    setStatus(
+      message
+    );
+  }
+
+  finishOperationProgress({
+    message:
+      message || 'Done',
+    status:
+      options.status || 'complete',
+    delayMs:
+      options.delayMs
+  });
 }

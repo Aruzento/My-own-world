@@ -45,7 +45,9 @@ import {
 } from '../js/storage/assetAdapter.js';
 
 import {
+  compactTreeOrderForParent,
   deletePageBranch,
+  scheduleTreeOrderCompaction,
   updatePageTreePosition,
   updatePageTreePositions
 } from '../js/storage/pageStorage.js';
@@ -68,6 +70,12 @@ import {
   clearWorkspacePerformanceEvents,
   getWorkspacePerformanceEvents
 } from '../js/performance/workspacePerformance.js';
+
+import {
+  clearBackgroundCheckpointQueue,
+  flushBackgroundCheckpoints,
+  getBackgroundCheckpointSnapshot
+} from '../js/performance/backgroundCheckpointQueue.js';
 
 
 test(
@@ -924,6 +932,120 @@ test(
 
 
 test(
+  'deletePageBranch backs up only the deleted branch pages',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const pages =
+      [
+        {
+          id: 'delete-root',
+          path: '/pages/delete-root.md',
+          name: 'delete-root.md',
+          parent: null,
+          order: 1,
+          title: 'Delete Root',
+          type: 'note',
+          template: 'card',
+          tags: [],
+          aliases: [],
+          content: '<h1>Delete Root</h1>'
+        },
+        {
+          id: 'delete-child',
+          path: '/pages/delete-child.md',
+          name: 'delete-child.md',
+          parent: 'delete-root',
+          order: 2,
+          title: 'Delete Child',
+          type: 'note',
+          template: 'card',
+          tags: [],
+          aliases: [],
+          content: '<h1>Delete Child</h1>'
+        },
+        {
+          id: 'unrelated',
+          path: '/pages/unrelated.md',
+          name: 'unrelated.md',
+          parent: null,
+          order: 3,
+          title: 'Unrelated',
+          type: 'note',
+          template: 'card',
+          tags: [],
+          aliases: [],
+          content: '<h1>Unrelated</h1>'
+        }
+      ];
+
+    for (const page of pages) {
+
+      await adapter.writeText(
+        page.path,
+        page.content
+      );
+    }
+
+    setPages(
+      pages
+    );
+
+    await deletePageBranch(
+      pages[0]
+    );
+
+    const backupEntries =
+      await adapter.listFiles(
+        '.my-own-world-backups'
+      );
+
+    assert.equal(
+      backupEntries.length,
+      1
+    );
+
+    const manifest =
+      JSON.parse(
+        await adapter.readText(
+          `.my-own-world-backups/${backupEntries[0].name}/manifest.json`
+        )
+      );
+
+    assert.equal(
+      manifest.pageCount,
+      2
+    );
+
+    assert.deepEqual(
+      manifest.pages.map(page => page.id).sort(),
+      [
+        'delete-child',
+        'delete-root'
+      ]
+    );
+
+    await assert.rejects(
+      () => adapter.readText(
+        `.my-own-world-backups/${backupEntries[0].name}/pages/unrelated.md`
+      )
+    );
+
+    assert.equal(
+      await adapter.readText('/pages/unrelated.md'),
+      '<h1>Unrelated</h1>'
+    );
+  }
+);
+
+
+test(
   'deletePageBranch removes a large nested branch without quadratic tree scan',
   async () => {
 
@@ -1025,7 +1147,8 @@ aliases: []
     assert.ok(
       progressEvents.some(progress =>
         progress.label === 'Удаление' &&
-        progress.current === pageCount
+        progress.current === pageCount &&
+        Number.isFinite(progress.elapsedMs)
       )
     );
 
@@ -1171,6 +1294,106 @@ aliases: []
 
 
 test(
+  'single parent-changing tree move uses operation journal without full backup',
+  async () => {
+
+    clearBackgroundCheckpointQueue();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page = {
+      id: 'single-move',
+      name: 'single-move.md',
+      path: '/pages/single-move.md',
+      parent: null,
+      order: 1,
+      title: 'Single move',
+      template: 'card',
+      type: 'note',
+      tags: ['card'],
+      aliases: [],
+      content: `---
+id: single-move
+parent: null
+order: 1
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Single move</h1>
+`
+    };
+
+    await adapter.writeText(
+      page.path,
+      page.content
+    );
+
+    setPages([
+      page
+    ]);
+
+    await updatePageTreePosition(
+      page,
+      'new-parent',
+      25
+    );
+
+    const backupEntries =
+      await adapter.listFiles(
+        '.my-own-world-backups'
+      );
+
+    assert.equal(
+      backupEntries.length,
+      0
+    );
+
+    const committedEntries =
+      await adapter.listFiles(
+        '.my-own-world-ops/committed'
+      );
+
+    assert.equal(
+      committedEntries.filter(entry =>
+        entry.kind === 'file'
+      ).length,
+      1
+    );
+
+    assert.match(
+      await adapter.readText('/pages/single-move.md'),
+      /parent:\s*new-parent/
+    );
+
+    assert.equal(
+      page.parent,
+      'new-parent'
+    );
+
+    assert.equal(
+      getBackgroundCheckpointSnapshot().queued.length,
+      1
+    );
+
+    await flushBackgroundCheckpoints();
+
+    assert.equal(
+      getBackgroundCheckpointSnapshot().recent[0].status,
+      'completed'
+    );
+  }
+);
+
+
+test(
   'updatePageTreePositions batches tree writes behind one risky-operation backup',
   async () => {
 
@@ -1297,7 +1520,8 @@ aliases: []
       progressEvents.some(progress =>
         progress.label === 'Перенос' &&
         progress.current === 2 &&
-        progress.total === 2
+        progress.total === 2 &&
+        Number.isFinite(progress.elapsedMs)
       )
     );
 
@@ -1306,6 +1530,157 @@ aliases: []
         event.operation === 'tree.moveBatch' &&
         event.counts.changedPages === 2
       )
+    );
+  }
+);
+
+
+test(
+  'tree order compaction rewrites one sibling set in the background without full backup',
+  async () => {
+
+    clearBackgroundCheckpointQueue();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const pages =
+      [
+        createTreePage(
+          'compact-a',
+          'parent',
+          1
+        ),
+        createTreePage(
+          'compact-b',
+          'parent',
+          1.0000000001
+        ),
+        createTreePage(
+          'compact-c',
+          'parent',
+          2
+        ),
+        createTreePage(
+          'compact-other',
+          'other-parent',
+          1.00000000001
+        )
+      ];
+
+    for (const page of pages) {
+
+      await adapter.writeText(
+        page.path,
+        page.content
+      );
+    }
+
+    setPages(
+      pages
+    );
+
+    const scheduled =
+      scheduleTreeOrderCompaction({
+        parentId:
+          'parent',
+        reason:
+          'test-dense-tree-order'
+      });
+
+    assert.equal(
+      scheduled.scheduled,
+      true
+    );
+
+    await flushBackgroundCheckpoints();
+
+    assert.match(
+      await adapter.readText('/pages/compact-a.md'),
+      /order:\s*1000/
+    );
+
+    assert.match(
+      await adapter.readText('/pages/compact-b.md'),
+      /order:\s*2000/
+    );
+
+    assert.match(
+      await adapter.readText('/pages/compact-c.md'),
+      /order:\s*3000/
+    );
+
+    assert.match(
+      await adapter.readText('/pages/compact-other.md'),
+      /order:\s*1\.00000000001/
+    );
+
+    const backupEntries =
+      await adapter.listFiles(
+        '.my-own-world-backups'
+      );
+
+    assert.equal(
+      backupEntries.length,
+      0
+    );
+
+    assert.equal(
+      getBackgroundCheckpointSnapshot().recent[0].status,
+      'completed'
+    );
+
+    assert.equal(
+      getBackgroundCheckpointSnapshot().recent[0].result.changedPages,
+      3
+    );
+  }
+);
+
+
+test(
+  'manual tree order compaction reports no-op for healthy siblings',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    setPages(
+      [
+        createTreePage(
+          'healthy-a',
+          null,
+          1000
+        ),
+        createTreePage(
+          'healthy-b',
+          null,
+          2000
+        )
+      ]
+    );
+
+    const result =
+      await compactTreeOrderForParent(
+        null
+      );
+
+    assert.equal(
+      result.needed,
+      false
+    );
+
+    assert.equal(
+      result.changedPages,
+      0
     );
   }
 );
@@ -1400,6 +1775,51 @@ test(
     );
   }
 );
+
+
+function createTreePage(
+  id,
+  parent,
+  order
+) {
+
+  const content =
+`---
+id: ${id}
+parent: ${parent ?? 'null'}
+order: ${order}
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>${id}</h1>
+`;
+
+  return {
+    id,
+    path:
+      `/pages/${id}.md`,
+    name:
+      `${id}.md`,
+    parent,
+    order,
+    title:
+      id,
+    type:
+      'note',
+    template:
+      'card',
+    tags:
+      [
+        'card'
+      ],
+    aliases:
+      [],
+    content
+  };
+}
 
 
 function createMemoryStorageAdapter() {

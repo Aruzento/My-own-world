@@ -27,12 +27,10 @@ import {
 } from '../ui/confirmPopup.js';
 
 import {
+  finishProgressStatus,
+  setProgressStatus,
   setStatus
 } from '../ui/ui.js';
-
-import {
-  createProgressMessage
-} from '../performance/workspacePerformance.js';
 
 import {
   openPopupAtPoint,
@@ -315,11 +313,7 @@ async function removePageBranch(
       page,
       {
         onProgress:
-          progress => setStatus(
-            createProgressMessage(
-              progress
-            )
-          )
+          setProgressStatus
       }
     );
 
@@ -339,7 +333,7 @@ async function removePageBranch(
         deletedIds
       );
 
-    setStatus(
+    finishProgressStatus(
       tokensCleanupSucceeded
         ? 'Элемент удалён'
         : 'Элемент удалён. Токены карты будут очищены после переоткрытия workspace.'
@@ -354,8 +348,14 @@ async function removePageBranch(
 
     renderTree();
 
-    setStatus(
-      'Не удалось удалить элемент. Переоткрой workspace через кнопку ⊞.'
+    finishProgressStatus(
+      'Не удалось удалить элемент. Переоткрой workspace через кнопку ⊞.',
+      {
+        status:
+          'failed',
+        delayMs:
+          3200
+      }
     );
   }
 }

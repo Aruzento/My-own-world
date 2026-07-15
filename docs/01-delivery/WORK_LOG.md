@@ -6,6 +6,548 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-15: Scoped Delete Backup For Large Workspaces
+
+### What Changed
+
+- Fixed tree branch deletion so it no longer creates a page backup for the entire workspace.
+- `deletePageBranch()` now passes only the pages that are about to be deleted into the risky-operation backup.
+- Added a regression test proving that unrelated pages stay out of the delete backup.
+- Updated the backup/recovery and lightweight operations contracts with the scoped-delete rule.
+- Updated release notes and tester instructions.
+
+### User Impact
+
+- Deleting a small page or small branch in a large workspace should feel much faster.
+- The action is still protected: the deleted branch pages are saved in `.my-own-world-backups/`.
+- Manual full workspace backup is unchanged and still available from settings.
+
+### Checks
+
+- `node --test tests\storageAdapter.test.mjs tests\backupService.test.mjs`
+- `npm run verify`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+### Next
+
+- Continue large-workspace desktop click-through and watch whether delete still feels slow in `X:\ДНД\Мастер\База`.
+
+---
+
+## 2026-07-15: 0.0.1.1.1 Large Workspace Native Desktop Click-Through Prep
+
+### What Changed
+
+- Continued `0.0.1.1.1`.
+- Re-ran the real large workspace diagnostics for `X:\ДНД\Мастер\База`.
+- Re-ran the read-only large workspace tree probe.
+- Re-ran desktop environment, packaging smoke, and full desktop release gate checks.
+- Launched the current native release executable for owner-visible click-through.
+- Updated [LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md](./LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md) with the current pass status.
+
+### User Impact
+
+- The engineering side still points away from raw file IO as the main bottleneck: diagnostics and tree parsing are fast on the known GM workspace.
+- The remaining proof is visual and interactive: the owner needs to confirm the native window can open the large workspace and complete the visible smoke path without feeling frozen.
+
+### Checks
+
+- `npm run diagnostics:workspace -- --workspace "X:\ДНД\Мастер\База" --no-json`
+- `node tools\probe_large_workspace_tree_performance.mjs --workspace "X:\ДНД\Мастер\База"`
+- `npm run desktop:check`
+- `npm run desktop:packaging-smoke`
+- `npm run desktop:gate`
+
+### Next
+
+- Complete the owner-visible manual pass in the launched native window: open the large workspace, scroll/search/find in tree, run diagnostics, open a heavy map, open presentation, test audio, and create/move/delete only on a workspace copy.
+
+---
+
+## 2026-07-15: 0.0.1.1.8 Lightweight Operations Regression And Performance Gates
+
+### What Changed
+
+- Completed `0.0.1.1.8`.
+- Added `tests/lightweightWorkspaceOperationsGate.test.mjs` as a permanent regression/performance gate for the lightweight workspace operations contract.
+- Covered startup `PageIndex`/`TreeIndex` build timing on a large fixture.
+- Covered create page with no full backup, repository/tree index visibility, and background checkpoint scheduling.
+- Covered same-level reorder as one page write with no backup.
+- Covered one-page parent-changing move as a journaled operation with no full backup.
+- Covered pending journal visibility for future recovery UI.
+- Covered large visible tree row generation budget.
+- Removed completed `0.0.1.1.8` from the active plan.
+
+### User Impact
+
+- Future changes that accidentally make normal tree/create/move work heavy should fail `npm run verify`.
+- The large-workspace performance direction is now guarded by automated budgets, not just documentation.
+- This closes the current lightweight-operations implementation batch; remaining work in `0.0.1.1.0` is the visible native desktop click-through on the real GM workspace.
+
+### Checks
+
+- `node --test tests\lightweightWorkspaceOperationsGate.test.mjs`
+- `npm run verify`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+
+### Next
+
+- `0.0.1.1.1`: finish visible native desktop click-through on the known large GM workspace, or continue to `0.0.1.2.1` if we accept the native click-through as manual-owner work for now.
+
+---
+
+## 2026-07-15: 0.0.1.1.7 Tree Order Compaction
+
+### What Changed
+
+- Completed `0.0.1.1.7`.
+- Added `js/tree/treeOrderCompaction.js` to detect dense fractional tree order values and build a per-parent compaction plan.
+- Connected tree order compaction to `pageStorage`: after a completed reorder/move, the app checks only the affected parent and schedules background compaction when gaps become too small.
+- Compaction rewrites only the sibling set for one parent, spaces order values back out by large steps, and skips full workspace backup for this bounded same-parent metadata rewrite.
+- Added unit and storage regression coverage for dense-order detection, scoped sibling rewriting, no-op healthy siblings, and background execution.
+- Removed completed `0.0.1.1.7` from the active plan.
+
+### User Impact
+
+- Repeated same-level tree sorting can stay cheap over time: fractional `order` values are cleaned up in the background before they become fragile.
+- Drag/drop still responds immediately; compaction never runs during pointer drag and does not scan or rewrite the whole workspace.
+- This supports the large-workspace target: fast visible tree actions first, maintenance work second.
+
+### Checks
+
+- `node --test tests\treeOrderCompaction.test.mjs tests\storageAdapter.test.mjs tests\backgroundCheckpointQueue.test.mjs`
+- `npm run verify`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+
+### Next
+
+- `0.0.1.1.8`: add regression and performance gates for lightweight operations.
+
+---
+
+## 2026-07-15: 0.0.1.1.6 Background Validation And Checkpoint Queue
+
+### What Changed
+
+- Completed `0.0.1.1.6`.
+- Added `js/performance/backgroundCheckpointQueue.js` as a deduplicated idle/background job queue.
+- Added `js/storage/workspaceCheckpointTasks.js` for workspace validation checkpoints after mutations.
+- Connected create page, delete branch, same-level reorder, parent-changing move, and parent update to schedule background checkpoints without awaiting them in the hot path.
+- Kept checkpoint work non-repairing: it validates schema/tree/journal state and records status, but does not silently change user data.
+- Removed completed `0.0.1.1.6` from the active plan.
+
+### User Impact
+
+- Tree and page actions can finish quickly while heavier validation runs just after the action.
+- If the background checkpoint finds schema/tree/journal issues, it records them for diagnostics instead of freezing the current click/drag operation.
+- This moves the project closer to the target behavior for large workspaces: immediate visible action first, consistency check second.
+
+### Checks
+
+- `node --test tests\backgroundCheckpointQueue.test.mjs tests\workspaceCheckpointTasks.test.mjs tests\storageAdapter.test.mjs`
+- `npm run verify`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+
+### Next
+
+- `0.0.1.1.7`: add order compaction for dense tree order values.
+
+---
+
+## 2026-07-15: 0.0.1.1.3-0.0.1.1.5 Page/Tree Index Validation And Lightweight Tree Operations
+
+### What Changed
+
+- Completed `0.0.1.1.3`: added a dedicated `TreeIndex` read model next to `PageIndex`.
+- Completed `0.0.1.1.4`: added a lightweight workspace operation journal in `.my-own-world-ops/`.
+- Completed `0.0.1.1.5`: replaced full workspace backup for ordinary create and one-page parent-changing tree moves with journaled lightweight snapshots.
+- Kept full backup for branch delete and multi-page parent-changing batch moves.
+- Removed completed `0.0.1.1.3`-`0.0.1.1.5` from the active plan.
+
+### User Impact
+
+- Moving one page into another folder no longer pays the cost of copying the whole workspace.
+- Same-level reorder still writes only the moved page.
+- Create/move actions now leave a small operation trail that can support recovery work without blocking the hot path.
+- Large workspace tree work should feel closer to an immediate local action instead of a backup operation.
+
+### Checks
+
+- `node --test tests\treeIndex.test.mjs tests\operationJournal.test.mjs tests\pageRepository.test.mjs tests\storageAdapter.test.mjs`
+- `npm run verify`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+
+### Next
+
+- `0.0.1.1.6`: add background validation and checkpoint queue.
+
+---
+
+## 2026-07-15: 0.0.1.1.2 Lightweight Workspace Operations Contract
+
+### What Changed
+
+- Completed `0.0.1.1.2`.
+- Added [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](../02-architecture/contracts/LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
+- Removed completed `0.0.1.1.2` from the active plan; implementation continues at `0.0.1.1.3`.
+
+### User Impact
+
+- The project now has a clear rule for fast workspace work: ordinary tree/create/rename/save operations should stay light, while full backup is reserved for destructive and bulk changes.
+- This directly supports the goal of very smooth and fast app behavior on large workspaces.
+
+### Checks
+
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+
+### Next
+
+- `0.0.1.1.3`: add startup `PageIndex` and `TreeIndex` validation pass.
+
+---
+
+## 2026-07-15: Added UI/UX Redesign Plan From Brief
+
+### What Changed
+
+- Read `C:\Users\Aruko\Downloads\MyOwnWorld UI-UX Redesign.docx`.
+- Added active plan block `0.0.1.8.0. System UI/UX Redesign`.
+- Decomposed the redesign into audit, design contract, foundations proof of concept, component catalogue proof of concept, AppShell proof of concept, migration phases, and visual regression.
+
+### Decision
+
+- The redesign is planned after the current stabilization and release/documentation work.
+- The first redesign result must be an audit/report and a small proof of concept, not a full interface rewrite.
+- Map, graph, cards, task tracker, and settings must migrate to one shared UI system instead of growing separate visual systems.
+
+---
+
+## 2026-07-15: Lightweight Workspace Operations Planning
+
+### What Changed
+
+- Researched safer patterns for local-first performance and recovery.
+- Added priority plan items `0.0.1.1.2`-`0.0.1.1.8`.
+- Updated BUG-001 with the new architecture direction.
+
+### Decision
+
+- Full workspace backup should not be the default cost of normal tree work.
+- Ordinary create/rename/reorder/move should use indexes, operation journal entries, and small rollback snapshots.
+- Full backup stays for branch delete, restore, schema upgrade, bulk repair, import, and other destructive or multi-file operations.
+- Heavy validation, index refresh, order compaction, and cleanup should run as background/checkpoint work, not inside the pointer move path.
+
+### Sources Considered
+
+- SQLite WAL documentation: cheap append writes, WAL-index for reads, and checkpointing outside the main write path.
+- Microsoft Event Sourcing and CQRS patterns: events plus read models/snapshots for traceable state and fast reads.
+- Local-first software principles: local operations should feel fast and should not depend on heavyweight external coordination.
+
+---
+
+## 2026-07-15: Same-Level Tree Move Performance Fix
+
+### What Changed
+
+- Optimized tree sorting on the same level: a reorder now writes only the dragged page instead of rewriting all siblings.
+- Changed same-level tree ordering to use an order value between neighboring pages.
+- Skipped the risky-operation workspace backup when a tree move keeps the same parent.
+- Kept backup protection for moves that change parent/root placement.
+- Added browser regression coverage proving same-level reorder writes one page and creates no backup.
+
+### User Impact
+
+- Moving a page up/down within the same folder should feel much faster on a large workspace.
+- Moving a page into another folder is still protected by backup, because that changes the page hierarchy.
+- Future refinement: add rare order compaction if many repeated reorders make fractional order values too dense.
+
+### Checks
+
+- `node --test tests\treeMovePlanner.test.mjs tests\storageAdapter.test.mjs tests\workspacePerformance.test.mjs`
+- `npm run test:browser -- tests/browser/tree-dnd-regression.spec.mjs`
+- `npm run verify`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+---
+
+## 2026-07-15: 0.0.1.1.1 Large Workspace Desktop Click-Through Engineering Pass
+
+### What Changed
+
+- Advanced `0.0.1.1.1` through all automatable checks available in the current environment.
+- Added [LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md](./LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md).
+- Confirmed the real workspace `X:\ДНД\Мастер\База` is accessible.
+- Ran read-only diagnostics and tree probe against the real workspace.
+- Confirmed desktop environment, packaging smoke, full desktop release gate, and executable launch.
+- Left the destructive create/move/delete pass for a workspace copy or explicit approval.
+- Kept `0.0.1.1.1` active because visible native window click-through cannot be honestly completed by the current agent without a Tauri UI runner or manual owner pass.
+
+### User Impact
+
+- The large workspace itself looks healthy: no missing asset refs, backups are complete, page parsing is fast.
+- The remaining risk is visual/runtime behavior inside the native desktop window, especially heavy maps, presentation, and audio.
+
+### Checks
+
+- `npm run diagnostics:workspace -- --workspace "X:\ДНД\Мастер\База" --no-json`
+- `node tools\probe_large_workspace_tree_performance.mjs --workspace "X:\ДНД\Мастер\База"`
+- `npm run desktop:check`
+- `npm run desktop:packaging-smoke`
+- `npm run desktop:gate`
+- Native executable launch probe: `my-own-world.exe` stayed alive after 10 seconds.
+
+### Next
+
+- Finish the visible manual/native pass for `0.0.1.1.1`.
+- Then continue to `0.0.1.2.1`: finalize desktop install and update flow.
+
+---
+
+## 2026-07-15: 0.0.1.1.4-0.0.1.1.6 Large Workspace UI Validation And Diagnostics
+
+### What Changed
+
+- Closed `0.0.1.1.4`: added real browser UI coverage for pointer tree drag/drop, including the batch move path and visible progress panel.
+- Closed `0.0.1.1.5`: added an in-app workspace diagnostics panel in Settings.
+- Closed `0.0.1.1.6`: diagnostics now shows heavy maps, large pages, asset groups, broken/orphan asset refs, schema issues, recent slow operations, and presentation startup timing.
+- Added `js/ui/workspaceDiagnosticsPanel.js`.
+- Connected the diagnostics panel in `js/ui/appTopbar.js`.
+- Added compact diagnostics styles in `styles/app-topbar.css`.
+- Added performance recording for `campaign-map-presentation-open` in `js/editor/campaignMapPresentation.js`.
+- Added browser smoke coverage in `tests/browser/tree-dnd-regression.spec.mjs` and `tests/browser/asset-health.spec.mjs`.
+
+### User Impact
+
+- Tree move/delete batch behavior is now checked through real pointer UI, not only model/unit probes.
+- The owner can open Settings and run workspace diagnostics without using the terminal.
+- Heavy worlds now have a readable in-app summary: pages, maps, assets, broken refs, orphan refs, heavy maps, large pages, and recent slow operations.
+
+### Checks
+
+- `node --check js\ui\workspaceDiagnosticsPanel.js`
+- `node --check js\ui\appTopbar.js`
+- `node --check js\editor\campaignMapPresentation.js`
+- `npm run test:browser` - 74 passed
+
+### Next
+
+- `0.0.1.1.1`: finish visible native desktop click-through on the known large GM workspace.
+- Then `0.0.1.2.0`: Desktop Product Hardening.
+
+---
+
+## 2026-07-15: 0.0.1.1.3 Visible Progress UI For Long Operations
+
+### What Changed
+
+- Closed `0.0.1.1.3`: long workspace operations now show a visible progress panel in addition to the statusbar.
+- Added `js/ui/operationProgress.js`.
+- Added progress panel styles to `styles/ui.css`.
+- Connected the panel to existing progress callbacks for manual backup, restore, backup cleanup, incomplete backup scan/cleanup, tree branch delete, and tree drag/drop move.
+- The panel shows operation title, stage/message, `current/total`, percent, elapsed time, a progress bar, success/failure state, and a collapse button.
+- Added browser smoke coverage in `tests/browser/app-shell.spec.mjs`.
+
+### User Impact
+
+- Large delete, move, backup, restore, and cleanup operations should no longer feel silent or frozen.
+- The statusbar still keeps the short text, while the progress panel gives a clearer visual signal.
+
+### Checks
+
+- `node --check js\ui\operationProgress.js`
+- `node --check js\ui\ui.js`
+- `node --check js\ui\appTopbar.js`
+- `node --check js\tree\treeDragDrop.js`
+- `node --check js\tree\treeContextMenu.js`
+- `node --test tests\workspacePerformance.test.mjs tests\storageAdapter.test.mjs`
+- `npm run test:browser` - 72 passed
+
+### Next
+
+- `0.0.1.1.4`: validate batch tree move/delete through real UI drag.
+
+---
+
+## 2026-07-15: 0.0.1.1.2 Large Workspace Performance Smoke
+
+### What Changed
+
+- Closed `0.0.1.1.2`: added a permanent large-workspace performance smoke that does not need the private GM workspace.
+- Added `tools/run_large_workspace_performance_smoke.mjs`.
+- Added `npm run test:large-workspace`.
+- Included the large-workspace smoke in `npm run verify`.
+- The smoke creates a synthetic 900-page workspace with maps and assets, then measures page loading, parsing, index/search/wiki lookup, tree visible rows, virtual range, asset checks, map parsing, and create/move/delete mutation.
+- Added `tools/run_workspace_diagnostics.mjs` and `npm run diagnostics:workspace` as the CLI foundation for `0.0.1.1.5` and `0.0.1.1.6`.
+
+### User Impact
+
+- CI can now catch large-world performance regressions before they reach the owner workspace.
+- For a real workspace, diagnostics can be run with:
+  `npm run diagnostics:workspace -- --workspace "X:\path\to\workspace"`.
+- The diagnostics report shows counts, largest pages/assets, missing asset refs, heavy maps, and backup health.
+
+### Checks
+
+- `npm run test:large-workspace`
+
+### Next
+
+- `0.0.1.1.3`: finish visible progress UI for long operations.
+- `0.0.1.1.5` / `0.0.1.1.6`: expose the new diagnostics inside the app.
+
+---
+
+## 2026-07-15: 0.0.1.0.3 P0/P1 Progress Feedback Fix
+
+### What Changed
+
+- Treated `0.0.1.0.3` as a concrete P0/P1 stabilization fix for large workspace operations that feel frozen.
+- Improved shared progress messages in `js/performance/workspacePerformance.js`.
+- Statusbar progress now includes `current/total`, percent, and elapsed time when the operation provides progress.
+- Backup/restore/backup cleanup progress now gets elapsed time automatically through `backupService.reportProgress()`.
+- Tree delete and batch tree move progress now pass elapsed time from `pageStorage.js`.
+- Added regression coverage so tree delete and tree move progress events must include `elapsedMs`.
+
+### User Impact
+
+- During risky operations like backup, restore, large delete, and large move, the user gets clearer proof that work is still happening.
+- This does not solve every large workspace delay yet, but it reduces the "it broke" feeling while the next performance work continues.
+
+### Checks
+
+- `node --test tests\workspacePerformance.test.mjs tests\backupService.test.mjs tests\storageAdapter.test.mjs`
+- `npm run verify`
+- `npm run test:browser` - 72 passed
+
+### Next
+
+- Continue inside `0.0.1.1.0`: add permanent large-workspace performance smoke and a fuller visible progress panel for long operations.
+
+---
+
+## 2026-07-14: 0.0.1.1.1 Large Workspace Desktop Smoke Probe
+
+### What Changed
+
+- Ran the measurable part of `0.0.1.1.1` on the real GM workspace `X:\ДНД\Мастер\База`.
+- Created [LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md](./LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md).
+- Confirmed the workspace has 691 pages, 24 maps, 2 task trackers, 669 pages with image refs, 138 asset files, and 458.6 MB of assets.
+- Confirmed backup health: 13 complete backups, 0 incomplete backups.
+- Ran a safe mutate probe: temporary `perf-probe-*` pages were created, moved, and deleted; no temporary files remained.
+- Confirmed file-level operations are fast: read/parse 691 pages in 108 ms, temp page create in 1 ms, move/delete in 0 ms.
+- Prepared desktop frontend and confirmed the release `.exe` starts and stays alive for 8 seconds.
+
+### Main Finding
+
+The large workspace slowdown is unlikely to be raw file write performance. The next likely bottlenecks are UI tree render/re-render, asset checks, heavy map images, presentation startup, backup copying, and missing progress feedback.
+
+### Limits
+
+- The visible native desktop click-through is not complete because there is no automated Tauri UI runner yet.
+- Real UI drag/drop, context-menu delete, heavy map opening, presentation, and audio playback still need a visible desktop pass.
+
+### Checks
+
+- `node tools\probe_large_workspace_tree_performance.mjs --workspace "X:\ДНД\Мастер\База" --mutate`
+- `npm run desktop:prepare`
+- desktop executable launch probe
+
+### Next
+
+- Continue inside `0.0.1.1.0`: add permanent large-workspace performance smoke and progress UI for long operations.
+
+---
+
+## 2026-07-14: 0.0.1.0.3-0.0.1.0.5 Stabilization Follow-Up
+
+### What Changed
+
+- Closed the remaining `0.0.1.0.x` stabilization housekeeping after the green smoke pass.
+- `BUG-002` is no longer treated as a vague active blocker without reproduction. It stays in [BUG_INVENTORY.md](./BUG_INVENTORY.md) as a watch-list item until a concrete broken flow is reported.
+- Added [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_CHECKLIST.md) so human checks are short, readable, and repeatable.
+- The active plan now moves to the first concrete unresolved risk: real desktop smoke on the large GM workspace.
+
+### Checks
+
+- Documentation-only change. Run after this update:
+  - `node tools\docs_index.mjs`
+  - `npm run check:encoding`
+  - `git diff --check`
+
+### Next
+
+- `0.0.1.1.1`: run a real desktop smoke on the known large GM workspace.
+
+---
+
+## 2026-07-14: 0.0.1.0.2 Browser And Desktop Smoke Pass
+
+### What Changed
+
+- Closed `0.0.1.0.2` by creating [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md).
+- Browser smoke is green, and a live Playwright probe confirmed the app shell, sidebar, topbar, create menu, statusbar, and no console errors on startup.
+- Desktop gate is green: verify, browser smoke, desktop prepare, packaging smoke, desktop environment check, and Tauri `cargo check` passed.
+- The release executable started and stayed alive for 5 seconds.
+
+### Limits
+
+- The Codex in-app browser blocked localhost with `ERR_BLOCKED_BY_CLIENT`, so the manual browser probe used Playwright.
+- The desktop `.exe` check was a launch probe, not a full visible real-workspace walkthrough.
+- Real large workspace desktop testing remains active as `0.0.1.1.1`.
+
+### Checks
+
+- `npm run desktop:gate`
+- Playwright live browser probe
+
+### Next
+
+- `0.0.1.0.3`: fix confirmed P0/P1 broken flows before new feature work.
+
+---
+
+## 2026-07-14: 0.0.1.0.1 Bug Inventory
+
+### What Changed
+
+- Closed `0.0.1.0.1` by creating [BUG_INVENTORY.md](./BUG_INVENTORY.md).
+- The inventory separates confirmed user complaints, high-risk areas, automated coverage, and missing manual/desktop verification.
+- The active plan now points to the inventory instead of keeping the full bug list inline.
+
+### Main Findings
+
+- Browser smoke is currently green: `npm run test:browser` passed 72 tests.
+- P0 focus is still stabilization, especially large workspace behavior, desktop verification, and broad user-reported broken functions that need concrete reproduction.
+- P1 focus includes campaign map presentation/drawing/music, Properties/CharacterModel UX, task tracker legacy workspaces, Knowledge Graph visual expectations, recovery UX, and docs readability checks.
+- `debug.log` remains local untracked noise and was not committed.
+
+### Checks
+
+- `npm run test:browser`
+
+### Next
+
+- `0.0.1.0.2`: run a manual smoke pass in browser and desktop using `BUG_INVENTORY.md` as the checklist.
+
+---
+
 ## 2026-07-14: 0.0.0.7.6 Tree Virtualization For Large Workspaces
 
 ### Что сделано

@@ -46,8 +46,17 @@ import {
 } from './assetHealthPanel.js';
 
 import {
+  renderWorkspaceDiagnosticsPanel
+} from './workspaceDiagnosticsPanel.js';
+
+import {
   createProgressMessage
 } from '../performance/workspacePerformance.js';
+
+import {
+  finishOperationProgress,
+  showOperationProgress
+} from './operationProgress.js';
 
 const APPEARANCE_STORAGE_KEY =
   'myOwnWorld.appearance';
@@ -116,6 +125,10 @@ export function setupAppTopbar() {
       );
 
       await renderAssetHealthPanel(
+        settingsPopup
+      );
+
+      await renderWorkspaceDiagnosticsPanel(
         settingsPopup
       );
 
@@ -679,14 +692,10 @@ async function renderBackupPanel(
           await createWorkspaceBackup({
             reason: 'manual',
             onProgress:
-              progress => setStatus(
-                createProgressMessage(
-                  progress
-                )
-              )
+              setProgressStatus
           });
 
-        setStatus(
+        finishProgressStatus(
           `Backup создан: ${manifest.pageCount} страниц`
         );
 
@@ -702,8 +711,14 @@ async function renderBackupPanel(
           error
         );
 
-        setStatus(
-          'Не удалось создать backup'
+        finishProgressStatus(
+          'Не удалось создать backup',
+          {
+            status:
+              'failed',
+            delayMs:
+              3200
+          }
         );
 
       } finally {
@@ -810,14 +825,10 @@ function createBackupRetentionControls({
             keepLatest:
               getBackupRetentionLimit(),
             onProgress:
-              progress => setStatus(
-                createProgressMessage(
-                  progress
-                )
-              )
+              setProgressStatus
           });
 
-        setStatus(
+        finishProgressStatus(
           `Backup cleanup: удалено ${result.removed}`
         );
 
@@ -830,8 +841,14 @@ function createBackupRetentionControls({
           error
         );
 
-        setStatus(
-          'Не удалось очистить backup'
+        finishProgressStatus(
+          'Не удалось очистить backup',
+          {
+            status:
+              'failed',
+            delayMs:
+              3200
+          }
         );
 
       } finally {
@@ -912,7 +929,7 @@ function createIncompleteBackupControls({
         cleanupButton.disabled =
           incomplete.length === 0;
 
-        setStatus(
+        finishProgressStatus(
           `Недособранные backup: ${incomplete.length}`
         );
 
@@ -923,8 +940,14 @@ function createIncompleteBackupControls({
           error
         );
 
-        setStatus(
-          'Не удалось проверить недособранные backup'
+        finishProgressStatus(
+          'Не удалось проверить недособранные backup',
+          {
+            status:
+              'failed',
+            delayMs:
+              3200
+          }
         );
 
       } finally {
@@ -967,14 +990,10 @@ function createIncompleteBackupControls({
             backupIds:
               ids,
             onProgress:
-              progress => setStatus(
-                createProgressMessage(
-                  progress
-                )
-              )
+              setProgressStatus
           });
 
-        setStatus(
+        finishProgressStatus(
           `Недособранные backup удалены: ${result.removed}`
         );
 
@@ -987,8 +1006,14 @@ function createIncompleteBackupControls({
           error
         );
 
-        setStatus(
-          'Не удалось удалить недособранные backup'
+        finishProgressStatus(
+          'Не удалось удалить недособранные backup',
+          {
+            status:
+              'failed',
+            delayMs:
+              3200
+          }
         );
 
       } finally {
@@ -1018,11 +1043,7 @@ async function renderIncompleteBackupList(
   const incomplete =
     await listIncompleteWorkspaceBackups({
       onProgress:
-        progress => setStatus(
-          createProgressMessage(
-            progress
-          )
-        )
+        setProgressStatus
     });
 
   container.replaceChildren();
@@ -1276,17 +1297,13 @@ function renderRestoreConfirm(
             null,
             {
               onProgress:
-                progress => setStatus(
-                  createProgressMessage(
-                    progress
-                  )
-                )
+                setProgressStatus
             }
           );
 
         await reloadWorkspaceAfterRestore();
 
-        setStatus(
+        finishProgressStatus(
           `Backup восстановлен: ${result.restoredPages} страниц`
         );
 
@@ -1303,8 +1320,14 @@ function renderRestoreConfirm(
           error
         );
 
-        setStatus(
-          'Не удалось восстановить backup'
+        finishProgressStatus(
+          'Не удалось восстановить backup',
+          {
+            status:
+              'failed',
+            delayMs:
+              3200
+          }
         );
 
       } finally {
@@ -1397,4 +1420,41 @@ function setStatus(
     statusbar.textContent =
       text;
   }
+}
+
+
+function setProgressStatus(
+  progress
+) {
+
+  const message =
+    showOperationProgress(
+      progress
+    ) ||
+    createProgressMessage(
+      progress
+    );
+
+  setStatus(
+    message
+  );
+}
+
+
+function finishProgressStatus(
+  message,
+  options = {}
+) {
+
+  setStatus(
+    message
+  );
+
+  finishOperationProgress({
+    message,
+    status:
+      options.status || 'complete',
+    delayMs:
+      options.delayMs
+  });
 }

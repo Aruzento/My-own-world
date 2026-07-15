@@ -203,3 +203,238 @@
   font-size:
     11px;
 }
+
+
+.operation-progress {
+  position:
+    fixed;
+
+  right:
+    18px;
+
+  bottom:
+    44px;
+
+  z-index:
+    5000;
+
+  width:
+    min(360px, calc(100vw - 28px));
+
+  padding:
+    14px;
+
+  border:
+    1px solid rgba(241,211,142,0.22);
+
+  border-radius:
+    14px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(31,32,30,0.96),
+      rgba(16,17,18,0.96)
+    );
+
+  box-shadow:
+    0 20px 56px rgba(0,0,0,0.42),
+    inset 0 1px 0 rgba(255,255,255,0.08);
+
+  color:
+    rgba(255,248,230,0.92);
+
+  opacity:
+    1;
+
+  transform:
+    translateY(0);
+
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+
+  pointer-events:
+    auto;
+}
+
+
+.operation-progress.is-hidden {
+  opacity:
+    0;
+
+  transform:
+    translateY(12px);
+
+  pointer-events:
+    none;
+}
+
+
+.operation-progress-head {
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+
+  justify-content:
+    space-between;
+
+  gap:
+    10px;
+}
+
+
+.operation-progress-title {
+  display:
+    block;
+
+  margin-bottom:
+    3px;
+
+  font-size:
+    13px;
+
+  line-height:
+    1.2;
+}
+
+
+.operation-progress-stage {
+  display:
+    block;
+
+  color:
+    rgba(255,255,255,0.58);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.35;
+}
+
+
+.operation-progress-collapse {
+  width:
+    26px;
+
+  height:
+    26px;
+
+  flex:
+    0 0 auto;
+
+  border:
+    1px solid rgba(255,255,255,0.10);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.06);
+
+  color:
+    rgba(255,255,255,0.70);
+
+  cursor:
+    pointer;
+}
+
+
+.operation-progress-track {
+  height:
+    7px;
+
+  margin-top:
+    12px;
+
+  overflow:
+    hidden;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,255,255,0.08);
+}
+
+
+.operation-progress-fill {
+  width:
+    0;
+
+  height:
+    100%;
+
+  border-radius:
+    inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(241,211,142,0.82),
+      rgba(117,198,255,0.78)
+    );
+
+  transition:
+    width 0.18s ease;
+}
+
+
+.operation-progress-meta {
+  margin-top:
+    8px;
+
+  display:
+    flex;
+
+  justify-content:
+    space-between;
+
+  gap:
+    10px;
+
+  color:
+    rgba(255,255,255,0.50);
+
+  font-size:
+    11px;
+}
+
+
+.operation-progress.is-complete .operation-progress-fill {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(134,226,167,0.88),
+      rgba(241,211,142,0.74)
+    );
+}
+
+
+.operation-progress.is-failed {
+  border-color:
+    rgba(255,120,120,0.35);
+}
+
+
+.operation-progress.is-failed .operation-progress-fill {
+  background:
+    rgba(255,120,120,0.80);
+}
+
+
+.operation-progress.is-collapsed {
+  width:
+    min(260px, calc(100vw - 28px));
+}
+
+
+.operation-progress.is-collapsed .operation-progress-track,
+.operation-progress.is-collapsed .operation-progress-meta,
+.operation-progress.is-collapsed .operation-progress-stage {
+  display:
+    none;
+}

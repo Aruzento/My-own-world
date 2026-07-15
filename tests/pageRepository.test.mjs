@@ -12,10 +12,12 @@ import {
   getPageById,
   getPagesByTag,
   getPagesByType,
+  getTreeIndex,
   notifyPageMoved,
   notifyPageUpdated,
   queryPages,
-  rebuildPageRepository
+  rebuildPageRepository,
+  validateTreeIndex
 } from '../js/repository/pageRepository.js';
 
 
@@ -77,6 +79,11 @@ test(
 
     assert.deepEqual(
       getChildren('parent'),
+      [child]
+    );
+
+    assert.deepEqual(
+      getTreeIndex().getChildren('parent'),
       [child]
     );
 
@@ -189,6 +196,11 @@ test(
       [child]
     );
 
+    assert.equal(
+      validateTreeIndex().valid,
+      true
+    );
+
     setPages([
       firstParent,
       secondParent
@@ -282,6 +294,11 @@ test(
 
       assert.deepEqual(
         getChildren('next-parent'),
+        [movingPage]
+      );
+
+      assert.deepEqual(
+        getTreeIndex().getChildren('next-parent'),
         [movingPage]
       );
 

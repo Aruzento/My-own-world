@@ -455,7 +455,8 @@
 
 
 .app-backup-panel,
-.app-asset-health-panel {
+.app-asset-health-panel,
+.app-workspace-diagnostics-panel {
 
   display:
     grid;
@@ -469,7 +470,8 @@
 
 
 .app-backup-panel h3,
-.app-asset-health-panel h3 {
+.app-asset-health-panel h3,
+.app-workspace-diagnostics-panel h3 {
 
   margin:
     0;
@@ -483,7 +485,8 @@
 
 
 .app-backup-panel p,
-.app-asset-health-panel p {
+.app-asset-health-panel p,
+.app-workspace-diagnostics-panel p {
 
   margin:
     0;
@@ -502,7 +505,8 @@
 .app-backup-primary,
 .app-backup-restore,
 .app-backup-confirm-actions button,
-.app-asset-health-primary {
+.app-asset-health-primary,
+.app-workspace-diagnostics-primary {
 
   min-height:
     30px;
@@ -534,7 +538,8 @@
 .app-backup-primary:hover,
 .app-backup-restore:hover,
 .app-backup-confirm-actions button:hover,
-.app-asset-health-primary:hover {
+.app-asset-health-primary:hover,
+.app-workspace-diagnostics-primary:hover {
 
   background:
     rgba(241,211,142,0.10);
@@ -544,7 +549,8 @@
 .app-backup-primary:disabled,
 .app-backup-restore:disabled,
 .app-backup-confirm-actions button:disabled,
-.app-asset-health-primary:disabled {
+.app-asset-health-primary:disabled,
+.app-workspace-diagnostics-primary:disabled {
 
   cursor:
     default;
@@ -680,7 +686,8 @@
 }
 
 
-.app-asset-health-panel {
+.app-asset-health-panel,
+.app-workspace-diagnostics-panel {
 
   margin-top:
     10px;
@@ -707,6 +714,168 @@
 
   font-size:
     12px;
+}
+
+
+.app-workspace-diagnostics-result {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  color:
+    rgba(255,248,230,0.72);
+
+  font-size:
+    12px;
+}
+
+
+.app-workspace-diagnostics-summary-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap:
+    6px;
+}
+
+
+.app-workspace-diagnostics-card {
+
+  min-width:
+    0;
+
+  padding:
+    7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.12);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(255,248,230,0.04);
+}
+
+
+.app-workspace-diagnostics-card strong,
+.app-workspace-diagnostics-card span {
+
+  display:
+    block;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.app-workspace-diagnostics-card strong {
+
+  color:
+    rgba(255,248,230,0.94);
+
+  font-size:
+    16px;
+}
+
+
+.app-workspace-diagnostics-card span {
+
+  color:
+    rgba(255,248,230,0.56);
+
+  font-size:
+    10px;
+}
+
+
+.app-workspace-diagnostics-section {
+
+  display:
+    grid;
+
+  gap:
+    5px;
+}
+
+
+.app-workspace-diagnostics-section h4 {
+
+  margin:
+    2px 0 0;
+
+  color:
+    rgba(255,248,230,0.78);
+
+  font-size:
+    11px;
+}
+
+
+.app-workspace-diagnostics-list {
+
+  display:
+    grid;
+
+  gap:
+    5px;
+
+  max-height:
+    150px;
+
+  overflow:
+    auto;
+}
+
+
+.app-workspace-diagnostics-item,
+.app-workspace-diagnostics-summary {
+
+  min-width:
+    0;
+
+  padding:
+    6px 7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.10);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(0,0,0,0.14);
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+}
+
+
+.app-workspace-diagnostics-summary.is-ok {
+
+  border-color:
+    rgba(103,190,128,0.24);
+
+  background:
+    rgba(103,190,128,0.08);
 }
 
 

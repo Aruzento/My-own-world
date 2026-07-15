@@ -7,6 +7,10 @@ owner_zone: "architecture"
 ---
 # Backup And Recovery Contract
 
+Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
+
+Important update: full workspace backup is no longer the default protection for every ordinary tree operation. Use the lightweight operations contract to decide whether an action needs a single-file write, operation journal, rollback snapshot, background validation, or full backup gate. Full backup remains mandatory for destructive, bulk, schema, restore, import, and repair operations.
+
 Дата: 01.06.2026
 
 Этот контракт описывает, как проект должен защищать пользовательские данные перед рискованными операциями и перед будущим автоматическим recovery.
@@ -119,9 +123,11 @@ Risky-operation snapshots are page-first by default: they store page files and a
 
 Current automatic snapshot points:
 
-- page branch deletion;
+- page branch deletion - scoped to the deleted branch pages only, not the whole workspace;
 - page parent move;
 - tree reorder / move.
+
+Delete backup rule: deleting a leaf page or branch must create a restorable page snapshot for the pages that will be removed. It must not copy unrelated pages from the same workspace. Full-workspace backup is reserved for schema repair, restore, import, destructive rollback, asset cleanup, or other operations where the blast radius is not limited to one known branch.
 
 Tree reorder/move must create one risky-operation snapshot per user drop, not one snapshot per changed sibling. Use batch tree-position writes for DnD plans so large sibling lists do not create multiple backups for a single visible action.
 

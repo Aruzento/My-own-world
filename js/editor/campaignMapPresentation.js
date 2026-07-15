@@ -32,6 +32,11 @@ import {
   openTauriWebviewWindow
 } from '../storage/tauriBridge.js';
 
+import {
+  nowMs,
+  recordWorkspacePerformance
+} from '../performance/workspacePerformance.js';
+
 let presentationWindow = null;
 let presentationMode = 'browser';
 let presentationChannel = null;
@@ -53,9 +58,14 @@ const presentationState = {
 
 export function openPresentationWindow() {
 
+  const startedAt =
+    nowMs();
+
   if (isTauriRuntime()) {
 
-    openTauriPresentationWindow();
+    openTauriPresentationWindow(
+      startedAt
+    );
     return;
   }
 
@@ -65,6 +75,13 @@ export function openPresentationWindow() {
   ) {
 
     presentationWindow.focus();
+
+    recordPresentationOpenPerformance(
+      startedAt,
+      'browser',
+      'completed'
+    );
+
     return;
   }
 
@@ -107,6 +124,12 @@ export function openPresentationWindow() {
 
   bindPresentationViewportEvents(
     presentationWindow.document.querySelector('.presentation-map')
+  );
+
+  recordPresentationOpenPerformance(
+    startedAt,
+    'browser',
+    'completed'
   );
 }
 
@@ -373,7 +396,9 @@ export function syncPresentationDragMeasure(
 }
 
 
-function openTauriPresentationWindow() {
+function openTauriPresentationWindow(
+  startedAt = nowMs()
+) {
 
   presentationMode =
     'tauri';
@@ -384,6 +409,13 @@ function openTauriPresentationWindow() {
 
     presentationWindow.setFocus?.();
     sendTauriPresentationRender();
+
+    recordPresentationOpenPerformance(
+      startedAt,
+      'tauri',
+      'completed'
+    );
+
     return;
   }
 
@@ -410,6 +442,12 @@ function openTauriPresentationWindow() {
             false;
 
           sendTauriPresentationRender();
+
+          recordPresentationOpenPerformance(
+            startedAt,
+            'tauri',
+            'completed'
+          );
         }
       );
 
@@ -430,6 +468,12 @@ function openTauriPresentationWindow() {
 
           pendingTauriPresentationRender =
             false;
+
+          recordPresentationOpenPerformance(
+            startedAt,
+            'tauri',
+            'failed'
+          );
         }
       );
 
@@ -462,7 +506,37 @@ function openTauriPresentationWindow() {
 
       presentationWindow =
         null;
+
+      recordPresentationOpenPerformance(
+        startedAt,
+        'tauri',
+        'failed'
+      );
     });
+}
+
+
+function recordPresentationOpenPerformance(
+  startedAt,
+  mode,
+  status
+) {
+
+  const endedAt =
+    nowMs();
+
+  recordWorkspacePerformance({
+    operation:
+      'campaign-map-presentation-open',
+    startedAt,
+    endedAt,
+    durationMs:
+      endedAt - startedAt,
+    counts: {
+      mode
+    },
+    status
+  });
 }
 
 

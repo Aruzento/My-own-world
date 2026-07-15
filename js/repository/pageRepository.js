@@ -10,6 +10,10 @@ import {
   PageIndex
 } from './pageIndex.js';
 
+import {
+  TreeIndex
+} from './treeIndex.js';
+
 
 // Живой read-only репозиторий страниц.
 // Load/setPages пересобирает индекс целиком, а известные lifecycle events
@@ -19,12 +23,21 @@ const pageIndex =
     state.pages
   );
 
+const treeIndex =
+  new TreeIndex(
+    state.pages
+  );
+
 
 subscribeState(
   'pages',
   event => {
 
     pageIndex.rebuild(
+      event.value
+    );
+
+    treeIndex.rebuild(
       event.value
     );
   }
@@ -37,11 +50,27 @@ export function getPageIndex() {
 }
 
 
+export function getTreeIndex() {
+
+  return treeIndex;
+}
+
+
+export function validateTreeIndex() {
+
+  return treeIndex.validate();
+}
+
+
 export function rebuildPageRepository(
   pages = state.pages
 ) {
 
   pageIndex.rebuild(
+    pages
+  );
+
+  treeIndex.rebuild(
     pages
   );
 
@@ -56,6 +85,10 @@ export function notifyPageCreated(
   if (page?.id) {
 
     pageIndex.addPage(
+      page
+    );
+
+    treeIndex.addPage(
       page
     );
 
@@ -74,6 +107,11 @@ export function notifyPageUpdated(
   if (nextPage?.id) {
 
     pageIndex.updatePage(
+      previousPage,
+      nextPage
+    );
+
+    treeIndex.updatePage(
       previousPage,
       nextPage
     );
@@ -97,6 +135,11 @@ export function notifyPageMoved(
       nextPage
     );
 
+    treeIndex.updatePage(
+      previousPage,
+      nextPage
+    );
+
     return pageIndex;
   }
 
@@ -114,12 +157,20 @@ export function notifyPageDeleted(
       pageOrPages
     );
 
+    treeIndex.deletePages(
+      pageOrPages
+    );
+
     return pageIndex;
   }
 
   if (pageOrPages?.id) {
 
     pageIndex.deletePage(
+      pageOrPages
+    );
+
+    treeIndex.deletePage(
       pageOrPages
     );
 
@@ -198,7 +249,7 @@ export function getChildren(
   parentId = null
 ) {
 
-  return pageIndex.getChildren(
+  return treeIndex.getChildren(
     parentId
   );
 }
@@ -208,7 +259,7 @@ export function getSiblings(
   pageId
 ) {
 
-  return pageIndex.getSiblings(
+  return treeIndex.getSiblings(
     pageId
   );
 }
@@ -231,7 +282,7 @@ export function isDescendantOf(
   ancestorId
 ) {
 
-  return pageIndex.isDescendantOf(
+  return treeIndex.isDescendantOf(
     pageId,
     ancestorId
   );

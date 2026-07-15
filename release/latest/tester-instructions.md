@@ -1,5 +1,14 @@
 # Tester Instructions
 
+## 2026-07-15: Faster Tree Delete Backup
+
+1. Open a large workspace, preferably a copy of `X:\ДНД\Мастер\База`.
+2. Delete a small page or small branch through the tree context menu.
+3. Expected result: the tree updates without a long full-workspace backup pause.
+4. Open `.my-own-world-backups/` and inspect the newest `delete-page-branch` backup.
+5. Expected result: `manifest.json` lists only the deleted page/branch pages, not unrelated workspace pages.
+6. Manual full backup from settings should still create a full backup when explicitly requested.
+
 ## 2026-07-14: Проверка Виртуального Дерева
 
 1. Открыть большой workspace, желательно `X:\ДНД\Мастер\База` или другой мир с сотнями страниц.

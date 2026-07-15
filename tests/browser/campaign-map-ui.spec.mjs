@@ -98,36 +98,43 @@ ${body}
               nextState.__testWrittenFiles =
                 [];
 
+              const createDirectoryHandle =
+                () => ({
+                  async getDirectoryHandle() {
+
+                    return createDirectoryHandle();
+                  },
+                  async getFileHandle(name) {
+
+                    return {
+                      name,
+                      async createWritable() {
+
+                        return {
+                          async write(content) {
+
+                            const id =
+                              String(content)
+                                .match(/id:\s*(.+)/)?.[1]
+                                ?.trim() || '';
+
+                            nextState.__testWrittenFiles.push({
+                              id,
+                              name,
+                              content: String(content)
+                            });
+                          },
+                          async close() {}
+                        };
+                      }
+                    };
+                  }
+                });
+
               setWorkspaceHandle({
                 async getDirectoryHandle() {
 
-                  return {
-                    async getFileHandle(name) {
-
-                      return {
-                        name,
-                        async createWritable() {
-
-                          return {
-                            async write(content) {
-
-                              const id =
-                                String(content)
-                                  .match(/id:\s*(.+)/)?.[1]
-                                  ?.trim() || '';
-
-                              nextState.__testWrittenFiles.push({
-                                id,
-                                name,
-                                content: String(content)
-                              });
-                            },
-                            async close() {}
-                          };
-                        }
-                      };
-                    }
-                  };
+                  return createDirectoryHandle();
                 }
               });
             };
@@ -358,7 +365,11 @@ ${body}
       result.tokenPageId
     ).toBe(
       result.duplicateParent
-        ? result.writtenFiles.at(-1).id
+        ? result.writtenFiles
+          .filter(file =>
+            file.name.endsWith('.md')
+          )
+          .at(-1).id
         : ''
     );
 

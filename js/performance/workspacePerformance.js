@@ -129,7 +129,8 @@ export function createProgressMessage({
   label = 'Операция',
   current = 0,
   total = 0,
-  stage = ''
+  stage = '',
+  elapsedMs = null
 } = {}) {
 
   const prefix =
@@ -139,5 +140,70 @@ export function createProgressMessage({
 
   if (!total) return prefix;
 
-  return `${prefix} ${current}/${total}`;
+  const safeCurrent =
+    Math.max(
+      0,
+      Number(current) || 0
+    );
+
+  const safeTotal =
+    Math.max(
+      0,
+      Number(total) || 0
+    );
+
+  const percent =
+    safeTotal
+      ? Math.min(
+        100,
+        Math.round(
+          safeCurrent / safeTotal * 100
+        )
+      )
+      : 0;
+
+  const elapsed =
+    formatElapsedMs(
+      elapsedMs
+    );
+
+  return [
+    `${prefix}: ${safeCurrent}/${safeTotal}`,
+    `${percent}%`,
+    elapsed
+  ].filter(Boolean).join(
+    ' - '
+  );
+}
+
+
+function formatElapsedMs(
+  value
+) {
+
+  if (
+    value === null ||
+    value === undefined
+  ) {
+
+    return '';
+  }
+
+  const ms =
+    Math.max(
+      0,
+      Number(value) || 0
+    );
+
+  if (ms < 1000) {
+
+    return `${Math.round(ms)} ms`;
+  }
+
+  const seconds =
+    Math.round(
+      ms / 100
+    ) / 10;
+
+  return `${seconds} s`;
 }

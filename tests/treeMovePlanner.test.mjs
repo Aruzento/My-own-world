@@ -120,9 +120,7 @@ test(
         item.order
       ]),
       [
-        ['c', 'root', 1],
-        ['a', 'root', 2],
-        ['b', 'root', 3]
+        ['c', 'root', 0]
       ]
     );
   }
@@ -155,9 +153,7 @@ test(
         item.order
       ]),
       [
-        ['b', 'root', 1],
-        ['c', 'root', 2],
-        ['a', 'root', 3]
+        ['a', 'root', 4]
       ]
     );
   }

@@ -155,6 +155,13 @@ if (!jsOnly) {
   );
 
   run(
+    process.execPath,
+    [
+      'tools/run_large_workspace_performance_smoke.mjs'
+    ]
+  );
+
+  run(
     'git',
     [
       'diff',

@@ -105,15 +105,67 @@ function createSiblingMovePlan(
       ? targetIndex + 1
       : targetIndex;
 
-  siblings.splice(
-    insertIndex,
-    0,
-    draggedPage
-  );
+  const previousPage =
+    siblings[insertIndex - 1] || null;
 
-  return siblings.map((page, index) => ({
-    page,
-    parentId: targetPage.parent,
-    order: index + 1
-  }));
+  const nextPage =
+    siblings[insertIndex] || null;
+
+  return [
+    {
+      page:
+        draggedPage,
+      parentId:
+        targetPage.parent,
+      order:
+        createOrderBetween(
+          previousPage,
+          nextPage
+        )
+    }
+  ];
+}
+
+
+function createOrderBetween(
+  previousPage,
+  nextPage
+) {
+
+  const previousOrder =
+    previousPage
+      ? getPageOrder(
+        previousPage
+      )
+      : null;
+
+  const nextOrder =
+    nextPage
+      ? getPageOrder(
+        nextPage
+      )
+      : null;
+
+  if (
+    previousOrder === null &&
+    nextOrder === null
+  ) {
+
+    return 1;
+  }
+
+  if (previousOrder === null) {
+
+    return nextOrder - 1;
+  }
+
+  if (nextOrder === null) {
+
+    return previousOrder + 1;
+  }
+
+  return (
+    previousOrder +
+    nextOrder
+  ) / 2;
 }

@@ -63,6 +63,26 @@ test(
                   async close() {}
                 });
 
+              const createDirectoryHandle =
+                () => ({
+                  async getDirectoryHandle() {
+
+                    return createDirectoryHandle();
+                  },
+                  async getFileHandle(name) {
+
+                    return {
+                      name,
+                      async createWritable() {
+
+                        return createWritableFor(
+                          name
+                        );
+                      }
+                    };
+                  }
+                });
+
               setWorkspaceHandle({
                 async getFileHandle(name, options = {}) {
 
@@ -95,20 +115,7 @@ test(
                 },
                 async getDirectoryHandle() {
 
-                  return {
-                    async getFileHandle(name) {
-
-                      return {
-                        name,
-                        async createWritable() {
-
-                          return createWritableFor(
-                            name
-                          );
-                        }
-                      };
-                    }
-                  };
+                  return createDirectoryHandle();
                 }
               });
             };

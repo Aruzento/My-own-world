@@ -23,8 +23,18 @@ import {
 } from './backupService.js';
 
 import {
+  beginWorkspaceOperation,
+  commitWorkspaceOperation,
+  failWorkspaceOperation
+} from './operationJournal.js';
+
+import {
   measureWorkspaceOperation
 } from '../performance/workspacePerformance.js';
+
+import {
+  enqueueBackgroundCheckpoint
+} from '../performance/backgroundCheckpointQueue.js';
 
 import {
   getStorageAdapter,
@@ -37,6 +47,15 @@ import {
   notifyPageMoved,
   notifyPageUpdated
 } from '../repository/pageRepository.js';
+
+import {
+  scheduleWorkspaceCheckpoint
+} from './workspaceCheckpointTasks.js';
+
+import {
+  createOrderCompactionPlan,
+  getOrderCompactionNeed
+} from '../tree/treeOrderCompaction.js';
 
 
 export async function createPage(
@@ -165,21 +184,16 @@ async function writePageFile(
     'pages'
   );
 
+  const parsed =
+    parseMarkdown(
+      content
+    );
+
   const fileName =
     `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.md`;
 
   const path =
     `/pages/${fileName}`;
-
-  await storageAdapter.writeText(
-    path,
-    content
-  );
-
-  const parsed =
-    parseMarkdown(
-      content
-    );
 
   const page =
     createPageRecord({
@@ -189,16 +203,56 @@ async function writePageFile(
       content
     });
 
-  setPages(
-    [
-      ...state.pages,
-      page
-    ]
-  );
+  const journalEntry =
+    await beginWorkspaceOperation({
+      type: 'create-page',
+      affectedPages: [
+        page.id
+      ],
+      before: {},
+      after: {
+        [page.id]:
+          createPageJournalSnapshot(
+            page
+          )
+      }
+    });
 
-  notifyPageCreated(
-    page
-  );
+  try {
+
+    await storageAdapter.writeText(
+      path,
+      content
+    );
+
+    setPages(
+      [
+        ...state.pages,
+        page
+      ]
+    );
+
+    notifyPageCreated(
+      page
+    );
+
+    await commitWorkspaceOperation(
+      journalEntry
+    );
+
+    scheduleWorkspaceCheckpoint({
+      reason: 'after-create-page'
+    });
+
+  } catch (error) {
+
+    await failWorkspaceOperation(
+      journalEntry,
+      error
+    );
+
+    throw error;
+  }
 
   return page;
 }
@@ -275,6 +329,8 @@ async function deletePageBranchMeasured(
   await requireWorkspaceBackupBeforeRiskyOperation(
     'delete-page-branch',
     {
+      pages:
+        pagesToDelete,
       onProgress:
         options.onProgress
     }
@@ -285,6 +341,9 @@ async function deletePageBranchMeasured(
 
   const failedPages =
     [];
+
+  const deleteStartedAt =
+    Date.now();
 
   for (
     let index = 0;
@@ -309,7 +368,9 @@ async function deletePageBranchMeasured(
         label: 'Удаление',
         stage: 'страницы',
         current: index + 1,
-        total: pagesToDelete.length
+        total: pagesToDelete.length,
+        elapsedMs:
+          Date.now() - deleteStartedAt
       });
 
     } catch (error) {
@@ -345,6 +406,10 @@ async function deletePageBranchMeasured(
   notifyPageDeleted(
     deletedPages
   );
+
+  scheduleWorkspaceCheckpoint({
+    reason: 'after-delete-page-branch'
+  });
 
   if (failedPages.length > 0) {
 
@@ -536,31 +601,77 @@ export async function updatePageParent(
       livePage
     );
 
-  await requireWorkspaceBackupBeforeRiskyOperation(
-    'move-page-parent'
-  );
+  const previousContent =
+    livePage.content;
 
-  livePage.parent =
-    parentId;
-
-  const updatedContent =
-    livePage.content.replace(
-      /parent:\s*(.*)/i,
-      `parent: ${parentId ?? 'null'}`
+  const journalEntry =
+    await beginWorkspaceOperation(
+      createTreeOperationJournalData(
+        [
+          {
+            livePage,
+            previousPage,
+            parentId,
+            order:
+              livePage.order
+          }
+        ],
+        'move-page-parent'
+      )
     );
 
-  await writePageContent(
-    livePage,
-    updatedContent
-  );
+  try {
 
-  livePage.content =
-    updatedContent;
+    livePage.parent =
+      parentId;
 
-  notifyPageMoved(
-    previousPage,
-    livePage
-  );
+    const updatedContent =
+      livePage.content.replace(
+        /parent:\s*(.*)/i,
+        `parent: ${parentId ?? 'null'}`
+      );
+
+    await writePageContent(
+      livePage,
+      updatedContent
+    );
+
+    livePage.content =
+      updatedContent;
+
+    notifyPageMoved(
+      previousPage,
+      livePage
+    );
+
+    await commitWorkspaceOperation(
+      journalEntry
+    );
+
+    scheduleWorkspaceCheckpoint({
+      reason: 'after-move-page-parent'
+    });
+
+    scheduleTreeOrderCompaction({
+      parentId,
+      reason: 'after-move-page-parent'
+    });
+
+  } catch (error) {
+
+    livePage.parent =
+      previousPage.parent;
+
+    livePage.content =
+      previousContent;
+
+    await failWorkspaceOperation(
+      journalEntry,
+      error
+    );
+
+    throw error;
+  }
 }
 
 
@@ -579,12 +690,14 @@ export async function updatePageTreePosition(
 
   if (!change) return;
 
-  await requireWorkspaceBackupBeforeRiskyOperation(
-    'move-page-tree-position'
-  );
-
-  await applyPageTreePositionChange(
-    change
+  await applyPageTreePositionChanges(
+    [
+      change
+    ],
+    {
+      reason:
+        'after-tree-position-update'
+    }
   );
 }
 
@@ -626,13 +739,37 @@ async function updatePageTreePositionsMeasured(
 
   if (changes.length === 0) return;
 
-  await requireWorkspaceBackupBeforeRiskyOperation(
-    'move-page-tree-position',
-    {
-      onProgress:
-        options.onProgress
-    }
-  );
+  const moveStartedAt =
+    Date.now();
+
+  if (
+    shouldBackupTreePositionChanges(
+      changes
+    )
+  ) {
+
+    await requireWorkspaceBackupBeforeRiskyOperation(
+      'move-page-tree-position',
+      {
+        onProgress:
+          options.onProgress
+      }
+    );
+  }
+
+  const journalEntry =
+    shouldJournalTreePositionChanges(
+      changes
+    )
+      ? await beginWorkspaceOperation(
+        createTreeOperationJournalData(
+          changes,
+          'move-page-tree-position'
+        )
+      )
+      : null;
+
+  try {
 
   for (
     let index = 0;
@@ -651,14 +788,299 @@ async function updatePageTreePositionsMeasured(
       label: 'Перенос',
       stage: 'страницы',
       current: index + 1,
-      total: changes.length
+      total: changes.length,
+      elapsedMs:
+        Date.now() - moveStartedAt
     });
+  }
+
+  } catch (error) {
+
+    rollbackPageTreePositionChanges(
+      changes
+    );
+
+    if (journalEntry) {
+
+      await failWorkspaceOperation(
+        journalEntry,
+        error
+      );
+    }
+
+    throw error;
+  }
+
+  if (journalEntry) {
+
+    await commitWorkspaceOperation(
+      journalEntry
+    );
+  }
+
+  const checkpointReason =
+    shouldJournalTreePositionChanges(
+      changes
+    )
+      ? 'after-tree-parent-move'
+      : 'after-tree-reorder';
+
+  if (!options.skipCheckpoint) {
+
+    scheduleWorkspaceCheckpoint({
+      reason:
+        checkpointReason
+    });
+
+    scheduleTreeOrderCompactionForChanges(
+      changes,
+      checkpointReason
+    );
   }
 
   return {
     changedPages:
       changes.length
   };
+}
+
+
+function shouldBackupTreePositionChanges(
+  changes
+) {
+
+  return changes.length > 1 &&
+    changes.some(change =>
+      change.previousPage?.parent !== change.parentId
+    );
+}
+
+
+function shouldJournalTreePositionChanges(
+  changes
+) {
+
+  return changes.some(change =>
+    change.previousPage?.parent !== change.parentId
+  );
+}
+
+
+async function applyPageTreePositionChanges(
+  changes,
+  options = {}
+) {
+
+  const journalEntry =
+    shouldJournalTreePositionChanges(
+      changes
+    )
+      ? await beginWorkspaceOperation(
+        createTreeOperationJournalData(
+          changes,
+          'move-page-tree-position'
+        )
+      )
+      : null;
+
+  try {
+
+    for (const change of changes) {
+
+      await applyPageTreePositionChange(
+        change
+      );
+    }
+
+  } catch (error) {
+
+    rollbackPageTreePositionChanges(
+      changes
+    );
+
+    if (journalEntry) {
+
+      await failWorkspaceOperation(
+        journalEntry,
+        error
+      );
+    }
+
+    throw error;
+  }
+
+  if (journalEntry) {
+
+    await commitWorkspaceOperation(
+      journalEntry
+    );
+  }
+
+  const checkpointReason =
+    options.reason ||
+    (
+      shouldJournalTreePositionChanges(
+        changes
+      )
+        ? 'after-tree-parent-move'
+        : 'after-tree-reorder'
+    );
+
+  if (!options.skipCheckpoint) {
+
+    scheduleWorkspaceCheckpoint({
+      reason:
+        checkpointReason
+    });
+
+    scheduleTreeOrderCompactionForChanges(
+      changes,
+      checkpointReason
+    );
+  }
+}
+
+
+export function scheduleTreeOrderCompaction({
+  parentId = null,
+  reason = 'after-tree-reorder'
+} = {}) {
+
+  const need =
+    getOrderCompactionNeed(
+      state.pages,
+      parentId
+    );
+
+  if (!need.needed) {
+
+    return {
+      scheduled:
+        false,
+      ...need
+    };
+  }
+
+  const workspaceId =
+    getWorkspaceIdForBackgroundJob();
+
+  const job =
+    enqueueBackgroundCheckpoint({
+      type:
+        `tree.order-compaction:${need.parentId ?? 'root'}`,
+      workspaceId,
+      reason,
+      payload: {
+        parentId:
+          need.parentId
+      },
+      run:
+        async ({ payload }) =>
+          compactTreeOrderForParent(
+            payload.parentId,
+            {
+              skipCheckpoint:
+                true
+            }
+          )
+    });
+
+  return {
+    scheduled:
+      true,
+    ...need,
+    job
+  };
+}
+
+
+export async function compactTreeOrderForParent(
+  parentId = null,
+  options = {}
+) {
+
+  const plan =
+    createOrderCompactionPlan(
+      state.pages,
+      parentId
+    );
+
+  if (plan.length === 0) {
+
+    return {
+      needed:
+        false,
+      changedPages:
+        0,
+      parentId:
+        parentId ?? null
+    };
+  }
+
+  await updatePageTreePositions(
+    plan,
+    {
+      ...options,
+      skipCheckpoint:
+        true
+    }
+  );
+
+  if (!options.skipCheckpoint) {
+
+    scheduleWorkspaceCheckpoint({
+      reason:
+        'after-tree-order-compaction'
+    });
+  }
+
+  return {
+    needed:
+      true,
+    changedPages:
+      plan.length,
+    parentId:
+      parentId ?? null
+  };
+}
+
+
+function scheduleTreeOrderCompactionForChanges(
+  changes,
+  reason
+) {
+
+  const parentIds =
+    new Set();
+
+  changes.forEach(change => {
+
+    parentIds.add(
+      change.parentId ?? null
+    );
+  });
+
+  parentIds.forEach(parentId => {
+
+    scheduleTreeOrderCompaction({
+      parentId,
+      reason
+    });
+  });
+}
+
+
+function getWorkspaceIdForBackgroundJob() {
+
+  const storageAdapter =
+    getStorageAdapter();
+
+  return String(
+    storageAdapter.getWorkspaceRoot?.() ||
+    storageAdapter.getWorkspaceHandle?.()?.name ||
+    storageAdapter.kind ||
+    'current-workspace'
+  );
 }
 
 
@@ -683,6 +1105,8 @@ function preparePageTreePositionChange({
   return {
     livePage,
     previousPage,
+    previousContent:
+      livePage.content,
     parentId,
     order
   };
@@ -763,6 +1187,105 @@ async function applyPageTreePositionChange({
 }
 
 
+function rollbackPageTreePositionChanges(
+  changes
+) {
+
+  changes.forEach(change => {
+
+    const rollbackFrom =
+      snapshotPageForIndex(
+        change.livePage
+      );
+
+    change.livePage.parent =
+      change.previousPage.parent;
+
+    change.livePage.order =
+      change.previousPage.order;
+
+    if (
+      typeof change.previousContent === 'string'
+    ) {
+
+      change.livePage.content =
+        change.previousContent;
+    }
+
+    notifyPageMoved(
+      rollbackFrom,
+      change.livePage
+    );
+  });
+}
+
+
+function createTreeOperationJournalData(
+  changes,
+  type
+) {
+
+  const before =
+    {};
+
+  const after =
+    {};
+
+  changes.forEach(change => {
+
+    const pageId =
+      change.livePage.id;
+
+    before[pageId] =
+      createPageJournalSnapshot(
+        change.previousPage
+      );
+
+    after[pageId] =
+      createPageJournalSnapshot({
+        ...change.livePage,
+        parent:
+          change.parentId,
+        order:
+          change.order
+      });
+  });
+
+  return {
+    type,
+    affectedPages:
+      changes.map(change =>
+        change.livePage.id
+      ),
+    before,
+    after
+  };
+}
+
+
+function createPageJournalSnapshot(
+  page
+) {
+
+  return {
+    id:
+      page?.id || null,
+    path:
+      page?.path || null,
+    parent:
+      page?.parent ?? null,
+    order:
+      page?.order ?? 0,
+    title:
+      page?.title || '',
+    template:
+      page?.template || '',
+    type:
+      page?.type || ''
+  };
+}
+
+
 export async function updatePageAliases(
   page,
   aliases
@@ -824,6 +1347,7 @@ function snapshotPageForIndex(
 
   return {
     id: page.id,
+    path: page.path,
     parent: page.parent,
     order: page.order,
     title: page.title,

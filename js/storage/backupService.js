@@ -1239,8 +1239,19 @@ function reportProgress(
 
   if (typeof options?.onProgress !== 'function') return;
 
+  if (!options.__progressStartedAt) {
+
+    options.__progressStartedAt =
+      Date.now();
+  }
+
   options.onProgress(
-    progress
+    {
+      ...progress,
+      elapsedMs:
+        progress.elapsedMs ??
+        Date.now() - options.__progressStartedAt
+    }
   );
 }
 

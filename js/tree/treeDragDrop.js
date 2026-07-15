@@ -9,10 +9,8 @@ import {
 } from '../storage/storage.js';
 
 import {
-  createProgressMessage
-} from '../performance/workspacePerformance.js';
-
-import {
+  finishProgressStatus,
+  setProgressStatus,
   setStatus
 } from '../ui/ui.js';
 
@@ -474,11 +472,7 @@ async function commitTreePointerDrop(
     plan,
     {
       onProgress:
-        progress => setStatus(
-          createProgressMessage(
-            progress
-          )
-        )
+        setProgressStatus
     }
   );
 
@@ -493,7 +487,7 @@ async function commitTreePointerDrop(
     stateToCommit.renderTree
   );
 
-  setStatus(
+  finishProgressStatus(
     `Перенос завершен: ${plan.length} стр.`
   );
 }

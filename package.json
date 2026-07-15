@@ -15,7 +15,9 @@
     "docs:index": "node tools/docs_index.mjs",
     "agents:validate": "node tools/validate_agent_skills.mjs",
     "check:encoding": "node tools/check_text_encoding.mjs",
+    "diagnostics:workspace": "node tools/run_workspace_diagnostics.mjs",
     "test": "node --test \"tests/*.test.mjs\"",
+    "test:large-workspace": "node tools/run_large_workspace_performance_smoke.mjs",
     "test:browser": "node tools/run_browser_smoke.mjs",
     "check:js": "node tools/run_checks.mjs --js-only",
     "verify": "node tools/run_checks.mjs"

@@ -146,9 +146,11 @@ test(
         current:
           3,
         total:
-          10
+          10,
+        elapsedMs:
+          1250
       }),
-      'Backup: страницы 3/10'
+      'Backup: страницы: 3/10 - 30% - 1.3 s'
     );
 
     assert.equal(
@@ -157,6 +159,16 @@ test(
           'Cleanup'
       }),
       'Cleanup'
+    );
+
+    assert.equal(
+      createProgressMessage({
+        current:
+          2,
+        total:
+          4
+      }),
+      'Операция: 2/4 - 50%'
     );
   }
 );

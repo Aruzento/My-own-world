@@ -7,6 +7,10 @@ owner_zone: "architecture"
 ---
 # PageRepository Contract
 
+Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
+
+Large-workspace mutations should update `PageRepository` / `PageIndex` incrementally instead of forcing full workspace reloads after ordinary create, rename, move, or reorder operations.
+
 `PageRepository` — будущий единый слой доступа к страницам проекта. Его задача — убрать хаотичные `state.pages.find(...)`, `state.pages.filter(...)` и ручные обходы parent-chain из feature-кода.
 
 ## Зачем Нужен PageRepository

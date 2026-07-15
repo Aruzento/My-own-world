@@ -1,5 +1,12 @@
 # Release Notes
 
+## 2026-07-15: Faster Tree Delete Backup
+
+- Deleting a page or branch no longer backs up every page in the workspace.
+- Automatic delete protection now creates a scoped backup containing only the pages that will be removed.
+- This keeps deletion protected while avoiding large-workspace pauses when the user deletes a small branch.
+- Manual full workspace backup from settings is unchanged.
+
 ## 2026-07-14: Tree Virtualization For Big Workspaces
 
 - Дерево страниц теперь включает виртуализацию на больших workspace: вместо сотен DOM-строк приложение рендерит только видимый диапазон и небольшой запас вокруг него.

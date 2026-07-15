@@ -118,6 +118,64 @@ test(
       4
     );
 
+    await page.evaluate(
+      async () => {
+
+        const {
+          finishProgressStatus,
+          setProgressStatus
+        } = await import('/js/ui/ui.js');
+
+        setProgressStatus({
+          label:
+            'Backup',
+          stage:
+            'pages',
+          current:
+            2,
+          total:
+            4,
+          elapsedMs:
+            1200
+        });
+
+        window.__finishProgressStatus =
+          finishProgressStatus;
+      }
+    );
+
+    await expect(
+      page.locator('.operation-progress')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.operation-progress-percent')
+    ).toHaveText(
+      '50%'
+    );
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      '50%'
+    );
+
+    await page.evaluate(
+      () => window.__finishProgressStatus(
+        'Backup done',
+        {
+          delayMs:
+            20
+        }
+      )
+    );
+
+    await expect(
+      page.locator('.operation-progress')
+    ).toHaveClass(
+      /is-hidden/
+    );
+
     expect(
       pageErrors
     ).toEqual(

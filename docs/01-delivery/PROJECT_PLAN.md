@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-14
+Updated: 2026-07-15
 
 Planning version: 1
 
@@ -31,49 +31,25 @@ This file contains only active and unfinished work. Completed history lives in [
 
 Goal: restore confidence in the core product before adding more features. MyOwnWorld must feel predictable in browser and desktop on both small and large workspaces.
 
-0.0.1.0.1. Build a current bug inventory.
+Current inventory: [BUG_INVENTORY.md](./BUG_INVENTORY.md).
 
-Description: list broken or suspicious user flows from recent work: tree operations, delete, drag and drop, map presentation, drawing, music playlists, properties grid, desktop assets, graph view, and large workspace latency.
+Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md).
 
-0.0.1.0.2. Run a manual smoke pass in browser and desktop.
+Manual smoke checklist: [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_CHECKLIST.md).
 
-Description: check workspace open, page create, rename, move, delete, search, wiki-link, card edit, save/reload, map open, map presentation, properties block, backup/restore, and playlist playback.
-
-0.0.1.0.3. Fix P0/P1 broken flows before new features.
-
-Description: fix any flow that blocks normal work, corrupts data, loses user edits, prevents opening a workspace, or makes a main feature unusable.
-
-0.0.1.0.4. Add regression coverage for fixed P0/P1 bugs.
-
-Description: every fixed critical bug should get a unit, browser, or desktop smoke scenario. If automation is not practical, document the manual check in tester instructions.
-
-0.0.1.0.5. Update tester instructions and known issues.
-
-Description: keep the human testing path short and understandable: what to open, what to click, what result proves the fix.
+No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. The next concrete risk is the known large-workspace desktop path in `0.0.1.1.1`.
 
 ### 0.0.1.1.0. Large Workspace Performance & Reliability
 
 Goal: the real large workspace must not feel frozen. Tree rendering, moving, deleting, search, and map opening should stay understandable and responsive.
 
-0.0.1.1.1. Run a real desktop smoke on the known large GM workspace.
+Latest large workspace smoke: [LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md](./LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md).
 
-Description: open the workspace in the desktop app, scroll the virtual tree, use search, find in tree, create a test page, move it, delete it, open a map, and start presentation mode. Measure visible delays.
+Architecture direction: keep interactive operations small and local. Use startup indexes, lightweight operation journals, rollback snapshots, and background validation/checkpointing instead of full workspace backup on every ordinary tree action. Full backups stay for destructive, multi-file, schema, restore, import, and repair operations.
 
-0.0.1.1.2. Add permanent performance smoke for large workspaces.
+0.0.1.1.1. Finish visible native desktop click-through on the known large GM workspace.
 
-Description: cover load, tree render, search, wiki lookup, move, delete, and map open with repeatable metrics and budgets.
-
-0.0.1.1.3. Finish progress UI for long operations.
-
-Description: asset scan, asset cleanup, large delete, large move, backup, and restore should show clear progress, not just a vague statusbar message.
-
-0.0.1.1.4. Validate batch tree move/delete through real UI drag.
-
-Description: verify that optimized batch operations work from actual drag and context-menu delete, not only from unit probes.
-
-0.0.1.1.5. Add workspace diagnostics for heavy workspaces.
-
-Description: show pages count, assets count, broken refs, backup health, schema status, and recent slow operations in a readable diagnostics view.
+Description: engineering checks are green: real workspace diagnostics, read-only tree probe, desktop environment, desktop packaging smoke, desktop release gate, and native executable launch. Remaining work: owner-visible native Tauri click-through by hand or with a future Tauri UI runner. Verify workspace picker, tree scroll, search, find in tree, settings diagnostics, heavy map open, presentation, audio, and create/move/delete only on a workspace copy.
 
 ### 0.0.1.2.0. Desktop Product Hardening
 
@@ -222,3 +198,75 @@ Description: release handoff should tell what changed, what to test, known risks
 0.0.1.7.5. Preserve old plans as archives only.
 
 Description: active plan stays clean; history and completed details go to `docs/archive` and `WORK_LOG.md`.
+
+### 0.0.1.8.0. System UI/UX Redesign
+
+Goal: turn MyOwnWorld into a coherent professional desktop workbench for a GM: dense, readable, local-first, and calm, with dark fantasy used as accents rather than visual noise.
+
+Source: `C:\Users\Aruko\Downloads\MyOwnWorld UI-UX Redesign.docx`.
+
+Principles: do not rewrite the whole interface in one pass; do not create separate mini design systems for map, graph, cards, or task tracker; do not mix visual restyle with business logic changes. Every migrated area must keep browser and Tauri behavior working.
+
+0.0.1.8.1. UI/CSS inventory report.
+
+Description: produce the first Codex report requested by the redesign brief: current UI/CSS file tree, existing components, duplicate controls, popup/modal implementations, icon approaches, hardcoded colors, proposed UI structure, proposed semantic token schema, migration map, browser/Tauri risks, reusable current UI, and any proposed dependencies.
+
+0.0.1.8.2. Design system contract.
+
+Description: create or update the design contract for MyOwnWorld UI: product image, AppShell/workbench zones, semantic design tokens, theme model, typography, spacing, density, radii, elevation, z-index scale, accessibility rules, and prohibited implementation patterns.
+
+0.0.1.8.3. Theme foundation proof of concept.
+
+Description: implement semantic tokens, theme manager/provider, typography scale, spacing scale, density modes, elevation levels, icon wrapper, and reduced motion foundation without migrating the whole app.
+
+0.0.1.8.4. Component catalogue proof of concept.
+
+Description: implement the first shared primitives only: one button, one input, one panel, one popover, and their hover/active/focus/disabled/keyboard states. Add usage examples and tests before broader migration.
+
+0.0.1.8.5. AppShell proof of concept.
+
+Description: create a minimal workbench layout with title/context bar, main navigation, primary sidebar, workspace, optional inspector, bottom panel, and status bar. Migrate only one safe section first.
+
+0.0.1.8.6. Migration Phase 0: audit baselines.
+
+Description: collect UI inventory, CSS inventory, icon inventory, popup inventory, and screenshot baseline. No large visual changes in this phase.
+
+0.0.1.8.7. Migration Phase 1: foundations.
+
+Description: apply semantic tokens, theme model, typography, spacing, density, elevation, and icon wrapper to app-level surfaces and shared layout rules.
+
+0.0.1.8.8. Migration Phase 2: primitives.
+
+Description: migrate buttons, icon buttons, inputs, selects, checkboxes, switches, sliders, badges, tabs, separators, and scroll areas to shared primitives.
+
+0.0.1.8.9. Migration Phase 3: overlays.
+
+Description: migrate dialog, popover, dropdown, context menu, tooltip, toast, and popup manager to one shared overlay lifecycle.
+
+0.0.1.8.10. Migration Phase 4: AppShell.
+
+Description: migrate main navigation, primary sidebar, workspace, inspector, bottom panel, status bar, resizing, and collapsing behavior.
+
+0.0.1.8.11. Migration Phase 5: core content.
+
+Description: migrate tree, card editor, properties, templates, search, and command palette into the shared design system.
+
+0.0.1.8.12. Migration Phase 6: campaign map.
+
+Description: migrate map toolbar, scene/list surfaces, layers, token dock, map inspector, and map contextual actions without changing map business logic.
+
+0.0.1.8.13. Migration Phase 7: knowledge graph.
+
+Description: migrate graph toolbar, canvas controls, node cards, edge states, inspector, and filters.
+
+0.0.1.8.14. Migration Phase 8: secondary screens.
+
+Description: migrate task tracker, settings, imports, backup/restore, release/help screens, diagnostics, and support panels.
+
+0.0.1.8.15. Migration Phase 9: polish and cleanup.
+
+Description: run accessibility audit, performance pass, visual regression, theme presets, animation review, dead CSS removal, and documentation updates.
+
+0.0.1.8.16. Visual regression for design system.
+
+Description: add fixed viewport/theme/scale screenshots for shell, tree, editor, properties, map, graph, popups, empty/loading/error states, compact/comfortable density, dark and high-contrast themes.
