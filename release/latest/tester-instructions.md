@@ -1,5 +1,43 @@
 # Tester Instructions
 
+## 2026-07-15: Desktop Release Gate
+
+1. Before building or sending an installer, run `npm run desktop:gate`.
+2. Open `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md`.
+3. Expected result: all required steps are `passed`.
+4. If testing a large GM workspace, run `npm run desktop:gate -- --workspace "<workspace path>"`.
+5. Expected result for large-workspace handoff: the large workspace desktop smoke is not skipped.
+6. Do not hand off an installer if the gate report says `FAILED`.
+
+## 2026-07-15: Desktop Large Workspace Smoke
+
+1. Make sure the large workspace disk/folder is available.
+2. Run `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\База"`.
+3. Open the generated report: `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md`.
+4. Start the desktop app and follow the manual checklist in `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md`.
+5. Use a copied workspace for create/move/delete checks.
+6. Expected result: automated checks pass, desktop diagnostics explain the workspace state, and no tree/map/backup action feels frozen.
+
+## 2026-07-15: Desktop Workspace Diagnostics
+
+1. Open MyOwnWorld desktop build.
+2. Select a workspace.
+3. Open app settings with the top-right gear button.
+4. In `Диагностика workspace`, click `Обновить диагностику`.
+5. Expected result: the first diagnostics section shows runtime mode, workspace path, write access, schema status, checkpoint status, backup folder and last operation.
+6. Expected result: the summary cards include pages, maps, assets, broken refs, orphan refs, schema issues, backup count, incomplete backup count and pending operations.
+7. If the workspace cannot write, has pending operations, incomplete backup folders or a failed checkpoint, the warning section should say that directly.
+
+## 2026-07-15: Desktop Install And Update Flow
+
+1. Build or receive `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+2. Install it as the normal desktop app.
+3. Open MyOwnWorld and select a copied test workspace.
+4. Check that the tree, one card, one map, images, presentation mode, music if present, and manual backup work.
+5. To test update, close the app, make a manual backup or copy the workspace folder, install the new installer over the old build, then reopen the same workspace.
+6. Expected result: the app updates without moving or deleting the workspace.
+7. If the build is bad, reinstall the previous known-good installer. Restore the workspace backup only if the test changed workspace data.
+
 ## 2026-07-15: Faster Tree Delete Backup
 
 1. Open a large workspace, preferably a copy of `X:\ДНД\Мастер\База`.

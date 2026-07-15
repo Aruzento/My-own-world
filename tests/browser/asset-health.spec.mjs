@@ -187,6 +187,35 @@ test(
             {
               hasWorkspace: true,
               autoRun: true,
+              workspacePath: 'X:\\ДНД\\Мастер\\База',
+              canWriteWorkspace: true,
+              backupStatus: {
+                backups: [
+                  {
+                    id: 'backup-1',
+                    reason: 'manual',
+                    createdAt: '2026-07-15T10:00:00.000Z'
+                  }
+                ],
+                incomplete: [
+                  {
+                    id: 'partial-backup'
+                  }
+                ]
+              },
+              pendingOperations: [
+                {
+                  id: 'pending-1',
+                  type: 'tree-move'
+                }
+              ],
+              workspaceCheckpoint: {
+                ok: false,
+                checkedAt: '2026-07-15T10:01:00.000Z',
+                schemaIssues: 0,
+                treeErrors: 1,
+                pendingOperations: 1
+              },
               pages: [
                 {
                   id: 'map-1',
@@ -233,10 +262,14 @@ test(
               popup.querySelectorAll(
                 '.app-workspace-diagnostics-card'
               ).length,
+            statusText:
+              popup.querySelector(
+                '.app-workspace-diagnostics-section'
+              )?.textContent || '',
             warningCount:
               popup.querySelectorAll(
                 '.app-workspace-diagnostics-section'
-              )[0]?.querySelectorAll(
+              )[1]?.querySelectorAll(
                 '.app-workspace-diagnostics-item'
               ).length || 0
           };
@@ -246,7 +279,19 @@ test(
     expect(
       result.cardCount
     ).toBe(
-      6
+      9
+    );
+
+    expect(
+      result.statusText
+    ).toContain(
+      'X:\\ДНД\\Мастер\\База'
+    );
+
+    expect(
+      result.statusText
+    ).toContain(
+      'manual'
     );
 
     expect(

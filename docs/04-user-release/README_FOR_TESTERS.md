@@ -7,6 +7,20 @@ owner_zone: "user-release"
 ---
 # README For Testers
 
+## Start Here
+
+For desktop testing, start with [HOW_TO_INSTALL.md](./HOW_TO_INSTALL.md).
+
+Use the installer for handoff:
+
+```text
+src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe
+```
+
+The installer updates the app only. The workspace is a separate folder selected inside MyOwnWorld, so test on a copied workspace when possible.
+
+After install or update, run the short smoke from [HOW_TO_INSTALL.md](./HOW_TO_INSTALL.md), then continue with [TEST_SCENARIOS.md](./TEST_SCENARIOS.md).
+
 ## Где Лежат Инструкции
 
 Рабочая пользовательская документация находится в `docs/04-user-release/`.

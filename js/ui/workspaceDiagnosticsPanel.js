@@ -7,6 +7,12 @@ import {
 } from '../performance/workspacePerformance.js';
 
 import {
+  BACKUP_ROOT_DIR,
+  listIncompleteWorkspaceBackups,
+  listWorkspaceBackups
+} from '../storage/backupService.js';
+
+import {
   findBrokenAssetReferences,
   findOrphanAssetPaths
 } from '../storage/storage.js';
@@ -17,8 +23,13 @@ import {
 
 import {
   getStorageAdapter,
-  hasWorkspaceAccess
+  hasWorkspaceAccess,
+  queryWorkspaceWritePermission
 } from '../storage/storageAdapter.js';
+
+import {
+  listPendingWorkspaceOperations
+} from '../storage/operationJournal.js';
 
 import {
   validateWorkspaceSnapshot
@@ -175,6 +186,27 @@ export async function collectWorkspaceDiagnostics(
       pages
     });
 
+  const workspace =
+    await createWorkspaceStatus(
+      options
+    );
+
+  const backup =
+    await createBackupStatus(
+      options
+    );
+
+  const pendingOperations =
+    await getPendingOperations(
+      options
+    );
+
+  const checkpoint =
+    normalizeCheckpoint(
+      options.workspaceCheckpoint ??
+      state.workspaceCheckpoint
+    );
+
   const brokenAssets =
     findBrokenAssetReferences(
       pages,
@@ -221,7 +253,11 @@ export async function collectWorkspaceDiagnostics(
 
   const warnings =
     createWarnings({
+      workspace,
       schema,
+      checkpoint,
+      backup,
+      pendingOperations,
       brokenAssets,
       orphanAssets,
       pageStats,
@@ -247,9 +283,22 @@ export async function collectWorkspaceDiagnostics(
         orphanAssets.length,
       schemaIssues:
         schema.issues.length,
+      schemaErrors:
+        schema.errors.length,
+      backups:
+        backup.completeCount,
+      incompleteBackups:
+        backup.incompleteCount,
+      pendingOperations:
+        pendingOperations.length,
       warnings:
         warnings.length
     },
+    workspace,
+    schema,
+    checkpoint,
+    backup,
+    pendingOperations,
     pageStats,
     assetGroups:
       groupAssetPaths(
@@ -268,6 +317,211 @@ export async function collectWorkspaceDiagnostics(
     heavyMaps,
     performanceEvents,
     warnings
+  };
+}
+
+
+async function createWorkspaceStatus(
+  options
+) {
+
+  const adapter =
+    options.storageAdapter ||
+    getStorageAdapter();
+
+  const hasAccess =
+    options.hasWorkspace ??
+    hasWorkspaceAccess(
+      adapter
+    );
+
+  let canWrite =
+    options.canWriteWorkspace;
+
+  if (canWrite === undefined) {
+
+    try {
+
+      canWrite =
+        await queryWorkspaceWritePermission(
+          adapter
+        );
+
+    } catch (error) {
+
+      canWrite =
+        false;
+    }
+  }
+
+  const handle =
+    adapter.getWorkspaceHandle?.();
+
+  const path =
+    options.workspacePath ||
+    adapter.getWorkspaceRoot?.() ||
+    handle?.name ||
+    '';
+
+  return {
+    mode:
+      adapter.kind || 'unknown',
+    path:
+      path || 'Workspace not selected',
+    hasAccess:
+      Boolean(hasAccess),
+    canWrite:
+      Boolean(canWrite),
+    backupPath:
+      path && adapter.kind === 'desktop'
+        ? `${path}\\${BACKUP_ROOT_DIR}`
+        : `${BACKUP_ROOT_DIR} inside selected workspace`
+  };
+}
+
+
+async function createBackupStatus(
+  options
+) {
+
+  if (options.backupStatus) {
+
+    return normalizeBackupStatus(
+      options.backupStatus
+    );
+  }
+
+  if (options.listBackups) {
+
+    const backups =
+      await options.listBackups();
+
+    const incomplete =
+      options.listIncompleteBackups
+        ? await options.listIncompleteBackups()
+        : [];
+
+    return normalizeBackupStatus({
+      backups,
+      incomplete
+    });
+  }
+
+  try {
+
+    const adapter =
+      options.storageAdapter ||
+      getStorageAdapter();
+
+    const backups =
+      await listWorkspaceBackups(
+        adapter
+      );
+
+    const incomplete =
+      await listIncompleteWorkspaceBackups(
+        {
+          storageAdapter:
+            adapter
+        }
+      );
+
+    return normalizeBackupStatus({
+      backups,
+      incomplete
+    });
+
+  } catch (error) {
+
+    return normalizeBackupStatus({
+      backups: [],
+      incomplete: [],
+      error:
+        error?.message || String(error)
+    });
+  }
+}
+
+
+function normalizeBackupStatus({
+  backups = [],
+  incomplete = [],
+  error = ''
+} = {}) {
+
+  const latest =
+    backups[0] || null;
+
+  return {
+    completeCount:
+      backups.length,
+    incompleteCount:
+      incomplete.length,
+    latestId:
+      latest?.id || '',
+    latestReason:
+      latest?.reason || '',
+    latestAt:
+      latest?.createdAt || '',
+    error
+  };
+}
+
+
+async function getPendingOperations(
+  options
+) {
+
+  if (Array.isArray(options.pendingOperations)) {
+
+    return options.pendingOperations;
+  }
+
+  if (options.listPendingOperations) {
+
+    return options.listPendingOperations();
+  }
+
+  try {
+
+    return await listPendingWorkspaceOperations(
+      options.storageAdapter ||
+      getStorageAdapter()
+    );
+
+  } catch (error) {
+
+    return [];
+  }
+}
+
+
+function normalizeCheckpoint(
+  checkpoint
+) {
+
+  if (!checkpoint) {
+
+    return {
+      ok: null,
+      checkedAt: '',
+      schemaIssues: null,
+      treeErrors: null,
+      pendingOperations: null
+    };
+  }
+
+  return {
+    ok:
+      checkpoint.ok === true,
+    checkedAt:
+      checkpoint.checkedAt || '',
+    schemaIssues:
+      checkpoint.schemaIssues ?? null,
+    treeErrors:
+      checkpoint.treeErrors ?? null,
+    pendingOperations:
+      checkpoint.pendingOperations ?? null
   };
 }
 
@@ -426,6 +680,12 @@ function renderDiagnosticsResult(
   container.replaceChildren();
 
   container.appendChild(
+    createWorkspaceStatusSection(
+      diagnostics
+    )
+  );
+
+  container.appendChild(
     createSummaryGrid(
       diagnostics.summary
     )
@@ -507,7 +767,10 @@ function createSummaryGrid(
     ['Ассетов', summary.assets],
     ['Broken refs', summary.brokenAssets],
     ['Orphan refs', summary.orphanAssets],
-    ['Проблем схемы', summary.schemaIssues]
+    ['Проблем схемы', summary.schemaIssues],
+    ['Backup', summary.backups],
+    ['Недособр. backup', summary.incompleteBackups],
+    ['Pending ops', summary.pendingOperations]
   ].forEach(([label, value]) => {
 
     const item =
@@ -539,6 +802,69 @@ function createSummaryGrid(
   });
 
   return grid;
+}
+
+
+function createWorkspaceStatusSection(
+  diagnostics
+) {
+
+  const latestOperation =
+    diagnostics.performanceEvents[0];
+
+  const rows =
+    [
+      [
+        'Режим',
+        diagnostics.workspace.mode
+      ],
+      [
+        'Workspace',
+        diagnostics.workspace.path
+      ],
+      [
+        'Запись',
+        diagnostics.workspace.canWrite
+          ? 'OK'
+          : 'Нет доступа на запись'
+      ],
+      [
+        'Схема',
+        diagnostics.schema.ok
+          ? 'OK'
+          : `${diagnostics.summary.schemaIssues} issues, ${diagnostics.summary.schemaErrors} errors`
+      ],
+      [
+        'Checkpoint',
+        diagnostics.checkpoint.ok === null
+          ? 'Еще не запускался'
+          : diagnostics.checkpoint.ok
+            ? `OK (${formatDateTime(diagnostics.checkpoint.checkedAt)})`
+            : `Есть проблемы (${formatDateTime(diagnostics.checkpoint.checkedAt)})`
+      ],
+      [
+        'Backup',
+        diagnostics.backup.latestId
+          ? `${diagnostics.backup.completeCount} шт., последний: ${diagnostics.backup.latestReason || diagnostics.backup.latestId}`
+          : `${diagnostics.backup.completeCount} шт.`
+      ],
+      [
+        'Папка backup',
+        diagnostics.workspace.backupPath
+      ],
+      [
+        'Последняя операция',
+        latestOperation
+          ? `${latestOperation.operation}: ${latestOperation.durationMs} ms (${latestOperation.status})`
+          : 'Нет данных'
+      ]
+    ];
+
+  return createListSection(
+    'Desktop workspace status',
+    rows,
+    ([label, value]) => `${label}: ${value}`
+  );
 }
 
 
@@ -599,7 +925,11 @@ function createListSection(
 
 
 function createWarnings({
+  workspace,
   schema,
+  checkpoint,
+  backup,
+  pendingOperations,
   brokenAssets,
   orphanAssets,
   pageStats,
@@ -610,10 +940,55 @@ function createWarnings({
   const warnings =
     [];
 
+  if (!workspace.hasAccess) {
+
+    warnings.push(
+      'Workspace не выбран.'
+    );
+  }
+
+  if (
+    workspace.hasAccess &&
+    !workspace.canWrite
+  ) {
+
+    warnings.push(
+      'Нет доступа на запись в workspace.'
+    );
+  }
+
   if (!schema.ok) {
 
     warnings.push(
       `Схема workspace содержит ошибки: ${schema.issues.length}`
+    );
+  }
+
+  if (checkpoint.ok === false) {
+
+    warnings.push(
+      'Последний background checkpoint нашел проблемы.'
+    );
+  }
+
+  if (pendingOperations.length) {
+
+    warnings.push(
+      `Есть незавершенные операции workspace: ${pendingOperations.length}`
+    );
+  }
+
+  if (backup.incompleteCount) {
+
+    warnings.push(
+      `Есть недособранные backup: ${backup.incompleteCount}`
+    );
+  }
+
+  if (backup.error) {
+
+    warnings.push(
+      `Не удалось проверить backup: ${backup.error}`
     );
   }
 
@@ -779,6 +1154,26 @@ function parseEncodedJSON(
 
     return fallback;
   }
+}
+
+
+function formatDateTime(
+  value
+) {
+
+  if (!value) return 'no date';
+
+  const date =
+    new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+
+    return String(value);
+  }
+
+  return date.toLocaleString(
+    'ru-RU'
+  );
 }
 
 

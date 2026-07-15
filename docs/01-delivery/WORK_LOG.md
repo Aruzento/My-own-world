@@ -6,6 +6,147 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-15: 0.0.1.2.4 Desktop Release Gate Hardening
+
+### What Changed
+
+- Completed `0.0.1.2.4`.
+- Hardened `npm run desktop:gate` so it now validates release handoff files, npm scripts, docs index, agent skills, verify, browser smoke, desktop prepare, packaging smoke, desktop environment and Tauri cargo check.
+- Added an optional large workspace smoke hook to the gate through `--workspace "<path>"` or `MOW_DESKTOP_RELEASE_WORKSPACE`.
+- Added a generated release gate report at `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md`.
+- Updated desktop release policy, install guide, release notes and tester instructions.
+- Removed `0.0.1.2.4` from the active plan.
+
+### User Impact
+
+- Before building or handing off an installer, there is now one stronger command: `npm run desktop:gate`.
+- If a large GM workspace is available, the same gate can include it: `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\База"`.
+- If no large workspace is provided, the report explicitly says the build is not validated as a large-workspace handoff.
+
+### Checks
+
+- `node --check tools\run_desktop_release_gate.mjs`
+- `npm run desktop:gate`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+### Next
+
+- Continue with `0.0.1.3.1` stabilize presentation mode.
+
+---
+
+## 2026-07-15: 0.0.1.2.3 Desktop Large Workspace Smoke
+
+### What Changed
+
+- Completed `0.0.1.2.3`.
+- Added `tools/run_desktop_large_workspace_smoke.mjs`.
+- Added `npm run desktop:large-workspace-smoke`.
+- Added [DESKTOP_LARGE_WORKSPACE_SMOKE.md](./DESKTOP_LARGE_WORKSPACE_SMOKE.md) as the repeatable large workspace desktop smoke procedure.
+- The runner collects read-only workspace diagnostics, tree probe timings, desktop environment checks, packaging smoke and desktop artifact presence.
+- The runner writes `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` by default.
+- Updated release notes, tester instructions and desktop release policy.
+- Removed `0.0.1.2.3` from the active plan.
+
+### User Impact
+
+- Large workspace desktop checks now have one command and one report instead of scattered manual notes.
+- The report still honestly separates automated metrics from native Tauri click-through, which remains manual until a real desktop UI runner exists.
+
+### Checks
+
+- `node --check tools\run_desktop_large_workspace_smoke.mjs`
+- `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\База"` was attempted, but the workspace path is not mounted in this session.
+- `npm run verify`
+- `npm run test:browser`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+### Next
+
+- Continue with `0.0.1.2.4` harden desktop release gate.
+
+---
+
+## 2026-07-15: 0.0.1.2.2 Desktop Workspace Diagnostics
+
+### What Changed
+
+- Completed `0.0.1.2.2`.
+- Expanded the existing workspace diagnostics panel in app settings.
+- Added a compact workspace status section with runtime mode, selected workspace path, write access, schema status, background checkpoint status, backup location, latest backup and latest operation.
+- Diagnostics now include backup count, incomplete backup count, pending operation count and schema error count in the summary.
+- Added warnings for missing write access, failed checkpoints, pending operations, incomplete backups and backup scan errors.
+- Updated browser regression coverage for the diagnostics panel.
+- Removed `0.0.1.2.2` from the active plan.
+
+### User Impact
+
+- In desktop settings, the user can quickly see whether the selected workspace is available, writable, schema-clean, backed up and free of pending operations.
+- This should make reports like "workspace does not delete/move/save" easier to diagnose without guessing.
+
+### Checks
+
+- `npm run check:js`
+- `npm run test:browser`
+
+### Next
+
+- Continue with `0.0.1.2.3` desktop large workspace smoke.
+
+---
+
+## 2026-07-15: 0.0.1.2.1 Desktop Install And Update Flow
+
+### What Changed
+
+- Completed `0.0.1.2.1`.
+- Replaced the old desktop-spike install stub with a clear desktop install, update, handoff, and rollback guide.
+- Documented which file to send to another person: `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+- Documented that the installer contains the app, while the workspace is a separate folder selected by the user.
+- Updated the desktop release policy with the same install/update rules.
+- Removed `0.0.1.2.1` from the active plan.
+
+### User Impact
+
+- It is now clear how to build an installer, what to send to another person, how to update safely, and how to roll back if a build is bad.
+- Testers should use a copied workspace, not the only important workspace.
+
+### Checks
+
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+### Next
+
+- Continue with `0.0.1.2.2` desktop workspace diagnostics.
+
+---
+
+## 2026-07-15: 0.0.1.1.1 Large Workspace Native Desktop Click-Through Accepted
+
+### What Changed
+
+- Closed `0.0.1.1.1` based on owner baseline testing.
+- The app was handed to another person for additional real-world bug discovery.
+- Removed the accepted click-through item from the active plan.
+
+### User Impact
+
+- Large workspace desktop work remains watch-listed: new bugs from the external tester will be triaged as bug inventory items instead of keeping the old broad task open.
+
+### Checks
+
+- Owner manual pass, external tester handoff.
+
+### Next
+
+- Keep large-workspace bugs prioritized when they appear.
+
+---
+
 ## 2026-07-15: Scoped Delete Backup For Large Workspaces
 
 ### What Changed

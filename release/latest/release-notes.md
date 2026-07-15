@@ -1,5 +1,33 @@
 # Release Notes
 
+## 2026-07-15: Hardened Desktop Release Gate
+
+- `npm run desktop:gate` now writes `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md`.
+- The gate validates release handoff docs, required npm scripts, docs index, agent skills, verify, browser smoke, desktop prepare, packaging smoke, desktop environment and Tauri cargo check.
+- The gate can include a real large workspace smoke with `npm run desktop:gate -- --workspace "<path>"`.
+- If no large workspace is provided, the report marks that part as skipped so the release is not accidentally described as large-workspace validated.
+
+## 2026-07-15: Desktop Large Workspace Smoke Runner
+
+- Added `npm run desktop:large-workspace-smoke` for repeatable large-workspace desktop handoff checks.
+- The runner collects read-only workspace diagnostics, tree timing, desktop environment checks, packaging smoke and desktop artifact presence.
+- Added `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md` as the current manual native desktop checklist.
+- The generated report defaults to `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md`.
+
+## 2026-07-15: Desktop Workspace Diagnostics
+
+- Settings now show a clearer workspace diagnostics block for desktop and browser builds.
+- The diagnostics report shows runtime mode, selected workspace path, write access, schema status, last background checkpoint, backup folder, latest backup and last recorded workspace operation.
+- The summary now includes backup count, incomplete backup count and pending workspace operation count.
+- Warnings now call out missing write access, failed checkpoints, pending operations, incomplete backups and backup scan errors.
+
+## 2026-07-15: Desktop Install And Update Flow
+
+- Added a clear desktop install guide in `docs/04-user-release/HOW_TO_INSTALL.md`.
+- The recommended handoff file is now explicitly documented: `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+- The guide separates app install/update from workspace data: the installer updates the app, while the workspace remains an external folder selected by the user.
+- Added safe update and rollback steps for testers: close the app, back up or copy the workspace, install the new build, reopen the same workspace, then run a short smoke pass.
+
 ## 2026-07-15: Faster Tree Delete Backup
 
 - Deleting a page or branch no longer backs up every page in the workspace.

@@ -39,37 +39,9 @@ Manual smoke checklist: [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_C
 
 No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. The next concrete risk is the known large-workspace desktop path in `0.0.1.1.1`.
 
-### 0.0.1.1.0. Large Workspace Performance & Reliability
-
-Goal: the real large workspace must not feel frozen. Tree rendering, moving, deleting, search, and map opening should stay understandable and responsive.
-
-Latest large workspace smoke: [LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md](./LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md).
-
-Architecture direction: keep interactive operations small and local. Use startup indexes, lightweight operation journals, rollback snapshots, and background validation/checkpointing instead of full workspace backup on every ordinary tree action. Full backups stay for destructive, multi-file, schema, restore, import, and repair operations.
-
-0.0.1.1.1. Finish visible native desktop click-through on the known large GM workspace.
-
-Description: engineering checks are green: real workspace diagnostics, read-only tree probe, desktop environment, desktop packaging smoke, desktop release gate, and native executable launch. Remaining work: owner-visible native Tauri click-through by hand or with a future Tauri UI runner. Verify workspace picker, tree scroll, search, find in tree, settings diagnostics, heavy map open, presentation, audio, and create/move/delete only on a workspace copy.
-
 ### 0.0.1.2.0. Desktop Product Hardening
 
 Goal: desktop should feel like a real app, not a fragile wrapper around the browser build.
-
-0.0.1.2.1. Finalize desktop install and update flow.
-
-Description: document which `.exe` to run, when to use the installer, where data lives, and how to update without losing a workspace.
-
-0.0.1.2.2. Add desktop workspace diagnostics.
-
-Description: expose permissions, selected workspace path, schema status, asset availability, backup location, and last operation status.
-
-0.0.1.2.3. Add desktop large workspace smoke.
-
-Description: automate or document a repeatable desktop scenario for the real large workspace, including tree, map, images, music, and backup.
-
-0.0.1.2.4. Harden desktop release gate.
-
-Description: before building an installer, run verify, browser smoke, packaging smoke, desktop smoke, and update tester instructions.
 
 ### 0.0.1.3.0. Campaign Map Stabilization & UX
 
