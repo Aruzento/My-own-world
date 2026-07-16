@@ -35,8 +35,23 @@ import {
 } from '../repository/pageRepository.js';
 
 
-// Picker карты отвечает за выбор исходных карточек и создание дочерних дублей.
-// Сам DOM-токен на карте создает внешний callback addMapToken.
+const MAP_TEXT =
+  Object.freeze({
+    map:
+      '\u041a\u0430\u0440\u0442\u0430',
+    creatures:
+      '\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0430',
+    creature:
+      '\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u043e',
+    objects:
+      '\u041e\u0431\u044a\u0435\u043a\u0442\u044b',
+    object:
+      '\u041e\u0431\u044a\u0435\u043a\u0442'
+  });
+
+
+// Campaign map picker chooses source cards and creates child duplicates for map tokens.
+// The actual token DOM is created by the injected addMapToken callback.
 
 export function openAddKindPopup(
   map,
@@ -220,7 +235,7 @@ function renderCardPickerList(
       'campaign-map-picker-empty';
 
     empty.textContent =
-      'Ничего не найдено';
+      '\u041d\u0438\u0447\u0435\u0433\u043e \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043e';
 
     list.appendChild(
       empty
@@ -239,7 +254,7 @@ function renderCardPickerList(
 
     label.innerHTML = `
       <input class="campaign-map-picker-check" type="checkbox" value="${page.id}">
-      <span>${page.title || 'Без названия'}</span>
+      <span>${page.title || '\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f'}</span>
     `;
 
     list.appendChild(
@@ -482,10 +497,14 @@ async function ensureMapBucket(
   kind
 ) {
 
+  const mapTitle =
+    state.currentPage?.title ||
+    MAP_TEXT.map;
+
   const title =
     kind === 'creature'
-      ? `Существа.${state.currentPage?.title || 'Карта'}`
-      : `Объекты.${state.currentPage?.title || 'Карта'}`;
+      ? `${MAP_TEXT.creatures}.${mapTitle || MAP_TEXT.map}`
+      : `${MAP_TEXT.objects}.${mapTitle || MAP_TEXT.map}`;
 
   const existing =
     findMapBucket(
@@ -500,7 +519,6 @@ async function ensureMapBucket(
     state.currentPage.id
   );
 }
-
 
 function clampCopies(
   value
@@ -526,11 +544,11 @@ function getNextMapEntityIndex(
 
   const prefix =
     kind === 'object'
-      ? 'Объект'
-      : 'Существо';
+      ? MAP_TEXT.object
+      : MAP_TEXT.creature;
 
   const suffix =
-    mapTitle || 'Карта';
+    mapTitle || MAP_TEXT.map;
 
   const pattern =
     new RegExp(
@@ -558,7 +576,6 @@ function getNextMapEntityIndex(
 
   return maxIndex + 1;
 }
-
 
 function escapeRegExp(
   value

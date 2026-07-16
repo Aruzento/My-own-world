@@ -50,6 +50,92 @@ const playbackStatusByMap =
 let activePlaybackMap =
   null;
 
+const MUSIC_UI_TEXT =
+  Object.freeze({
+    musicTitle:
+      '\u041c\u0443\u0437\u044b\u043a\u0430 \u043a\u0430\u0440\u0442\u044b',
+    normalMode:
+      '\u041e\u0431\u044b\u0447\u043d\u0430\u044f',
+    battleMode:
+      '\u0411\u043e\u0439',
+    nameLabel:
+      '\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435',
+    shuffleTitle:
+      '\u0421\u043b\u0443\u0447\u0430\u0439\u043d\u044b\u0439 \u043f\u043e\u0440\u044f\u0434\u043e\u043a',
+    loopTitle:
+      '\u0417\u0430\u0446\u0438\u043a\u043b\u0438\u0442\u044c \u043f\u043b\u0435\u0439\u043b\u0438\u0441\u0442',
+    previousTitle:
+      '\u041f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0430\u044f',
+    playTitle:
+      '\u0418\u0433\u0440\u0430\u0442\u044c',
+    stopTitle:
+      '\u0421\u0442\u043e\u043f',
+    nextTitle:
+      '\u0421\u043b\u0435\u0434\u0443\u044e\u0449\u0430\u044f',
+    playlistLabel:
+      '\u041f\u043b\u0435\u0439\u043b\u0438\u0441\u0442',
+    emptyPlaylist:
+      '\u041f\u043e\u043a\u0430 \u043d\u0435\u0442 \u043f\u0435\u0441\u0435\u043d',
+    addTracksLabel:
+      '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u0435\u0441\u043d\u0438',
+    chooseFiles:
+      '\u0412\u044b\u0431\u043e\u0440 \u0444\u0430\u0439\u043b\u043e\u0432',
+    adding:
+      '\u0414\u043e\u0431\u0430\u0432\u043b\u044f\u044e...',
+    add:
+      '\u0414\u043e\u0431\u0430\u0432\u0438\u0442\u044c',
+    copyPlaylistLabel:
+      '\u0421\u043a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043f\u043b\u0435\u0439\u043b\u0438\u0441\u0442',
+    choosePlaylist:
+      '\u0412\u044b\u0431\u0435\u0440\u0438 \u043f\u043b\u0435\u0439\u043b\u0438\u0441\u0442',
+    copy:
+      '\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c',
+    removeTitle:
+      '\u0423\u0431\u0440\u0430\u0442\u044c',
+    addingTracks:
+      '\u0414\u043e\u0431\u0430\u0432\u043b\u044f\u044e \u043f\u0435\u0441\u043d\u0438...',
+    tracksAdded:
+      '\u041f\u0435\u0441\u0435\u043d \u0434\u043e\u0431\u0430\u0432\u043b\u0435\u043d\u043e',
+    stopped:
+      '\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u043b\u0435\u043d\u043e',
+    nowPlaying:
+      '\u0421\u0435\u0439\u0447\u0430\u0441 \u0438\u0433\u0440\u0430\u0435\u0442',
+    ready:
+      '\u0413\u043e\u0442\u043e\u0432\u043e \u043a \u0437\u0430\u043f\u0443\u0441\u043a\u0443',
+    noTracks:
+      '\u041d\u0435\u0442 \u0442\u0440\u0435\u043a\u043e\u0432',
+    playlistEmpty:
+      '\u041f\u043b\u0435\u0439\u043b\u0438\u0441\u0442 \u043f\u0443\u0441\u0442',
+    selectedFiles:
+      '\u0412\u044b\u0431\u0440\u0430\u043d\u043e \u0444\u0430\u0439\u043b\u043e\u0432',
+    addFailed:
+      '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0434\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u0435\u0441\u043d\u0438',
+    addFailedConsole:
+      '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0434\u043e\u0431\u0430\u0432\u0438\u0442\u044c \u043f\u0435\u0441\u043d\u0438. \u041f\u043e\u0434\u0440\u043e\u0431\u043d\u043e\u0441\u0442\u0438 \u0441\u043c\u043e\u0442\u0440\u0438 \u0432 \u043a\u043e\u043d\u0441\u043e\u043b\u0438.',
+    playing:
+      '\u0418\u0433\u0440\u0430\u0435\u0442',
+    noActiveTracks:
+      '\u0412 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u043c \u043f\u043b\u0435\u0439\u043b\u0438\u0441\u0442\u0435 \u043d\u0435\u0442 \u043f\u0435\u0441\u0435\u043d',
+    playbackFailed:
+      '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u043c\u0443\u0437\u044b\u043a\u0443',
+    playbackFailedAdvice:
+      '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442\u044c \u043c\u0443\u0437\u044b\u043a\u0443. \u041f\u0440\u043e\u0432\u0435\u0440\u044c \u0444\u043e\u0440\u043c\u0430\u0442 \u0444\u0430\u0439\u043b\u0430 \u0438 \u0434\u043e\u0441\u0442\u0443\u043f \u043a workspace.',
+    blobUnavailable:
+      'Audio Blob API is not available in this runtime.',
+    objectUrlUnavailable:
+      'Audio Object URL API is not available in this runtime.',
+    mapFallback:
+      '\u041a\u0430\u0440\u0442\u0430'
+  });
+
+
+function t(
+  key
+) {
+
+  return MUSIC_UI_TEXT[key] || key;
+}
+
 
 export async function openCampaignMapMusicPopup(
   map,
@@ -177,7 +263,14 @@ export async function playCampaignMapMusic(
       mode
     );
 
-  if (playlist.tracks.length === 0) return null;
+  if (playlist.tracks.length === 0) {
+
+    stopCampaignMapMusic(
+      map
+    );
+
+    return null;
+  }
 
   const currentTrackId =
     getRuntimeTrackId(
@@ -349,7 +442,7 @@ async function bindCampaignMapMusicPopup(
             state:
               'loading',
             message:
-              'Добавляю песни...'
+              t('addingTracks')
           }
         );
 
@@ -378,14 +471,14 @@ async function bindCampaignMapMusicPopup(
               state:
                 'success',
               message:
-                `Песен добавлено: ${tracks.length}`
+                `${t('tracksAdded')}: ${tracks.length}`
             }
           );
 
         } catch (error) {
 
           console.error(
-            'Не удалось добавить музыку в плейлист.',
+            'Failed to add campaign map music.',
             error
           );
 
@@ -405,7 +498,6 @@ async function bindCampaignMapMusicPopup(
         await render();
       }
     );
-
   popup
     .querySelectorAll('.campaign-music-remove-track')
     .forEach(button => {
@@ -569,13 +661,12 @@ async function bindCampaignMapMusicPopup(
         setPlaybackStatus(
           map,
           'info',
-          'Остановлено'
+          t('stopped')
         );
 
         await render();
       }
     );
-
   popup
     .querySelector('.campaign-music-prev-btn')
     ?.addEventListener(
@@ -817,37 +908,34 @@ async function importAudioFilesToWorkspace(
   files
 ) {
 
-  const tracks =
-    [];
+  return Promise.all(
+    files.map(async file => {
 
-  for (const file of files) {
+      const result =
+        await saveAssetFile(
+          file,
+          {
+            filename:
+              `music/${createSafeAudioFilename(
+                file.name
+              )}`,
+            resolveUrl:
+              false
+          }
+        );
 
-    const result =
-      await saveAssetFile(
-      file,
-      {
-        filename:
-          `music/${createSafeAudioFilename(
-            file.name
-          )}`,
-        resolveUrl:
-          false
-      }
-    );
-
-    tracks.push({
-      path:
-        normalizeImportedAudioPath(
-          result.path
-        ),
-      title:
-        createTrackTitleFromPath(
-          result.path
-        )
-    });
-  }
-
-  return tracks;
+      return {
+        path:
+          normalizeImportedAudioPath(
+            result.path
+          ),
+        title:
+          createTrackTitleFromPath(
+            result.path
+          )
+      };
+    })
+  );
 }
 
 
@@ -916,7 +1004,30 @@ async function playTrack(
   audio.dataset.trackTitle =
     track.title;
 
-  await audio.play();
+  try {
+
+    if (typeof audio.load === 'function') {
+
+      audio.load();
+    }
+
+    await audio.play();
+
+  } catch (error) {
+
+    releaseAudioObjectURL(
+      audio
+    );
+
+    audio.removeAttribute?.(
+      'src'
+    );
+
+    audio.src =
+      '';
+
+    throw error;
+  }
 }
 
 
@@ -927,7 +1038,7 @@ async function createAudioObjectURL(
   if (typeof Blob !== 'function') {
 
     throw new Error(
-      'Audio Blob API недоступен в текущей среде.'
+      t('blobUnavailable')
     );
   }
 
@@ -937,7 +1048,7 @@ async function createAudioObjectURL(
   ) {
 
     throw new Error(
-      'Audio Object URL API недоступен в текущей среде.'
+      t('objectUrlUnavailable')
     );
   }
 
@@ -964,7 +1075,6 @@ async function createAudioObjectURL(
     )
   );
 }
-
 
 function normalizeAudioWorkspacePath(
   path
@@ -1168,12 +1278,15 @@ function getCopyablePlaylists(
           page.content || ''
         );
 
+      const pageTitle =
+        page.title || t('mapFallback');
+
       return [
         {
           id:
             `${page.id}:normal`,
           label:
-            `${page.title || 'Карта'} / ${music.normal.title}`,
+            `${pageTitle} / ${music.normal.title}`,
           playlist:
             music.normal
         },
@@ -1181,7 +1294,7 @@ function getCopyablePlaylists(
           id:
             `${page.id}:battle`,
           label:
-            `${page.title || 'Карта'} / ${music.battle.title}`,
+            `${pageTitle} / ${music.battle.title}`,
           playlist:
             music.battle
         }
@@ -1191,7 +1304,6 @@ function getCopyablePlaylists(
       option.playlist.tracks.length > 0
     );
 }
-
 
 function readMusicFromPageContent(
   content
@@ -1253,31 +1365,31 @@ function getCampaignMapMusicPopupHTML({
         <strong>${escapeHTML(playback.title)}</strong>
       </div>
     </div>
-    <div class="campaign-map-popup-title">Музыка карты</div>
+    <div class="campaign-map-popup-title">${t('musicTitle')}</div>
 
     <div class="campaign-music-mode-row">
-      ${getModeButton('normal', 'Обычная', mode)}
-      ${getModeButton('battle', 'Бой', mode)}
+      ${getModeButton('normal', t('normalMode'), mode)}
+      ${getModeButton('battle', t('battleMode'), mode)}
     </div>
 
     <label class="campaign-music-title-label">
-      <span>Название плейлиста</span>
+      <span>${t('nameLabel')}</span>
       <input class="campaign-music-title-input" type="text" value="${escapeAttribute(playlist.title)}">
     </label>
 
     <div class="campaign-music-controls">
-      <button class="campaign-music-order-btn ${playlist.order === CAMPAIGN_MAP_MUSIC_ORDER.shuffle ? 'is-active' : ''}" type="button" title="Случайный порядок">${iconSvg('shuffle')}</button>
-      <button class="campaign-music-loop-btn ${playlist.loop ? 'is-active' : ''}" type="button" title="Зациклить плейлист">${iconSvg('repeat')}</button>
-      <button class="campaign-music-prev-btn" type="button" title="Предыдущая">${iconSvg('skip-back')}</button>
-      <button class="campaign-music-play-btn" type="button" title="Играть">${iconSvg('play')}</button>
-      <button class="campaign-music-stop-btn" type="button" title="Стоп">${iconSvg('stop')}</button>
-      <button class="campaign-music-next-btn" type="button" title="Следующая">${iconSvg('skip-forward')}</button>
+      <button class="campaign-music-order-btn ${playlist.order === CAMPAIGN_MAP_MUSIC_ORDER.shuffle ? 'is-active' : ''}" type="button" title="${t('shuffleTitle')}">${iconSvg('shuffle')}</button>
+      <button class="campaign-music-loop-btn ${playlist.loop ? 'is-active' : ''}" type="button" title="${t('loopTitle')}">${iconSvg('repeat')}</button>
+      <button class="campaign-music-prev-btn" type="button" title="${t('previousTitle')}">${iconSvg('skip-back')}</button>
+      <button class="campaign-music-play-btn campaign-music-play-primary" type="button" title="${t('playTitle')}">${iconSvg('play')}</button>
+      <button class="campaign-music-stop-btn" type="button" title="${t('stopTitle')}">${iconSvg('stop')}</button>
+      <button class="campaign-music-next-btn" type="button" title="${t('nextTitle')}">${iconSvg('skip-forward')}</button>
     </div>
 
     ${getPlaybackStatusHTML(playbackStatus)}
 
     <div class="campaign-music-section">
-      <strong>Плейлист</strong>
+      <strong>${t('playlistLabel')}</strong>
       <div class="campaign-music-track-list">
         ${playlist.tracks.length > 0
           ? playlist.tracks.map(track =>
@@ -1286,19 +1398,19 @@ function getCampaignMapMusicPopupHTML({
               playback.trackId
             )
           ).join('')
-          : '<div class="campaign-music-empty">Пока нет песен</div>'}
+          : `<div class="campaign-music-empty">${t('emptyPlaylist')}</div>`}
       </div>
     </div>
 
     <div class="campaign-music-section">
-      <strong>Добавить песню</strong>
+      <strong>${t('addTracksLabel')}</strong>
       <div class="campaign-music-upload-row">
         <label class="campaign-music-upload">
           <input class="campaign-music-upload-input" type="file" accept="audio/*" multiple>
-          <span>Выбор файлов</span>
+          <span>${t('chooseFiles')}</span>
         </label>
         <button class="campaign-music-upload-add-btn" type="button" ${pendingUploadFiles.length === 0 || uploadStatus.state === 'loading' ? 'disabled' : ''}>
-          ${uploadStatus.state === 'loading' ? 'Добавляю...' : 'Добавить'}
+          ${uploadStatus.state === 'loading' ? t('adding') : t('add')}
         </button>
       </div>
       ${getPendingUploadFilesHTML(pendingUploadFiles)}
@@ -1306,20 +1418,19 @@ function getCampaignMapMusicPopupHTML({
     </div>
 
     <div class="campaign-music-section">
-      <strong>Скопировать плейлист</strong>
+      <strong>${t('copyPlaylistLabel')}</strong>
       <div class="campaign-music-copy-row">
         <select class="campaign-music-copy-select">
-          <option value="">Выбери плейлист</option>
+          <option value="">${t('choosePlaylist')}</option>
           ${copyOptions.map(option => `
             <option value="${escapeAttribute(option.id)}">${escapeHTML(option.label)}</option>
           `).join('')}
         </select>
-        <button class="campaign-music-copy-btn" type="button" ${copyOptions.length === 0 ? 'disabled' : ''}>Копировать</button>
+        <button class="campaign-music-copy-btn" type="button" ${copyOptions.length === 0 ? 'disabled' : ''}>${t('copy')}</button>
       </div>
     </div>
   `;
 }
-
 
 function getPlaybackState(
   playlist,
@@ -1348,13 +1459,13 @@ function getPlaybackState(
     title:
       currentTrack?.title ||
       playlist.tracks[0]?.title ||
-      'Плейлист пуст',
+      t('playlistEmpty'),
     kicker:
       currentTrack
-        ? 'Сейчас играет'
+        ? t('nowPlaying')
         : playlist.tracks.length > 0
-        ? 'Готово к запуску'
-        : 'Нет треков'
+        ? t('ready')
+        : t('noTracks')
   };
 }
 
@@ -1363,18 +1474,11 @@ function getPendingUploadFilesHTML(
   files
 ) {
 
-  if (files.length === 0) {
-
-    return `
-      <div class="campaign-music-upload-hint">
-        Выбранные файлы появятся здесь. Нажми Добавить, чтобы положить их в текущий плейлист.
-      </div>
-    `;
-  }
+  if (files.length === 0) return '';
 
   return `
     <div class="campaign-music-upload-pending">
-      Выбрано файлов: ${files.length}
+      ${t('selectedFiles')}: ${files.length}
     </div>
   `;
 }
@@ -1428,8 +1532,8 @@ function getMusicUploadErrorMessage(
     '';
 
   return message
-    ? `Не удалось добавить песни: ${message}`
-    : 'Не удалось добавить песни. Подробности смотри в консоли.';
+    ? `${t('addFailed')}: ${message}`
+    : t('addFailedConsole');
 }
 
 
@@ -1461,15 +1565,14 @@ function getPlaylistTrackHTML(
 
   return `
     <div class="campaign-music-track-row ${isCurrent ? 'is-playing' : ''}" data-track-id="${escapeAttribute(track.trackId)}">
-      <button class="campaign-music-track-play" type="button" data-track-id="${escapeAttribute(track.trackId)}" title="Играть этот трек">
-        <span class="campaign-music-track-index">${isCurrent ? '▶' : '♪'}</span>
+      <button class="campaign-music-track-play" type="button" data-track-id="${escapeAttribute(track.trackId)}" title="${t('playTitle')}">
+        <span class="campaign-music-track-index">${isCurrent ? '&blacktriangleright;' : '&#9834;'}</span>
         <span class="campaign-music-track-title">${escapeHTML(track.title)}</span>
       </button>
-      <button class="campaign-music-remove-track" type="button" data-track-id="${escapeAttribute(track.trackId)}" title="Убрать">×</button>
+      <button class="campaign-music-remove-track" type="button" data-track-id="${escapeAttribute(track.trackId)}" title="${t('removeTitle')}">&times;</button>
     </div>
   `;
 }
-
 
 function createSafeAudioFilename(
   name
@@ -1478,15 +1581,30 @@ function createSafeAudioFilename(
   const fallback =
     `track-${Date.now()}.mp3`;
 
-  return String(name || fallback)
-    .replaceAll('\\', '/')
-    .split('/')
-    .pop()
-    .replace(/[^a-zA-Z0-9а-яА-ЯёЁ._ -]/g, '_')
-    .trim() ||
-    fallback;
-}
+  const rawName =
+    String(name || fallback)
+      .replaceAll('\\', '/')
+      .split('/')
+      .pop()
+      .trim();
 
+  const extension =
+    rawName.includes('.')
+      ? `.${rawName.split('.').pop()}`
+      : '.mp3';
+
+  const baseName =
+    rawName
+      .replace(/\.[^.]+$/, '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9._ -]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^[_ .-]+|[_ .-]+$/g, '') ||
+    `track-${Date.now()}`;
+
+  return `${baseName}${extension}`;
+}
 
 function normalizeImportedAudioPath(
   path
@@ -1536,15 +1654,15 @@ async function playCampaignMapMusicAndReport(
         ? 'success'
         : 'info',
       track
-        ? `Играет: ${track.title}`
-        : 'В активном плейлисте нет песен',
+        ? `${t('playing')}: ${track.title}`
+        : t('noActiveTracks'),
       track?.trackId || ''
     );
 
   } catch (error) {
 
     console.error(
-      'Не удалось запустить музыку карты.',
+      'Failed to start campaign map music.',
       error
     );
 
@@ -1562,7 +1680,6 @@ async function playCampaignMapMusicAndReport(
     await render();
   }
 }
-
 
 function setPlaybackStatus(
   map,
@@ -1592,10 +1709,9 @@ function getMusicPlaybackErrorMessage(
     '';
 
   return message
-    ? `Не удалось запустить музыку: ${message}`
-    : 'Не удалось запустить музыку. Проверь формат файла и доступ к workspace.';
+    ? `${t('playbackFailed')}: ${message}`
+    : t('playbackFailedAdvice');
 }
-
 
 async function saveMapMusic(
   deps

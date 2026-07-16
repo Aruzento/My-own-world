@@ -4,9 +4,24 @@ import {
 } from '../repository/pageRepository.js';
 
 
-// Единое правило уникальности названий сущностей.
-// Сравнение мягкое: без учета регистра и лишних пробелов.
+const PAGE_TITLE_TEXT =
+  Object.freeze({
+    untitled:
+      '\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f',
+    copy:
+      '\u041a\u043e\u043f\u0438\u044f',
+    map:
+      '\u041a\u0430\u0440\u0442\u0430',
+    mapEntity:
+      '\u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c',
+    object:
+      '\u041e\u0431\u044a\u0435\u043a\u0442',
+    creature:
+      '\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u043e'
+  });
 
+
+// Soft uniqueness rule for entity titles: case-insensitive and whitespace-safe.
 export function normalizePageTitle(
   title
 ) {
@@ -56,13 +71,13 @@ export function getUniqueCopyTitle(
 ) {
 
   const baseTitle =
-    sourceTitle || 'Без названия';
+    sourceTitle || PAGE_TITLE_TEXT.untitled;
 
   let index =
     1;
 
   let title =
-    `Копия${index} - ${baseTitle}`;
+    `${PAGE_TITLE_TEXT.copy}${index} - ${baseTitle}`;
 
   while (
     hasDuplicatePageTitle(
@@ -74,7 +89,7 @@ export function getUniqueCopyTitle(
     index += 1;
 
     title =
-      `Копия${index} - ${baseTitle}`;
+      `${PAGE_TITLE_TEXT.copy}${index} - ${baseTitle}`;
   }
 
   return title;
@@ -86,7 +101,7 @@ export function getCampaignMapEntityTitle(
   mapTitle
 ) {
 
-  return `${sourceTitle || 'Без названия'} - сущность.${mapTitle || 'Карта'}`;
+  return `${sourceTitle || PAGE_TITLE_TEXT.untitled} - ${PAGE_TITLE_TEXT.mapEntity}.${mapTitle || PAGE_TITLE_TEXT.map}`;
 }
 
 
@@ -98,8 +113,8 @@ export function getCampaignMapNumberedEntityTitle(
 
   const prefix =
     kind === 'object'
-      ? 'Объект'
-      : 'Существо';
+      ? PAGE_TITLE_TEXT.object
+      : PAGE_TITLE_TEXT.creature;
 
   const safeIndex =
     Math.max(
@@ -107,5 +122,5 @@ export function getCampaignMapNumberedEntityTitle(
       Number(index) || 1
     );
 
-  return `${prefix}${safeIndex}.${mapTitle || 'Карта'}`;
+  return `${prefix}${safeIndex}.${mapTitle || PAGE_TITLE_TEXT.map}`;
 }

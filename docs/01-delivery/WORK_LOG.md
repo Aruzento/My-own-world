@@ -6,6 +6,189 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-16: 0.0.1.3.6 Map Regression Coverage
+
+### What Changed
+
+- Completed `0.0.1.3.6`.
+- Added browser regression `campaign-map-regression-gate-persists-core-systems-through-save-reload`.
+- The new gate builds a campaign map with token HP/source data, grid, fog, locked fog zones, layers, drawing shapes, normal/battle playlists and initiative state.
+- The gate serializes that map through persistent HTML, reloads it through `CampaignMapModel.fromElement()` and verifies the core state survived together.
+- Updated `tests/browser/scenarios.mjs` with a dedicated `campaign-map-core-regression-gate` scenario and corrected the initiative scenario automation name.
+- Removed `0.0.1.3.6` from the active plan.
+
+### User Impact
+
+- No direct UI change.
+- Future changes to map save/reload, fog, layers, drawing, playlists or initiative should fail browser smoke sooner if they break persistent map data.
+
+### Checks
+
+- `node --check tests\browser\campaign-map-data.spec.mjs`
+- `node --check tests\browser\scenarios.mjs`
+- `npm run check:js`
+- `npm run test:browser -- --grep 'campaign-map-regression-gate|campaign-map-data-first|campaign-map-initiative|campaign-map-presentation|campaign-map-music|campaign-map-layers|campaign-map-drawing'` 77 passed
+
+### Next
+
+- Continue with `0.0.1.4.1` finish the Properties block constructor.
+
+---
+
+## 2026-07-16: 0.0.1.3.5 Initiative UX Completion
+
+### What Changed
+
+- Completed `0.0.1.3.5`.
+- The campaign map initiative button now opens the turn-order window directly when initiative already has participants, instead of forcing the participant picker every time.
+- The participant picker now defaults living creature tokens to selected and excludes tokens with `hp <= 0`.
+- Manual initiative values are editable in the turn-order window; `Сохранить порядок` persists the edited values and sorts the order.
+- Next/previous turn controls preserve edited values before switching active participant.
+- Clicking a participant in the turn window makes that participant active and keeps token highlight synced.
+- Campaign map token model/serialization now preserves optional `hp` as `data-hp`, so living/dead filtering survives model commits and reload paths.
+- Replaced old mojibake strings in the initiative popup with stable Russian UI strings.
+- Browser regression now covers participant selection, dead-token filtering, manual value editing, direct reopen to the turn window, active turn switching and persisted initiative JSON.
+- Removed `0.0.1.3.5` from the active plan.
+
+### User Impact
+
+- During a live game, opening initiative after combat starts now shows the current turn order immediately.
+- The DM can type real dice results directly into the turn window, save/sort, then use previous/next without losing edits.
+- Dead tokens no longer appear as default initiative participants.
+
+### Checks
+
+- `npm run check:js`
+- `node --test tests\campaignMapModel.test.mjs tests\campaignMapDataSerializer.test.mjs tests\campaignMapInitiativeModel.test.mjs`
+- `npm run test:browser -- --grep "campaign-map-initiative"` 76 passed
+
+### Next
+
+- Continue with `0.0.1.3.6` add map regression coverage.
+
+---
+
+## 2026-07-15: 0.0.1.3.4 Music Playlist Stabilization
+
+### What Changed
+
+- Completed `0.0.1.3.4`.
+- Reworked campaign map music into a compact AIMP-like player surface with two playlists per map: normal and battle.
+- Music import now adds selected audio files directly into the active playlist and imports files in parallel instead of one by one.
+- Playback now uses the storage adapter binary path more defensively, calls `audio.load()` before play, clears stale blob URLs, and reports playback failures without breaking the map.
+- Empty playlists now stop previous map music when switching maps.
+- Fixed music popup text and map picker/title validation strings so Russian UI labels do not depend on mojibake-prone source text.
+- Browser regression now covers adding/copying playlists, controls, mode switching, and autostart of the first active playlist track on map open/switch.
+- Removed `0.0.1.3.4` from the active plan.
+
+### User Impact
+
+- The music popup should feel smaller and clearer: current track, basic controls, normal/battle mode, playlist rows, import, and copy from another map.
+- Adding selected files should be faster and should not show a second redundant "added files" list.
+- Switching maps stops music from the old map and tries to start the first track from the new map's active playlist.
+- If the browser/desktop runtime blocks playback or cannot load a file, the map stays usable and the popup shows a status instead of silently doing nothing.
+
+### Checks
+
+- `npm run check:js`
+- `node --test tests\campaignMapModel.test.mjs`
+- `npm run test:browser`
+
+### Next
+
+- Continue with `0.0.1.3.5` finish initiative UX.
+
+---
+
+## 2026-07-15: 0.0.1.3.3 Map Layers Completion
+
+### What Changed
+
+- Completed `0.0.1.3.3`.
+- Added a dedicated system layer for locked fog zones: `map-locked-fog`.
+- Layer normalization now keeps `map-fog` and `map-locked-fog` above objects, creatures, shapes and drawings even if an older map has stale z-index values.
+- Editor layer application now controls visibility and z-index for tokens, shapes, fog canvas and locked fog zones.
+- Browser presentation and model-first desktop/Tauri presentation now use the same layer state for fog and locked fog zones.
+- Layer visibility changes now schedule presentation sync, so the player view does not wait for a manual refresh.
+- Schema validation now accepts the current `layerId` field for campaign map layers.
+- Removed `0.0.1.3.3` from the active plan.
+
+### User Impact
+
+- The Layers popup now includes both `Туман` and `Запретные зоны тумана`.
+- Fog stays above map objects and creatures.
+- Locked fog zones are visible/editable above the fog canvas in the GM editor, but render as normal fog in presentation.
+- Hiding the locked-fog layer hides locked zones without deleting their data.
+
+### Checks
+
+- `npm run check:js`
+- `node --test tests\campaignMapLayerModel.test.mjs tests\campaignMapModel.test.mjs tests\schemaValidation.test.mjs`
+- `npm run test:browser`
+
+### Next
+
+- Continue with `0.0.1.3.4` stabilize music playlists.
+
+---
+
+## 2026-07-15: 0.0.1.3.2 Drawing Tools Stabilization
+
+### What Changed
+
+- Completed `0.0.1.3.2`.
+- Drawing shape color, fill color and stroke width now persist through data-first campaign map save/reload.
+- Pen drawing now creates a real two-point first segment and only continues an existing vector when the pointer starts near a line endpoint. A far click creates a new vector instead of merging unrelated drawings.
+- Fill visuals are more visible on empty maps and in presentation mode.
+- Browser regression coverage now checks pencil, pen continuation, far pen start, fill, eraser, drawing layer assignment, fog layer presence and save/reload of drawing style data.
+- Removed `0.0.1.3.2` from the active plan.
+
+### User Impact
+
+- Drawn map marks should survive reopening a map with their color and fill intact.
+- The pen behaves closer to a simple vector tool: continue from the endpoint, start a separate line elsewhere.
+- Filled drawing areas and full-map drawing fill are easier to see even when the map has no background image.
+
+### Checks
+
+- `npm run check:js`
+- `node --test tests\campaignMapDataSerializer.test.mjs tests\campaignMapModel.test.mjs tests\campaignMapLayerModel.test.mjs`
+- `npm run test:browser`
+
+### Next
+
+- Continue with `0.0.1.3.3` finish map layers.
+
+---
+
+## 2026-07-15: 0.0.1.3.1 Presentation Mode Stabilization
+
+### What Changed
+
+- Completed `0.0.1.3.1`.
+- Browser presentation fog sync now refreshes locked fog zones together with the fog image, so moved/resized locked zones no longer wait for a full presentation rerender.
+- Presentation entry now shows a lightweight waiting state until the first map render arrives, instead of a silent blank black window.
+- Added browser regression coverage for locked fog zone updates through fog sync and for the initial presentation loading state.
+- Removed `0.0.1.3.1` from the active plan.
+
+### User Impact
+
+- Presentation mode should feel less broken during map changes: locked fog zones stay in the right place and the presentation window tells you it is waiting for the map before the first render.
+- Existing protections remain: fog renders above tokens, hidden NPC tokens stay hidden, hidden player tokens remain visible with the hidden badge, and distance arrows stay covered by regression tests.
+
+### Checks
+
+- `node --check js\editor\campaignMapPresentation.js`
+- `node --check js\presentation\presentationEntry.js`
+- `node --check tests\browser\campaign-map-presentation.spec.mjs`
+- `npm run test:browser`
+
+### Next
+
+- Continue with `0.0.1.3.2` finish drawing tools.
+
+---
+
 ## 2026-07-15: 0.0.1.2.4 Desktop Release Gate Hardening
 
 ### What Changed

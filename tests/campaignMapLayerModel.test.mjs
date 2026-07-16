@@ -24,7 +24,8 @@ test(
         'map-creatures',
         'map-shapes',
         'map-drawing',
-        'map-fog'
+        'map-fog',
+        'map-locked-fog'
       ]
     );
 
@@ -50,6 +51,74 @@ test(
         'freehand'
       ),
       'map-drawing'
+    );
+  }
+);
+
+
+test(
+  'CampaignMapLayerModel keeps fog and locked fog above custom layer order',
+  () => {
+
+    const layers =
+      normalizeCampaignMapLayers([
+        {
+          layerId: 'map-creatures',
+          zIndex: 700
+        },
+        {
+          layerId: 'map-fog',
+          zIndex: 10,
+          visible: false
+        },
+        {
+          layerId: 'map-locked-fog',
+          zIndex: 11,
+          visible: false
+        }
+      ]);
+
+    const creatures =
+      layers.find(layer =>
+        layer.layerId === 'map-creatures'
+      );
+
+    const fog =
+      layers.find(layer =>
+        layer.layerId === 'map-fog'
+      );
+
+    const lockedFog =
+      layers.find(layer =>
+        layer.layerId === 'map-locked-fog'
+      );
+
+    assert.equal(
+      fog.visible,
+      false
+    );
+
+    assert.equal(
+      lockedFog.visible,
+      false
+    );
+
+    assert.equal(
+      fog.locked,
+      true
+    );
+
+    assert.equal(
+      lockedFog.locked,
+      true
+    );
+
+    assert.ok(
+      fog.zIndex > creatures.zIndex
+    );
+
+    assert.ok(
+      lockedFog.zIndex > fog.zIndex
     );
   }
 );

@@ -499,3 +499,10 @@
 }
 
 
+.campaign-fog-locked-zone[data-layer-hidden="true"] {
+
+  display:
+    none;
+}
+
+

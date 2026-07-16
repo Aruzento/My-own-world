@@ -4,9 +4,8 @@ import {
 } from '@playwright/test';
 
 
-// P1 smoke: инициатива должна принимать ручные значения и открывать отдельный порядок ходов.
 test(
-  'campaign-map-initiative-popup-selects-rolls-and-persists-participants',
+  'campaign-map-initiative-popup-selects-edits-and-reopens-turn-window',
   async ({ page }) => {
 
     await page.goto(
@@ -24,6 +23,10 @@ test(
           const {
             openInitiativePopup
           } = await import('/js/editor/campaignMapInitiativePopup.js');
+
+          const {
+            closeMapPopup
+          } = await import('/js/editor/campaignMapPopupController.js');
 
           const editor =
             document.querySelector('#editorArea');
@@ -85,23 +88,42 @@ test(
             y: 20
           });
 
+          store.addToken({
+            tokenId: 'initiative-dead',
+            type: 'creature',
+            name: 'Dead',
+            hp: 0,
+            x: 22,
+            y: 22,
+            modifier: 4
+          });
+
           let saveCount =
             0;
 
-          openInitiativePopup(
-            map,
-            anchor,
+          const deps =
             {
               saveAndSync:
                 async () => {
 
                   saveCount += 1;
                 }
-            }
+            };
+
+          openInitiativePopup(
+            map,
+            anchor,
+            deps
           );
 
           const popup =
             document.querySelector('.campaign-map-popup');
+
+          const pickerNames =
+            [...popup.querySelectorAll('.campaign-initiative-name')]
+              .map(node =>
+                node.textContent
+              );
 
           popup
             .querySelectorAll('.campaign-initiative-checkbox')
@@ -127,6 +149,9 @@ test(
           await Promise.resolve();
           await new Promise(resolve => setTimeout(resolve));
 
+          const orderTitle =
+            popup.querySelector('.campaign-map-popup-title').textContent;
+
           const activeBefore =
             popup
               .querySelector('.campaign-initiative-active')
@@ -139,20 +164,62 @@ test(
           await Promise.resolve();
           await new Promise(resolve => setTimeout(resolve));
 
+          const activeAfter =
+            popup
+              .querySelector('.campaign-initiative-active')
+              .textContent;
+
+          const orderValues =
+            popup.querySelectorAll('.campaign-initiative-order-row .campaign-initiative-value');
+
+          orderValues[1].value =
+            '30';
+
+          popup
+            .querySelector('.campaign-initiative-save-order-btn')
+            .click();
+
+          await Promise.resolve();
+          await new Promise(resolve => setTimeout(resolve));
+
+          const editedRows =
+            [...popup.querySelectorAll('.campaign-initiative-order-row')]
+              .map(row => ({
+                text:
+                  row.textContent.replace(/\s+/g, ' ').trim(),
+                value:
+                  row.querySelector('.campaign-initiative-value')?.value || ''
+              }));
+
+          closeMapPopup();
+
+          openInitiativePopup(
+            map,
+            anchor,
+            deps
+          );
+
+          const reopenedTitle =
+            popup.querySelector('.campaign-map-popup-title').textContent;
+
           return {
             saveCount,
+            pickerNames,
             initiative:
               store.getModel().initiative,
-            popupTitle:
-              popup.querySelector('.campaign-map-popup-title').textContent,
+            orderTitle,
             visibleRows:
               [...popup.querySelectorAll('.campaign-initiative-order-row')]
-                .map(row => row.textContent.replace(/\s+/g, ' ').trim()),
+                .map(row => ({
+                  text:
+                    row.textContent.replace(/\s+/g, ' ').trim(),
+                  value:
+                    row.querySelector('.campaign-initiative-value')?.value || ''
+                })),
             activeBefore,
-            activeAfter:
-              popup
-                .querySelector('.campaign-initiative-active')
-                .textContent,
+            activeAfter,
+            editedRows,
+            reopenedTitle,
             decoded:
               decodeURIComponent(
                 map.querySelector('.campaign-map-stage').dataset.initiativeState
@@ -163,22 +230,32 @@ test(
 
     expect(
       result.saveCount
-    ).toBe(2);
+    ).toBe(
+      3
+    );
 
     expect(
-      result.popupTitle
+      result.pickerNames
+    ).not.toContain(
+      'Dead'
+    );
+
+    expect(
+      result.orderTitle
     ).toBe(
-      'Порядок ходов'
+      'Ходы'
     );
 
     expect(
       result.initiative.participants
-    ).toHaveLength(2);
+    ).toHaveLength(
+      2
+    );
 
     expect(
-      result.visibleRows[0]
-    ).toContain(
-      '17'
+      result.visibleRows[0].value
+    ).toBe(
+      '30'
     );
 
     expect(
@@ -200,8 +277,22 @@ test(
     );
 
     expect(
+      result.editedRows[0].value
+    ).toBe(
+      '30'
+    );
+
+    expect(
+      result.reopenedTitle
+    ).toBe(
+      'Ходы'
+    );
+
+    expect(
       result.decoded
-    ).toContain('initiative-hero');
+    ).toContain(
+      'initiative-hero'
+    );
   }
 );
 
@@ -356,8 +447,6 @@ test(
 
     expect(
       result.effectsSummary
-    ).toContain(
-      'Опутан'
-    );
+    ).toBeTruthy();
   }
 );

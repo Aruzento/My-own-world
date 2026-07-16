@@ -47,30 +47,6 @@ Goal: desktop should feel like a real app, not a fragile wrapper around the brow
 
 Goal: map tools must be simple, fast, and usable during a live game.
 
-0.0.1.3.1. Stabilize presentation mode.
-
-Description: presentation must sync map changes quickly, preserve correct fog/layer order, show distance arrows while moving, and avoid long blank loading.
-
-0.0.1.3.2. Finish drawing tools.
-
-Description: canvas, pencil, Figma-like pen, eraser, fill, color picker, recent colors, deletion with `Del`, and drawing layers must work cleanly and predictably.
-
-0.0.1.3.3. Finish map layers.
-
-Description: objects, creatures, drawings, fog, and locked fog zones should appear in layer controls and render in the correct order in editor and presentation.
-
-0.0.1.3.4. Stabilize music playlists.
-
-Description: each map has normal and battle playlists with clear names, AIMP-like compact UI, play/stop/next/previous, shuffle, loop, copy from another map, and reliable autostart of the first track when opening a map.
-
-0.0.1.3.5. Finish initiative UX.
-
-Description: live participants, manual initiative values, roll d20, separate turn window, next/previous controls, and persistence should be easy to use in one or two clicks.
-
-0.0.1.3.6. Add map regression coverage.
-
-Description: cover save/reload, presentation sync, fog, layers, drawing, playlist playback where possible, and initiative persistence.
-
 ### 0.0.1.4.0. Properties & Character UX
 
 Goal: character properties should feel like a clear editable character sheet, while staying flexible for homebrew.

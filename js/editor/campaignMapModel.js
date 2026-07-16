@@ -687,6 +687,7 @@ function readTokenElement(
     height: token.dataset.h,
     rotation: token.dataset.rotation,
     imageAsset: token.dataset.imageAsset || '',
+    hp: token.dataset.hp,
     sourceMode: token.dataset.sourceMode || '',
     isPlayerToken: token.dataset.playerToken === 'true',
     initiativeModifier: token.dataset.initiativeModifier,
@@ -1076,6 +1077,10 @@ function normalizeToken(
       ? Number(token.rotation)
       : 0,
     imageAsset: String(token.imageAsset || ''),
+    hp: normalizeOptionalNumber(
+      token.hp ?? token.currentHp,
+      ''
+    ),
     initiativeModifier: normalizeNumber(
       token.initiativeModifier ?? token.modifier,
       0
@@ -1197,6 +1202,27 @@ function normalizeNumber(
   value,
   fallback = 0
 ) {
+
+  const number =
+    Number(value);
+
+  return Number.isFinite(
+    number
+  )
+    ? number
+    : fallback;
+}
+
+
+function normalizeOptionalNumber(
+  value,
+  fallback = ''
+) {
+
+  if (value === undefined || value === null || value === '') {
+
+    return fallback;
+  }
 
   const number =
     Number(value);

@@ -21,6 +21,10 @@ import {
 } from './campaignMapGeometry.js';
 
 import {
+  applyCampaignMapLayers
+} from './campaignMapLayers.js';
+
+import {
   schedulePresentationFogSync,
   schedulePresentationSync
 } from './campaignMapPresentationSync.js';
@@ -498,6 +502,10 @@ export function renderLockedFogZones(
       element
     );
   });
+
+  applyCampaignMapLayers(
+    map
+  );
 }
 
 

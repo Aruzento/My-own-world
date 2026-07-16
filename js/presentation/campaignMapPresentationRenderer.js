@@ -112,7 +112,8 @@ function createStage(
       payload
     ),
     createFogImage(
-      payload.fogImage
+      payload.fogImage,
+      model
     )
   );
 
@@ -237,7 +238,8 @@ function updatePresentationFog(
     fog =
       ensureFogCanvas(
         viewport,
-        fog
+        fog,
+        payload.model || {}
       );
 
     applyFogPatchToCanvas(
@@ -257,7 +259,8 @@ function updatePresentationFog(
 
     fog =
       createFogImage(
-        ''
+        '',
+        payload.model || {}
       );
 
     viewport.appendChild(
@@ -269,7 +272,8 @@ function updatePresentationFog(
 
     const image =
       createFogImage(
-        ''
+        '',
+        payload.model || {}
       );
 
     fog.replaceWith(
@@ -283,6 +287,12 @@ function updatePresentationFog(
   fog.src =
     payload.fogImage || '';
 
+  applySystemLayerState(
+    fog,
+    payload.model || {},
+    'map-fog'
+  );
+
   renderLockedFogZones(
     viewport,
     payload.model || {}
@@ -294,7 +304,8 @@ function updatePresentationFog(
 
 function ensureFogCanvas(
   viewport,
-  fog
+  fog,
+  model = {}
 ) {
 
   if (
@@ -312,6 +323,12 @@ function ensureFogCanvas(
 
   canvas.className =
     'campaign-map-fog-image';
+
+  applySystemLayerState(
+    canvas,
+    model,
+    'map-fog'
+  );
 
   canvas.width =
     WORLD_WIDTH;
@@ -780,7 +797,8 @@ function normalizeLinePoints(
 
 
 function createFogImage(
-  src
+  src,
+  model = {}
 ) {
 
   const fog =
@@ -796,6 +814,12 @@ function createFogImage(
 
   fog.alt =
     '';
+
+  applySystemLayerState(
+    fog,
+    model,
+    'map-fog'
+  );
 
   return fog;
 }
@@ -821,6 +845,9 @@ function renderLockedFogZones(
       element.className =
         'campaign-presentation-locked-fog-zone';
 
+      element.dataset.layerId =
+        'map-locked-fog';
+
       element.style.left =
         `${Number(zone.x || 0)}px`;
 
@@ -833,10 +860,49 @@ function renderLockedFogZones(
       element.style.height =
         `${Number(zone.height || 0)}px`;
 
+      applySystemLayerState(
+        element,
+        model,
+        'map-locked-fog'
+      );
+
       viewport.appendChild(
         element
       );
     });
+}
+
+
+function applySystemLayerState(
+  element,
+  model,
+  layerId
+) {
+
+  if (!element) return;
+
+  const layer =
+    (model.layers || []).find(item =>
+      item.layerId === layerId
+    );
+
+  element.dataset.layerId =
+    layerId;
+
+  element.dataset.layerHidden =
+    layer?.visible === false
+      ? 'true'
+      : 'false';
+
+  element.style.zIndex =
+    String(
+      layer?.zIndex ||
+      (
+        layerId === 'map-locked-fog'
+          ? 130
+          : 120
+      )
+    );
 }
 
 

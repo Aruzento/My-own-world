@@ -1,6 +1,7 @@
 import {
   CampaignMapInitiativeModel,
-  createParticipantFromToken
+  createParticipantFromToken,
+  isTokenAlive
 } from './campaignMapInitiativeModel.js';
 
 import {
@@ -13,7 +14,45 @@ import {
   showMapPopup
 } from './campaignMapPopupController.js';
 
-// Popup инициативы разделен на выбор/ввод значений и отдельное окно порядка ходов.
+
+const INITIATIVE_TEXT = {
+  title:
+    '\u0418\u043d\u0438\u0446\u0438\u0430\u0442\u0438\u0432\u0430',
+  turnTitle:
+    '\u0425\u043e\u0434\u044b',
+  noCreatures:
+    '\u041d\u0430 \u043a\u0430\u0440\u0442\u0435 \u043d\u0435\u0442 \u0436\u0438\u0432\u044b\u0445 \u0441\u0443\u0449\u0435\u0441\u0442\u0432',
+  noParticipants:
+    '\u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u0438 \u043d\u0435 \u0432\u044b\u0431\u0440\u0430\u043d\u044b',
+  activePrefix:
+    '\u0425\u043e\u0434',
+  noActive:
+    '\u041d\u0435\u0442 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0433\u043e \u0445\u043e\u0434\u0430',
+  apply:
+    '\u041d\u0430\u0447\u0430\u0442\u044c \u0431\u043e\u0439',
+  saveOrder:
+    '\u0421\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043f\u043e\u0440\u044f\u0434\u043e\u043a',
+  rollAll:
+    'Roll d20',
+  edit:
+    '\u0423\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u0438',
+  close:
+    '\u0417\u0430\u043a\u0440\u044b\u0442\u044c',
+  previous:
+    '\u041d\u0430\u0437\u0430\u0434',
+  next:
+    '\u0414\u0430\u043b\u044c\u0448\u0435',
+  player:
+    '\u0438\u0433\u0440\u043e\u043a',
+  duplicate:
+    '\u0434\u0443\u0431\u043b\u044c',
+  initiative:
+    '\u0418\u043d\u0438\u0446\u0438\u0430\u0442\u0438\u0432\u0430',
+  setActive:
+    '\u0421\u0434\u0435\u043b\u0430\u0442\u044c \u0445\u043e\u0434\u043e\u043c'
+};
+
+
 export function openInitiativePopup(
   map,
   anchor,
@@ -33,17 +72,34 @@ export function openInitiativePopup(
   const popup =
     getMapPopup();
 
-  renderPickerPopup(
-    popup,
-    model
-  );
+  const initiative =
+    new CampaignMapInitiativeModel(
+      model.initiative
+    );
 
-  bindPickerActions(
-    popup,
-    store,
-    deps,
-    anchor
-  );
+  if (initiative.participants.length) {
+
+    renderOrderPopup(
+      popup,
+      store,
+      deps,
+      anchor
+    );
+
+  } else {
+
+    renderPickerPopup(
+      popup,
+      model
+    );
+
+    bindPickerActions(
+      popup,
+      store,
+      deps,
+      anchor
+    );
+  }
 
   showMapPopup(
     popup,
@@ -51,6 +107,7 @@ export function openInitiativePopup(
     'initiative'
   );
 }
+
 
 function renderPickerPopup(
   popup,
@@ -65,6 +122,7 @@ function renderPickerPopup(
     model
   );
 }
+
 
 function bindPickerActions(
   popup,
@@ -123,6 +181,7 @@ function bindPickerActions(
     );
 }
 
+
 function renderPickerList(
   popup,
   model
@@ -145,13 +204,16 @@ function renderPickerList(
 
   const tokens =
     model.tokens.filter(token =>
-      token.type === 'creature'
+      token.type === 'creature' &&
+      isTokenAlive(
+        token
+      )
     );
 
   if (!tokens.length) {
 
     list.innerHTML =
-      '<div class="campaign-initiative-empty">На карте нет существ для инициативы</div>';
+      `<div class="campaign-initiative-empty">${INITIATIVE_TEXT.noCreatures}</div>`;
 
     return;
   }
@@ -170,14 +232,17 @@ function renderPickerList(
           ),
           {
             selected:
-              selectedIds.has(
-                token.tokenId
-              )
+              selectedIds.size
+                ? selectedIds.has(
+                    token.tokenId
+                  )
+                : true
           }
         );
       })
       .join('');
 }
+
 
 function fillRolls(
   popup
@@ -206,6 +271,7 @@ function fillRolls(
         );
     });
 }
+
 
 function applySelectedParticipants(
   popup,
@@ -252,6 +318,7 @@ function applySelectedParticipants(
   return initiative;
 }
 
+
 function createParticipantFromRow(
   row,
   model,
@@ -297,6 +364,7 @@ function createParticipantFromRow(
   };
 }
 
+
 function renderOrderPopup(
   popup,
   store,
@@ -326,6 +394,7 @@ function renderOrderPopup(
     anchor
   );
 }
+
 
 function bindOrderActions(
   popup,
@@ -374,7 +443,35 @@ function bindOrderActions(
       }
     );
 
-  bindOrderRowActions(
+  popup
+    .querySelector('.campaign-initiative-save-order-btn')
+    .addEventListener(
+      'click',
+      async event => {
+
+        event.preventDefault();
+
+        saveOrderValues(
+          popup,
+          store,
+          {
+            sort:
+              true
+          }
+        );
+
+        renderOrderPopup(
+          popup,
+          store,
+          deps,
+          anchor
+        );
+
+        await deps.saveAndSync?.();
+      }
+    );
+
+  bindOrderListActions(
     popup,
     store,
     deps,
@@ -415,6 +512,7 @@ function bindOrderActions(
     );
 }
 
+
 function renderOrderList(
   popup,
   model
@@ -436,7 +534,7 @@ function renderOrderList(
   if (!initiative.participants.length) {
 
     list.innerHTML =
-      '<div class="campaign-initiative-empty">Участники не выбраны</div>';
+      `<div class="campaign-initiative-empty">${INITIATIVE_TEXT.noParticipants}</div>`;
 
     return;
   }
@@ -455,6 +553,7 @@ function renderOrderList(
       .join('');
 }
 
+
 function renderActiveTurn(
   popup,
   initiative
@@ -472,9 +571,10 @@ function renderActiveTurn(
 
   label.textContent =
     active
-      ? `Ход: ${active.name}`
-      : 'Нет активного хода';
+      ? `${INITIATIVE_TEXT.activePrefix}: ${active.name}`
+      : INITIATIVE_TEXT.noActive;
 }
+
 
 function shiftInitiativeTurn(
   popup,
@@ -483,6 +583,11 @@ function shiftInitiativeTurn(
   anchor,
   direction
 ) {
+
+  saveOrderValues(
+    popup,
+    store
+  );
 
   const initiative =
     new CampaignMapInitiativeModel(
@@ -507,12 +612,7 @@ function shiftInitiativeTurn(
     initiative
   );
 
-  renderOrderList(
-    popup,
-    store.getModel()
-  );
-
-  bindOrderRowActions(
+  renderOrderPopup(
     popup,
     store,
     deps,
@@ -521,7 +621,7 @@ function shiftInitiativeTurn(
 }
 
 
-function bindOrderRowActions(
+function bindOrderListActions(
   popup,
   store,
   deps,
@@ -536,7 +636,18 @@ function bindOrderRowActions(
         'click',
         async event => {
 
+          if (
+            event.target.closest(
+              '.campaign-initiative-value'
+            )
+          ) return;
+
           event.preventDefault();
+
+          saveOrderValues(
+            popup,
+            store
+          );
 
           const initiative =
             new CampaignMapInitiativeModel(
@@ -551,17 +662,40 @@ function bindOrderRowActions(
             initiative.toJSON()
           );
 
-          renderOrderList(
+          renderOrderPopup(
             popup,
-            store.getModel()
+            store,
+            deps,
+            anchor
           );
 
-          syncActiveTokenHighlights(
-            store.map,
-            initiative
+          await deps.saveAndSync?.();
+        }
+      );
+    });
+
+  popup
+    .querySelectorAll('.campaign-initiative-order-row .campaign-initiative-value')
+    .forEach(input => {
+
+      input.addEventListener(
+        'keydown',
+        async event => {
+
+          if (event.key !== 'Enter') return;
+
+          event.preventDefault();
+
+          saveOrderValues(
+            popup,
+            store,
+            {
+              sort:
+                true
+            }
           );
 
-          bindOrderActions(
+          renderOrderPopup(
             popup,
             store,
             deps,
@@ -573,6 +707,63 @@ function bindOrderRowActions(
       );
     });
 }
+
+
+function saveOrderValues(
+  popup,
+  store,
+  options = {}
+) {
+
+  const initiative =
+    new CampaignMapInitiativeModel(
+      store.getModel().initiative
+    );
+
+  popup
+    .querySelectorAll('.campaign-initiative-order-row')
+    .forEach(row => {
+
+      const participant =
+        initiative.getParticipant(
+          row.dataset.participantId
+        );
+
+      const input =
+        row.querySelector('.campaign-initiative-value');
+
+      if (!participant || !input) return;
+
+      const total =
+        normalizeNumber(
+          input.value,
+          participant.total
+        );
+
+      participant.total =
+        total;
+
+      participant.roll =
+        total - participant.modifier;
+    });
+
+  if (options.sort) {
+
+    initiative.sortByInitiative();
+  }
+
+  store.setInitiative(
+    initiative.toJSON()
+  );
+
+  syncActiveTokenHighlights(
+    store.map,
+    initiative
+  );
+
+  return initiative;
+}
+
 
 function getNextActiveParticipantId(
   currentActiveId,
@@ -591,35 +782,39 @@ function getNextActiveParticipantId(
   return participants[0]?.participantId || '';
 }
 
+
 function getPickerHTML() {
 
   return `
-    <div class="campaign-map-popup-title">Инициатива</div>
+    <div class="campaign-map-popup-title">${INITIATIVE_TEXT.title}</div>
     <div class="campaign-initiative-list"></div>
     <div class="campaign-map-popup-actions campaign-initiative-actions">
-      <button class="campaign-initiative-save-btn" type="button">Применить</button>
-      <button class="campaign-initiative-roll-btn" type="button">Roll d20</button>
-      <button class="campaign-initiative-close-btn" type="button">Закрыть</button>
+      <button class="campaign-initiative-save-btn" type="button">${INITIATIVE_TEXT.apply}</button>
+      <button class="campaign-initiative-roll-btn" type="button">${INITIATIVE_TEXT.rollAll}</button>
+      <button class="campaign-initiative-close-btn" type="button">${INITIATIVE_TEXT.close}</button>
     </div>
   `;
 }
+
 
 function getOrderHTML() {
 
   return `
-    <div class="campaign-map-popup-title">Порядок ходов</div>
+    <div class="campaign-map-popup-title">${INITIATIVE_TEXT.turnTitle}</div>
     <div class="campaign-initiative-turn">
-      <button class="campaign-initiative-prev-btn" type="button">←</button>
-      <span class="campaign-initiative-active">Нет активного хода</span>
-      <button class="campaign-initiative-next-btn" type="button">→</button>
+      <button class="campaign-initiative-prev-btn" type="button" title="${INITIATIVE_TEXT.previous}">&lsaquo;</button>
+      <span class="campaign-initiative-active">${INITIATIVE_TEXT.noActive}</span>
+      <button class="campaign-initiative-next-btn" type="button" title="${INITIATIVE_TEXT.next}">&rsaquo;</button>
     </div>
     <div class="campaign-initiative-order-list"></div>
-    <div class="campaign-map-popup-actions campaign-initiative-actions">
-      <button class="campaign-initiative-edit-btn" type="button">Изменить</button>
-      <button class="campaign-initiative-close-btn" type="button">Закрыть</button>
+    <div class="campaign-map-popup-actions campaign-initiative-actions campaign-initiative-order-actions">
+      <button class="campaign-initiative-save-order-btn" type="button">${INITIATIVE_TEXT.saveOrder}</button>
+      <button class="campaign-initiative-edit-btn" type="button">${INITIATIVE_TEXT.edit}</button>
+      <button class="campaign-initiative-close-btn" type="button">${INITIATIVE_TEXT.close}</button>
     </div>
   `;
 }
+
 
 function getPickerRowHTML(
   token,
@@ -648,11 +843,12 @@ function getPickerRowHTML(
         type="number"
         value="${escapeAttribute(getParticipantTotal(nextParticipant))}"
         data-modifier="${escapeAttribute(nextParticipant.modifier)}"
-        title="Инициатива"
+        title="${INITIATIVE_TEXT.initiative}"
       >
     </label>
   `;
 }
+
 
 function getOrderRowHTML(
   participant,
@@ -660,12 +856,25 @@ function getOrderRowHTML(
 ) {
 
   return `
-    <div class="${getOrderRowClass(options)}" data-participant-id="${escapeAttribute(participant.participantId)}">
+    <div
+      class="${getOrderRowClass(options)}"
+      data-participant-id="${escapeAttribute(participant.participantId)}"
+      title="${INITIATIVE_TEXT.setActive}"
+    >
       <span class="campaign-initiative-name">${escapeHTML(participant.name)}</span>
+      <span class="campaign-initiative-meta">${escapeHTML(getParticipantMetaText(participant))}</span>
+      <input
+        class="campaign-initiative-value"
+        type="number"
+        value="${escapeAttribute(participant.total)}"
+        data-modifier="${escapeAttribute(participant.modifier)}"
+        title="${INITIATIVE_TEXT.initiative}"
+      >
       <span class="campaign-initiative-result">${escapeHTML(getParticipantResultText(participant))}</span>
     </div>
   `;
 }
+
 
 function getOrderRowClass(
   options
@@ -682,21 +891,28 @@ function getOrderRowClass(
     .join(' ');
 }
 
+
 function getParticipantMetaText(
   participant
 ) {
 
   return participant.sourceMode === 'original'
-    ? 'игрок'
-    : 'дубль';
+    ? INITIATIVE_TEXT.player
+    : INITIATIVE_TEXT.duplicate;
 }
+
 
 function getParticipantTotal(
   participant
 ) {
 
-  return participant?.total || '';
+  return Number.isFinite(
+    participant?.total
+  )
+    ? participant.total
+    : '';
 }
+
 
 function getParticipantResultText(
   participant
@@ -707,7 +923,7 @@ function getParticipantResultText(
       ? `+${participant.modifier}`
       : String(participant.modifier);
 
-  return `${participant.total} (${participant.roll}${modifier})`;
+  return `${participant.roll}${modifier}`;
 }
 
 
@@ -749,12 +965,14 @@ function syncActiveTokenHighlights(
   );
 }
 
+
 function rollD20() {
 
   return Math.floor(
     Math.random() * 20
   ) + 1;
 }
+
 
 function normalizeNumber(
   value,
@@ -771,6 +989,7 @@ function normalizeNumber(
     : fallback;
 }
 
+
 function escapeHTML(
   value
 ) {
@@ -780,6 +999,7 @@ function escapeHTML(
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
 }
+
 
 function escapeAttribute(
   value

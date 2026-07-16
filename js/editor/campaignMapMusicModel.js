@@ -19,6 +19,19 @@ export const CAMPAIGN_MAP_MUSIC_ORDER =
   });
 
 
+const DEFAULT_NORMAL_PLAYLIST_TITLE =
+  'Обычная музыка';
+
+const DEFAULT_BATTLE_PLAYLIST_TITLE =
+  'Боевая музыка';
+
+const DEFAULT_PLAYLIST_TITLE =
+  'Плейлист';
+
+const DEFAULT_TRACK_TITLE =
+  'Трек';
+
+
 export function normalizeCampaignMapMusic(
   input = {}
 ) {
@@ -33,7 +46,7 @@ export function normalizeCampaignMapMusic(
       input.normal,
       {
         fallbackTitle:
-          'Обычная музыка'
+          DEFAULT_NORMAL_PLAYLIST_TITLE
       }
     );
 
@@ -42,7 +55,7 @@ export function normalizeCampaignMapMusic(
       input.battle,
       {
         fallbackTitle:
-          'Боевая музыка'
+          DEFAULT_BATTLE_PLAYLIST_TITLE
       }
     );
 
@@ -66,7 +79,7 @@ export function normalizeCampaignMapPlaylist(
       input.title
     ) ||
     options.fallbackTitle ||
-    'Плейлист';
+    DEFAULT_PLAYLIST_TITLE;
 
   return {
     playlistId:
@@ -212,8 +225,8 @@ export function updateCampaignMapPlaylist(
         {
           fallbackTitle:
             key === CAMPAIGN_MAP_MUSIC_MODES.battle
-              ? 'Боевая музыка'
-              : 'Обычная музыка'
+              ? DEFAULT_BATTLE_PLAYLIST_TITLE
+              : DEFAULT_NORMAL_PLAYLIST_TITLE
         }
       )
   });
@@ -266,7 +279,7 @@ export function createTrackTitleFromPath(
     .replaceAll('_', ' ')
     .replaceAll('-', ' ')
     .trim() ||
-    'Трек';
+    DEFAULT_TRACK_TITLE;
 }
 
 

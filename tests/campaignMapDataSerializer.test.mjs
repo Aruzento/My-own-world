@@ -63,7 +63,10 @@ test(
       y: 34,
       width: 56,
       height: 78,
-      points: '50,6 94,94 6,94'
+      points: '50,6 94,94 6,94',
+      strokeColor: '#aa33cc',
+      fillColor: '#74c69d',
+      strokeWidth: 5
     });
 
     const html =
@@ -130,6 +133,21 @@ test(
     assert.match(
       html,
       /data-shape-id="shape-1"/
+    );
+
+    assert.match(
+      html,
+      /data-stroke-color="#aa33cc"/
+    );
+
+    assert.match(
+      html,
+      /data-fill-color="#74c69d"/
+    );
+
+    assert.match(
+      html,
+      /data-stroke-width="5"/
     );
 
     assert.doesNotMatch(

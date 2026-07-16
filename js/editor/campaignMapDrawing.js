@@ -39,7 +39,7 @@ const DRAWING_POINT_THRESHOLD =
   3;
 
 const PEN_CONTINUE_DISTANCE =
-  320;
+  28;
 
 let activeDrawing =
   null;
@@ -220,11 +220,8 @@ export function startCampaignMapDrawing(
       ) ||
       findLastPenContinuationTarget(
         map,
-        store
-      ) ||
-      findAnyPenContinuationTarget(
-        map,
-        store
+        store,
+        point
       );
 
     if (continuation) {
@@ -336,11 +333,20 @@ export function moveCampaignMapDrawing(
 
   if (activeDrawing.tool === 'pen') {
 
-    activeDrawing.points =
-      [
-        ...activeDrawing.points.slice(0, -1),
+    if (activeDrawing.points.length <= 1) {
+
+      activeDrawing.points.push(
         point
-      ];
+      );
+
+    } else {
+
+      activeDrawing.points =
+        [
+          ...activeDrawing.points.slice(0, -1),
+          point
+        ];
+    }
 
   } else {
 
@@ -382,10 +388,6 @@ export function finishCampaignMapDrawing() {
 
   if (finished.tool === 'pen') {
 
-    mergePenLineShapes(
-      finished
-    );
-
     lastPenShapeByMap.set(
       finished.map,
       finished.shapeId
@@ -396,92 +398,6 @@ export function finishCampaignMapDrawing() {
   }
 
   return finished.map;
-}
-
-
-function mergePenLineShapes(
-  drawing
-) {
-
-  const lines =
-    [
-      ...(drawing.store?.getModel()?.shapes || [])
-    ]
-      .filter(shape =>
-        shape.type === 'line'
-      );
-
-  if (lines.length < 2) return;
-
-  const primary =
-    lines[0];
-
-  const worldPoints =
-    lines.flatMap(shape =>
-      getWorldPointsFromShapeRecord(
-        shape
-      )
-    );
-
-  if (worldPoints.length < 2) return;
-
-  const patch =
-    createDrawingShapePatch(
-      'pen',
-      primary.strokeColor || drawing.color,
-      worldPoints
-    );
-
-  const record =
-    drawing.store.updateShape(
-      primary.shapeId,
-      patch
-    );
-
-  const primaryElement =
-    getShapeElementById(
-      drawing.map,
-      primary.shapeId
-    );
-
-  if (primaryElement) {
-
-    applyShapeRecordToElement(
-      primaryElement,
-      record
-    );
-
-    renderMapShapeElement(
-      primaryElement
-    );
-  }
-
-  lines.slice(1).forEach(shape => {
-
-    drawing.store.removeShape(
-      shape.shapeId
-    );
-
-    getShapeElementById(
-      drawing.map,
-      shape.shapeId
-    )?.remove();
-  });
-
-  drawing.shapeId =
-    primary.shapeId;
-
-  drawing.element =
-    primaryElement || drawing.element;
-
-  scheduleLivePresentationSync({
-    map:
-      drawing.map,
-    itemType:
-      'shape',
-    itemId:
-      primary.shapeId
-  });
 }
 
 
@@ -733,7 +649,8 @@ function findPenContinuationTarget(
 
 function findLastPenContinuationTarget(
   map,
-  store
+  store,
+  point
 ) {
 
   const shapeId =
@@ -761,36 +678,15 @@ function findLastPenContinuationTarget(
 
   if (points.length < 2) return null;
 
-  return createContinuationResult(
-    map,
-    record,
-    points
-  );
-}
+  const last =
+    points.at(-1);
 
-
-function findAnyPenContinuationTarget(
-  map,
-  store
-) {
-
-  const record =
-    [
-      ...(store?.getModel()?.shapes || [])
-    ]
-      .filter(shape =>
-        shape.type === 'line'
-      )
-      .at(-1);
-
-  if (!record) return null;
-
-  const points =
-    getWorldPointsFromShapeRecord(
-      record
-    );
-
-  if (points.length < 2) return null;
+  if (
+    getPointDistance(
+      point,
+      last
+    ) > PEN_CONTINUE_DISTANCE
+  ) return null;
 
   return createContinuationResult(
     map,

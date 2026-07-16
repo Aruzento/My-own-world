@@ -2,6 +2,10 @@ import {
   getCampaignMapStore
 } from './campaignMapStore.js';
 
+import {
+  schedulePresentationSync
+} from './campaignMapPresentationSync.js';
+
 
 // Runtime helper слоев: применяет видимость и меняет порядок через model/store.
 
@@ -44,6 +48,11 @@ export function applyCampaignMapLayers(
       layer.layerId === 'map-fog'
     );
 
+  const lockedFogLayer =
+    model.layers.find(layer =>
+      layer.layerId === 'map-locked-fog'
+    );
+
   const fogCanvas =
     map.querySelector('.campaign-map-fog-canvas');
 
@@ -57,6 +66,27 @@ export function applyCampaignMapLayers(
     fogCanvas.style.zIndex =
       String(fogLayer.zIndex);
   }
+
+  map
+    .querySelectorAll('.campaign-fog-locked-zone')
+    .forEach(zone => {
+
+      const isVisible =
+        lockedFogLayer?.visible !== false;
+
+      zone.dataset.layerId =
+        'map-locked-fog';
+
+      zone.dataset.layerHidden =
+        isVisible
+          ? 'false'
+          : 'true';
+
+      zone.style.zIndex =
+        String(
+          lockedFogLayer?.zIndex || 130
+        );
+    });
 }
 
 
@@ -176,6 +206,8 @@ function applyLayerUpdate(
   applyCampaignMapLayers(
     map
   );
+
+  schedulePresentationSync();
 
   return nextLayers;
 }

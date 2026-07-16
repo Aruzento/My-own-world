@@ -343,13 +343,24 @@ export function syncPresentationFog(
     sourceMap.querySelector('.campaign-map-stage') ||
     sourceMap;
 
+  const store =
+    getCampaignMapStore(
+      sourceStage.closest('.campaign-map-document')
+    );
+
+  const model =
+    store?.getModel();
+
   const sourceCanvas =
     sourceStage.querySelector('.campaign-map-fog-canvas');
 
-  const targetFog =
-    presentationWindow.document.querySelector('.campaign-map-fog-image');
+  const targetViewport =
+    presentationWindow.document.querySelector('.campaign-map-viewport');
 
-  if (!sourceCanvas || !targetFog) {
+  const targetFog =
+    targetViewport?.querySelector('.campaign-map-fog-image');
+
+  if (!sourceCanvas || !targetFog || !targetViewport) {
 
     syncPresentation();
 
@@ -361,6 +372,17 @@ export function syncPresentationFog(
       sourceStage,
       sourceCanvas
     );
+
+  applyPresentationSystemLayerState(
+    targetFog,
+    model,
+    'map-fog'
+  );
+
+  renderPresentationLockedFogZones(
+    targetViewport,
+    model
+  );
 
   return true;
 }
@@ -841,7 +863,8 @@ function preparePresentationClone(
 
   replaceFogCanvasWithImage(
     clone,
-    fogImageSrc
+    fogImageSrc,
+    model
   );
 
   renderPresentationLockedFogZones(
@@ -900,7 +923,8 @@ function applyCloneViewportTransform(
 
 function replaceFogCanvasWithImage(
   clone,
-  fogImageSrc
+  fogImageSrc,
+  model
 ) {
 
   clone
@@ -916,6 +940,12 @@ function replaceFogCanvasWithImage(
       image.src =
         fogImageSrc || '';
 
+      applyPresentationSystemLayerState(
+        image,
+        model,
+        'map-fog'
+      );
+
       canvas.replaceWith(
         image
       );
@@ -924,14 +954,20 @@ function replaceFogCanvasWithImage(
 
 
 function renderPresentationLockedFogZones(
-  clone,
+  target,
   model
 ) {
 
   const viewport =
-    clone.querySelector('.campaign-map-viewport');
+    target.classList?.contains('campaign-map-viewport')
+      ? target
+      : target.querySelector('.campaign-map-viewport');
 
   if (!viewport) return;
+
+  viewport
+    .querySelectorAll('.campaign-presentation-locked-fog-zone')
+    .forEach(zone => zone.remove());
 
   (model?.fog?.lockedZones || [])
     .forEach(zone => {
@@ -941,6 +977,9 @@ function renderPresentationLockedFogZones(
 
       element.className =
         'campaign-presentation-locked-fog-zone';
+
+      element.dataset.layerId =
+        'map-locked-fog';
 
       element.style.left =
         `${Number(zone.x || 0)}px`;
@@ -954,10 +993,49 @@ function renderPresentationLockedFogZones(
       element.style.height =
         `${Number(zone.height || 0)}px`;
 
+      applyPresentationSystemLayerState(
+        element,
+        model,
+        'map-locked-fog'
+      );
+
       viewport.appendChild(
         element
       );
     });
+}
+
+
+function applyPresentationSystemLayerState(
+  element,
+  model,
+  layerId
+) {
+
+  if (!element) return;
+
+  const layer =
+    (model?.layers || []).find(item =>
+      item.layerId === layerId
+    );
+
+  element.dataset.layerId =
+    layerId;
+
+  element.dataset.layerHidden =
+    layer?.visible === false
+      ? 'true'
+      : 'false';
+
+  element.style.zIndex =
+    String(
+      layer?.zIndex ||
+      (
+        layerId === 'map-locked-fog'
+          ? 130
+          : 120
+      )
+    );
 }
 
 

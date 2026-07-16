@@ -44,7 +44,8 @@ const ignoredDirectories =
     '.git',
     'dist-desktop',
     'node_modules',
-    'target'
+    'target',
+    'test-results'
   ]);
 
 const ignoredFiles =

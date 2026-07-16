@@ -173,10 +173,10 @@ test(
       playerBadge: '"скрыт"',
       npcExists: false,
       hiddenShapeExists: false,
-      fogZ: 10000,
+      fogZ: 120,
       tokenZ: 40,
       lockedFogExists: true,
-      lockedFogZ: 10001
+      lockedFogZ: 130
     });
   }
 );
@@ -344,7 +344,19 @@ test(
                       height: 22
                     }
                   ]
-                }
+                },
+                layers: [
+                  {
+                    layerId: 'map-fog',
+                    visible: true,
+                    zIndex: 120
+                  },
+                  {
+                    layerId: 'map-locked-fog',
+                    visible: true,
+                    zIndex: 130
+                  }
+                ]
               }
             }
           );
@@ -396,6 +408,8 @@ test(
               root.querySelector('.campaign-map-fog-image')?.getAttribute('src'),
             lockedZones:
               root.querySelectorAll('.campaign-presentation-locked-fog-zone').length,
+            lockedFogHidden:
+              root.querySelector('.campaign-presentation-locked-fog-zone')?.dataset.layerHidden,
             measureText:
               root.querySelector('.campaign-map-drag-measure text')?.textContent,
             measureZ:
@@ -419,9 +433,10 @@ test(
       gridColorAfter: 'rgba(255,0,0,0.22)',
       fogSrc: 'data:image/png;base64,deltafog',
       lockedZones: 1,
+      lockedFogHidden: 'false',
       measureText: '10 ft',
       measureZ: 10002,
-      fogZ: 10000
+      fogZ: 120
     });
   }
 );
@@ -1033,6 +1048,172 @@ test(
       'rgb(0, 0, 0)'
     );
 
+    await page.evaluate(
+      async () => {
+
+        const {
+          syncPresentationFog
+        } = await import('/js/editor/campaignMapPresentation.js');
+
+        const {
+          getCampaignMapStore
+        } = await import('/js/editor/campaignMapStore.js');
+
+        const map =
+          document.querySelector('.campaign-map-document');
+
+        getCampaignMapStore(
+          map
+        ).updateLockedFogZone(
+          'locked-fog-zone',
+          {
+            x: 260,
+            y: 280,
+            width: 120,
+            height: 96
+          }
+        );
+
+        syncPresentationFog(
+          map
+        );
+      }
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const lockedFog =
+                document.querySelector('.campaign-presentation-locked-fog-zone');
+
+              return {
+                left:
+                  lockedFog?.style.left,
+                top:
+                  lockedFog?.style.top,
+                width:
+                  lockedFog?.style.width,
+                height:
+                  lockedFog?.style.height
+              };
+            }
+          )
+      )
+      .toEqual({
+        left: '260px',
+        top: '280px',
+        width: '120px',
+        height: '96px'
+      });
+
     await popup.close();
+  }
+);
+
+
+test(
+  'campaign-map-presentation-entry-shows-loading-until-first-render',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const state =
+      await page.evaluate(
+        async () => {
+
+          const root =
+            document.createElement(
+              'div'
+            );
+
+          root.id =
+            'presentationMap';
+
+          document.body.appendChild(
+            root
+          );
+
+          await import(
+            `/js/presentation/presentationEntry.js?presentation-loading=${Date.now()}`
+          );
+
+          const before = {
+            status:
+              root.dataset.presentationStatus,
+            loading:
+              root.querySelector('.presentation-loading')?.textContent || ''
+          };
+
+          const channel =
+            new BroadcastChannel(
+              'my-own-world-campaign-map-presentation'
+            );
+
+          channel.postMessage({
+            type: 'render-model',
+            css: '',
+            model: {
+              grid: {
+                enabled: false,
+                size: 48
+              },
+              layers: [],
+              tokens: [],
+              shapes: [],
+              fog: {
+                lockedZones: []
+              }
+            },
+            assets: {
+              background: '',
+              tokens: {}
+            },
+            fogImage: '',
+            tokenView: {}
+          });
+
+          await new Promise(resolve =>
+            setTimeout(
+              resolve,
+              50
+            )
+          );
+
+          const after = {
+            status:
+              root.dataset.presentationStatus,
+            loadingExists:
+              Boolean(root.querySelector('.presentation-loading')),
+            stageExists:
+              Boolean(root.querySelector('.campaign-map-stage'))
+          };
+
+          channel.close();
+
+          return {
+            before,
+            after
+          };
+        }
+      );
+
+    expect(
+      state
+    ).toEqual({
+      before: {
+        status: 'waiting',
+        loading: 'Ожидание карты...'
+      },
+      after: {
+        status: 'ready',
+        loadingExists: false,
+        stageExists: true
+      }
+    });
   }
 );

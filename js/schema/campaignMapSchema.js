@@ -197,7 +197,10 @@ function validateLayers(
 
   layers.forEach((layer, index) => {
 
-    if (!isNonEmptyString(layer?.id)) {
+    const layerId =
+      layer?.layerId || layer?.id;
+
+    if (!isNonEmptyString(layerId)) {
 
       issues.push(
         createSchemaIssue(
@@ -213,7 +216,7 @@ function validateLayers(
       return;
     }
 
-    if (ids.has(layer.id)) {
+    if (ids.has(layerId)) {
 
       issues.push(
         createSchemaIssue(
@@ -221,14 +224,14 @@ function validateLayers(
           'map.layer_duplicate_id',
           'Слой карты имеет дублирующийся id.',
           {
-            layerId: layer.id
+            layerId
           }
         )
       );
     }
 
     ids.add(
-      layer.id
+      layerId
     );
   });
 }

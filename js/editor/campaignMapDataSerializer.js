@@ -147,6 +147,7 @@ function serializeToken(
                     'data-size': formatNumber(token.size, 3),
                     'data-rotation': token.rotation,
                     'data-image-asset': token.imageAsset,
+                    'data-hp': token.hp,
                     'data-initiative-modifier': token.initiativeModifier,
                     'data-source-mode': token.sourceMode,
                     'data-player-token': token.isPlayerToken ? 'true' : 'false',
@@ -174,6 +175,9 @@ function serializeShape(
                     'data-w': Math.round(shape.width),
                     'data-h': Math.round(shape.height),
                     'data-points': shape.points,
+                    'data-stroke-color': shape.strokeColor,
+                    'data-fill-color': shape.fillColor,
+                    'data-stroke-width': shape.strokeWidth,
                     'data-layer-id': shape.layerId,
                     'data-z-index': shape.zIndex,
                     'data-presentation-hidden': shape.presentationHidden ? 'true' : 'false'

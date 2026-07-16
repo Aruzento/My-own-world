@@ -1,5 +1,47 @@
 # Release Notes
 
+## 2026-07-16: Campaign Map Regression Gate
+
+- Added a browser regression gate for campaign map persistent data.
+- The gate verifies that save/reload keeps token HP/source data, grid, fog, locked fog zones, layers, drawing shapes, normal/battle playlists and initiative state together.
+- Browser smoke scenario tracking now includes the new map core regression gate and points initiative coverage to the current test name.
+
+## 2026-07-16: Campaign Map Initiative UX
+
+- Initiative now reopens directly to the turn-order window when combat already has participants.
+- Living creature tokens are selected by default; tokens with `hp <= 0` are excluded from the initiative picker.
+- Manual initiative values can be edited in the turn-order window, saved, sorted and preserved while using previous/next turn controls.
+- Active participant highlight stays synced with the map token.
+- Campaign map tokens now preserve optional `hp` through model serialization via `data-hp`.
+
+## 2026-07-15: Campaign Map Music Stabilization
+
+- Campaign map music is now stabilized as a compact AIMP-like playlist popup with normal/battle playlists, play/stop/previous/next, shuffle/order, loop and copy-from-map.
+- Selected audio files are imported into the workspace in parallel and added directly to the active playlist.
+- Switching maps stops stale music when the new active playlist is empty, or attempts to start the first track when it is not empty.
+- Playback failures are reported in the popup status without breaking the map.
+- Russian labels in the map music/picker/title-validation path were hardened against encoding breakage.
+
+## 2026-07-15: Map Layers Completion
+
+- Campaign map layers now include a separate locked-fog-zones layer.
+- Fog and locked fog zones keep a stable top render order in the GM editor and presentation mode.
+- Hiding the fog or locked-fog layer now updates both the editor and presentation view.
+- Campaign map schema validation now accepts the current `layerId` layer field.
+
+## 2026-07-15: Drawing Tools Stabilization
+
+- Campaign map drawings now preserve stroke color, fill color and stroke width after save/reload.
+- Pen drawing now continues a vector only from a nearby endpoint; a far click starts a separate line.
+- Drawing fills are more visible on empty maps and in presentation mode.
+- Regression coverage was expanded for drawing tools, drawing layer assignment and persisted drawing style data.
+
+## 2026-07-15: Presentation Mode Stabilization
+
+- Browser presentation now refreshes locked fog zones during fog sync, so moved or resized locked zones update without waiting for a full presentation rerender.
+- The standalone presentation window now shows a waiting state before the first map render arrives instead of staying silently blank.
+- Regression coverage was added for locked fog zone sync and presentation loading state.
+
 ## 2026-07-15: Hardened Desktop Release Gate
 
 - `npm run desktop:gate` now writes `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md`.

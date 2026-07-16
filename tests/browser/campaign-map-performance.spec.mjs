@@ -684,7 +684,7 @@ test(
     expect(
       result.report.snapshot.layerCount
     ).toBe(
-      11
+      12
     );
 
     expect(

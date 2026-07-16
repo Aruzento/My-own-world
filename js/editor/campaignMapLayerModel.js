@@ -41,6 +41,14 @@ export const DEFAULT_CAMPAIGN_MAP_LAYERS = [
     zIndex: 120,
     visible: true,
     locked: true
+  },
+  {
+    layerId: 'map-locked-fog',
+    title: '\u0417\u0430\u043f\u0440\u0435\u0442\u043d\u044b\u0435 \u0437\u043e\u043d\u044b \u0442\u0443\u043c\u0430\u043d\u0430',
+    kind: 'lockedFog',
+    zIndex: 130,
+    visible: true,
+    locked: true
   }
 ];
 
@@ -153,7 +161,9 @@ export function normalizeCampaignMapLayers(
       );
     });
 
-  return [...normalized.values()]
+  return normalizeSystemLayerOrder(
+    [...normalized.values()]
+  )
     .sort((left, right) =>
       left.zIndex - right.zIndex
     );
@@ -244,6 +254,7 @@ function normalizeLayerKind(
     kind === 'shape' ||
     kind === 'drawing' ||
     kind === 'fog' ||
+    kind === 'lockedFog' ||
     kind === 'custom'
   ) {
 
@@ -251,4 +262,63 @@ function normalizeLayerKind(
   }
 
   return 'custom';
+}
+
+
+function normalizeSystemLayerOrder(
+  layers
+) {
+
+  const maxRegularZIndex =
+    layers
+      .filter(layer =>
+        layer.layerId !== 'map-fog' &&
+        layer.layerId !== 'map-locked-fog'
+      )
+      .reduce(
+        (max, layer) =>
+          Math.max(
+            max,
+            Number(layer.zIndex || 0)
+          ),
+        0
+      );
+
+  const fogLayer =
+    layers.find(layer =>
+      layer.layerId === 'map-fog'
+    );
+
+  const lockedFogLayer =
+    layers.find(layer =>
+      layer.layerId === 'map-locked-fog'
+    );
+
+  if (fogLayer) {
+
+    fogLayer.zIndex =
+      Math.max(
+        Number(fogLayer.zIndex || 0),
+        maxRegularZIndex + 20,
+        120
+      );
+
+    fogLayer.locked =
+      true;
+  }
+
+  if (lockedFogLayer) {
+
+    lockedFogLayer.zIndex =
+      Math.max(
+        Number(lockedFogLayer.zIndex || 0),
+        Number(fogLayer?.zIndex || 120) + 10,
+        130
+      );
+
+    lockedFogLayer.locked =
+      true;
+  }
+
+  return layers;
 }

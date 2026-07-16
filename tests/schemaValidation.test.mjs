@@ -72,6 +72,49 @@ test(
 
 
 test(
+  'campaign map schema accepts current layerId field',
+  () => {
+
+    const result =
+      validateCampaignMapData({
+        version: 1,
+        grid: {
+          enabled: true,
+          size: 50,
+          color: '#999999'
+        },
+        fog: {
+          mode: 'draw',
+          brushSize: 40,
+          brushShape: 'square',
+          lockedZones: []
+        },
+        view: {
+          x: 0,
+          y: 0,
+          zoom: 1
+        },
+        layers: [
+          {
+            layerId: 'map-creatures'
+          },
+          {
+            layerId: 'map-locked-fog'
+          }
+        ],
+        tokens: [],
+        shapes: []
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+  }
+);
+
+
+test(
   'schema upgrade gate требует чистую validation и backup',
   () => {
 

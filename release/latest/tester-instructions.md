@@ -1,5 +1,65 @@
 # Tester Instructions
 
+## 2026-07-16: Campaign Map Regression Gate
+
+1. Open or create a campaign map with at least one creature token, fog, one locked fog zone, one drawing, and normal/battle playlists.
+2. Set initiative participants and give one token a visible HP value/source binding.
+3. Save, switch to another page, then reopen the map.
+4. Expected result: token data, fog image/mode, locked fog zones, layer visibility, drawing style, playlists and initiative order are still present.
+5. Open presentation mode and make a small token/fog/layer change.
+6. Expected result: presentation still follows the map without losing fog/layer ordering.
+
+## 2026-07-16: Campaign Map Initiative UX
+
+1. Open a campaign map with at least two living creature tokens and one creature token with `hp = 0`.
+2. Open initiative: living creatures should be selected by default, and the dead token should not be listed.
+3. Type manual initiative totals and press `Начать бой`: the popup should switch to `Ходы`.
+4. Edit a value in the turn window and press `Сохранить порядок`: the order should sort by the edited total.
+5. Use previous/next: the active row and token highlight should move without losing edited values.
+6. Close and reopen initiative: it should open directly to `Ходы`, not the participant picker.
+
+## 2026-07-15: Campaign Map Music Stabilization
+
+1. Open a campaign map and the map music popup.
+2. Select 1-2 audio files and press `Добавить`: tracks should appear in the active playlist without a second "added files" list.
+3. Click a track row or `play`: playback should start or show a clear status/error without breaking the map.
+4. Check `stop`, `previous`, `next`, `loop`, and `shuffle/order`.
+5. Switch `Обычная / Бой`: the active playlist should change, stale music should stop, and a non-empty new playlist should attempt to start its first track.
+6. Copy a playlist from another map, open another page, then return: playlist titles and tracks should persist.
+
+## 2026-07-15: Map Layers Completion
+
+1. Open a campaign map with tokens, shapes, drawings, fog and at least one locked fog zone.
+2. Open `Слои`.
+3. Expected result: the list includes `Объекты`, `Существа`, `Фигуры`, `Рисование`, `Туман` and `Запретные зоны тумана`.
+4. Toggle `Фигуры` or `Рисование` off.
+5. Expected result: only that layer disappears; tokens and fog remain.
+6. Toggle `Запретные зоны тумана` off.
+7. Expected result: locked fog zones disappear from the GM editor but are not deleted.
+8. Open presentation mode and toggle fog/locked-fog visibility.
+9. Expected result: presentation updates with the same fog layer visibility and locked zones render as normal fog.
+
+## 2026-07-15: Drawing Tools Stabilization
+
+1. Open a campaign map and use Drawing.
+2. Draw with Pencil, change color, then save/reopen the map.
+3. Expected result: the drawing keeps its color.
+4. Use Pen from the end of an existing line.
+5. Expected result: the line continues as one vector.
+6. Use Pen far away from the previous line.
+7. Expected result: a separate vector is created.
+8. Use Fill on a pencil shape and on an empty part of the map.
+9. Expected result: fill is visible, and drawing items belong to the `Рисование` layer.
+
+## 2026-07-15: Presentation Mode Stabilization
+
+1. Open a campaign map with fog and at least one locked fog zone.
+2. Open presentation mode.
+3. Move or resize the locked fog zone in the GM map.
+4. Expected result: the presentation updates the locked fog zone as normal fog without needing to close/reopen presentation.
+5. Open presentation in a fresh window.
+6. Expected result: before the first map appears, the window shows `Ожидание карты...` rather than a blank black screen.
+
 ## 2026-07-15: Desktop Release Gate
 
 1. Before building or sending an installer, run `npm run desktop:gate`.

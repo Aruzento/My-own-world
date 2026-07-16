@@ -91,6 +91,23 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'campaign-map-core-regression-gate',
+    priority: 'P1',
+    area: 'campaign-map',
+    title: 'Campaign map core systems survive save/reload together',
+    description:
+      'Build one map with token data, fog, locked fog zones, layers, drawing shapes, playlists and initiative, save it to persistent HTML, reload it through CampaignMapModel and verify the state.',
+    automationStatus:
+      'automated: campaign-map-regression-gate-persists-core-systems-through-save-reload',
+    automatesChecklist: [
+      'Campaign Map: save/reload',
+      'Campaign Map: fog and locked fog',
+      'Campaign Map: layers and drawing',
+      'Campaign Map: music playlists',
+      'Campaign Map: initiative persistence'
+    ]
+  },
+  {
     id: 'campaign-map-fog-performance-smoke',
     priority: 'P1',
     area: 'campaign-map',
@@ -112,7 +129,7 @@ export const browserSmokeScenarios = [
     description:
       'Открыть popup инициативы, выбрать живое существо, выполнить roll d20 и проверить, что состояние записано в CampaignMapModel и persistent dataset карты.',
     automationStatus:
-      'automated: campaign-map-initiative-popup-selects-rolls-and-persists-participants',
+      'automated: campaign-map-initiative-turn-order-manual-values-and-living-token-filter',
     automatesChecklist: [
       'Карта Кампании: initiative',
       'Карта Кампании: persistence'

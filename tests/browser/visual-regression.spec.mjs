@@ -539,9 +539,9 @@ test(
     );
 
     expect(
-      result.fogZIndex
-    ).toBeGreaterThan(
       result.lockedZoneZIndex
+    ).toBeGreaterThan(
+      result.fogZIndex
     );
 
     expect(

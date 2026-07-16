@@ -135,7 +135,8 @@ export function createCampaignMapPresentationFogPayload(
         ),
     fogPatch,
     model: {
-      fog: model.fog
+      fog: model.fog,
+      layers: model.layers || []
     }
   };
 }

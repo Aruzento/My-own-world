@@ -273,11 +273,11 @@ export function getPresentationCSS() {
     }
 
     .campaign-map-drawing-svg.is-filled polyline {
-      fill: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 42%, transparent);
+      fill: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 58%, transparent);
     }
 
     .campaign-map-shape[data-shape-type="fill"] .campaign-map-shape-svg rect {
-      fill: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 34%, transparent);
+      fill: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 48%, transparent);
       stroke: color-mix(in srgb, var(--campaign-shape-fill, #f1d38e) 72%, white);
       stroke-width: 1px;
       filter: none;
@@ -339,14 +339,17 @@ export function getPresentationCSS() {
       width: 100%;
       height: 100%;
       object-fit: fill;
-      z-index: 10000;
       opacity: 1 !important;
       pointer-events: none;
     }
 
+    .campaign-map-fog-image[data-layer-hidden="true"],
+    .campaign-presentation-locked-fog-zone[data-layer-hidden="true"] {
+      display: none;
+    }
+
     .campaign-presentation-locked-fog-zone {
       position: absolute;
-      z-index: 10001;
       background: rgba(0,0,0,1);
       pointer-events: none;
     }

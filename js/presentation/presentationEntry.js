@@ -24,6 +24,12 @@ const map =
     'presentationMap'
   );
 
+map.dataset.presentationStatus =
+  'waiting';
+
+map.innerHTML =
+  '<div class="presentation-loading" role="status">Ожидание карты...</div>';
+
 const channel =
   new BroadcastChannel(
     CHANNEL_NAME
@@ -91,12 +97,18 @@ function handlePresentationMessage(
       message.css
     );
 
+    map.dataset.presentationStatus =
+      'rendering';
+
     renderCampaignMapPresentationModel(
       map,
       message
     );
 
     applyViewportTransform();
+
+    map.dataset.presentationStatus =
+      'ready';
 
     return;
   }
@@ -121,10 +133,16 @@ function handlePresentationMessage(
     message.css
   );
 
+  map.dataset.presentationStatus =
+    'rendering';
+
   map.innerHTML =
     message.html || '';
 
   applyViewportTransform();
+
+  map.dataset.presentationStatus =
+    'ready';
 }
 
 
@@ -217,6 +235,19 @@ function ensureStyle(
       .presentation-map {
         width: 100%;
         height: 100%;
+      }
+
+      .presentation-loading {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: rgba(255,248,230,0.82);
+        background:
+          radial-gradient(circle at center, rgba(241,211,142,0.12), transparent 42%),
+          #050505;
+        font: 800 18px/1.2 system-ui, sans-serif;
+        letter-spacing: 0;
       }
 
       ${css || ''}

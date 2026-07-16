@@ -4,7 +4,7 @@ import {
 } from '@playwright/test';
 
 
-// P0 smoke: добавление карточки на карту должно создавать bucket, дочерний дубль и токен.
+// P0 smoke: adding a card to the map creates a bucket, child duplicate and token.
 
 test(
   'campaign-map-add-page-flow-creates-bucket-duplicate-and-token',
@@ -17,6 +17,15 @@ test(
     const result =
       await page.evaluate(
       async () => {
+
+          const MAP_TITLE =
+            '\u041f\u0435\u0449\u0435\u0440\u0430';
+
+          const SOURCE_TITLE =
+            '\u0413\u043e\u0431\u043b\u0438\u043d';
+
+          const PLAYER_TITLE =
+            '\u041b\u0430\u0437\u0430\u0440\u044c';
 
           const { state } =
             await import('/js/state.js');
@@ -48,7 +57,7 @@ test(
             () => `
               <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
                 <div class="campaign-map-topbar" contenteditable="false">
-                  <h1 class="campaign-map-title singleline-field" contenteditable="true">Пещера</h1>
+                  <h1 class="campaign-map-title singleline-field" contenteditable="true">${MAP_TITLE}</h1>
                 </div>
 
                 <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
@@ -146,7 +155,7 @@ ${body}
           const mapPage =
             createPageRecord({
               id: 'map-page',
-              title: 'Пещера',
+              title: MAP_TITLE,
               type: 'campaignMap',
               template: 'campaignMap',
               tags: ['campaign-map']
@@ -155,7 +164,7 @@ ${body}
           const source =
             createPageRecord({
               id: 'source-creature',
-              title: 'Гоблин',
+              title: SOURCE_TITLE,
               type: 'creature',
               tags: ['card', 'creature']
             });
@@ -163,7 +172,7 @@ ${body}
           const player =
             createPageRecord({
               id: 'player-character',
-              title: 'Лазарь',
+              title: PLAYER_TITLE,
               type: 'character',
               tags: ['card', 'character', 'player']
             });
@@ -171,7 +180,7 @@ ${body}
           const mapChild =
             createPageRecord({
               id: 'map-child-creature',
-              title: 'Гоблин.Пещера',
+              title: `${SOURCE_TITLE}.${MAP_TITLE}`,
               type: 'creature',
               tags: ['card', 'creature'],
               parent: mapPage.id
@@ -300,7 +309,7 @@ ${body}
           const bucket =
             state.pages.find(candidate =>
               candidate.parent === mapPage.id &&
-              candidate.title === 'Существа.Пещера'
+              candidate.title === `\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0430.${MAP_TITLE}`
             );
 
           const tokens =
@@ -330,7 +339,7 @@ ${body}
     expect(
       result.pickerLabels
     ).toEqual([
-      'Гоблин'
+      '\u0413\u043e\u0431\u043b\u0438\u043d'
     ]);
 
     expect(
@@ -348,13 +357,13 @@ ${body}
     expect(
       result.bucketTitle
     ).toBe(
-      'Существа.Пещера'
+      '\u0421\u0443\u0449\u0435\u0441\u0442\u0432\u0430.\u041f\u0435\u0449\u0435\u0440\u0430'
     );
 
     expect(
       result.duplicateTitle
     ).toBe(
-      'Гоблин - сущность.Пещера'
+      '\u0413\u043e\u0431\u043b\u0438\u043d - \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c.\u041f\u0435\u0449\u0435\u0440\u0430'
     );
 
     expect(
@@ -376,7 +385,7 @@ ${body}
     expect(
       result.tokenName
     ).toBe(
-      'Гоблин - сущность.Пещера'
+      '\u0413\u043e\u0431\u043b\u0438\u043d - \u0441\u0443\u0449\u043d\u043e\u0441\u0442\u044c.\u041f\u0435\u0449\u0435\u0440\u0430'
     );
 
     expect(
@@ -550,6 +559,30 @@ test(
               .filter(shape => shape.type === 'line')
               .map(shape => shape.points);
 
+          startCampaignMapDrawing(
+            pointer(
+              'pointerdown',
+              700,
+              700
+            ),
+            stage
+          );
+
+          moveCampaignMapDrawing(
+            pointer(
+              'pointermove',
+              740,
+              740
+            )
+          );
+
+          finishCampaignMapDrawing();
+
+          const penShapesAfterFarClick =
+            store.getModel().shapes
+              .filter(shape => shape.type === 'line')
+              .map(shape => shape.points);
+
           setDrawingTool(
             map,
             'fill'
@@ -604,6 +637,7 @@ test(
           return {
             beforeErase,
             penShapesBeforeFill,
+            penShapesAfterFarClick,
             afterErase:
               store.getModel().shapes.map(shape => shape.type),
             hasPolylineBeforeErase,
@@ -618,6 +652,7 @@ test(
     ).toEqual([
       'freehand',
       'line',
+      'line',
       'fill'
     ]);
 
@@ -625,6 +660,12 @@ test(
       result.penShapesBeforeFill.length
     ).toBe(
       1
+    );
+
+    expect(
+      result.penShapesAfterFarClick.length
+    ).toBe(
+      2
     );
 
     expect(
@@ -656,6 +697,7 @@ test(
     expect(
       result.afterErase
     ).toEqual([
+      'line',
       'line',
       'fill'
     ]);
@@ -908,11 +950,11 @@ test(
             encodeURIComponent(
               JSON.stringify({
                 normal: {
-                  title: 'Старый город',
+                  title: '\u0421\u0442\u0430\u0440\u044b\u0439 \u0433\u043e\u0440\u043e\u0434',
                   tracks: [
                     {
                       trackId: 'copy-track',
-                      title: 'Старый город',
+                      title: '\u0421\u0442\u0430\u0440\u044b\u0439 \u0433\u043e\u0440\u043e\u0434',
                       path: 'assets/music/town.mp3'
                     }
                   ]
@@ -923,7 +965,7 @@ test(
           setPages([
             {
               id: 'other-map',
-              title: 'Город',
+              title: '\u0413\u043e\u0440\u043e\u0434',
               type: 'campaignMap',
               template: 'campaignMap',
               content: `<div class="campaign-map-stage" data-map-music-state="${copiedMusic}"></div>`
@@ -935,7 +977,7 @@ test(
               <button class="anchor" type="button">music</button>
               <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
                 <div class="campaign-map-topbar" contenteditable="false">
-                  <h1 class="campaign-map-title singleline-field" contenteditable="true">Лес</h1>
+                  <h1 class="campaign-map-title singleline-field" contenteditable="true">\u041b\u0435\u0441</h1>
                 </div>
                 <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
                   <div class="campaign-map-viewport">
@@ -997,7 +1039,7 @@ test(
     await expect(
       page.locator('.campaign-music-upload-pending')
     ).toContainText(
-      'Выбрано файлов: 1'
+      '\u0412\u044b\u0431\u0440\u0430\u043d\u043e \u0444\u0430\u0439\u043b\u043e\u0432: 1'
     );
 
     await page
@@ -1033,7 +1075,7 @@ test(
     await expect(
       page.locator('.campaign-music-playback-status')
     ).toContainText(
-      'Играет'
+      '\u0418\u0433\u0440\u0430\u0435\u0442'
     );
 
     await page
@@ -1058,7 +1100,7 @@ test(
     await expect(
       page.locator('.campaign-music-upload-pending')
     ).toContainText(
-      'Выбрано файлов: 1'
+      '\u0412\u044b\u0431\u0440\u0430\u043d\u043e \u0444\u0430\u0439\u043b\u043e\u0432: 1'
     );
 
     await page
@@ -1148,7 +1190,7 @@ test(
     expect(
       result.battleTitle
     ).toBe(
-      'Старый город'
+      '\u0421\u0442\u0430\u0440\u044b\u0439 \u0433\u043e\u0440\u043e\u0434'
     );
 
     expect(
@@ -1621,11 +1663,19 @@ test(
               map
             );
 
+          store.addLockedFogZone({
+            id: 'locked-zone',
+            x: 40,
+            y: 60,
+            width: 80,
+            height: 90
+          });
+
           const token =
             store.addToken({
               tokenId: 'token-hero',
               type: 'creature',
-              name: 'Герой'
+              name: '\u0413\u0435\u0440\u043e\u0439'
             });
 
           const shape =
@@ -1645,6 +1695,14 @@ test(
             )
           );
 
+          const {
+            renderLockedFogZones
+          } = await import('/js/editor/campaignMapFog.js');
+
+          renderLockedFogZones(
+            map
+          );
+
           applyCampaignMapLayers(
             map
           );
@@ -1661,6 +1719,27 @@ test(
             'down'
           );
 
+          const fogCanvas =
+            map.querySelector('.campaign-map-fog-canvas');
+
+          const lockedFogZone =
+            map.querySelector('.campaign-fog-locked-zone');
+
+          const lockedFogBeforeHide = {
+            layerId:
+              lockedFogZone.dataset.layerId,
+            hidden:
+              lockedFogZone.dataset.layerHidden,
+            z:
+              lockedFogZone.style.zIndex
+          };
+
+          setCampaignMapLayerVisibility(
+            map,
+            'map-locked-fog',
+            false
+          );
+
           const nextModel =
             refreshCampaignMapStore(
               map
@@ -1673,9 +1752,16 @@ test(
               map.querySelector('.campaign-map-shape').dataset.zIndex,
             tokenZ:
               map.querySelector('.campaign-map-token').dataset.zIndex,
+            fogZ:
+              fogCanvas.style.zIndex,
+            lockedFogBeforeHide,
+            lockedFogHidden:
+              lockedFogZone.dataset.layerHidden,
             savedLayers:
               nextModel.layers.map(item => ({
                 layerId: item.layerId,
+                title: item.title,
+                locked: item.locked,
                 visible: item.visible,
                 zIndex: item.zIndex
               }))
@@ -1699,6 +1785,58 @@ test(
       result.savedLayers.find(layer => layer.layerId === 'map-shapes').visible
     ).toBe(
       false
+    );
+
+    expect(
+      result.savedLayers.some(layer =>
+        layer.layerId === 'map-drawing' &&
+        layer.title === '\u0420\u0438\u0441\u043e\u0432\u0430\u043d\u0438\u0435'
+      )
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.savedLayers.some(layer =>
+        layer.layerId === 'map-fog' &&
+        layer.locked === true
+      )
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.savedLayers.some(layer =>
+        layer.layerId === 'map-locked-fog' &&
+        layer.locked === true &&
+        layer.title === '\u0417\u0430\u043f\u0440\u0435\u0442\u043d\u044b\u0435 \u0437\u043e\u043d\u044b \u0442\u0443\u043c\u0430\u043d\u0430'
+      )
+    ).toBe(
+      true
+    );
+
+    expect(
+      Number(result.fogZ)
+    ).toBeGreaterThan(
+      Number(result.tokenZ)
+    );
+
+    expect(
+      result.lockedFogBeforeHide
+    ).toEqual({
+      layerId: 'map-locked-fog',
+      hidden: 'false',
+      z: String(
+        result.savedLayers.find(layer =>
+          layer.layerId === 'map-locked-fog'
+        ).zIndex
+      )
+    });
+
+    expect(
+      result.lockedFogHidden
+    ).toBe(
+      'true'
     );
   }
 );
