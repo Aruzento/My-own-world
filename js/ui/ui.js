@@ -10,9 +10,6 @@ import {
 
 export function renderTags(tags = []) {
 
-  // OLD SIDEBAR TAGS
-  // (оставлено для совместимости)
-
   const oldContainer =
     document.getElementById(
       'tagList'
@@ -29,19 +26,32 @@ export function renderTags(tags = []) {
           'div'
         );
 
-      el.className = 'tag';
+      el.className =
+        'tag';
 
-      el.innerHTML = `
-        <span>#</span>
-        <span>${tag}</span>
-      `;
+      const marker =
+        document.createElement('span');
 
-      oldContainer.appendChild(el);
+      marker.textContent =
+        '#';
+
+      const label =
+        document.createElement('span');
+
+      label.textContent =
+        tag;
+
+      el.append(
+        marker,
+        label
+      );
+
+      oldContainer.appendChild(
+        el
+      );
     });
   }
 
-
-  // INLINE CARD TAGS
 
   const inlineLists =
     document.querySelectorAll(
@@ -62,26 +72,42 @@ export function renderTags(tags = []) {
       el.className =
         'inline-tag';
 
-      el.innerHTML = `
-        <span class="inline-tag-label">
-          #${tag}
-        </span>
+      const label =
+        document.createElement('span');
 
-        <button
-          class="inline-tag-remove"
-          data-tag="${tag}"
-          type="button"
-          title="Удалить тег"
-        >
-          ×
-        </button>
-      `;
+      label.className =
+        'inline-tag-label';
+
+      label.textContent =
+        `#${tag}`;
+
+      const remove =
+        document.createElement('button');
+
+      remove.className =
+        'inline-tag-remove';
+
+      remove.dataset.tag =
+        tag;
+
+      remove.type =
+        'button';
+
+      remove.title =
+        'Удалить тег';
+
+      remove.textContent =
+        '×';
+
+      el.append(
+        label,
+        remove
+      );
 
       container.appendChild(el);
     });
   });
 }
-
 
 
 export function setStatus(text) {

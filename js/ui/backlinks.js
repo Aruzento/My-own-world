@@ -98,13 +98,27 @@ export function renderBacklinks() {
       chip.dataset.pageId =
         page.id;
 
-      chip.innerHTML = `
-        ${getPageIcon(page.tags)}
+      const iconWrapper =
+        document.createElement('span');
 
-        <span class="backlink-title">
-          ${page.title || 'Без названия'}
-        </span>
-      `;
+      iconWrapper.innerHTML =
+        getPageIcon(
+          page.tags
+        );
+
+      const title =
+        document.createElement('span');
+
+      title.className =
+        'backlink-title';
+
+      title.textContent =
+        page.title || 'Без названия';
+
+      chip.append(
+        ...iconWrapper.childNodes,
+        title
+      );
 
       container.appendChild(
         chip

@@ -6,6 +6,136 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-17: 0.0.1.0.4.3 Runtime UI Text Security Regressions
+
+### What Changed
+
+- Completed `0.0.1.0.4.3`.
+- Added browser regression coverage for the remaining external-audit runtime text surfaces: Task Tracker text, Campaign Map titles and Knowledge Graph page/relationship labels.
+- Added a unit/static regression for World Package import preview strings so script-like titles stay data-only.
+- Updated the innerHTML audit note with the completed regression coverage.
+- Removed `0.0.1.0.4.3` from the active plan.
+
+### User Impact
+
+- No workflow change is intended.
+- More user-entered labels are now covered by regression tests that prove HTML-looking text stays inert.
+
+### Checks
+
+- `node --check tests\browser\tree-security.spec.mjs`
+- `node --check tests\securityInnerHtmlAudit.test.mjs`
+- `node --test tests\securityInnerHtmlAudit.test.mjs` 2 passed
+- `npm run check:encoding`
+- `node tools\docs_index.mjs`
+- `npm run test:browser -- --grep "tree-render-escapes-user-title-html|runtime-label-renderers|remaining-runtime-text-renderers"` 80 passed
+- `npm run verify` 216 unit/static checks passed plus large-workspace performance smoke
+
+### Remaining Risk
+
+- Persistent HTML parser paths still use `innerHTML` by design and depend on sanitizer/serializer coverage.
+- The next external-audit P0 is desktop filesystem boundary hardening.
+
+### Next
+
+- Continue with `0.0.1.0.5` desktop filesystem boundary hardening.
+
+---
+
+## 2026-07-17: 0.0.1.0.4.2 User-Controlled InnerHTML Audit
+
+### What Changed
+
+- Completed `0.0.1.0.4.2`.
+- Audited runtime `innerHTML` surfaces for page titles, aliases, tags, task text, relationship labels, map titles, imported package strings and adjacent UI labels.
+- Replaced unsafe runtime insertion for aliases, tags, backlinks, wiki-link page picker and campaign map card picker with DOM construction / `textContent`.
+- Escaped page title and short description in item set / universal list renderers.
+- Fixed mojibake labels in `js/ui/itemSets.js` while touching that file.
+- Added audit note `docs/03-testing/INNER_HTML_AUDIT_2026-07-17.md`.
+- Added browser regression for malicious aliases/tags and a static guard for known runtime label files.
+- Removed `0.0.1.0.4.2` from the active plan and narrowed `0.0.1.0.4.3` to remaining regression coverage.
+
+### User Impact
+
+- User-entered aliases, tags and linked card titles now render as text in the audited runtime UI surfaces, even when they look like HTML.
+- Universal list/card picker labels keep the same workflow, but page titles/descriptions are escaped before rendering.
+
+### Checks
+
+- `node --check` for changed JS and test files
+- `node --test tests\securityInnerHtmlAudit.test.mjs`
+- `npm run check:encoding`
+- `npm run test:browser -- --grep "tree-render-escapes-user-title-html|runtime-label-renderers"` 79 passed
+- `node tools\docs_index.mjs`
+- `npm run verify`
+
+### Remaining Risk
+
+- Persistent HTML parser paths still use `innerHTML` by design and depend on sanitizer/serializer coverage.
+- Remaining security regression targets for task text, relationship labels, map titles and imported package strings stay in `0.0.1.0.4.3`.
+
+### Next
+
+- Continue with `0.0.1.0.4.3` expanded security regression tests for remaining runtime UI text.
+
+---
+
+## 2026-07-17: 0.0.1.0.4.1 Tree Title HTML Injection Fix
+
+### What Changed
+
+- Completed `0.0.1.0.4.1`.
+- Replaced the page tree title `innerHTML` path with DOM construction.
+- Runtime tree icons still render through the trusted icon helper, but user-controlled page titles now enter the tree through `textContent`.
+- Added browser regression `tree-render-escapes-user-title-html`.
+- Updated `BUG_INVENTORY.md` and removed the completed item from the active plan.
+
+### User Impact
+
+- Page titles that look like HTML now appear as plain text in the tree.
+- No intended visual workflow change beyond safer title rendering.
+
+### Checks
+
+- `node --check js\tree\treeRender.js`
+- `node --check tests\browser\tree-security.spec.mjs`
+- `npm run check:encoding`
+- `node tools\docs_index.mjs`
+- `npm run test:browser -- --grep "tree-render-escapes-user-title-html"` 78 passed
+- `npm run verify`
+
+### Next
+
+- Continue with `0.0.1.0.4.3` expanded security regression tests for remaining runtime UI text.
+
+---
+
+## 2026-07-17: Anti-Slop Agent Workflow Gate
+
+### What Changed
+
+- Added `.agents/skills/anti-slop/SKILL.md`.
+- Adapted the public `kill-ai-slop` idea for MyOwnWorld without copying external files directly.
+- Added an Anti-Slop Gate section to `AGENTS.md`.
+- The new gate tells Codex to reject vague completion claims, decorative UI churn, untested abstractions, overbroad refactors and plan items marked done while only a foundation exists.
+
+### User Impact
+
+- No direct app UI change.
+- Future development should be easier to audit: work should name readiness level, user-visible workflow, tests, remaining risk and next plan item.
+
+### Checks
+
+- `node tools\validate_agent_skills.mjs`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+### Next
+
+- Continue with `0.0.1.0.4.3` expanded security regression tests for remaining runtime UI text.
+
+---
+
 ## 2026-07-16: 0.0.1.3.6 Map Regression Coverage
 
 ### What Changed

@@ -206,9 +206,30 @@ export function createTreePageElement(
   title.className =
     'tree-title';
 
-  title.innerHTML =
-    `${getPageIcon(page.tags)}
-     <span class="tree-label">${page.title || 'Без названия'}</span>`;
+  const iconWrapper =
+    document.createElement('span');
+
+  iconWrapper.innerHTML =
+    getPageIcon(
+      page.tags
+    );
+
+  const label =
+    document.createElement('span');
+
+  label.className =
+    'tree-label';
+
+  label.textContent =
+    page.title || 'Без названия';
+
+  title.append(
+    ...iconWrapper.childNodes,
+    document.createTextNode(
+      ' '
+    ),
+    label
+  );
 
 
   const actions =

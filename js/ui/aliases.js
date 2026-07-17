@@ -145,20 +145,37 @@ export function renderAliases(
       el.className =
         'inline-alias';
 
-      el.innerHTML = `
-        <span class="inline-alias-label">
-          ${alias}
-        </span>
+      const label =
+        document.createElement('span');
 
-        <button
-          class="inline-alias-remove"
-          data-alias="${alias}"
-          type="button"
-          title="Удалить alias"
-        >
-          ×
-        </button>
-      `;
+      label.className =
+        'inline-alias-label';
+
+      label.textContent =
+        alias;
+
+      const remove =
+        document.createElement('button');
+
+      remove.className =
+        'inline-alias-remove';
+
+      remove.dataset.alias =
+        alias;
+
+      remove.type =
+        'button';
+
+      remove.title =
+        'Удалить alias';
+
+      remove.textContent =
+        '×';
+
+      el.append(
+        label,
+        remove
+      );
 
       container.appendChild(
         el

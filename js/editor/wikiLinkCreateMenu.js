@@ -52,7 +52,6 @@ export function openWikiCreateMenu(
 
   menu.innerHTML = '';
 
-
   const connectButton =
     document.createElement('button');
 
@@ -81,7 +80,6 @@ export function openWikiCreateMenu(
     connectButton
   );
 
-
   Object.entries(templates)
     .forEach(([key, template]) => {
 
@@ -91,16 +89,25 @@ export function openWikiCreateMenu(
       button.className =
         'wiki-create-option';
 
-      button.innerHTML = `
-        <span class="wiki-create-icon">
-          ${template.iconSvg || ''}
-        </span>
+      const icon =
+        document.createElement('span');
 
-        <span>
-          Создать: ${template.name || key}
-        </span>
-      `;
+      icon.className =
+        'wiki-create-icon';
 
+      icon.innerHTML =
+        template.iconSvg || '';
+
+      const label =
+        document.createElement('span');
+
+      label.textContent =
+        `Создать: ${template.name || key}`;
+
+      button.append(
+        icon,
+        label
+      );
 
       button.addEventListener(
         'click',
@@ -153,7 +160,6 @@ export function openWikiCreateMenu(
       );
     });
 
-
   openPopupAtPoint(
     menu,
     x,
@@ -188,7 +194,6 @@ function openExistingPagePicker(
   list.className =
     'wiki-page-list';
 
-
   function renderList() {
 
     const query =
@@ -220,7 +225,6 @@ function openExistingPagePicker(
         );
       });
 
-
     pages.forEach(page => {
 
       const button =
@@ -229,11 +233,18 @@ function openExistingPagePicker(
       button.className =
         'wiki-page-option';
 
-      button.innerHTML = `
-        <span class="wiki-page-title">
-          ${page.title || 'Без названия'}
-        </span>
-      `;
+      const pageTitle =
+        document.createElement('span');
+
+      pageTitle.className =
+        'wiki-page-title';
+
+      pageTitle.textContent =
+        page.title || 'Без названия';
+
+      button.appendChild(
+        pageTitle
+      );
 
       button.addEventListener(
         'click',
@@ -254,7 +265,6 @@ function openExistingPagePicker(
       );
     });
   }
-
 
   searchInput.addEventListener(
     'input',
@@ -302,11 +312,9 @@ async function connectMissingLinkToPage(
     );
   }
 
-
   await loadWorkspace();
 
   renderTree();
-
 
   const updatedTarget =
     getPageById(
@@ -314,7 +322,6 @@ async function connectMissingLinkToPage(
     );
 
   if (!updatedTarget) return;
-
 
   if (sourceLink) {
 
@@ -337,21 +344,21 @@ async function connectMissingLinkToPage(
     );
   }
 
-
   const editorModule =
     await import('./editor.js');
 
   await editorModule.saveCurrentPage();
 
-
   const wikiLinksModule =
     await import('./wikiLinks.js');
 
   wikiLinksModule.refreshCurrentEditorWikiLinks();
-const backlinksModule =
-  await import('../ui/backlinks.js');
 
-backlinksModule.refreshCurrentBacklinks();
+  const backlinksModule =
+    await import('../ui/backlinks.js');
+
+  backlinksModule.refreshCurrentBacklinks();
+
   closeWikiCreateMenu();
 }
 

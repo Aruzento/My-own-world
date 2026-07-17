@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-15
+Updated: 2026-07-17
 
 Planning version: 1
 
@@ -37,7 +37,75 @@ Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md).
 
 Manual smoke checklist: [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_CHECKLIST.md).
 
-No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. The next concrete risk is the known large-workspace desktop path in `0.0.1.1.1`.
+No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. After the external audit received on 2026-07-16, the next concrete priority is security and filesystem boundary hardening before new feature work.
+
+0.0.1.0.5. Desktop filesystem boundary hardening.
+
+Description: move the trust boundary into Rust for desktop file operations.
+
+0.0.1.0.5.1. Store allowed workspace root in Rust-managed state.
+
+Description: after folder selection, Rust records the canonical allowed root; frontend commands pass only workspace-relative paths.
+
+0.0.1.0.5.2. Forbid deleting the workspace root.
+
+Description: `remove_directory` must reject empty paths, `.` and any path resolving to the canonical workspace root.
+
+0.0.1.0.5.3. Harden symlink/junction boundary checks.
+
+Description: when creating a new file or directory, resolve and validate the nearest existing parent and prevent path escape through symlink/junction tricks.
+
+0.0.1.0.5.4. Add atomic writes for desktop text/binary files.
+
+Description: write to a temporary file inside the same directory, flush/validate where practical, then rename into place.
+
+0.0.1.0.5.5. Split desktop filesystem error codes.
+
+Description: distinguish missing file, missing permission, disconnected disk, locked file, path escape and root-delete rejection in command errors and diagnostics.
+
+0.0.1.0.5.6. Add Rust and JS tests for desktop filesystem boundaries.
+
+Description: cover root deletion, path escape, symlink/junction parent validation, atomic write behavior and relative-only command usage.
+
+0.0.1.0.6. Clean stale project status docs from the audit.
+
+Description: update README, Product Dashboard, BUG_INVENTORY and active plan references so they match the current app status, Node version, desktop status, latest commit direction and current release process.
+
+0.0.1.0.7. Add Definition of Done levels for Codex tasks.
+
+Description: introduce `Foundation`, `MVP`, `Usable`, and `Release-ready` readiness labels in planning/work-log handoff so a task is not called done when only a model, temporary UI or unverified foundation exists.
+
+### 0.0.1.1.0. Workspace Operations & Page Lifecycle Hardening
+
+Goal: make page operations reliable, reversible and diagnosable on real large workspaces.
+
+0.0.1.1.1. Create PageCommandService.
+
+Description: route create, rename, move, delete and batch operations through commands with validate, rollback, apply, persist, index update and diagnostic event phases.
+
+0.0.1.1.2. Introduce a PageRecord pipeline.
+
+Description: centralize page parse, validate, migrate, serialize front matter, sanitize persistent body and write. Stop ad-hoc front matter line replacement.
+
+0.0.1.1.3. Add required page metadata fields.
+
+Description: add or migrate `schemaVersion`, `updatedAt` and content hash/checksum fields for diagnostics and incomplete-write detection.
+
+0.0.1.1.4. Add trash and undo foundation for page operations.
+
+Description: support restore for delete and undo for move/rename/delete before adding broader destructive workflows.
+
+0.0.1.1.5. Improve PageIndex and search lifecycle.
+
+Description: add content indexing, ranking, path display, recent/recently edited pages and one lifecycle for rename, alias and metadata changes; consider Web Worker indexing for large workspaces.
+
+0.0.1.1.6. Add write revision and transaction protection.
+
+Description: autosave/write queue should prevent older operations from overwriting newer content and expose changed/saving/saved/error/conflict states.
+
+0.0.1.1.7. Add read-only/external workspace test matrix.
+
+Description: verify workspaces on another disk, network folder, external drive, outside `$HOME` and read-only mode, with diagnostics that explain the failure.
 
 ### 0.0.1.2.0. Desktop Product Hardening
 

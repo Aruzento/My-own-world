@@ -76,10 +76,24 @@ node tools/validate_agent_skills.mjs
 
 ## Skills
 
+## Anti-Slop Gate
+
+Use `.agents/skills/anti-slop/SKILL.md` when a task can produce vague AI-default work: broad UI polish, architecture, docs, plans, "finish the whole block", "stabilize", "improve", or any task where a foundation could be mistaken for a usable feature.
+
+Before calling work done, check:
+
+- the user-visible workflow exists and is reachable;
+- the solution is not decorative churn or unnecessary abstraction;
+- release notes and work log do not overclaim;
+- P0/P1 work has a regression test or a clear reason why it cannot;
+- partial work stays in the active plan with a smaller next task;
+- the final answer names what changed, what was verified, what remains risky, and the next plan item.
+
 Сценарии работы лежат в `.agents/skills/`.
 
 Перед задачей выбирать релевантный skill:
 
+- `anti-slop`;
 - `character-model`;
 - `docs-restructure`;
 - `release-handoff`;

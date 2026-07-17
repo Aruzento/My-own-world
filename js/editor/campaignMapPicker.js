@@ -252,10 +252,28 @@ function renderCardPickerList(
     label.className =
       'campaign-map-picker-row';
 
-    label.innerHTML = `
-      <input class="campaign-map-picker-check" type="checkbox" value="${page.id}">
-      <span>${page.title || '\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f'}</span>
-    `;
+    const input =
+      document.createElement('input');
+
+    input.className =
+      'campaign-map-picker-check';
+
+    input.type =
+      'checkbox';
+
+    input.value =
+      page.id;
+
+    const title =
+      document.createElement('span');
+
+    title.textContent =
+      page.title || '\u0411\u0435\u0437 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f';
+
+    label.append(
+      input,
+      title
+    );
 
     list.appendChild(
       label

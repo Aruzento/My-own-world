@@ -1,4 +1,4 @@
-import { state } from '../state.js';
+﻿import { state } from '../state.js';
 
 import {
   saveCurrentPage
@@ -12,6 +12,10 @@ import {
 import {
   getPageIcon
 } from '../core/icons.js';
+
+import {
+  escapeHTML
+} from '../taskTracker/taskTrackerEscapeHTML.js';
 
 import {
   renderTree
@@ -352,7 +356,6 @@ function closeItemSetPicker() {
   activeSetKind = 'items';
 }
 
-
 document.addEventListener(
   'change',
   async event => {
@@ -540,7 +543,7 @@ function renderItemSetOptions() {
           ${getPageIcon(page.tags)}
 
           <span class="item-set-option-title">
-            ${page.title || 'Без названия'}
+            ${escapeHTML(page.title || 'Без названия')}
           </span>
         `;
 
@@ -599,7 +602,7 @@ async function addItemToSet(
         ${getPageIcon(page.tags)}
 
         <span class="item-set-title">
-          ${page.title || 'Без названия'}
+          ${escapeHTML(page.title || 'Без названия')}
         </span>
 
         <label class="item-set-quantity-label" title="Количество">
@@ -811,7 +814,7 @@ function createSetOptionHTML(
       ${getPageIcon(page.tags)}
 
       <span class="item-set-option-title">
-        ${page.title || 'Без названия'}
+        ${escapeHTML(page.title || 'Без названия')}
       </span>
     `;
   }
@@ -822,7 +825,7 @@ function createSetOptionHTML(
       ${getPageIcon(page.tags)}
 
       <span class="item-set-option-title spell-set-option-text">
-        <strong>${page.title || 'Без названия'}</strong>
+        <strong>${escapeHTML(page.title || 'Без названия')}</strong>
       </span>
     `;
   }
@@ -831,8 +834,8 @@ function createSetOptionHTML(
     ${getPageIcon(page.tags)}
 
     <span class="item-set-option-title spell-set-option-text">
-      <strong>${page.title || 'Без названия'}</strong>
-      <small>${getPageShortDescription(page) || 'Без описания'}</small>
+      <strong>${escapeHTML(page.title || 'Без названия')}</strong>
+      <small>${escapeHTML(getPageShortDescription(page) || 'Без описания')}</small>
     </span>
   `;
 }
@@ -856,8 +859,8 @@ function createSpellChipHTML(
     ${getPageIcon(page.tags)}
 
     <span class="${textClass}">
-      <strong>${page.title || 'Без названия'}</strong>
-      <small>${getPageShortDescription(page) || 'Без описания'}</small>
+      <strong>${escapeHTML(page.title || 'Без названия')}</strong>
+      <small>${escapeHTML(getPageShortDescription(page) || 'Без описания')}</small>
     </span>
 
     <span

@@ -1,5 +1,22 @@
 # Release Notes
 
+## 2026-07-17: Tree Title Security Fix
+
+- Page titles in the tree now render through safe DOM text insertion instead of user-controlled `innerHTML`.
+- Titles that look like HTML are shown as plain text and cannot create runtime elements in the tree title label.
+- Added a browser regression for malicious-looking tree titles.
+
+## 2026-07-17: Runtime Label Security Audit
+
+- Audited user-controlled runtime labels that were rendered around aliases, tags, backlinks, wiki-link picker, campaign map picker and universal lists.
+- Aliases, tags and linked page titles now render as text or escaped HTML in those surfaces.
+- Added regression coverage for malicious-looking aliases/tags and a static guard for the audited runtime label files.
+
+## 2026-07-17: Runtime Text Regression Coverage
+
+- Added browser regression coverage for task tracker text, campaign map titles and knowledge graph relationship/page labels so script-like user text stays inert.
+- Added a data-only World Package import preview regression for script-like page titles and dependency names.
+
 ## 2026-07-16: Campaign Map Regression Gate
 
 - Added a browser regression gate for campaign map persistent data.

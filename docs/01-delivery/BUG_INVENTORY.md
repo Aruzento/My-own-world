@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Bug Inventory
 
-Updated: 2026-07-15
+Updated: 2026-07-17
 
 Plan ref: `0.0.1.0.1`
 
@@ -16,7 +16,7 @@ Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md)
 
 ## Baseline
 
-Automated browser smoke is currently green: `npm run test:browser` passed 72 tests on 2026-07-14. Desktop gate is also green as of the same date.
+Automated checks are currently green: `npm run verify` passed on 2026-07-16, and browser smoke passed 77 tests during the campaign map regression coverage work. Desktop gate was previously green, but real installed-app and large-workspace verification remain separate risks.
 
 This means the inventory below is not a list of confirmed automated failures. It is a stabilization map: confirmed user complaints, recently fragile areas, untested real-world scenarios, and product mismatches that should be checked before new feature work.
 
@@ -34,6 +34,38 @@ Status meanings:
 - `Covered by smoke` - current automated coverage exists, but keep watching.
 
 ## P0
+
+### BUG-SEC-001. Tree title can render user text through innerHTML
+
+Area: tree, safe HTML, runtime UI
+
+Status: Fixed / watch broader `innerHTML` audit
+
+Source: external audit received on 2026-07-16 and local check of `js/tree/treeRender.js`.
+
+Symptoms: page title is user-controlled data, but the tree title row builds part of the title area with `innerHTML`. A malicious page title could be interpreted as HTML in runtime UI if not escaped by the surrounding path.
+
+Risk: runtime HTML injection in the page tree.
+
+Fix: `0.0.1.0.4.1` replaced title insertion with safe DOM construction and `textContent`, then added a malicious-title browser regression.
+
+Regression target: tree renders a title containing script-like markup as text only; no element/event handler from the title appears in the DOM.
+
+### BUG-FS-001. Desktop filesystem commands trust workspace_root from frontend
+
+Area: desktop, Rust, storage, data safety
+
+Status: Needs fix
+
+Source: external audit received on 2026-07-16 and local check of `src-tauri/src/main.rs`.
+
+Symptoms: desktop commands accept `workspace_root` from JavaScript for each operation. Writes use direct `fs::write`, and `remove_directory` delegates to `remove_dir_all` after path resolution. The current boundary relies too much on frontend-provided root values.
+
+Risk: a bad command call or future frontend bug could target the wrong path, delete the workspace root, or mishandle symlink/junction boundaries.
+
+Planned fix: `0.0.1.0.5` moves the allowed workspace root into Rust-managed state, requires relative paths, forbids root deletion, hardens symlink/junction checks and adds atomic writes.
+
+Regression target: Rust/JS tests reject root deletion, path escape and unsafe symlink/junction parents, and prove atomic write behavior.
 
 ### BUG-001. Large workspace operations can feel frozen
 
