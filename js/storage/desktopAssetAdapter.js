@@ -7,7 +7,8 @@ import {
 } from './storageAdapterContract.js';
 
 import {
-  isTauriRuntime
+  isTauriRuntime,
+  registerDesktopWorkspaceRoot
 } from './desktopStorageAdapter.js';
 
 import {
@@ -23,6 +24,38 @@ export function createDesktopAssetAdapter(
   let workspaceRoot =
     options.workspaceRoot || '';
 
+  let registeredWorkspaceRoot =
+    '';
+
+  async function ensureWorkspaceRootRegistered() {
+
+    const storageAdapter =
+      getStorageAdapter();
+
+    const root =
+      workspaceRoot ||
+      storageAdapter.getWorkspaceRoot?.() ||
+      '';
+
+    if (!root) {
+
+      throw new Error(
+        'Desktop workspace root is not selected.'
+      );
+    }
+
+    if (registeredWorkspaceRoot !== root) {
+
+      workspaceRoot =
+        await registerDesktopWorkspaceRoot(
+          root
+        );
+
+      registeredWorkspaceRoot =
+        workspaceRoot;
+    }
+  }
+
   return {
     kind: 'desktop',
 
@@ -32,6 +65,9 @@ export function createDesktopAssetAdapter(
 
       workspaceRoot =
         String(root || '');
+
+      registeredWorkspaceRoot =
+        '';
     },
 
     async importFile(
@@ -89,19 +125,12 @@ export function createDesktopAssetAdapter(
       assetReference
     ) {
 
-      const storageAdapter =
-        getStorageAdapter();
-
-      const root =
-        workspaceRoot ||
-        storageAdapter.getWorkspaceRoot?.() ||
-        '';
+      await ensureWorkspaceRootRegistered();
 
       const filePath =
         await invokeFsCommand(
           'resolve_asset_url',
           {
-            workspaceRoot: root,
             path: `assets/${normalizeAssetPath(
               assetReference.path || assetReference
             )}`
@@ -117,18 +146,11 @@ export function createDesktopAssetAdapter(
       assetReference
     ) {
 
-      const storageAdapter =
-        getStorageAdapter();
-
-      const root =
-        workspaceRoot ||
-        storageAdapter.getWorkspaceRoot?.() ||
-        '';
+      await ensureWorkspaceRootRegistered();
 
       return invokeFsCommand(
         'resolve_asset_url',
         {
-          workspaceRoot: root,
           path: `assets/${normalizeAssetPath(
             assetReference.path || assetReference
           )}`
@@ -140,18 +162,11 @@ export function createDesktopAssetAdapter(
       assetReference
     ) {
 
-      const storageAdapter =
-        getStorageAdapter();
-
-      const root =
-        workspaceRoot ||
-        storageAdapter.getWorkspaceRoot?.() ||
-        '';
+      await ensureWorkspaceRootRegistered();
 
       return invokeFsCommand(
         'path_exists',
         {
-          workspaceRoot: root,
           path: `assets/${normalizeAssetPath(
             assetReference.path || assetReference
           )}`

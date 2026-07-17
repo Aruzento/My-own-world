@@ -186,6 +186,110 @@ test(
 
 
 test(
+  'DesktopStorageAdapter registers root once and sends file commands without workspaceRoot',
+  async () => {
+
+    const previousTauri =
+      globalThis.__TAURI__;
+
+    const previousLocalStorage =
+      globalThis.localStorage;
+
+    const calls =
+      [];
+
+    globalThis.localStorage = {
+      getItem() {
+
+        return null;
+      },
+
+      setItem() {}
+    };
+
+    globalThis.__TAURI__ = {
+      core: {
+        async invoke(command, payload) {
+
+          calls.push({
+            command,
+            payload
+          });
+
+          if (command === 'set_workspace_root') {
+
+            assert.equal(
+              payload.workspaceRoot,
+              'C:/World'
+            );
+
+            return 'C:/World';
+          }
+
+          assert.equal(
+            command,
+            'read_text_file'
+          );
+
+          assert.equal(
+            payload.path,
+            'pages/hero.md'
+          );
+
+          assert.equal(
+            Object.hasOwn(
+              payload,
+              'workspaceRoot'
+            ),
+            false
+          );
+
+          return '# Hero';
+        }
+      }
+    };
+
+    try {
+
+      const adapter =
+        createDesktopStorageAdapter({
+          workspaceRoot:
+            'C:/World'
+        });
+
+      const content =
+        await adapter.readText(
+          'pages/hero.md'
+        );
+
+      assert.equal(
+        content,
+        '# Hero'
+      );
+
+      assert.deepEqual(
+        calls.map(
+          call => call.command
+        ),
+        [
+          'set_workspace_root',
+          'read_text_file'
+        ]
+      );
+
+    } finally {
+
+      globalThis.__TAURI__ =
+        previousTauri;
+
+      globalThis.localStorage =
+        previousLocalStorage;
+    }
+  }
+);
+
+
+test(
   'DesktopStorageAdapter выбирает workspace через глобальный Tauri dialog API',
   async () => {
 
@@ -226,11 +330,19 @@ test(
         }
       },
       core: {
-        async invoke() {
+        async invoke(command, payload) {
 
-          throw new Error(
-            'Файловые команды не нужны для выбора workspace.'
+          assert.equal(
+            command,
+            'set_workspace_root'
           );
+
+          assert.equal(
+            payload.workspaceRoot,
+            'C:/World/Desktop'
+          );
+
+          return 'C:/World/Desktop';
         }
       }
     };
@@ -303,6 +415,16 @@ test(
       core: {
         async invoke(command, payload) {
 
+          if (command === 'set_workspace_root') {
+
+            assert.equal(
+              payload.workspaceRoot,
+              'C:/World'
+            );
+
+            return 'C:/World';
+          }
+
           assert.equal(
             command,
             'resolve_asset_url'
@@ -311,6 +433,14 @@ test(
           assert.equal(
             payload.path,
             'assets/portraits/hero.png'
+          );
+
+          assert.equal(
+            Object.hasOwn(
+              payload,
+              'workspaceRoot'
+            ),
+            false
           );
 
           return 'C:\\World\\assets\\portraits\\hero.png';
@@ -375,7 +505,17 @@ test(
 
     globalThis.__TAURI__ = {
       core: {
-        async invoke(command) {
+        async invoke(command, payload) {
+
+          if (command === 'set_workspace_root') {
+
+            assert.equal(
+              payload.workspaceRoot,
+              'C:/World'
+            );
+
+            return 'C:/World';
+          }
 
           assert.equal(
             command,
@@ -452,15 +592,31 @@ test(
         async invoke(command, payload) {
 
           invokedPayloads.push(
-            payload
+            {
+              command,
+              payload
+            }
           );
+
+          if (command === 'set_workspace_root') {
+
+            return payload.workspaceRoot;
+          }
 
           assert.equal(
             command,
             'resolve_asset_url'
           );
 
-          return `${payload.workspaceRoot}\\${payload.path.replaceAll('/', '\\')}`;
+          assert.equal(
+            Object.hasOwn(
+              payload,
+              'workspaceRoot'
+            ),
+            false
+          );
+
+          return `C:/NewWorld\\${payload.path.replaceAll('/', '\\')}`;
         },
 
         convertFileSrc(path, protocol) {
@@ -500,8 +656,15 @@ test(
       );
 
       assert.equal(
-        invokedPayloads.at(-1).workspaceRoot,
+        invokedPayloads.find(
+          entry => entry.command === 'set_workspace_root'
+        ).payload.workspaceRoot,
         'C:/NewWorld'
+      );
+
+      assert.equal(
+        invokedPayloads.at(-1).command,
+        'resolve_asset_url'
       );
 
     } finally {

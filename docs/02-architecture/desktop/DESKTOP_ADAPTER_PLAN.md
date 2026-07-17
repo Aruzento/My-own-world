@@ -115,6 +115,8 @@ Rust backend содержит команды:
 
 Операции ограничены workspace root. Выход через `..` блокируется. Текстовые операции используют UTF-8.
 
+Обновление 17.07.2026: boundary перенесён в Rust-managed state. После выбора workspace frontend регистрирует root через `set_workspace_root`; обычные команды `read_text_file`, `write_text_file`, `read_binary_file`, `write_binary_file`, `list_directory`, `ensure_directory`, `remove_file`, `remove_directory`, `path_exists` и `resolve_asset_url` принимают только workspace-relative `path`. `remove_directory` запрещает удаление root (`""`, `"."` и canonical root). Новые пути проверяются по ближайшему существующему родителю, чтобы symlink/junction parent не уводил запись наружу. Текстовые и бинарные записи идут через temp-файл в той же папке, flush/sync и rename.
+
 ## 20.7.1. Desktop Storage Hardening
 
 Статус: **сделано**.

@@ -29,6 +29,36 @@ export function createDesktopStorageAdapter(
     ) ||
     '';
 
+  let registeredWorkspaceRoot =
+    '';
+
+  async function invokeFsCommand(
+    command,
+    payload
+  ) {
+
+    if (workspaceRoot && registeredWorkspaceRoot !== workspaceRoot) {
+
+      workspaceRoot =
+        await registerDesktopWorkspaceRoot(
+          workspaceRoot
+        );
+
+      registeredWorkspaceRoot =
+        workspaceRoot;
+
+      localStorage.setItem(
+        DESKTOP_WORKSPACE_ROOT_KEY,
+        workspaceRoot
+      );
+    }
+
+    return invokeFsCommandWithoutRoot(
+      command,
+      payload
+    );
+  }
+
   return {
     kind: 'desktop',
 
@@ -43,6 +73,9 @@ export function createDesktopStorageAdapter(
 
       workspaceRoot =
         String(root || '');
+
+      registeredWorkspaceRoot =
+        '';
     },
 
     async pickWorkspace() {
@@ -62,6 +95,14 @@ export function createDesktopStorageAdapter(
       workspaceRoot =
         String(selectedPath);
 
+      workspaceRoot =
+        await registerDesktopWorkspaceRoot(
+          workspaceRoot
+        );
+
+      registeredWorkspaceRoot =
+        workspaceRoot;
+
       localStorage.setItem(
         DESKTOP_WORKSPACE_ROOT_KEY,
         workspaceRoot
@@ -71,6 +112,22 @@ export function createDesktopStorageAdapter(
     },
 
     async restoreWorkspace() {
+
+      if (workspaceRoot) {
+
+        workspaceRoot =
+          await registerDesktopWorkspaceRoot(
+            workspaceRoot
+          );
+
+        registeredWorkspaceRoot =
+          workspaceRoot;
+
+        localStorage.setItem(
+          DESKTOP_WORKSPACE_ROOT_KEY,
+          workspaceRoot
+        );
+      }
 
       return workspaceRoot || null;
     },
@@ -82,7 +139,6 @@ export function createDesktopStorageAdapter(
       await invokeFsCommand(
         'ensure_directory',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path)
         }
       );
@@ -105,7 +161,6 @@ export function createDesktopStorageAdapter(
       return invokeFsCommand(
         'read_text_file',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path)
         }
       );
@@ -119,7 +174,6 @@ export function createDesktopStorageAdapter(
       await invokeFsCommand(
         'write_text_file',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path),
           content: String(content)
         }
@@ -134,7 +188,6 @@ export function createDesktopStorageAdapter(
         await invokeFsCommand(
           'read_binary_file',
           {
-            workspaceRoot,
             path: normalizeWorkspacePath(path)
           }
         );
@@ -152,7 +205,6 @@ export function createDesktopStorageAdapter(
       await invokeFsCommand(
         'write_binary_file',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path),
           content: Array.from(
             new Uint8Array(
@@ -170,7 +222,6 @@ export function createDesktopStorageAdapter(
       return invokeFsCommand(
         'list_directory',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path)
         }
       );
@@ -183,7 +234,6 @@ export function createDesktopStorageAdapter(
       await invokeFsCommand(
         'remove_file',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path)
         }
       );
@@ -196,7 +246,6 @@ export function createDesktopStorageAdapter(
       await invokeFsCommand(
         'remove_directory',
         {
-          workspaceRoot,
           path: normalizeWorkspacePath(path)
         }
       );
@@ -205,7 +254,31 @@ export function createDesktopStorageAdapter(
 }
 
 
-async function invokeFsCommand(
+export async function registerDesktopWorkspaceRoot(
+  root
+) {
+
+  const normalizedRoot =
+    String(root || '');
+
+  if (!normalizedRoot) {
+
+    throw new Error(
+      'Desktop workspace root is not selected.'
+    );
+  }
+
+  return invokeFsCommandWithoutRoot(
+    'set_workspace_root',
+    {
+      workspaceRoot:
+        normalizedRoot
+    }
+  );
+}
+
+
+async function invokeFsCommandWithoutRoot(
   command,
   payload
 ) {

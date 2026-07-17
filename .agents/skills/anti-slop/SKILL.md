@@ -23,6 +23,7 @@ Use this skill when a task touches:
 - `docs/00-product/PRODUCT_DASHBOARD.md`
 - `docs/01-delivery/PROJECT_PLAN.md`
 - `docs/01-delivery/WORK_LOG.md`
+- `docs/01-delivery/DEFINITION_OF_DONE.md`
 - Relevant subsystem contract in `docs/02-architecture/`
 - Relevant skill for the domain, for example `map-hardening`, `character-model`, `design-system`, `desktop-release` or `minimal-change`
 
@@ -46,7 +47,7 @@ Before editing:
 
 1. State the user-visible outcome in one sentence.
 2. Name the smallest subsystem boundary that should change.
-3. Identify whether the target is `Foundation`, `MVP`, `Usable` or `Release-ready`.
+3. Identify whether the target is `Foundation`, `MVP`, `Usable` or `Release-ready` using `docs/01-delivery/DEFINITION_OF_DONE.md`.
 4. Decide the regression target or explain why automation is not possible.
 
 While editing:
@@ -68,7 +69,7 @@ Before final response:
 ## What To Update After Work
 
 - `docs/01-delivery/PROJECT_PLAN.md` if scope, priority or unfinished work changes.
-- `docs/01-delivery/WORK_LOG.md` with readiness level and verification.
+- `docs/01-delivery/WORK_LOG.md` with readiness level, verification and unverified behavior.
 - Release notes / tester instructions if user-visible behavior changes.
 - Relevant contract if a subsystem rule changes.
 - Bug inventory if a new risk or regression is discovered.

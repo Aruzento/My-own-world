@@ -80,6 +80,19 @@ node tools/validate_agent_skills.mjs
 
 Use `.agents/skills/anti-slop/SKILL.md` when a task can produce vague AI-default work: broad UI polish, architecture, docs, plans, "finish the whole block", "stabilize", "improve", or any task where a foundation could be mistaken for a usable feature.
 
+## Definition Of Done
+
+Use `docs/01-delivery/DEFINITION_OF_DONE.md` before marking a plan item complete.
+
+Every completed task must state one readiness level:
+
+- `Foundation`: model, contract, helper or technical base exists, but the human workflow is not complete.
+- `MVP`: a basic user path exists and can be tested.
+- `Usable`: the owner can use the workflow in normal work, with persistence/reload/error handling considered.
+- `Release-ready`: the workflow is ready for handoff after automated checks, manual checks, docs, release notes, compatibility, performance and security review.
+
+Do not remove active plan work when only `Foundation` was delivered. Split the remaining work into the next active item instead.
+
 Before calling work done, check:
 
 - the user-visible workflow exists and is reachable;

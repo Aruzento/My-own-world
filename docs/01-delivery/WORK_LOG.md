@@ -6,6 +6,83 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-17: 0.0.1.0.6-0.0.1.0.7 Project Status Docs And Definition Of Done
+
+### What Changed
+
+- Completed `0.0.1.0.6` and `0.0.1.0.7`.
+- Rebuilt the root `README.md` so it reflects the current browser and desktop workflows, current npm scripts, desktop installer path, active docs map and AI workflow.
+- Rebuilt `docs/00-product/PRODUCT_DASHBOARD.md` around the current version-1 stabilization focus.
+- Added `docs/01-delivery/DEFINITION_OF_DONE.md` with `Foundation`, `MVP`, `Usable` and `Release-ready` readiness levels.
+- Updated `AGENTS.md`, `.agents/skills/anti-slop/SKILL.md` and the code review template to require explicit readiness evidence.
+- Updated `BUG_INVENTORY.md` baseline to the current 2026-07-17 verification state.
+- Removed `0.0.1.0.6` and `0.0.1.0.7` from the active plan.
+
+### Readiness
+
+Usable project-process cleanup. The active plan, dashboard and README now describe where the project is and how to judge completed work.
+
+### Checks
+
+- `node tools\docs_index.mjs` 73 markdown files, metadata OK
+- `node tools\validate_agent_skills.mjs` 9 skills OK
+- `npm run check:encoding`
+- `npm run verify` 217 unit/static checks passed plus large-workspace performance smoke
+
+### Remaining Risk
+
+- Some older archived or secondary docs can still contain stale status or mojibake; this pass cleaned the active entry points, not every archived file.
+- `package.json` still uses version `0.0.0`; semantic product versioning remains a future desktop release task.
+- `npm run test:browser` was not rerun for this docs/process pass because no browser UI/runtime behavior changed.
+
+### Next
+
+- Continue with `0.0.1.1.1` Create PageCommandService.
+
+---
+
+## 2026-07-17: 0.0.1.0.5 Desktop Filesystem Boundary Hardening
+
+### What Changed
+
+- Completed `0.0.1.0.5.1`-`0.0.1.0.5.6`.
+- Added Rust-managed workspace root state through `set_workspace_root`.
+- Changed desktop storage and asset adapters so ordinary file commands send only workspace-relative paths.
+- Rejected workspace-root directory deletion through `remove_directory`.
+- Hardened new-path resolution by validating the nearest existing parent before writing or creating directories.
+- Replaced direct desktop text/binary writes with temp-file atomic writes in the same directory.
+- Split several desktop filesystem error codes, including root not selected, root delete rejected, permission denied, file locked and file not found.
+- Added Rust unit tests and JS storage adapter regression coverage for the new boundary.
+- Removed `0.0.1.0.5` from the active plan.
+
+### Readiness
+
+Usable security hardening for the desktop filesystem boundary. The browser workspace format and browser storage path were not changed.
+
+### Checks
+
+- `node --check js\storage\desktopStorageAdapter.js`
+- `node --check js\storage\desktopAssetAdapter.js`
+- `node --check tests\storageAdapter.test.mjs`
+- `cargo fmt`
+- `cargo test` 3 Rust tests passed
+- `cargo check`
+- `node --test tests\storageAdapter.test.mjs` 26 passed
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `npm run verify` 217 unit/static checks passed plus large-workspace performance smoke
+
+### Remaining Risk
+
+- This does not replace a real installed-app click-through on a large workspace.
+- Atomic rename behavior is covered at Rust unit-test level; production release gate should still run `desktop:gate` before installer handoff.
+
+### Next
+
+- Continue with `0.0.1.0.6` clean stale project status docs from the audit.
+
+---
+
 ## 2026-07-17: 0.0.1.0.4.3 Runtime UI Text Security Regressions
 
 ### What Changed

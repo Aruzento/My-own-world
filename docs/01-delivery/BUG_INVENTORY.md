@@ -16,7 +16,7 @@ Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md)
 
 ## Baseline
 
-Automated checks are currently green: `npm run verify` passed on 2026-07-16, and browser smoke passed 77 tests during the campaign map regression coverage work. Desktop gate was previously green, but real installed-app and large-workspace verification remain separate risks.
+Automated checks are currently green: `npm run verify` passed on 2026-07-17 with 217 unit/static checks plus the large-workspace performance smoke. `node --test tests\storageAdapter.test.mjs` passed 26 storage-adapter tests, and `cargo test` / `cargo check` passed for the desktop filesystem boundary work. Browser smoke last passed during the runtime text security regression pass. Desktop gate was previously green, but real installed-app and large-workspace verification remain separate risks.
 
 This means the inventory below is not a list of confirmed automated failures. It is a stabilization map: confirmed user complaints, recently fragile areas, untested real-world scenarios, and product mismatches that should be checked before new feature work.
 
@@ -32,6 +32,7 @@ Status meanings:
 - `Needs fix` - known enough to implement.
 - `Needs regression` - behavior may already pass manually but needs a test.
 - `Covered by smoke` - current automated coverage exists, but keep watching.
+- `Fixed / watch` - fix and regression exist, but the area remains important enough to keep visible.
 
 ## P0
 
@@ -55,17 +56,17 @@ Regression target: tree renders a title containing script-like markup as text on
 
 Area: desktop, Rust, storage, data safety
 
-Status: Needs fix
+Status: Fixed / watch desktop release gate
 
 Source: external audit received on 2026-07-16 and local check of `src-tauri/src/main.rs`.
 
-Symptoms: desktop commands accept `workspace_root` from JavaScript for each operation. Writes use direct `fs::write`, and `remove_directory` delegates to `remove_dir_all` after path resolution. The current boundary relies too much on frontend-provided root values.
+Symptoms: desktop commands used to accept `workspace_root` from JavaScript for each operation. Writes used direct `fs::write`, and `remove_directory` delegated to `remove_dir_all` after path resolution. The old boundary relied too much on frontend-provided root values.
 
 Risk: a bad command call or future frontend bug could target the wrong path, delete the workspace root, or mishandle symlink/junction boundaries.
 
-Planned fix: `0.0.1.0.5` moves the allowed workspace root into Rust-managed state, requires relative paths, forbids root deletion, hardens symlink/junction checks and adds atomic writes.
+Fix: `0.0.1.0.5` moved the allowed workspace root into Rust-managed state. File commands now use workspace-relative paths, reject workspace root deletion, validate the nearest existing parent for new paths, use atomic temp-file writes, and return clearer desktop error codes.
 
-Regression target: Rust/JS tests reject root deletion, path escape and unsafe symlink/junction parents, and prove atomic write behavior.
+Regression target: Rust unit tests reject root deletion and path escape, prove atomic write behavior, and JS storage adapter tests prove desktop commands no longer send `workspaceRoot` with ordinary file operations.
 
 ### BUG-001. Large workspace operations can feel frozen
 

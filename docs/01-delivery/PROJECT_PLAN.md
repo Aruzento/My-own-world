@@ -24,6 +24,8 @@ This file contains only active and unfinished work. Completed history lives in [
 - P0/P1 work needs an automated test or a clear note explaining why automation is not possible yet.
 - If user-visible behavior changes, update release notes, tester instructions, or the manual.
 - Future work is allowed here only when it is still actionable and should not be forgotten.
+- Completed work must state a readiness level from [DEFINITION_OF_DONE.md](./DEFINITION_OF_DONE.md): `Foundation`, `MVP`, `Usable`, or `Release-ready`.
+- Do not remove a plan item when only `Foundation` was completed and user-facing work remains.
 
 ## Active Plan
 
@@ -37,43 +39,7 @@ Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md).
 
 Manual smoke checklist: [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_CHECKLIST.md).
 
-No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. After the external audit received on 2026-07-16, the next concrete priority is security and filesystem boundary hardening before new feature work.
-
-0.0.1.0.5. Desktop filesystem boundary hardening.
-
-Description: move the trust boundary into Rust for desktop file operations.
-
-0.0.1.0.5.1. Store allowed workspace root in Rust-managed state.
-
-Description: after folder selection, Rust records the canonical allowed root; frontend commands pass only workspace-relative paths.
-
-0.0.1.0.5.2. Forbid deleting the workspace root.
-
-Description: `remove_directory` must reject empty paths, `.` and any path resolving to the canonical workspace root.
-
-0.0.1.0.5.3. Harden symlink/junction boundary checks.
-
-Description: when creating a new file or directory, resolve and validate the nearest existing parent and prevent path escape through symlink/junction tricks.
-
-0.0.1.0.5.4. Add atomic writes for desktop text/binary files.
-
-Description: write to a temporary file inside the same directory, flush/validate where practical, then rename into place.
-
-0.0.1.0.5.5. Split desktop filesystem error codes.
-
-Description: distinguish missing file, missing permission, disconnected disk, locked file, path escape and root-delete rejection in command errors and diagnostics.
-
-0.0.1.0.5.6. Add Rust and JS tests for desktop filesystem boundaries.
-
-Description: cover root deletion, path escape, symlink/junction parent validation, atomic write behavior and relative-only command usage.
-
-0.0.1.0.6. Clean stale project status docs from the audit.
-
-Description: update README, Product Dashboard, BUG_INVENTORY and active plan references so they match the current app status, Node version, desktop status, latest commit direction and current release process.
-
-0.0.1.0.7. Add Definition of Done levels for Codex tasks.
-
-Description: introduce `Foundation`, `MVP`, `Usable`, and `Release-ready` readiness labels in planning/work-log handoff so a task is not called done when only a model, temporary UI or unverified foundation exists.
+No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. The external-audit security/docs cleanup for `0.0.1.0.4`-`0.0.1.0.7` is closed at usable project-process level. The next priority is page/workspace lifecycle hardening before new feature work.
 
 ### 0.0.1.1.0. Workspace Operations & Page Lifecycle Hardening
 

@@ -9,40 +9,44 @@ owner_zone: "testing"
 
 ## Ref
 
-Номер задачи из `PROJECT_PLAN.md`.
+Task number from `PROJECT_PLAN.md`.
+
+## Readiness
+
+Foundation / MVP / Usable / Release-ready. Use `docs/01-delivery/DEFINITION_OF_DONE.md`.
 
 ## Surface
 
-Какая подсистема затронута.
+Affected subsystem.
 
 ## What changed
 
-Что изменено.
+What changed.
 
 ## Root cause
 
-Какая проблема решалась.
+What problem was solved.
 
 ## Best fix
 
-Почему выбранное решение правильное.
+Why this solution is the right fit.
 
 ## Tests
 
-Какие проверки запущены.
+Checks that were run.
 
 ## Docs updated
 
-Какие документы обновлены.
+Documents that were updated.
 
 ## Release impact
 
-Нужно ли обновлять release notes / tester instructions.
+Whether release notes / tester instructions need updates.
 
 ## Risk
 
-Что осталось рискованным.
+What remains risky.
 
 ## What remains unverified
 
-Что не удалось проверить автоматически.
+What could not be verified automatically.

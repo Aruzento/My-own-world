@@ -1,5 +1,18 @@
 # Release Notes
 
+## 2026-07-17: Project Status Docs And Definition Of Done
+
+- README and Product Dashboard now describe the current browser/desktop status instead of the older desktop spike and Python-server notes.
+- Added `docs/01-delivery/DEFINITION_OF_DONE.md` with `Foundation`, `MVP`, `Usable` and `Release-ready` readiness levels.
+- Updated agent workflow and verification template so completed work must name its evidence level and keep partial work in the active plan.
+
+## 2026-07-17: Desktop Filesystem Boundary Hardening
+
+- Desktop filesystem commands now use a Rust-managed workspace root instead of trusting `workspaceRoot` on every file operation.
+- Ordinary desktop file and asset commands now send workspace-relative paths only.
+- Desktop writes now use temp-file atomic writes, and `remove_directory` rejects workspace-root deletion.
+- Added Rust and JS regression coverage for root registration, relative-only command payloads, root-delete rejection, path escape rejection and atomic write behavior.
+
 ## 2026-07-17: Tree Title Security Fix
 
 - Page titles in the tree now render through safe DOM text insertion instead of user-controlled `innerHTML`.
