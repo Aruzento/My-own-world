@@ -28,6 +28,10 @@ import {
 } from '../storage/storageAdapter.js';
 
 import {
+  collectWorkspaceAccessDiagnostics
+} from '../storage/workspaceAccessDiagnostics.js';
+
+import {
   listPendingWorkspaceOperations
 } from '../storage/operationJournal.js';
 
@@ -363,6 +367,30 @@ async function createWorkspaceStatus(
     handle?.name ||
     '';
 
+  const access =
+    await collectWorkspaceAccessDiagnostics({
+      storageAdapter:
+        adapter,
+      workspacePath:
+        path,
+      hasWorkspace:
+        hasAccess,
+      canWriteWorkspace:
+        canWrite,
+      homePath:
+        options.homePath,
+      platform:
+        options.platform,
+      writeProbe:
+        options.writeProbe ??
+        adapter.kind === 'desktop'
+    });
+
+  canWrite =
+    access.canWriteKnown
+      ? access.canWrite
+      : canWrite;
+
   return {
     mode:
       adapter.kind || 'unknown',
@@ -372,6 +400,7 @@ async function createWorkspaceStatus(
       Boolean(hasAccess),
     canWrite:
       Boolean(canWrite),
+    access,
     backupPath:
       path && adapter.kind === 'desktop'
         ? `${path}\\${BACKUP_ROOT_DIR}`
@@ -823,10 +852,22 @@ function createWorkspaceStatusSection(
         diagnostics.workspace.path
       ],
       [
+        'Location',
+        diagnostics.workspace.access?.location?.summary || 'unknown'
+      ],
+      [
+        'Access matrix',
+        diagnostics.workspace.access?.matrixSummary || 'not checked'
+      ],
+      [
         'Запись',
         diagnostics.workspace.canWrite
           ? 'OK'
           : 'Нет доступа на запись'
+      ],
+      [
+        'Write probe',
+        diagnostics.workspace.access?.writeProbe?.message || 'not checked'
       ],
       [
         'Схема',

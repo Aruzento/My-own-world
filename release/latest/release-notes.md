@@ -1,5 +1,11 @@
 # Release Notes
 
+## 2026-07-19: Workspace Access Diagnostics Matrix
+
+- Workspace diagnostics now show whether the selected workspace is on the default local path, another disk, a network folder, a possible external drive, or outside HOME.
+- Desktop diagnostics can run a tiny write probe and report read-only/no-permission/disconnected-path failures in plain language.
+- `tools/run_workspace_diagnostics.mjs` now includes the same access matrix for CLI checks.
+
 ## 2026-07-19: Write Revision Protection
 
 - Autosave and special page saves now reserve a write revision before writing page content.

@@ -34,7 +34,7 @@ Recently closed:
 
 Next active block:
 
-- `0.0.1.1.0` Workspace Operations & Page Lifecycle Hardening.
+- `0.0.1.2.0` Desktop Product Hardening, starting with the real workspace access matrix on the large GM workspace and any available external/network/read-only folders.
 
 ## Readiness Model
 
@@ -50,7 +50,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in tree operations and map-heavy sessions.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle and runtime write revision protection; richer recovery remains open.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection and workspace access diagnostics; richer recovery remains open.
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.
 - Properties and CharacterModel are promising, but the character workflow still needs a clearer release-ready path.

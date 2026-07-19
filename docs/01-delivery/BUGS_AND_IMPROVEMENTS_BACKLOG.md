@@ -41,7 +41,7 @@ It is not a replacement for [PROJECT_PLAN.md](./PROJECT_PLAN.md) or [BUG_INVENTO
 | ID | Priority | Area | Status | Related plan block | Note |
 | --- | --- | --- | --- | --- | --- |
 | BI-001 | P1 | Workspace operations | Done | `0.0.1.1.0` | Closed across `0.0.1.1.1`-`0.0.1.1.6`: PageCommandService, PageRecord, required metadata, trash/undo, PageIndex lifecycle and write revision protection are in place. |
-| BI-002 | P1 | Desktop / large workspace | Needs repro | `0.0.1.1.7`, `0.0.1.2.0` | Real large GM workspace should stay part of desktop click-through: open, search, move, delete, map open, presentation, diagnostics. |
+| BI-002 | P1 | Desktop / large workspace | Fix with block | `0.0.1.2.0` | `0.0.1.1.7` added the workspace access matrix and diagnostics. Next desktop pass must run it on the real large GM workspace and any available external/network/read-only folders, then fix any P0/P1 failures. |
 | BI-003 | P1 | Campaign map | Fix with block | `0.0.1.3.0` | Map subsystems should be stabilized before new map features: presentation, fog/drawing/layers, playlists, initiative and regressions. |
 | BI-004 | P1 | Properties / character | Fix with block | `0.0.1.4.0` | Properties block still needs real character-card UX polish: constructor, default layout, armor picker, calculations and map integration. |
 | BI-005 | P2 | Knowledge graph | Ready for plan | `0.0.1.5.0` | Current graph foundation is readable, but the intended feature is a real visual graph canvas with nodes, edges, filters and focus mode. |

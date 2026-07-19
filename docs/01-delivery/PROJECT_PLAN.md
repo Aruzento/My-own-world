@@ -47,13 +47,13 @@ No currently confirmed P0/P1 code failure remains in the small-workspace smoke p
 
 Goal: make page operations reliable, reversible and diagnosable on real large workspaces.
 
-0.0.1.1.7. Add read-only/external workspace test matrix.
-
-Description: verify workspaces on another disk, network folder, external drive, outside `$HOME` and read-only mode, with diagnostics that explain the failure.
-
 ### 0.0.1.2.0. Desktop Product Hardening
 
 Goal: desktop should feel like a real app, not a fragile wrapper around the browser build.
+
+0.0.1.2.1. Run real desktop workspace access matrix.
+
+Description: use the diagnostics popup and `tools/run_workspace_diagnostics.mjs` on the known large GM workspace and any available external, network and read-only test folders. Record exact outcomes and fix any P0/P1 workspace access failures found during the run.
 
 ### 0.0.1.3.0. Campaign Map Stabilization & UX
 

@@ -2,6 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { performance } from 'node:perf_hooks';
+import os from 'node:os';
+
+import {
+  buildWorkspaceAccessMatrix,
+  classifyWorkspaceLocation,
+  normalizeWorkspaceAccessError
+} from '../js/storage/workspaceAccessDiagnostics.js';
 
 
 const args =
@@ -13,7 +20,10 @@ const workspace =
   args.workspace || args._[0];
 
 const outputJson =
-  args.json !== false;
+  parseBooleanFlag(
+    args.json,
+    true
+  );
 
 if (!workspace) {
 
@@ -31,7 +41,12 @@ const diagnostics =
   await runDiagnostics(
     path.resolve(
       workspace
-    )
+    ),
+    {
+      writeProbe:
+        args['no-write-probe'] !== true &&
+        args['write-probe'] !== 'false'
+    }
   );
 
 diagnostics.durationMs =
@@ -64,7 +79,8 @@ if (diagnostics.errors.length) {
 
 
 async function runDiagnostics(
-  root
+  root,
+  options = {}
 ) {
 
   const pagesDir =
@@ -87,6 +103,24 @@ async function runDiagnostics(
 
   const errors =
     [];
+
+  const access =
+    await inspectWorkspaceAccess(
+      root,
+      options
+    );
+
+  if (access.error) {
+
+    errors.push({
+      code:
+        access.error.code,
+      message:
+        access.error.userMessage,
+      path:
+        access.error.path || root
+    });
+  }
 
   const pages =
     await readPages(
@@ -237,8 +271,19 @@ async function runDiagnostics(
       incompleteBackupCount:
         backupHealth.incompleteCount,
       warningCount:
-        warnings.length
+        warnings.length,
+      accessWarnings:
+        access.matrix.filter(row =>
+          [
+            'blocked',
+            'unknown',
+            'needs-real-hardware'
+          ].includes(
+            row.status
+          )
+        ).length
     },
+    access,
     templates,
     types,
     largestPages,
@@ -253,6 +298,248 @@ async function runDiagnostics(
     warnings,
     errors
   };
+}
+
+
+async function inspectWorkspaceAccess(
+  root,
+  options
+) {
+
+  const location =
+    classifyWorkspaceLocation(
+      root,
+      {
+        homePath:
+          os.homedir(),
+        platform:
+          process.platform
+      }
+    );
+
+  let hasAccess =
+    false;
+
+  let canWrite =
+    null;
+
+  let error =
+    null;
+
+  let writeProbe =
+    {
+      attempted:
+        false,
+      ok:
+        null,
+      message:
+        'Write probe was not run.'
+    };
+
+  try {
+
+    const stats =
+      await fs.stat(
+        root
+      );
+
+    hasAccess =
+      stats.isDirectory();
+
+    if (!hasAccess) {
+
+      throw Object.assign(
+        new Error('Workspace path is not a directory.'),
+        {
+          code:
+            'workspace.not_directory',
+          path:
+            root
+        }
+      );
+    }
+
+    await fs.access(
+      root
+    );
+
+    if (options.writeProbe !== false) {
+
+      writeProbe =
+        await runNodeWriteProbe(
+          root
+        );
+
+      canWrite =
+        writeProbe.ok === true;
+
+      if (!writeProbe.ok) {
+
+        error =
+          normalizeWorkspaceAccessError({
+            code:
+              writeProbe.code,
+            message:
+              writeProbe.rawMessage || writeProbe.message,
+            path:
+              writeProbe.path
+          });
+      }
+    }
+
+  } catch (accessError) {
+
+    error =
+      normalizeWorkspaceAccessError(
+        accessError
+      );
+
+    canWrite =
+      false;
+  }
+
+  const matrix =
+    buildWorkspaceAccessMatrix({
+      location,
+      hasAccess,
+      canWrite,
+      writeProbe
+    });
+
+  return {
+    path:
+      root,
+    hasAccess,
+    canWrite:
+      canWrite === true,
+    canWriteKnown:
+      canWrite !== null,
+    location,
+    writeProbe,
+    matrix,
+    error
+  };
+}
+
+
+async function runNodeWriteProbe(
+  root
+) {
+
+  const probePath =
+    path.join(
+      root,
+      `.my-own-world-write-probe-${process.pid}.tmp`
+    );
+
+  const content =
+    `my-own-world-write-probe:${Date.now()}`;
+
+  try {
+
+    await fs.writeFile(
+      probePath,
+      content,
+      'utf8'
+    );
+
+    const readBack =
+      await fs.readFile(
+        probePath,
+        'utf8'
+      );
+
+    const cleanupOk =
+      await removeProbeFile(
+        probePath
+      );
+
+    if (readBack !== content) {
+
+      return {
+        attempted:
+          true,
+        ok:
+          false,
+        code:
+          'workspace.write_probe_mismatch',
+        path:
+          probePath,
+        message:
+          'Write probe created a file but read different content back.',
+        cleanupOk
+      };
+    }
+
+    return {
+      attempted:
+        true,
+      ok:
+        true,
+      code:
+        cleanupOk
+          ? ''
+          : 'workspace.write_probe_cleanup_failed',
+      path:
+        probePath,
+      message:
+        cleanupOk
+          ? 'Write probe OK.'
+          : 'Write probe OK, but cleanup failed.',
+      cleanupOk
+    };
+
+  } catch (probeError) {
+
+    await removeProbeFile(
+      probePath
+    );
+
+    const normalized =
+      normalizeWorkspaceAccessError(
+        probeError
+      );
+
+    return {
+      attempted:
+        true,
+      ok:
+        false,
+      code:
+        normalized.code,
+      path:
+        probePath,
+      message:
+        normalized.userMessage,
+      rawMessage:
+        normalized.message,
+      cleanupOk:
+        true
+    };
+  }
+}
+
+
+async function removeProbeFile(
+  probePath
+) {
+
+  try {
+
+    await fs.rm(
+      probePath,
+      {
+        force:
+          true
+      }
+    );
+
+    return true;
+
+  } catch {
+
+    return false;
+  }
 }
 
 
@@ -913,6 +1200,14 @@ function printHumanReport(
   );
 
   console.log(
+    `Location: ${diagnostics.access.location.summary}`
+  );
+
+  console.log(
+    `Write access: ${diagnostics.access.canWrite ? 'OK' : 'not available or not checked'}`
+  );
+
+  console.log(
     `Pages: ${diagnostics.summary.pageCount}, maps: ${diagnostics.summary.campaignMapCount}, assets: ${diagnostics.summary.assetFileCount}`
   );
 
@@ -1019,6 +1314,40 @@ function parseArgs(
   }
 
   return parsed;
+}
+
+
+function parseBooleanFlag(
+  value,
+  fallback
+) {
+
+  if (value === undefined) return fallback;
+  if (value === true) return true;
+  if (value === false) return false;
+
+  const normalized =
+    String(value).toLowerCase();
+
+  if (
+    normalized === 'false' ||
+    normalized === '0' ||
+    normalized === 'no'
+  ) {
+
+    return false;
+  }
+
+  if (
+    normalized === 'true' ||
+    normalized === '1' ||
+    normalized === 'yes'
+  ) {
+
+    return true;
+  }
+
+  return fallback;
 }
 
 

@@ -19,6 +19,7 @@ Implementation status:
 - `0.0.1.1.3`: implemented required PageRecord metadata fields: `schemaVersion`, `updatedAt` and diagnostic `contentHash`.
 - `0.0.1.1.4`: implemented page trash and undo foundation for delete, move and rename operations.
 - `0.0.1.1.6`: implemented write revisions for page content saves and visible save states for autosave/special-save flows.
+- `0.0.1.1.7`: implemented workspace access diagnostics matrix for another disk, network path, possible external drive, outside-HOME path and read-only/write-probe failures.
 - Historical lightweight operations work already implemented `TreeIndex`, `.my-own-world-ops/` operation journal, lightweight create/move journal entries, background checkpoint queue, tree order compaction and performance gates.
 - Remaining: recovery UI for pending journal entries.
 
@@ -177,6 +178,7 @@ Examples:
 - wiki-link lookup;
 - tree render;
 - diagnostics scan.
+- workspace access path classification.
 
 Rules:
 
@@ -186,6 +188,8 @@ Rules:
 - may report warnings/errors.
 - PageIndex search must use cached search documents and incremental lifecycle updates instead of per-keypress page body parsing.
 - Search result rendering may show paths, excerpts and recent/recently edited pages, but these are read-only navigation views.
+
+Workspace access diagnostics may run a tiny explicit write probe outside the hot path when the user opens diagnostics or runs `tools/run_workspace_diagnostics.mjs`. The probe writes, reads and removes one temp file in the workspace root. It must report permission, missing path, locked file and outside-workspace errors in human-readable language.
 
 ### Tier 1: Atomic Single-File Write
 
@@ -506,6 +510,7 @@ Required tests for implementation:
 - background validation does not block tree drop;
 - order compaction rewrites only one sibling set and never runs during drag.
 - lightweight operations gate covers create, same-level reorder, parent-changing move, pending journal visibility, background checkpointing, and large read-model budgets.
+- workspace access diagnostics classify another disk, network path, possible external drive, outside-HOME path and read-only/write-probe failure.
 
 ## Definition Of Done For `0.0.1.1.2`
 

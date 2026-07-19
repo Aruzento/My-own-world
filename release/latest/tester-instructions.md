@@ -1,5 +1,19 @@
 # Tester Instructions
 
+## 2026-07-19: Workspace Access Diagnostics Matrix
+
+1. Open a workspace in desktop or browser.
+2. Open workspace diagnostics from the app topbar/settings diagnostics area.
+3. Expected result: the diagnostics status includes `Location`, `Access matrix`, and `Write probe`.
+4. In desktop, run:
+
+```bash
+node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\База" --json false
+```
+
+5. Expected result: the report states whether the workspace is inside HOME/default disk, another disk, network folder, possible external drive, outside HOME, and whether write access is OK.
+6. If testing a read-only folder, expected result: write access is reported as unavailable instead of silently passing.
+
 ## 2026-07-19: Write Revision Protection
 
 1. Open any normal card.

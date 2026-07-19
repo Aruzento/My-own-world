@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-19: 0.0.1.1.7 Workspace Access Matrix
+
+### What Changed
+
+- Completed the automated and diagnostic part of `0.0.1.1.7`.
+- Added `js/storage/workspaceAccessDiagnostics.js` for workspace access classification and write-probe diagnostics.
+- The diagnostics layer now identifies another disk, network folder, possible external drive, outside-HOME paths and read-only/no-write states.
+- Workspace diagnostics UI now shows `Location`, `Access matrix` and `Write probe` in the existing diagnostics panel.
+- `tools/run_workspace_diagnostics.mjs` now reports the same access matrix in JSON and human output.
+- Added `docs/03-testing/WORKSPACE_ACCESS_MATRIX.md` with the human test matrix and exact CLI commands.
+- Added unit coverage for another disk, network path, successful write probe, read-only failure and disconnected-path-style errors.
+- Removed `0.0.1.1.7` from the active plan and added `0.0.1.2.1` for the real desktop workspace matrix run.
+
+### Readiness
+
+MVP. The owner can run diagnostics from the app or CLI and see whether the workspace is on another disk, network path, outside HOME, or not writable. Real external-drive and network-folder hardware smoke remains a desktop hardening task.
+
+### Checks
+
+- `node --check js\storage\workspaceAccessDiagnostics.js`
+- `node --check js\ui\workspaceDiagnosticsPanel.js`
+- `node --check tools\run_workspace_diagnostics.mjs`
+- `node --check tests\workspaceAccessDiagnostics.test.mjs`
+- `node --test tests\workspaceAccessDiagnostics.test.mjs` 5 passed
+- `node tools\run_workspace_diagnostics.mjs --workspace docs\03-testing\sample-workspace --no-write-probe --json false`
+- `node tools\run_workspace_diagnostics.mjs --workspace docs\03-testing\sample-workspace --json false`
+
+### Remaining Risk
+
+- The automated tests simulate external/network/read-only conditions. The next desktop task must run the matrix on real paths, especially the known large GM workspace.
+- The diagnostics write probe creates and removes a tiny temp file in the workspace root. If cleanup fails, the diagnostics report warns about it.
+
+### Next
+
+- Continue with `0.0.1.2.1` Run real desktop workspace access matrix.
+
+---
+
 ## 2026-07-19: 0.0.1.1.6 Write Revision Protection
 
 ### What Changed

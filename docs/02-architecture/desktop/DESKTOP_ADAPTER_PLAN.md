@@ -241,6 +241,24 @@ Fog all / Unfog all остаются full-image fallback, потому что э
 - cloud/backend implementation;
 - desktop updater и signing.
 
+## Workspace Access Diagnostics
+
+Update 2026-07-19: workspace diagnostics now include an access matrix for desktop and CLI checks:
+
+- another disk;
+- network folder;
+- possible external drive;
+- outside HOME;
+- read-only / no write access.
+
+The shared implementation is `js/storage/workspaceAccessDiagnostics.js`. The visible diagnostics panel shows `Location`, `Access matrix` and `Write probe`. The CLI entrypoint is:
+
+```bash
+node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\База" --json false
+```
+
+Manual real-path verification remains in `0.0.1.2.1`.
+
 ## Проверки Для Desktop Foundation
 
 Минимальный gate:
