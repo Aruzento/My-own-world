@@ -33,7 +33,8 @@ export function renderTreePage(
   draggedPageState,
   renderTree,
   saveTreeExpansionState,
-  duplicateTitleIds = getDuplicatePageTitleIds()
+  duplicateTitleIds = getDuplicatePageTitleIds(),
+  renderOptions = {}
 ) {
 
   const item =
@@ -44,7 +45,8 @@ export function renderTreePage(
       draggedPageState,
       renderTree,
       saveTreeExpansionState,
-      duplicateTitleIds
+      duplicateTitleIds,
+      renderOptions
     );
 
   container.appendChild(
@@ -82,7 +84,8 @@ export function renderTreePage(
         draggedPageState,
         renderTree,
         saveTreeExpansionState,
-        duplicateTitleIds
+        duplicateTitleIds,
+        renderOptions
       );
     });
   }
@@ -96,7 +99,8 @@ export function createTreePageElement(
   draggedPageState,
   renderTree,
   saveTreeExpansionState,
-  duplicateTitleIds = getDuplicatePageTitleIds()
+  duplicateTitleIds = getDuplicatePageTitleIds(),
+  renderOptions = {}
 ) {
 
   const item =
@@ -206,6 +210,25 @@ export function createTreePageElement(
   title.className =
     'tree-title';
 
+  const searchResult =
+    renderOptions.searchResultByPageId?.get(
+      page.id
+    );
+
+  if (
+    renderOptions.mode === 'search' &&
+    searchResult?.path
+  ) {
+
+    item.classList.add(
+      'has-search-path'
+    );
+
+    title.classList.add(
+      'has-search-path'
+    );
+  }
+
   const iconWrapper =
     document.createElement('span');
 
@@ -223,13 +246,49 @@ export function createTreePageElement(
   label.textContent =
     page.title || 'Без названия';
 
-  title.append(
-    ...iconWrapper.childNodes,
-    document.createTextNode(
-      ' '
-    ),
-    label
-  );
+  if (
+    renderOptions.mode === 'search' &&
+    searchResult?.path
+  ) {
+
+    const textStack =
+      document.createElement('span');
+
+    textStack.className =
+      'tree-title-text';
+
+    const path =
+      document.createElement('span');
+
+    path.className =
+      'tree-search-path';
+
+    path.textContent =
+      searchResult.path;
+
+    textStack.append(
+      label,
+      path
+    );
+
+    title.append(
+      ...iconWrapper.childNodes,
+      document.createTextNode(
+        ' '
+      ),
+      textStack
+    );
+
+  } else {
+
+    title.append(
+      ...iconWrapper.childNodes,
+      document.createTextNode(
+        ' '
+      ),
+      label
+    );
+  }
 
 
   const actions =

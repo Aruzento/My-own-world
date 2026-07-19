@@ -3,14 +3,34 @@ import {
 } from '../core/markdown.js';
 
 import {
-  getAllPages
+  getAllPages,
+  searchPageResults as searchRepositoryPageResults
 } from '../repository/pageRepository.js';
+
+import {
+  normalizeSearchText
+} from '../repository/pageIndex.js';
 
 
 // Единая функция поиска по страницам.
 // Список страниц берется из PageRepository, а не напрямую из state.pages.
 export function searchPages(
-  query
+  query,
+  options = {}
+) {
+
+  return searchPageResults(
+    query,
+    options
+  ).map(result =>
+    result.page
+  );
+}
+
+
+export function searchPageResults(
+  query,
+  options = {}
 ) {
 
   const normalizedQuery =
@@ -18,19 +38,26 @@ export function searchPages(
       query
     );
 
-  const pages =
-    getAllPages();
-
   if (!normalizedQuery) {
 
-    return pages;
+    return getAllPages().map(page => ({
+      page,
+      score: 0,
+      matchedFields: [],
+      path: '',
+      excerpt: '',
+      updatedAt:
+        page.updatedAt || '',
+      updatedAtMs:
+        Date.parse(
+          page.updatedAt || ''
+        ) || 0
+    }));
   }
 
-  return pages.filter(page =>
-    isPageMatchingSearch(
-      page,
-      normalizedQuery
-    )
+  return searchRepositoryPageResults(
+    normalizedQuery,
+    options
   );
 }
 
@@ -77,6 +104,8 @@ export function normalizeSearchQuery(
 ) {
 
   return String(value || '')
-    .trim()
-    .toLowerCase();
+    ? normalizeSearchText(
+      value
+    )
+    : '';
 }

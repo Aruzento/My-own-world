@@ -1,6 +1,7 @@
 import {
   createSchemaIssue,
   createValidationResult,
+  isPlainObject,
   isNonEmptyString
 } from './schemaValidation.js';
 
@@ -41,6 +42,13 @@ export function validatePageRecord(
       )
     );
   }
+
+  issues.push(
+    ...createPageRecordMetadataIssues(
+      page,
+      pageId
+    )
+  );
 
   if (!isNonEmptyString(page?.title)) {
 
@@ -130,6 +138,154 @@ export function validatePageRecord(
   return createValidationResult(
     issues
   );
+}
+
+
+function createPageRecordMetadataIssues(
+  page,
+  pageId
+) {
+
+  const status =
+    page?.pageRecordStatus;
+
+  if (!isPlainObject(status)) return [];
+
+  const issues =
+    [];
+
+  const schemaState =
+    status.schemaVersionState || {};
+
+  if (status.schemaVersionMissing) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.missing_schema_version',
+        'Page front matter is missing schemaVersion; it will be migrated on next PageRecord write.',
+        {
+          pageId: pageId || null
+        }
+      )
+    );
+  }
+
+  if (status.schemaVersionInvalid) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.invalid_schema_version',
+        'Page front matter has an invalid schemaVersion.',
+        {
+          pageId: pageId || null,
+          schemaVersion:
+            page?.schemaVersion ?? null
+        }
+      )
+    );
+  }
+
+  if (schemaState.isFuture) {
+
+    issues.push(
+      createSchemaIssue(
+        'error',
+        'page.future_schema_version',
+        'Page was created by a newer page schema version.',
+        {
+          pageId: pageId || null,
+          schemaVersion:
+            schemaState.version,
+          currentVersion:
+            schemaState.currentVersion
+        }
+      )
+    );
+  }
+
+  if (schemaState.isLegacy) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.legacy_schema_version',
+        'Page uses a legacy page schema version.',
+        {
+          pageId: pageId || null,
+          schemaVersion:
+            schemaState.version,
+          currentVersion:
+            schemaState.currentVersion
+        }
+      )
+    );
+  }
+
+  if (status.updatedAtMissing) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.missing_updated_at',
+        'Page front matter is missing updatedAt; it will be migrated on next PageRecord write.',
+        {
+          pageId: pageId || null
+        }
+      )
+    );
+  }
+
+  if (status.updatedAtInvalid) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.invalid_updated_at',
+        'Page front matter has an invalid updatedAt timestamp.',
+        {
+          pageId: pageId || null,
+          updatedAt:
+            page?.updatedAt ?? null
+        }
+      )
+    );
+  }
+
+  if (status.contentHashMissing) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.missing_content_hash',
+        'Page front matter is missing contentHash; it will be migrated on next PageRecord write.',
+        {
+          pageId: pageId || null
+        }
+      )
+    );
+  }
+
+  if (status.contentHashValid === false) {
+
+    issues.push(
+      createSchemaIssue(
+        'warning',
+        'page.content_hash_mismatch',
+        'Page contentHash does not match the persistent body.',
+        {
+          pageId: pageId || null,
+          contentHash:
+            page?.contentHash ?? null,
+          expectedContentHash:
+            status.expectedContentHash || null
+        }
+      )
+    );
+  }
+
+  return issues;
 }
 
 

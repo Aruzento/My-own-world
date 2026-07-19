@@ -47,6 +47,9 @@ Workspace считается валидным, если:
 ```yaml
 ---
 id: string
+schemaVersion: number
+updatedAt: ISO timestamp
+contentHash: "fnv1a32:<8 hex chars>"
 parent: string | null
 order: number
 tags: string[]
@@ -64,6 +67,16 @@ aliases: string[]
 - `template` определяет основной renderer;
 - `type` определяет пользовательский тип карточки или системную сущность;
 - title берется из persistent body и не должен быть пустым.
+
+PageRecord diagnostic metadata:
+
+- `schemaVersion` is the page schema version from `js/schema/schemaVersions.js`.
+- `updatedAt` is refreshed by normal PageRecord writes and can later support diagnostics/recently edited.
+- `contentHash` is computed from the persistent body and detects incomplete/manual write mismatch.
+- `contentHash` is not a cryptographic security boundary.
+- Legacy pages without these fields remain readable and migrate on the next normal PageRecord write.
+- Future page schema versions must produce a blocking validation error.
+- Missing diagnostic metadata and hash mismatch are validation warnings unless a later recovery step explicitly promotes them.
 
 ## Campaign Map Data
 

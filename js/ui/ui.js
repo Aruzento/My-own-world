@@ -119,8 +119,37 @@ export function setStatus(text) {
 
   if (!statusbar) return;
 
+  delete statusbar.dataset.saveState;
+
   statusbar.textContent =
     text;
+}
+
+
+export function setSaveStatus(
+  state,
+  text
+) {
+
+  const statusbar =
+    document.getElementById(
+      'statusbar'
+    );
+
+  if (!statusbar) return;
+
+  const normalizedState =
+    normalizeSaveStatusState(
+      state
+    );
+
+  statusbar.dataset.saveState =
+    normalizedState;
+
+  statusbar.textContent =
+    text || getDefaultSaveStatusText(
+      normalizedState
+    );
 }
 
 
@@ -139,6 +168,43 @@ export function setProgressStatus(
   setStatus(
     message
   );
+}
+
+
+function normalizeSaveStatusState(
+  state
+) {
+
+  const value =
+    String(state || '').trim().toLowerCase();
+
+  if (
+    [
+      'changed',
+      'saving',
+      'saved',
+      'error',
+      'conflict'
+    ].includes(value)
+  ) {
+
+    return value;
+  }
+
+  return 'saved';
+}
+
+
+function getDefaultSaveStatusText(
+  state
+) {
+
+  if (state === 'changed') return 'Changed';
+  if (state === 'saving') return 'Saving...';
+  if (state === 'error') return 'Save error';
+  if (state === 'conflict') return 'Save conflict';
+
+  return 'Saved';
 }
 
 

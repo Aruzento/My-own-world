@@ -3,6 +3,10 @@ import {
 } from '../core/markdown.js';
 
 import {
+  updatePageRecordContent
+} from '../core/pageRecord.js';
+
+import {
   writePageContent
 } from '../storage/storage.js';
 
@@ -69,18 +73,29 @@ export async function addTaskToTrackerPage(
   );
 
   const content =
-`---
-id: ${trackerPage.id}
-parent: ${trackerPage.parent ?? 'null'}
-order: ${trackerPage.order ?? Date.now()}
-tags: [${(trackerPage.tags || parsed.tags || []).join(', ')}]
-template: taskTracker
-type: taskTracker
-aliases: [${(trackerPage.aliases || parsed.aliases || []).join(', ')}]
----
-
-${wrapper.innerHTML}
-`;
+    updatePageRecordContent(
+      trackerPage.content,
+      {
+        id:
+          trackerPage.id,
+        parent:
+          trackerPage.parent ?? null,
+        order:
+          trackerPage.order ?? Date.now(),
+        tags:
+          trackerPage.tags || parsed.tags || [],
+        template:
+          'taskTracker',
+        type:
+          'taskTracker',
+        aliases:
+          trackerPage.aliases || parsed.aliases || [],
+        relationships:
+          trackerPage.relationships || parsed.relationships || [],
+        body:
+          wrapper.innerHTML
+      }
+    );
 
   await writePageContent(
     trackerPage,

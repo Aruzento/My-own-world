@@ -33,6 +33,11 @@ import {
 } from '../js/schema/schemaVersions.js';
 
 import {
+  buildPageRecordContent,
+  createRuntimePageFromContent
+} from '../js/core/pageRecord.js';
+
+import {
   assertSchemaUpgradeAllowed,
   createSchemaUpgradeGateResult
 } from '../js/schema/schemaUpgradeGate.js';
@@ -40,6 +45,176 @@ import {
 import {
   validateJSONText
 } from '../js/schema/schemaJson.js';
+
+
+test(
+  'workspace schema reports missing PageRecord diagnostic metadata as warnings',
+  () => {
+
+    const legacyPage =
+      createRuntimePageFromContent({
+        name:
+          'legacy.md',
+        path:
+          '/pages/legacy.md',
+        content:
+`---
+id: legacy
+parent: null
+order: 1
+tags: [card]
+template: card
+type: note
+aliases: []
+---
+
+<h1>Legacy</h1>
+`
+      });
+
+    const result =
+      validateWorkspaceSnapshot({
+        pages:
+          [
+            legacyPage
+          ]
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.deepEqual(
+      result.warnings.map(issue => issue.code).slice(0, 3),
+      [
+        'page.missing_schema_version',
+        'page.missing_updated_at',
+        'page.missing_content_hash'
+      ]
+    );
+  }
+);
+
+
+test(
+  'workspace schema blocks future page schema version',
+  () => {
+
+    const page =
+      createRuntimePageFromContent({
+        name:
+          'future.md',
+        path:
+          '/pages/future.md',
+        content:
+          buildPageRecordContent({
+            id:
+              'future',
+            schemaVersion:
+              999,
+            parent:
+              null,
+            order:
+              1,
+            tags:
+              [
+                'card'
+              ],
+            template:
+              'card',
+            type:
+              'note',
+            aliases:
+              [],
+            body:
+              '<h1>Future</h1>',
+            now:
+              '2026-07-19T09:00:00.000Z'
+          })
+      });
+
+    const result =
+      validateWorkspaceSnapshot({
+        pages:
+          [
+            page
+          ]
+      });
+
+    assert.equal(
+      result.ok,
+      false
+    );
+
+    assert.equal(
+      result.errors[0].code,
+      'page.future_schema_version'
+    );
+  }
+);
+
+
+test(
+  'workspace schema reports PageRecord content hash mismatch',
+  () => {
+
+    const content =
+      buildPageRecordContent({
+        id:
+          'hash-page',
+        parent:
+          null,
+        order:
+          1,
+        tags:
+          [
+            'card'
+          ],
+        template:
+          'card',
+        type:
+          'note',
+        aliases:
+          [],
+        body:
+          '<h1>Saved</h1>',
+        now:
+          '2026-07-19T09:00:00.000Z'
+      });
+
+    const page =
+      createRuntimePageFromContent({
+        name:
+          'hash-page.md',
+        path:
+          '/pages/hash-page.md',
+        content:
+          content.replace(
+            '<h1>Saved</h1>',
+            '<h1>Broken</h1>'
+          )
+      });
+
+    const result =
+      validateWorkspaceSnapshot({
+        pages:
+          [
+            page
+          ]
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.warnings[0].code,
+      'page.content_hash_mismatch'
+    );
+  }
+);
 
 
 test(

@@ -3,7 +3,8 @@ import {
 } from '../state.js';
 
 import {
-  writePageContent
+  persistPageContentCommand,
+  snapshotPageForCommand
 } from '../storage/storage.js';
 
 import {
@@ -11,12 +12,9 @@ import {
 } from '../tree/tree.js';
 
 import {
+  setSaveStatus,
   setStatus
 } from '../ui/ui.js';
-
-import {
-  notifyPageUpdated
-} from '../repository/pageRepository.js';
 
 import {
   hasDuplicatePageTitle
@@ -27,8 +25,8 @@ import {
 } from './pageTitleWarning.js';
 
 import {
-  formatRelationshipsFrontMatter
-} from '../core/markdown.js';
+  updatePageRecordContent
+} from '../core/pageRecord.js';
 
 import {
   sanitizePersistentHTMLOnSave
@@ -155,6 +153,11 @@ async function saveCurrentTaskTracker(
 
   if (!state.currentPage) return;
 
+  const previousPage =
+    snapshotPageForCommand(
+      state.currentPage
+    );
+
   const tags =
     state.currentPage.tags || ['task-tracker'];
 
@@ -177,24 +180,35 @@ async function saveCurrentTaskTracker(
   ) return;
 
   const content =
-`---
-id: ${state.currentPage.id}
-parent: ${state.currentPage.parent ?? 'null'}
-order: ${state.currentPage.order ?? Date.now()}
-tags: [${tags.join(', ')}]
-template: taskTracker
-type: taskTracker
-aliases: [${aliases.join(', ')}]
-${formatRelationshipsFrontMatter(state.currentPage.relationships)}
----
-
-${sanitizePersistentHTMLOnSave(
-  serializeTaskTrackerHTML(editor)
-)}
-`;
+    updatePageRecordContent(
+      state.currentPage.content,
+      {
+        id:
+          state.currentPage.id,
+        parent:
+          state.currentPage.parent ?? null,
+        order:
+          state.currentPage.order ?? Date.now(),
+        tags,
+        template:
+          'taskTracker',
+        type:
+          'taskTracker',
+        aliases,
+        relationships:
+          state.currentPage.relationships || [],
+        body:
+          sanitizePersistentHTMLOnSave(
+            serializeTaskTrackerHTML(
+              editor
+            )
+          )
+      }
+    );
 
   await persistCurrentPage(
-    content
+    content,
+    previousPage
   );
 }
 
@@ -203,6 +217,11 @@ async function saveCurrentCampaignMap(
 ) {
 
   if (!state.currentPage) return;
+
+  const previousPage =
+    snapshotPageForCommand(
+      state.currentPage
+    );
 
   const tags =
     state.currentPage.tags || [];
@@ -226,24 +245,35 @@ async function saveCurrentCampaignMap(
   ) return;
 
   const content =
-`---
-id: ${state.currentPage.id}
-parent: ${state.currentPage.parent ?? 'null'}
-order: ${state.currentPage.order ?? Date.now()}
-tags: [${tags.join(', ')}]
-template: campaignMap
-type: campaignMap
-aliases: [${aliases.join(', ')}]
-${formatRelationshipsFrontMatter(state.currentPage.relationships)}
----
-
-${sanitizePersistentHTMLOnSave(
-  serializeCampaignMapHTML(editor)
-)}
-`;
+    updatePageRecordContent(
+      state.currentPage.content,
+      {
+        id:
+          state.currentPage.id,
+        parent:
+          state.currentPage.parent ?? null,
+        order:
+          state.currentPage.order ?? Date.now(),
+        tags,
+        template:
+          'campaignMap',
+        type:
+          'campaignMap',
+        aliases,
+        relationships:
+          state.currentPage.relationships || [],
+        body:
+          sanitizePersistentHTMLOnSave(
+            serializeCampaignMapHTML(
+              editor
+            )
+          )
+      }
+    );
 
   await persistCurrentPage(
-    content
+    content,
+    previousPage
   );
 
   syncCampaignMapPresentation();
@@ -254,6 +284,11 @@ async function saveCurrentRuleTree(
 ) {
 
   if (!state.currentPage) return;
+
+  const previousPage =
+    snapshotPageForCommand(
+      state.currentPage
+    );
 
   const tags =
     state.currentPage.tags || ['rule-tree'];
@@ -277,24 +312,35 @@ async function saveCurrentRuleTree(
   ) return;
 
   const content =
-`---
-id: ${state.currentPage.id}
-parent: ${state.currentPage.parent ?? 'null'}
-order: ${state.currentPage.order ?? Date.now()}
-tags: [${tags.join(', ')}]
-template: ruleTree
-type: ruleTree
-aliases: [${aliases.join(', ')}]
-${formatRelationshipsFrontMatter(state.currentPage.relationships)}
----
-
-${sanitizePersistentHTMLOnSave(
-  serializeRuleTreeHTML(editor)
-)}
-`;
+    updatePageRecordContent(
+      state.currentPage.content,
+      {
+        id:
+          state.currentPage.id,
+        parent:
+          state.currentPage.parent ?? null,
+        order:
+          state.currentPage.order ?? Date.now(),
+        tags,
+        template:
+          'ruleTree',
+        type:
+          'ruleTree',
+        aliases,
+        relationships:
+          state.currentPage.relationships || [],
+        body:
+          sanitizePersistentHTMLOnSave(
+            serializeRuleTreeHTML(
+              editor
+            )
+          )
+      }
+    );
 
   await persistCurrentPage(
-    content
+    content,
+    previousPage
   );
 }
 
@@ -304,6 +350,11 @@ async function saveCurrentKnowledgeGraph(
 ) {
 
   if (!state.currentPage) return;
+
+  const previousPage =
+    snapshotPageForCommand(
+      state.currentPage
+    );
 
   const tags =
     state.currentPage.tags || ['knowledge-graph'];
@@ -327,42 +378,72 @@ async function saveCurrentKnowledgeGraph(
   ) return;
 
   const content =
-`---
-id: ${state.currentPage.id}
-parent: ${state.currentPage.parent ?? 'null'}
-order: ${state.currentPage.order ?? Date.now()}
-tags: [${tags.join(', ')}]
-template: knowledgeGraph
-type: knowledgeGraph
-aliases: [${aliases.join(', ')}]
-${formatRelationshipsFrontMatter(state.currentPage.relationships)}
----
-
-${sanitizePersistentHTMLOnSave(
-  serializeKnowledgeGraphHTML(editor)
-)}
-`;
+    updatePageRecordContent(
+      state.currentPage.content,
+      {
+        id:
+          state.currentPage.id,
+        parent:
+          state.currentPage.parent ?? null,
+        order:
+          state.currentPage.order ?? Date.now(),
+        tags,
+        template:
+          'knowledgeGraph',
+        type:
+          'knowledgeGraph',
+        aliases,
+        relationships:
+          state.currentPage.relationships || [],
+        body:
+          sanitizePersistentHTMLOnSave(
+            serializeKnowledgeGraphHTML(
+              editor
+            )
+          )
+      }
+    );
 
   await persistCurrentPage(
-    content
+    content,
+    previousPage
   );
 }
 
 async function persistCurrentPage(
-  content
+  content,
+  previousPage = null
 ) {
 
-  await writePageContent(
-    state.currentPage,
-    content
+  setSaveStatus(
+    'saving'
   );
 
-  state.currentPage.content =
-    content;
+  const result =
+    await persistPageContentCommand({
+    page:
+      state.currentPage,
+    content,
+    previousPage,
+    type:
+      previousPage?.title !== state.currentPage.title
+        ? 'rename-page'
+        : 'update-page-content',
+    reason:
+      'special-save'
+  });
 
-  notifyPageUpdated();
+  if (result?.stale) {
 
-  setStatus(
+    setSaveStatus(
+      'conflict',
+      'Save conflict: newer change kept'
+    );
+
+    return;
+  }
+
+  setSaveStatus(
     'Сохранено'
   );
 

@@ -302,6 +302,48 @@
   white-space: nowrap;
 }
 
+.tree-title.has-search-path {
+
+  align-items:
+    flex-start;
+}
+
+.tree-title-text {
+
+  min-width:
+    0;
+
+  display:
+    flex;
+
+  flex-direction:
+    column;
+
+  gap:
+    1px;
+}
+
+.tree-search-path {
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  color:
+    rgba(255,255,255,0.38);
+
+  font-size:
+    11px;
+
+  line-height:
+    1.1;
+}
+
 /* =========================================
    TREE CONTEXT MENU
 ========================================= */

@@ -1,5 +1,26 @@
 # Tester Instructions
 
+## 2026-07-19: Write Revision Protection
+
+1. Open any normal card.
+2. Type in the editor.
+3. Expected result: the statusbar changes to `Changed`, then `Saving...`, then `Saved`.
+4. Make several quick edits in a row.
+5. Expected result: the final text remains after reload; an older save should not bring back earlier text.
+6. Open a campaign map or task tracker, make a small change, and wait for save.
+7. Expected result: the same save states appear and the page still reloads with the latest change.
+
+## 2026-07-19: PageIndex Search Lifecycle
+
+1. Open a workspace with nested pages.
+2. Click the sidebar search field without typing.
+3. Expected result: a compact panel shows recent and recently edited pages if such pages exist.
+4. Open two different pages, focus search again, and verify the recent list updates.
+5. Type a title, alias, tag, or body word in search.
+6. Expected result: matching pages appear as a ranked flat list, and each result shows its path under the title.
+7. Clear the search field.
+8. Expected result: the normal tree returns.
+
 ## 2026-07-16: Campaign Map Regression Gate
 
 1. Open or create a campaign map with at least one creature token, fog, one locked fog zone, one drawing, and normal/battle playlists.
@@ -98,12 +119,12 @@
 6. Expected result: the app updates without moving or deleting the workspace.
 7. If the build is bad, reinstall the previous known-good installer. Restore the workspace backup only if the test changed workspace data.
 
-## 2026-07-15: Faster Tree Delete Backup
+## 2026-07-19: Faster Tree Delete Trash
 
 1. Open a large workspace, preferably a copy of `X:\ДНД\Мастер\База`.
 2. Delete a small page or small branch through the tree context menu.
 3. Expected result: the tree updates without a long full-workspace backup pause.
-4. Open `.my-own-world-backups/` and inspect the newest `delete-page-branch` backup.
+4. Open `.my-own-world-trash/page-deletes/` and inspect the newest delete manifest.
 5. Expected result: `manifest.json` lists only the deleted page/branch pages, not unrelated workspace pages.
 6. Manual full backup from settings should still create a full backup when explicitly requested.
 

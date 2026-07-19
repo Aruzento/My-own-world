@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-17
+Updated: 2026-07-19
 
 Planning version: 1
 
@@ -35,6 +35,8 @@ Goal: restore confidence in the core product before adding more features. MyOwnW
 
 Current inventory: [BUG_INVENTORY.md](./BUG_INVENTORY.md).
 
+Deferred bugs and improvement notes: [BUGS_AND_IMPROVEMENTS_BACKLOG.md](./BUGS_AND_IMPROVEMENTS_BACKLOG.md).
+
 Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md).
 
 Manual smoke checklist: [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_CHECKLIST.md).
@@ -44,30 +46,6 @@ No currently confirmed P0/P1 code failure remains in the small-workspace smoke p
 ### 0.0.1.1.0. Workspace Operations & Page Lifecycle Hardening
 
 Goal: make page operations reliable, reversible and diagnosable on real large workspaces.
-
-0.0.1.1.1. Create PageCommandService.
-
-Description: route create, rename, move, delete and batch operations through commands with validate, rollback, apply, persist, index update and diagnostic event phases.
-
-0.0.1.1.2. Introduce a PageRecord pipeline.
-
-Description: centralize page parse, validate, migrate, serialize front matter, sanitize persistent body and write. Stop ad-hoc front matter line replacement.
-
-0.0.1.1.3. Add required page metadata fields.
-
-Description: add or migrate `schemaVersion`, `updatedAt` and content hash/checksum fields for diagnostics and incomplete-write detection.
-
-0.0.1.1.4. Add trash and undo foundation for page operations.
-
-Description: support restore for delete and undo for move/rename/delete before adding broader destructive workflows.
-
-0.0.1.1.5. Improve PageIndex and search lifecycle.
-
-Description: add content indexing, ranking, path display, recent/recently edited pages and one lifecycle for rename, alias and metadata changes; consider Web Worker indexing for large workspaces.
-
-0.0.1.1.6. Add write revision and transaction protection.
-
-Description: autosave/write queue should prevent older operations from overwriting newer content and expose changed/saving/saved/error/conflict states.
 
 0.0.1.1.7. Add read-only/external workspace test matrix.
 

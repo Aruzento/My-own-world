@@ -55,6 +55,8 @@ export {
   /* Удаление страницы вместе с дочерними */
   deletePageBranch,
 
+  restorePageTrashEntry,
+
   /* Изменение parent страницы */
   updatePageParent,
 
@@ -125,9 +127,27 @@ export {
 
 
 export {
+  clearWriteRevisions,
+  createWriteRevision,
   getPageWriteKey,
+  getWriteRevisionState,
+  isWriteRevisionCurrent,
+  markWriteRevisionState,
   queueWrite,
   writeFile,
   writePageContent,
   writeTextFile
 } from './writeQueue.js';
+
+
+export {
+  clearPageCommandEvents,
+  clearPageUndoEntries,
+  executePageCommand,
+  getPageCommandEvents,
+  getPageUndoEntries,
+  persistPageContentCommand,
+  registerPageUndoEntry,
+  snapshotPageForCommand,
+  undoLastPageCommand
+} from './pageCommandService.js';

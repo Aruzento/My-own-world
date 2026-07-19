@@ -10,13 +10,18 @@ import {
   getChildren,
   getPageIndex,
   getPageById,
+  getPagePath,
   getPagesByTag,
   getPagesByType,
+  getRecentlyEditedPages,
+  getRecentPages,
   getTreeIndex,
+  markPageOpened,
   notifyPageMoved,
   notifyPageUpdated,
   queryPages,
   rebuildPageRepository,
+  searchPageResults,
   validateTreeIndex
 } from '../js/repository/pageRepository.js';
 
@@ -95,6 +100,102 @@ test(
     assert.deepEqual(
       getPagesByTag('player'),
       [child]
+    );
+  }
+);
+
+
+test(
+  'PageRepository search lifecycle updates content paths and recent APIs',
+  () => {
+
+    const parent =
+      makePage({
+        id: 'parent-search',
+        title: 'Parent',
+        updatedAt: '2026-07-19T08:00:00.000Z',
+        content: '<h1>Parent</h1>'
+      });
+
+    const page =
+      makePage({
+        id: 'search-page',
+        parent: 'parent-search',
+        title: 'Old Search Title',
+        aliases: ['Old Alias'],
+        updatedAt: '2026-07-19T09:00:00.000Z',
+        content: '<h1>Old Search Title</h1><p>old body marker</p>'
+      });
+
+    setPages([
+      parent,
+      page
+    ]);
+
+    assert.equal(
+      searchPageResults('old body marker')[0].page,
+      page
+    );
+
+    const beforeUpdate =
+      {
+        ...page,
+        aliases: [...page.aliases],
+        tags: [...page.tags]
+      };
+
+    page.title =
+      'New Search Title';
+
+    page.aliases =
+      ['New Alias'];
+
+    page.updatedAt =
+      '2026-07-19T10:00:00.000Z';
+
+    page.content =
+      '<h1>New Search Title</h1><p>silver needle marker</p>';
+
+    notifyPageUpdated(
+      beforeUpdate,
+      page
+    );
+
+    assert.equal(
+      searchPageResults('old body marker').length,
+      0
+    );
+
+    assert.equal(
+      searchPageResults('silver needle marker')[0].page,
+      page
+    );
+
+    assert.equal(
+      searchPageResults('new alias')[0].page,
+      page
+    );
+
+    assert.equal(
+      getPagePath('search-page'),
+      'Parent / New Search Title'
+    );
+
+    markPageOpened(
+      'search-page',
+      {
+        now: '2026-07-19T10:01:00.000Z'
+      }
+    );
+
+    assert.equal(
+      getRecentPages()[0],
+      page
+    );
+
+    assert.equal(
+      getRecentlyEditedPages()[0],
+      page
     );
   }
 );

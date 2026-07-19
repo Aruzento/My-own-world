@@ -6,6 +6,7 @@ import {
 } from '../js/stateActions.js';
 
 import {
+  searchPageResults,
   searchPages
 } from '../js/search/searchPages.js';
 
@@ -79,6 +80,81 @@ aliases: [Велесса]
         lore,
         character
       ]
+    );
+  }
+);
+
+
+test(
+  'searchPageResults returns ranked metadata while searchPages stays compatible',
+  () => {
+
+    const parent =
+      {
+        id: 'search-parent',
+        name: 'parent.md',
+        title: 'Parent',
+        parent: null,
+        order: 1,
+        template: 'card',
+        type: 'folder',
+        tags: ['card'],
+        aliases: [],
+        content: '<h1>Parent</h1>'
+      };
+
+    const exact =
+      {
+        id: 'exact',
+        name: 'exact.md',
+        title: 'Needle',
+        parent: 'search-parent',
+        order: 1,
+        template: 'card',
+        type: 'note',
+        tags: ['card'],
+        aliases: [],
+        content: '<h1>Needle</h1>'
+      };
+
+    const body =
+      {
+        id: 'body',
+        name: 'body.md',
+        title: 'Haystack',
+        parent: 'search-parent',
+        order: 2,
+        template: 'card',
+        type: 'note',
+        tags: ['card'],
+        aliases: [],
+        content: '<h1>Haystack</h1><p>needle appears here.</p>'
+      };
+
+    setPages([
+      parent,
+      body,
+      exact
+    ]);
+
+    assert.deepEqual(
+      searchPages('needle').map(page => page.id),
+      ['exact', 'body']
+    );
+
+    const results =
+      searchPageResults(
+        'needle'
+      );
+
+    assert.equal(
+      results[0].score > results[1].score,
+      true
+    );
+
+    assert.equal(
+      results[0].path,
+      'Parent / Needle'
     );
   }
 );

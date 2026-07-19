@@ -1,5 +1,43 @@
 # Release Notes
 
+## 2026-07-19: Write Revision Protection
+
+- Autosave and special page saves now reserve a write revision before writing page content.
+- Older stale save intents no longer update runtime page content, search indexes or undo state after a newer save intent exists.
+- The statusbar now exposes page save states: changed, saving, saved, error and conflict.
+- The workspace lifecycle backlog item for PageRecord, metadata, trash/undo and revision protection is now closed.
+
+## 2026-07-19: PageIndex Search Lifecycle
+
+- Sidebar search now uses cached PageIndex search documents instead of reparsing every page on each typed character.
+- Search results are ranked by title, alias, tag, content and file-name match strength.
+- Search results show the page path under each title, making similarly named pages easier to identify.
+- Empty focused search shows recent and recently edited pages; clicking a row opens that page.
+
+## 2026-07-19: Page Trash And Undo Foundation
+
+- Page delete now writes a scoped trash snapshot under `.my-own-world-trash/page-deletes/` instead of creating an ordinary backup entry.
+- Page operation undo APIs can restore deleted page files, undo tree moves and undo page renames through the existing PageRecord write path.
+- Delete failures restore already removed files from trash before reporting the error.
+
+## 2026-07-19: Required Page Metadata
+
+- Page front matter now includes `schemaVersion`, `updatedAt` and `contentHash` for diagnostics and incomplete-write detection.
+- Older pages continue to open normally and receive the new metadata when a normal PageRecord write updates them.
+- Workspace validation now reports missing page diagnostic metadata, future page schema versions and content hash mismatch without blocking legacy pages that only need migration.
+
+## 2026-07-19: PageRecord Pipeline
+
+- Page markdown parsing, front matter serialization and metadata updates now go through a shared `PageRecord` pipeline.
+- Main page save paths preserve unknown front matter fields instead of rebuilding metadata by local string replacement.
+- Added regression coverage for PageRecord parsing, relationship metadata and metadata preservation during page commands.
+
+## 2026-07-17: PageCommandService Foundation
+
+- Page create, title/content save, aliases update, tree move, batch move and delete branch operations now enter through a shared `PageCommandService` command boundary.
+- Command events record affected pages, phase order, status, duration and errors for future diagnostics and undo/recovery work.
+- Added regression coverage for command phase order, rollback and real page operation routing.
+
 ## 2026-07-17: Project Status Docs And Definition Of Done
 
 - README and Product Dashboard now describe the current browser/desktop status instead of the older desktop spike and Python-server notes.

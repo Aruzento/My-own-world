@@ -53,6 +53,9 @@ import {
 } from '../js/storage/pageStorage.js';
 
 import {
+  clearWriteRevisions,
+  createWriteRevision,
+  getPageWriteKey,
   writePageContent
 } from '../js/storage/writeQueue.js';
 
@@ -981,6 +984,77 @@ test(
 
 
 test(
+  'writePageContent skips a stale write revision before touching the file',
+  async () => {
+
+    clearWriteRevisions();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page =
+      {
+        id:
+          'page-stale-write',
+        path:
+          '/pages/stale-write.md',
+        name:
+          'stale-write.md',
+        content:
+          'old'
+      };
+
+    const key =
+      getPageWriteKey(
+        page
+      );
+
+    const staleRevision =
+      createWriteRevision(
+        key,
+        {
+          reason:
+            'test-old'
+        }
+      );
+
+    createWriteRevision(
+      key,
+      {
+        reason:
+          'test-new'
+      }
+    );
+
+    const result =
+      await writePageContent(
+        page,
+        'old content',
+        {
+          revision:
+            staleRevision
+        }
+      );
+
+    assert.equal(
+      result.skipped,
+      true
+    );
+
+    await assert.rejects(
+      () => adapter.readText(
+        '/pages/stale-write.md'
+      )
+    );
+  }
+);
+
+
+test(
   'deletePageBranch removes stale page records when file is already missing',
   async () => {
 
@@ -1095,7 +1169,7 @@ test(
 
 
 test(
-  'deletePageBranch backs up only the deleted branch pages',
+  'deletePageBranch writes trash only for the deleted branch pages',
   async () => {
 
     const adapter =
@@ -1164,20 +1238,20 @@ test(
       pages[0]
     );
 
-    const backupEntries =
+    const trashEntries =
       await adapter.listFiles(
-        '.my-own-world-backups'
+        '.my-own-world-trash/page-deletes'
       );
 
     assert.equal(
-      backupEntries.length,
+      trashEntries.length,
       1
     );
 
     const manifest =
       JSON.parse(
         await adapter.readText(
-          `.my-own-world-backups/${backupEntries[0].name}/manifest.json`
+          `.my-own-world-trash/page-deletes/${trashEntries[0].name}/manifest.json`
         )
       );
 
@@ -1196,8 +1270,15 @@ test(
 
     await assert.rejects(
       () => adapter.readText(
-        `.my-own-world-backups/${backupEntries[0].name}/pages/unrelated.md`
+        `.my-own-world-trash/page-deletes/${trashEntries[0].name}/pages/unrelated.md`
       )
+    );
+
+    assert.deepEqual(
+      await adapter.listFiles(
+        '.my-own-world-backups'
+      ),
+      []
     );
 
     assert.equal(

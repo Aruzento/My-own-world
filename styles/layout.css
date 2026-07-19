@@ -147,6 +147,26 @@
     rgba(5, 7, 6, 0.52);
 }
 
+.statusbar[data-save-state="changed"],
+.statusbar[data-save-state="saving"] {
+
+  color:
+    var(--mow-accent-soft);
+}
+
+.statusbar[data-save-state="saved"] {
+
+  color:
+    var(--mow-success, #7ac88c);
+}
+
+.statusbar[data-save-state="error"],
+.statusbar[data-save-state="conflict"] {
+
+  color:
+    var(--mow-danger, #ff8f8f);
+}
+
 
 
 /* =========================================

@@ -101,6 +101,10 @@ import {
   sanitizeAssetImagesBeforeRender
 } from './editorAssetSanitizer.js';
 
+import {
+  markPageOpened
+} from '../repository/pageRepository.js';
+
 export async function openPageInEditor(
   editor,
   page,
@@ -113,6 +117,10 @@ export async function openPageInEditor(
   );
 
   setCurrentPage(
+    page
+  );
+
+  markPageOpened(
     page
   );
 

@@ -5,16 +5,18 @@ import {
 } from '../tree/tree.js';
 
 import {
-  writePageContent
+  persistPageContentCommand,
+  snapshotPageForCommand
 } from '../storage/storage.js';
 
 import {
+  setSaveStatus,
   setStatus
 } from '../ui/ui.js';
 
 import {
-  formatRelationshipsFrontMatter
-} from '../core/markdown.js';
+  updatePageRecordContent
+} from '../core/pageRecord.js';
 
 import {
   serializePersistentEditorHTML
@@ -42,10 +44,6 @@ import {
 } from './pageTitleWarning.js';
 
 import {
-  notifyPageUpdated
-} from '../repository/pageRepository.js';
-
-import {
   sanitizePersistentHTMLOnSave
 } from './safeHtmlSanitizer.js';
 
@@ -60,6 +58,10 @@ export function setupAutosave(
   editor.addEventListener(
     'input',
     () => {
+
+      setSaveStatus(
+        'changed'
+      );
 
       clearTimeout(
         timeout
@@ -84,11 +86,15 @@ export async function saveCurrentPage(
   editor
 ) {
 
-  if (!state.currentPage) return;
+  const page =
+    state.currentPage;
+
+  if (!page) return;
 
   if (
     isCampaignMapEditorMismatch(
-      editor
+      editor,
+      page
     )
   ) {
 
@@ -101,7 +107,8 @@ export async function saveCurrentPage(
 
   if (
     isTaskTrackerEditorMismatch(
-      editor
+      editor,
+      page
     )
   ) {
 
@@ -114,7 +121,8 @@ export async function saveCurrentPage(
 
   if (
     isKnowledgeGraphEditorMismatch(
-      editor
+      editor,
+      page
     )
   ) {
 
@@ -126,21 +134,26 @@ export async function saveCurrentPage(
   }
 
   const tags =
-    state.currentPage.tags || [];
+    page.tags || [];
 
   const aliases =
-    state.currentPage.aliases || [];
+    page.aliases || [];
 
   const template =
-    state.currentPage.template || '';
+    page.template || '';
 
   const type =
-    state.currentPage.type || 'note';
+    page.type || 'note';
 
   const titleElement =
     editor.querySelector('h1');
 
-  state.currentPage.title =
+  const previousPage =
+    snapshotPageForCommand(
+      page
+    );
+
+  page.title =
     titleElement
       ? titleElement.textContent.trim()
       : 'Без названия';
@@ -148,14 +161,14 @@ export async function saveCurrentPage(
   /* Не сохраняем конфликтующие названия: дерево, wiki-links и быстрый поиск должны видеть одну сущность на одно имя. */
   if (
     hasDuplicatePageTitle(
-      state.currentPage.id,
-      state.currentPage.title
+      page.id,
+      page.title
     )
   ) {
 
     updateOpenPageTitleWarning(
       editor,
-      state.currentPage
+      page
     );
 
     setStatus(
@@ -169,37 +182,81 @@ export async function saveCurrentPage(
 
   updateOpenPageTitleWarning(
     editor,
-    state.currentPage
+    page
+  );
+
+  setSaveStatus(
+    'saving'
   );
 
   const content =
-`---
-id: ${state.currentPage.id}
-parent: ${state.currentPage.parent ?? 'null'}
-order: ${state.currentPage.order ?? Date.now()}
-tags: [${tags.join(', ')}]
-template: ${template}
-type: ${type}
-aliases: [${aliases.join(', ')}]
-${formatRelationshipsFrontMatter(state.currentPage.relationships)}
----
+    updatePageRecordContent(
+      page.content,
+      {
+        id:
+          page.id,
+        parent:
+          page.parent ?? null,
+        order:
+          page.order ?? Date.now(),
+        tags,
+        template,
+        type,
+        aliases,
+        relationships:
+          page.relationships || [],
+        body:
+          getSerializedEditorHTML(
+            editor,
+            page
+          )
+      }
+    );
 
-${getSerializedEditorHTML(editor)}
-`;
+  let result;
 
-  await writePageContent(
-    state.currentPage,
-    content
-  );
+  try {
 
-  state.currentPage.content =
-    content;
+    result =
+      await persistPageContentCommand({
+        page,
+        content,
+        previousPage,
+        type:
+          previousPage?.title !== page.title
+            ? 'rename-page'
+            : 'update-page-content',
+        reason:
+          'autosave'
+      });
 
-  notifyPageUpdated();
+  } catch (error) {
 
-  setStatus(
+    setSaveStatus(
+      'error',
+      `Save error: ${error?.message || error}`
+    );
+
+    throw error;
+  }
+
+  if (result?.stale) {
+
+    setSaveStatus(
+      'conflict',
+      'Save conflict: newer change kept'
+    );
+
+    return;
+  }
+
+  if (state.currentPage?.id === page.id) {
+
+  setSaveStatus(
     'Сохранено'
   );
+
+  }
 
   renderTree();
 
@@ -208,7 +265,8 @@ ${getSerializedEditorHTML(editor)}
 
 
 function isCampaignMapEditorMismatch(
-  editor
+  editor,
+  page = state.currentPage
 ) {
 
   const editorHasMap =
@@ -217,15 +275,16 @@ function isCampaignMapEditorMismatch(
     );
 
   const currentIsMap =
-    state.currentPage?.template === 'campaignMap' ||
-    state.currentPage?.type === 'campaignMap';
+    page?.template === 'campaignMap' ||
+    page?.type === 'campaignMap';
 
   return editorHasMap !== currentIsMap;
 }
 
 
 function isTaskTrackerEditorMismatch(
-  editor
+  editor,
+  page = state.currentPage
 ) {
 
   const editorHasTracker =
@@ -234,15 +293,16 @@ function isTaskTrackerEditorMismatch(
     );
 
   const currentIsTracker =
-    state.currentPage?.template === 'taskTracker' ||
-    state.currentPage?.type === 'taskTracker';
+    page?.template === 'taskTracker' ||
+    page?.type === 'taskTracker';
 
   return editorHasTracker !== currentIsTracker;
 }
 
 
 function isKnowledgeGraphEditorMismatch(
-  editor
+  editor,
+  page = state.currentPage
 ) {
 
   const editorHasGraph =
@@ -251,20 +311,21 @@ function isKnowledgeGraphEditorMismatch(
     );
 
   const currentIsGraph =
-    state.currentPage?.template === 'knowledgeGraph' ||
-    state.currentPage?.type === 'knowledgeGraph';
+    page?.template === 'knowledgeGraph' ||
+    page?.type === 'knowledgeGraph';
 
   return editorHasGraph !== currentIsGraph;
 }
 
 
 function getSerializedEditorHTML(
-  editor
+  editor,
+  page = state.currentPage
 ) {
 
   if (
-    state.currentPage?.template === 'campaignMap' ||
-    state.currentPage?.type === 'campaignMap'
+    page?.template === 'campaignMap' ||
+    page?.type === 'campaignMap'
   ) {
 
     return sanitizePersistentHTMLOnSave(
@@ -275,8 +336,8 @@ function getSerializedEditorHTML(
   }
 
   if (
-    state.currentPage?.template === 'taskTracker' ||
-    state.currentPage?.type === 'taskTracker'
+    page?.template === 'taskTracker' ||
+    page?.type === 'taskTracker'
   ) {
 
     return sanitizePersistentHTMLOnSave(
@@ -287,8 +348,8 @@ function getSerializedEditorHTML(
   }
 
   if (
-    state.currentPage?.template === 'knowledgeGraph' ||
-    state.currentPage?.type === 'knowledgeGraph'
+    page?.template === 'knowledgeGraph' ||
+    page?.type === 'knowledgeGraph'
   ) {
 
     return sanitizePersistentHTMLOnSave(

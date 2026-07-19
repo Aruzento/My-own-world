@@ -83,6 +83,149 @@ test(
 
 
 test(
+  'PageIndex search ranks title, alias and content and returns paths',
+  () => {
+
+    const pages =
+      [
+        {
+          id: 'world',
+          title: 'World',
+          parent: null,
+          order: 1,
+          template: 'card',
+          type: 'folder',
+          tags: ['card'],
+          updatedAt: '2026-07-19T08:00:00.000Z',
+          content: '<h1>World</h1>'
+        },
+        {
+          id: 'region',
+          title: 'North',
+          parent: 'world',
+          order: 1,
+          template: 'card',
+          type: 'region',
+          tags: ['card'],
+          updatedAt: '2026-07-19T09:00:00.000Z',
+          content: '<h1>North</h1>'
+        },
+        {
+          id: 'dragon',
+          title: 'Dragon',
+          parent: 'region',
+          order: 1,
+          template: 'card',
+          type: 'creature',
+          tags: ['monster'],
+          aliases: ['Wyrm'],
+          updatedAt: '2026-07-19T10:00:00.000Z',
+          content: '<h1>Dragon</h1><p>Ancient lair under the mountain.</p>'
+        },
+        {
+          id: 'lair-note',
+          title: 'Mountain note',
+          parent: 'region',
+          order: 2,
+          template: 'card',
+          type: 'note',
+          tags: ['lore'],
+          updatedAt: '2026-07-19T11:00:00.000Z',
+          content: '<h1>Mountain note</h1><p>Dragon clue.</p>'
+        }
+      ];
+
+    const index =
+      new PageIndex(
+        pages
+      );
+
+    assert.deepEqual(
+      index.searchPageResults('dragon').map(result => result.page.id),
+      ['dragon', 'lair-note']
+    );
+
+    assert.equal(
+      index.searchPageResults('wyrm')[0].page.id,
+      'dragon'
+    );
+
+    assert.equal(
+      index.searchPageResults('lair')[0].matchedFields.includes('content'),
+      true
+    );
+
+    assert.equal(
+      index.searchPageResults('lair')[0].path,
+      'World / North / Dragon'
+    );
+  }
+);
+
+
+test(
+  'PageIndex tracks recent and recently edited pages',
+  () => {
+
+    const pages =
+      [
+        {
+          id: 'first',
+          title: 'First',
+          parent: null,
+          updatedAt: '2026-07-19T08:00:00.000Z',
+          content: '<h1>First</h1>'
+        },
+        {
+          id: 'second',
+          title: 'Second',
+          parent: 'first',
+          updatedAt: '2026-07-19T12:00:00.000Z',
+          content: '<h1>Second</h1>'
+        }
+      ];
+
+    const index =
+      new PageIndex(
+        pages
+      );
+
+    index.markPageOpened(
+      'first',
+      {
+        now: '2026-07-19T12:01:00.000Z'
+      }
+    );
+
+    index.markPageOpened(
+      'second',
+      {
+        now: '2026-07-19T12:02:00.000Z'
+      }
+    );
+
+    assert.deepEqual(
+      index.getRecentPages().map(page => page.id),
+      ['second', 'first']
+    );
+
+    assert.deepEqual(
+      index.getRecentlyEditedPages().map(page => page.id),
+      ['second', 'first']
+    );
+
+    assert.equal(
+      index.getRecentPages({
+        includeMetadata: true,
+        limit: 1
+      })[0].path,
+      'First / Second'
+    );
+  }
+);
+
+
+test(
   'PageIndex строит индексы по id, title и aliases',
   () => {
 

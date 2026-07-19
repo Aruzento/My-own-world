@@ -6,6 +6,316 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-19: 0.0.1.1.6 Write Revision Protection
+
+### What Changed
+
+- Completed `0.0.1.1.6`.
+- Added runtime write revisions in `writeQueue`: page saves can now mark `changed`, `saving`, `saved`, `error`, `stale` and `superseded-after-write` states.
+- `persistPageContentCommand()` now reserves a revision before writing and refuses to update runtime page content, PageRepository/PageIndex or rename undo entries when an older save has been superseded.
+- Autosave now marks the statusbar as `Changed`, `Saving...`, `Saved`, `Save error` or `Save conflict`.
+- Autosave keeps a local page reference while saving, reducing the risk of an async save from an older page changing the current page's status.
+- Special page saves for campaign maps, task trackers, Rule Tree and Knowledge Graph now use the same save-state status behavior.
+- Added regression coverage for stale queued writes and racing page content commands.
+- Closed backlog item `BI-001`.
+- Removed `0.0.1.1.6` from the active plan.
+
+### Readiness
+
+Usable. Normal and special page saves now expose visible save states and have regression coverage for stale write protection. The owner can verify the behavior by typing quickly, waiting for `Saved`, reloading and checking that the latest text remains.
+
+### Checks
+
+- `node --check js\storage\writeQueue.js`
+- `node --check js\storage\pageCommandService.js`
+- `node --check js\storage\storage.js`
+- `node --check js\editor\autosave.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check js\ui\ui.js`
+- `node --check tests\pageCommandService.test.mjs`
+- `node --check tests\storageAdapter.test.mjs`
+- `node --test tests\pageCommandService.test.mjs tests\storageAdapter.test.mjs` 33 passed
+- `node tools\docs_index.mjs`
+- `node tools\validate_agent_skills.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+- `npm run verify` 239 passed
+- `npm run test:browser` 80 passed
+
+### Remaining Risk
+
+- Write revisions are runtime protection. They do not yet create a durable per-page revision history or conflict-resolution UI after app restart.
+- Direct low-level `writePageContent()` callers without revisions remain allowed for non-autosave paths; future hot-path page content writes should use `persistPageContentCommand()`.
+
+### Next
+
+- Continue with `0.0.1.1.7` Add read-only/external workspace test matrix.
+
+---
+
+## 2026-07-19: 0.0.1.1.5 PageIndex Search Lifecycle
+
+### What Changed
+
+- Completed `0.0.1.1.5`.
+- `PageIndex` now builds a cached search document for every page during rebuild/add/update, including title, aliases, tags, body text, file name and `updatedAt`.
+- Sidebar search now uses ranked PageIndex results instead of reparsing every page on every keystroke.
+- Search results are shown as a flat ranked list with the page path under the title, so the owner can see where a match lives.
+- Empty focused search now shows a compact recent/recently edited popup; clicking a row opens that page.
+- Page open lifecycle now marks recent pages through `PageRepository`.
+- Added repository APIs for ranked search results, page path, recent pages and recently edited pages.
+- Tree rendering now reuses duplicate-title diagnostics once per render pass, including virtualized search/tree rows.
+- Removed `0.0.1.1.5` from the active plan.
+
+### Readiness
+
+Usable. The owner can use the sidebar search in one action, see ranked matches with paths, and open recent/recently edited pages from the search field. The search index updates through existing page lifecycle notifications.
+
+### Checks
+
+- `node --check js\repository\pageIndex.js`
+- `node --check js\repository\pageRepository.js`
+- `node --check js\search\searchPages.js`
+- `node --check js\search\search.js`
+- `node --check js\tree\tree.js`
+- `node --check js\tree\treeRender.js`
+- `node --check js\editor\editorOpenPage.js`
+- `node --check tests\pageIndex.test.mjs`
+- `node --check tests\pageRepository.test.mjs`
+- `node --check tests\searchPages.test.mjs`
+- `node --test tests\pageIndex.test.mjs tests\pageRepository.test.mjs tests\searchPages.test.mjs` 15 passed
+- `node tools\docs_index.mjs`
+- `node tools\validate_agent_skills.mjs`
+- `npm run check:encoding`
+- `git diff --check`
+- `npm run verify` 237 passed
+- `npm run test:browser` 80 passed
+
+Note: the first browser smoke run caught a virtualized tree regression (`renderOptions` was not read from `treeVirtualState`). The bug was fixed and the full browser smoke passed afterward.
+
+### Remaining Risk
+
+- Search indexing still runs on the main thread during workspace open/rebuild. This is acceptable for the current indexed cache pass; Web Worker indexing should be considered only if measured startup budgets fail on the known large workspace.
+- Legacy callers that invoke `notifyPageUpdated()` without previous/next page still fall back to repository rebuild. This remains safe, but new page lifecycle code should pass explicit before/after pages.
+
+### Next
+
+- Continue with `0.0.1.1.6` Add write revision and transaction protection.
+
+---
+
+## 2026-07-19: 0.0.1.1.4 Page Trash And Undo Foundation
+
+### What Changed
+
+- Completed `0.0.1.1.4`.
+- Added a lightweight page operation undo stack in `PageCommandService`.
+- `rename-page` commands now register an undo entry that restores previous metadata and file content.
+- Tree move commands now register undo entries that restore previous `parent` and `order` through the same PageRecord/write queue path.
+- Page branch delete now writes a scoped trash snapshot under `.my-own-world-trash/page-deletes/<trashId>/` before removing files.
+- Delete undo restores trashed page files to their original paths and rebuilds `state.pages` through existing runtime page parsing.
+- Delete no longer creates `.my-own-world-backups` for ordinary page deletion; trash is the scoped restorable snapshot for this operation.
+- If a delete partially fails, already removed files are restored from trash before the command reports failure.
+- Updated delete regression coverage from backup expectations to trash expectations.
+- Removed `0.0.1.1.4` from the active plan.
+
+### Readiness
+
+Foundation. The durable trash snapshot and command-level undo APIs exist and are tested for delete, move and rename. A polished user-facing trash/undo panel is not implemented yet.
+
+### Checks
+
+- `node --check js\storage\pageCommandService.js`
+- `node --check js\storage\pageStorage.js`
+- `node --check js\storage\storage.js`
+- `node --check tests\pageCommandService.test.mjs`
+- `node --check tests\storageAdapter.test.mjs`
+- `node --check tests\browser\tree-delete.spec.mjs`
+- `node --test tests\pageCommandService.test.mjs` 5 passed
+- `node --test tests\pageCommandService.test.mjs tests\storageAdapter.test.mjs tests\workspaceCheckpointTasks.test.mjs tests\backupService.test.mjs` 41 passed
+- `npm run test:browser` 80 passed
+- `node tools\docs_index.mjs` 74 markdown files, docs metadata OK
+- `npm run check:encoding`
+- `node tools\validate_agent_skills.mjs` 9 skills OK
+- `git diff --check`
+- `npm run verify` 233 tests passed; large workspace performance smoke passed
+
+### Remaining Risk
+
+- Trash restore currently restores page files and page tree records, but does not restore map token references that may have been cleaned after page deletion.
+- There is no dedicated human-facing trash manager yet; the foundation is available through page operation APIs and future UI can build on it.
+
+### Next
+
+- Continue with `0.0.1.1.5` Improve PageIndex and search lifecycle.
+
+---
+
+## 2026-07-19: 0.0.1.1.3 Required Page Metadata
+
+### What Changed
+
+- Completed `0.0.1.1.3`.
+- Extended `PageRecord` front matter with required diagnostic fields: `schemaVersion`, `updatedAt` and `contentHash`.
+- New and rewritten page files now stamp the current page schema version, update timestamp and a deterministic `fnv1a32` body checksum without adding new dependencies.
+- Old pages without these fields still open normally and are migrated on the next PageRecord write.
+- Page runtime records now expose `schemaVersion`, `updatedAt`, `contentHash` and `pageRecordStatus` for diagnostics.
+- Workspace schema validation now reports missing page diagnostic metadata, invalid/future page schema versions and content hash mismatch from `pageRecordStatus`.
+- `parseMarkdown()` now passes through the PageRecord diagnostic fields for compatibility callers.
+- Added regression coverage for metadata writing, migration, hash mismatch diagnostics and command-driven metadata migration.
+- Removed `0.0.1.1.3` from the active plan.
+
+### Readiness
+
+MVP infrastructure. The page file format now carries the required diagnostic metadata and validation can detect missing, future or mismatched page records. There is no new user-facing repair UI yet; trash/undo and richer recovery stay in the active plan.
+
+### Checks
+
+- `node --check js\core\pageRecord.js`
+- `node --check js\core\markdown.js`
+- `node --check js\schema\pageSchema.js`
+- `node --check js\editor\editorOpenPage.js`
+- `node --check tests\pageRecord.test.mjs`
+- `node --check tests\schemaValidation.test.mjs`
+- `node --check tests\pageCommandService.test.mjs`
+- `node --test tests\pageRecord.test.mjs tests\schemaValidation.test.mjs` 30 passed
+- `node --test tests\pageCommandService.test.mjs tests\storageAdapter.test.mjs tests\workspaceCheckpointTasks.test.mjs` 29 passed
+- `node --test tests\searchPages.test.mjs tests\knowledgeGraph.test.mjs tests\ruleTreeProvider.test.mjs` 17 passed
+- `node --test tests\pageIndex.test.mjs tests\pageRepository.test.mjs tests\treeIndex.test.mjs` 13 passed
+- `node tools\docs_index.mjs` 74 markdown files, docs metadata OK
+- `node tools\validate_agent_skills.mjs` 9 skills OK
+- `npm run check:encoding`
+- `git diff --check`
+- `npm run verify` 230 tests passed; large workspace performance smoke passed
+- `npm run test:browser` 80 passed
+
+### Remaining Risk
+
+- `contentHash` is a deterministic checksum for diagnostics, not a cryptographic security boundary.
+- Existing old pages are not rewritten during workspace load; they are migrated when a normal PageRecord write touches them.
+- Native desktop click-through was not rerun for this infrastructure pass.
+
+### Next
+
+- Continue with `0.0.1.1.4` Add trash and undo foundation for page operations.
+
+---
+
+## 2026-07-19: 0.0.1.1.2 PageRecord Pipeline
+
+### What Changed
+
+- Completed `0.0.1.1.2`.
+- Added `js/core/pageRecord.js` as the shared parser/serializer/update boundary for page markdown records.
+- Kept `js/core/markdown.js` as a compatibility wrapper so older callers still receive the legacy parsed page shape.
+- Routed page creation, workspace scanning, desktop/browser page writes, aliases, tree parent/order updates, autosave, special entity saves, template-created pages, task tracker quick pages and token-converted pages through PageRecord metadata updates.
+- Preserved unknown front matter fields during ordinary metadata updates, so future metadata and imported fields are not lost by a local edit.
+- Added regression coverage for PageRecord parsing, relationship front matter, metadata updates, invalid relationship preservation and PageCommandService metadata preservation.
+- Removed `0.0.1.1.2` from the active plan.
+
+### Readiness
+
+MVP infrastructure. Main page read/write paths now share a PageRecord pipeline, and existing user workflows should continue to behave the same. Required `schemaVersion`, `updatedAt` and content hash/checksum are intentionally still active work in `0.0.1.1.3`.
+
+### Checks
+
+- `node --check js\core\pageRecord.js`
+- `node --check js\core\markdown.js`
+- `node --check js\storage\pageStorage.js`
+- `node --check js\editor\autosave.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check js\templates\pageTemplateStorage.js`
+- `node --check js\taskTracker\taskTrackerPageActions.js`
+- `node --check js\editor\campaignMapTokenActions.js`
+- `node --check tests\pageRecord.test.mjs`
+- `node --check tests\pageCommandService.test.mjs`
+- `node --test tests\pageRecord.test.mjs tests\pageCommandService.test.mjs tests\storageAdapter.test.mjs` 33 passed
+- `node --test tests\searchPages.test.mjs tests\knowledgeGraph.test.mjs tests\ruleTreeProvider.test.mjs` 17 passed
+- `npm run check:js`
+- `node tools\docs_index.mjs` 74 markdown files, metadata OK
+- `node tools\validate_agent_skills.mjs` 9 skills OK
+- `npm run check:encoding`
+- `git diff --check` passed with Windows CRLF warnings only
+- `npm run verify` 224 unit/static tests passed plus large-workspace performance smoke
+- `npm run test:browser` 80 passed
+
+### Remaining Risk
+
+- `schemaVersion`, `updatedAt` and content hash/checksum are not added yet; they belong to `0.0.1.1.3`.
+- A few body-only helpers still preserve existing front matter while replacing the body. They do not patch metadata, but can be pulled into PageRecord later if body serialization becomes fully centralized.
+- Native desktop click-through was not rerun for this infrastructure pass.
+
+### Next
+
+- Continue with `0.0.1.1.3` Add required page metadata fields.
+
+---
+
+## 2026-07-17: Bugs And Improvements Backlog
+
+### What Changed
+
+- Added `docs/01-delivery/BUGS_AND_IMPROVEMENTS_BACKLOG.md` as a lightweight intake file for bugs, rough edges and improvements that should be fixed when the related plan block is touched.
+- Linked the backlog from `PROJECT_PLAN.md` and `PRODUCT_DASHBOARD.md`.
+
+### Readiness
+
+Foundation. This creates the tracking habit and routing rules; it does not fix the listed issues by itself.
+
+### Checks
+
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+
+### Next
+
+- Continue with `0.0.1.1.2` Introduce a PageRecord pipeline.
+
+---
+
+## 2026-07-17: 0.0.1.1.1 PageCommandService Foundation
+
+### What Changed
+
+- Completed `0.0.1.1.1`.
+- Added `js/storage/pageCommandService.js` as the explicit command boundary for page mutations.
+- Routed page create, tree delete branch, single move, batch move, aliases update, autosave content update and title rename saves through command events.
+- Command events now record command type, affected page ids, phase order, status, duration and errors.
+- Added rollback hooks for failed command execution and content persistence.
+- Added regression coverage for command phase order, rollback and real page create/move/batch/aliases/delete routing.
+- Updated the lightweight workspace operations contract with the PageCommandService rules.
+- Removed `0.0.1.1.1` from the active plan.
+
+### Readiness
+
+MVP infrastructure. The existing user workflows keep working, and page mutations now have a command boundary. Full trash/undo, PageRecord parsing/serialization and richer recovery remain active follow-up work.
+
+### Checks
+
+- `node --check js\storage\pageCommandService.js`
+- `node --check js\storage\pageStorage.js`
+- `node --check js\editor\autosave.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check tests\pageCommandService.test.mjs`
+- `node --test tests\pageCommandService.test.mjs tests\storageAdapter.test.mjs tests\lightweightWorkspaceOperationsGate.test.mjs` 30 passed
+- `npm run check:js`
+- `node tools\docs_index.mjs`
+- `npm run check:encoding`
+- `npm run verify` 219 unit/static tests passed plus large-workspace performance smoke
+- `npm run test:browser` 80 passed
+
+### Remaining Risk
+
+- Existing page serialization still uses the current markdown/front matter helpers; `0.0.1.1.2` will introduce the dedicated PageRecord pipeline.
+- Delete branch still uses full/scoped backup rather than trash/undo. That is intentional until `0.0.1.1.4`.
+- Browser and verify checks pass, but native desktop click-through was not rerun in this pass.
+
+### Next
+
+- Continue with `0.0.1.1.2` Introduce a PageRecord pipeline.
+
+---
+
 ## 2026-07-17: 0.0.1.0.6-0.0.1.0.7 Project Status Docs And Definition Of Done
 
 ### What Changed

@@ -1,6 +1,9 @@
 const writeQueues =
   new Map();
 
+const writeRevisions =
+  new Map();
+
 
 let storageAdapterProvider =
   null;
@@ -25,6 +28,122 @@ export function getPageWriteKey(
     page?.path ||
     page?.name ||
     crypto.randomUUID();
+}
+
+export function createWriteRevision(
+  key,
+  metadata = {}
+) {
+
+  const writeKey =
+    normalizeWriteKey(
+      key
+    );
+
+  const previous =
+    writeRevisions.get(
+      writeKey
+    );
+
+  const entry = {
+    key:
+      writeKey,
+    revision:
+      Number(previous?.revision || 0) + 1,
+    state:
+      'changed',
+    createdAt:
+      new Date().toISOString(),
+    updatedAt:
+      new Date().toISOString(),
+    metadata:
+      {
+        ...metadata
+      },
+    error:
+      null
+  };
+
+  writeRevisions.set(
+    writeKey,
+    entry
+  );
+
+  return serializeWriteRevision(
+    entry
+  );
+}
+
+
+export function markWriteRevisionState(
+  revision,
+  state,
+  details = {}
+) {
+
+  const entry =
+    getCurrentRevisionEntry(
+      revision
+    );
+
+  if (!entry) return null;
+
+  entry.state =
+    state || entry.state;
+
+  entry.updatedAt =
+    new Date().toISOString();
+
+  entry.error =
+    details.error
+      ? String(details.error)
+      : null;
+
+  writeRevisions.set(
+    entry.key,
+    entry
+  );
+
+  return serializeWriteRevision(
+    entry
+  );
+}
+
+
+export function isWriteRevisionCurrent(
+  revision
+) {
+
+  return Boolean(
+    getCurrentRevisionEntry(
+      revision
+    )
+  );
+}
+
+
+export function getWriteRevisionState(
+  key
+) {
+
+  const entry =
+    writeRevisions.get(
+      normalizeWriteKey(
+        key
+      )
+    );
+
+  return entry
+    ? serializeWriteRevision(
+      entry
+    )
+    : null;
+}
+
+
+export function clearWriteRevisions() {
+
+  writeRevisions.clear();
 }
 
 
@@ -69,13 +188,15 @@ export function queueWrite(
 export function writeTextFile(
   handle,
   content,
-  key = handle?.name
+  key = handle?.name,
+  options = {}
 ) {
 
   return writeFile(
     handle,
     String(content),
-    key
+    key,
+    options
   );
 }
 
@@ -83,12 +204,41 @@ export function writeTextFile(
 export function writeFile(
   handle,
   content,
-  key = handle?.name
+  key = handle?.name,
+  options = {}
 ) {
 
+  const writeKey =
+    normalizeWriteKey(
+      key
+    );
+
   return queueWrite(
-    key,
+    writeKey,
     async () => {
+
+      if (
+        isStaleRevision(
+          options.revision
+        )
+      ) {
+
+        return createWriteResult({
+          key:
+            writeKey,
+          revision:
+            options.revision,
+          state:
+            'stale',
+          skipped:
+            true
+        });
+      }
+
+      markWriteRevisionState(
+        options.revision,
+        'saving'
+      );
 
       if (
         handle?.adapterPath &&
@@ -112,7 +262,10 @@ export function writeFile(
             content
           );
 
-          return;
+          return finishWriteResult(
+            writeKey,
+            options.revision
+          );
         }
 
         await storageAdapter.writeText(
@@ -120,7 +273,10 @@ export function writeFile(
           String(content)
         );
 
-        return;
+        return finishWriteResult(
+          writeKey,
+          options.revision
+        );
       }
 
       const writable =
@@ -129,6 +285,11 @@ export function writeFile(
       await writable.write(content);
 
       await writable.close();
+
+      return finishWriteResult(
+        writeKey,
+        options.revision
+      );
     }
   );
 }
@@ -136,8 +297,14 @@ export function writeFile(
 
 export function writePageContent(
   page,
-  content
+  content,
+  options = {}
 ) {
+
+  const writeKey =
+    getPageWriteKey(
+      page
+    );
 
   if (
     page?.path &&
@@ -152,17 +319,46 @@ export function writePageContent(
       return writeTextFile(
         page.handle,
         content,
-        getPageWriteKey(page)
+        writeKey,
+        options
       );
     }
 
     return queueWrite(
-      getPageWriteKey(page),
+      writeKey,
       async () => {
+
+        if (
+          isStaleRevision(
+            options.revision
+          )
+        ) {
+
+          return createWriteResult({
+            key:
+              writeKey,
+            revision:
+              options.revision,
+            state:
+              'stale',
+            skipped:
+              true
+          });
+        }
+
+        markWriteRevisionState(
+          options.revision,
+          'saving'
+        );
 
         await storageAdapter.writeText(
           page.path,
           String(content)
+        );
+
+        return finishWriteResult(
+          writeKey,
+          options.revision
         );
       }
     );
@@ -171,7 +367,149 @@ export function writePageContent(
   return writeTextFile(
     page.handle,
     content,
-    getPageWriteKey(page)
+    writeKey,
+    options
+  );
+}
+
+
+function finishWriteResult(
+  key,
+  revision
+) {
+
+  if (
+    revision &&
+    !isWriteRevisionCurrent(
+      revision
+    )
+  ) {
+
+    return createWriteResult({
+      key,
+      revision,
+      state:
+        'superseded-after-write',
+      written:
+        true
+    });
+  }
+
+  markWriteRevisionState(
+    revision,
+    'saved'
+  );
+
+  return createWriteResult({
+    key,
+    revision,
+    state:
+      'saved',
+    written:
+      true
+  });
+}
+
+
+function isStaleRevision(
+  revision
+) {
+
+  return Boolean(
+    revision &&
+    !isWriteRevisionCurrent(
+      revision
+    )
+  );
+}
+
+
+function getCurrentRevisionEntry(
+  revision
+) {
+
+  if (!revision?.key) return null;
+
+  const entry =
+    writeRevisions.get(
+      normalizeWriteKey(
+        revision.key
+      )
+    );
+
+  if (
+    !entry ||
+    entry.revision !== Number(revision.revision)
+  ) {
+
+    return null;
+  }
+
+  return entry;
+}
+
+
+function createWriteResult({
+  key,
+  revision,
+  state,
+  written = false,
+  skipped = false
+}) {
+
+  return {
+    key:
+      normalizeWriteKey(
+        key || revision?.key
+      ),
+    revision:
+      revision?.revision ?? null,
+    state,
+    written:
+      Boolean(written),
+    skipped:
+      Boolean(skipped),
+    current:
+      revision
+        ? isWriteRevisionCurrent(
+          revision
+        )
+        : true
+  };
+}
+
+
+function serializeWriteRevision(
+  entry
+) {
+
+  return {
+    key:
+      entry.key,
+    revision:
+      entry.revision,
+    state:
+      entry.state,
+    createdAt:
+      entry.createdAt,
+    updatedAt:
+      entry.updatedAt,
+    metadata:
+      {
+        ...entry.metadata
+      },
+    error:
+      entry.error
+  };
+}
+
+
+function normalizeWriteKey(
+  key
+) {
+
+  return String(
+    key || 'default'
   );
 }
 

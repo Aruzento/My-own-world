@@ -8,18 +8,18 @@ owner_zone: "architecture"
 
 # Lightweight Workspace Operations Contract
 
-Date: 2026-07-15
+Date: 2026-07-19
 
-Plan ref: `0.0.1.1.2`
+Plan refs: workspace operation hardening and active page lifecycle work.
 
 Implementation status:
 
-- `0.0.1.1.3`: implemented `TreeIndex` and repository-level tree validation.
-- `0.0.1.1.4`: implemented `.my-own-world-ops/` operation journal.
-- `0.0.1.1.5`: ordinary create and one-page parent-changing tree moves use lightweight journal entries instead of full workspace backup.
-- `0.0.1.1.6`: implemented background checkpoint queue and workspace validation checkpoint after tree/page mutations.
-- `0.0.1.1.7`: implemented per-parent tree order compaction through the background checkpoint queue.
-- `0.0.1.1.8`: implemented regression and timing gates for lightweight create/reorder/move/index/checkpoint paths.
+- `0.0.1.1.1`: implemented `PageCommandService` as the explicit command boundary for create, rename/update-content, aliases, single move, batch move and delete branch operations.
+- `0.0.1.1.2`: implemented `PageRecord` as the shared page markdown parser/serializer/update boundary for main page creation, scanning, save and metadata update paths.
+- `0.0.1.1.3`: implemented required PageRecord metadata fields: `schemaVersion`, `updatedAt` and diagnostic `contentHash`.
+- `0.0.1.1.4`: implemented page trash and undo foundation for delete, move and rename operations.
+- `0.0.1.1.6`: implemented write revisions for page content saves and visible save states for autosave/special-save flows.
+- Historical lightweight operations work already implemented `TreeIndex`, `.my-own-world-ops/` operation journal, lightweight create/move journal entries, background checkpoint queue, tree order compaction and performance gates.
 - Remaining: recovery UI for pending journal entries.
 
 ## Goal
@@ -33,8 +33,8 @@ The safety model is layered:
 1. In-memory indexes for fast reads.
 2. Atomic or queued single-file writes for local mutations.
 3. Lightweight operation journal for recoverable metadata changes.
-4. Small rollback snapshots for operations that change relationships.
-5. Full workspace backup only for destructive, bulk, schema, restore, import, and repair operations.
+4. Small rollback snapshots and page trash for directly affected pages.
+5. Full workspace backup only for destructive bulk, schema, restore, import, repair, and asset-wide operations.
 6. Background validation and checkpointing outside the pointer/click hot path.
 
 ## Non-Goals
@@ -73,6 +73,97 @@ The hot path may:
 
 ## Operation Safety Tiers
 
+## PageCommandService Contract
+
+`PageCommandService` is the command boundary for page mutations.
+
+Command phases:
+
+1. `validate`
+2. `createRollback`
+3. `apply`
+4. `persist`
+5. `updateIndexes`
+6. `publishEvent`
+
+Rules:
+
+- user-facing create, rename/update-content, aliases, tree move, batch move and delete branch operations must enter through the service;
+- command events record type, affected page ids, phase order, status, duration and error;
+- command rollback hooks must restore in-memory state when a command fails before durable recovery takes over;
+- existing operation journal and full/scoped backup rules still apply inside the command;
+- undo entries record type, affected page ids, label and a callable rollback action for the current session;
+- `rename-page` undo restores the previous metadata and file content;
+- tree move undo restores the previous `parent` and `order` through the PageRecord/write queue path;
+- page delete must write a durable trash manifest before removing files.
+
+## Page Trash Contract
+
+Page trash is the scoped restorable snapshot for ordinary page deletion.
+
+Rules:
+
+- delete branch writes `.my-own-world-trash/page-deletes/<trashId>/manifest.json`;
+- trashed page files are copied under `.my-own-world-trash/page-deletes/<trashId>/pages/`;
+- manifest entries keep `id`, `path`, `name`, `parent`, `order`, `title`, `template`, `type`, `originalPath` and `trashPath`;
+- restore writes trashed files back to their original workspace paths and rehydrates runtime page records through `PageRecord`;
+- restore must refuse to overwrite an existing page id or existing target file unless explicitly called as internal rollback;
+- ordinary page delete should not create `.my-own-world-backups`; trash is the page-scoped rollback artifact;
+- full backup is still required for schema repair, package import, restore, asset cleanup and other operations whose blast radius is wider than the known deleted branch.
+
+## PageRecord Pipeline Contract
+
+`PageRecord` is the serialization boundary for workspace page markdown files.
+
+Rules:
+
+- page front matter parsing, serialization and known metadata updates should go through `js/core/pageRecord.js`;
+- compatibility callers may use `parseMarkdown`, but new write paths should use PageRecord APIs directly;
+- known fields are `id`, `schemaVersion`, `updatedAt`, `contentHash`, `parent`, `order`, `tags`, `template`, `type`, `aliases` and `relationshipsJson`;
+- unknown front matter fields must be preserved unless a migration explicitly removes or replaces them;
+- new or rewritten pages must stamp the current page `schemaVersion` and `updatedAt`;
+- `contentHash` must be recomputed from the persistent page body on PageRecord writes;
+- `contentHash` is an incomplete-write diagnostic checksum, not a cryptographic security boundary;
+- relationships must serialize through one formatter so typed graph data keeps a stable front matter shape;
+- invalid `relationshipsJson` must not be silently erased by unrelated metadata edits;
+- persistent body sanitization should be supplied as a PageRecord serialization step when a caller writes user HTML;
+- write paths must not rebuild page front matter with ad-hoc string templates or local regexp replacements for known metadata.
+
+Current coverage:
+
+- page creation;
+- workspace scan runtime page creation;
+- title/body autosave;
+- aliases update;
+- tree parent/order updates;
+- special entity saves for campaign map, task tracker, Rule Tree and Knowledge Graph;
+- template-created pages;
+- task tracker quick-created pages;
+- map token conversion metadata updates.
+
+Known follow-up work:
+
+- move remaining body-only helpers into PageRecord if body serialization becomes fully centralized;
+- add migrations and diagnostics for impossible page metadata.
+
+## Write Revision Contract
+
+Every page content save that enters through `persistPageContentCommand()` must reserve a write revision for the page write key before it reaches the queue.
+
+Rules:
+
+- a newer revision for the same page write key supersedes older pending revisions;
+- a stale revision must not write the file if it has not started yet;
+- if an older revision already wrote before it noticed a newer intent, it must not update runtime `page.content`, PageRepository/PageIndex, undo entries or user-facing "saved" status;
+- autosave and special entity save flows should expose `changed`, `saving`, `saved`, `error` and `conflict` through the statusbar;
+- write revision state is runtime protection, not durable workspace metadata;
+- direct low-level `writePageContent()` callers may omit a revision only when the write is not an autosave/page content race path.
+
+Regression target:
+
+- queued stale writes skip file mutation;
+- racing page content commands keep the newest write as runtime and file truth.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.
@@ -93,6 +184,8 @@ Rules:
 - can run background after startup;
 - must not mutate user data;
 - may report warnings/errors.
+- PageIndex search must use cached search documents and incremental lifecycle updates instead of per-keypress page body parsing.
+- Search result rendering may show paths, excerpts and recent/recently edited pages, but these are read-only navigation views.
 
 ### Tier 1: Atomic Single-File Write
 
@@ -201,8 +294,8 @@ Rules:
 | Move page to another parent | Tier 2 | one page file + journal | no full backup by default | tree validation |
 | Order compaction for one parent | Tier 4 | one sibling set after action | no full backup when bounded to one parent | validation |
 | Move many pages | Tier 3 | many page files | full/scoped backup | validation, progress report |
-| Delete leaf page | Tier 3 if destructive | remove one page file | scoped page backup or trash/journal required | validation |
-| Delete branch | Tier 3 | many deletes | scoped backup of deleted branch pages | validation, progress report |
+| Delete leaf page | Tier 3 if destructive | trash copy + remove one page file | page trash required; no ordinary backup | validation |
+| Delete branch | Tier 3 | trash copy + many deletes | page trash required; no ordinary backup | validation, progress report |
 | Card autosave | Tier 1 | one page file | none | none or lightweight validation |
 | Map save | Tier 1 | one page file | none | map schema validation |
 | Task tracker save | Tier 1 | one page file | none | task schema validation |
@@ -323,6 +416,7 @@ Rules:
 - same-level reorder does not need content snapshot if it writes one metadata field and the journal has before/after metadata;
 - parent-changing move should have at least metadata snapshot;
 - rename should have metadata and title/body boundary snapshot;
+- delete should use page trash because full content restore is required;
 - create should have a delete-on-rollback marker for the new file;
 - duplicate should have a delete-on-rollback marker for the duplicate file.
 
@@ -337,7 +431,7 @@ This contract narrows when full backup is required:
 - ordinary tree reorder: no;
 - ordinary create/rename: no full backup, use journal;
 - one-page parent move: no full backup by default, use journal + rollback snapshot;
-- delete branch: yes;
+- delete branch: no ordinary backup, use page trash scoped to the deleted branch;
 - schema repair/upgrade: yes;
 - restore/import/bulk migration: yes;
 - asset cleanup: yes.
@@ -407,7 +501,7 @@ Required tests for implementation:
 - parent-changing move writes journal + one page and can recover from pending journal;
 - create page updates `PageIndex` and `TreeIndex` without full reload;
 - rename updates title/alias indexes;
-- delete branch still requires backup;
+- delete branch writes page trash and can restore deleted page files;
 - schema repair still requires backup;
 - background validation does not block tree drop;
 - order compaction rewrites only one sibling set and never runs during drag.

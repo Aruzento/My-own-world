@@ -5,7 +5,7 @@ import {
 
 
 test(
-  'tree-context-delete-removes-page-branch-after-backup',
+  'tree-context-delete-removes-page-branch-after-trash-snapshot',
   async ({ page }) => {
 
     await page.goto(
@@ -187,10 +187,10 @@ test(
               state.pages.map(candidate => candidate.id),
             removedPaths:
               testState.removedPaths,
-            backupFiles:
+            trashFiles:
               Array
                 .from(testState.files.keys())
-                .filter(path => path.includes('.my-own-world-backups/'))
+                .filter(path => path.includes('.my-own-world-trash/page-deletes/'))
           };
         }
       );
@@ -209,7 +209,7 @@ test(
     ]);
 
     expect(
-      result.backupFiles.length
+      result.trashFiles.length
     ).toBeGreaterThan(
       0
     );

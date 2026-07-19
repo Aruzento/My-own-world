@@ -130,7 +130,8 @@ export function revealPageInTree(
 }
 
 export function renderFilteredTree(
-  pages
+  pages,
+  options = {}
 ) {
 
   const tree =
@@ -157,10 +158,22 @@ export function renderFilteredTree(
     rootPages,
     rows
   } =
-    buildVisibleTreeRows(
-      pages,
-      collapsedPages
+    options.mode === 'search'
+      ? buildSearchTreeRows(
+        pages
+      )
+      : buildVisibleTreeRows(
+        pages,
+        collapsedPages
+      );
+
+  const renderOptions =
+    createTreeRenderOptions(
+      options
     );
+
+  const duplicateTitleIds =
+    getDuplicatePageTitleIds();
 
   if (
     shouldVirtualizeTree(
@@ -171,8 +184,33 @@ export function renderFilteredTree(
     renderVirtualizedTree(
       tree,
       rows,
-      previousScrollTop
+      previousScrollTop,
+      renderOptions
     );
+
+    return;
+  }
+
+  if (options.mode === 'search') {
+
+    rootPages.forEach(page => {
+
+      tree.appendChild(
+        createTreePageElement(
+          page,
+          0,
+          collapsedPages,
+          draggedPageState,
+          renderTree,
+          saveTreeExpansionState,
+          duplicateTitleIds,
+          renderOptions
+        )
+      );
+    });
+
+    tree.scrollTop =
+      previousScrollTop;
 
     return;
   }
@@ -186,7 +224,9 @@ export function renderFilteredTree(
       collapsedPages,
       draggedPageState,
       renderTree,
-      saveTreeExpansionState
+      saveTreeExpansionState,
+      duplicateTitleIds,
+      renderOptions
     );
   });
 
@@ -198,7 +238,8 @@ export function renderFilteredTree(
 function renderVirtualizedTree(
   tree,
   rows,
-  initialScrollTop = 0
+  initialScrollTop = 0,
+  renderOptions = {}
 ) {
 
   tree.classList.add(
@@ -249,6 +290,7 @@ function renderVirtualizedTree(
     items,
     bottomSpacer,
     duplicateTitleIds,
+    renderOptions,
     lastStart: -1,
     lastEnd: -1
   };
@@ -284,7 +326,8 @@ function renderVirtualTreeWindow() {
     topSpacer,
     items,
     bottomSpacer,
-    duplicateTitleIds
+    duplicateTitleIds,
+    renderOptions
   } =
     treeVirtualState;
 
@@ -336,7 +379,8 @@ function renderVirtualTreeWindow() {
           draggedPageState,
           renderTree,
           saveTreeExpansionState,
-          duplicateTitleIds
+          duplicateTitleIds,
+          renderOptions
         )
       );
     });
@@ -408,6 +452,52 @@ function getTreeRootOffset(
   if (!rootDropZone) return 0;
 
   return rootDropZone.offsetHeight + 4;
+}
+
+
+function buildSearchTreeRows(
+  pages
+) {
+
+  const rootPages =
+    Array.isArray(pages)
+      ? [...pages]
+      : [];
+
+  return {
+    rootPages,
+    rows:
+      rootPages.map(page => ({
+        page,
+        level: 0
+      }))
+  };
+}
+
+
+function createTreeRenderOptions(
+  options = {}
+) {
+
+  const searchResultByPageId =
+    new Map();
+
+  (options.searchResults || []).forEach(result => {
+
+    if (result?.page?.id) {
+
+      searchResultByPageId.set(
+        result.page.id,
+        result
+      );
+    }
+  });
+
+  return {
+    mode:
+      options.mode || 'tree',
+    searchResultByPageId
+  };
 }
 
 

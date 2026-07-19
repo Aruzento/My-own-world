@@ -3,6 +3,10 @@ import {
 } from '../core/markdown.js';
 
 import {
+  updatePageRecordContent
+} from '../core/pageRecord.js';
+
+import {
   createPage,
   writePageContent
 } from '../storage/storage.js';
@@ -222,20 +226,31 @@ export async function createPageFromTemplate(
     );
 
   const content =
-`---
-id: ${page.id}
-parent: ${parentId ?? 'null'}
-order: ${Date.now()}
-tags: [${(pageTemplate.tags || []).join(', ')}]
-template: ${pageTemplate.template || 'card'}
-type: ${pageTemplate.type || 'note'}
-aliases: []
----
-
-${sanitizePersistentHTMLOnSave(
-  body
-)}
-`;
+    updatePageRecordContent(
+      page.content,
+      {
+        id:
+          page.id,
+        parent:
+          parentId ?? null,
+        order:
+          Date.now(),
+        tags:
+          pageTemplate.tags || [],
+        template:
+          pageTemplate.template || 'card',
+        type:
+          pageTemplate.type || 'note',
+        aliases:
+          [],
+        relationships:
+          page.relationships || [],
+        body:
+          sanitizePersistentHTMLOnSave(
+            body
+          )
+      }
+    );
 
   await writePageContent(
     page,

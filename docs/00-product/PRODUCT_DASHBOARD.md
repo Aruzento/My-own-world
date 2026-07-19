@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-07-17
+Updated: 2026-07-19
 
 ## Current Product
 
@@ -50,7 +50,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in tree operations and map-heavy sessions.
-- Page lifecycle is not yet centralized through `PageCommandService` and a `PageRecord` pipeline.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle and runtime write revision protection; richer recovery remains open.
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.
 - Properties and CharacterModel are promising, but the character workflow still needs a clearer release-ready path.
@@ -61,5 +61,6 @@ This prevents "done" from meaning only "a model/helper was created".
 - Plan: `docs/01-delivery/PROJECT_PLAN.md`
 - Work log: `docs/01-delivery/WORK_LOG.md`
 - Bug inventory: `docs/01-delivery/BUG_INVENTORY.md`
+- Bugs and improvements backlog: `docs/01-delivery/BUGS_AND_IMPROVEMENTS_BACKLOG.md`
 - Definition of Done: `docs/01-delivery/DEFINITION_OF_DONE.md`
 - Agent rules: `AGENTS.md`

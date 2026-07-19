@@ -11,12 +11,23 @@ import {
 } from '../core/markdown.js';
 
 import {
+  buildPageRecordContent,
+  createRuntimePageFromContent,
+  updatePageRecordContent
+} from '../core/pageRecord.js';
+
+import {
   templates
 } from '../templates/templates.js';
 
 import {
   writePageContent
 } from './writeQueue.js';
+
+import {
+  executePageCommand,
+  registerPageUndoEntry
+} from './pageCommandService.js';
 
 import {
   requireWorkspaceBackupBeforeRiskyOperation
@@ -42,6 +53,10 @@ import {
 } from './storageAdapter.js';
 
 import {
+  normalizeWorkspacePath
+} from './storageAdapterContract.js';
+
+import {
   notifyPageCreated,
   notifyPageDeleted,
   notifyPageMoved,
@@ -56,6 +71,10 @@ import {
   createOrderCompactionPlan,
   getOrderCompactionNeed
 } from '../tree/treeOrderCompaction.js';
+
+
+const PAGE_TRASH_ROOT =
+  '.my-own-world-trash/page-deletes';
 
 
 export async function createPage(
@@ -77,18 +96,22 @@ export async function createPage(
     );
 
   const content =
-`---
-id: ${pageId}
-parent: ${parentId ?? 'null'}
-order: ${Date.now()}
-tags: [${template.tags.join(', ')}]
-template: ${template.template || templateKey}
-type: ${template.type || 'note'}
-aliases: []
----
-
-${templateContent}
-`;
+    buildPageContent({
+      id:
+        pageId,
+      parent:
+        parentId,
+      tags:
+        template.tags,
+      template:
+        template.template || templateKey,
+      type:
+        template.type || 'note',
+      aliases:
+        [],
+      body:
+        templateContent
+    });
 
   return writePageFile(
     content
@@ -151,6 +174,8 @@ export async function duplicatePageAsChild(
       template: parsed.template || 'card',
       type: parsed.type || 'note',
       aliases: parsed.aliases || [],
+      relationships:
+        parsed.relationships || [],
       body
     });
 
@@ -184,11 +209,6 @@ async function writePageFile(
     'pages'
   );
 
-  const parsed =
-    parseMarkdown(
-      content
-    );
-
   const fileName =
     `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.md`;
 
@@ -197,89 +217,170 @@ async function writePageFile(
 
   const page =
     createPageRecord({
-      parsed,
       name: fileName,
       path,
       content
     });
 
-  const journalEntry =
-    await beginWorkspaceOperation({
-      type: 'create-page',
-      affectedPages: [
+  let journalEntry =
+    null;
+
+  const previousPages =
+    [
+      ...state.pages
+    ];
+
+  return executePageCommand({
+    type:
+      'create-page',
+    affectedPages:
+      [
         page.id
       ],
-      before: {},
-      after: {
-        [page.id]:
+    validate() {
+
+      if (!page.id) {
+
+        throw new Error(
+          'Create page command requires a page id.'
+        );
+      }
+    },
+    createRollback() {
+
+      return {
+        previousPages,
+        createdPath:
+          path,
+        page:
           createPageJournalSnapshot(
             page
           )
-      }
-    });
+      };
+    },
+    async apply() {
 
-  try {
+      journalEntry =
+        await beginWorkspaceOperation({
+          type:
+            'create-page',
+          affectedPages:
+            [
+              page.id
+            ],
+          before:
+            {},
+          after: {
+            [page.id]:
+              createPageJournalSnapshot(
+                page
+              )
+          }
+        });
+    },
+    async persist() {
 
-    await storageAdapter.writeText(
-      path,
-      content
-    );
+      await storageAdapter.writeText(
+        path,
+        content
+      );
+    },
+    updateIndexes() {
 
-    setPages(
-      [
-        ...state.pages,
+      setPages(
+        [
+          ...state.pages,
+          page
+        ]
+      );
+
+      notifyPageCreated(
         page
-      ]
-    );
+      );
+    },
+    async publishEvent(context) {
 
-    notifyPageCreated(
-      page
-    );
+      await commitWorkspaceOperation(
+        journalEntry
+      );
 
-    await commitWorkspaceOperation(
-      journalEntry
-    );
+      scheduleWorkspaceCheckpoint({
+        reason:
+          'after-create-page'
+      });
 
-    scheduleWorkspaceCheckpoint({
-      reason: 'after-create-page'
-    });
+      context.result =
+        page;
+    },
+    async rollback(
+      error,
+      context
+    ) {
 
-  } catch (error) {
+      setPages(
+        context.rollbackData?.previousPages || previousPages
+      );
 
-    await failWorkspaceOperation(
-      journalEntry,
-      error
-    );
+      if (journalEntry) {
 
-    throw error;
-  }
+        await failWorkspaceOperation(
+          journalEntry,
+          error
+        );
+      }
 
-  return page;
+      try {
+
+        await storageAdapter.removeFile(
+          path
+        );
+
+      } catch (removeError) {
+
+        if (!isMissingFileDeleteError(removeError)) {
+
+          console.warn(
+            'Could not remove partially created page after command failure.',
+            removeError
+          );
+        }
+      }
+    },
+    getResult(context) {
+
+      return context.result;
+    }
+  });
 }
 
 
 function buildPageContent({
   id,
   parent,
+  order = Date.now(),
   tags,
   template,
   type,
   aliases,
-  body
+  relationships = [],
+  body,
+  frontMatter = null,
+  invalidFrontMatter = {}
 }) {
 
-  return `---
-id: ${id}
-parent: ${parent ?? 'null'}
-order: ${Date.now()}
-tags: [${tags.join(', ')}]
-template: ${template}
-type: ${type}
-aliases: [${aliases.join(', ')}]
----
-
-${body}
-`;
+  return buildPageRecordContent({
+    id,
+    parent,
+    order,
+    tags,
+    template,
+    type,
+    aliases,
+    relationships,
+    body,
+    frontMatter,
+    invalidFrontMatter
+  });
 }
 
 
@@ -289,12 +390,60 @@ export async function deletePageBranch(
   options = {}
 ) {
 
+  const livePage =
+    getLivePage(
+      page
+    ) || page;
+
+  const pagesToDelete =
+    livePage?.id
+      ? collectPageBranch(
+        livePage
+      )
+      : [];
+
   return measureWorkspaceOperation(
     'tree.deleteBranch',
-    () => deletePageBranchMeasured(
-      page,
-      options
-    ),
+    () => executePageCommand({
+      type:
+        'delete-page-branch',
+      affectedPages:
+        pagesToDelete.map(targetPage =>
+          targetPage.id
+        ),
+      validate() {
+
+        if (!livePage?.id) {
+
+          throw new Error(
+            'Delete page command requires a page id.'
+          );
+        }
+      },
+      createRollback() {
+
+        return {
+          pages:
+            pagesToDelete.map(targetPage =>
+              createPageJournalSnapshot(
+                targetPage
+              )
+            )
+        };
+      },
+      async apply(context) {
+
+        context.result =
+          await deletePageBranchMeasured(
+            livePage,
+            options
+          );
+      },
+      getResult(context) {
+
+        return context.result;
+      }
+    }),
     {
       counts: result => ({
         pages:
@@ -326,15 +475,14 @@ async function deletePageBranchMeasured(
 
   await ensureWorkspaceCanWrite();
 
-  await requireWorkspaceBackupBeforeRiskyOperation(
-    'delete-page-branch',
-    {
-      pages:
-        pagesToDelete,
-      onProgress:
-        options.onProgress
-    }
-  );
+  const trashEntry =
+    await createPageTrashEntry(
+      pagesToDelete,
+      {
+        type:
+          'delete-page-branch'
+      }
+    );
 
   const deletedPages =
     [];
@@ -394,6 +542,27 @@ async function deletePageBranchMeasured(
       )
     );
 
+  if (failedPages.length > 0) {
+
+    await restorePageTrashManifest(
+      trashEntry,
+      {
+        pageIds:
+          deletedPageIds,
+        overwriteExisting:
+          true,
+        updateState:
+          false,
+        scheduleCheckpoint:
+          false
+      }
+    );
+
+    throw new Error(
+      `Could not delete page files: ${failedPages.length}`
+    );
+  }
+
   setPages(
     state.pages.filter(
       existingPage =>
@@ -418,12 +587,472 @@ async function deletePageBranchMeasured(
     );
   }
 
+  registerPageUndoEntry({
+    type:
+      'undo-delete-page-branch',
+    label:
+      `Restore deleted branch: ${livePage.title || livePage.id}`,
+    affectedPages:
+      pagesToDelete.map(targetPage =>
+        targetPage.id
+      ),
+    undo:
+      async () =>
+        restorePageTrashEntry(
+          trashEntry.trashId
+        )
+  });
+
   return {
     deletedPages:
       deletedPages.length,
     failedPages:
-      failedPages.length
+      failedPages.length,
+    trashId:
+      trashEntry.trashId
   };
+}
+
+
+async function createPageTrashEntry(
+  pages,
+  options = {}
+) {
+
+  const storageAdapter =
+    getReadyStorageAdapter();
+
+  const trashId =
+    createPageTrashId(
+      options.type
+    );
+
+  const trashRoot =
+    `${PAGE_TRASH_ROOT}/${trashId}`;
+
+  const trashPagesRoot =
+    `${trashRoot}/pages`;
+
+  await storageAdapter.ensureDirectory(
+    trashPagesRoot
+  );
+
+  const trashPages =
+    [];
+
+  for (
+    let index = 0;
+    index < pages.length;
+    index += 1
+  ) {
+
+    const page =
+      pages[index];
+
+    const originalPath =
+      getPageStoragePath(
+        page
+      );
+
+    const content =
+      await readPageContentForTrash(
+        storageAdapter,
+        page,
+        originalPath
+      );
+
+    const trashPath =
+      `${trashPagesRoot}/${createTrashPageFileName(
+        index,
+        page
+      )}`;
+
+    await storageAdapter.writeText(
+      trashPath,
+      content
+    );
+
+    trashPages.push({
+      ...createPageJournalSnapshot(
+        page
+      ),
+      name:
+        page.name || getFileNameFromPath(
+          originalPath
+        ),
+      originalPath:
+        ensureDisplayPath(
+          originalPath
+        ),
+      trashPath:
+        normalizeWorkspacePath(
+          trashPath
+        )
+    });
+  }
+
+  const manifest = {
+    schemaVersion:
+      1,
+    trashId,
+    type:
+      options.type || 'page-delete',
+    createdAt:
+      new Date().toISOString(),
+    pageCount:
+      trashPages.length,
+    pages:
+      trashPages
+  };
+
+  await storageAdapter.writeText(
+    `${trashRoot}/manifest.json`,
+    JSON.stringify(
+      manifest,
+      null,
+      2
+    )
+  );
+
+  return manifest;
+}
+
+
+export async function restorePageTrashEntry(
+  trashId,
+  options = {}
+) {
+
+  const manifest =
+    await readPageTrashManifest(
+      trashId
+    );
+
+  return restorePageTrashManifest(
+    manifest,
+    options
+  );
+}
+
+
+async function readPageTrashManifest(
+  trashId
+) {
+
+  const safeTrashId =
+    normalizeTrashId(
+      trashId
+    );
+
+  if (!safeTrashId) {
+
+    throw new Error(
+      'Page trash id is required.'
+    );
+  }
+
+  const storageAdapter =
+    getReadyStorageAdapter();
+
+  return JSON.parse(
+    await storageAdapter.readText(
+      `${PAGE_TRASH_ROOT}/${safeTrashId}/manifest.json`
+    )
+  );
+}
+
+
+async function restorePageTrashManifest(
+  manifest,
+  options = {}
+) {
+
+  const storageAdapter =
+    getReadyStorageAdapter();
+
+  const pageIds =
+    options.pageIds instanceof Set
+      ? options.pageIds
+      : null;
+
+  const manifestPages =
+    Array.isArray(manifest?.pages)
+      ? manifest.pages
+      : [];
+
+  const pagesToRestore =
+    pageIds
+      ? manifestPages.filter(page =>
+        pageIds.has(
+          page.id
+        )
+      )
+      : manifestPages;
+
+  if (!options.overwriteExisting) {
+
+    assertTrashRestoreTargetsAreFree(
+      pagesToRestore
+    );
+  }
+
+  const restoredPages =
+    [];
+
+  for (const pageInfo of pagesToRestore) {
+
+    const originalPath =
+      pageInfo.originalPath || pageInfo.path;
+
+    const content =
+      await storageAdapter.readText(
+        pageInfo.trashPath
+      );
+
+    if (!options.overwriteExisting) {
+
+      await assertRestorePathIsFree(
+        storageAdapter,
+        originalPath
+      );
+    }
+
+    await storageAdapter.writeText(
+      originalPath,
+      content
+    );
+
+    restoredPages.push(
+      createPageRecord({
+        name:
+          pageInfo.name || getFileNameFromPath(
+            originalPath
+          ),
+        path:
+          ensureDisplayPath(
+            originalPath
+          ),
+        content
+      })
+    );
+  }
+
+  if (options.updateState !== false) {
+
+    setPages([
+      ...state.pages,
+      ...restoredPages
+    ]);
+  }
+
+  if (options.scheduleCheckpoint !== false) {
+
+    scheduleWorkspaceCheckpoint({
+      reason:
+        'after-page-trash-restore'
+    });
+  }
+
+  return {
+    trashId:
+      manifest.trashId || null,
+    restoredPages:
+      restoredPages.length
+  };
+}
+
+
+function assertTrashRestoreTargetsAreFree(
+  pagesToRestore
+) {
+
+  const existingIds =
+    new Set(
+      state.pages.map(page =>
+        page.id
+      )
+    );
+
+  const conflictingPage =
+    pagesToRestore.find(page =>
+      page.id &&
+      existingIds.has(
+        page.id
+      )
+    );
+
+  if (conflictingPage) {
+
+    throw new Error(
+      `Cannot restore page ${conflictingPage.id}: page already exists.`
+    );
+  }
+}
+
+
+async function assertRestorePathIsFree(
+  storageAdapter,
+  path
+) {
+
+  try {
+
+    await storageAdapter.readText(
+      path
+    );
+
+  } catch (error) {
+
+    if (isMissingFileDeleteError(error)) {
+
+      return;
+    }
+
+    throw error;
+  }
+
+  throw new Error(
+    `Cannot restore page file ${path}: file already exists.`
+  );
+}
+
+
+async function readPageContentForTrash(
+  storageAdapter,
+  page,
+  path
+) {
+
+  try {
+
+    return await storageAdapter.readText(
+      path
+    );
+
+  } catch (error) {
+
+    if (
+      isMissingFileDeleteError(error) &&
+      typeof page.content === 'string'
+    ) {
+
+      return page.content;
+    }
+
+    throw error;
+  }
+}
+
+
+function createPageTrashId(
+  type = 'page-delete'
+) {
+
+  const safeType =
+    String(type || 'page-delete')
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') ||
+    'page-delete';
+
+  const timestamp =
+    new Date()
+      .toISOString()
+      .replaceAll(':', '-')
+      .replaceAll('.', '-');
+
+  const suffix =
+    crypto.randomUUID
+      ? crypto.randomUUID().slice(
+        0,
+        8
+      )
+      : Math.random().toString(36).slice(
+        2,
+        10
+      );
+
+  return `${timestamp}-${safeType}-${suffix}`;
+}
+
+
+function createTrashPageFileName(
+  index,
+  page
+) {
+
+  const id =
+    String(page?.id || page?.name || `page-${index}`)
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') ||
+    `page-${index}`;
+
+  return `${String(index).padStart(4, '0')}-${id}.md`;
+}
+
+
+function normalizeTrashId(
+  trashId
+) {
+
+  return String(trashId || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9_.-]+/g, '');
+}
+
+
+function getPageStoragePath(
+  page
+) {
+
+  const path =
+    page?.path ||
+    (
+      page?.name
+        ? `/pages/${page.name}`
+        : ''
+    );
+
+  if (!path) {
+
+    throw new Error(
+      'Page path is required for trash.'
+    );
+  }
+
+  return ensureDisplayPath(
+    path
+  );
+}
+
+
+function ensureDisplayPath(
+  path
+) {
+
+  const normalized =
+    normalizeWorkspacePath(
+      path
+    );
+
+  return normalized
+    ? `/${normalized}`
+    : '';
+}
+
+
+function getFileNameFromPath(
+  path
+) {
+
+  return normalizeWorkspacePath(
+    path
+  )
+    .split('/')
+    .filter(Boolean)
+    .pop() ||
+    'page.md';
 }
 
 
@@ -519,6 +1148,8 @@ function isMissingFileDeleteError(
   return name === 'NotFoundError' ||
     code === 'ENOENT' ||
     code === 'desktop.file_not_found' ||
+    message.includes('missing ') ||
+    message.includes('\u0444\u0430\u0439\u043b \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d') ||
     message.includes('not found') ||
     message.includes('cannot find') ||
     message.includes('no such file');
@@ -604,9 +1235,100 @@ export async function updatePageParent(
   const previousContent =
     livePage.content;
 
-  const journalEntry =
-    await beginWorkspaceOperation(
-      createTreeOperationJournalData(
+  let journalEntry =
+    null;
+
+  return executePageCommand({
+    type:
+      'move-page-parent',
+    affectedPages:
+      [
+        livePage.id
+      ],
+    validate() {
+
+      if (!livePage?.id) {
+
+        throw new Error(
+          'Move parent command requires a page id.'
+        );
+      }
+    },
+    createRollback() {
+
+      return {
+        before:
+          createPageJournalSnapshot(
+            previousPage
+          ),
+        previousContent
+      };
+    },
+    async apply() {
+
+      journalEntry =
+        await beginWorkspaceOperation(
+          createTreeOperationJournalData(
+            [
+              {
+                livePage,
+                previousPage,
+                parentId,
+                order:
+                  livePage.order
+              }
+            ],
+            'move-page-parent'
+          )
+        );
+    },
+    async persist() {
+
+      livePage.parent =
+        parentId;
+
+      const updatedContent =
+        updatePageRecordContent(
+          livePage.content,
+          {
+            parent:
+              parentId
+          }
+        );
+
+      await writePageContent(
+        livePage,
+        updatedContent
+      );
+
+      livePage.content =
+        updatedContent;
+    },
+    updateIndexes() {
+
+      notifyPageMoved(
+        previousPage,
+        livePage
+      );
+    },
+    async publishEvent() {
+
+      await commitWorkspaceOperation(
+        journalEntry
+      );
+
+      scheduleWorkspaceCheckpoint({
+        reason:
+          'after-move-page-parent'
+      });
+
+      scheduleTreeOrderCompaction({
+        parentId,
+        reason:
+          'after-move-page-parent'
+      });
+
+      registerTreeMoveUndoEntry(
         [
           {
             livePage,
@@ -616,62 +1338,26 @@ export async function updatePageParent(
               livePage.order
           }
         ],
-        'move-page-parent'
-      )
-    );
-
-  try {
-
-    livePage.parent =
-      parentId;
-
-    const updatedContent =
-      livePage.content.replace(
-        /parent:\s*(.*)/i,
-        `parent: ${parentId ?? 'null'}`
+        'undo-page-move'
       );
+    },
+    async rollback(error) {
 
-    await writePageContent(
-      livePage,
-      updatedContent
-    );
+      livePage.parent =
+        previousPage.parent;
 
-    livePage.content =
-      updatedContent;
+      livePage.content =
+        previousContent;
 
-    notifyPageMoved(
-      previousPage,
-      livePage
-    );
+      if (journalEntry) {
 
-    await commitWorkspaceOperation(
-      journalEntry
-    );
-
-    scheduleWorkspaceCheckpoint({
-      reason: 'after-move-page-parent'
-    });
-
-    scheduleTreeOrderCompaction({
-      parentId,
-      reason: 'after-move-page-parent'
-    });
-
-  } catch (error) {
-
-    livePage.parent =
-      previousPage.parent;
-
-    livePage.content =
-      previousContent;
-
-    await failWorkspaceOperation(
-      journalEntry,
-      error
-    );
-
-    throw error;
-  }
+        await failWorkspaceOperation(
+          journalEntry,
+          error
+        );
+      }
+    }
+  });
 }
 
 
@@ -690,15 +1376,68 @@ export async function updatePageTreePosition(
 
   if (!change) return;
 
-  await applyPageTreePositionChanges(
-    [
-      change
-    ],
-    {
-      reason:
-        'after-tree-position-update'
+  return executePageCommand({
+    type:
+      'move-page-tree-position',
+    affectedPages:
+      [
+        change.livePage.id
+      ],
+    validate() {
+
+      if (!change.livePage?.id) {
+
+        throw new Error(
+          'Move page command requires a page id.'
+        );
+      }
+    },
+    createRollback() {
+
+      return {
+        before:
+          createPageJournalSnapshot(
+            change.previousPage
+          ),
+        after:
+          createPageJournalSnapshot({
+            ...change.livePage,
+            parent:
+              change.parentId,
+            order:
+              change.order
+          })
+      };
+    },
+      async apply(context) {
+
+        await applyPageTreePositionChanges(
+          [
+            change
+        ],
+        {
+          reason:
+            'after-tree-position-update'
+        }
+      );
+
+      registerTreeMoveUndoEntry(
+        [
+          change
+        ],
+        'undo-page-move'
+      );
+
+      context.result = {
+        changedPages:
+          1
+      };
+    },
+    getResult(context) {
+
+      return context.result;
     }
-  );
+  });
 }
 
 
@@ -709,10 +1448,53 @@ export async function updatePageTreePositions(
 
   return measureWorkspaceOperation(
     'tree.moveBatch',
-    () => updatePageTreePositionsMeasured(
-      updates,
-      options
-    ),
+    () => executePageCommand({
+      type:
+        'move-page-tree-position-batch',
+      affectedPages:
+        updates
+          .map(update =>
+            update?.page?.id
+          )
+          .filter(Boolean),
+      validate() {
+
+        if (!Array.isArray(updates)) {
+
+          throw new Error(
+            'Batch move command requires an updates array.'
+          );
+        }
+      },
+      createRollback() {
+
+        return {
+          before:
+            updates
+              .map(update =>
+                getLivePage(update?.page) || update?.page
+              )
+              .filter(Boolean)
+              .map(targetPage =>
+                createPageJournalSnapshot(
+                  targetPage
+                )
+              )
+        };
+      },
+      async apply(context) {
+
+        context.result =
+          await updatePageTreePositionsMeasured(
+            updates,
+            options
+          );
+      },
+      getResult(context) {
+
+        return context.result;
+      }
+    }),
     {
       counts: result => ({
         changedPages:
@@ -815,6 +1597,14 @@ async function updatePageTreePositionsMeasured(
 
     await commitWorkspaceOperation(
       journalEntry
+    );
+  }
+
+  if (!options.skipUndo) {
+
+    registerTreeMoveUndoEntry(
+      changes,
+      'undo-page-move-batch'
     );
   }
 
@@ -1070,6 +1860,101 @@ function scheduleTreeOrderCompactionForChanges(
 }
 
 
+function registerTreeMoveUndoEntry(
+  changes,
+  type
+) {
+
+  const rollbackTargets =
+    changes
+      .map(change => ({
+        id:
+          change.livePage?.id,
+        parent:
+          change.previousPage?.parent ?? null,
+        order:
+          change.previousPage?.order ?? 0
+      }))
+      .filter(target =>
+        target.id
+      );
+
+  if (rollbackTargets.length === 0) return;
+
+  registerPageUndoEntry({
+    type,
+    label:
+      rollbackTargets.length === 1
+        ? 'Undo page move'
+        : `Undo page move: ${rollbackTargets.length} pages`,
+    affectedPages:
+      rollbackTargets.map(target =>
+        target.id
+      ),
+    undo:
+      async () =>
+        undoTreePositionChanges(
+          rollbackTargets
+        )
+  });
+}
+
+
+async function undoTreePositionChanges(
+  rollbackTargets
+) {
+
+  const changes =
+    rollbackTargets
+      .map(target => {
+
+        const livePage =
+          getLivePage({
+            id:
+              target.id
+          });
+
+        if (!livePage) return null;
+
+        return {
+          livePage,
+          previousPage:
+            snapshotPageForIndex(
+              livePage
+            ),
+          previousContent:
+            livePage.content,
+          parentId:
+            target.parent,
+          order:
+            target.order
+        };
+      })
+      .filter(Boolean);
+
+  if (changes.length === 0) {
+
+    return {
+      changedPages:
+        0
+    };
+  }
+
+  await applyPageTreePositionChanges(
+    changes,
+    {
+      reason:
+        'after-page-move-undo'
+    }
+  );
+
+  return {
+    changedPages:
+      changes.length
+  };
+}
+
+
 function getWorkspaceIdForBackgroundJob() {
 
   const storageAdapter =
@@ -1126,51 +2011,15 @@ async function applyPageTreePositionChange({
   livePage.order =
     order;
 
-  let updatedContent =
-    livePage.content;
-
-  if (
-    /parent:\s*(.*)/i.test(
-      updatedContent
-    )
-  ) {
-
-    updatedContent =
-      updatedContent.replace(
-        /parent:\s*(.*)/i,
-        `parent: ${parentId ?? 'null'}`
-      );
-
-  } else {
-
-    updatedContent =
-      updatedContent.replace(
-        /---/,
-        `---\nparent: ${parentId ?? 'null'}`
-      );
-  }
-
-  if (
-    /order:\s*(.*)/i.test(
-      updatedContent
-    )
-  ) {
-
-    updatedContent =
-      updatedContent.replace(
-        /order:\s*(.*)/i,
-        `order: ${order}`
-      );
-
-  } else {
-
-    updatedContent =
-      updatedContent.replace(
-        /parent:\s*(.*)/i,
-        match =>
-          `${match}\norder: ${order}`
-      );
-  }
+  const updatedContent =
+    updatePageRecordContent(
+      livePage.content,
+      {
+        parent:
+          parentId,
+        order
+      }
+    );
 
   await writePageContent(
     livePage,
@@ -1296,46 +2145,80 @@ export async function updatePageAliases(
       page
     );
 
-  page.aliases =
-    aliases;
-
-  let updatedContent =
+  const previousContent =
     page.content;
 
-  if (
-    /aliases:\s*\[(.*?)\]/i.test(
-      updatedContent
-    )
-  ) {
+  return executePageCommand({
+    type:
+      'update-page-aliases',
+    affectedPages:
+      page?.id
+        ? [
+          page.id
+        ]
+        : [],
+    validate() {
 
-    updatedContent =
-      updatedContent.replace(
-        /aliases:\s*\[(.*?)\]/i,
-        `aliases: [${aliases.join(', ')}]`
+      if (!page?.id) {
+
+        throw new Error(
+          'Update aliases command requires a page id.'
+        );
+      }
+    },
+    createRollback() {
+
+      return {
+        before:
+          createPageJournalSnapshot(
+            previousPage
+          ),
+        previousContent
+      };
+    },
+    async persist() {
+
+      const nextAliases =
+        Array.isArray(aliases)
+          ? aliases
+          : [];
+
+      page.aliases =
+        nextAliases;
+
+      const updatedContent =
+        updatePageRecordContent(
+          page.content,
+          {
+            aliases:
+              nextAliases
+          }
+        );
+
+      await writePageContent(
+        page,
+        updatedContent
       );
 
-  } else {
+      page.content =
+        updatedContent;
+    },
+    updateIndexes() {
 
-    updatedContent =
-      updatedContent.replace(
-        /tags:\s*\[(.*?)\]/i,
-        match =>
-          `${match}\naliases: [${aliases.join(', ')}]`
+      notifyPageUpdated(
+        previousPage,
+        page
       );
-  }
+    },
+    rollback() {
 
-  await writePageContent(
-    page,
-    updatedContent
-  );
+      page.aliases =
+        previousPage.aliases || [];
 
-  page.content =
-    updatedContent;
-
-  notifyPageUpdated(
-    previousPage,
-    page
-  );
+      page.content =
+        previousContent;
+    }
+  });
 }
 
 
@@ -1394,14 +2277,8 @@ export async function scanDirectory(
     const content =
       await file.text();
 
-    const parsed =
-      parseMarkdown(
-        content
-      );
-
     state.pages.push(
       createPageRecord({
-        parsed,
         name: entry.name,
         path: currentPath,
         handle: entry,
@@ -1465,14 +2342,8 @@ async function scanAdapterDirectory(
         currentAdapterPath
       );
 
-    const parsed =
-      parseMarkdown(
-        content
-      );
-
     state.pages.push(
       createPageRecord({
-        parsed,
         name: entry.name,
         path: currentDisplayPath,
         content
@@ -1483,7 +2354,6 @@ async function scanAdapterDirectory(
 
 
 function createPageRecord({
-  parsed,
   name,
   path,
   handle = null,
@@ -1491,21 +2361,13 @@ function createPageRecord({
   content
 }) {
 
-  return {
-    id: parsed.id,
-    parent: parsed.parent,
-    order: parsed.order,
+  return createRuntimePageFromContent({
+    content,
     name,
-    title: parsed.title,
-    type: parsed.type,
-    tags: parsed.tags,
-    template: parsed.template,
-    aliases: parsed.aliases,
     path,
     handle,
-    parentDirHandle,
-    content
-  };
+    parentDirHandle
+  });
 }
 
 

@@ -345,3 +345,71 @@ export function findDuplicateTitles() {
 
   return pageIndex.findDuplicateTitles();
 }
+
+
+export function searchPages(
+  query,
+  options = {}
+) {
+
+  return pageIndex.searchPages(
+    query,
+    options
+  );
+}
+
+
+export function searchPageResults(
+  query,
+  options = {}
+) {
+
+  return pageIndex.searchPageResults(
+    query,
+    options
+  );
+}
+
+
+export function getPagePath(
+  pageOrId,
+  options = {}
+) {
+
+  return pageIndex.getPagePath(
+    pageOrId,
+    options
+  );
+}
+
+
+export function markPageOpened(
+  pageOrId,
+  options = {}
+) {
+
+  return pageIndex.markPageOpened(
+    pageOrId,
+    options
+  );
+}
+
+
+export function getRecentPages(
+  options = {}
+) {
+
+  return pageIndex.getRecentPages(
+    options
+  );
+}
+
+
+export function getRecentlyEditedPages(
+  options = {}
+) {
+
+  return pageIndex.getRecentlyEditedPages(
+    options
+  );
+}

@@ -5,6 +5,10 @@ import {
 } from '../core/markdown.js';
 
 import {
+  updatePageRecordContent
+} from '../core/pageRecord.js';
+
+import {
   deletePageBranch,
   duplicatePageAsChild,
   writePageContent
@@ -658,17 +662,26 @@ async function normalizeDuplicatedTokenPage(
     ];
 
   page.content =
-    page.content.replace(
-      /^---[\s\S]*?---/,
-      `---
-id: ${page.id}
-parent: ${page.parent ?? 'null'}
-order: ${page.order ?? Date.now()}
-tags: [${page.tags.join(', ')}]
-template: card
-type: ${tokenType}
-aliases: [${(page.aliases || []).join(', ')}]
----`
+    updatePageRecordContent(
+      page.content,
+      {
+        id:
+          page.id,
+        parent:
+          page.parent ?? null,
+        order:
+          page.order ?? Date.now(),
+        tags:
+          page.tags,
+        template:
+          'card',
+        type:
+          tokenType,
+        aliases:
+          page.aliases || [],
+        relationships:
+          page.relationships || []
+      }
     );
 
   await writePageContent(

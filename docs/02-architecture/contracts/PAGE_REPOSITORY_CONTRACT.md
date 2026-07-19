@@ -174,6 +174,33 @@ normalizeTitle(value)
 
 Индекс должен пересобираться после загрузки workspace и точечно обновляться после изменений.
 
+## Search Index And Recent Pages
+
+`PageIndex` also owns cached search documents. Search must not parse every markdown body on every keypress.
+
+Search document fields:
+
+- `pageId`;
+- normalized title;
+- normalized aliases;
+- normalized tags;
+- normalized persistent body text;
+- normalized file name;
+- `updatedAt` and parsed timestamp when available.
+
+Public read APIs:
+
+- `searchPages(query, options)` returns matching pages in ranked order;
+- `searchPageResults(query, options)` returns result metadata with `page`, `score`, `matchedFields`, `path`, `excerpt`, `updatedAt` and `updatedAtMs`;
+- `getPagePath(pageOrId)` returns a human-readable tree path;
+- `markPageOpened(pageOrId)` records a runtime recent-open entry;
+- `getRecentPages(options)` returns recent-open pages for the current app session;
+- `getRecentlyEditedPages(options)` returns pages sorted by metadata `updatedAt`.
+
+Ranking order should favor exact title matches, then aliases, title prefix/includes, tags, content and file name. Result rendering must add user text through DOM `textContent`, not `innerHTML`.
+
+Recent-open data is runtime UI state. It is useful for navigation but is not a workspace data source of truth.
+
 ## Lifecycle
 
 `PageRepository` должен поддерживать такие события:

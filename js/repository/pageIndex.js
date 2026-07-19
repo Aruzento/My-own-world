@@ -1,5 +1,9 @@
 // Индекс страниц: быстрый read-only слой для поиска по metadata.
 
+import {
+  parseMarkdown
+} from '../core/markdown.js';
+
 export class PageIndex {
 
   constructor(
@@ -15,6 +19,12 @@ export class PageIndex {
   rebuild(
     pages = []
   ) {
+
+    if (!this.recentOpenRecords) {
+
+      this.recentOpenRecords =
+        new Map();
+    }
 
     this.pages =
       Array.isArray(pages)
@@ -42,12 +52,17 @@ export class PageIndex {
     this.byTag =
       new Map();
 
+    this.searchDocuments =
+      new Map();
+
     this.pages.forEach(page => {
 
       this.addToIndexes(
         page
       );
     });
+
+    this.pruneRecentOpenRecords();
 
     return this;
   }
@@ -301,6 +316,248 @@ export class PageIndex {
   }
 
 
+  searchPages(
+    query,
+    options = {}
+  ) {
+
+    return this.searchPageResults(
+      query,
+      options
+    ).map(result =>
+      result.page
+    );
+  }
+
+
+  searchPageResults(
+    query,
+    options = {}
+  ) {
+
+    const normalizedQuery =
+      normalizeSearchText(
+        query
+      );
+
+    const limit =
+      normalizeLimit(
+        options.limit
+      );
+
+    const results =
+      this.getSearchDocuments()
+        .map(document =>
+          normalizedQuery
+            ? scoreSearchDocument(
+              document,
+              normalizedQuery,
+              this
+            )
+            : createSearchResult(
+              document,
+              {
+                score: 0,
+                matchedFields: [],
+                query: normalizedQuery,
+                index: this
+              }
+            )
+        )
+        .filter(Boolean)
+        .sort(compareSearchResults);
+
+    return results.slice(
+      0,
+      limit
+    );
+  }
+
+
+  getSearchDocuments() {
+
+    return this.pages
+      .map(page =>
+        this.searchDocuments.get(
+          normalizeId(
+            page?.id
+          )
+        )
+      )
+      .filter(Boolean);
+  }
+
+
+  getPagePath(
+    pageOrId,
+    options = {}
+  ) {
+
+    const page =
+      typeof pageOrId === 'object'
+        ? pageOrId
+        : this.getPageById(
+          pageOrId
+        );
+
+    if (!page?.id) return '';
+
+    const separator =
+      options.separator || ' / ';
+
+    return [
+      ...this.getParentChain(
+        page.id,
+        {
+          rootFirst: true
+        }
+      ),
+      page
+    ]
+      .map(getPageDisplayTitle)
+      .filter(Boolean)
+      .join(
+        separator
+      );
+  }
+
+
+  markPageOpened(
+    pageOrId,
+    options = {}
+  ) {
+
+    const pageId =
+      normalizeId(
+        typeof pageOrId === 'object'
+          ? pageOrId.id
+          : pageOrId
+      );
+
+    if (
+      !pageId ||
+      !this.getPageById(
+        pageId
+      )
+    ) {
+
+      return this;
+    }
+
+    this.recentOpenRecords.set(
+      pageId,
+      {
+        pageId,
+        openedAt:
+          createTimestamp(
+            options.now
+          )
+      }
+    );
+
+    this.pruneRecentOpenRecords();
+
+    return this;
+  }
+
+
+  getRecentPages(
+    options = {}
+  ) {
+
+    const limit =
+      normalizeLimit(
+        options.limit,
+        10
+      );
+
+    const results =
+      [...this.recentOpenRecords.values()]
+        .map(record => ({
+          ...record,
+          openedAtMs:
+            parseTimestamp(
+              record.openedAt
+            ),
+          page:
+            this.getPageById(
+              record.pageId
+            )
+        }))
+        .filter(result =>
+          result.page
+        )
+        .sort((left, right) =>
+          right.openedAtMs - left.openedAtMs
+        )
+        .slice(
+          0,
+          limit
+        )
+        .map(result => ({
+          page:
+            result.page,
+          openedAt:
+            result.openedAt,
+          path:
+            this.getPagePath(
+              result.page
+            )
+        }));
+
+    return options.includeMetadata
+      ? results
+      : results.map(result =>
+        result.page
+      );
+  }
+
+
+  getRecentlyEditedPages(
+    options = {}
+  ) {
+
+    const limit =
+      normalizeLimit(
+        options.limit,
+        10
+      );
+
+    const results =
+      this.getSearchDocuments()
+        .filter(document =>
+          Number.isFinite(
+            document.updatedAtMs
+          )
+        )
+        .map(document => ({
+          page:
+            document.page,
+          updatedAt:
+            document.updatedAt,
+          updatedAtMs:
+            document.updatedAtMs,
+          path:
+            this.getPagePath(
+              document.page
+            )
+        }))
+        .sort((left, right) =>
+          right.updatedAtMs - left.updatedAtMs
+        )
+        .slice(
+          0,
+          limit
+        );
+
+    return options.includeMetadata
+      ? results
+      : results.map(result =>
+        result.page
+      );
+  }
+
+
   findDuplicateTitles() {
 
     return [...this.byTitle.entries()]
@@ -500,6 +757,15 @@ export class PageIndex {
         page
       );
     });
+
+    this.searchDocuments.set(
+      normalizeId(
+        page.id
+      ),
+      createSearchDocument(
+        page
+      )
+    );
   }
 
 
@@ -555,6 +821,57 @@ export class PageIndex {
         pageId
       );
     });
+
+    this.searchDocuments.delete(
+      pageId
+    );
+  }
+
+
+  pruneRecentOpenRecords() {
+
+    if (!this.recentOpenRecords) {
+
+      this.recentOpenRecords =
+        new Map();
+
+      return;
+    }
+
+    const pageIds =
+      new Set(
+        this.pages.map(page =>
+          normalizeId(
+            page?.id
+          )
+        )
+      );
+
+    [...this.recentOpenRecords.keys()].forEach(pageId => {
+
+      if (
+        !pageIds.has(
+          pageId
+        )
+      ) {
+
+        this.recentOpenRecords.delete(
+          pageId
+        );
+      }
+    });
+
+    [...this.recentOpenRecords.entries()]
+      .sort(([, left], [, right]) =>
+        parseTimestamp(right.openedAt) - parseTimestamp(left.openedAt)
+      )
+      .slice(50)
+      .forEach(([pageId]) => {
+
+        this.recentOpenRecords.delete(
+          pageId
+        );
+      });
   }
 }
 
@@ -577,6 +894,510 @@ export function normalizeLookupValue(
   return String(value || '')
     .trim()
     .toLowerCase();
+}
+
+
+export function normalizeSearchText(
+  value
+) {
+
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+
+function createSearchDocument(
+  page
+) {
+
+  const parsed =
+    parsePageForSearch(
+      page?.content
+    );
+
+  const aliases =
+    normalizeSearchList(
+      page?.aliases?.length
+        ? page.aliases
+        : parsed.aliases
+    );
+
+  const tags =
+    normalizeSearchList(
+      page?.tags?.length
+        ? page.tags
+        : parsed.tags
+    );
+
+  const title =
+    getPageDisplayTitle(
+      page,
+      parsed
+    );
+
+  const body =
+    stripHtmlToText(
+      parsed.body || page?.content || ''
+    );
+
+  const name =
+    String(page?.name || '');
+
+  const updatedAt =
+    page?.updatedAt || parsed.updatedAt || '';
+
+  return {
+    pageId:
+      normalizeId(
+        page?.id
+      ),
+    page,
+    title,
+    aliases,
+    tags,
+    body,
+    name,
+    updatedAt,
+    updatedAtMs:
+      parseTimestamp(
+        updatedAt
+      ),
+    normalized:
+      {
+        title:
+          normalizeSearchText(
+            title
+          ),
+        aliases:
+          aliases.map(normalizeSearchText),
+        tags:
+          tags.map(normalizeSearchText),
+        body:
+          normalizeSearchText(
+            body
+          ),
+        name:
+          normalizeSearchText(
+            name
+          ),
+        all:
+          normalizeSearchText(
+            [
+              title,
+              ...aliases,
+              ...tags,
+              body,
+              name
+            ].join(' ')
+          )
+      }
+  };
+}
+
+
+function parsePageForSearch(
+  content
+) {
+
+  try {
+
+    return parseMarkdown(
+      content || ''
+    );
+
+  } catch (error) {
+
+    return {
+      title: '',
+      aliases: [],
+      tags: [],
+      body:
+        String(content || ''),
+      updatedAt: ''
+    };
+  }
+}
+
+
+function scoreSearchDocument(
+  document,
+  query,
+  index
+) {
+
+  let score =
+    0;
+
+  const matchedFields =
+    new Set();
+
+  score += scoreTextField(
+    document.normalized.title,
+    query,
+    {
+      exact: 1000,
+      prefix: 760,
+      includes: 620
+    },
+    matchedFields,
+    'title'
+  );
+
+  score += scoreListField(
+    document.normalized.aliases,
+    query,
+    {
+      exact: 900,
+      prefix: 700,
+      includes: 560
+    },
+    matchedFields,
+    'alias'
+  );
+
+  score += scoreListField(
+    document.normalized.tags,
+    query,
+    {
+      exact: 420,
+      prefix: 340,
+      includes: 260
+    },
+    matchedFields,
+    'tag'
+  );
+
+  score += scoreTextField(
+    document.normalized.body,
+    query,
+    {
+      exact: 0,
+      prefix: 0,
+      includes: 180
+    },
+    matchedFields,
+    'content'
+  );
+
+  score += scoreTextField(
+    document.normalized.name,
+    query,
+    {
+      exact: 180,
+      prefix: 130,
+      includes: 90
+    },
+    matchedFields,
+    'file'
+  );
+
+  if (
+    score === 0 &&
+    document.normalized.all.includes(
+      query
+    )
+  ) {
+
+    score =
+      20;
+
+    matchedFields.add(
+      'text'
+    );
+  }
+
+  if (score <= 0) return null;
+
+  return createSearchResult(
+    document,
+    {
+      score,
+      matchedFields:
+        [...matchedFields],
+      query,
+      index
+    }
+  );
+}
+
+
+function createSearchResult(
+  document,
+  {
+    score,
+    matchedFields,
+    query,
+    index
+  }
+) {
+
+  return {
+    page:
+      document.page,
+    score,
+    matchedFields,
+    path:
+      index.getPagePath(
+        document.pageId
+      ),
+    excerpt:
+      createSearchExcerpt(
+        document.body,
+        query
+      ),
+    updatedAt:
+      document.updatedAt,
+    updatedAtMs:
+      document.updatedAtMs
+  };
+}
+
+
+function scoreListField(
+  values,
+  query,
+  weights,
+  matchedFields,
+  fieldName
+) {
+
+  return values.reduce(
+    (highest, value) =>
+      Math.max(
+        highest,
+        scoreTextField(
+          value,
+          query,
+          weights,
+          matchedFields,
+          fieldName
+        )
+      ),
+    0
+  );
+}
+
+
+function scoreTextField(
+  value,
+  query,
+  weights,
+  matchedFields,
+  fieldName
+) {
+
+  if (!value || !query) return 0;
+
+  let score =
+    0;
+
+  if (
+    weights.exact &&
+    value === query
+  ) {
+
+    score =
+      weights.exact;
+
+  } else if (
+    weights.prefix &&
+    value.startsWith(
+      query
+    )
+  ) {
+
+    score =
+      weights.prefix;
+
+  } else if (
+    weights.includes &&
+    value.includes(
+      query
+    )
+  ) {
+
+    score =
+      weights.includes;
+  }
+
+  if (score > 0) {
+
+    matchedFields.add(
+      fieldName
+    );
+  }
+
+  return score;
+}
+
+
+function compareSearchResults(
+  left,
+  right
+) {
+
+  if (right.score !== left.score) {
+
+    return right.score - left.score;
+  }
+
+  if (right.updatedAtMs !== left.updatedAtMs) {
+
+    return right.updatedAtMs - left.updatedAtMs;
+  }
+
+  return normalizePageTitle(
+    left.page?.title
+  ).localeCompare(
+    normalizePageTitle(
+      right.page?.title
+    ),
+    'ru'
+  );
+}
+
+
+function createSearchExcerpt(
+  text,
+  query
+) {
+
+  const source =
+    String(text || '').replace(/\s+/g, ' ').trim();
+
+  if (!source || !query) return '';
+
+  const normalizedSource =
+    normalizeSearchText(
+      source
+    );
+
+  const index =
+    normalizedSource.indexOf(
+      query
+    );
+
+  if (index < 0) return '';
+
+  const start =
+    Math.max(
+      0,
+      index - 42
+    );
+
+  const end =
+    Math.min(
+      source.length,
+      index + query.length + 58
+    );
+
+  return `${start > 0 ? '...' : ''}${source.slice(start, end)}${end < source.length ? '...' : ''}`;
+}
+
+
+function getPageDisplayTitle(
+  page,
+  parsed = {}
+) {
+
+  return String(
+    page?.title ||
+    parsed.title ||
+    page?.name ||
+    ''
+  ).trim();
+}
+
+
+function stripHtmlToText(
+  value
+) {
+
+  return String(value || '')
+    .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function normalizeSearchList(
+  values
+) {
+
+  return (
+    Array.isArray(values)
+      ? values
+      : []
+  )
+    .map(value =>
+      String(value || '').trim()
+    )
+    .filter(Boolean);
+}
+
+
+function parseTimestamp(
+  value
+) {
+
+  const timestamp =
+    Date.parse(
+      value
+    );
+
+  return Number.isFinite(
+    timestamp
+  )
+    ? timestamp
+    : 0;
+}
+
+
+function createTimestamp(
+  value = null
+) {
+
+  if (value instanceof Date) {
+
+    return value.toISOString();
+  }
+
+  const normalized =
+    String(value || '').trim();
+
+  if (normalized) return normalized;
+
+  return new Date().toISOString();
+}
+
+
+function normalizeLimit(
+  value,
+  fallback = Number.POSITIVE_INFINITY
+) {
+
+  const limit =
+    Number(value);
+
+  if (
+    Number.isFinite(limit) &&
+    limit >= 0
+  ) {
+
+    return limit;
+  }
+
+  return fallback;
 }
 
 
