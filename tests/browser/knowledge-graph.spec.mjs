@@ -392,6 +392,41 @@ aliases: []
       initialScale
     );
 
+    const scaleBeforeWheel =
+      Number(
+        await stageLocator.getAttribute(
+          'data-scale'
+        )
+      );
+
+    const stageBoxForWheel =
+      await stageLocator.boundingBox();
+
+    await page.mouse.move(
+      stageBoxForWheel.x + stageBoxForWheel.width / 2,
+      stageBoxForWheel.y + stageBoxForWheel.height / 2
+    );
+
+    await page.mouse.wheel(
+      0,
+      -320
+    );
+
+    const scaleAfterWheel =
+      Number(
+        await stageLocator.getAttribute(
+          'data-scale'
+        )
+      );
+
+    expect(
+      scaleAfterWheel
+    ).toBeGreaterThan(
+      scaleBeforeWheel
+    );
+
+    await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
+
     const worldLocator =
       page.locator('[data-knowledge-graph-canvas-world]');
 
@@ -686,9 +721,68 @@ aliases: []
       editedHeroCard
     ).toBeVisible();
 
-    await editedHeroCard.click({
-      button: 'right'
-    });
+    const editedHeroCardBox =
+      await editedHeroCard.boundingBox();
+
+    const contextClickX =
+      editedHeroCardBox.x + editedHeroCardBox.width / 2;
+
+    const contextClickY =
+      editedHeroCardBox.y + editedHeroCardBox.height / 2;
+
+    await page.mouse.click(
+      contextClickX,
+      contextClickY,
+      {
+        button:
+          'right'
+      }
+    );
+
+    const nodeMenu =
+      page.locator('[data-knowledge-graph-node-menu]');
+
+    await expect(
+      nodeMenu
+    ).toBeVisible();
+
+    const nodeMenuBox =
+      await nodeMenu.boundingBox();
+
+    const viewportSize =
+      page.viewportSize();
+
+    expect(
+      nodeMenuBox.x
+    ).toBeGreaterThanOrEqual(
+      0
+    );
+
+    expect(
+      nodeMenuBox.y
+    ).toBeGreaterThanOrEqual(
+      0
+    );
+
+    expect(
+      nodeMenuBox.x + nodeMenuBox.width
+    ).toBeLessThanOrEqual(
+      viewportSize.width + 1
+    );
+
+    expect(
+      contextClickX >= nodeMenuBox.x - 12 &&
+        contextClickX <= nodeMenuBox.x + nodeMenuBox.width + 12
+    ).toBe(
+      true
+    );
+
+    expect(
+      contextClickY >= nodeMenuBox.y - 12 &&
+        contextClickY <= nodeMenuBox.y + nodeMenuBox.height + 12
+    ).toBe(
+      true
+    );
 
     await expect(
       page.locator('[data-knowledge-graph-node-menu-action="reset-position"]')
@@ -753,9 +847,26 @@ aliases: []
       page.locator('[data-knowledge-graph-connect-banner]')
     ).toBeVisible();
 
-    await page.locator('[data-knowledge-graph-connect-type]').selectOption('enemy');
-
     await page.locator('[data-knowledge-graph-canvas-node="world"]').click();
+
+    const connectPopup =
+      page.locator('[data-knowledge-graph-connect-popup]');
+
+    await expect(
+      connectPopup
+    ).toBeVisible();
+
+    await connectPopup
+      .locator('[data-knowledge-graph-connect-type]')
+      .selectOption('enemy');
+
+    await connectPopup
+      .locator('[data-knowledge-graph-connect-label]')
+      .fill('First conflict');
+
+    await connectPopup
+      .locator('[data-knowledge-graph-connect-action="create"]')
+      .click();
 
     await page.waitForFunction(
       async () => {
@@ -769,13 +880,37 @@ aliases: []
           ?.relationships
           ?.some(relationship =>
             relationship.type === 'enemy' &&
-            relationship.targetId === 'world'
+            relationship.targetId === 'world' &&
+            relationship.label === 'First conflict'
           );
       }
     );
 
-    await page.keyboard.press(
-      'Control+Z'
+    await page.evaluate(() => {
+
+      const graphDocument =
+        document.querySelector(
+          '.knowledge-graph-document'
+        );
+
+      graphDocument.dispatchEvent(
+        new KeyboardEvent(
+          'keydown',
+          {
+            key:
+              '\u044f',
+            code:
+              'KeyZ',
+            ctrlKey:
+              true,
+            bubbles:
+              true,
+            cancelable:
+              true
+          }
+        )
+      );
+    }
     );
 
     await page.waitForFunction(
@@ -811,7 +946,8 @@ aliases: []
           ?.relationships
           ?.some(relationship =>
             relationship.type === 'enemy' &&
-            relationship.targetId === 'world'
+            relationship.targetId === 'world' &&
+            relationship.label === 'First conflict'
           );
       }
     );
@@ -888,7 +1024,7 @@ aliases: []
           ?.some(relationship =>
             relationship.type === 'enemy' &&
             relationship.targetId === 'world' &&
-            !relationship.label
+            relationship.label === 'First conflict'
           );
       }
     );

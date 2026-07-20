@@ -6,6 +6,49 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: 0.0.1.5.5 Knowledge Graph Performance Gate And Canvas UX Fixes
+
+### What Changed
+
+- Completed `0.0.1.5.5`.
+- Added Knowledge Graph timings to the large-workspace performance smoke:
+  - graph model build;
+  - visible canvas slice generation;
+  - node/edge counts for the full graph and rendered slice.
+- Kept the large all-world graph bounded by rendering a slice instead of trying to draw every node at once.
+- Fixed graph Ctrl+Z for physical `KeyZ`, so Russian keyboard layout no longer blocks canvas undo.
+- Mouse wheel over the graph canvas now zooms at the cursor instead of scrolling the graph editor.
+- Right-click node menus now appear under the click area instead of drifting away from the node.
+- Creating a new relationship from the canvas now opens a small confirmation popup for type and readable label before saving.
+- Prevented transient relationship-creation state from being serialized into persistent graph HTML.
+
+### Readiness
+
+Usable. The graph can be opened and manipulated without the editor scrolling under the cursor, canvas undo works from the keyboard, relationship creation has a human-readable confirmation step, and the performance smoke now protects large graph slices.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: `node --check tools\run_large_workspace_performance_smoke.mjs`
+- Passed: `node tools\run_large_workspace_performance_smoke.mjs`
+  - full graph: 900 nodes, 894 edges;
+  - rendered slice: 96 nodes, 18 edges;
+  - graph model: 19 ms / 1200 ms budget;
+  - canvas slice: 11 ms / 500 ms budget.
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run verify` with 254 unit/integration tests and the synthetic large-workspace performance smoke.
+
+### Risk / Remaining
+
+- This is still a visual graph workbench, not the final RelationModel v2 or daily-use world operations surface.
+- Richer graph actions, relation source inspection and broader graph-tool workflows remain in the small backlog.
+- `0.0.1.5.6` remains active for graph regression coverage beyond the performance gate.
+
+### Next
+
+- Continue with `0.0.1.5.6` graph regression tests unless a higher-priority bug appears.
+
 ## 2026-07-20: 0.0.1.5.4.3 Knowledge Graph Relationship Context Actions
 
 ### What Changed

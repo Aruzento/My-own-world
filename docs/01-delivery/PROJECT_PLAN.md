@@ -59,10 +59,6 @@ Goal: map tools must be simple, fast, and usable during a live game.
 
 Goal: "Graph of relationships" should become a real visual map of the world, not just a list.
 
-0.0.1.5.5. Add graph performance gate.
-
-Description: large worlds should render graph slices, not freeze on a huge all-world graph.
-
 0.0.1.5.6. Add graph regression tests.
 
 Description: typed relationships, orphan view, visual graph data generation, and opening pages from graph.

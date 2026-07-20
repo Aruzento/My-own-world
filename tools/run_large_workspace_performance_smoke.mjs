@@ -3,6 +3,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { performance } from 'node:perf_hooks';
 
+import {
+  buildKnowledgeGraph,
+  buildKnowledgeGraphCanvasModel
+} from '../js/wiki/knowledgeGraph.js';
+
 
 const PAGE_COUNT =
   900;
@@ -23,11 +28,13 @@ const budgets =
     'wiki.lookup': 100,
     'tree.buildVisibleRows': 500,
     'tree.virtualRange': 100,
+    'knowledgeGraph.model': 1200,
+    'knowledgeGraph.canvasSlice': 500,
     'assets.scanReferences': 800,
     'assets.checkExisting': 1200,
     'map.openParse': 300,
     'mutation.createMoveDelete': 800,
-    total: 7000
+    total: 8500
   };
 
 
@@ -230,6 +237,32 @@ async function runSmoke(
     })
   );
 
+  const knowledgeGraph =
+    await timed(
+      timings,
+      'knowledgeGraph.model',
+      () => buildKnowledgeGraph(
+        pages
+      )
+    );
+
+  const knowledgeGraphCanvas =
+    await timed(
+      timings,
+      'knowledgeGraph.canvasSlice',
+      () => buildKnowledgeGraphCanvasModel(
+        knowledgeGraph,
+        {
+          filters: {
+            viewPreset:
+              'all'
+          },
+          maxNodes:
+            96
+        }
+      )
+    );
+
   const assetReferences =
     await timed(
       timings,
@@ -275,6 +308,16 @@ async function runSmoke(
       assetReferences.length,
     visibleRowCount:
       visibleRows.length,
+    knowledgeGraphNodeCount:
+      knowledgeGraph.nodes.length,
+    knowledgeGraphEdgeCount:
+      knowledgeGraph.edges.length,
+    knowledgeGraphVisibleNodeCount:
+      knowledgeGraphCanvas.nodes.length,
+    knowledgeGraphVisibleEdgeCount:
+      knowledgeGraphCanvas.edges.length,
+    knowledgeGraphHiddenNodeCount:
+      knowledgeGraphCanvas.hiddenNodeCount,
     totalDurationMs:
       Math.round(
         performance.now() - startedAt
