@@ -62,6 +62,62 @@ export function getCampaignMapCharacterState(
 }
 
 
+export function createCampaignMapCharacterTokenSnapshot(
+  page
+) {
+
+  const characterState =
+    getCampaignMapCharacterState(
+      page
+    );
+
+  if (!characterState) return null;
+
+  const health =
+    characterState.health || null;
+
+  const effects =
+    characterState.effects || {};
+
+  const conditionLabels =
+    effects.conditionLabels || [];
+
+  const effectTitles =
+    effects.effectTitles || [];
+
+  const flags =
+    effects.flags || {};
+
+  return {
+    hp:
+      health?.current ?? '',
+    hpMax:
+      health?.max ?? '',
+    hpTemp:
+      health?.temp ?? '',
+    initiativeModifier:
+      characterState.initiativeModifier,
+    armorClass:
+      characterState.armorClass ?? '',
+    speed:
+      characterState.speed ?? '',
+    conditionCount:
+      conditionLabels.length,
+    effectCount:
+      effectTitles.length,
+    effectsSummary:
+      [
+        ...conditionLabels,
+        ...effectTitles
+      ].join(', '),
+    incapacitated:
+      Boolean(flags.isIncapacitated),
+    speedZero:
+      Boolean(flags.speedIsZero)
+  };
+}
+
+
 export function getCampaignMapCharacterEffects(
   page
 ) {

@@ -6,6 +6,73 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: 0.0.1.4.5 Properties/CharacterModel Map Connection
+
+### What Changed
+
+- Completed `0.0.1.4.5`.
+- New character and creature `Properties` blocks no longer start with unreadably narrow standard fields; the default grid uses wider top metrics, a separate armor row, one-row abilities and readable skill groups.
+- Item `Properties` now treats armor as one compound `Armor` field with stable nested keys: `armorKind`, `armorBaseAc` and `armorDexMax`. The owner can delete or restore that armor group as one field from the gear popup.
+- Map tokens created from character/creature cards now receive a `CharacterModel` snapshot for HP, max HP, temp HP, AC, speed, initiative modifier and active effect/status summary.
+- Restored map tokens refresh the same snapshot through `campaignMapCharacterBridge`, so the map does not read random card HTML for these combat values.
+- Release notes, tester instructions, dashboard, backlog and subsystem contracts were updated.
+
+### Readiness
+
+Usable. The owner can create an item armor profile in one Properties group, pick that item on a character/creature, place the card on the map and see HP/AC/speed/effect data travel through the model-backed token path.
+
+### Checks
+
+- Passed: `node --test tests\propertyBlocks.test.mjs tests\propertiesCalculationEngine.test.mjs tests\campaignMapModel.test.mjs tests\campaignMapInitiativeModel.test.mjs`
+- Passed: `npm run check:js`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: `npm run verify`
+- Passed: `npm run test:browser` with 82 browser tests.
+
+### Risk / Remaining
+
+- Existing cards keep their saved manual Properties layouts. The wider defaults affect new blocks and fields without stored layout.
+- This closes the current Properties/Character map integration path, but `0.0.1.4.6` still needs to simplify the visible block creation menu for the owner.
+
+### Next
+
+- Continue with `0.0.1.4.6` Simplify block creation.
+
+## 2026-07-20: 0.0.1.4.4 Armor Picker For Character Properties
+
+### What Changed
+
+- Completed `0.0.1.4.4`.
+- Character and creature `Properties` blocks now rebuild the `Armor` select list from workspace item cards.
+- Only item cards whose own item `Properties` block has an armor type are offered in the `Armor` field.
+- Existing stale/manual references to ordinary items are preserved visibly as unavailable values, but they no longer feed AC calculations.
+- DnD armor calculations now use an internal armor-kind key, so normal Russian values and legacy mojibake values are both handled.
+
+### Readiness
+
+Usable. The owner can create or open item cards, mark one item as armor in its `Properties`, then pick only that item from a character/creature `Armor` field and see AC update.
+
+### Checks
+
+- Passed: `node --check js/properties/propertiesCalculationEngine.js`
+- Passed: `node --check js/editor/propertiesAutoCalculations.js`
+- Passed: `node --test tests/propertiesCalculationEngine.test.mjs`
+- Passed: `npm run verify`
+- Passed: `npm run docs:index`
+- Passed: `npm run agents:validate`
+- Passed: `npm run test:browser` with 81 browser tests.
+
+### Risk / Remaining
+
+- The repo still contains old mojibake strings in several docs/code areas. This task protects armor-kind calculations from those legacy values, but it does not clean the wider encoding backlog.
+- `0.0.1.4.5` remains open: map tokens still need the explicit Properties/CharacterModel integration path for HP, AC, initiative, effects and statuses.
+
+### Next
+
+- Continue with `0.0.1.4.5` Connect Properties/CharacterModel to the map.
+
 ## 2026-07-20: 0.0.1.4.3 Visible DnD Character Calculations
 
 ### What Changed

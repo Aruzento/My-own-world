@@ -406,11 +406,34 @@ test(
           return {
             tokenModifier:
               token.dataset.initiativeModifier,
+            tokenHp:
+              token.dataset.hp,
+            tokenHpMax:
+              token.dataset.hpMax,
+            tokenArmorClass:
+              token.dataset.armorClass,
+            tokenSpeed:
+              token.dataset.speed,
             modelModifier:
               getCampaignMapStore(map)
                 .getModel()
                 .tokens[0]
                 .initiativeModifier,
+            modelHp:
+              getCampaignMapStore(map)
+                .getModel()
+                .tokens[0]
+                .hp,
+            modelArmorClass:
+              getCampaignMapStore(map)
+                .getModel()
+                .tokens[0]
+                .armorClass,
+            modelSpeed:
+              getCampaignMapStore(map)
+                .getModel()
+                .tokens[0]
+                .speed,
             popupModifier:
               initiativeInput.dataset.modifier,
             conditionCount:
@@ -428,9 +451,51 @@ test(
     );
 
     expect(
+      result.tokenHp
+    ).toBe(
+      '7'
+    );
+
+    expect(
+      result.tokenHpMax
+    ).toBe(
+      '12'
+    );
+
+    expect(
+      result.tokenArmorClass
+    ).toBe(
+      '13'
+    );
+
+    expect(
+      result.tokenSpeed
+    ).toBe(
+      '0'
+    );
+
+    expect(
       result.modelModifier
     ).toBe(
       5
+    );
+
+    expect(
+      result.modelHp
+    ).toBe(
+      7
+    );
+
+    expect(
+      result.modelArmorClass
+    ).toBe(
+      13
+    );
+
+    expect(
+      result.modelSpeed
+    ).toBe(
+      0
     );
 
     expect(

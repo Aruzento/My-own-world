@@ -1249,6 +1249,90 @@
 }
 
 
+.card-property-compound-field {
+  align-content:
+    stretch;
+}
+
+
+.card-property-compound-grid {
+  grid-column:
+    1 / -1;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(104px, 1.5fr) minmax(62px, 0.75fr) minmax(92px, 1fr);
+
+  gap:
+    7px;
+
+  min-width:
+    0;
+}
+
+
+.card-property-subfield {
+  min-width:
+    0;
+
+  display:
+    grid;
+
+  gap:
+    4px;
+}
+
+
+.card-property-compound-grid .card-property-subfield span {
+  grid-column:
+    1 / -1;
+
+  overflow:
+    hidden;
+
+  color:
+    rgba(255,255,255,0.52);
+
+  font-size:
+    10px;
+
+  font-weight:
+    700;
+
+  line-height:
+    1.15;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.card-property-compound-grid input,
+.card-property-compound-grid select {
+  grid-column:
+    1 / -1;
+
+  height:
+    30px;
+
+  padding:
+    0 7px;
+}
+
+
+.card-property-compound-field[data-property-span="1"] .card-property-compound-grid,
+.card-property-compound-field[data-property-span="2"] .card-property-compound-grid,
+.card-property-compound-field[data-property-span="3"] .card-property-compound-grid {
+  grid-template-columns:
+    1fr;
+}
+
+
 .card-property-field span {
 
   grid-column:

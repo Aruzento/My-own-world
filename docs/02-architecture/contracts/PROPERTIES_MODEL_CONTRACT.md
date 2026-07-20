@@ -123,7 +123,7 @@ owner_zone: "architecture"
 
 `Бонус мастерства` (`proficiencyBonus`) и `Инициатива` (`initiative`) являются видимыми стандартными полями персонажа/существа. `proficiencyBonus` считается от уровня, `initiative` считается от модификатора ЛОВ. Оба поля можно изменить вручную; ручное значение не перетирается runtime-авторасчетом и передается в `CharacterModel` через `manualOverrides`.
 
-КЗ персонажа/существа считается через поле `Доспех` (`armorItem`) и свойства выбранной карточки-предмета. У предмета для этого есть поля `Тип доспеха`, `Базовая КЗ доспеха`, `Лимит ЛОВ к КЗ`. Правила DnD:
+КЗ персонажа/существа считается через поле `Доспех` (`armorItem`) и свойства выбранной карточки-предмета. У предмета для этого есть поля `Тип доспеха`, `Базовая КЗ доспеха`, `Лимит ЛОВ к КЗ`. Поле `armorItem` в runtime UI должно предлагать только карточки типа `item`, у которых собственный блок `Свойства` содержит `Тип доспеха`, отличный от `Нет`/пустого значения. Старая сохраненная ссылка на обычный предмет может быть показана как недоступная, но не должна участвовать в расчете КЗ. Правила DnD:
 
 - без доспеха: `10 + модификатор ЛОВ`;
 - легкий доспех: `base + модификатор ЛОВ`;
@@ -132,6 +132,26 @@ owner_zone: "architecture"
 - щит: `10 + модификатор ЛОВ + base`.
 
 Если доспех не выбран, но в старой карточке уже явно записана КЗ, значение считается legacy/manual базой для совместимости.
+
+## Compound Fields
+
+`Properties` may expose a visible compound field when several stable model keys are one human concept.
+
+Current example: item armor settings are one visible `Armor` field (`armorProfile`) with three nested controls:
+
+- `armorKind` - armor type;
+- `armorBaseAc` - armor AC/base AC;
+- `armorDexMax` - DEX modifier limit.
+
+The compound field is a UI/layout grouping only. `PropertiesModel` and calculation code still read the nested stable keys, so old calculations, `armorItem` filtering and `CharacterModel` do not need a parallel armor model.
+
+Rules:
+
+- a compound field can be deleted/restored from the gear popup as one row;
+- nested controls must keep their own `data-property-name` values;
+- `getSchemaValueFields()` must flatten compound fields for model reads;
+- field layout belongs to the compound wrapper, not to each nested control;
+- use compound fields only when deleting or moving the parts separately would be confusing for the owner.
 
 ## Layout Grid
 

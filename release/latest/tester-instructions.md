@@ -1,5 +1,30 @@
 # Tester Instructions
 
+## 2026-07-20: Properties To Map Character Snapshot
+
+1. Open or create a character/creature card and add a `Properties` block.
+2. Expected result: standard fields are readable immediately; labels should not require manual resizing.
+3. Open or create an item card and add `Properties`.
+4. Expected result: item armor settings appear as one `Armor` group with armor type, AC and DEX limit.
+5. Open the Properties gear popup for the item and delete the `Armor` row.
+6. Expected result: armor type, AC and DEX limit disappear together as one field group.
+7. Re-add `Armor` from the same popup, mark the item as armor, then select it in the character/creature `Armor` field.
+8. Place that character/creature on a campaign map.
+9. Expected result: the token receives HP, AC, speed, initiative and active effect/status data from the character model.
+
+## 2026-07-20: Armor Picker For Character Properties
+
+1. Create or open two item cards.
+2. On the first item, add/open `Properties` and set `Armor type` to light, medium, heavy armor or shield. Set a base AC value.
+3. On the second item, keep `Armor type` empty or `None`.
+4. Open a character or creature card with a `Properties` block.
+5. Open the `Armor` field.
+6. Expected result: only the item marked as armor appears as a selectable armor item. The ordinary item is not listed.
+7. Select the armor item and set DEX.
+8. Expected result: AC updates from the selected item's armor properties.
+9. Change that item back to `None`/empty armor type, reopen the character Properties block, and check `Armor` again.
+10. Expected result: the item is no longer offered as armor and should not affect AC.
+
 ## 2026-07-20: Visible DnD Character Calculations
 
 1. Open a character or creature card and add/create a `Properties` block.

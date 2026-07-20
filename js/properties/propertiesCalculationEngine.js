@@ -4,7 +4,8 @@ import {
 } from './propertiesModel.js';
 
 import {
-  DND_SKILL_GROUPS
+  DND_SKILL_GROUPS,
+  PROPERTY_ARMOR_KIND_OPTIONS
 } from './propertySchemas.js';
 
 
@@ -15,6 +16,14 @@ export const PROPERTY_CALCULATION_ABILITY_KEYS = [
   'int',
   'wis',
   'cha'
+];
+
+const ARMOR_KIND_KEYS_BY_OPTION_INDEX = [
+  'none',
+  'light',
+  'medium',
+  'heavy',
+  'shield'
 ];
 
 
@@ -447,9 +456,34 @@ export function calculateDndArmorClass(
     );
 
   const kind =
-    normalizeArmorKind(
+    normalizeArmorKindKey(
       armorKind
     );
+
+  if (kind === 'light') {
+
+    return (base ?? 11) + dex;
+  }
+
+  if (kind === 'medium') {
+
+    return (base ?? 12) + Math.min(
+      dex,
+      normalizeOptionalNumber(
+        armorDexMax
+      ) ?? 2
+    );
+  }
+
+  if (kind === 'heavy') {
+
+    return base ?? 16;
+  }
+
+  if (kind === 'shield') {
+
+    return 10 + dex + (base ?? 2);
+  }
 
   if (kind === 'Легкий') {
 
@@ -567,16 +601,16 @@ function resolveArmorCalculation(
     );
 
   const armorPage =
-    findArmorPage(
+    findArmorItemPage(
       pages,
       armorReference
     );
 
   const armorProperties =
     armorPage
-      ? (armorPage.propertiesModels || readPropertiesModelsFromHTML(
-        armorPage.content
-      )).find(model => model.cardType === 'item')
+      ? getArmorPageProperties(
+        armorPage
+      )
       : null;
 
   const armorKind =
@@ -751,7 +785,34 @@ function createHealthCalculation(
 }
 
 
-function findArmorPage(
+export function getArmorItemPages(
+  pages = []
+) {
+
+  return (pages || [])
+    .filter(isArmorItemPage);
+}
+
+
+export function isArmorItemPage(
+  page
+) {
+
+  if (page?.type !== 'item') return false;
+
+  return isArmorKindValue(
+    getPropertyValue(
+      getArmorPageProperties(
+        page
+      ),
+      'armorKind',
+      ''
+    )
+  );
+}
+
+
+export function findArmorItemPage(
   pages,
   reference
 ) {
@@ -763,10 +824,10 @@ function findArmorPage(
 
   if (!normalized) return null;
 
-  return (pages || [])
+  return getArmorItemPages(
+    pages
+  )
     .find(page => {
-
-      if (page?.type !== 'item') return false;
 
       const candidates = [
         page.id,
@@ -783,6 +844,28 @@ function findArmorPage(
 }
 
 
+export function getArmorPageProperties(
+  page
+) {
+
+  if (page?.type !== 'item') return null;
+
+  return (page.propertiesModels || readPropertiesModelsFromHTML(
+    page.content
+  )).find(model => model.cardType === 'item') || null;
+}
+
+
+export function isArmorKindValue(
+  value
+) {
+
+  return normalizeArmorKindKey(
+    value
+  ) !== 'none';
+}
+
+
 function getArmorDexPartValue(
   {
     armorKind,
@@ -792,9 +875,21 @@ function getArmorDexPartValue(
 ) {
 
   const kind =
-    normalizeArmorKind(
+    normalizeArmorKindKey(
       armorKind
     );
+
+  if (kind === 'heavy') return 0;
+
+  if (kind === 'medium') {
+
+    return Math.min(
+      dexModifier,
+      normalizeOptionalNumber(
+        armorDexMax
+      ) ?? 2
+    );
+  }
 
   if (kind === 'Тяжелый') return 0;
 
@@ -1047,6 +1142,45 @@ function normalizeOptionalNumber(
   return Number.isFinite(number)
     ? Math.floor(number)
     : null;
+}
+
+
+function normalizeArmorKindKey(
+  value
+) {
+
+  const normalized =
+    normalizeLookup(
+      value
+    );
+
+  const optionIndex =
+    PROPERTY_ARMOR_KIND_OPTIONS.findIndex(option =>
+      normalizeLookup(
+        option
+      ) === normalized
+    );
+
+  if (optionIndex >= 0) {
+
+    return ARMOR_KIND_KEYS_BY_OPTION_INDEX[optionIndex] || 'none';
+  }
+
+  if (normalized.includes('\u0440\u203a\u0440\u00b5')) return 'light';
+  if (normalized.includes('\u0440\u045e\u0441\u0452')) return 'medium';
+  if (normalized.includes('\u0440\u045e\u0441\u045f')) return 'heavy';
+  if (normalized.includes('\u0440\u00a9\u0440\u0451')) return 'shield';
+
+  if (normalized.includes('лег')) return 'light';
+  if (normalized.includes('light')) return 'light';
+  if (normalized.includes('сред')) return 'medium';
+  if (normalized.includes('medium')) return 'medium';
+  if (normalized.includes('тяж')) return 'heavy';
+  if (normalized.includes('heavy')) return 'heavy';
+  if (normalized.includes('щит')) return 'shield';
+  if (normalized.includes('shield')) return 'shield';
+
+  return 'none';
 }
 
 

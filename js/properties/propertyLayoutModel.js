@@ -2,7 +2,7 @@ export const PROPERTY_LAYOUT_COLUMNS =
   12;
 
 export const PROPERTY_LAYOUT_DEFAULT_WIDTH =
-  3;
+  4;
 
 export const PROPERTY_LAYOUT_MIN_WIDTH =
   1;

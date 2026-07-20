@@ -53,8 +53,68 @@ export function applyTokenRecordToElement(
     tokenRecord.imageAsset
   );
 
+  syncDatasetValue(
+    tokenElement,
+    'hp',
+    tokenRecord.hp
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'hpMax',
+    tokenRecord.hpMax
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'hpTemp',
+    tokenRecord.hpTemp
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'armorClass',
+    tokenRecord.armorClass
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'speed',
+    tokenRecord.speed
+  );
+
   tokenElement.dataset.initiativeModifier =
     String(tokenRecord.initiativeModifier);
+
+  syncDatasetValue(
+    tokenElement,
+    'conditionCount',
+    tokenRecord.conditionCount
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'effectCount',
+    tokenRecord.effectCount
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'effectsSummary',
+    tokenRecord.effectsSummary
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'incapacitated',
+    tokenRecord.incapacitated ? 'true' : ''
+  );
+
+  syncDatasetValue(
+    tokenElement,
+    'speedZero',
+    tokenRecord.speedZero ? 'true' : ''
+  );
 
   tokenElement.dataset.sourceMode =
     tokenRecord.sourceMode === 'original'
@@ -147,6 +207,28 @@ export function applyShapeRecordToElement(
     shapeRecord.presentationHidden
       ? 'true'
       : 'false';
+}
+
+
+function syncDatasetValue(
+  element,
+  key,
+  value
+) {
+
+  if (
+    value !== undefined &&
+    value !== null &&
+    value !== ''
+  ) {
+
+    element.dataset[key] =
+      String(value);
+
+    return;
+  }
+
+  delete element.dataset[key];
 }
 
 

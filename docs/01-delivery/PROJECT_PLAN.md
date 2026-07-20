@@ -59,14 +59,6 @@ Goal: map tools must be simple, fast, and usable during a live game.
 
 Goal: character properties should feel like a clear editable character sheet, while staying flexible for homebrew.
 
-0.0.1.4.4. Make armor selection use item picker behavior.
-
-Description: the armor field should select an existing item like item list blocks do, then feed AC calculations.
-
-0.0.1.4.5. Connect Properties/CharacterModel to the map.
-
-Description: map tokens should read HP, AC, initiative, effects, and statuses from the model, not from random HTML fields.
-
 0.0.1.4.6. Simplify block creation.
 
 Description: keep the block menu human-readable: text, list, table, image, properties. Specialized behavior should live as modes inside these blocks.

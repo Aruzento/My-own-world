@@ -2,16 +2,15 @@ import {
   calculateDndAbilityModifier,
   calculateDndArmorClass,
   calculateDndCheckValue,
-  calculateDndProficiencyBonus
+  calculateDndProficiencyBonus,
+  findArmorItemPage,
+  getArmorItemPages,
+  getArmorPageProperties
 } from '../properties/propertiesCalculationEngine.js';
 
 import {
   DND_SKILL_GROUPS
 } from '../properties/propertySchemas.js';
-
-import {
-  readPropertiesModelsFromHTML
-} from '../properties/propertiesModel.js';
 
 import {
   state
@@ -73,11 +72,16 @@ export function refreshPropertiesAutoCalculations(
 
   root
     .querySelectorAll?.('.card-properties-block[data-block-type="properties"]')
-    .forEach(block =>
+    .forEach(block => {
+
+      populateArmorItemSelect(
+        block
+      );
+
       recalculatePropertiesBlock(
         block
-      )
-    );
+      );
+    });
 }
 
 
@@ -465,34 +469,17 @@ function resolveSelectedArmor(
 
   if (!reference) return null;
 
-  const normalized =
-    normalizeLookup(
+  const page =
+    findArmorItemPage(
+      state.pages,
       reference
     );
-
-  const page =
-    state.pages.find(candidate => {
-
-      if (candidate.type !== 'item') return false;
-
-      return [
-        candidate.id,
-        candidate.title,
-        ...(candidate.aliases || [])
-      ].some(value =>
-        normalizeLookup(
-          value
-        ) === normalized
-      );
-    });
 
   if (!page) return null;
 
   const model =
-    readPropertiesModelsFromHTML(
-      page.content
-    ).find(item =>
-      item.cardType === 'item'
+    getArmorPageProperties(
+      page
     );
 
   return {
@@ -503,6 +490,200 @@ function resolveSelectedArmor(
     armorDexMax:
       model?.values?.armorDexMax || ''
   };
+}
+
+
+function populateArmorItemSelect(
+  block
+) {
+
+  const cardType =
+    block.dataset.cardType || '';
+
+  if (
+    cardType !== 'character' &&
+    cardType !== 'creature'
+  ) return;
+
+  const select =
+    getControl(
+      block,
+      'armorItem'
+    );
+
+  if (
+    !select ||
+    select.tagName !== 'SELECT'
+  ) return;
+
+  const previousValue =
+    readValue(
+      block,
+      'armorItem'
+    );
+
+  const armorPages =
+    getArmorItemPages(
+      state.pages
+    )
+      .slice()
+      .sort(comparePageTitles);
+
+  const selectedArmor =
+    findArmorItemPage(
+      armorPages,
+      previousValue
+    );
+
+  select.innerHTML =
+    '';
+
+  appendOption(
+    select,
+    '',
+    'Без доспеха',
+    {
+      selected:
+        !previousValue
+    }
+  );
+
+  armorPages.forEach(page => {
+
+    const value =
+      page.id ||
+      page.title ||
+      '';
+
+    if (!value) return;
+
+    appendOption(
+      select,
+      value,
+      formatArmorOptionLabel(
+        page
+      ),
+      {
+        selected:
+          selectedArmor === page
+      }
+    );
+  });
+
+  if (
+    previousValue &&
+    !selectedArmor
+  ) {
+
+    appendOption(
+      select,
+      previousValue,
+      `Недоступно: ${previousValue}`,
+      {
+        disabled:
+          true,
+        selected:
+          true
+      }
+    );
+
+    select.title =
+      'Этот предмет не имеет типа доспеха в блоке "Свойства" карточки предмета.';
+
+  } else {
+
+    select.title =
+      'Показываются только предметы, у которых в "Свойствах" выбран тип доспеха.';
+  }
+
+  if (
+    selectedArmor
+  ) {
+
+    select.value =
+      selectedArmor.id ||
+      selectedArmor.title ||
+      '';
+  }
+}
+
+
+function appendOption(
+  select,
+  value,
+  label,
+  {
+    disabled = false,
+    selected = false
+  } = {}
+) {
+
+  const option =
+    document.createElement(
+      'option'
+    );
+
+  option.value =
+    String(value ?? '');
+
+  option.textContent =
+    String(label ?? value ?? '');
+
+  option.disabled =
+    disabled;
+
+  option.selected =
+    selected;
+
+  select.appendChild(
+    option
+  );
+}
+
+
+function formatArmorOptionLabel(
+  page
+) {
+
+  const properties =
+    getArmorPageProperties(
+      page
+    );
+
+  const kind =
+    properties?.values?.armorKind || '';
+
+  const baseAc =
+    properties?.values?.armorBaseAc || '';
+
+  const suffix = [
+    kind,
+    baseAc
+      ? `КЗ ${baseAc}`
+      : ''
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  return suffix
+    ? `${page.title || page.id} (${suffix})`
+    : (page.title || page.id || 'Предмет');
+}
+
+
+function comparePageTitles(
+  left,
+  right
+) {
+
+  return String(left?.title || left?.id || '')
+    .localeCompare(
+      String(right?.title || right?.id || ''),
+      'ru',
+      {
+        sensitivity: 'base'
+      }
+    );
 }
 
 
@@ -669,14 +850,4 @@ function getControl(
   return block.querySelector(
     `[data-property-name="${CSS.escape(key)}"]`
   );
-}
-
-
-function normalizeLookup(
-  value
-) {
-
-  return String(value || '')
-    .trim()
-    .toLowerCase();
 }

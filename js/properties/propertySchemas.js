@@ -248,13 +248,19 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         min: 0
       }),
       textField('weight', 'Вес', '1 фнт.'),
-      selectField('armorKind', 'Тип доспеха', PROPERTY_ARMOR_KIND_OPTIONS),
-      numberField('armorBaseAc', 'Базовая КЗ доспеха', '', {
-        min: 0
-      }),
-      numberField('armorDexMax', 'Лимит ЛОВ к КЗ', '', {
-        min: 0
-      }),
+      compoundField(
+        'armorProfile',
+        'Доспех',
+        [
+          selectField('armorKind', 'Тип доспеха', PROPERTY_ARMOR_KIND_OPTIONS),
+          numberField('armorBaseAc', 'КЗ', '', {
+            min: 0
+          }),
+          numberField('armorDexMax', 'Лимит ловкости', '', {
+            min: 0
+          })
+        ]
+      ),
       textareaField('effect', 'Эффект', 'Что делает предмет')
     ]
   }
@@ -305,6 +311,11 @@ export function getSchemaValueFields(
 
   return (schema?.fields || [])
     .flatMap(field => {
+
+      if (field.type === 'compound') {
+
+        return (field.fields || []);
+      }
 
       if (field.type !== 'skillGroup') {
 
@@ -409,6 +420,21 @@ function entityField(
     label,
     type: 'entity',
     placeholder
+  };
+}
+
+
+function compoundField(
+  name,
+  label,
+  fields = []
+) {
+
+  return {
+    name,
+    label,
+    type: 'compound',
+    fields
   };
 }
 

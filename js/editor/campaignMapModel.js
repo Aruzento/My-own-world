@@ -688,9 +688,20 @@ function readTokenElement(
     rotation: token.dataset.rotation,
     imageAsset: token.dataset.imageAsset || '',
     hp: token.dataset.hp,
+    hpMax: token.dataset.hpMax,
+    hpTemp: token.dataset.hpTemp,
+    hpPercent: token.dataset.hpPercent,
+    hpState: token.dataset.hpState || '',
+    armorClass: token.dataset.armorClass,
+    speed: token.dataset.speed,
     sourceMode: token.dataset.sourceMode || '',
     isPlayerToken: token.dataset.playerToken === 'true',
     initiativeModifier: token.dataset.initiativeModifier,
+    conditionCount: token.dataset.conditionCount,
+    effectCount: token.dataset.effectCount,
+    effectsSummary: token.dataset.effectsSummary || '',
+    incapacitated: token.dataset.incapacitated === 'true',
+    speedZero: token.dataset.speedZero === 'true',
     layerId: token.dataset.layerId || '',
     zIndex: token.dataset.zIndex,
     presentationHidden: token.dataset.presentationHidden === 'true'
@@ -1081,9 +1092,49 @@ function normalizeToken(
       token.hp ?? token.currentHp,
       ''
     ),
+    hpMax: normalizeOptionalNumber(
+      token.hpMax,
+      ''
+    ),
+    hpTemp: normalizeOptionalNumber(
+      token.hpTemp,
+      ''
+    ),
+    hpPercent: normalizeOptionalNumber(
+      token.hpPercent,
+      ''
+    ),
+    hpState: normalizeHpState(
+      token.hpState
+    ),
+    armorClass: normalizeOptionalNumber(
+      token.armorClass,
+      ''
+    ),
+    speed: normalizeOptionalNumber(
+      token.speed,
+      ''
+    ),
     initiativeModifier: normalizeNumber(
       token.initiativeModifier ?? token.modifier,
       0
+    ),
+    conditionCount: normalizeOptionalNumber(
+      token.conditionCount,
+      ''
+    ),
+    effectCount: normalizeOptionalNumber(
+      token.effectCount,
+      ''
+    ),
+    effectsSummary: String(
+      token.effectsSummary || ''
+    ),
+    incapacitated: normalizeBoolean(
+      token.incapacitated
+    ),
+    speedZero: normalizeBoolean(
+      token.speedZero
     ),
     sourceMode: token.sourceMode === 'original'
       ? 'original'
@@ -1232,6 +1283,29 @@ function normalizeOptionalNumber(
   )
     ? number
     : fallback;
+}
+
+
+function normalizeHpState(
+  value
+) {
+
+  return [
+    'alive',
+    'dead'
+  ].includes(value)
+    ? value
+    : '';
+}
+
+
+function normalizeBoolean(
+  value
+) {
+
+  if (value === true || value === 'true') return true;
+
+  return false;
 }
 
 

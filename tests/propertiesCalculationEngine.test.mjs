@@ -9,6 +9,7 @@ import {
   createPropertiesCalculationModel,
   calculateDndArmorClass,
   createManualOverride,
+  getArmorItemPages,
   resolveCalculatedProperty
 } from '../js/properties/propertiesCalculationEngine.js';
 
@@ -159,6 +160,106 @@ test(
 
 
 test(
+  'armor item helpers expose only item cards with armor type in Properties',
+  () => {
+
+    const armorPage = {
+      id: 'chain-shirt',
+      title: 'Chain Shirt',
+      type: 'item',
+      propertiesModels: [
+        createPropertiesModel({
+          cardType: 'item',
+          values: {
+            armorKind: 'Легкий',
+            armorBaseAc: '13'
+          }
+        })
+      ]
+    };
+
+    const ordinaryItemPage = {
+      id: 'torch',
+      title: 'Torch',
+      type: 'item',
+      propertiesModels: [
+        createPropertiesModel({
+          cardType: 'item',
+          values: {
+            armorKind: 'Нет',
+            armorBaseAc: '99'
+          }
+        })
+      ]
+    };
+
+    const notePage = {
+      id: 'armor-note',
+      title: 'Armor note',
+      type: 'note'
+    };
+
+    assert.deepEqual(
+      getArmorItemPages([
+        ordinaryItemPage,
+        armorPage,
+        notePage
+      ]).map(page => page.id),
+      [
+        'chain-shirt'
+      ]
+    );
+  }
+);
+
+
+test(
+  'PropertiesCalculationModel ignores armorItem references to non-armor items',
+  () => {
+
+    const ordinaryItemPage = {
+      id: 'magic-ring',
+      title: 'Magic Ring',
+      type: 'item',
+      propertiesModels: [
+        createPropertiesModel({
+          cardType: 'item',
+          values: {
+            armorKind: 'Нет',
+            armorBaseAc: '99'
+          }
+        })
+      ]
+    };
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          dex: '16',
+          armorClass: '',
+          armorItem: 'magic-ring'
+        }
+      });
+
+    const model =
+      createPropertiesCalculationModel({
+        propertiesModel:
+          properties,
+        pages: [
+          ordinaryItemPage
+        ]
+      });
+
+    assert.equal(
+      model.armorClass.value,
+      13
+    );
+  }
+);
+
+
+test(
   'calculateDndArmorClass follows basic DnD armor rules',
   () => {
 
@@ -185,6 +286,14 @@ test(
         armorBaseAc: 18
       }),
       18
+    );
+    assert.equal(
+      calculateDndArmorClass({
+        dexModifier: 2,
+        armorKind: 'Легкий',
+        armorBaseAc: 11
+      }),
+      13
     );
   }
 );

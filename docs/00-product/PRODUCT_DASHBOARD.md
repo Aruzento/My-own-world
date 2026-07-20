@@ -35,10 +35,12 @@ Recently closed:
 - `0.0.1.4.1` Properties block constructor: live drag preview, collision pushdown and visual grid-step handling.
 - `0.0.1.4.2` standard character Properties layout: compact top metrics, one-row abilities and readable skill groups for new character/creature Properties blocks.
 - `0.0.1.4.3` visible DnD calculations in Properties: ability modifiers, proficiency bonus, initiative, skills/expertise, armor-based AC and manual overrides.
+- `0.0.1.4.4` armor selection in Properties: the `Armor` field now lists only item cards whose own Properties mark them as armor.
+- `0.0.1.4.5` Properties/CharacterModel map connection: map tokens now receive HP, AC, speed, initiative and effect/status summaries from the model snapshot.
 
 Next active block:
 
-- `0.0.1.4.4` Make armor selection use item picker behavior, unless a campaign-map bug from the lightweight backlog is promoted first.
+- `0.0.1.4.6` Simplify block creation, unless a P0/P1 bug from the lightweight backlog is promoted first.
 
 ## Readiness Model
 
@@ -57,7 +59,7 @@ This prevents "done" from meaning only "a model/helper was created".
 - Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection and workspace access diagnostics; richer recovery remains open.
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.
-- Properties and CharacterModel are promising, but the character workflow still needs a clearer release-ready path.
+- Properties and CharacterModel now have a usable card-to-map path, but the broader character workflow still needs release-ready polish and clearer block creation.
 - README, dashboard, bug inventory and plan must stay synchronized so the project remains understandable to the owner.
 
 ## Where To Read Next

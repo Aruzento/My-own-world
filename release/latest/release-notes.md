@@ -1,5 +1,20 @@
 # Release Notes
 
+## 2026-07-20: Properties To Map Character Snapshot
+
+- New character and creature `Properties` blocks now open with wider readable default fields instead of cramped labels.
+- Item armor settings are now one compound `Armor` field containing armor type, AC and DEX limit.
+- The armor compound field can be removed or restored as one unit from the Properties gear popup.
+- Map tokens created from character/creature cards now receive model-backed HP, max HP, temp HP, AC, speed, initiative modifier and effect/status summary.
+- Restored map tokens refresh the same CharacterModel snapshot instead of relying on scattered card HTML fields.
+
+## 2026-07-20: Armor Picker For Character Properties
+
+- The character/creature `Properties` block now treats `Armor` as a real item picker.
+- The picker only lists item cards whose own `Properties` block marks them as armor.
+- Ordinary item cards no longer appear as selectable armor and no longer affect AC if an old saved reference points to them.
+- AC calculations now accept both normal Russian armor type values and legacy mojibake armor type values.
+
 ## 2026-07-20: Visible DnD Character Calculations
 
 - Character and creature `Properties` blocks now include visible `Proficiency` and `Initiative` fields by default.

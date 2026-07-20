@@ -390,6 +390,25 @@ function createPropertyFieldHTML(
     `;
   }
 
+  if (type === 'compound') {
+
+    return `
+      <section
+        class="card-property-field card-property-compound-field"
+        data-property-id="${name}"
+        data-property-compound-name="${name}"
+        ${layoutAttributes}
+      >
+        <span>${label}</span>
+        <div class="card-property-compound-grid">
+          ${(normalizedField.fields || [])
+            .map(createPropertyCompoundControlHTML)
+            .join('')}
+        </div>
+      </section>
+    `;
+  }
+
   if (type === 'select') {
 
     return `
@@ -432,6 +451,64 @@ function createPropertyFieldHTML(
       <span>${label}</span>
       <input
         type="${type === 'entity' ? 'text' : type || 'text'}"
+        data-property-name="${name}"
+        data-property-type="${type || 'text'}"
+        ${assetAttributes}
+        placeholder="${placeholder || ''}"
+        ${min !== undefined ? `min="${min}"` : ''}
+        ${max !== undefined ? `max="${max}"` : ''}
+      >
+    </label>
+  `;
+}
+
+
+function createPropertyCompoundControlHTML(
+  field
+) {
+
+  const normalizedField =
+    normalizePropertyField(
+      field
+    );
+
+  const {
+    name,
+    label,
+    type,
+    options = [],
+    min,
+    max,
+    placeholder,
+    assetType
+  } = normalizedField;
+
+  const assetAttributes =
+    createPropertyAssetAttributes(
+      assetType
+    );
+
+  if (type === 'select') {
+
+    return `
+      <label class="card-property-subfield">
+        <span>${label}</span>
+        <select class="card-property-select" data-property-name="${name}">
+          ${(options.length > 0 ? options : PROPERTY_SHAPE_OPTIONS)
+            .map(option =>
+              `<option value="${option}">${option}</option>`
+            )
+            .join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="card-property-subfield">
+      <span>${label}</span>
+      <input
+        type="${type === 'number' ? 'number' : 'text'}"
         data-property-name="${name}"
         data-property-type="${type || 'text'}"
         ${assetAttributes}
@@ -527,28 +604,18 @@ function createInitialPropertyLayout(
     };
   }
 
-  const wide =
-    field.type === 'textarea' ||
-    field.type === 'skillGroup';
+  const size =
+    getDefaultPropertyLayoutSize(
+      field
+    );
 
   return {
     x: 0,
     y: 0,
     w:
-      wide
-        ? 12
-        : 3,
+      size.w,
     h:
-      field.type === 'skillGroup'
-        ? Math.max(
-          2,
-          Math.ceil(
-            (field.items?.length || 1) / 2
-          )
-        )
-      : wide
-        ? 2
-        : 1,
+      size.h,
     order: index,
     collapsed: false,
     groupId: null
@@ -591,26 +658,16 @@ function createPropertyLayoutPlan(
         return;
       }
 
-      const wide =
-        field.type === 'textarea' ||
-        field.type === 'skillGroup';
+      const size =
+        getDefaultPropertyLayoutSize(
+          field
+        );
 
       const width =
-        wide
-          ? 12
-          : 3;
+        size.w;
 
       const height =
-        field.type === 'skillGroup'
-          ? Math.max(
-            2,
-            Math.ceil(
-              (field.items?.length || 1) / 2
-            )
-          )
-          : wide
-          ? 2
-          : 1;
+        size.h;
 
       if (
         cursorX > 0 &&
@@ -652,7 +709,7 @@ function createPropertyLayoutPlan(
         );
 
       if (
-        wide ||
+        width >= 12 ||
         cursorX >= 12
       ) {
 
@@ -671,11 +728,85 @@ function createPropertyLayoutPlan(
 }
 
 
+function getDefaultPropertyLayoutSize(
+  field
+) {
+
+  if (field.type === 'skillGroup') {
+
+    return {
+      w: 12,
+      h:
+        Math.max(
+          2,
+          Math.ceil(
+            (field.items?.length || 1) / 2
+          )
+        )
+    };
+  }
+
+  if (field.type === 'textarea') {
+
+    return {
+      w: 12,
+      h: 2
+    };
+  }
+
+  if (field.type === 'compound') {
+
+    return {
+      w: 6,
+      h: 2
+    };
+  }
+
+  return {
+    w: 4,
+    h: 1
+  };
+}
+
+
 function getInitialPropertyLayoutPreset(
   cardType,
   field,
   index
 ) {
+
+  if (cardType === 'item') {
+
+    const itemLayout = {
+      gold: [0, 0, 2, 1],
+      silver: [2, 0, 2, 1],
+      copper: [4, 0, 2, 1],
+      weight: [6, 0, 3, 1],
+      armorProfile: [0, 1, 6, 2],
+      effect: [6, 1, 6, 2]
+    };
+
+    const value =
+      itemLayout[field.name];
+
+    if (!value) return null;
+
+    const [
+      x,
+      y,
+      w,
+      h
+    ] = value;
+
+    return {
+      x,
+      y,
+      w,
+      h,
+      order:
+        index
+    };
+  }
 
   if (
     cardType !== 'character' &&
@@ -683,31 +814,31 @@ function getInitialPropertyLayoutPreset(
   ) return null;
 
   const compactTop = {
-    level: [0, 0, 1, 1],
-    proficiencyBonus: [1, 0, 1, 1],
-    initiative: [2, 0, 1, 1],
-    armorClass: [3, 0, 1, 1],
-    speed: [4, 0, 1, 1],
-    armorItem: [5, 0, 3, 1],
-    hpCurrent: [8, 0, 2, 1],
-    hpMax: [10, 0, 1, 1],
-    hpTemp: [11, 0, 1, 1],
-    str: [0, 1, 2, 2],
-    dex: [2, 1, 2, 2],
-    con: [4, 1, 2, 2],
-    int: [6, 1, 2, 2],
-    wis: [8, 1, 2, 2],
-    cha: [10, 1, 2, 2],
-    strSkills: [0, 3, 4, 3],
-    dexSkills: [4, 3, 4, 4],
-    conSkills: [8, 3, 4, 2],
-    intSkills: [0, 7, 4, 5],
-    wisSkills: [4, 7, 4, 5],
-    chaSkills: [8, 7, 4, 5],
-    deathSaveSuccesses: [0, 12, 2, 1],
-    deathSaveFailures: [2, 12, 2, 1],
-    senses: [0, 12, 4, 1],
-    effect: [4, 12, 8, 3]
+    level: [0, 0, 2, 1],
+    proficiencyBonus: [2, 0, 2, 1],
+    initiative: [4, 0, 2, 1],
+    armorClass: [6, 0, 2, 1],
+    speed: [8, 0, 2, 1],
+    hpCurrent: [10, 0, 2, 1],
+    armorItem: [0, 1, 4, 1],
+    hpMax: [4, 1, 2, 1],
+    hpTemp: [6, 1, 3, 1],
+    str: [0, 2, 2, 2],
+    dex: [2, 2, 2, 2],
+    con: [4, 2, 2, 2],
+    int: [6, 2, 2, 2],
+    wis: [8, 2, 2, 2],
+    cha: [10, 2, 2, 2],
+    strSkills: [0, 4, 4, 3],
+    dexSkills: [4, 4, 4, 4],
+    conSkills: [8, 4, 4, 2],
+    intSkills: [0, 8, 4, 5],
+    wisSkills: [4, 8, 4, 5],
+    chaSkills: [8, 8, 4, 5],
+    deathSaveSuccesses: [0, 13, 3, 1],
+    deathSaveFailures: [3, 13, 3, 1],
+    senses: [6, 13, 3, 1],
+    effect: [0, 14, 12, 3]
   };
 
   const value =

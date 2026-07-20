@@ -337,43 +337,43 @@ test(
     expect(
       result.level
     ).toEqual({
-      gridColumn: '1 / span 1',
+      gridColumn: '1 / span 2',
       gridRow: '1 / span 1',
-      span: '1',
+      span: '2',
       rows: '1'
     });
 
     expect(
       result.armorItem
     ).toEqual({
-      gridColumn: '6 / span 3',
-      gridRow: '1 / span 1',
-      span: '3',
+      gridColumn: '1 / span 4',
+      gridRow: '2 / span 1',
+      span: '4',
       rows: '1'
     });
 
     expect(
       result.proficiencyBonus
     ).toEqual({
-      gridColumn: '2 / span 1',
+      gridColumn: '3 / span 2',
       gridRow: '1 / span 1',
-      span: '1',
+      span: '2',
       rows: '1'
     });
 
     expect(
       result.initiative
     ).toEqual({
-      gridColumn: '3 / span 1',
+      gridColumn: '5 / span 2',
       gridRow: '1 / span 1',
-      span: '1',
+      span: '2',
       rows: '1'
     });
 
     expect(
       result.str.gridRow
     ).toBe(
-      '2 / span 2'
+      '3 / span 2'
     );
 
     expect(
@@ -386,7 +386,7 @@ test(
       result.dexSkills
     ).toEqual({
       gridColumn: '5 / span 4',
-      gridRow: '4 / span 4',
+      gridRow: '5 / span 4',
       span: '4',
       rows: '4'
     });
@@ -396,6 +396,144 @@ test(
     ).toBe(
       1
     );
+  }
+);
+
+
+test(
+  'item-armor-profile-is-one-removable-compound-property',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          editor
+            .querySelector('[data-property-name="armorKind"]')
+            .value =
+            'Легкий';
+
+          editor
+            .querySelector('[data-property-name="armorBaseAc"]')
+            .value =
+            '12';
+
+          editor
+            .querySelector('[data-property-name="armorDexMax"]')
+            .value =
+            '2';
+
+          editor
+            .querySelector('.card-properties-settings-btn')
+            .click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          let popup =
+            document.querySelector('.property-settings-popup');
+
+          const armorRowsBefore =
+            [
+              ...popup.querySelectorAll('.property-settings-row')
+            ].filter(row =>
+              row.textContent.includes('Доспех')
+            ).length;
+
+          popup
+            .querySelector('.property-settings-delete[data-field-id="armorProfile"]')
+            .click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const hasAfterDelete =
+            Boolean(
+              editor.querySelector('[data-property-name="armorKind"]')
+            );
+
+          popup =
+            document.querySelector('.property-settings-popup');
+
+          popup
+            .querySelector('.property-settings-add')
+            .click();
+
+          const preset =
+            popup.querySelector('.property-settings-preset');
+
+          preset.value =
+            'armorProfile';
+
+          preset.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          popup
+            .querySelector('.property-settings-create')
+            .click();
+
+          return {
+            armorRowsBefore,
+            hasAfterDelete:
+              hasAfterDelete,
+            restoredCompound:
+              Boolean(
+                editor.querySelector('[data-property-compound-name="armorProfile"]')
+              ),
+            restoredKeys:
+              [
+                'armorKind',
+                'armorBaseAc',
+                'armorDexMax'
+              ].every(name =>
+                Boolean(
+                  editor.querySelector(`[data-property-name="${name}"]`)
+                )
+              )
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      armorRowsBefore: 1,
+      hasAfterDelete: false,
+      restoredCompound: true,
+      restoredKeys: true
+    });
   }
 );
 
@@ -451,6 +589,25 @@ test(
                   </label>
                 </div>
               `
+            },
+            {
+              id: 'torch',
+              title: 'Torch',
+              type: 'item',
+              content: `
+                <div class="template-block card-properties-block" data-block-type="properties" data-card-type="item">
+                  <label class="card-property-field">
+                    <span>Тип доспеха</span>
+                    <select data-property-name="armorKind">
+                      <option value="Нет" selected>Нет</option>
+                    </select>
+                  </label>
+                  <label class="card-property-field">
+                    <span>Базовая КЗ доспеха</span>
+                    <input data-property-name="armorBaseAc" value="99">
+                  </label>
+                </div>
+              `
             }
           ];
 
@@ -496,6 +653,10 @@ test(
 
           const armorClass =
             host.querySelector('[data-property-name="armorClass"]');
+
+          const armorOptions =
+            [...armorItem.options]
+              .map(option => option.value);
 
           level.value =
             '5';
@@ -695,6 +856,7 @@ test(
               calculations.initiative.source,
             modelInitiative:
               calculations.initiative.value,
+            armorOptions,
             armorClassFromArmor
           };
         }
@@ -770,6 +932,18 @@ test(
       result.modelInitiative
     ).toBe(
       8
+    );
+
+    expect(
+      result.armorOptions
+    ).toContain(
+      'studded-leather'
+    );
+
+    expect(
+      result.armorOptions
+    ).not.toContain(
+      'torch'
     );
 
     expect(
@@ -912,7 +1086,7 @@ test(
     ).toEqual({
       hasButton: true,
       popupVisible: true,
-      rowCount: 8,
+      rowCount: 6,
       hasAddButton: true,
       rulesVisible: true,
       rulesText:

@@ -247,55 +247,55 @@ test(
         level: {
           x: 0,
           y: 0,
-          w: 1,
+          w: 2,
           h: 1
         },
         proficiencyBonus: {
-          x: 1,
+          x: 2,
           y: 0,
-          w: 1,
+          w: 2,
           h: 1
         },
         initiative: {
-          x: 2,
+          x: 4,
           y: 0,
-          w: 1,
+          w: 2,
           h: 1
         },
         armorClass: {
-          x: 3,
+          x: 6,
           y: 0,
-          w: 1,
+          w: 2,
           h: 1
         },
         speed: {
-          x: 4,
-          y: 0,
-          w: 1,
-          h: 1
-        },
-        armorItem: {
-          x: 5,
-          y: 0,
-          w: 3,
-          h: 1
-        },
-        hpCurrent: {
           x: 8,
           y: 0,
           w: 2,
           h: 1
         },
-        hpMax: {
+        armorItem: {
+          x: 0,
+          y: 1,
+          w: 4,
+          h: 1
+        },
+        hpCurrent: {
           x: 10,
           y: 0,
-          w: 1,
+          w: 2,
+          h: 1
+        },
+        hpMax: {
+          x: 4,
+          y: 1,
+          w: 2,
           h: 1
         },
         hpTemp: {
-          x: 11,
-          y: 0,
-          w: 1,
+          x: 6,
+          y: 1,
+          w: 3,
           h: 1
         }
       }
@@ -318,7 +318,7 @@ test(
 
       assert.equal(
         layoutByName[name].y,
-        1
+        2
       );
 
       assert.equal(
@@ -358,37 +358,37 @@ test(
       {
         strSkills: {
           x: 0,
-          y: 3,
+          y: 4,
           w: 4,
           h: 3
         },
         dexSkills: {
           x: 4,
-          y: 3,
+          y: 4,
           w: 4,
           h: 4
         },
         intSkills: {
           x: 0,
-          y: 7,
+          y: 8,
           w: 4,
           h: 5
         },
         wisSkills: {
           x: 4,
-          y: 7,
+          y: 8,
           w: 4,
           h: 5
         },
         conSkills: {
           x: 8,
-          y: 3,
+          y: 4,
           w: 4,
           h: 2
         },
         chaSkills: {
           x: 8,
-          y: 7,
+          y: 8,
           w: 4,
           h: 5
         }
@@ -406,14 +406,14 @@ test(
       {
         deathSaveSuccesses: {
           x: 0,
-          y: 12,
-          w: 2,
+          y: 13,
+          w: 3,
           h: 1
         },
         deathSaveFailures: {
-          x: 2,
-          y: 12,
-          w: 2,
+          x: 3,
+          y: 13,
+          w: 3,
           h: 1
         }
       }
@@ -460,6 +460,67 @@ test(
         );
       }
     }
+  }
+);
+
+
+test(
+  'item armor properties render as one compound field with stable model keys',
+  () => {
+
+    const html =
+      createPropertiesBlock({
+        title: 'Свойства предмета',
+        cardType: 'item'
+      });
+
+    assert.match(
+      html,
+      /data-property-id="armorProfile"/
+    );
+
+    assert.match(
+      html,
+      /data-property-compound-name="armorProfile"/
+    );
+
+    assert.match(
+      html,
+      /data-property-name="armorKind"/
+    );
+
+    assert.match(
+      html,
+      /data-property-name="armorBaseAc"/
+    );
+
+    assert.match(
+      html,
+      /data-property-name="armorDexMax"/
+    );
+
+    const fields =
+      getPropertyValueFields(
+        'item'
+      );
+
+    assert.ok(
+      fields.some(field =>
+        field.name === 'armorKind'
+      )
+    );
+
+    assert.ok(
+      fields.some(field =>
+        field.name === 'armorBaseAc'
+      )
+    );
+
+    assert.ok(
+      fields.some(field =>
+        field.name === 'armorDexMax'
+      )
+    );
   }
 );
 
@@ -754,7 +815,7 @@ test(
           layout: {
             x: 0,
             y: 0,
-            w: 3,
+            w: 4,
             h: 1,
             order: 0,
             collapsed: false,

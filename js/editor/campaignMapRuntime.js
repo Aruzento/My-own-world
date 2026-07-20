@@ -52,6 +52,7 @@ import {
 } from './campaignMapHealth.js';
 
 import {
+  createCampaignMapCharacterTokenSnapshot,
   getCampaignMapCharacterInitiativeModifier,
   getCampaignMapCharacterState
 } from './campaignMapCharacterBridge.js';
@@ -112,13 +113,23 @@ export async function addMapToken(
     Array.isArray(page?.tags) &&
     page.tags.includes('player');
 
-  const initiativeModifier =
+  const characterSnapshot =
     page
-      ? getCampaignMapCharacterInitiativeModifier(
-        page,
-        0
+      ? createCampaignMapCharacterTokenSnapshot(
+        page
       )
-      : 0;
+      : null;
+
+  const initiativeModifier =
+    characterSnapshot?.initiativeModifier ??
+    (
+      page
+        ? getCampaignMapCharacterInitiativeModifier(
+          page,
+          0
+        )
+        : 0
+    );
 
   const tokenData =
     store.addToken({
@@ -139,7 +150,8 @@ export async function addMapToken(
         ? 'original'
         : 'copy',
       isPlayerToken,
-      initiativeModifier
+      initiativeModifier,
+      ...characterSnapshot
     });
 
   const token =
@@ -219,6 +231,11 @@ export async function restoreMapTokens(
         true;
     }
 
+    syncTokenCharacterSnapshotFromPage(
+      token,
+      page
+    );
+
     await renderMapTokenElement(
       token,
       {
@@ -289,6 +306,8 @@ export function applyTokenHealthState(
         ? `${health.current}/${health.max}/${health.temp || 0}`
         : 'none',
       initiativeModifier,
+      characterState?.armorClass ?? '',
+      characterState?.speed ?? '',
       effectsKey
     ].join('|');
 
@@ -304,6 +323,11 @@ export function applyTokenHealthState(
   syncTokenInitiativeModifier(
     token,
     initiativeModifier
+  );
+
+  syncTokenCombatState(
+    token,
+    characterState
   );
 
   syncTokenEffectsState(
@@ -327,21 +351,81 @@ export function applyTokenHealthState(
       1
     );
 
-  token.dataset.hpPercent =
-    String(
-      Math.round(percent * 100)
-    );
-
-  token.dataset.hpState =
-    health.current <= 0
-      ? 'dead'
-      : 'alive';
+  syncTokenRecordPatch(
+    token,
+    {
+      hpPercent:
+        Math.round(percent * 100),
+      hpState:
+        health.current <= 0
+          ? 'dead'
+          : 'alive'
+    }
+  );
 
   token.style.setProperty(
     '--token-health-color',
     getHealthColor(
       percent
     )
+  );
+}
+
+
+function syncTokenCharacterSnapshotFromPage(
+  token,
+  page
+) {
+
+  const snapshot =
+    createCampaignMapCharacterTokenSnapshot(
+      page
+    );
+
+  if (!snapshot) return;
+
+  syncTokenRecordPatch(
+    token,
+    snapshot
+  );
+}
+
+
+function syncTokenCombatState(
+  token,
+  characterState
+) {
+
+  if (!characterState) {
+
+    syncTokenRecordPatch(
+      token,
+      {
+        hp: '',
+        hpMax: '',
+        hpTemp: '',
+        armorClass: '',
+        speed: ''
+      }
+    );
+
+    return;
+  }
+
+  syncTokenRecordPatch(
+    token,
+    {
+      hp:
+        characterState.health?.current ?? '',
+      hpMax:
+        characterState.health?.max ?? '',
+      hpTemp:
+        characterState.health?.temp ?? '',
+      armorClass:
+        characterState.armorClass ?? '',
+      speed:
+        characterState.speed ?? ''
+    }
   );
 }
 
@@ -370,15 +454,21 @@ function syncTokenEffectsState(
       effectTitles.length
     );
 
-  token.dataset.incapacitated =
+  syncTokenDatasetValue(
+    token,
+    'incapacitated',
     flags.isIncapacitated
       ? 'true'
-      : 'false';
+      : ''
+  );
 
-  token.dataset.speedZero =
+  syncTokenDatasetValue(
+    token,
+    'speedZero',
     flags.speedIsZero
       ? 'true'
-      : 'false';
+      : ''
+  );
 
   const summary =
     [
@@ -402,6 +492,26 @@ function syncTokenEffectsState(
       'title'
     );
   }
+
+  syncTokenRecordPatch(
+    token,
+    {
+      conditionCount:
+        conditionLabels.length,
+      effectCount:
+        effectTitles.length,
+      effectsSummary:
+        summary,
+      incapacitated:
+        flags.isIncapacitated
+          ? true
+          : '',
+      speedZero:
+        flags.speedIsZero
+          ? true
+          : ''
+    }
+  );
 }
 
 
@@ -438,6 +548,61 @@ function syncTokenInitiativeModifier(
         normalized
     }
   );
+}
+
+
+function syncTokenRecordPatch(
+  token,
+  patch
+) {
+
+  Object
+    .entries(
+      patch || {}
+    )
+    .forEach(([
+      key,
+      value
+    ]) => {
+
+      syncTokenDatasetValue(
+        token,
+        key,
+        value
+      );
+    });
+
+  const store =
+    getCampaignMapStore(
+      token.closest('.campaign-map-document')
+    );
+
+  store?.updateToken(
+    token.dataset.tokenId,
+    patch
+  );
+}
+
+
+function syncTokenDatasetValue(
+  token,
+  key,
+  value
+) {
+
+  if (
+    value === undefined ||
+    value === null ||
+    value === ''
+  ) {
+
+    delete token.dataset[key];
+
+    return;
+  }
+
+  token.dataset[key] =
+    String(value);
 }
 
 
@@ -716,8 +881,18 @@ function clearTokenHealthState(
   token
 ) {
 
+  delete token.dataset.hp;
+  delete token.dataset.hpMax;
+  delete token.dataset.hpTemp;
   delete token.dataset.hpPercent;
   delete token.dataset.hpState;
+  delete token.dataset.armorClass;
+  delete token.dataset.speed;
+  delete token.dataset.conditionCount;
+  delete token.dataset.effectCount;
+  delete token.dataset.effectsSummary;
+  delete token.dataset.incapacitated;
+  delete token.dataset.speedZero;
 
   token.style.removeProperty(
     '--token-health-color'

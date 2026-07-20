@@ -56,6 +56,7 @@ getCharacterInventory(model)
 getCharacterEffects(model)
 getCharacterEffectsCombatSummary(model)
 hasCharacterCondition(model, conditionKey)
+createCampaignMapCharacterTokenSnapshot(page)
 applyCharacterHealthChange(model, options)
 model.calculations
 calculateAbilityModifier(score)
@@ -178,6 +179,22 @@ calculateDndCheckValue(options)
 14. Персональный выбор правил для конкретной карточки персонажа хранится в persistent JSON блока `Эффекты и состояния` как `selectedRuleIds`. `CharacterModel` объединяет эти ids с глобальными активными правилами Rule Tree.
 15. `model.calculations` является backend-объяснением расчетов. UI может показывать формулу и части расчета из него, но не должен записывать изменения напрямую в этот объект.
 
+
+## Map Snapshot Boundary
+
+Campaign map code must use `createCampaignMapCharacterTokenSnapshot(page)` when a token is created from a character or creature page, and when saved map tokens are restored.
+
+The snapshot may expose only model-backed values:
+
+- current/max/temp HP;
+- effective AC;
+- effective speed;
+- initiative modifier;
+- active condition/effect counts;
+- readable effect/status summary;
+- combat flags such as incapacitated or speed-zero.
+
+Map UI may render these values on the token or store them in `CampaignMapModel`, but it must not parse arbitrary card HTML for combat stats when the snapshot is available.
 
 ## Effects / Conditions
 

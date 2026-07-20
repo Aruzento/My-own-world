@@ -570,6 +570,9 @@ function getVisiblePropertyFields(
       const control =
         field.querySelector('input, select, textarea');
 
+      const compound =
+        field.dataset.propertyCompoundName;
+
       return {
         id:
           getPropertyFieldId(
@@ -577,9 +580,13 @@ function getVisiblePropertyFields(
           ),
         label,
         type:
-          getControlType(control),
+          compound
+            ? 'составное'
+            : getControlType(control),
         value:
-          getControlValue(control),
+          compound
+            ? getCompoundControlValue(field)
+            : getControlValue(control),
         custom:
           isCustomPropertyField(
             field
@@ -894,9 +901,12 @@ function addCustomPropertyFieldFromPopup(
       id: fieldId,
       label,
       type,
+      fields:
+        preset?.fields || [],
       layout:
         findNextPropertyFreeLayout(
-          block
+          block,
+          type
         )
     })
   );
@@ -967,6 +977,7 @@ function createCustomPropertyFieldHTML(
     id,
     label,
     type,
+    fields = [],
     layout
   }
 ) {
@@ -976,6 +987,22 @@ function createCustomPropertyFieldHTML(
 
   const safeLabel =
     escapeHTML(label);
+
+  if (type === 'compound') {
+
+    return createCompoundPropertyFieldHTML({
+      id:
+        safeId,
+      label:
+        safeLabel,
+      fields,
+      layout:
+        layout ||
+        createDefaultPropertyLayout({
+          type
+        })
+    });
+  }
 
   const sharedAttributes = `
       class="card-property-field card-property-custom-field"
@@ -1036,15 +1063,96 @@ function createCustomPropertyFieldHTML(
 }
 
 
-function createDefaultPropertyLayout() {
+function createCompoundPropertyFieldHTML(
+  {
+    id,
+    label,
+    fields,
+    layout
+  }
+) {
+
+  return `
+    <section
+      class="card-property-field card-property-compound-field"
+      data-property-id="${id}"
+      data-property-compound-name="${id}"
+      ${createPropertyLayoutAttributes(layout)}
+    >
+      <span>${label}</span>
+      <div class="card-property-compound-grid">
+        ${(fields || [])
+          .map(createCompoundPropertyControlHTML)
+          .join('')}
+      </div>
+    </section>
+  `;
+}
+
+
+function createCompoundPropertyControlHTML(
+  field
+) {
+
+  const safeName =
+    escapeAttribute(
+      field.name || ''
+    );
+
+  const safeLabel =
+    escapeHTML(
+      field.label || field.name || ''
+    );
+
+  if (field.type === 'select') {
+
+    return `
+      <label class="card-property-subfield">
+        <span>${safeLabel}</span>
+        <select class="card-property-select" data-property-name="${safeName}">
+          ${(field.options || [])
+            .map(option => `
+              <option value="${escapeAttribute(option)}">${escapeHTML(option)}</option>
+            `)
+            .join('')}
+        </select>
+      </label>
+    `;
+  }
+
+  return `
+    <label class="card-property-subfield">
+      <span>${safeLabel}</span>
+      <input
+        type="${field.type === 'number' ? 'number' : 'text'}"
+        data-property-name="${safeName}"
+        data-property-type="${escapeAttribute(field.type || 'text')}"
+        placeholder="${escapeAttribute(field.placeholder || '')}"
+        ${field.min !== undefined ? `min="${escapeAttribute(field.min)}"` : ''}
+        ${field.max !== undefined ? `max="${escapeAttribute(field.max)}"` : ''}
+      >
+    </label>
+  `;
+}
+
+
+function createDefaultPropertyLayout(
+  {
+    type = 'text'
+  } = {}
+) {
 
   return normalizePropertyLayout({
     x: 0,
     y: 0,
     w:
-      PROPERTY_DEFAULT_SPAN,
+      type === 'compound'
+        ? 6
+        : PROPERTY_DEFAULT_SPAN,
     h:
-      1,
+      type === 'compound'
+        ? 2
+        : 1,
     order:
       0,
     collapsed:
@@ -1056,14 +1164,19 @@ function createDefaultPropertyLayout() {
 
 
 function findNextPropertyFreeLayout(
-  block
+  block,
+  type = 'text'
 ) {
 
   const width =
-    PROPERTY_DEFAULT_SPAN;
+    type === 'compound'
+      ? 6
+      : PROPERTY_DEFAULT_SPAN;
 
   const height =
-    1;
+    type === 'compound'
+      ? 2
+      : 1;
 
   const occupied =
     [
@@ -1243,7 +1356,8 @@ function normalizeCustomFieldType(
     'text',
     'number',
     'textarea',
-    'checkbox'
+    'checkbox',
+    'compound'
   ].includes(value)
     ? value
     : 'text';
@@ -1316,6 +1430,10 @@ function ensurePropertyEntitySelects(
       'select[data-property-filter-type="item"]'
     )
     .forEach(select => {
+
+      if (
+        select.dataset.propertyName === 'armorItem'
+      ) return;
 
       let currentValue =
         select.value ||
@@ -3343,7 +3461,9 @@ function buildPropertyFieldPresets() {
           type:
             normalizeCustomFieldType(
               field.type
-            )
+            ),
+          fields:
+            field.fields || []
         }
       );
     });
@@ -3484,6 +3604,26 @@ function getControlValue(
   return control.value ||
     control.textContent ||
     '';
+}
+
+
+function getCompoundControlValue(
+  field
+) {
+
+  return [
+    ...field.querySelectorAll('[data-property-name]')
+  ]
+    .map(control =>
+      getControlValue(
+        control
+      )
+    )
+    .map(value =>
+      String(value || '').trim()
+    )
+    .filter(Boolean)
+    .join(' / ');
 }
 
 
