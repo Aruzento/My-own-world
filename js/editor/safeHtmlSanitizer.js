@@ -191,6 +191,9 @@ function isSafeJsonScript(
       ) ||
       isRuleTreeJsonScript(
         element
+      ) ||
+      isKnowledgeGraphJsonScript(
+        element
       )
     )
   );
@@ -314,6 +317,22 @@ function sanitizeAttributes(
     );
   }
 
+  if (
+    tagName === 'script' &&
+    isKnowledgeGraphJsonScript(
+      element
+    )
+  ) {
+
+    element.className =
+      'knowledge-graph-view-state';
+
+    element.setAttribute(
+      'data-knowledge-graph-view-state',
+      ''
+    );
+  }
+
   hardenExternalLink(
     element,
     tagName
@@ -413,7 +432,8 @@ function isAllowedJsonScriptAttribute(
     name === 'class' ||
     name === 'data-task-tracker-data' ||
     name === 'data-character-effects' ||
-    name === 'data-rule-tree-data'
+    name === 'data-rule-tree-data' ||
+    name === 'data-knowledge-graph-view-state'
   );
 }
 
@@ -447,6 +467,17 @@ function isRuleTreeJsonScript(
   return (
     element.hasAttribute('data-rule-tree-data') ||
     element.classList.contains('rule-tree-data')
+  );
+}
+
+
+function isKnowledgeGraphJsonScript(
+  element
+) {
+
+  return (
+    element.hasAttribute('data-knowledge-graph-view-state') ||
+    element.classList.contains('knowledge-graph-view-state')
   );
 }
 

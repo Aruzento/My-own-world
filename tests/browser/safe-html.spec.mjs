@@ -19,6 +19,7 @@ test(
             <script type="application/json" data-task-tracker-data data-extra="x">{"ok":true}</script>
             <script type="application/json" data-character-effects data-extra="x">{"conditions":["poisoned"]}</script>
             <script type="application/json" data-rule-tree-data data-extra="x">{"rules":[]}</script>
+            <script type="application/json" data-knowledge-graph-view-state data-extra="x">{"version":1,"positions":{"hero":{"x":120,"y":80,"pinned":true}}}</script>
             <iframe src="https://example.com"></iframe>
             <object data="x"></object>
             <embed src="x">
@@ -42,7 +43,9 @@ test(
     expect(result.saved).toContain('data-task-tracker-data');
     expect(result.saved).toContain('data-character-effects');
     expect(result.saved).toContain('data-rule-tree-data');
+    expect(result.saved).toContain('data-knowledge-graph-view-state');
     expect(result.saved).toContain('character-effects-data');
+    expect(result.saved).toContain('knowledge-graph-view-state');
     expect(result.saved).not.toContain('data-extra');
   }
 );

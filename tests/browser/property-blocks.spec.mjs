@@ -17,6 +17,7 @@ test(
         async () => {
 
           const {
+            getVisibleBlockTypesForCardType,
             renderTypePicker
           } = await import('/js/editor/blocks/blockPopupViews.js');
 
@@ -58,34 +59,75 @@ test(
 
           return {
             itemTypes,
+            itemVisibleTypes:
+              getVisibleBlockTypesForCardType(
+                'item'
+              ),
             locationTypes,
-            noteTypes
+            locationVisibleTypes:
+              getVisibleBlockTypesForCardType(
+                'location'
+              ),
+            noteTypes,
+            noteVisibleTypes:
+              getVisibleBlockTypesForCardType(
+                'note'
+              )
           };
         }
       );
 
     expect(
       result.itemTypes
-    ).toContain(
-      'properties'
+    ).toEqual(
+      [
+        'text',
+        'list',
+        'table',
+        'image',
+        'properties'
+      ]
+    );
+
+    expect(
+      result.itemVisibleTypes
+    ).toEqual(
+      result.itemTypes
     );
 
     expect(
       result.locationTypes
-    ).toContain(
-      'properties'
+    ).toEqual(
+      [
+        'text',
+        'list',
+        'table',
+        'image',
+        'properties'
+      ]
+    );
+
+    expect(
+      result.locationVisibleTypes
+    ).toEqual(
+      result.locationTypes
     );
 
     expect(
       result.noteTypes
-    ).not.toContain(
-      'properties'
+    ).toEqual(
+      [
+        'text',
+        'list',
+        'table',
+        'image'
+      ]
     );
 
     expect(
-      result.itemTypes
-    ).toContain(
-      'list'
+      result.noteVisibleTypes
+    ).toEqual(
+      result.noteTypes
     );
 
     expect(
@@ -122,6 +164,24 @@ test(
       result.itemTypes
     ).not.toContain(
       'dndStats'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'characterSheet'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'taskTracker'
+    );
+
+    expect(
+      result.itemTypes
+    ).not.toContain(
+      'template'
     );
   }
 );

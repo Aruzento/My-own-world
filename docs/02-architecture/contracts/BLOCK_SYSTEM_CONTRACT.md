@@ -208,6 +208,8 @@ Image block использует `data-block-type="image"` и не имеет з
 - `image` - картинка;
 - `properties` - свойства карточки.
 
+Source of truth для первого уровня popup `Добавить блок` - `getVisibleBlockTypesForCardType()` в `js/editor/blocks/blockPopupViews.js`. Тесты должны проверять точный список, чтобы `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `taskTracker`, page templates и другие специализированные сценарии не возвращались в меню случайно.
+
 Legacy-блоки `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `characterStats`, `dndStats`, `dndStatsV2` остаются поддерживаемыми при открытии старых карточек, но не должны возвращаться в первый уровень popup `Добавить блок` без отдельного продуктового решения.
 
 Universal list block использует `data-block-type="list"` и `data-list-kind`. Его режимы меняют picker и подписи, но не меняют тип блока. Runtime-кнопка добавления удаляется при сохранении, а выбранный режим должен сохраняться в persistent HTML.

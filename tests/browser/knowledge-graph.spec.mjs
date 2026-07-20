@@ -261,138 +261,554 @@ aliases: []
     await expect(
       page.locator('.knowledge-graph-summary-card')
     ).toHaveCount(
-      3
+      0
     );
 
     await expect(
       page.locator('.knowledge-graph-domain-card')
     ).toHaveCount(
-      4
+      0
     );
 
     await expect(
-      page.locator('.knowledge-graph-node').filter({
-        hasText: 'Hero'
-      })
+      page.locator('.knowledge-graph-workbench')
     ).toBeVisible();
 
     await expect(
-      page.locator('.knowledge-graph-exploration').filter({
-        hasText: 'Быстрое исследование мира'
-      })
+      page.locator('.knowledge-graph-canvas-stage')
     ).toBeVisible();
 
     await expect(
-      page.locator('.knowledge-graph-scenario-card').filter({
-        hasText: 'Персонажи'
-      })
+      page.locator('[data-knowledge-graph-layout="tree"]')
+    ).toHaveClass(
+      /is-active/
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-filter-status]')
+    ).toContainText(
+      'Стандартный вид'
+    );
+
+    await expect(
+      page.locator('.knowledge-graph-canvas-domain-label')
+    ).toHaveCount(
+      0
+    );
+
+    await expect(
+      page.locator('.knowledge-graph-readable-fallback')
+    ).toHaveCount(
+      0
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-tab]')
+    ).toHaveCount(
+      0
+    );
+
+    const graphEdgeCount =
+      await page.locator('.knowledge-graph-canvas-edge').count();
+
+    expect(
+      graphEdgeCount
+    ).toBeGreaterThan(
+      0
+    );
+
+    await expect(
+      page.locator('.knowledge-graph-canvas-filterbar')
+    ).toBeVisible();
+
+    await page.locator('[data-knowledge-graph-filter="domain"]').selectOption('item');
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="sword"]')
     ).toBeVisible();
 
     await expect(
-      page.locator('.knowledge-graph-scenario-card').filter({
-        hasText: 'Организации'
-      })
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="rules"]')
+    ).toHaveCount(
+      0
+    );
+
+    await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
+
+    await page.locator('[data-knowledge-graph-filter-action="orphans"]').click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="orphan"]')
     ).toBeVisible();
 
     await expect(
-      page.locator('.knowledge-graph-access-policy').filter({
-        hasText: 'admin'
-      })
-    ).toBeVisible();
+      page.locator('.knowledge-graph-canvas-edge')
+    ).toHaveCount(
+      0
+    );
 
-    await page.locator('[data-knowledge-graph-domain-shortcut="organization"]').click();
+    await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
 
-    await expect(
-      page.locator('[data-knowledge-graph-domain-panel="organization"] .knowledge-graph-row').filter({
-        hasText: 'Faction'
-      })
-    ).toBeVisible();
-
-    await page.locator('[data-knowledge-graph-tab="relationships"]').click();
-    await page.locator('[data-knowledge-graph-domain="all"]').click();
+    await page.locator('[data-knowledge-graph-filter="relationshipType"]').selectOption('equipped');
 
     await expect(
-      page.locator('[data-knowledge-graph-domain-panel="all"] .knowledge-graph-row').filter({
-        hasText: 'Wiki-ссылка'
-      })
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]')
     ).toBeVisible();
-
-    await page.locator('.knowledge-graph-relationship-form [name="sourceId"]').selectOption('world');
-    await page.locator('.knowledge-graph-relationship-form [name="type"]').selectOption('ally');
-    await page.locator('.knowledge-graph-relationship-form [name="targetId"]').selectOption('sword');
-    await page.locator('.knowledge-graph-relationship-form [name="label"]').fill('Treasure');
-    await page.locator('.knowledge-graph-relationship-form button[type="submit"]').click();
-    await page.locator('[data-knowledge-graph-tab="relationships"]').click();
 
     await expect(
-      page.locator('[data-knowledge-graph-domain-panel="all"] .knowledge-graph-row').filter({
-        hasText: 'Treasure'
-      })
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="sword"]')
     ).toBeVisible();
 
-    const savedRelationship =
-      await page.evaluate(
-        async () => {
+    await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
 
-          const {
-            state
-          } = await import('/js/state.js');
+    await page.locator('[data-knowledge-graph-canvas-node="hero"]').click();
 
-          const sourcePage =
-            state.pages.find(item =>
-              item.id === 'world'
-            );
+    await expect(
+      page.locator('.knowledge-graph-canvas-selection')
+    ).toHaveCount(
+      0
+    );
 
-          return {
-            relationship:
-              sourcePage.relationships?.at(-1) || null,
-            content:
-              sourcePage.content
-          };
-        }
+    const stageLocator =
+      page.locator('[data-knowledge-graph-canvas-stage]');
+
+    const initialScale =
+      Number(
+        await stageLocator.getAttribute(
+          'data-scale'
+        )
+      );
+
+    await page.locator('[data-knowledge-graph-canvas-action="zoom-in"]').click();
+
+    const canvasScale =
+      await stageLocator.getAttribute(
+        'data-scale'
       );
 
     expect(
-      savedRelationship.relationship
-    ).toEqual({
-      type: 'ally',
-      targetId: 'sword',
-      label: 'Treasure'
-    });
-
-    expect(
-      savedRelationship.content
-    ).toContain(
-      'relationshipsJson:'
+      Number(canvasScale)
+    ).toBeGreaterThan(
+      initialScale
     );
 
-    await page.locator('[data-knowledge-graph-domain="item"]').click();
+    const worldLocator =
+      page.locator('[data-knowledge-graph-canvas-world]');
+
+    const heroCard =
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]');
+
+    const heroBoxForGrab =
+      await heroCard.boundingBox();
+
+    const heroYBeforeGrab =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-y'
+        )
+      );
+
+    await page.mouse.move(
+      heroBoxForGrab.x + heroBoxForGrab.width / 2,
+      heroBoxForGrab.y + heroBoxForGrab.height / 2
+    );
+
+    await page.mouse.down();
+
+    await page.mouse.move(
+      heroBoxForGrab.x + heroBoxForGrab.width / 2 + 2,
+      heroBoxForGrab.y + heroBoxForGrab.height / 2 - 2
+    );
+
+    await page.mouse.up();
+
+    const heroYAfterGrab =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-y'
+        )
+      );
+
+    expect(
+      Math.abs(heroYAfterGrab - heroYBeforeGrab)
+    ).toBeLessThan(
+      10
+    );
+
+    const initialHeroX =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-x'
+        )
+      );
+
+    const initialWorldWidth =
+      await worldLocator.evaluate(element =>
+        Number.parseFloat(element.style.width)
+      );
+
+    const initialHeroEdgePath =
+      await page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="hero"]').first()
+        .getAttribute(
+          'd'
+        );
+
+    const heroBoxForDrag =
+      await heroCard.boundingBox();
+
+    const stageBoxForNodeDrag =
+      await stageLocator.boundingBox();
+
+    const heroDragStartX =
+      heroBoxForDrag.x + heroBoxForDrag.width / 2;
+
+    const heroDragStartY =
+      heroBoxForDrag.y + heroBoxForDrag.height / 2;
+
+    const heroDragEndX =
+      Math.min(
+        stageBoxForNodeDrag.x + stageBoxForNodeDrag.width - 18,
+        heroDragStartX + 520
+      );
+
+    await page.mouse.move(
+      heroDragStartX,
+      heroDragStartY
+    );
+
+    await page.mouse.down();
+
+    await page.mouse.move(
+      heroDragEndX,
+      heroDragStartY + 42,
+      {
+        steps: 8
+      }
+    );
+
+    await page.mouse.up();
+
+    const movedHeroX =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-x'
+        )
+      );
+
+    expect(
+      movedHeroX
+    ).toBeGreaterThan(
+      initialHeroX
+    );
+
+    const expandedWorldWidth =
+      await worldLocator.evaluate(element =>
+        Number.parseFloat(element.style.width)
+      );
+
+    expect(
+      expandedWorldWidth
+    ).toBeGreaterThan(
+      initialWorldWidth
+    );
+
+    const movedHeroEdgePath =
+      await page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="hero"]').first()
+        .getAttribute(
+          'd'
+        );
+
+    expect(
+      movedHeroEdgePath
+    ).not.toBe(
+      initialHeroEdgePath
+    );
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return (
+          state.currentPage?.content.includes(
+            'data-knowledge-graph-view-state'
+          ) &&
+          state.currentPage.content.includes(
+            '"hero"'
+          )
+        );
+      }
+    );
+
+    await page.locator('.knowledge-graph-refresh').click();
 
     await expect(
-      page.locator('[data-knowledge-graph-domain-panel="item"] .knowledge-graph-row').filter({
-        hasText: 'Main hand'
-      })
-    ).toBeVisible();
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'true'
+    );
 
-    await page.locator('[data-knowledge-graph-domain="rule"]').click();
+    const persistedHeroX =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-x'
+        )
+      );
+
+    expect(
+      Math.abs(persistedHeroX - movedHeroX)
+    ).toBeLessThan(
+      2
+    );
+
+    const historyUndoButton =
+      page.locator('[data-knowledge-graph-history-action="undo"]');
+
+    const historyRedoButton =
+      page.locator('[data-knowledge-graph-history-action="redo"]');
 
     await expect(
-      page.locator('[data-knowledge-graph-domain-panel="rule"] .knowledge-graph-row').filter({
-        hasText: 'Rules'
-      })
-    ).toBeVisible();
-
-    await page.locator('[data-knowledge-graph-tab="orphans"]').click();
+      historyUndoButton
+    ).toBeEnabled();
 
     await expect(
-      page.locator('.knowledge-graph-row').filter({
-        hasText: 'Orphan'
-      })
+      historyRedoButton
+    ).toBeDisabled();
+
+    await historyUndoButton.click();
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'false'
+    );
+
+    const undoHeroX =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-x'
+        )
+      );
+
+    expect(
+      Math.abs(undoHeroX - initialHeroX)
+    ).toBeLessThan(
+      2
+    );
+
+    await expect(
+      historyRedoButton
+    ).toBeEnabled();
+
+    await historyRedoButton.click();
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'true'
+    );
+
+    const redoneHeroX =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-x'
+        )
+      );
+
+    expect(
+      Math.abs(redoneHeroX - movedHeroX)
+    ).toBeLessThan(
+      2
+    );
+
+    await heroCard.click({
+      button: 'right'
+    });
+
+    await expect(
+      page.locator('[data-knowledge-graph-node-menu-action="reset-position"]')
     ).toBeVisible();
 
-    await page.locator(
-      '.knowledge-graph-open-page[data-page-id="orphan"]'
-    ).click();
+    await page.locator('[data-knowledge-graph-node-menu-action="connect"]').click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-connect-banner]')
+    ).toBeVisible();
+
+    await page.locator('[data-knowledge-graph-connect-type]').selectOption('enemy');
+
+    await page.locator('[data-knowledge-graph-canvas-node="world"]').click();
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'enemy' &&
+            relationship.targetId === 'world'
+          );
+      }
+    );
+
+    await page.keyboard.press(
+      'Control+Z'
+    );
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return !state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'enemy' &&
+            relationship.targetId === 'world'
+          );
+      }
+    );
+
+    await page.keyboard.press(
+      'Control+Y'
+    );
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'enemy' &&
+            relationship.targetId === 'world'
+          );
+      }
+    );
+
+    await page.locator('[data-knowledge-graph-filter="viewPreset"]').selectOption('manual');
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="world"]')
+    ).toBeVisible();
+
+    await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
+
+    await heroCard.click({
+      button: 'right'
+    });
+
+    await expect(
+      page.locator('[data-knowledge-graph-node-menu]')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('[data-knowledge-graph-node-menu]')
+    ).toContainText(
+      'Hero'
+    );
+
+    await page.locator('[data-knowledge-graph-node-menu-action="focus"]').click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-filter-status]')
+    ).toContainText(
+      'соседи'
+    );
+
+    await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
+
+    const beforeTransform =
+      await worldLocator.evaluate(element =>
+        element.style.transform
+      );
+
+    const beforeHeroBox =
+      await heroCard.boundingBox();
+
+    const stageBox =
+      await stageLocator.boundingBox();
+
+    await page.mouse.move(
+      stageBox.x + 24,
+      stageBox.y + 24
+    );
+
+    await page.mouse.down();
+
+    await page.mouse.move(
+      stageBox.x + 114,
+      stageBox.y + 74
+    );
+
+    await page.mouse.up();
+
+    const afterTransform =
+      await worldLocator.evaluate(element =>
+        element.style.transform
+      );
+
+    const afterHeroBox =
+      await heroCard.boundingBox();
+
+    expect(
+      afterTransform
+    ).not.toBe(
+      beforeTransform
+    );
+
+    expect(
+      Math.abs(afterHeroBox.x - beforeHeroBox.x)
+    ).toBeGreaterThan(
+      20
+    );
+
+    await page.locator('[data-knowledge-graph-layout="hub"]').click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-stage]')
+    ).toHaveAttribute(
+      'data-layout',
+      'hub'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-layout="hub"]')
+    ).toHaveClass(
+      /is-active/
+    );
+
+    await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
+    await page.locator('[data-knowledge-graph-filter-action="orphans"]').click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="orphan"]')
+    ).toBeVisible();
+
+    await page
+      .locator('[data-knowledge-graph-canvas-card][data-node-id="orphan"]')
+      .click({
+        button: 'right'
+      });
+
+    await page.locator('[data-knowledge-graph-node-menu-action="open"]').click();
 
     await page.waitForFunction(
       async () => {

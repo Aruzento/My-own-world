@@ -1,5 +1,64 @@
 # Release Notes
 
+## 2026-07-20: Knowledge Graph Canvas Undo/Redo
+
+- The Knowledge Graph canvas toolbar now has visible Back/Forward history controls for graph edits.
+- Ctrl+Z and Ctrl+Y/Ctrl+Shift+Z work for graph canvas history when focus is not inside a text or select field.
+- Undo/redo covers node moves, saved position reset and manual relationship creation from canvas connection mode.
+- The history changes the same persisted graph view-state and page relationship data that refresh/reopen already use.
+- Existing follow-up: editing/deleting an existing relationship is still planned in `0.0.1.5.4.3`.
+
+## 2026-07-20: Knowledge Graph Persistent Positions And Canvas Relationships
+
+- Fixed a graph drag bug where a grabbed node near the top of the canvas could drift upward while the infinite canvas expanded.
+- Dragged Knowledge Graph nodes now save their manual position in the graph page and keep it after refresh/reopen.
+- Right-clicking a graph node now offers `Закрепить здесь`, `Сбросить позицию` and `Связать...`.
+- `Связать...` starts a simple canvas connection mode: pick a relationship type, then click the target node.
+- Added readable relationship presets: `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`.
+- The graph view-state JSON is now preserved by the Safe HTML sanitizer while ordinary scripts remain blocked.
+- Ctrl+Z / undo for graph edits is a planned follow-up, not part of this release slice.
+
+## 2026-07-20: Knowledge Graph Canvas Usability Polish
+
+- `Граф связей` now opens as a full canvas workbench without the old `Карта` / `Связи` / `Одинокие` tabs around it.
+- The default view is now `Стандартный вид`: roots and two levels down through tree relationships, so the first screen explains the world from the top instead of showing a mysterious top-connected slice.
+- Nodes no longer start stacked on top of each other in the standard layout.
+- Fixed background domain labels and the bottom node list were removed from the first screen.
+- Dragging a node near the canvas edge expands the canvas world dynamically; empty-space drag still pans the viewport.
+- Toolbar controls are reorganized into layout, zoom/fit and filters.
+- Relationship creation/view presets remain a planned follow-up; current node actions stay in the right-click menu.
+
+## 2026-07-20: Knowledge Graph Filters And Node Drag
+
+- The Knowledge Graph canvas now has simple first-screen filters for entity type, relationship type, search and orphan pages.
+- The status line explains why the current nodes are visible, instead of leaving the owner to guess why the graph picked those pages.
+- The selected-node side inspector was removed from the canvas. Node actions now live in a right-click context menu.
+- Nodes can be dragged directly on the canvas; connected lines follow the moved node immediately.
+- Dragging empty canvas space still pans the whole graph layer.
+- Manual node positions are runtime-only for now. Saved/pinned positions remain a follow-up interaction task.
+
+## 2026-07-20: Knowledge Graph Workbench Layout
+
+- `Graph of relationships` now opens the visual tab as a cleaner canvas workbench instead of a page full of counters and helper cards.
+- The toolbar now offers `Domains`, `Center`, zoom, and center/fit controls.
+- This was later refined by the canvas usability polish: the default layout is now `Стандартный вид`, while `По типам` is the optional domain layout.
+- Dragging empty canvas space now pans the graph layer with nodes and lines together.
+- The later polish removed the bottom readable node list from the first screen.
+
+## 2026-07-20: Knowledge Graph Visual Canvas
+
+- `Граф связей` now has a real visual canvas above the readable node grid.
+- The canvas shows page nodes and relationship lines, with simple zoom, pan and fit-to-view controls.
+- Selecting a node highlights it; right-click opens node actions such as opening the page or focusing neighbors.
+- The later polish removed the old fallback node grid from the first screen.
+
+## 2026-07-20: Simplified Block Creation Menu
+
+- The card `Add block` popup now has one explicit source of truth for the first-level block list.
+- The first-level list is limited to `Text`, `List`, `Table`, `Image` and `Properties` when the current card type supports properties.
+- Specialized legacy blocks such as item/spell/skill sets, character effects, character sheet, DnD stat blocks, task tracker and page-template flows stay supported for old content, but they are not offered as first-level block choices.
+- The old `Effects and Conditions` block remains readable through `CharacterModel` when an existing card already contains its JSON data; new user-facing setup should go through `Properties`, universal list modes and Rule Tree paths.
+
 ## 2026-07-20: Readable Item Properties Defaults
 
 - New item `Properties` blocks now start with readable width and height for money, weight, armor and effect fields.
@@ -416,7 +475,7 @@
 - Добавлен блок `Лист персонажа`: расчетная сводка персонажа/существа по свойствам, инвентарю и эффектам.
 - Добавлена отдельная сущность `Правила` / `Rule Tree`: правила хранятся в собственном JSON, старые карточки с тегом `rule` можно импортировать как временный bridge.
 - `Правила` теперь доступны не только в архитектуре, но и в ручном UI: сущность можно создать через главный `+` и со стартового пустого экрана.
-- Блок карточки `Состояния и эффекты` явно доступен в popup `Добавить блок` и создается с таким названием для новых карточек.
+- Legacy-блок карточки `Состояния и эффекты` поддерживается для уже существующих карточек, но новый первый уровень popup `Добавить блок` больше не предлагает его как отдельный сценарий.
 - Главный popup `+` упрощен: быстрые пункты `Задача` и `По шаблону` убраны из первого уровня меню, чтобы не перегружать основной вход создания сущностей.
 - Направление развития `Свойств` пересобрано: блок `Свойства` становится главным человеко-понятным местом для параметров карточки, ручных значений, эффектов и будущих расчетов.
 - В блок `Свойства` добавлена шестеренка настроек: она открывает мягкий runtime-popup с текущими параметрами блока.
@@ -477,13 +536,13 @@
 
 - В меню `+` добавлена сущность `Граф связей`.
 - Граф показывает понятную сводку мира: сколько страниц, сколько связей и какие страницы пока ни с чем не связаны.
-- Внутри графа есть вкладки `Связи` и `Одинокие страницы`; из списка можно открыть страницу.
+- Historical: на этом этапе внутри графа были вкладки `Связи` и `Одинокие страницы`; текущий экран заменен canvas-first workflow из заметки 2026-07-20.
 - Связи строятся из дерева, wiki-links и подготовленного typed relationships foundation.
 - В `Связях` появились фокусы: `Все связи`, `Персонажи`, `Предметы`, `Организации`, `Правила`.
 ## 2026-07-07: Knowledge Graph relationships
 
-- `Граф связей` получил readable graph view: первая вкладка показывает компактную карту узлов мира.
-- Во вкладке `Связи` теперь можно вручную добавить typed relationship между двумя существующими страницами.
+- Historical: `Граф связей` получил readable graph view; текущий экран заменен canvas-first workflow из заметки 2026-07-20.
+- Historical: ручное добавление typed relationship через вкладку `Связи` было доступно в старом UI; новый canvas/context-menu вариант запланирован как follow-up.
 - Ручные связи сохраняются в metadata исходной карточки как `relationshipsJson` и затем отображаются в графе вместе с деревом и wiki-links.
 - В контракте `KNOWLEDGE_GRAPH_ENTITY_CONTRACT.md` закреплен формат связей и правило: readable view остается обязательным fallback перед будущим canvas/explorer.
 

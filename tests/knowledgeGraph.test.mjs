@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   buildKnowledgeGraph,
+  buildKnowledgeGraphCanvasModel,
   getKnowledgeGraphAccessPolicy,
   getKnowledgeGraphDomainEdges,
   getKnowledgeGraphDomainInsights,
@@ -421,6 +422,325 @@ test(
       policy.ruleTree.readRoles.includes(
         'player'
       )
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph canvas model positions readable nodes and edges',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'hero',
+          title: 'Hero',
+          type: 'character',
+          relationships: [
+            {
+              type: 'ally',
+              targetId: 'guild',
+              label: 'Member'
+            },
+            {
+              type: 'equipped',
+              targetId: 'sword',
+              label: 'Main hand'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'guild',
+          title: 'Guild',
+          type: 'organization',
+          content: ''
+        },
+        {
+          id: 'sword',
+          title: 'Sword',
+          type: 'item',
+          content: ''
+        },
+        {
+          id: 'loose',
+          title: 'Loose',
+          type: 'note',
+          content: ''
+        }
+      ]);
+
+    const canvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          maxNodes: 3
+        }
+      );
+
+    assert.equal(
+      canvas.width,
+      900
+    );
+
+    assert.equal(
+      canvas.layout,
+      'tree'
+    );
+
+    assert.equal(
+      canvas.nodes.length,
+      3
+    );
+
+    assert.equal(
+      canvas.nodes[0].id,
+      'hero'
+    );
+
+    assert.equal(
+      canvas.nodes[0].domain,
+      'character'
+    );
+
+    assert.ok(
+      canvas.domains.some(domain =>
+        domain.key === 'item'
+      )
+    );
+
+    assert.equal(
+      canvas.edges.length,
+      2
+    );
+
+    assert.equal(
+      canvas.hiddenNodeCount,
+      1
+    );
+
+    assert.ok(
+      canvas.nodes.every(node =>
+        Number.isFinite(node.x) &&
+        Number.isFinite(node.y)
+      )
+    );
+
+    assert.ok(
+      canvas.edges.every(edge =>
+        Number.isFinite(edge.x1) &&
+        Number.isFinite(edge.y1) &&
+        Number.isFinite(edge.x2) &&
+        Number.isFinite(edge.y2)
+      )
+    );
+
+    const hubCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          maxNodes: 3,
+          layout: 'hub'
+        }
+      );
+
+    assert.equal(
+      hubCanvas.layout,
+      'hub'
+    );
+
+    assert.equal(
+      hubCanvas.nodes[0].x,
+      450
+    );
+
+    const itemCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          filters: {
+            domain: 'item'
+          }
+        }
+      );
+
+    assert.deepEqual(
+      itemCanvas.nodes.map(node => node.id).sort(),
+      [
+        'hero',
+        'sword'
+      ]
+    );
+
+    assert.equal(
+      itemCanvas.edges.length,
+      1
+    );
+
+    const allyCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          filters: {
+            relationshipType: 'ally'
+          }
+        }
+      );
+
+    assert.deepEqual(
+      allyCanvas.nodes.map(node => node.id).sort(),
+      [
+        'guild',
+        'hero'
+      ]
+    );
+
+    const manualCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          filters: {
+            relationshipType: 'manual'
+          }
+        }
+      );
+
+    assert.deepEqual(
+      manualCanvas.edges.map(edge => edge.source),
+      [
+        'manual',
+        'manual'
+      ]
+    );
+
+    const pinnedCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          positions: {
+            hero: {
+              x: 240,
+              y: 180,
+              pinned: true
+            }
+          }
+        }
+      );
+
+    const pinnedHero =
+      pinnedCanvas.nodes.find(node =>
+        node.id === 'hero'
+      );
+
+    assert.equal(
+      pinnedHero.x,
+      240
+    );
+
+    assert.equal(
+      pinnedHero.y,
+      180
+    );
+
+    assert.equal(
+      pinnedHero.isPinned,
+      true
+    );
+
+    const orphanCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          width: 900,
+          height: 500,
+          filters: {
+            orphanOnly: true
+          }
+        }
+      );
+
+    assert.deepEqual(
+      orphanCanvas.nodes.map(node => node.id),
+      [
+        'loose'
+      ]
+    );
+
+    assert.equal(
+      orphanCanvas.edges.length,
+      0
+    );
+  }
+);
+
+
+test(
+  'KnowledgeGraph canvas default view starts at roots and stops after two levels',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'world',
+          title: 'World',
+          parent: null,
+          content: ''
+        },
+        {
+          id: 'region',
+          title: 'Region',
+          parent: 'world',
+          content: ''
+        },
+        {
+          id: 'city',
+          title: 'City',
+          parent: 'region',
+          content: ''
+        },
+        {
+          id: 'inn',
+          title: 'Inn',
+          parent: 'city',
+          content: ''
+        }
+      ]);
+
+    const canvas =
+      buildKnowledgeGraphCanvasModel(
+        graph
+      );
+
+    assert.deepEqual(
+      canvas.nodes.map(node => node.id),
+      [
+        'world',
+        'region',
+        'city'
+      ]
+    );
+
+    assert.equal(
+      canvas.layout,
+      'tree'
+    );
+
+    assert.match(
+      canvas.filterSummary.text,
+      /Стандартный вид/
     );
   }
 );

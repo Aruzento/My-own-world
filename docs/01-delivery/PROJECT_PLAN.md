@@ -55,33 +55,13 @@ Goal: desktop should feel like a real app, not a fragile wrapper around the brow
 
 Goal: map tools must be simple, fast, and usable during a live game.
 
-### 0.0.1.4.0. Properties & Character UX
-
-Goal: character properties should feel like a clear editable character sheet, while staying flexible for homebrew.
-
-0.0.1.4.6. Simplify block creation.
-
-Description: keep the block menu human-readable: text, list, table, image, properties. Specialized behavior should live as modes inside these blocks.
-
 ### 0.0.1.5.0. Knowledge Graph Visual Graph
 
 Goal: "Graph of relationships" should become a real visual map of the world, not just a list.
 
-0.0.1.5.1. Design a real graph canvas.
+0.0.1.5.4.3. Add relationship edit/delete and hover context polish.
 
-Description: visual nodes and edges, zoom/pan, fit to view, selected node, and one-click open page.
-
-0.0.1.5.2. Add readable graph layout.
-
-Description: cluster by domain: characters, items, organizations, rules, maps, and locations. Default layout should be useful without manual setup.
-
-0.0.1.5.3. Add graph filters.
-
-Description: filter by entity type, relationship type, tags, current-card neighborhood, and orphan pages.
-
-0.0.1.5.4. Add graph interaction.
-
-Description: hover preview, click open, drag node, pin node, focus neighborhood, and breadcrumbs.
+Description: let the owner change or delete an existing manual relationship from the node context menu or a simple relationship menu. Add hover previews/breadcrumbs only if they make the canvas easier to read without adding permanent side panels or noisy helper text.
 
 0.0.1.5.5. Add graph performance gate.
 

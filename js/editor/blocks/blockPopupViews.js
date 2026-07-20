@@ -3,6 +3,66 @@ import {
 } from '../../templates/propertyBlockDefinitions.js';
 
 
+const PRIMARY_BLOCK_TYPE_ORDER = [
+  'text',
+  'list',
+  'table',
+  'image',
+  'properties'
+];
+
+
+const PRIMARY_BLOCK_TYPE_OPTIONS = {
+  text: {
+    icon: 'T',
+    title: 'Текстовый блок',
+    description: 'Обычный блок с заголовком и текстом'
+  },
+  list: {
+    icon: '◆',
+    title: 'Блок списка',
+    description: 'Один блок для предметов, заклинаний, навыков и сущностей'
+  },
+  table: {
+    icon: '▦',
+    title: 'Таблица',
+    description: 'Таблица с заданным числом строк и столбцов'
+  },
+  image: {
+    icon: '▧',
+    title: 'Картинка',
+    description: 'Изображение на всю ширину блока'
+  }
+};
+
+
+export function getVisibleBlockTypesForCardType(
+  cardType
+) {
+
+  return PRIMARY_BLOCK_TYPE_ORDER
+    .filter(type =>
+      type !== 'properties' ||
+      hasPropertyBlockDefinition(
+        cardType
+      )
+    );
+}
+
+
+export function isVisibleBlockTypeForCardType(
+  type,
+  cardType
+) {
+
+  return getVisibleBlockTypesForCardType(
+    cardType
+  ).includes(
+    type
+  );
+}
+
+
 export function renderTypePicker(
   popup,
   cardType
@@ -15,46 +75,23 @@ export function renderTypePicker(
     .querySelector('.block-popup-actions')
     .classList.add('hidden');
 
-  popup.querySelector('.block-popup-body').innerHTML = `
-    <div class="block-type-list">
-      ${createTypeOptionHTML({
-        type: 'text',
-        icon: 'T',
-        title: 'Текстовый блок',
-        description: 'Обычный блок с заголовком и текстом'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'list',
-        icon: '◆',
-        title: 'Блок списка',
-        description: 'Один блок для предметов, заклинаний, навыков и сущностей'
-      })}
-
-      ${hasPropertyBlockDefinition(cardType)
-        ? createTypeOptionHTML({
-          type: 'properties',
-          icon: 'P',
-          title: 'Свойства',
-          description: `Поля для типа "${getCardTypeLabel(cardType)}"`
+  const optionsHTML =
+    getVisibleBlockTypesForCardType(
+      cardType
+    )
+      .map(type =>
+        createTypeOptionHTML({
+          type,
+          ...getTypeOptionConfig(
+            type,
+            cardType
+          )
         })
-        : ''}
+      )
+      .join('');
 
-      ${createTypeOptionHTML({
-        type: 'image',
-        icon: '▧',
-        title: 'Картинка',
-        description: 'Изображение на всю ширину блока'
-      })}
-
-      ${createTypeOptionHTML({
-        type: 'table',
-        icon: '▦',
-        title: 'Таблица',
-        description: 'Таблица с заданным числом строк и столбцов'
-      })}
-    </div>
-  `;
+  popup.querySelector('.block-popup-body').innerHTML =
+    `<div class="block-type-list">${optionsHTML}</div>`;
 }
 
 
@@ -243,6 +280,25 @@ function createTypeOptionHTML({
       </span>
     </button>
   `;
+}
+
+
+function getTypeOptionConfig(
+  type,
+  cardType
+) {
+
+  if (type === 'properties') {
+
+    return {
+      icon: 'P',
+      title: 'Свойства',
+      description: `Поля для типа "${getCardTypeLabel(cardType)}"`
+    };
+  }
+
+  return PRIMARY_BLOCK_TYPE_OPTIONS[type] ||
+    PRIMARY_BLOCK_TYPE_OPTIONS.text;
 }
 
 

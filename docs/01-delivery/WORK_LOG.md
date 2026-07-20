@@ -6,6 +6,279 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: 0.0.1.5.4.2 Knowledge Graph Canvas Undo/Redo
+
+### What Changed
+
+- Completed `0.0.1.5.4.2`.
+- Added visible graph history controls in the Knowledge Graph canvas toolbar: `Back` and `Forward`.
+- Added Ctrl+Z and Ctrl+Y/Ctrl+Shift+Z handling for graph canvas history when focus is not inside a text/select input.
+- Graph history now covers:
+  - node moves;
+  - saved position reset;
+  - manual relationship creation from canvas connection mode.
+- Undo/redo updates the same persisted graph view-state and page relationship data that refresh/reopen already use.
+- Closed backlog item `BI-015`.
+
+### Readiness
+
+Usable. The owner can undo and redo the main graph canvas edits through visible toolbar buttons or keyboard shortcuts without opening a developer-only menu.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: `node --test tests\knowledgeGraph.test.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run check:encoding`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: `npm run verify` with 254 unit/integration tests and the synthetic large-workspace performance smoke.
+
+### Risk / Remaining
+
+- Graph history is runtime history for the currently open graph page. It is not a cross-session app-wide undo stack.
+- Editing or deleting an existing manual relationship remains in `0.0.1.5.4.3`.
+- Very large graph performance slices remain in `0.0.1.5.5`-`0.0.1.5.6`.
+
+### Next
+
+- Continue with `0.0.1.5.4.3` relationship edit/delete and hover context polish, unless a higher-priority bug appears.
+
+## 2026-07-20: 0.0.1.5.4.1 Knowledge Graph Persistent Positions And Canvas Relationships
+
+### What Changed
+
+- Completed the usable part of `0.0.1.5.4.1`.
+- Fixed the node-drag regression where grabbing a node near the top edge could make it drift upward because canvas expansion shifted world coordinates during the drag.
+- Saved manual node positions into the Knowledge Graph page as a sanitized `application/json` view-state script.
+- Reopening or refreshing the graph now reapplies saved positions and marks pinned nodes with a small visual dot.
+- Added right-click node actions:
+  - `Закрепить здесь`;
+  - `Сбросить позицию`;
+  - `Связать...`.
+- Added a simple canvas connection mode: right-click a source node, choose `Связать...`, pick the relationship type and click a target node.
+- Added readable view presets: `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`.
+- `Стандартный вид` remains root plus two tree levels; `Все связи` now explicitly requests the broader all-relationship graph slice.
+- Extended the Safe HTML sanitizer so the graph view-state JSON is allowed while ordinary scripts remain blocked.
+- Added `BI-015` for graph Ctrl+Z / undo instead of overclaiming it inside this pass.
+
+### Readiness
+
+Usable. The owner can drag a graph node, refresh/reopen the graph and keep that position; manual relationships can be created from the canvas in two obvious actions.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraph.js`
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --check js\editor\safeHtmlSanitizer.js`
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: `node --test tests\knowledgeGraph.test.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run check:encoding`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: `npm run verify` with 254 unit/integration tests and the synthetic large-workspace performance smoke.
+
+### Risk / Remaining
+
+- Ctrl+Z / undo for graph edits is still planned in `0.0.1.5.4.2`.
+- Editing or deleting an existing manual relationship and optional hover/breadcrumb polish remain in `0.0.1.5.4.3`.
+- Very large worlds still need graph performance slices and gates in `0.0.1.5.5`-`0.0.1.5.6`.
+
+### Next
+
+- Continue with `0.0.1.5.4.2` graph canvas undo/redo, unless a higher-priority bug appears.
+
+## 2026-07-20: 0.0.1.5.4 Knowledge Graph Canvas Usability Polish
+
+### What Changed
+
+- Completed the user-facing part of `0.0.1.5.4`.
+- Removed the visual graph tabs from the first screen. `Карта`, `Связи` and `Одинокие` are no longer separate modes around the canvas.
+- Removed the fixed background domain labels and the node list under the canvas. The first screen is now the canvas plus compact controls.
+- Changed the default graph view to a readable tree slice: roots and two levels below, with the status line saying `Стандартный вид`.
+- Added a tree layout that spaces levels and siblings deterministically so nodes do not stack on first open.
+- Made the canvas world dynamically expandable when a node is dragged toward an edge. The implementation follows the infinite-canvas pattern: separate world coordinates, pan/zoom viewport and growing bounds.
+- Reorganized the graph toolbar into layout controls, zoom/fit controls and filters.
+- Kept node actions in the right-click context menu instead of a permanent side inspector.
+- Updated browser regression coverage for: no tabs, no domain-label overlay, no fallback node list, default tree status, direct node drag, dynamic world expansion, edge redraw, pan, filters and context-menu actions.
+
+### Readiness
+
+Usable. The owner can open the graph and use it like a map-style exploration canvas: standard root view first, filters in one or two actions, draggable nodes, expanding field and right-click node actions.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraph.js`
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: `node --test tests\knowledgeGraph.test.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run check:encoding`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: `npm run verify` with 254 unit/integration tests and the synthetic large-workspace performance smoke.
+
+### Risk / Remaining
+
+- Manual node positions are still runtime-only. Persistent pinned positions stay in `0.0.1.5.4.1`.
+- Relationship creation/editing should move to canvas/context-menu flows with clear view presets. This is planned but not implemented in this polish pass.
+- Very large worlds still need graph slices and performance gates in `0.0.1.5.5`.
+
+### Next
+
+- Continue with `0.0.1.5.4.1` for persistent graph positions and readable relationship tools, or promote a P0/P1 bug if one appears.
+
+## 2026-07-20: 0.0.1.5.3 Knowledge Graph Filters And Direct Canvas Interaction
+
+### What Changed
+
+- Completed `0.0.1.5.3`.
+- Added a compact graph filter bar to the visual Knowledge Graph canvas:
+  - entity/domain filter;
+  - relationship type filter;
+  - search by title, alias, tag, type or id;
+  - orphan-pages filter;
+  - one-click reset.
+- Added a readable status line that explains why the current nodes are visible: most-connected pages, selected type, relationship type, search, orphan pages or focused neighbors.
+- Removed the permanent selected-node side panel from the first graph screen.
+- Added a right-click node context menu with:
+  - open page;
+  - show neighbors;
+  - show whole graph.
+- Added direct node dragging on the canvas. Dragging a node updates its runtime coordinates and connected edge paths immediately; dragging empty canvas space still pans the viewport.
+- Fixed graph filtering so domain filters expand only one neighbor step and do not cascade into unrelated neighbors.
+
+### Readiness
+
+Usable. The owner can open the graph, filter it in one or two actions, right-click a node for actions and manually move nodes during exploration. Saved/pinned manual positions and richer interaction polish remain in `0.0.1.5.4`.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraph.js`
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --test tests\knowledgeGraph.test.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+
+### Risk / Remaining
+
+- Manual node drag is runtime-only. A filter/layout refresh rebuilds the deterministic layout. Saved/pinned positions stay in the next plan item.
+- Very large worlds still need graph slices and performance gates in `0.0.1.5.5`.
+
+### Next
+
+- Continue with `0.0.1.5.4` Knowledge Graph interaction polish.
+
+## 2026-07-20: 0.0.1.5.2 Knowledge Graph Readable Workbench Layout
+
+### What Changed
+
+- Completed `0.0.1.5.2`.
+- The `Graph of relationships` visual tab now opens as a map-like workbench: compact top toolbar, large canvas area and a small selected-node inspector.
+- Removed the noisy first-screen summary/domain/stat cards from the visual graph view; relationship management and orphan cleanup remain in their own tabs.
+- Added the default domain layout for characters, items, organizations, locations, maps, rules and notes.
+- Kept the previous hub-and-ring view as the `Center` layout option.
+- Fixed canvas panning so the same transformed graph layer contains domain labels, SVG edges and node cards; dragging empty canvas space now moves the nodes and lines together.
+- Kept a collapsed readable node list as fallback instead of showing it as another visual grid by default.
+- Prevented runtime graph layout state from being serialized into persistent Knowledge Graph HTML.
+
+### Readiness
+
+Usable. The owner can use the graph as a readable visual overview without manual setup. Filters, deeper interaction, pinned/focus mode and large-world slicing remain active plan work.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraph.js`
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --test tests\knowledgeGraph.test.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run verify`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+
+### Risk / Remaining
+
+- The visual graph is still all-world/top-node oriented. `0.0.1.5.3` must add filters before very large worlds feel precise.
+- Node drag/pin/focus-neighborhood belongs to `0.0.1.5.4`; this task only fixes canvas pan and readable layout.
+
+### Next
+
+- Continue with `0.0.1.5.3` Knowledge Graph filters.
+
+## 2026-07-20: 0.0.1.5.1 Knowledge Graph Real Canvas Foundation
+
+### What Changed
+
+- Completed `0.0.1.5.1`.
+- `Граф связей` now renders a real visual canvas above the readable node grid: nodes are positioned in a deterministic graph space and connected with visible SVG edges.
+- Added canvas controls for zoom in, zoom out and fit-to-view.
+- Added mouse panning by dragging empty canvas space.
+- Selecting a node updates a small details panel with title, type and relationship count.
+- Each visual node has an explicit one-click open button, so opening a page is intentional and does not happen from accidental clicks on the node container.
+- Added a `buildKnowledgeGraphCanvasModel` helper so visual graph data is generated from the existing graph model instead of duplicating relationship logic in UI code.
+- Added `BI-014` to the lightweight backlog for future `Add block` popup redesign; it is not part of this Knowledge Graph task.
+
+### Readiness
+
+MVP. The graph is now visually inspectable and testable, but useful domain layout, filters, focus mode and performance slicing remain in `0.0.1.5.2`-`0.0.1.5.6`.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraph.js`
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --test tests\knowledgeGraph.test.mjs`
+- Passed: `npm run check:js`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run verify` with 253 unit tests and the synthetic large-workspace performance smoke.
+
+### Risk / Remaining
+
+- Current layout is deterministic and readable enough for an MVP, but not yet clustered by domain.
+- Very large workspaces still need graph slices/performance gates before the all-world view can be considered release-ready.
+
+### Next
+
+- Continue with `0.0.1.5.2` readable Knowledge Graph layout.
+
+## 2026-07-20: 0.0.1.4.6 Simplified Block Creation
+
+### What Changed
+
+- Completed `0.0.1.4.6`.
+- The card `Add block` popup now builds its first-level list from one explicit allowlist: `text`, `list`, `table`, `image`, and `properties` only when the current card type supports a Properties schema.
+- Added a guard so a hidden/specialized block type cannot be created through a tampered first-level popup option.
+- Legacy specialized block creators remain available for old saved cards and compatibility code, but `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `characterStats`, `dndStats`, task tracker and template flows are not first-level block choices.
+- Updated CharacterModel and Block System contracts so future work does not reintroduce the old `Effects and Conditions` block into the main creation popup.
+- Release notes, tester instructions, product dashboard and active plan were synchronized.
+
+### Readiness
+
+Usable. The owner can open `Add block` and see a short human-readable list; universal list modes and Properties are the intended user path for specialized behavior.
+
+### Checks
+
+- Passed: `node --check js\editor\blocks\blockPopupViews.js`
+- Passed: `node --check js\editor\blocks\blockPopup.js`
+- Passed: `npm run check:js`
+- Passed: `npm run check:encoding`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run verify`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+
+### Risk / Remaining
+
+- Existing cards with legacy specialized blocks remain supported, but new effect/rule UX still needs broader release-ready polish in later Character/Rule Tree work.
+- `BI-013` remains open for the separate block-level drag-and-drop regression and belongs to the future design/core-content block.
+
+### Next
+
+- Continue with `0.0.1.5.0` Knowledge Graph Visual Graph, unless a P0/P1 bug is promoted first.
+
 ## 2026-07-20: Item Properties Readable Defaults Hotfix
 
 ### What Changed

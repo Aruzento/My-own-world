@@ -367,10 +367,8 @@ test(
               mapHost.querySelector('.campaign-map-title')?.textContent.trim() || '',
             graphImages:
               graphHost.querySelectorAll('img').length,
-            relationshipNote:
-              graphHost.querySelector('.knowledge-graph-note')?.textContent || '',
-            graphPageText:
-              graphHost.querySelector('.knowledge-graph-page-link')?.textContent.trim() || ''
+            graphNodeText:
+              graphHost.querySelector('[data-node-id="target"] strong')?.textContent.trim() || ''
           };
         }
       );
@@ -424,13 +422,7 @@ test(
     );
 
     expect(
-      result.relationshipNote
-    ).toBe(
-      '<img src=x onerror="window.__remainingRuntimeInjected=true">Text'
-    );
-
-    expect(
-      result.graphPageText
+      result.graphNodeText
     ).toBe(
       '<img src=x onerror="window.__remainingRuntimeInjected=true">Text'
     );

@@ -37,10 +37,15 @@ Recently closed:
 - `0.0.1.4.3` visible DnD calculations in Properties: ability modifiers, proficiency bonus, initiative, skills/expertise, armor-based AC and manual overrides.
 - `0.0.1.4.4` armor selection in Properties: the `Armor` field now lists only item cards whose own Properties mark them as armor.
 - `0.0.1.4.5` Properties/CharacterModel map connection: map tokens now receive HP, AC, speed, initiative and effect/status summaries from the model snapshot.
+- `0.0.1.4.6` simplified block creation: `Add block` now stays at text, list, table, image and properties, while legacy specialized blocks remain compatibility-only.
+- `0.0.1.5.1` Knowledge Graph real canvas foundation: visual nodes and edges, zoom/pan/fit, selected node details and one-click page open from the node.
+- `0.0.1.5.2` readable Knowledge Graph layout: the first graph screen became a canvas workbench with domain/hub layouts, compact controls and fit/zoom/pan instead of noisy statistics cards.
+- `0.0.1.5.3` Knowledge Graph filters and direct canvas interaction: filter by type, relationship, search and orphan pages; right-click a node for actions; drag nodes directly on the canvas.
+- `0.0.1.5.4` Knowledge Graph canvas usability polish: standard root-plus-two-level view, no tabs/lists around the canvas, no fixed background domain labels, dynamic canvas expansion near edges, non-overlapping first layout and cleaner controls.
 
 Next active block:
 
-- `0.0.1.4.6` Simplify block creation, unless a P0/P1 bug from the lightweight backlog is promoted first.
+- `0.0.1.5.4.1` persistent graph positions and readable relationship tools, unless a P0/P1 bug from the lightweight backlog is promoted first.
 
 ## Readiness Model
 
@@ -59,7 +64,7 @@ This prevents "done" from meaning only "a model/helper was created".
 - Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection and workspace access diagnostics; richer recovery remains open.
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.
-- Properties and CharacterModel now have a usable card-to-map path, but the broader character workflow still needs release-ready polish and clearer block creation.
+- Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.
 - README, dashboard, bug inventory and plan must stay synchronized so the project remains understandable to the owner.
 
 ## Where To Read Next

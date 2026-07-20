@@ -16,7 +16,8 @@ import {
   renderNameForm,
   renderTableForm,
   getBlockPopupTitle,
-  getDefaultBlockTitle
+  getDefaultBlockTitle,
+  isVisibleBlockTypeForCardType
 } from './blockPopupViews.js';
 
 import {
@@ -196,6 +197,23 @@ function openAddBlockPopup({
   saveCurrentPage
 }) {
 
+  const cardType =
+    getCurrentCardType(
+      button
+    );
+
+  if (
+    !isVisibleBlockTypeForCardType(
+      type,
+      cardType
+    )
+  ) {
+
+    closeBlockPopup();
+
+    return;
+  }
+
   if (type === 'image') {
 
     addImageBlock(
@@ -212,7 +230,8 @@ function openAddBlockPopup({
 
     addPropertiesBlock(
       button,
-      saveCurrentPage
+      saveCurrentPage,
+      cardType
     );
 
     closeBlockPopup();
@@ -364,18 +383,14 @@ async function applyPopupAction() {
 
 function addPropertiesBlock(
   button,
-  saveCurrentPage
+  saveCurrentPage,
+  cardType
 ) {
 
   const main =
     button.closest('.entity-main');
 
   if (!main) return;
-
-  const cardType =
-    getCurrentCardType(
-      button
-    );
 
   const block =
     createTypedBlock(
