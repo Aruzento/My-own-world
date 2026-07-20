@@ -1004,14 +1004,27 @@ function createCustomPropertyFieldHTML(
     });
   }
 
+  const sharedClassName =
+    [
+      'card-property-field',
+      'card-property-custom-field',
+      type === 'textarea'
+        ? 'card-property-textarea-field'
+        : ''
+    ]
+      .filter(Boolean)
+      .join(' ');
+
   const sharedAttributes = `
-      class="card-property-field card-property-custom-field"
+      class="${sharedClassName}"
       data-property-custom="true"
     data-property-id="${safeId}"
     data-property-label="${escapeAttribute(label)}"
     ${createPropertyLayoutAttributes(
       layout ||
-      createDefaultPropertyLayout()
+      createDefaultPropertyLayout({
+        type
+      })
     )}
   `;
 
@@ -1152,7 +1165,7 @@ function createDefaultPropertyLayout(
     h:
       type === 'compound'
         ? 2
-        : 1,
+        : 2,
     order:
       0,
     collapsed:
@@ -1176,7 +1189,7 @@ function findNextPropertyFreeLayout(
   const height =
     type === 'compound'
       ? 2
-      : 1;
+      : 2;
 
   const occupied =
     [
@@ -1389,6 +1402,10 @@ function ensurePropertyFieldLayoutHandles(
     .forEach(field => {
 
       ensurePropertyFieldLayoutState(
+        field
+      );
+
+      classifyPropertyFieldContent(
         field
       );
 
@@ -1680,6 +1697,21 @@ function markPropertyFieldLabel(
 
   label.classList.add(
     'card-property-label'
+  );
+}
+
+
+function classifyPropertyFieldContent(
+  field
+) {
+
+  field.classList.toggle(
+    'card-property-textarea-field',
+    Boolean(
+      field.querySelector(
+        '.card-property-textarea'
+      )
+    )
   );
 }
 
@@ -2935,7 +2967,7 @@ function ensurePropertyFieldLayoutState(
             'card-property-field-wide'
           )
             ? 2
-            : 1
+            : 2
       }
     );
 

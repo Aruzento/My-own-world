@@ -52,6 +52,7 @@ It is not a replacement for [PROJECT_PLAN.md](./PROJECT_PLAN.md) or [BUG_INVENTO
 | BI-010 | P1 | Campaign map / toolbar | Needs repro | `0.0.1.3.0` | Under unknown circumstances the top map toolbar disappears. Workaround: open a card, then reopen the map. Need reproduction, root cause and regression. |
 | BI-011 | P1 | Campaign map / creature skills menu | Fix with block | `0.0.1.3.0` | Encoding is broken in the map creature context menu item/submenu for skills (`Навыки`). Fix mojibake and add an encoding/UI regression if practical. |
 | BI-012 | P1 | Data safety / schema recovery | Ready for plan | `0.0.1.6.3` | The real large workspace `X:\ДНД\Мастер\По кампаниям\База` reports 2074 schema issues in desktop diagnostics. Before any automatic repair, add a grouped human-readable report that explains which issues are legacy/migration noise and which are unsafe. |
+| BI-013 | P1 | Editor / block drag-and-drop | Needs repro | `0.0.1.8.11` | Blocks appear to have stopped moving. Reproduce the block-level drag-and-drop regression, restore moving blocks, and modernize the block DnD UX so it matches the smoother Properties field drag/resize behavior. |
 
 ## Intake Template
 

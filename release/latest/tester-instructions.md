@@ -1,5 +1,17 @@
 # Tester Instructions
 
+## 2026-07-20: Readable Item Properties Defaults
+
+1. Open or create an item card.
+2. Add a `Properties` block.
+3. Expected result: money fields, `Weight`, `Armor` and `Effect` show both the field name and the input immediately without manually resizing fields.
+4. Add a new custom field from the Properties gear popup.
+5. Expected result: the new field starts at a readable default width and height, not as a narrow or vertically clipped control.
+6. Hover a short field such as `Weight` or a money field.
+7. Expected result: the label/input pair is vertically balanced inside the field, and resize dots appear above the border instead of sinking into it.
+8. Resize a long text field such as `Effect`/`Description` to a taller shape.
+9. Expected result: the field name stays visible at the top, the editor grows into the remaining space, and text scrolls inside the field instead of pushing the title out.
+
 ## 2026-07-20: Properties To Map Character Snapshot
 
 1. Open or create a character/creature card and add a `Properties` block.

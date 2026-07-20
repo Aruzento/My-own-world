@@ -401,6 +401,393 @@ test(
 
 
 test(
+  'item-properties-default-layout-is-readable-after-runtime-setup',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.style.width =
+            '960px';
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'item'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          const block =
+            editor.querySelector('.card-properties-block');
+
+          function layout(
+            name
+          ) {
+
+            const node =
+              block.querySelector(
+                `.card-property-field[data-property-id="${name}"]`
+              );
+
+            const label =
+              node.querySelector(
+                'span'
+              );
+
+            const control =
+              node.querySelector(
+                'input, select, .card-property-textarea'
+              );
+
+            const nodeRect =
+              node.getBoundingClientRect();
+
+            const labelRect =
+              label.getBoundingClientRect();
+
+            const controlRect =
+              control.getBoundingClientRect();
+
+            const contentTop =
+              Math.min(
+                labelRect.top,
+                controlRect.top
+              );
+
+            const contentBottom =
+              Math.max(
+                labelRect.bottom,
+                controlRect.bottom
+              );
+
+            const resizeDot =
+              node.querySelector(
+                '.card-property-resize-dot-e'
+              );
+
+            return {
+              gridColumn:
+                node.style.gridColumn,
+              gridRow:
+                node.style.gridRow,
+              span:
+                node.dataset.propertySpan,
+              rows:
+                node.dataset.propertyRows,
+              width:
+                Math.round(
+                  nodeRect.width
+                ),
+              labelWidth:
+                Math.round(
+                  labelRect.width
+                ),
+              labelHeight:
+                Math.round(
+                  labelRect.height
+                ),
+              labelTopGap:
+                Math.round(
+                  labelRect.top - nodeRect.top
+                ),
+              labelBeforeControl:
+                labelRect.bottom <= controlRect.top,
+              controlHeight:
+                Math.round(
+                  controlRect.height
+                ),
+              controlBottomInside:
+                controlRect.bottom <= nodeRect.bottom + 1,
+              topGap:
+                Math.round(
+                  contentTop - nodeRect.top
+                ),
+              bottomGap:
+                Math.round(
+                  nodeRect.bottom - contentBottom
+                ),
+              alignContent:
+                window
+                  .getComputedStyle(
+                    node
+                  )
+                  .alignContent,
+              overflow:
+                window
+                  .getComputedStyle(
+                    node
+                  )
+                  .overflow,
+              controlOverflow:
+                window
+                  .getComputedStyle(
+                    control
+                  )
+                  .overflow,
+              dotZIndex:
+                resizeDot
+                  ? window
+                    .getComputedStyle(
+                      resizeDot
+                    )
+                    .zIndex
+                  : null
+            };
+          }
+
+          const effect =
+            layout('effect');
+
+          const effectNode =
+            block.querySelector(
+              '.card-property-field[data-property-id="effect"]'
+            );
+
+          effectNode.dataset.propertyRows =
+            '5';
+
+          effectNode.style.setProperty(
+            '--property-field-rows',
+            '5'
+          );
+
+          effectNode.style.setProperty(
+            '--property-field-min-height',
+            '220px'
+          );
+
+          effectNode.style.gridRow =
+            '5 / span 5';
+
+          const effectTall =
+            layout('effect');
+
+          return {
+            gold:
+              layout('gold'),
+            silver:
+              layout('silver'),
+            copper:
+              layout('copper'),
+            weight:
+              layout('weight'),
+            armorProfile:
+              layout('armorProfile'),
+            effect:
+              effect,
+            effectTall
+          };
+        }
+      );
+
+    expect(
+      result.gold
+    ).toMatchObject({
+      gridColumn: '1 / span 4',
+      gridRow: '1 / span 2',
+      span: '4',
+      rows: '2'
+    });
+
+    expect(
+      result.silver
+    ).toMatchObject({
+      gridColumn: '5 / span 4',
+      gridRow: '1 / span 2',
+      span: '4',
+      rows: '2'
+    });
+
+    expect(
+      result.copper
+    ).toMatchObject({
+      gridColumn: '9 / span 4',
+      gridRow: '1 / span 2',
+      span: '4',
+      rows: '2'
+    });
+
+    expect(
+      result.weight
+    ).toMatchObject({
+      gridColumn: '1 / span 4',
+      gridRow: '3 / span 2',
+      span: '4',
+      rows: '2'
+    });
+
+    expect(
+      result.armorProfile
+    ).toMatchObject({
+      gridColumn: '5 / span 8',
+      gridRow: '3 / span 2',
+      span: '8',
+      rows: '2'
+    });
+
+    expect(
+      result.effect
+    ).toMatchObject({
+      gridColumn: '1 / span 12',
+      gridRow: '5 / span 2',
+      span: '12',
+      rows: '2'
+    });
+
+    [
+      'gold',
+      'silver',
+      'copper',
+      'weight'
+    ].forEach(name => {
+
+      expect(
+        result[name].width
+      ).toBeGreaterThan(
+        120
+      );
+
+      expect(
+        result[name].labelWidth
+      ).toBeGreaterThan(
+        16
+      );
+
+      expect(
+        result[name].rows
+      ).toBe(
+        '2'
+      );
+
+      expect(
+        result[name].alignContent
+      ).toBe(
+        'center'
+      );
+
+      expect(
+        Math.abs(
+          result[name].topGap - result[name].bottomGap
+        )
+      ).toBeLessThanOrEqual(
+        12
+      );
+    });
+
+    expect(
+      result.gold.overflow
+    ).toBe(
+      'visible'
+    );
+
+    expect(
+      result.effect.alignContent
+    ).toBe(
+      'stretch'
+    );
+
+    expect(
+      result.effect.labelHeight
+    ).toBeGreaterThan(
+      8
+    );
+
+    expect(
+      result.effect.labelTopGap
+    ).toBeGreaterThanOrEqual(
+      4
+    );
+
+    expect(
+      result.effect.labelBeforeControl
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.effect.controlHeight
+    ).toBeGreaterThan(
+      36
+    );
+
+    expect(
+      result.effect.controlBottomInside
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.effect.overflow
+    ).toBe(
+      'visible'
+    );
+
+    expect(
+      result.effect.controlOverflow
+    ).toBe(
+      'auto'
+    );
+
+    expect(
+      result.effectTall.rows
+    ).toBe(
+      '5'
+    );
+
+    expect(
+      result.effectTall.labelBeforeControl
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.effectTall.labelHeight
+    ).toBeGreaterThan(
+      8
+    );
+
+    expect(
+      result.effectTall.controlHeight
+    ).toBeGreaterThan(
+      result.effect.controlHeight
+    );
+
+    expect(
+      result.effectTall.controlBottomInside
+    ).toBe(
+      true
+    );
+
+    expect(
+      Number(
+        result.gold.dotZIndex
+      )
+    ).toBeGreaterThanOrEqual(
+      8
+    );
+  }
+);
+
+
+test(
   'item-armor-profile-is-one-removable-compound-property',
   async ({ page }) => {
 
@@ -2055,7 +2442,7 @@ test(
         w:
           Number(result.westSpan),
         h:
-          1,
+          2,
         collapsed:
           false
       })

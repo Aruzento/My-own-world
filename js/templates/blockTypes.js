@@ -353,7 +353,7 @@ function createPropertyFieldHTML(
   if (type === 'textarea') {
 
     return `
-      <label class="card-property-field card-property-field-wide" data-property-id="${name}" ${layoutAttributes}>
+      <label class="card-property-field card-property-field-wide card-property-textarea-field" data-property-id="${name}" ${layoutAttributes}>
         <span>${label}</span>
         <div
           class="card-property-textarea rich-text-field"
@@ -764,7 +764,7 @@ function getDefaultPropertyLayoutSize(
 
   return {
     w: 4,
-    h: 1
+    h: 2
   };
 }
 
@@ -778,12 +778,12 @@ function getInitialPropertyLayoutPreset(
   if (cardType === 'item') {
 
     const itemLayout = {
-      gold: [0, 0, 2, 1],
-      silver: [2, 0, 2, 1],
-      copper: [4, 0, 2, 1],
-      weight: [6, 0, 3, 1],
-      armorProfile: [0, 1, 6, 2],
-      effect: [6, 1, 6, 2]
+      gold: [0, 0, 4, 2],
+      silver: [4, 0, 4, 2],
+      copper: [8, 0, 4, 2],
+      weight: [0, 2, 4, 2],
+      armorProfile: [4, 2, 8, 2],
+      effect: [0, 4, 12, 2]
     };
 
     const value =

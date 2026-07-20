@@ -10,6 +10,9 @@ export const PROPERTY_LAYOUT_MIN_WIDTH =
 export const PROPERTY_LAYOUT_MIN_HEIGHT =
   1;
 
+export const PROPERTY_LAYOUT_DEFAULT_HEIGHT =
+  2;
+
 export const PROPERTY_LAYOUT_MAX_HEIGHT =
   8;
 
@@ -33,7 +36,7 @@ export function normalizePropertyLayout(
       value.h ?? value.height ?? fallback.h ?? fallback.height,
       PROPERTY_LAYOUT_MIN_HEIGHT,
       PROPERTY_LAYOUT_MAX_HEIGHT,
-      fallback.h ?? PROPERTY_LAYOUT_MIN_HEIGHT
+      fallback.h ?? PROPERTY_LAYOUT_DEFAULT_HEIGHT
     );
 
   return {

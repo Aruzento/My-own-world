@@ -6,6 +6,36 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: Item Properties Readable Defaults Hotfix
+
+### What Changed
+
+- Fixed new item `Properties` blocks so all standard fields show the field name and input without manual resizing, not only the compound `Armor` field.
+- Money and weight fields now start at 4 grid columns and 2 grid rows, `Armor` starts at 8 columns and 2 rows, and `Effect` starts full width.
+- The generic `Properties` model/CSS fallback now uses the same 4-column, 2-row default, so newly added fields without a stored layout do not start cramped or vertically clipped.
+- Short `Properties` fields now center their label/input pair vertically to avoid an empty lower half.
+- Resize dots now render above the field border with a small backing ring instead of being clipped by the field border.
+- Long text `Properties` fields now reserve a stable label row and let the editor fill the remaining height, so fields like `Description` keep their title visible even after custom resizing.
+- Added `BI-013` to the lightweight backlog for the separate block-level drag-and-drop regression.
+
+### Readiness
+
+Usable. This affects new item `Properties` blocks and fields without saved layout; existing manually resized layouts remain untouched.
+
+### Checks
+
+- Passed: `node --test tests\propertyBlocks.test.mjs`
+- Passed: `npm run check:js`
+- Passed: browser regression for tall item `Properties` text fields keeping the label visible.
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run verify`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+
+### Risk / Remaining
+
+- Block-level drag-and-drop is recorded as `BI-013` and still needs a separate reproduction/fix pass.
+
 ## 2026-07-20: 0.0.1.4.5 Properties/CharacterModel Map Connection
 
 ### What Changed

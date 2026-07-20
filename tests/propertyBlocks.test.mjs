@@ -55,6 +55,60 @@ function pickLayouts(
 }
 
 
+function extractPropertyLayouts(html) {
+
+  const layoutByName = {};
+
+  [
+    ...html.matchAll(
+      /<(label|section)\b[^>]*class="[^"]*card-property-field[^"]*"[^>]*>/g
+    )
+  ].forEach(match => {
+
+    const tag =
+      match[0];
+
+    const layoutMatch =
+      tag.match(
+        /data-property-layout='([^']+)'/
+      );
+
+    if (!layoutMatch) return;
+
+    const idMatch =
+      tag.match(
+        /data-property-id="([^"]+)"/
+      );
+
+    let key =
+      idMatch?.[1];
+
+    if (!key) {
+
+      const after =
+        html.slice(
+          match.index + tag.length,
+          match.index + tag.length + 900
+        );
+
+      key =
+        after.match(
+          /data-property-name="([^"]+)"/
+        )?.[1];
+    }
+
+    if (!key) return;
+
+    layoutByName[key] =
+      JSON.parse(
+        layoutMatch[1]
+      );
+  });
+
+  return layoutByName;
+}
+
+
 function layoutsOverlap(
   first,
   second
@@ -180,53 +234,10 @@ test(
         cardType: 'character'
       });
 
-    const layoutByName = {};
-
-    [
-      ...html.matchAll(
-        /<(label|section)\b[^>]*class="[^"]*card-property-field[^"]*"[^>]*>/g
-      )
-    ].forEach(match => {
-
-      const tag =
-        match[0];
-
-      const layoutMatch =
-        tag.match(
-          /data-property-layout='([^']+)'/
-        );
-
-      if (!layoutMatch) return;
-
-      const idMatch =
-        tag.match(
-          /data-property-id="([^"]+)"/
-        );
-
-      let key =
-        idMatch?.[1];
-
-      if (!key) {
-
-        const after =
-          html.slice(
-            match.index + tag.length,
-            match.index + tag.length + 900
-          );
-
-        key =
-          after.match(
-            /data-property-name="([^"]+)"/
-          )?.[1];
-      }
-
-      if (!key) return;
-
-      layoutByName[key] =
-        JSON.parse(
-          layoutMatch[1]
-        );
-    });
+    const layoutByName =
+      extractPropertyLayouts(
+        html
+      );
 
     assert.deepEqual(
       pickLayouts(
@@ -460,6 +471,96 @@ test(
         );
       }
     }
+  }
+);
+
+
+test(
+  'item properties block starts with readable standard field sizes',
+  () => {
+
+    const html =
+      createPropertiesBlock({
+        title: 'Properties',
+        cardType: 'item'
+      });
+
+    const layoutByName =
+      extractPropertyLayouts(
+        html
+      );
+
+    assert.deepEqual(
+      pickLayouts(
+        layoutByName,
+        [
+          'gold',
+          'silver',
+          'copper',
+          'weight',
+          'armorProfile',
+          'effect'
+        ]
+      ),
+      {
+        gold: {
+          x: 0,
+          y: 0,
+          w: 4,
+          h: 2
+        },
+        silver: {
+          x: 4,
+          y: 0,
+          w: 4,
+          h: 2
+        },
+        copper: {
+          x: 8,
+          y: 0,
+          w: 4,
+          h: 2
+        },
+        weight: {
+          x: 0,
+          y: 2,
+          w: 4,
+          h: 2
+        },
+        armorProfile: {
+          x: 4,
+          y: 2,
+          w: 8,
+          h: 2
+        },
+        effect: {
+          x: 0,
+          y: 4,
+          w: 12,
+          h: 2
+        }
+      }
+    );
+
+    assert.match(
+      html,
+      /class="[^"]*card-property-field[^"]*card-property-textarea-field[^"]*"[^>]*data-property-id="effect"/
+    );
+
+    Object
+      .entries(
+        layoutByName
+      )
+      .forEach(([name, layout]) => {
+
+        assert.ok(
+          layout.x >= 0 &&
+          layout.y >= 0 &&
+          layout.w >= 4 &&
+          layout.x + layout.w <= 12,
+          `${name} should start readable inside the 12-column grid`
+        );
+      });
   }
 );
 
@@ -816,7 +917,7 @@ test(
             x: 0,
             y: 0,
             w: 4,
-            h: 1,
+            h: 2,
             order: 0,
             collapsed: false,
             groupId: null

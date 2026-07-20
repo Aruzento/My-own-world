@@ -145,7 +145,7 @@
     7px;
 
   overflow:
-    hidden;
+    visible;
 
   transition:
     border-color 0.14s ease,
@@ -174,6 +174,9 @@
 
 .card-property-field:hover,
 .card-property-field:focus-within {
+  z-index:
+    6;
+
   border-color:
     rgba(241,211,142,0.24);
 
@@ -235,6 +238,9 @@
 
 
 .card-property-field.is-property-resizing {
+  z-index:
+    7;
+
   outline:
     1px solid rgba(241,211,142,0.34);
 }
@@ -272,7 +278,11 @@
     0;
 
   z-index:
-    3;
+    8;
+
+  box-shadow:
+    0 0 0 2px rgba(29,28,25,0.94),
+    0 2px 6px rgba(0,0,0,0.22);
 
   transition:
     opacity 0.12s ease,
@@ -1204,19 +1214,25 @@
     grid;
 
   grid-column:
-    span var(--property-field-span, 3);
+    span var(--property-field-span, 4);
+
+  grid-row:
+    span var(--property-field-rows, 2);
 
   min-height:
-    var(--property-field-min-height, 52px);
+    var(--property-field-min-height, 94px);
 
   grid-template-columns:
     minmax(0, 1fr);
+
+  grid-template-rows:
+    auto auto;
 
   gap:
     5px 6px;
 
   align-content:
-    start;
+    center;
 
   transition:
     transform 0.16s ease,
@@ -1246,10 +1262,28 @@
 
   grid-column:
     span var(--property-field-span, 12);
+
+  align-content:
+    start;
 }
 
 
 .card-property-compound-field {
+  align-content:
+    stretch;
+}
+
+
+.card-property-skill-group {
+  align-content:
+    start;
+}
+
+
+.card-property-textarea-field {
+  grid-template-rows:
+    auto minmax(0, 1fr);
+
   align-content:
     stretch;
 }
@@ -1550,13 +1584,19 @@
 .card-property-textarea {
 
   min-height:
-    max(78px, calc(var(--property-field-min-height, 78px) - 32px));
+    0;
+
+  height:
+    100%;
 
   padding:
     9px 10px;
 
   line-height:
     1.45;
+
+  overflow:
+    auto;
 }
 
 
@@ -1746,13 +1786,13 @@
 
 .card-property-drop-placeholder {
   grid-column:
-    span var(--property-field-span, 3);
+    span var(--property-field-span, 4);
 
   grid-row:
-    span var(--property-field-rows, 1);
+    span var(--property-field-rows, 2);
 
   min-height:
-    var(--property-field-min-height, 52px);
+    var(--property-field-min-height, 94px);
 
   border:
     1px dashed rgba(241,211,142,0.42);

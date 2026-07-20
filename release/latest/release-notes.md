@@ -1,5 +1,15 @@
 # Release Notes
 
+## 2026-07-20: Readable Item Properties Defaults
+
+- New item `Properties` blocks now start with readable width and height for money, weight, armor and effect fields.
+- Ordinary `Properties` fields now default to 2 grid rows, so the field label and the input both fit without manual resizing.
+- The generic `Properties` fallback field size now matches the model default of 4 grid columns and 2 grid rows, so newly added fields do not start as cramped controls.
+- Short `Properties` fields now center their label and input vertically, removing the awkward empty bottom space.
+- Long text fields in `Properties`, including `Description`-style fields, now reserve space for the field name at any grid height and keep the text editor inside the field.
+- Field resize dots now render above the field border with a subtle backing ring instead of being clipped into the border.
+- Added a backlog item for the separate block-level drag-and-drop regression; that scenario is not mixed into this narrow item Properties fix.
+
 ## 2026-07-20: Properties To Map Character Snapshot
 
 - New character and creature `Properties` blocks now open with wider readable default fields instead of cramped labels.
