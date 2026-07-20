@@ -12,6 +12,15 @@ export function setupEditorKeyboard(
     async event => {
 
       if (
+        isKnowledgeGraphCanvasHistoryShortcut(
+          event
+        )
+      ) {
+
+        return;
+      }
+
+      if (
         isRedoShortcut(
           event
         )
@@ -99,6 +108,46 @@ export function setupEditorKeyboard(
         nextField
       );
     }
+  );
+}
+
+
+function isKnowledgeGraphCanvasHistoryShortcut(
+  event
+) {
+
+  const graphDocument =
+    document.querySelector(
+      '.knowledge-graph-document'
+    );
+
+  if (!graphDocument) return false;
+
+  if (
+    !(event.ctrlKey || event.metaKey) ||
+    event.altKey
+  ) {
+
+    return false;
+  }
+
+  if (
+    event.target?.closest?.(
+      'input, textarea, select, [contenteditable="true"]'
+    )
+  ) {
+
+    return false;
+  }
+
+  const key =
+    String(event.key || '').toLowerCase();
+
+  return (
+    event.code === 'KeyZ' ||
+    event.code === 'KeyY' ||
+    key === 'z' ||
+    key === 'y'
   );
 }
 

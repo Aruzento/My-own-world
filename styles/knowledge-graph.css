@@ -1050,7 +1050,10 @@
   z-index: 4000;
   display: grid;
   gap: 4px;
-  min-width: 176px;
+  min-width: 220px;
+  max-width: min(420px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 24px));
+  overflow: auto;
   padding: 8px;
   border: 1px solid var(--mow-border, rgba(120, 106, 82, 0.28));
   border-radius: 8px;
@@ -1089,12 +1092,85 @@
   background: var(--mow-accent-soft, rgba(143, 93, 42, 0.14));
 }
 
+.knowledge-graph-node-menu button.is-danger {
+  color: var(--mow-danger, #9f2d24);
+}
+
+.knowledge-graph-node-menu button.is-danger:hover {
+  background: rgba(159, 45, 36, 0.1);
+}
+
 .knowledge-graph-node-menu hr {
   width: 100%;
   height: 1px;
   margin: 2px 0;
   border: 0;
   background: var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
+}
+
+.knowledge-graph-node-menu-relationships {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.knowledge-graph-node-menu-empty {
+  margin: 0;
+  max-width: 260px;
+  padding: 4px 6px;
+  color: var(--mow-text-muted, #665f55);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.knowledge-graph-node-menu-relationship {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
+  border-radius: 7px;
+  background: var(--mow-surface-raised, rgba(255, 252, 244, 0.72));
+}
+
+.knowledge-graph-node-menu-relationship-title {
+  overflow: hidden;
+  color: var(--mow-text, #211a13);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.knowledge-graph-node-menu-relationship label {
+  display: grid;
+  gap: 4px;
+  color: var(--mow-text-muted, #665f55);
+  font-size: 11px;
+}
+
+.knowledge-graph-node-menu-relationship select,
+.knowledge-graph-node-menu-relationship input {
+  min-height: 30px;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--mow-border, rgba(120, 106, 82, 0.28));
+  border-radius: 6px;
+  background: var(--mow-surface, #fffaf0);
+  color: var(--mow-text, #211a13);
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.knowledge-graph-node-menu-relationship-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.knowledge-graph-node-menu-relationship-actions button {
+  text-align: center;
 }
 
 .knowledge-graph-readable-fallback {

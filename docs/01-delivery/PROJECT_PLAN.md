@@ -59,10 +59,6 @@ Goal: map tools must be simple, fast, and usable during a live game.
 
 Goal: "Graph of relationships" should become a real visual map of the world, not just a list.
 
-0.0.1.5.4.3. Add relationship edit/delete and hover context polish.
-
-Description: let the owner change or delete an existing manual relationship from the node context menu or a simple relationship menu. Add hover previews/breadcrumbs only if they make the canvas easier to read without adding permanent side panels or noisy helper text.
-
 0.0.1.5.5. Add graph performance gate.
 
 Description: large worlds should render graph slices, not freeze on a huge all-world graph.

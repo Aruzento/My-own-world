@@ -581,6 +581,11 @@ aliases: []
       historyRedoButton
     ).toBeDisabled();
 
+    const transformBeforeHistoryUndo =
+      await worldLocator.evaluate(element =>
+        element.style.transform
+      );
+
     await historyUndoButton.click();
 
     await expect(
@@ -609,6 +614,17 @@ aliases: []
       40
     );
 
+    const transformAfterHistoryUndo =
+      await worldLocator.evaluate(element =>
+        element.style.transform
+      );
+
+    expect(
+      transformAfterHistoryUndo
+    ).toBe(
+      transformBeforeHistoryUndo
+    );
+
     await expect(
       historyRedoButton
     ).toBeEnabled();
@@ -635,13 +651,101 @@ aliases: []
       graphCoordinateTolerance
     );
 
-    await heroCard.click({
+    await page.evaluate(() => {
+      document.activeElement?.blur?.();
+    });
+
+    await page.keyboard.press(
+      'Control+Z'
+    );
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'false'
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+Z'
+    );
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'true'
+    );
+
+    await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
+
+    const editedHeroCard =
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]');
+
+    await expect(
+      editedHeroCard
+    ).toBeVisible();
+
+    await editedHeroCard.click({
       button: 'right'
     });
 
     await expect(
       page.locator('[data-knowledge-graph-node-menu-action="reset-position"]')
     ).toBeVisible();
+
+    await page.locator('[data-knowledge-graph-node-menu-action="reset-position"]').click();
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'false'
+    );
+
+    await historyUndoButton.click();
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'true'
+    );
+
+    const restoredAfterResetUndoX =
+      Number(
+        await heroCard.getAttribute(
+          'data-node-x'
+        )
+      );
+
+    expect(
+      Math.abs(restoredAfterResetUndoX - movedHeroX)
+    ).toBeLessThan(
+      graphCoordinateTolerance
+    );
+
+    await historyRedoButton.click();
+
+    await expect(
+      heroCard
+    ).toHaveAttribute(
+      'data-node-pinned',
+      'false'
+    );
+
+    await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
+
+    const restoredHeroCard =
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]');
+
+    await expect(
+      restoredHeroCard
+    ).toBeVisible();
+
+    await restoredHeroCard.click({
+      button: 'right'
+    });
 
     await page.locator('[data-knowledge-graph-node-menu-action="connect"]').click();
 
@@ -708,6 +812,165 @@ aliases: []
           ?.some(relationship =>
             relationship.type === 'enemy' &&
             relationship.targetId === 'world'
+          );
+      }
+    );
+
+    await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
+
+    const relationshipDeleteHeroCard =
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]');
+
+    await expect(
+      relationshipDeleteHeroCard
+    ).toBeVisible();
+
+    await relationshipDeleteHeroCard.click({
+      button: 'right'
+    });
+
+    const heroWorldRelationship =
+      page
+        .locator('[data-knowledge-graph-node-relationship]')
+        .filter({
+          hasText: 'Hero -> World'
+        })
+        .first();
+
+    await expect(
+      heroWorldRelationship
+    ).toBeVisible();
+
+    await heroWorldRelationship
+      .locator('[data-knowledge-graph-relationship-field="type"]')
+      .selectOption('ally');
+
+    await heroWorldRelationship
+      .locator('[data-knowledge-graph-relationship-field="label"]')
+      .fill('Story link');
+
+    await heroWorldRelationship
+      .locator('[data-knowledge-graph-relationship-menu-action="save"]')
+      .click();
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'ally' &&
+            relationship.targetId === 'world' &&
+            relationship.label === 'Story link'
+          );
+      }
+    );
+
+    await page.keyboard.press(
+      'Control+Z'
+    );
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'enemy' &&
+            relationship.targetId === 'world' &&
+            !relationship.label
+          );
+      }
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+Z'
+    );
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'ally' &&
+            relationship.targetId === 'world' &&
+            relationship.label === 'Story link'
+          );
+      }
+    );
+
+    await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
+
+    const relationshipRemoveHeroCard =
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]');
+
+    await expect(
+      relationshipRemoveHeroCard
+    ).toBeVisible();
+
+    await relationshipRemoveHeroCard.click({
+      button: 'right'
+    });
+
+    await page
+      .locator('[data-knowledge-graph-node-relationship]')
+      .filter({
+        hasText: 'Hero -> World'
+      })
+      .first()
+      .locator('[data-knowledge-graph-relationship-menu-action="delete"]')
+      .click();
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return !state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.targetId === 'world'
+          );
+      }
+    );
+
+    await page.keyboard.press(
+      'Control+Z'
+    );
+
+    await page.waitForFunction(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        return state.pages
+          .find(page => page.id === 'hero')
+          ?.relationships
+          ?.some(relationship =>
+            relationship.type === 'ally' &&
+            relationship.targetId === 'world' &&
+            relationship.label === 'Story link'
           );
       }
     );

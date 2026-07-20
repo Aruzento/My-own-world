@@ -6,6 +6,45 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: 0.0.1.5.4.3 Knowledge Graph Relationship Context Actions
+
+### What Changed
+
+- Completed `0.0.1.5.4.3`.
+- Added editable manual relationships directly into the Knowledge Graph node context menu.
+- A right-clicked node now shows its connected manual relationships without a permanent side panel.
+- Existing manual relationships can be updated in place:
+  - relationship type;
+  - optional readable label.
+- Existing manual relationships can be deleted from the same context menu.
+- Graph history now covers relationship create, edit and delete through visible Back/Forward buttons and Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z.
+- Hardened graph keyboard history so the global editor undo stack does not steal graph canvas shortcuts when focus is outside a text field.
+- Updated the small backlog so the completed context-menu operations are recorded without overclaiming future graph tool work.
+
+### Readiness
+
+Usable. The owner can right-click a graph node, edit or delete a manual relationship in one short menu, and undo/redo those actions without opening a technical panel.
+
+### Checks
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`
+- Passed: `node --check js\editor\keyboard.js`
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: isolated `tests\browser\knowledge-graph.spec.mjs`
+- Passed: `npm run test:browser` with 83 browser tests.
+- Passed: `npm run check:encoding`
+- Passed: `npm run verify` with 254 unit/integration tests and the synthetic large-workspace performance smoke.
+
+### Risk / Remaining
+
+- This is still the readable context-action layer, not the final RelationModel v2 or full graph inspector.
+- Very large graph slicing and budgets remain in `0.0.1.5.5`-`0.0.1.5.6`.
+- Broader graph operations, richer filters and daily-use actions remain in the backlog instead of being silently folded into this task.
+
+### Next
+
+- Continue with `0.0.1.5.5` graph performance gate unless a higher-priority bug appears.
+
 ## 2026-07-20: 0.0.1.5.4.2 Knowledge Graph Canvas Undo/Redo
 
 ### What Changed

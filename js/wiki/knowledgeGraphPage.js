@@ -56,6 +56,9 @@ const KNOWLEDGE_GRAPH_VIEW_STATE_VERSION =
 const graphCanvasHistoryByDocument =
   new WeakMap();
 
+const graphCanvasKeyboardHandlersByDocument =
+  new WeakMap();
+
 const KNOWLEDGE_GRAPH_VIEW_PRESETS =
   [
     {
@@ -164,6 +167,9 @@ export function renderKnowledgeGraphPage(
     );
 
   if (!documentElement) return;
+
+  documentElement.tabIndex =
+    -1;
 
   const graph =
     buildKnowledgeGraph(
@@ -515,6 +521,33 @@ function pushGraphCanvasHistoryEntry(
   updateGraphCanvasHistoryControls(
     documentElement
   );
+
+  focusKnowledgeGraphDocument(
+    documentElement
+  );
+}
+
+
+function focusKnowledgeGraphDocument(
+  documentElement,
+  options = {}
+) {
+
+  if (
+    !options.force &&
+    documentElement.ownerDocument.activeElement?.closest?.(
+      'input, textarea, select, [contenteditable="true"]'
+    )
+  ) {
+
+    return;
+  }
+
+  documentElement.focus?.(
+    {
+      preventScroll: true
+    }
+  );
 }
 
 
@@ -559,7 +592,7 @@ function isGraphCanvasHistoryKeyboardShortcut(
   if (
     !(event.ctrlKey || event.metaKey) ||
     event.altKey ||
-    event.target.closest(
+    event.target.closest?.(
       'input, textarea, select, [contenteditable="true"]'
     )
   ) {
@@ -596,6 +629,106 @@ function getGraphCanvasHistoryActionFromKeyboardEvent(
   }
 
   return 'undo';
+}
+
+
+function isGraphCanvasHistoryKeyboardScope(
+  documentElement,
+  event
+) {
+
+  if (!documentElement?.isConnected) {
+
+    return false;
+  }
+
+  const ownerDocument =
+    documentElement.ownerDocument;
+
+  const activeElement =
+    ownerDocument.activeElement;
+
+  return (
+    documentElement.contains(event.target) ||
+    documentElement.contains(activeElement) ||
+    activeElement === ownerDocument.body ||
+    activeElement === ownerDocument.documentElement
+  );
+}
+
+
+function setupGraphCanvasKeyboardHistory(
+  documentElement
+) {
+
+  if (
+    graphCanvasKeyboardHandlersByDocument.has(
+      documentElement
+    )
+  ) {
+
+    return;
+  }
+
+  const ownerDocument =
+    documentElement.ownerDocument;
+
+  const handler =
+    async event => {
+
+      if (event.defaultPrevented) {
+
+        return;
+      }
+
+      if (!documentElement.isConnected) {
+
+        ownerDocument.removeEventListener(
+          'keydown',
+          handler,
+          true
+        );
+
+        graphCanvasKeyboardHandlersByDocument.delete(
+          documentElement
+        );
+
+        return;
+      }
+
+      if (
+        !isGraphCanvasHistoryKeyboardScope(
+          documentElement,
+          event
+        ) ||
+        !isGraphCanvasHistoryKeyboardShortcut(
+          event
+        )
+      ) {
+
+        return;
+      }
+
+      event.preventDefault();
+
+      await handleGraphCanvasHistoryAction(
+        documentElement,
+        getGraphCanvasHistoryActionFromKeyboardEvent(
+          event
+        )
+      );
+    };
+
+  graphCanvasKeyboardHandlersByDocument.set(
+    documentElement,
+    handler
+  );
+
+  ownerDocument.addEventListener(
+    'keydown',
+    handler,
+    true
+  );
 }
 
 
@@ -693,6 +826,7 @@ async function applyGraphCanvasHistoryEntry(
             entry.relationship,
             {
               recordHistory: false,
+              awaitWrite: false,
               silent: true
             }
           )
@@ -700,6 +834,7 @@ async function applyGraphCanvasHistoryEntry(
             documentElement,
             entry.relationship,
             {
+              awaitWrite: false,
               silent: true
             }
           );
@@ -710,10 +845,109 @@ async function applyGraphCanvasHistoryEntry(
       ) || document
     );
 
+    focusKnowledgeGraphDocument(
+      documentElement,
+      {
+        force:
+          true
+      }
+    );
+
     setStatus(
       action === 'redo'
         ? 'Связь повторена'
         : 'Связь отменена'
+    );
+
+    return changed;
+  }
+
+  if (entry?.type === 'relationship-delete') {
+
+    const changed =
+      action === 'redo'
+        ? await removeRelationshipAtIndex(
+            documentElement,
+            entry.relationship,
+            {
+              recordHistory: false,
+              awaitWrite: false,
+              silent: true
+            }
+          )
+        : await insertRelationshipAtIndex(
+            documentElement,
+            entry.relationship,
+            {
+              recordHistory: false,
+              awaitWrite: false,
+              silent: true
+            }
+          );
+
+    renderKnowledgeGraphPage(
+      documentElement.closest(
+        '#editorArea'
+      ) || document
+    );
+
+    focusKnowledgeGraphDocument(
+      documentElement,
+      {
+        force:
+          true
+      }
+    );
+
+    setStatus(
+      action === 'redo'
+        ? 'Удаление связи повторено'
+        : 'Связь восстановлена'
+    );
+
+    return changed;
+  }
+
+  if (entry?.type === 'relationship-update') {
+
+    const changed =
+      await replaceRelationshipAtIndex(
+        documentElement,
+        {
+          sourceId:
+            entry.sourceId,
+          index:
+            entry.index,
+          relationship:
+            action === 'redo'
+              ? entry.after
+              : entry.before
+        },
+        {
+          recordHistory: false,
+          awaitWrite: false,
+          silent: true
+        }
+      );
+
+    renderKnowledgeGraphPage(
+      documentElement.closest(
+        '#editorArea'
+      ) || document
+    );
+
+    focusKnowledgeGraphDocument(
+      documentElement,
+      {
+        force:
+          true
+      }
+    );
+
+    setStatus(
+      action === 'redo'
+        ? 'Изменение связи повторено'
+        : 'Изменение связи отменено'
     );
 
     return changed;
@@ -1289,6 +1523,11 @@ function getCanvasContextMenuHTML() {
       <button type="button" data-knowledge-graph-node-menu-action="pin-position">Закрепить здесь</button>
       <button type="button" data-knowledge-graph-node-menu-action="reset-position">Сбросить позицию</button>
       <button type="button" data-knowledge-graph-node-menu-action="connect">Связать...</button>
+      <hr>
+      <div
+        class="knowledge-graph-node-menu-relationships"
+        data-knowledge-graph-node-menu-relationships
+      ></div>
     </div>
   `;
 }
@@ -1351,6 +1590,86 @@ function getPageOptionsHTML(
   return pages
     .map(page => `
       <option value="${escapeHTML(page.id)}">${escapeHTML(page.title || page.id)}</option>
+    `)
+    .join('');
+}
+
+
+function getNodeRelationshipsMenuHTML(
+  nodeId
+) {
+
+  const relationships =
+    getEditableNodeRelationships(
+      nodeId
+    );
+
+  if (!relationships.length) {
+
+    return `
+      <p class="knowledge-graph-node-menu-empty">
+        Ручных связей у этой ноды пока нет.
+      </p>
+    `;
+  }
+
+  return relationships
+    .map(relationship => `
+      <section
+        class="knowledge-graph-node-menu-relationship"
+        data-knowledge-graph-node-relationship
+        data-relationship-source-id="${escapeHTML(relationship.sourceId)}"
+        data-relationship-index="${escapeHTML(relationship.index)}"
+      >
+        <span class="knowledge-graph-node-menu-relationship-title">
+          ${escapeHTML(relationship.sourceTitle)} -&gt; ${escapeHTML(relationship.targetTitle)}
+        </span>
+        <label>
+          <span>Тип</span>
+          <select data-knowledge-graph-relationship-field="type">
+            ${getEditableRelationshipTypeOptionsHTML(relationship.type)}
+          </select>
+        </label>
+        <label>
+          <span>Подпись</span>
+          <input
+            data-knowledge-graph-relationship-field="label"
+            type="text"
+            value="${escapeHTML(relationship.label)}"
+            placeholder="Без подписи"
+          >
+        </label>
+        <div class="knowledge-graph-node-menu-relationship-actions">
+          <button
+            type="button"
+            data-knowledge-graph-relationship-menu-action="save"
+          >Сохранить</button>
+          <button
+            class="is-danger"
+            type="button"
+            data-knowledge-graph-relationship-menu-action="delete"
+          >Удалить</button>
+        </div>
+      </section>
+    `)
+    .join('');
+}
+
+
+function getEditableRelationshipTypeOptionsHTML(
+  activeType
+) {
+
+  const currentType =
+    getEditableRelationshipType(
+      activeType
+    );
+
+  return EDITABLE_RELATIONSHIP_TYPES
+    .map(type => `
+      <option value="${escapeHTML(type.value)}"${type.value === currentType ? ' selected' : ''}>
+        ${escapeHTML(type.label)}
+      </option>
     `)
     .join('');
 }
@@ -1514,9 +1833,28 @@ function setupKnowledgeGraphEvents(
   documentElement.dataset.knowledgeGraphReady =
     'true';
 
+  setupGraphCanvasKeyboardHistory(
+    documentElement
+  );
+
   documentElement.addEventListener(
     'click',
     async event => {
+
+      const relationshipMenuAction =
+        event.target.closest(
+          '[data-knowledge-graph-relationship-menu-action]'
+        );
+
+      if (relationshipMenuAction) {
+
+        await handleGraphRelationshipMenuAction(
+          documentElement,
+          relationshipMenuAction
+        );
+
+        return;
+      }
 
       const nodeMenuAction =
         event.target.closest(
@@ -1764,6 +2102,11 @@ function setupKnowledgeGraphEvents(
   documentElement.addEventListener(
     'keydown',
     async event => {
+
+      if (event.defaultPrevented) {
+
+        return;
+      }
 
       if (
         isGraphCanvasHistoryKeyboardShortcut(
@@ -2451,6 +2794,148 @@ function getEditableRelationshipType(
 }
 
 
+function getRelationshipTargetId(
+  relationship
+) {
+
+  const directTargetId =
+    relationship?.targetId ||
+    relationship?.pageId ||
+    relationship?.id;
+
+  if (directTargetId) {
+
+    return String(directTargetId);
+  }
+
+  const targetTitle =
+    relationship?.targetTitle ||
+    relationship?.target ||
+    relationship?.title;
+
+  if (!targetTitle) return '';
+
+  const normalizedTitle =
+    normalizeRelationshipForComparison(
+      targetTitle
+    );
+
+  return state.pages.find(page =>
+    normalizeRelationshipForComparison(
+      page.title
+    ) === normalizedTitle
+  )?.id || '';
+}
+
+
+function normalizeRelationshipRecord(
+  relationship
+) {
+
+  const targetId =
+    getRelationshipTargetId(
+      relationship
+    );
+
+  const label =
+    String(relationship?.label || '').trim();
+
+  return {
+    type:
+      getEditableRelationshipType(
+        relationship?.type
+      ),
+    ...(targetId ? { targetId } : {}),
+    ...(relationship?.targetTitle && !targetId
+      ? {
+          targetTitle:
+            String(relationship.targetTitle)
+        }
+      : {}),
+    ...(label ? { label } : {})
+  };
+}
+
+
+function areRelationshipRecordsEqual(
+  left,
+  right
+) {
+
+  const normalizedLeft =
+    normalizeRelationshipRecord(
+      left
+    );
+
+  const normalizedRight =
+    normalizeRelationshipRecord(
+      right
+    );
+
+  return (
+    normalizeRelationshipForComparison(normalizedLeft.type) ===
+      normalizeRelationshipForComparison(normalizedRight.type) &&
+    String(normalizedLeft.targetId || '') ===
+      String(normalizedRight.targetId || '') &&
+    String(normalizedLeft.targetTitle || '') ===
+      String(normalizedRight.targetTitle || '') &&
+    String(normalizedLeft.label || '').trim() ===
+      String(normalizedRight.label || '').trim()
+  );
+}
+
+
+function getEditableNodeRelationships(
+  nodeId
+) {
+
+  const targetNodeId =
+    String(nodeId || '');
+
+  if (!targetNodeId) return [];
+
+  return state.pages.flatMap(page =>
+    (page.relationships || [])
+      .map((relationship, index) => {
+
+        const relationshipTargetId =
+          getRelationshipTargetId(
+            relationship
+          );
+
+        if (
+          page.id !== targetNodeId &&
+          relationshipTargetId !== targetNodeId
+        ) {
+
+          return null;
+        }
+
+        return {
+          sourceId:
+            page.id,
+          sourceTitle:
+            page.title || page.id,
+          targetId:
+            relationshipTargetId,
+          targetTitle:
+            getGraphPageTitle(
+              relationshipTargetId
+            ),
+          index,
+          type:
+            getEditableRelationshipType(
+              relationship.type
+            ),
+          label:
+            String(relationship.label || '').trim()
+        };
+      })
+      .filter(Boolean)
+  );
+}
+
+
 function handleGraphConnectAction(
   documentElement,
   action
@@ -2518,6 +3003,14 @@ async function handleGraphCanvasNodeConnectClick(
     documentElement.closest(
       '#editorArea'
     ) || document
+  );
+
+  focusKnowledgeGraphDocument(
+    documentElement,
+    {
+      force:
+        true
+    }
   );
 
   return true;
@@ -2613,6 +3106,151 @@ async function handleGraphNodeMenuAction(
 }
 
 
+async function handleGraphRelationshipMenuAction(
+  documentElement,
+  actionButton
+) {
+
+  const relationshipElement =
+    actionButton.closest(
+      '[data-knowledge-graph-node-relationship]'
+    );
+
+  if (!relationshipElement) return;
+
+  const sourceId =
+    relationshipElement.dataset.relationshipSourceId;
+
+  const index =
+    Number(
+      relationshipElement.dataset.relationshipIndex
+    );
+
+  const before =
+    getRelationshipAtIndex(
+      sourceId,
+      index
+    );
+
+  if (!before) {
+
+    setStatus(
+      'Связь уже недоступна'
+    );
+
+    return;
+  }
+
+  const action =
+    actionButton.dataset.knowledgeGraphRelationshipMenuAction;
+
+  if (action === 'delete') {
+
+    const removed =
+      await removeRelationshipAtIndex(
+        documentElement,
+        {
+          sourceId,
+          index,
+          relationship:
+            before
+        }
+      );
+
+    if (removed) {
+
+      hideGraphNodeContextMenu(
+        documentElement
+      );
+
+      renderKnowledgeGraphPage(
+        documentElement.closest(
+          '#editorArea'
+        ) || document
+      );
+
+      focusKnowledgeGraphDocument(
+        documentElement,
+        {
+          force:
+            true
+        }
+      );
+    }
+
+    return;
+  }
+
+  if (action !== 'save') return;
+
+  const type =
+    relationshipElement.querySelector(
+      '[data-knowledge-graph-relationship-field="type"]'
+    )?.value;
+
+  const label =
+    relationshipElement.querySelector(
+      '[data-knowledge-graph-relationship-field="label"]'
+    )?.value;
+
+  const after =
+    normalizeRelationshipRecord(
+      {
+        ...before,
+        type,
+        label
+      }
+    );
+
+  if (
+    areRelationshipRecordsEqual(
+      before,
+      after
+    )
+  ) {
+
+    setStatus(
+      'Связь не изменилась'
+    );
+
+    return;
+  }
+
+  const updated =
+    await replaceRelationshipAtIndex(
+      documentElement,
+      {
+        sourceId,
+        index,
+        before,
+        relationship:
+          after
+      }
+    );
+
+  if (updated) {
+
+    hideGraphNodeContextMenu(
+      documentElement
+    );
+
+    renderKnowledgeGraphPage(
+      documentElement.closest(
+        '#editorArea'
+      ) || document
+    );
+
+    focusKnowledgeGraphDocument(
+      documentElement,
+      {
+        force:
+          true
+      }
+    );
+  }
+}
+
+
 function showGraphNodeContextMenu(
   documentElement,
   card,
@@ -2676,6 +3314,19 @@ function showGraphNodeContextMenu(
 
     resetButton.hidden =
       !hasPinnedPosition;
+  }
+
+  const relationshipsElement =
+    menu.querySelector(
+      '[data-knowledge-graph-node-menu-relationships]'
+    );
+
+  if (relationshipsElement) {
+
+    relationshipsElement.innerHTML =
+      getNodeRelationshipsMenuHTML(
+        card.dataset.nodeId
+      );
   }
 
   menu.hidden =
@@ -2784,6 +3435,57 @@ function getGraphCanvasPositionState(
 }
 
 
+function getGraphCanvasComputedNodePosition(
+  documentElement,
+  nodeId,
+  positions
+) {
+
+  const graph =
+    buildKnowledgeGraph(
+      state.pages
+    );
+
+  const canvasModel =
+    buildKnowledgeGraphCanvasModel(
+      graph,
+      {
+        layout:
+          documentElement.dataset.currentKnowledgeGraphLayout ||
+          'tree',
+        filters:
+          getRuntimeGraphFilters(
+            documentElement
+          ),
+        positions:
+          positions || {}
+      }
+    );
+
+  const node =
+    canvasModel.nodes.find(item =>
+      item.id === nodeId
+    );
+
+  if (!node) {
+
+    return {
+      pinned:
+        false
+    };
+  }
+
+  return {
+    x:
+      node.x,
+    y:
+      node.y,
+    pinned:
+      Boolean(node.isPinned)
+  };
+}
+
+
 function areGraphCanvasPositionStatesEqual(
   left,
   right
@@ -2817,18 +3519,33 @@ function applyGraphCanvasPositionState(
       documentElement
     );
 
-  if (
-    position?.pinned &&
-    Number.isFinite(Number(position.x)) &&
-    Number.isFinite(Number(position.y))
-  ) {
+  const hasExplicitPosition =
+    Number.isFinite(Number(position?.x)) &&
+    Number.isFinite(Number(position?.y));
+
+  const nextPosition =
+    hasExplicitPosition
+      ? {
+          x:
+            Math.round(Number(position.x)),
+          y:
+            Math.round(Number(position.y)),
+          pinned:
+            Boolean(position?.pinned)
+        }
+      : {
+          pinned:
+            false
+        };
+
+  if (nextPosition.pinned) {
 
     viewState.positions[nodeId] =
       {
         x:
-          Math.round(Number(position.x)),
+          nextPosition.x,
         y:
-          Math.round(Number(position.y)),
+          nextPosition.y,
         pinned:
           true
       };
@@ -2845,6 +3562,41 @@ function applyGraphCanvasPositionState(
   markKnowledgeGraphChanged(
     documentElement
   );
+
+  const card =
+    findGraphCanvasNodeCard(
+      documentElement,
+      nodeId
+    );
+
+  const stage =
+    card?.closest(
+      '[data-knowledge-graph-canvas-stage]'
+    );
+
+  if (
+    card &&
+    stage &&
+    hasExplicitPosition
+  ) {
+
+    moveGraphCanvasNode(
+      card,
+      stage,
+      nextPosition.x,
+      nextPosition.y
+    );
+
+    card.dataset.nodePinned =
+      nextPosition.pinned ? 'true' : 'false';
+
+    card.classList.toggle(
+      'is-pinned',
+      nextPosition.pinned
+    );
+
+    return;
+  }
 
   renderKnowledgeGraphPage(
     documentElement.closest(
@@ -2980,6 +3732,13 @@ function resetGraphCanvasPosition(
 
   delete viewState.positions[nodeId];
 
+  const nextPosition =
+    getGraphCanvasComputedNodePosition(
+      documentElement,
+      nodeId,
+      viewState.positions
+    );
+
   writeKnowledgeGraphViewState(
     documentElement,
     viewState
@@ -3000,10 +3759,7 @@ function resetGraphCanvasPosition(
         before:
           previousPosition,
         after:
-          {
-            pinned:
-              false
-          }
+          nextPosition
       }
     );
   }
@@ -3834,6 +4590,14 @@ async function addRelationshipFromForm(
         '#editorArea'
       ) || document
     );
+
+    focusKnowledgeGraphDocument(
+      documentElement,
+      {
+        force:
+          true
+      }
+    );
   }
 }
 
@@ -3900,7 +4664,8 @@ async function addRelationshipBetweenPages(
     return false;
   }
 
-  sourcePage.relationships =
+  await writeSourcePageRelationships(
+    sourcePage,
     [
       ...existingRelationships,
       {
@@ -3908,20 +4673,12 @@ async function addRelationshipBetweenPages(
         targetId,
         ...(label ? { label } : {})
       }
-    ];
-
-  sourcePage.content =
-    updateRelationshipsFrontMatter(
-      sourcePage.content,
-      sourcePage.relationships
-    );
-
-  await writePageContent(
-    sourcePage,
-    sourcePage.content
+    ],
+    {
+      awaitWrite:
+        options.awaitWrite
+    }
   );
-
-  notifyPageUpdated();
 
   if (options.recordHistory !== false) {
 
@@ -3945,6 +4702,326 @@ async function addRelationshipBetweenPages(
 
     setStatus(
       'Связь добавлена'
+    );
+  }
+
+  return true;
+}
+
+
+function getRelationshipAtIndex(
+  sourceId,
+  index
+) {
+
+  const sourcePage =
+    state.pages.find(page =>
+      page.id === sourceId
+    );
+
+  const relationship =
+    sourcePage?.relationships?.[index];
+
+  if (!relationship) return null;
+
+  return normalizeRelationshipRecord(
+    relationship
+  );
+}
+
+
+async function writeSourcePageRelationships(
+  sourcePage,
+  relationships,
+  options = {}
+) {
+
+  sourcePage.relationships =
+    relationships.map(relationship =>
+      normalizeRelationshipRecord(
+        relationship
+      )
+    );
+
+  sourcePage.content =
+    updateRelationshipsFrontMatter(
+      sourcePage.content,
+      sourcePage.relationships
+    );
+
+  notifyPageUpdated();
+
+  const writePromise =
+    writePageContent(
+      sourcePage,
+      sourcePage.content
+    );
+
+  if (options.awaitWrite === false) {
+
+    writePromise.catch(error => {
+
+      console.error(
+        'Failed to persist knowledge graph relationship change.',
+        error
+      );
+    });
+
+    return;
+  }
+
+  await writePromise;
+}
+
+
+async function replaceRelationshipAtIndex(
+  documentElement,
+  relationshipInput,
+  options = {}
+) {
+
+  const sourceId =
+    String(relationshipInput.sourceId || '');
+
+  const index =
+    Number(
+      relationshipInput.index
+    );
+
+  const sourcePage =
+    state.pages.find(page =>
+      page.id === sourceId
+    );
+
+  if (
+    !sourcePage ||
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= (sourcePage.relationships || []).length
+  ) {
+
+    return false;
+  }
+
+  const before =
+    normalizeRelationshipRecord(
+      relationshipInput.before ||
+      sourcePage.relationships[index]
+    );
+
+  const after =
+    normalizeRelationshipRecord(
+      relationshipInput.relationship
+    );
+
+  if (
+    areRelationshipRecordsEqual(
+      before,
+      after
+    )
+  ) {
+
+    return false;
+  }
+
+  const duplicate =
+    (sourcePage.relationships || []).some((relationship, relationshipIndex) =>
+      relationshipIndex !== index &&
+      getRelationshipTargetId(relationship) === getRelationshipTargetId(after) &&
+      normalizeRelationshipForComparison(relationship.type) ===
+        normalizeRelationshipForComparison(after.type)
+    );
+
+  if (duplicate) {
+
+    if (!options.silent) {
+
+      setStatus(
+        'Такая связь уже есть'
+      );
+    }
+
+    return false;
+  }
+
+  const nextRelationships =
+    [
+      ...(sourcePage.relationships || [])
+    ];
+
+  nextRelationships[index] =
+    after;
+
+  await writeSourcePageRelationships(
+    sourcePage,
+    nextRelationships,
+    {
+      awaitWrite:
+        options.awaitWrite
+    }
+  );
+
+  if (options.recordHistory !== false) {
+
+    pushGraphCanvasHistoryEntry(
+      documentElement,
+      {
+        type:
+          'relationship-update',
+        sourceId,
+        index,
+        before,
+        after
+      }
+    );
+  }
+
+  if (!options.silent) {
+
+    setStatus(
+      'Связь изменена'
+    );
+  }
+
+  return true;
+}
+
+
+async function insertRelationshipAtIndex(
+  documentElement,
+  relationshipInput,
+  options = {}
+) {
+
+  const sourceId =
+    String(relationshipInput.sourceId || '');
+
+  const sourcePage =
+    state.pages.find(page =>
+      page.id === sourceId
+    );
+
+  if (!sourcePage) return false;
+
+  const nextRelationships =
+    [
+      ...(sourcePage.relationships || [])
+    ];
+
+  const index =
+    Number.isInteger(Number(relationshipInput.index))
+      ? Math.max(
+          0,
+          Math.min(
+            Number(relationshipInput.index),
+            nextRelationships.length
+          )
+        )
+      : nextRelationships.length;
+
+  nextRelationships.splice(
+    index,
+    0,
+    normalizeRelationshipRecord(
+      relationshipInput.relationship
+    )
+  );
+
+  await writeSourcePageRelationships(
+    sourcePage,
+    nextRelationships,
+    {
+      awaitWrite:
+        options.awaitWrite
+    }
+  );
+
+  if (!options.silent) {
+
+    setStatus(
+      'Связь восстановлена'
+    );
+  }
+
+  return true;
+}
+
+
+async function removeRelationshipAtIndex(
+  documentElement,
+  relationshipInput,
+  options = {}
+) {
+
+  const sourceId =
+    String(relationshipInput.sourceId || '');
+
+  const index =
+    Number(
+      relationshipInput.index
+    );
+
+  const sourcePage =
+    state.pages.find(page =>
+      page.id === sourceId
+    );
+
+  if (
+    !sourcePage ||
+    !Number.isInteger(index) ||
+    index < 0 ||
+    index >= (sourcePage.relationships || []).length
+  ) {
+
+    return false;
+  }
+
+  const relationship =
+    normalizeRelationshipRecord(
+      relationshipInput.relationship ||
+      sourcePage.relationships[index]
+    );
+
+  const nextRelationships =
+    [
+      ...(sourcePage.relationships || [])
+    ];
+
+  nextRelationships.splice(
+    index,
+    1
+  );
+
+  await writeSourcePageRelationships(
+    sourcePage,
+    nextRelationships,
+    {
+      awaitWrite:
+        options.awaitWrite
+    }
+  );
+
+  if (options.recordHistory !== false) {
+
+    pushGraphCanvasHistoryEntry(
+      documentElement,
+      {
+        type:
+          'relationship-delete',
+        relationship:
+          {
+            sourceId,
+            index,
+            relationship
+          }
+      }
+    );
+  }
+
+  if (!options.silent) {
+
+    setStatus(
+      'Связь удалена'
     );
   }
 
@@ -4016,21 +5093,14 @@ async function removeRelationshipBetweenPages(
 
   if (!removed) return false;
 
-  sourcePage.relationships =
-    nextRelationships;
-
-  sourcePage.content =
-    updateRelationshipsFrontMatter(
-      sourcePage.content,
-      sourcePage.relationships
-    );
-
-  await writePageContent(
+  await writeSourcePageRelationships(
     sourcePage,
-    sourcePage.content
+    nextRelationships,
+    {
+      awaitWrite:
+        options.awaitWrite
+    }
   );
-
-  notifyPageUpdated();
 
   if (!options.silent) {
 
