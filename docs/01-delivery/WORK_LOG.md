@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: 0.0.1.5.6 Knowledge Graph Regression Tests
+
+### What Changed
+
+- Completed `0.0.1.5.6`.
+- Added model-level regression coverage for the graph canvas:
+  - default root-to-two-level view;
+  - all-world view;
+  - manual relationship focus view;
+  - search by alias;
+  - orphan-only view;
+  - hidden-node slicing for large canvases;
+  - finite visual edge coordinates;
+  - excluding the Knowledge Graph page itself from the graph canvas.
+- Added browser smoke assertions for graph relationship filters:
+  - `equipped` shows the Hero -> Sword edge and hides unrelated rule-effect edges;
+  - manual view shows the manual Hero -> World edge without leaking the wiki-link edge direction.
+
+### Readiness
+
+Usable. The graph remains a visual workbench, but the current user-facing canvas behavior is now protected by model and browser regressions.
+
+### Checks
+
+- Passed: `node --check tests\knowledgeGraph.test.mjs`
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: `node --test tests\knowledgeGraph.test.mjs` with 11 tests.
+- Passed: `npm run test:browser` with 83 browser tests.
+
+### Risk / Remaining
+
+- This does not turn the graph into the final daily-use RelationModel v2 operations surface.
+- Richer graph context actions, relation source/type inspection and practical graph workflows remain in `BI-016`.
+
+### Next
+
+- Continue with `0.0.1.6.1` Data Safety & Recovery unless a higher-priority bug appears.
+
 ## 2026-07-20: 0.0.1.5.5 Knowledge Graph Performance Gate And Canvas UX Fixes
 
 ### What Changed

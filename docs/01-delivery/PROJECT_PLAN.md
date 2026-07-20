@@ -55,14 +55,6 @@ Goal: desktop should feel like a real app, not a fragile wrapper around the brow
 
 Goal: map tools must be simple, fast, and usable during a live game.
 
-### 0.0.1.5.0. Knowledge Graph Visual Graph
-
-Goal: "Graph of relationships" should become a real visual map of the world, not just a list.
-
-0.0.1.5.6. Add graph regression tests.
-
-Description: typed relationships, orphan view, visual graph data generation, and opening pages from graph.
-
 ### 0.0.1.6.0. Data Safety & Recovery
 
 Goal: protect user content while the product grows.

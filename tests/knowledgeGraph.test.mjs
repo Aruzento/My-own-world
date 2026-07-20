@@ -747,6 +747,276 @@ test(
 
 
 test(
+  'KnowledgeGraph regression gate covers canvas filters and visual data',
+  () => {
+
+    const graph =
+      buildKnowledgeGraph([
+        {
+          id: 'world',
+          title: 'World',
+          parent: null,
+          type: 'note',
+          content: ''
+        },
+        {
+          id: 'region',
+          title: 'Region',
+          parent: 'world',
+          type: 'location',
+          content: ''
+        },
+        {
+          id: 'city',
+          title: 'City',
+          parent: 'region',
+          type: 'location',
+          content: '[[Guild]]'
+        },
+        {
+          id: 'inn',
+          title: 'Inn',
+          parent: 'city',
+          type: 'location',
+          content: ''
+        },
+        {
+          id: 'hero',
+          title: 'Hero',
+          parent: 'city',
+          type: 'character',
+          relationships: [
+            {
+              type: 'equipped',
+              targetId: 'sword',
+              label: 'Main hand'
+            },
+            {
+              type: 'ruleEffect',
+              targetId: 'rules',
+              label: 'Rage'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'sword',
+          title: 'Sword',
+          aliases: [
+            'Blade'
+          ],
+          type: 'item',
+          content: ''
+        },
+        {
+          id: 'guild',
+          title: 'Guild',
+          type: 'organization',
+          relationships: [
+            {
+              type: 'ally',
+              targetId: 'hero',
+              label: 'Member'
+            }
+          ],
+          content: ''
+        },
+        {
+          id: 'rules',
+          title: 'Rules',
+          type: 'ruleTree',
+          template: 'ruleTree',
+          content: ''
+        },
+        {
+          id: 'loose',
+          title: 'Loose',
+          type: 'note',
+          content: ''
+        },
+        {
+          id: 'graph-page',
+          title: 'Graph',
+          type: 'knowledgeGraph',
+          template: 'knowledgeGraph',
+          content: ''
+        }
+      ]);
+
+    const allCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          filters: {
+            viewPreset:
+              'all'
+          },
+          maxNodes:
+            20
+        }
+      );
+
+    assert.equal(
+      allCanvas.nodes.some(node =>
+        node.id === 'graph-page'
+      ),
+      false
+    );
+
+    assert.equal(
+      allCanvas.nodes.some(node =>
+        node.id === 'inn'
+      ),
+      true
+    );
+
+    assert.ok(
+      allCanvas.edges.some(edge =>
+        edge.type === 'wikiLink' &&
+        edge.from === 'city' &&
+        edge.to === 'guild'
+      )
+    );
+
+    assert.ok(
+      allCanvas.edges.every(edge =>
+        Number.isFinite(edge.x1) &&
+        Number.isFinite(edge.y1) &&
+        Number.isFinite(edge.x2) &&
+        Number.isFinite(edge.y2) &&
+        Number.isFinite(edge.midX) &&
+        Number.isFinite(edge.midY)
+      )
+    );
+
+    const defaultCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph
+      );
+
+    assert.equal(
+      defaultCanvas.nodes.some(node =>
+        node.id === 'inn'
+      ),
+      false
+    );
+
+    assert.equal(
+      defaultCanvas.filterSummary.nodeCount,
+      defaultCanvas.nodes.length
+    );
+
+    const focusManualCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          filters: {
+            relationshipType:
+              'manual',
+            focusNodeId:
+              'hero',
+            viewPreset:
+              'all'
+          },
+          maxNodes:
+            20
+        }
+      );
+
+    assert.deepEqual(
+      focusManualCanvas.nodes
+        .map(node => node.id)
+        .sort(),
+      [
+        'guild',
+        'hero',
+        'rules',
+        'sword'
+      ]
+    );
+
+    assert.deepEqual(
+      focusManualCanvas.edges
+        .map(edge => edge.source)
+        .sort(),
+      [
+        'manual',
+        'manual',
+        'manual'
+      ]
+    );
+
+    const searchCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          filters: {
+            search:
+              'blade',
+            viewPreset:
+              'all'
+          },
+          maxNodes:
+            20
+        }
+      );
+
+    assert.deepEqual(
+      searchCanvas.nodes
+        .map(node => node.id)
+        .sort(),
+      [
+        'hero',
+        'sword'
+      ]
+    );
+
+    const orphanCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          filters: {
+            orphanOnly:
+              true
+          },
+          maxNodes:
+            20
+        }
+      );
+
+    assert.deepEqual(
+      orphanCanvas.nodes.map(node => node.id),
+      [
+        'loose'
+      ]
+    );
+
+    assert.equal(
+      orphanCanvas.edges.length,
+      0
+    );
+
+    const limitedCanvas =
+      buildKnowledgeGraphCanvasModel(
+        graph,
+        {
+          filters: {
+            viewPreset:
+              'all'
+          },
+          maxNodes:
+            3
+        }
+      );
+
+    assert.ok(
+      limitedCanvas.hiddenNodeCount > 0
+    );
+  }
+);
+
+
+test(
   'KnowledgeGraph summary counts nodes edges and orphans',
   () => {
 

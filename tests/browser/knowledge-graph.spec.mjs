@@ -359,6 +359,18 @@ aliases: []
       page.locator('[data-knowledge-graph-canvas-card][data-node-id="sword"]')
     ).toBeVisible();
 
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="hero"][data-edge-to="sword"]')
+    ).toHaveCount(
+      1
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-to="rules"]')
+    ).toHaveCount(
+      0
+    );
+
     await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
 
     await page.locator('[data-knowledge-graph-canvas-node="hero"]').click();
@@ -1116,6 +1128,18 @@ aliases: []
     await expect(
       page.locator('[data-knowledge-graph-canvas-card][data-node-id="world"]')
     ).toBeVisible();
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="hero"][data-edge-to="world"]')
+    ).toHaveCount(
+      1
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="world"][data-edge-to="hero"]')
+    ).toHaveCount(
+      0
+    );
 
     await page.locator('[data-knowledge-graph-canvas-action="fit"]').click();
 
