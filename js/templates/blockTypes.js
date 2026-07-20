@@ -353,7 +353,7 @@ function createPropertyFieldHTML(
   if (type === 'textarea') {
 
     return `
-      <label class="card-property-field card-property-field-wide" ${layoutAttributes}>
+      <label class="card-property-field card-property-field-wide" data-property-id="${name}" ${layoutAttributes}>
         <span>${label}</span>
         <div
           class="card-property-textarea rich-text-field"
@@ -393,7 +393,7 @@ function createPropertyFieldHTML(
   if (type === 'select') {
 
     return `
-      <label class="card-property-field" ${layoutAttributes}>
+      <label class="card-property-field" data-property-id="${name}" ${layoutAttributes}>
         <span>${label}</span>
         <select class="card-property-select" data-property-name="${name}">
           ${(options.length > 0 ? options : PROPERTY_SHAPE_OPTIONS)
@@ -412,7 +412,7 @@ function createPropertyFieldHTML(
   ) {
 
     return `
-      <label class="card-property-field" ${layoutAttributes}>
+      <label class="card-property-field" data-property-id="${name}" ${layoutAttributes}>
         <span>${label}</span>
         <select
           class="card-property-select card-property-entity-select"
@@ -428,7 +428,7 @@ function createPropertyFieldHTML(
   }
 
   return `
-    <label class="card-property-field" ${layoutAttributes}>
+    <label class="card-property-field" data-property-id="${name}" ${layoutAttributes}>
       <span>${label}</span>
       <input
         type="${type === 'entity' ? 'text' : type || 'text'}"
@@ -683,31 +683,31 @@ function getInitialPropertyLayoutPreset(
   ) return null;
 
   const compactTop = {
-    level: [0, 0, 1, 2],
-    armorClass: [1, 0, 1, 2],
-    hpCurrent: [3, 0, 1, 2],
-    hpMax: [4, 0, 1, 2],
-    hpTemp: [5, 0, 2, 2],
-    deathSaveSuccesses: [8, 0, 2, 2],
-    deathSaveFailures: [10, 0, 2, 2],
-    speed: [0, 2, 2, 2],
-    armorItem: [3, 2, 2, 2],
-    str: [0, 5, 2, 2],
-    dex: [2, 5, 2, 2],
-    int: [4, 5, 2, 2],
-    wis: [6, 5, 2, 2],
-    con: [8, 5, 2, 2],
-    cha: [10, 5, 2, 2],
-    strSkills: [0, 7, 2, 4],
-    dexSkills: [2, 7, 2, 6],
-    intSkills: [4, 7, 2, 6],
-    wisSkills: [6, 7, 2, 6],
-    conSkills: [8, 7, 2, 2],
-    chaSkills: [10, 7, 2, 6],
-    conditions: [0, 10, 6, 3],
-    effects: [6, 10, 6, 3],
-    senses: [0, 10, 4, 1],
-    effect: [4, 10, 8, 3]
+    level: [0, 0, 1, 1],
+    proficiencyBonus: [1, 0, 1, 1],
+    initiative: [2, 0, 1, 1],
+    armorClass: [3, 0, 1, 1],
+    speed: [4, 0, 1, 1],
+    armorItem: [5, 0, 3, 1],
+    hpCurrent: [8, 0, 2, 1],
+    hpMax: [10, 0, 1, 1],
+    hpTemp: [11, 0, 1, 1],
+    str: [0, 1, 2, 2],
+    dex: [2, 1, 2, 2],
+    con: [4, 1, 2, 2],
+    int: [6, 1, 2, 2],
+    wis: [8, 1, 2, 2],
+    cha: [10, 1, 2, 2],
+    strSkills: [0, 3, 4, 3],
+    dexSkills: [4, 3, 4, 4],
+    conSkills: [8, 3, 4, 2],
+    intSkills: [0, 7, 4, 5],
+    wisSkills: [4, 7, 4, 5],
+    chaSkills: [8, 7, 4, 5],
+    deathSaveSuccesses: [0, 12, 2, 1],
+    deathSaveFailures: [2, 12, 2, 1],
+    senses: [0, 12, 4, 1],
+    effect: [4, 12, 8, 3]
   };
 
   const value =

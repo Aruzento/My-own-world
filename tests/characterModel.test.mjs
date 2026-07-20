@@ -187,6 +187,68 @@ test(
 
 
 test(
+  'CharacterModel respects manual Properties overrides for initiative and proficiency',
+  () => {
+
+    const properties =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          level: '1',
+          str: '16',
+          dex: '12',
+          skillAthleticsProficient: '2',
+          proficiencyBonus: '5',
+          initiative: '8',
+          manualOverrides: {
+            'override-proficiencyBonus': '5',
+            'override-initiative': '8'
+          }
+        }
+      });
+
+    const model =
+      createCharacterModelFromSources({
+        page: {
+          id: 'hero',
+          type: 'character'
+        },
+        propertiesModels: [
+          properties
+        ]
+      });
+
+    assert.equal(
+      model.calculations.proficiencyBonus.value,
+      5
+    );
+
+    assert.equal(
+      model.calculations.proficiencyBonus.source,
+      'manual'
+    );
+
+    assert.equal(
+      getCharacterInitiativeModifier(
+        model
+      ),
+      8
+    );
+
+    assert.equal(
+      model.calculations.initiative.source,
+      'manual'
+    );
+
+    assert.equal(
+      model.calculations.checks.byKey.skillAthletics.value,
+      13
+    );
+  }
+);
+
+
+test(
   'CharacterModel falls back to legacy DnD health when properties are missing',
   () => {
 

@@ -105,6 +105,8 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         min: 1,
         max: 20
       }),
+      numberField('proficiencyBonus', 'БМ', ''),
+      numberField('initiative', 'Инициатива', ''),
       numberField('armorClass', 'КЗ', '10'),
       entityField('armorItem', 'Доспех', 'Название или id предмета-доспеха'),
       numberField('hpCurrent', 'Хиты факт', '10'),
@@ -133,6 +135,8 @@ export const PROPERTY_BLOCK_SCHEMAS = {
         min: 0,
         max: 30
       }),
+      numberField('proficiencyBonus', 'БМ', ''),
+      numberField('initiative', 'Инициатива', ''),
       numberField('armorClass', 'КЗ', '10'),
       entityField('armorItem', 'Доспех', 'Название или id предмета-доспеха'),
       numberField('hpCurrent', 'Хиты факт', '10'),

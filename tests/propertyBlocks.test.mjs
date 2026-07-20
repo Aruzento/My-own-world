@@ -32,6 +32,43 @@ import {
 } from '../js/properties/propertySchemas.js';
 
 
+function pickLayouts(
+  layoutByName,
+  names
+) {
+
+  return Object.fromEntries(
+    names.map(name => [
+      name,
+      {
+        x:
+          layoutByName[name].x,
+        y:
+          layoutByName[name].y,
+        w:
+          layoutByName[name].w,
+        h:
+          layoutByName[name].h
+      }
+    ])
+  );
+}
+
+
+function layoutsOverlap(
+  first,
+  second
+) {
+
+  return !(
+    first.x + first.w <= second.x ||
+    second.x + second.w <= first.x ||
+    first.y + first.h <= second.y ||
+    second.y + second.h <= first.y
+  );
+}
+
+
 test(
   'property block creates type-specific skill fields',
   () => {
@@ -107,6 +144,16 @@ test(
 
     assert.match(
       html,
+      /data-property-name="proficiencyBonus"/
+    );
+
+    assert.match(
+      html,
+      /data-property-name="initiative"/
+    );
+
+    assert.match(
+      html,
       /data-property-group-name="strSkills"/
     );
 
@@ -124,7 +171,7 @@ test(
 
 
 test(
-  'character properties block starts with compact combat fields and one-row abilities',
+  'character properties block starts with readable sheet-like default layout',
   () => {
 
     const html =
@@ -181,64 +228,85 @@ test(
         );
     });
 
-    assert.equal(
-      layoutByName.level.w,
-      1
-    );
-
-    assert.equal(
-      layoutByName.armorClass.w,
-      1
-    );
-
-    assert.equal(
-      layoutByName.hpCurrent.w,
-      1
-    );
-
-    assert.equal(
-      layoutByName.hpTemp.w,
-      2
-    );
-
     assert.deepEqual(
+      pickLayouts(
+        layoutByName,
+        [
+          'level',
+          'proficiencyBonus',
+          'initiative',
+          'armorClass',
+          'speed',
+          'armorItem',
+          'hpCurrent',
+          'hpMax',
+          'hpTemp'
+        ]
+      ),
       {
-        x:
-          layoutByName.deathSaveSuccesses.x,
-        y:
-          layoutByName.deathSaveSuccesses.y,
-        w:
-          layoutByName.deathSaveSuccesses.w
-      },
-      {
-        x: 8,
-        y: 0,
-        w: 2
-      }
-    );
-
-    assert.deepEqual(
-      {
-        x:
-          layoutByName.armorItem.x,
-        y:
-          layoutByName.armorItem.y,
-        w:
-          layoutByName.armorItem.w
-      },
-      {
-        x: 3,
-        y: 2,
-        w: 2
+        level: {
+          x: 0,
+          y: 0,
+          w: 1,
+          h: 1
+        },
+        proficiencyBonus: {
+          x: 1,
+          y: 0,
+          w: 1,
+          h: 1
+        },
+        initiative: {
+          x: 2,
+          y: 0,
+          w: 1,
+          h: 1
+        },
+        armorClass: {
+          x: 3,
+          y: 0,
+          w: 1,
+          h: 1
+        },
+        speed: {
+          x: 4,
+          y: 0,
+          w: 1,
+          h: 1
+        },
+        armorItem: {
+          x: 5,
+          y: 0,
+          w: 3,
+          h: 1
+        },
+        hpCurrent: {
+          x: 8,
+          y: 0,
+          w: 2,
+          h: 1
+        },
+        hpMax: {
+          x: 10,
+          y: 0,
+          w: 1,
+          h: 1
+        },
+        hpTemp: {
+          x: 11,
+          y: 0,
+          w: 1,
+          h: 1
+        }
       }
     );
 
     const abilityColumns = {
       str: 0,
       dex: 2,
-      int: 4,
-      wis: 6,
-      con: 8,
+      con: 4,
+      int: 6,
+      wis: 8,
       cha: 10
     };
 
@@ -250,7 +318,7 @@ test(
 
       assert.equal(
         layoutByName[name].y,
-        5
+        1
       );
 
       assert.equal(
@@ -281,43 +349,117 @@ test(
             y:
               layoutByName[name].y,
             w:
-              layoutByName[name].w
+              layoutByName[name].w,
+            h:
+              layoutByName[name].h
           }
         ])
       ),
       {
         strSkills: {
           x: 0,
-          y: 7,
-          w: 2
+          y: 3,
+          w: 4,
+          h: 3
         },
         dexSkills: {
-          x: 2,
-          y: 7,
-          w: 2
+          x: 4,
+          y: 3,
+          w: 4,
+          h: 4
         },
         intSkills: {
-          x: 4,
+          x: 0,
           y: 7,
-          w: 2
+          w: 4,
+          h: 5
         },
         wisSkills: {
-          x: 6,
+          x: 4,
           y: 7,
-          w: 2
+          w: 4,
+          h: 5
         },
         conSkills: {
           x: 8,
-          y: 7,
-          w: 2
+          y: 3,
+          w: 4,
+          h: 2
         },
         chaSkills: {
-          x: 10,
+          x: 8,
           y: 7,
-          w: 2
+          w: 4,
+          h: 5
         }
       }
     );
+
+    assert.deepEqual(
+      pickLayouts(
+        layoutByName,
+        [
+          'deathSaveSuccesses',
+          'deathSaveFailures'
+        ]
+      ),
+      {
+        deathSaveSuccesses: {
+          x: 0,
+          y: 12,
+          w: 2,
+          h: 1
+        },
+        deathSaveFailures: {
+          x: 2,
+          y: 12,
+          w: 2,
+          h: 1
+        }
+      }
+    );
+
+    Object
+      .entries(
+        layoutByName
+      )
+      .forEach(([name, layout]) => {
+
+        assert.ok(
+          layout.x >= 0 &&
+          layout.y >= 0 &&
+          layout.w >= 1 &&
+          layout.x + layout.w <= 12,
+          `${name} should fit inside the 12-column grid`
+        );
+      });
+
+    const visibleLayouts =
+      Object
+        .entries(
+          layoutByName
+        );
+
+    for (let first = 0; first < visibleLayouts.length; first += 1) {
+
+      for (let second = first + 1; second < visibleLayouts.length; second += 1) {
+
+        const [firstName, firstLayout] =
+          visibleLayouts[first];
+
+        const [secondName, secondLayout] =
+          visibleLayouts[second];
+
+        assert.equal(
+          layoutsOverlap(
+            firstLayout,
+            secondLayout
+          ),
+          false,
+          `${firstName} should not overlap ${secondName}`
+        );
+      }
+    }
   }
 );
 
@@ -704,6 +846,41 @@ test(
         collapsed: false,
         groupId: 'combat'
       }
+    );
+  }
+);
+
+
+test(
+  'PropertiesModel exposes manual calculation overrides without custom field UI',
+  () => {
+
+    const model =
+      createPropertiesModel({
+        cardType: 'character',
+        values: {
+          initiative: '8',
+          manualOverrides: {
+            'override-initiative': '8'
+          }
+        }
+      });
+
+    assert.deepEqual(
+      model.manualOverrides,
+      {
+        'override-initiative': '8'
+      }
+    );
+
+    assert.equal(
+      model.customValues['override-initiative'],
+      '8'
+    );
+
+    assert.equal(
+      model.customFields.length,
+      0
     );
   }
 );

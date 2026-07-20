@@ -1,5 +1,43 @@
 # Release Notes
 
+## 2026-07-20: Visible DnD Character Calculations
+
+- Character and creature `Properties` blocks now include visible `Proficiency` and `Initiative` fields by default.
+- Ability fields show a compact runtime modifier badge, so the owner can immediately see how STR/DEX/CON/INT/WIS/CHA translate into DnD modifiers.
+- Skill and save rows now recalculate from the related ability, current proficiency bonus and the three-state proficiency control: none, proficient or expertise.
+- Initiative recalculates from DEX unless the user types a manual value.
+- Manual calculated values stay protected, are exposed to `CharacterModel` as explicit overrides and are not overwritten by the next automatic recalculation.
+
+## 2026-07-20: Standard Character Properties Layout
+
+- New character and creature `Properties` blocks now open with a more readable default layout.
+- Level, AC, speed, armor and HP sit in a compact top row.
+- Ability scores fit on one row in DnD order: STR, DEX, CON, INT, WIS, CHA.
+- Skill groups are wider and arranged in two readable rows instead of six cramped columns.
+- Existing cards keep their saved manual layout; this change affects newly created Properties blocks and fields without stored layout.
+
+## 2026-07-19: Properties Constructor Drag/Resize Polish
+
+- Properties fields now show the resulting grid layout while dragging.
+- Dropping a field onto occupied cells pushes existing fields down instead of visually stacking them under the placeholder.
+- Drag/drop and resize use the actual displayed grid gap, so placement follows the visible grid more predictably.
+- Added browser regression coverage for live collision preview and cursor-grid placement.
+
+## 2026-07-19: Native Large Workspace Desktop Click-Through
+
+- The current real large GM workspace for owner validation is `X:\ДНД\Мастер\По кампаниям\База`.
+- Added `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` to launch the real Tauri release exe and click through Settings diagnostics, tree search, heavy map open and presentation open through WebView2.
+- Rebuilt and validated the release exe on that workspace: native click-through passed with 690 pages, 25 maps, 141 assets, 527 asset references and 0 missing asset references.
+- Fixed desktop asset loading for restored workspaces outside HOME: Rust now registers the selected workspace root in Tauri asset protocol scope during `set_workspace_root`, so map/card assets on `X:` do not fail with 403 after restart.
+- Known follow-up: the real large workspace still reports 2074 schema diagnostics issues; recovery UI must explain those before any automatic repair.
+
+## 2026-07-19: Real Large Workspace Desktop Matrix
+
+- The current real large GM workspace was confirmed at `X:\ДНД\Мастер\По кампаниям\База`; the older planned paths `X:\ДНД\Мастер\База` and `X:\ДНД\Мастер\По кампаниям\2` are stale for current owner validation.
+- `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` now passes with write probe OK, 690 pages, 25 maps, 141 assets, 0 missing asset references and tree parsing under 150 ms.
+- Fixed the desktop large-workspace smoke runner so Cyrillic workspace paths survive child-process calls on Windows.
+- Human CLI diagnostics now print an explicit `Errors` section when a workspace path is missing or not a MyOwnWorld workspace.
+
 ## 2026-07-19: Workspace Access Diagnostics Matrix
 
 - Workspace diagnostics now show whether the selected workspace is on the default local path, another disk, a network folder, a possible external drive, or outside HOME.

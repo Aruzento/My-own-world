@@ -233,11 +233,11 @@ Fog all / Unfog all остаются full-image fallback, потому что э
 
 Эти задачи больше не считаются хвостами пункта 20 и должны планироваться отдельно:
 
-- настоящий Tauri UI click-runner;
+- расширение native smoke до installed-app и destructive-flow проверки на копии workspace;
 - native image picker, если WebView file input окажется проблемным;
 - audio/playlist assets;
 - структурированные desktop error objects;
-- desktop storage runner поверх реального Tauri окна;
+- desktop storage runner поверх реального Tauri окна для create/move/delete сценариев;
 - cloud/backend implementation;
 - desktop updater и signing.
 
@@ -254,10 +254,10 @@ Update 2026-07-19: workspace diagnostics now include an access matrix for deskto
 The shared implementation is `js/storage/workspaceAccessDiagnostics.js`. The visible diagnostics panel shows `Location`, `Access matrix` and `Write probe`. The CLI entrypoint is:
 
 ```bash
-node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\База" --json false
+node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --json false
 ```
 
-Manual real-path verification remains in `0.0.1.2.1`.
+The 2026-07-19 owner pass uses the current large GM workspace `X:\ДНД\Мастер\По кампаниям\База`. `0.0.1.2.2` added `npm run desktop:native-smoke` for native Tauri click-through through WebView2.
 
 ## Проверки Для Desktop Foundation
 

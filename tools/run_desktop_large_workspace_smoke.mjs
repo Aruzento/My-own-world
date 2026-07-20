@@ -207,17 +207,23 @@ function runCommand({
   const startedAt =
     Date.now();
 
+  const spawnCommand =
+    resolveCommand(
+      command,
+      args
+    );
+
   const result =
     spawnSync(
-      command,
-      args,
+      spawnCommand.command,
+      spawnCommand.args,
       {
         cwd:
           process.cwd(),
         encoding:
           'utf8',
         shell:
-          process.platform === 'win32',
+          false,
         stdio
       }
     );
@@ -240,6 +246,39 @@ function runCommand({
       result.stderr || '',
     error:
       result.error?.message || ''
+  };
+}
+
+
+function resolveCommand(
+  command,
+  args
+) {
+
+  if (
+    process.platform === 'win32' &&
+    command === 'npm'
+  ) {
+
+    return {
+      command:
+        'cmd.exe',
+      args:
+        [
+          '/d',
+          '/s',
+          '/c',
+          [
+            'npm',
+            ...args
+          ].join(' ')
+        ]
+    };
+  }
+
+  return {
+    command,
+    args
   };
 }
 
@@ -304,7 +343,7 @@ function createMarkdownReport({
     '',
     `Run date: ${runStartedAt.toISOString()}`,
     '',
-    `Plan ref: \`0.0.1.2.3\``,
+    `Plan ref: \`0.0.1.2.2\``,
     '',
     `Workspace: \`${workspacePath}\``,
     '',
@@ -324,6 +363,9 @@ function createMarkdownReport({
     '',
     '## Workspace Summary',
     '',
+    `- Location: ${diagnosticData.access?.location?.summary || 'unknown'}`,
+    `- Write probe: ${diagnosticData.access?.writeProbe?.message || 'not checked'}`,
+    `- Access matrix: ${formatAccessMatrix(diagnosticData.access?.matrix)}`,
     `- Pages: ${summary.pageCount ?? 'unknown'}`,
     `- Campaign maps: ${summary.campaignMapCount ?? 'unknown'}`,
     `- Task trackers: ${summary.taskTrackerCount ?? 'unknown'}`,
@@ -333,6 +375,28 @@ function createMarkdownReport({
     `- Complete backups: ${summary.completeBackupCount ?? 'unknown'}`,
     `- Incomplete backups: ${summary.incompleteBackupCount ?? 'unknown'}`,
     `- Diagnostics duration: ${diagnosticData.durationMs ?? 'unknown'} ms`,
+    '',
+    '## Manual Native Targets',
+    '',
+    'Open these first during the native Tauri click-through.',
+    '',
+    '### Heavy Maps',
+    '',
+    ...formatHeavyMapTargets(
+      diagnosticData.heavyMaps || []
+    ),
+    '',
+    '### Large Assets',
+    '',
+    ...formatLargeAssetTargets(
+      diagnosticData.largestAssets || []
+    ),
+    '',
+    '### Diagnostics Warnings',
+    '',
+    ...formatDiagnosticWarnings(
+      diagnosticData.warnings || []
+    ),
     '',
     '## Tree Probe Summary',
     '',
@@ -376,11 +440,160 @@ function createMarkdownReport({
     '- The app must not feel frozen during tree scroll, search, map open, presentation open, backup or page move/delete.',
     '- Destructive checks must never run on the only important workspace copy.',
     '',
-    '## Known Automation Limit',
+    '## Native WebView Runner',
     '',
-    'This runner cannot click inside the native Tauri WebView. It prepares the measurable part and a manual checklist; a future Tauri UI runner should automate the visible click-through.',
+    'This runner covers the CLI/measurable side. Run `npm run desktop:native-smoke -- --workspace "<workspace path>"` after `npm run desktop:build` to click through the real Tauri WebView, open a heavy map, open presentation, and catch failed WebView resources.',
     ''
   ].join('\n');
+}
+
+
+function formatHeavyMapTargets(
+  maps
+) {
+
+  if (!Array.isArray(maps) || !maps.length) {
+
+    return [
+      '- No heavy maps were reported by diagnostics.'
+    ];
+  }
+
+  return maps
+    .slice(
+      0,
+      5
+    )
+    .map(map =>
+      `- ${formatTargetTitle(map)} - ${formatBytes(map.sizeBytes)}, tokens: ${map.tokens ?? 0}, fog zones: ${map.fogZones ?? 0}, file/id: \`${map.file || map.id || 'unknown'}\``
+    );
+}
+
+
+function formatLargeAssetTargets(
+  assets
+) {
+
+  if (!Array.isArray(assets) || !assets.length) {
+
+    return [
+      '- No large assets were reported by diagnostics.'
+    ];
+  }
+
+  return assets
+    .slice(
+      0,
+      5
+    )
+    .map(asset =>
+      `- \`${asset.relativePath || 'unknown'}\` - ${formatBytes(asset.sizeBytes)}`
+    );
+}
+
+
+function formatDiagnosticWarnings(
+  warnings
+) {
+
+  if (!Array.isArray(warnings) || !warnings.length) {
+
+    return [
+      '- No diagnostics warnings.'
+    ];
+  }
+
+  return warnings.map(warning => {
+
+    const count =
+      warning.count != null
+        ? ` (${warning.count})`
+        : '';
+
+    const examples =
+      Array.isArray(warning.examples) && warning.examples.length
+        ? ` Examples: ${warning.examples.slice(0, 3).map(formatWarningExample).join('; ')}.`
+        : '';
+
+    return `- ${warning.code || 'warning'}${count}: ${warning.message || 'No message.'}${examples}`;
+  });
+}
+
+
+function formatWarningExample(
+  example
+) {
+
+  if (example.relativePath) {
+
+    return `${example.relativePath} ${formatBytes(example.sizeBytes)}`;
+  }
+
+  if (example.title) {
+
+    return `${example.title} ${formatBytes(example.sizeBytes)}`;
+  }
+
+  return JSON.stringify(
+    example
+  );
+}
+
+
+function formatTargetTitle(
+  target
+) {
+
+  const title =
+    target.title ||
+    target.name ||
+    target.id ||
+    'Untitled';
+
+  return String(title).replace(/\s+/g, ' ').trim();
+}
+
+
+function formatBytes(
+  value
+) {
+
+  const bytes =
+    Number(value || 0);
+
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+
+    return 'unknown size';
+  }
+
+  if (bytes >= 1024 * 1024) {
+
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  if (bytes >= 1024) {
+
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+
+  return `${bytes} B`;
+}
+
+
+function formatAccessMatrix(
+  matrix
+) {
+
+  if (!Array.isArray(matrix) || !matrix.length) {
+
+    return 'not checked';
+  }
+
+  return matrix
+    .map(row =>
+      `${row.label}: ${row.status}`
+    )
+    .join('; ');
 }
 
 
@@ -398,7 +611,82 @@ function createCommandSummary(
       ? 'passed'
       : 'failed';
 
-  return `- ${result.name}: ${status} (${result.durationMs} ms)`;
+  const lines =
+    [
+      `- ${result.name}: ${status} (${result.durationMs} ms)`
+    ];
+
+  if (!result.ok) {
+
+    lines.push(
+      ...formatCommandFailureDetails(
+        result
+      )
+    );
+  }
+
+  return lines.join(
+    '\n'
+  );
+}
+
+
+function formatCommandFailureDetails(
+  result
+) {
+
+  const details =
+    [];
+
+  if (result.error) {
+
+    details.push(
+      `  - error: ${result.error}`
+    );
+  }
+
+  const stderr =
+    firstLines(
+      result.stderr
+    );
+
+  if (stderr.length) {
+
+    details.push(
+      `  - stderr: ${stderr.join(' | ')}`
+    );
+  }
+
+  const stdout =
+    firstLines(
+      result.stdout
+    );
+
+  if (stdout.length) {
+
+    details.push(
+      `  - stdout: ${stdout.join(' | ')}`
+    );
+  }
+
+  return details;
+}
+
+
+function firstLines(
+  value
+) {
+
+  return String(value || '')
+    .split(/\r?\n/)
+    .map(line =>
+      line.trim()
+    )
+    .filter(Boolean)
+    .slice(
+      0,
+      3
+    );
 }
 
 

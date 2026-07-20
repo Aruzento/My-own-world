@@ -8,6 +8,7 @@
     "desktop:check": "node tools/check_desktop_environment.mjs",
     "desktop:packaging-smoke": "node tools/check_desktop_packaging_smoke.mjs",
     "desktop:large-workspace-smoke": "node tools/run_desktop_large_workspace_smoke.mjs",
+    "desktop:native-smoke": "node tools/run_desktop_native_clickthrough.mjs",
     "desktop:prepare": "node tools/prepare_desktop_dist.mjs",
     "desktop:gate": "node tools/run_desktop_release_gate.mjs",
     "desktop:dev": "tauri dev",

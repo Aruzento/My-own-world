@@ -26,6 +26,10 @@ export function createPropertiesModel(
   const normalizedValues = {};
   const normalizedCustomFields =
     [];
+  const normalizedManualOverrides =
+    normalizeManualOverrides(
+      values.manualOverrides || {}
+    );
 
   getSchemaValueFields(
     schema
@@ -69,13 +73,18 @@ export function createPropertiesModel(
       ),
     customFields:
       normalizedCustomFields,
+    manualOverrides:
+      normalizedManualOverrides,
     customValues:
-      Object.fromEntries(
-        normalizedCustomFields.map(field => [
-          field.key,
-          field.value
-        ])
-      )
+      {
+        ...Object.fromEntries(
+          normalizedCustomFields.map(field => [
+            field.key,
+            field.value
+          ])
+        ),
+        ...normalizedManualOverrides
+      }
   };
 }
 
@@ -118,6 +127,12 @@ export function readPropertiesModelFromElement(
   values.customFields =
     readCustomPropertyFields(
       block
+    );
+
+  values.manualOverrides =
+    readManualPropertyOverrides(
+      block,
+      schema
     );
 
   values.layout =
@@ -322,6 +337,47 @@ function readCustomPropertyFields(
 }
 
 
+function readManualPropertyOverrides(
+  block,
+  schema
+) {
+
+  const overrides = {};
+
+  getSchemaValueFields(
+    schema
+  )
+    .forEach(field => {
+
+      const control =
+        block.querySelector(
+          `[data-property-name="${CSS.escape(field.name)}"]`
+        );
+
+      if (
+        !control ||
+        control.dataset.propertyManual !== 'true'
+      ) return;
+
+      const value =
+        readControlValue(
+          control
+        );
+
+      if (
+        value === '' ||
+        value === null ||
+        value === undefined
+      ) return;
+
+      overrides[`override-${field.name}`] =
+        String(value);
+    });
+
+  return overrides;
+}
+
+
 function readCustomPropertyLayout(
   block
 ) {
@@ -402,6 +458,33 @@ function normalizePropertiesLayout(
         normalizePropertyLayout(
           value
         )
+      ])
+  );
+}
+
+
+function normalizeManualOverrides(
+  overrides
+) {
+
+  return Object.fromEntries(
+    Object
+      .entries(
+        overrides || {}
+      )
+      .filter(([
+        key,
+        value
+      ]) =>
+        key &&
+        String(value ?? '').trim() !== ''
+      )
+      .map(([
+        key,
+        value
+      ]) => [
+        key,
+        String(value ?? '').trim()
       ])
   );
 }

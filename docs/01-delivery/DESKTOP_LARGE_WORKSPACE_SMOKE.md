@@ -9,26 +9,31 @@ owner_zone: "delivery"
 
 # Desktop Large Workspace Smoke
 
-Plan ref: `0.0.1.2.3`
+Plan ref: `0.0.1.2.2`
 
-This is the repeatable smoke path for a real large GM workspace. It has two parts:
+This is the repeatable smoke path for a real large GM workspace. It has three parts:
 
 1. Automated read-only checks that can be run from the project.
-2. Manual native desktop click-through that must be done in the Tauri window.
+2. Automated native desktop click-through through the real Tauri WebView.
+3. Optional human pass for subjective smoothness and audio/output devices.
 
-The automated runner never mutates the workspace.
+The automated runner does not change durable workspace content. It may create, read and remove one tiny `.my-own-world-write-probe-*.tmp` file to verify write access.
 
 ## Command
 
 ```powershell
 cd "C:\Users\Aruko\Documents\New project\My own world"
-npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\База"
+npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
+npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
 ```
+
+The older planned paths `X:\ДНД\Мастер\База` and `X:\ДНД\Мастер\По кампаниям\2` are stale for the current owner pass.
 
 Default report:
 
 ```text
 docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md
+docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md
 ```
 
 If the real workspace is not mounted, run the command later when the disk is available. The runner must fail fast instead of pretending that the smoke passed.
@@ -44,9 +49,19 @@ If the real workspace is not mounted, run the command later when the disk is ava
 - desktop packaging smoke;
 - presence of the current release executable and installer.
 
+## What The Native Runner Checks
+
+- launches `src-tauri\target\release\my-own-world.exe`;
+- restores the selected workspace in the desktop adapter;
+- opens settings and refreshes workspace diagnostics;
+- scrolls/searches the tree;
+- opens the heaviest campaign map target from the workspace;
+- opens the Tauri presentation window;
+- fails if a normal page resource returns a failed response.
+
 ## Manual Native Desktop Checklist
 
-Use a copied workspace for destructive checks.
+Use this as an owner feel-check after the automated native runner. Use a copied workspace for destructive checks.
 
 1. Start `src-tauri\target\release\my-own-world.exe` or install the latest NSIS installer.
 2. Select the large workspace.
@@ -76,4 +91,4 @@ Use a copied workspace for destructive checks.
 
 ## Known Limit
 
-This procedure still needs a human for native Tauri UI clicks. Browser Playwright cannot inspect the native desktop WebView. A future Tauri UI automation runner can replace the manual part, but until then the generated report plus this checklist is the source of truth.
+The native runner proves the click path and resource loading through WebView2, but it does not judge subjective smoothness, speaker/output-device behavior, or destructive create/move/delete flows on the only important workspace copy.

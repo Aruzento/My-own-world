@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-07-19
+Updated: 2026-07-20
 
 ## Current Product
 
@@ -31,10 +31,14 @@ Recently closed:
 
 - `0.0.1.0.4` runtime UI text security coverage.
 - `0.0.1.0.5` desktop filesystem boundary hardening.
+- `0.0.1.2.2` native desktop click-through on the real large GM workspace `X:\ДНД\Мастер\По кампаниям\База`.
+- `0.0.1.4.1` Properties block constructor: live drag preview, collision pushdown and visual grid-step handling.
+- `0.0.1.4.2` standard character Properties layout: compact top metrics, one-row abilities and readable skill groups for new character/creature Properties blocks.
+- `0.0.1.4.3` visible DnD calculations in Properties: ability modifiers, proficiency bonus, initiative, skills/expertise, armor-based AC and manual overrides.
 
 Next active block:
 
-- `0.0.1.2.0` Desktop Product Hardening, starting with the real workspace access matrix on the large GM workspace and any available external/network/read-only folders.
+- `0.0.1.4.4` Make armor selection use item picker behavior, unless a campaign-map bug from the lightweight backlog is promoted first.
 
 ## Readiness Model
 
@@ -49,7 +53,7 @@ This prevents "done" from meaning only "a model/helper was created".
 
 ## Key Risks
 
-- Large real workspaces can still expose UI delay, especially in tree operations and map-heavy sessions.
+- Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
 - Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection and workspace access diagnostics; richer recovery remains open.
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.

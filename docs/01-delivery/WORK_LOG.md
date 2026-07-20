@@ -6,6 +6,228 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-20: 0.0.1.4.3 Visible DnD Character Calculations
+
+### What Changed
+
+- Completed `0.0.1.4.3`.
+- Character and creature `Properties` blocks now show `БМ` and `Инициатива` as standard visible fields.
+- Ability fields show runtime modifier badges, so the owner can see `+3`, `-1`, etc. directly beside STR/DEX/CON/INT/WIS/CHA.
+- Runtime auto-calculation now updates proficiency bonus from level, initiative from DEX, and skills/saves from ability modifier plus proficiency or expertise.
+- Manual edits to calculated visible fields are preserved as explicit `manualOverrides` in `PropertiesModel`, so `CharacterModel` respects them instead of recalculating over the owner's value.
+- The release notes, tester instructions, product dashboard, active plan, backlog and Properties contract were updated to keep the handoff readable.
+
+### Readiness
+
+Usable. The owner can test the feature in a normal character card: change level, change DEX, toggle a skill between none/proficient/expertise, and type a manual value to see it stay protected.
+
+### Checks
+
+- `node --test tests\propertyBlocks.test.mjs`
+- `node --test tests\characterModel.test.mjs`
+- `npm run test:browser`
+- `npm run verify`
+- `npm run docs:index`
+- `npm run agents:validate`
+
+### Remaining Risk
+
+- `0.0.1.4.4` is still open: the `Доспех` field calculates correctly when it has an item reference/title, but the user-facing picker should become the same clear item picker used by item list flows.
+- `0.0.1.4.5` is still open: map tokens must be wired to the model snapshot for HP/AC/initiative/effects/statuses as one explicit integration path.
+
+### Next
+
+- Continue with `0.0.1.4.4` Make armor selection use item picker behavior.
+
+---
+
+## 2026-07-20: 0.0.1.4.2 Standard Character Properties Layout
+
+### What Changed
+
+- Completed `0.0.1.4.2`.
+- New character and creature `Properties` blocks now start with a readable sheet-like default layout instead of six very narrow skill columns.
+- The first row is compact and action-oriented: level, AC, speed, armor picker, current HP, max HP and temporary HP.
+- DnD abilities now fit on one row in the natural order `STR / DEX / CON / INT / WIS / CHA`.
+- Skill groups now use wider readable blocks arranged in two rows, while still adapting to one-column skill rows when the field is narrow.
+- Standard fields now carry `data-property-id`, so runtime styling, settings and regressions can target them consistently without reading visible Russian labels.
+
+### Readiness
+
+Usable. The default layout is visible in one obvious action: create/open a character or creature `Properties` block. Existing cards keep their saved manual layout and are not silently overwritten.
+
+### Checks
+
+- `node --check js\templates\blockTypes.js`
+- `node --check tests\propertyBlocks.test.mjs`
+- `node --check tests\browser\property-blocks.spec.mjs`
+- `node --test tests\propertyBlocks.test.mjs`
+- `npm run test:browser`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run agents:validate`
+- `npm run verify`
+
+### Remaining Risk
+
+- Existing cards with saved layouts intentionally keep their current positions. A future reset-to-default action can be added if the owner wants to apply the new layout to old cards.
+- The next character tasks still need to finish calculations, armor picker behavior and map integration before the whole `Properties & Character UX` block can be considered release-ready.
+
+### Next
+
+- Continue with `0.0.1.4.3` Finish DnD calculations.
+
+---
+
+## 2026-07-19: 0.0.1.4.1 Properties Block Constructor
+
+### What Changed
+
+- Completed `0.0.1.4.1`.
+- Properties field drag now previews the real resulting layout while the mouse is moving: if the target cells are occupied, the existing fields visually move down instead of staying overlapped under the placeholder.
+- Drop and resize now use the actual CSS grid step, including row/column gaps, so visual placement follows the displayed grid more closely.
+- Resize keeps the existing edge behavior and collision resolution, but now uses the same visual spacing as drag.
+- Added browser regression coverage for live collision preview during drag and cursor-grid placement with real grid gaps.
+
+### Readiness
+
+Usable. The constructor is still intentionally simple for the owner: drag by the field border, resize by edge/corner dots, and the grid can keep empty gaps. The broader Properties & Character UX block remains open for standard character layout, armor picker, calculations and map integration.
+
+### Checks
+
+- `node --check js\editor\propertiesSettingsPopup.js`
+- `node --check tests\browser\property-blocks.spec.mjs`
+- `npm run test:browser`
+- `npm run docs:index`
+- `npm run agents:validate`
+- `npm run verify`
+
+### Remaining Risk
+
+- This pass validates the browser behavior. A subjective desktop feel-check is still useful after `0.0.1.4.2` because Properties layout is primarily a visual/editor workflow.
+
+### Next
+
+- Continue with `0.0.1.4.2` Improve standard character layout.
+
+---
+
+## 2026-07-19: 0.0.1.2.2 Native Desktop Click-Through On Real Large Workspace
+
+### What Changed
+
+- Completed `0.0.1.2.2`.
+- Used the owner-provided current large workspace: `X:\ДНД\Мастер\По кампаниям\База`.
+- Added `tools/run_desktop_native_clickthrough.mjs`, a WebView2/CDP runner that launches the real Tauri release exe, restores the workspace, opens Settings diagnostics, searches the tree, opens a heavy campaign map and opens the Tauri presentation window.
+- Added `npm run desktop:native-smoke`.
+- Rebuilt the release desktop executable before the native pass so the smoke ran against current code, not an older July 11 binary.
+- Fixed desktop restore for workspaces outside HOME: `set_workspace_root` now registers the canonical workspace root in Tauri asset protocol scope for the current session, preventing asset 403 failures after restoring a workspace from localStorage.
+- Updated the large-workspace smoke procedure, product dashboard, active plan, backlog and release handoff to use `X:\ДНД\Мастер\По кампаниям\База`.
+- Added `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md` as the latest native desktop evidence report.
+- Fixed `tools/run_desktop_release_gate.mjs` so the gate runs project-local checks through direct `node tools/...` commands instead of nested Windows shell `npm run` calls. This keeps Cyrillic workspace paths stable when the gate invokes the large-workspace smoke.
+- Re-ran the full desktop release gate on `X:\ДНД\Мастер\По кампаниям\База`; `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md` is now `PASSED`.
+
+### Readiness
+
+Usable. The real native Tauri click path is now automated and passed on the current large GM workspace. It is not `Release-ready` yet because subjective owner feel-checks, audio output-device behavior and destructive create/move/delete checks on a copied workspace still need human confirmation.
+
+### Real Workspace Result
+
+- Workspace: `X:\ДНД\Мастер\По кампаниям\База`.
+- CLI diagnostics: write probe OK, 690 pages, 25 maps, 141 assets, 527 asset references, 0 missing asset references, 5 complete backups, 0 incomplete backups.
+- Tree probe: read directory 3 ms, read/parse pages 149 ms, parent index 0 ms.
+- Native click-through: launch 601 ms, workspace restore 1482 ms, diagnostics 670 ms, tree search 181 ms, heavy map open 25 ms, presentation open 984 ms.
+- Native map target opened: `Горы-Пещеры`, 26 rendered tokens, toolbar visible, stage visible, background element present, fog canvas present.
+- Native presentation: opened `presentation.html`, status `ready`, 18 rendered tokens.
+- Resource issues after asset-scope fix: none captured.
+
+### Checks
+
+- `node --check tools\run_desktop_native_clickthrough.mjs`
+- `node --check tools\run_desktop_large_workspace_smoke.mjs`
+- `node --check tests\desktopLargeWorkspaceSmoke.test.mjs`
+- `cargo check`
+- `npm run desktop:build`
+- `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --json false`
+- `node tools\probe_large_workspace_tree_performance.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База"`
+- `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`
+- `node tools\run_desktop_native_clickthrough.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База"`
+- `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`
+- `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`
+
+### Remaining Risk
+
+- Desktop diagnostics on the real large workspace report 2074 schema issues. They are captured in `0.0.1.6.3`/`BI-012` and need a grouped human-readable recovery report before any automatic repair.
+- The native runner does not create, move or delete pages; destructive checks should still use a copied workspace.
+- The native runner does not judge subjective smoothness, speaker output, or long play-session memory behavior.
+
+### Next
+
+- Continue with `0.0.1.4.0` Properties & Character UX unless a campaign-map backlog bug is promoted first.
+
+---
+
+## 2026-07-19: 0.0.1.2.1 Real Desktop Workspace Access Matrix
+
+### What Changed
+
+- Completed the measurable CLI/report part of `0.0.1.2.1`.
+- Found that the older planned path `X:\ДНД\Мастер\База` is stale in the current mounted `X:` drive.
+- Identified the current real large GM workspace as `X:\ДНД\Мастер\По кампаниям\2`.
+- Ran the real workspace access matrix on that workspace with write probe enabled.
+- Updated the desktop large-workspace smoke runner so Cyrillic workspace paths survive child-process calls on Windows.
+- Updated the smoke report to show `Location`, `Write probe` and the access matrix in the workspace summary.
+- Fixed the human CLI output for missing workspace paths so it prints an explicit `Errors` section instead of only showing zero counts.
+- Added regression coverage for Cyrillic desktop smoke paths and missing-workspace human diagnostics.
+- Wrote the current measurable smoke report to `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md`.
+- Removed `0.0.1.2.1` from the active plan and added `0.0.1.2.2` for visible native Tauri click-through.
+
+### Readiness
+
+MVP. The measurable large-workspace matrix is green and repeatable from the project, but native Tauri UI click-through in the actual window remains a separate manual pass.
+
+### Real Workspace Result
+
+- Workspace: `X:\ДНД\Мастер\По кампаниям\2`
+- Location: different drive, possible external drive, outside HOME.
+- Write probe: OK.
+- Pages: 287.
+- Campaign maps: 15.
+- Assets: 76.
+- Asset references: 463.
+- Missing asset references: 0.
+- Complete backups: 20.
+- Incomplete backups: 0.
+- Diagnostics duration: 79 ms in the final runner pass.
+- Tree probe: read directory 1 ms, read/parse pages 41 ms, parent index 0 ms.
+
+### Checks
+
+- `node --check tools\run_workspace_diagnostics.mjs`
+- `node --check tools\run_desktop_large_workspace_smoke.mjs`
+- `node --check tests\workspaceDiagnosticsCli.test.mjs`
+- `node --check tests\desktopLargeWorkspaceSmoke.test.mjs`
+- `node --test tests\desktopLargeWorkspaceSmoke.test.mjs tests\workspaceDiagnosticsCli.test.mjs` 2 passed
+- `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\База" --no-write-probe --json false` returns a clear missing-path error
+- `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\2" --json false`
+- `node tools\probe_large_workspace_tree_performance.mjs --workspace "X:\ДНД\Мастер\По кампаниям\2"`
+- `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\2"`
+- `npm run desktop:check`
+- `npm run desktop:packaging-smoke`
+- `node tools\check_text_encoding.mjs docs\01-delivery\LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md tools\run_desktop_large_workspace_smoke.mjs tools\run_workspace_diagnostics.mjs tests\desktopLargeWorkspaceSmoke.test.mjs tests\workspaceDiagnosticsCli.test.mjs`
+
+### Remaining Risk
+
+- No real network folder was available in this session (`net use` reported no mapped network connections).
+- A deliberately read-only real folder was not created because that requires ACL changes and should be a separate controlled test.
+- The Settings diagnostics popup in the actual Tauri window was not clicked by automation; this remains the next active plan item.
+
+### Next
+
+- Continue with `0.0.1.2.2` Run visible native desktop click-through on the current large GM workspace.
+
+---
+
 ## 2026-07-19: 0.0.1.1.7 Workspace Access Matrix
 
 ### What Changed

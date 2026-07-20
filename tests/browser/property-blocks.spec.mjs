@@ -235,6 +235,172 @@ test(
 
 
 test(
+  'character-properties-default-layout-is-readable-after-runtime-setup',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.style.width =
+            '960px';
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'character'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          const block =
+            editor.querySelector('.card-properties-block');
+
+          function field(
+            name
+          ) {
+
+            return block.querySelector(
+              `.card-property-field[data-property-id="${name}"]`
+            );
+          }
+
+          function layout(
+            name
+          ) {
+
+            const node =
+              field(
+                name
+              );
+
+            return {
+              gridColumn:
+                node.style.gridColumn,
+              gridRow:
+                node.style.gridRow,
+              span:
+                node.dataset.propertySpan,
+              rows:
+                node.dataset.propertyRows
+            };
+          }
+
+          const dexSkillColumns =
+            window
+              .getComputedStyle(
+                field('dexSkills')
+                  .querySelector('.card-property-skill-list')
+              )
+              .gridTemplateColumns
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .length;
+
+          return {
+            level:
+              layout('level'),
+            proficiencyBonus:
+              layout('proficiencyBonus'),
+            initiative:
+              layout('initiative'),
+            armorItem:
+              layout('armorItem'),
+            str:
+              layout('str'),
+            cha:
+              layout('cha'),
+            dexSkills:
+              layout('dexSkills'),
+            dexSkillColumns
+          };
+        }
+      );
+
+    expect(
+      result.level
+    ).toEqual({
+      gridColumn: '1 / span 1',
+      gridRow: '1 / span 1',
+      span: '1',
+      rows: '1'
+    });
+
+    expect(
+      result.armorItem
+    ).toEqual({
+      gridColumn: '6 / span 3',
+      gridRow: '1 / span 1',
+      span: '3',
+      rows: '1'
+    });
+
+    expect(
+      result.proficiencyBonus
+    ).toEqual({
+      gridColumn: '2 / span 1',
+      gridRow: '1 / span 1',
+      span: '1',
+      rows: '1'
+    });
+
+    expect(
+      result.initiative
+    ).toEqual({
+      gridColumn: '3 / span 1',
+      gridRow: '1 / span 1',
+      span: '1',
+      rows: '1'
+    });
+
+    expect(
+      result.str.gridRow
+    ).toBe(
+      '2 / span 2'
+    );
+
+    expect(
+      result.cha.gridColumn
+    ).toBe(
+      '11 / span 2'
+    );
+
+    expect(
+      result.dexSkills
+    ).toEqual({
+      gridColumn: '5 / span 4',
+      gridRow: '4 / span 4',
+      span: '4',
+      rows: '4'
+    });
+
+    expect(
+      result.dexSkillColumns
+    ).toBe(
+      1
+    );
+  }
+);
+
+
+test(
   'property-block-auto-calculates-skills-and-armor-class',
   async ({ page }) => {
 
@@ -251,12 +417,16 @@ test(
           } = await import('/js/templates/blockTypes.js');
 
           const {
-            setupPropertiesAutoCalculations
-          } = await import('/js/editor/propertiesAutoCalculations.js');
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
 
           const {
-            ensurePropertySettingsControls
-          } = await import('/js/editor/propertiesSettingsPopup.js');
+            readPropertiesModelFromElement
+          } = await import('/js/properties/propertiesModel.js');
+
+          const {
+            createPropertiesCalculationModel
+          } = await import('/js/properties/propertiesCalculationEngine.js');
 
           const {
             state
@@ -296,13 +466,18 @@ test(
               cardType: 'character'
             });
 
-          setupPropertiesAutoCalculations(
+          applyBlockSystemContract(
             host
           );
 
-          ensurePropertySettingsControls(
-            host
-          );
+          const level =
+            host.querySelector('[data-property-name="level"]');
+
+          const proficiencyBonus =
+            host.querySelector('[data-property-name="proficiencyBonus"]');
+
+          const initiative =
+            host.querySelector('[data-property-name="initiative"]');
 
           const str =
             host.querySelector('[data-property-name="str"]');
@@ -321,6 +496,21 @@ test(
 
           const armorClass =
             host.querySelector('[data-property-name="armorClass"]');
+
+          level.value =
+            '5';
+
+          level.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const proficiencyAtLevelFive =
+            proficiencyBonus.value;
 
           str.value =
             '18';
@@ -350,6 +540,21 @@ test(
           );
 
           const athleticsWithProficiency =
+            athletics.value;
+
+          athleticsProficient.value =
+            '2';
+
+          athleticsProficient.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const athleticsWithExpertise =
             athletics.value;
 
           athletics.value =
@@ -402,6 +607,24 @@ test(
           dex.value =
             '16';
 
+          dex.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const dexModifierBadge =
+            dex
+              .closest('.card-property-field')
+              .querySelector('.card-property-ability-modifier')
+              ?.textContent || '';
+
+          const initiativeFromDex =
+            initiative.value;
+
           armorItem.value =
             'studded-leather';
 
@@ -414,17 +637,74 @@ test(
             )
           );
 
+          const armorClassFromArmor =
+            armorClass.value;
+
+          initiative.value =
+            '8';
+
+          initiative.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          dex.value =
+            '10';
+
+          dex.dispatchEvent(
+            new Event(
+              'input',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const manualInitiativeStillProtected =
+            initiative.value;
+
+          const model =
+            readPropertiesModelFromElement(
+              host.querySelector('.card-properties-block')
+            );
+
+          const calculations =
+            createPropertiesCalculationModel({
+              propertiesModel:
+                model,
+              pages:
+                state.pages
+            });
+
           return {
+            proficiencyAtLevelFive,
             athleticsWithoutProficiency,
             athleticsWithProficiency,
+            athleticsWithExpertise,
             manualClass,
             manualStillProtected,
             automaticAfterClear,
-            armorClass:
-              armorClass.value
+            dexModifierBadge,
+            initiativeFromDex,
+            manualInitiativeStillProtected,
+            modelInitiativeSource:
+              calculations.initiative.source,
+            modelInitiative:
+              calculations.initiative.value,
+            armorClassFromArmor
           };
         }
       );
+
+    expect(
+      result.proficiencyAtLevelFive
+    ).toBe(
+      '3'
+    );
 
     expect(
       result.athleticsWithoutProficiency
@@ -435,7 +715,13 @@ test(
     expect(
       result.athleticsWithProficiency
     ).toBe(
-      '6'
+      '7'
+    );
+
+    expect(
+      result.athleticsWithExpertise
+    ).toBe(
+      '10'
     );
 
     expect(
@@ -453,11 +739,41 @@ test(
     expect(
       result.automaticAfterClear
     ).toBe(
-      '2'
+      '6'
     );
 
     expect(
-      result.armorClass
+      result.dexModifierBadge
+    ).toBe(
+      '+3'
+    );
+
+    expect(
+      result.initiativeFromDex
+    ).toBe(
+      '3'
+    );
+
+    expect(
+      result.manualInitiativeStillProtected
+    ).toBe(
+      '8'
+    );
+
+    expect(
+      result.modelInitiativeSource
+    ).toBe(
+      'manual'
+    );
+
+    expect(
+      result.modelInitiative
+    ).toBe(
+      8
+    );
+
+    expect(
+      result.armorClassFromArmor
     ).toBe(
       '15'
     );
@@ -1048,12 +1364,12 @@ test(
           let popup =
             document.querySelector('.property-settings-popup');
 
-          const deleteLevel =
+          const deleteInitiative =
             popup.querySelector(
-              '.property-settings-delete[data-field-id="level"]'
+              '.property-settings-delete[data-field-id="initiative"]'
             );
 
-          deleteLevel.click();
+          deleteInitiative.click();
 
           await new Promise(resolve =>
             requestAnimationFrame(resolve)
@@ -1086,9 +1402,9 @@ test(
             .click();
 
           return {
-            hasLevel:
+            hasInitiative:
               Boolean(
-                editor.querySelector('[data-property-name="level"]')
+                editor.querySelector('[data-property-name="initiative"]')
               ),
             initiativeLabel:
               editor
@@ -1114,9 +1430,9 @@ test(
       );
 
     expect(
-      result.hasLevel
+      result.hasInitiative
     ).toBe(
-      false
+      true
     );
 
     expect(
@@ -1196,6 +1512,17 @@ test(
           const firstRect =
             firstField.getBoundingClientRect();
 
+          function readGridRowStart(
+            node
+          ) {
+
+            return Number(
+              String(
+                node?.style?.gridRow || ''
+              ).split('/')[0]
+            ) || 0;
+          }
+
           firstField.dispatchEvent(
             new PointerEvent(
               'pointerdown',
@@ -1236,6 +1563,19 @@ test(
 
           const fieldHiddenDuringDrag =
             firstField.style.display === 'none';
+
+          const placeholderDuringDrag =
+            editor.querySelector('.card-property-drop-placeholder');
+
+          const previewPlaceholderRow =
+            readGridRowStart(
+              placeholderDuringDrag
+            );
+
+          const previewSecondRow =
+            readGridRowStart(
+              secondField
+            );
 
           editor.dispatchEvent(
             new PointerEvent(
@@ -1404,6 +1744,8 @@ test(
             hasGhostDuringDrag,
             hasPlaceholderDuringDrag,
             fieldHiddenDuringDrag,
+            previewPlaceholderRow,
+            previewSecondRow,
             hasGhostAfterDrop:
               Boolean(
                 document.querySelector('.card-property-drag-ghost')
@@ -1464,6 +1806,12 @@ test(
       result.fieldHiddenDuringDrag
     ).toBe(
       true
+    );
+
+    expect(
+      result.previewSecondRow
+    ).toBeGreaterThan(
+      result.previewPlaceholderRow
     );
 
     expect(
@@ -1621,11 +1969,57 @@ test(
           const gridRect =
             grid.getBoundingClientRect();
 
+          function getGridColumnStep(
+            grid,
+            gridRect
+          ) {
+
+            const style =
+              window.getComputedStyle(
+                grid
+              );
+
+            const gap =
+              Number.parseFloat(
+                style.columnGap
+              ) || 0;
+
+            return (
+              (
+                gridRect.width -
+                gap * 11
+              ) / 12
+            ) + gap;
+          }
+
+
+          function getGridRowStep(
+            grid
+          ) {
+
+            const style =
+              window.getComputedStyle(
+                grid
+              );
+
+            const gap =
+              Number.parseFloat(
+                style.rowGap
+              ) || 0;
+
+            return 42 + gap;
+          }
+
           const cellWidth =
-            gridRect.width / 12;
+            getGridColumnStep(
+              grid,
+              gridRect
+            );
 
           const rowHeight =
-            42;
+            getGridRowStep(
+              grid
+            );
 
           editor.dispatchEvent(
             new PointerEvent(

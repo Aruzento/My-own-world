@@ -5,6 +5,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
+use tauri::Manager;
 
 #[derive(serde::Serialize)]
 struct DirectoryEntry {
@@ -49,6 +50,7 @@ fn main() {
 
 #[tauri::command]
 fn set_workspace_root(
+    app: tauri::AppHandle,
     state: tauri::State<'_, WorkspaceRootState>,
     workspace_root: String,
 ) -> DesktopResult<String> {
@@ -67,6 +69,16 @@ fn set_workspace_root(
             Some(root),
         ));
     }
+
+    app.asset_protocol_scope()
+        .allow_directory(&root, true)
+        .map_err(|error| {
+            desktop_error(
+                "desktop.asset_scope_failed",
+                &format!("Workspace asset scope could not be registered: {error}"),
+                Some(root.clone()),
+            )
+        })?;
 
     let mut stored_root = state.root.lock().map_err(|_| {
         desktop_error(

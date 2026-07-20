@@ -1677,11 +1677,13 @@ function setupPropertyFieldLayoutDelegation(
         edge:
             resizeHandle.dataset.resizeEdge || 'e',
         cellWidth:
-            getPropertyGridCellWidth(
+            getPropertyGridColumnStep(
               field
             ),
         rowHeight:
-            getPropertyGridRowHeight(),
+            getPropertyGridRowStep(
+              field
+            ),
           appliedShiftX:
             0,
           appliedShiftY:
@@ -2011,9 +2013,62 @@ function updatePropertyFieldDrag(
     }
   );
 
-  applyPropertyFieldLayoutStyles(
-    dragState.placeholder,
+  previewPropertyDragLayout(
+    dragState,
     nextLayout
+  );
+}
+
+
+function previewPropertyDragLayout(
+  dragState,
+  nextLayout
+) {
+
+  const {
+    grid,
+    field,
+    placeholder
+  } = dragState;
+
+  if (
+    !grid ||
+    !placeholder
+  ) return;
+
+  const previewNodes =
+    getPropertyLayoutNodes(
+      grid,
+      field
+    );
+
+  const resolvedLayouts =
+    createResolvedPropertyLayouts(
+      previewNodes,
+      placeholder
+    );
+
+  animatePropertyLayoutNodes(
+    previewNodes,
+    () => {
+
+      previewNodes.forEach(node => {
+
+        const layout =
+          node === placeholder
+            ? nextLayout
+            : resolvedLayouts.get(
+              node
+            );
+
+        if (!layout) return;
+
+        applyPropertyFieldLayoutStyles(
+          node,
+          layout
+        );
+      });
+    }
   );
 }
 
@@ -2342,13 +2397,14 @@ function getPropertyDropLayoutFromPoint(
     );
 
   const cellWidth =
-    Math.max(
-      1,
-      rect.width / PROPERTY_GRID_COLUMNS
+    getPropertyGridColumnStep(
+      grid
     );
 
   const rowHeight =
-    getPropertyGridRowHeight();
+    getPropertyGridRowStep(
+      grid
+    );
 
   const x =
     Math.floor(
@@ -2462,6 +2518,64 @@ function animatePropertyGridReflow(
     getPropertyLayoutNodes(
       grid
     );
+
+  const previousRects =
+    new Map(
+      nodes.map(node => [
+        node,
+        node.getBoundingClientRect()
+      ])
+    );
+
+  mutate();
+
+  nodes.forEach(node => {
+
+    const previous =
+      previousRects.get(
+        node
+      );
+
+    if (!previous) return;
+
+    const next =
+      node.getBoundingClientRect();
+
+    const deltaX =
+      previous.left - next.left;
+
+    const deltaY =
+      previous.top - next.top;
+
+    if (
+      Math.abs(deltaX) < 1 &&
+      Math.abs(deltaY) < 1
+    ) return;
+
+    node.style.transition =
+      'none';
+
+    node.style.transform =
+      `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+
+    requestAnimationFrame(
+      () => {
+
+        node.style.transition =
+          '';
+
+        node.style.transform =
+          '';
+      }
+    );
+  });
+}
+
+
+function animatePropertyLayoutNodes(
+  nodes,
+  mutate
+) {
 
   const previousRects =
     new Map(
@@ -3051,6 +3165,104 @@ function getPropertyGridCellWidth(
     32,
     rect.width / PROPERTY_GRID_COLUMNS
   );
+}
+
+
+function getPropertyGridColumnStep(
+  source
+) {
+
+  const grid =
+    getPropertyGridElement(
+      source
+    );
+
+  if (!grid) return 64;
+
+  const rect =
+    grid.getBoundingClientRect();
+
+  const gap =
+    getPropertyGridGap(
+      grid,
+      'column'
+    );
+
+  const trackWidth =
+    (
+      rect.width -
+      gap * (PROPERTY_GRID_COLUMNS - 1)
+    ) / PROPERTY_GRID_COLUMNS;
+
+  return Math.max(
+    32,
+    trackWidth + gap
+  );
+}
+
+
+function getPropertyGridRowStep(
+  source
+) {
+
+  const grid =
+    getPropertyGridElement(
+      source
+    );
+
+  const gap =
+    grid
+      ? getPropertyGridGap(
+        grid,
+        'row'
+      )
+      : 0;
+
+  return getPropertyGridRowHeight() + gap;
+}
+
+
+function getPropertyGridGap(
+  grid,
+  axis
+) {
+
+  const style =
+    window.getComputedStyle(
+      grid
+    );
+
+  const raw =
+    axis === 'row'
+      ? style.rowGap
+      : style.columnGap;
+
+  const value =
+    Number.parseFloat(
+      raw
+    );
+
+  return Number.isFinite(
+    value
+  )
+    ? value
+    : 0;
+}
+
+
+function getPropertyGridElement(
+  source
+) {
+
+  if (
+    source?.classList?.contains(
+      'card-properties-grid'
+    )
+  ) return source;
+
+  return source?.closest?.(
+    '.card-properties-grid'
+  ) || null;
 }
 
 

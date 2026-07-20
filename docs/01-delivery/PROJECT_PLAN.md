@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-19
+Updated: 2026-07-20
 
 Planning version: 1
 
@@ -51,10 +51,6 @@ Goal: make page operations reliable, reversible and diagnosable on real large wo
 
 Goal: desktop should feel like a real app, not a fragile wrapper around the browser build.
 
-0.0.1.2.1. Run real desktop workspace access matrix.
-
-Description: use the diagnostics popup and `tools/run_workspace_diagnostics.mjs` on the known large GM workspace and any available external, network and read-only test folders. Record exact outcomes and fix any P0/P1 workspace access failures found during the run.
-
 ### 0.0.1.3.0. Campaign Map Stabilization & UX
 
 Goal: map tools must be simple, fast, and usable during a live game.
@@ -62,18 +58,6 @@ Goal: map tools must be simple, fast, and usable during a live game.
 ### 0.0.1.4.0. Properties & Character UX
 
 Goal: character properties should feel like a clear editable character sheet, while staying flexible for homebrew.
-
-0.0.1.4.1. Finish the Properties block constructor.
-
-Description: fields can be placed freely, never overlap unintentionally, resize from any edge, keep inputs inside borders, and preserve empty grid gaps when the user wants them.
-
-0.0.1.4.2. Improve standard character layout.
-
-Description: make small fields like level, AC, and HP compact; keep abilities on one readable row; use the user-sorted layout from the real character card as the default.
-
-0.0.1.4.3. Finish DnD calculations.
-
-Description: abilities, modifiers, skills, proficiency, expertise, AC from armor and Dexterity, HP, initiative, and manual overrides should calculate predictably. Manual values should be visibly marked.
 
 0.0.1.4.4. Make armor selection use item picker behavior.
 
@@ -129,7 +113,7 @@ Description: pasted text and HTML must not bring scripts, runtime UI, unsafe lin
 
 0.0.1.6.3. Finish schema recovery UI.
 
-Description: show workspace validation issues and allow safe repair actions only after backup.
+Description: show workspace validation issues and allow safe repair actions only after backup. The real large workspace `X:\ДНД\Мастер\По кампаниям\База` currently reports 2074 schema issues in diagnostics, so this task must include a readable grouped report before any repair action.
 
 0.0.1.6.4. Add recovery fallback tests.
 

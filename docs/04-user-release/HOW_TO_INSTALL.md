@@ -50,7 +50,7 @@ npm run desktop:build
 For a large GM workspace handoff, include that workspace in the gate before building:
 
 ```powershell
-npm run desktop:gate -- --workspace "X:\ДНД\Мастер\База"
+npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
 ```
 
 The gate writes:

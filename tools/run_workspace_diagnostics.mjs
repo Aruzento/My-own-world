@@ -1231,6 +1231,38 @@ function printHumanReport(
       );
     });
   }
+
+  if (diagnostics.errors.length) {
+
+    console.log(
+      '\nErrors:'
+    );
+
+    diagnostics.errors.forEach(error => {
+
+      const location =
+        error.path
+          ? ` (${error.path})`
+          : '';
+
+      console.log(
+        `- ${error.code}: ${formatHumanErrorMessage(error)}${location}`
+      );
+    });
+  }
+}
+
+
+function formatHumanErrorMessage(
+  error
+) {
+
+  if (error.code === 'pages_read_failed') {
+
+    return 'Pages folder could not be read. Check that this is a MyOwnWorld workspace and that the path is correct.';
+  }
+
+  return error.message;
 }
 
 

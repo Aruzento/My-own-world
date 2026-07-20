@@ -9,7 +9,7 @@ owner_zone: "delivery"
 
 # Bugs And Improvements Backlog
 
-Updated: 2026-07-17
+Updated: 2026-07-20
 
 This file is a lightweight holding area for issues that should not interrupt the current task immediately, but should not be forgotten.
 
@@ -41,9 +41,9 @@ It is not a replacement for [PROJECT_PLAN.md](./PROJECT_PLAN.md) or [BUG_INVENTO
 | ID | Priority | Area | Status | Related plan block | Note |
 | --- | --- | --- | --- | --- | --- |
 | BI-001 | P1 | Workspace operations | Done | `0.0.1.1.0` | Closed across `0.0.1.1.1`-`0.0.1.1.6`: PageCommandService, PageRecord, required metadata, trash/undo, PageIndex lifecycle and write revision protection are in place. |
-| BI-002 | P1 | Desktop / large workspace | Fix with block | `0.0.1.2.0` | `0.0.1.1.7` added the workspace access matrix and diagnostics. Next desktop pass must run it on the real large GM workspace and any available external/network/read-only folders, then fix any P0/P1 failures. |
+| BI-002 | P1 | Desktop / large workspace | Done | `0.0.1.2.0` | Closed in `0.0.1.2.2`: the current real large workspace is `X:\ДНД\Мастер\По кампаниям\База`; CLI smoke and native Tauri click-through pass on the rebuilt release exe. Desktop restore now registers the selected workspace in Tauri asset protocol scope, so assets outside HOME no longer return 403 after restart. |
 | BI-003 | P1 | Campaign map | Fix with block | `0.0.1.3.0` | Map subsystems should be stabilized before new map features: presentation, fog/drawing/layers, playlists, initiative and regressions. |
-| BI-004 | P1 | Properties / character | Fix with block | `0.0.1.4.0` | Properties block still needs real character-card UX polish: constructor, default layout, armor picker, calculations and map integration. |
+| BI-004 | P1 | Properties / character | Fix with block | `0.0.1.4.0` | Constructor layout polish is closed in `0.0.1.4.1`; default character/creature layout is closed in `0.0.1.4.2`; visible DnD calculations are closed in `0.0.1.4.3`. Remaining character-card UX work: armor picker and map integration. |
 | BI-005 | P2 | Knowledge graph | Ready for plan | `0.0.1.5.0` | Current graph foundation is readable, but the intended feature is a real visual graph canvas with nodes, edges, filters and focus mode. |
 | BI-006 | P1 | Data safety | Fix with block | `0.0.1.6.0` | Safe HTML, restore preview, partial restore, backup manifests and asset verification should stay grouped as data-safety work. |
 | BI-007 | P2 | UI / design | Ready for plan | `0.0.1.9.0` | Redesign requests should be handled through primitives, design contract and visual regression, not one-off color changes. |
@@ -51,6 +51,7 @@ It is not a replacement for [PROJECT_PLAN.md](./PROJECT_PLAN.md) or [BUG_INVENTO
 | BI-009 | P2 | Campaign map / shapes | Fix with block | `0.0.1.3.0` | Add rotation controls to all map shapes, matching the existing object rotation behavior. |
 | BI-010 | P1 | Campaign map / toolbar | Needs repro | `0.0.1.3.0` | Under unknown circumstances the top map toolbar disappears. Workaround: open a card, then reopen the map. Need reproduction, root cause and regression. |
 | BI-011 | P1 | Campaign map / creature skills menu | Fix with block | `0.0.1.3.0` | Encoding is broken in the map creature context menu item/submenu for skills (`Навыки`). Fix mojibake and add an encoding/UI regression if practical. |
+| BI-012 | P1 | Data safety / schema recovery | Ready for plan | `0.0.1.6.3` | The real large workspace `X:\ДНД\Мастер\По кампаниям\База` reports 2074 schema issues in desktop diagnostics. Before any automatic repair, add a grouped human-readable report that explains which issues are legacy/migration noise and which are unsafe. |
 
 ## Intake Template
 

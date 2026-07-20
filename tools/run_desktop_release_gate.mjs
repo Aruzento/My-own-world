@@ -48,58 +48,51 @@ function main() {
     [
       {
         name: 'documentation index',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'docs:index'
+          'tools/docs_index.mjs'
         ]
       },
       {
         name: 'agent skills validation',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'agents:validate'
+          'tools/validate_agent_skills.mjs'
         ]
       },
       {
         name: 'verify',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'verify'
+          'tools/run_checks.mjs'
         ]
       },
       {
         name: 'browser smoke',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'test:browser'
+          'tools/run_browser_smoke.mjs'
         ]
       },
       {
         name: 'desktop frontend prepare',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'desktop:prepare'
+          'tools/prepare_desktop_dist.mjs'
         ]
       },
       {
         name: 'desktop packaging smoke',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'desktop:packaging-smoke'
+          'tools/check_desktop_packaging_smoke.mjs'
         ]
       },
       {
         name: 'desktop environment',
-        command: 'npm',
+        command: process.execPath,
         args: [
-          'run',
-          'desktop:check'
+          'tools/check_desktop_environment.mjs'
         ]
       },
       {
@@ -120,11 +113,9 @@ function main() {
 
     commands.push({
       name: 'large workspace desktop smoke',
-      command: 'npm',
+      command: process.execPath,
       args: [
-        'run',
-        'desktop:large-workspace-smoke',
-        '--',
+        'tools/run_desktop_large_workspace_smoke.mjs',
         '--workspace',
         workspace
       ]
@@ -287,7 +278,9 @@ function runCommand(
 
   const result =
     spawnSync(
-      command.command,
+      resolveCommand(
+        command.command
+      ),
       command.args,
       {
         cwd:
@@ -295,7 +288,7 @@ function runCommand(
         stdio:
           'inherit',
         shell:
-          process.platform === 'win32'
+          false
       }
     );
 
@@ -418,6 +411,22 @@ function formatResult(
 function hasFailure() {
 
   return results.some(result => result.ok === false);
+}
+
+
+function resolveCommand(
+  command
+) {
+
+  if (
+    process.platform === 'win32' &&
+    command === 'npm'
+  ) {
+
+    return 'npm.cmd';
+  }
+
+  return command;
 }
 
 

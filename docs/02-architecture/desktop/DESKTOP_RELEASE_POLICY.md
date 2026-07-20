@@ -51,7 +51,7 @@ The command writes `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md`.
 For large GM workspace handoff, pass the workspace into the same gate:
 
 ```powershell
-npm run desktop:gate -- --workspace "X:\ДНД\Мастер\База"
+npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
 ```
 
 If no workspace is provided, the large workspace smoke is explicitly marked as skipped in the report.
@@ -143,12 +143,13 @@ Diagnostics are read-only. They may scan pages, assets, backups and operation jo
 Before handing a desktop build to a GM with a large workspace, run the repeatable large workspace smoke:
 
 ```powershell
-npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\База"
+npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
+npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
 ```
 
-The runner writes `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` by default. It covers the measurable part: workspace diagnostics, tree parsing, asset/backups health, desktop environment and packaging smoke.
+The runners write `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` and `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md` by default. They cover the measurable part: workspace diagnostics, tree parsing, asset/backups health, desktop environment, packaging smoke, native settings diagnostics, native tree search, heavy map open, presentation open and failed WebView resources.
 
-The visible native Tauri click-through remains manual and is described in `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md`.
+Manual owner testing is still useful for subjective smoothness, speaker/output-device behavior and destructive create/move/delete checks on a copied workspace.
 
 ## Ручной Release Smoke
 

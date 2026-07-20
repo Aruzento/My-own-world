@@ -13,14 +13,22 @@ Purpose: make workspace access problems understandable to a human. The app shoul
 Run the CLI check:
 
 ```bash
-node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\База" --json false
+node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --json false
 ```
 
 Use this when you only want read diagnostics and do not want the tiny write probe:
 
 ```bash
-node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\База" --no-write-probe --json false
+node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --no-write-probe --json false
 ```
+
+Current real large GM workspace found during the 2026-07-19 pass:
+
+```bash
+node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --json false
+```
+
+The older planned paths `X:\ДНД\Мастер\База` and `X:\ДНД\Мастер\По кампаниям\2` are stale for the current owner validation pass.
 
 The write probe creates a tiny `.my-own-world-write-probe-*.tmp` file in the workspace root, reads it back, and removes it. If the workspace is read-only, disconnected or blocked by permissions, the report should explain that directly.
 

@@ -21,6 +21,15 @@ import {
 const AUTO_WRITE_FLAG =
   'propertyAutoWriting';
 
+const ABILITY_KEYS = [
+  'str',
+  'dex',
+  'con',
+  'int',
+  'wis',
+  'cha'
+];
+
 
 // Runtime-авторасчет не является источником истины сам по себе.
 // Он только заполняет видимые поля блока "Свойства", чтобы пользователь сразу
@@ -150,6 +159,18 @@ function recalculatePropertiesBlock(
     cardType !== 'creature'
   ) return;
 
+  recalculateAbilityModifierBadges(
+    block
+  );
+
+  recalculateProficiencyBonusField(
+    block
+  );
+
+  recalculateInitiativeField(
+    block
+  );
+
   recalculateSkillFields(
     block
   );
@@ -160,20 +181,159 @@ function recalculatePropertiesBlock(
 }
 
 
+function recalculateAbilityModifierBadges(
+  block
+) {
+
+  ABILITY_KEYS.forEach(key => {
+
+    const control =
+      getControl(
+        block,
+        key
+      );
+
+    const field =
+      control?.closest(
+        '.card-property-field'
+      );
+
+    if (!field) return;
+
+    const modifier =
+      calculateDndAbilityModifier(
+        readNumber(
+          block,
+          key,
+          10
+        )
+      );
+
+    let badge =
+      field.querySelector(
+        '.card-property-ability-modifier[data-runtime="true"]'
+      );
+
+    if (!badge) {
+
+      badge =
+        document.createElement('span');
+
+      badge.className =
+        'card-property-ability-modifier';
+
+      badge.dataset.runtime =
+        'true';
+
+      badge.setAttribute(
+        'contenteditable',
+        'false'
+      );
+
+      const label =
+        field.querySelector(
+          '.card-property-label, span'
+        );
+
+      if (label?.nextSibling) {
+
+        field.insertBefore(
+          badge,
+          label.nextSibling
+        );
+
+      } else {
+
+        field.insertBefore(
+          badge,
+          control
+        );
+      }
+    }
+
+    badge.textContent =
+      formatSigned(
+        modifier
+      );
+
+    badge.title =
+      'Модификатор';
+
+    badge.dataset.modifierValue =
+      String(
+        modifier
+      );
+  });
+}
+
+
+function recalculateProficiencyBonusField(
+  block
+) {
+
+  const control =
+    getControl(
+      block,
+      'proficiencyBonus'
+    );
+
+  if (
+    !control ||
+    isManualControl(
+      control
+    )
+  ) return;
+
+  writeAutoValue(
+    control,
+    calculateDndProficiencyBonus(
+      readNumber(
+        block,
+        'level',
+        1
+      )
+    )
+  );
+}
+
+
+function recalculateInitiativeField(
+  block
+) {
+
+  const control =
+    getControl(
+      block,
+      'initiative'
+    );
+
+  if (
+    !control ||
+    isManualControl(
+      control
+    )
+  ) return;
+
+  writeAutoValue(
+    control,
+    calculateDndAbilityModifier(
+      readNumber(
+        block,
+        'dex',
+        10
+      )
+    )
+  );
+}
+
+
 function recalculateSkillFields(
   block
 ) {
 
-  const level =
-    readNumber(
-      block,
-      'level',
-      1
-    );
-
   const proficiencyBonus =
-    calculateDndProficiencyBonus(
-      level
+    readEffectiveProficiencyBonus(
+      block
     );
 
   DND_SKILL_GROUPS.forEach(group => {
@@ -217,6 +377,35 @@ function recalculateSkillFields(
         );
       });
   });
+}
+
+
+function readEffectiveProficiencyBonus(
+  block
+) {
+
+  const calculated =
+    calculateDndProficiencyBonus(
+      readNumber(
+        block,
+        'level',
+        1
+      )
+    );
+
+  const control =
+    getControl(
+      block,
+      'proficiencyBonus'
+    );
+
+  if (!control) return calculated;
+
+  return readNumber(
+    block,
+    'proficiencyBonus',
+    calculated
+  );
 }
 
 
@@ -351,10 +540,34 @@ function isCalculatedPropertyName(
 ) {
 
   return name === 'armorClass' ||
+    name === 'proficiencyBonus' ||
+    name === 'initiative' ||
     DND_SKILL_GROUPS.some(group =>
       (group.items || []).some(item =>
         item.name === name
       )
+    );
+}
+
+
+function formatSigned(
+  value
+) {
+
+  const number =
+    Number(value);
+
+  if (!Number.isFinite(number)) return '+0';
+
+  const rounded =
+    Math.floor(
+      number
+    );
+
+  return rounded >= 0
+    ? `+${rounded}`
+    : String(
+      rounded
     );
 }
 
