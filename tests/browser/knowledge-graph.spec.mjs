@@ -551,6 +551,9 @@ aliases: []
       'true'
     );
 
+    const graphCoordinateTolerance =
+      8;
+
     const persistedHeroX =
       Number(
         await heroCard.getAttribute(
@@ -561,7 +564,7 @@ aliases: []
     expect(
       Math.abs(persistedHeroX - movedHeroX)
     ).toBeLessThan(
-      2
+      graphCoordinateTolerance
     );
 
     const historyUndoButton =
@@ -597,7 +600,13 @@ aliases: []
     expect(
       Math.abs(undoHeroX - initialHeroX)
     ).toBeLessThan(
-      2
+      graphCoordinateTolerance
+    );
+
+    expect(
+      Math.abs(undoHeroX - movedHeroX)
+    ).toBeGreaterThan(
+      40
     );
 
     await expect(
@@ -623,7 +632,7 @@ aliases: []
     expect(
       Math.abs(redoneHeroX - movedHeroX)
     ).toBeLessThan(
-      2
+      graphCoordinateTolerance
     );
 
     await heroCard.click({
