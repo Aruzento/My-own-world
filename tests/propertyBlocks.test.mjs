@@ -383,13 +383,13 @@ test(
           x: 0,
           y: 8,
           w: 4,
-          h: 5
+          h: 6
         },
         wisSkills: {
           x: 4,
           y: 8,
           w: 4,
-          h: 5
+          h: 6
         },
         conSkills: {
           x: 8,
@@ -417,13 +417,13 @@ test(
       {
         deathSaveSuccesses: {
           x: 0,
-          y: 13,
+          y: 14,
           w: 3,
           h: 1
         },
         deathSaveFailures: {
           x: 3,
-          y: 13,
+          y: 14,
           w: 3,
           h: 1
         }

@@ -7,7 +7,8 @@
 - `popup-lifecycle.spec.mjs` now also verifies `data-overlay-*` state synchronization, modal focus trap and focus return in addition to viewport fit, Escape, outside click, z-index and trigger lifecycle behavior.
 - `editor-formatting.spec.mjs` now includes the block-level pointer DnD regression: a real mouse drag moves a block, shows preview/placeholder feedback, writes one save, and removes runtime drag UI after drop.
 - `property-blocks.spec.mjs` now guards the redesigned Add block picker: local sprite icons, option roles/labels, group labels, hidden first-step actions and focus styling.
-- `visual-regression.spec.mjs` now also guards the `0.0.1.8.11.3` card editor header/toolbar contract: local nav icons, accessible toolbar labels, restrained radii, no blur, overlay-layer placement and no title overlap.
+- `visual-regression.spec.mjs` now also guards the `0.0.1.8.11.6` core-content contract: card editor header/toolbar local icons and overlay placement, shared card block type badges/markers, shared card-block select styling, plus the updated Properties visual baseline.
+- `property-blocks.spec.mjs` now guards the `0.0.1.8.11.4` Properties field-state contract: semantic variants/states, local sprite field badges, tokenized field surfaces and no character skill/death-save overlap.
 
 Эта папка хранит браузерные smoke/regression тесты и сценарии для их расширения.
 

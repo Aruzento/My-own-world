@@ -1,6 +1,6 @@
 .character-effects-block {
-  border: 1px solid rgba(166, 151, 115, 0.28);
-  background: linear-gradient(180deg, rgba(255, 253, 246, 0.96), rgba(246, 243, 235, 0.94));
+  border-color: var(--mow-block-border);
+  background: transparent;
 }
 
 .character-effects-block h2 {
@@ -22,7 +22,7 @@
 }
 
 .character-effects-row strong {
-  color: #4b4538;
+  color: var(--mow-property-label-color);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0;
@@ -40,51 +40,51 @@
 .character-effects-flags span,
 .character-effects-empty {
   align-items: center;
-  border: 1px solid rgba(148, 132, 92, 0.28);
+  border: 1px solid var(--mow-field-border);
   border-radius: 999px;
   display: inline-flex;
   gap: 7px;
   min-height: 28px;
   padding: 4px 8px;
-  color: #4a4233;
-  background: rgba(255, 255, 255, 0.78);
+  color: var(--mow-text-secondary);
+  background: var(--mow-field-bg);
   font-size: 12px;
   line-height: 1.2;
 }
 
 .character-effect-pill.is-condition {
-  border-color: rgba(185, 82, 76, 0.24);
-  background: rgba(255, 237, 229, 0.72);
+  border-color: var(--mow-status-danger-border);
+  background: var(--mow-status-danger-bg);
 }
 
 .character-effect-pill.is-rule {
-  border-color: rgba(107, 91, 47, 0.24);
-  background: rgba(246, 224, 151, 0.34);
+  border-color: var(--mow-status-warning-border);
+  background: var(--mow-status-warning-bg);
 }
 
 .character-effect-pill small {
-  color: #7b725f;
+  color: var(--mow-text-muted);
   font-size: 11px;
 }
 
 .character-effect-pill button {
-  border: 0;
+  border: 1px solid var(--mow-button-danger-border);
   border-radius: 50%;
   width: 18px;
   height: 18px;
-  color: #8f453d;
-  background: rgba(185, 82, 76, 0.1);
+  color: var(--mow-text-danger);
+  background: var(--mow-button-danger-bg);
   cursor: pointer;
   font: 700 12px/1 system-ui, sans-serif;
 }
 
 .character-effect-pill button:hover {
-  background: rgba(185, 82, 76, 0.2);
+  background: rgba(182, 80, 69, 0.24);
 }
 
 .character-effects-empty {
-  color: #8b826f;
-  background: rgba(255, 255, 255, 0.48);
+  color: var(--mow-text-muted);
+  background: var(--mow-field-bg);
 }
 
 .character-effects-flags {
@@ -92,8 +92,8 @@
 }
 
 .character-effects-flags span {
-  border-color: rgba(132, 121, 91, 0.22);
-  background: rgba(246, 224, 151, 0.32);
+  border-color: var(--mow-status-warning-border);
+  background: var(--mow-status-warning-bg);
   font-weight: 700;
 }
 
@@ -109,9 +109,9 @@
   gap: 8px;
   align-items: end;
   padding: 10px;
-  border: 1px solid rgba(166, 151, 115, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--mow-field-border);
+  border-radius: var(--mow-radius-control);
+  background: var(--mow-field-bg);
 }
 
 .character-effects-add-panel.is-effect {
@@ -129,7 +129,7 @@
 }
 
 .character-effects-add-panel label span {
-  color: #685d49;
+  color: var(--mow-property-label-color);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -139,12 +139,16 @@
 .character-effects-add-panel select {
   min-width: 0;
   width: 100%;
-  border: 1px solid rgba(141, 127, 94, 0.28);
-  border-radius: 7px;
+  border: 1px solid var(--mow-field-border);
+  border-radius: var(--mow-radius-control);
   padding: 7px 8px;
-  color: #3f382d;
-  background: rgba(255, 255, 255, 0.88);
-  font: 13px/1.2 system-ui, sans-serif;
+  color: var(--mow-property-value-color);
+  background: var(--mow-field-bg);
+  font: 13px/1.2 var(--mow-font-ui);
+}
+
+.character-effects-add-panel select {
+  padding-right: 28px;
 }
 
 .character-effects-add-panel .is-wide {

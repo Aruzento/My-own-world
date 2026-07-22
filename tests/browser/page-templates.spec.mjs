@@ -270,3 +270,246 @@ aliases: []
     );
   }
 );
+
+
+test(
+  'page-template-picker-is-reachable-from-create-menu',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const { state } =
+          await import('/js/state.js');
+
+        const {
+          setWorkspaceHandle
+        } = await import('/js/stateActions.js');
+
+        const {
+          loadPageTemplates
+        } = await import('/js/templates/pageTemplateStorage.js');
+
+        const {
+          renderTree
+        } = await import('/js/tree/tree.js');
+
+        const rootFiles =
+          new Map();
+
+        const createWritableFor =
+          name => ({
+            async write(content) {
+
+              rootFiles.set(
+                name,
+                String(content)
+              );
+            },
+            async close() {}
+          });
+
+        const createDirectoryHandle =
+          () => ({
+            async getDirectoryHandle() {
+
+              return createDirectoryHandle();
+            },
+            async getFileHandle(name) {
+
+              return {
+                name,
+                async createWritable() {
+
+                  return createWritableFor(
+                    name
+                  );
+                }
+              };
+            }
+          });
+
+        setWorkspaceHandle({
+          async getFileHandle(name, options = {}) {
+
+            if (
+              !rootFiles.has(name) &&
+              !options.create
+            ) {
+
+              throw new Error('not found');
+            }
+
+            return {
+              name,
+              async getFile() {
+
+                return {
+                  async text() {
+
+                    return rootFiles.get(name) || '';
+                  }
+                };
+              },
+              async createWritable() {
+
+                return createWritableFor(
+                  name
+                );
+              }
+            };
+          },
+          async getDirectoryHandle() {
+
+            return createDirectoryHandle();
+          }
+        });
+
+        localStorage.clear();
+
+        localStorage.setItem(
+          'my-own-world:page-templates',
+          JSON.stringify([
+            {
+              id: 'ui-template',
+              title: 'Шаблон NPC',
+              createdAt: 1,
+              tags: ['card', 'creature'],
+              template: 'card',
+              type: 'creature',
+              aliases: [],
+              body: '<div class="entity-layout card-shell"><h1>Шаблон NPC</h1><div class="rich-text-field">Черновик NPC</div></div>'
+            }
+          ])
+        );
+
+        state.pages =
+          [];
+
+        state.currentPage =
+          null;
+
+        await loadPageTemplates();
+
+        renderTree();
+      }
+    );
+
+    await page
+      .locator('[data-create-page]')
+      .first()
+      .click();
+
+    await expect(
+      page.locator('#createMenu')
+    ).toHaveAttribute(
+      'data-create-menu-view',
+      'root'
+    );
+
+    await page
+      .locator('#createMenu .create-option')
+      .filter({
+        hasText:
+          'Из шаблона'
+      })
+      .click();
+
+    await expect(
+      page.locator('#createMenu')
+    ).toHaveAttribute(
+      'data-create-menu-view',
+      'templates'
+    );
+
+    await expect(
+      page.locator('.create-template-search')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.create-template-open')
+    ).toContainText(
+      'Шаблон NPC'
+    );
+
+    await expect(
+      page.locator('.create-template-open')
+    ).toContainText(
+      'существо · карточка'
+    );
+
+    await expect(
+      page.locator('.create-template-open-icon-svg')
+    ).toHaveAttribute(
+      'data-icon-name',
+      'document'
+    );
+
+    await expect(
+      page.locator('.create-template-delete-icon')
+    ).toHaveAttribute(
+      'data-icon-name',
+      'trash'
+    );
+
+    await page
+      .locator('.create-template-search')
+      .fill(
+        'NPC'
+      );
+
+    await expect(
+      page.locator('.create-template-row')
+    ).toHaveCount(
+      1
+    );
+
+    await page
+      .locator('.create-template-open')
+      .click();
+
+    await expect(
+      page.locator('#createMenu')
+    ).toBeHidden();
+
+    const currentPage =
+      await page.evaluate(
+        async () => {
+
+          const { state } =
+            await import('/js/state.js');
+
+          return {
+            title:
+              state.currentPage?.title,
+            type:
+              state.currentPage?.type,
+            content:
+              state.currentPage?.content
+          };
+        }
+      );
+
+    expect(
+      currentPage.title
+    ).toBe(
+      'Копия1 - Шаблон NPC'
+    );
+
+    expect(
+      currentPage.type
+    ).toBe(
+      'creature'
+    );
+
+    expect(
+      currentPage.content
+    ).toContain(
+      '<h1>Копия1 - Шаблон NPC</h1>'
+    );
+  }
+);

@@ -669,12 +669,15 @@
   appearance:
     none;
 
+  color-scheme:
+    dark;
+
   background-color:
     var(--mow-select-bg);
 
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--mow-text-muted) 50%),
-    linear-gradient(135deg, var(--mow-text-muted) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, var(--mow-select-arrow) 50%),
+    linear-gradient(135deg, var(--mow-select-arrow) 50%, transparent 50%);
 
   background-position:
     calc(100% - 16px) 50%,
@@ -686,6 +689,15 @@
   background-size:
     5px 5px,
     5px 5px;
+}
+
+
+.mow-select:hover {
+  border-color:
+    var(--mow-border-focus);
+
+  background-color:
+    var(--mow-select-bg-hover);
 }
 
 
@@ -706,6 +718,24 @@
 .mow-input[readonly] {
   color:
     var(--mow-text-secondary);
+}
+
+
+.mow-select option {
+  background:
+    var(--mow-select-option-bg);
+
+  color:
+    var(--mow-select-option-color);
+}
+
+
+.mow-select option:checked {
+  background:
+    var(--mow-select-option-checked-bg);
+
+  color:
+    var(--mow-select-option-checked-color);
 }
 
 

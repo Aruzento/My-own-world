@@ -848,13 +848,19 @@ test(
     await expect(
       page.locator('#createMenu .create-option')
     ).toHaveCount(
-      5
+      6
     );
 
     await expect(
       page.locator('#createMenu [data-template]')
     ).toHaveCount(
       5
+    );
+
+    await expect(
+      page.locator('#createMenu .create-option').last()
+    ).toContainText(
+      'Из шаблона'
     );
 
     await expect(

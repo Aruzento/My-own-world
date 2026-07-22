@@ -154,7 +154,7 @@ test(
       page.locator('.app')
     ).toHaveAttribute(
       'data-core-content-migration',
-      '0.0.1.8.11.3'
+      '0.0.1.8.11.6'
     );
 
     await expect(

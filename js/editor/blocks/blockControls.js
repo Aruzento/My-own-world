@@ -6,6 +6,64 @@ import {
   iconSvg
 } from '../../core/icons.js';
 
+const BLOCK_KIND_META = {
+  text: {
+    label: 'Текст',
+    icon: 'document',
+    kind: 'text'
+  },
+  list: {
+    label: 'Список',
+    icon: 'grid',
+    kind: 'list'
+  },
+  items: {
+    label: 'Предметы',
+    icon: 'document',
+    kind: 'list'
+  },
+  spells: {
+    label: 'Заклинания',
+    icon: 'lore',
+    kind: 'list'
+  },
+  skills: {
+    label: 'Навыки',
+    icon: 'skill',
+    kind: 'list'
+  },
+  table: {
+    label: 'Таблица',
+    icon: 'grid',
+    kind: 'table'
+  },
+  image: {
+    label: 'Изображение',
+    icon: 'image',
+    kind: 'image'
+  },
+  properties: {
+    label: 'Свойства',
+    icon: 'hash',
+    kind: 'properties'
+  },
+  variables: {
+    label: 'Переменные',
+    icon: 'calculator',
+    kind: 'data'
+  },
+  characterEffects: {
+    label: 'Эффекты',
+    icon: 'check',
+    kind: 'properties'
+  },
+  characterSheet: {
+    label: 'Лист',
+    icon: 'document',
+    kind: 'properties'
+  }
+};
+
 export function ensureBlocksToolbar(
   main
 ) {
@@ -45,6 +103,10 @@ export function ensureBlockControls(
   if (
     block.classList.contains('hero-block')
   ) return;
+
+  ensureBlockKindBadge(
+    block
+  );
 
   if (
     block.querySelector('.block-actions')
@@ -105,6 +167,74 @@ export function ensureBlockControls(
 
   block.prepend(
     actions
+  );
+}
+
+
+function ensureBlockKindBadge(
+  block
+) {
+
+  if (
+    block.querySelector('.block-kind-badge')
+  ) return;
+
+  const type =
+    block.dataset.blockType;
+
+  const meta =
+    BLOCK_KIND_META[type] || {
+      label: 'Блок',
+      icon: 'document',
+      kind: 'data'
+    };
+
+  const badge =
+    document.createElement('span');
+
+  badge.className =
+    'block-kind-badge';
+
+  badge.dataset.blockKind =
+    meta.kind;
+
+  badge.innerHTML =
+    iconSvg(
+      meta.icon,
+      'app-icon'
+    );
+
+  const label =
+    document.createElement('span');
+
+  label.className =
+    'block-kind-label';
+
+  label.textContent =
+    meta.label;
+
+  badge.append(
+    label
+  );
+
+  markRuntime(
+    badge
+  );
+
+  const title =
+    block.querySelector('h2');
+
+  if (title) {
+
+    title.before(
+      badge
+    );
+
+    return;
+  }
+
+  block.prepend(
+    badge
   );
 }
 

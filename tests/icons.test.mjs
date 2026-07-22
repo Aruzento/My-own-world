@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {
+  readFileSync
+} from 'node:fs';
 
 import {
   getPageIcon,
@@ -99,5 +102,33 @@ test(
       markup,
       /#icon-location/
     );
+  }
+);
+
+
+test(
+  'local sprite exposes property field state icons',
+  () => {
+
+    const sprite =
+      readFileSync(
+        new URL(
+          '../assets/icons/rpg-ui.svg',
+          import.meta.url
+        ),
+        'utf8'
+      );
+
+    [
+      'icon-calculator',
+      'icon-hash',
+      'icon-check'
+    ].forEach(id => {
+
+      assert.match(
+        sprite,
+        new RegExp(`id="${id}"`)
+      );
+    });
   }
 );

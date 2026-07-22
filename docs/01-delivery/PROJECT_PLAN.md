@@ -75,7 +75,7 @@ Principles: do not rewrite the whole interface in one pass; do not create separa
 
 Description: migrate tree, card editor, properties, templates, search, and command palette into the shared design system.
 
-Status: advanced by `0.0.1.8.11.3`: `BI-013` block drag-and-drop is restored, `BI-014` Add block popup is redesigned, and the card editor header/runtime controls now use the shared design-system direction: local sprite nav icons, tokenized card type/tags/aliases/image controls, accessible floating toolbar semantics, viewport-level toolbar placement and browser visual guards against title overlap. Remaining work includes Properties, templates, search depth and command palette migration.
+Status: advanced by `0.0.1.8.11.6`: `BI-013` block drag-and-drop is restored, `BI-014` Add block popup is redesigned, the card editor header/runtime controls now follow shared tokens and local sprite icons, Properties use field variants/states with local sprite badges, ordinary card blocks share one visual language with runtime-only type badges/thin markers/tokenized surfaces, card-block selects now use the shared dark select contract, and saved page templates are reachable from the create menu through a tokenized picker. Remaining work includes search depth and command palette migration.
 
 0.0.1.8.12. Migration Phase 6: campaign map.
 

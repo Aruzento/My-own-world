@@ -59,6 +59,34 @@ const PROPERTY_MIN_ROWS =
 const PROPERTY_MAX_ROWS =
   PROPERTY_LAYOUT_MAX_HEIGHT;
 
+const PROPERTY_METRIC_FIELD_IDS = new Set([
+  'level',
+  'proficiencyBonus',
+  'initiative',
+  'armorClass',
+  'speed',
+  'hpCurrent',
+  'hpMax',
+  'hpTemp',
+  'deathSaveSuccesses',
+  'deathSaveFailures'
+]);
+
+const PROPERTY_ABILITY_FIELD_IDS = new Set([
+  'str',
+  'dex',
+  'con',
+  'int',
+  'wis',
+  'cha'
+]);
+
+const PROPERTY_COMPUTED_FIELD_IDS = new Set([
+  'proficiencyBonus',
+  'initiative',
+  'armorClass'
+]);
+
 
 export function ensurePropertySettingsControls(
   editor
@@ -76,6 +104,9 @@ export function ensurePropertySettingsControls(
     .querySelectorAll?.('.card-properties-block')
     .forEach(block => {
 
+      block.dataset.propertyUiMigration =
+        '0.0.1.8.11.4';
+
       ensurePropertySettingsButton(
         block
       );
@@ -88,6 +119,9 @@ export function ensurePropertySettingsControls(
   if (
     editor.matches?.('.card-properties-block')
   ) {
+
+    editor.dataset.propertyUiMigration =
+      '0.0.1.8.11.4';
 
     ensurePropertySettingsButton(
       editor
@@ -131,6 +165,11 @@ function ensurePropertySettingsButton(
   button.setAttribute(
     'contenteditable',
     'false'
+  );
+
+  button.setAttribute(
+    'aria-label',
+    'Настройки свойств'
   );
 
   button.innerHTML =
@@ -462,7 +501,8 @@ function createPropertySettingsHTML(
           class="property-settings-rules-toggle"
           type="button"
         >
-          Правила
+          ${iconSvg('lore', 'property-settings-action-icon')}
+          <span>Правила</span>
         </button>
 
         <div class="property-settings-rules hidden">
@@ -489,7 +529,8 @@ function createPropertySettingsHTML(
         type="button"
         title="Добавить пользовательский параметр"
       >
-        + Добавить параметр
+        ${iconSvg('plus', 'property-settings-action-icon')}
+        <span>Добавить параметр</span>
       </button>
 
       <div class="property-settings-new hidden">
@@ -1420,6 +1461,10 @@ function ensurePropertyFieldLayoutHandles(
         field
       );
 
+      classifyPropertyFieldDesign(
+        field
+      );
+
       field
         .querySelectorAll('.card-property-drag-handle')
         .forEach(handle =>
@@ -1696,6 +1741,7 @@ function markPropertyFieldLabel(
       field.children
     ).find(child =>
       child.tagName === 'SPAN' &&
+      !child.classList.contains('card-property-kind-badge') &&
       !child.classList.contains('card-property-drag-handle') &&
       !child.classList.contains('card-property-resize-dot')
     );
@@ -1705,6 +1751,329 @@ function markPropertyFieldLabel(
   label.classList.add(
     'card-property-label'
   );
+}
+
+
+function classifyPropertyFieldDesign(
+  field
+) {
+
+  const meta =
+    getPropertyFieldDesignMeta(
+      field
+    );
+
+  field.dataset.propertyVariant =
+    meta.variant;
+
+  field.dataset.propertyKindIcon =
+    meta.iconName;
+
+  if (meta.states.length > 0) {
+
+    field.dataset.propertyState =
+      meta.states.join(' ');
+
+  } else {
+
+    delete field.dataset.propertyState;
+  }
+
+  [
+    'ability',
+    'asset',
+    'choice',
+    'compound',
+    'computed',
+    'custom',
+    'longform',
+    'metric',
+    'number',
+    'relation',
+    'skill-group',
+    'text',
+    'toggle'
+  ].forEach(name => {
+
+    field.classList.toggle(
+      `card-property-field-${name}`,
+      meta.variant === name ||
+      meta.states.includes(name)
+    );
+  });
+
+  ensurePropertyFieldKindBadge(
+    field,
+    meta
+  );
+}
+
+
+function getPropertyFieldDesignMeta(
+  field
+) {
+
+  const id =
+    field.dataset.propertyId || '';
+
+  const control =
+    field.querySelector(
+      '[data-property-name]'
+    );
+
+  const controlType =
+    control?.dataset?.propertyType ||
+    control?.getAttribute?.('type') ||
+    control?.tagName?.toLowerCase() ||
+    '';
+
+  const custom =
+    field.dataset.propertyCustom === 'true';
+
+  const asset =
+    Boolean(
+      field.querySelector(
+        '[data-property-asset-type]'
+      )
+    );
+
+  const relation =
+    Boolean(
+      field.querySelector(
+        '[data-property-filter-type], [data-property-type="entity"]'
+      )
+    );
+
+  let variant =
+    custom
+      ? 'custom'
+      : 'text';
+
+  if (field.dataset.propertyGroupName) {
+
+    variant =
+      'skill-group';
+
+  } else if (field.dataset.propertyCompoundName) {
+
+    variant =
+      'compound';
+
+  } else if (asset) {
+
+    variant =
+      'asset';
+
+  } else if (relation) {
+
+    variant =
+      'relation';
+
+  } else if (field.classList.contains('card-property-textarea-field')) {
+
+    variant =
+      'longform';
+
+  } else if (
+    PROPERTY_ABILITY_FIELD_IDS.has(
+      id
+    )
+  ) {
+
+    variant =
+      'ability';
+
+  } else if (
+    PROPERTY_METRIC_FIELD_IDS.has(
+      id
+    )
+  ) {
+
+    variant =
+      'metric';
+
+  } else if (control?.tagName === 'SELECT') {
+
+    variant =
+      'choice';
+
+  } else if (controlType === 'checkbox') {
+
+    variant =
+      'toggle';
+
+  } else if (controlType === 'number') {
+
+    variant =
+      'number';
+  }
+
+  const states = [];
+
+  if (
+    PROPERTY_COMPUTED_FIELD_IDS.has(
+      id
+    ) ||
+    variant === 'skill-group'
+  ) {
+
+    states.push(
+      'computed'
+    );
+  }
+
+  if (custom) {
+
+    states.push(
+      'custom'
+    );
+  }
+
+  if (
+    asset ||
+    relation
+  ) {
+
+    states.push(
+      'asset'
+    );
+  }
+
+  return {
+    variant,
+    states,
+    iconName:
+      getPropertyFieldIconName(
+        variant,
+        states
+      ),
+    title:
+      getPropertyFieldKindTitle(
+        variant,
+        states
+      )
+  };
+}
+
+
+function getPropertyFieldIconName(
+  variant,
+  states
+) {
+
+  if (variant === 'skill-group') return 'skill';
+
+  if (
+    states.includes(
+      'computed'
+    )
+  ) return 'calculator';
+
+  if (
+    variant === 'ability' ||
+    variant === 'metric' ||
+    variant === 'number'
+  ) return 'hash';
+
+  if (variant === 'compound') return 'grid';
+  if (variant === 'longform') return 'document';
+  if (variant === 'choice') return 'more';
+  if (variant === 'relation' || variant === 'asset') return 'link';
+  if (variant === 'toggle') return 'check';
+  if (variant === 'custom') return 'edit';
+
+  return 'edit';
+}
+
+
+function getPropertyFieldKindTitle(
+  variant,
+  states
+) {
+
+  if (
+    states.includes(
+      'computed'
+    ) &&
+    variant !== 'skill-group'
+  ) return 'Расчетное поле';
+
+  const titles = {
+    ability: 'Характеристика',
+    asset: 'Связанное поле',
+    choice: 'Выбор',
+    compound: 'Группа полей',
+    custom: 'Пользовательский параметр',
+    longform: 'Длинный текст',
+    metric: 'Показатель',
+    number: 'Число',
+    relation: 'Связь',
+    'skill-group': 'Группа навыков',
+    text: 'Текст',
+    toggle: 'Да / нет'
+  };
+
+  return titles[variant] || 'Параметр';
+}
+
+
+function ensurePropertyFieldKindBadge(
+  field,
+  meta
+) {
+
+  const label =
+    field.querySelector(
+      '.card-property-label'
+    );
+
+  if (!label) return;
+
+  let badge =
+    field.querySelector(
+      '.card-property-kind-badge[data-runtime="true"]'
+    );
+
+  if (!badge) {
+
+    badge =
+      document.createElement(
+        'span'
+      );
+
+    badge.className =
+      'card-property-kind-badge';
+
+    badge.dataset.runtime =
+      'true';
+
+    badge.setAttribute(
+      'contenteditable',
+      'false'
+    );
+
+    badge.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+
+    label.insertAdjacentElement(
+      'afterend',
+      badge
+    );
+  }
+
+  badge.dataset.propertyKind =
+    meta.variant;
+
+  badge.title =
+    meta.title;
+
+  badge.innerHTML =
+    iconSvg(
+      meta.iconName,
+      'card-property-kind-icon'
+    );
 }
 
 

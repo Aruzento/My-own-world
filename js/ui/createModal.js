@@ -2,6 +2,10 @@ import {
   templates
 } from '../templates/templates.js';
 
+import {
+  iconSvg
+} from '../core/icons.js';
+
 import { state } from '../state.js';
 
 import {
@@ -54,6 +58,41 @@ let createActionsReady =
 
 const menuAnchors =
   [];
+
+const TEMPLATE_META_LABELS = {
+  card:
+    'карточка',
+  character:
+    'персонаж',
+  creature:
+    'существо',
+  location:
+    'локация',
+  region:
+    'регион',
+  folder:
+    'папка',
+  magic:
+    'магия',
+  skill:
+    'навык',
+  object:
+    'объект',
+  item:
+    'предмет',
+  lore:
+    'лор',
+  note:
+    'заметка',
+  campaignMap:
+    'карта',
+  taskTracker:
+    'задачи',
+  ruleTree:
+    'правила',
+  knowledgeGraph:
+    'граф'
+};
 
 
 export function setupCreateModal() {
@@ -201,6 +240,8 @@ function closeMenu() {
     'hidden'
   );
 
+  delete ensureCreateMenu().dataset.createMenuView;
+
   menuAnchors.splice(
     0,
     menuAnchors.length
@@ -248,9 +289,15 @@ function setupCreateMenuBackHandler() {
     'click',
     event => {
 
+      const backButton =
+        event.target.closest?.(
+          '.create-picker-back'
+        );
+
       if (
-        !event.target.classList.contains(
-          'create-picker-back'
+        !backButton ||
+        !ensureCreateMenu().contains(
+          backButton
         )
       ) return;
 
@@ -265,6 +312,9 @@ function setupCreateMenuBackHandler() {
 function renderMenu() {
 
   menu.innerHTML = '';
+
+  menu.dataset.createMenuView =
+    'root';
 
   Object.entries(templates)
     .forEach(([key, template]) => {
@@ -305,6 +355,18 @@ function renderMenu() {
 
       menu.appendChild(item);
     });
+
+  renderSpecialCreateOption({
+    title:
+      'Из шаблона',
+    icon:
+      iconSvg(
+        'copy',
+        'create-option-icon-svg'
+      ),
+    onClick:
+      () => void openTemplateCreatePicker()
+  });
 }
 
 
@@ -490,6 +552,9 @@ async function openTemplateCreatePicker(
   query = ''
 ) {
 
+  menu.dataset.createMenuView =
+    'templates';
+
   menu.innerHTML =
     getPickerHeaderHTML(
       'Выберите шаблон'
@@ -546,8 +611,8 @@ async function openTemplateCreatePicker(
       'create-template-row';
 
     const createButton =
-      createPickerButton(
-        pageTemplate.title || 'Шаблон'
+      createTemplatePickerButton(
+        pageTemplate
       );
 
     createButton.addEventListener(
@@ -583,11 +648,19 @@ async function openTemplateCreatePicker(
     deleteButton.type =
       'button';
 
-    deleteButton.textContent =
-      '×';
+    deleteButton.innerHTML =
+      iconSvg(
+        'trash',
+        'create-template-delete-icon'
+      );
 
     deleteButton.title =
       'Удалить шаблон';
+
+    deleteButton.setAttribute(
+      'aria-label',
+      `Удалить шаблон ${pageTemplate.title || 'Шаблон'}`
+    );
 
     deleteButton.addEventListener(
       'click',
@@ -626,8 +699,10 @@ function getPickerHeaderHTML(
 
   return `
     <div class="create-picker-header">
-      <button class="create-picker-back" type="button">←</button>
-      <span>${title}</span>
+      <button class="create-picker-back" type="button" aria-label="Назад">
+        ${iconSvg('arrow-left', 'create-picker-back-icon')}
+      </button>
+      <span>${escapeHTML(title)}</span>
     </div>
   `;
 }
@@ -653,6 +728,41 @@ function createPickerButton(
 }
 
 
+function createTemplatePickerButton(
+  pageTemplate
+) {
+
+  const button =
+    document.createElement('button');
+
+  button.className =
+    'create-option create-picker-option create-template-open';
+
+  button.type =
+    'button';
+
+  const title =
+    pageTemplate.title || 'Шаблон';
+
+  const meta =
+    formatTemplateMeta(
+      pageTemplate
+    );
+
+  button.innerHTML = `
+    <span class="create-template-open-icon">
+      ${iconSvg('document', 'create-template-open-icon-svg')}
+    </span>
+    <span class="create-template-open-copy">
+      <strong>${escapeHTML(title)}</strong>
+      <small>${escapeHTML(meta)}</small>
+    </span>
+  `;
+
+  return button;
+}
+
+
 function renderPickerEmpty(
   text
 ) {
@@ -669,4 +779,56 @@ function renderPickerEmpty(
   menu.appendChild(
     empty
   );
+}
+
+
+function formatTemplateMeta(
+  pageTemplate
+) {
+
+  const parts =
+    [
+      ...new Set(
+        [
+          pageTemplate.type || 'note',
+          ...(pageTemplate.tags || [])
+        ]
+          .filter(Boolean)
+      )
+    ]
+      .slice(
+        0,
+        3
+      )
+      .map(formatTemplateMetaPart);
+
+  return parts.length
+    ? parts.join(' · ')
+    : 'карточка';
+}
+
+
+function formatTemplateMetaPart(
+  value
+) {
+
+  const key =
+    String(value || '')
+      .trim();
+
+  return TEMPLATE_META_LABELS[key] ||
+    key;
+}
+
+
+function escapeHTML(
+  value
+) {
+
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

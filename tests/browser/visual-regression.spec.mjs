@@ -512,6 +512,23 @@ test(
           } = await import('/js/templates/cardShell.js');
 
           const {
+            createImageBlock,
+            createListBlock,
+            createPropertiesBlock,
+            createTableBlock,
+            createTextBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            renderCustomBlocks,
+            setupCustomBlocks
+          } = await import('/js/editor/customBlocks.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
             renderBackButtonIfNeeded
           } = await import('/js/editor/editorNavigation.js');
 
@@ -553,6 +570,46 @@ test(
 
           editor.querySelector('.card-short-description').textContent =
             'Опорная карточка для проверки интерфейса редактора.';
+
+          const main =
+            editor.querySelector('.entity-main');
+
+          main.insertAdjacentHTML(
+            'beforeend',
+            [
+              createTextBlock({
+                title: 'Заметки',
+                placeholder: 'Текст сцены'
+              }),
+              createListBlock({
+                title: 'Зацепки',
+                kind: 'items'
+              }),
+              createTableBlock({
+                title: 'Таблица слухов',
+                rows: 2,
+                columns: 2
+              }),
+              createImageBlock(),
+              createPropertiesBlock({
+                title: 'Свойства',
+                cardType: 'location'
+              })
+            ].join('')
+          );
+
+          setupCustomBlocks(
+            editor,
+            () => {}
+          );
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          renderCustomBlocks(
+            editor
+          );
 
           renderCardType();
 
@@ -610,6 +667,59 @@ test(
               cardTypeTrigger
             );
 
+          const textBlock =
+            editor.querySelector('[data-block-type="text"]');
+
+          const listBlock =
+            editor.querySelector('[data-block-type="list"]');
+
+          const listKindSelect =
+            listBlock.querySelector('.universal-list-kind-select');
+
+          const tableBlock =
+            editor.querySelector('[data-block-type="table"]');
+
+          const imageBlock =
+            editor.querySelector('[data-block-type="image"]');
+
+          const propertiesField =
+            editor.querySelector('.card-property-field[data-property-id]');
+
+          const blockStyle =
+            getComputedStyle(
+              textBlock
+            );
+
+          const textBadgeStyle =
+            getComputedStyle(
+              textBlock.querySelector('.block-kind-badge')
+            );
+
+          const listBadgeStyle =
+            getComputedStyle(
+              listBlock.querySelector('.block-kind-badge')
+            );
+
+          const listKindSelectStyle =
+            getComputedStyle(
+              listKindSelect
+            );
+
+          const tableBadgeStyle =
+            getComputedStyle(
+              tableBlock.querySelector('.block-kind-badge')
+            );
+
+          const imageFrameStyle =
+            getComputedStyle(
+              imageBlock.querySelector('.image-block-frame')
+            );
+
+          const propertiesFieldStyle =
+            getComputedStyle(
+              propertiesField
+            );
+
           return {
             rootMigration:
               document
@@ -646,7 +756,39 @@ test(
             titleFontSize:
               Number.parseFloat(titleStyle.fontSize),
             cardTypeRadius:
-              Number.parseFloat(cardTypeStyle.borderRadius)
+              Number.parseFloat(cardTypeStyle.borderRadius),
+            blockLabels:
+              [
+                ...editor.querySelectorAll('.block-kind-label')
+              ].map(label => label.textContent.trim()),
+            blockIconNames:
+              [
+                ...editor.querySelectorAll('.block-kind-badge .app-icon')
+              ].map(icon => icon.dataset.iconName),
+            blockRuntimeBadges:
+              editor.querySelectorAll('.block-kind-badge[data-runtime="true"]').length,
+            blockRadius:
+              Number.parseFloat(blockStyle.borderRadius),
+            blockBorder:
+              blockStyle.borderColor,
+            textBadgeColor:
+              textBadgeStyle.color,
+            listBadgeColor:
+              listBadgeStyle.color,
+            listSelectRadius:
+              Number.parseFloat(listKindSelectStyle.borderRadius),
+            listSelectBg:
+              listKindSelectStyle.backgroundColor,
+            listSelectArrow:
+              listKindSelectStyle.backgroundImage,
+            listSelectColorScheme:
+              listKindSelectStyle.colorScheme,
+            tableBadgeColor:
+              tableBadgeStyle.color,
+            imageFrameRadius:
+              Number.parseFloat(imageFrameStyle.borderRadius),
+            propertiesFieldBackground:
+              propertiesFieldStyle.backgroundColor
           };
         }
       );
@@ -654,7 +796,7 @@ test(
     expect(
       result.rootMigration
     ).toBe(
-      '0.0.1.8.11.3'
+      '0.0.1.8.11.6'
     );
 
     expect(
@@ -733,6 +875,98 @@ test(
       result.cardTypeRadius
     ).toBeLessThanOrEqual(
       8
+    );
+
+    expect(
+      result.blockLabels
+    ).toEqual(
+      [
+        'Текст',
+        'Текст',
+        'Список',
+        'Таблица',
+        'Изображение',
+        'Свойства'
+      ]
+    );
+
+    expect(
+      result.blockIconNames
+    ).toEqual(
+      [
+        'document',
+        'document',
+        'grid',
+        'grid',
+        'image',
+        'hash'
+      ]
+    );
+
+    expect(
+      result.blockRuntimeBadges
+    ).toBe(
+      6
+    );
+
+    expect(
+      result.blockRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      result.blockBorder
+    ).not.toBe(
+      'rgba(0, 0, 0, 0)'
+    );
+
+    expect(
+      result.textBadgeColor
+    ).not.toBe(
+      result.listBadgeColor
+    );
+
+    expect(
+      result.listSelectRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      result.listSelectBg
+    ).not.toBe(
+      'rgb(255, 255, 255)'
+    );
+
+    expect(
+      result.listSelectArrow
+    ).toContain(
+      'linear-gradient'
+    );
+
+    expect(
+      result.listSelectColorScheme
+    ).toBe(
+      'dark'
+    );
+
+    expect(
+      result.tableBadgeColor
+    ).not.toBe(
+      result.textBadgeColor
+    );
+
+    expect(
+      result.imageFrameRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      result.propertiesFieldBackground
+    ).toBe(
+      'rgba(0, 0, 0, 0)'
     );
   }
 );

@@ -513,7 +513,19 @@ test(
           pressedHandles:
             [...document.querySelectorAll(
               '#block-dnd-test-editor .block-drag-handle[aria-pressed]'
-            )].length
+            )].length,
+          badgeLabels:
+            [...document.querySelectorAll(
+              '#block-dnd-test-editor .block-kind-label'
+            )].map(label => label.textContent.trim()),
+          badgeIcons:
+            [...document.querySelectorAll(
+              '#block-dnd-test-editor .block-kind-badge .app-icon'
+            )].map(icon => icon.dataset.iconName),
+          runtimeBadges:
+            document.querySelectorAll(
+              '#block-dnd-test-editor .block-kind-badge[data-runtime="true"]'
+            ).length
         })
       );
 
@@ -555,6 +567,32 @@ test(
       result.pressedHandles
     ).toBe(
       0
+    );
+
+    expect(
+      result.badgeLabels
+    ).toEqual(
+      [
+        'Текст',
+        'Текст',
+        'Текст'
+      ]
+    );
+
+    expect(
+      result.badgeIcons
+    ).toEqual(
+      [
+        'document',
+        'document',
+        'document'
+      ]
+    );
+
+    expect(
+      result.runtimeBadges
+    ).toBe(
+      3
     );
   }
 );

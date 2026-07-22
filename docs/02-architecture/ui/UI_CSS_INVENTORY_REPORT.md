@@ -108,30 +108,34 @@ index.html
 
 | File | Lines | Role |
 | --- | ---: | --- |
-| `styles/block-properties.css` | 1,875 | Properties grid, field controls, settings popup, DnD/resize states, character layout polish. |
-| `styles/campaign-map-popups.css` | 1,822 | Map popups, playlists, layers, drawing, settings and scene controls. |
-| `styles/app-topbar.css` | 1,560 | App topbar, appearance, backup, asset health, workspace diagnostics. |
-| `styles/knowledge-graph.css` | 1,341 | Graph workbench, canvas, toolbar, filters, context/edit popup and responsive rules. |
-| `styles/blocks.css` | 813 | Generic blocks toolbar, block surfaces and runtime controls. |
-| `styles/tree.css` | 808 | Sidebar tree, context menu and virtualized rows. |
+| `styles/block-properties.css` | 2,171 | Properties grid, field controls, settings popup, DnD/resize states, character layout polish and select styling. |
+| `styles/campaign-map-popups.css` | 1,878 | Map popups, playlists, layers, drawing, settings and scene controls. |
+| `styles/ui.css` | 1,779 | Shared primitive seeds, including Button, IconButton, Input, Select, Checkbox, SegmentedControl, Toolbar, Panel, Popover and toast/status primitives. |
+| `styles/app-topbar.css` | 1,620 | App topbar, appearance, backup, asset health, workspace diagnostics. |
+| `styles/knowledge-graph.css` | 1,355 | Graph workbench, canvas, toolbar, filters, context/edit popup and responsive rules. |
+| `styles/blocks.css` | 1,204 | Generic blocks toolbar, shared card block surfaces, type badges, markers, runtime controls and card-block select styling. |
+| `styles/tree.css` | 1,053 | Sidebar tree, context menu and virtualized rows. |
 | `styles/block-dnd-stats-legacy.css` | 789 | Legacy DnD stat block compatibility. |
-| `styles/editor.css` | 713 | Editor shell, empty states and navigation controls. |
+| `styles/editor.css` | 903 | Editor shell, empty states and navigation controls. |
 | `styles/document.css` | 661 | Persistent document typography and card body styles. |
-| `styles/brand-system.css` | 642 | Final brand skin, shared state overrides and popup motion. |
+| `styles/brand-system.css` | 633 | Final brand skin, shared state overrides and popup motion. |
 | `styles/campaign-map-token-popup.css` | 633 | Token popup and token quick actions. |
-| `styles/block-table.css` | 577 | Table block, selection toolbar and resize states. |
+| `styles/block-character-sheet.css` | 467 | Runtime character sheet view backed by PropertiesModel. |
+| `styles/block-table.css` | 393 | Table block, selection toolbar and resize states. |
 
 ## Largest UI-Related JS Files
 
 | File | Lines | UI Risk |
 | --- | ---: | --- |
 | `js/wiki/knowledgeGraphPage.js` | 5,408 | Too much graph page, canvas UI, actions and persistence in one file. Already tracked in `BI-017`/`BI-018`. |
-| `js/editor/propertiesSettingsPopup.js` | 3,683 | Properties field UI, settings, grid interactions and model bridge are tightly coupled. |
+| `js/editor/propertiesSettingsPopup.js` | 4,058 | Properties field UI, settings, grid interactions and model bridge are tightly coupled. |
 | `js/wiki/knowledgeGraph.js` | 2,366 | Graph model/build logic is large enough to hide lifecycle bypasses. |
 | `js/ui/workspaceDiagnosticsPanel.js` | 1,891 | Diagnostics UI is useful, but large and should not become a generic panel model. |
 | `js/editor/campaignMapMusic.js` | 1,759 | Playlist UI and playback behavior share one large file. |
 | `js/ui/appTopbar.js` | 1,461 | Appearance, backup, diagnostics and app tools are concentrated in the topbar surface. |
+| `js/ui/createModal.js` | 834 | Create menu and saved-template picker now share popup lifecycle, local sprite icons and human-readable template metadata. |
 | `js/templates/blockTypes.js` | 1,519 | Block catalog and creation UI data are dense. This matters for `BI-014` Add block redesign. |
+| `js/editor/blocks/blockControls.js` | 269 | Runtime block toolbar and block-kind badges; keep persistent/runtime split intact. |
 
 ## Existing Reusable UI
 
@@ -292,7 +296,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.8` Primitives | Closed: shared IconButton, Select, Checkbox, SegmentedControl, Toolbar and Separator primitives are added beside Button/Input/Panel/Popover. | Component catalogue covers the new primitives; app Tools popup consumes shared `.mow-button`; popupManager has first overlay state markers for topbar/catalogue popovers. |
 | `0.0.1.8.9` Overlays | Closed: modal focus trap/return, dropdown/context-menu keyboard behavior, first shell tooltip styling, operation-progress toast markers, editor feature popups, campaign map generic/token popups, item picker, onboarding and Knowledge Graph node/connect overlays now extend the popupManager overlay foundation. | Acceptance met: feature overlays use shared lifecycle semantics without adding parallel overlay systems; broader visual polish moves to owning migration phases. |
 | `0.0.1.8.10` AppShell | Closed and corrected after user review: AppShell now has a left rail where `Дерево` shows/hides the primary tree sidebar, profile/user sits in the rail, Explorer-style no-workspace/root creation actions stay in the tree, resize remains available when the sidebar is visible, and the old page-info right inspector has been removed. Content types are not duplicated as rail tabs. | AppShell browser coverage verifies empty start readability, no-workspace tree open-folder CTA, root-level create/folder actions, one-tree-entry rail, no content-type rail duplicates, no duplicate tree header, rail profile placement, tree search, resize, tree show/hide editor expansion, hidden right-panel default state and explicit right-panel foundation open/close. A fake diagnostics bottom panel was not added. |
-| `0.0.1.8.11` Core content | Advanced by `0.0.1.8.11.3`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup and the card editor header/runtime toolbar layer are migrated to the shared design direction. Remaining: Properties, templates, deeper search and command palette. | `BI-013` and `BI-014` are closed; keep `BI-025` as future pane-planning material. |
+| `0.0.1.8.11` Core content | Advanced by `0.0.1.8.11.6`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects and saved-template creation are migrated to the shared design direction. Remaining: deeper search and command palette. | `BI-013` and `BI-014` are closed; block-kind badges, select tokens, Properties field-state markers and template-picker metadata are runtime/UI language that future search/command-palette work should reuse instead of adding another local style; keep `BI-025` as future pane-planning material. |
 | `0.0.1.8.12` Campaign map | Map toolbar, popups, layers and token dock migrate without business logic changes. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke. |
 | `0.0.1.8.13` Knowledge graph | Graph toolbar, canvas controls, node cards and filters migrate. | Also check `BI-017`, `BI-018`, `BI-019`. |
 
@@ -340,7 +344,7 @@ When the redesign reaches these areas, check the small backlog before marking th
 
 - `BI-013`: editor block drag-and-drop regression, closed in `0.0.1.8.11.2`.
 - `BI-014`: Add block popup visual cleanup, closed in `0.0.1.8.11.2`.
-- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`; remaining card-editor Phase 5 work should focus on Properties/template/search/command palette surfaces rather than reworking this toolbar foundation.
+- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, and card selects/template picker advanced in `0.0.1.8.11.6`; remaining card-editor Phase 5 work should focus on search/command palette surfaces rather than reworking those foundations.
 - `BI-017`: Knowledge Graph file/CSS split, belongs to graph redesign or graph lifecycle work.
 - `BI-018`: Knowledge Graph should stop bypassing the page lifecycle before more graph behavior.
 - `BI-019`: graph hidden-slice clarity belongs to graph UI migration.

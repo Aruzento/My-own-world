@@ -92,7 +92,10 @@ owner_zone: "architecture"
 - Confirmed by `0.0.1.8.11.1`: the tree/search surface now carries the first Phase 5 core-content marker and local search icon foundation.
 - Confirmed by `0.0.1.8.11.2`: block-level DnD (`BI-013`) is restored with pointer preview/placeholder behavior, and Add block (`BI-014`) uses local sprite icons, tokenized type-picker styling, focus states and visual smoke coverage.
 - Confirmed by `0.0.1.8.11.3`: card editor header/runtime controls now consume shared tokens, page nav uses local sprite icons, title typography avoids negative/viewport-scaled sizing, and the floating text toolbar is an overlay-layer accessible toolbar with visual overlap coverage.
-- Next action updated: continue with `0.0.1.8.11` Migration Phase 5 core content for Properties, templates, deeper search and command palette.
+- Confirmed by `0.0.1.8.11.4`: Properties now use field-state/variant markers, runtime-only local sprite field badges, tokenized field surfaces/focus and corrected default character/creature skill/death-save spacing.
+- Confirmed by `0.0.1.8.11.5`: ordinary card blocks now share tokenized outer frames, runtime-only type badges and thin colored markers; Properties field state no longer relies on heavy background fill.
+- Confirmed by `0.0.1.8.11.6`: card-block dropdowns now consume the shared dark select contract, and saved page templates are reachable from the create menu through a tokenized picker.
+- Next action updated: continue with `0.0.1.8.11` Migration Phase 5 core content for deeper search and command palette.
 
 ### Общий Layout
 

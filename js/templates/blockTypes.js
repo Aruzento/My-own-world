@@ -12,6 +12,35 @@ import {
 } from '../properties/propertyLayoutModel.js';
 
 
+const PROPERTY_METRIC_FIELD_IDS = new Set([
+  'level',
+  'proficiencyBonus',
+  'initiative',
+  'armorClass',
+  'speed',
+  'hpCurrent',
+  'hpMax',
+  'hpTemp',
+  'deathSaveSuccesses',
+  'deathSaveFailures'
+]);
+
+const PROPERTY_ABILITY_FIELD_IDS = new Set([
+  'str',
+  'dex',
+  'con',
+  'int',
+  'wis',
+  'cha'
+]);
+
+const PROPERTY_COMPUTED_FIELD_IDS = new Set([
+  'proficiencyBonus',
+  'initiative',
+  'armorClass'
+]);
+
+
 export function createTextBlock({
   title,
   placeholder = 'Введите текст'
@@ -239,6 +268,7 @@ export function createPropertiesBlock({
       data-block-type="properties"
       data-block-version="1"
       data-card-type="${cardType}"
+      data-property-ui-migration="0.0.1.8.11.4"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title || definition.title}</h2>
@@ -350,11 +380,16 @@ function createPropertyFieldHTML(
       assetType
     );
 
+  const fieldMeta =
+    createPropertyFieldMeta(
+      normalizedField
+    );
+
   if (type === 'textarea') {
 
     return `
-      <label class="card-property-field card-property-field-wide card-property-textarea-field" data-property-id="${name}" ${layoutAttributes}>
-        <span>${label}</span>
+      <label class="${fieldMeta.className}" data-property-id="${name}" ${fieldMeta.attributes} ${layoutAttributes}>
+        <span class="card-property-label">${label}</span>
         <div
           class="card-property-textarea rich-text-field"
           contenteditable="true"
@@ -371,12 +406,13 @@ function createPropertyFieldHTML(
 
     return `
       <section
-        class="card-property-field card-property-field-wide card-property-skill-group"
+        class="${fieldMeta.className}"
         data-property-id="${name}"
         data-property-group-name="${name}"
+        ${fieldMeta.attributes}
         ${layoutAttributes}
       >
-        <span>${label}</span>
+        <span class="card-property-label">${label}</span>
         <div class="card-property-skill-list">
           ${(normalizedField.items || [])
             .map(item =>
@@ -394,12 +430,13 @@ function createPropertyFieldHTML(
 
     return `
       <section
-        class="card-property-field card-property-compound-field"
+        class="${fieldMeta.className}"
         data-property-id="${name}"
         data-property-compound-name="${name}"
+        ${fieldMeta.attributes}
         ${layoutAttributes}
       >
-        <span>${label}</span>
+        <span class="card-property-label">${label}</span>
         <div class="card-property-compound-grid">
           ${(normalizedField.fields || [])
             .map(createPropertyCompoundControlHTML)
@@ -412,8 +449,8 @@ function createPropertyFieldHTML(
   if (type === 'select') {
 
     return `
-      <label class="card-property-field" data-property-id="${name}" ${layoutAttributes}>
-        <span>${label}</span>
+      <label class="${fieldMeta.className}" data-property-id="${name}" ${fieldMeta.attributes} ${layoutAttributes}>
+        <span class="card-property-label">${label}</span>
         <select class="card-property-select" data-property-name="${name}">
           ${(options.length > 0 ? options : PROPERTY_SHAPE_OPTIONS)
             .map(option =>
@@ -431,8 +468,8 @@ function createPropertyFieldHTML(
   ) {
 
     return `
-      <label class="card-property-field" data-property-id="${name}" ${layoutAttributes}>
-        <span>${label}</span>
+      <label class="${fieldMeta.className}" data-property-id="${name}" ${fieldMeta.attributes} ${layoutAttributes}>
+        <span class="card-property-label">${label}</span>
         <select
           class="card-property-select card-property-entity-select"
           data-property-name="${name}"
@@ -447,8 +484,8 @@ function createPropertyFieldHTML(
   }
 
   return `
-    <label class="card-property-field" data-property-id="${name}" ${layoutAttributes}>
-      <span>${label}</span>
+    <label class="${fieldMeta.className}" data-property-id="${name}" ${fieldMeta.attributes} ${layoutAttributes}>
+      <span class="card-property-label">${label}</span>
       <input
         type="${type === 'entity' ? 'text' : type || 'text'}"
         data-property-name="${name}"
@@ -460,6 +497,161 @@ function createPropertyFieldHTML(
       >
     </label>
   `;
+}
+
+
+function createPropertyFieldMeta(
+  field
+) {
+
+  const variant =
+    getPropertyFieldVariant(
+      field
+    );
+
+  const states =
+    getPropertyFieldStates(
+      field,
+      variant
+    );
+
+  const iconName =
+    getPropertyFieldIconName(
+      field,
+      variant,
+      states
+    );
+
+  const className = [
+    'card-property-field',
+    `card-property-field-${variant}`,
+    field.type === 'textarea'
+      ? 'card-property-field-wide'
+      : '',
+    field.type === 'textarea'
+      ? 'card-property-textarea-field'
+      : '',
+    field.type === 'skillGroup'
+      ? 'card-property-field-wide card-property-skill-group'
+      : '',
+    field.type === 'compound'
+      ? 'card-property-compound-field'
+      : '',
+    states.includes('computed')
+      ? 'card-property-field-computed'
+      : '',
+    states.includes('asset')
+      ? 'card-property-field-asset'
+      : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const attributes = [
+    `data-property-variant="${variant}"`,
+    `data-property-kind-icon="${iconName}"`,
+    states.length > 0
+      ? `data-property-state="${states.join(' ')}"`
+      : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return {
+    className,
+    iconName,
+    variant,
+    states,
+    attributes
+  };
+}
+
+
+function getPropertyFieldVariant(
+  field
+) {
+
+  if (field.type === 'skillGroup') return 'skill-group';
+  if (field.type === 'compound') return 'compound';
+  if (field.type === 'textarea') return 'longform';
+  if (field.type === 'select') return 'choice';
+  if (field.type === 'entity') return 'relation';
+  if (field.assetType) return 'asset';
+
+  if (
+    PROPERTY_ABILITY_FIELD_IDS.has(
+      field.name
+    )
+  ) return 'ability';
+
+  if (
+    PROPERTY_METRIC_FIELD_IDS.has(
+      field.name
+    )
+  ) return 'metric';
+
+  if (field.type === 'checkbox') return 'toggle';
+  if (field.type === 'number') return 'number';
+
+  return 'text';
+}
+
+
+function getPropertyFieldStates(
+  field,
+  variant
+) {
+
+  const states = [];
+
+  if (
+    PROPERTY_COMPUTED_FIELD_IDS.has(
+      field.name
+    ) ||
+    variant === 'skill-group'
+  ) {
+
+    states.push(
+      'computed'
+    );
+  }
+
+  if (
+    field.assetType ||
+    variant === 'relation'
+  ) {
+
+    states.push(
+      'asset'
+    );
+  }
+
+  return states;
+}
+
+
+function getPropertyFieldIconName(
+  field,
+  variant,
+  states
+) {
+
+  if (
+    states.includes(
+      'computed'
+    )
+  ) return 'calculator';
+
+  if (variant === 'ability') return 'hash';
+  if (variant === 'metric' || variant === 'number') return 'hash';
+  if (variant === 'skill-group') return 'skill';
+  if (variant === 'compound') return 'grid';
+  if (variant === 'longform') return 'document';
+  if (variant === 'choice') return 'more';
+  if (variant === 'relation' || variant === 'asset') return 'link';
+  if (variant === 'toggle') return 'check';
+
+  return 'edit';
 }
 
 
@@ -539,7 +731,7 @@ function createPropertySkillRowHTML(
 ) {
 
   return `
-    <label class="card-property-skill-row">
+    <label class="card-property-skill-row" data-property-state="computed">
       <input
         class="card-property-skill-proficiency"
         type="hidden"
@@ -832,13 +1024,13 @@ function getInitialPropertyLayoutPreset(
     strSkills: [0, 4, 4, 3],
     dexSkills: [4, 4, 4, 4],
     conSkills: [8, 4, 4, 2],
-    intSkills: [0, 8, 4, 5],
-    wisSkills: [4, 8, 4, 5],
+    intSkills: [0, 8, 4, 6],
+    wisSkills: [4, 8, 4, 6],
     chaSkills: [8, 8, 4, 5],
-    deathSaveSuccesses: [0, 13, 3, 1],
-    deathSaveFailures: [3, 13, 3, 1],
-    senses: [6, 13, 3, 1],
-    effect: [0, 14, 12, 3]
+    deathSaveSuccesses: [0, 14, 3, 1],
+    deathSaveFailures: [3, 14, 3, 1],
+    senses: [6, 14, 3, 1],
+    effect: [0, 15, 12, 3]
   };
 
   const value =

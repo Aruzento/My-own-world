@@ -586,6 +586,12 @@ test(
               layout('cha'),
             dexSkills:
               layout('dexSkills'),
+            intSkills:
+              layout('intSkills'),
+            wisSkills:
+              layout('wisSkills'),
+            deathSaveSuccesses:
+              layout('deathSaveSuccesses'),
             dexSkillColumns
           };
         }
@@ -649,9 +655,288 @@ test(
     });
 
     expect(
+      result.intSkills.rows
+    ).toBe(
+      '6'
+    );
+
+    expect(
+      result.wisSkills.rows
+    ).toBe(
+      '6'
+    );
+
+    expect(
+      result.deathSaveSuccesses.gridRow
+    ).toBe(
+      '15 / span 1'
+    );
+
+    expect(
       result.dexSkillColumns
     ).toBe(
       1
+    );
+  }
+);
+
+
+test(
+  'properties-sheet-uses-core-content-design-states',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            ensurePropertySettingsControls
+          } = await import('/js/editor/propertiesSettingsPopup.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              cardType: 'character'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          ensurePropertySettingsControls(
+            editor
+          );
+
+          const block =
+            editor.querySelector('.card-properties-block');
+
+          function fieldSnapshot(
+            id
+          ) {
+
+            const field =
+              block.querySelector(
+                `.card-property-field[data-property-id="${id}"]`
+              );
+
+            const style =
+              getComputedStyle(
+                field
+              );
+
+            return {
+              id,
+              variant:
+                field.dataset.propertyVariant,
+              state:
+                field.dataset.propertyState || '',
+              icon:
+                field
+                  .querySelector('.card-property-kind-icon')
+                  ?.dataset
+                  ?.iconName || '',
+              badgeKind:
+                field
+                  .querySelector('.card-property-kind-badge')
+                  ?.dataset
+                  ?.propertyKind || '',
+              radius:
+                Number.parseFloat(
+                  style.borderRadius
+                ),
+              background:
+                style.backgroundColor,
+              border:
+                style.borderColor
+            };
+          }
+
+          const inputStyle =
+            getComputedStyle(
+              block.querySelector('[data-property-name="level"]')
+            );
+
+          const gridStyle =
+            getComputedStyle(
+              block.querySelector('.card-properties-grid')
+            );
+
+          return {
+            rootMigration:
+              document
+                .querySelector('.app')
+                .dataset
+                .coreContentMigration,
+            blockMigration:
+              block.dataset.propertyUiMigration,
+            settingsButtonLabel:
+              block
+                .querySelector('.card-properties-settings-btn')
+                ?.getAttribute('aria-label') || '',
+            level:
+              fieldSnapshot('level'),
+            proficiencyBonus:
+              fieldSnapshot('proficiencyBonus'),
+            str:
+              fieldSnapshot('str'),
+            dexSkills:
+              fieldSnapshot('dexSkills'),
+            armorItem:
+              fieldSnapshot('armorItem'),
+            inputRadius:
+              Number.parseFloat(
+                inputStyle.borderRadius
+              ),
+            gridColumns:
+              gridStyle.gridTemplateColumns
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .length,
+            persistentUseIcons:
+              block.querySelectorAll('use').length
+          };
+        }
+      );
+
+    expect(
+      result.rootMigration
+    ).toBe(
+      '0.0.1.8.11.6'
+    );
+
+    expect(
+      result.blockMigration
+    ).toBe(
+      '0.0.1.8.11.4'
+    );
+
+    expect(
+      result.settingsButtonLabel
+    ).toBe(
+      'Настройки свойств'
+    );
+
+    expect(
+      result.level.variant
+    ).toBe(
+      'metric'
+    );
+
+    expect(
+      result.level.icon
+    ).toBe(
+      'hash'
+    );
+
+    expect(
+      result.proficiencyBonus.state
+    ).toContain(
+      'computed'
+    );
+
+    expect(
+      result.proficiencyBonus.icon
+    ).toBe(
+      'calculator'
+    );
+
+    expect(
+      result.str.variant
+    ).toBe(
+      'ability'
+    );
+
+    expect(
+      result.str.icon
+    ).toBe(
+      'hash'
+    );
+
+    expect(
+      result.dexSkills.variant
+    ).toBe(
+      'skill-group'
+    );
+
+    expect(
+      result.dexSkills.state
+    ).toContain(
+      'computed'
+    );
+
+    expect(
+      result.dexSkills.icon
+    ).toBe(
+      'skill'
+    );
+
+    expect(
+      result.armorItem.variant
+    ).toBe(
+      'relation'
+    );
+
+    expect(
+      result.armorItem.state
+    ).toContain(
+      'asset'
+    );
+
+    expect(
+      result.armorItem.icon
+    ).toBe(
+      'link'
+    );
+
+    expect(
+      result.level.radius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      result.inputRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      result.level.background
+    ).toBe(
+      'rgba(0, 0, 0, 0)'
+    );
+
+    expect(
+      result.proficiencyBonus.border
+    ).not.toBe(
+      result.level.border
+    );
+
+    expect(
+      result.gridColumns
+    ).toBe(
+      12
+    );
+
+    expect(
+      result.persistentUseIcons
+    ).toBeGreaterThan(
+      0
     );
   }
 );

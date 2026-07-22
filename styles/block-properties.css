@@ -10,6 +10,9 @@
 
   box-shadow:
     none;
+
+  color:
+    var(--mow-property-value-color);
 }
 
 
@@ -23,6 +26,15 @@
 
   gap:
     8px;
+
+  color:
+    var(--mow-text-primary);
+
+  font-size:
+    var(--mow-font-size-xl);
+
+  letter-spacing:
+    0;
 }
 
 .card-properties-settings-btn {
@@ -43,16 +55,16 @@
     center;
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-control-border);
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.035);
+    var(--mow-control-bg);
 
   color:
-    rgba(255,255,255,0.72);
+    var(--mow-button-color);
 
   cursor:
     pointer;
@@ -68,13 +80,13 @@
 .card-properties-settings-btn:hover {
 
   border-color:
-    rgba(241,211,142,0.32);
+    var(--mow-property-field-border-hover);
 
   background:
-    rgba(241,211,142,0.12);
+    var(--mow-control-bg-hover);
 
   color:
-    #f1d38e;
+    var(--mow-button-color-hover);
 
   transform:
     translateY(-1px);
@@ -109,7 +121,7 @@
     rgba(170, 135, 221, 0.42);
 
   background:
-    rgba(232, 220, 255, 0.16);
+    rgba(232, 220, 255, 0.035);
 }
 
 
@@ -118,7 +130,7 @@
     rgba(170, 135, 221, 0.44);
 
   background:
-    rgba(232, 220, 255, 0.14);
+    rgba(232, 220, 255, 0.032);
 }
 
 
@@ -136,13 +148,16 @@
     border-box;
 
   border:
-    1px solid transparent;
+    1px solid var(--mow-property-field-border);
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   padding:
-    7px;
+    8px;
+
+  background:
+    var(--mow-property-field-bg);
 
   overflow:
     visible;
@@ -178,13 +193,42 @@
     6;
 
   border-color:
-    rgba(241,211,142,0.24);
+    var(--mow-property-field-border-hover);
 
   background:
-    rgba(255,255,255,0.018);
+    var(--mow-property-field-bg-hover);
 
   box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,0.025);
+    inset 0 0 0 1px rgba(255,255,255,0.025),
+    var(--mow-focus-shadow);
+}
+
+
+.card-property-field-computed {
+  border-color:
+    var(--mow-property-field-border-computed);
+
+  background:
+    var(--mow-property-field-bg-computed);
+}
+
+
+.card-property-field-custom {
+  border-color:
+    var(--mow-property-field-border-custom);
+
+  background:
+    var(--mow-property-field-bg-custom);
+}
+
+
+.card-property-field-asset,
+.card-property-field-relation {
+  border-color:
+    var(--mow-property-field-border-asset);
+
+  background:
+    var(--mow-property-field-bg-asset);
 }
 
 
@@ -272,7 +316,7 @@
     999px;
 
   background:
-    rgba(241,211,142,0.92);
+    var(--mow-property-resize-color);
 
   opacity:
     0;
@@ -621,6 +665,15 @@
   min-height:
     34px;
 
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
   border:
     1px solid rgba(241,211,142,0.20);
 
@@ -641,6 +694,30 @@
 
   padding:
     0 11px;
+}
+
+
+.property-settings-action-icon {
+  width:
+    14px;
+
+  height:
+    14px;
+
+  flex:
+    0 0 auto;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
 }
 
 
@@ -1087,7 +1164,31 @@
 .property-settings-new select {
 
   padding:
-    0 28px 0 9px;
+    0 30px 0 9px;
+
+  appearance:
+    none;
+
+  color-scheme:
+    dark;
+
+  background-color:
+    var(--mow-select-bg);
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--mow-select-arrow) 50%),
+    linear-gradient(135deg, var(--mow-select-arrow) 50%, transparent 50%);
+
+  background-position:
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
+
+  background-repeat:
+    no-repeat;
+
+  background-size:
+    5px 5px,
+    5px 5px;
 }
 
 
@@ -1151,6 +1252,18 @@
 
   min-height:
     36px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    8px;
 
   border:
     1px solid rgba(241,211,142,0.24);
@@ -1247,7 +1360,7 @@
     relative;
 
   background:
-    rgba(255,255,255,0.026);
+    var(--mow-property-field-bg-custom);
 }
 
 
@@ -1275,8 +1388,26 @@
 
 
 .card-property-skill-group {
+  grid-template-rows:
+    minmax(16px, auto) minmax(0, 1fr);
+
   align-content:
-    start;
+    stretch;
+
+  gap:
+    7px;
+}
+
+
+.card-property-skill-group > .card-property-label {
+  min-height:
+    16px;
+
+  padding-right:
+    28px;
+
+  line-height:
+    1.25;
 }
 
 
@@ -1367,7 +1498,7 @@
 }
 
 
-.card-property-field span {
+.card-property-label {
 
   grid-column:
     1 / -1;
@@ -1379,7 +1510,7 @@
     hidden;
 
   color:
-    rgba(255,255,255,0.58);
+    var(--mow-property-label-color);
 
   font-size:
     11px;
@@ -1395,6 +1526,88 @@
 
   white-space:
     nowrap;
+}
+
+
+.card-property-kind-badge {
+  position:
+    absolute;
+
+  top:
+    7px;
+
+  right:
+    7px;
+
+  width:
+    18px;
+
+  height:
+    18px;
+
+  display:
+    inline-grid;
+
+  place-items:
+    center;
+
+  border:
+    1px solid var(--mow-property-badge-border);
+
+  border-radius:
+    999px;
+
+  background:
+    var(--mow-property-badge-bg);
+
+  color:
+    var(--mow-property-badge-color);
+
+  pointer-events:
+    none;
+}
+
+
+.card-property-field-computed .card-property-kind-badge {
+  color:
+    var(--mow-property-badge-computed-color);
+}
+
+
+.card-property-field-custom .card-property-kind-badge {
+  color:
+    var(--mow-property-badge-custom-color);
+}
+
+
+.card-property-field-asset .card-property-kind-badge,
+.card-property-field-relation .card-property-kind-badge {
+  color:
+    var(--mow-property-badge-asset-color);
+}
+
+
+.card-property-kind-icon {
+  width:
+    12px;
+
+  height:
+    12px;
+
+  stroke-width:
+    var(--mow-icon-stroke-width);
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
 }
 
 
@@ -1415,16 +1628,16 @@
     0;
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-field-border);
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.035);
+    var(--mow-field-bg);
 
   color:
-    rgba(255,255,255,0.86);
+    var(--mow-property-value-color);
 
   outline:
     none;
@@ -1445,6 +1658,52 @@
 
   padding:
     0 9px;
+}
+
+
+.card-property-field-metric {
+  grid-template-rows:
+    auto minmax(0, 1fr);
+
+  align-content:
+    stretch;
+
+  gap:
+    1px;
+
+  padding:
+    4px 28px 4px 7px;
+}
+
+
+.card-property-field-metric .card-property-label {
+  font-size:
+    9px;
+
+  font-weight:
+    760;
+
+  line-height:
+    1;
+
+  text-transform:
+    uppercase;
+}
+
+
+.card-property-field-metric input,
+.card-property-field-metric select {
+  height:
+    22px;
+
+  min-height:
+    0;
+
+  padding:
+    0 5px;
+
+  font-size:
+    13px;
 }
 
 
@@ -1520,7 +1779,7 @@
     22px;
 
   color:
-    var(--mow-text-strong, #1f2937);
+    var(--mow-accent-bright);
 
   font-size:
     19px;
@@ -1612,6 +1871,9 @@
 
   gap:
     6px;
+
+  align-content:
+    start;
 }
 
 
@@ -1648,13 +1910,13 @@
     5px 6px;
 
   border:
-    1px solid rgba(255,255,255,0.08);
+    1px solid var(--mow-property-field-border);
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.026);
+    rgba(255,246,222,0.032);
 }
 
 
@@ -1795,13 +2057,13 @@
     var(--property-field-min-height, 94px);
 
   border:
-    1px dashed rgba(241,211,142,0.42);
+    1px dashed var(--mow-property-field-border-hover);
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
-    rgba(241,211,142,0.055);
+    var(--mow-property-field-bg-hover);
 
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,0.025);
@@ -1819,10 +2081,10 @@
 .card-property-textarea:focus {
 
   border-color:
-    rgba(241,211,142,0.34);
+    var(--mow-field-focus-border);
 
   box-shadow:
-    0 0 0 3px rgba(241,211,142,0.08);
+    var(--mow-focus-shadow);
 }
 
 
@@ -1831,13 +2093,19 @@
   appearance:
     none;
 
+  color-scheme:
+    dark;
+
+  background-color:
+    var(--mow-select-bg);
+
   background-image:
-    linear-gradient(45deg, transparent 50%, rgba(241,211,142,0.9) 50%),
-    linear-gradient(135deg, rgba(241,211,142,0.9) 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, var(--mow-select-arrow) 50%),
+    linear-gradient(135deg, var(--mow-select-arrow) 50%, transparent 50%);
 
   background-position:
-    calc(100% - 15px) 14px,
-    calc(100% - 10px) 14px;
+    calc(100% - 16px) 50%,
+    calc(100% - 11px) 50%;
 
   background-size:
     5px 5px,
@@ -1845,6 +2113,35 @@
 
   background-repeat:
     no-repeat;
+
+  padding-right:
+    30px;
+}
+
+
+.card-property-select:hover {
+  background-color:
+    var(--mow-select-bg-hover);
+}
+
+
+.card-property-select option,
+.property-settings-new select option {
+  background:
+    var(--mow-select-option-bg);
+
+  color:
+    var(--mow-select-option-color);
+}
+
+
+.card-property-select option:checked,
+.property-settings-new select option:checked {
+  background:
+    var(--mow-select-option-checked-bg);
+
+  color:
+    var(--mow-select-option-checked-color);
 }
 
 

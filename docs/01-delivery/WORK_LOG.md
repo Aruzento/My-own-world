@@ -6,6 +6,114 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-22: 0.0.1.8.11.6 Card Selects And Template Picker
+
+### What Changed
+
+- Advanced Phase 5 core content from `0.0.1.8.11.5` to `0.0.1.8.11.6`.
+- Card-block dropdowns now share one dark select language: the universal list type picker, Properties selects, character effects selects and DnD v2 identity selects use tokenized backgrounds, borders, focus, arrow styling and dark option colors.
+- Added a visible `Из шаблона` entry to the create menu. It opens the existing saved page-template flow instead of leaving `createPageFromTemplate()` as a hidden storage/API path.
+- Redesigned the page-template picker inside the existing popup lifecycle: local sprite icons, readable template rows, Russian metadata (`существо · карточка` instead of raw `creature · card`), tokenized search, icon back/delete buttons and a one-column template view.
+- Kept the saved template data model, workspace `.my-own-world-templates.json` migration and template-create behavior unchanged.
+
+### Readiness
+
+Usable for this slice. A human can save a card as a template from the tree context menu, open `+`, choose `Из шаблона`, search the saved template and create a new card from it. Card dropdowns no longer look like default browser controls inside the new block visual language. Broader `0.0.1.8.11` remains active for deeper search and command palette.
+
+### Verification
+
+- Passed: `node --check js\ui\createModal.js`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `node --check tests\browser\page-templates.spec.mjs`.
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`.
+- Passed twice: focused `npm run test:browser -- --grep "card-editor-core-content-controls-use-shared-ui-contract|page-template-create-delete-and-create-card|page-template-picker-is-reachable-from-create-menu|popup-triggers-toggle-create-menu-tools-and-campaign-map-popup|properties-sheet-uses-core-content-design-states"` with 5 browser tests.
+- Passed: `npm run test:browser -- tests/browser/page-templates.spec.mjs` with 2 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs` with 7 browser tests.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs` with 24 browser tests.
+- Passed: `npm run test:browser -- tests/browser/editor-formatting.spec.mjs` with 3 browser tests.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: full `npm run verify` after the final code/docs state with 272 node tests and large-workspace smoke.
+- Passed: `npm run desktop:gate` after the final code/docs state, including docs index, skills validation, `verify`, 102 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+- Visual QA: reviewed `test-results/selects-11-6-qa.png` for styled card/list selects and `test-results/template-picker-11-6-qa.png` for the saved-template create picker.
+
+### Follow-Up
+
+- Continue `0.0.1.8.11` Migration Phase 5 core content with deeper search and command palette migration.
+- If templates later need richer management, keep it inside this create/search pattern instead of adding a separate permanent panel.
+
+## 2026-07-22: 0.0.1.8.11.5 Shared Card Block Visual Language
+
+### What Changed
+
+- Advanced Phase 5 core content from `0.0.1.8.11.4` to `0.0.1.8.11.5`.
+- Ordinary card blocks now share one outer visual language: `.template-block[data-block-type]` uses tokenized borders, a thin colored type marker and compact runtime-only `.block-kind-badge` labels/icons.
+- Added block-kind badges through the existing runtime block controls, so `Текст`, `Список`, `Таблица`, `Изображение`, `Свойства`, effects and sheet blocks get local sprite markers without polluting saved card HTML.
+- Lightened `Properties` fields by removing the heavy field/background fill from normal and state variants. Field meaning stays visible through borders, badges, icons and focus states.
+- Tokenized supporting list, image, table and character-effects surfaces so those blocks no longer feel like separate local mini themes inside one card.
+
+### Readiness
+
+Usable for this slice. A human can open a normal card and scan text, list, table, image and Properties blocks as one coherent editor surface. The saved block model, drag/drop behavior, Add block flow, Properties calculations, custom fields and table behavior remain unchanged. Broader `0.0.1.8.11` remains active for templates, deeper search and command palette.
+
+### Verification
+
+- Passed: `node --check js\editor\blocks\blockControls.js`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `node --check tests\browser\editor-formatting.spec.mjs`.
+- Passed: `node --check tests\browser\property-blocks.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "editor-block-pointer-dnd-reorders-blocks-and-cleans-runtime-ui|card-editor-core-content-controls-use-shared-ui-contract|properties-sheet-uses-core-content-design-states|app-shell-empty-state"` twice after the final CSS state.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/editor-formatting.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs` with 24 browser tests.
+- Passed: full `npm run verify` after the final code/docs state with 272 node tests and large-workspace smoke.
+- Passed: `npm run desktop:gate` after the final code/docs state, including docs index, skills validation, `verify`, 101 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+- Visual QA: reviewed `test-results/block-language-11-5-qa.png` for mixed card blocks and `test-results/properties-no-fill-11-5-qa.png` for the lighter Properties fields.
+
+### Follow-Up
+
+- Continue `0.0.1.8.11` Migration Phase 5 core content with templates, deeper search and command palette migration.
+- Future editor block work should reuse `.block-kind-badge` / `--mow-block-*` instead of creating another per-block outer style.
+
+## 2026-07-22: 0.0.1.8.11.4 Properties Field States And Layout Polish
+
+### What Changed
+
+- Advanced Phase 5 core content from `0.0.1.8.11.3` to `0.0.1.8.11.4`.
+- Properties fields now expose readable design states without changing the saved data model: metric, ability, computed, relation/asset, skill-group, compound, custom, longform and toggle fields get `data-property-*` markers and matching `card-property-field-*` classes.
+- Added runtime-only local sprite field badges for Properties. The badges use the project SVG sprite (`hash`, `calculator`, `check`, `skill`, `grid`, `link`, `document`, `edit`) and do not persist raw SVG `use` nodes into saved card content.
+- Tokenized the visible Properties field surfaces, focus treatment, badge colors, resize dots and compact metric rows through `--mow-property-*` / `--mow-field-*` tokens.
+- Improved the Properties settings popup action buttons with local sprite icons while keeping the existing dialog lifecycle, add-field behavior and internal rules search.
+- Corrected the default character/creature Properties layout so INT/МДР skill groups have enough vertical room and death-save fields no longer visually overlap the bottom skill rows.
+
+### Readiness
+
+Usable for this slice. A human can scan a character Properties block more easily: computed values, linked fields, metrics and skill groups now read as distinct field types while the existing calculations, custom fields, armor picker, drag/resize and settings popup continue to work. Broader `0.0.1.8.11` remains active for templates, deeper search and command palette.
+
+### Verification
+
+- Passed: `node --check js\templates\blockTypes.js`.
+- Passed: `node --check js\editor\propertiesSettingsPopup.js`.
+- Passed: `node --check tests\browser\property-blocks.spec.mjs`.
+- Passed: `node --test tests\icons.test.mjs`.
+- Passed: `node --test tests\propertyBlocks.test.mjs`.
+- Passed: focused `npm run test:browser -- --grep "properties-sheet-uses-core-content-design-states|character-properties-default-layout-is-readable|property-settings-gear-opens-soft-settings-popup|app-shell-empty-state"` twice after the final CSS/layout state.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs`.
+- Passed: full `npm run test:browser -- tests/browser/property-blocks.spec.mjs` with 24 browser tests.
+- Passed: full `npm run verify` after updating the unit layout contract for the new non-overlapping INT/WIS skill group height.
+- Passed: `npm run desktop:gate` after the final code/docs state, including docs index, skills validation, `verify`, 101 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+- Visual QA: reviewed `test-results/properties-11-4-qa.png` and `test-results/properties-popup-11-4-qa.png`; compact metrics, field badges, skill groups and the settings popup are readable, and the death-save fields no longer overlap the lower skill groups.
+
+### Follow-Up
+
+- Continue `0.0.1.8.11` Migration Phase 5 core content with templates, deeper search and command palette migration.
+- Future `BI-023` lock-toggle work should build on these field-state markers instead of adding another local Properties control language.
+
 ## 2026-07-22: Tauri Dev Port Reuse Fix
 
 ### What Changed
