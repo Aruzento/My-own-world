@@ -188,6 +188,203 @@ test(
 
 
 test(
+  'add-block-picker-uses-design-system-icons-and-focus-states',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            renderTypePicker
+          } = await import('/js/editor/blocks/blockPopupViews.js');
+
+          const popup =
+            document.createElement('div');
+
+          popup.className =
+            'block-popup';
+
+          popup.innerHTML = `
+            <div class="block-popup-title"></div>
+            <div class="block-popup-body"></div>
+            <div class="block-popup-actions"></div>
+          `;
+
+          document.body.appendChild(
+            popup
+          );
+
+          renderTypePicker(
+            popup,
+            'item'
+          );
+
+          const firstOption =
+            popup.querySelector('.block-type-option');
+
+          firstOption.focus();
+
+          const firstOptionStyle =
+            getComputedStyle(
+              firstOption
+            );
+
+          const iconNames =
+            [...popup.querySelectorAll('.block-type-icon-svg')]
+              .map(icon => icon.dataset.iconName);
+
+          const iconText =
+            [...popup.querySelectorAll('.block-type-icon')]
+              .map(icon => icon.textContent.trim())
+              .filter(Boolean);
+
+          const options =
+            [...popup.querySelectorAll('.block-type-option')]
+              .map(option => ({
+                type: option.dataset.blockType,
+                role: option.getAttribute('role'),
+                label: option.getAttribute('aria-label'),
+                group:
+                  option.querySelector('.block-type-group')?.textContent || ''
+              }));
+
+          return {
+            title:
+              popup.querySelector('.block-popup-title').textContent,
+            view:
+              popup.dataset.blockPopupView,
+            pickerRole:
+              popup.querySelector('.block-type-picker')?.getAttribute('role'),
+            actionsHidden:
+              popup
+                .querySelector('.block-popup-actions')
+                .classList
+                .contains('hidden'),
+            optionTypes:
+              options.map(option => option.type),
+            optionRoles:
+              options.map(option => option.role),
+            optionLabels:
+              options.map(option => option.label),
+            optionGroups:
+              options.map(option => option.group),
+            iconNames,
+            iconText,
+            firstOutline:
+              firstOptionStyle.outlineStyle,
+            firstBorderRadius:
+              firstOptionStyle.borderRadius
+          };
+        }
+      );
+
+    expect(
+      result.title
+    ).toBe(
+      'Добавить блок'
+    );
+
+    expect(
+      result.view
+    ).toBe(
+      'type-picker'
+    );
+
+    expect(
+      result.pickerRole
+    ).toBe(
+      'listbox'
+    );
+
+    expect(
+      result.actionsHidden
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.optionTypes
+    ).toEqual(
+      [
+        'text',
+        'list',
+        'table',
+        'image',
+        'properties'
+      ]
+    );
+
+    expect(
+      result.optionRoles
+    ).toEqual(
+      [
+        'option',
+        'option',
+        'option',
+        'option',
+        'option'
+      ]
+    );
+
+    expect(
+      result.optionLabels.every(Boolean)
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.optionGroups
+    ).toEqual(
+      [
+        'Текст',
+        'Списки',
+        'Структура',
+        'Медиа',
+        'Метаданные'
+      ]
+    );
+
+    expect(
+      result.iconNames
+    ).toEqual(
+      [
+        'document',
+        'task-tracker',
+        'grid',
+        'image',
+        'settings'
+      ]
+    );
+
+    expect(
+      result.iconText
+    ).toEqual(
+      []
+    );
+
+    expect(
+      result.firstOutline
+    ).not.toBe(
+      'none'
+    );
+
+    expect(
+      Number.parseFloat(
+        result.firstBorderRadius
+      )
+    ).toBeLessThanOrEqual(
+      8
+    );
+  }
+);
+
+
+test(
   'character-properties-render-grouped-dnd-skills',
   async ({ page }) => {
 

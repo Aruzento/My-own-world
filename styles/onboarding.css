@@ -18,20 +18,20 @@
     hidden;
 
   z-index:
-    1200;
+    var(--mow-z-popover, 100);
 
   border:
     1px solid
-    rgba(241,211,142,0.18);
+    var(--mow-border, rgba(241,211,142,0.18));
 
   border-radius:
-    14px;
+    var(--mow-radius-overlay, 14px);
 
   background:
-    rgba(31,30,27,0.98);
+    var(--mow-popover-bg, rgba(31,30,27,0.98));
 
   box-shadow:
-    0 24px 70px rgba(0,0,0,0.42);
+    var(--mow-shadow-overlay, 0 24px 70px rgba(0,0,0,0.42));
 }
 
 
@@ -61,7 +61,7 @@
 
   border-bottom:
     1px solid
-    rgba(241,211,142,0.12);
+    var(--mow-border-subtle, rgba(241,211,142,0.12));
 }
 
 
@@ -71,7 +71,7 @@
     3px;
 
   color:
-    rgba(241,211,142,0.78);
+    var(--mow-accent-bright, rgba(241,211,142,0.78));
 
   font-size:
     11px;
@@ -87,7 +87,7 @@
     0;
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-text-primary, rgba(255,248,230,0.96));
 
   font-size:
     20px;
@@ -123,13 +123,13 @@
 
   border:
     1px solid
-    rgba(241,211,142,0.13);
+    var(--mow-border-subtle, rgba(241,211,142,0.13));
 
   border-radius:
-    10px;
+    var(--mow-radius-md, 10px);
 
   background:
-    rgba(255,255,255,0.035);
+    var(--mow-surface-embedded, rgba(255,255,255,0.035));
 }
 
 
@@ -139,7 +139,7 @@
     0 0 6px;
 
   color:
-    rgba(255,248,230,0.94);
+    var(--mow-text-primary, rgba(255,248,230,0.94));
 
   font-size:
     14px;
@@ -152,7 +152,7 @@
     0;
 
   color:
-    rgba(255,248,230,0.72);
+    var(--mow-text-secondary, rgba(255,248,230,0.72));
 
   font-size:
     13px;

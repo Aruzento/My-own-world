@@ -1,5 +1,58 @@
 # Release Notes
 
+## 2026-07-21: Current Stabilization Handoff
+
+This `latest` handoff is for the current version-1 stabilization build. It is not a new feature sprint; it is the safer baseline after the page lifecycle, desktop, map, Properties, Knowledge Graph, data safety and documentation passes.
+
+### What To Run
+
+- Browser/dev check: `npm run verify` and `npm run test:browser`.
+- Focused browser check when validating one area: `npm run test:browser -- --grep <pattern>` or `npm run test:browser -- tests/browser/<file>.spec.mjs`.
+- Desktop release gate before sending a build: `npm run desktop:gate`.
+- Desktop installer path for handoff after a successful build: `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+
+### What Changed In The Current Handoff
+
+- Safe HTML and paste boundaries were hardened so persistent cards, tables, wiki-links and project JSON blocks keep allowed content while scripts/runtime UI are removed.
+- Workspace diagnostics now shows grouped schema recovery information and blocks persisted repair if the backup step fails.
+- The full generated manual was regenerated and verified as a valid docx/zip.
+- GitHub Actions `Verify` now uses least-privilege permissions, concurrency cancellation, a job timeout and short-lived browser artifacts on failure.
+- The browser smoke runner now forwards Playwright filters and spec paths after `--`, so focused local checks are actually focused.
+- Tools now includes `Компоненты`, a design-system catalogue proof of concept for shared Button/Input/Panel/Popover states. This is a reference surface, not a broad screen migration.
+- The empty workspace start screen is now a clear single-card action surface. The confusing internal AppShell demo panels (`Workspace`, `Context`, `Diagnostics`) were removed, while the real shell markers and starter actions remain covered.
+- UI redesign Phase 0 now has `UI_MIGRATION_BASELINES.md` and expanded visual smoke attachments for shell, tree, editor, Properties, map, graph, task tracker and shared popover surfaces before broader migration.
+- UI redesign Phase 1 now applies semantic `--mow-shell-*` foundation tokens to the current AppShell, topbar, sidebar, editor shell, statusbar and empty-workbench start surface, with `data-ui-foundation="0.0.1.8.7"` and AppShell browser coverage.
+- UI redesign Phase 2 now adds shared IconButton, Select, Checkbox, SegmentedControl, Toolbar and Separator primitives beside Button/Input/Panel/Popover. The Tools popup consumes shared `.mow-button`, and topbar/component catalogue popovers now expose popupManager-driven `data-overlay-*` lifecycle/state markers as the first Phase 3 overlay foundation.
+- UI redesign Phase 3 overlays are now closed at foundation level: registered modal popups expose `data-overlay-modal`, dialog defaults, Tab focus trap and focus return; dropdown/context-menu keyboard behavior is covered; shell icon controls have shared tooltip styling; operation progress is marked as a toast overlay. Editor feature popups, campaign map generic/token popups, item picker, onboarding help and Knowledge Graph node/connect overlays now use shared popupManager lifecycle semantics without adding a parallel overlay system.
+- UI redesign Phase 4 AppShell is now closed after user-review correction: the app has a left navigation rail where `Дерево` shows/hides the primary tree sidebar and the profile/user bar lives in the rail. Cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows instead of being duplicated as rail tabs. The shell keeps sidebar resize and editor expansion when the tree is hidden; the old page-info right inspector has been removed and replaced by a hidden reserved right-panel slot. A fake diagnostics bottom panel was intentionally not added.
+- UI redesign Phase 5 core content has advanced: the root shell exposes `data-core-content-migration="0.0.1.8.11.3"`, tree/search have stable core-content zone markers, editor block drag-and-drop is restored with pointer preview/placeholder behavior, the first-level `Add block` popup now uses local sprite icons/grouped readable copy/focus states, and the card editor header/runtime toolbar layer uses shared tokens with a visual guard against toolbar/title overlap.
+- The AppShell sidebar now follows an Explorer-style action model: with no workspace, the tree area shows `Открыть папку`; with a workspace, the `Корень` row owns the root `+` create-menu action and a direct folder action that creates a `type: folder` card.
+
+### Known Risks
+
+- Real installed-app desktop testing is still required before sending a build to another person.
+- Large real workspaces can still reveal subjective UI delay even when synthetic performance checks are green.
+- Desktop audio/codec behavior still needs real-file verification.
+- Knowledge Graph is usable as a canvas workbench, but richer daily-use graph operations and lifecycle cleanup remain backlog work.
+- Restore preview, partial restore, link cleanup and asset repair are still future data-safety work.
+
+### Verification Snapshot
+
+- `npm run verify` passed locally twice with 271 node tests.
+- `npm run test:browser` passed locally twice with 100 browser tests after the AppShell rail/profile, Explorer action, block DnD, Add block popup and card editor toolbar corrections.
+- `npm run test:browser -- --grep "editor-block-pointer-dnd|add-block-picker|visual-safety"` passed locally with 3 focused browser tests for block reorder cleanup, Add block icon/focus contract and visual smoke capture.
+- `npm run test:browser -- --grep "card-editor-core-content-controls|app-shell-empty-state"` passed locally with 2 focused browser tests for the card editor toolbar/header visual contract and AppShell empty-state guard.
+- `npm run test:browser -- component-catalogue` passed locally with the expanded shared primitive and overlay marker coverage.
+- `npm run test:browser -- popup-lifecycle` passed locally with 7 focused browser tests for overlay state synchronization, modal focus trap/return, menu keyboard behavior, Escape/outside close, dragging coverage, editor feature popups, campaign map generic/token popup paths, item picker and onboarding overlay paths.
+- `npm run test:browser -- knowledge-graph` passed locally with 1 focused browser test covering graph canvas operations plus node/connect overlay lifecycle markers.
+- `npm run test:browser -- campaign-map-ui` passed locally with 9 focused browser tests for map add, drawing, delete, music, layers, fog and selection flows.
+- `npm run test:browser -- campaign-map-initiative` passed locally with 2 focused browser tests for initiative popup behavior.
+- `npm run test:browser -- app-shell` passed locally with focused browser tests for the simplified start screen, no-workspace tree open-folder action, root create/folder actions, first tooltip/toast consumers, AppShell foundation marker, tokenized shell surfaces, one-tree-entry rail, rail profile placement, absence of content-type rail duplicates, absence of duplicate tree header, tree search, sidebar resize, tree show/hide editor expansion, hidden right-panel default state, explicit right-panel foundation open/close, compact density behavior and mobile readability.
+- `npm run test:browser -- tests/browser/visual-regression.spec.mjs` passed locally with 2 focused browser tests and the Phase 0 baseline attachments.
+- After the AppShell rail simplification, Explorer action, rail/profile, right-panel reserve and `0.0.1.8.11.3` core editor corrections, full `npm run verify` and full `npm run test:browser` both passed twice on the runtime/docs/test state.
+- `npm run test:browser -- --grep schema-recovery` passed locally with 5 focused browser tests.
+- `node tools/docs_index.mjs`, `node tools/audit_project_files.mjs`, `npm run check:encoding` and `node tools/validate_agent_skills.mjs` passed locally.
+
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 
 - The Knowledge Graph canvas toolbar now has visible Back/Forward history controls for graph edits.

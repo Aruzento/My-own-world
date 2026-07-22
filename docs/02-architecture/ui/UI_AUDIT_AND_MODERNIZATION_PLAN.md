@@ -8,13 +8,91 @@ owner_zone: "architecture"
 
 # UI Audit And Modernization Plan
 
-Дата обновления: 05.06.2026
+Дата обновления: 22.07.2026
+
+Подробный инвентаризационный снимок для версии 1: [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md).
+
+Референсы конкурентов и visual craft для систем MyOwnWorld: [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md).
 
 ## Цель
 
 Подготовить поэтапную модернизацию UI MyOwnWorld без хаотичного редизайна. Интерфейс должен стать цельным, современным и приятным для долгой работы, но не потерять скорость, читаемость, desktop-совместимость и существующие сценарии.
 
 ## UI Audit
+
+### 2026-07-21 Inventory Baseline
+
+- Подтверждено: в `styles/` сейчас 52 CSS-файла и 22,646 строк CSS; редизайн нельзя делать одним массовым патчем.
+- Подтверждено: `styles/design-tokens.css`, `styles/ui.css`, `styles/brand-system.css`, `js/ui/popupManager.js` и локальный SVG sprite уже являются reusable foundation.
+- Основной риск: крупные feature-файлы (`block-properties.css`, `campaign-map-popups.css`, `knowledge-graph.css`, `knowledgeGraphPage.js`, `propertiesSettingsPopup.js`) держат слишком много локальных визуальных и поведенческих решений.
+- Next action completed by `0.0.1.8.7`; the current AppShell now has a runtime shell-token foundation before primitive migration.
+
+### 2026-07-21 Theme Foundation POC
+
+- Confirmed: `0.0.1.8.3` added runtime theme management through `js/ui/themeManager.js` without changing workspace data or moving large UI systems.
+- Confirmed: `styles/design-tokens.css` now has semantic aliases for surfaces, text, accent, focus, controls, density, typography, spacing, status, elevation, motion, z-index, icons and the first map/graph/block/property/task/diagnostics seeds.
+- Confirmed: the shared `styles/ui.css` seed layer now proves those tokens on icons, generic buttons, generic inputs and operation-progress motion.
+- Confirmed: `js/core/icons.js` keeps the old helper API, but supports normalized icon names, escaped attributes/text, optional labels and size metadata.
+- Next action completed by `0.0.1.8.4`; the first visible shared primitives now exist before broad screen migration.
+
+### 2026-07-21 Component Catalogue POC
+
+- Confirmed: `0.0.1.8.4` added `Tools -> Компоненты` as a visible proof-of-concept catalogue for shared Button, Input, Panel and Popover primitives.
+- Confirmed: the catalogue uses the existing popup lifecycle instead of creating another overlay controller.
+- Confirmed: the samples cover focus, keyboard close, disabled, readonly, invalid, pressed, loading, compact/large density and reduced-motion-safe overlay behavior.
+- Confirmed: this is a reference surface only; feature screens are not migrated in this step.
+- Next action completed by `0.0.1.8.5`; the empty workspace start screen now carries the first visible AppShell foundation.
+
+### 2026-07-21 AppShell Foundation
+
+- Confirmed: `0.0.1.8.5` added semantic AppShell zone markers to the current shell without moving feature business logic.
+- Confirmed after review: the empty workspace start screen is a single clear action card using shared tokens and the local icon sprite, not an internal workspace/inspector/diagnostics demo.
+- Confirmed: the start-screen actions keep the existing create-template behavior instead of inventing a new global router.
+- Confirmed: the POC has desktop and mobile browser coverage.
+- Next action completed by `0.0.1.8.6`; screenshot and inventory baselines are now collected before broader migration.
+
+### 2026-07-21 Migration Phase 0 Baselines
+
+- Confirmed: `0.0.1.8.6` added [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) as the UI/CSS/icon/popup/screenshot baseline manifest for future migration phases.
+- Confirmed: `tests/browser/visual-regression.spec.mjs` now attaches baseline screenshots for AppShell, empty workspace start, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker and shared component catalogue popover.
+- Confirmed: `tests/uiMigrationBaselines.test.mjs` keeps the baseline manifest synchronized with the visual smoke attachment names and required system inventory rows.
+- Confirmed: this phase makes no broad visual migration; it is the controlled comparison layer for `0.0.1.8.7+`.
+- Next action completed by `0.0.1.8.7`; semantic AppShell foundation tokens are now applied to app-level surfaces.
+
+### 2026-07-21 Migration Phase 1 Foundations
+
+- Confirmed: `0.0.1.8.7` added `--mow-shell-*` tokens for app shell layout, density, topbar/statusbar height, panel surface, divider, elevation and shell control states.
+- Confirmed: `.app`, `.app-topbar`, `.sidebar`, `.editor`, `.statusbar` and the empty-workbench start surface now consume those tokens instead of keeping their own local shell values.
+- Confirmed: `data-ui-foundation="0.0.1.8.7"` marks the root shell, and `tests/browser/app-shell.spec.mjs` verifies the marker, tokenized shell surfaces and compact density response.
+- Confirmed: this phase does not migrate feature systems or shared primitives beyond the app-level foundation.
+- Next action completed by `0.0.1.8.8`; shared control primitives now exist beyond Button/Input/Panel/Popover.
+
+### 2026-07-21 Migration Phase 2 Primitives
+
+- Confirmed: `0.0.1.8.8` added shared IconButton, Select, Checkbox, SegmentedControl, Toolbar and Separator tokens/styles without touching map, graph, editor, Properties or task-tracker business logic.
+- Confirmed: `Tools -> Компоненты` now exposes Button, IconButton, Field, Toolbar, Panel and Popover states as a living primitive reference.
+- Confirmed: the app Tools popup is a real consumer of shared `.mow-button`, so the primitive layer is not catalogue-only.
+- Confirmed: the same slice started the overlay foundation with `data-overlay-kind`, `data-overlay-lifecycle` and `data-overlay-state` on topbar/component catalogue popovers through `popupManager`.
+- Next action completed by `0.0.1.8.10` and corrected by `0.0.1.8.10.2`-`0.0.1.8.10.4`; the real AppShell now has a rail that keeps `Дерево` as the only current content navigation entry and tree-panel show/hide control, tree-preserving sidebar behavior, Explorer-style root actions and resize without adding fake content-type tabs or bottom-panel placeholders.
+
+### 2026-07-21 Migration Phase 3 Overlays Closed
+
+- Confirmed: `popupManager` now owns the shared lifecycle for modal focus/focus return, menu keyboard behavior, tooltip/toast markers and the high-risk feature overlay families touched in `0.0.1.8.9`.
+- Confirmed: direct runtime JS popup opening through `positionPopup*` or manual `.hidden` removal is gone outside `popupManager`/`popupPosition`.
+- Confirmed: remaining visual work belongs to the later owner phases, not to a reopened overlay infrastructure phase.
+
+### 2026-07-21 Migration Phase 4 AppShell Closed
+
+- Confirmed: `0.0.1.8.10` adds a left `nav-rail` using existing local sprite icons; `0.0.1.8.10.2` corrects it so content types are not duplicated as rail tabs, and `0.0.1.8.10.4` makes `Дерево` the show/hide control for the tree panel. The visible rail currently contains `Дерево` plus the profile/user bar; future additions should be distinct global tools.
+- Confirmed: the primary sidebar keeps the tree intact; cards, maps, task trackers, rule trees and knowledge graphs remain normal world pages reachable through `Дерево` and create flows until a future rail entry owns a distinct tool workflow.
+- Confirmed: `0.0.1.8.10.3` moves workspace opening into the no-workspace tree area and moves root-level creation to the `Корень` row with separate `+` and folder actions.
+- Confirmed: `0.0.1.8.10.4` removes the duplicate sidebar `MyWorld` / `Дерево мира` header and moves profile out of the tree sidebar into the rail.
+- Confirmed: tree-panel visibility and sidebar resize are owned by AppShell, are keyboard-accessible and persist local UI state without touching workspace schema.
+- Confirmed by `0.0.1.8.11.1`: the old page-info right inspector is removed. The reserved `right-panel` slot stays hidden until a future workflow has a clear purpose for it.
+- Confirmed by `0.0.1.8.11.1`: the tree/search surface now carries the first Phase 5 core-content marker and local search icon foundation.
+- Confirmed by `0.0.1.8.11.2`: block-level DnD (`BI-013`) is restored with pointer preview/placeholder behavior, and Add block (`BI-014`) uses local sprite icons, tokenized type-picker styling, focus states and visual smoke coverage.
+- Confirmed by `0.0.1.8.11.3`: card editor header/runtime controls now consume shared tokens, page nav uses local sprite icons, title typography avoids negative/viewport-scaled sizing, and the floating text toolbar is an overlay-layer accessible toolbar with visual overlap coverage.
+- Next action updated: continue with `0.0.1.8.11` Migration Phase 5 core content for Properties, templates, deeper search and command palette.
 
 ### Общий Layout
 

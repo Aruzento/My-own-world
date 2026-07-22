@@ -42,7 +42,7 @@ owner_zone: "architecture"
 
 **Safe HTML boundary** — слой, который на save/load/paste пропускает только разрешенные теги, атрибуты и data-поля.
 
-**Sanitizer** — будущий модуль, который будет приводить HTML к allowlist и удалять все запрещенное.
+**Sanitizer** — модуль, который приводит HTML к allowlist и удаляет все запрещенное.
 
 ## Общие Правила
 
@@ -552,13 +552,15 @@ Popup и toolbar не являются persistent content.
 9. синхронизировать form values через persistent serializer;
 10. вернуть HTML, пригодный для `.md`.
 
-Текущая реализация 7.3:
+Текущая реализация:
 
 - модуль: `js/editor/safeHtmlSanitizer.js`;
 - подключен к autosave, block serializer, сохранению campaign map/task tracker и созданию страницы по шаблону;
 - удаляет runtime selectors, forbidden tags, inline `on*`, dangerous URLs, `blob:` sources на save и небезопасные style;
-- сохраняет `script[type="application/json"][data-task-tracker-data]` как controlled JSON-модель task tracker;
-- пока не вводит строгий allowlist всех классов и `data-*`, чтобы не сломать существующие блоки до расширения regression tests.
+- сохраняет controlled JSON-модели для task tracker, character effects, rule tree и knowledge graph view state;
+- применяет исполняемый allowlist persistent-тегов, обычных атрибутов, project-owned `class` и `data-*`;
+- мягко разворачивает неизвестные контейнерные теги, чтобы удалить чужую разметку, но не потерять пользовательский текст;
+- запрещает `data:image/svg+xml` URL и оставляет только безопасный width-style для `<col>`.
 
 ## Load/Open Boundary
 
@@ -578,19 +580,21 @@ Popup и toolbar не являются persistent content.
 
 ## Paste Boundary
 
-Будущий paste sanitizer должен:
+Текущий paste sanitizer:
 
-1. вставлять plain text в обычные текстовые зоны;
-2. разрешать минимальный safe inline HTML только если feature явно этого требует;
-3. не переносить внешние классы и стили;
-4. сохранять формат места вставки;
-5. не допускать image/html/script вставку напрямую в persistent DOM без asset flow.
+1. вставляет plain text в обычные текстовые зоны и ячейки таблиц;
+2. предпочитает `text/plain`, если clipboard его отдает;
+3. если clipboard отдает только `text/html`, разбирает HTML через inert `<template>`, удаляет executable/runtime nodes и вставляет только видимый текст;
+4. если clipboard отдает только rich binary data вроде files/images, перехватывает paste и не вставляет данные напрямую в persistent DOM;
+5. не переносит внешние классы, стили, dangerous URLs, inline event handlers, scripts и прямые pasted images без asset flow;
+6. сохраняет формат места вставки: пользователь вставляет в текущее поле, а не получает чужую DOM-разметку.
 
-Текущая реализация 7.5:
+Текущая реализация:
 
-- редактор и таблицы берут только `text/plain`;
+- модуль: `js/editor/safeHtmlSanitizer.js`;
+- `sanitizeClipboardPaste()` нормализует clipboard payload для редактора и таблиц;
 - `sanitizePlainTextPaste()` нормализует line endings и удаляет control chars;
-- HTML из clipboard не вставляется в persistent DOM.
+- `setupEditorPlainTextPaste()` и table paste handler используют общий clipboard sanitizer.
 
 ## Security Regression Tests Для 7.6
 

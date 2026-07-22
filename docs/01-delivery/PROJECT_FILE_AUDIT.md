@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-07-11
+Дата: 2026-07-22
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 480.
+Всего файлов в аудите: 543.
 
 ## Два Независимых Прохода
 
@@ -24,45 +24,51 @@ owner_zone: "delivery"
 
 | Зона | Файлов |
 |---|---:|
-| agent workflow | 8 |
+| agent workflow | 9 |
 | assets | 4 |
-| browser tests | 22 |
+| browser tests | 25 |
 | campaign map | 47 |
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
-| docs/architecture | 32 |
-| docs/archive | 4 |
-| docs/delivery | 5 |
+| docs/architecture | 36 |
+| docs/archive | 5 |
+| docs/delivery | 15 |
 | docs/product | 8 |
 | docs/root | 3 |
-| docs/testing | 10 |
+| docs/testing | 13 |
 | docs/user-release | 4 |
 | editor | 45 |
 | knowledge graph | 3 |
 | maturity | 7 |
-| page repository | 2 |
+| page repository | 3 |
 | presentation | 3 |
 | properties | 9 |
 | release handoff | 7 |
-| root | 17 |
+| root | 22 |
 | rules | 19 |
 | schema | 12 |
-| storage | 22 |
+| storage | 26 |
 | story log | 1 |
 | styles | 52 |
 | tables | 8 |
 | task tracker | 17 |
 | templates | 9 |
-| tools | 14 |
-| tree | 9 |
-| ui | 20 |
-| unit tests | 38 |
+| tools | 19 |
+| tree | 11 |
+| ui | 25 |
+| unit tests | 57 |
 | world packages | 2 |
 
 ## Кандидаты На Уборку
 
-Явных кандидатов на удаление не найдено.
+| Файл | Причина |
+|---|---|
+| `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
+| `js/ui/appShell.js` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `js/ui/componentCatalogue.js` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `js/ui/themeManager.js` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -72,9 +78,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 3324829 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5028538 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 334171 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 726075 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 520541 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 160710 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -142,12 +150,15 @@ owner_zone: "delivery"
 
 ### Неразрешенные Относительные Ссылки
 
-Неразрешенных относительных ссылок/import-ов не найдено.
+| Откуда | Ссылка |
+|---|---|
+| `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md` | `docs/02-architecture/ui/assets/icons/rpg-ui.svg` |
 
 ## Полная Инвентаризация
 
 | Название файла | Зона | За что отвечает | Нужно ли оптимизировать | Можно ли удалить? |
 |---|---|---|---|---|
+| `.agents/skills/anti-slop/SKILL.md` | agent workflow | Описание AI-skill для повторяемого рабочего сценария Codex. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `.agents/skills/character-model/SKILL.md` | agent workflow | Описание AI-skill для повторяемого рабочего сценария Codex. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `.agents/skills/design-system/SKILL.md` | agent workflow | Описание AI-skill для повторяемого рабочего сценария Codex. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `.agents/skills/desktop-release/SKILL.md` | agent workflow | Описание AI-skill для повторяемого рабочего сценария Codex. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -172,68 +183,87 @@ owner_zone: "delivery"
 | `assets/icons/README.md` | assets | Главная инструкция и обзор проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/icons/rpg-ui.svg` | assets | Иконки и sprite приложения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/rules/internal-rules-workspace.json` | assets | Seed-данные внутреннего пространства правил. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `docs/00-product/BRANDBOOK.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/CURRENT_MILESTONE.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/PO_DISCOVERY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/PRODUCT_DASHBOARD.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/PRODUCT_STRATEGY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/PRODUCT_VISION.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/ROADMAP.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/00-product/USER_PERSONAS.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/01-delivery/CHANGELOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/01-delivery/PROJECT_PLAN.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/01-delivery/RELEASE_PROCESS.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/01-delivery/WORK_LOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/adapters/BACKEND_STORAGE_API_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/AI_ONBOARDING.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/EDITOR_HISTORY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/FORMATTING_SERVICE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/PAGE_REPOSITORY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/POPUP_LIFECYCLE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/RULE_TREE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/SAFE_HTML_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/TABLES_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/WORKSPACE_SCHEMA_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/contracts/WORLD_PACKAGE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_BACKUP_RESTORE_GATE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_MAP_PERFORMANCE_NOTES.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_PROTOTYPE_SMOKE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/KNOWLEDGE_GRAPH_ENTITY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/KNOWLEDGE_GRAPH_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/security/CLOUD_THREAT_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `debug.log` | root | Локальный debug-лог, не является исходником проекта. | Нет смысла оптимизировать: кандидат на удаление после подтверждения. | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
+| `docs/00-product/BRANDBOOK.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/CURRENT_MILESTONE.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/PO_DISCOVERY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/PRODUCT_DASHBOARD.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/PRODUCT_STRATEGY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/PRODUCT_VISION.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/ROADMAP.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/00-product/USER_PERSONAS.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/BUG_INVENTORY.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/BUGS_AND_IMPROVEMENTS_BACKLOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/CHANGELOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/DEFINITION_OF_DONE.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/PROJECT_PLAN.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/RELEASE_PROCESS.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/SMOKE_PASS_2026-07-14.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/WORK_LOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/adapters/BACKEND_STORAGE_API_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/AI_ONBOARDING.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/EDITOR_HISTORY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/FORMATTING_SERVICE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/PAGE_REPOSITORY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/POPUP_LIFECYCLE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/RULE_TREE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/SAFE_HTML_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/TABLES_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/WORKSPACE_SCHEMA_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/contracts/WORLD_PACKAGE_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_BACKUP_RESTORE_GATE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_MAP_PERFORMANCE_NOTES.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_PROTOTYPE_SMOKE.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/KNOWLEDGE_GRAPH_ENTITY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/KNOWLEDGE_GRAPH_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/security/CLOUD_THREAT_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/storage/.gitkeep` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/03-testing/CODE_REVIEW_TEMPLATE.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/03-testing/DESKTOP_SMOKE.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/CODE_REVIEW_TEMPLATE.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/DESKTOP_SMOKE.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/INNER_HTML_AUDIT_2026-07-17.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/MANUAL_SMOKE_CHECKLIST.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/03-testing/sample-workspace/assets/.gitkeep` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/03-testing/sample-workspace/pages/0001-welcome.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/03-testing/sample-workspace/pages/0002-campaign-map.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/03-testing/sample-workspace/pages/0003-task-tracker.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/03-testing/sample-workspace/README.md` | docs/testing | Главная инструкция и обзор проекта. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/03-testing/SMOKE_TESTS.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/03-testing/UX_ONBOARDING_CHECKLIST.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/03-testing/VISUAL_REGRESSION.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/04-user-release/HOW_TO_INSTALL.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/04-user-release/KNOWN_ISSUES.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/04-user-release/README_FOR_TESTERS.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
-| `docs/04-user-release/TEST_SCENARIOS.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/03-testing/sample-workspace/README.md` | docs/testing | Главная инструкция и обзор проекта. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/SMOKE_TESTS.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/UX_ONBOARDING_CHECKLIST.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/VISUAL_REGRESSION.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/WORKSPACE_ACCESS_MATRIX.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/04-user-release/HOW_TO_INSTALL.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/04-user-release/KNOWN_ISSUES.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/04-user-release/README_FOR_TESTERS.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/04-user-release/TEST_SCENARIOS.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/archive/ARCHIVED_EXPERIMENTS.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/PLANS_AND_TECH_DEBT.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
+| `docs/archive/PROJECT_PLAN_BEFORE_0.0.1.0.0_2026-07-14.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/README.md` | docs/archive | Главная инструкция и обзор проекта. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | docs/root | Документация зоны docs/root. | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. | Нет. |
 | `docs/PROJECT_STRATEGY_PRESENTATION.html` | docs/root | Документация зоны docs/root. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
@@ -247,6 +277,7 @@ owner_zone: "delivery"
 | `js/character/inventoryModel.js` | character | JavaScript модуль подсистемы: character. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/core/icons.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/core/markdown.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/core/pageRecord.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/editor/autosave.js` | editor | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/editor/blocks/blockContract.js` | editor | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/editor/blocks/blockControls.js` | editor | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Нет. |
@@ -339,6 +370,8 @@ owner_zone: "delivery"
 | `js/editor/wikiLinkNormalizer.js` | editor | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/editor/wikiLinkPreview.js` | editor | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/editor/wikiLinks.js` | editor | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/performance/backgroundCheckpointQueue.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/performance/workspacePerformance.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/presentation/campaignMapPresentationPrivacy.js` | presentation | JavaScript модуль подсистемы: presentation. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/presentation/campaignMapPresentationRenderer.js` | presentation | JavaScript модуль подсистемы: presentation. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/presentation/presentationEntry.js` | presentation | JavaScript модуль подсистемы: presentation. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -353,6 +386,7 @@ owner_zone: "delivery"
 | `js/properties/propertySchemas.js` | properties | JavaScript модуль подсистемы: properties. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/repository/pageIndex.js` | page repository | JavaScript модуль подсистемы: page repository. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/repository/pageRepository.js` | page repository | JavaScript модуль подсистемы: page repository. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/repository/treeIndex.js` | page repository | JavaScript модуль подсистемы: page repository. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/rules/ruleTreeProvider.js` | rules | JavaScript модуль подсистемы: rules. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/rulesWorkspace/internalRulePage.js` | rules | JavaScript модуль подсистемы: rules. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/rulesWorkspace/rulesWorkspaceContent.js` | rules | JavaScript модуль подсистемы: rules. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -402,12 +436,16 @@ owner_zone: "delivery"
 | `js/storage/desktopAssetAdapter.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/desktopStorageAdapter.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/locationMusic.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/storage/operationJournal.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/storage/pageCommandService.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/pageStorage.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/persistence.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/storage.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/storageAdapter.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/storageAdapterContract.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/tauriBridge.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/storage/workspaceAccessDiagnostics.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/storage/workspaceCheckpointTasks.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/workspaceStorage.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/storage/writeQueue.js` | storage | JavaScript модуль подсистемы: storage. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/taskTracker/taskTracker.js` | task tracker | JavaScript модуль подсистемы: task tracker. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -442,20 +480,25 @@ owner_zone: "delivery"
 | `js/tree/treeDropIntent.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/tree/treeKeys.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/tree/treeMovePlanner.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/tree/treeOrderCompaction.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/tree/treeRender.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/tree/treeRootDropZone.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/tree/treeUtils.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/tree/treeVirtualization.js` | tree | JavaScript модуль подсистемы: tree. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/ui/aliases.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/appShell.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `js/ui/appTopbar.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/assetHealthPanel.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/backlinks.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/cardType.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/componentCatalogue.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `js/ui/confirmPopup.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/createModal.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/dndStats.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/dndStatsV2.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/itemSets.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/onboardingGuide.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/operationProgress.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/popupManager.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/popupPosition.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/profile.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
@@ -469,16 +512,19 @@ owner_zone: "delivery"
 | `js/ui/tables/tableSelectionState.js` | tables | JavaScript модуль подсистемы: tables. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/tables/tableToolbar.js` | tables | JavaScript модуль подсистемы: tables. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/tags.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/themeManager.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `js/ui/ui.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/variables.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/variables/variableCalculations.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/variables/variableDefinitions.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/workspaceDiagnosticsPanel.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/validation/pageTitleValidation.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraph.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphPage.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/references.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/worldPackage/worldPackageModel.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/worldPackage/worldPackageStorage.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `k` | root | Файл проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `package-lock.json` | root | Зафиксированное дерево npm-зависимостей. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `package.json` | root | NPM scripts, зависимости и метаданные приложения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `playwright.config.mjs` | root | Конфигурация browser smoke/regression tests. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -554,66 +600,88 @@ owner_zone: "delivery"
 | `styles/ui.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/variables-block.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/variables.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
-| `tests/assetBrokenChecker.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/assetOrphanDetector.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/assetReference.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/assetReferenceScanner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/assetWorkspaceService.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/backupService.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/app-shell.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/asset-health.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/campaign-map-data.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/campaign-map-initiative.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/campaign-map-performance.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/campaign-map-presentation.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/campaign-map-ui.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/editor-formatting.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/knowledge-graph.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/page-templates.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/popup-lifecycle.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/property-blocks.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tests/assetBrokenChecker.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/assetOrphanDetector.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/assetReference.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/assetReferenceScanner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/assetWorkspaceService.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/backgroundCheckpointQueue.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/backupService.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/app-shell.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/asset-health.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/campaign-map-data.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/campaign-map-initiative.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/campaign-map-performance.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/campaign-map-presentation.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/campaign-map-ui.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/component-catalogue.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/editor-formatting.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/knowledge-graph.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/page-templates.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/popup-lifecycle.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/property-blocks.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/README.md` | browser tests | Главная инструкция и обзор проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/rule-tree.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/safe-html.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tests/browser/rule-tree.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/safe-html.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/scenarios.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/schema-recovery.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/tables.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/task-tracker.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/tree-delete.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/tree-dnd-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/browser/visual-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/campaignMapDataSerializer.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/campaignMapInitiativeModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/campaignMapLayerModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/campaignMapModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/campaignMapPerformance.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/campaignMapStore.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/cardVariablesModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/characterIntegrationApi.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/characterModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/effectsModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/inventoryModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/knowledgeGraph.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/locationMusic.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/pageIndex.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/pageRepository.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/pageTitleValidation.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/propertiesCalculationEngine.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/propertyBlocks.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/rulesWorkspace.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/ruleTreeEngine.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/ruleTreeModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/ruleTreePackageStorage.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/ruleTreeProvider.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/schemaValidation.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/searchPages.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tests/browser/schema-recovery.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/tables.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/task-tracker.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/tree-delete.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/tree-dnd-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/tree-security.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/tree-virtualization.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/visual-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browserSmokeRunner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/campaignMapDataSerializer.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/campaignMapInitiativeModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/campaignMapLayerModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/campaignMapModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/campaignMapPerformance.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/campaignMapStore.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/cardVariablesModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/characterIntegrationApi.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/characterModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/desktopLargeWorkspaceSmoke.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/effectsModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/githubActionsWorkflow.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/icons.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/inventoryModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/knowledgeGraph.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/lightweightWorkspaceOperationsGate.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/locationMusic.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/operationJournal.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/pageCommandService.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/pageIndex.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/pageRecord.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/pageRepository.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/pageTitleValidation.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/propertiesCalculationEngine.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/propertyBlocks.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/rulesWorkspace.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/ruleTreeEngine.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/ruleTreeModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/ruleTreePackageStorage.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/ruleTreeProvider.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/schemaValidation.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/searchPages.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/securityInnerHtmlAudit.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/setup.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/storageAdapter.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/taskTrackerModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/treeDropIntent.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/treeMovePlanner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/wikiLinkLookup.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `tests/worldPackage.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tests/storageAdapter.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/taskTrackerModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/themeManager.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/treeDropIntent.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/treeIndex.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/treeMovePlanner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/treeOrderCompaction.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/treeVirtualization.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/uiMigrationBaselines.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/wikiLinkLookup.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/workspaceAccessDiagnostics.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/workspaceCheckpointTasks.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/workspaceDiagnosticsCli.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/workspacePerformance.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/worldPackage.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tools/audit_project_files.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: новый повторяемый инструмент аудита, нужен для будущих уборок. |
 | `tools/check_desktop_environment.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/check_desktop_packaging_smoke.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -622,15 +690,20 @@ owner_zone: "delivery"
 | `tools/docs_index.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/generate_manual_docx.py` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/prepare_desktop_dist.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tools/probe_large_workspace_tree_performance.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/run_browser_smoke.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/run_checks.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tools/run_desktop_large_workspace_smoke.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tools/run_desktop_native_clickthrough.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/run_desktop_release_gate.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tools/run_large_workspace_performance_smoke.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `tools/run_workspace_diagnostics.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/safe_commit.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/static_server.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/validate_agent_skills.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 
 ## Результат
 
-- `0.0.0.8.1` закрывает инвентаризацию, но не выполняет удаление.
+- Этот отчет является снимком навигации и рисков по файлам, а не разрешением на удаление.
 - Удаление/архивация начинается только после подтвержденного списка из раздела “Кандидаты На Уборку”.
-- Следующий логичный подпункт: `0.0.0.8.2` — починить кодировки в документации и добавить защиту от повторного mojibake.
+- Актуальный следующий шаг всегда находится в `docs/01-delivery/PROJECT_PLAN.md`.

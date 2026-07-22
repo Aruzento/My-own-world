@@ -2,6 +2,10 @@ import {
   hasPropertyBlockDefinition
 } from '../../templates/propertyBlockDefinitions.js';
 
+import {
+  iconSvg
+} from '../../core/icons.js';
+
 
 const PRIMARY_BLOCK_TYPE_ORDER = [
   'text',
@@ -14,24 +18,28 @@ const PRIMARY_BLOCK_TYPE_ORDER = [
 
 const PRIMARY_BLOCK_TYPE_OPTIONS = {
   text: {
-    icon: 'T',
+    iconName: 'document',
+    group: 'Текст',
     title: 'Текстовый блок',
-    description: 'Обычный блок с заголовком и текстом'
+    description: 'Заголовок и свободный текст для заметок, сцен и лора'
   },
   list: {
-    icon: '◆',
-    title: 'Блок списка',
-    description: 'Один блок для предметов, заклинаний, навыков и сущностей'
+    iconName: 'task-tracker',
+    group: 'Списки',
+    title: 'Список',
+    description: 'Единый список для предметов, заклинаний, навыков или сущностей'
   },
   table: {
-    icon: '▦',
+    iconName: 'grid',
+    group: 'Структура',
     title: 'Таблица',
-    description: 'Таблица с заданным числом строк и столбцов'
+    description: 'Сетка со строками и столбцами для справочников и списков'
   },
   image: {
-    icon: '▧',
-    title: 'Картинка',
-    description: 'Изображение на всю ширину блока'
+    iconName: 'image',
+    group: 'Медиа',
+    title: 'Изображение',
+    description: 'Картинка на ширину карточки: портрет, сцена или артефакт'
   }
 };
 
@@ -68,8 +76,11 @@ export function renderTypePicker(
   cardType
 ) {
 
+  popup.dataset.blockPopupView =
+    'type-picker';
+
   popup.querySelector('.block-popup-title').textContent =
-    'Выбери тип блока';
+    'Добавить блок';
 
   popup
     .querySelector('.block-popup-actions')
@@ -91,13 +102,20 @@ export function renderTypePicker(
       .join('');
 
   popup.querySelector('.block-popup-body').innerHTML =
-    `<div class="block-type-list">${optionsHTML}</div>`;
+    `
+      <div class="block-type-picker" role="listbox" aria-label="Типы блоков">
+        <div class="block-type-kicker">Содержимое карточки</div>
+        <div class="block-type-list">${optionsHTML}</div>
+      </div>
+    `;
 }
 
 
 export function renderDeletePrompt(
   popup
 ) {
+
+  delete popup.dataset.blockPopupView;
 
   popup.querySelector('.block-popup-title').textContent =
     'Удалить блок';
@@ -122,6 +140,8 @@ export function renderNameForm({
   inputValue,
   confirmText
 }) {
+
+  delete popup.dataset.blockPopupView;
 
   popup.querySelector('.block-popup-title').textContent =
     title;
@@ -152,6 +172,8 @@ export function renderNameForm({
 export function renderTableForm(
   popup
 ) {
+
+  delete popup.dataset.blockPopupView;
 
   popup.querySelector('.block-popup-title').textContent =
     'Создать таблицу';
@@ -266,17 +288,27 @@ export function getDefaultBlockTitle(
 
 function createTypeOptionHTML({
   type,
-  icon,
+  iconName,
+  group,
   title,
   description
 }) {
 
   return `
-    <button class="block-type-option" type="button" data-block-type="${type}">
-      <span class="block-type-icon">${icon}</span>
-      <span>
-        <strong>${title}</strong>
-        <small>${description}</small>
+    <button
+      class="block-type-option"
+      type="button"
+      data-block-type="${escapeAttribute(type)}"
+      role="option"
+      aria-label="${escapeAttribute(`${title}. ${description}`)}"
+    >
+      <span class="block-type-icon">
+        ${iconSvg(iconName, 'block-type-icon-svg')}
+      </span>
+      <span class="block-type-copy">
+        <span class="block-type-group">${escapeHtml(group)}</span>
+        <strong>${escapeHtml(title)}</strong>
+        <small>${escapeHtml(description)}</small>
       </span>
     </button>
   `;
@@ -291,14 +323,37 @@ function getTypeOptionConfig(
   if (type === 'properties') {
 
     return {
-      icon: 'P',
+      iconName: 'settings',
+      group: 'Метаданные',
       title: 'Свойства',
-      description: `Поля для типа "${getCardTypeLabel(cardType)}"`
+      description: `Поля карточки: ${getCardTypeLabel(cardType)}`
     };
   }
 
   return PRIMARY_BLOCK_TYPE_OPTIONS[type] ||
     PRIMARY_BLOCK_TYPE_OPTIONS.text;
+}
+
+
+function escapeHtml(
+  value
+) {
+
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  )
+    .replace(/"/g, '&quot;');
 }
 
 

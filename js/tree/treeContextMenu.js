@@ -513,7 +513,8 @@ function ensureTreeContextMenu() {
   registerPopup({
     popup: contextMenu,
     close: closeTreeContextMenu,
-    key: 'tree-context-menu'
+    key: 'tree-context-menu',
+    kind: 'context-menu'
   });
 
   return contextMenu;

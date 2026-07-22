@@ -7,7 +7,7 @@ import {
 } from '../editor/editorHistory.js';
 
 import {
-  sanitizePlainTextPaste
+  sanitizeClipboardPaste
 } from '../editor/safeHtmlSanitizer.js';
 
 import {
@@ -292,37 +292,42 @@ function handleTablePaste(
 
   if (!cell) return;
 
-  const text =
-    sanitizePlainTextPaste(
+  const paste =
+    sanitizeClipboardPaste(
       event.clipboardData
-        ?.getData('text/plain')
     );
 
-  if (!text) return;
+  if (
+    !paste.shouldHandle
+  ) return;
 
   event.preventDefault();
 
+  if (
+    !paste.text
+  ) return;
+
   pushEditorHistorySnapshot(
     document.getElementById('editorArea'),
-    text.includes('\n') || text.includes('\t')
+    paste.text.includes('\n') || paste.text.includes('\t')
       ? 'Вставка в таблицу'
       : 'Вставка в ячейку таблицы'
   );
 
   if (
-    text.includes('\n') ||
-    text.includes('\t')
+    paste.text.includes('\n') ||
+    paste.text.includes('\t')
   ) {
 
     pasteTextIntoTable(
       cell,
-      text
+      paste.text
     );
 
   } else {
 
     insertPlainTextAtCaret(
-      text
+      paste.text
     );
   }
 

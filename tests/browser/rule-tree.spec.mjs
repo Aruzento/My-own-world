@@ -19,11 +19,22 @@ test(
           setStorageAdapter
         } = await import('/js/storage/storageAdapter.js');
 
+        const {
+          renderTree
+        } = await import('/js/tree/tree.js');
+
         const files =
           new Map();
 
         setStorageAdapter({
           kind: 'memory',
+          getWorkspaceHandle() {
+            return {
+              name:
+                'Test workspace'
+            };
+          },
+          setWorkspaceHandle() {},
           async pickWorkspace() {
             return {};
           },
@@ -53,10 +64,12 @@ test(
           async removeFile() {},
           async removeDirectory() {}
         });
+
+        renderTree();
       }
     );
 
-    await page.locator('#newPageBtn').click();
+    await page.locator('[data-create-page]').click();
     await page.locator('#createMenu [data-template="ruleTree"]').click();
 
     await expect(

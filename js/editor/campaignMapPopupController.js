@@ -55,6 +55,11 @@ export function getMapPopup() {
   popup.className =
     'campaign-map-popup hidden';
 
+  popup.setAttribute(
+    'aria-label',
+    'Настройки карты'
+  );
+
   markRuntime(
     popup
   );
@@ -74,9 +79,11 @@ export function getMapPopup() {
   popupController =
     registerPopup({
       popup,
-      close: closeMapPopup,
+      close: hideMapPopup,
       anchors: mapPopupAnchors,
-      key: 'campaign-map-popup'
+      key: 'campaign-map-popup',
+      kind: 'dialog',
+      modal: true
     });
 
   return popup;
@@ -126,6 +133,18 @@ export function showMapPopup(
 
 
 export function closeMapPopup() {
+
+  if (popupController) {
+
+    popupController.close();
+    return;
+  }
+
+  hideMapPopup();
+}
+
+
+function hideMapPopup() {
 
   const popup =
     document.getElementById('campaignMapPopup');

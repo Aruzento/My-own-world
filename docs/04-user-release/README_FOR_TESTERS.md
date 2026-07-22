@@ -21,6 +21,11 @@ The installer updates the app only. The workspace is a separate folder selected 
 
 After install or update, run the short smoke from [HOW_TO_INSTALL.md](./HOW_TO_INSTALL.md), then continue with [TEST_SCENARIOS.md](./TEST_SCENARIOS.md).
 
+For the current stabilization handoff, also read:
+
+- `release/latest/release-notes.md` - short current summary, verification snapshot and known risks.
+- `release/latest/tester-instructions.md` - current first-pass smoke route before the historical detailed sections.
+
 ## Где Лежат Инструкции
 
 Рабочая пользовательская документация находится в `docs/04-user-release/`.

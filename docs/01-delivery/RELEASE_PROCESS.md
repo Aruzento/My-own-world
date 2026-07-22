@@ -67,6 +67,12 @@ npm run verify
 npm run test:browser
 ```
 
+Для точечной перепроверки перед полным browser smoke можно использовать фильтр Playwright:
+
+```powershell
+npm run test:browser -- --grep schema-recovery
+```
+
 7. Проверить кодировку:
 
 ```powershell

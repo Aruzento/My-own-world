@@ -1,5 +1,106 @@
 # Tester Instructions
 
+## 2026-07-21: Current Handoff Smoke
+
+Start here when you receive the current build.
+
+### 1. Confirm Which Build You Are Testing
+
+- Browser/dev: run from the repository with `npm run dev:web`.
+- Local desktop executable for developer smoke: `src-tauri\target\release\my-own-world.exe`.
+- Installer for another person: `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+
+Use a copied workspace for destructive checks such as create, move, delete, backup restore or repair.
+
+### 2. Required Automated Checks Before Handoff
+
+Run:
+
+```powershell
+npm run verify
+npm run test:browser
+```
+
+For focused regression checks, use:
+
+```powershell
+npm run test:browser -- --grep schema-recovery
+npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs
+```
+
+For UI redesign baseline attachments, use:
+
+```powershell
+npm run test:browser -- tests/browser/visual-regression.spec.mjs
+```
+
+Then inspect the Playwright attachments named in `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`.
+
+For the editor block DnD and Add block redesign slice, use:
+
+```powershell
+npm run test:browser -- --grep "editor-block-pointer-dnd|add-block-picker"
+```
+
+For the card editor header and floating toolbar redesign slice, use:
+
+```powershell
+npm run test:browser -- --grep "card-editor-core-content-controls|app-shell-empty-state"
+```
+
+For the AppShell foundation guard, use:
+
+```powershell
+npm run test:browser -- --grep app-shell
+```
+
+For shared primitive and overlay lifecycle coverage, use:
+
+```powershell
+npm run test:browser -- component-catalogue
+npm run test:browser -- popup-lifecycle
+```
+
+Before sending a desktop build, run:
+
+```powershell
+npm run desktop:gate
+```
+
+For a large GM workspace handoff, include the workspace:
+
+```powershell
+npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
+```
+
+### 3. Manual Smoke Priority
+
+1. Open a copied workspace.
+2. Open Settings diagnostics and check that workspace path, write access, schema status and backup status are readable.
+3. On the empty start screen, check that there is one clear action card with `Карточка`, `Карта`, `Задачи`, `Правила` and `Граф связей`. It should not show internal `Workspace`, `Context` or `Diagnostics` demo panels, and the actions should not overlap on desktop or mobile. In the sidebar tree area, when no workspace is open, there should be one clear `Открыть папку` button.
+4. Check the left AppShell rail: it should show `Дерево` and the profile/user button only. `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` should remain reachable through the world tree/create flows, not as duplicated rail tabs. The tree sidebar should not repeat `MyWorld` / `Дерево мира` and should not contain workspace/open or create buttons in a header; after opening a workspace, the `Корень` row should show the root `+` create action and the folder-create action.
+5. Click `Дерево` in the rail to hide and reopen the tree sidebar, then resize the visible sidebar with the separator by dragging or using Left/Right arrow keys while it is focused. The editor should expand while the tree is hidden, the workspace should stay readable, and the resize handle should be hidden on mobile.
+6. Open any real page and check that no right page-info inspector appears. The editor should keep the freed width; the reserved right panel is hidden until a future real workflow owns it.
+Card editor design check: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay with accessible controls, stable width and no overlap with the card title.
+7. In Settings, switch UI scale between compact/normal/large and check that topbar, rail, sidebar controls, tree search and statusbar stay aligned instead of jumping or overlapping.
+8. Open Tools -> `Компоненты`; check that the Button/Input/Panel/Popover examples appear, focus moves inside, and Escape closes the catalogue. For modal dialogs/popups in later checks, Tab/Shift+Tab should stay inside the dialog and close should return focus to the opener. Icon-only shell controls should show compact tooltip labels on hover/focus, and long operation progress should behave like a toast-style status surface.
+   UI primitive note: the catalogue should now include IconButton, Select/Checkbox/Segmented field examples, Toolbar/Separator, Panel and Popover without text overlap at compact/normal/large scale.
+9. Create a card, type text, save/reopen.
+10. Create or open a character/creature card with `Properties`; check HP, AC, initiative and armor picker behavior. Also open Properties settings, Add block, link creation, image crop, text color and item picker popups; they should close by their normal buttons/Escape without leaving a stuck overlay or lost keyboard focus. In a normal card, drag a content block by its grip handle and confirm the preview/drop placeholder are readable, the block moves, and the `Add block` first-level menu uses real icons instead of letter/symbol placeholders.
+11. Open a campaign map; move a token, hover/open token actions, use layers/fog/drawing/music/initiative popups, open presentation. The map popups should keep a compact dark overlay style, close through normal controls/Escape/repeated trigger, and return keyboard focus where the popup is modal.
+12. If music is part of the test build, add real audio files and test play/stop/next/previous in desktop.
+13. Create/open `Граф связей`; drag a node, undo/redo, right-click a node and check relationship actions.
+14. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should stay within the viewport and close cleanly by Escape/outside click.
+15. Run backup manually before any repair action; schema repair must stop if backup fails.
+
+### 4. Known Risks To Watch
+
+- Desktop installed-app behavior can still differ from browser smoke.
+- Real audio codecs may fail even when playlist UI passes browser tests.
+- Large workspace UI smoothness is partly subjective; report any action that feels frozen.
+- Knowledge Graph is currently a useful visual workbench, not the final full relationship-management surface.
+- Restore preview, partial restore, link cleanup and asset repair remain unfinished.
+
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 
 1. Open a Knowledge Graph page.
@@ -561,7 +662,7 @@ Superseded by `Knowledge Graph Canvas Usability Polish` above. The old domain ca
 
 Для проверки CharacterModel foundation:
 
-0. Открыть главный `+` в sidebar и проверить, что первый уровень меню не показывает быстрые пункты `Задача` и `По шаблону`. В меню должны остаться основные сущности создания.
+0. Открыть `+` в строке `Корень` дерева и проверить, что первый уровень меню не показывает быстрые пункты `Задача` и `По шаблону`. В меню должны остаться основные сущности создания.
 1. Создать карточку типа `Персонаж` или `Существо`.
 2. Добавить блок `Свойства`.
 3. Проверить, что в свойствах есть HP и характеристики.

@@ -395,6 +395,11 @@ function ensurePropertySettingsPopup() {
     'false'
   );
 
+  popup.setAttribute(
+    'aria-label',
+    'Настройки свойств'
+  );
+
   document.body.appendChild(
     popup
   );
@@ -404,7 +409,9 @@ function ensurePropertySettingsPopup() {
       popup,
       close: () => closePopup(popup),
       anchors: popupAnchors,
-      key: 'property-settings-popup'
+      key: 'property-settings-popup',
+      kind: 'dialog',
+      modal: true
     });
 
   return popup;

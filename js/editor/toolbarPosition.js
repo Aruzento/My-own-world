@@ -6,6 +6,9 @@ export function positionToolbar(
   const margin =
     8;
 
+  const selectionGap =
+    14;
+
   const width =
     toolbar.offsetWidth || 320;
 
@@ -23,12 +26,12 @@ export function positionToolbar(
     );
 
   let top =
-    rect.top - height - 10;
+    rect.top - height - selectionGap;
 
   if (top < margin) {
 
     top =
-      rect.bottom + 10;
+      rect.bottom + selectionGap;
   }
 
   top =

@@ -22,7 +22,7 @@ import {
 } from './toolbarPosition.js';
 
 import {
-  enablePopupDragging
+  registerPopup
 } from '../ui/popupManager.js';
 
 import {
@@ -52,6 +52,14 @@ export function setupFloatingToolbar() {
 
   if (!toolbar) return;
 
+  moveToolbarToBody(
+    toolbar
+  );
+
+  prepareToolbarAccessibility(
+    toolbar
+  );
+
   const colorPicker =
     document.getElementById(
       'textColorPicker'
@@ -76,9 +84,20 @@ export function setupFloatingToolbar() {
     colorPopup
   );
 
-  enablePopupDragging(
-    colorPopup
-  );
+  const colorPopupController =
+    setupToolbarColorPopup(
+      colorPopup,
+      toolbar,
+      colorButton
+    );
+
+  const colorControls = {
+    colorPicker,
+    recentColors,
+    colorPopup,
+    colorButton,
+    colorPopupController
+  };
 
   renderRecentColors(
     recentColors,
@@ -91,23 +110,64 @@ export function setupFloatingToolbar() {
 
   setupToolbarClicks(
     toolbar,
-    {
-      colorPicker,
-      recentColors,
-      colorPopup,
-      colorButton
-    }
+    colorControls
   );
 
   setupColorPopupClicks(
     toolbar,
-    {
-      colorPicker,
-      recentColors,
-      colorPopup,
-      colorButton
-    }
+    colorControls
   );
+}
+
+function moveToolbarToBody(
+  toolbar
+) {
+
+  if (
+    toolbar &&
+    toolbar.parentElement !== document.body
+  ) {
+
+    document.body.appendChild(
+      toolbar
+    );
+  }
+}
+
+function prepareToolbarAccessibility(
+  toolbar
+) {
+
+  toolbar.setAttribute(
+    'role',
+    'toolbar'
+  );
+
+  toolbar.setAttribute(
+    'aria-label',
+    toolbar.getAttribute('aria-label') || 'Форматирование текста'
+  );
+
+  toolbar
+    .querySelectorAll('button')
+    .forEach(button => {
+
+      if (!button.type) {
+        button.type =
+          'button';
+      }
+
+      if (
+        !button.hasAttribute('aria-label') &&
+        button.title
+      ) {
+
+        button.setAttribute(
+          'aria-label',
+          button.title
+        );
+      }
+    });
 }
 
 function moveColorPopupToBody(
@@ -124,6 +184,40 @@ function moveColorPopupToBody(
     );
   }
 }
+
+function setupToolbarColorPopup(
+  colorPopup,
+  toolbar,
+  colorButton
+) {
+
+  if (!colorPopup) return null;
+
+  colorPopup.dataset.runtime =
+    'true';
+
+  colorPopup.setAttribute(
+    'contenteditable',
+    'false'
+  );
+
+  colorPopup.setAttribute(
+    'aria-label',
+    'Цвет текста'
+  );
+
+  return registerPopup({
+    popup: colorPopup,
+    close: () => hideToolbarColorPopup(colorPopup),
+    anchors: [
+      toolbar,
+      colorButton
+    ].filter(Boolean),
+    key: 'toolbar-color-popup',
+    kind: 'popover'
+  });
+}
+
 
 function setupSelectionTracking(
   toolbar
@@ -239,7 +333,8 @@ function setupToolbarClicks(
 
       toggleColorPopup(
         colorControls.colorPopup,
-        colorControls.colorButton
+        colorControls.colorButton,
+        colorControls.colorPopupController
       );
     }
   );
@@ -418,8 +513,8 @@ function setupColorPopupClicks(
         colorButton?.contains(event.target)
       ) return;
 
-      colorPopup.classList.add(
-        'hidden'
+      closeToolbarColorPopup(
+        colorControls
       );
     }
   );
@@ -439,8 +534,8 @@ async function applySelectedColor(
     colorControls.colorButton
   );
 
-  colorControls.colorPopup?.classList.add(
-    'hidden'
+  closeToolbarColorPopup(
+    colorControls
   );
 
   await saveCurrentPage();
@@ -527,7 +622,8 @@ function restoreLastSelection() {
 
 function toggleColorPopup(
   popup,
-  button
+  button,
+  controller
 ) {
 
   if (!popup || !button) return;
@@ -537,16 +633,68 @@ function toggleColorPopup(
       'hidden'
     );
 
-  popup.classList.toggle(
-    'hidden',
-    !shouldOpen
-  );
-
   if (shouldOpen) {
+
+    if (controller) {
+
+      controller.openNearAnchor(
+        button,
+        {
+          fallbackWidth: 220,
+          fallbackHeight: 180
+        }
+      );
+
+    } else {
+
+      popup.classList.remove(
+        'hidden'
+      );
+    }
 
     positionColorPopup(
       popup,
       button
     );
+
+    return;
   }
+
+  if (controller) {
+
+    controller.close();
+
+    return;
+  }
+
+  hideToolbarColorPopup(
+    popup
+  );
+}
+
+
+function closeToolbarColorPopup(
+  colorControls
+) {
+
+  if (colorControls.colorPopupController) {
+
+    colorControls.colorPopupController.close();
+
+    return;
+  }
+
+  hideToolbarColorPopup(
+    colorControls.colorPopup
+  );
+}
+
+
+function hideToolbarColorPopup(
+  popup
+) {
+
+  popup?.classList.add(
+    'hidden'
+  );
 }

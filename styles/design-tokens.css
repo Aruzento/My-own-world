@@ -3,6 +3,24 @@
 
   --mow-font-ui: Inter, Manrope, "Segoe UI", sans-serif;
   --mow-font-title: Cinzel, "Cormorant Garamond", Georgia, serif;
+  --mow-font-sans: var(--mow-font-ui);
+  --mow-font-serif: var(--mow-font-title);
+  --mow-font-mono: "Cascadia Code", "Fira Code", Consolas, monospace;
+
+  --mow-font-size-xs: 11px;
+  --mow-font-size-sm: 12px;
+  --mow-font-size-md: 13px;
+  --mow-font-size-lg: 14px;
+  --mow-font-size-xl: 16px;
+  --mow-font-size-title: 20px;
+  --mow-line-height-tight: 1.1;
+  --mow-line-height-compact: 1.25;
+  --mow-line-height-body: 1.45;
+  --mow-line-height-relaxed: 1.6;
+  --mow-font-weight-regular: 400;
+  --mow-font-weight-medium: 500;
+  --mow-font-weight-semibold: 600;
+  --mow-font-weight-bold: 700;
 
   --mow-bg-app: #050706;
   --mow-bg-app-2: #080b0a;
@@ -51,6 +69,8 @@
   --mow-space-4: 16px;
   --mow-space-5: 20px;
   --mow-space-6: 24px;
+  --mow-space-7: 32px;
+  --mow-space-8: 40px;
 
   --mow-motion-fast: 120ms;
   --mow-motion-base: 170ms;
@@ -63,6 +83,244 @@
     linear-gradient(180deg, var(--mow-bg-app-2), var(--mow-bg-app));
 
   --mow-ui-scale: 1;
+
+  /* Semantic foundation for new and migrated UI. */
+  --mow-app-bg: var(--mow-bg-app);
+  --mow-app-bg-raised: var(--mow-bg-app-2);
+  --mow-app-text: var(--mow-text-main);
+  --mow-app-text-muted: var(--mow-text-muted);
+
+  --mow-surface-base: var(--mow-bg-app);
+  --mow-surface-panel: var(--mow-bg-panel);
+  --mow-surface-raised: var(--mow-bg-card);
+  --mow-surface-overlay: var(--mow-bg-panel-soft);
+  --mow-surface-sunken: var(--mow-bg-input);
+  --mow-surface-embedded: rgba(255, 246, 222, 0.035);
+  --mow-surface: var(--mow-surface-raised);
+
+  --mow-text-primary: var(--mow-text-main);
+  --mow-text-secondary: var(--mow-text-soft);
+  --mow-text-strong: var(--mow-text-main);
+  --mow-text: var(--mow-text-main);
+  --mow-text-danger: var(--mow-danger);
+  --mow-text-warning: var(--mow-warning);
+  --mow-text-success: var(--mow-success);
+
+  --mow-accent-primary: var(--mow-accent);
+  --mow-accent-primary-hover: var(--mow-accent-bright);
+  --mow-accent-secondary: var(--mow-success);
+  --mow-accent-danger: var(--mow-danger);
+
+  --mow-border-subtle: var(--mow-border-soft);
+  --mow-border-default: var(--mow-border-medium);
+  --mow-border-focus: var(--mow-accent-border);
+  --mow-border-danger: rgba(182, 80, 69, 0.42);
+  --mow-border: var(--mow-border-default);
+
+  --mow-status-success-text: var(--mow-success);
+  --mow-status-success-bg: rgba(111, 175, 93, 0.14);
+  --mow-status-success-border: rgba(111, 175, 93, 0.34);
+  --mow-status-warning-text: var(--mow-warning);
+  --mow-status-warning-bg: rgba(214, 168, 79, 0.14);
+  --mow-status-warning-border: rgba(214, 168, 79, 0.34);
+  --mow-status-danger-text: var(--mow-danger);
+  --mow-status-danger-bg: rgba(182, 80, 69, 0.16);
+  --mow-status-danger-border: rgba(182, 80, 69, 0.38);
+  --mow-status-info-text: var(--mow-info);
+  --mow-status-info-bg: rgba(77, 131, 189, 0.14);
+  --mow-status-info-border: rgba(77, 131, 189, 0.34);
+
+  --mow-focus-ring: rgba(201, 164, 92, 0.42);
+  --mow-focus-ring-offset: rgba(5, 7, 6, 0.86);
+  --mow-focus-shadow: 0 0 0 3px rgba(201, 164, 92, 0.16);
+
+  --mow-control-bg: rgba(255, 255, 255, 0.055);
+  --mow-control-bg-hover: var(--mow-accent-bg);
+  --mow-control-bg-active: rgba(255, 246, 222, 0.09);
+  --mow-control-bg-disabled: rgba(255, 255, 255, 0.028);
+  --mow-control-border: var(--mow-border-subtle);
+  --mow-control-height-sm: calc(28px * var(--mow-ui-scale));
+  --mow-control-height-md: calc(34px * var(--mow-ui-scale));
+  --mow-control-height-lg: calc(40px * var(--mow-ui-scale));
+  --mow-button-bg: var(--mow-control-bg);
+  --mow-button-bg-hover: var(--mow-control-bg-hover);
+  --mow-button-bg-active: var(--mow-control-bg-active);
+  --mow-button-color: var(--mow-text-secondary);
+  --mow-button-color-hover: var(--mow-text-primary);
+  --mow-button-primary-bg: var(--mow-accent-bg);
+  --mow-button-primary-border: var(--mow-accent-border);
+  --mow-button-primary-color: var(--mow-text-primary);
+  --mow-button-secondary-bg: var(--mow-control-bg);
+  --mow-button-secondary-border: var(--mow-control-border);
+  --mow-button-ghost-bg: transparent;
+  --mow-button-danger-bg: var(--mow-status-danger-bg);
+  --mow-button-danger-border: var(--mow-status-danger-border);
+  --mow-button-disabled-bg: var(--mow-control-bg-disabled);
+  --mow-icon-button-size-sm: var(--mow-density-control-height-sm);
+  --mow-icon-button-size-md: var(--mow-density-control-height-md);
+  --mow-icon-button-size-lg: var(--mow-density-control-height-lg);
+  --mow-icon-button-bg: var(--mow-button-secondary-bg);
+  --mow-icon-button-bg-hover: var(--mow-button-bg-hover);
+  --mow-icon-button-border: var(--mow-button-secondary-border);
+  --mow-icon-button-border-hover: var(--mow-border-focus);
+  --mow-icon-button-color: var(--mow-button-color);
+  --mow-icon-button-color-hover: var(--mow-button-color-hover);
+  --mow-input-bg: var(--mow-surface-sunken);
+  --mow-input-border: var(--mow-control-border);
+  --mow-input-border-focus: var(--mow-border-focus);
+  --mow-input-invalid-bg: var(--mow-status-danger-bg);
+  --mow-input-invalid-border: var(--mow-status-danger-border);
+  --mow-select-bg: var(--mow-input-bg);
+  --mow-select-border: var(--mow-input-border);
+  --mow-select-border-focus: var(--mow-input-border-focus);
+  --mow-checkbox-size: calc(16px * var(--mow-ui-scale));
+  --mow-checkbox-bg: var(--mow-input-bg);
+  --mow-checkbox-border: var(--mow-input-border);
+  --mow-checkbox-checked-bg: var(--mow-accent-bg);
+  --mow-checkbox-checked-border: var(--mow-accent-border);
+  --mow-checkbox-check: var(--mow-accent-bright);
+  --mow-segmented-bg: var(--mow-surface-sunken);
+  --mow-segmented-border: var(--mow-border-subtle);
+  --mow-segmented-item-bg-hover: var(--mow-control-bg-hover);
+  --mow-segmented-item-bg-active: var(--mow-accent-bg);
+  --mow-segmented-item-border-active: var(--mow-accent-border);
+  --mow-panel-bg: var(--mow-surface-panel);
+  --mow-panel-border: var(--mow-border-subtle);
+  --mow-panel-raised-bg: var(--mow-surface-raised);
+  --mow-panel-sunken-bg: var(--mow-surface-sunken);
+  --mow-panel-embedded-bg: var(--mow-surface-embedded);
+  --mow-popover-bg: var(--mow-surface-overlay);
+  --mow-popover-border: var(--mow-border-default);
+  --mow-toolbar-bg: var(--mow-surface-sunken);
+  --mow-toolbar-border: var(--mow-border-subtle);
+  --mow-separator-color: var(--mow-border-subtle);
+
+  /* AppShell migration phase 1 tokens. */
+  --mow-app-font-family: var(--mow-font-ui);
+  --mow-app-shell-bg: var(--mow-bg-texture);
+  --mow-shell-nav-rail-width: calc(50px * var(--mow-ui-scale));
+  --mow-shell-nav-rail-bg: rgba(12, 14, 13, 0.72);
+  --mow-shell-nav-rail-border: var(--mow-border-medium);
+  --mow-shell-sidebar-width: 270px;
+  --mow-shell-sidebar-min-width: 220px;
+  --mow-shell-sidebar-max-width: 380px;
+  --mow-shell-right-panel-width: 260px;
+  --mow-shell-resizer-width: calc(6px * var(--mow-ui-scale));
+  --mow-shell-topbar-height: calc(26px * var(--mow-ui-scale));
+  --mow-shell-statusbar-height: calc(24px * var(--mow-ui-scale));
+  --mow-shell-gutter: calc(10px * var(--mow-ui-scale));
+  --mow-shell-padding: var(--mow-shell-gutter);
+  --mow-shell-workbench-gap: var(--mow-space-3);
+  --mow-shell-workspace-padding: clamp(14px, 2vw, 24px);
+  --mow-shell-panel-bg:
+    linear-gradient(
+      180deg,
+      var(--mow-bg-panel),
+      var(--mow-bg-panel-soft)
+    );
+  --mow-shell-panel-border: var(--mow-border-medium);
+  --mow-shell-panel-shadow:
+    var(--mow-elevation-panel),
+    inset 0 1px 0 rgba(255, 246, 222, 0.06);
+  --mow-shell-panel-radius: var(--mow-radius-panel);
+  --mow-shell-divider: rgba(247, 220, 164, 0.12);
+  --mow-shell-topbar-color: var(--mow-text-muted);
+  --mow-shell-title-color: var(--mow-text-primary);
+  --mow-shell-title-size: 15px;
+  --mow-shell-control-color: var(--mow-text-secondary);
+  --mow-shell-control-color-hover: var(--mow-text-primary);
+  --mow-shell-control-bg-hover: rgba(241, 211, 142, 0.08);
+  --mow-shell-control-border-hover: rgba(241, 211, 142, 0.18);
+  --mow-shell-icon-button-size: var(--mow-density-control-height-sm);
+  --mow-shell-nav-item-size: var(--mow-density-control-height-md);
+  --mow-shell-statusbar-bg: rgba(18, 16, 13, 0.34);
+  --mow-shell-statusbar-color: rgba(226, 209, 178, 0.62);
+  --mow-shell-statusbar-font-size: var(--mow-font-size-xs);
+  --mow-shell-workspace-bg: var(--mow-surface-raised);
+
+  --mow-density-control-height-sm: var(--mow-control-height-sm);
+  --mow-density-control-height-md: var(--mow-control-height-md);
+  --mow-density-control-height-lg: var(--mow-control-height-lg);
+  --mow-density-panel-padding: calc(16px * var(--mow-ui-scale));
+  --mow-density-row-gap: calc(8px * var(--mow-ui-scale));
+
+  --mow-icon-size-sm: calc(14px * var(--mow-ui-scale));
+  --mow-icon-size-md: calc(18px * var(--mow-ui-scale));
+  --mow-icon-size-lg: calc(22px * var(--mow-ui-scale));
+  --mow-icon-stroke-width: 1.9;
+
+  --mow-radius-panel: var(--mow-radius-lg);
+  --mow-radius-overlay: var(--mow-radius-lg);
+  --mow-radius-control: var(--mow-radius-sm);
+
+  --mow-shadow-soft: var(--mow-shadow-card);
+  --mow-shadow-overlay: var(--mow-shadow-popup);
+  --mow-shadow-floating: 0 16px 44px rgba(0, 0, 0, 0.36);
+  --mow-elevation-panel: var(--mow-shadow-panel);
+  --mow-elevation-overlay: var(--mow-shadow-overlay);
+  --mow-elevation-floating: var(--mow-shadow-floating);
+
+  --mow-motion-standard: var(--mow-motion-base);
+  --mow-motion-overlay: var(--mow-motion-slow);
+  --mow-motion-press-duration: var(--mow-motion-fast);
+  --mow-motion-hover-duration: var(--mow-motion-fast);
+  --mow-motion-overlay-enter: var(--mow-motion-slow);
+  --mow-motion-overlay-exit: var(--mow-motion-base);
+  --mow-motion-panel-reveal: var(--mow-motion-slow);
+  --mow-motion-dnd-feedback: var(--mow-motion-base);
+  --mow-motion-canvas-feedback: var(--mow-motion-fast);
+  --mow-motion-progress: var(--mow-motion-base);
+  --mow-ease-press: cubic-bezier(0.2, 0, 0.2, 1);
+
+  --mow-z-base: 1;
+  --mow-z-sticky: 20;
+  --mow-z-dropdown: 50;
+  --mow-z-popover: 100;
+  --mow-z-modal: 200;
+  --mow-z-toast: 300;
+
+  --mow-map-canvas-bg: var(--mow-bg-app);
+  --mow-map-control-bg: var(--mow-bg-toolbar);
+  --mow-map-control-border: var(--mow-border-subtle);
+  --mow-map-overlay-bg: var(--mow-surface-overlay);
+  --mow-map-overlay-border: var(--mow-border-default);
+  --mow-map-selection-border: var(--mow-accent-bright);
+  --mow-map-selection-bg: var(--mow-accent-bg);
+  --mow-map-fog-fill: rgba(2, 3, 3, 0.62);
+
+  --mow-graph-canvas-bg: var(--mow-bg-app);
+  --mow-graph-node-bg: var(--mow-surface-raised);
+  --mow-graph-node-border: var(--mow-border-subtle);
+  --mow-graph-node-selected-border: var(--mow-accent-border);
+  --mow-graph-edge: rgba(201, 164, 92, 0.35);
+  --mow-graph-group-bg: rgba(201, 164, 92, 0.08);
+  --mow-graph-hidden-opacity: 0.38;
+
+  --mow-block-bg: var(--mow-surface-raised);
+  --mow-block-border: var(--mow-border-subtle);
+  --mow-drop-indicator-bg: var(--mow-accent-bright);
+  --mow-selection-bg: var(--mow-accent-bg);
+  --mow-selection-border: var(--mow-accent-border);
+
+  --mow-property-panel-bg: var(--mow-surface-panel);
+  --mow-property-field-bg: var(--mow-surface-sunken);
+  --mow-property-field-border: var(--mow-border-subtle);
+  --mow-field-bg: var(--mow-surface-sunken);
+  --mow-field-border: var(--mow-border-subtle);
+  --mow-field-focus-border: var(--mow-border-focus);
+
+  --mow-task-column-bg: var(--mow-surface-panel);
+  --mow-task-card-bg: var(--mow-surface-raised);
+  --mow-task-label-bg: var(--mow-accent-bg);
+  --mow-task-label-border: var(--mow-accent-border);
+
+  --mow-health-ok: var(--mow-status-success-text);
+  --mow-health-warning: var(--mow-status-warning-text);
+  --mow-health-danger: var(--mow-status-danger-text);
+  --mow-backup-bg: var(--mow-status-info-bg);
+  --mow-backup-border: var(--mow-status-info-border);
+  --mow-restore-bg: var(--mow-status-warning-bg);
+  --mow-restore-border: var(--mow-status-warning-border);
 
   /* Compatibility aliases for the existing CSS layer. */
   --color-bg-app: var(--mow-bg-app);
@@ -82,7 +340,7 @@
   --color-danger-soft: rgba(182, 80, 69, 0.18);
   --color-border-subtle: var(--mow-border-soft);
   --color-border-hover: var(--mow-accent-border);
-  --color-focus-ring: rgba(201, 164, 92, 0.42);
+  --color-focus-ring: var(--mow-focus-ring);
   --color-surface-veil: rgba(18, 16, 13, 0.62);
   --color-surface-engraved: rgba(255, 246, 222, 0.035);
   --color-rune: rgba(201, 164, 92, 0.58);
@@ -93,6 +351,8 @@
   --space-4: var(--mow-space-4);
   --space-5: var(--mow-space-5);
   --space-6: var(--mow-space-6);
+  --space-7: var(--mow-space-7);
+  --space-8: var(--mow-space-8);
   --radius-xs: var(--mow-radius-xs);
   --radius-sm: var(--mow-radius-sm);
   --radius-md: var(--mow-radius-md);
@@ -118,7 +378,8 @@
   --mow-accent-bright: #7db7ff;
   --mow-accent-bg: rgba(77, 131, 189, 0.16);
   --mow-accent-border: rgba(125, 183, 255, 0.45);
-  --color-focus-ring: rgba(125, 183, 255, 0.38);
+  --mow-focus-ring: rgba(125, 183, 255, 0.38);
+  --mow-focus-shadow: 0 0 0 3px rgba(125, 183, 255, 0.14);
 }
 
 [data-accent="red"] {
@@ -127,7 +388,8 @@
   --mow-accent-bright: #ff8a75;
   --mow-accent-bg: rgba(182, 80, 69, 0.16);
   --mow-accent-border: rgba(255, 138, 117, 0.45);
-  --color-focus-ring: rgba(255, 138, 117, 0.38);
+  --mow-focus-ring: rgba(255, 138, 117, 0.38);
+  --mow-focus-shadow: 0 0 0 3px rgba(255, 138, 117, 0.14);
 }
 
 [data-accent="purple"] {
@@ -136,7 +398,8 @@
   --mow-accent-bright: #c5a4ff;
   --mow-accent-bg: rgba(143, 106, 200, 0.16);
   --mow-accent-border: rgba(197, 164, 255, 0.45);
-  --color-focus-ring: rgba(197, 164, 255, 0.36);
+  --mow-focus-ring: rgba(197, 164, 255, 0.36);
+  --mow-focus-shadow: 0 0 0 3px rgba(197, 164, 255, 0.13);
 }
 
 [data-accent="green"] {
@@ -145,7 +408,8 @@
   --mow-accent-bright: #a7dd90;
   --mow-accent-bg: rgba(111, 175, 93, 0.16);
   --mow-accent-border: rgba(167, 221, 144, 0.45);
-  --color-focus-ring: rgba(167, 221, 144, 0.36);
+  --mow-focus-ring: rgba(167, 221, 144, 0.36);
+  --mow-focus-shadow: 0 0 0 3px rgba(167, 221, 144, 0.13);
 }
 
 [data-bg="stone"] {
@@ -176,11 +440,57 @@
   --mow-ui-scale: 0.92;
 }
 
+[data-ui-scale="normal"] {
+  --mow-ui-scale: 1;
+}
+
 [data-ui-scale="large"] {
   --mow-ui-scale: 1.08;
 }
 
+[data-ui-scale] {
+  --mow-control-height-sm: calc(28px * var(--mow-ui-scale));
+  --mow-control-height-md: calc(34px * var(--mow-ui-scale));
+  --mow-control-height-lg: calc(40px * var(--mow-ui-scale));
+  --mow-density-control-height-sm: var(--mow-control-height-sm);
+  --mow-density-control-height-md: var(--mow-control-height-md);
+  --mow-density-control-height-lg: var(--mow-control-height-lg);
+  --mow-density-panel-padding: calc(16px * var(--mow-ui-scale));
+  --mow-density-row-gap: calc(8px * var(--mow-ui-scale));
+  --mow-shell-topbar-height: calc(26px * var(--mow-ui-scale));
+  --mow-shell-statusbar-height: calc(24px * var(--mow-ui-scale));
+  --mow-shell-gutter: calc(10px * var(--mow-ui-scale));
+  --mow-shell-padding: var(--mow-shell-gutter);
+  --mow-shell-icon-button-size: var(--mow-density-control-height-sm);
+  --mow-shell-nav-rail-width: calc(50px * var(--mow-ui-scale));
+  --mow-shell-nav-item-size: var(--mow-density-control-height-md);
+  --mow-shell-resizer-width: calc(6px * var(--mow-ui-scale));
+  --mow-icon-button-size-sm: var(--mow-density-control-height-sm);
+  --mow-icon-button-size-md: var(--mow-density-control-height-md);
+  --mow-icon-button-size-lg: var(--mow-density-control-height-lg);
+  --mow-checkbox-size: calc(16px * var(--mow-ui-scale));
+  --mow-icon-size-sm: calc(14px * var(--mow-ui-scale));
+  --mow-icon-size-md: calc(18px * var(--mow-ui-scale));
+  --mow-icon-size-lg: calc(22px * var(--mow-ui-scale));
+}
+
 @media (prefers-reduced-motion: reduce) {
+  :root {
+    --mow-motion-fast: 1ms;
+    --mow-motion-base: 1ms;
+    --mow-motion-slow: 1ms;
+    --mow-motion-standard: 1ms;
+    --mow-motion-overlay: 1ms;
+    --mow-motion-press-duration: 1ms;
+    --mow-motion-hover-duration: 1ms;
+    --mow-motion-overlay-enter: 1ms;
+    --mow-motion-overlay-exit: 1ms;
+    --mow-motion-panel-reveal: 1ms;
+    --mow-motion-dnd-feedback: 1ms;
+    --mow-motion-canvas-feedback: 1ms;
+    --mow-motion-progress: 1ms;
+  }
+
   *,
   *::before,
   *::after {

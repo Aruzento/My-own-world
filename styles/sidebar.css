@@ -1,68 +1,6 @@
 ﻿/* =========================================
-   SIDEBAR HEADER
-========================================= */
-
-.sidebar-header {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: space-between;
-
-  padding:
-    14px
-    14px
-    10px;
-
-  border-bottom:
-    1px solid
-    var(--border);
-}
-
-
-.sidebar-title {
-
-  font-size: 15px;
-
-  font-weight: 650;
-
-  letter-spacing:
-    -0.02em;
-
-  color:
-    rgba(255,255,255,0.92);
-}
-
-
-.sidebar-actions {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 4px;
-}
-
-
-
-/* =========================================
    PROFILE
 ========================================= */
-
-.sidebar-profile {
-
-  margin-top:
-    auto;
-
-  padding:
-    10px;
-
-  border-top:
-    1px solid
-    rgba(255,255,255,0.06);
-}
-
 
 .profile-button {
 
@@ -72,11 +10,11 @@
   min-width:
     0;
 
-  height:
-    52px;
+  min-height:
+    calc(52px * var(--mow-ui-scale));
 
   padding:
-    7px;
+    calc(7px * var(--mow-ui-scale));
 
   display:
     flex;
@@ -85,7 +23,7 @@
     center;
 
   gap:
-    10px;
+    var(--mow-shell-gutter);
 
   border:
     none;
@@ -97,7 +35,7 @@
     transparent;
 
   color:
-    rgba(255,255,255,0.84);
+    var(--mow-text-secondary);
 
   cursor:
     pointer;
@@ -106,15 +44,15 @@
     left;
 
   transition:
-    background 0.14s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
 }
 
 
 .profile-button:hover {
 
   background:
-    rgba(255,255,255,0.055);
+    var(--mow-shell-control-bg-hover);
 }
 
 
@@ -226,7 +164,7 @@
 .profile-name {
 
   color:
-    rgba(255,255,255,0.88);
+    var(--mow-text-primary);
 
   font-size:
     13px;
@@ -239,7 +177,7 @@
 .profile-tarif {
 
   color:
-    rgba(255,255,255,0.42);
+    var(--mow-text-muted);
 
   font-size:
     11px;
@@ -253,11 +191,14 @@
 
 .icon-btn {
 
-  width: 28px;
+  width:
+    var(--mow-shell-icon-button-size);
 
-  height: 28px;
+  height:
+    var(--mow-shell-icon-button-size);
 
-  min-height: 28px;
+  min-height:
+    var(--mow-shell-icon-button-size);
 
   padding: 0;
 
@@ -270,32 +211,32 @@
   border: none;
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
     transparent;
 
   color:
-    var(--muted);
+    var(--mow-shell-control-color);
 
   font-size: 14px;
 
   cursor: pointer;
 
   transition:
-    background 0.14s,
-    color 0.14s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
 }
 
 
 .icon-btn:hover {
 
   background:
-    var(--hover);
+    var(--mow-shell-control-bg-hover);
 
   color:
-    var(--text);
+    var(--mow-shell-control-color-hover);
 }
 
 
@@ -314,10 +255,44 @@
 .search-wrapper {
 
   padding:
-    10px;
+    var(--mow-shell-gutter);
 
   position:
     relative;
+}
+
+
+.search-wrapper-icon {
+
+  position:
+    absolute;
+
+  z-index:
+    1;
+
+  top:
+    50%;
+
+  left:
+    calc(
+      var(--mow-shell-gutter) +
+      var(--mow-space-3)
+    );
+
+  width:
+    var(--mow-icon-size-sm);
+
+  height:
+    var(--mow-icon-size-sm);
+
+  color:
+    var(--mow-text-muted);
+
+  pointer-events:
+    none;
+
+  transform:
+    translateY(-50%);
 }
 
 
@@ -325,47 +300,63 @@
 
   width: 100%;
 
-  height: 32px;
+  height:
+    var(--mow-density-control-height-md);
 
   padding:
-    0 12px;
+    0
+    var(--mow-space-3)
+    0
+    calc(
+      var(--mow-space-3) +
+      var(--mow-icon-size-sm) +
+      var(--mow-space-2)
+    );
 
   border: none;
 
   outline: none;
 
   border-radius:
-    10px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.05);
+    var(--mow-input-bg);
 
   color:
-    var(--text);
+    var(--mow-text-primary);
 
-  font-size: 13px;
+  font-size:
+    var(--mow-font-size-md);
 
   transition:
-    background 0.14s,
-    box-shadow 0.14s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
 #searchInput::placeholder {
 
   color:
-    rgba(255,255,255,0.30);
+    var(--mow-text-muted);
 }
 
 
 #searchInput:focus {
 
   background:
-    rgba(255,255,255,0.07);
+    var(--mow-control-bg-active);
 
   box-shadow:
     0 0 0 1px
-    rgba(241,211,142,0.18);
+    var(--mow-shell-control-border-hover);
+}
+
+
+.search-wrapper:focus-within .search-wrapper-icon {
+
+  color:
+    var(--mow-accent-bright);
 }
 
 
@@ -375,16 +366,20 @@
     absolute;
 
   z-index:
-    40;
+    var(--mow-z-dropdown);
 
   top:
-    48px;
+    calc(
+      var(--mow-shell-gutter) +
+      var(--mow-density-control-height-md) +
+      var(--mow-space-2)
+    );
 
   left:
-    10px;
+    var(--mow-shell-gutter);
 
   right:
-    10px;
+    var(--mow-shell-gutter);
 
   max-height:
     min(340px, 58vh);
@@ -393,7 +388,7 @@
     auto;
 
   padding:
-    8px;
+    var(--mow-space-2);
 
   display:
     flex;
@@ -402,21 +397,20 @@
     column;
 
   gap:
-    8px;
+    var(--mow-space-2);
 
   border:
     1px solid
-    rgba(255,255,255,0.10);
+    var(--mow-popover-border);
 
   border-radius:
-    12px;
+    var(--mow-radius-overlay);
 
   background:
-    rgba(20,22,24,0.96);
+    var(--mow-popover-bg);
 
   box-shadow:
-    0 18px 48px rgba(0,0,0,0.34),
-    inset 0 1px 0 rgba(255,255,255,0.06);
+    var(--mow-elevation-floating);
 }
 
 

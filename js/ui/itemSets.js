@@ -22,8 +22,9 @@ import {
 } from '../tree/tree.js';
 
 import {
-  positionPopupNearAnchor
-} from './popupPosition.js';
+  openPopupNearAnchor,
+  registerPopup
+} from './popupManager.js';
 
 import {
   notifyPageUpdated
@@ -32,6 +33,10 @@ import {
 
 let activeSetList = null;
 let activeSetKind = 'items';
+let itemSetPickerController = null;
+
+const itemSetPickerAnchors =
+  [];
 
 
 export function setupItemSets() {
@@ -136,6 +141,21 @@ function setupItemSetPicker() {
   picker.className =
     'item-set-picker hidden';
 
+  picker.setAttribute(
+    'role',
+    'dialog'
+  );
+
+  picker.setAttribute(
+    'aria-modal',
+    'false'
+  );
+
+  picker.setAttribute(
+    'aria-label',
+    'Выбор элемента набора'
+  );
+
   picker.innerHTML = `
     <div class="item-set-create-panel hidden">
       <button
@@ -175,6 +195,21 @@ function setupItemSetPicker() {
     picker
   );
 
+  itemSetPickerController =
+    registerPopup({
+      popup:
+        picker,
+      close:
+        hideItemSetPicker,
+      anchors:
+        itemSetPickerAnchors,
+      key:
+        'item-set-picker',
+      kind:
+        'popover',
+      modal:
+        false
+    });
 
   picker
     .querySelector('.item-set-search')
@@ -317,21 +352,18 @@ function openItemSetPicker(
   );
 
 
-  picker.classList.remove(
-    'hidden'
+  itemSetPickerAnchors.splice(
+    0,
+    itemSetPickerAnchors.length,
+    button
   );
 
-  requestAnimationFrame(
-    () => {
-
-      positionPopupNearAnchor(
-        picker,
-        button,
-        {
-          fallbackWidth: 280,
-          fallbackHeight: 320
-        }
-      );
+  openPopupNearAnchor(
+    picker,
+    button,
+    {
+      fallbackWidth: 280,
+      fallbackHeight: 320
     }
   );
 
@@ -342,6 +374,18 @@ function openItemSetPicker(
 
 
 function closeItemSetPicker() {
+
+  if (itemSetPickerController) {
+
+    itemSetPickerController.close();
+    return;
+  }
+
+  hideItemSetPicker();
+}
+
+
+function hideItemSetPicker() {
 
   const picker =
     document.getElementById(
@@ -354,6 +398,11 @@ function closeItemSetPicker() {
 
   activeSetList = null;
   activeSetKind = 'items';
+
+  itemSetPickerAnchors.splice(
+    0,
+    itemSetPickerAnchors.length
+  );
 }
 
 document.addEventListener(

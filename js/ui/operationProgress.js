@@ -33,6 +33,11 @@ export function showOperationProgress(
     'is-collapsed'
   );
 
+  setProgressOverlayState(
+    element,
+    'open'
+  );
+
   element.querySelector('.operation-progress-title').textContent =
     normalized.label;
 
@@ -84,6 +89,11 @@ export function finishOperationProgress({
       : 'is-complete'
   );
 
+  setProgressOverlayState(
+    progressElement,
+    'open'
+  );
+
   progressElement.querySelector('.operation-progress-stage').textContent =
     message;
 
@@ -112,6 +122,11 @@ export function hideOperationProgress() {
   progressElement.classList.add(
     'is-hidden'
   );
+
+  setProgressOverlayState(
+    progressElement,
+    'closed'
+  );
 }
 
 
@@ -126,7 +141,25 @@ function ensureProgressElement() {
     document.createElement('aside');
 
   progressElement.className =
-    'operation-progress is-hidden';
+    'operation-progress mow-toast is-hidden';
+
+  progressElement.dataset.runtime =
+    'true';
+
+  progressElement.dataset.overlayKind =
+    'toast';
+
+  progressElement.dataset.overlayLifecycle =
+    'operation-progress';
+
+  progressElement.dataset.overlayModal =
+    'false';
+
+  progressElement.dataset.overlayState =
+    'closed';
+
+  progressElement.dataset.toastState =
+    'closed';
 
   progressElement.setAttribute(
     'role',
@@ -146,6 +179,11 @@ function ensureProgressElement() {
   progressElement.setAttribute(
     'aria-valuemax',
     '100'
+  );
+
+  progressElement.setAttribute(
+    'aria-label',
+    'Статус операции'
   );
 
   progressElement.innerHTML = `
@@ -180,6 +218,21 @@ function ensureProgressElement() {
   );
 
   return progressElement;
+}
+
+
+function setProgressOverlayState(
+  element,
+  state
+) {
+
+  if (!element) return;
+
+  element.dataset.overlayState =
+    state;
+
+  element.dataset.toastState =
+    state;
 }
 
 

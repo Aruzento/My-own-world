@@ -58,7 +58,7 @@ h4 {
   font-weight: 650;
 
   letter-spacing:
-    -0.02em;
+    0;
 }
 
 
@@ -307,6 +307,21 @@ a:hover {
 }
 
 
+.empty-editor-page[data-app-shell-surface="empty-workspace"] {
+  display:
+    grid;
+
+  align-items:
+    center;
+
+  justify-items:
+    center;
+
+  padding:
+    var(--mow-shell-workspace-padding);
+}
+
+
 .empty-editor-inner {
 
   width:
@@ -317,19 +332,55 @@ a:hover {
 }
 
 
+.empty-workbench-card {
+  width:
+    min(760px, 100%);
+
+  min-height:
+    auto;
+
+  margin:
+    0 auto;
+
+  display:
+    grid;
+
+  gap:
+    var(--mow-space-4);
+
+  padding:
+    clamp(var(--mow-space-4), 4vw, var(--mow-space-6));
+
+  border:
+    1px solid var(--mow-shell-panel-border);
+
+  border-radius:
+    var(--mow-shell-panel-radius);
+
+  background:
+    var(--mow-shell-panel-bg);
+
+  box-shadow:
+    var(--mow-shell-panel-shadow);
+
+  text-align:
+    left;
+}
+
+
 .empty-editor-kicker {
 
   margin:
-    0 0 8px;
+    0;
 
   color:
-    rgba(241,211,142,0.72);
+    var(--mow-accent-bright);
 
   font-size:
-    12px;
+    var(--mow-font-size-xs);
 
   font-weight:
-    700;
+    var(--mow-font-weight-semibold);
 
   text-transform:
     uppercase;
@@ -352,6 +403,39 @@ a:hover {
 }
 
 
+.empty-workbench-card h1 {
+  margin:
+    0;
+
+  color:
+    var(--mow-text-primary);
+
+  font-size:
+    var(--mow-font-size-title);
+
+  line-height:
+    var(--mow-line-height-compact);
+
+  letter-spacing:
+    0;
+}
+
+
+.empty-workbench-card .empty-editor-note {
+  max-width:
+    580px;
+
+  margin:
+    0;
+
+  color:
+    var(--mow-text-secondary);
+
+  font-size:
+    var(--mow-font-size-sm);
+}
+
+
 .empty-create-grid {
 
   display:
@@ -365,58 +449,165 @@ a:hover {
 }
 
 
+.empty-workbench-actions {
+  grid-template-columns:
+    repeat(auto-fit, minmax(150px, 1fr));
+
+  gap:
+    var(--mow-space-2);
+}
+
+
 .empty-create-option {
 
   min-height:
-    116px;
+    calc(var(--mow-control-height-lg) + 20px);
 
   padding:
-    16px;
+    var(--mow-space-2);
 
   display:
     grid;
 
-  place-items:
+  align-content:
+    center;
+
+  justify-items:
     center;
 
   gap:
-    8px;
+    var(--mow-space-2);
 
   border:
-    1px solid
-    rgba(255,255,255,0.08);
+    1px solid var(--mow-button-secondary-border);
 
   border-radius:
-    14px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.04);
+    var(--mow-control-bg);
 
   color:
-    rgba(255,255,255,0.78);
+    var(--mow-text-secondary);
 
   cursor:
     pointer;
+
+  font-family:
+    var(--mow-font-sans);
+
+  font-size:
+    var(--mow-font-size-xs);
+
+  font-weight:
+    var(--mow-font-weight-medium);
+
+  line-height:
+    var(--mow-line-height-compact);
+
+  text-align:
+    center;
+
+  transition:
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
+}
+
+
+.empty-workbench-card .empty-create-option {
+  min-height:
+    calc(var(--mow-control-height-lg) + 10px);
+
+  grid-template-columns:
+    var(--mow-control-height-sm)
+    minmax(0, 1fr);
+
+  align-items:
+    center;
+
+  justify-items:
+    start;
+
+  text-align:
+    left;
+}
+
+
+.empty-workbench-card .empty-create-option > span:last-child {
+  min-width:
+    0;
+
+  overflow-wrap:
+    anywhere;
 }
 
 
 .empty-create-option:hover {
 
   background:
-    rgba(241,211,142,0.08);
+    var(--mow-control-bg-hover);
 
   border-color:
-    rgba(241,211,142,0.22);
+    var(--mow-border-focus);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-text-primary);
+}
+
+
+.empty-create-option:active {
+  transform:
+    translateY(1px)
+    scale(0.985);
+}
+
+
+.empty-create-option:focus-visible {
+  outline:
+    2px solid var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
 }
 
 
 .empty-create-icon {
+  width:
+    var(--mow-control-height-sm);
 
-  font-size:
-    26px;
+  height:
+    var(--mow-control-height-sm);
+
+  display:
+    inline-grid;
+
+  place-items:
+    center;
+
+  border:
+    1px solid var(--mow-border-subtle);
+
+  border-radius:
+    var(--mow-radius-control);
+
+  background:
+    var(--mow-surface-embedded);
+
+  color:
+    var(--mow-accent-bright);
+
+  line-height:
+    1;
+}
+
+
+@media (max-width: 620px) {
+  .empty-workbench-actions {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
 }
 
 
@@ -449,6 +640,156 @@ a:hover {
 
   text-align:
     left;
+}
+
+
+.workspace-recovery-summary {
+
+  margin:
+    0 auto 14px;
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap:
+    8px;
+
+  max-width:
+    680px;
+
+  text-align:
+    left;
+}
+
+
+.workspace-recovery-summary span {
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.10);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.05);
+}
+
+
+.workspace-recovery-summary strong,
+.workspace-recovery-summary small {
+
+  display:
+    block;
+}
+
+
+.workspace-recovery-summary strong {
+
+  color:
+    rgba(255,248,230,0.96);
+
+  font-size:
+    18px;
+}
+
+
+.workspace-recovery-summary small {
+
+  color:
+    rgba(255,255,255,0.58);
+
+  font-size:
+    11px;
+}
+
+
+.workspace-recovery-groups {
+
+  margin-bottom:
+    14px;
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  text-align:
+    left;
+}
+
+
+.workspace-recovery-group {
+
+  padding:
+    10px 12px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.14);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,248,230,0.05);
+}
+
+
+.workspace-recovery-group header,
+.workspace-recovery-group-meta {
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  gap:
+    8px;
+
+  flex-wrap:
+    wrap;
+}
+
+
+.workspace-recovery-group header {
+
+  justify-content:
+    space-between;
+}
+
+
+.workspace-recovery-group p {
+
+  margin:
+    5px 0 8px;
+
+  color:
+    rgba(255,255,255,0.62);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.45;
+}
+
+
+.workspace-recovery-group-meta span {
+
+  color:
+    rgba(255,248,230,0.62);
+
+  font-size:
+    11px;
 }
 
 

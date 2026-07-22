@@ -6,13 +6,13 @@
     fixed;
 
   z-index:
-    10009;
+    var(--mow-z-popover, 100);
 
   width:
     auto;
 
   padding:
-    8px;
+    var(--mow-space-2, 8px);
 
   display:
     grid;
@@ -25,20 +25,16 @@
 
   border:
     1px solid
-    rgba(255,255,255,0.10);
+    var(--mow-border, rgba(255,255,255,0.10));
 
   border-radius:
-    14px;
+    var(--mow-radius-overlay, 14px);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(28,29,27,0.98),
-      rgba(14,15,16,0.96)
-    );
+    var(--mow-popover-bg, rgba(18,21,19,0.96));
 
   box-shadow:
-    0 18px 48px rgba(0,0,0,0.36),
+    var(--mow-shadow-overlay, 0 18px 48px rgba(0,0,0,0.36)),
     inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
@@ -79,7 +75,7 @@
 .campaign-token-image-title {
 
   color:
-    rgba(255,248,230,0.9);
+    var(--mow-text-primary, rgba(255,248,230,0.9));
 
   font:
     800 13px/1.2 system-ui, sans-serif;
@@ -98,10 +94,10 @@
     contain;
 
   border-radius:
-    10px;
+    var(--mow-radius-md, 10px);
 
   background:
-    rgba(255,255,255,0.04);
+    var(--mow-surface-embedded, rgba(255,255,255,0.04));
 }
 
 
@@ -117,13 +113,13 @@
     34px;
 
   border-radius:
-    10px;
+    var(--mow-radius-md, 10px);
 
   color:
-    rgba(255,248,230,0.94);
+    var(--mow-text-primary, rgba(255,248,230,0.94));
 
   background:
-    rgba(241,211,142,0.14);
+    var(--mow-accent-bg, rgba(241,211,142,0.14));
 }
 
 
@@ -206,16 +202,16 @@
     0 10px;
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-border, rgba(255,255,255,0.10));
 
   border-radius:
-    10px;
+    var(--mow-radius-control, 10px);
 
   background:
-    rgba(255,255,255,0.06);
+    var(--mow-input-bg, rgba(255,255,255,0.06));
 
   color:
-    rgba(255,248,230,0.94);
+    var(--mow-text-primary, rgba(255,248,230,0.94));
 
   color-scheme:
     dark;
@@ -291,13 +287,13 @@
     none;
 
   border-radius:
-    9px;
+    var(--mow-radius-control, 9px);
 
   background:
-    rgba(255,255,255,0.055);
+    var(--mow-control-bg, rgba(255,255,255,0.055));
 
   color:
-    rgba(255,255,255,0.76);
+    var(--mow-button-color, rgba(255,255,255,0.76));
 
   cursor:
     pointer;
@@ -443,16 +439,16 @@
     36px;
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-border, rgba(255,255,255,0.10));
 
   border-radius:
-    10px;
+    var(--mow-radius-control, 10px);
 
   background:
-    rgba(255,255,255,0.06);
+    var(--mow-input-bg, rgba(255,255,255,0.06));
 
   color:
-    rgba(255,248,230,0.94);
+    var(--mow-text-primary, rgba(255,248,230,0.94));
 
   font:
     700 13px system-ui, sans-serif;
@@ -606,10 +602,10 @@
 .campaign-token-popup button:hover {
 
   background:
-    rgba(241,211,142,0.12);
+    var(--mow-control-bg-hover, rgba(241,211,142,0.12));
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-button-color-hover, rgba(255,248,230,0.96));
 }
 
 
@@ -619,7 +615,7 @@
     rgba(255,154,154,0.14);
 
   color:
-    var(--danger);
+    var(--mow-danger, var(--danger));
 }
 
 

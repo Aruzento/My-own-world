@@ -15,6 +15,127 @@
 }
 
 
+.tree.is-empty-workspace {
+
+  display:
+    flex;
+
+  align-items:
+    flex-start;
+}
+
+
+.tree-empty-workspace {
+
+  width:
+    100%;
+
+  padding:
+    8px 4px;
+
+  display:
+    flex;
+}
+
+
+.tree-open-workspace-button {
+
+  width:
+    100%;
+
+  min-height:
+    34px;
+
+  padding:
+    0 10px;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    8px;
+
+  border:
+    1px solid
+    rgba(255,255,255,0.10);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,255,255,0.035);
+
+  color:
+    rgba(255,255,255,0.72);
+
+  font-size:
+    12px;
+
+  font-weight:
+    620;
+
+  cursor:
+    pointer;
+
+  transition:
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
+}
+
+
+.tree-open-workspace-button:hover {
+
+  border-color:
+    rgba(241,211,142,0.28);
+
+  background:
+    rgba(241,211,142,0.10);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.tree-open-workspace-button:active {
+
+  transform:
+    scale(0.985);
+}
+
+
+.tree-open-workspace-button .app-icon {
+
+  width:
+    15px;
+
+  height:
+    15px;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    2;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
+}
+
+
 
 /* =========================================
    TREE ITEM
@@ -629,6 +750,12 @@
   align-items:
     center;
 
+  justify-content:
+    space-between;
+
+  gap:
+    8px;
+
   border-radius:
     8px;
 
@@ -700,6 +827,125 @@
 
   cursor:
     pointer;
+}
+
+
+.tree-root-label {
+
+  min-width:
+    0;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.tree-root-actions {
+
+  margin-left:
+    auto;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    2px;
+}
+
+
+.tree-root-action {
+
+  width:
+    22px;
+
+  height:
+    22px;
+
+  min-height:
+    22px;
+
+  padding:
+    0;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border:
+    none;
+
+  border-radius:
+    6px;
+
+  background:
+    transparent;
+
+  color:
+    rgba(255,255,255,0.40);
+
+  cursor:
+    pointer;
+
+  transition:
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
+}
+
+
+.tree-root-action:hover {
+
+  background:
+    rgba(241,211,142,0.10);
+
+  color:
+    rgba(255,248,230,0.96);
+}
+
+
+.tree-root-action:active {
+
+  transform:
+    scale(0.94);
+}
+
+
+.tree-root-action .app-icon {
+
+  width:
+    14px;
+
+  height:
+    14px;
+
+  fill:
+    none;
+
+  stroke:
+    currentColor;
+
+  stroke-width:
+    2;
+
+  stroke-linecap:
+    round;
+
+  stroke-linejoin:
+    round;
 }
 
 .tree-drop-placeholder {

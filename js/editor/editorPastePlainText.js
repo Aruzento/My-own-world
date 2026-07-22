@@ -7,7 +7,7 @@ import {
 } from './editorHistory.js';
 
 import {
-  sanitizePlainTextPaste
+  sanitizeClipboardPaste
 } from './safeHtmlSanitizer.js';
 
 import {
@@ -27,14 +27,13 @@ export function setupEditorPlainTextPaste(
         !event.target.closest('.table-cell-content')
       ) {
 
-        const text =
-          sanitizePlainTextPaste(
+        const paste =
+          sanitizeClipboardPaste(
             event.clipboardData
-              ?.getData('text/plain')
           );
 
         if (
-          text &&
+          paste.shouldHandle &&
           shouldPastePlainText(
             editor,
             event.target
@@ -43,10 +42,15 @@ export function setupEditorPlainTextPaste(
 
           event.preventDefault();
 
-          insertPlainTextAtSelection(
-            editor,
-            text
-          );
+          if (
+            paste.text
+          ) {
+
+            insertPlainTextAtSelection(
+              editor,
+              paste.text
+            );
+          }
         }
       }
 

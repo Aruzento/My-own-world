@@ -17,6 +17,33 @@ const INTERACTIVE_POPUP_SELECTOR = [
   '[data-popup-drag-ignore="true"]'
 ].join(',');
 
+const FOCUSABLE_POPUP_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+  '[contenteditable="true"]'
+].join(',');
+
+const MENU_OVERLAY_KINDS =
+  new Set([
+    'menu',
+    'dropdown-menu',
+    'context-menu'
+  ]);
+
+const MENU_ITEM_SELECTOR = [
+  'a[href]',
+  'button',
+  '[role="menuitem"]',
+  '[data-overlay-menu-item="true"]'
+].join(',');
+
+const TEXT_ENTRY_SELECTOR =
+  'input, textarea, select, [contenteditable="true"]';
+
 let popupZIndex =
   10_000;
 
@@ -36,7 +63,8 @@ export function registerPopup({
   close,
   anchors = [],
   key = '',
-  modal = false
+  modal = false,
+  kind = ''
 }) {
 
   if (!popup) return null;
@@ -44,13 +72,47 @@ export function registerPopup({
   const popupKey =
     key || popup.id || `popup-${managedPopups.size + 1}`;
 
+  const overlayKind =
+    normalizeOverlayKind(
+      modal
+        ? 'dialog'
+        : kind || popup.dataset.overlayKind || 'popover'
+    );
+
+  ensureOverlayContract(
+    popup,
+    {
+      modal,
+      kind:
+        overlayKind
+    }
+  );
+
+  const closeHandler =
+    close || (() => closePopup(popup));
+
   const entry = {
     popup,
     close:
-      close || (() => closePopup(popup)),
+      () => {
+
+        closeHandler();
+
+        syncPopupOverlayState(
+          popup
+        );
+
+        restorePopupFocus(
+          entry
+        );
+      },
     anchors,
     key: popupKey,
-    modal
+    modal,
+    kind:
+      overlayKind,
+    restoreFocusElement:
+      null
   };
 
   managedPopups.set(
@@ -133,12 +195,21 @@ export function closePopup(
   popup.dataset.popupOpen =
     'false';
 
+  popup.dataset.overlayState =
+    'closed';
+
   if (
     activeDrag?.popup === popup
   ) {
 
     stopPopupDrag();
   }
+
+  restorePopupFocus(
+    getPopupEntry(
+      popup
+    )
+  );
 }
 
 
@@ -148,6 +219,38 @@ export function openPopup(
 
   if (!popup) return;
 
+  const entry =
+    getPopupEntry(
+      popup
+    );
+
+  const wasClosed =
+    popup.classList.contains(
+      'hidden'
+    );
+
+  ensureOverlayContract(
+    popup,
+    {
+      modal:
+        Boolean(
+          entry?.modal
+        ),
+      kind:
+        entry?.kind || popup.dataset.overlayKind || ''
+    }
+  );
+
+  if (
+    shouldRestorePopupFocus(entry) &&
+    wasClosed
+  ) {
+
+    capturePopupRestoreFocus(
+      entry
+    );
+  }
+
   popup.classList.remove(
     'hidden'
   );
@@ -155,10 +258,30 @@ export function openPopup(
   popup.dataset.popupOpen =
     'true';
 
+  popup.dataset.overlayState =
+    'open';
+
   popup.style.zIndex =
     String(
       ++popupZIndex
     );
+
+  if (entry?.modal) {
+
+    focusInitialPopupElement(
+      entry
+    );
+  }
+
+  if (
+    isMenuPopupEntry(entry) &&
+    wasClosed
+  ) {
+
+    focusInitialMenuItem(
+      entry
+    );
+  }
 }
 
 
@@ -272,6 +395,751 @@ export function isPopupOpen(
 }
 
 
+function ensureOverlayContract(
+  popup,
+  {
+    modal = false,
+    kind = ''
+  } = {}
+) {
+
+  if (!popup) return;
+
+  const overlayKind =
+    normalizeOverlayKind(
+      kind ||
+      (modal ? 'dialog' : popup.dataset.overlayKind || 'popover')
+    );
+
+  if (!popup.dataset.overlayLifecycle) {
+
+    popup.dataset.overlayLifecycle =
+      'popup-manager';
+  }
+
+  if (modal) {
+
+    popup.dataset.overlayKind =
+      'dialog';
+
+  } else if (
+    kind ||
+    !popup.dataset.overlayKind
+  ) {
+
+    popup.dataset.overlayKind =
+      overlayKind;
+  }
+
+  if (
+    modal ||
+    !popup.dataset.overlayModal
+  ) {
+
+    popup.dataset.overlayModal =
+      String(
+        Boolean(
+          modal
+        )
+      );
+  }
+
+  if (modal) {
+
+    if (!popup.hasAttribute('tabindex')) {
+
+      popup.tabIndex =
+        -1;
+    }
+
+    if (!popup.hasAttribute('role')) {
+
+      popup.setAttribute(
+        'role',
+        'dialog'
+      );
+    }
+
+    if (!popup.hasAttribute('aria-modal')) {
+
+      popup.setAttribute(
+        'aria-modal',
+        'true'
+      );
+    }
+  }
+
+  if (
+    isMenuOverlayKind(
+      popup.dataset.overlayKind
+    )
+  ) {
+
+    ensureMenuOverlayContract(
+      popup
+    );
+  }
+
+  if (!popup.dataset.overlayState) {
+
+    syncPopupOverlayState(
+      popup
+    );
+  }
+}
+
+
+function normalizeOverlayKind(
+  kind
+) {
+
+  const normalized =
+    String(
+      kind || ''
+    )
+      .trim()
+      .toLowerCase();
+
+  if (
+    normalized === 'dropdownmenu'
+  ) {
+
+    return 'dropdown-menu';
+  }
+
+  if (
+    normalized === 'contextmenu'
+  ) {
+
+    return 'context-menu';
+  }
+
+  return normalized || 'popover';
+}
+
+
+function isMenuOverlayKind(
+  kind
+) {
+
+  return MENU_OVERLAY_KINDS.has(
+    normalizeOverlayKind(
+      kind
+    )
+  );
+}
+
+
+function isMenuPopupEntry(
+  entry
+) {
+
+  return Boolean(
+    entry &&
+    isMenuOverlayKind(
+      entry.kind || entry.popup?.dataset.overlayKind
+    )
+  );
+}
+
+
+function ensureMenuOverlayContract(
+  popup
+) {
+
+  if (!popup.hasAttribute('role')) {
+
+    popup.setAttribute(
+      'role',
+      'menu'
+    );
+  }
+
+  if (!popup.hasAttribute('aria-orientation')) {
+
+    popup.setAttribute(
+      'aria-orientation',
+      'vertical'
+    );
+  }
+
+  refreshMenuOverlayItems(
+    popup
+  );
+}
+
+
+function refreshMenuOverlayItems(
+  popup
+) {
+
+  getMenuItemCandidates(
+    popup
+  ).forEach(item => {
+
+    if (
+      isDisabledMenuItem(
+        item
+      )
+    ) {
+
+      item.tabIndex =
+        -1;
+
+      if (!item.hasAttribute('aria-disabled')) {
+
+        item.setAttribute(
+          'aria-disabled',
+          'true'
+        );
+      }
+
+      return;
+    }
+
+    if (!item.hasAttribute('role')) {
+
+      item.setAttribute(
+        'role',
+        'menuitem'
+      );
+    }
+
+    if (!item.hasAttribute('tabindex')) {
+
+      item.tabIndex =
+        -1;
+    }
+  });
+}
+
+
+function syncPopupOverlayState(
+  popup
+) {
+
+  if (!popup) return;
+
+  const isOpen =
+    !popup.classList.contains('hidden');
+
+  popup.dataset.popupOpen =
+    String(isOpen);
+
+  popup.dataset.overlayState =
+    isOpen ? 'open' : 'closed';
+}
+
+
+function capturePopupRestoreFocus(
+  entry
+) {
+
+  const activeElement =
+    document.activeElement;
+
+  entry.restoreFocusElement =
+    activeElement &&
+    activeElement !== document.body &&
+    activeElement !== document.documentElement &&
+    !entry.popup.contains(activeElement) &&
+    typeof activeElement.focus === 'function'
+      ? activeElement
+      : null;
+}
+
+
+function focusInitialPopupElement(
+  entry
+) {
+
+  if (
+    !entry?.modal ||
+    !isPopupOpen(entry.popup)
+  ) return;
+
+  const autofocusElement =
+    entry.popup.querySelector(
+      '[data-overlay-autofocus="true"], [autofocus]'
+    );
+
+  const focusTarget =
+    isFocusableElement(
+      autofocusElement
+    )
+      ? autofocusElement
+      : getFocusablePopupElements(
+        entry.popup
+      )[0] || entry.popup;
+
+  focusPopupElement(
+    focusTarget
+  );
+}
+
+
+function focusInitialMenuItem(
+  entry
+) {
+
+  if (
+    !isMenuPopupEntry(entry) ||
+    !isPopupOpen(entry.popup)
+  ) return;
+
+  refreshMenuOverlayItems(
+    entry.popup
+  );
+
+  const firstItem =
+    getMenuItemElements(
+      entry.popup
+    )[0];
+
+  if (!firstItem) return;
+
+  focusPopupElement(
+    firstItem
+  );
+}
+
+
+function shouldRestorePopupFocus(
+  entry
+) {
+
+  return Boolean(
+    entry?.modal ||
+    isMenuPopupEntry(
+      entry
+    )
+  );
+}
+
+
+function restorePopupFocus(
+  entry
+) {
+
+  if (
+    !shouldRestorePopupFocus(
+      entry
+    )
+  ) return;
+
+  const restoreTarget =
+    entry.restoreFocusElement?.isConnected
+      ? entry.restoreFocusElement
+      : entry.anchors.find(anchor =>
+        anchor?.isConnected &&
+        typeof anchor.focus === 'function'
+      );
+
+  entry.restoreFocusElement =
+    null;
+
+  if (!restoreTarget) return;
+
+  focusPopupElement(
+    restoreTarget
+  );
+}
+
+
+function handlePopupTabKey(
+  event
+) {
+
+  const entry =
+    getTopmostOpenModalEntry();
+
+  if (!entry) return;
+
+  trapModalFocus(
+    entry,
+    event
+  );
+}
+
+
+function handlePopupMenuKey(
+  event
+) {
+
+  const entry =
+    getTopmostOpenMenuEntry();
+
+  if (!entry) return false;
+
+  const menuKeys =
+    ['ArrowDown', 'ArrowUp', 'Home', 'End', 'Enter', ' '];
+
+  if (
+    !menuKeys.includes(event.key)
+  ) return false;
+
+  const target =
+    event.target;
+
+  const isTextEntry =
+    target?.nodeType === 1 &&
+    typeof target.closest === 'function' &&
+    entry.popup.contains(target) &&
+    Boolean(
+      target.closest(
+        TEXT_ENTRY_SELECTOR
+      )
+    );
+
+  if (
+    isTextEntry &&
+    event.key !== 'ArrowDown' &&
+    event.key !== 'ArrowUp'
+  ) return false;
+
+  const items =
+    getMenuItemElements(
+      entry.popup
+    );
+
+  if (!items.length) return false;
+
+  const activeElement =
+    document.activeElement;
+
+  const activeIndex =
+    items.indexOf(
+      activeElement
+    );
+
+  if (
+    event.key === 'ArrowDown'
+  ) {
+
+    event.preventDefault();
+
+    focusMenuItemByIndex(
+      items,
+      activeIndex === -1 ? 0 : activeIndex + 1
+    );
+
+    return true;
+  }
+
+  if (
+    event.key === 'ArrowUp'
+  ) {
+
+    event.preventDefault();
+
+    focusMenuItemByIndex(
+      items,
+      activeIndex === -1 ? items.length - 1 : activeIndex - 1
+    );
+
+    return true;
+  }
+
+  if (
+    event.key === 'Home'
+  ) {
+
+    event.preventDefault();
+
+    focusMenuItemByIndex(
+      items,
+      0
+    );
+
+    return true;
+  }
+
+  if (
+    event.key === 'End'
+  ) {
+
+    event.preventDefault();
+
+    focusMenuItemByIndex(
+      items,
+      items.length - 1
+    );
+
+    return true;
+  }
+
+  if (
+    activeIndex === -1
+  ) return false;
+
+  event.preventDefault();
+
+  activeElement.click();
+
+  return true;
+}
+
+
+function trapModalFocus(
+  entry,
+  event
+) {
+
+  const focusableElements =
+    getFocusablePopupElements(
+      entry.popup
+    );
+
+  if (!focusableElements.length) {
+
+    event.preventDefault();
+
+    focusPopupElement(
+      entry.popup
+    );
+
+    return;
+  }
+
+  const activeElement =
+    document.activeElement;
+
+  const activeIndex =
+    focusableElements.indexOf(
+      activeElement
+    );
+
+  if (activeIndex === -1) {
+
+    event.preventDefault();
+
+    focusPopupElement(
+      event.shiftKey
+        ? focusableElements[focusableElements.length - 1]
+        : focusableElements[0]
+    );
+
+    return;
+  }
+
+  if (
+    event.shiftKey &&
+    activeIndex === 0
+  ) {
+
+    event.preventDefault();
+
+    focusPopupElement(
+      focusableElements[focusableElements.length - 1]
+    );
+
+    return;
+  }
+
+  if (
+    !event.shiftKey &&
+    activeIndex === focusableElements.length - 1
+  ) {
+
+    event.preventDefault();
+
+    focusPopupElement(
+      focusableElements[0]
+    );
+  }
+}
+
+
+function getTopmostOpenModalEntry() {
+
+  let topEntry =
+    null;
+
+  let topZIndex =
+    -Infinity;
+
+  managedPopups.forEach(entry => {
+
+    if (
+      !entry.modal ||
+      entry.popup.classList.contains('hidden')
+    ) return;
+
+    const zIndex =
+      Number(
+        entry.popup.style.zIndex
+      ) || 0;
+
+    if (
+      !topEntry ||
+      zIndex >= topZIndex
+    ) {
+
+      topEntry =
+        entry;
+
+      topZIndex =
+        zIndex;
+    }
+  });
+
+  return topEntry;
+}
+
+
+function getTopmostOpenMenuEntry() {
+
+  let topEntry =
+    null;
+
+  let topZIndex =
+    -Infinity;
+
+  managedPopups.forEach(entry => {
+
+    if (
+      !isMenuPopupEntry(entry) ||
+      entry.popup.classList.contains('hidden')
+    ) return;
+
+    const zIndex =
+      Number(
+        entry.popup.style.zIndex
+      ) || 0;
+
+    if (
+      !topEntry ||
+      zIndex >= topZIndex
+    ) {
+
+      topEntry =
+        entry;
+
+      topZIndex =
+        zIndex;
+    }
+  });
+
+  return topEntry;
+}
+
+
+function getMenuItemCandidates(
+  popup
+) {
+
+  if (!popup) return [];
+
+  return Array.from(
+    popup.querySelectorAll(
+      MENU_ITEM_SELECTOR
+    )
+  );
+}
+
+
+function getMenuItemElements(
+  popup
+) {
+
+  return getMenuItemCandidates(
+    popup
+  ).filter(item =>
+    !isDisabledMenuItem(item) &&
+    isFocusableElement(item)
+  );
+}
+
+
+function isDisabledMenuItem(
+  item
+) {
+
+  return Boolean(
+    item?.disabled ||
+    item?.getAttribute?.('aria-disabled') === 'true' ||
+    item?.classList?.contains('is-disabled')
+  );
+}
+
+
+function focusMenuItemByIndex(
+  items,
+  index
+) {
+
+  if (!items.length) return;
+
+  const nextIndex =
+    (index + items.length) % items.length;
+
+  focusPopupElement(
+    items[nextIndex]
+  );
+}
+
+
+function getFocusablePopupElements(
+  popup
+) {
+
+  if (!popup) return [];
+
+  return Array.from(
+    popup.querySelectorAll(
+      FOCUSABLE_POPUP_SELECTOR
+    )
+  ).filter(
+    isFocusableElement
+  );
+}
+
+
+function isFocusableElement(
+  element
+) {
+
+  if (
+    !element ||
+    typeof element.focus !== 'function'
+  ) return false;
+
+  const style =
+    window.getComputedStyle(
+      element
+    );
+
+  return (
+    style.display !== 'none' &&
+    style.visibility !== 'hidden' &&
+    element.getClientRects().length > 0
+  );
+}
+
+
+function focusPopupElement(
+  element
+) {
+
+  if (
+    !element ||
+    typeof element.focus !== 'function'
+  ) return;
+
+  try {
+
+    element.focus({
+      preventScroll:
+        true
+    });
+
+  } catch {
+
+    element.focus();
+  }
+}
+
+
 function ensurePopupManagerListeners() {
 
   if (isListening) return;
@@ -307,6 +1175,21 @@ function ensurePopupManagerListeners() {
   document.addEventListener(
     'keydown',
     event => {
+
+      if (event.key === 'Tab') {
+
+        handlePopupTabKey(
+          event
+        );
+
+        return;
+      }
+
+      if (
+        handlePopupMenuKey(
+          event
+        )
+      ) return;
 
       if (event.key !== 'Escape') return;
 
@@ -517,6 +1400,13 @@ function createPopupController(
 ) {
 
   return {
+    open() {
+
+      openPopup(
+        entry.popup
+      );
+    },
+
     openNearAnchor(anchor, options = {}) {
 
       openPopupNearAnchor(

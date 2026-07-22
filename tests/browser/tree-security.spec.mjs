@@ -17,7 +17,8 @@ test(
         async () => {
 
           const {
-            setPages
+            setPages,
+            setWorkspaceHandle
           } = await import('/js/stateActions.js');
 
           const {
@@ -29,6 +30,11 @@ test(
 
           window.__treeTitleInjected =
             false;
+
+          setWorkspaceHandle({
+            name:
+              'Test workspace'
+          });
 
           setPages([
             {

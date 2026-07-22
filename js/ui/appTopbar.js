@@ -5,6 +5,16 @@ import {
 } from './popupManager.js';
 
 import {
+  applyStoredAppearance,
+  getStoredAppearance,
+  updateStoredAppearance
+} from './themeManager.js';
+
+import {
+  setupComponentCatalogue
+} from './componentCatalogue.js';
+
+import {
   state
 } from '../state.js';
 
@@ -58,17 +68,6 @@ import {
   showOperationProgress
 } from './operationProgress.js';
 
-const APPEARANCE_STORAGE_KEY =
-  'myOwnWorld.appearance';
-
-const DEFAULT_APPEARANCE =
-  Object.freeze({
-    theme: 'dark',
-    accent: 'gold',
-    background: 'stone',
-    scale: 'normal'
-  });
-
 
 export function setupAppTopbar() {
 
@@ -97,10 +96,30 @@ export function setupAppTopbar() {
   ) return;
 
   const closeSettings =
-    () => closePopup(settingsPopup);
+    () => {
+
+      settingsButton.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+
+      closePopup(
+        settingsPopup
+      );
+    };
 
   const closeTools =
-    () => closePopup(toolsPopup);
+    () => {
+
+      toolsButton.setAttribute(
+        'aria-expanded',
+        'false'
+      );
+
+      closePopup(
+        toolsPopup
+      );
+    };
 
   registerPopup({
     popup: settingsPopup,
@@ -112,6 +131,10 @@ export function setupAppTopbar() {
     popup: toolsPopup,
     close: closeTools,
     anchors: [toolsButton]
+  });
+
+  setupComponentCatalogue({
+    toolsPopup
   });
 
   settingsButton.addEventListener(
@@ -136,13 +159,19 @@ export function setupAppTopbar() {
         settingsPopup
       );
 
-      togglePopupNearAnchor(
+      const opened =
+        togglePopupNearAnchor(
         settingsPopup,
         settingsButton,
         {
           fallbackWidth: 340,
           offset: 8
         }
+      );
+
+      settingsButton.setAttribute(
+        'aria-expanded',
+        String(opened)
       );
     }
   );
@@ -153,13 +182,19 @@ export function setupAppTopbar() {
 
       closeSettings();
 
-      togglePopupNearAnchor(
+      const opened =
+        togglePopupNearAnchor(
         toolsPopup,
         toolsButton,
         {
           fallbackWidth: 150,
           offset: 8
         }
+      );
+
+      toolsButton.setAttribute(
+        'aria-expanded',
+        String(opened)
       );
     }
   );
@@ -446,115 +481,6 @@ function createAppearanceSegmented({
   );
 
   return group;
-}
-
-
-function updateStoredAppearance(
-  patch
-) {
-
-  const next =
-    {
-      ...getStoredAppearance(),
-      ...patch
-    };
-
-  localStorage.setItem(
-    APPEARANCE_STORAGE_KEY,
-    JSON.stringify(next)
-  );
-
-  applyAppearance(
-    next
-  );
-}
-
-
-function applyStoredAppearance() {
-
-  applyAppearance(
-    getStoredAppearance()
-  );
-}
-
-
-function getStoredAppearance() {
-
-  try {
-
-    const parsed =
-      JSON.parse(
-        localStorage.getItem(APPEARANCE_STORAGE_KEY) || '{}'
-      );
-
-    return normalizeAppearance(
-      parsed
-    );
-
-  } catch {
-
-    return {
-      ...DEFAULT_APPEARANCE
-    };
-  }
-}
-
-
-function normalizeAppearance(
-  value
-) {
-
-  const next =
-    {
-      ...DEFAULT_APPEARANCE
-    };
-
-  if (['dark'].includes(value.theme)) {
-
-    next.theme =
-      value.theme;
-  }
-
-  if (['gold', 'blue', 'green', 'purple', 'red'].includes(value.accent)) {
-
-    next.accent =
-      value.accent;
-  }
-
-  if (['stone', 'forest', 'arcane'].includes(value.background)) {
-
-    next.background =
-      value.background;
-  }
-
-  if (['compact', 'normal', 'large'].includes(value.scale)) {
-
-    next.scale =
-      value.scale;
-  }
-
-  return next;
-}
-
-
-function applyAppearance({
-  theme,
-  accent,
-  background,
-  scale
-}) {
-
-  document.body.dataset.theme =
-    theme;
-
-  document.body.dataset.accent =
-    accent;
-
-  document.body.dataset.bg =
-    background;
-
-  document.body.dataset.uiScale =
-    scale;
 }
 
 

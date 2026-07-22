@@ -5,7 +5,8 @@ import {
 } from 'node:fs';
 
 import {
-  createServer
+  createServer,
+  request
 } from 'node:http';
 
 import {
@@ -52,6 +53,11 @@ const server =
     handleRequest
   );
 
+server.on(
+  'error',
+  handleServerError
+);
+
 server.listen(
   port,
   '127.0.0.1',
@@ -72,6 +78,105 @@ process.on(
   'SIGINT',
   closeServer
 );
+
+
+async function handleServerError(
+  error
+) {
+
+  if (error?.code !== 'EADDRINUSE') {
+
+    console.error(
+      error
+    );
+
+    process.exit(
+      1
+    );
+  }
+
+  const existingServerReady =
+    await probeExistingServer(
+      port
+    );
+
+  if (existingServerReady) {
+
+    console.log(
+      `Static server: reusing existing http://127.0.0.1:${port}/`
+    );
+
+    process.exit(
+      0
+    );
+  }
+
+  console.error(
+    `Static server: port ${port} is busy, but http://127.0.0.1:${port}/ did not answer.`
+  );
+
+  process.exit(
+    1
+  );
+}
+
+
+function probeExistingServer(
+  candidatePort
+) {
+
+  return new Promise(resolveProbe => {
+
+    const probe =
+      request(
+        {
+          hostname:
+            '127.0.0.1',
+          port:
+            candidatePort,
+          path:
+            '/',
+          method:
+            'GET',
+          timeout:
+            1000
+        },
+        response => {
+
+          response.resume();
+
+          resolveProbe(
+            response.statusCode >= 200 &&
+            response.statusCode < 500
+          );
+        }
+      );
+
+    probe.on(
+      'timeout',
+      () => {
+
+        probe.destroy();
+
+        resolveProbe(
+          false
+        );
+      }
+    );
+
+    probe.on(
+      'error',
+      () => {
+
+        resolveProbe(
+          false
+        );
+      }
+    );
+
+    probe.end();
+  });
+}
 
 
 function handleRequest(

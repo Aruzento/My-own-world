@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Bug Inventory
 
-Updated: 2026-07-17
+Updated: 2026-07-21
 
 Plan ref: `0.0.1.0.1`
 
@@ -110,7 +110,7 @@ Regression target: each confirmed P0/P1 bug gets a specific browser/unit/desktop
 
 Area: desktop, release, storage adapters
 
-Status: Needs repro
+Status: Partially covered
 
 Source: plan `0.0.1.2.0`, previous image/audio/workspace issues.
 
@@ -134,7 +134,7 @@ Source: user reports and plan `0.0.1.3.1`.
 
 Symptoms seen before: slow presentation, delayed sync, wrong fog/layer order, missing distance arrows, bright grid, hidden player token badge problems.
 
-Current automated status: browser smoke covers model render, delta patches, dirty fog patches, hidden player token visibility, fog above tokens, and presentation sync.
+Current automated status: browser smoke covers model render, delta patches, dirty fog patches, hidden player token visibility, fog above tokens, and presentation sync. Since `0.0.1.7.3`, focused browser smoke commands can pass Playwright filters through `npm run test:browser -- --grep ...` instead of silently running the full suite.
 
 Risk: real desktop presentation during a live game can still fail even if model-level browser tests pass.
 
@@ -226,51 +226,51 @@ Next check: open a real older workspace with existing trackers and verify tasks,
 
 Regression target: fixture based on an old tracker page if the real broken shape is found.
 
-### BUG-010. Knowledge Graph is not the intended visual graph
+### BUG-010. Knowledge Graph needs final daily-use operations and lifecycle hardening
 
 Area: knowledge graph, UX
 
-Status: Needs fix
+Status: Improved, keep in backlog
 
-Source: user report and plan `0.0.1.5.0`.
+Source: user reports, plan `0.0.1.5.0`, and 2026-07-20 recommendations.
 
-Symptoms: current graph foundation is too list-like; expected result is a visual map of nodes and relationships.
+Symptoms: the graph now has a visual canvas with nodes, edges, drag, zoom, filters, node context actions, relationship edit/delete and regression coverage. Remaining problem: it is still more of a visual workbench than a daily world-operations tool, and recent audit notes show lifecycle, maintainability and visible-slice risks.
 
-Risk: the feature exists by name but does not satisfy the user goal.
+Risk: adding more graph behavior without cleanup can reintroduce stale-state/save/undo errors and make the user believe a capped graph slice is the whole world.
 
-Next check: design and implement visual graph canvas after stabilization.
+Next check: use `BUGS_AND_IMPROVEMENTS_BACKLOG.md` BI-016 through BI-019 before adding graph features: relation operations, file split, PageCommandService/PageRecord lifecycle, and clear hidden-node counts.
 
-Regression target: graph model data generation plus browser test for opening a page from a visual node.
+Regression target: graph canvas tests for filters/edges/orphans, plus lifecycle tests for relationship/view-state saves after the graph is moved to command-based persistence.
 
 ### BUG-011. Manual restore and recovery UX still needs real-world validation
 
 Area: backup, restore, schema recovery
 
-Status: Needs repro
+Status: Partially covered / needs restore validation
 
 Source: plan `0.0.1.6.0` and backup/recovery contract.
 
-Symptoms: safe repair actions exist, but full recovery UX on messy real workspaces is not fully proven.
+Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions now cover malformed pages, partial data, missing assets, invalid workspace shape and backup-before-repair failure, but restore preview and non-page repair persistence still need validation.
 
-Risk: recovery tools can be scary or unclear if they do not explain what will change.
+Risk: recovery tools can still be scary or incomplete if restore, link cleanup, assets or map/task repairs do not explain what will change before writing.
 
-Next check: create a disposable broken workspace fixture and run schema recovery, backup-before-repair, restore, and incomplete-backup cleanup.
+Next check: create a disposable broken workspace fixture and run restore preview, partial restore, incomplete-backup cleanup, link cleanup, asset repair and persistent map/task repair flows.
 
-Regression target: storage/browser tests for recovery fallback and repair actions.
+Regression target: storage/browser tests for restore preview, partial restore, link cleanup, asset repair and future persistent repair actions.
 
 ### BUG-012. Documentation readability and encoding guard need another pass
 
 Area: docs, release handoff
 
-Status: Needs repro
+Status: Covered by smoke / watch
 
 Source: previous encoding problems and current terminal display risk for older Russian docs.
 
-Symptoms: several older documents have historically shown mojibake or damaged text in tooling. `npm run check:encoding` currently passes, so the remaining issue may be display/tooling-specific or a pattern the guard does not catch.
+Symptoms: several older documents have historically shown mojibake or damaged text in tooling. `0.0.1.7.2` kept `npm run check:encoding` green after the manual regeneration, and `0.0.1.7.4` refreshed the current release handoff entry points. The remaining issue may be display/tooling-specific or a future pattern the guard does not catch.
 
 Risk: owner cannot rely on docs, plans, and release handoff if they are hard to read.
 
-Next check: open product dashboard, known issues, smoke tests, work log, and key contracts in the editor/app view; if text is actually damaged, repair sources and extend `check_text_encoding.mjs`.
+Next check: keep opening product dashboard, known issues, smoke tests, work log, and key contracts in the editor/app view during release handoff; if text is actually damaged, repair sources and extend `check_text_encoding.mjs`.
 
 Regression target: encoding check pattern extension plus docs index.
 
@@ -280,15 +280,15 @@ Regression target: encoding check pattern extension plus docs index.
 
 Area: manual, release handoff
 
-Status: Needs fix
+Status: Fixed / watch release handoff
 
 Source: plan `0.0.1.7.1`.
 
-Symptoms: the docx manual may lag behind the current desktop, properties, graph, map, and backup behavior.
+Symptoms: the docx manual had lagged behind the current desktop, properties, graph, map, and backup behavior. `0.0.1.7.1` regenerated `docs/MY_OWN_WORLD_FULL_MANUAL.docx` and verified it as a valid docx/zip.
 
 Risk: tester or owner follows stale instructions.
 
-Next check: clean the manual generator if needed, regenerate the docx, and verify it opens as a valid zip/docx.
+Next check: keep the manual regeneration step in release handoff when user-visible features change.
 
 Regression target: keep `python -m zipfile -t docs/MY_OWN_WORLD_FULL_MANUAL.docx` in verify.
 
@@ -329,10 +329,10 @@ Not yet covered enough:
 - real installed-app smoke;
 - real older user workspace tracker/card/map fixtures;
 - real desktop audio playback and codec/path behavior;
-- visual graph canvas;
+- graph daily-use operations and lifecycle hardening;
 - full end-to-end character properties to map token behavior;
 - user-readable docs/manual review.
 
 ## Recommended Next Step
 
-Proceed to `0.0.1.1.1`: run a real desktop smoke on the known large GM workspace.
+Proceed with the active plan in `PROJECT_PLAN.md`. Current next step: `0.0.1.8.2` Design system contract, unless a P0/P1 backlog item is promoted first.

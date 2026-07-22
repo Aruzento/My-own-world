@@ -17,7 +17,8 @@ test(
         async () => {
 
           const {
-            setPages
+            setPages,
+            setWorkspaceHandle
           } = await import('/js/stateActions.js');
 
           const {
@@ -40,6 +41,11 @@ test(
                 html: '<p></p>'
               })
             );
+
+          setWorkspaceHandle({
+            name:
+              'Test workspace'
+          });
 
           setPages(
             pages

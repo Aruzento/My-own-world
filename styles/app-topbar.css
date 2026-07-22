@@ -4,7 +4,7 @@
     1 / -1;
 
   height:
-    26px;
+    var(--mow-shell-topbar-height);
 
   display:
     flex;
@@ -17,6 +17,9 @@
 
   padding:
     0 4px;
+
+  color:
+    var(--mow-shell-topbar-color);
 }
 
 
@@ -29,7 +32,67 @@
     center;
 
   gap:
-    4px;
+    var(--mow-space-1);
+}
+
+
+.app-topbar-context {
+  min-width:
+    0;
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  gap:
+    var(--mow-space-2);
+
+  color:
+    var(--mow-text-secondary);
+
+  font-size:
+    var(--mow-font-size-xs);
+
+  line-height:
+    var(--mow-line-height-tight);
+}
+
+
+.app-topbar-brand {
+  color:
+    var(--mow-text-primary);
+
+  font-weight:
+    var(--mow-font-weight-semibold);
+}
+
+
+.app-topbar-section {
+  max-width:
+    220px;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.app-topbar-context-divider {
+  width:
+    1px;
+
+  height:
+    12px;
+
+  background:
+    var(--mow-border-subtle);
 }
 
 
@@ -37,10 +100,10 @@
 .app-popup-close {
 
   width:
-    26px;
+    var(--mow-shell-topbar-height);
 
   height:
-    26px;
+    var(--mow-shell-topbar-height);
 
   display:
     inline-grid;
@@ -53,21 +116,21 @@
     transparent;
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
     transparent;
 
   color:
-    rgba(255,248,230,0.72);
+    var(--mow-shell-control-color);
 
   cursor:
     pointer;
 
   transition:
-    background 0.14s,
-    color 0.14s,
-    border-color 0.14s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
@@ -75,13 +138,13 @@
 .app-popup-close:hover {
 
   border-color:
-    rgba(241,211,142,0.18);
+    var(--mow-shell-control-border-hover);
 
   background:
-    rgba(241,211,142,0.08);
+    var(--mow-shell-control-bg-hover);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-shell-control-color-hover);
 }
 
 
@@ -92,20 +155,19 @@
     fixed;
 
   z-index:
-    1000;
+    var(--mow-z-popover);
 
   border-radius:
-    12px;
+    var(--mow-radius-overlay);
 
   border:
-    1px solid
-    rgba(241,211,142,0.16);
+    1px solid var(--mow-popover-border);
 
   background:
-    rgba(28,27,24,0.96);
+    var(--mow-popover-bg);
 
   box-shadow:
-    0 18px 46px rgba(0,0,0,0.34);
+    var(--mow-elevation-overlay);
 }
 
 
@@ -415,42 +477,41 @@
 }
 
 
-.app-tools-popup button {
+.app-tools-popup .mow-button {
 
   min-height:
-    30px;
+    var(--mow-density-control-height-md);
 
   border:
-    1px solid
-    rgba(241,211,142,0.14);
+    1px solid var(--mow-button-secondary-border);
 
   border-radius:
-    8px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.04);
+    var(--mow-button-ghost-bg);
 
   color:
-    rgba(255,248,230,0.86);
+    var(--mow-button-color);
 
   cursor:
     pointer;
 
   font-size:
-    13px;
+    var(--mow-font-size-sm);
 
   text-align:
     left;
 
   padding:
-    0 10px;
+    0 var(--mow-space-3);
 }
 
 
-.app-tools-popup button:hover {
+.app-tools-popup .mow-button:hover {
 
   background:
-    rgba(241,211,142,0.10);
+    var(--mow-button-bg-hover);
 }
 
 
@@ -876,6 +937,263 @@
 
   background:
     rgba(103,190,128,0.08);
+}
+
+
+.app-workspace-recovery-section {
+
+  padding:
+    8px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.12);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255,248,230,0.035);
+}
+
+
+.app-workspace-recovery-intro {
+
+  margin:
+    0;
+
+  color:
+    rgba(255,248,230,0.68);
+
+  font-size:
+    12px;
+
+  line-height:
+    1.45;
+}
+
+
+.app-workspace-recovery-stats {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap:
+    5px;
+}
+
+
+.app-workspace-recovery-stats div {
+
+  min-width:
+    0;
+
+  padding:
+    6px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.10);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(0,0,0,0.14);
+}
+
+
+.app-workspace-recovery-stats strong,
+.app-workspace-recovery-stats span {
+
+  display:
+    block;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.app-workspace-recovery-stats strong {
+
+  color:
+    rgba(255,248,230,0.94);
+
+  font-size:
+    15px;
+}
+
+
+.app-workspace-recovery-stats span {
+
+  color:
+    rgba(255,248,230,0.56);
+
+  font-size:
+    10px;
+}
+
+
+.app-workspace-recovery-groups {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+
+  max-height:
+    240px;
+
+  overflow:
+    auto;
+}
+
+
+.app-workspace-recovery-group {
+
+  display:
+    grid;
+
+  gap:
+    4px;
+
+  padding:
+    7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.10);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(0,0,0,0.12);
+}
+
+
+.app-workspace-recovery-group strong {
+
+  color:
+    rgba(255,248,230,0.88);
+
+  font-size:
+    12px;
+}
+
+
+.app-workspace-recovery-group p,
+.app-workspace-recovery-group-meta,
+.app-workspace-recovery-examples span,
+.app-workspace-recovery-status {
+
+  color:
+    rgba(255,248,230,0.62);
+
+  font-size:
+    11px;
+
+  line-height:
+    1.35;
+}
+
+
+.app-workspace-recovery-group p {
+
+  margin:
+    0;
+}
+
+
+.app-workspace-recovery-examples {
+
+  display:
+    grid;
+
+  gap:
+    3px;
+}
+
+
+.app-workspace-recovery-examples span {
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.app-workspace-recovery-actions {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+
+.app-workspace-recovery-repair-button {
+
+  width:
+    100%;
+
+  padding:
+    8px 10px;
+
+  border:
+    1px solid
+    rgba(103,190,128,0.34);
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(103,190,128,0.12);
+
+  color:
+    rgba(230,255,235,0.94);
+
+  font-size:
+    12px;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+}
+
+
+.app-workspace-recovery-repair-button:hover {
+
+  background:
+    rgba(103,190,128,0.18);
+}
+
+
+.app-workspace-recovery-repair-button:disabled {
+
+  cursor:
+    progress;
+
+  opacity:
+    0.66;
 }
 
 

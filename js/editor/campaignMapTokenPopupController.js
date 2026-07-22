@@ -7,8 +7,9 @@ import {
 } from '../ui/ui.js';
 
 import {
-  positionPopupNearAnchor
-} from '../ui/popupPosition.js';
+  openPopupNearAnchor,
+  registerPopup
+} from '../ui/popupManager.js';
 
 import {
   markRuntime
@@ -44,6 +45,11 @@ const TOKEN_POPUP_DELAY = 420;
 let tokenPopupTimer = null;
 let tokenPopupCloseTimer = null;
 let activeTokenPopupToken = null;
+let tokenPopupController = null;
+let tokenPopupControllerElement = null;
+
+const tokenPopupAnchors =
+  [];
 
 
 // Controller hover-попапов токенов и фигур на карте.
@@ -236,11 +242,7 @@ export function openTokenPopup(
       }
     );
 
-  popup.classList.remove(
-    'hidden'
-  );
-
-  positionPopupNearAnchor(
+  openTokenPopupNearAnchor(
     popup,
     token,
     {
@@ -254,6 +256,18 @@ export function openTokenPopup(
 
 export function closeTokenPopup() {
 
+  if (tokenPopupController) {
+
+    tokenPopupController.close();
+    return;
+  }
+
+  hideTokenPopup();
+}
+
+
+function hideTokenPopup() {
+
   const popup =
     document.getElementById('campaignTokenPopup');
 
@@ -263,6 +277,11 @@ export function closeTokenPopup() {
 
   activeTokenPopupToken =
     null;
+
+  tokenPopupAnchors.splice(
+    0,
+    tokenPopupAnchors.length
+  );
 }
 
 
@@ -323,11 +342,7 @@ function openCreatureTokenPopup(
       }
     );
 
-  popup.classList.remove(
-    'hidden'
-  );
-
-  positionPopupNearAnchor(
+  openTokenPopupNearAnchor(
     popup,
     token,
     {
@@ -434,11 +449,7 @@ function openCreatureTokenActionsPopup(
       );
     });
 
-  popup.classList.remove(
-    'hidden'
-  );
-
-  positionPopupNearAnchor(
+  openTokenPopupNearAnchor(
     popup,
     token,
     {
@@ -554,11 +565,7 @@ function openTokenSkillPopup(
       }
     );
 
-  popup.classList.remove(
-    'hidden'
-  );
-
-  positionPopupNearAnchor(
+  openTokenPopupNearAnchor(
     popup,
     token,
     {
@@ -824,11 +831,7 @@ function openTokenHpPopup(
       }
     );
 
-  popup.classList.remove(
-    'hidden'
-  );
-
-  positionPopupNearAnchor(
+  openTokenPopupNearAnchor(
     popup,
     token,
     {
@@ -849,13 +852,25 @@ function getTokenPopup() {
   let popup =
     document.getElementById('campaignTokenPopup');
 
-  if (popup) return popup;
+  if (popup) {
+
+    ensureTokenPopupController(
+      popup
+    );
+
+    return popup;
+  }
 
   popup =
     document.createElement('div');
 
   popup.id =
     'campaignTokenPopup';
+
+  popup.setAttribute(
+    'aria-label',
+    'Действия токена карты'
+  );
 
   popup.className =
     'campaign-token-popup hidden';
@@ -880,6 +895,10 @@ function getTokenPopup() {
   );
 
   document.body.appendChild(
+    popup
+  );
+
+  ensureTokenPopupController(
     popup
   );
 
@@ -933,11 +952,7 @@ function openTokenImagePopup(
       }
     );
 
-  popup.classList.remove(
-    'hidden'
-  );
-
-  positionPopupNearAnchor(
+  openTokenPopupNearAnchor(
     popup,
     token,
     {
@@ -947,6 +962,65 @@ function openTokenImagePopup(
     }
   );
 }
+
+
+function openTokenPopupNearAnchor(
+  popup,
+  token,
+  options
+) {
+
+  tokenPopupAnchors.splice(
+    0,
+    tokenPopupAnchors.length,
+    token
+  );
+
+  ensureTokenPopupController(
+    popup
+  );
+
+  openPopupNearAnchor(
+    popup,
+    token,
+    options
+  );
+}
+
+
+function ensureTokenPopupController(
+  popup
+) {
+
+  if (
+    tokenPopupController &&
+    tokenPopupControllerElement === popup
+  ) {
+
+    return tokenPopupController;
+  }
+
+  tokenPopupController =
+    registerPopup({
+      popup,
+      close:
+        hideTokenPopup,
+      anchors:
+        tokenPopupAnchors,
+      key:
+        'campaign-token-popup',
+      kind:
+        'popover',
+      modal:
+        false
+    });
+
+  tokenPopupControllerElement =
+    popup;
+
+  return tokenPopupController;
+}
+
 
 function getTokenVisibilityIcon(
   hidden

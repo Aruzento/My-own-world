@@ -208,7 +208,9 @@ Image block использует `data-block-type="image"` и не имеет з
 - `image` - картинка;
 - `properties` - свойства карточки.
 
-Source of truth для первого уровня popup `Добавить блок` - `getVisibleBlockTypesForCardType()` в `js/editor/blocks/blockPopupViews.js`. Тесты должны проверять точный список, чтобы `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `taskTracker`, page templates и другие специализированные сценарии не возвращались в меню случайно.
+Source of truth для первого уровня popup `Добавить блок` - `getVisibleBlockTypesForCardType()` в `js/editor/blocks/blockPopupViews.js`. Тесты должны проверять точный список, чтобы `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `taskTracker`, page templates и другие специализированные сценарии не возвращались в меню случайно. После `0.0.1.8.11.2` первый уровень popup также обязан использовать локальные sprite-иконки через `iconSvg()`, а не буквенные или символные заглушки.
+
+Block-level drag-and-drop после `0.0.1.8.11.2` является pointer-based runtime-поведением: `.block-drag-handle` не должен полагаться на native `draggable`, пользователь видит `.block-drag-preview` и `.block-drop-placeholder`, а история/сохранение пишутся только после реального изменения порядка.
 
 Legacy-блоки `items`, `spells`, `skills`, `characterEffects`, `characterSheet`, `characterStats`, `dndStats`, `dndStatsV2` остаются поддерживаемыми при открытии старых карточек, но не должны возвращаться в первый уровень popup `Добавить блок` без отдельного продуктового решения.
 

@@ -15,6 +15,9 @@ import {
 let savedLinkRange =
   null;
 
+let linkPopupController =
+  null;
+
 
 export function setupLinks(
   editor
@@ -139,6 +142,25 @@ function setupLinkPopup() {
       'cancelLinkBtn'
     );
 
+  popup.dataset.runtime =
+    'true';
+
+  popup.setAttribute(
+    'contenteditable',
+    'false'
+  );
+
+  popup.setAttribute(
+    'aria-label',
+    'Создание ссылки'
+  );
+
+  document
+    .getElementById('linkUrlInput')
+    ?.setAttribute(
+      'data-overlay-autofocus',
+      'true'
+    );
 
   applyButton.addEventListener(
     'click',
@@ -178,15 +200,18 @@ function setupLinkPopup() {
     }
   );
 
-  registerPopup({
+  linkPopupController =
+    registerPopup({
     popup,
-    close: closeLinkPopup,
+    close: hideLinkPopup,
     anchors: [
       document.getElementById(
         'floatingToolbar'
       )
     ],
-    key: 'link-popup'
+    key: 'link-popup',
+    kind: 'dialog',
+    modal: true
   });
 }
 
@@ -255,6 +280,19 @@ async function applyLinkFromPopup() {
 
 
 function closeLinkPopup() {
+
+  if (linkPopupController) {
+
+    linkPopupController.close();
+
+    return;
+  }
+
+  hideLinkPopup();
+}
+
+
+function hideLinkPopup() {
 
   const popup =
     document.getElementById(

@@ -206,7 +206,7 @@ export const browserSmokeScenarios = [
     area: 'ui',
     title: 'Ключевые поверхности сохраняются как визуальные smoke-артефакты',
     description:
-      'Открыть app shell, карточку, карту и task tracker, сделать screenshot attachments и проверить базовые layout-инварианты.',
+      'Открыть app shell, карточку, Add block popup, карту и task tracker, сделать screenshot attachments и проверить базовые layout-инварианты.',
     automationStatus:
       'automated: visual-safety-captures-core-surfaces и visual-layout-guards-common-regressions',
     automatesChecklist: [

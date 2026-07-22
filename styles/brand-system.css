@@ -121,39 +121,31 @@ textarea:focus-visible,
 .editor {
 
   background:
-    linear-gradient(
-      180deg,
-      var(--mow-bg-panel),
-      var(--mow-bg-panel-soft)
-    );
+    var(--mow-shell-panel-bg);
 
   border-color:
-    var(--mow-border-medium);
+    var(--mow-shell-panel-border);
 
   box-shadow:
-    var(--mow-shadow-panel),
-    inset 0 1px 0 rgba(255, 246, 222, 0.06);
+    var(--mow-shell-panel-shadow);
 }
 
 
 .app-topbar {
 
   color:
-    var(--mow-text-muted);
+    var(--mow-shell-topbar-color);
 }
 
 
-.sidebar-header,
-.sidebar-profile,
 .statusbar,
 .blocks-toolbar {
 
   border-color:
-    rgba(247, 220, 164, 0.12);
+    var(--mow-shell-divider);
 }
 
 
-.sidebar-title,
 .hero-block h1,
 .rule-tree-title,
 .task-tracker-title,
@@ -534,10 +526,10 @@ textarea::placeholder,
 .statusbar {
 
   background:
-    rgba(18, 16, 13, 0.34);
+    var(--mow-shell-statusbar-bg);
 
   color:
-    rgba(226, 209, 178, 0.62);
+    var(--mow-shell-statusbar-color);
 }
 
 

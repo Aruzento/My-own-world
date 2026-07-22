@@ -6,13 +6,13 @@
     fixed;
 
   z-index:
-    10004;
+    var(--mow-z-popover, 100);
 
   width:
     260px;
 
   padding:
-    12px;
+    var(--mow-space-3, 12px);
 
   display:
     flex;
@@ -21,17 +21,13 @@
     column;
 
   gap:
-    8px;
+    var(--mow-space-2, 8px);
 
   border-radius:
-    18px;
+    var(--mow-radius-overlay, 18px);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(28,29,27,0.96),
-      rgba(14,15,16,0.94)
-    );
+    var(--mow-popover-bg, rgba(18,21,19,0.96));
 
   backdrop-filter:
     blur(18px);
@@ -40,10 +36,10 @@
     blur(18px);
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-border, rgba(255,255,255,0.10));
 
   box-shadow:
-    0 22px 70px rgba(0,0,0,0.38),
+    var(--mow-shadow-overlay, 0 22px 70px rgba(0,0,0,0.38)),
     inset 0 1px 0 rgba(255,255,255,0.08);
 
   animation:
@@ -63,19 +59,19 @@
     0 10px;
 
   border:
-    1px solid rgba(255,255,255,0.08);
+    1px solid var(--mow-input-border, rgba(255,255,255,0.08));
 
   outline:
     none;
 
   border-radius:
-    11px;
+    var(--mow-radius-control, 11px);
 
   background:
-    rgba(255,255,255,0.055);
+    var(--mow-input-bg, rgba(255,255,255,0.055));
 
   color:
-    var(--text);
+    var(--mow-text-primary, var(--text));
 
   font-size:
     13px;
@@ -85,7 +81,7 @@
 .item-set-search::placeholder {
 
   color:
-    rgba(255,255,255,0.30);
+    var(--mow-text-muted, rgba(255,255,255,0.30));
 }
 
 
@@ -132,13 +128,13 @@
     none;
 
   border-radius:
-    8px;
+    var(--mow-radius-control, 8px);
 
   background:
     transparent;
 
   color:
-    rgba(255,255,255,0.74);
+    var(--mow-button-color, rgba(255,255,255,0.74));
 
   font-size:
     13px;
@@ -151,10 +147,10 @@
 .item-set-option:hover {
 
   background:
-    rgba(241,211,142,0.10);
+    var(--mow-control-bg-hover, rgba(241,211,142,0.10));
 
   color:
-    white;
+    var(--mow-button-color-hover, white);
 }
 
 
@@ -177,7 +173,7 @@
     8px 10px;
 
   color:
-    rgba(255,255,255,0.36);
+    var(--mow-text-muted, rgba(255,255,255,0.36));
 
   font-size:
     13px;
@@ -215,16 +211,16 @@
     0 12px;
 
   border:
-    1px solid rgba(241,211,142,0.18);
+    1px solid var(--mow-button-primary-border, rgba(241,211,142,0.18));
 
   border-radius:
-    10px;
+    var(--mow-radius-control, 10px);
 
   background:
-    rgba(241,211,142,0.09);
+    var(--mow-button-primary-bg, rgba(241,211,142,0.09));
 
   color:
-    rgba(255,248,230,0.92);
+    var(--mow-button-primary-color, rgba(255,248,230,0.92));
 
   cursor:
     pointer;
@@ -238,10 +234,10 @@
 .item-set-create-confirm:hover {
 
   background:
-    rgba(241,211,142,0.15);
+    var(--mow-control-bg-hover, rgba(241,211,142,0.15));
 
   border-color:
-    rgba(241,211,142,0.28);
+    var(--mow-accent-border, rgba(241,211,142,0.28));
 }
 
 
@@ -270,16 +266,16 @@
     0 10px;
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-input-border, rgba(255,255,255,0.10));
 
   border-radius:
-    10px;
+    var(--mow-radius-control, 10px);
 
   background:
-    rgba(255,255,255,0.06);
+    var(--mow-input-bg, rgba(255,255,255,0.06));
 
   color:
-    rgba(255,248,230,0.94);
+    var(--mow-text-primary, rgba(255,248,230,0.94));
 
   outline:
     none;

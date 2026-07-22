@@ -11,19 +11,23 @@
     <link rel="stylesheet" href="./styles/main.css"> <!-- Подключает главный CSS-файл, который импортирует остальные стили -->
   </head>
   <body> <!-- Видимая часть приложения -->
-    <div class="app"> <!-- Главный layout-контейнер приложения: sidebar + editor -->
+    <div class="app" data-app-shell-poc="0.0.1.8.5" data-ui-foundation="0.0.1.8.7" data-app-shell-migration="0.0.1.8.10" data-core-content-migration="0.0.1.8.11.3" data-app-shell-mode="tree" data-sidebar-state="expanded" data-right-panel-state="hidden"> <!-- Главный layout-контейнер приложения: sidebar + editor -->
 
-      <header class="app-topbar">
-        <div class="app-topbar-spacer"></div>
+      <header class="app-topbar" data-app-shell-zone="title-context-bar">
+        <div class="app-topbar-context">
+          <span class="app-topbar-brand">MyOwnWorld</span>
+          <span class="app-topbar-context-divider"></span>
+          <span class="app-topbar-section" id="appTopbarModeLabel">Дерево</span>
+        </div>
 
         <div class="app-topbar-actions">
-          <button id="appSettingsBtn" class="app-topbar-btn" type="button" title="Настройки">
+          <button id="appSettingsBtn" class="app-topbar-btn" type="button" title="Настройки" data-tooltip="Настройки" data-tooltip-placement="bottom" aria-label="Настройки" aria-haspopup="dialog" aria-expanded="false" aria-controls="appSettingsPopup">
             <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
               <use href="./assets/icons/rpg-ui.svg#icon-settings"></use>
             </svg>
           </button>
 
-          <button id="appToolsBtn" class="app-topbar-btn" type="button" title="Инструменты">
+          <button id="appToolsBtn" class="app-topbar-btn" type="button" title="Инструменты" data-tooltip="Инструменты" data-tooltip-placement="bottom" aria-label="Инструменты" aria-haspopup="dialog" aria-expanded="false" aria-controls="appToolsPopup">
             <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
               <use href="./assets/icons/rpg-ui.svg#icon-tools"></use>
             </svg>
@@ -31,45 +35,25 @@
         </div>
       </header>
 
-
-      <!-- SIDEBAR -->
-      <aside class="sidebar"> <!-- Левая боковая панель -->
-        <div class="sidebar-header"> <!-- Верхняя часть sidebar -->
-          
-          <div class="sidebar-title">
-            MyWorld
-          </div> <!-- Название приложения -->
-          
-          <div class="sidebar-actions"> <!-- Кнопки действий в sidebar -->
-            
-            <button id="openWorkspaceBtn" class="icon-btn" title="Workspace" >
-              <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <use href="./assets/icons/rpg-ui.svg#icon-folder-open"></use>
-              </svg>
-            </button> <!-- Кнопка выбора/открытия рабочей папки -->
-
-            <button id="newPageBtn" class="icon-btn" title="Новая страница">
-              <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <use href="./assets/icons/rpg-ui.svg#icon-plus"></use>
-              </svg>
-            </button> <!-- Кнопка открытия меню создания новой карточки -->
-          
-          </div> <!-- Кнопки действий в sidebar -->
-        </div> <!-- Верхняя часть sidebar -->
-        
-        <div class="search-wrapper"> <!-- Контейнер поиска -->
-          <input id="searchInput" placeholder="Поиск..."/> <!-- Поле поиска по страницам -->
+      <nav class="app-nav-rail" data-app-shell-zone="nav-rail" aria-label="Навигация workspace">
+        <div class="app-nav-rail-main">
+          <button id="appTreeRailBtn" class="app-nav-item is-active" type="button" data-shell-tab="tree" title="Скрыть дерево" data-tooltip="Скрыть дерево" data-tooltip-placement="right" aria-label="Скрыть дерево" aria-controls="primarySidebar" aria-expanded="true" aria-pressed="true">
+            <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <use href="./assets/icons/rpg-ui.svg#icon-folder-open"></use>
+            </svg>
+          </button>
         </div>
-        
-        <div class="tree" id="tree">
 
-        </div> <!-- Контейнер дерева страниц -->
-
-        <div class="sidebar-profile">
+        <div class="app-nav-rail-bottom">
           <button
-            class="profile-button"
+            class="profile-button rail-profile-button"
             id="profileButton"
             type="button"
+            title="Профиль"
+            data-tooltip="Профиль"
+            data-tooltip-placement="right"
+            aria-label="Профиль"
+            aria-haspopup="dialog"
           >
             <span class="profile-avatar">
               <img class="profile-image" alt="">
@@ -82,14 +66,32 @@
             </span>
           </button>
         </div>
+      </nav>
+
+
+      <!-- SIDEBAR -->
+      <aside id="primarySidebar" class="sidebar" data-app-shell-zone="primary-sidebar" aria-label="Навигация workspace"> <!-- Левая боковая панель -->
+        <div class="search-wrapper" data-core-content-zone="tree-search"> <!-- Контейнер поиска -->
+          <svg class="app-icon search-wrapper-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <use href="./assets/icons/rpg-ui.svg#icon-search"></use>
+          </svg>
+          <input id="searchInput" placeholder="Поиск..."/> <!-- Поле поиска по страницам -->
+        </div>
+
+        <div class="tree" id="tree" data-core-content-zone="world-tree">
+
+        </div> <!-- Контейнер дерева страниц -->
+
       </aside>
+
+      <div id="appSidebarResizeHandle" class="app-sidebar-resize-handle" role="separator" aria-label="Изменить ширину sidebar" aria-orientation="vertical" aria-valuemin="220" aria-valuemax="380" aria-valuenow="270" tabindex="0"></div>
 
       
       <!-- MAIN EDITOR -->
-      <main class="editor"> <!-- Правая основная область редактора -->
+      <main class="editor" data-app-shell-zone="workspace"> <!-- Правая основная область редактора -->
 
         <!-- FLOATING TOOLBAR -->
-        <div class="floating-toolbar hidden" id="floatingToolbar"> <!-- Плавающая панель форматирования текста -->
+        <div class="floating-toolbar hidden" id="floatingToolbar" role="toolbar" aria-label="Форматирование текста" data-core-content-zone="editor-format-toolbar"> <!-- Плавающая панель форматирования текста -->
           
           <button data-command="bold" title="Жирный">
             B
@@ -176,13 +178,15 @@
         </div>
 
         <!-- STATUSBAR -->
-        <div class="statusbar" id="statusbar">
+        <div class="statusbar" id="statusbar" data-app-shell-zone="status-bar">
           Готово
         </div> <!-- Нижняя строка статуса -->
       </main>
+
+      <aside id="appRightPanel" class="app-right-panel hidden" data-app-shell-zone="right-panel" aria-label="Правая панель" aria-hidden="true"></aside>
     </div>
 
-    <div id="appSettingsPopup" class="app-settings-popup hidden ui-panel" data-runtime="true">
+    <div id="appSettingsPopup" class="app-settings-popup hidden ui-panel" data-runtime="true" data-overlay-kind="popover" data-overlay-owner="app-topbar" data-overlay-lifecycle="popup-manager" data-overlay-state="closed" role="dialog" aria-modal="false" aria-label="Настройки приложения">
       <button id="appSettingsCloseBtn" class="app-popup-close" type="button" title="Закрыть">
         <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
           <use href="./assets/icons/rpg-ui.svg#icon-x"></use>
@@ -190,10 +194,10 @@
       </button>
     </div>
 
-    <div id="appToolsPopup" class="app-tools-popup hidden ui-panel" data-runtime="true">
-      <button type="button" data-onboarding-open="quickstart">Быстрый старт</button>
-      <button type="button" data-onboarding-open="product">Как устроено</button>
-      <button type="button" data-onboarding-open="checklist">Checklist</button>
+    <div id="appToolsPopup" class="app-tools-popup hidden ui-panel" data-runtime="true" data-overlay-kind="popover" data-overlay-owner="app-topbar" data-overlay-lifecycle="popup-manager" data-overlay-state="closed" role="dialog" aria-modal="false" aria-label="Инструменты">
+      <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="quickstart">Быстрый старт</button>
+      <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="product">Как устроено</button>
+      <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="checklist">Checklist</button>
     </div>
 
     <div id="onboardingPopup" class="onboarding-popup hidden ui-panel" data-runtime="true">

@@ -44,6 +44,7 @@ import {
 
 let popupState = null;
 let activeAnchor = null;
+let blockPopupController = null;
 const popupAnchors = [];
 
 
@@ -62,8 +63,13 @@ export function setupBlockPopup() {
   popup.className =
     'block-popup hidden';
 
+  popup.setAttribute(
+    'aria-labelledby',
+    'blockPopupTitle'
+  );
+
   popup.innerHTML = `
-    <div class="block-popup-title"></div>
+    <div class="block-popup-title" id="blockPopupTitle"></div>
 
     <div class="block-popup-body"></div>
 
@@ -91,10 +97,14 @@ export function setupBlockPopup() {
       applyPopupAction
     );
 
-  registerPopup({
+  blockPopupController =
+    registerPopup({
     popup,
-    close: closeBlockPopup,
-    anchors: popupAnchors
+    close: hideBlockPopup,
+    anchors: popupAnchors,
+    key: 'block-popup',
+    kind: 'dialog',
+    modal: true
   });
 }
 
@@ -626,6 +636,19 @@ function getCurrentCardType(
 
 
 function closeBlockPopup() {
+
+  if (blockPopupController) {
+
+    blockPopupController.close();
+
+    return;
+  }
+
+  hideBlockPopup();
+}
+
+
+function hideBlockPopup() {
 
   const popup =
     getPopup();

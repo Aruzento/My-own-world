@@ -13,19 +13,27 @@ Use this checklist when automated tests are green but the product still needs a 
 ## Browser
 
 1. Open the app.
-2. Create a card.
-3. Rename the card.
-4. Edit text and save.
-5. Reload and confirm the text stayed.
-6. Create a map.
-7. Add a token or object.
-8. Open presentation mode.
-9. Move the token and confirm presentation updates.
-10. Create a task tracker and add one task.
-11. Create a properties block on a character.
-12. Change ability values and confirm calculated fields update.
-13. Use search and open a result.
-14. Delete the test entities.
+2. Before opening a workspace, confirm the tree area starts with search, shows `Открыть папку`, has no duplicate `MyWorld` / `Дерево мира` header, and the profile/user bar is in the left rail.
+3. Open a disposable workspace.
+4. Create a card from the `Корень` row `+` action.
+5. Create a folder from the `Корень` row folder action and confirm it appears as a folder page.
+6. Rename the card.
+7. Edit text and save.
+8. Reload and confirm the text stayed.
+9. Open `Add block` and confirm the first-level menu shows text/list/table/image/properties with clean local icons and no letter or symbol placeholders.
+10. Drag a normal content block by its grip handle, confirm the floating preview and drop placeholder are readable, then drop it in a new position and save/reload.
+Design check after step 10: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay above the selection without covering the title or changing editor width.
+11. Create a map.
+12. Add a token or object.
+13. Open presentation mode.
+14. Move the token and confirm presentation updates.
+15. Create a task tracker and add one task.
+16. Create a properties block on a character.
+17. Change ability values and confirm calculated fields update.
+18. Use search and open a result.
+19. Confirm opening a page does not show a right page-info panel; the reserved right panel should stay hidden in normal work.
+20. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
+21. Delete the test entities.
 
 ## Desktop
 

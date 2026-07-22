@@ -14,6 +14,7 @@ import {
 
 
 let cropPopup = null;
+let cropPopupController = null;
 let activeCropImage = null;
 let cropSaveTimer = null;
 
@@ -505,12 +506,25 @@ function getCropPopup() {
   cropPopup.className =
     'image-crop-popup hidden ui-panel';
 
+  cropPopup.dataset.runtime =
+    'true';
+
+  cropPopup.setAttribute(
+    'contenteditable',
+    'false'
+  );
+
+  cropPopup.setAttribute(
+    'aria-label',
+    'Кадрирование изображения'
+  );
+
   cropPopup.innerHTML = `
     <div class="image-crop-title">Кадрирование</div>
 
     <label class="image-crop-field">
       <span>Горизонталь</span>
-      <input class="image-crop-x" type="range" min="0" max="100" value="50">
+      <input class="image-crop-x" type="range" min="0" max="100" value="50" data-overlay-autofocus="true">
     </label>
 
     <label class="image-crop-field">
@@ -549,9 +563,13 @@ function getCropPopup() {
     cropPopup
   );
 
-  registerPopup({
+  cropPopupController =
+    registerPopup({
     popup: cropPopup,
-    close: closeCropPopup
+    close: hideCropPopup,
+    key: 'image-crop-popup',
+    kind: 'dialog',
+    modal: true
   });
 
   return cropPopup;
@@ -651,6 +669,19 @@ function scheduleCropSave() {
 
 
 function closeCropPopup() {
+
+  if (cropPopupController) {
+
+    cropPopupController.close();
+
+    return;
+  }
+
+  hideCropPopup();
+}
+
+
+function hideCropPopup() {
 
   if (!cropPopup) return;
 

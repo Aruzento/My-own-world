@@ -10,9 +10,9 @@
 
   flex-wrap: wrap;
 
-  gap: 6px;
+  gap: var(--mow-space-2);
 
-  margin-bottom: 12px;
+  margin-bottom: var(--mow-space-3);
 }
 
 
@@ -35,7 +35,7 @@
 
   flex-wrap: wrap;
 
-  gap: 6px;
+  gap: var(--mow-space-2);
 }
 
 
@@ -58,37 +58,37 @@
     0 8px;
 
   border-radius:
-    999px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(255,255,255,0.05);
+    var(--mow-control-bg);
 
   border:
     1px solid
-    rgba(255,255,255,0.06);
+    var(--mow-control-border);
 
   color:
-    rgba(255,255,255,0.62);
+    var(--mow-text-secondary);
 
-  font-size: 11px;
+  font-size: var(--mow-font-size-xs);
 
   transition:
-    background 0.12s,
-    border-color 0.12s,
-    color 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
 .inline-tag:hover {
 
   background:
-    rgba(255,255,255,0.08);
+    var(--mow-control-bg-hover);
 
   border-color:
-    rgba(255,255,255,0.10);
+    var(--mow-border-focus);
 
   color:
-    rgba(255,255,255,0.92);
+    var(--mow-text-primary);
 }
 
 
@@ -121,30 +121,30 @@
   border: none;
 
   border-radius:
-    999px;
+    var(--mow-radius-xs);
 
   background: transparent;
 
   color:
-    rgba(255,255,255,0.34);
+    var(--mow-text-muted);
 
   font-size: 11px;
 
   cursor: pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
 .inline-tag-remove:hover {
 
   background:
-    rgba(255,154,154,0.14);
+    var(--mow-status-danger-bg);
 
   color:
-    var(--danger);
+    var(--mow-text-danger);
 }
 
 
@@ -167,19 +167,19 @@
   outline: none;
 
   border-radius:
-    7px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(255,255,255,0.04);
+    var(--mow-input-bg);
 
   color:
-    var(--text);
+    var(--mow-text-primary);
 
-  font-size: 11px;
+  font-size: var(--mow-font-size-xs);
 
   transition:
-    background 0.12s,
-    box-shadow 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
@@ -193,11 +193,10 @@
 .inline-tag-input:focus {
 
   background:
-    rgba(255,255,255,0.07);
+    var(--mow-control-bg-active);
 
   box-shadow:
-    0 0 0 1px
-    rgba(241,211,142,0.18);
+    var(--mow-focus-shadow);
 }
 
 
@@ -219,32 +218,32 @@
   border: none;
 
   border-radius:
-    7px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(255,255,255,0.05);
+    var(--mow-control-bg);
 
   color:
-    var(--muted);
+    var(--mow-text-secondary);
 
   font-size: 12px;
 
   cursor: pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
 }
 
 
 .inline-add-tag-btn:hover {
 
   background:
-    rgba(241,211,142,0.10);
+    var(--mow-control-bg-hover);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-text-primary);
 }
 
 
@@ -270,26 +269,26 @@
     wrap;
 
   gap:
-    6px;
+    var(--mow-space-2);
 
   margin:
-    4px 0 10px;
+    var(--mow-space-1) 0 var(--mow-space-3);
 }
 
 
 .aliases-label {
 
   color:
-    rgba(255,255,255,0.34);
+    var(--mow-text-muted);
 
   font-size:
-    11px;
+    var(--mow-font-size-xs);
 
   font-weight:
     600;
 
   letter-spacing:
-    0.04em;
+    0;
 
   white-space:
     nowrap;
@@ -308,7 +307,7 @@
     wrap;
 
   gap:
-    6px;
+    var(--mow-space-2);
 }
 
 
@@ -330,38 +329,38 @@
     0 8px;
 
   border-radius:
-    999px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(241,211,142,0.055);
+    var(--mow-accent-bg);
 
   border:
     1px solid
-    rgba(241,211,142,0.09);
+    var(--mow-border-subtle);
 
   color:
-    rgba(255,248,230,0.62);
+    var(--mow-text-secondary);
 
   font-size:
-    11px;
+    var(--mow-font-size-xs);
 
   transition:
-    background 0.12s,
-    border-color 0.12s,
-    color 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
 .inline-alias:hover {
 
   background:
-    rgba(241,211,142,0.09);
+    var(--mow-control-bg-hover);
 
   border-color:
-    rgba(241,211,142,0.16);
+    var(--mow-border-focus);
 
   color:
-    rgba(255,255,255,0.92);
+    var(--mow-text-primary);
 }
 
 
@@ -390,33 +389,33 @@
     none;
 
   border-radius:
-    999px;
+    var(--mow-radius-xs);
 
   background:
     transparent;
 
   color:
-    rgba(255,248,230,0.34);
+    var(--mow-text-muted);
 
   font-size:
-    11px;
+    var(--mow-font-size-xs);
 
   cursor:
     pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
 .inline-alias-remove:hover {
 
   background:
-    rgba(255,154,154,0.14);
+    var(--mow-status-danger-bg);
 
   color:
-    var(--danger);
+    var(--mow-text-danger);
 }
 
 
@@ -438,20 +437,20 @@
     none;
 
   border-radius:
-    7px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(241,211,142,0.045);
+    var(--mow-input-bg);
 
   color:
-    var(--text);
+    var(--mow-text-primary);
 
   font-size:
-    11px;
+    var(--mow-font-size-xs);
 
   transition:
-    background 0.12s,
-    box-shadow 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
@@ -465,11 +464,10 @@
 .inline-alias-input:focus {
 
   background:
-    rgba(241,211,142,0.075);
+    var(--mow-control-bg-active);
 
   box-shadow:
-    0 0 0 1px
-    rgba(241,211,142,0.18);
+    var(--mow-focus-shadow);
 }
 
 
@@ -491,13 +489,13 @@
     none;
 
   border-radius:
-    7px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(241,211,142,0.055);
+    var(--mow-control-bg);
 
   color:
-    rgba(255,248,230,0.46);
+    var(--mow-text-secondary);
 
   font-size:
     12px;
@@ -506,19 +504,19 @@
     pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
 }
 
 
 .inline-add-alias-btn:hover {
 
   background:
-    rgba(241,211,142,0.10);
+    var(--mow-control-bg-hover);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-text-primary);
 }
 
 

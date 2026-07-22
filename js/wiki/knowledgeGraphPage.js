@@ -23,6 +23,11 @@ import {
 } from '../ui/ui.js';
 
 import {
+  openPopupAtPoint,
+  registerPopup
+} from '../ui/popupManager.js';
+
+import {
   buildKnowledgeGraphCanvasModel,
   buildKnowledgeGraph,
   getKnowledgeGraphCanvasDomainDefinitions,
@@ -57,6 +62,12 @@ const graphCanvasHistoryByDocument =
   new WeakMap();
 
 const graphCanvasKeyboardHandlersByDocument =
+  new WeakMap();
+
+const graphNodeMenuControllersByDocument =
+  new WeakMap();
+
+const graphConnectPopupControllersByDocument =
   new WeakMap();
 
 const KNOWLEDGE_GRAPH_VIEW_PRESETS =
@@ -214,6 +225,10 @@ export function renderKnowledgeGraphPage(
       viewState,
       connectState
     )
+  );
+
+  setupKnowledgeGraphOverlays(
+    documentElement
   );
 
   setupKnowledgeGraphEvents(
@@ -1206,7 +1221,13 @@ function getCanvasConnectDetailsPopupHTML(
   }
 
   return `
-    <section class="knowledge-graph-connect-popup" data-knowledge-graph-connect-popup>
+    <section
+      class="knowledge-graph-connect-popup"
+      data-knowledge-graph-connect-popup
+      role="dialog"
+      aria-modal="false"
+      aria-label="Создание связи графа"
+    >
       <strong>
         ${escapeHTML(connectState.sourceTitle)} -> ${escapeHTML(connectState.targetTitle)}
       </strong>
@@ -1568,7 +1589,14 @@ function getCanvasOverflowNoteHTML(
 function getCanvasContextMenuHTML() {
 
   return `
-    <div class="knowledge-graph-node-menu" data-knowledge-graph-node-menu hidden>
+    <div
+      class="knowledge-graph-node-menu hidden"
+      data-knowledge-graph-node-menu
+      role="dialog"
+      aria-modal="false"
+      aria-label="Действия узла графа"
+      hidden
+    >
       <strong data-knowledge-graph-node-menu-title></strong>
       <button type="button" data-knowledge-graph-node-menu-action="open">Открыть</button>
       <button type="button" data-knowledge-graph-node-menu-action="focus">Показать соседей</button>
@@ -1875,6 +1903,166 @@ function getEmptyHTML(
       ${escapeHTML(text)}
     </div>
   `;
+}
+
+
+function setupKnowledgeGraphOverlays(
+  documentElement
+) {
+
+  const nodeMenu =
+    documentElement.querySelector(
+      '[data-knowledge-graph-node-menu]'
+    );
+
+  if (nodeMenu) {
+
+    ensureGraphNodeMenuController(
+      documentElement,
+      nodeMenu
+    );
+  }
+
+  const connectPopup =
+    documentElement.querySelector(
+      '[data-knowledge-graph-connect-popup]'
+    );
+
+  if (connectPopup) {
+
+    ensureGraphConnectPopupController(
+      documentElement,
+      connectPopup
+    );
+  }
+}
+
+
+function ensureGraphNodeMenuController(
+  documentElement,
+  menu
+) {
+
+  const existing =
+    graphNodeMenuControllersByDocument.get(
+      documentElement
+    );
+
+  if (
+    existing?.menu === menu
+  ) {
+
+    return existing.controller;
+  }
+
+  const controller =
+    registerPopup({
+      popup:
+        menu,
+      close:
+        () => hideGraphNodeContextMenuElement(
+          menu
+        ),
+      key:
+        'knowledge-graph-node-menu',
+      kind:
+        'popover',
+      modal:
+        false
+    });
+
+  graphNodeMenuControllersByDocument.set(
+    documentElement,
+    {
+      menu,
+      controller
+    }
+  );
+
+  return controller;
+}
+
+
+function ensureGraphConnectPopupController(
+  documentElement,
+  popup
+) {
+
+  const existing =
+    graphConnectPopupControllersByDocument.get(
+      documentElement
+    );
+
+  if (
+    existing?.popup === popup
+  ) {
+
+    return existing.controller;
+  }
+
+  const controller =
+    registerPopup({
+      popup,
+      close:
+        () => closeGraphConnectPopup(
+          documentElement
+        ),
+      key:
+        'knowledge-graph-connect-popup',
+      kind:
+        'dialog',
+      modal:
+        false
+    });
+
+  graphConnectPopupControllersByDocument.set(
+    documentElement,
+    {
+      popup,
+      controller
+    }
+  );
+
+  return controller;
+}
+
+
+function closeGraphConnectPopup(
+  documentElement
+) {
+
+  const popup =
+    documentElement.querySelector(
+      '[data-knowledge-graph-connect-popup]'
+    );
+
+  popup?.classList.add(
+    'hidden'
+  );
+
+  const hadConnectState =
+    Boolean(
+      documentElement.dataset.currentKnowledgeGraphConnectSource
+    );
+
+  delete documentElement.dataset.currentKnowledgeGraphConnectSource;
+  delete documentElement.dataset.currentKnowledgeGraphConnectType;
+  delete documentElement.dataset.currentKnowledgeGraphConnectTarget;
+
+  if (hadConnectState) {
+
+    setStatus(
+      'Создание связи отменено'
+    );
+  }
+
+  renderKnowledgeGraphPageAndFocus(
+    documentElement,
+    {
+      force:
+        true
+    }
+  );
 }
 
 
@@ -3105,6 +3293,14 @@ async function handleGraphConnectAction(
     return;
   }
 
+  documentElement
+    .querySelector(
+      '[data-knowledge-graph-connect-popup]'
+    )
+    ?.classList.add(
+      'hidden'
+    );
+
   delete documentElement.dataset.currentKnowledgeGraphConnectSource;
   delete documentElement.dataset.currentKnowledgeGraphConnectType;
   delete documentElement.dataset.currentKnowledgeGraphConnectTarget;
@@ -3473,49 +3669,28 @@ function showGraphNodeContextMenu(
   menu.hidden =
     false;
 
-  menu.style.left =
-    '0px';
+  menu.classList.add(
+    'hidden'
+  );
 
-  menu.style.top =
-    '0px';
+  ensureGraphNodeMenuController(
+    documentElement,
+    menu
+  );
 
-  const menuRect =
-    menu.getBoundingClientRect();
+  openPopupAtPoint(
+    menu,
+    clientX,
+    clientY,
+    {
+      fallbackWidth: 260,
+      fallbackHeight: 360
+    }
+  );
 
-  const left =
-    clampGraphCanvasPosition(
-      clientX,
-      12,
-      Math.max(
-        12,
-        window.innerWidth - menuRect.width - 12
-      )
-    );
-
-  const top =
-    clampGraphCanvasPosition(
-      clientY,
-      12,
-      Math.max(
-        12,
-        window.innerHeight - menuRect.height - 12
-      )
-    );
-
-  menu.style.left =
-    `${Math.round(left)}px`;
-
-  menu.style.top =
-    `${Math.round(top)}px`;
-
-  const actualRect =
-    menu.getBoundingClientRect();
-
-  menu.style.left =
-    `${Math.round(left + left - actualRect.left)}px`;
-
-  menu.style.top =
-    `${Math.round(top + top - actualRect.top)}px`;
+  adjustGraphNodeMenuToViewport(
+    menu
+  );
 }
 
 
@@ -3530,10 +3705,83 @@ function hideGraphNodeContextMenu(
 
   if (!menu) return;
 
+  const controller =
+    ensureGraphNodeMenuController(
+      documentElement,
+      menu
+    );
+
+  if (
+    controller?.isOpen()
+  ) {
+
+    controller.close();
+    return;
+  }
+
+  hideGraphNodeContextMenuElement(
+    menu
+  );
+}
+
+
+function hideGraphNodeContextMenuElement(
+  menu
+) {
+
   menu.hidden =
     true;
 
+  menu.classList.add(
+    'hidden'
+  );
+
   delete menu.dataset.nodeId;
+}
+
+
+function adjustGraphNodeMenuToViewport(
+  menu
+) {
+
+  const rect =
+    menu.getBoundingClientRect();
+
+  const targetLeft =
+    clampGraphCanvasPosition(
+      rect.left,
+      12,
+      Math.max(
+        12,
+        window.innerWidth - rect.width - 12
+      )
+    );
+
+  const targetTop =
+    clampGraphCanvasPosition(
+      rect.top,
+      12,
+      Math.max(
+        12,
+        window.innerHeight - rect.height - 12
+      )
+    );
+
+  const styleLeft =
+    Number.parseFloat(
+      menu.style.left
+    ) || 0;
+
+  const styleTop =
+    Number.parseFloat(
+      menu.style.top
+    ) || 0;
+
+  menu.style.left =
+    `${Math.round(styleLeft + targetLeft - rect.left)}px`;
+
+  menu.style.top =
+    `${Math.round(styleTop + targetTop - rect.top)}px`;
 }
 
 

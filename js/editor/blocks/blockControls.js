@@ -67,7 +67,7 @@ export function ensureBlockControls(
     <button
       class="block-drag-handle"
       type="button"
-      draggable="true"
+      aria-label="Перетащить блок"
       title="Перетащить блок"
     >
       ${iconSvg('grip')}

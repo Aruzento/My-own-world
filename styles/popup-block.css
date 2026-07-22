@@ -9,7 +9,7 @@
     10003;
 
   width:
-    260px;
+    336px;
 
   padding:
     12px;
@@ -24,14 +24,10 @@
     8px;
 
   border-radius:
-    18px;
+    var(--mow-radius-md);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(28,29,27,0.96),
-      rgba(14,15,16,0.94)
-    );
+    var(--mow-surface-overlay);
 
   backdrop-filter:
     blur(18px);
@@ -43,18 +39,17 @@
     1px solid rgba(255,255,255,0.10);
 
   box-shadow:
-    0 22px 70px rgba(0,0,0,0.38),
-    inset 0 1px 0 rgba(255,255,255,0.08);
+    var(--mow-elevation-overlay);
 
   animation:
-    popupFade 0.14s ease;
+    popupFade var(--mow-motion-overlay-enter) var(--mow-ease-standard);
 }
 
 
 .block-popup-title {
 
   color:
-    rgba(255,255,255,0.86);
+    var(--mow-text-primary);
 
   font-size:
     13px;
@@ -76,16 +71,16 @@
     0 10px;
 
   border:
-    1px solid rgba(255,255,255,0.08);
+    1px solid var(--mow-input-border);
 
   outline:
     none;
 
   border-radius:
-    11px;
+    var(--mow-radius-sm);
 
   background:
-    rgba(255,255,255,0.055);
+    var(--mow-input-bg);
 
   color:
     var(--text);
@@ -102,10 +97,19 @@
 }
 
 
+.block-popup-input:focus {
+  border-color:
+    var(--mow-input-border-focus);
+
+  box-shadow:
+    var(--mow-focus-shadow);
+}
+
+
 .block-popup-message {
 
   color:
-    rgba(255,255,255,0.52);
+    var(--mow-text-secondary);
 
   font-size:
     13px;
@@ -137,16 +141,17 @@
     0 10px;
 
   border:
-    none;
+    1px solid
+    var(--mow-button-secondary-border);
 
   border-radius:
-    8px;
+    var(--mow-radius-sm);
 
   background:
-    rgba(255,255,255,0.055);
+    var(--mow-button-secondary-bg);
 
   color:
-    rgba(255,255,255,0.72);
+    var(--mow-button-color);
 
   font-size:
     12px;
@@ -155,19 +160,36 @@
     pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
 }
 
 
 .block-popup-actions button:hover {
 
   background:
-    rgba(241,211,142,0.12);
+    var(--mow-button-bg-hover);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-button-color-hover);
+
+  border-color:
+    var(--mow-border-focus);
+}
+
+
+.block-popup-actions button:focus-visible {
+  outline:
+    2px solid
+    var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
+
+  box-shadow:
+    var(--mow-focus-shadow);
 }
 
 

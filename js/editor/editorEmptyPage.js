@@ -1,4 +1,8 @@
 import {
+  iconSvg
+} from '../core/icons.js';
+
+import {
   setCurrentPage
 } from '../stateActions.js';
 
@@ -58,56 +62,46 @@ export function renderEmptyEditorContent(
   );
 
   editor.innerHTML = `
-    <section class="empty-editor-page" contenteditable="false">
-      <div class="empty-editor-inner">
+    <section class="empty-editor-page" contenteditable="false" data-app-shell-surface="empty-workspace">
+      <div class="empty-editor-inner empty-workbench-card">
         <p class="empty-editor-kicker">Добро пожаловать</p>
         <h1>Создайте свой мир</h1>
 
-        <div class="empty-create-grid">
-          <button
-            class="empty-create-option"
-            type="button"
-            data-template="card"
-          >
-            <span class="empty-create-icon">◇</span>
-            <span>Карточка</span>
-          </button>
+        <p class="empty-editor-note">
+          Выберите, с чего начать: карточку персонажа или локации, карту сцены,
+          доску задач, правила или граф связей.
+        </p>
 
-          <button
-            class="empty-create-option"
-            type="button"
-            data-template="campaignMap"
-          >
-            <span class="empty-create-icon">▧</span>
-            <span>Карта</span>
-          </button>
+        <div class="empty-create-grid empty-workbench-actions" aria-label="Создать первый объект">
+          ${renderEmptyCreateButton({
+            template: 'card',
+            icon: 'document',
+            label: 'Карточка'
+          })}
 
-          <button
-            class="empty-create-option"
-            type="button"
-            data-template="taskTracker"
-          >
-            <span class="empty-create-icon">☑</span>
-            <span>Таски</span>
-          </button>
+          ${renderEmptyCreateButton({
+            template: 'campaignMap',
+            icon: 'campaign-map',
+            label: 'Карта'
+          })}
 
-          <button
-            class="empty-create-option"
-            type="button"
-            data-template="ruleTree"
-          >
-            <span class="empty-create-icon">§</span>
-            <span>Правила</span>
-          </button>
+          ${renderEmptyCreateButton({
+            template: 'taskTracker',
+            icon: 'task-tracker',
+            label: 'Задачи'
+          })}
 
-          <button
-            class="empty-create-option"
-            type="button"
-            data-template="knowledgeGraph"
-          >
-            <span class="empty-create-icon">◎</span>
-            <span>Граф связей</span>
-          </button>
+          ${renderEmptyCreateButton({
+            template: 'ruleTree',
+            icon: 'lore',
+            label: 'Правила'
+          })}
+
+          ${renderEmptyCreateButton({
+            template: 'knowledgeGraph',
+            icon: 'link',
+            label: 'Граф связей'
+          })}
         </div>
       </div>
     </section>
@@ -118,6 +112,29 @@ export function renderEmptyEditorContent(
   setStatus(
     'Пустая страница'
   );
+}
+
+
+function renderEmptyCreateButton({
+  template,
+  icon,
+  label
+}) {
+
+  return `
+    <button
+      class="empty-create-option"
+      type="button"
+      data-template="${template}"
+    >
+      <span class="empty-create-icon">
+        ${iconSvg(icon, 'app-icon', {
+          size: 'md'
+        })}
+      </span>
+      <span>${label}</span>
+    </button>
+  `;
 }
 
 
@@ -135,6 +152,11 @@ export function renderWorkspaceRecoveryEditorContent(
       ? report.actions
       : [];
 
+  const issueGroups =
+    Array.isArray(report?.issueGroups)
+      ? report.issueGroups
+      : [];
+
   editor.innerHTML = `
     <section class="empty-editor-page" contenteditable="false">
       <div class="empty-editor-inner">
@@ -145,6 +167,14 @@ export function renderWorkspaceRecoveryEditorContent(
           Приложение не исправляет эти ошибки автоматически. Сначала создайте
           резервную копию workspace, затем исправьте источник проблемы.
         </p>
+
+        ${getRecoverySummaryHTML(
+          report
+        )}
+
+        ${getRecoveryGroupsHTML(
+          issueGroups
+        )}
 
         <div class="workspace-recovery-list">
           ${actions
@@ -168,6 +198,114 @@ export function renderWorkspaceRecoveryEditorContent(
   setStatus(
     'Найдены ошибки схемы workspace'
   );
+}
+
+
+function getRecoverySummaryHTML(
+  report
+) {
+
+  const summary =
+    report?.summary || {};
+
+  const cards =
+    [
+      [
+        'Всего',
+        report?.issueCount || summary.issueCount || 0
+      ],
+      [
+        'Ошибки',
+        report?.errorCount || 0
+      ],
+      [
+        'Предупреждения',
+        report?.warningCount || 0
+      ],
+      [
+        'Можно после backup',
+        report?.safeActionCount || summary.safeActionCount || 0
+      ]
+    ];
+
+  return `
+    <div class="workspace-recovery-summary">
+      ${cards
+        .map(([label, value]) => `
+          <span>
+            <strong>${escapeHTML(value)}</strong>
+            <small>${escapeHTML(label)}</small>
+          </span>
+        `)
+        .join('')}
+    </div>
+  `;
+}
+
+
+function getRecoveryGroupsHTML(
+  groups
+) {
+
+  if (!groups.length) return '';
+
+  return `
+    <div class="workspace-recovery-groups">
+      ${groups
+        .map(group => `
+          <article class="workspace-recovery-group">
+            <header>
+              <strong>${escapeHTML(group.label)}</strong>
+              <span>${escapeHTML(group.issueCount)} шт.</span>
+            </header>
+            <p>${escapeHTML(group.description)}</p>
+            <div class="workspace-recovery-group-meta">
+              ${getRecoveryGroupMetaHTML(
+                group
+              )}
+            </div>
+          </article>
+        `)
+        .join('')}
+    </div>
+  `;
+}
+
+
+function getRecoveryGroupMetaHTML(
+  group
+) {
+
+  const meta =
+    [
+      [
+        group.errorCount,
+        'ошибок'
+      ],
+      [
+        group.warningCount,
+        'предупреждений'
+      ],
+      [
+        group.safeActionCount,
+        'безопасных действий'
+      ],
+      [
+        group.legacyWarningCount,
+        'legacy'
+      ]
+    ]
+      .filter(([value]) =>
+        Number(value || 0) > 0
+      );
+
+  if (!meta.length) return '';
+
+  return meta
+    .map(([value, label]) =>
+      `<span>${escapeHTML(value)} ${escapeHTML(label)}</span>`
+    )
+    .join('');
 }
 
 

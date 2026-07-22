@@ -737,6 +737,219 @@ test(
 
 
 test(
+  'workspace recovery report groups legacy and safe issues for humans',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          {
+            id:
+              'legacy-page',
+            title:
+              'Legacy Page',
+            parent:
+              null,
+            tags:
+              [],
+            aliases:
+              [],
+            pageRecordStatus: {
+              schemaVersionMissing:
+                true,
+              updatedAtMissing:
+                true,
+              contentHashMissing:
+                true
+            }
+          },
+          {
+            id:
+              'orphan-child',
+            title:
+              'Orphan Child',
+            parent:
+              'missing-parent',
+            tags:
+              [],
+            aliases:
+              []
+          }
+        ]
+      });
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validation
+      );
+
+    const metadataGroup =
+      report.issueGroups.find(group =>
+        group.id === 'page-metadata'
+      );
+
+    const treeGroup =
+      report.issueGroups.find(group =>
+        group.id === 'page-tree'
+      );
+
+    assert.equal(
+      report.summary.legacyWarningCount,
+      3
+    );
+
+    assert.equal(
+      report.summary.safeActionCount,
+      1
+    );
+
+    assert.equal(
+      metadataGroup.issueCount,
+      3
+    );
+
+    assert.equal(
+      treeGroup.safeActionCount,
+      1
+  );
+}
+);
+
+
+test(
+  'workspace recovery report groups malformed pages, partial data and missing assets',
+  () => {
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages: [
+          null,
+          {
+            id:
+              'partial-page',
+            title:
+              'Partial Page',
+            parent:
+              null,
+            tags:
+              'broken-tags',
+            aliases:
+              'broken-aliases'
+          },
+          {
+            id:
+              'orphan-child',
+            title:
+              'Orphan Child',
+            parent:
+              'missing-parent',
+            tags:
+              [],
+            aliases:
+              []
+          }
+        ],
+        templates: {
+          version:
+            1,
+          templates:
+            'not-an-array'
+        },
+        assetReferences: [
+          {
+            id:
+              'asset-without-path',
+            type:
+              'image',
+            owner: {
+              pageId:
+                'partial-page'
+            }
+          }
+        ]
+      });
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validation
+      );
+
+    const groupIds =
+      report.issueGroups.map(group =>
+        group.id
+      );
+
+    assert.equal(
+      report.blocking,
+      true
+    );
+
+    assert.deepEqual(
+      groupIds,
+      [
+        'page-identity',
+        'page-tree',
+        'page-content',
+        'template',
+        'asset'
+      ]
+    );
+
+    assert.equal(
+      report.safeActionCount,
+      1
+    );
+
+    assert.equal(
+      report.manualActionCount,
+      5
+    );
+
+    assert.ok(
+      report.actions.some(action =>
+        action.code === 'asset.missing_path'
+      )
+    );
+  }
+);
+
+
+test(
+  'workspace recovery report covers invalid workspace shape as a blocking fallback',
+  () => {
+
+    const report =
+      createWorkspaceRecoveryReport(
+        validateWorkspaceSnapshot({
+          pages:
+            null
+        })
+      );
+
+    assert.equal(
+      report.blocking,
+      true
+    );
+
+    assert.equal(
+      report.actions[0].code,
+      'workspace.invalid_pages'
+    );
+
+    assert.equal(
+      report.issueGroups[0].id,
+      'workspace'
+    );
+
+    assert.equal(
+      report.actions[0].repairAction.safety,
+      'manual'
+    );
+  }
+);
+
+
+test(
   'workspace repair actions require backup manifest',
   () => {
 

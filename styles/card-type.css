@@ -6,17 +6,17 @@
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: var(--mow-space-2);
 
-  margin: 6px 0 10px;
+  margin: var(--mow-space-2) 0 var(--mow-space-3);
 }
 
 
 .card-type-label {
   color:
-    rgba(255,255,255,0.34);
+    var(--mow-text-muted);
 
-  font-size: 11px;
+  font-size: var(--mow-font-size-xs);
   font-weight: 600;
   letter-spacing: 0;
 
@@ -35,7 +35,7 @@
 
 
 .card-type-trigger {
-  height: 30px;
+  height: var(--mow-control-height-md);
 
   min-width: 134px;
 
@@ -43,21 +43,17 @@
 
   border:
     1px solid
-    rgba(255,255,255,0.08);
+    var(--mow-control-border);
 
-  border-radius: 12px;
+  border-radius: var(--mow-radius-sm);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,0.09),
-      rgba(255,255,255,0.045)
-    );
+    var(--mow-control-bg);
 
   color:
-    rgba(255,255,255,0.84);
+    var(--mow-text-secondary);
 
-  font-size: 12px;
+  font-size: var(--mow-font-size-sm);
   font-weight: 560;
 
   outline: none;
@@ -70,31 +66,26 @@
   gap: 12px;
 
   transition:
-    background 0.12s,
-    color 0.12s,
-    box-shadow 0.12s,
-    border-color 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
 .card-type-trigger:hover,
 .card-type-custom.is-open .card-type-trigger {
   background:
-    linear-gradient(
-      180deg,
-      rgba(241,211,142,0.13),
-      rgba(255,255,255,0.055)
-    );
+    var(--mow-control-bg-hover);
 
-  color: white;
+  color: var(--mow-text-primary);
 }
 
 
 .card-type-trigger:focus,
 .card-type-custom.is-open .card-type-trigger {
   box-shadow:
-    0 0 0 3px rgba(241,211,142,0.09),
-    inset 0 0 0 1px rgba(241,211,142,0.28);
+    var(--mow-focus-shadow);
 }
 
 
@@ -110,17 +101,17 @@
   height: 7px;
 
   border-right:
-    1px solid rgba(255,248,230,0.78);
+    1px solid var(--mow-text-secondary);
 
   border-bottom:
-    1px solid rgba(255,248,230,0.78);
+    1px solid var(--mow-text-secondary);
 
   transform:
     rotate(45deg)
     translateY(-2px);
 
   transition:
-    transform 0.14s ease;
+    transform var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 

@@ -6,6 +6,1157 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-22: Tauri Dev Port Reuse Fix
+
+### What Changed
+
+- Fixed `npm run desktop:dev` when `http://127.0.0.1:5173/` is already open from a browser preview.
+- `tools/static_server.mjs` now handles `EADDRINUSE` on the requested port by probing the existing local server. If it answers, the command prints `Static server: reusing existing http://127.0.0.1:5173/` and exits successfully instead of breaking Tauri `beforeDevCommand`.
+- Kept the normal no-existing-server path unchanged: `npm run dev:web` still starts the local static server and stays running.
+
+### Readiness
+
+Usable. The owner can keep a browser preview open and still start the desktop app through the familiar `npm run desktop:dev` command.
+
+### Verification
+
+- Reproduced the failure before the fix: `npm run desktop:dev` failed with `Error: listen EADDRINUSE: address already in use 127.0.0.1:5173`.
+- Passed: `node --check tools\static_server.mjs`.
+- Passed: `npm run dev:web` while `5173` was already occupied; it reused the existing server and exited with code 0.
+- Passed: controlled `npm run desktop:dev` start; Tauri reached `Running target\debug\my-own-world.exe` without early failure.
+- Passed: `npm run desktop:check`.
+- Passed: focused `npm run test:browser -- --grep app-shell-empty-state`.
+- Passed: `npm run docs:index`.
+- Passed: `node tools\audit_project_files.mjs` with 543 files and 0 mojibake candidates.
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: full `npm run verify` after the final code/docs state (271 node tests, large-workspace smoke, `git diff --check`, manual docx zip check).
+
+### Follow-Up
+
+- If a future dev workflow needs multiple simultaneous app versions, add an explicit configurable dev port instead of overloading `5173`.
+
+## 2026-07-22: 0.0.1.8.11.3 Card Editor Surface And Toolbar Polish
+
+### What Changed
+
+- Advanced Phase 5 core content from `0.0.1.8.11.2` to `0.0.1.8.11.3`.
+- Migrated the visible card editor shell controls toward the shared design direction: card page navigation now uses local sprite icons with clear accessible labels, card type/tags/aliases/image controls consume design-system tokens, and card title typography no longer uses negative letter spacing or viewport-scaled font size.
+- Made the floating text toolbar an explicit accessible toolbar, gave every toolbar button an accessible label, moved the toolbar into the app overlay layer, and increased its selection gap so it does not overlap the card title while appearing.
+- Added a browser visual contract for the card editor controls: root migration marker, toolbar role/labels/width/radius/no-blur, local find-in-tree icon, restrained card type radius, no negative title letter spacing and no title/toolbar overlap.
+
+### Readiness
+
+Usable for this slice. A human can open a normal card and see a cleaner editor header/runtime-control layer without losing the existing edit, format, block, image, tag, alias or card-type behavior. Broader `0.0.1.8.11` remains active for Properties, templates, deeper search and command palette.
+
+### Verification
+
+- Passed: `node --check js\editor\editorNavigation.js`.
+- Passed: `node --check js\editor\toolbar.js`.
+- Passed: `node --check js\editor\toolbarPosition.js`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "card-editor-core-content-controls|app-shell-empty-state"` (2 browser tests).
+- Visual QA: reviewed local Playwright screenshot `test-results/card-editor-shell-qa.png`; the toolbar sits above the title without overlap and the card header controls remain readable.
+- Passed: `npm run docs:index` with 80 markdown documents, 0 missing metadata and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 543 files and 0 mojibake candidates.
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: full `npm run verify` twice after the code/docs/test state (271 node tests each, large-workspace smoke, `git diff --check`, manual docx zip check).
+- Passed: full `npm run test:browser` twice after the code/docs/test state (100 browser tests each).
+
+### Follow-Up
+
+- Continue `0.0.1.8.11` Migration Phase 5 core content with Properties, templates, deeper search and command palette migration.
+- Keep the floating toolbar as an overlay-layer control; do not move it back inside the editor panel because filtered shell surfaces can shift fixed positioning.
+
+## 2026-07-22: 0.0.1.8.11.2 Core Editor Blocks DnD And Add Block Picker
+
+### What Changed
+
+- Closed `BI-013`: editor block drag-and-drop is restored with pointer-based handling on the block grip, a real drag preview, a stable drop placeholder and cleanup of runtime-only drag UI after drop/cancel.
+- Closed `BI-014`: the first-level card `Add block` popup now uses grouped readable rows, local sprite icons, design-system spacing, focus states and compact menu sizing instead of letter/shape placeholder icons.
+- Added regression coverage for a real block reorder, save count, drag UI cleanup, non-native handle behavior and Add block popup icon/focus/radius contract.
+- Added visual smoke coverage for the Add block popup so the redesigned menu is captured with the rest of the Phase 5 core surfaces.
+- Advanced the runtime marker to `data-core-content-migration="0.0.1.8.11.2"` and updated plan, backlog, changelog, baselines, CSS inventory, design-system/block contracts, tester notes, manual checklist, release notes and browser test notes.
+
+### Readiness
+
+Usable for this slice. A human can drag blocks in the card editor again and the Add block menu now reads as a designed product control instead of a placeholder surface. Broader `0.0.1.8.11` Phase 5 remains active for the rest of core content.
+
+### Verification
+
+- Passed: `node --check js\editor\customBlocks.js`.
+- Passed: `node --check js\editor\blocks\blockControls.js`.
+- Passed: `node --check js\editor\blocks\blockPopupViews.js`.
+- Passed: `node --check tests\browser\editor-formatting.spec.mjs`.
+- Passed: `node --check tests\browser\property-blocks.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "editor-block-pointer-dnd|add-block-picker|visual-safety"` (3 browser tests).
+- Passed: focused `npm run test:browser -- --grep "property-block-picker-is-limited|editor-feature-popups-use-shared-overlay-contract"` (2 browser tests).
+- Passed: focused `npm run test:browser -- --grep app-shell` (5 browser tests).
+- Visual QA: reviewed a local Playwright screenshot of the Add block popup for icon rendering, text fit, compact radius and focus treatment.
+- Passed: `npm run verify` twice after the code/docs/test state (271 node tests each, large-workspace smoke, `git diff --check`, manual docx zip check).
+- Passed: full `npm run test:browser` twice after the code/docs/test state (99 browser tests each).
+
+### Follow-Up
+
+- Continue `0.0.1.8.11` Migration Phase 5 core content with broader card editor polish, Properties, templates, deeper search and command palette migration.
+- Keep the Add block popup intentionally small until the command palette/search path is designed; avoid adding legacy specialized blocks back into the first-level list.
+
+## 2026-07-22: 0.0.1.8.11.1 Right Panel Reserve And Tree Search Foundation
+
+### What Changed
+
+- Removed the old right page-info inspector from the active AppShell runtime, DOM, CSS and browser contract. Selecting/opening a page no longer creates a right-side metadata panel.
+- Added a hidden reserved `right-panel` AppShell slot with explicit `showAppRightPanel()` / `hideAppRightPanel()` foundation functions, so a future real workflow can open the right panel deliberately.
+- Started `0.0.1.8.11` core content with a small visible tree/search slice: the root app now carries `data-core-content-migration="0.0.1.8.11.1"`, tree/search have stable core-content zone markers, and the search field uses the local SVG `icon-search` instead of looking like an orphan input.
+- Added `BI-025` to the lightweight backlog for a future workbench model with up to 3 open work areas, such as card, campaign map and knowledge graph panes. This is not implemented yet and must be designed as workspace splitting, not as a decorative side panel.
+- Updated dashboard, plan, changelog, design-system contract, UI audit/baselines/inventory, tester instructions, manual smoke checklist, release notes and browser test notes to match the new behavior.
+
+### Readiness
+
+Foundation. Normal AppShell work is simpler because the unused page-info inspector is gone, and the right-panel slot now exists only as a deliberate future extension point. `0.0.1.8.11` remains active for the real core-content migration work.
+
+### Verification
+
+- Passed: `node --check js\ui\appShell.js`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `npm run test:browser -- app-shell` (5 browser tests).
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Passed: `npm run docs:index`.
+- Passed: `npm run check:encoding`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: full `npm run verify` twice after the final code/docs/test state.
+- Passed: full `npm run test:browser` twice after the final code/docs/test state.
+
+### Follow-Up
+
+- Continue `0.0.1.8.11` Migration Phase 5 core content with `BI-013` block drag-and-drop reproduction/fix, `BI-014` Add block popup cleanup, card editor, Properties, templates, deeper search and command palette migration.
+- Define a concrete future owner before showing the reserved right panel in normal runtime.
+- Keep `BI-025` as future planning material for the up-to-3-pane workspace model.
+
+## 2026-07-22: 0.0.1.8.10.4 AppShell Rail Profile And Tree Toggle Correction
+
+### What Changed
+
+- Removed the duplicate `MyWorld` / `Дерево мира` title block from the tree sidebar. The active context now stays in the topbar, while the sidebar starts directly with tree search and navigation.
+- Moved the user/profile bar from the bottom of the tree sidebar into the bottom of the left rail, so the tree panel is only about workspace navigation.
+- Removed the separate sidebar-collapse rail button. The existing `Дерево` rail button now shows and hides the primary tree sidebar itself.
+- Kept the existing AppShell layout state: when the tree sidebar is hidden, the editor expands into the freed space; when it is shown again, resize and inspector behavior return normally.
+- Updated AppShell and visual browser coverage for the new rail/profile/toggle model.
+
+### Readiness
+
+Usable. A human now sees a quieter VS Code-like rail: `Дерево` controls the tree panel, profile is a global rail item, and the sidebar no longer repeats the product name or mode label.
+
+### Verification
+
+- Passed: `node --check js\ui\appShell.js`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `npm run test:browser -- app-shell` (5 browser tests).
+- Passed: `npm run docs:index`.
+- Passed: `npm run check:encoding`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: full `npm run verify` twice after the final code/docs state (271 node tests each, large-workspace smoke, `git diff --check`, manual docx zip check).
+- Passed: full `npm run test:browser` twice after the final code/docs state (97 browser tests each).
+
+### Follow-Up
+
+- Continue with `0.0.1.8.11` Migration Phase 5 core content after the full verification passes for this correction.
+- Future rail entries should be real global tools; do not add a second sidebar toggle unless it owns a distinct behavior.
+
+## 2026-07-22: 0.0.1.8.10.3 AppShell Explorer Actions Correction
+
+### What Changed
+
+- Corrected the primary sidebar action placement after user review: the workspace-open and create buttons no longer sit in the sidebar header next to `MyWorld`.
+- Added a VS Code-like no-workspace tree state: the tree area itself shows one explicit `Открыть папку` button until a workspace is available.
+- Moved page creation to the `Корень` row. The root row now owns a compact `+` action for the existing create menu and a folder action that immediately creates a card with `type: folder`.
+- Converted create/open entry points to stable `data-*` action hooks so future sidebar tools can move without depending on header-only ids.
+- Updated browser coverage for the new no-workspace tree state, root create actions, create-menu trigger lifecycle and immediate folder creation.
+
+### Readiness
+
+Usable. The owner now sees a clearer Explorer model: opening a workspace is a tree-area action when no workspace exists, and creating root-level content belongs to the root row instead of the sidebar title bar.
+
+### Verification
+
+- Passed: `node --check js\app.js`.
+- Passed: `node --check js\ui\createModal.js`.
+- Passed: `node --check js\tree\tree.js`.
+- Passed: `node --check js\tree\treeRootDropZone.js`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`.
+- Passed: `node --check tests\browser\rule-tree.spec.mjs`.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`.
+- Passed: `npm run test:browser -- app-shell popup-lifecycle rule-tree knowledge-graph` (17 browser tests).
+- Passed after updating old direct tree-render tests to set fake workspace access: `npm run test:browser -- tree-security tree-virtualization` (4 browser tests).
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Passed: `npm run docs:index`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Visual QA: reviewed local Playwright screenshots for the no-workspace tree button and root-level create/folder actions.
+- Passed: full `npm run verify` twice after the final code/docs/test state (271 node tests each, large-workspace smoke, `git diff --check`, manual docx zip check).
+- Passed: full `npm run test:browser` twice after the final code/docs/test state (97 browser tests each).
+
+### Follow-Up
+
+- Continue with `0.0.1.8.11` Migration Phase 5 core content after the full verification passes for this correction.
+- Future sidebar header actions should be added only when they describe the sidebar itself; workspace/content creation belongs to tree state or root/tree rows.
+
+## 2026-07-22: 0.0.1.8.10.2 AppShell Rail Simplification
+
+### What Changed
+
+- Corrected the left AppShell rail after user review: `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` are no longer rail tabs because they duplicate page types already visible in `Дерево`.
+- Kept the rail as a real workbench surface instead of hiding it: it now has `Дерево` as the only current content navigation entry plus the sidebar collapse control. Future entries should be added only when they are distinct global tools, not alternate lists of tree content.
+- Removed the AppShell system-sidebar rendering layer and its dead CSS. The primary sidebar stays owned by the world tree and tree search.
+- Kept the right inspector useful and concrete: it appears for a selected page and shows type, path, children, links, tags and a reveal-in-tree action. It stays hidden on the empty tree start screen.
+- Updated AppShell browser coverage so it fails if content-type rail tabs return.
+- Updated dashboard, changelog, design-system contract, UI baselines, CSS inventory, release handoff and tester/browser notes so the design decision is human-readable.
+
+### Readiness
+
+Usable. A human sees one clear tree-first navigation rail without duplicated content-type sections, can still collapse/resize the sidebar, search the tree and use the inspector for the selected page.
+
+### Verification
+
+- Passed: `node --check js\ui\appShell.js`.
+- Passed: `node --check js\tree\tree.js`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- app-shell` (4 browser tests).
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Passed: `npm run docs:index`.
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify` twice after the runtime/docs correction (271 node tests each, large-workspace smoke, `git diff --check`, manual docx zip check).
+- Passed: full `npm run test:browser` twice after the runtime correction (96 browser tests each).
+
+### Follow-Up
+
+- Continue with `0.0.1.8.11` Migration Phase 5 core content after the full verification passes for this correction.
+- Future rail entries should be real tools such as command/search/diagnostics/settings/workflow surfaces, not mirrors of content types already in the world tree.
+
+## 2026-07-22: 0.0.1.8.10.1 AppShell Navigation Correction
+
+### What Changed
+
+- Corrected the `0.0.1.8.10` AppShell rail model after user review: the left rail is now system tabs, not hidden tree filters.
+- `Дерево` keeps the real world tree intact. `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` render dedicated sidebar lists and empty/create states for their systems.
+- Expanded the right AppShell inspector from a minimal context stub into a useful page/section panel: page type, path, children, links, tags, quick reveal-in-tree/system actions, and section-level create/tree actions when no page is selected.
+- Kept the empty start screen clean: no extra internal AppShell demo panels were reintroduced.
+- Updated AppShell browser coverage so tests assert tabs/system sidebar behavior instead of tree filtering.
+- After the first full browser run exposed an accidental tree ownership regression, narrowed the AppShell `pages` subscription so it updates system lists/inspector without forcing a tree rerender in `Дерево`.
+
+### Readiness
+
+Usable. A human can read the shell as a real workbench: the rail chooses the working area, the sidebar shows the navigation/list for that area, and the right panel gives relevant actions instead of decorative context.
+
+### Verification
+
+- Passed: `npm run test:browser -- app-shell` (4 browser tests).
+- Passed: `npm run test:browser -- tests/browser/page-templates.spec.mjs` after narrowing the `pages` subscription.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Visual QA: reviewed local Playwright screenshots for the `Карты` system tab and `Дерево` tab with inspector visible.
+- Passed: `npm run docs:index`.
+- Regenerated and zip-verified `docs/MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify` twice after the final code/docs state (271 node tests each, large-workspace smoke, `git diff --check`, manual docx zip check).
+- Passed: full `npm run test:browser` twice after the final code/docs state (96 browser tests each).
+
+### Follow-Up
+
+- Continue with `0.0.1.8.11` Migration Phase 5 core content after the full verification passes for this correction.
+
+## 2026-07-21: 0.0.1.8.10 AppShell Migration Closed
+
+### What Changed
+
+- Closed `0.0.1.8.10` for the real AppShell surfaces that exist today: global navigation, primary sidebar, workspace layout, inspector slot, status bar, sidebar resizing and collapsing.
+- Added a left `nav-rail` AppShell zone with six working entries for the world tree, cards, maps, task trackers, rule trees and knowledge graphs. Follow-up `0.0.1.8.10.1` corrected these entries into true system tabs instead of tree filters.
+- Added sidebar mode labels and empty-state guidance. If a system has no pages and no workspace is selected, the create action focuses the existing Workspace button and reports the requirement in the status bar instead of failing silently.
+- Added sidebar collapse and keyboard/pointer resize with clamped width, ARIA separator metadata and local UI-state persistence.
+- Added a right inspector AppShell slot. Follow-up `0.0.1.8.10.1` expanded it with page stats, section state and quick actions.
+- Kept the empty start screen as one clear action card; no internal `Workspace`, `Context`, `Diagnostics` or bottom-panel demo surfaces were reintroduced.
+
+### Readiness
+
+Usable for the existing AppShell workflow after `0.0.1.8.10.1`: a human can switch working areas from the rail, keep the tree intact in `Дерево`, understand empty system sections, resize/collapse the sidebar, and use the inspector for page/section actions. The standalone diagnostics/history bottom panel is intentionally deferred to `0.0.1.8.14` secondary screens so the app does not gain a fake empty panel.
+
+### Verification
+
+- Passed: `node --check js/ui/appShell.js`.
+- Passed: `node --check js/app.js`.
+- Passed: `node --check tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- app-shell` (4 browser tests).
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Passed: `npm run test:browser -- knowledge-graph` after updating the existing graph popup/pan guards for the narrower AppShell workspace with inspector.
+- Passed: full `npm run verify` twice for the final implementation/test state (271 node tests each, large-workspace smoke, `git diff --check` and manual docx zip check).
+- Passed: full `npm run test:browser` twice for the final implementation/test state (96 browser tests each).
+- Passed after the final documentation counter update: `npm run docs:index`, `npm run check:encoding` and `git diff --check`.
+- Visual inspection: desktop, mobile and inspector AppShell screenshots were reviewed from local Playwright captures.
+
+### Follow-Up
+
+- Continue with `0.0.1.8.11` Migration Phase 5 core content unless a P0/P1 backlog bug is promoted first.
+- Do not add a bottom diagnostics panel as a blank shell placeholder; connect it to real diagnostics/history work in the secondary-screens phase.
+
+## 2026-07-21: 0.0.1.8.9 Overlay Migration Closed
+
+### What Changed
+
+- Closed `0.0.1.8.9` as one complete overlay lifecycle migration step instead of another partial slice.
+- Moved campaign map token hover/actions popups onto `popupManager` as non-modal popovers while keeping delayed hover behavior and token action flows.
+- Moved Knowledge Graph node actions and connect-details overlays onto the shared lifecycle with `data-overlay-*` state, Escape/outside close behavior and viewport correction for right-click menus inside the graph canvas.
+- Moved item-set picker and onboarding help popup onto registered popup controllers, including shared open/close state and ARIA metadata.
+- Added a static `controller.open()` method to `popupManager` for already-positioned overlays such as onboarding.
+- Tokenized the base styles for campaign token popups, item picker, onboarding popup and Knowledge Graph overlays with shared z-index, surface, radius, shadow, control and focus tokens.
+- Extended browser regression coverage for token popup, item picker, onboarding and Knowledge Graph overlay contracts.
+- Updated the active plan and dashboard so the next active redesign block is `0.0.1.8.10` AppShell.
+
+### Readiness
+
+Foundation. The shared overlay lifecycle is now complete enough for the redesign plan to move to AppShell. Remaining visual modernization belongs to later owning phases: AppShell, core content, campaign map, Knowledge Graph and secondary screens.
+
+### Verification
+
+- Passed: `node --check` for changed JS and browser spec files.
+- Passed: targeted `git diff --check` for changed overlay JS/CSS/test files, with only existing LF-to-CRLF working-copy warnings.
+- Passed: `npm run test:browser -- popup-lifecycle` (7 browser tests).
+- Passed: `npm run test:browser -- knowledge-graph` (1 browser test).
+- Passed: `npm run test:browser -- campaign-map-ui` (9 browser tests).
+- Passed: `npm run test:browser -- app-shell` (3 browser tests).
+- Passed: `npm run test:browser -- property-blocks` (22 browser tests).
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` (2 browser tests).
+- Passed: full `npm run verify` twice (271 node tests each, large-workspace smoke and docx zip test).
+- Passed: full `npm run test:browser` twice (95 browser tests each).
+
+### Follow-Up
+
+- Continue with `0.0.1.8.10` Migration Phase 4 AppShell unless a P0/P1 backlog bug is promoted first.
+- Do not reopen `0.0.1.8.9` for broad feature restyling; feature visual redesign now belongs to the later owning migration phases.
+
+## 2026-07-21: 0.0.1.8.9 Campaign Map Generic Popup Overlay Slice
+
+### What Changed
+
+- Continued `0.0.1.8.9` without closing the whole overlay phase.
+- Registered the generic campaign map popup container (`#campaignMapPopup`) as a modal dialog overlay through `popupManager`.
+- Routed `closeMapPopup()` through the popup controller path, so map popup close/toggle behavior keeps `data-overlay-state`, `data-popup-open` and focus return synchronized.
+- Tokenized the base campaign map popup/control layer in `styles/campaign-map-popups.css`: overlay z-index, max-size, radius, surface, spacing, button/input/range styling and focus states now use shared `--mow-*` tokens.
+- Extended `popup-lifecycle.spec.mjs` so the real campaign map popup path verifies dialog semantics, modal markers, open/closed state and focus return.
+- Updated dashboard, active plan, popup lifecycle contract, design-system contract, UI migration baselines, CSS inventory, audit plan and release handoff notes so the current 8.9 status is understandable.
+
+### Readiness
+
+Foundation. The generic map popup family now shares the overlay lifecycle and tokenized base styling, but this is not the full campaign map visual migration.
+
+### Checks
+
+- Passed: `node --check js\editor\campaignMapPopupController.js`
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`
+- Passed: targeted `git diff --check` for the changed campaign map popup JS/CSS/test files with only LF-to-CRLF working-copy warnings.
+- Passed: `npm run test:browser -- popup-lifecycle` with 6 focused browser tests.
+- Passed: `npm run test:browser -- campaign-map-ui` with 9 focused browser tests.
+- Passed: `npm run test:browser -- campaign-map-initiative` with 2 focused browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 2 focused browser tests.
+- Passed: first full verification pass with `npm run verify` and 271 node tests.
+- Passed: first full browser smoke pass with `npm run test:browser` and 94 browser tests.
+- Passed: second full verification pass with `npm run verify` and 271 node tests.
+- Passed: second full browser smoke pass with `npm run test:browser` and 94 browser tests.
+- Passed: `node tools\docs_index.mjs` with 80 markdown documents and valid metadata.
+- Passed: `npm run check:encoding`.
+- Passed: `node tools\audit_project_files.mjs` and refreshed `docs\01-delivery\PROJECT_FILE_AUDIT.md` with 542 files.
+- Passed: `node tools\validate_agent_skills.mjs` with 9 valid project skills.
+- Passed: final `git diff --check` with only existing LF-to-CRLF working-copy warnings.
+
+### Risk / Remaining
+
+- `0.0.1.8.9` remains active: token hover popup, broader feature-specific visual overlay adoption and Knowledge Graph overlays are still unfinished.
+- This slice intentionally avoided stage/fog canvas/token movement animation or map business-logic changes.
+- Existing map popup sub-sections still contain local compatibility styling until the later campaign map migration phase reaches them.
+- `git diff --check` still reports existing LF-to-CRLF working-copy warnings, but no diff-check errors.
+
+### Next
+
+- Continue with the remaining `0.0.1.8.9` overlay migration, likely Knowledge Graph overlays or token-hover popup, unless a P0/P1 bug is promoted first.
+
+## 2026-07-21: 0.0.1.8.9 Editor Overlay Lifecycle Slice
+
+### What Changed
+
+- Continued `0.0.1.8.9` without closing the whole overlay phase.
+- Wired the first editor feature popups into the shared overlay lifecycle: Add block, link creation, Properties settings and image crop now register as dialog overlays through `popupManager`.
+- Wired the floating toolbar text color popup as a non-modal popover overlay, so it has explicit popover semantics without behaving like a modal dialog.
+- Routed direct close/apply/cancel paths through the shared controller path where needed, so `data-overlay-state`, `data-popup-open`, focus behavior and close buttons stay in sync.
+- Added browser regression coverage for the real editor feature popup paths instead of only the abstract popupManager fixtures.
+- Updated dashboard, active plan, popup lifecycle contract, design-system contract, UI migration baselines, CSS inventory, audit plan and release handoff notes so the current 8.9 status is understandable.
+
+### Readiness
+
+Foundation. The first real editor feature overlays now use the shared lifecycle contract, but this is still not the visual redesign of every popup.
+
+### Checks
+
+- Passed: `node --check js\editor\links.js`
+- Passed: `node --check js\editor\blocks\blockPopup.js`
+- Passed: `node --check js\editor\images.js`
+- Passed: `node --check js\editor\propertiesSettingsPopup.js`
+- Passed: `node --check js\editor\toolbar.js`
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`
+- Passed: `npm run test:browser -- popup-lifecycle` with 6 focused browser tests.
+- Passed: `npm run test:browser -- property-blocks` with 22 focused browser tests.
+- Passed: `npm run test:browser -- editor-formatting` with 2 focused browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 2 focused browser tests.
+- Passed: `npm run test:browser -- app-shell` with 3 focused browser tests.
+- Passed: first full verification pass with `npm run verify` and 271 node tests.
+- Passed: first full browser smoke pass with `npm run test:browser` and 94 browser tests.
+- Passed: second full verification pass with `npm run verify` and 271 node tests.
+- Passed: second full browser smoke pass with `npm run test:browser` and 94 browser tests.
+- Passed: `node tools\docs_index.mjs` with 80 markdown documents and valid metadata.
+- Passed: `npm run check:encoding`.
+- Passed: `node tools\audit_project_files.mjs` and refreshed `docs\01-delivery\PROJECT_FILE_AUDIT.md` with 542 files.
+- Passed: `node tools\validate_agent_skills.mjs` with 9 valid project skills.
+- Passed: final `git diff --check` with only existing LF-to-CRLF working-copy warnings.
+
+### Risk / Remaining
+
+- `0.0.1.8.9` remains active: broader visual overlay adoption, campaign map overlays and Knowledge Graph overlays are still unfinished.
+- Existing feature popup CSS remains compatibility styling until its owning visual migration phase updates it.
+- This slice intentionally standardized lifecycle, semantics and close behavior first; it did not restyle every popup surface.
+- `git diff --check` still reports existing LF-to-CRLF working-copy warnings, but no diff-check errors.
+
+### Next
+
+- Continue with the remaining `0.0.1.8.9` overlay migration unless a P0/P1 bug is promoted first.
+
+## 2026-07-21: 0.0.1.8.9 Empty Start Cleanup + Tooltip/Toast Foundation
+
+### What Changed
+
+- Continued `0.0.1.8.9` without closing the whole overlay phase.
+- Reviewed the empty start screen and removed the confusing internal AppShell demo sections: `Workspace`, `Context` and `Diagnostics`.
+- Replaced the empty-workspace surface with one clear action card: `Карточка`, `Карта`, `Задачи`, `Правила` and `Граф связей`.
+- Added the first shared CSS tooltip foundation for icon-only shell controls while keeping `title` and `aria-label` fallbacks.
+- Marked operation progress as the first toast-like overlay surface with `data-overlay-kind="toast"`, `data-overlay-state` and `data-toast-state`.
+- Updated `tests/browser/app-shell.spec.mjs` so the start screen, removed demo sections, first tooltip consumers and operation-progress toast state are guarded.
+- Updated dashboard, active plan, overlay contract, design-system contract, UI migration baselines, CSS inventory, audit plan and release handoff notes so the current status is understandable.
+
+### Readiness
+
+Foundation. The start screen is now human-readable again and the tooltip/toast layer has first real consumers, but `0.0.1.8.9` remains active for broader feature-specific overlay adoption.
+
+### Checks
+
+- Passed: `node --check js\editor\editorEmptyPage.js`
+- Passed: `node --check js\ui\operationProgress.js`
+- Passed: `node --check tests\browser\app-shell.spec.mjs`
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`
+- Passed: `npm run test:browser -- app-shell` with 3 focused browser tests.
+- Passed: `npm run test:browser -- popup-lifecycle` with 5 focused browser tests.
+- Passed: `npm run test:browser -- component-catalogue` with 1 focused browser test.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 2 focused browser tests.
+- Passed: first full verification pass with `npm run verify` and 271 node tests.
+- Passed: first full browser smoke pass with `npm run test:browser` and 93 browser tests.
+- Passed: second full verification pass with `npm run verify` and 271 node tests.
+- Passed: second full browser smoke pass with `npm run test:browser` and 93 browser tests.
+
+### Risk / Remaining
+
+- `0.0.1.8.9` remains active: broader feature-specific Dialog/Popover/ContextMenu/Tooltip/Toast adoption is still unfinished.
+- Existing feature popup CSS remains compatibility styling until its owning migration phase updates it.
+- `git diff --check` still reports existing LF-to-CRLF working-copy warnings, but no diff-check errors.
+
+### Next
+
+- Continue with the remaining `0.0.1.8.9` overlay migration unless a P0/P1 bug is promoted first.
+
+## 2026-07-21: 0.0.1.8.9 Dropdown And Context Menu Keyboard Foundation
+
+### What Changed
+
+- Continued `0.0.1.8.9` without closing the whole overlay phase.
+- Extended `popupManager` with explicit menu overlay kinds: `dropdown-menu` and `context-menu`.
+- Added shared menu lifecycle behavior: menu ARIA defaults, disabled item skipping, initial focus, ArrowUp/ArrowDown wrapping, Home/End jumps, Enter/Space activation and focus return to the opener/anchor when possible.
+- Kept text fields inside menu-like popups usable: normal text entry stays intact, while ArrowUp/ArrowDown can move from a field into the command list.
+- Connected the real create menu, tree context menu and wiki create menu to the shared overlay kind behavior.
+- Added browser regression coverage for the generic menu lifecycle and for the real create-menu keyboard path from `#newPageBtn`.
+- Updated dashboard, active plan, overlay contract, design-system contract and UI migration baselines so the current 8.9 status is human-readable.
+
+### Readiness
+
+Foundation. Dropdown/context-menu keyboard behavior now has a shared tested base, and the most obvious menu consumers are connected. This is still not the full overlay migration.
+
+### Checks
+
+- Passed: `node --check js\ui\popupManager.js`
+- Passed: `node --check js\ui\createModal.js`
+- Passed: `node --check js\tree\treeContextMenu.js`
+- Passed: `node --check js\editor\wikiLinkCreateMenu.js`
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`
+- Passed: `npm run test:browser -- popup-lifecycle` with 5 focused browser tests.
+- Passed: `npm run test:browser -- app-shell` with 3 focused browser tests for the start screen/readability concern.
+- Passed: first full verification pass with `npm run verify` and 271 node tests.
+- Passed: first full browser smoke pass with `npm run test:browser` and 93 browser tests.
+- Passed: second full verification pass with `npm run verify` and 271 node tests.
+- Passed: second full browser smoke pass with `npm run test:browser` and 93 browser tests.
+
+### Risk / Remaining
+
+- `0.0.1.8.9` remains active: tooltip primitives, toast primitives and broader feature-specific overlay adoption are still unfinished.
+- Complex picker views inside menu-like popups still keep their existing local layout/styling; this slice only unified lifecycle and keyboard behavior.
+- Existing feature popup CSS remains compatibility styling until its owning migration phase updates it.
+- `git diff --check` still reports existing LF-to-CRLF working-copy warnings, but no diff-check errors.
+
+### Next
+
+- Continue with the remaining `0.0.1.8.9` overlay migration unless a P0/P1 bug is promoted first.
+
+## 2026-07-21: 0.0.1.8.9 Overlay Focus Foundation + AppShell Start Fix
+
+### What Changed
+
+- Continued `0.0.1.8.9` without closing the whole overlay phase.
+- Fixed the empty-workspace AppShell start screen regression where starter actions were squeezed into unreadable narrow cells.
+- Scoped the fix to `[data-app-shell-surface="empty-workspace"]`: the AppShell POC nav rail now uses a readable one-column action list on desktop and stable two-column responsive behavior on small screens.
+- Added browser layout guards for the start actions: minimum button width, no horizontal overflow and no action overlap on desktop/mobile.
+- Extended `popupManager` modal behavior with `data-overlay-modal`, dialog defaults, Tab focus trap, initial modal focus and focus return to the trigger/anchor on close.
+- Added popup lifecycle browser coverage for modal focus trapping, Shift+Tab wrapping, overlay modal markers, ARIA defaults and focus return.
+- Updated design/system docs and release handoff notes so this is visible as partial `0.0.1.8.9` progress, not a completed overlay migration.
+
+### Readiness
+
+Foundation. Modal focus lifecycle now has a shared base and the broken start screen is guarded, but `0.0.1.8.9` still has remaining overlay families to migrate.
+
+### Checks
+
+- Passed: `node --check js\ui\popupManager.js`
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`
+- Passed: `node --check tests\browser\app-shell.spec.mjs`
+- Passed: `npm run test:browser -- --grep popup-manager` with 3 focused browser tests.
+- Passed: `npm run test:browser -- --grep app-shell` with 3 focused browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 2 browser tests.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`
+- Passed: first full verification pass with `npm run verify` and 271 node tests.
+- Passed: first full browser smoke pass with `npm run test:browser` and 92 browser tests.
+- Passed: second full verification pass with `npm run verify` and 271 node tests.
+- Passed: second full browser smoke pass with `npm run test:browser` and 92 browser tests.
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\audit_project_files.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: final `git diff --check` with only existing LF-to-CRLF working-copy warnings.
+
+### Risk / Remaining
+
+- `0.0.1.8.9` remains active: dropdown/context-menu keyboard behavior, tooltip primitives, toast primitives and feature-specific overlay adoption are still unfinished.
+- Existing feature popup styles remain compatibility surfaces until their owning migration phase touches them.
+- Modal outside-click behavior still follows the existing popupManager close model; this slice only unified focus lifecycle and overlay markers.
+- `git diff --check` still reports existing LF-to-CRLF working-copy warnings, but no diff-check errors.
+
+### Next
+
+- Continue with the remaining `0.0.1.8.9` overlay migration unless a P0/P1 bug is promoted first.
+
+## 2026-07-21: 0.0.1.8.8 Migration Phase 2 Primitives + 0.0.1.8.9 Overlay Foundation
+
+### What Changed
+
+- Completed `0.0.1.8.8`.
+- Added shared primitive tokens in `styles/design-tokens.css` for IconButton, Select, Checkbox, SegmentedControl, Toolbar and Separator, including density-aware sizes.
+- Expanded `styles/ui.css` with `.mow-icon-button`, `.mow-select`, `.mow-checkbox`, `.mow-segmented`, `.mow-toolbar` and `.mow-separator` states beside the existing Button/Input/Panel/Popover layer.
+- Extended `Tools -> Компоненты` so the component catalogue now exposes Button, IconButton, Field, Toolbar, Panel and Popover examples with focus, disabled, pressed, loading, invalid, checked, selected and density states.
+- Migrated the app Tools popup buttons to shared `.mow-button` styling, giving the primitive layer a real topbar consumer instead of only a catalogue sample.
+- Started the `0.0.1.8.9` overlay foundation by adding popupManager-driven `data-overlay-kind`, `data-overlay-lifecycle` and `data-overlay-state` synchronization for app topbar/component catalogue popovers.
+- Updated the dashboard, active plan, design contract, modernization plan, CSS inventory, migration baselines, browser smoke docs and release handoff files so the next active redesign step is `0.0.1.8.9`.
+
+### Readiness
+
+Foundation. The shared primitive layer is broader and tested, and overlay lifecycle markers have started, but full overlay migration is still active work.
+
+### Checks
+
+- Passed: `node --check js\ui\popupManager.js`
+- Passed: `node --check js\ui\componentCatalogue.js`
+- Passed: `node --check js\ui\appTopbar.js`
+- Passed: `node --check tests\browser\component-catalogue.spec.mjs`
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`
+- Passed: `npm run test:browser -- --grep component-catalogue` with 1 browser test.
+- Passed: `npm run test:browser -- --grep popup-manager` with 2 focused browser tests.
+- Passed: `npm run test:browser -- --grep app-shell` with 3 focused browser tests.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 2 browser tests.
+- Passed: first full verification pass with `npm run verify` and 271 node tests.
+- Passed: first full browser smoke pass with `npm run test:browser` and 91 browser tests.
+- Passed: second full verification pass with `npm run verify` and 271 node tests.
+- Passed: second full browser smoke pass with `npm run test:browser` and 91 browser tests.
+
+### Risk / Remaining
+
+- `0.0.1.8.9` is not closed: modal focus trap, focus return, dropdown/context-menu keyboard behavior, tooltip and toast primitives remain to migrate.
+- Switch, slider/stepper, tabs and scroll area primitives are still future migration targets; this slice covered the controls blocking the next safe overlay/core UI work.
+- The old feature-specific popup CSS families remain active risks until the overlay and core-content migration phases reach them.
+- `git diff --check` still reports existing LF-to-CRLF working-copy warnings, but no diff-check errors.
+
+### Next
+
+- Continue with `0.0.1.8.9` Migration Phase 3 overlays unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.7 Migration Phase 1 Foundations
+
+### What Changed
+
+- Completed `0.0.1.8.7`.
+- Added a semantic `--mow-shell-*` token family in `styles/design-tokens.css` for AppShell layout, density, topbar/statusbar height, shell gutter/padding, panel surface, divider, elevation, title, control and statusbar states.
+- Moved the current app-level shell CSS in `styles/layout.css`, `styles/app-topbar.css`, `styles/sidebar.css`, `styles/editor.css` and `styles/brand-system.css` toward those tokens without changing editor, tree, map, graph, properties or task-tracker business logic.
+- Added `data-ui-foundation="0.0.1.8.7"` to the root `.app` so the active foundation layer is inspectable in runtime.
+- Extended `tests/browser/app-shell.spec.mjs` with a guard for the foundation marker, tokenized shell surfaces and compact density behavior.
+- Updated the dashboard, active plan, design contract, modernization plan, CSS inventory delta, migration baselines and release handoff files so the next active redesign step is `0.0.1.8.8`.
+
+### Readiness
+
+Foundation. The AppShell has a real shared shell-token layer now, but this is not the full primitive, overlay, map, graph or content-surface migration.
+
+### Checks
+
+- Passed: `node --check tests\browser\app-shell.spec.mjs`
+- Passed: `node --test tests\themeManager.test.mjs tests\icons.test.mjs`
+- Passed: `npm run test:browser -- --grep app-shell` with 3 browser tests
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 2 browser tests
+- Passed: first full verification pass with `npm run verify` and 271 node tests
+- Passed: first full browser smoke pass with `npm run test:browser` and 91 browser tests
+- Passed: second full verification pass with `npm run verify` and 271 node tests
+- Passed: second full browser smoke pass with `npm run test:browser` and 91 browser tests
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\audit_project_files.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: final `git diff --check` with only existing LF-to-CRLF working-copy warnings.
+
+### Risk / Remaining
+
+- The first focused AppShell run exposed a density inheritance issue: body-level `data-ui-scale="compact"` did not shrink the shell gap until the shell density aliases were also redefined inside `[data-ui-scale]`. That is fixed and covered by the new browser guard.
+- `styles/brand-system.css` still acts as a compatibility skin; later migration phases should shrink it rather than keep adding app-wide overrides.
+- Search hints and topbar popups still have deeper overlay-specific styling that belongs to the later overlay migration, not this foundation slice.
+
+### Next
+
+- Continue with `0.0.1.8.8` Migration Phase 2 primitives unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.6 Migration Phase 0 Audit Baselines
+
+### What Changed
+
+- Completed `0.0.1.8.6`.
+- Added `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md` as the Phase 0 manifest for UI, CSS, icon, popup and screenshot baselines.
+- Expanded `tests/browser/visual-regression.spec.mjs` so its screenshot attachments cover AppShell, empty-workbench POC, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker and shared component catalogue popover surfaces.
+- Added `tests/uiMigrationBaselines.test.mjs` to keep the baseline manifest synchronized with the visual smoke attachment names and required system inventory rows.
+- Updated the dashboard, active plan, design contract, modernization plan, CSS inventory report, browser smoke README and release handoff files so the next active redesign step is `0.0.1.8.7`.
+
+### Readiness
+
+Foundation. The migration baseline layer is now documented and test-backed, but it is not a broad visual migration and does not change feature workflows.
+
+### Checks
+
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`
+- Passed: `node --check tests\uiMigrationBaselines.test.mjs`
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\audit_project_files.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: first full verification pass with `npm run verify` and 271 node tests
+- Passed: first full browser smoke pass with `npm run test:browser` and 90 browser tests
+- Passed: second full verification pass with `npm run verify` and 271 node tests
+- Passed: second full browser smoke pass with `npm run test:browser` and 90 browser tests
+- Passed: final `git diff --check` with only existing LF-to-CRLF working-copy warnings.
+
+### Risk / Remaining
+
+- Baselines are screenshot attachments and layout guards, not strict pixel snapshot comparisons yet.
+- The visual smoke uses synthetic browser state and must not be treated as a replacement for real-workspace manual review.
+- Future migration phases must update `UI_MIGRATION_BASELINES.md` intentionally when they change a baseline surface.
+
+### Next
+
+- Continue with `0.0.1.8.7` Migration Phase 1 foundations unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.5 AppShell Proof Of Concept
+
+### What Changed
+
+- Completed `0.0.1.8.5`.
+- Added semantic AppShell zone markers to the existing shell: title/context bar, primary sidebar, workspace and status bar.
+- Replaced the blank topbar spacer with a quiet title/context strip that identifies `MyOwnWorld` and the current workspace context without adding another command-heavy toolbar.
+- Migrated the safe empty workspace start screen into the first visible workbench AppShell POC: title/context, functional nav rail create actions, workspace panel, inspector context and bottom diagnostics panel.
+- Replaced the old empty-screen glyph buttons with local SVG sprite icons through `iconSvg`, keeping the existing `.empty-create-option` click path and page-template behavior.
+- Added responsive AppShell POC CSS so the start surface stacks on narrow viewports without hiding the five starter actions.
+- Extended `tests/browser/app-shell.spec.mjs` to verify shell zone markers, the AppShell POC surface, local icons, inspector/bottom panel visibility, mobile width and the existing Settings/Tools/statusbar flows.
+- Removed `0.0.1.8.5` from the active plan and advanced the dashboard/plan to `0.0.1.8.6` Migration Phase 0 audit baselines.
+
+### Readiness
+
+Foundation. A real visible AppShell POC exists on one safe surface, but the tree, editor pages, maps, graph, task tracker and full global navigation are not migrated yet.
+
+### Checks
+
+- Passed: `node --check js\editor\editorEmptyPage.js`
+- Passed: `node --check tests\browser\app-shell.spec.mjs`
+- Passed: `npm run test:browser -- --grep app-shell`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: first full verification pass with `npm run verify`
+- Passed: first full browser smoke pass with `npm run test:browser` and 90 browser tests
+- Passed: second full verification pass with `npm run verify`
+- Passed: second full browser smoke pass with `npm run test:browser` and 90 browser tests
+
+### Risk / Remaining
+
+- The AppShell nav rail is scoped to the empty start screen and keeps the existing create-template behavior; it is not yet the final global mode navigation.
+- Full AppShell migration remains in later redesign phases, especially `0.0.1.8.10`.
+- The next plan item is `0.0.1.8.6`, which should collect screenshot and inventory baselines before broader migration.
+
+### Next
+
+- Continue with `0.0.1.8.6` Migration Phase 0 audit baselines unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.4 Component Catalogue Proof Of Concept
+
+### What Changed
+
+- Completed `0.0.1.8.4`.
+- Added a visible `Tools -> Компоненты` entry that opens the first shared component catalogue instead of hiding the design-system work in CSS only.
+- Added `js/ui/componentCatalogue.js`, using the existing `popupManager` lifecycle and local SVG sprite path for the catalogue trigger, close action and sample command icons.
+- Expanded `styles/ui.css` with shared `.mow-button`, `.mow-input`, `.mow-panel` and `.mow-popover` primitive seeds, including hover, active, focus-visible, disabled, readonly, invalid, pressed, loading, density and reduced-motion behavior.
+- Added component-level tokens in `styles/design-tokens.css` for button variants, input invalid state, panel surfaces and popover borders.
+- Fixed the body-level density token inheritance for the new primitives so `body[data-ui-scale]` changes control height, panel padding and icon sizing through the shared token layer.
+- Added `tests/browser/component-catalogue.spec.mjs` to verify the visible catalogue path, primitive state examples, density change, focus movement, Escape close and absence of browser console/page errors.
+- Removed `0.0.1.8.4` from the active plan and advanced the dashboard/plan to `0.0.1.8.5` AppShell proof of concept.
+
+### Readiness
+
+Foundation. The first visible primitive catalogue exists and is tested, but it deliberately does not migrate the tree, editor, map, graph, task tracker or other real app screens yet.
+
+### Checks
+
+- Passed: `node --check js\ui\componentCatalogue.js`
+- Passed: `node --check js\ui\appTopbar.js`
+- Passed: `node --check tests\browser\component-catalogue.spec.mjs`
+- Passed: `npm run test:browser -- --grep component-catalogue`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: first full verification pass with `npm run verify`.
+- Passed: first full browser smoke pass with `npm run test:browser` and 89 browser tests.
+- Passed: second full verification pass with `npm run verify`.
+- Passed: second full browser smoke pass with `npm run test:browser` and 89 browser tests.
+- Note: an earlier full browser pass exposed the density token inheritance issue in the new primitive layer; it was fixed before the two final full passes above.
+
+### Risk / Remaining
+
+- The catalogue is a reference surface, not the full component library migration.
+- Shared primitives still need real consumers in later plan items before old feature-specific button/input/panel/popup styles can be removed.
+- The next plan item is `0.0.1.8.5`, which should create a minimal AppShell proof of concept on one safe surface.
+
+### Next
+
+- Continue with `0.0.1.8.5` AppShell proof of concept unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.3 Theme Foundation Proof Of Concept
+
+### What Changed
+
+- Completed `0.0.1.8.3`.
+- Added `js/ui/themeManager.js` as the shared runtime owner for appearance state: theme, accent, background and UI scale now normalize, persist and apply through one provider instead of living inside the topbar module.
+- Kept the existing Settings appearance panel behavior, but moved its storage/application logic to the theme manager so later UI work can reuse it without coupling to `appTopbar.js`.
+- Expanded `styles/design-tokens.css` with semantic token families for app surfaces, text, accents, borders, focus, controls, density, icons, elevation, motion, z-index and initial map/graph/block/property/task/diagnostics aliases.
+- Added typography, spacing, radius, status and reduced-motion aliases so future migrated UI can use readable names instead of ad hoc values.
+- Connected the shared `styles/ui.css` seed layer to the new tokens for icons, buttons, inputs and operation progress motion as a narrow proof of concept.
+- Hardened `js/core/icons.js` while keeping the old `iconSvg(name, className)` contract: SVG output now normalizes icon names, escapes attributes/text, supports optional labels and `data-icon-size`, and keeps decorative icons hidden from assistive tech by default.
+- Added unit coverage for the theme manager and icon helper, and extended the app shell browser smoke to verify runtime CSS token propagation after changing the accent.
+- Removed `0.0.1.8.3` from the active plan and advanced the dashboard/plan to `0.0.1.8.4` Component catalogue proof of concept.
+
+### Readiness
+
+Foundation. The theme/token/icon runtime foundation exists and is test-covered, but the full visible redesign has not started. The next work should build the first shared component catalogue before migrating large screens.
+
+### Checks
+
+- Passed: `node --test tests\icons.test.mjs tests\themeManager.test.mjs`
+- Passed: `npm test` with 270 unit/integration tests.
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: first full verification pass with `npm run verify`.
+- Passed: first browser smoke pass with `npm run test:browser`.
+- Passed: second full verification pass with `npm run verify`.
+- Passed: second browser smoke pass with `npm run test:browser`.
+
+### Risk / Remaining
+
+- This deliberately does not migrate the tree, editor, properties, campaign map, Knowledge Graph or task tracker visuals.
+- The `blue` accent still exists as an optional user preset, but the default remains Candle Gold style.
+- Large feature CSS files still contain local visual values; they should be migrated only through later plan items.
+- The next plan item is `0.0.1.8.4`, where the first shared button/input/panel/popover primitives should be made visible and documented before broader migration.
+
+### Next
+
+- Continue with `0.0.1.8.4` Component catalogue proof of concept unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.2 Design System Contract
+
+### What Changed
+
+- Completed `0.0.1.8.2`.
+- Rewrote `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` as the current version-1 UI redesign contract.
+- Defined the product image, AppShell/workbench zones, token layers, required semantic token families, theme/density model, typography, spacing, radii, elevation, z-index, motion, effects, iconography, shared primitives, shared overlays, visual states, subsystem ownership boundaries and migration gates.
+- Added a short owner-facing Russian summary to the contract so the intent is understandable without reading every technical table first.
+- Linked the competitor/reference research from `UI_AUDIT_AND_MODERNIZATION_PLAN.md` and moved the audit plan's next action to `0.0.1.8.3`.
+- Removed `0.0.1.8.2` from the active plan and advanced the dashboard/plan to `0.0.1.8.3` Theme foundation proof of concept.
+- During full browser verification, stabilized the Knowledge Graph browser smoke right-click step by using a locator-based right click on the graph node card. The product behavior did not change; the test now waits for the actual card target instead of sometimes missing with raw page coordinates in the full parallel run.
+
+### Readiness
+
+Foundation. The design-system contract is now usable as the rule source for UI migration, but it does not implement the theme foundation, primitives or AppShell migration yet.
+
+### Checks
+
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `npm run verify` with 262 unit/integration tests and the large-workspace performance smoke.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`
+- Passed: `npm run test:browser -- --grep "knowledge-graph-can-be-created-and-opens-orphan-pages"`
+- Passed after the test stabilization: `npm run test:browser` with 88 browser tests.
+
+### Risk / Remaining
+
+- No runtime UI, CSS, theme or primitive behavior was migrated in this task.
+- The contract is intentionally Foundation-level; the user-facing redesign still begins with `0.0.1.8.3`.
+- Existing large feature CSS files and duplicate control families remain active risks until the phased migration reaches them.
+- The initial full browser smoke exposed a Knowledge Graph test flake in the full parallel run; the final focused and full reruns passed after the test clicked the graph node through Playwright's locator actionability checks.
+
+### Next
+
+- Continue with `0.0.1.8.3` Theme foundation proof of concept unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.8.1 UI/CSS Inventory Report
+
+### What Changed
+
+- Completed `0.0.1.8.1`.
+- Added `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md` as the detailed version-1 UI/CSS inventory.
+- Documented the current CSS entry tree, largest CSS and UI-related JS files, reusable UI foundations, duplicate control families, popup/overlay implementations, icon approaches, hardcoded color/token findings, proposed semantic token groups, migration map, browser/Tauri risks and backlog touchpoints.
+- Linked the report from `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md` and `DESIGN_SYSTEM_CONTRACT.md`.
+- Removed the completed inventory item from the active plan and advanced the next active work to `0.0.1.8.2`.
+- Updated the product dashboard and bug inventory so their next-step pointers stay current.
+- Adjusted the project file audit classifier so valid markdown documents with metadata are not treated as cleanup candidates only because they are still untracked before commit.
+
+### Readiness
+
+Foundation. The report is usable as a planning and audit base for the redesign, but it does not migrate UI or create final primitives yet.
+
+### Checks
+
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `node --check tools\audit_project_files.mjs`
+- Passed: `node tools\audit_project_files.mjs`
+- Passed: `npm run verify`
+
+### Risk / Remaining
+
+- No runtime UI behavior changed in this task.
+- The next task must turn the inventory into enforceable design-system rules, not start a broad visual restyle.
+- Large UI files and duplicate control families remain active risks until later migration phases.
+- Browser smoke was not run because this task changed docs and the audit tool only; no runtime UI behavior or CSS loaded by the app changed.
+
+### Next
+
+- Continue with `0.0.1.8.2` Design system contract unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.7.4-0.0.1.7.5 Release Handoff And Archive Pass
+
+### What Changed
+
+- Completed `0.0.1.7.4` and `0.0.1.7.5`.
+- Added a current stabilization handoff summary to `release/latest/release-notes.md`:
+  - what build/check commands to run;
+  - what changed in the current handoff;
+  - known risks;
+  - local verification snapshot.
+- Added a current first-pass tester route to `release/latest/tester-instructions.md`:
+  - how to identify browser/dev, raw desktop exe and installer builds;
+  - which automated checks to run;
+  - which manual smoke checks matter first;
+  - which known risks to watch.
+- Updated `docs/04-user-release/README_FOR_TESTERS.md`, `TEST_SCENARIOS.md` and `KNOWN_ISSUES.md` so user-release docs point to the current handoff instead of only historical sections.
+- Confirmed old combined plans remain archive-only history through `docs/archive/README.md`.
+- Refreshed the project file audit and adjusted its generated footer so it points to the current active plan instead of an old `0.0.0.8.x` task.
+- Adjusted the audit cleanup classifier so new regression tests are not shown as delete candidates merely because they are untracked before commit.
+- Removed the completed release/documentation tasks from the active plan and advanced the next active work to `0.0.1.8.1`.
+- Closed backlog item `BI-021` for current docs status drift and added `BI-024` for a future lightweight automated docs consistency check if drift returns.
+
+### Readiness
+
+Usable as a current release/tester handoff. It is not marked release-ready because installed-app verification, a formal tagged release, signing/updater work and final external tester feedback remain outside this documentation pass.
+
+### Checks
+
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\audit_project_files.mjs`
+- Passed: `node tools\validate_agent_skills.mjs`
+- Passed: `npm run test:browser`
+- Passed: `npm run verify`
+
+### Risk / Remaining
+
+- `release/latest` remains a working handoff area, not a frozen tagged release.
+- Formal release candidate packaging, app signing, updater and installed-app WebDriver smoke remain future desktop release work.
+- The next active plan block is UI/design inventory; it must start with auditing, not a broad restyle.
+
+### Next
+
+- Continue with `0.0.1.8.1` UI/CSS inventory report unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.7.3 GitHub Actions Verify And Browser Smoke Maintenance
+
+### What Changed
+
+- Completed `0.0.1.7.3`.
+- The browser smoke runner now forwards Playwright CLI arguments after `--`, so commands such as `npm run test:browser -- --grep schema-recovery` run the intended focused smoke instead of silently running the whole browser suite.
+- Added unit regression coverage for the browser smoke runner argument forwarding.
+- Hardened the GitHub Actions `Verify` workflow:
+  - least-privilege `contents: read` permission;
+  - concurrency cancellation for older runs on the same ref;
+  - a 25-minute job timeout;
+  - short-lived browser smoke artifacts on failure.
+- Added workflow regression coverage so these CI guardrails do not disappear during future cleanup.
+- Updated the browser smoke README, smoke checklist and release process with the focused browser-smoke command.
+
+### Readiness
+
+Usable for day-to-day development and release checks. The local browser smoke workflow is now easier to run surgically, and CI is less likely to waste time or hide useful failure artifacts.
+
+### Checks
+
+- Passed: `node --check tools\run_browser_smoke.mjs`
+- Passed: `node --check tests\browserSmokeRunner.test.mjs`
+- Passed: `node --check tests\githubActionsWorkflow.test.mjs`
+- Passed: `node --test tests\browserSmokeRunner.test.mjs tests\githubActionsWorkflow.test.mjs`
+- Passed: `npm run test:browser -- --grep schema-recovery`
+- Passed: `node tools\docs_index.mjs`
+- Passed: `npm run check:encoding`
+- Passed: `npm run verify`
+
+### Risk / Remaining
+
+- This does not add a Windows/Tauri GitHub Actions job or installer artifact build; that remains desktop release hardening work.
+- Browser smoke artifacts depend on Playwright output directories being produced by the failing run.
+- Release notes and tester instructions remain in `0.0.1.7.4`.
+
+### Next
+
+- Continue with `0.0.1.7.4` Finish release notes and tester instructions unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.7.1-0.0.1.7.2 Manual And Encoding Pass
+
+### What Changed
+
+- Completed `0.0.1.7.1` and `0.0.1.7.2`.
+- Regenerated `docs/MY_OWN_WORLD_FULL_MANUAL.docx` with the current project tree and documentation state.
+- Verified the regenerated manual as a valid docx/zip archive.
+- Kept the text encoding guard green; no new mojibake patterns were found, so the guard did not need expansion in this pass.
+- Removed both finished items from the active plan and advanced the next active documentation item to `0.0.1.7.3`.
+
+### Readiness
+
+Usable for owner/tester reference as the current full generated manual. It is not a full release handoff yet because release notes, tester instructions, GitHub Actions maintenance and archive cleanup remain active documentation work.
+
+### Checks
+
+- Passed: `python tools\generate_manual_docx.py`
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`
+- Passed: `npm run check:encoding`
+- Passed: `node tools\docs_index.mjs`
+
+### Risk / Remaining
+
+- The manual generator is still broad and source-tree based; it produces a comprehensive reference, not a hand-written beginner guide.
+- Release notes/tester instructions remain in `0.0.1.7.4`.
+
+### Next
+
+- Continue with `0.0.1.7.3` Maintain GitHub Actions verify and browser smoke unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.6.4 Recovery Fallback Tests
+
+### What Changed
+
+- Completed `0.0.1.6.4`.
+- Added unit regression coverage for recovery reports built from:
+  - malformed page records;
+  - partial page metadata;
+  - invalid template data;
+  - missing asset paths;
+  - invalid workspace shape with no usable `pages` array.
+- Added browser recovery coverage for the fallback editor so grouped malformed workspace issues stay visible and readable.
+- Added browser diagnostics coverage proving a failed backup stops the safe repair before any parent field is changed.
+
+### Readiness
+
+Usable as regression coverage for schema recovery fallback and backup-before-repair behavior. It is not release-ready recovery yet because restore preview, partial restore, persistent map/task repair flows, asset repair and broken wiki/relation cleanup remain future work.
+
+### Checks
+
+- Passed: `node --check tests\browser\schema-recovery.spec.mjs`
+- Passed: `node --test tests\schemaValidation.test.mjs` (25 passed)
+- Passed: `npm run test:browser -- --grep schema-recovery` (current runner executed the full browser smoke: 88 passed)
+
+### Risk / Remaining
+
+- The tests prove recovery fallback and backup gating, but do not add new repair actions.
+- Model-level map token and task reference repair actions remain preview-only in UI.
+- Restore preview, asset repair and broken wiki/relation cleanup stay in the active backlog.
+
+### Next
+
+- Continue with `0.0.1.7.1` Regenerate the full manual safely unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.6.3 Schema Recovery UI
+
+### What Changed
+
+- Completed `0.0.1.6.3`.
+- Extended `WorkspaceRecoveryReport` with human-readable `summary` and `issueGroups`.
+- Workspace diagnostics now shows schema problems grouped by meaning:
+  - unsafe page identity/tree problems;
+  - legacy PageRecord metadata warnings;
+  - page content, map, task, template, asset and package groups.
+- The recovery UI separates:
+  - safe-after-backup actions;
+  - manual actions;
+  - legacy migration warnings;
+  - warnings that need review.
+- Settings diagnostics can now apply the persisted safe broken-parent repair:
+  - creates a backup gate first;
+  - clears a missing page parent through the existing page command path;
+  - reruns diagnostics after repair.
+- The fallback recovery editor also shows summary cards and grouped issue sections, so a large broken workspace does not appear as one unreadable wall of codes.
+
+### Readiness
+
+Usable for grouped schema diagnosis and the persisted broken-parent repair. It is not release-ready because restore preview, malformed workspace fixtures, map/task repair persistence, asset repair and broken wiki/relation link cleanup remain future work.
+
+### Checks
+
+- Passed: `node --check js\schema\schemaRecovery.js`
+- Passed: `node --check js\ui\workspaceDiagnosticsPanel.js`
+- Passed: `node --check js\editor\editorEmptyPage.js`
+- Passed: `node --check tests\browser\schema-recovery.spec.mjs`
+- Passed: `node --test tests\schemaValidation.test.mjs`
+- Passed: `npm run test:browser -- --grep schema-recovery` (current runner executed the full browser smoke: 86 passed)
+- Passed: `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --json true`
+
+### Risk / Remaining
+
+- Model-level map token and task reference repair actions are still preview-only in UI because they do not yet have a reliable persistent write path.
+- The large real workspace diagnostics currently reports 691 pages, 25 maps, 141 assets, 527 asset references, 0 missing asset references, 5 complete backups and 0 incomplete backups; it still warns about large pages, large assets and heavy maps.
+- Dedicated link/orphan cleanup remains beyond schema grouping.
+- `0.0.1.6.4` should add broader recovery fallback tests for malformed pages, partial data, missing assets and backup-before-repair behavior.
+
+### Next
+
+- Continue with `0.0.1.6.4` Add recovery fallback tests unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-21: 0.0.1.6.2 Paste Sanitization
+
+### What Changed
+
+- Completed `0.0.1.6.2`.
+- Added a shared clipboard paste sanitizer:
+  - `text/plain` is preferred and normalized;
+  - HTML-only clipboard payloads are parsed through inert `<template>` content;
+  - executable/runtime nodes are removed before extracting visible text;
+  - image/file-only rich paste is handled and blocked from direct persistent DOM insertion.
+- Routed normal editor paste and table-cell paste through the same sanitizer, so behavior no longer depends on where the user pastes.
+- Hardened the persistent HTML sanitizer parser to serialize from inert template content, avoiding accidental image/error-handler activation while parsing unsafe HTML.
+- Added browser regression coverage for:
+  - plain text preference over clipboard HTML;
+  - HTML-only paste becoming text without scripts/runtime UI;
+  - rich image/file-only paste being blocked;
+  - real editor paste events preventing default browser HTML insertion.
+- Stabilized the Knowledge Graph browser test drag gesture after full smoke revealed a too-small movement threshold at current zoom.
+
+### Readiness
+
+Usable. Pasting into normal editor fields and table cells now has a clear safe path and browser regression coverage. It is not marked release-ready because manual paste checks from Word, Google Docs and desktop apps still belong in a release handoff pass.
+
+### Checks
+
+- Passed: `node --check js\editor\safeHtmlSanitizer.js`
+- Passed: `node --check js\editor\editorPastePlainText.js`
+- Passed: `node --check js\ui\tables.js`
+- Passed: `node --check tests\browser\safe-html.spec.mjs`
+- Passed: `npm run test:browser` with 85 browser tests.
+
+### Risk / Remaining
+
+- Schema recovery UI remains in `0.0.1.6.3`.
+- Recovery fallback tests remain in `0.0.1.6.4`.
+- Direct image paste is intentionally blocked unless a future dedicated asset-flow feature is designed.
+
+### Next
+
+- Continue with `0.0.1.6.3` Finish schema recovery UI unless a P0/P1 backlog item is promoted first.
+
+## 2026-07-20: 0.0.1.6.1 Safe HTML Boundary
+
+### What Changed
+
+- Completed `0.0.1.6.1`.
+- Turned the sanitizer from a mostly denylist cleanup into an executable persistent HTML boundary:
+  - allowlisted persistent tags;
+  - allowlisted normal attributes;
+  - allowlisted project-owned `class` names/prefixes;
+  - allowlisted project-owned `data-*` fields;
+  - stripped runtime-only state classes such as `is-selected`;
+  - unwrapped unknown container tags while keeping user text;
+  - continued removing forbidden executable tags, inline event handlers, dangerous URLs and runtime UI.
+- Hardened URL cleanup:
+  - `blob:` remains blocked on save;
+  - `data:image/svg+xml` is blocked;
+  - only safe raster image data URLs are allowed for `<img src>`.
+- Kept controlled JSON script blocks for task tracker, character effects, rule tree and knowledge graph view state.
+- Preserved internal DnD rule pages and rule picker IDs after sanitization.
+- Updated `SAFE_HTML_CONTRACT.md` so it describes the current allowlist behavior instead of the older soft-sanitizer state.
+
+### Readiness
+
+Usable. Cards, tables, wiki-links, task tracker data, campaign map shells and internal rule pages now have a stricter persistent HTML boundary, with browser regression coverage proving the important surfaces still survive save/load.
+
+### Checks
+
+- Passed: `node --check js\editor\safeHtmlSanitizer.js`
+- Passed: `node --check tests\browser\safe-html.spec.mjs`
+- Passed: `npm run test:browser` with 84 browser tests.
+
+### Risk / Remaining
+
+- Paste-specific behavior remains in `0.0.1.6.2`.
+- Recovery UI and backup/restore hardening remain in `0.0.1.6.3`-`0.0.1.6.4`.
+- New persistent block features must add their `class`/`data-*` fields to `safeHtmlSanitizer.js` and the Safe HTML contract together.
+
+### Next
+
+- Continue with `0.0.1.6.2` Finish paste sanitization unless a higher-priority bug appears.
+
 ## 2026-07-20: 0.0.1.5.6 Knowledge Graph Regression Tests
 
 ### What Changed

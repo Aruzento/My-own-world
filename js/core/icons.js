@@ -18,14 +18,75 @@ const pageIcons = {
 };
 
 
-export function iconSvg(
-  name,
-  className = 'app-icon'
+function normalizeIconName(
+  name
 ) {
 
+  return String(name || 'document')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '') ||
+    'document';
+}
+
+
+function escapeAttribute(
+  value
+) {
+
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+
+function escapeText(
+  value
+) {
+
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+
+export function iconSvg(
+  name,
+  className = 'app-icon',
+  options = {}
+) {
+
+  const iconName =
+    normalizeIconName(
+      name
+    );
+
+  const label =
+    options.ariaLabel ||
+    options.title ||
+    '';
+
+  const accessibility =
+    label
+      ? `role="img" aria-label="${escapeAttribute(label)}"`
+      : 'aria-hidden="true"';
+
+  const sizeAttribute =
+    options.size
+      ? ` data-icon-size="${escapeAttribute(options.size)}"`
+      : '';
+
+  const title =
+    options.title
+      ? `
+      <title>${escapeText(options.title)}</title>`
+      : '';
+
   return `
-    <svg class="${className}" viewBox="0 0 24 24" aria-hidden="true">
-      <use href="${ICON_SPRITE_PATH}#icon-${name}"></use>
+    <svg class="${escapeAttribute(className)}" viewBox="0 0 24 24" focusable="false" data-icon-name="${iconName}"${sizeAttribute} ${accessibility}>${title}
+      <use href="${ICON_SPRITE_PATH}#icon-${iconName}"></use>
     </svg>
   `;
 }

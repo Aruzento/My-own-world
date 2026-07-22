@@ -39,7 +39,8 @@ document.body.appendChild(menu);
 
 registerPopup({
   popup: menu,
-  close: closeWikiCreateMenu
+  close: closeWikiCreateMenu,
+  kind: 'dropdown-menu'
 });
 
 

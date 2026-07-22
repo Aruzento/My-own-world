@@ -8,13 +8,15 @@ import {
 
 import {
   BACKUP_ROOT_DIR,
+  requireWorkspaceBackupBeforeRiskyOperation,
   listIncompleteWorkspaceBackups,
   listWorkspaceBackups
 } from '../storage/backupService.js';
 
 import {
   findBrokenAssetReferences,
-  findOrphanAssetPaths
+  findOrphanAssetPaths,
+  updatePageParent
 } from '../storage/storage.js';
 
 import {
@@ -38,6 +40,15 @@ import {
 import {
   validateWorkspaceSnapshot
 } from '../schema/workspaceSchema.js';
+
+import {
+  applyWorkspaceRepairActions,
+  createWorkspaceRecoveryReport
+} from '../schema/schemaRecovery.js';
+
+import {
+  renderTree
+} from '../tree/tree.js';
 
 const LARGE_PAGE_BYTES =
   250 * 1024;
@@ -137,7 +148,12 @@ export async function renderWorkspaceDiagnosticsPanel(
 
         renderDiagnosticsResult(
           result,
-          diagnostics
+          diagnostics,
+          {
+            ...options,
+            refreshDiagnostics:
+              refresh
+          }
         );
 
       } catch (error) {
@@ -189,6 +205,11 @@ export async function collectWorkspaceDiagnostics(
         options.schemaVersion,
       pages
     });
+
+  const recoveryReport =
+    createWorkspaceRecoveryReport(
+      schema
+    );
 
   const workspace =
     await createWorkspaceStatus(
@@ -300,6 +321,7 @@ export async function collectWorkspaceDiagnostics(
     },
     workspace,
     schema,
+    recoveryReport,
     checkpoint,
     backup,
     pendingOperations,
@@ -703,7 +725,8 @@ function inspectCampaignMapPage(
 
 function renderDiagnosticsResult(
   container,
-  diagnostics
+  diagnostics,
+  options = {}
 ) {
 
   container.replaceChildren();
@@ -747,6 +770,16 @@ function renderDiagnosticsResult(
   }
 
   container.appendChild(
+    createSchemaRecoverySection(
+      diagnostics,
+      {
+        ...options,
+        container
+      }
+    )
+  );
+
+  container.appendChild(
     createListSection(
       'Тяжелые карты',
       diagnostics.heavyMaps,
@@ -777,6 +810,624 @@ function renderDiagnosticsResult(
       event => `${event.operation}: ${event.durationMs} ms (${event.status})`
     )
   );
+}
+
+
+function createSchemaRecoverySection(
+  diagnostics,
+  options = {}
+) {
+
+  const report =
+    diagnostics.recoveryReport ||
+    createWorkspaceRecoveryReport(
+      diagnostics.schema
+    );
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'app-workspace-diagnostics-section app-workspace-recovery-section';
+
+  const heading =
+    document.createElement('h4');
+
+  heading.textContent =
+    'Проблемы схемы и восстановление';
+
+  section.appendChild(
+    heading
+  );
+
+  if (!report.issueCount) {
+
+    const ok =
+      document.createElement('div');
+
+    ok.className =
+      'app-workspace-diagnostics-summary is-ok';
+
+    ok.textContent =
+      'Схема workspace выглядит нормально. Repair actions не нужны.';
+
+    section.appendChild(
+      ok
+    );
+
+    return section;
+  }
+
+  const intro =
+    document.createElement('p');
+
+  intro.className =
+    'app-workspace-recovery-intro';
+
+  intro.textContent =
+    `Найдено ${report.issueCount} проблем: ${report.errorCount} ошибок и ${report.warningCount} предупреждений. Ниже они сгруппированы по смыслу, чтобы не чинить большой workspace вслепую.`;
+
+  section.appendChild(
+    intro
+  );
+
+  section.appendChild(
+    createRecoveryStatsGrid(
+      report
+    )
+  );
+
+  section.appendChild(
+    createRecoveryGroupList(
+      report.issueGroups || []
+    )
+  );
+
+  const repairControls =
+    createRecoveryRepairControls(
+      report,
+      options
+    );
+
+  if (repairControls) {
+
+    section.appendChild(
+      repairControls
+    );
+  }
+
+  return section;
+}
+
+
+function createRecoveryStatsGrid(
+  report
+) {
+
+  const grid =
+    document.createElement('div');
+
+  grid.className =
+    'app-workspace-recovery-stats';
+
+  [
+    [
+      'Всего',
+      report.issueCount
+    ],
+    [
+      'Ошибки',
+      report.errorCount
+    ],
+    [
+      'Legacy',
+      report.legacyWarningCount
+    ],
+    [
+      'После backup',
+      report.safeActionCount
+    ]
+  ].forEach(([label, value]) => {
+
+    const item =
+      document.createElement('div');
+
+    const number =
+      document.createElement('strong');
+
+    number.textContent =
+      String(value || 0);
+
+    const caption =
+      document.createElement('span');
+
+    caption.textContent =
+      label;
+
+    item.append(
+      number,
+      caption
+    );
+
+    grid.appendChild(
+      item
+    );
+  });
+
+  return grid;
+}
+
+
+function createRecoveryGroupList(
+  groups
+) {
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-workspace-recovery-groups';
+
+  const visibleGroups =
+    groups.length
+      ? groups
+      : [
+        {
+          label:
+            'Нет групп',
+          description:
+            'Schema validator не вернул группируемых проблем.',
+          issueCount:
+            0,
+          examples:
+            []
+        }
+      ];
+
+  visibleGroups.forEach(group => {
+
+    const item =
+      document.createElement('article');
+
+    item.className =
+      'app-workspace-recovery-group';
+
+    const title =
+      document.createElement('strong');
+
+    title.textContent =
+      `${group.label}: ${group.issueCount}`;
+
+    const description =
+      document.createElement('p');
+
+    description.textContent =
+      group.description || '';
+
+    const meta =
+      document.createElement('span');
+
+    meta.className =
+      'app-workspace-recovery-group-meta';
+
+    meta.textContent =
+      formatRecoveryGroupMeta(
+        group
+      );
+
+    item.append(
+      title,
+      description,
+      meta
+    );
+
+    const examples =
+      createRecoveryExamplesList(
+        group.examples || []
+      );
+
+    if (examples) {
+
+      item.appendChild(
+        examples
+      );
+    }
+
+    list.appendChild(
+      item
+    );
+  });
+
+  return list;
+}
+
+
+function createRecoveryExamplesList(
+  examples
+) {
+
+  if (!examples.length) return null;
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-workspace-recovery-examples';
+
+  examples.forEach(example => {
+
+    const row =
+      document.createElement('span');
+
+    row.textContent =
+      `${example.code}: ${formatRecoveryExampleDetails(example)}`;
+
+    list.appendChild(
+      row
+    );
+  });
+
+  return list;
+}
+
+
+function createRecoveryRepairControls(
+  report,
+  options
+) {
+
+  const actions =
+    getPersistableRecoveryActions(
+      report.actions || []
+    );
+
+  const wrap =
+    document.createElement('div');
+
+  wrap.className =
+    'app-workspace-recovery-actions';
+
+  const status =
+    document.createElement('span');
+
+  status.className =
+    'app-workspace-recovery-status';
+
+  if (!actions.length) {
+
+    status.textContent =
+      report.safeActionCount
+        ? 'Есть безопасные model-level repair actions, но для них еще нет надежной записи в workspace. Сейчас они оставлены как preview.'
+        : 'Автоматических безопасных действий нет. Эти проблемы нужно разбирать вручную или через отдельный repair-сценарий.';
+
+    wrap.appendChild(
+      status
+    );
+
+    return wrap;
+  }
+
+  const button =
+    document.createElement('button');
+
+  button.className =
+    'app-workspace-recovery-repair-button';
+
+  button.type =
+    'button';
+
+  button.textContent =
+    `Создать backup и исправить безопасное (${actions.length})`;
+
+  status.textContent =
+    'Сейчас можно безопасно очистить отсутствующих родителей страниц и вывести такие страницы в корень дерева.';
+
+  button.addEventListener(
+    'click',
+    () => applySchemaRecoveryRepairs({
+      actions,
+      options,
+      status,
+      button
+    })
+  );
+
+  wrap.append(
+    button,
+    status
+  );
+
+  return wrap;
+}
+
+
+async function applySchemaRecoveryRepairs({
+  actions,
+  options,
+  status,
+  button
+}) {
+
+  if (!actions.length) return;
+
+  button.disabled =
+    true;
+
+  try {
+
+    status.textContent =
+      'Создаю backup перед schema repair...';
+
+    const backupManifest =
+      await createSchemaRecoveryBackup(
+        options,
+        progress => {
+
+          status.textContent =
+            formatRecoveryProgress(
+              progress
+            );
+        }
+      );
+
+    applyWorkspaceRepairActions(
+      {
+        pages:
+          getRecoveryPages(
+            options
+          )
+      },
+      actions,
+      {
+        backupManifest
+      }
+    );
+
+    const result =
+      await persistSchemaRecoveryActions(
+        actions,
+        options
+      );
+
+    await options.onRecoveryRepairComplete?.({
+      backupManifest,
+      result
+    });
+
+    const validation =
+      validateWorkspaceSnapshot({
+        pages:
+          getRecoveryPages(
+            options
+          )
+      });
+
+    state.workspaceValidation =
+      validation;
+
+    state.workspaceRecoveryReport =
+      createWorkspaceRecoveryReport(
+        validation
+      );
+
+    renderTree();
+
+    status.textContent =
+      `Готово: применено ${result.applied}, пропущено ${result.skipped}. Повторяю диагностику...`;
+
+    if (typeof options.refreshDiagnostics === 'function') {
+
+      await options.refreshDiagnostics();
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Не удалось применить schema recovery repair actions.',
+      error
+    );
+
+    status.textContent =
+      `Repair остановлен: ${error?.message || String(error)}`;
+
+  } finally {
+
+    button.disabled =
+      false;
+  }
+}
+
+
+async function createSchemaRecoveryBackup(
+  options,
+  onProgress
+) {
+
+  if (typeof options.createRecoveryBackup === 'function') {
+
+    return options.createRecoveryBackup({
+      reason:
+        'schema-recovery-safe-repair',
+      onProgress
+    });
+  }
+
+  return requireWorkspaceBackupBeforeRiskyOperation(
+    'schema-recovery-safe-repair',
+    {
+      onProgress
+    }
+  );
+}
+
+
+async function persistSchemaRecoveryActions(
+  actions,
+  options
+) {
+
+  const pages =
+    getRecoveryPages(
+      options
+    );
+
+  let applied =
+    0;
+
+  let skipped =
+    0;
+
+  for (const action of actions) {
+
+    if (action.repairAction?.id !== 'detach-page-parent-to-root') {
+
+      skipped +=
+        1;
+
+      continue;
+    }
+
+    const page =
+      pages.find(candidate =>
+        candidate?.id === action.details?.pageId
+      );
+
+    if (!page) {
+
+      skipped +=
+        1;
+
+      continue;
+    }
+
+    const applyPageParent =
+      options.applyRecoveryPageParent ||
+      updatePageParent;
+
+    await applyPageParent(
+      page,
+      null,
+      action
+    );
+
+    applied +=
+      1;
+  }
+
+  return {
+    applied,
+    skipped
+  };
+}
+
+
+function getPersistableRecoveryActions(
+  actions
+) {
+
+  return actions.filter(action =>
+    action?.repairAction?.safety === 'safe-after-backup' &&
+    action.repairAction?.id === 'detach-page-parent-to-root'
+  );
+}
+
+
+function getRecoveryPages(
+  options
+) {
+
+  return Array.isArray(options.pages)
+    ? options.pages
+    : state.pages || [];
+}
+
+
+function formatRecoveryProgress(
+  progress = {}
+) {
+
+  const total =
+    Number(progress.total || 0);
+
+  const current =
+    Number(progress.current || 0);
+
+  const count =
+    total
+      ? `${current}/${total}`
+      : String(current || '');
+
+  return [
+    progress.label || 'Backup',
+    progress.stage || '',
+    count
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+
+function formatRecoveryGroupMeta(
+  group
+) {
+
+  const parts =
+    [
+      [
+        group.errorCount,
+        'ошибок'
+      ],
+      [
+        group.warningCount,
+        'предупреждений'
+      ],
+      [
+        group.safeActionCount,
+        'можно после backup'
+      ],
+      [
+        group.manualActionCount,
+        'вручную'
+      ],
+      [
+        group.legacyWarningCount,
+        'legacy'
+      ]
+    ]
+      .filter(([value]) =>
+        Number(value || 0) > 0
+      )
+      .map(([value, label]) =>
+        `${value} ${label}`
+      );
+
+  return parts.join(' · ') ||
+    'Нет дополнительных деталей.';
+}
+
+
+function formatRecoveryExampleDetails(
+  example
+) {
+
+  const details =
+    example.details || {};
+
+  const target =
+    details.pageId ||
+    details.templateId ||
+    details.id ||
+    details.path ||
+    details.title ||
+    details.parent ||
+    details.index;
+
+  if (target !== undefined && target !== null && target !== '') {
+
+    return `${example.message} (${target})`;
+  }
+
+  return example.message || example.severity || '';
 }
 
 

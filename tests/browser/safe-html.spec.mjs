@@ -131,6 +131,111 @@ test(
 
 
 test(
+  'safe-html-sanitizer-enforces-persistent-tag-and-attribute-allowlist',
+  async ({ page }) => {
+
+    await page.goto('/');
+
+    const result =
+      await sanitizeInBrowser(
+        page,
+        `
+          <div
+            class="entity-layout card-shell mso-normal random-class"
+            data-card-shell="v1"
+            data-extra="drop"
+            onclick="alert(1)"
+          >
+            <h1
+              class="card-title singleline-field unknown-title"
+              contenteditable="maybe"
+              data-placeholder="Название"
+              data-evil="drop"
+            >Hero</h1>
+            <a
+              class="wiki-link internal-link is-missing bad-link"
+              href="#"
+              data-page-id="hero"
+              data-page-title="Hero"
+              data-extra="drop"
+            >Hero link</a>
+            <table class="custom-table imported-table" data-junk="drop">
+              <colgroup>
+                <col style="width: 88px; background: url(javascript:alert(1));">
+              </colgroup>
+              <tbody><tr><td colspan="2">Cell</td></tr></tbody>
+            </table>
+            <div
+              class="campaign-map-document"
+              data-campaign-map="v1"
+              data-map-model-version="1"
+              data-grid="true"
+              data-view-x="10"
+              data-view-y="20"
+              data-view-zoom="1.5"
+              data-extra="drop"
+            >
+              <canvas class="campaign-map-fog-canvas" width="300" height="200" data-evil="drop"></canvas>
+              <button
+                class="campaign-map-token is-creature is-selected bad-token"
+                type="submit"
+                data-token-id="token-1"
+                data-page-id="hero"
+                data-extra="drop"
+              >Token</button>
+            </div>
+            <x-unsafe data-extra="drop"><span class="text-block-body random-class">Keep text</span></x-unsafe>
+            <math><mi>Math text</mi></math>
+            <img
+              class="image-block bad-image"
+              data-asset="portrait.png"
+              src="data:image/svg+xml,<svg onload=alert(1)>"
+              data-extra="drop"
+            >
+          </div>
+        `
+      );
+
+    expect(result.saved).toContain('class="entity-layout card-shell"');
+    expect(result.saved).toContain('data-card-shell="v1"');
+    expect(result.saved).toContain('data-placeholder="Название"');
+    expect(result.saved).toContain('class="wiki-link internal-link is-missing"');
+    expect(result.saved).toContain('data-page-id="hero"');
+    expect(result.saved).toContain('data-page-title="Hero"');
+    expect(result.saved).toContain('class="custom-table"');
+    expect(result.saved).toContain('style="width: 88px;"');
+    expect(result.saved).toContain('data-campaign-map="v1"');
+    expect(result.saved).toContain('data-map-model-version="1"');
+    expect(result.saved).toContain('data-view-zoom="1.5"');
+    expect(result.saved).toContain('width="300"');
+    expect(result.saved).toContain('height="200"');
+    expect(result.saved).toContain('data-token-id="token-1"');
+    expect(result.saved).toContain('type="button"');
+    expect(result.saved).toContain('Keep text');
+    expect(result.saved).toContain('Math text');
+
+    expect(result.saved).not.toContain('onclick');
+    expect(result.saved).not.toContain('data-extra');
+    expect(result.saved).not.toContain('data-evil');
+    expect(result.saved).not.toContain('data-junk');
+    expect(result.saved).not.toContain('random-class');
+    expect(result.saved).not.toContain('unknown-title');
+    expect(result.saved).not.toContain('bad-link');
+    expect(result.saved).not.toContain('imported-table');
+    expect(result.saved).not.toContain('is-selected');
+    expect(result.saved).not.toContain('bad-token');
+    expect(result.saved).not.toContain('bad-image');
+    expect(result.saved).not.toContain('contenteditable="maybe"');
+    expect(result.saved).not.toContain('type="submit"');
+    expect(result.saved).not.toContain('data:image/svg+xml');
+    expect(result.saved).not.toContain('<x-unsafe');
+    expect(result.saved).not.toContain('<math');
+    expect(result.saved).not.toContain('<mi');
+  }
+);
+
+
+test(
   'safe-html-sanitizer-handles-malformed-html-and-plain-text-paste',
   async ({ page }) => {
 
@@ -143,17 +248,64 @@ test(
           const {
             sanitizePersistentHTMLOnLoad,
             sanitizePersistentHTMLOnSave,
+            sanitizeClipboardPaste,
             sanitizePlainTextPaste
           } = await import('/js/editor/safeHtmlSanitizer.js');
 
           const malformed =
             '<div><p>Текст<script>alert(1)</script><a href="java\\nscript:alert(2)">x';
 
+          const plainPreferred =
+            sanitizeClipboardPaste(
+              createClipboardData({
+                'text/html': '<p><img src=x onerror=alert(1)>Bad</p>',
+                'text/plain': 'Good\u0000 text\r\nnext'
+              })
+            );
+
+          const htmlOnly =
+            sanitizeClipboardPaste(
+              createClipboardData({
+                'text/html': `
+                  <p>Hello <img src=x onerror=alert(1)> image</p>
+                  <script>alert(1)</script>
+                  <div data-runtime="true">runtime</div>
+                  <a href="javascript:alert(2)">Link</a>
+                `
+              })
+            );
+
+          const richOnly =
+            sanitizeClipboardPaste({
+              files: [
+                {}
+              ],
+              getData: () => '',
+              types: [
+                'Files',
+                'image/png'
+              ]
+            });
+
           return {
             saved: sanitizePersistentHTMLOnSave(malformed),
             loaded: sanitizePersistentHTMLOnLoad(malformed),
-            paste: sanitizePlainTextPaste('a\u0000b\r\nc\u0007')
+            paste: sanitizePlainTextPaste('a\u0000b\r\nc\u0007'),
+            plainPreferred,
+            htmlOnly,
+            richOnly
           };
+
+          function createClipboardData(
+            entries
+          ) {
+
+            return {
+              files: [],
+              getData: type => entries[type] || '',
+              types: Object.keys(entries)
+            };
+          }
         }
       );
 
@@ -162,6 +314,163 @@ test(
     expect(result.saved).not.toContain('javascript:');
     expect(result.loaded).not.toContain('<script');
     expect(result.paste).toBe('ab\nc');
+    expect(result.plainPreferred).toEqual({
+      shouldHandle: true,
+      source: 'text',
+      text: 'Good text\nnext'
+    });
+    expect(result.htmlOnly.shouldHandle).toBe(true);
+    expect(result.htmlOnly.source).toBe('html');
+    expect(result.htmlOnly.text).toContain('Hello  image');
+    expect(result.htmlOnly.text).toContain('Link');
+    expect(result.htmlOnly.text).not.toContain('alert');
+    expect(result.htmlOnly.text).not.toContain('runtime');
+    expect(result.richOnly).toEqual({
+      shouldHandle: true,
+      source: 'blocked-rich-data',
+      text: ''
+    });
+  }
+);
+
+
+test(
+  'editor-paste-handler-converts-html-only-clipboard-to-plain-text',
+  async ({ page }) => {
+
+    await page.goto('/');
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            setupEditorPlainTextPaste
+          } = await import('/js/editor/editorPastePlainText.js');
+
+          state.currentPage = {
+            id: 'paste-security-page',
+            template: 'card',
+            type: 'note'
+          };
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          let normalizationCount =
+            0;
+
+          editor.innerHTML = `
+            <div class="entity-layout card-shell" contenteditable="false">
+              <div
+                class="rich-text-field"
+                contenteditable="true"
+                data-persistent-editable="true"
+              >Start </div>
+            </div>
+          `;
+
+          setupEditorPlainTextPaste(
+            editor,
+            {
+              scheduleWikiLinkNormalization: () => {
+
+                normalizationCount += 1;
+              }
+            }
+          );
+
+          const field =
+            editor.querySelector('.rich-text-field');
+
+          field.focus();
+
+          const range =
+            document.createRange();
+
+          range.selectNodeContents(
+            field
+          );
+
+          range.collapse(
+            false
+          );
+
+          const selection =
+            window.getSelection();
+
+          selection.removeAllRanges();
+          selection.addRange(
+            range
+          );
+
+          const pasteEvent =
+            new Event(
+              'paste',
+              {
+                bubbles: true,
+                cancelable: true
+              }
+            );
+
+          Object.defineProperty(
+            pasteEvent,
+            'clipboardData',
+            {
+              value: {
+                files: [],
+                getData: type =>
+                  type === 'text/html'
+                    ? `
+                      <p>Hello <img src=x onerror=alert(1)> image</p>
+                      <script>alert(2)</script>
+                      <button data-runtime="true">runtime button</button>
+                      <a href="javascript:alert(3)">Link</a>
+                    `
+                    : '',
+                types: [
+                  'text/html'
+                ]
+              }
+            }
+          );
+
+          const dispatchResult =
+            field.dispatchEvent(
+              pasteEvent
+            );
+
+          await new Promise(resolve =>
+            setTimeout(
+              resolve,
+              0
+            )
+          );
+
+          return {
+            defaultPrevented: pasteEvent.defaultPrevented,
+            dispatchResult,
+            html: field.innerHTML,
+            normalizationCount,
+            text: field.textContent
+          };
+        }
+      );
+
+    expect(result.defaultPrevented).toBe(true);
+    expect(result.dispatchResult).toBe(false);
+    expect(result.text).toContain('Start Hello  image');
+    expect(result.text).toContain('Link');
+    expect(result.html).not.toContain('<img');
+    expect(result.html).not.toContain('<script');
+    expect(result.html).not.toContain('onerror');
+    expect(result.html).not.toContain('javascript:');
+    expect(result.html).not.toContain('runtime button');
+    expect(result.normalizationCount).toBe(1);
   }
 );
 

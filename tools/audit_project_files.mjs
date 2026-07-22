@@ -187,12 +187,29 @@ function optimizeNote(file, size) {
   return 'Нет срочно: поддерживать через обычные проверки и контракт подсистемы.';
 }
 
+function isDocumentMarkdownWithMetadata(file) {
+  if (!file.startsWith('docs/') || !file.endsWith('.md')) {
+    return false;
+  }
+
+  const text = readText(file);
+  if (!text) return false;
+
+  return (
+    /^---\r?\n[\s\S]*?\r?\n---/.test(text) &&
+    /summary:\s*/.test(text) &&
+    /owner_zone:\s*/.test(text)
+  );
+}
+
 function deleteNote(file, gitState) {
   if (file === 'debug.log') return 'Да, после подтверждения: локальный лог, не должен попадать в коммит.';
   if (file === 'tools/audit_project_files.mjs') return 'Нет: новый повторяемый инструмент аудита, нужен для будущих уборок.';
   if (file === 'tools/check_text_encoding.mjs') return 'Нет: проверка кодировки подключена к npm run verify.';
   if (file === 'docs/README.md') return 'Нет: карта документации нужна после разделения docs по зонам.';
   if (file.startsWith('docs/archive/')) return 'Нет: архив хранит историю решений.';
+  if (file.startsWith('tests/') && (file.endsWith('.test.mjs') || file.endsWith('.spec.mjs'))) return 'Нет: regression test, проверять через тесты и code review перед коммитом.';
+  if (isDocumentMarkdownWithMetadata(file)) return 'Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита.';
   if (file.startsWith('dist-desktop/') || file.startsWith('test-results/') || file.startsWith('src-tauri/target/')) return 'Да, если попал в рабочее дерево: generated artifact.';
   if (gitState.untracked.has(file)) return 'Кандидат: untracked файл, проверить назначение перед удалением.';
   return 'Нет.';
@@ -457,9 +474,9 @@ function main() {
   lines.push('');
   lines.push('## Результат');
   lines.push('');
-  lines.push('- `0.0.0.8.1` закрывает инвентаризацию, но не выполняет удаление.');
+  lines.push('- Этот отчет является снимком навигации и рисков по файлам, а не разрешением на удаление.');
   lines.push('- Удаление/архивация начинается только после подтвержденного списка из раздела “Кандидаты На Уборку”.');
-  lines.push('- Следующий логичный подпункт: `0.0.0.8.2` — починить кодировки в документации и добавить защиту от повторного mojibake.');
+  lines.push('- Актуальный следующий шаг всегда находится в `docs/01-delivery/PROJECT_PLAN.md`.');
 
   fs.writeFileSync(OUTPUT, `${lines.join('\n')}\n`, 'utf8');
   console.log(`Wrote ${path.relative(ROOT, OUTPUT)} with ${rows.length} files.`);

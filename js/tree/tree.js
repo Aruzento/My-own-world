@@ -1,6 +1,10 @@
 import { state } from '../state.js';
 
 import {
+  iconSvg
+} from '../core/icons.js';
+
+import {
   getStorageAdapter,
   hasWorkspaceAccess
 } from '../storage/storageAdapter.js';
@@ -40,6 +44,7 @@ export function renderTree() {
     state.pages
   );
 }
+
 
 const COLLAPSED_TREE_STORAGE_KEY =
   'my-own-world:collapsed-tree-pages';
@@ -148,7 +153,24 @@ export function renderFilteredTree(
     tree
   );
 
+  tree.classList.remove(
+    'is-empty-workspace'
+  );
+
   tree.innerHTML = '';
+
+  if (
+    !hasWorkspaceAccess(
+      getStorageAdapter()
+    )
+  ) {
+
+    renderNoWorkspaceTree(
+      tree
+    );
+
+    return;
+  }
 
   renderRootDropZone(
     tree
@@ -232,6 +254,50 @@ export function renderFilteredTree(
 
   tree.scrollTop =
     previousScrollTop;
+}
+
+
+function renderNoWorkspaceTree(
+  tree
+) {
+
+  tree.classList.add(
+    'is-empty-workspace'
+  );
+
+  const empty =
+    document.createElement('div');
+
+  empty.className =
+    'tree-empty-workspace';
+
+  empty.dataset.treeEmptyWorkspace =
+    'true';
+
+  const button =
+    document.createElement('button');
+
+  button.className =
+    'tree-open-workspace-button';
+
+  button.type =
+    'button';
+
+  button.dataset.openWorkspace =
+    'true';
+
+  button.innerHTML = `
+    ${iconSvg('folder-open')}
+    <span>Открыть папку</span>
+  `;
+
+  empty.appendChild(
+    button
+  );
+
+  tree.appendChild(
+    empty
+  );
 }
 
 

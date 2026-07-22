@@ -29,35 +29,31 @@
     7px;
 
   border-radius:
-    16px;
+    var(--mow-radius-sm);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(28,29,27,0.94),
-      rgba(14,15,16,0.92)
-    );
+    var(--mow-toolbar-bg);
 
   backdrop-filter:
-    blur(16px);
+    none;
 
   -webkit-backdrop-filter:
-    blur(16px);
+    none;
 
   border:
     1px solid
-    rgba(255,255,255,0.10);
+    var(--mow-toolbar-border);
 
   box-shadow:
-    0 18px 54px rgba(0,0,0,0.36),
-    inset 0 1px 0 rgba(255,255,255,0.08);
+    var(--mow-shadow-floating),
+    inset 0 1px 0 rgba(255, 246, 222, 0.06);
 
   transform:
     translateX(-50%);
 
   animation:
     toolbarFade
-    0.12s ease;
+    var(--mow-motion-overlay-enter) var(--mow-ease-emphasized);
 }
 
 
@@ -107,23 +103,45 @@
   border: none;
 
   border-radius:
-    8px;
+    var(--mow-radius-xs);
 
   background: transparent;
 
   color:
-    rgba(255,255,255,0.76);
+    var(--mow-text-secondary);
 
-  font-size: 13px;
+  font-size:
+    var(--mow-font-size-md);
 
   font-weight: 600;
 
   cursor: pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press);
+}
+
+.floating-toolbar button:focus-visible {
+  outline:
+    2px solid var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
+}
+
+.floating-toolbar button[data-command="italic"] {
+  font-style:
+    italic;
+}
+
+.floating-toolbar button[data-command="underline"] {
+  text-decoration:
+    underline;
+
+  text-underline-offset:
+    3px;
 }
 
 
@@ -146,10 +164,10 @@
     block;
 
   border:
-    1px solid rgba(255,255,255,0.36);
+    1px solid var(--mow-border-default);
 
   border-radius:
-    5px;
+    var(--mow-radius-xs);
 
   background:
     var(--current-text-color, #f4dfa8);
@@ -162,10 +180,10 @@
 .floating-toolbar button:hover {
 
   background:
-    rgba(241,211,142,0.10);
+    var(--mow-control-bg-hover);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-text-primary);
 }
 
 
@@ -184,10 +202,10 @@
 .floating-toolbar button.active {
 
   background:
-    rgba(241,211,142,0.16);
+    var(--mow-control-bg-active);
 
   color:
-    #f4dfa8;
+    var(--mow-accent-primary-hover);
 }
 
 
@@ -206,7 +224,7 @@
     0 4px;
 
   background:
-    rgba(255,255,255,0.08);
+    var(--mow-separator-color);
 }
 
 
@@ -236,27 +254,23 @@
     center;
 
   gap:
-    8px;
+    var(--mow-space-2);
 
   padding:
-    8px;
+    var(--mow-space-2);
 
   border:
-    1px solid rgba(255,255,255,0.10);
+    1px solid var(--mow-popover-border);
 
   border-radius:
-    14px;
+    var(--mow-radius-sm);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(28,29,27,0.96),
-      rgba(14,15,16,0.94)
-    );
+    var(--mow-popover-bg);
 
   box-shadow:
-    0 18px 54px rgba(0,0,0,0.36),
-    inset 0 1px 0 rgba(255,255,255,0.08);
+    var(--mow-shadow-overlay),
+    inset 0 1px 0 rgba(255, 246, 222, 0.08);
 }
 
 
@@ -278,7 +292,7 @@
   border: none;
 
   border-radius:
-    8px;
+    var(--mow-radius-xs);
 
   overflow: hidden;
 
@@ -293,7 +307,7 @@
   border: none;
 
   border-radius:
-    8px;
+    var(--mow-radius-xs);
 }
 
 
@@ -318,10 +332,10 @@
     2px;
 
   border-radius:
-    8px;
+    var(--mow-radius-xs);
 
   background:
-    rgba(255,255,255,0.045);
+    var(--mow-surface-embedded);
 }
 
 
@@ -347,7 +361,7 @@
     0;
 
   border:
-    1px solid rgba(255,255,255,0.22);
+    1px solid var(--mow-border-subtle);
 
   border-radius:
     3px;
@@ -364,10 +378,10 @@
 .toolbar-color-popup .toolbar-color-swatch.is-current {
 
   border-color:
-    rgba(244,223,168,0.92);
+    var(--mow-border-focus);
 
   box-shadow:
-    0 0 0 2px rgba(241,211,142,0.18),
+    0 0 0 2px var(--mow-accent-bg),
     inset 0 0 0 1px rgba(0,0,0,0.16);
 }
 
@@ -387,7 +401,7 @@
     rgba(36,29,16,0.94);
 
   background:
-    rgba(241,211,142,0.92);
+    var(--mow-accent-primary-hover);
 }
 
 
@@ -397,7 +411,7 @@
     rgba(30,24,14,0.98);
 
   background:
-    rgba(244,223,168,0.98);
+    var(--mow-accent-primary-hover);
 }
 
 
@@ -421,7 +435,7 @@
     padding: 4px;
 
     border-radius:
-      12px;
+      var(--mow-radius-sm);
   }
 
   .floating-toolbar button {
@@ -430,7 +444,8 @@
 
     height: 28px;
 
-    font-size: 12px;
+    font-size:
+      var(--mow-font-size-sm);
   }
 
 }

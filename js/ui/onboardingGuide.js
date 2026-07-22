@@ -1,3 +1,8 @@
+import {
+  registerPopup
+} from './popupManager.js';
+
+
 const ONBOARDING_SECTIONS = {
   quickstart: {
     title: 'Быстрый старт',
@@ -86,6 +91,34 @@ export function setupOnboardingGuide() {
     !closeButton
   ) return;
 
+  popup.setAttribute(
+    'role',
+    'dialog'
+  );
+
+  popup.setAttribute(
+    'aria-modal',
+    'false'
+  );
+
+  popup.setAttribute(
+    'aria-labelledby',
+    'onboardingTitle'
+  );
+
+  const controller =
+    registerPopup({
+      popup,
+      close:
+        () => popup.classList.add('hidden'),
+      key:
+        'onboarding-popup',
+      kind:
+        'dialog',
+      modal:
+        false
+    });
+
   document.addEventListener(
     'click',
     event => {
@@ -100,7 +133,8 @@ export function setupOnboardingGuide() {
         {
           popup,
           title,
-          body
+          body,
+          controller
         }
       );
     }
@@ -108,7 +142,7 @@ export function setupOnboardingGuide() {
 
   closeButton.addEventListener(
     'click',
-    () => popup.classList.add('hidden')
+    () => controller.close()
   );
 }
 
@@ -130,7 +164,7 @@ function openOnboardingSection(
       .map(renderOnboardingItem)
       .join('');
 
-  elements.popup.classList.remove('hidden');
+  elements.controller.open();
 }
 
 

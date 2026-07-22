@@ -89,6 +89,10 @@ import {
 } from './ui/appTopbar.js';
 
 import {
+  setupAppShell
+} from './ui/appShell.js';
+
+import {
   setupOnboardingGuide
 } from './ui/onboardingGuide.js';
 
@@ -108,52 +112,57 @@ void loadInternalRulesWorkspaceContent();
 
 
 
-document
-  .getElementById('openWorkspaceBtn') /* Находит кнопку открытия workspace. Она создается в index.html*/
+document.addEventListener(
+  'click',
+  async event => {
 
-  /* Вешает обработчик клика */
-  .addEventListener(
-    'click',
+    const openWorkspaceButton =
+      event.target.closest?.(
+        '[data-open-workspace]'
+      );
 
-    /* Асинхронный обработчик */
-    async () => {
+    if (!openWorkspaceButton) return;
 
-      /* Открывает системный picker папки */
-      const success =
-        await openWorkspace(); /* Функция из storage.js
+    event.preventDefault();
 
-      /* Если пользователь отменил выбор папки — выходим */
-      if (!success) return;
+    await openSelectedWorkspace();
+  }
+);
 
-      /* Загружает все страницы workspace */
-      await loadWorkspace();
 
-      await loadPageTemplates();
+async function openSelectedWorkspace() {
 
-      await restoreWorkspaceTreeExpansionState();
+  const success =
+    await openWorkspace();
 
-      /* Перерисовывает дерево */
-      renderTree();
+  if (!success) return;
 
-      if (
-        shouldShowWorkspaceRecovery(
-          state.workspaceRecoveryReport
-        )
-      ) {
+  await loadWorkspace();
 
-        renderWorkspaceRecoveryEditor(
-          state.workspaceRecoveryReport
-        );
+  await loadPageTemplates();
 
-        return;
-      }
+  await restoreWorkspaceTreeExpansionState();
 
-      if (state.pages.length === 0) {
+  renderTree();
 
-        renderEmptyEditor();
-      }
-    }
-  );
+  if (
+    shouldShowWorkspaceRecovery(
+      state.workspaceRecoveryReport
+    )
+  ) {
+
+    renderWorkspaceRecoveryEditor(
+      state.workspaceRecoveryReport
+    );
+
+    return;
+  }
+
+  if (state.pages.length === 0) {
+
+    renderEmptyEditor();
+  }
+}
 
 
 
@@ -168,6 +177,8 @@ setupOnboardingGuide();
 
 /* Инициализация поиска */
 setupSearch();
+
+setupAppShell();
 
 /* Инициализация тегов */
 setupTags();

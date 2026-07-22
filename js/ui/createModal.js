@@ -5,6 +5,7 @@ import {
 import { state } from '../state.js';
 
 import {
+  createFolderPage,
   createPage
 } from '../storage/storage.js';
 
@@ -48,10 +49,8 @@ let menu =
 let createMenuBackHandlerReady =
   false;
 
-const button =
-  document.getElementById(
-    'newPageBtn'
-  );
+let createActionsReady =
+  false;
 
 const menuAnchors =
   [];
@@ -66,37 +65,79 @@ export function setupCreateModal() {
 
   renderMenu();
 
-  button.addEventListener(
-    'click',
-    toggleMenu
-  );
+  setupCreateActions();
 
   registerPopup({
     popup: menu,
     close: closeMenu,
-    anchors: menuAnchors
+    anchors: menuAnchors,
+    kind: 'dropdown-menu'
   });
 }
 
 
-function toggleMenu(event) {
+function setupCreateActions() {
+
+  if (createActionsReady) return;
+
+  createActionsReady =
+    true;
+
+  document.addEventListener(
+    'click',
+    handleCreateActionClick
+  );
+}
+
+
+function handleCreateActionClick(event) {
+
+  const createPageButton =
+    event.target.closest?.(
+      '[data-create-page]'
+    );
+
+  if (createPageButton) {
+
+    toggleMenu(
+      event,
+      createPageButton
+    );
+
+    return;
+  }
+
+  const createFolderButton =
+    event.target.closest?.(
+      '[data-create-folder]'
+    );
+
+  if (!createFolderButton) return;
+
+  void createFolderFromButton(
+    event,
+    createFolderButton
+  );
+}
+
+
+function toggleMenu(
+  event,
+  anchor
+) {
 
   event.stopPropagation();
 
   if (
-    menu.classList.contains(
-      'hidden'
-    )
+    menu.classList.contains('hidden') ||
+    menuAnchors[0] !== anchor
   ) {
 
-    const rect =
-      button.getBoundingClientRect();
-
     openCreateMenu(
-      rect.left,
-      rect.bottom + 8,
-      null,
-      button
+      0,
+      0,
+      anchor.dataset.parentId || null,
+      anchor
     );
 
   } else {
@@ -257,7 +298,19 @@ function renderMenu() {
 
       item.addEventListener(
         'click',
-        async () => {
+        async () => createPageFromMenuTemplate(
+          key
+        )
+      );
+
+      menu.appendChild(item);
+    });
+}
+
+
+async function createPageFromMenuTemplate(
+  templateKey
+) {
 
   closeMenu();
 
@@ -266,9 +319,9 @@ function renderMenu() {
 
   const page =
     await createPage(
-    key,
-    parentId
-  );
+      templateKey,
+      parentId
+    );
 
   renderTree();
 
@@ -279,10 +332,56 @@ function renderMenu() {
     );
   }
 }
+
+
+async function createFolderFromButton(
+  event,
+  button
+) {
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  closeMenu();
+
+  try {
+
+    const page =
+      await createFolderPage(
+        'Новая папка',
+        button.dataset.parentId || null
       );
 
-      menu.appendChild(item);
-    });
+    renderTree();
+
+    if (page) {
+
+      openPage(
+        page
+      );
+
+      setStatus(
+        'Папка создана'
+      );
+
+      return;
+    }
+
+    setStatus(
+      'Не удалось создать папку'
+    );
+
+  } catch (error) {
+
+    console.error(
+      'Не удалось создать папку:',
+      error
+    );
+
+    setStatus(
+      'Не удалось создать папку'
+    );
+  }
 }
 
 

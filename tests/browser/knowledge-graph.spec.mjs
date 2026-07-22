@@ -23,11 +23,22 @@ test(
           state
         } = await import('/js/state.js');
 
+        const {
+          renderTree
+        } = await import('/js/tree/tree.js');
+
         const files =
           new Map();
 
         setStorageAdapter({
           kind: 'memory',
+          getWorkspaceHandle() {
+            return {
+              name:
+                'Test workspace'
+            };
+          },
+          setWorkspaceHandle() {},
           async pickWorkspace() {
             return {};
           },
@@ -217,10 +228,12 @@ aliases: []
 <h1>Orphan</h1>`
           }
         ];
+
+        renderTree();
       }
     );
 
-    await page.locator('#newPageBtn').click();
+    await page.locator('[data-create-page]').click();
     await page.locator('#createMenu [data-template="knowledgeGraph"]').click();
 
     await page.waitForFunction(
@@ -742,14 +755,17 @@ aliases: []
     const contextClickY =
       editedHeroCardBox.y + editedHeroCardBox.height / 2;
 
-    await page.mouse.click(
-      contextClickX,
-      contextClickY,
-      {
-        button:
-          'right'
-      }
-    );
+    await editedHeroCard.click({
+      button:
+        'right',
+      position:
+        {
+          x:
+            editedHeroCardBox.width / 2,
+          y:
+            editedHeroCardBox.height / 2
+        }
+    });
 
     const nodeMenu =
       page.locator('[data-knowledge-graph-node-menu]');
@@ -757,6 +773,34 @@ aliases: []
     await expect(
       nodeMenu
     ).toBeVisible();
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-overlay-kind',
+      'popover'
+    );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-overlay-lifecycle',
+      'popup-manager'
+    );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'open'
+    );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'aria-modal',
+      'false'
+    );
 
     const nodeMenuBox =
       await nodeMenu.boundingBox();
@@ -783,15 +827,37 @@ aliases: []
     );
 
     expect(
+      nodeMenuBox.y + nodeMenuBox.height
+    ).toBeLessThanOrEqual(
+      viewportSize.height + 1
+    );
+
+    const nodeMenuContainsContextX =
       contextClickX >= nodeMenuBox.x - 12 &&
-        contextClickX <= nodeMenuBox.x + nodeMenuBox.width + 12
+      contextClickX <= nodeMenuBox.x + nodeMenuBox.width + 12;
+
+    const nodeMenuClampedHorizontally =
+      nodeMenuBox.x <= 13 ||
+      nodeMenuBox.x + nodeMenuBox.width >= viewportSize.width - 13;
+
+    expect(
+      nodeMenuContainsContextX ||
+      nodeMenuClampedHorizontally
     ).toBe(
       true
     );
 
-    expect(
+    const nodeMenuContainsContextY =
       contextClickY >= nodeMenuBox.y - 12 &&
-        contextClickY <= nodeMenuBox.y + nodeMenuBox.height + 12
+      contextClickY <= nodeMenuBox.y + nodeMenuBox.height + 12;
+
+    const nodeMenuClampedVertically =
+      nodeMenuBox.y <= 13 ||
+      nodeMenuBox.y + nodeMenuBox.height >= viewportSize.height - 13;
+
+    expect(
+      nodeMenuContainsContextY ||
+      nodeMenuClampedVertically
     ).toBe(
       true
     );
@@ -867,6 +933,34 @@ aliases: []
     await expect(
       connectPopup
     ).toBeVisible();
+
+    await expect(
+      connectPopup
+    ).toHaveAttribute(
+      'data-overlay-kind',
+      'dialog'
+    );
+
+    await expect(
+      connectPopup
+    ).toHaveAttribute(
+      'data-overlay-lifecycle',
+      'popup-manager'
+    );
+
+    await expect(
+      connectPopup
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'open'
+    );
+
+    await expect(
+      connectPopup
+    ).toHaveAttribute(
+      'aria-modal',
+      'false'
+    );
 
     await connectPopup
       .locator('[data-knowledge-graph-connect-type]')
@@ -1175,19 +1269,88 @@ aliases: []
     const beforeHeroBox =
       await heroCard.boundingBox();
 
-    const stageBox =
-      await stageLocator.boundingBox();
+    const panPoints =
+      await page.evaluate(
+        () => {
+
+          const stage =
+            document.querySelector(
+              '[data-knowledge-graph-canvas-stage]'
+            );
+
+          const stageRect =
+            stage.getBoundingClientRect();
+
+          const isFreePoint =
+            (x, y) => {
+
+              const target =
+                document.elementFromPoint(
+                  x,
+                  y
+                );
+
+              return Boolean(
+                target?.closest(
+                  '[data-knowledge-graph-canvas-stage]'
+                )
+              ) &&
+              !target?.closest(
+                '[data-knowledge-graph-canvas-card], button, a, input, select, textarea'
+              );
+            };
+
+          for (
+            let y = stageRect.top + 24;
+            y <= stageRect.bottom - 144;
+            y += 48
+          ) {
+
+            for (
+              let x = stageRect.left + 24;
+              x <= stageRect.right - 224;
+              x += 48
+            ) {
+
+              if (isFreePoint(x, y)) {
+
+                return {
+                  startX:
+                    x,
+                  startY:
+                    y,
+                  endX:
+                    x + 200,
+                  endY:
+                    y + 120
+                };
+              }
+            }
+          }
+
+          return {
+            startX:
+              stageRect.left + stageRect.width / 2,
+            startY:
+              stageRect.top + stageRect.height / 2,
+            endX:
+              stageRect.left + stageRect.width / 2 + 80,
+            endY:
+              stageRect.top + stageRect.height / 2 + 60
+          };
+        }
+      );
 
     await page.mouse.move(
-      stageBox.x + 24,
-      stageBox.y + 24
+      panPoints.startX,
+      panPoints.startY
     );
 
     await page.mouse.down();
 
     await page.mouse.move(
-      stageBox.x + 114,
-      stageBox.y + 74
+      panPoints.endX,
+      panPoints.endY
     );
 
     await page.mouse.up();

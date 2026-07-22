@@ -71,6 +71,130 @@ const SAFE_REPAIR_ACTIONS =
     }
   });
 
+const LEGACY_WARNING_CODES =
+  new Set([
+    'workspace.legacy_schema_version',
+    'page.missing_schema_version',
+    'page.invalid_schema_version',
+    'page.legacy_schema_version',
+    'page.missing_updated_at',
+    'page.missing_content_hash'
+  ]);
+
+const RECOVERY_GROUPS =
+  Object.freeze({
+    workspace: {
+      id:
+        'workspace',
+      label:
+        'Workspace',
+      description:
+        'Общие проблемы формата workspace. Их нельзя чинить автоматически без отдельного сценария.',
+      priority:
+        10
+    },
+    'page-identity': {
+      id:
+        'page-identity',
+      label:
+        'Идентичность страниц',
+      description:
+        'Проблемы с id страниц. Это опасно для сохранения, ссылок и карты.',
+      priority:
+        20
+    },
+    'page-tree': {
+      id:
+        'page-tree',
+      label:
+        'Дерево страниц',
+      description:
+        'Страницы ссылаются на отсутствующего родителя или образуют цикл.',
+      priority:
+        30
+    },
+    'page-metadata': {
+      id:
+        'page-metadata',
+      label:
+        'Legacy metadata',
+      description:
+        'Старые страницы без новых диагностических полей. Обычно это миграционный шум, который обновится при следующей нормальной записи страницы.',
+      priority:
+        40
+    },
+    'page-content': {
+      id:
+        'page-content',
+      label:
+        'Содержимое страниц',
+      description:
+        'Поля страницы или контрольные данные выглядят нестандартно и требуют проверки.',
+      priority:
+        50
+    },
+    map: {
+      id:
+        'map',
+      label:
+        'Карты',
+      description:
+        'Проблемы persistent-данных карты: токены, слои, фигуры или туман.',
+      priority:
+        60
+    },
+    task: {
+      id:
+        'task',
+      label:
+        'Task tracker',
+      description:
+        'Проблемы колонок, задач или ссылок task tracker.',
+      priority:
+        70
+    },
+    template: {
+      id:
+        'template',
+      label:
+        'Шаблоны',
+      description:
+        'Проблемы файла шаблонов страниц.',
+      priority:
+        80
+    },
+    asset: {
+      id:
+        'asset',
+      label:
+        'Assets',
+      description:
+        'Проблемы persistent-ссылок на файлы assets.',
+      priority:
+        90
+    },
+    package: {
+      id:
+        'package',
+      label:
+        'World packages',
+      description:
+        'Проблемы импортируемых пакетов мира.',
+      priority:
+        100
+    },
+    other: {
+      id:
+        'other',
+      label:
+        'Другое',
+      description:
+        'Проблемы, для которых еще нет отдельной группы.',
+      priority:
+        1000
+    }
+  });
+
 
 export function createWorkspaceRecoveryReport(
   validation = createValidationResult()
@@ -79,8 +203,15 @@ export function createWorkspaceRecoveryReport(
   const issues =
     validation.issues || [];
 
+  const annotatedIssues =
+    issues.map(issue =>
+      createRecoveryIssue(
+        issue
+      )
+    );
+
   const actions =
-    issues
+    annotatedIssues
       .filter(issue =>
         issue.severity === 'error'
       )
@@ -88,15 +219,24 @@ export function createWorkspaceRecoveryReport(
         code:
           issue.code,
         message:
-          RECOVERY_MESSAGES[issue.code] ||
-          'Проблема требует ручной проверки данных workspace.',
+          issue.recoveryMessage,
         details:
           issue.details || {},
         repairAction:
-          getWorkspaceRepairAction(
-            issue
-          )
+          issue.repairAction
       }));
+
+  const issueGroups =
+    createWorkspaceRecoveryIssueGroups(
+      annotatedIssues
+    );
+
+  const summary =
+    createWorkspaceRecoverySummary(
+      annotatedIssues,
+      issueGroups,
+      actions
+    );
 
   return {
     blocking:
@@ -107,8 +247,302 @@ export function createWorkspaceRecoveryReport(
       validation.errors?.length || 0,
     warningCount:
       validation.warnings?.length || 0,
+    safeActionCount:
+      summary.safeActionCount,
+    manualActionCount:
+      summary.manualActionCount,
+    legacyWarningCount:
+      summary.legacyWarningCount,
+    reviewWarningCount:
+      summary.reviewWarningCount,
+    issueGroups,
+    groups:
+      issueGroups,
+    summary,
     actions
   };
+}
+
+
+export function createWorkspaceRecoveryIssueGroups(
+  issues = []
+) {
+
+  const groups =
+    new Map();
+
+  for (const issue of issues) {
+
+    const groupId =
+      issue.groupId ||
+      getWorkspaceRecoveryGroupId(
+        issue
+      );
+
+    const groupConfig =
+      RECOVERY_GROUPS[groupId] ||
+      RECOVERY_GROUPS.other;
+
+    if (!groups.has(groupConfig.id)) {
+
+      groups.set(
+        groupConfig.id,
+        {
+          id:
+            groupConfig.id,
+          label:
+            groupConfig.label,
+          description:
+            groupConfig.description,
+          priority:
+            groupConfig.priority,
+          issueCount:
+            0,
+          errorCount:
+            0,
+          warningCount:
+            0,
+          safeActionCount:
+            0,
+          manualActionCount:
+            0,
+          legacyWarningCount:
+            0,
+          reviewWarningCount:
+            0,
+          codes:
+            {},
+          examples:
+            []
+        }
+      );
+    }
+
+    const group =
+      groups.get(
+        groupConfig.id
+      );
+
+    group.issueCount +=
+      1;
+
+    if (issue.severity === 'error') {
+
+      group.errorCount +=
+        1;
+
+    } else if (issue.severity === 'warning') {
+
+      group.warningCount +=
+        1;
+    }
+
+    if (issue.category === 'safe-after-backup') {
+
+      group.safeActionCount +=
+        1;
+    }
+
+    if (issue.category === 'manual') {
+
+      group.manualActionCount +=
+        1;
+    }
+
+    if (issue.category === 'legacy') {
+
+      group.legacyWarningCount +=
+        1;
+    }
+
+    if (issue.category === 'review') {
+
+      group.reviewWarningCount +=
+        1;
+    }
+
+    group.codes[issue.code] =
+      (group.codes[issue.code] || 0) + 1;
+
+    if (group.examples.length < 5) {
+
+      group.examples.push({
+        code:
+          issue.code,
+        severity:
+          issue.severity,
+        message:
+          issue.recoveryMessage || issue.message || '',
+        details:
+          issue.details || {},
+        category:
+          issue.category,
+        repairAction:
+          issue.repairAction || null
+      });
+    }
+  }
+
+  return [...groups.values()]
+    .sort((a, b) =>
+      a.priority - b.priority ||
+      b.errorCount - a.errorCount ||
+      b.issueCount - a.issueCount ||
+      a.label.localeCompare(
+        b.label
+      )
+    );
+}
+
+
+function createWorkspaceRecoverySummary(
+  issues,
+  issueGroups,
+  actions
+) {
+
+  const safeActionCount =
+    actions.filter(action =>
+      action.repairAction?.safety === 'safe-after-backup'
+    ).length;
+
+  const manualActionCount =
+    actions.filter(action =>
+      action.repairAction?.safety === 'manual'
+    ).length;
+
+  const legacyWarningCount =
+    issues.filter(issue =>
+      issue.category === 'legacy'
+    ).length;
+
+  const reviewWarningCount =
+    issues.filter(issue =>
+      issue.category === 'review'
+    ).length;
+
+  return {
+    issueCount:
+      issues.length,
+    groupCount:
+      issueGroups.length,
+    safeActionCount,
+    manualActionCount,
+    legacyWarningCount,
+    reviewWarningCount
+  };
+}
+
+
+function createRecoveryIssue(
+  issue
+) {
+
+  const repairAction =
+    issue?.severity === 'error'
+      ? getWorkspaceRepairAction(
+        issue
+      )
+      : null;
+
+  const groupId =
+    getWorkspaceRecoveryGroupId(
+      issue
+    );
+
+  const category =
+    getWorkspaceRecoveryCategory(
+      issue,
+      repairAction
+    );
+
+  return {
+    ...issue,
+    groupId,
+    category,
+    repairAction,
+    recoveryMessage:
+      RECOVERY_MESSAGES[issue.code] ||
+      issue.message ||
+      'Проблема требует ручной проверки данных workspace.'
+  };
+}
+
+
+function getWorkspaceRecoveryGroupId(
+  issue
+) {
+
+  const code =
+    String(
+      issue?.code || ''
+    );
+
+  if (code.startsWith('workspace.')) return 'workspace';
+
+  if (
+    code === 'page.missing_id' ||
+    code === 'page.duplicate_id'
+  ) {
+
+    return 'page-identity';
+  }
+
+  if (
+    code === 'page.broken_parent' ||
+    code === 'page.parent_cycle'
+  ) {
+
+    return 'page-tree';
+  }
+
+  if (
+    LEGACY_WARNING_CODES.has(
+      code
+    )
+  ) {
+
+    return 'page-metadata';
+  }
+
+  if (code.startsWith('page.')) return 'page-content';
+
+  if (code.startsWith('map.')) return 'map';
+
+  if (code.startsWith('task.')) return 'task';
+
+  if (code.startsWith('template.')) return 'template';
+
+  if (code.startsWith('asset.')) return 'asset';
+
+  if (code.startsWith('package.')) return 'package';
+
+  return 'other';
+}
+
+
+function getWorkspaceRecoveryCategory(
+  issue,
+  repairAction
+) {
+
+  if (issue?.severity === 'error') {
+
+    return repairAction?.safety === 'safe-after-backup'
+      ? 'safe-after-backup'
+      : 'manual';
+  }
+
+  if (
+    LEGACY_WARNING_CODES.has(
+      issue?.code
+    )
+  ) {
+
+    return 'legacy';
+  }
+
+  return 'review';
 }
 
 

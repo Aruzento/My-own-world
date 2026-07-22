@@ -22,6 +22,10 @@ import {
 let draggedBlock = null;
 let blockDropPlaceholder = null;
 let blockDropReference = null;
+let blockDragState = null;
+
+const BLOCK_DRAG_START_DISTANCE =
+  5;
 
 
 export function setupCustomBlocks(
@@ -118,6 +122,90 @@ function setupBlockDragAndDrop(
   editor,
   saveCurrentPage
 ) {
+
+  editor.addEventListener(
+    'pointerdown',
+    event => {
+
+      const handle =
+        event.target.closest('.block-drag-handle');
+
+      if (!handle) return;
+
+      if (
+        event.button !== 0 ||
+        event.isPrimary === false
+      ) return;
+
+      if (blockDragState) {
+
+        clearDraggedBlock();
+      }
+
+      const block =
+        handle.closest('.template-block');
+
+      const main =
+        block?.closest('.entity-main');
+
+      if (
+        !block ||
+        !main ||
+        block.classList.contains('hero-block') ||
+        !editor.contains(main)
+      ) return;
+
+      const rect =
+        block.getBoundingClientRect();
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      blockDragState = {
+        editor,
+        saveCurrentPage,
+        handle,
+        block,
+        main,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        pointerOffsetX: event.clientX - rect.left,
+        pointerOffsetY: event.clientY - rect.top,
+        width: rect.width,
+        height: rect.height,
+        moved: false,
+        preview: null
+      };
+
+      handle.setAttribute(
+        'aria-pressed',
+        'true'
+      );
+
+      handle.setPointerCapture?.(
+        event.pointerId
+      );
+
+      window.addEventListener(
+        'pointermove',
+        handleBlockPointerMove,
+        true
+      );
+
+      window.addEventListener(
+        'pointerup',
+        handleBlockPointerUp,
+        true
+      );
+
+      window.addEventListener(
+        'pointercancel',
+        cancelBlockPointerDrag,
+        true
+      );
+    }
+  );
 
   editor.addEventListener(
     'dragstart',
@@ -229,6 +317,151 @@ function setupBlockDragAndDrop(
 }
 
 
+function handleBlockPointerMove(
+  event
+) {
+
+  if (
+    !blockDragState ||
+    event.pointerId !== blockDragState.pointerId
+  ) return;
+
+  const distance =
+    Math.hypot(
+      event.clientX - blockDragState.startX,
+      event.clientY - blockDragState.startY
+    );
+
+  if (
+    !blockDragState.moved &&
+    distance < BLOCK_DRAG_START_DISTANCE
+  ) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (!blockDragState.moved) {
+
+    startBlockPointerDrag();
+  }
+
+  updateBlockDragPreview(
+    event.clientX,
+    event.clientY
+  );
+
+  moveBlockPlaceholderToPointer(
+    blockDragState.main,
+    event.clientY
+  );
+}
+
+
+function handleBlockPointerUp(
+  event
+) {
+
+  if (
+    !blockDragState ||
+    event.pointerId !== blockDragState.pointerId
+  ) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const state =
+    blockDragState;
+
+  if (state.moved) {
+
+    commitBlockPointerDrag(
+      state
+    );
+  }
+
+  clearDraggedBlock();
+}
+
+
+function cancelBlockPointerDrag(
+  event
+) {
+
+  if (
+    blockDragState &&
+    event.pointerId !== blockDragState.pointerId
+  ) return;
+
+  clearDraggedBlock();
+}
+
+
+function startBlockPointerDrag() {
+
+  const state =
+    blockDragState;
+
+  if (!state) return;
+
+  draggedBlock =
+    state.block;
+
+  getBlockDropPlaceholder(
+    state.height
+  );
+
+  state.block.classList.add(
+    'is-dragging',
+    'is-dragging-active'
+  );
+
+  state.preview =
+    createBlockDragPreview(
+      state.block,
+      state.width
+    );
+
+  document.body.appendChild(
+    state.preview
+  );
+
+  state.moved =
+    true;
+}
+
+
+function commitBlockPointerDrag(
+  state
+) {
+
+  const placeholder =
+    blockDropPlaceholder;
+
+  if (
+    !placeholder ||
+    !placeholder.parentNode
+  ) return;
+
+  if (
+    isBlockPlaceholderNoop(
+      placeholder,
+      state.block
+    )
+  ) return;
+
+  pushEditorHistorySnapshot(
+    state.editor,
+    'Перемещение блока'
+  );
+
+  placeholder.before(
+    state.block
+  );
+
+  state.saveCurrentPage();
+}
+
+
 function clearDraggedBlock() {
 
   if (draggedBlock) {
@@ -241,6 +474,47 @@ function clearDraggedBlock() {
 
   draggedBlock =
     null;
+
+  if (blockDragState) {
+
+    blockDragState.handle?.removeAttribute(
+      'aria-pressed'
+    );
+
+    blockDragState.preview?.remove();
+
+    if (
+      blockDragState.handle?.hasPointerCapture?.(
+        blockDragState.pointerId
+      )
+    ) {
+
+      blockDragState.handle.releasePointerCapture(
+        blockDragState.pointerId
+      );
+    }
+  }
+
+  blockDragState =
+    null;
+
+  window.removeEventListener(
+    'pointermove',
+    handleBlockPointerMove,
+    true
+  );
+
+  window.removeEventListener(
+    'pointerup',
+    handleBlockPointerUp,
+    true
+  );
+
+  window.removeEventListener(
+    'pointercancel',
+    cancelBlockPointerDrag,
+    true
+  );
 
   clearDropMarkers();
 }
@@ -315,6 +589,74 @@ function getBlockInsertionReference(
     return pointerY <
       rect.top + rect.height / 2;
   }) || null;
+}
+
+
+function isBlockPlaceholderNoop(
+  placeholder,
+  block
+) {
+
+  return (
+    placeholder.previousElementSibling === block ||
+    placeholder.nextElementSibling === block
+  );
+}
+
+
+function createBlockDragPreview(
+  block,
+  width
+) {
+
+  const preview =
+    block.cloneNode(
+      true
+    );
+
+  preview.classList.remove(
+    'is-dragging',
+    'is-dragging-active'
+  );
+
+  preview.classList.add(
+    'block-drag-preview'
+  );
+
+  preview.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+
+  preview.querySelectorAll(
+    '[data-runtime="true"]'
+  ).forEach(element =>
+    element.remove()
+  );
+
+  preview.style.width =
+    `${Math.max(220, Math.min(width, 720))}px`;
+
+  markRuntime(
+    preview
+  );
+
+  return preview;
+}
+
+
+function updateBlockDragPreview(
+  clientX,
+  clientY
+) {
+
+  const state =
+    blockDragState;
+
+  if (!state?.preview) return;
+
+  state.preview.style.transform =
+    `translate3d(${clientX - state.pointerOffsetX}px, ${clientY - state.pointerOffsetY}px, 0)`;
 }
 
 

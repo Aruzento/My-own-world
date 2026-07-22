@@ -6,6 +6,10 @@ import {
   revealPageInTree
 } from '../tree/tree.js';
 
+import {
+  iconSvg
+} from '../core/icons.js';
+
 const navigationStack =
   [];
 
@@ -110,11 +114,19 @@ function createFindButton() {
   findButton.type =
     'button';
 
-  findButton.textContent =
-    '⌖';
+  findButton.innerHTML =
+    iconSvg(
+      'search',
+      'editor-nav-icon'
+    );
 
   findButton.title =
     'Найти в дереве';
+
+  findButton.setAttribute(
+    'aria-label',
+    'Найти в дереве'
+  );
 
   findButton.addEventListener(
     'click',
@@ -145,11 +157,19 @@ function createBackButton(
   button.dataset.runtime =
     'true';
 
-  button.textContent =
-    '←';
+  button.innerHTML =
+    iconSvg(
+      'arrow-left',
+      'editor-nav-icon'
+    );
 
   button.title =
     'Назад';
+
+  button.setAttribute(
+    'aria-label',
+    'Назад'
+  );
 
   button.addEventListener(
     'click',
