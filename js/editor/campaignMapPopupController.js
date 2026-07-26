@@ -7,6 +7,10 @@ import {
   markRuntime
 } from './blocks/blockContract.js';
 
+import {
+  MAP_POPUP_UI_MIGRATION
+} from './campaignMapPopupMarkup.js';
+
 
 // Общий controller для popup-ов карты. Он отвечает только за контейнер,
 // позиционирование, повторный клик по кнопке и закрытие по клику снаружи.
@@ -55,6 +59,9 @@ export function getMapPopup() {
   popup.className =
     'campaign-map-popup hidden';
 
+  popup.dataset.mapPopupUiMigration =
+    MAP_POPUP_UI_MIGRATION;
+
   popup.setAttribute(
     'aria-label',
     'Настройки карты'
@@ -99,6 +106,16 @@ export function showMapPopup(
   popup.dataset.popupKey =
     key;
 
+  popup.dataset.mapPopupUiMigration =
+    MAP_POPUP_UI_MIGRATION;
+
+  popup.setAttribute(
+    'aria-label',
+    getMapPopupLabel(
+      key
+    )
+  );
+
   popup.dataset.anchorKey =
     getAnchorKey(
       anchor
@@ -129,6 +146,37 @@ export function showMapPopup(
       );
     }
   );
+}
+
+
+function getMapPopupLabel(
+  key
+) {
+
+  const labels =
+    {
+      add:
+        'Добавление на карту',
+      picker:
+        'Выбор карточек для карты',
+      grid:
+        'Настройки сетки карты',
+      drawing:
+        'Инструменты рисования карты',
+      fog:
+        'Настройки тумана карты',
+      shapes:
+        'Фигуры карты',
+      layers:
+        'Слои карты',
+      initiative:
+        'Инициатива карты',
+      music:
+        'Музыка карты'
+    };
+
+  return labels[key] ||
+    'Настройки карты';
 }
 
 

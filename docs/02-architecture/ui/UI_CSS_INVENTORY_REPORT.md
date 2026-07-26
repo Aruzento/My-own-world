@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI/CSS Inventory Report
 
-Updated: 2026-07-22
+Updated: 2026-07-27
 
 Plan ref: `0.0.1.8.1`
 
@@ -120,6 +120,7 @@ index.html
 | `styles/document.css` | 661 | Persistent document typography and card body styles. |
 | `styles/brand-system.css` | 633 | Final brand skin, shared state overrides and popup motion. |
 | `styles/campaign-map-token-popup.css` | 633 | Token popup and token quick actions. |
+| `styles/command-palette.css` | 559 | Global command palette, deep search results and command rows. |
 | `styles/block-character-sheet.css` | 467 | Runtime character sheet view backed by PropertiesModel. |
 | `styles/block-table.css` | 393 | Table block, selection toolbar and resize states. |
 
@@ -132,7 +133,8 @@ index.html
 | `js/wiki/knowledgeGraph.js` | 2,366 | Graph model/build logic is large enough to hide lifecycle bypasses. |
 | `js/ui/workspaceDiagnosticsPanel.js` | 1,891 | Diagnostics UI is useful, but large and should not become a generic panel model. |
 | `js/editor/campaignMapMusic.js` | 1,759 | Playlist UI and playback behavior share one large file. |
-| `js/ui/appTopbar.js` | 1,461 | Appearance, backup, diagnostics and app tools are concentrated in the topbar surface. |
+| `js/ui/appTopbar.js` | 1,386 | Appearance, backup, diagnostics and app tools are concentrated in the topbar surface. |
+| `js/ui/commandPalette.js` | 1,039 | Global command/search surface; keep it thin by reusing PageRepository, popupManager and existing app actions. |
 | `js/ui/createModal.js` | 834 | Create menu and saved-template picker now share popup lifecycle, local sprite icons and human-readable template metadata. |
 | `js/templates/blockTypes.js` | 1,519 | Block catalog and creation UI data are dense. This matters for `BI-014` Add block redesign. |
 | `js/editor/blocks/blockControls.js` | 269 | Runtime block toolbar and block-kind badges; keep persistent/runtime split intact. |
@@ -174,6 +176,7 @@ Uses or is wired to `popupManager`:
 
 - app settings/tools popups;
 - profile popup;
+- command palette;
 - create menu;
 - tree context menu;
 - block popup;
@@ -296,8 +299,8 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.8` Primitives | Closed: shared IconButton, Select, Checkbox, SegmentedControl, Toolbar and Separator primitives are added beside Button/Input/Panel/Popover. | Component catalogue covers the new primitives; app Tools popup consumes shared `.mow-button`; popupManager has first overlay state markers for topbar/catalogue popovers. |
 | `0.0.1.8.9` Overlays | Closed: modal focus trap/return, dropdown/context-menu keyboard behavior, first shell tooltip styling, operation-progress toast markers, editor feature popups, campaign map generic/token popups, item picker, onboarding and Knowledge Graph node/connect overlays now extend the popupManager overlay foundation. | Acceptance met: feature overlays use shared lifecycle semantics without adding parallel overlay systems; broader visual polish moves to owning migration phases. |
 | `0.0.1.8.10` AppShell | Closed and corrected after user review: AppShell now has a left rail where `Дерево` shows/hides the primary tree sidebar, profile/user sits in the rail, Explorer-style no-workspace/root creation actions stay in the tree, resize remains available when the sidebar is visible, and the old page-info right inspector has been removed. Content types are not duplicated as rail tabs. | AppShell browser coverage verifies empty start readability, no-workspace tree open-folder CTA, root-level create/folder actions, one-tree-entry rail, no content-type rail duplicates, no duplicate tree header, rail profile placement, tree search, resize, tree show/hide editor expansion, hidden right-panel default state and explicit right-panel foundation open/close. A fake diagnostics bottom panel was not added. |
-| `0.0.1.8.11` Core content | Advanced by `0.0.1.8.11.6`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects and saved-template creation are migrated to the shared design direction. Remaining: deeper search and command palette. | `BI-013` and `BI-014` are closed; block-kind badges, select tokens, Properties field-state markers and template-picker metadata are runtime/UI language that future search/command-palette work should reuse instead of adding another local style; keep `BI-025` as future pane-planning material. |
-| `0.0.1.8.12` Campaign map | Map toolbar, popups, layers and token dock migrate without business logic changes. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke. |
+| `0.0.1.8.11` Core content | Closed at `Usable` by `0.0.1.8.11.7`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects, saved-template creation, deep search and command palette are migrated to the shared design direction. | `BI-013` and `BI-014` are closed; command palette reuses PageRepository, popupManager and existing app action hooks instead of adding a command registry; keep `BI-025` as future pane-planning material. |
+| `0.0.1.8.12` Campaign map | Active. `0.0.1.8.12.1` migrated the map toolbar foundation, and `0.0.1.8.12.2` migrated the shared map popup surface for add/picker, grid, drawing, fog, shapes, layers, initiative and music. Remaining: layer/token dock or inspector surfaces and contextual actions. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke. |
 | `0.0.1.8.13` Knowledge graph | Graph toolbar, canvas controls, node cards and filters migrate. | Also check `BI-017`, `BI-018`, `BI-019`. |
 
 ## Browser And Tauri Risks
@@ -344,7 +347,7 @@ When the redesign reaches these areas, check the small backlog before marking th
 
 - `BI-013`: editor block drag-and-drop regression, closed in `0.0.1.8.11.2`.
 - `BI-014`: Add block popup visual cleanup, closed in `0.0.1.8.11.2`.
-- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, and card selects/template picker advanced in `0.0.1.8.11.6`; remaining card-editor Phase 5 work should focus on search/command palette surfaces rather than reworking those foundations.
+- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map toolbar foundation advanced in `0.0.1.8.12.1`, and the shared popup surface advanced in `0.0.1.8.12.2`; continue Phase 6 on layer/token dock or inspector surfaces instead of repainting toolbar/popups again.
 - `BI-017`: Knowledge Graph file/CSS split, belongs to graph redesign or graph lifecycle work.
 - `BI-018`: Knowledge Graph should stop bypassing the page lifecycle before more graph behavior.
 - `BI-019`: graph hidden-slice clarity belongs to graph UI migration.

@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # Design System Contract
 
-Updated: 2026-07-22
+Updated: 2026-07-27
 
 Plan ref: `0.0.1.8.2`
 
@@ -626,6 +626,9 @@ The closing 2026-07-21 `0.0.1.8.9` follow-up completed the overlay migration ste
 - `0.0.1.8.11.4` migrates the Properties field-state slice: Properties blocks expose `data-property-ui-migration="0.0.1.8.11.4"`, fields get semantic `data-property-variant`, `data-property-state` and `data-property-kind-icon` markers, visible field badges are runtime-only local sprite icons, and compact character/creature layouts must avoid skill/death-save overlap.
 - `0.0.1.8.11.5` migrates the shared card block visual slice: ordinary `.template-block[data-block-type]` surfaces use `--mow-block-*` tokens, thin type markers and runtime-only `.block-kind-badge` icons/labels; block-specific content may stay specialized, but the outer editor block frame must not introduce another local card style.
 - `0.0.1.8.11.6` migrates the card select/template slice: native selects inside card blocks must use `--mow-select-*` tokens, dark option colors, custom arrow styling and warm focus states; saved page templates must be reachable from the existing create menu through the shared popup lifecycle, local sprite icons and human-readable metadata.
+- `0.0.1.8.11.7` migrates the search/command slice: the rail may expose `Поиск и команды` as a real global tool, but it must not become a content-type tab or tree filter. The command palette must use `popupManager` modal lifecycle, local sprite icons, tokenized command/result rows, `PageRepository` search metadata, `Ctrl+K`, and existing app action hooks rather than a parallel command registry until command complexity proves that registry necessary.
+- `0.0.1.8.12.1` migrates the first campaign-map toolbar slice: `.campaign-map-controls` must be an accessible toolbar with labeled action groups for creation, scene/view, map tools and live-session actions. It must keep existing action selectors, use local sprite icons, shared control/map tokens, `aria-pressed` for active grid/pan/drawing/fog states and responsive behavior that prevents toolbar overflow inside the editor workspace.
+- `0.0.1.8.12.2` migrates the campaign-map popup surface: `#campaignMapPopup[data-map-popup-ui-migration="0.0.1.8.12.2"]` and `.campaign-map-popup-shell[data-map-popup-ui-migration="0.0.1.8.12.2"]` must provide one compact map overlay frame for add/picker, grid, drawing, fog, shapes, layers, initiative and music. The surface must keep legacy action selectors, use local sprite icons, expose readable section labels and keep per-popup aria labels through `campaignMapPopupController`.
 - The separate diagnostics/history bottom panel was not added as a decorative placeholder. It remains a secondary-screens migration target where it can attach to real diagnostics, backup, recovery and history data.
 
-`0.0.1.8.10` is closed. `0.0.1.8.11` Migration Phase 5 core content is active; tree/search, block DnD, first-level Add block picker, card editor header/toolbar controls, Properties, shared card block frames, card selects and saved template creation have migrated slices, while deeper search and command palette remain active.
+`0.0.1.8.10` is closed. `0.0.1.8.11` Migration Phase 5 core content is closed at `Usable` level; tree/search, block DnD, first-level Add block picker, card editor header/toolbar controls, Properties, shared card block frames, card selects, saved template creation, deep search and the command palette now have migrated slices. `0.0.1.8.12` campaign map migration is active; the toolbar foundation is closed by `0.0.1.8.12.1` and the popup surface is closed by `0.0.1.8.12.2`, while layer/token dock or inspector surfaces and contextual actions remain in Phase 6.

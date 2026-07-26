@@ -517,6 +517,19 @@ function ensureMapControls(
   controls.className =
     'campaign-map-controls';
 
+  controls.dataset.mapUiMigration =
+    '0.0.1.8.12.1';
+
+  controls.setAttribute(
+    'role',
+    'toolbar'
+  );
+
+  controls.setAttribute(
+    'aria-label',
+    'Инструменты карты кампании'
+  );
+
   markRuntime(
     controls
   );

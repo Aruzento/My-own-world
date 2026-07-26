@@ -93,6 +93,10 @@ import {
 } from './ui/appShell.js';
 
 import {
+  setupCommandPalette
+} from './ui/commandPalette.js';
+
+import {
   setupOnboardingGuide
 } from './ui/onboardingGuide.js';
 
@@ -179,6 +183,8 @@ setupOnboardingGuide();
 setupSearch();
 
 setupAppShell();
+
+setupCommandPalette();
 
 /* Инициализация тегов */
 setupTags();

@@ -658,6 +658,9 @@ export function setMapTool(
   stage.dataset.tool =
     tool;
 
+  const drawingActive =
+    String(tool || '').startsWith('drawing-');
+
   if (
     tool === 'draw' ||
     tool === 'erase'
@@ -685,7 +688,14 @@ export function setMapTool(
     .querySelector('.campaign-drawing-btn')
     ?.classList.toggle(
       'is-active',
-      String(tool || '').startsWith('drawing-')
+      drawingActive
+    );
+
+  map
+    .querySelector('.campaign-drawing-btn')
+    ?.setAttribute(
+      'aria-pressed',
+      String(drawingActive)
     );
 
   if (
@@ -717,21 +727,44 @@ export function updateFogButtons(
       mode === 'erase'
     );
 
-  document
-    .getElementById('campaignMapPopup')
-    ?.querySelector('.campaign-fog-draw-btn')
-    ?.classList.toggle(
-      'is-active',
-      mode === 'draw'
+  map
+    .querySelector('.campaign-fog-btn')
+    ?.setAttribute(
+      'aria-pressed',
+      String(
+        mode === 'draw' ||
+        mode === 'erase'
+      )
     );
 
-  document
-    .getElementById('campaignMapPopup')
-    ?.querySelector('.campaign-fog-erase-btn')
-    ?.classList.toggle(
-      'is-active',
-      mode === 'erase'
-    );
+  const popup =
+    document.getElementById('campaignMapPopup');
+
+  const drawButton =
+    popup?.querySelector('.campaign-fog-draw-btn');
+
+  const eraseButton =
+    popup?.querySelector('.campaign-fog-erase-btn');
+
+  drawButton?.classList.toggle(
+    'is-active',
+    mode === 'draw'
+  );
+
+  drawButton?.setAttribute(
+    'aria-pressed',
+    String(mode === 'draw')
+  );
+
+  eraseButton?.classList.toggle(
+    'is-active',
+    mode === 'erase'
+  );
+
+  eraseButton?.setAttribute(
+    'aria-pressed',
+    String(mode === 'erase')
+  );
 }
 
 
@@ -750,6 +783,13 @@ export function updatePanButton(
     ?.classList.toggle(
       'is-active',
       active
+    );
+
+  map
+    .querySelector('.campaign-pan-btn')
+    ?.setAttribute(
+      'aria-pressed',
+      String(active)
     );
 }
 

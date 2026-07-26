@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-07-22
+Дата: 2026-07-26
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 543.
+Всего файлов в аудите: 546.
 
 ## Два Независимых Прохода
 
@@ -27,7 +27,7 @@ owner_zone: "delivery"
 | agent workflow | 9 |
 | assets | 4 |
 | browser tests | 25 |
-| campaign map | 47 |
+| campaign map | 48 |
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
@@ -50,13 +50,13 @@ owner_zone: "delivery"
 | schema | 12 |
 | storage | 26 |
 | story log | 1 |
-| styles | 52 |
+| styles | 53 |
 | tables | 8 |
 | task tracker | 17 |
 | templates | 9 |
 | tools | 19 |
 | tree | 11 |
-| ui | 25 |
+| ui | 26 |
 | unit tests | 57 |
 | world packages | 2 |
 
@@ -65,7 +65,10 @@ owner_zone: "delivery"
 | Файл | Причина |
 |---|---|
 | `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
+| `js/editor/campaignMapPopupMarkup.js` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `js/ui/commandPalette.js` | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/command-palette.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -75,11 +78,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5302574 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5364473 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 771615 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 530636 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 159988 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 821115 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 542334 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 161510 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -116,6 +119,7 @@ owner_zone: "delivery"
 | `styles/campaign-map-tokens.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/campaign-map.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/card-type.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
+| `styles/command-palette.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/design-tokens.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/dnd-stats-v2.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/document.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
@@ -312,6 +316,7 @@ owner_zone: "delivery"
 | `js/editor/campaignMapPicker.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapPointerController.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapPopupController.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
+| `js/editor/campaignMapPopupMarkup.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `js/editor/campaignMapPresentation.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapPresentationItemSync.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapPresentationPayload.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
@@ -488,6 +493,7 @@ owner_zone: "delivery"
 | `js/ui/assetHealthPanel.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/backlinks.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/cardType.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/commandPalette.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `js/ui/componentCatalogue.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/confirmPopup.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/createModal.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
@@ -568,6 +574,7 @@ owner_zone: "delivery"
 | `styles/campaign-map-tokens.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
 | `styles/campaign-map.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
 | `styles/card-type.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `styles/command-palette.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `styles/design-tokens.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/dnd-stats-v2.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/document.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="./styles/main.css"> <!-- Подключает главный CSS-файл, который импортирует остальные стили -->
   </head>
   <body> <!-- Видимая часть приложения -->
-    <div class="app" data-app-shell-poc="0.0.1.8.5" data-ui-foundation="0.0.1.8.7" data-app-shell-migration="0.0.1.8.10" data-core-content-migration="0.0.1.8.11.6" data-app-shell-mode="tree" data-sidebar-state="expanded" data-right-panel-state="hidden"> <!-- Главный layout-контейнер приложения: sidebar + editor -->
+    <div class="app" data-app-shell-poc="0.0.1.8.5" data-ui-foundation="0.0.1.8.7" data-app-shell-migration="0.0.1.8.10" data-core-content-migration="0.0.1.8.11.7" data-app-shell-mode="tree" data-sidebar-state="expanded" data-right-panel-state="hidden"> <!-- Главный layout-контейнер приложения: sidebar + editor -->
 
       <header class="app-topbar" data-app-shell-zone="title-context-bar">
         <div class="app-topbar-context">
@@ -40,6 +40,12 @@
           <button id="appTreeRailBtn" class="app-nav-item is-active" type="button" data-shell-tab="tree" title="Скрыть дерево" data-tooltip="Скрыть дерево" data-tooltip-placement="right" aria-label="Скрыть дерево" aria-controls="primarySidebar" aria-expanded="true" aria-pressed="true">
             <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
               <use href="./assets/icons/rpg-ui.svg#icon-folder-open"></use>
+            </svg>
+          </button>
+
+          <button id="appCommandRailBtn" class="app-nav-item" type="button" data-command-palette-open title="Поиск и команды" data-tooltip="Поиск и команды" data-tooltip-placement="right" aria-label="Поиск и команды" aria-haspopup="dialog" aria-controls="commandPalette" aria-expanded="false">
+            <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <use href="./assets/icons/rpg-ui.svg#icon-search"></use>
             </svg>
           </button>
         </div>
@@ -198,6 +204,29 @@
       <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="quickstart">Быстрый старт</button>
       <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="product">Как устроено</button>
       <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="checklist">Checklist</button>
+    </div>
+
+    <div id="commandPalette" class="command-palette hidden ui-panel" data-runtime="true" data-overlay-kind="dialog" data-overlay-owner="app-shell" data-overlay-lifecycle="popup-manager" data-overlay-state="closed" role="dialog" aria-modal="true" aria-labelledby="commandPaletteTitle">
+      <div class="command-palette-header" data-popup-drag-ignore="true">
+        <svg class="app-icon command-palette-header-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <use href="./assets/icons/rpg-ui.svg#icon-search"></use>
+        </svg>
+
+        <input id="commandPaletteInput" class="command-palette-input" type="search" placeholder="Поиск по миру или команда..." autocomplete="off" spellcheck="false" data-overlay-autofocus="true" aria-label="Поиск по миру или команда">
+
+        <button id="commandPaletteCloseBtn" class="command-palette-close" type="button" title="Закрыть" aria-label="Закрыть">
+          <svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <use href="./assets/icons/rpg-ui.svg#icon-x"></use>
+          </svg>
+        </button>
+      </div>
+
+      <div class="command-palette-meta">
+        <h2 id="commandPaletteTitle">Поиск и команды</h2>
+        <span class="command-palette-shortcut">Ctrl K</span>
+      </div>
+
+      <div id="commandPaletteResults" class="command-palette-results" role="listbox" aria-label="Результаты поиска и команд"></div>
     </div>
 
     <div id="onboardingPopup" class="onboarding-popup hidden ui-panel" data-runtime="true">

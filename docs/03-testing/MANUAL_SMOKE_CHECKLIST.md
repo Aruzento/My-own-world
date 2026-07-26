@@ -24,20 +24,21 @@ Use this checklist when automated tests are green but the product still needs a 
 10. Create text, list, table, image and properties blocks in one card; confirm they share small type badges, thin colored markers and one calm outer block style.
 11. Check dropdowns inside card blocks: the list type picker, Properties selects and character effect selects should use the dark MyOwnWorld control style, not default browser white/blue selects.
 12. Save a card as a template from the tree context menu, open the `Корень` row `+` menu, choose `Из шаблона`, search the template and create a new card from it.
-13. Drag a normal content block by its grip handle, confirm the floating preview and drop placeholder are readable, then drop it in a new position and save/reload.
-Design check after step 13: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay above the selection without covering the title or changing editor width.
-14. Create a map.
-15. Add a token or object.
-16. Open presentation mode.
-17. Move the token and confirm presentation updates.
-18. Create a task tracker and add one task.
-19. Create a properties block on a character.
-20. Confirm compact metrics, ability fields, computed badges and skill groups are readable, and death-save fields do not overlap the lower skill groups; fields should not look like one heavy filled panel.
-21. Change ability values and confirm calculated fields update.
-22. Use search and open a result.
-23. Confirm opening a page does not show a right page-info panel; the reserved right panel should stay hidden in normal work.
-24. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
-25. Delete the test entities.
+13. Open `Поиск и команды` from the left rail or press `Ctrl+K`; search a body-only word, confirm the result shows title/path/matched field/excerpt, open the result, then run the `Скрыть дерево` or `Показать дерево` command from the palette.
+14. Drag a normal content block by its grip handle, confirm the floating preview and drop placeholder are readable, then drop it in a new position and save/reload.
+Design check after step 14: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay above the selection without covering the title or changing editor width.
+15. Create a map and confirm the toolbar has four readable groups: `Создание`, `Сцена`, `Инструменты` and `Live`. At normal desktop width no group should be clipped; grid, pan, drawing and fog buttons should show a clear active pressed state when toggled. Open add, grid, drawing, fog, layers, music and initiative popups; each should have a compact dark shared frame with an icon, readable title, section labels, no clipping/overlap, and normal Escape/repeated-trigger close behavior.
+16. Add a token or object.
+17. Open presentation mode.
+18. Move the token and confirm presentation updates.
+19. Create a task tracker and add one task.
+20. Create a properties block on a character.
+21. Confirm compact metrics, ability fields, computed badges and skill groups are readable, and death-save fields do not overlap the lower skill groups; fields should not look like one heavy filled panel.
+22. Change ability values and confirm calculated fields update.
+23. Use tree search and open a result.
+24. Confirm opening a page does not show a right page-info panel; the reserved right panel should stay hidden in normal work.
+25. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
+26. Delete the test entities.
 
 ## Desktop
 

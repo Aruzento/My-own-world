@@ -410,6 +410,499 @@ ${body}
 
 
 test(
+  'campaign-map-toolbar-uses-migrated-mode-action-groups',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createCampaignMapTemplate
+          } = await import('/js/templates/campaignMap.js');
+
+          const {
+            renderCampaignMap
+          } = await import('/js/editor/campaignMap.js');
+
+          const {
+            setDrawingTool
+          } = await import('/js/editor/campaignMapDrawing.js');
+
+          const {
+            setMapTool
+          } = await import('/js/editor/campaignMapFog.js');
+
+          const {
+            toggleGrid
+          } = await import('/js/editor/campaignMapViewport.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createCampaignMapTemplate().content;
+
+          await renderCampaignMap(
+            editor
+          );
+
+          const map =
+            editor.querySelector('.campaign-map-document');
+
+          const toolbar =
+            map.querySelector('.campaign-map-controls');
+
+          toggleGrid(
+            map
+          );
+
+          setMapTool(
+            map,
+            'pan'
+          );
+
+          const panPressed =
+            toolbar
+              .querySelector('.campaign-pan-btn')
+              .getAttribute('aria-pressed');
+
+          setDrawingTool(
+            map,
+            'pencil'
+          );
+
+          const drawingPressed =
+            toolbar
+              .querySelector('.campaign-drawing-btn')
+              .getAttribute('aria-pressed');
+
+          setMapTool(
+            map,
+            'draw'
+          );
+
+          const mapRect =
+            map.getBoundingClientRect();
+
+          const toolbarRect =
+            toolbar.getBoundingClientRect();
+
+          return {
+            migration:
+              toolbar.dataset.mapUiMigration,
+            role:
+              toolbar.getAttribute('role'),
+            label:
+              toolbar.getAttribute('aria-label'),
+            groupKeys:
+              [...toolbar.querySelectorAll('.campaign-map-control-group')]
+                .map(group => group.dataset.mapControlGroup),
+            groupLabels:
+              [...toolbar.querySelectorAll('.campaign-map-control-group-label')]
+                .map(label => label.textContent.trim()),
+            buttonLabels:
+              [...toolbar.querySelectorAll('.campaign-map-button-label')]
+                .map(label => label.textContent.trim()),
+            buttonsWithoutAria:
+              [...toolbar.querySelectorAll('button')]
+                .filter(button => !button.getAttribute('aria-label')).length,
+            gridPressed:
+              toolbar
+                .querySelector('.campaign-grid-btn')
+                .getAttribute('aria-pressed'),
+            panPressed,
+            drawingPressed,
+            fogPressed:
+              toolbar
+                .querySelector('.campaign-fog-btn')
+                .getAttribute('aria-pressed'),
+            drawingPressedAfterFog:
+              toolbar
+                .querySelector('.campaign-drawing-btn')
+                .getAttribute('aria-pressed'),
+            toolButtonCount:
+              toolbar.querySelectorAll('.campaign-map-tool-button').length,
+            toolbarFitsMap:
+              Math.ceil(toolbarRect.right) <=
+              Math.ceil(mapRect.right),
+            legacySelectorsStillPresent:
+              [
+                '.campaign-add-btn',
+                '.campaign-pan-btn',
+                '.campaign-grid-btn',
+                '.campaign-change-map-btn',
+                '.campaign-open-presentation-btn',
+                '.campaign-shapes-btn',
+                '.campaign-drawing-btn',
+                '.campaign-layers-btn',
+                '.campaign-fog-btn',
+                '.campaign-initiative-btn',
+                '.campaign-music-btn'
+              ].every(selector =>
+                Boolean(
+                  toolbar.querySelector(selector)
+                )
+              )
+          };
+        }
+      );
+
+    expect(
+      result.migration
+    ).toBe(
+      '0.0.1.8.12.1'
+    );
+
+    expect(
+      result.role
+    ).toBe(
+      'toolbar'
+    );
+
+    expect(
+      result.label
+    ).toBe(
+      'Инструменты карты кампании'
+    );
+
+    expect(
+      result.groupKeys
+    ).toEqual([
+      'create',
+      'scene',
+      'tools',
+      'live'
+    ]);
+
+    expect(
+      result.groupLabels
+    ).toEqual([
+      'Создание',
+      'Сцена',
+      'Инструменты',
+      'Live'
+    ]);
+
+    expect(
+      result.buttonLabels
+    ).toEqual([
+      'Добавить',
+      'Рука',
+      'Сетка',
+      'Карта',
+      'Слои',
+      'Фигуры',
+      'Рис.',
+      'Туман',
+      'Показ',
+      'Иниц.',
+      'Музыка'
+    ]);
+
+    expect(
+      result.buttonsWithoutAria
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.gridPressed
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.panPressed
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.drawingPressed
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.fogPressed
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.drawingPressedAfterFog
+    ).toBe(
+      'false'
+    );
+
+    expect(
+      result.toolButtonCount
+    ).toBe(
+      11
+    );
+
+    expect(
+      result.toolbarFitsMap
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.legacySelectorsStillPresent
+    ).toBe(
+      true
+    );
+  }
+);
+
+
+test(
+  'campaign-map-popups-use-migrated-shared-frame',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const waitFrames =
+            () => new Promise(resolve =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(resolve)
+              )
+            );
+
+          const {
+            createCampaignMapTemplate
+          } = await import('/js/templates/campaignMap.js');
+
+          const {
+            renderCampaignMap
+          } = await import('/js/editor/campaignMap.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createCampaignMapTemplate().content;
+
+          await renderCampaignMap(
+            editor
+          );
+
+          const specs =
+            [
+              {
+                selector:
+                  '.campaign-add-btn',
+                key:
+                  'add',
+                aria:
+                  'Добавление на карту',
+                sections:
+                  ['kind'],
+                legacy:
+                  ['.campaign-map-popup-option[data-kind="player"]']
+              },
+              {
+                selector:
+                  '.campaign-grid-btn',
+                key:
+                  'grid',
+                aria:
+                  'Настройки сетки карты',
+                sections:
+                  ['visibility', 'settings'],
+                legacy:
+                  ['.campaign-grid-toggle-btn', '.campaign-grid-size-range']
+              },
+              {
+                selector:
+                  '.campaign-drawing-btn',
+                key:
+                  'drawing',
+                aria:
+                  'Инструменты рисования карты',
+                sections:
+                  ['tool', 'color'],
+                legacy:
+                  ['.campaign-drawing-tool-btn', '.campaign-drawing-color']
+              },
+              {
+                selector:
+                  '.campaign-fog-btn',
+                key:
+                  'fog',
+                aria:
+                  'Настройки тумана карты',
+                sections:
+                  ['mode', 'brush', 'area'],
+                legacy:
+                  ['.campaign-fog-draw-btn', '.campaign-fog-lock-zone-btn']
+              },
+              {
+                selector:
+                  '.campaign-shapes-btn',
+                key:
+                  'shapes',
+                aria:
+                  'Фигуры карты',
+                sections:
+                  ['shape'],
+                legacy:
+                  ['.campaign-shape-option[data-shape="square"]']
+              },
+              {
+                selector:
+                  '.campaign-layers-btn',
+                key:
+                  'layers',
+                aria:
+                  'Слои карты',
+                sections:
+                  ['layers'],
+                legacy:
+                  ['.campaign-layer-row', '.campaign-layer-visible']
+              },
+              {
+                selector:
+                  '.campaign-initiative-btn',
+                key:
+                  'initiative',
+                aria:
+                  'Инициатива карты',
+                sections:
+                  ['participants'],
+                legacy:
+                  ['.campaign-initiative-list', '.campaign-initiative-save-btn']
+              },
+              {
+                selector:
+                  '.campaign-music-btn',
+                key:
+                  'music',
+                aria:
+                  'Музыка карты',
+                sections:
+                  ['playlist-settings', 'playlist', 'upload', 'copy'],
+                legacy:
+                  ['.campaign-music-controls', '.campaign-music-track-list']
+              }
+            ];
+
+          const snapshots =
+            [];
+
+          for (const spec of specs) {
+
+            const button =
+              editor.querySelector(
+                spec.selector
+              );
+
+            button.click();
+
+            await waitFrames();
+
+            const popup =
+              document.getElementById('campaignMapPopup');
+
+            const shell =
+              popup.querySelector('.campaign-map-popup-shell');
+
+            snapshots.push({
+              key:
+                spec.key,
+              visible:
+                !popup.classList.contains('hidden'),
+              popupMigration:
+                popup.dataset.mapPopupUiMigration,
+              shellMigration:
+                shell?.dataset.mapPopupUiMigration,
+              aria:
+                popup.getAttribute('aria-label'),
+              title:
+                shell?.querySelector('.campaign-map-popup-title')?.textContent.trim(),
+              sections:
+                [...popup.querySelectorAll('[data-map-popup-section]')]
+                  .map(section => section.dataset.mapPopupSection),
+              legacyPresent:
+                spec.legacy.every(selector =>
+                  Boolean(
+                    popup.querySelector(selector)
+                  )
+                ),
+              expected:
+                {
+                  aria:
+                    spec.aria,
+                  sections:
+                    spec.sections
+                }
+            });
+          }
+
+          return snapshots;
+        }
+      );
+
+    result.forEach(snapshot => {
+
+      expect(
+        snapshot.visible
+      ).toBe(
+        true
+      );
+
+      expect(
+        snapshot.popupMigration
+      ).toBe(
+        '0.0.1.8.12.2'
+      );
+
+      expect(
+        snapshot.shellMigration
+      ).toBe(
+        '0.0.1.8.12.2'
+      );
+
+      expect(
+        snapshot.aria
+      ).toBe(
+        snapshot.expected.aria
+      );
+
+      expect(
+        snapshot.sections
+      ).toEqual(
+        snapshot.expected.sections
+      );
+
+      expect(
+        snapshot.title.length
+      ).toBeGreaterThan(
+        0
+      );
+
+      expect(
+        snapshot.legacyPresent
+      ).toBe(
+        true
+      );
+    });
+  }
+);
+
+
+test(
   'campaign-map-drawing-tools-create-fill-and-erase-map-shapes',
   async ({ page }) => {
 

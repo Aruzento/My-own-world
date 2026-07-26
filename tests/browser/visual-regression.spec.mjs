@@ -8,6 +8,7 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-app-shell',
   'visual-app-shell-empty-workbench',
   'visual-sidebar-tree',
+  'visual-command-palette',
   'visual-card-editor',
   'visual-add-block-popup',
   'visual-properties-sheet',
@@ -61,6 +62,97 @@ test(
       page.locator('.sidebar'),
       testInfo,
       'visual-sidebar-tree'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setPages,
+          setWorkspaceHandle
+        } = await import('/js/stateActions.js');
+
+        setWorkspaceHandle({
+          name:
+            'Visual command workspace'
+        });
+
+        setPages(
+          [
+            {
+              id:
+                'visual-command-root',
+              title:
+                'Архив столицы',
+              order:
+                '0001',
+              template:
+                'card',
+              type:
+                'folder',
+              tags:
+                [
+                  'folder'
+                ],
+              content:
+                '<h1>Архив столицы</h1>'
+            },
+            {
+              id:
+                'visual-command-page',
+              title:
+                'Тайная переписка',
+              parent:
+                'visual-command-root',
+              order:
+                '0001',
+              template:
+                'card',
+              type:
+                'lore',
+              tags:
+                [
+                  'lore',
+                  'secret'
+                ],
+              content:
+                '<h1>Тайная переписка</h1><p>Внутри спрятан янтарный маркер для визуального поиска.</p>'
+            }
+          ]
+        );
+      }
+    );
+
+    await page.locator('#appCommandRailBtn').click();
+
+    await page
+      .locator('#commandPaletteInput')
+      .fill(
+        'янтарный маркер'
+      );
+
+    await expect(
+      page.locator('#commandPalette')
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'open'
+    );
+
+    await attachLocatorScreenshot(
+      page.locator('#commandPalette'),
+      testInfo,
+      'visual-command-palette'
+    );
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      page.locator('#commandPalette')
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'closed'
     );
 
     await page.evaluate(
@@ -796,7 +888,7 @@ test(
     expect(
       result.rootMigration
     ).toBe(
-      '0.0.1.8.11.6'
+      '0.0.1.8.11.7'
     );
 
     expect(

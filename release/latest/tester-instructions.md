@@ -36,6 +36,13 @@ npm run test:browser -- tests/browser/visual-regression.spec.mjs
 
 Then inspect the Playwright attachments named in `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`.
 
+For the campaign map toolbar and popup redesign slice, use:
+
+```powershell
+npm run test:browser -- --grep "campaign-map-toolbar-uses-migrated-mode-action-groups|campaign-map-popups-use-migrated-shared-frame|visual-safety-captures-core-surfaces"
+npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs
+```
+
 For the editor block DnD and Add block redesign slice, use:
 
 ```powershell
@@ -78,21 +85,22 @@ npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампани�
 1. Open a copied workspace.
 2. Open Settings diagnostics and check that workspace path, write access, schema status and backup status are readable.
 3. On the empty start screen, check that there is one clear action card with `Карточка`, `Карта`, `Задачи`, `Правила` and `Граф связей`. It should not show internal `Workspace`, `Context` or `Diagnostics` demo panels, and the actions should not overlap on desktop or mobile. In the sidebar tree area, when no workspace is open, there should be one clear `Открыть папку` button.
-4. Check the left AppShell rail: it should show `Дерево` and the profile/user button only. `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` should remain reachable through the world tree/create flows, not as duplicated rail tabs. The tree sidebar should not repeat `MyWorld` / `Дерево мира` and should not contain workspace/open or create buttons in a header; after opening a workspace, the `Корень` row should show the root `+` create action and the folder-create action.
+4. Check the left AppShell rail: it should show `Дерево`, `Поиск и команды`, and the profile/user button. `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` should remain reachable through the world tree/create flows, not as duplicated rail tabs. The tree sidebar should not repeat `MyWorld` / `Дерево мира` and should not contain workspace/open or create buttons in a header; after opening a workspace, the `Корень` row should show the root `+` create action and the folder-create action.
 5. Click `Дерево` in the rail to hide and reopen the tree sidebar, then resize the visible sidebar with the separator by dragging or using Left/Right arrow keys while it is focused. The editor should expand while the tree is hidden, the workspace should stay readable, and the resize handle should be hidden on mobile.
-6. Open any real page and check that no right page-info inspector appears. The editor should keep the freed width; the reserved right panel is hidden until a future real workflow owns it.
+6. Open `Поиск и команды` from the rail or press `Ctrl+K`. Search for a word that exists only in a page body; the palette should show the page title, path, matched field and excerpt, and opening the result should open the page. Reopen the palette, run `Скрыть дерево` or `Показать дерево`, and confirm it uses the same tree sidebar behavior as the rail button.
+7. Open any real page and check that no right page-info inspector appears. The editor should keep the freed width; the reserved right panel is hidden until a future real workflow owns it.
 Card editor design check: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay with accessible controls, stable width and no overlap with the card title.
-7. In Settings, switch UI scale between compact/normal/large and check that topbar, rail, sidebar controls, tree search and statusbar stay aligned instead of jumping or overlapping.
-8. Open Tools -> `Компоненты`; check that the Button/Input/Panel/Popover examples appear, focus moves inside, and Escape closes the catalogue. For modal dialogs/popups in later checks, Tab/Shift+Tab should stay inside the dialog and close should return focus to the opener. Icon-only shell controls should show compact tooltip labels on hover/focus, and long operation progress should behave like a toast-style status surface.
+8. In Settings, switch UI scale between compact/normal/large and check that topbar, rail, sidebar controls, tree search, command palette and statusbar stay aligned instead of jumping or overlapping.
+9. Open Tools -> `Компоненты`; check that the Button/Input/Panel/Popover examples appear, focus moves inside, and Escape closes the catalogue. For modal dialogs/popups in later checks, Tab/Shift+Tab should stay inside the dialog and close should return focus to the opener. Icon-only shell controls should show compact tooltip labels on hover/focus, and long operation progress should behave like a toast-style status surface.
    UI primitive note: the catalogue should now include IconButton, Select/Checkbox/Segmented field examples, Toolbar/Separator, Panel and Popover without text overlap at compact/normal/large scale.
-9. Create a card, type text, save/reopen.
-10. Create or open a normal card with text, list, table, image and `Properties` blocks. The blocks should share one quiet editor style with small type badges and thin colored markers; dropdowns inside these blocks, including the list type picker and Properties selects, should look like dark MyOwnWorld controls rather than default browser selects. `Properties` should keep readable field badges without a heavy filled background. For character/creature `Properties`, check HP, AC, initiative and armor picker behavior, readable compact metrics, skill groups and no overlap between lower skill groups and death-save fields. Also open Properties settings, Add block, link creation, image crop, text color and item picker popups; they should close by their normal buttons/Escape without leaving a stuck overlay or lost keyboard focus. Drag a content block by its grip handle and confirm the preview/drop placeholder are readable and the block moves.
-11. Save a normal card as a template from the tree context menu, then use the root `+` menu and choose `Из шаблона`. The template picker should show a search field, local icons, readable Russian metadata and create a new card from the selected template.
-12. Open a campaign map; move a token, hover/open token actions, use layers/fog/drawing/music/initiative popups, open presentation. The map popups should keep a compact dark overlay style, close through normal controls/Escape/repeated trigger, and return keyboard focus where the popup is modal.
-13. If music is part of the test build, add real audio files and test play/stop/next/previous in desktop.
-14. Create/open `Граф связей`; drag a node, undo/redo, right-click a node and check relationship actions.
-15. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should stay within the viewport and close cleanly by Escape/outside click.
-16. Run backup manually before any repair action; schema repair must stop if backup fails.
+10. Create a card, type text, save/reopen.
+11. Create or open a normal card with text, list, table, image and `Properties` blocks. The blocks should share one quiet editor style with small type badges and thin colored markers; dropdowns inside these blocks, including the list type picker and Properties selects, should look like dark MyOwnWorld controls rather than default browser selects. `Properties` should keep readable field badges without a heavy filled background. For character/creature `Properties`, check HP, AC, initiative and armor picker behavior, readable compact metrics, skill groups and no overlap between lower skill groups and death-save fields. Also open Properties settings, Add block, link creation, image crop, text color and item picker popups; they should close by their normal buttons/Escape without leaving a stuck overlay or lost keyboard focus. Drag a content block by its grip handle and confirm the preview/drop placeholder are readable and the block moves.
+12. Save a normal card as a template from the tree context menu, then use the root `+` menu and choose `Из шаблона`. The template picker should show a search field, local icons, readable Russian metadata and create a new card from the selected template.
+13. Open a campaign map; check that the top toolbar is split into `Создание`, `Сцена`, `Инструменты` and `Live`, with local icons, readable short labels and no clipping at normal desktop width. Toggle grid, pan, drawing and fog: the active button should be visibly pressed, then move a token, hover/open token actions, use add, grid, drawing, fog, layers, music and initiative popups and open presentation. The map popups should share one compact dark frame with a local icon, readable title and labeled sections, close through normal controls/Escape/repeated trigger, avoid text clipping/overlap, and return keyboard focus where the popup is modal.
+14. If music is part of the test build, add real audio files and test play/stop/next/previous in desktop.
+15. Create/open `Граф связей`; drag a node, undo/redo, right-click a node and check relationship actions.
+16. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should stay within the viewport and close cleanly by Escape/outside click.
+17. Run backup manually before any repair action; schema repair must stop if backup fails.
 
 ### 4. Known Risks To Watch
 

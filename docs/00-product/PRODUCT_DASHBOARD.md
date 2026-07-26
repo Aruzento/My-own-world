@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-07-22
+Updated: 2026-07-27
 
 ## Current Product
 
@@ -71,12 +71,15 @@ Recently closed:
 - `0.0.1.8.11.4` Properties field-state polish: Properties fields now expose readable metric/ability/computed/relation/custom states, local sprite field badges, tokenized field surfaces and corrected character skill/death-save spacing.
 - `0.0.1.8.11.5` Card block visual language: text, list, table, image and properties blocks now share one readable style with runtime-only type badges, thin colored markers and lighter Properties fields without heavy background fill.
 - `0.0.1.8.11.6` Card selects and template picker: native dropdowns inside card blocks now use the same dark shared select style, and saved page templates are reachable from the create menu through a readable `Из шаблона` picker with local icons and human metadata.
+- `0.0.1.8.11.7` Command palette and deep search: the left rail now has a real `Поиск и команды` tool, `Ctrl+K` opens the shared popupManager dialog, deep PageRepository-backed page results show paths/matched fields/excerpts, and core actions run through existing app buttons instead of a parallel command system.
+- `0.0.1.8.12.1` Campaign map toolbar foundation: the map toolbar now groups creation, scene/view, tools and live-session actions, uses local sprite icons/shared tokens, exposes toolbar/group/accessibility metadata and keeps active grid/pan/drawing/fog states readable.
+- `0.0.1.8.12.2` Campaign map popup surface: add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now share one map popup frame with local icons, readable section labels, per-popup aria labels, migration markers and preserved legacy action selectors.
 
 Next active block:
 
-- `0.0.1.8.11` Migration Phase 5 core content, unless a P0/P1 bug from the lightweight backlog is promoted first.
+- Continue `0.0.1.8.12` Migration Phase 6 campaign map with layer/token dock or inspector surfaces and contextual actions. Toolbar and popup visual foundations are closed; do not repaint them again unless a concrete bug appears.
 
-Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.6`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail currently exposes `Дерево` as the only content navigation entry and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. The Phase 5 editor slice now restores block movement, cleans up the first-level Add block picker, makes the card editor header/toolbar layer visually coherent, gives Properties a readable field-state language, brings ordinary card blocks into the same visual system, removes the remaining system-looking card dropdowns, and exposes saved templates from the create menu. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
+Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
 ## Readiness Model
 

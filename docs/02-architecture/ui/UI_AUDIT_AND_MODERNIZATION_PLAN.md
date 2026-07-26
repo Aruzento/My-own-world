@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 # UI Audit And Modernization Plan
 
-Дата обновления: 22.07.2026
+Дата обновления: 27.07.2026
 
 Подробный инвентаризационный снимок для версии 1: [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md).
 
@@ -95,7 +95,10 @@ owner_zone: "architecture"
 - Confirmed by `0.0.1.8.11.4`: Properties now use field-state/variant markers, runtime-only local sprite field badges, tokenized field surfaces/focus and corrected default character/creature skill/death-save spacing.
 - Confirmed by `0.0.1.8.11.5`: ordinary card blocks now share tokenized outer frames, runtime-only type badges and thin colored markers; Properties field state no longer relies on heavy background fill.
 - Confirmed by `0.0.1.8.11.6`: card-block dropdowns now consume the shared dark select contract, and saved page templates are reachable from the create menu through a tokenized picker.
-- Next action updated: continue with `0.0.1.8.11` Migration Phase 5 core content for deeper search and command palette.
+- Confirmed by `0.0.1.8.11.7`: the left rail now has a real `Поиск и команды` global tool; `Ctrl+K` opens a popupManager command palette with deep PageRepository-backed page results, matched fields, excerpts and existing app actions.
+- Confirmed by `0.0.1.8.12.1`: the campaign map toolbar now has readable creation/scene/tools/live groups, shared-token icon buttons, `aria-pressed` active states and responsive overflow coverage without changing map model or save behavior.
+- Confirmed by `0.0.1.8.12.2`: campaign map add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now use one shared map popup frame with local icons, section labels, per-popup aria labels and preserved legacy selectors.
+- Next action updated: continue `0.0.1.8.12` with layer/token dock or inspector surfaces and contextual action polish.
 
 ### Общий Layout
 

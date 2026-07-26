@@ -21,6 +21,9 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.2`: map add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now use one shared map popup frame with local icons, readable sections, migration markers and preserved legacy action selectors.
+- UI redesign Phase 6 campaign map started with `0.0.1.8.12.1`: the map toolbar now has grouped creation, scene, tools and live-session actions, local sprite icons, shared-token styling, accessible labels and active-state coverage without changing map business logic.
+- UI redesign Phase 5 core content closed at usable level with `0.0.1.8.11.7`: the left rail now has `Поиск и команды`, `Ctrl+K` opens a shared command palette, deep page results show paths/matched fields/excerpts, and commands reuse existing app actions.
 - UI redesign Phase 5 core content advanced with `0.0.1.8.11.6`: card-block dropdowns now use the shared dark select styling, and saved page templates can be opened from the create menu through a tokenized `Из шаблона` picker.
 - UI redesign Phase 5 core content advanced with `0.0.1.8.11.5`: ordinary card blocks now share the Properties-inspired visual language with runtime-only type badges, thin colored markers, tokenized block surfaces and lighter Properties fields without heavy background fill.
 - UI redesign Phase 5 core content advanced with `0.0.1.8.11.4`: Properties fields now expose design-system variants/states, local sprite field badges, tokenized field surfaces/focus and a corrected character skill/death-save default layout.

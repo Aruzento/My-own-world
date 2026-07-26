@@ -816,7 +816,7 @@ test(
     expect(
       result.rootMigration
     ).toBe(
-      '0.0.1.8.11.6'
+      '0.0.1.8.11.7'
     );
 
     expect(

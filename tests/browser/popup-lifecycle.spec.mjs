@@ -1032,7 +1032,7 @@ test(
         popupOpen: 'true',
         role: 'dialog',
         ariaModal: 'true',
-        ariaLabel: 'Настройки карты',
+        ariaLabel: 'Настройки тумана карты',
         focusInside: true
       },
       closedSnapshot: {

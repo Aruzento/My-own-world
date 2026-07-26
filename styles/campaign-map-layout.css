@@ -44,7 +44,7 @@
 .campaign-map-title {
 
   min-height:
-    54px;
+    62px;
 
   margin:
     0;
@@ -59,17 +59,17 @@
     center;
 
   border-radius:
-    14px;
+    var(--mow-radius-panel);
 
   background:
-    rgba(255,255,255,0.045);
+    var(--mow-surface-embedded);
 
   border:
     1px solid
-    rgba(255,255,255,0.07);
+    var(--mow-map-control-border);
 
   color:
-    rgba(255,255,255,0.92);
+    var(--mow-text-primary);
 
   font-size:
     18px;
@@ -142,13 +142,16 @@
     0;
 
   padding:
-    10px;
+    8px;
 
   display:
     grid;
 
   grid-template-columns:
-    repeat(3, auto);
+    minmax(118px, 0.8fr)
+    minmax(184px, 1.2fr)
+    minmax(184px, 1.2fr)
+    minmax(176px, 1fr);
 
   gap:
     8px;
@@ -157,18 +160,86 @@
     stretch;
 
   border-radius:
-    16px;
+    var(--mow-radius-panel);
 
   background:
-    rgba(255,255,255,0.045);
+    linear-gradient(
+      180deg,
+      var(--mow-map-control-bg),
+      rgba(255, 246, 222, 0.026)
+    );
 
   border:
-    1px solid
-    rgba(255,255,255,0.07);
+    1px solid var(--mow-map-control-border);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 246, 222, 0.045);
 }
 
 
 .campaign-map-control-group {
+
+  min-width:
+    0;
+
+  padding:
+    7px;
+
+  display:
+    grid;
+
+  grid-template-rows:
+    auto 1fr;
+
+  gap:
+    6px;
+
+  align-content:
+    stretch;
+
+  border:
+    1px solid rgba(247, 220, 164, 0.08);
+
+  border-radius:
+    var(--mow-radius-sm);
+
+  background:
+    rgba(5, 7, 6, 0.22);
+}
+
+
+.campaign-map-control-group-label {
+
+  min-width:
+    0;
+
+  color:
+    var(--mow-text-muted);
+
+  font-size:
+    var(--mow-font-size-xs);
+
+  font-weight:
+    var(--mow-font-weight-bold);
+
+  line-height:
+    var(--mow-line-height-tight);
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  text-transform:
+    uppercase;
+}
+
+
+.campaign-map-control-actions {
+
+  min-width:
+    0;
 
   display:
     flex;
@@ -184,43 +255,57 @@
 }
 
 
-.campaign-map-controls button {
+.campaign-map-controls .campaign-map-tool-button {
 
   width:
-    32px;
+    auto;
 
   min-height:
-    32px;
+    var(--mow-density-control-height-md);
 
   padding:
-    0;
+    0 9px;
+
+  gap:
+    6px;
 
   border:
-    none;
+    1px solid var(--mow-icon-button-border);
 
   border-radius:
-    10px;
+    var(--mow-radius-control);
 
   background:
-    rgba(255,255,255,0.055);
+    var(--mow-icon-button-bg);
 
   color:
-    rgba(255,255,255,0.76);
+    var(--mow-icon-button-color);
+
+  font-family:
+    var(--mow-font-sans);
 
   font-size:
-    15px;
+    var(--mow-font-size-xs);
+
+  font-weight:
+    var(--mow-font-weight-semibold);
+
+  line-height:
+    var(--mow-line-height-tight);
 
   cursor:
     pointer;
 
   transition:
-    background 0.12s,
-    color 0.12s,
-    transform 0.12s;
+    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    border-color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
+    transform var(--mow-motion-press-duration) var(--mow-ease-press),
+    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
 
-.campaign-map-controls button {
+.campaign-map-controls .campaign-map-tool-button {
 
   display:
     inline-flex;
@@ -233,52 +318,71 @@
 }
 
 
-.campaign-map-controls button:hover {
+.campaign-map-controls .campaign-map-tool-button:hover,
+.campaign-map-controls .campaign-map-tool-button:focus-visible {
+
+  border-color:
+    var(--mow-icon-button-border-hover);
 
   background:
-    rgba(241,211,142,0.12);
+    var(--mow-icon-button-bg-hover);
 
   color:
-    rgba(255,248,230,0.96);
+    var(--mow-icon-button-color-hover);
+
+  box-shadow:
+    var(--mow-focus-shadow);
 }
 
 
-.campaign-map-controls button:active {
+.campaign-map-controls .campaign-map-tool-button:active {
 
   transform:
+    translateY(1px)
     scale(0.97);
 }
 
 
-.campaign-map-controls button.is-active {
+.campaign-map-controls .campaign-map-tool-button.is-active,
+.campaign-map-controls .campaign-map-tool-button[aria-pressed="true"] {
+
+  border-color:
+    var(--mow-segmented-item-border-active);
 
   background:
-    rgba(241,211,142,0.18);
+    var(--mow-segmented-item-bg-active);
 
   color:
-    rgba(255,248,230,0.98);
+    var(--mow-text-primary);
 }
 
 
-.campaign-map-controls .campaign-fog-btn,
-.campaign-map-controls .campaign-grid-btn,
-.campaign-map-controls .campaign-layers-btn,
-.campaign-map-controls .campaign-initiative-btn {
+.campaign-map-tool-button .app-icon {
 
   width:
-    auto;
+    var(--mow-icon-size-sm);
+
+  height:
+    var(--mow-icon-size-sm);
+
+  flex:
+    0 0 auto;
+}
+
+
+.campaign-map-button-label {
 
   min-width:
-    58px;
+    0;
 
-  padding:
-    0 10px;
+  overflow:
+    hidden;
 
-  font-size:
-    12px;
+  text-overflow:
+    ellipsis;
 
-  font-weight:
-    700;
+  white-space:
+    nowrap;
 }
 
 

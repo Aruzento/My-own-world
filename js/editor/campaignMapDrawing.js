@@ -127,6 +127,13 @@ export function updateDrawingButtons(
       'is-active',
       active
     );
+
+  map
+    ?.querySelector('.campaign-drawing-btn')
+    ?.setAttribute(
+      'aria-pressed',
+      String(active)
+    );
 }
 
 

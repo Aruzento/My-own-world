@@ -14,6 +14,11 @@ import {
   showMapPopup
 } from './campaignMapPopupController.js';
 
+import {
+  getMapPopupFrameHTML,
+  getMapPopupSectionHTML
+} from './campaignMapPopupMarkup.js';
+
 
 const INITIATIVE_TEXT = {
   title:
@@ -785,34 +790,54 @@ function getNextActiveParticipantId(
 
 function getPickerHTML() {
 
-  return `
-    <div class="campaign-map-popup-title">${INITIATIVE_TEXT.title}</div>
-    <div class="campaign-initiative-list"></div>
-    <div class="campaign-map-popup-actions campaign-initiative-actions">
-      <button class="campaign-initiative-save-btn" type="button">${INITIATIVE_TEXT.apply}</button>
-      <button class="campaign-initiative-roll-btn" type="button">${INITIATIVE_TEXT.rollAll}</button>
-      <button class="campaign-initiative-close-btn" type="button">${INITIATIVE_TEXT.close}</button>
-    </div>
-  `;
+  return getMapPopupFrameHTML({
+    title: INITIATIVE_TEXT.title,
+    icon: 'skill',
+    children: `
+      ${getMapPopupSectionHTML({
+        label: INITIATIVE_TEXT.edit,
+        key: 'participants',
+        children: '<div class="campaign-initiative-list"></div>'
+      })}
+      <div class="campaign-map-popup-actions campaign-initiative-actions">
+        <button class="campaign-initiative-save-btn" type="button">${INITIATIVE_TEXT.apply}</button>
+        <button class="campaign-initiative-roll-btn" type="button">${INITIATIVE_TEXT.rollAll}</button>
+        <button class="campaign-initiative-close-btn" type="button">${INITIATIVE_TEXT.close}</button>
+      </div>
+    `
+  });
 }
 
 
 function getOrderHTML() {
 
-  return `
-    <div class="campaign-map-popup-title">${INITIATIVE_TEXT.turnTitle}</div>
-    <div class="campaign-initiative-turn">
-      <button class="campaign-initiative-prev-btn" type="button" title="${INITIATIVE_TEXT.previous}">&lsaquo;</button>
-      <span class="campaign-initiative-active">${INITIATIVE_TEXT.noActive}</span>
-      <button class="campaign-initiative-next-btn" type="button" title="${INITIATIVE_TEXT.next}">&rsaquo;</button>
-    </div>
-    <div class="campaign-initiative-order-list"></div>
-    <div class="campaign-map-popup-actions campaign-initiative-actions campaign-initiative-order-actions">
-      <button class="campaign-initiative-save-order-btn" type="button">${INITIATIVE_TEXT.saveOrder}</button>
-      <button class="campaign-initiative-edit-btn" type="button">${INITIATIVE_TEXT.edit}</button>
-      <button class="campaign-initiative-close-btn" type="button">${INITIATIVE_TEXT.close}</button>
-    </div>
-  `;
+  return getMapPopupFrameHTML({
+    title: INITIATIVE_TEXT.turnTitle,
+    icon: 'skill',
+    children: `
+      ${getMapPopupSectionHTML({
+        label: INITIATIVE_TEXT.activePrefix,
+        key: 'turn',
+        children: `
+          <div class="campaign-initiative-turn">
+            <button class="campaign-initiative-prev-btn" type="button" title="${INITIATIVE_TEXT.previous}">&lsaquo;</button>
+            <span class="campaign-initiative-active">${INITIATIVE_TEXT.noActive}</span>
+            <button class="campaign-initiative-next-btn" type="button" title="${INITIATIVE_TEXT.next}">&rsaquo;</button>
+          </div>
+        `
+      })}
+      ${getMapPopupSectionHTML({
+        label: INITIATIVE_TEXT.turnTitle,
+        key: 'order',
+        children: '<div class="campaign-initiative-order-list"></div>'
+      })}
+      <div class="campaign-map-popup-actions campaign-initiative-actions campaign-initiative-order-actions">
+        <button class="campaign-initiative-save-order-btn" type="button">${INITIATIVE_TEXT.saveOrder}</button>
+        <button class="campaign-initiative-edit-btn" type="button">${INITIATIVE_TEXT.edit}</button>
+        <button class="campaign-initiative-close-btn" type="button">${INITIATIVE_TEXT.close}</button>
+      </div>
+    `
+  });
 }
 
 

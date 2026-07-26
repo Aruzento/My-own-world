@@ -335,6 +335,19 @@ export function updateGridButton(
       ? 'Выключить сетку'
       : 'Включить сетку';
 
+  button.dataset.tooltip =
+    button.title;
+
+  button.setAttribute(
+    'aria-label',
+    button.title
+  );
+
+  button.setAttribute(
+    'aria-pressed',
+    String(enabled)
+  );
+
   button.classList.toggle(
     'is-active',
     enabled

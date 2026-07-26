@@ -6,6 +6,134 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.12.2 Campaign Map Popup Surface
+
+### What Changed
+
+- Continued `0.0.1.8.12` Migration Phase 6 with the campaign map popup surface, after the toolbar foundation.
+- Added a shared runtime map popup frame so add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now use the same header, local icon slot, readable title and section rhythm.
+- Added `data-map-popup-ui-migration="0.0.1.8.12.2"` on `#campaignMapPopup` and the inner popup shell so browser tests and future work can identify the migrated surface.
+- Added per-popup Russian aria labels for map creation, picker, grid, drawing, fog, shapes, layers, initiative and music.
+- Kept legacy selectors such as `.campaign-map-popup-option`, `.campaign-map-picker-list`, `.campaign-grid-toggle`, `.campaign-drawing-tool`, `.campaign-layer-row`, music controls and initiative controls intact, so existing map behavior stays wired.
+- Made layers rows more human-readable by showing visibility and locked state text beside the checkbox and reorder actions.
+- Added accessible pressed state synchronization for drawing and fog popup mode buttons.
+- Deliberately did not change map storage, model logic, token behavior, fog algorithms, layer data, music playback, initiative sorting or presentation synchronization.
+
+### Readiness
+
+Usable for this popup surface. A human can open the map controls and see a consistent compact dark overlay language instead of a collection of unrelated mini panels. The rest of Phase 6 remains active for layer/token dock or inspector surfaces and contextual action polish.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMapPopupMarkup.js`.
+- Passed: `node --check js\editor\campaignMapPopupController.js`.
+- Passed: `node --check js\editor\campaignMapToolbar.js`.
+- Passed: `node --check js\editor\campaignMapFog.js`.
+- Passed: `node --check js\editor\campaignMapInitiativePopup.js`.
+- Passed: `node --check js\editor\campaignMapMusic.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-popups-use-migrated-shared-frame"` with the new popup surface guard.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 11 browser tests.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs` with 7 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs`, `campaign-map-performance.spec.mjs`, `campaign-map-presentation.spec.mjs` and `campaign-map-initiative.spec.mjs`.
+- Visual QA: reviewed `test-results/map-popups-12-2-qa.png`; the layer popup shows the new header, section frame and readable state rows without clipping or overlap.
+- Passed after the final docs state: `node tools\audit_project_files.mjs` with 546 files and 0 mojibake candidates.
+- Passed after the final docs state: `python tools\generate_manual_docx.py` with 1,262 files.
+- Passed after the final docs state: `node tools\docs_index.mjs`, `npm run check:encoding`, `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx` and `git diff --check`.
+- Passed: full `npm run verify` with encoding/import/syntax checks, 272 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, `verify`, 105 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.12` on layer/token dock or inspector surfaces and contextual actions.
+- Keep the shared map popup frame as the owner pattern for future map overlay additions.
+
+## 2026-07-27: 0.0.1.8.12.1 Campaign Map Toolbar Foundation
+
+### What Changed
+
+- Started `0.0.1.8.12` Migration Phase 6 with the campaign map toolbar as the first closed surface.
+- Rebuilt the map toolbar into four readable groups: `Создание`, `Сцена`, `Инструменты` and `Live`.
+- Replaced mixed text-only map controls with shared compact icon+label buttons using the local SVG sprite and existing design tokens.
+- Added toolbar metadata for the migration: `.campaign-map-controls[data-map-ui-migration="0.0.1.8.12.1"]`, `role="toolbar"` and a readable Russian `aria-label`.
+- Kept all legacy action selectors, so existing map behavior stays wired to the same buttons.
+- Added visible and accessible active states for grid, pan, drawing and fog modes through `is-active` plus `aria-pressed`.
+- Updated responsive behavior so the toolbar wraps into stable groups instead of clipping at normal desktop editor widths.
+- Deliberately did not change map storage, model logic, token behavior, fog algorithms, layer data, music logic or presentation synchronization.
+
+### Readiness
+
+Usable for this toolbar slice. A human can open a campaign map and see what belongs to scene setup, map tools and live-session actions without decoding a flat row of unrelated buttons. The rest of Phase 6 remains active for map popups, layer/token dock or inspector surfaces and contextual action polish.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMapToolbar.js`.
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapViewport.js`.
+- Passed: `node --check js\editor\campaignMapDrawing.js`.
+- Passed: `node --check js\editor\campaignMapFog.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 10 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs` with 4 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-performance.spec.mjs` with 5 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-presentation.spec.mjs` with 7 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs` with 2 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: reviewed `test-results/map-toolbar-12-1-qa.png` after the responsive breakpoint correction; the toolbar groups stay readable and the map stage remains the dominant workspace.
+- Passed after the final docs state: `node tools\audit_project_files.mjs` with 545 files and 0 mojibake candidates.
+- Passed after the final docs state: `python tools\generate_manual_docx.py` with 1,260 files.
+- Passed after the final docs state: `node tools\docs_index.mjs`, `npm run check:encoding` and `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: full `npm run verify` with encoding/import/syntax checks, 272 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- First `npm run desktop:gate` attempt reached full browser smoke and failed once in the unrelated `property-settings-gear-opens-soft-settings-popup` Properties test. The failing test passed immediately on focused rerun, and the full `tests/browser/property-blocks.spec.mjs` suite passed with 24 browser tests.
+- Passed on the next full run: `npm run desktop:gate`, including docs index, skills validation, `verify`, 104 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.12` on campaign map popups and map-adjacent working surfaces instead of repainting the toolbar again.
+- Keep the future right-panel/work-area idea in backlog until a real map inspector or multi-card workflow owns it.
+
+## 2026-07-22: 0.0.1.8.11.7 Command Palette And Deep Search
+
+### What Changed
+
+- Closed `0.0.1.8.11` Migration Phase 5 core content at `Usable` level and advanced the root marker to `data-core-content-migration="0.0.1.8.11.7"`.
+- Added a real left-rail `Поиск и команды` tool. It is not a content-type tab and does not filter the tree; it opens a global command palette from the rail or `Ctrl+K`.
+- Built the palette on the existing `popupManager` modal lifecycle with focus trap, Escape close, focus return, local SVG sprite icons and tokenized dark UI.
+- Added deep PageRepository-backed page results in the palette: results show page title, path, matched fields such as `текст`, and body excerpts, so sidebar tree filtering is no longer the only search surface.
+- Added core command entries that reuse existing app actions instead of a new command registry: open workspace, create page, create folder, show/hide tree, settings, and tools.
+- Added visual smoke coverage for the command palette and removed the native browser search clear button so the palette has one clear close affordance.
+
+### Readiness
+
+Usable for this slice. A human can open the palette from the rail or with `Ctrl+K`, search page body text, open a result, and run a basic shell command without learning a second navigation model. Phase 5 core content is now usable; release-ready audit and broader polish remain in later migration phases.
+
+### Verification
+
+- Passed: `node --check js\ui\commandPalette.js`.
+- Passed: `node --check js\app.js`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed twice: focused `npm run test:browser -- --grep "command-palette-opens-from-rail-and-searches-pages-deeply|app-shell-empty-state|app-shell-nav-rail-keeps-tree-primary-and-toggles-sidebar|visual-safety-captures-core-surfaces|popup-manager-closes-by-escape-outside-and-keeps-popup-in-viewport"` with 5 browser tests.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs` with 6 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs` with 7 browser tests.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs` with 24 browser tests.
+- Passed: full `npm run verify` with encoding/import/syntax checks, 272 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, `verify`, 103 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+- Passed after the final docs state: `node tools\audit_project_files.mjs` with 545 files and 0 mojibake candidates.
+- Passed after the final docs state: `python tools\generate_manual_docx.py` with 1,260 files.
+- Passed after the final docs state: `node tools\docs_index.mjs` with 80 markdown documents and 0 metadata issues.
+- Passed after the final docs state: `npm run check:encoding`, `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`, `git diff --check`, `node --check js\ui\commandPalette.js`, and `node --check tests\browser\app-shell.spec.mjs`.
+- Visual QA: reviewed `test-results/command-palette-11-7-qa.png` after removing the duplicate native search clear control.
+
+### Follow-Up
+
+- Continue with `0.0.1.8.12` Migration Phase 6 campaign map.
+- Future command additions should reuse this palette surface and existing app actions until repeated command complexity proves a real registry is needed.
+
 ## 2026-07-22: 0.0.1.8.11.6 Card Selects And Template Picker
 
 ### What Changed

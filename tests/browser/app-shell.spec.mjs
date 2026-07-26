@@ -154,7 +154,7 @@ test(
       page.locator('.app')
     ).toHaveAttribute(
       'data-core-content-migration',
-      '0.0.1.8.11.6'
+      '0.0.1.8.11.7'
     );
 
     await expect(
@@ -208,6 +208,27 @@ test(
     ).toHaveAttribute(
       'aria-pressed',
       'true'
+    );
+
+    await expect(
+      page.locator('#appCommandRailBtn')
+    ).toHaveAttribute(
+      'aria-controls',
+      'commandPalette'
+    );
+
+    await expect(
+      page.locator('#appCommandRailBtn')
+    ).toHaveAttribute(
+      'data-tooltip',
+      'Поиск и команды'
+    );
+
+    await expect(
+      page.locator('#appCommandRailBtn')
+    ).toHaveAttribute(
+      'aria-expanded',
+      'false'
     );
 
     await expect(
@@ -1011,6 +1032,196 @@ test(
     ).toHaveAttribute(
       'aria-expanded',
       'true'
+    );
+  }
+);
+
+
+test(
+  'command-palette-opens-from-rail-and-searches-pages-deeply',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setPages,
+          setWorkspaceHandle
+        } = await import('/js/stateActions.js');
+
+        setWorkspaceHandle({
+          name:
+            'Command workspace'
+        });
+
+        setPages(
+          [
+            {
+              id:
+                'command-root',
+              title:
+                'Архив столицы',
+              order:
+                '0001',
+              template:
+                'card',
+              type:
+                'folder',
+              tags:
+                [
+                  'folder'
+                ],
+              content:
+                '<h1>Архив столицы</h1>'
+            },
+            {
+              id:
+                'command-page',
+              title:
+                'Тайная переписка',
+              parent:
+                'command-root',
+              order:
+                '0001',
+              template:
+                'card',
+              type:
+                'lore',
+              tags:
+                [
+                  'lore',
+                  'secret'
+                ],
+              aliases:
+                [
+                  'Письма канцлера'
+                ],
+              content:
+                '<h1>Тайная переписка</h1><p>Внутри спрятан янтарный маркер для глубокого поиска.</p>'
+            }
+          ]
+        );
+      }
+    );
+
+    await page.locator('#appCommandRailBtn').click();
+
+    await expect(
+      page.locator('#commandPalette')
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'open'
+    );
+
+    await expect(
+      page.locator('#commandPaletteInput')
+    ).toBeFocused();
+
+    await expect(
+      page.locator('.command-palette-section-title').first()
+    ).toHaveText(
+      'Команды'
+    );
+
+    await expect(
+      page.getByRole(
+        'option',
+        {
+          name:
+            /Новая страница/
+        }
+      )
+    ).toBeVisible();
+
+    await page
+      .locator('#commandPaletteInput')
+      .fill(
+        'янтарный маркер'
+      );
+
+    const deepResult =
+      page.getByRole(
+        'option',
+        {
+          name:
+            /Тайная переписка/
+        }
+      );
+
+    await expect(
+      deepResult
+    ).toBeVisible();
+
+    await expect(
+      deepResult
+    ).toContainText(
+      'совпадение: текст'
+    );
+
+    await expect(
+      deepResult
+    ).toContainText(
+      'Архив столицы / Тайная переписка'
+    );
+
+    await expect(
+      deepResult.locator('.command-palette-item-excerpt')
+    ).toContainText(
+      'янтарный маркер'
+    );
+
+    await deepResult.click();
+
+    await expect(
+      page.locator('#commandPalette')
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'closed'
+    );
+
+    await expect(
+      page.locator('#editorArea h1')
+    ).toHaveText(
+      'Тайная переписка'
+    );
+
+    await page.keyboard.press(
+      'Control+K'
+    );
+
+    await expect(
+      page.locator('#commandPalette')
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'open'
+    );
+
+    await page
+      .locator('#commandPaletteInput')
+      .fill(
+        'скрыть дерево'
+      );
+
+    await page.keyboard.press(
+      'Enter'
+    );
+
+    await expect(
+      page.locator('.app')
+    ).toHaveAttribute(
+      'data-sidebar-state',
+      'collapsed'
+    );
+
+    await expect(
+      page.locator('#commandPalette')
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'closed'
     );
   }
 );

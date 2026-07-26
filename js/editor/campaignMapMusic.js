@@ -20,6 +20,11 @@ import {
 } from './campaignMapPopupController.js';
 
 import {
+  getMapPopupFrameHTML,
+  getMapPopupSectionHTML
+} from './campaignMapPopupMarkup.js';
+
+import {
   getCampaignMapStore
 } from './campaignMapStore.js';
 
@@ -1358,78 +1363,100 @@ function getCampaignMapMusicPopupHTML({
       playbackStatus
     );
 
-  return `
-    <div class="campaign-music-player">
-      <div class="campaign-music-now">
-        <span class="campaign-music-now-kicker">${escapeHTML(playback.kicker)}</span>
-        <strong>${escapeHTML(playback.title)}</strong>
+  return getMapPopupFrameHTML({
+    title: t('musicTitle'),
+    icon: 'music',
+    children: `
+      <div class="campaign-music-player">
+        <div class="campaign-music-now">
+          <span class="campaign-music-now-kicker">${escapeHTML(playback.kicker)}</span>
+          <strong>${escapeHTML(playback.title)}</strong>
+        </div>
       </div>
-    </div>
-    <div class="campaign-map-popup-title">${t('musicTitle')}</div>
 
-    <div class="campaign-music-mode-row">
-      ${getModeButton('normal', t('normalMode'), mode)}
-      ${getModeButton('battle', t('battleMode'), mode)}
-    </div>
+      ${getMapPopupSectionHTML({
+        label: t('nameLabel'),
+        key: 'playlist-settings',
+        className: 'campaign-music-section',
+        children: `
+          <div class="campaign-music-mode-row">
+            ${getModeButton('normal', t('normalMode'), mode)}
+            ${getModeButton('battle', t('battleMode'), mode)}
+          </div>
 
-    <label class="campaign-music-title-label">
-      <span>${t('nameLabel')}</span>
-      <input class="campaign-music-title-input" type="text" value="${escapeAttribute(playlist.title)}">
-    </label>
+          <label class="campaign-music-title-label">
+            <span>${t('nameLabel')}</span>
+            <input class="campaign-music-title-input" type="text" value="${escapeAttribute(playlist.title)}">
+          </label>
 
-    <div class="campaign-music-controls">
-      <button class="campaign-music-order-btn ${playlist.order === CAMPAIGN_MAP_MUSIC_ORDER.shuffle ? 'is-active' : ''}" type="button" title="${t('shuffleTitle')}">${iconSvg('shuffle')}</button>
-      <button class="campaign-music-loop-btn ${playlist.loop ? 'is-active' : ''}" type="button" title="${t('loopTitle')}">${iconSvg('repeat')}</button>
-      <button class="campaign-music-prev-btn" type="button" title="${t('previousTitle')}">${iconSvg('skip-back')}</button>
-      <button class="campaign-music-play-btn campaign-music-play-primary" type="button" title="${t('playTitle')}">${iconSvg('play')}</button>
-      <button class="campaign-music-stop-btn" type="button" title="${t('stopTitle')}">${iconSvg('stop')}</button>
-      <button class="campaign-music-next-btn" type="button" title="${t('nextTitle')}">${iconSvg('skip-forward')}</button>
-    </div>
+          <div class="campaign-music-controls">
+            <button class="campaign-music-order-btn ${playlist.order === CAMPAIGN_MAP_MUSIC_ORDER.shuffle ? 'is-active' : ''}" type="button" title="${t('shuffleTitle')}">${iconSvg('shuffle')}</button>
+            <button class="campaign-music-loop-btn ${playlist.loop ? 'is-active' : ''}" type="button" title="${t('loopTitle')}">${iconSvg('repeat')}</button>
+            <button class="campaign-music-prev-btn" type="button" title="${t('previousTitle')}">${iconSvg('skip-back')}</button>
+            <button class="campaign-music-play-btn campaign-music-play-primary" type="button" title="${t('playTitle')}">${iconSvg('play')}</button>
+            <button class="campaign-music-stop-btn" type="button" title="${t('stopTitle')}">${iconSvg('stop')}</button>
+            <button class="campaign-music-next-btn" type="button" title="${t('nextTitle')}">${iconSvg('skip-forward')}</button>
+          </div>
 
-    ${getPlaybackStatusHTML(playbackStatus)}
+          ${getPlaybackStatusHTML(playbackStatus)}
+        `
+      })}
 
-    <div class="campaign-music-section">
-      <strong>${t('playlistLabel')}</strong>
-      <div class="campaign-music-track-list">
-        ${playlist.tracks.length > 0
-          ? playlist.tracks.map(track =>
-            getPlaylistTrackHTML(
-              track,
-              playback.trackId
-            )
-          ).join('')
-          : `<div class="campaign-music-empty">${t('emptyPlaylist')}</div>`}
-      </div>
-    </div>
+      ${getMapPopupSectionHTML({
+        label: t('playlistLabel'),
+        key: 'playlist',
+        className: 'campaign-music-section',
+        children: `
+          <div class="campaign-music-track-list">
+            ${playlist.tracks.length > 0
+              ? playlist.tracks.map(track =>
+                getPlaylistTrackHTML(
+                  track,
+                  playback.trackId
+                )
+              ).join('')
+              : `<div class="campaign-music-empty">${t('emptyPlaylist')}</div>`}
+          </div>
+        `
+      })}
 
-    <div class="campaign-music-section">
-      <strong>${t('addTracksLabel')}</strong>
-      <div class="campaign-music-upload-row">
-        <label class="campaign-music-upload">
-          <input class="campaign-music-upload-input" type="file" accept="audio/*" multiple>
-          <span>${t('chooseFiles')}</span>
-        </label>
-        <button class="campaign-music-upload-add-btn" type="button" ${pendingUploadFiles.length === 0 || uploadStatus.state === 'loading' ? 'disabled' : ''}>
-          ${uploadStatus.state === 'loading' ? t('adding') : t('add')}
-        </button>
-      </div>
-      ${getPendingUploadFilesHTML(pendingUploadFiles)}
-      ${getUploadStatusHTML(uploadStatus)}
-    </div>
+      ${getMapPopupSectionHTML({
+        label: t('addTracksLabel'),
+        key: 'upload',
+        className: 'campaign-music-section',
+        children: `
+          <div class="campaign-music-upload-row">
+            <label class="campaign-music-upload">
+              <input class="campaign-music-upload-input" type="file" accept="audio/*" multiple>
+              <span>${t('chooseFiles')}</span>
+            </label>
+            <button class="campaign-music-upload-add-btn" type="button" ${pendingUploadFiles.length === 0 || uploadStatus.state === 'loading' ? 'disabled' : ''}>
+              ${uploadStatus.state === 'loading' ? t('adding') : t('add')}
+            </button>
+          </div>
+          ${getPendingUploadFilesHTML(pendingUploadFiles)}
+          ${getUploadStatusHTML(uploadStatus)}
+        `
+      })}
 
-    <div class="campaign-music-section">
-      <strong>${t('copyPlaylistLabel')}</strong>
-      <div class="campaign-music-copy-row">
-        <select class="campaign-music-copy-select">
-          <option value="">${t('choosePlaylist')}</option>
-          ${copyOptions.map(option => `
-            <option value="${escapeAttribute(option.id)}">${escapeHTML(option.label)}</option>
-          `).join('')}
-        </select>
-        <button class="campaign-music-copy-btn" type="button" ${copyOptions.length === 0 ? 'disabled' : ''}>${t('copy')}</button>
-      </div>
-    </div>
-  `;
+      ${getMapPopupSectionHTML({
+        label: t('copyPlaylistLabel'),
+        key: 'copy',
+        className: 'campaign-music-section',
+        children: `
+          <div class="campaign-music-copy-row">
+            <select class="campaign-music-copy-select">
+              <option value="">${t('choosePlaylist')}</option>
+              ${copyOptions.map(option => `
+                <option value="${escapeAttribute(option.id)}">${escapeHTML(option.label)}</option>
+              `).join('')}
+            </select>
+            <button class="campaign-music-copy-btn" type="button" ${copyOptions.length === 0 ? 'disabled' : ''}>${t('copy')}</button>
+          </div>
+        `
+      })}
+    `
+  });
 }
 
 function getPlaybackState(

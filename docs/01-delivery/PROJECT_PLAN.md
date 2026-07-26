@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-22
+Updated: 2026-07-27
 
 Planning version: 1
 
@@ -75,11 +75,13 @@ Principles: do not rewrite the whole interface in one pass; do not create separa
 
 Description: migrate tree, card editor, properties, templates, search, and command palette into the shared design system.
 
-Status: advanced by `0.0.1.8.11.6`: `BI-013` block drag-and-drop is restored, `BI-014` Add block popup is redesigned, the card editor header/runtime controls now follow shared tokens and local sprite icons, Properties use field variants/states with local sprite badges, ordinary card blocks share one visual language with runtime-only type badges/thin markers/tokenized surfaces, card-block selects now use the shared dark select contract, and saved page templates are reachable from the create menu through a tokenized picker. Remaining work includes search depth and command palette migration.
+Status: closed at `Usable` by `0.0.1.8.11.7`: `BI-013` block drag-and-drop is restored, `BI-014` Add block popup is redesigned, the card editor header/runtime controls now follow shared tokens and local sprite icons, Properties use field variants/states with local sprite badges, ordinary card blocks share one visual language with runtime-only type badges/thin markers/tokenized surfaces, card-block selects use the shared dark select contract, saved page templates are reachable from the create menu, and the left rail now has a real `Поиск и команды` tool with deep PageRepository-backed page search and command execution through the shared popup lifecycle.
 
 0.0.1.8.12. Migration Phase 6: campaign map.
 
 Description: migrate map toolbar, scene/list surfaces, layers, token dock, map inspector, and map contextual actions without changing map business logic.
+
+Status: active. `0.0.1.8.12.1` closed the first toolbar foundation slice at `Usable` level for that surface: the map toolbar is grouped into creation, scene/view, tools and live-session actions, uses local sprite icons/shared tokens, exposes `data-map-ui-migration="0.0.1.8.12.1"`, keeps legacy action selectors for existing behavior, and has browser coverage for toolbar structure, accessibility labels, active grid/pan/drawing/fog states and no right-edge overflow. `0.0.1.8.12.2` closed the map popup surface at `Usable` level: `#campaignMapPopup` exposes `data-map-popup-ui-migration="0.0.1.8.12.2"`, add/picker, grid, drawing, fog, shapes, layers, initiative and music popups share one framed overlay language with local icons and readable sections, and legacy action selectors remain intact. Remaining Phase 6 work: layer/token dock or inspector surfaces and contextual action polish.
 
 0.0.1.8.13. Migration Phase 7: knowledge graph.
 
