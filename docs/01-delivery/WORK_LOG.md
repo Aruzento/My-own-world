@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.12.6 Campaign Map Advanced Contextual Actions
+
+### What Changed
+
+- Closed the remaining `0.0.1.8.12` Migration Phase 6 campaign-map contextual action coverage.
+- Extended the existing runtime-only `.campaign-map-selection-dock[data-map-selection-ui-migration="0.0.1.8.12.3"]` instead of creating a second action panel or a new map action model.
+- Multi-selected tokens and shapes now show visible/hidden counters in the bottom selection dock.
+- The multi-selection dock now offers direct group `Скрыть` and `Показать` actions when they are relevant for the current mixed selection.
+- Group visibility changes update the existing `CampaignMapStore`, reuse the token/shape render adapters to keep DOM and model aligned, then perform one save/sync for the group action.
+- Kept `Убрать` as a safe map-only action: it removes selected map objects from the current map and does not delete linked cards/pages.
+- Updated campaign-map browser coverage for a mixed token/shape selection with group hide/show, model/DOM agreement and status/save behavior.
+- Deliberately did not change map storage schema, token/page deletion rules, layer semantics, fog algorithms, initiative, music, presentation rendering or Knowledge Graph behavior.
+
+### Readiness
+
+Usable for Phase 6 campaign-map redesign. A human can open a map, understand toolbar/popup/scene/layer/selection surfaces, select one or multiple objects, see whether the selected objects are visible to players, hide/show a group in one action, and rely on existing save/sync without runtime UI leaking into saved map HTML. `0.0.1.8.12` is closed; `0.0.1.8.13` Knowledge Graph is the next plan item and was not started in this slice.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMapSelectionInspector.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-selection-inspector"` with 2 browser tests covering single-selection safe actions and multi-selection group visibility.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 15 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs tests/browser/campaign-map-performance.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-initiative.spec.mjs` with 18 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed after the final docs state: `python tools\generate_manual_docx.py`.
+- Passed after the final docs state: `npm run verify`.
+- Passed after the final docs state: `npm run desktop:gate`, including docs index, skills validation, verify, 109 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+- Passed after the final docs state: `node tools\docs_index.mjs`, `node tools\audit_project_files.mjs`, `npm run check:encoding`, `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`, `node tools\validate_agent_skills.mjs` and `git diff --check`.
+
+### Follow-Up
+
+- Start `0.0.1.8.13` Migration Phase 7: Knowledge Graph only after an explicit next-step request.
+- Future campaign-map UI work should be a concrete bug or polish item, not another broad Phase 6 redesign pass.
+
 ## 2026-07-27: 0.0.1.8.12.5 Campaign Map Scene-State Inspector
 
 ### What Changed

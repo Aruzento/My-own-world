@@ -246,6 +246,20 @@
 }
 
 
+.campaign-map-selection-stat[data-selection-stat="visible"] {
+
+  --selection-stat-accent:
+    rgba(92, 199, 133, 0.95);
+}
+
+
+.campaign-map-selection-stat[data-selection-stat="hidden"] {
+
+  --selection-stat-accent:
+    rgba(255, 113, 113, 0.88);
+}
+
+
 .campaign-map-selection-stat[data-selection-stat="effects"],
 .campaign-map-selection-stat[data-selection-stat="action"] {
 

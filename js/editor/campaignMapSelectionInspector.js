@@ -7,6 +7,15 @@ import {
 } from './blocks/blockContract.js';
 
 import {
+  applyShapeRecordToElement,
+  applyTokenRecordToElement
+} from './campaignMapRenderAdapter.js';
+
+import {
+  getCampaignMapStore
+} from './campaignMapStore.js';
+
+import {
   duplicateMapShape,
   duplicateTokenAndPage,
   openTokenCard,
@@ -281,6 +290,41 @@ async function handleDockClick(
     return;
   }
 
+  if (
+    action === 'hide-selection' ||
+    action === 'show-selection'
+  ) {
+
+    const hidden =
+      action === 'hide-selection';
+
+    const count =
+      setSelectedPresentationVisibility(
+        map,
+        selection,
+        hidden
+      );
+
+    if (!count) return;
+
+    deps.closeTokenPopup?.();
+    await deps.saveAndSync?.();
+    deps.setStatus?.(
+      hidden
+        ? `Скрыто от игроков: ${count}`
+        : `Показано игрокам: ${count}`
+    );
+
+    updateMapSelectionInspector(
+      map
+    );
+    updateMapLayerDock(
+      map
+    );
+
+    return;
+  }
+
   if (action === 'remove') {
 
     const count =
@@ -377,18 +421,9 @@ function getSelectionActionsHTML(
 
   if (selection.total > 1) {
 
-    return getDockActionHTML({
-      action:
-        'remove',
-      icon:
-        'trash',
-      label:
-        'Убрать',
-      title:
-        'Убрать выбранное с карты',
-      danger:
-        true
-    });
+    return getMultiSelectionActionsHTML(
+      selection
+    );
   }
 
   const hidden =
@@ -453,6 +488,64 @@ function getSelectionActionsHTML(
           'Убрать',
         title:
           'Убрать с карты',
+        danger:
+          true
+      }
+    ].filter(Boolean);
+
+  return actions
+    .map(getDockActionHTML)
+    .join('');
+}
+
+
+function getMultiSelectionActionsHTML(
+  selection
+) {
+
+  const hiddenCount =
+    getHiddenSelectionItemCount(
+      selection
+    );
+
+  const visibleCount =
+    selection.total - hiddenCount;
+
+  const actions =
+    [
+      visibleCount > 0
+        ? {
+          action:
+            'hide-selection',
+          icon:
+            'eye-off',
+          label:
+            'Скрыть',
+          title:
+            'Скрыть выбранное от игроков'
+        }
+        : null,
+      hiddenCount > 0
+        ? {
+          action:
+            'show-selection',
+          icon:
+            'eye',
+          label:
+            'Показать',
+          title:
+            'Показать выбранное игрокам'
+        }
+        : null,
+      {
+        action:
+          'remove',
+        icon:
+          'trash',
+        label:
+          'Убрать',
+        title:
+          'Убрать выбранное с карты',
         danger:
           true
       }
@@ -673,13 +766,21 @@ function getMultiSelectionSummary(
   selection
 ) {
 
+  const hiddenCount =
+    getHiddenSelectionItemCount(
+      selection
+    );
+
+  const visibleCount =
+    selection.total - hiddenCount;
+
   return {
     icon:
       'grid',
     title:
       `Выбрано: ${selection.total}`,
     meta:
-      `Токены ${selection.tokens.length} · Фигуры ${selection.shapes.length}`,
+      `Токены ${selection.tokens.length} · Фигуры ${selection.shapes.length} · ${hiddenCount} скрыто`,
     stats:
       [
         {
@@ -700,14 +801,172 @@ function getMultiSelectionSummary(
         },
         {
           key:
-            'action',
+            'visible',
           label:
-            'Действие',
+            'Видно',
           value:
-            'Групповое удаление с карты'
+            String(visibleCount)
+        },
+        {
+          key:
+            'hidden',
+          label:
+            'Скрыто',
+          value:
+            String(hiddenCount)
         }
       ]
   };
+}
+
+
+function setSelectedPresentationVisibility(
+  map,
+  selection,
+  hidden
+) {
+
+  const store =
+    getCampaignMapStore(
+      map
+    );
+
+  if (!store) return 0;
+
+  let changed =
+    0;
+
+  selection.tokens.forEach(token => {
+
+    if (
+      setTokenPresentationVisibility(
+        store,
+        token,
+        hidden
+      )
+    ) {
+
+      changed += 1;
+    }
+  });
+
+  selection.shapes.forEach(shape => {
+
+    if (
+      setShapePresentationVisibility(
+        store,
+        shape,
+        hidden
+      )
+    ) {
+
+      changed += 1;
+    }
+  });
+
+  return changed;
+}
+
+
+function setTokenPresentationVisibility(
+  store,
+  token,
+  hidden
+) {
+
+  if (
+    !token?.dataset?.tokenId ||
+    isPresentationHidden(
+      token
+    ) === hidden
+  ) return false;
+
+  const record =
+    store.updateToken(
+      token.dataset.tokenId,
+      {
+        presentationHidden:
+          hidden
+      }
+    );
+
+  applyTokenRecordToElement(
+    token,
+    record
+  );
+
+  token.classList.toggle(
+    'is-presentation-hidden',
+    hidden
+  );
+
+  return Boolean(record);
+}
+
+
+function setShapePresentationVisibility(
+  store,
+  shape,
+  hidden
+) {
+
+  if (
+    !shape?.dataset?.shapeId ||
+    isPresentationHidden(
+      shape
+    ) === hidden
+  ) return false;
+
+  const record =
+    store.updateShape(
+      shape.dataset.shapeId,
+      {
+        presentationHidden:
+          hidden
+      }
+    );
+
+  applyShapeRecordToElement(
+    shape,
+    record
+  );
+
+  shape.classList.toggle(
+    'is-presentation-hidden',
+    hidden
+  );
+
+  return Boolean(record);
+}
+
+
+function getHiddenSelectionItemCount(
+  selection
+) {
+
+  return getSelectionItems(
+    selection
+  ).filter(isPresentationHidden)
+    .length;
+}
+
+
+function getSelectionItems(
+  selection
+) {
+
+  return [
+    ...selection.tokens,
+    ...selection.shapes
+  ];
+}
+
+
+function isPresentationHidden(
+  item
+) {
+
+  return item?.dataset?.presentationHidden === 'true';
 }
 
 

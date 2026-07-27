@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 6 campaign map closed at `Usable` with `0.0.1.8.12.6`: multi-selected map tokens and shapes now show visible/hidden counters and support group `Скрыть` / `Показать` actions through the existing map store.
 - UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.5`: the map stage now has a runtime scene-state inspector for map background, grid and fog status, with direct actions into the existing map-image, Grid and Fog flows and no saved HTML/runtime leakage.
 - UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.4`: the map stage now has a runtime layer/object dock with token, shape and hidden-object counters, per-layer summaries, quick visibility toggles and a direct path into the existing Layers popup without changing map business logic.
 - UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.3`: selected tokens and shapes now open a compact runtime inspector dock with identity, position, visibility, key token stats, local sprite actions and safe remove-from-map behavior that does not delete the card.

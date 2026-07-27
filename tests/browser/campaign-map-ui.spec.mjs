@@ -1639,6 +1639,341 @@ test(
 
 
 test(
+  'campaign-map-selection-inspector-applies-group-visibility-actions',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement,
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapShapeElement,
+            renderMapTokenElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            ensureMapSelectionInspector
+          } = await import('/js/editor/campaignMapSelectionInspector.js');
+
+          const {
+            selectMapShape,
+            selectMapToken
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const layer =
+            map.querySelector('.campaign-map-object-layer');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const tokenRecord =
+            store.addToken({
+              tokenId:
+                'group-action-token',
+              type:
+                'creature',
+              name:
+                '\u0420\u0430\u0437\u0432\u0435\u0434\u0447\u0438\u043a',
+              x:
+                24,
+              y:
+                34
+            });
+
+          const shapeRecord =
+            store.addShape({
+              shapeId:
+                'group-action-shape',
+              type:
+                'circle',
+              x:
+                360,
+              y:
+                240,
+              width:
+                120,
+              height:
+                120,
+              presentationHidden:
+                true
+            });
+
+          const token =
+            createMapTokenElement(
+              tokenRecord
+            );
+
+          const shape =
+            createMapShapeElement(
+              shapeRecord,
+              store.getModel()
+            );
+
+          layer.append(
+            token,
+            shape
+          );
+
+          await renderMapTokenElement(
+            token
+          );
+
+          renderMapShapeElement(
+            shape
+          );
+
+          const saveLog =
+            [];
+
+          const statusLog =
+            [];
+
+          const flushAction =
+            async () => {
+
+              await Promise.resolve();
+              await Promise.resolve();
+            };
+
+          ensureMapSelectionInspector(
+            map,
+            {
+              closeTokenPopup() {},
+              getSelectionActionDeps() {
+
+                return {};
+              },
+              getTokenActionDeps() {
+
+                return {};
+              },
+              openTokenPopup() {},
+              async saveAndSync() {
+
+                saveLog.push(
+                  'group-visibility'
+                );
+              },
+              setStatus(text) {
+
+                statusLog.push(
+                  text
+                );
+              }
+            }
+          );
+
+          selectMapToken(
+            token
+          );
+
+          selectMapShape(
+            shape,
+            {
+              additive:
+                true
+            }
+          );
+
+          const dock =
+            map.querySelector('.campaign-map-selection-dock');
+
+          const collect =
+            () => ({
+              actions:
+                [...dock.querySelectorAll('[data-map-selection-action]')]
+                  .map(button => button.dataset.mapSelectionAction),
+              stats:
+                [...dock.querySelectorAll('.campaign-map-selection-stat')]
+                  .map(stat => [
+                    stat.dataset.selectionStat,
+                    stat.querySelector('strong')?.textContent?.trim()
+                  ]),
+              tokenHidden:
+                token.dataset.presentationHidden,
+              shapeHidden:
+                shape.dataset.presentationHidden,
+              modelTokenHidden:
+                store.getModel().getToken('group-action-token')
+                  ?.presentationHidden,
+              modelShapeHidden:
+                store.getModel().getShape('group-action-shape')
+                  ?.presentationHidden
+            });
+
+          const before =
+            collect();
+
+          dock
+            .querySelector('[data-map-selection-action="hide-selection"]')
+            .click();
+
+          await flushAction();
+
+          const afterHide =
+            collect();
+
+          dock
+            .querySelector('[data-map-selection-action="show-selection"]')
+            .click();
+
+          await flushAction();
+
+          const afterShow =
+            collect();
+
+          return {
+            before,
+            afterHide,
+            afterShow,
+            saveLog,
+            statusLog
+          };
+        }
+      );
+
+    expect(
+      result.before.actions
+    ).toEqual([
+      'hide-selection',
+      'show-selection',
+      'remove'
+    ]);
+
+    expect(
+      result.before.stats
+    ).toEqual(
+      expect.arrayContaining([
+        [
+          'visible',
+          '1'
+        ],
+        [
+          'hidden',
+          '1'
+        ]
+      ])
+    );
+
+    expect(
+      result.afterHide
+    ).toMatchObject({
+      actions:
+        [
+          'show-selection',
+          'remove'
+        ],
+      tokenHidden:
+        'true',
+      shapeHidden:
+        'true',
+      modelTokenHidden:
+        true,
+      modelShapeHidden:
+        true
+    });
+
+    expect(
+      result.afterHide.stats
+    ).toEqual(
+      expect.arrayContaining([
+        [
+          'visible',
+          '0'
+        ],
+        [
+          'hidden',
+          '2'
+        ]
+      ])
+    );
+
+    expect(
+      result.afterShow
+    ).toMatchObject({
+      actions:
+        [
+          'hide-selection',
+          'remove'
+        ],
+      tokenHidden:
+        'false',
+      shapeHidden:
+        'false',
+      modelTokenHidden:
+        false,
+      modelShapeHidden:
+        false
+    });
+
+    expect(
+      result.afterShow.stats
+    ).toEqual(
+      expect.arrayContaining([
+        [
+          'visible',
+          '2'
+        ],
+        [
+          'hidden',
+          '0'
+        ]
+      ])
+    );
+
+    expect(
+      result.saveLog
+    ).toEqual([
+      'group-visibility',
+      'group-visibility'
+    ]);
+
+    expect(
+      result.statusLog.at(-2)
+    ).toContain(
+      '1'
+    );
+
+    expect(
+      result.statusLog.at(-1)
+    ).toContain(
+      '2'
+    );
+  }
+);
+
+
+test(
   'campaign-map-layer-dock-summarizes-layers-and-objects',
   async ({ page }) => {
 
