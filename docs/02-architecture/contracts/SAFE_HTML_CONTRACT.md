@@ -429,6 +429,8 @@ data-image-kind
 <div class="campaign-map-stage" ...>
 ```
 
+Runtime-инспекторы карты, включая selection dock, layer/object dock и scene-state inspector, должны иметь `data-runtime="true"` и не должны попадать в persistent HTML.
+
 Разрешенные data-поля карты:
 
 ```text

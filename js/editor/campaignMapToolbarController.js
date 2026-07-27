@@ -62,6 +62,10 @@ import {
   updateMapLayerDock
 } from './campaignMapLayerDock.js';
 
+import {
+  updateMapSceneInspector
+} from './campaignMapSceneInspector.js';
+
 
 // Controller тулбара карты: маршрутизирует клики по кнопкам и управляет
 // popup-ами сетки, тумана и фигур.
@@ -136,6 +140,10 @@ export async function handleCampaignMapToolbarClick(
   ) {
 
     await deps.changeMapImage(
+      map
+    );
+
+    updateMapSceneInspector(
       map
     );
 
@@ -518,7 +526,7 @@ function bindLayerPopupEvents(
 }
 
 
-function openGridPopup(
+export function openGridPopup(
   map,
   anchor,
   deps
@@ -552,6 +560,10 @@ function openGridPopup(
             ? 'Выключить сетку'
             : 'Включить сетку';
 
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );
@@ -576,6 +588,10 @@ function openGridPopup(
         );
 
         updateGridSize(
+          map
+        );
+
+        updateMapSceneInspector(
           map
         );
 
@@ -606,6 +622,10 @@ function openGridPopup(
           map
         );
 
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );
@@ -618,7 +638,7 @@ function openGridPopup(
 }
 
 
-function openFogPopup(
+export function openFogPopup(
   map,
   anchor,
   deps
@@ -646,6 +666,11 @@ function openFogPopup(
           map,
           'draw'
         );
+
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );
@@ -661,6 +686,11 @@ function openFogPopup(
           map,
           'erase'
         );
+
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );
@@ -679,6 +709,10 @@ function openFogPopup(
         store?.updateFog({
           brushSize: event.target.value
         });
+
+        updateMapSceneInspector(
+          map
+        );
 
         await deps.saveAndSync();
       }
@@ -748,6 +782,10 @@ function openFogPopup(
           map
         );
 
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );
@@ -762,6 +800,11 @@ function openFogPopup(
         fillFog(
           map
         );
+
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );
@@ -776,6 +819,11 @@ function openFogPopup(
         clearFog(
           map
         );
+
+        updateMapSceneInspector(
+          map
+        );
+
         await deps.saveAndSync();
       }
     );

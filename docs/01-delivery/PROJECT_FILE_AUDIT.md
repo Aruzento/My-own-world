@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 550.
+Всего файлов в аудите: 552.
 
 ## Два Независимых Прохода
 
@@ -27,7 +27,7 @@ owner_zone: "delivery"
 | agent workflow | 9 |
 | assets | 4 |
 | browser tests | 25 |
-| campaign map | 50 |
+| campaign map | 51 |
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
@@ -50,7 +50,7 @@ owner_zone: "delivery"
 | schema | 12 |
 | storage | 26 |
 | story log | 1 |
-| styles | 55 |
+| styles | 56 |
 | tables | 8 |
 | task tracker | 17 |
 | templates | 9 |
@@ -65,7 +65,9 @@ owner_zone: "delivery"
 | Файл | Причина |
 |---|---|
 | `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
+| `js/editor/campaignMapSceneInspector.js` | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/campaign-map-scene-inspector.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -75,11 +77,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5436660 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5463031 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 843687 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 550976 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 162559 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 859329 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 555442 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 163213 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -111,6 +113,7 @@ owner_zone: "delivery"
 | `styles/campaign-map-layout.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/campaign-map-popups.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/campaign-map-responsive.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
+| `styles/campaign-map-scene-inspector.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/campaign-map-selection-inspector.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/campaign-map-shapes.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/campaign-map-stage.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
@@ -326,6 +329,7 @@ owner_zone: "delivery"
 | `js/editor/campaignMapRenderer.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapRuntime.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapSaveController.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
+| `js/editor/campaignMapSceneInspector.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `js/editor/campaignMapSelectionBox.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapSelectionInspector.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
 | `js/editor/campaignMapSerializerHelpers.js` | campaign map | JavaScript модуль подсистемы: campaign map. | Да: карта остается крупной зоной, важны performance и дальнейшее разбиение. | Нет. |
@@ -570,6 +574,7 @@ owner_zone: "delivery"
 | `styles/campaign-map-layout.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
 | `styles/campaign-map-popups.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
 | `styles/campaign-map-responsive.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
+| `styles/campaign-map-scene-inspector.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `styles/campaign-map-selection-inspector.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
 | `styles/campaign-map-shapes.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |
 | `styles/campaign-map-stage.css` | styles | CSS слой: styles. | Да: CSS карты дробить по зонам ответственности и проверять визуально. | Нет. |

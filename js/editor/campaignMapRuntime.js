@@ -39,6 +39,10 @@ import {
 } from './campaignMapLayerDock.js';
 
 import {
+  updateMapSceneInspector
+} from './campaignMapSceneInspector.js';
+
+import {
   renderMapShapeElement,
   renderMapTokenElement
 } from './campaignMapRenderer.js';
@@ -894,6 +898,10 @@ export async function changeMapImage(
   );
 
   await restoreFogCanvas(
+    map
+  );
+
+  updateMapSceneInspector(
     map
   );
 }

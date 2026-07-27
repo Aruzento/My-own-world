@@ -35,6 +35,10 @@ import {
   getCampaignMapStore
 } from './campaignMapStore.js';
 
+import {
+  updateMapSceneInspector
+} from './campaignMapSceneInspector.js';
+
 
 let visibleObjectsFrame = null;
 let pendingVisibleObjectsMap = null;
@@ -312,6 +316,10 @@ export function toggleGrid(
   updateGridButton(
     map
   );
+
+  updateMapSceneInspector(
+    map
+  );
 }
 
 
@@ -387,6 +395,10 @@ export function updateGridSize(
         shape
       );
     });
+
+  updateMapSceneInspector(
+    map
+  );
 }
 
 

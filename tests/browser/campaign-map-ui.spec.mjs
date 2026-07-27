@@ -2040,6 +2040,369 @@ test(
 
 
 test(
+  'campaign-map-scene-inspector-opens-scene-settings-and-stays-runtime',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            serializeCampaignMapDocumentHTML
+          } = await import('/js/editor/campaignMapDataSerializer.js');
+
+          const {
+            setFogMode
+          } = await import('/js/editor/campaignMapFog.js');
+
+          const {
+            ensureMapSceneInspector,
+            MAP_SCENE_INSPECTOR_UI_MIGRATION
+          } = await import('/js/editor/campaignMapSceneInspector.js');
+
+          const {
+            openFogPopup,
+            openGridPopup
+          } = await import('/js/editor/campaignMapToolbarController.js');
+
+          const flushPopup =
+            async () => {
+
+              await new Promise(resolve =>
+                requestAnimationFrame(resolve)
+              );
+              await Promise.resolve();
+            };
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-topbar" contenteditable="false">
+                <h1 class="campaign-map-title singleline-field" contenteditable="true">Scene inspector</h1>
+              </div>
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" data-brush-size="30" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          refreshCampaignMapStore(
+            map
+          );
+
+          const saveLog =
+            [];
+
+          const makePopupDeps =
+            saveLabel => ({
+              async saveAndSync() {
+
+                saveLog.push(
+                  saveLabel
+                );
+              },
+              setFogMode
+            });
+
+          ensureMapSceneInspector(
+            map,
+            {
+              async changeMapImage(nextMap) {
+
+                nextMap.querySelector('.campaign-map-stage').dataset.mapAsset =
+                  'assets/maps/cavern.webp';
+
+                saveLog.push(
+                  'image-save'
+                );
+              },
+              openFogPopup: (
+                nextMap,
+                anchor
+              ) => openFogPopup(
+                nextMap,
+                anchor,
+                makePopupDeps(
+                  'fog-save'
+                )
+              ),
+              openGridPopup: (
+                nextMap,
+                anchor
+              ) => openGridPopup(
+                nextMap,
+                anchor,
+                makePopupDeps(
+                  'grid-save'
+                )
+              )
+            }
+          );
+
+          const inspector =
+            map.querySelector('.campaign-map-scene-inspector');
+
+          const getSnapshot =
+            () => ({
+              editable:
+                inspector.getAttribute('contenteditable'),
+              header:
+                inspector.querySelector('.campaign-map-scene-inspector-heading span')
+                  ?.textContent
+                  ?.trim(),
+              migration:
+                inspector.dataset.mapSceneInspectorUiMigration,
+              runtime:
+                inspector.dataset.runtime,
+              items:
+                [...inspector.querySelectorAll('.campaign-map-scene-inspector-action')]
+                  .map(button => ({
+                    key:
+                      button.dataset.mapSceneKey,
+                    pressed:
+                      button.getAttribute('aria-pressed'),
+                    state:
+                      button.dataset.mapSceneState,
+                    value:
+                      button.querySelector('.campaign-map-scene-action-copy span')
+                        ?.textContent
+                        ?.trim()
+                  }))
+            });
+
+          const initial =
+            getSnapshot();
+
+          inspector
+            .querySelector('[data-map-scene-action="change-map"]')
+            .click();
+
+          await flushPopup();
+
+          const afterMapImage =
+            getSnapshot();
+
+          inspector
+            .querySelector('[data-map-scene-action="open-grid"]')
+            .click();
+
+          await flushPopup();
+
+          const gridPopup =
+            document.querySelector('#campaignMapPopup');
+
+          const gridPopupState =
+            {
+              key:
+                gridPopup?.dataset.popupKey || '',
+              visible:
+                Boolean(gridPopup) &&
+                !gridPopup.classList.contains('hidden')
+            };
+
+          gridPopup
+            ?.querySelector('.campaign-grid-toggle-btn')
+            ?.click();
+
+          await flushPopup();
+
+          const afterGridToggle =
+            getSnapshot();
+
+          inspector
+            .querySelector('[data-map-scene-action="open-fog"]')
+            .click();
+
+          await flushPopup();
+
+          const fogPopup =
+            document.querySelector('#campaignMapPopup');
+
+          const fogPopupState =
+            {
+              key:
+                fogPopup?.dataset.popupKey || '',
+              visible:
+                Boolean(fogPopup) &&
+                !fogPopup.classList.contains('hidden')
+            };
+
+          fogPopup
+            ?.querySelector('.campaign-fog-erase-btn')
+            ?.click();
+
+          await flushPopup();
+
+          const afterFogErase =
+            getSnapshot();
+
+          const saved =
+            serializeCampaignMapDocumentHTML(
+              map
+            );
+
+          return {
+            expectedMigration:
+              MAP_SCENE_INSPECTOR_UI_MIGRATION,
+            initial,
+            afterMapImage,
+            gridPopupState,
+            afterGridToggle,
+            fogPopupState,
+            afterFogErase,
+            saveLog,
+            savedHasRuntime:
+              /campaign-map-scene-inspector|data-runtime|0\.0\.1\.8\.12\.5/.test(
+                saved
+              )
+          };
+        }
+      );
+
+    expect(
+      result.initial.migration
+    ).toBe(
+      result.expectedMigration
+    );
+
+    expect(
+      result.initial.runtime
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.initial.editable
+    ).toBe(
+      'false'
+    );
+
+    expect(
+      result.initial.header
+    ).toBe(
+      '\u0420\u0435\u0436\u0438\u043c: \u0440\u0443\u043a\u0430'
+    );
+
+    expect(
+      result.initial.items
+    ).toEqual([
+      {
+        key:
+          'asset',
+        pressed:
+          null,
+        state:
+          'warning',
+        value:
+          '\u043d\u0435\u0442 \u0444\u043e\u043d\u0430'
+      },
+      {
+        key:
+          'grid',
+        pressed:
+          'false',
+        state:
+          'muted',
+        value:
+          '\u0432\u044b\u043a\u043b\u044e\u0447\u0435\u043d\u0430'
+      },
+      {
+        key:
+          'fog',
+        pressed:
+          null,
+        state:
+          'warning',
+        value:
+          '\u043f\u0443\u0441\u0442\u043e \u00b7 \u043a\u0438\u0441\u0442\u044c'
+      }
+    ]);
+
+    expect(
+      result.afterMapImage.items[0]
+    ).toMatchObject({
+      state:
+        'ready',
+      value:
+        'cavern.webp'
+    });
+
+    expect(
+      result.gridPopupState
+    ).toEqual({
+      key:
+        'grid',
+      visible:
+        true
+    });
+
+    expect(
+      result.afterGridToggle.items[1]
+    ).toMatchObject({
+      pressed:
+        'true',
+      state:
+        'info',
+      value:
+        '80 px'
+    });
+
+    expect(
+      result.fogPopupState
+    ).toEqual({
+      key:
+        'fog',
+      visible:
+        true
+    });
+
+    expect(
+      result.afterFogErase.header
+    ).toBe(
+      '\u0420\u0435\u0436\u0438\u043c: \u0442\u0443\u043c\u0430\u043d \u00b7 \u043b\u0430\u0441\u0442\u0438\u043a'
+    );
+
+    expect(
+      result.afterFogErase.items[2]
+    ).toMatchObject({
+      value:
+        '\u043f\u0443\u0441\u0442\u043e \u00b7 \u043b\u0430\u0441\u0442\u0438\u043a'
+    });
+
+    expect(
+      result.saveLog
+    ).toEqual(
+      expect.arrayContaining([
+        'image-save',
+        'grid-save',
+        'fog-save'
+      ])
+    );
+
+    expect(
+      result.savedHasRuntime
+    ).toBe(
+      false
+    );
+  }
+);
+
+
+test(
   'campaign-map-music-popup-manages-normal-and-battle-playlists',
   async ({ page }) => {
 

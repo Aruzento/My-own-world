@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI Migration Baselines
 
-Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is active with the toolbar foundation closed by `0.0.1.8.12.1`, the popup surface closed by `0.0.1.8.12.2`, the selected-object inspector dock closed by `0.0.1.8.12.3` and the layer/object dock closed by `0.0.1.8.12.4`.
+Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is active with the toolbar foundation closed by `0.0.1.8.12.1`, the popup surface closed by `0.0.1.8.12.2`, the selected-object inspector dock closed by `0.0.1.8.12.3`, the layer/object dock closed by `0.0.1.8.12.4` and the scene-state inspector closed by `0.0.1.8.12.5`.
 
 This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must compare against.
 
@@ -41,6 +41,8 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 
 `0.0.1.8.12.4` update: the Campaign map baseline now includes `.campaign-map-layer-dock[data-map-layer-dock-ui-migration="0.0.1.8.12.4"]`. The dock is runtime-only inside `.campaign-map-stage`, summarizes token/object/shape/hidden counts and per-layer content, can toggle editable layer visibility and opens the existing Layers popup for deeper controls. `campaign-map-ui.spec.mjs` guards the dock marker, counters, visibility toggle, popup path and post-remove refresh, and `visual-campaign-map` now captures the layer/object dock together with the selected-object dock.
 
+`0.0.1.8.12.5` update: the Campaign map baseline now includes `.campaign-map-scene-inspector[data-map-scene-inspector-ui-migration="0.0.1.8.12.5"]`. The inspector is runtime-only inside `.campaign-map-stage`, summarizes map background, grid and fog state, opens the existing map-image, Grid and Fog flows and is excluded from serialized map HTML. `campaign-map-ui.spec.mjs` guards the marker, runtime cleanup, popup paths and state refresh, and `visual-campaign-map` now captures the scene inspector with the layer/object and selected-object docks.
+
 ## Baseline Rules
 
 - Do not commit generated PNG screenshots. `tests/browser/visual-regression.spec.mjs` attaches them to the Playwright run as current baseline evidence.
@@ -63,7 +65,7 @@ These names are the current visual baseline contract. They are produced by `npm 
 | `visual-add-block-popup.png` | Add block popup | `#blockPopup` opened from `.add-block-btn` after `renderCustomBlocks()` | Captures the first-level block insertion surface, local sprite icons, focus state, spacing and overlay density. |
 | `visual-properties-sheet.png` | Properties block | `.card-properties-block` after `createPropertiesBlock({ cardType: 'character' })` | Captures field grid, settings affordance, labels, values and resize handles. |
 | `visual-properties-popup.png` | Properties overlay | `.property-settings-popup` opened from the real settings button | Captures one high-risk legacy overlay before overlay migration. |
-| `visual-campaign-map.png` | Campaign map | `.campaign-map-document` with synthetic tokens, shape, selected-object dock, layer/object dock and locked fog zone | Captures map stage, grid, tokens, hidden/player badge, selection inspector dock, layer/object dock, shape and fog layering. |
+| `visual-campaign-map.png` | Campaign map | `.campaign-map-document` with synthetic tokens, shape, scene-state inspector, selected-object dock, layer/object dock and locked fog zone | Captures map stage, grid, tokens, hidden/player badge, scene state, selection inspector dock, layer/object dock, shape and fog layering. |
 | `visual-knowledge-graph.png` | Knowledge graph | `.knowledge-graph-document` rendered from synthetic `state.pages` | Captures graph workbench, toolbar, filterbar, edges and node cards. |
 | `visual-task-tracker.png` | Task tracker | `.task-tracker-document` after `renderTaskTracker()` | Captures board columns, task cards and compact production-board density. |
 | `visual-component-catalogue-popover.png` | Shared primitives and popover | `#componentCataloguePopover` opened through Tools -> Components | Captures shared Button, IconButton, Field, Toolbar, Panel and Popover states that future migrations should consume. |
@@ -138,7 +140,7 @@ Current overlay visual polish to migrate later:
 
 - AppShell Settings/Tools, create menu and tree context menu visual styling during AppShell/core content phases.
 - Wiki preview and remaining editor overlay visual styling during core content migration.
-- Remaining campaign map inspector surfaces and advanced contextual visual polish during campaign map migration.
+- Remaining advanced campaign map contextual visual polish during campaign map migration.
 - Knowledge Graph overlay visual polish during Knowledge Graph migration.
 - App settings/tools popovers and component catalogue popover remain the current shared primitive/overlay reference.
 

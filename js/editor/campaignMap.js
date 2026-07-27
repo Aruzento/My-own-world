@@ -24,6 +24,8 @@ import {
 
 import {
   handleCampaignMapToolbarClick,
+  openFogPopup,
+  openGridPopup,
   openLayersPopup
 } from './campaignMapToolbarController.js';
 
@@ -157,6 +159,10 @@ import {
   ensureMapLayerDock,
   updateMapLayerDock
 } from './campaignMapLayerDock.js';
+
+import {
+  ensureMapSceneInspector
+} from './campaignMapSceneInspector.js';
 
 import {
   setStatus
@@ -448,6 +454,11 @@ export async function renderCampaignMap(
   ensureMapLayerDock(
     map,
     getLayerDockDeps()
+  );
+
+  ensureMapSceneInspector(
+    map,
+    getSceneInspectorDeps()
   );
 
   await playFirstCampaignMapMusicForMapSwitch(
@@ -744,6 +755,37 @@ function getLayerDockDeps() {
       getToolbarControllerDeps()
     ),
     saveAndSync
+  };
+}
+
+
+function getSceneInspectorDeps() {
+
+  return {
+    changeMapImage: async map => {
+
+      await changeMapImage(
+        map
+      );
+
+      await saveAndSync();
+    },
+    openFogPopup: (
+      map,
+      anchor
+    ) => openFogPopup(
+      map,
+      anchor,
+      getToolbarControllerDeps()
+    ),
+    openGridPopup: (
+      map,
+      anchor
+    ) => openGridPopup(
+      map,
+      anchor,
+      getToolbarControllerDeps()
+    )
   };
 }
 

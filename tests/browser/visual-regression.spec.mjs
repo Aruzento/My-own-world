@@ -333,6 +333,10 @@ test(
         } = await import('/js/editor/campaignMapLayerDock.js');
 
         const {
+          ensureMapSceneInspector
+        } = await import('/js/editor/campaignMapSceneInspector.js');
+
+        const {
           selectMapToken
         } = await import('/js/editor/campaignMapRuntime.js');
 
@@ -495,6 +499,15 @@ test(
           map,
           {
             async saveAndSync() {}
+          }
+        );
+
+        ensureMapSceneInspector(
+          map,
+          {
+            async changeMapImage() {},
+            openFogPopup() {},
+            openGridPopup() {}
           }
         );
 

@@ -6,6 +6,49 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.12.5 Campaign Map Scene-State Inspector
+
+### What Changed
+
+- Continued `0.0.1.8.12` Migration Phase 6 with the scene-state inspector slice.
+- Added a runtime-only `.campaign-map-scene-inspector[data-map-scene-inspector-ui-migration="0.0.1.8.12.5"]` inside the map stage.
+- The inspector shows the GM the scene basics without opening a popup first: whether the map background is set, whether grid is enabled and what fog state/mode is active.
+- The inspector routes actions into the existing map-image, Grid and Fog flows instead of creating a second scene-settings model or a duplicate settings panel.
+- Synced inspector refresh after map render, map background changes, grid toggles/size changes, fog fill/clear and fog/tool mode changes.
+- Added `styles/campaign-map-scene-inspector.css` as the CSS owner for this surface and kept the visual language close to the existing Properties-inspired map docks: thin markers, compact local sprite icons and readable state rows.
+- Updated the visual campaign-map smoke so the screenshot captures the scene inspector together with the layer/object dock and selected-object dock.
+- Deliberately did not change map storage, token/page deletion rules, layer model semantics, fog algorithms, initiative, music, presentation synchronization or card content.
+
+### Readiness
+
+Usable for this scene-state inspector surface. A human can open a campaign map and immediately see if the scene has a background, whether grid is on and what fog mode is ready, then jump straight to the existing settings that already own those actions. The rest of Phase 6 remains active for advanced contextual action coverage.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMapSceneInspector.js`.
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapFog.js`.
+- Passed: `node --check js\editor\campaignMapRuntime.js`.
+- Passed: `node --check js\editor\campaignMapToolbarController.js`.
+- Passed: `node --check js\editor\campaignMapViewport.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-scene-inspector"` with the inspector marker, runtime cleanup, map-image action, Grid popup path, Fog popup path and live state refresh.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 14 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: generated and reviewed a temporary `map-scene-inspector-12-5-qa.png` screenshot; the scene inspector stays in the top-left stage corner, uses shorter readable values, and does not overlap the layer/object or selected-object docks.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs tests/browser/campaign-map-performance.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-initiative.spec.mjs` with 18 browser tests.
+- Passed: full `npm run verify` with encoding/import/syntax checks, 272 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, `verify`, 108 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+- Passed after the final docs state: `python tools\generate_manual_docx.py` with 1,274 files.
+- Passed again after final docs/manual generation: `npm run test:browser -- --grep "campaign-map-toolbar-uses-migrated-mode-action-groups|campaign-map-popups-use-migrated-shared-frame|campaign-map-selection-inspector|campaign-map-layer-dock|campaign-map-scene-inspector|visual-safety-captures-core-surfaces"` with 6 browser tests.
+- Passed after the final docs state: `node tools\docs_index.mjs`, `node tools\audit_project_files.mjs` with 552 files and 0 mojibake candidates, `npm run check:encoding`, `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`, `node tools\validate_agent_skills.mjs` and `git diff --check`.
+
+### Follow-Up
+
+- Continue `0.0.1.8.12` on advanced contextual action coverage.
+- Keep the scene inspector runtime-only and connected to the existing map-image/Grid/Fog flows; do not turn it into a saved panel or second scene-settings model.
+
 ## 2026-07-27: 0.0.1.8.12.4 Campaign Map Layer/Object Dock
 
 ### What Changed
