@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.4`: the map stage now has a runtime layer/object dock with token, shape and hidden-object counters, per-layer summaries, quick visibility toggles and a direct path into the existing Layers popup without changing map business logic.
 - UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.3`: selected tokens and shapes now open a compact runtime inspector dock with identity, position, visibility, key token stats, local sprite actions and safe remove-from-map behavior that does not delete the card.
 - UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.2`: map add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now use one shared map popup frame with local icons, readable sections, migration markers and preserved legacy action selectors.
 - UI redesign Phase 6 campaign map started with `0.0.1.8.12.1`: the map toolbar now has grouped creation, scene, tools and live-session actions, local sprite icons, shared-token styling, accessible labels and active-state coverage without changing map business logic.

@@ -6,6 +6,50 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.12.4 Campaign Map Layer/Object Dock
+
+### What Changed
+
+- Continued `0.0.1.8.12` Migration Phase 6 with the layer/object dock slice.
+- Added a runtime-only `.campaign-map-layer-dock[data-map-layer-dock-ui-migration="0.0.1.8.12.4"]` inside the map stage.
+- The dock summarizes map state for the GM: total tokens, shapes, hidden objects, creature/object/shape counts and per-layer object summaries.
+- Layer rows now act as quick visibility toggles for editable layers and show locked/system layers without creating a second layer model.
+- Added a direct `...` action from the dock into the existing Layers popup, so deeper ordering controls stay in the already migrated popup surface.
+- Synced dock updates after map render, token/shape creation, selected-object removal, selection visibility changes, duplication and layer popup changes.
+- Added a dedicated CSS owner, `styles/campaign-map-layer-dock.css`, instead of growing popup CSS or the selected-object inspector CSS with another surface.
+- Updated the visual campaign-map baseline so the screenshot captures the layer/object dock together with the selected-object dock.
+- Deliberately did not change map storage, layer model semantics, token/page deletion rules, fog algorithms, initiative, music, presentation synchronization or card content.
+
+### Readiness
+
+Usable for this layer/object dock surface. A human can open a campaign map and immediately see what kinds of objects are on it, which layer has content, whether anything is hidden from players and quickly toggle layer visibility without hunting through the toolbar popup. The rest of Phase 6 remains active for map inspector surfaces and advanced contextual actions.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMapLayerDock.js`.
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapRuntime.js`.
+- Passed: `node --check js\editor\campaignMapSelectionInspector.js`.
+- Passed: `node --check js\editor\campaignMapToolbarController.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-layer-dock-summarizes-layers-and-objects"` with the new dock marker, counters, layer toggle, Layers popup path and post-remove update.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 13 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: reviewed `test-results/map-layer-dock-12-4-qa.png`; the layer dock stays in the top-right stage corner, the selection dock stays at the bottom and the two surfaces do not overlap.
+- Passed after the final docs state: `node tools\audit_project_files.mjs` with 550 files and 0 mojibake candidates.
+- Passed after the final docs state: `python tools\generate_manual_docx.py` with 1,270 files.
+- Passed after the final docs state: `node tools\docs_index.mjs`, `npm run check:encoding`, `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`, `node tools\validate_agent_skills.mjs` and `git diff --check`.
+- Passed again: `npm run test:browser -- --grep "campaign-map-toolbar-uses-migrated-mode-action-groups|campaign-map-popups-use-migrated-shared-frame|campaign-map-selection-inspector|campaign-map-layer-dock|visual-safety-captures-core-surfaces"` with 5 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs tests/browser/campaign-map-performance.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-initiative.spec.mjs` with 18 browser tests.
+- Passed: full `npm run verify` with encoding/import/syntax checks, 272 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, `verify`, 107 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.12` on map inspector surfaces and advanced contextual action coverage.
+- Keep the layer dock runtime-only and connected to the existing Layers popup; do not turn it into a separate saved panel or second layer model.
+
 ## 2026-07-27: 0.0.1.8.12.3 Campaign Map Selection Inspector
 
 ### What Changed

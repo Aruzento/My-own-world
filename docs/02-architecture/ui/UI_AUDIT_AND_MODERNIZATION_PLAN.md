@@ -99,7 +99,8 @@ owner_zone: "architecture"
 - Confirmed by `0.0.1.8.12.1`: the campaign map toolbar now has readable creation/scene/tools/live groups, shared-token icon buttons, `aria-pressed` active states and responsive overflow coverage without changing map model or save behavior.
 - Confirmed by `0.0.1.8.12.2`: campaign map add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now use one shared map popup frame with local icons, section labels, per-popup aria labels and preserved legacy selectors.
 - Confirmed by `0.0.1.8.12.3`: selected map tokens and shapes now open a runtime-only selection dock with identity, position, presentation visibility, key token stats and safe local-icon actions. The dock separates `Убрать с карты` from destructive card deletion and keeps map business logic unchanged.
-- Next action updated: continue `0.0.1.8.12` with deeper layer/token dock polish, map inspector surfaces and advanced contextual action coverage.
+- Confirmed by `0.0.1.8.12.4`: campaign maps now have a runtime-only layer/object dock with token/object/shape/hidden counters, per-layer summaries, quick visibility toggles and a direct path into the existing Layers popup.
+- Next action updated: continue `0.0.1.8.12` with map inspector surfaces and advanced contextual action coverage.
 
 ### Общий Layout
 

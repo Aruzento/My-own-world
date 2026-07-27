@@ -58,6 +58,10 @@ import {
   setCampaignMapLayerVisibility
 } from './campaignMapLayers.js';
 
+import {
+  updateMapLayerDock
+} from './campaignMapLayerDock.js';
+
 
 // Controller тулбара карты: маршрутизирует клики по кнопкам и управляет
 // popup-ами сетки, тумана и фигур.
@@ -386,7 +390,7 @@ function openDrawingPopup(
 }
 
 
-function openLayersPopup(
+export function openLayersPopup(
   map,
   anchor,
   deps
@@ -449,6 +453,10 @@ function bindLayerPopupEvents(
               event.target.checked
             );
 
+            updateMapLayerDock(
+              map
+            );
+
             await deps.saveAndSync();
           }
         );
@@ -468,6 +476,10 @@ function bindLayerPopupEvents(
             );
 
             applyCampaignMapLayers(
+              map
+            );
+
+            updateMapLayerDock(
               map
             );
 
@@ -491,6 +503,10 @@ function bindLayerPopupEvents(
             );
 
             applyCampaignMapLayers(
+              map
+            );
+
+            updateMapLayerDock(
               map
             );
 

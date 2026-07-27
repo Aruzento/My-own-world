@@ -329,6 +329,10 @@ test(
         } = await import('/js/editor/campaignMapSelectionInspector.js');
 
         const {
+          ensureMapLayerDock
+        } = await import('/js/editor/campaignMapLayerDock.js');
+
+        const {
           selectMapToken
         } = await import('/js/editor/campaignMapRuntime.js');
 
@@ -484,6 +488,13 @@ test(
             removeSelectedCampaignMapItems,
             async saveAndSync() {},
             setStatus() {}
+          }
+        );
+
+        ensureMapLayerDock(
+          map,
+          {
+            async saveAndSync() {}
           }
         );
 

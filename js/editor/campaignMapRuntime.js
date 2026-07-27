@@ -35,6 +35,10 @@ import {
 } from './campaignMapLayers.js';
 
 import {
+  updateMapLayerDock
+} from './campaignMapLayerDock.js';
+
+import {
   renderMapShapeElement,
   renderMapTokenElement
 } from './campaignMapRenderer.js';
@@ -176,6 +180,10 @@ export async function addMapToken(
   );
 
   applyCampaignMapLayers(
+    map
+  );
+
+  updateMapLayerDock(
     map
   );
 }
@@ -794,6 +802,10 @@ export function addMapShape(
   );
 
   applyCampaignMapLayers(
+    map
+  );
+
+  updateMapLayerDock(
     map
   );
 }

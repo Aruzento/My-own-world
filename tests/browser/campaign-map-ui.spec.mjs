@@ -1639,6 +1639,407 @@ test(
 
 
 test(
+  'campaign-map-layer-dock-summarizes-layers-and-objects',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement,
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapShapeElement,
+            renderMapTokenElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            applyCampaignMapLayers
+          } = await import('/js/editor/campaignMapLayers.js');
+
+          const {
+            ensureMapLayerDock,
+            MAP_LAYER_DOCK_UI_MIGRATION
+          } = await import('/js/editor/campaignMapLayerDock.js');
+
+          const {
+            openLayersPopup
+          } = await import('/js/editor/campaignMapToolbarController.js');
+
+          const {
+            removeSelectedCampaignMapItems
+          } = await import('/js/editor/campaignMap.js');
+
+          const flushPopup =
+            async () => {
+
+              await new Promise(resolve =>
+                requestAnimationFrame(resolve)
+              );
+              await Promise.resolve();
+            };
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const layer =
+            map.querySelector('.campaign-map-object-layer');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const creature =
+            store.addToken({
+              tokenId:
+                'layer-dock-creature',
+              type:
+                'creature',
+              name:
+                '\u0421\u0442\u0440\u0430\u0436',
+              x:
+                24,
+              y:
+                32,
+              presentationHidden:
+                true
+            });
+
+          const object =
+            store.addToken({
+              tokenId:
+                'layer-dock-object',
+              type:
+                'object',
+              name:
+                '\u0410\u043b\u0442\u0430\u0440\u044c',
+              x:
+                42,
+              y:
+                38
+            });
+
+          const shape =
+            store.addShape({
+              shapeId:
+                'layer-dock-shape',
+              type:
+                'square',
+              x:
+                240,
+              y:
+                200,
+              width:
+                140,
+              height:
+                120
+            });
+
+          store.updateFog({
+            lockedZones: [
+              {
+                id:
+                  'layer-dock-fog-lock',
+                x:
+                  500,
+                y:
+                  240,
+                width:
+                  180,
+                height:
+                  120
+              }
+            ]
+          });
+
+          const creatureElement =
+            createMapTokenElement(
+              creature
+            );
+
+          const objectElement =
+            createMapTokenElement(
+              object
+            );
+
+          const shapeElement =
+            createMapShapeElement(
+              shape
+            );
+
+          layer.append(
+            creatureElement,
+            objectElement,
+            shapeElement
+          );
+
+          await renderMapTokenElement(
+            creatureElement
+          );
+
+          await renderMapTokenElement(
+            objectElement
+          );
+
+          renderMapShapeElement(
+            shapeElement
+          );
+
+          applyCampaignMapLayers(
+            map
+          );
+
+          const saveLog =
+            [];
+
+          ensureMapLayerDock(
+            map,
+            {
+              openLayersPopup: (
+                nextMap,
+                anchor
+              ) => openLayersPopup(
+                nextMap,
+                anchor,
+                {
+                  async saveAndSync() {
+
+                    saveLog.push(
+                      'popup-save'
+                    );
+                  }
+                }
+              ),
+              async saveAndSync() {
+
+                saveLog.push(
+                  'dock-save'
+                );
+              }
+            }
+          );
+
+          const dock =
+            map.querySelector('.campaign-map-layer-dock');
+
+          const before =
+            {
+              migration:
+                dock.dataset.mapLayerDockUiMigration,
+              heading:
+                dock.querySelector('.campaign-map-layer-dock-heading span')
+                  ?.textContent
+                  ?.trim(),
+              metrics:
+                [...dock.querySelectorAll('.campaign-map-layer-metric')]
+                  .map(metric => [
+                    metric.dataset.layerMetric,
+                    metric.querySelector('strong')?.textContent?.trim()
+                  ]),
+              rows:
+                [...dock.querySelectorAll('.campaign-map-layer-dock-row')]
+                  .map(row => [
+                    row.dataset.layerId,
+                    row.getAttribute('aria-pressed'),
+                    row.querySelector('.campaign-map-layer-row-copy span')
+                      ?.textContent
+                      ?.trim()
+                  ])
+            };
+
+          dock
+            .querySelector('[data-layer-id="map-creatures"]')
+            .click();
+
+          await Promise.resolve();
+
+          const afterToggle =
+            {
+              creaturePressed:
+                dock
+                  .querySelector('[data-layer-id="map-creatures"]')
+                  .getAttribute('aria-pressed'),
+              creatureHidden:
+                creatureElement.dataset.layerHidden,
+              saveLog:
+                [...saveLog]
+            };
+
+          dock
+            .querySelector('[data-map-layer-dock-action="open-layers"]')
+            .click();
+
+          await flushPopup();
+
+          const popup =
+            document.querySelector('#campaignMapPopup');
+
+          const popupState =
+            {
+              key:
+                popup?.dataset.popupKey || '',
+              visible:
+                Boolean(popup) &&
+                !popup.classList.contains('hidden'),
+              hasLayerRows:
+                Boolean(
+                  popup?.querySelector('.campaign-layer-row')
+                )
+            };
+
+          creatureElement.classList.add(
+            'is-selected'
+          );
+
+          const deleted =
+            removeSelectedCampaignMapItems(
+              map
+            );
+
+          const afterRemove =
+            {
+              deleted,
+              heading:
+                dock.querySelector('.campaign-map-layer-dock-heading span')
+                  ?.textContent
+                  ?.trim(),
+              creatureRow:
+                dock
+                  .querySelector('[data-layer-id="map-creatures"] .campaign-map-layer-row-copy span')
+                  ?.textContent
+                  ?.trim()
+            };
+
+          return {
+            expectedMigration:
+              MAP_LAYER_DOCK_UI_MIGRATION,
+            before,
+            afterToggle,
+            popupState,
+            afterRemove
+          };
+        }
+      );
+
+    expect(
+      result.before.migration
+    ).toBe(
+      result.expectedMigration
+    );
+
+    expect(
+      result.before.heading
+    ).toBe(
+      '2 \u0442\u043e\u043a. \u00b7 1 \u0444\u0438\u0433. \u00b7 1 \u0441\u043a\u0440\u044b\u0442\u043e'
+    );
+
+    expect(
+      result.before.metrics
+    ).toEqual([
+      [
+        'creatures',
+        '1'
+      ],
+      [
+        'objects',
+        '1'
+      ],
+      [
+        'shapes',
+        '1'
+      ]
+    ]);
+
+    expect(
+      result.before.rows
+    ).toEqual(
+      expect.arrayContaining([
+        [
+          'map-creatures',
+          'true',
+          '1 \u0442\u043e\u043a.'
+        ],
+        [
+          'map-objects',
+          'true',
+          '1 \u0442\u043e\u043a.'
+        ],
+        [
+          'map-shapes',
+          'true',
+          '1 \u0444\u0438\u0433.'
+        ],
+        [
+          'map-locked-fog',
+          'true',
+          '1 \u0437\u043e\u043d'
+        ]
+      ])
+    );
+
+    expect(
+      result.afterToggle
+    ).toEqual({
+      creaturePressed:
+        'false',
+      creatureHidden:
+        'true',
+      saveLog:
+        [
+          'dock-save'
+        ]
+    });
+
+    expect(
+      result.popupState
+    ).toEqual({
+      key:
+        'layers',
+      visible:
+        true,
+      hasLayerRows:
+        true
+    });
+
+    expect(
+      result.afterRemove
+    ).toEqual({
+      deleted:
+        1,
+      heading:
+        '1 \u0442\u043e\u043a. \u00b7 1 \u0444\u0438\u0433. \u00b7 0 \u0441\u043a\u0440\u044b\u0442\u043e',
+      creatureRow:
+        '\u043f\u0443\u0441\u0442\u043e'
+    });
+  }
+);
+
+
+test(
   'campaign-map-music-popup-manages-normal-and-battle-playlists',
   async ({ page }) => {
 

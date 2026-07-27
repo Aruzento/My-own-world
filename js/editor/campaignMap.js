@@ -23,7 +23,8 @@ import {
 } from './campaignMapPopupController.js';
 
 import {
-  handleCampaignMapToolbarClick
+  handleCampaignMapToolbarClick,
+  openLayersPopup
 } from './campaignMapToolbarController.js';
 
 import {
@@ -151,6 +152,11 @@ import {
 import {
   ensureMapSelectionInspector
 } from './campaignMapSelectionInspector.js';
+
+import {
+  ensureMapLayerDock,
+  updateMapLayerDock
+} from './campaignMapLayerDock.js';
 
 import {
   setStatus
@@ -350,6 +356,10 @@ export function removeSelectedCampaignMapItems(
     map
   );
 
+  updateMapLayerDock(
+    map
+  );
+
   return selectedTokens.length + selectedShapes.length;
 }
 
@@ -433,6 +443,11 @@ export async function renderCampaignMap(
   ensureMapSelectionInspector(
     map,
     getSelectionInspectorDeps()
+  );
+
+  ensureMapLayerDock(
+    map,
+    getLayerDockDeps()
   );
 
   await playFirstCampaignMapMusicForMapSwitch(
@@ -713,6 +728,22 @@ function getSelectionInspectorDeps() {
     removeSelectedCampaignMapItems,
     saveAndSync,
     setStatus
+  };
+}
+
+
+function getLayerDockDeps() {
+
+  return {
+    openLayersPopup: (
+      map,
+      anchor
+    ) => openLayersPopup(
+      map,
+      anchor,
+      getToolbarControllerDeps()
+    ),
+    saveAndSync
   };
 }
 
