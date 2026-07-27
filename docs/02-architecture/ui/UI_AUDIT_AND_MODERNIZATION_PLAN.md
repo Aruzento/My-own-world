@@ -98,7 +98,8 @@ owner_zone: "architecture"
 - Confirmed by `0.0.1.8.11.7`: the left rail now has a real `Поиск и команды` global tool; `Ctrl+K` opens a popupManager command palette with deep PageRepository-backed page results, matched fields, excerpts and existing app actions.
 - Confirmed by `0.0.1.8.12.1`: the campaign map toolbar now has readable creation/scene/tools/live groups, shared-token icon buttons, `aria-pressed` active states and responsive overflow coverage without changing map model or save behavior.
 - Confirmed by `0.0.1.8.12.2`: campaign map add/picker, grid, drawing, fog, shapes, layers, initiative and music popups now use one shared map popup frame with local icons, section labels, per-popup aria labels and preserved legacy selectors.
-- Next action updated: continue `0.0.1.8.12` with layer/token dock or inspector surfaces and contextual action polish.
+- Confirmed by `0.0.1.8.12.3`: selected map tokens and shapes now open a runtime-only selection dock with identity, position, presentation visibility, key token stats and safe local-icon actions. The dock separates `Убрать с карты` from destructive card deletion and keeps map business logic unchanged.
+- Next action updated: continue `0.0.1.8.12` with deeper layer/token dock polish, map inspector surfaces and advanced contextual action coverage.
 
 ### Общий Layout
 

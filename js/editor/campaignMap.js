@@ -131,6 +131,7 @@ import {
   restoreMapBackground,
   restoreMapShapes,
   restoreMapTokens,
+  notifyMapSelectionChanged,
   selectMapShape,
   selectMapToken
 } from './campaignMapRuntime.js';
@@ -146,6 +147,14 @@ import {
 import {
   playFirstCampaignMapMusicForMapSwitch
 } from './campaignMapMusic.js';
+
+import {
+  ensureMapSelectionInspector
+} from './campaignMapSelectionInspector.js';
+
+import {
+  setStatus
+} from '../ui/ui.js';
 
 export {
   isCampaignMapPage,
@@ -337,6 +346,10 @@ export function removeSelectedCampaignMapItems(
     shape.remove();
   });
 
+  notifyMapSelectionChanged(
+    map
+  );
+
   return selectedTokens.length + selectedShapes.length;
 }
 
@@ -415,6 +428,11 @@ export async function renderCampaignMap(
 
   renderCampaignMapPerformanceDiagnostics(
     map
+  );
+
+  ensureMapSelectionInspector(
+    map,
+    getSelectionInspectorDeps()
   );
 
   await playFirstCampaignMapMusicForMapSwitch(
@@ -669,6 +687,32 @@ function getTokenActionDeps() {
     ),
     saveAndSync,
     selectMapShape
+  };
+}
+
+
+function getSelectionActionDeps() {
+
+  return {
+    ...getTokenActionDeps(),
+    openTokenPopup: () => {}
+  };
+}
+
+
+function getSelectionInspectorDeps() {
+
+  return {
+    closeTokenPopup,
+    getSelectionActionDeps,
+    getTokenActionDeps,
+    openTokenPopup: token => openTokenPopup(
+      token,
+      getTokenPopupDeps()
+    ),
+    removeSelectedCampaignMapItems,
+    saveAndSync,
+    setStatus
   };
 }
 

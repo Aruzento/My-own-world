@@ -7,7 +7,8 @@ import {
 
 import {
   clearSelectedMapShapes,
-  clearSelectedMapTokens
+  clearSelectedMapTokens,
+  notifyMapSelectionChanged
 } from './campaignMapRuntime.js';
 
 import {
@@ -159,6 +160,10 @@ export function finishCampaignMapSelectionBox(
         selectionBox.startWorld,
         currentWorld
       )
+    );
+
+    notifyMapSelectionChanged(
+      selectionBox.map
     );
   }
 

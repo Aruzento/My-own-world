@@ -25,10 +25,10 @@ Collected from the current workspace on 2026-07-21.
 
 | Area | Count |
 | --- | ---: |
-| CSS files in `styles/` | 52 |
-| CSS lines | 22,646 |
-| JS files in `js/` | 252 |
-| JS lines | 99,903 |
+| CSS files in `styles/` | 54 |
+| CSS lines | 19,103 |
+| JS files in `js/` | 258 |
+| JS lines | 84,043 |
 | CSS variable definitions | 119 |
 | CSS variable names used through `var(...)` | 94 |
 | Hardcoded CSS hex colors | 172 |
@@ -43,6 +43,8 @@ Collected from the current workspace on 2026-07-21.
 The numbers are not all bugs. Some hardcoded values are deliberate fallbacks, dynamic map colors or presentation styles. The important finding is that the project already has design-system seeds, but feature CSS still owns too many local visual decisions.
 
 Post-`0.0.1.8.7` delta: app-level shell CSS now has a named `--mow-shell-*` foundation for layout, density, surface, divider, elevation and control states. Future inventory passes should treat `styles/design-tokens.css` as the owner of AppShell shell tokens, while `styles/layout.css`, `styles/app-topbar.css`, `styles/sidebar.css`, `styles/editor.css` and `styles/brand-system.css` consume those tokens during the transition.
+
+Post-`0.0.1.8.12.3` delta: campaign map CSS now includes `styles/campaign-map-selection-inspector.css`, a dedicated runtime selection dock owner. Keep selected-object dock styling there instead of growing `campaign-map-popups.css` or the stage file with contextual action UI.
 
 ## Current CSS Entry Tree
 
@@ -92,6 +94,7 @@ index.html
       -> campaign-map-stage.css
       -> campaign-map-tokens.css
       -> campaign-map-shapes.css
+      -> campaign-map-selection-inspector.css
       -> campaign-map-token-popup.css
       -> campaign-map-popups.css
       -> campaign-map-responsive.css
@@ -300,7 +303,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.9` Overlays | Closed: modal focus trap/return, dropdown/context-menu keyboard behavior, first shell tooltip styling, operation-progress toast markers, editor feature popups, campaign map generic/token popups, item picker, onboarding and Knowledge Graph node/connect overlays now extend the popupManager overlay foundation. | Acceptance met: feature overlays use shared lifecycle semantics without adding parallel overlay systems; broader visual polish moves to owning migration phases. |
 | `0.0.1.8.10` AppShell | Closed and corrected after user review: AppShell now has a left rail where `Дерево` shows/hides the primary tree sidebar, profile/user sits in the rail, Explorer-style no-workspace/root creation actions stay in the tree, resize remains available when the sidebar is visible, and the old page-info right inspector has been removed. Content types are not duplicated as rail tabs. | AppShell browser coverage verifies empty start readability, no-workspace tree open-folder CTA, root-level create/folder actions, one-tree-entry rail, no content-type rail duplicates, no duplicate tree header, rail profile placement, tree search, resize, tree show/hide editor expansion, hidden right-panel default state and explicit right-panel foundation open/close. A fake diagnostics bottom panel was not added. |
 | `0.0.1.8.11` Core content | Closed at `Usable` by `0.0.1.8.11.7`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects, saved-template creation, deep search and command palette are migrated to the shared design direction. | `BI-013` and `BI-014` are closed; command palette reuses PageRepository, popupManager and existing app action hooks instead of adding a command registry; keep `BI-025` as future pane-planning material. |
-| `0.0.1.8.12` Campaign map | Active. `0.0.1.8.12.1` migrated the map toolbar foundation, and `0.0.1.8.12.2` migrated the shared map popup surface for add/picker, grid, drawing, fog, shapes, layers, initiative and music. Remaining: layer/token dock or inspector surfaces and contextual actions. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke. |
+| `0.0.1.8.12` Campaign map | Active. `0.0.1.8.12.1` migrated the map toolbar foundation, `0.0.1.8.12.2` migrated the shared map popup surface for add/picker, grid, drawing, fog, shapes, layers, initiative and music, and `0.0.1.8.12.3` migrated the selected-object inspector dock. Remaining: deeper layer/token dock polish, map inspector surfaces and advanced contextual actions. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke. |
 | `0.0.1.8.13` Knowledge graph | Graph toolbar, canvas controls, node cards and filters migrate. | Also check `BI-017`, `BI-018`, `BI-019`. |
 
 ## Browser And Tauri Risks
@@ -347,7 +350,7 @@ When the redesign reaches these areas, check the small backlog before marking th
 
 - `BI-013`: editor block drag-and-drop regression, closed in `0.0.1.8.11.2`.
 - `BI-014`: Add block popup visual cleanup, closed in `0.0.1.8.11.2`.
-- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map toolbar foundation advanced in `0.0.1.8.12.1`, and the shared popup surface advanced in `0.0.1.8.12.2`; continue Phase 6 on layer/token dock or inspector surfaces instead of repainting toolbar/popups again.
+- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map toolbar foundation advanced in `0.0.1.8.12.1`, shared popup surface advanced in `0.0.1.8.12.2`, and selected-object inspector dock advanced in `0.0.1.8.12.3`; continue Phase 6 on deeper layer/token dock polish, map inspector surfaces and advanced contextual actions instead of repainting toolbar/popups/dock again.
 - `BI-017`: Knowledge Graph file/CSS split, belongs to graph redesign or graph lifecycle work.
 - `BI-018`: Knowledge Graph should stop bypassing the page lifecycle before more graph behavior.
 - `BI-019`: graph hidden-slice clarity belongs to graph UI migration.

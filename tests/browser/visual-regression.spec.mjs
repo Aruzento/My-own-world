@@ -316,8 +316,25 @@ test(
         } = await import('/js/editor/campaignMapElementFactory.js');
 
         const {
+          renderMapShapeElement,
+          renderMapTokenElement
+        } = await import('/js/editor/campaignMapRenderer.js');
+
+        const {
           renderLockedFogZones
         } = await import('/js/editor/campaignMapFog.js');
+
+        const {
+          ensureMapSelectionInspector
+        } = await import('/js/editor/campaignMapSelectionInspector.js');
+
+        const {
+          selectMapToken
+        } = await import('/js/editor/campaignMapRuntime.js');
+
+        const {
+          removeSelectedCampaignMapItems
+        } = await import('/js/editor/campaignMap.js');
 
         const editor =
           document.querySelector('#editorArea');
@@ -365,6 +382,10 @@ test(
             x: 18,
             y: 22,
             size: 1,
+            hp: 8,
+            hpMax: 12,
+            armorClass: 14,
+            speed: 30,
             presentationHidden: true,
             isPlayerToken: true
           });
@@ -402,16 +423,37 @@ test(
           ]
         });
 
-        layer.append(
+        const tokenElement =
           createMapTokenElement(
             token
-          ),
+          );
+
+        const objectElement =
           createMapTokenElement(
             object
-          ),
+          );
+
+        const shapeElement =
           createMapShapeElement(
             shape
-          )
+          );
+
+        layer.append(
+          tokenElement,
+          objectElement,
+          shapeElement
+        );
+
+        await renderMapTokenElement(
+          tokenElement
+        );
+
+        await renderMapTokenElement(
+          objectElement
+        );
+
+        renderMapShapeElement(
+          shapeElement
         );
 
         renderLockedFogZones(
@@ -419,6 +461,35 @@ test(
         );
 
         store.commitToDOM();
+
+        const actionDeps =
+          () => ({
+            applyTokenHealthState() {},
+            clearDraggedToken() {},
+            closeTokenPopup() {},
+            openTokenPopup() {},
+            async saveAndSync() {},
+            selectMapShape() {}
+          });
+
+        ensureMapSelectionInspector(
+          map,
+          {
+            closeTokenPopup() {},
+            getSelectionActionDeps:
+              actionDeps,
+            getTokenActionDeps:
+              actionDeps,
+            openTokenPopup() {},
+            removeSelectedCampaignMapItems,
+            async saveAndSync() {},
+            setStatus() {}
+          }
+        );
+
+        selectMapToken(
+          map.querySelector('[data-token-id="visual-token"]')
+        );
       }
     );
 

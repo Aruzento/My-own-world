@@ -6,6 +6,49 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.12.3 Campaign Map Selection Inspector
+
+### What Changed
+
+- Continued `0.0.1.8.12` Migration Phase 6 with the selected-object inspector/contextual action dock.
+- Added a runtime-only `.campaign-map-selection-dock[data-map-selection-ui-migration="0.0.1.8.12.3"]` inside the map stage.
+- Selecting a map token or shape now shows a compact dock with object identity, map position, presentation visibility and available token stats such as HP, AC, speed and effects.
+- Added local sprite actions for open card, hide/show from players, duplicate, more actions and `Убрать`.
+- Kept the destructive linked-card delete action out of the new dock: `Убрать` removes selected objects from the current map only and does not delete the underlying page/card.
+- Routed click, box-selection and remove flows through a small `campaign-map-selection-change` runtime event so the dock updates without persisting runtime UI into saved map HTML.
+- Added a dedicated CSS owner, `styles/campaign-map-selection-inspector.css`, instead of growing the generic map popup CSS with another local surface.
+- Updated the visual campaign-map baseline so the screenshot now captures a selected token with the new dock visible.
+- Deliberately did not change map storage, token/page deletion rules, fog algorithms, layer data, music, initiative, presentation synchronization or card content.
+
+### Readiness
+
+Usable for this selected-object surface. A human can click a token or shape and immediately understand what is selected, whether players can see it, what the important token stats are, and which actions are safe. The rest of Phase 6 remains active for deeper layer/token dock polish, map inspector surfaces and advanced contextual actions.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapRuntime.js`.
+- Passed: `node --check js\editor\campaignMapSelectionBox.js`.
+- Passed: `node --check js\editor\campaignMapSelectionInspector.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-selection-inspector"` with the new dock marker/stats/visibility/safe-remove guard.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 12 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: reviewed `test-results/campaign-map-selection-inspector-12-3.png`; the dock stays compact at the bottom of the stage, uses readable stat markers and does not overlap toolbar or popup controls.
+- Passed again: `npm run test:browser -- --grep "campaign-map-toolbar-uses-migrated-mode-action-groups|campaign-map-popups-use-migrated-shared-frame|campaign-map-selection-inspector|visual-safety-captures-core-surfaces"` with 4 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs tests/browser/campaign-map-performance.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-initiative.spec.mjs` with 18 browser tests.
+- Passed after the final docs state: `node tools\audit_project_files.mjs` with 548 files and 0 mojibake candidates.
+- Passed after the final docs state: `python tools\generate_manual_docx.py` with 1,266 files.
+- Passed after the final docs state: `node tools\docs_index.mjs`, `npm run check:encoding`, `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx` and `git diff --check`.
+- Passed: full `npm run verify` with encoding/import/syntax checks, 272 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, `verify`, 106 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.12` on deeper layer/token dock polish, map inspector surfaces and advanced contextual action coverage.
+- Keep `Убрать с карты` separate from destructive linked-card deletion in future map UI.
+
 ## 2026-07-27: 0.0.1.8.12.2 Campaign Map Popup Surface
 
 ### What Changed

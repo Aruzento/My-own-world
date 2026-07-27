@@ -1324,6 +1324,321 @@ test(
 
 
 test(
+  'campaign-map-selection-inspector-shows-context-and-safe-actions',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapTokenElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            removeSelectedCampaignMapItems
+          } = await import('/js/editor/campaignMap.js');
+
+          const {
+            ensureMapSelectionInspector,
+            MAP_SELECTION_UI_MIGRATION
+          } = await import('/js/editor/campaignMapSelectionInspector.js');
+
+          const {
+            selectMapToken
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const record =
+            store.addToken({
+              tokenId:
+                'selection-inspector-token',
+              type:
+                'creature',
+              name:
+                '\u0421\u0442\u0440\u0430\u0436 \u0432\u043e\u0440\u043e\u0442',
+              x:
+                26.4,
+              y:
+                37.2,
+              hp:
+                8,
+              hpMax:
+                12,
+              armorClass:
+                14,
+              speed:
+                30,
+              effectsSummary:
+                '\u0411\u0434\u0438\u0442'
+            });
+
+          const token =
+            createMapTokenElement(
+              record
+            );
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              token
+            );
+
+          await renderMapTokenElement(
+            token
+          );
+
+          const saveLog =
+            [];
+
+          const statusLog =
+            [];
+
+          const actionDeps =
+            () => ({
+              applyTokenHealthState() {},
+              clearDraggedToken() {},
+              closeTokenPopup() {},
+              openTokenPopup() {},
+              async saveAndSync() {
+
+                saveLog.push(
+                  'selection-action'
+                );
+              },
+              selectMapShape(shape) {
+
+                shape.classList.add(
+                  'is-selected'
+                );
+              }
+            });
+
+          const flushAction =
+            async () => {
+
+              await Promise.resolve();
+              await Promise.resolve();
+            };
+
+          ensureMapSelectionInspector(
+            map,
+            {
+              closeTokenPopup() {},
+              getSelectionActionDeps:
+                actionDeps,
+              getTokenActionDeps:
+                actionDeps,
+              openTokenPopup(item) {
+
+                item.dataset.popupOpened =
+                  'true';
+              },
+              removeSelectedCampaignMapItems,
+              async saveAndSync() {
+
+                saveLog.push(
+                  'dock-remove'
+                );
+              },
+              setStatus(text) {
+
+                statusLog.push(
+                  text
+                );
+              }
+            }
+          );
+
+          selectMapToken(
+            token
+          );
+
+          const dock =
+            map.querySelector('.campaign-map-selection-dock');
+
+          const before =
+            {
+              hidden:
+                dock.classList.contains('hidden'),
+              migration:
+                dock.dataset.mapSelectionUiMigration,
+              title:
+                dock.querySelector('.campaign-map-selection-dock-heading strong')
+                  ?.textContent
+                  ?.trim(),
+              stats:
+                [...dock.querySelectorAll('.campaign-map-selection-stat')]
+                  .map(stat => [
+                    stat.dataset.selectionStat,
+                    stat.querySelector('strong')?.textContent?.trim()
+                  ]),
+              actions:
+                [...dock.querySelectorAll('[data-map-selection-action]')]
+                  .map(button => button.dataset.mapSelectionAction)
+            };
+
+          await dock
+            .querySelector('[data-map-selection-action="visibility"]')
+            .click();
+
+          await flushAction();
+
+          const afterVisibility =
+            {
+              hidden:
+                token.dataset.presentationHidden,
+              actionLabel:
+                dock
+                  .querySelector('[data-map-selection-action="visibility"] span')
+                  ?.textContent
+                  ?.trim()
+            };
+
+          await dock
+            .querySelector('[data-map-selection-action="remove"]')
+            .click();
+
+          await flushAction();
+
+          const afterRemove =
+            {
+              hidden:
+                dock.classList.contains('hidden'),
+              domTokens:
+                map.querySelectorAll('.campaign-map-token').length,
+              modelTokens:
+                store.getModel().tokens.length,
+              statusLog,
+              saveLog
+            };
+
+          return {
+            expectedMigration:
+              MAP_SELECTION_UI_MIGRATION,
+            before,
+            afterVisibility,
+            afterRemove
+          };
+        }
+      );
+
+    expect(
+      result.before.hidden
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.before.migration
+    ).toBe(
+      result.expectedMigration
+    );
+
+    expect(
+      result.before.title
+    ).toBe(
+      '\u0421\u0442\u0440\u0430\u0436 \u0432\u043e\u0440\u043e\u0442'
+    );
+
+    expect(
+      result.before.stats
+    ).toEqual(
+      expect.arrayContaining([
+        [
+          'hp',
+          '8/12'
+        ],
+        [
+          'armor',
+          '14'
+        ],
+        [
+          'speed',
+          '30'
+        ]
+      ])
+    );
+
+    expect(
+      result.before.actions
+    ).toEqual([
+      'open',
+      'visibility',
+      'duplicate',
+      'more',
+      'remove'
+    ]);
+
+    expect(
+      result.afterVisibility.hidden
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.afterVisibility.actionLabel
+    ).toBe(
+      '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c'
+    );
+
+    expect(
+      result.afterRemove
+    ).toMatchObject({
+      hidden:
+        true,
+      domTokens:
+        0,
+      modelTokens:
+        0,
+      saveLog:
+        [
+          'selection-action',
+          'dock-remove'
+        ]
+    });
+
+    expect(
+      result.afterRemove.statusLog.at(-1)
+    ).toContain(
+      '1'
+    );
+  }
+);
+
+
+test(
   'campaign-map-music-popup-manages-normal-and-battle-playlists',
   async ({ page }) => {
 

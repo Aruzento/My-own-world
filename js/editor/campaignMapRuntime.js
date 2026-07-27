@@ -631,6 +631,10 @@ export function selectMapToken(
       ? !token.classList.contains('is-selected')
       : true
   );
+
+  notifyMapSelectionChanged(
+    map
+  );
 }
 
 
@@ -638,14 +642,23 @@ export function clearSelectedMapTokens(
   map
 ) {
 
-  map
-    ?.querySelectorAll('.campaign-map-token.is-selected')
-    .forEach(token => {
+  const selected =
+    [
+      ...(map?.querySelectorAll('.campaign-map-token.is-selected') || [])
+    ];
 
-      token.classList.remove(
-        'is-selected'
-      );
-    });
+  if (!selected.length) return;
+
+  selected.forEach(token => {
+
+    token.classList.remove(
+      'is-selected'
+    );
+  });
+
+  notifyMapSelectionChanged(
+    map
+  );
 }
 
 
@@ -653,14 +666,44 @@ export function clearSelectedMapShapes(
   map
 ) {
 
-  map
-    ?.querySelectorAll('.campaign-map-shape.is-selected')
-    .forEach(shape => {
+  const selected =
+    [
+      ...(map?.querySelectorAll('.campaign-map-shape.is-selected') || [])
+    ];
 
-      shape.classList.remove(
-        'is-selected'
-      );
-    });
+  if (!selected.length) return;
+
+  selected.forEach(shape => {
+
+    shape.classList.remove(
+      'is-selected'
+    );
+  });
+
+  notifyMapSelectionChanged(
+    map
+  );
+}
+
+
+export function notifyMapSelectionChanged(
+  map
+) {
+
+  map?.dispatchEvent(
+    new CustomEvent(
+      'campaign-map-selection-change',
+      {
+        bubbles:
+          true,
+        detail:
+          {
+            migration:
+              '0.0.1.8.12.3'
+          }
+      }
+    )
+  );
 }
 
 
@@ -780,6 +823,10 @@ export function selectMapShape(
     options.additive
       ? !shape.classList.contains('is-selected')
       : true
+  );
+
+  notifyMapSelectionChanged(
+    map
   );
 }
 
