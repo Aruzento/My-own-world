@@ -522,6 +522,26 @@ test(
       1
     );
 
+    assert.equal(
+      canvas.totalNodeCount,
+      4
+    );
+
+    assert.equal(
+      canvas.visibleNodeCount,
+      3
+    );
+
+    assert.equal(
+      canvas.hiddenByLimitNodeCount,
+      1
+    );
+
+    assert.equal(
+      canvas.hiddenTotalNodeCount,
+      1
+    );
+
     assert.ok(
       canvas.nodes.every(node =>
         Number.isFinite(node.x) &&
@@ -741,6 +761,16 @@ test(
     assert.match(
       canvas.filterSummary.text,
       /Стандартный вид/
+    );
+
+    assert.equal(
+      canvas.hiddenBySliceNodeCount,
+      1
+    );
+
+    assert.equal(
+      canvas.hiddenTotalNodeCount,
+      1
     );
   }
 );
@@ -1011,6 +1041,14 @@ test(
 
     assert.ok(
       limitedCanvas.hiddenNodeCount > 0
+    );
+
+    assert.ok(
+      limitedCanvas.hiddenByLimitNodeCount > 0
+    );
+
+    assert.ok(
+      limitedCanvas.hiddenTotalNodeCount > 0
     );
   }
 );

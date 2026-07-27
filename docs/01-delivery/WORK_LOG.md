@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.13.1 Knowledge Graph Visible Slice And Graph Controls
+
+### What Changed
+
+- Started `0.0.1.8.13` Migration Phase 7 for Knowledge Graph with a focused first slice.
+- Extended `buildKnowledgeGraphCanvasModel()` with explicit visible-slice counts: total, filtered, candidate, visible, hidden-by-filter, hidden-by-standard-slice and hidden-by-limit node/edge counts.
+- Updated the graph filter status from a vague node count to a human-readable `показано X из Y` summary with hidden reasons.
+- Added compact slice stats to the graph filterbar: `показано`, `в мире`, `скрыто`.
+- Added a visible slice notice above the canvas when the current graph is not the whole world, with direct actions for `Все связи` and `Уточнить поиск`.
+- Migrated the graph toolbar and node metadata toward the shared design direction with local sprite icons, compact tokenized controls, domain markers and calmer node surfaces.
+- Added unit and browser regression coverage for standard-slice hidden nodes, full-view limit hidden nodes and search-refine focus behavior.
+- Deliberately did not change relationship storage, graph persistence, PageCommandService integration, node drag math, canvas performance budgets, map behavior or task tracker behavior.
+
+### Readiness
+
+Foundation for Phase 7. A human can now tell when the Knowledge Graph canvas is showing only a slice of the world, why nodes are hidden, and what action to take next. `BI-019` is closed at UI-clarity level. The full `0.0.1.8.13` phase remains active for edge-state polish, graph inspector, overlay visual cleanup, file/CSS split and lifecycle bridge work from `BI-017` / `BI-018`.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraph.js`.
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check tests\knowledgeGraph.test.mjs`.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`.
+- Passed: `npm run test -- tests/knowledgeGraph.test.mjs` (the project test command also ran the full node suite: 272 tests).
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 552 files, 2 delete candidates and 0 mojibake candidates.
+- Passed: `npm run verify` with 272 node tests, large-workspace smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 110 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with edge state polish and graph inspector, or split graph files/CSS first if the next work needs deeper graph edits.
+- Do not start `0.0.1.8.14` secondary screens until Phase 7 has an explicit stopping point.
+
 ## 2026-07-27: 0.0.1.8.12.6 Campaign Map Advanced Contextual Actions
 
 ### What Changed

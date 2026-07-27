@@ -1435,3 +1435,152 @@ aliases: []
     );
   }
 );
+
+
+test(
+  'knowledge-graph-slice-status-explains-hidden-canvas-nodes',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const {
+          createKnowledgeGraphTemplate
+        } = await import('/js/templates/knowledgeGraph.js');
+
+        const {
+          renderKnowledgeGraphPage
+        } = await import('/js/wiki/knowledgeGraphPage.js');
+
+        state.pages =
+          Array.from(
+            {
+              length:
+                111
+            },
+            (_, index) => ({
+              id:
+                `node-${index}`,
+              name:
+                `node-${index}.md`,
+              path:
+                `/pages/node-${index}.md`,
+              order:
+                index + 1,
+              title:
+                index === 0
+                  ? 'World Root'
+                  : `Chain Node ${index}`,
+              parent:
+                index === 0
+                  ? null
+                  : `node-${index - 1}`,
+              template:
+                'card',
+              type:
+                index % 5 === 0
+                  ? 'location'
+                  : 'note',
+              tags:
+                [],
+              aliases:
+                [],
+              content:
+                `<h1>Chain Node ${index}</h1>`
+            })
+          );
+
+        const editor =
+          document.querySelector(
+            '#editorArea'
+          );
+
+        editor.innerHTML =
+          createKnowledgeGraphTemplate().content;
+
+        renderKnowledgeGraphPage(
+          editor
+        );
+      }
+    );
+
+    const filterStatus =
+      page.locator(
+        '[data-knowledge-graph-filter-status]'
+      );
+
+    await expect(
+      filterStatus
+    ).toContainText(
+      'показано 3 из 111 узл.'
+    );
+
+    await expect(
+      filterStatus
+    ).toContainText(
+      'вне среза 108'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-stat="shown"] strong')
+    ).toHaveText(
+      '3'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-stat="total"] strong')
+    ).toHaveText(
+      '111'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-stat="hidden"] strong')
+    ).toHaveText(
+      '108'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-note]')
+    ).toContainText(
+      'Показано 3 из 111 страниц'
+    );
+
+    await page
+      .locator('[data-knowledge-graph-slice-action="show-all"]')
+      .click();
+
+    await expect(
+      filterStatus
+    ).toContainText(
+      'показано 96 из 111 узл.'
+    );
+
+    await expect(
+      filterStatus
+    ).toContainText(
+      'лимит скрыл 15'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-action="show-all"]')
+    ).toHaveCount(
+      0
+    );
+
+    await page
+      .locator('[data-knowledge-graph-slice-action="refine"]')
+      .click();
+
+    await expect(
+      page.locator('[data-knowledge-graph-filter="search"]')
+    ).toBeFocused();
+  }
+);

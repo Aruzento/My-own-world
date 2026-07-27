@@ -397,6 +397,8 @@ Owns: graph toolbar, canvas controls, node cards, edges, groups, filters, hidden
 
 Use: same canvas-control language as map where possible; do not bypass page lifecycle.
 
+`0.0.1.8.13.1` starts the graph migration at hidden-slice clarity level: graph status must say `показано X из Y`, visible/total/hidden counters must be present near filters, hidden reasons must distinguish filter, standard-slice and canvas-limit states, and graph node cards should use compact domain markers/icons without turning the canvas into a bright whiteboard.
+
 ### Task Tracker
 
 Owns: board toolbar, columns, task cards, checklists, labels, drag previews, empty states.
@@ -635,4 +637,4 @@ The closing 2026-07-21 `0.0.1.8.9` follow-up completed the overlay migration ste
 - `0.0.1.8.12.6` closes advanced campaign-map contextual action coverage inside the existing selection dock: multi-selected tokens and shapes may show visible/hidden counters and group `Скрыть` / `Показать` actions, but must update the existing `CampaignMapStore`, reuse render adapters, perform a single save/sync per group action and remain runtime-only.
 - The separate diagnostics/history bottom panel was not added as a decorative placeholder. It remains a secondary-screens migration target where it can attach to real diagnostics, backup, recovery and history data.
 
-`0.0.1.8.10` is closed. `0.0.1.8.11` Migration Phase 5 core content is closed at `Usable` level; tree/search, block DnD, first-level Add block picker, card editor header/toolbar controls, Properties, shared card block frames, card selects, saved template creation, deep search and the command palette now have migrated slices. `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.6`; toolbar, shared map popups, selected-object dock, layer/object dock, scene-state inspector and group contextual visibility actions now share one design direction. `0.0.1.8.13` knowledge graph migration is the next phase and has not started in this slice.
+`0.0.1.8.10` is closed. `0.0.1.8.11` Migration Phase 5 core content is closed at `Usable` level; tree/search, block DnD, first-level Add block picker, card editor header/toolbar controls, Properties, shared card block frames, card selects, saved template creation, deep search and the command palette now have migrated slices. `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.6`; toolbar, shared map popups, selected-object dock, layer/object dock, scene-state inspector and group contextual visibility actions now share one design direction. `0.0.1.8.13` knowledge graph migration is active: `0.0.1.8.13.1` covers visible-slice counters, hidden-state explanation and first toolbar/node-card visual migration; edge states, inspector, overlay visual cleanup, file/CSS split and lifecycle bridge remain open.

@@ -682,6 +682,60 @@ export function buildKnowledgeGraphCanvasModel(
         };
       });
 
+  const totalNodeCount =
+    (graph?.nodes || []).length;
+
+  const totalEdgeCount =
+    (graph?.edges || []).length;
+
+  const filteredNodeCount =
+    (filteredGraph.nodes || []).length;
+
+  const filteredEdgeCount =
+    (filteredGraph.edges || []).length;
+
+  const candidateNodeCount =
+    candidates.length;
+
+  const canvasEdgeCount =
+    (canvasGraph.edges || []).length;
+
+  const hiddenByFilterNodeCount =
+    Math.max(
+      0,
+      totalNodeCount - filteredNodeCount
+    );
+
+  const hiddenByFilterEdgeCount =
+    Math.max(
+      0,
+      totalEdgeCount - filteredEdgeCount
+    );
+
+  const hiddenBySliceNodeCount =
+    Math.max(
+      0,
+      filteredNodeCount - candidateNodeCount
+    );
+
+  const hiddenBySliceEdgeCount =
+    Math.max(
+      0,
+      filteredEdgeCount - canvasEdgeCount
+    );
+
+  const hiddenByLimitNodeCount =
+    Math.max(
+      0,
+      candidateNodeCount - finalPositionedNodes.length
+    );
+
+  const hiddenByLimitEdgeCount =
+    Math.max(
+      0,
+      canvasEdgeCount - visibleEdges.length
+    );
+
   return {
     width:
       worldBounds.width,
@@ -713,16 +767,35 @@ export function buildKnowledgeGraphCanvasModel(
         worldBounds.width,
         worldBounds.height
       ),
-    hiddenNodeCount:
+    totalNodeCount,
+    totalEdgeCount,
+    filteredNodeCount,
+    filteredEdgeCount,
+    candidateNodeCount,
+    visibleNodeCount:
+      finalPositionedNodes.length,
+    visibleEdgeCount:
+      visibleEdges.length,
+    hiddenByFilterNodeCount,
+    hiddenByFilterEdgeCount,
+    hiddenBySliceNodeCount,
+    hiddenBySliceEdgeCount,
+    hiddenByLimitNodeCount,
+    hiddenByLimitEdgeCount,
+    hiddenTotalNodeCount:
       Math.max(
         0,
-        candidates.length - visibleNodes.length
+        totalNodeCount - finalPositionedNodes.length
       ),
-    hiddenEdgeCount:
+    hiddenTotalEdgeCount:
       Math.max(
         0,
-        (canvasGraph.edges || []).length - visibleEdges.length
-      )
+        totalEdgeCount - visibleEdges.length
+      ),
+    hiddenNodeCount:
+      hiddenByLimitNodeCount,
+    hiddenEdgeCount:
+      hiddenByLimitEdgeCount
   };
 }
 

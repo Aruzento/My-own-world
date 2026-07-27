@@ -234,11 +234,11 @@ Status: Improved, keep in backlog
 
 Source: user reports, plan `0.0.1.5.0`, and 2026-07-20 recommendations.
 
-Symptoms: the graph now has a visual canvas with nodes, edges, drag, zoom, filters, node context actions, relationship edit/delete and regression coverage. Remaining problem: it is still more of a visual workbench than a daily world-operations tool, and recent audit notes show lifecycle, maintainability and visible-slice risks.
+Symptoms: the graph now has a visual canvas with nodes, edges, drag, zoom, filters, visible-slice counters, node context actions, relationship edit/delete and regression coverage. Remaining problem: it is still more of a visual workbench than a daily world-operations tool, and recent audit notes show lifecycle, maintainability, edge-state and inspector risks.
 
-Risk: adding more graph behavior without cleanup can reintroduce stale-state/save/undo errors and make the user believe a capped graph slice is the whole world.
+Risk: adding more graph behavior without cleanup can reintroduce stale-state/save/undo errors and make the graph harder to trust in large worlds.
 
-Next check: use `BUGS_AND_IMPROVEMENTS_BACKLOG.md` BI-016 through BI-019 before adding graph features: relation operations, file split, PageCommandService/PageRecord lifecycle, and clear hidden-node counts.
+Next check: use `BUGS_AND_IMPROVEMENTS_BACKLOG.md` BI-016 through BI-018 before adding graph features: relation operations, file split and PageCommandService/PageRecord lifecycle.
 
 Regression target: graph canvas tests for filters/edges/orphans, plus lifecycle tests for relationship/view-state saves after the graph is moved to command-based persistence.
 

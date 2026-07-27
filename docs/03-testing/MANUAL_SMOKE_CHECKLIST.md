@@ -28,17 +28,18 @@ Use this checklist when automated tests are green but the product still needs a 
 14. Drag a normal content block by its grip handle, confirm the floating preview and drop placeholder are readable, then drop it in a new position and save/reload.
 Design check after step 14: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay above the selection without covering the title or changing editor width.
 15. Create a map and confirm the toolbar has four readable groups: `Создание`, `Сцена`, `Инструменты` and `Live`. At normal desktop width no group should be clipped; grid, pan, drawing and fog buttons should show a clear active pressed state when toggled. Check the top-left scene inspector: it should summarize map background, grid and fog state and open the existing map image, Grid and Fog flows. Select a token or shape and confirm the bottom selection dock shows identity, position, visibility and available stats, with compact local-icon actions; multi-select tokens/shapes and confirm the dock shows visible/hidden counters plus group `Скрыть` / `Показать`; `Убрать` should remove from the map only, not delete the card. Open add, grid, drawing, fog, layers, music and initiative popups; each should have a compact dark shared frame with an icon, readable title, section labels, no clipping/overlap, and normal Escape/repeated-trigger close behavior.
-16. Add a token or object.
-17. Open presentation mode.
-18. Move the token and confirm presentation updates.
-19. Create a task tracker and add one task.
-20. Create a properties block on a character.
-21. Confirm compact metrics, ability fields, computed badges and skill groups are readable, and death-save fields do not overlap the lower skill groups; fields should not look like one heavy filled panel.
-22. Change ability values and confirm calculated fields update.
-23. Use tree search and open a result.
-24. Confirm opening a page does not show a right page-info panel; the reserved right panel should stay hidden in normal work.
-25. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
-26. Delete the test entities.
+16. Create/open `Граф связей`; confirm the filterbar shows `показано`, `в мире`, `скрыто`, the status reads like `показано X из Y`, hidden-slice notes explain why nodes are hidden, and `Все связи` / `Уточнить поиск` behave clearly.
+17. Add a token or object.
+18. Open presentation mode.
+19. Move the token and confirm presentation updates.
+20. Create a task tracker and add one task.
+21. Create a properties block on a character.
+22. Confirm compact metrics, ability fields, computed badges and skill groups are readable, and death-save fields do not overlap the lower skill groups; fields should not look like one heavy filled panel.
+23. Change ability values and confirm calculated fields update.
+24. Use tree search and open a result.
+25. Confirm opening a page does not show a right page-info panel; the reserved right panel should stay hidden in normal work.
+26. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
+27. Delete the test entities.
 
 ## Desktop
 

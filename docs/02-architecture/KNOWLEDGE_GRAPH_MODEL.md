@@ -68,6 +68,7 @@ Backlinks должны перейти от простого списка "кто
 
 - `tests/knowledgeGraph.test.mjs` проверяет `treeParent`, `wikiLink`, explicit relationships and orphan pages.
 - `buildKnowledgeGraphCanvasModel` строит lightweight visual canvas model из готового graph: видимые nodes, edges, координаты, счетчики связей, количество скрытых узлов/связей and filter summary.
+- Since `0.0.1.8.13.1`, the canvas model also exposes visible-slice clarity counts: total, filtered, candidate, visible, hidden-by-filter, hidden-by-standard-slice and hidden-by-limit node/edge counts. UI should use these fields instead of inventing hidden counts from DOM.
 
 ## Visual Graph View
 
@@ -83,6 +84,7 @@ Visual canvas есть как usable workbench:
 - right-click node actions can start a simple canvas connection mode for creating manual relationships;
 - graph canvas has local undo/redo for node moves, saved position reset and manual relationship creation;
 - readable view presets separate `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`;
+- visible-slice UI explains `показано X из Y` and separates nodes hidden by filters, the standard root/depth slice and the 96-node canvas cap;
 - canvas world dynamically expands when a node is dragged near an edge;
 - canvas transform-layer общий для SVG edges and node cards, поэтому pan двигает граф целиком;
 - fixed background domain labels, bottom node list and visual tabs are not part of the current first screen.

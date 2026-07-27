@@ -127,6 +127,7 @@ Foundation визуального исследования мира состои
 - кнопок layout: `Стандарт`, `По типам`, `Центр`;
 - compact zoom/fit/refresh controls;
 - фильтров на первом экране: тип сущности, тип связи, поиск и одиночные страницы;
+- visible-slice clarity: UI должен показывать `показано X из Y`, отдельные counters `показано` / `в мире` / `скрыто`, причину скрытия (фильтр, стандартный срез или canvas limit) и понятные refine/full-view действия;
 - единого transform-layer для SVG edges и node cards, чтобы pan двигал весь граф вместе;
 - runtime node drag внутри canvas с мгновенным пересчетом линий;
 - dynamic canvas expansion near edges: если node тянут к краю, world bounds расширяются, а viewport остается управляемым;

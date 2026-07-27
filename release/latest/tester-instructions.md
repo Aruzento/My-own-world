@@ -98,16 +98,17 @@ Card editor design check: select text in the card title and in a normal text blo
 12. Save a normal card as a template from the tree context menu, then use the root `+` menu and choose `Из шаблона`. The template picker should show a search field, local icons, readable Russian metadata and create a new card from the selected template.
 13. Open a campaign map; check that the top toolbar is split into `Создание`, `Сцена`, `Инструменты` and `Live`, with local icons, readable short labels and no clipping at normal desktop width. Toggle grid, pan, drawing and fog: the active button should be visibly pressed. Check the top-left scene inspector: it should show map background, grid and fog state, and its map/grid/fog actions should open the existing map image, Grid and Fog flows instead of a second settings panel. Check the top-right layer/object dock: it should show token/object/shape counts, hidden-object count, per-layer summaries, quick visibility toggles and an action that opens the existing Layers popup. Then select a token or shape. A compact dock should appear at the bottom of the stage with object name/type, map position, visibility, HP/AC/speed/effects when available and local-icon actions. Multi-select at least two tokens/shapes with mixed player visibility; the same dock should show visible/hidden counters and offer `Скрыть` / `Показать` for the group. `Убрать` should remove the object from this map only, not delete the linked card. Then move a token, hover/open token actions, use add, grid, drawing, fog, layers, music and initiative popups and open presentation. The map popups should share one compact dark frame with a local icon, readable title and labeled sections, close through normal controls/Escape/repeated trigger, avoid text clipping/overlap, and return keyboard focus where the popup is modal.
 14. If music is part of the test build, add real audio files and test play/stop/next/previous in desktop.
-15. Create/open `Граф связей`; drag a node, undo/redo, right-click a node and check relationship actions.
-16. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should stay within the viewport and close cleanly by Escape/outside click.
-17. Run backup manually before any repair action; schema repair must stop if backup fails.
+15. Create/open `Граф связей`; check that the filterbar shows visible/total/hidden counters and the status reads like `показано X из Y`. If the graph is only showing a slice, the note should explain whether nodes are hidden by filters, the standard slice or the canvas limit, and `Все связи` / `Уточнить поиск` should be clear actions.
+16. In the Knowledge Graph, drag a node, undo/redo, right-click a node and check relationship actions.
+17. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should stay within the viewport and close cleanly by Escape/outside click.
+18. Run backup manually before any repair action; schema repair must stop if backup fails.
 
 ### 4. Known Risks To Watch
 
 - Desktop installed-app behavior can still differ from browser smoke.
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
-- Knowledge Graph is currently a useful visual workbench, not the final full relationship-management surface.
+- Knowledge Graph is currently a useful visual workbench with visible-slice clarity, not the final full relationship-management surface.
 - Restore preview, partial restore, link cleanup and asset repair remain unfinished.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo

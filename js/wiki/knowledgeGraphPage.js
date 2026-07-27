@@ -7,6 +7,10 @@ import {
 } from '../core/markdown.js';
 
 import {
+  iconSvg
+} from '../core/icons.js';
+
+import {
   notifyPageUpdated
 } from '../repository/pageRepository.js';
 
@@ -1028,7 +1032,7 @@ function getVisualGraphHTML(
     canvasModel.nodes;
 
   return `
-    <section class="knowledge-graph-workbench">
+    <section class="knowledge-graph-workbench" data-knowledge-graph-migration="phase-7-slice">
       <div class="knowledge-graph-canvas-card">
         <header class="knowledge-graph-canvas-toolbar">
           <div class="knowledge-graph-canvas-toolbar-group" aria-label="Представление графа">
@@ -1043,22 +1047,35 @@ function getVisualGraphHTML(
               data-knowledge-graph-history-action="undo"
               title="Отменить действие графа (Ctrl+Z)"
               disabled
-            >Назад</button>
+            >
+              ${iconSvg('arrow-left', 'knowledge-graph-toolbar-icon')}
+              <span>Назад</span>
+            </button>
             <button
               type="button"
               class="knowledge-graph-history-button"
               data-knowledge-graph-history-action="redo"
               title="Повторить действие графа (Ctrl+Y)"
               disabled
-            >Вперед</button>
-            <button type="button" data-knowledge-graph-canvas-action="zoom-out" title="Уменьшить">−</button>
-            <button type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф">Центр</button>
-            <button type="button" data-knowledge-graph-canvas-action="zoom-in" title="Увеличить">+</button>
+            >
+              ${iconSvg('skip-forward', 'knowledge-graph-toolbar-icon')}
+              <span>Вперед</span>
+            </button>
+            <button type="button" data-knowledge-graph-canvas-action="zoom-out" title="Уменьшить" aria-label="Уменьшить">−</button>
+            <button type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф">
+              ${iconSvg('link', 'knowledge-graph-toolbar-icon')}
+              <span>Центр</span>
+            </button>
+            <button type="button" data-knowledge-graph-canvas-action="zoom-in" title="Увеличить" aria-label="Увеличить">+</button>
             <span data-knowledge-graph-canvas-scale>100%</span>
-            <button class="knowledge-graph-refresh" type="button" title="Обновить граф">↻</button>
+            <button class="knowledge-graph-refresh" type="button" title="Обновить граф">
+              ${iconSvg('repeat', 'knowledge-graph-toolbar-icon')}
+              <span>Обновить</span>
+            </button>
           </div>
         </header>
         ${getCanvasFilterBarHTML(graph, canvasModel, connectState)}
+        ${getCanvasOverflowNoteHTML(canvasModel)}
         ${getCanvasConnectBannerHTML(connectState)}
         ${getCanvasConnectDetailsPopupHTML(connectState)}
         <div
@@ -1143,7 +1160,37 @@ function getCanvasFilterBarHTML(
       <span class="knowledge-graph-canvas-filterbar-status" data-knowledge-graph-filter-status>
         ${escapeHTML(getCanvasFilterStatusText(graph, canvasModel))}
       </span>
+      ${getCanvasSliceStatsHTML(canvasModel)}
     </div>
+  `;
+}
+
+
+function getCanvasSliceStatsHTML(
+  canvasModel
+) {
+
+  return `
+    <div class="knowledge-graph-canvas-slice-stats" data-knowledge-graph-slice-stats>
+      ${getCanvasSliceStatHTML('shown', canvasModel.visibleNodeCount, 'показано')}
+      ${getCanvasSliceStatHTML('total', canvasModel.totalNodeCount, 'в мире')}
+      ${getCanvasSliceStatHTML('hidden', canvasModel.hiddenTotalNodeCount, 'скрыто')}
+    </div>
+  `;
+}
+
+
+function getCanvasSliceStatHTML(
+  key,
+  value,
+  label
+) {
+
+  return `
+    <span class="knowledge-graph-canvas-slice-stat" data-knowledge-graph-slice-stat="${escapeHTML(key)}">
+      <strong>${escapeHTML(value)}</strong>
+      <span>${escapeHTML(label)}</span>
+    </span>
   `;
 }
 
@@ -1314,7 +1361,49 @@ function getCanvasFilterStatusText(
       ? `Показано: ${parts.join(' · ')}`
       : canvasModel.filterSummary.text || 'Стандартный вид';
 
-  return `${base} · ${canvasModel.nodes.length} узл.`;
+  const hiddenReasons =
+    getCanvasHiddenReasonLabels(
+      canvasModel
+    );
+
+  const hiddenText =
+    hiddenReasons.length > 0
+      ? ` · ${hiddenReasons.join(' · ')}`
+      : '';
+
+  return `${base} · показано ${canvasModel.visibleNodeCount} из ${canvasModel.totalNodeCount} узл.${hiddenText}`;
+}
+
+
+function getCanvasHiddenReasonLabels(
+  canvasModel
+) {
+
+  const reasons =
+    [];
+
+  if (canvasModel.hiddenByFilterNodeCount > 0) {
+
+    reasons.push(
+      `фильтры скрыли ${canvasModel.hiddenByFilterNodeCount}`
+    );
+  }
+
+  if (canvasModel.hiddenBySliceNodeCount > 0) {
+
+    reasons.push(
+      `вне среза ${canvasModel.hiddenBySliceNodeCount}`
+    );
+  }
+
+  if (canvasModel.hiddenByLimitNodeCount > 0) {
+
+    reasons.push(
+      `лимит скрыл ${canvasModel.hiddenByLimitNodeCount}`
+    );
+  }
+
+  return reasons;
 }
 
 
@@ -1406,8 +1495,23 @@ function getCanvasLayoutButtonHTML(
       type="button"
       data-knowledge-graph-layout="${escapeHTML(layout)}"
       aria-pressed="${activeLayout === layout ? 'true' : 'false'}"
-    >${escapeHTML(label)}</button>
+    >
+      ${iconSvg(getCanvasLayoutIcon(layout), 'knowledge-graph-toolbar-icon')}
+      <span>${escapeHTML(label)}</span>
+    </button>
   `;
+}
+
+
+function getCanvasLayoutIcon(
+  layout
+) {
+
+  if (layout === 'domain') return 'grid';
+
+  if (layout === 'hub') return 'link';
+
+  return 'folder';
 }
 
 
@@ -1555,7 +1659,10 @@ function getCanvasNodesHTML(
               title="Перетащить ноду. ПКМ - действия."
             >
               <strong>${escapeHTML(node.title || node.id)}</strong>
-              <span>${escapeHTML(node.domainLabel || 'Заметки')} · ${escapeHTML(node.type || 'note')}</span>
+              <span class="knowledge-graph-canvas-node-meta">
+                ${iconSvg(getCanvasNodeIcon(node), 'knowledge-graph-node-domain-icon')}
+                <span>${escapeHTML(node.domainLabel || 'Заметки')} · ${escapeHTML(node.type || 'note')}</span>
+              </span>
             </button>
           </article>
         `;
@@ -1566,22 +1673,80 @@ function getCanvasNodesHTML(
 }
 
 
+function getCanvasNodeIcon(
+  node
+) {
+
+  const iconsByDomain = {
+    character:
+      'character',
+    item:
+      'item',
+    organization:
+      'lore',
+    location:
+      'location',
+    map:
+      'campaign-map',
+    rule:
+      'lore',
+    note:
+      'document'
+  };
+
+  return iconsByDomain[node?.domain] ||
+    iconsByDomain.note;
+}
+
+
 function getCanvasOverflowNoteHTML(
   canvasModel
 ) {
 
   if (
-    canvasModel.hiddenNodeCount === 0 &&
-    canvasModel.hiddenEdgeCount === 0
+    canvasModel.hiddenTotalNodeCount === 0 &&
+    canvasModel.hiddenTotalEdgeCount === 0
   ) {
 
     return '';
   }
 
+  const hiddenReasons =
+    getCanvasHiddenReasonLabels(
+      canvasModel
+    );
+
+  const reasonText =
+    hiddenReasons.length > 0
+      ? hiddenReasons.join(' · ')
+      : 'часть связей сейчас вне видимой области';
+
+  const showAllAction =
+    canvasModel.hiddenBySliceNodeCount > 0 &&
+    canvasModel.filters.viewPreset !== 'all'
+      ? `
+        <button type="button" data-knowledge-graph-slice-action="show-all">
+          Все связи
+        </button>
+      `
+      : '';
+
   return `
-    <p class="knowledge-graph-canvas-note">
-      Показаны самые связанные узлы. Скрыто: ${escapeHTML(canvasModel.hiddenNodeCount)} страниц, ${escapeHTML(canvasModel.hiddenEdgeCount)} связей.
-    </p>
+    <aside class="knowledge-graph-canvas-slice-note" data-knowledge-graph-slice-note>
+      <span class="knowledge-graph-canvas-slice-note-icon">
+        ${iconSvg('eye-off', 'knowledge-graph-slice-note-icon-svg')}
+      </span>
+      <div>
+        <strong>Показано ${escapeHTML(canvasModel.visibleNodeCount)} из ${escapeHTML(canvasModel.totalNodeCount)} страниц</strong>
+        <p>${escapeHTML(reasonText)}. Скрыто ${escapeHTML(canvasModel.hiddenTotalEdgeCount)} связей; уточни фильтры или открой полный вид, если нужен весь контекст.</p>
+      </div>
+      <div class="knowledge-graph-canvas-slice-actions">
+        ${showAllAction}
+        <button type="button" data-knowledge-graph-slice-action="refine">
+          Уточнить поиск
+        </button>
+      </div>
+    </aside>
   `;
 }
 
@@ -2134,6 +2299,21 @@ function setupKnowledgeGraphEvents(
         await handleGraphConnectAction(
           documentElement,
           connectAction.dataset.knowledgeGraphConnectAction
+        );
+
+        return;
+      }
+
+      const sliceAction =
+        event.target.closest(
+          '[data-knowledge-graph-slice-action]'
+        );
+
+      if (sliceAction) {
+
+        handleGraphSliceAction(
+          documentElement,
+          sliceAction.dataset.knowledgeGraphSliceAction
         );
 
         return;
@@ -3046,6 +3226,54 @@ function handleGraphFilterChange(
       '#editorArea'
     ) || document
   );
+}
+
+
+function handleGraphSliceAction(
+  documentElement,
+  action
+) {
+
+  if (action === 'show-all') {
+
+    documentElement.dataset.currentKnowledgeGraphFilterDomain =
+      'all';
+
+    documentElement.dataset.currentKnowledgeGraphFilterRelationship =
+      'all';
+
+    documentElement.dataset.currentKnowledgeGraphFilterOrphans =
+      'false';
+
+    documentElement.dataset.currentKnowledgeGraphViewPreset =
+      'all';
+
+    delete documentElement.dataset.currentKnowledgeGraphFilterSearch;
+    delete documentElement.dataset.currentKnowledgeGraphFocusNode;
+
+    renderKnowledgeGraphPage(
+      documentElement.closest(
+        '#editorArea'
+      ) || document
+    );
+
+    return;
+  }
+
+  if (action === 'refine') {
+
+    const searchInput =
+      documentElement.querySelector(
+        '[data-knowledge-graph-filter="search"]'
+      );
+
+    searchInput?.focus();
+    searchInput?.select?.();
+
+    setStatus(
+      'Уточни поиск или выбери фильтр графа'
+    );
+  }
 }
 
 
