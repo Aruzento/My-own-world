@@ -116,7 +116,7 @@ index.html
 | `styles/campaign-map-popups.css` | 1,878 | Map popups, playlists, layers, drawing, settings and scene controls. |
 | `styles/ui.css` | 1,779 | Shared primitive seeds, including Button, IconButton, Input, Select, Checkbox, SegmentedControl, Toolbar, Panel, Popover and toast/status primitives. |
 | `styles/app-topbar.css` | 1,620 | App topbar, appearance, backup, asset health, workspace diagnostics. |
-| `styles/knowledge-graph.css` | 1,355 | Graph workbench, canvas, toolbar, filters, context/edit popup and responsive rules. |
+| `styles/knowledge-graph.css` | 1,930 | Graph workbench, canvas, toolbar, filters, selected-node inspector, edge states, context/edit popup and responsive rules. |
 | `styles/blocks.css` | 1,204 | Generic blocks toolbar, shared card block surfaces, type badges, markers, runtime controls and card-block select styling. |
 | `styles/tree.css` | 1,053 | Sidebar tree, context menu and virtualized rows. |
 | `styles/block-dnd-stats-legacy.css` | 789 | Legacy DnD stat block compatibility. |
@@ -133,7 +133,7 @@ index.html
 
 | File | Lines | UI Risk |
 | --- | ---: | --- |
-| `js/wiki/knowledgeGraphPage.js` | 5,408 | Too much graph page, canvas UI, actions and persistence in one file. Already tracked in `BI-017`/`BI-018`. |
+| `js/wiki/knowledgeGraphPage.js` | 6,646 | Too much graph page, canvas UI, actions and persistence in one file. `0.0.1.8.13.2` added the selected-node inspector and edge states, so the `BI-017` split is now more important before deeper graph behavior. |
 | `js/editor/propertiesSettingsPopup.js` | 4,058 | Properties field UI, settings, grid interactions and model bridge are tightly coupled. |
 | `js/wiki/knowledgeGraph.js` | 2,366 | Graph model/build logic is large enough to hide lifecycle bypasses. |
 | `js/ui/workspaceDiagnosticsPanel.js` | 1,891 | Diagnostics UI is useful, but large and should not become a generic panel model. |
@@ -306,7 +306,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.10` AppShell | Closed and corrected after user review: AppShell now has a left rail where `Дерево` shows/hides the primary tree sidebar, profile/user sits in the rail, Explorer-style no-workspace/root creation actions stay in the tree, resize remains available when the sidebar is visible, and the old page-info right inspector has been removed. Content types are not duplicated as rail tabs. | AppShell browser coverage verifies empty start readability, no-workspace tree open-folder CTA, root-level create/folder actions, one-tree-entry rail, no content-type rail duplicates, no duplicate tree header, rail profile placement, tree search, resize, tree show/hide editor expansion, hidden right-panel default state and explicit right-panel foundation open/close. A fake diagnostics bottom panel was not added. |
 | `0.0.1.8.11` Core content | Closed at `Usable` by `0.0.1.8.11.7`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects, saved-template creation, deep search and command palette are migrated to the shared design direction. | `BI-013` and `BI-014` are closed; command palette reuses PageRepository, popupManager and existing app action hooks instead of adding a command registry; keep `BI-025` as future pane-planning material. |
 | `0.0.1.8.12` Campaign map | Closed at `Usable` by `0.0.1.8.12.6`: toolbar, shared map popups, selected-object dock, layer/object dock, scene-state inspector and group contextual visibility actions now share the Phase 6 design direction. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke for future map bugfixes. |
-| `0.0.1.8.13` Knowledge graph | Active: `0.0.1.8.13.1` migrated visible-slice clarity, first toolbar/node-card visual language and filterbar counters. Edge states, inspector, overlay visual cleanup, file/CSS split and lifecycle bridge remain open. | `BI-019` is closed; also check `BI-017` and `BI-018` before deeper graph edits. |
+| `0.0.1.8.13` Knowledge graph | Active: `0.0.1.8.13.1` migrated visible-slice clarity, first toolbar/node-card visual language and filterbar counters; `0.0.1.8.13.2` added selected-node edge states, related/muted node states and the graph inspector dock. Overlay visual cleanup, file/CSS split and lifecycle bridge remain open. | `BI-019` is closed; `BI-017` is more urgent now because `knowledgeGraphPage.js` grew past 6k lines; also check `BI-018` before deeper graph edits. |
 
 ## Browser And Tauri Risks
 
@@ -355,7 +355,7 @@ When the redesign reaches these areas, check the small backlog before marking th
 - Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map Phase 6 is closed at `Usable` by `0.0.1.8.12.6`; future map UI work should be a concrete map bug/polish item, while the next redesign phase is `0.0.1.8.13` Knowledge Graph.
 - `BI-017`: Knowledge Graph file/CSS split, belongs to graph redesign or graph lifecycle work.
 - `BI-018`: Knowledge Graph should stop bypassing the page lifecycle before more graph behavior.
-- `BI-019`: graph hidden-slice clarity is closed in `0.0.1.8.13.1`; future hidden-state work should be a concrete graph bug or an extension of the graph inspector.
+- `BI-019`: graph hidden-slice clarity is closed in `0.0.1.8.13.1`; selected-node edge-state/inspector clarity is covered by `0.0.1.8.13.2`; future hidden-state work should be a concrete graph bug or an extension of the graph inspector.
 - `BI-023`: Properties field lock toggle belongs to Properties/core content redesign.
 
 ## Anti-Slop Gate For The Next UI Work

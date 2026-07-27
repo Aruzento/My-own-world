@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI Migration Baselines
 
-Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.6`; `0.0.1.8.13` knowledge graph migration is active with `0.0.1.8.13.1` closed at `Foundation`.
+Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.6`; `0.0.1.8.13` knowledge graph migration is active with `0.0.1.8.13.1` and `0.0.1.8.13.2` closed at `Foundation`.
 
 This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must compare against.
 
@@ -46,6 +46,8 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 `0.0.1.8.12.6` update: the Campaign map selected-object baseline now includes advanced contextual action coverage for multi-selection. The existing `.campaign-map-selection-dock[data-map-selection-ui-migration="0.0.1.8.12.3"]` shows visible/hidden counters for selected token/shape groups and exposes direct group `Скрыть` / `Показать` actions through the existing `CampaignMapStore`, with one save/sync per action and no saved runtime HTML. `campaign-map-ui.spec.mjs` guards mixed selected token/shape state, group hide, group show and model/DOM agreement.
 
 `0.0.1.8.13.1` update: the Knowledge graph baseline now includes `.knowledge-graph-workbench[data-knowledge-graph-migration="phase-7-slice"]`, visible/total/hidden filterbar counters, a `.knowledge-graph-canvas-slice-note` when the current canvas is not the whole world, local sprite icons in graph toolbar/node metadata and tokenized domain markers on node cards. `knowledge-graph.spec.mjs` guards standard-slice hidden nodes, full-view canvas limit state and search-refine focus behavior.
+
+`0.0.1.8.13.2` update: the Knowledge graph baseline now includes selected-node edge states on `.knowledge-graph-canvas-edge[data-edge-state]`, related/muted node classes, and `.knowledge-graph-canvas-inspector` as a workbench-local dock. The inspector shows identity, incoming/outgoing visible counts, pinned status, relationship rows and `Открыть` / `Соседи` actions. It is not the AppShell right panel and must not overlay the canvas in a way that blocks drag or right-click. `knowledge-graph.spec.mjs` guards selected-node inspector content, active/muted edge states, related node styling and context-menu anchor correction.
 
 ## Baseline Rules
 
@@ -145,7 +147,7 @@ Current overlay visual polish to migrate later:
 - AppShell Settings/Tools, create menu and tree context menu visual styling during AppShell/core content phases.
 - Wiki preview and remaining editor overlay visual styling during core content migration.
 - Campaign map Phase 6 contextual polish is closed; future map UI changes should come from concrete map bugs or later polish/cleanup, not from another broad Phase 6 repaint.
-- Knowledge Graph overlay visual polish during the remaining `0.0.1.8.13` slices; visible-slice clarity is already migrated in `0.0.1.8.13.1`.
+- Knowledge Graph overlay visual polish during the remaining `0.0.1.8.13` slices; visible-slice clarity is already migrated in `0.0.1.8.13.1`, and selected-node edge states/inspector are migrated in `0.0.1.8.13.2`.
 - App settings/tools popovers and component catalogue popover remain the current shared primitive/overlay reference.
 
 ## Migration Gate For Future Phases

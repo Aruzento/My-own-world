@@ -128,6 +128,8 @@ Foundation визуального исследования мира состои
 - compact zoom/fit/refresh controls;
 - фильтров на первом экране: тип сущности, тип связи, поиск и одиночные страницы;
 - visible-slice clarity: UI должен показывать `показано X из Y`, отдельные counters `показано` / `в мире` / `скрыто`, причину скрытия (фильтр, стандартный срез или canvas limit) и понятные refine/full-view действия;
+- selected-node clarity: клик по node должен показывать, какие видимые edges относятся к ней (`active`), какие node являются соседями (`related`), а какой видимый контекст сейчас не относится к выбору (`muted`);
+- graph inspector dock: выбранная node должна иметь workbench-local inspector с domain/type, incoming/outgoing counts, pinned state, relationship rows и прямыми действиями `Открыть` / `Соседи`. Это не AppShell right panel и не saved content;
 - единого transform-layer для SVG edges и node cards, чтобы pan двигал весь граф вместе;
 - runtime node drag внутри canvas с мгновенным пересчетом линий;
 - dynamic canvas expansion near edges: если node тянут к краю, world bounds расширяются, а viewport остается управляемым;

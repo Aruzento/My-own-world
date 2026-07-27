@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-27: 0.0.1.8.13.2 Knowledge Graph Edge States And Inspector
+
+### What Changed
+
+- Continued `0.0.1.8.13` Migration Phase 7 for Knowledge Graph with the edge-state and inspector slice.
+- Added runtime selected-node state for the graph canvas and excluded it from serialized Knowledge Graph HTML.
+- Added explicit `active` / `muted` edge states and related/muted node states, so selecting a node explains which visible relationships belong to it instead of only changing the node border.
+- Added a compact graph inspector dock inside the Knowledge Graph workbench, beside the canvas on desktop and below it on narrower screens. It shows the selected node identity, domain/type, visible incoming/outgoing relationship counts, pinned status, relationship rows and direct `Открыть` / `Соседи` actions.
+- Kept the global AppShell right panel hidden; the new inspector belongs only to the Knowledge Graph workbench and does not revive the removed page-info side panel.
+- Fixed Knowledge Graph node context-menu anchoring by compensating for transformed/offset shell containers against the real right-click anchor.
+- Extended browser coverage for selected-node inspector content, active/muted edge state, related node styling and context-menu anchor coordinates.
+- Deliberately did not change relationship storage, graph persistence schema, PageCommandService lifecycle, file split, graph build algorithm, map behavior or task tracker behavior.
+
+### Readiness
+
+Foundation for Phase 7 edge-state and inspector work. A human can now click a node and immediately understand which visible lines belong to it, whether relationships enter or leave the node, and how to open the selected page or narrow the canvas to its neighbors. The remaining `0.0.1.8.13` work is maintainability/lifecycle hardening and final overlay visual cleanup, not another selection-inspector foundation.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests.
+- Passed again after docs/manual updates: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 552 files, 2 delete candidates and 0 mojibake candidates.
+- Passed: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 110 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with overlay visual cleanup, then split graph files/CSS or address the PageCommandService lifecycle bridge from `BI-017` / `BI-018`.
+- Do not start `0.0.1.8.14` secondary screens until Phase 7 has an explicit stopping point.
+
 ## 2026-07-27: 0.0.1.8.13.1 Knowledge Graph Visible Slice And Graph Controls
 
 ### What Changed

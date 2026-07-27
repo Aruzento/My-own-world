@@ -234,7 +234,7 @@ Status: Improved, keep in backlog
 
 Source: user reports, plan `0.0.1.5.0`, and 2026-07-20 recommendations.
 
-Symptoms: the graph now has a visual canvas with nodes, edges, drag, zoom, filters, visible-slice counters, node context actions, relationship edit/delete and regression coverage. Remaining problem: it is still more of a visual workbench than a daily world-operations tool, and recent audit notes show lifecycle, maintainability, edge-state and inspector risks.
+Symptoms: the graph now has a visual canvas with nodes, edges, drag, zoom, filters, visible-slice counters, selected-node edge states, a graph inspector dock, node context actions, relationship edit/delete and regression coverage. Remaining problem: it is still more of a visual workbench than a daily world-operations tool, and recent audit notes show lifecycle, maintainability and richer operation risks.
 
 Risk: adding more graph behavior without cleanup can reintroduce stale-state/save/undo errors and make the graph harder to trust in large worlds.
 

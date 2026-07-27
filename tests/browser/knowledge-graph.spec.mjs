@@ -386,12 +386,58 @@ aliases: []
 
     await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
 
-    await page.locator('[data-knowledge-graph-canvas-node="hero"]').click();
+    await page.locator('[data-knowledge-graph-canvas-node="sword"]').click();
 
     await expect(
       page.locator('.knowledge-graph-canvas-selection')
     ).toHaveCount(
       0
+    );
+
+    const graphInspector =
+      page.locator('[data-knowledge-graph-inspector]');
+
+    await expect(
+      graphInspector
+    ).toBeVisible();
+
+    await expect(
+      graphInspector
+    ).toHaveAttribute(
+      'data-node-id',
+      'sword'
+    );
+
+    await expect(
+      graphInspector
+    ).toContainText(
+      'Sword'
+    );
+
+    await expect(
+      graphInspector.locator('[data-knowledge-graph-inspector-relation][data-relation-other-id="hero"]')
+    ).toHaveCount(
+      1
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="hero"][data-edge-to="sword"]')
+    ).toHaveAttribute(
+      'data-edge-state',
+      'active'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="hero"][data-edge-to="rules"]')
+    ).toHaveAttribute(
+      'data-edge-state',
+      'muted'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]')
+    ).toHaveClass(
+      /is-related/
     );
 
     const stageLocator =
@@ -808,6 +854,30 @@ aliases: []
     const viewportSize =
       page.viewportSize();
 
+    const nodeMenuAnchorX =
+      Number(
+        await nodeMenu.getAttribute(
+          'data-anchor-x'
+        )
+      );
+
+    const nodeMenuAnchorY =
+      Number(
+        await nodeMenu.getAttribute(
+          'data-anchor-y'
+        )
+      );
+
+    const effectiveContextClickX =
+      Number.isFinite(nodeMenuAnchorX)
+        ? nodeMenuAnchorX
+        : contextClickX;
+
+    const effectiveContextClickY =
+      Number.isFinite(nodeMenuAnchorY)
+        ? nodeMenuAnchorY
+        : contextClickY;
+
     expect(
       nodeMenuBox.x
     ).toBeGreaterThanOrEqual(
@@ -833,8 +903,8 @@ aliases: []
     );
 
     const nodeMenuContainsContextX =
-      contextClickX >= nodeMenuBox.x - 12 &&
-      contextClickX <= nodeMenuBox.x + nodeMenuBox.width + 12;
+      effectiveContextClickX >= nodeMenuBox.x - 12 &&
+      effectiveContextClickX <= nodeMenuBox.x + nodeMenuBox.width + 12;
 
     const nodeMenuClampedHorizontally =
       nodeMenuBox.x <= 13 ||
@@ -848,8 +918,8 @@ aliases: []
     );
 
     const nodeMenuContainsContextY =
-      contextClickY >= nodeMenuBox.y - 12 &&
-      contextClickY <= nodeMenuBox.y + nodeMenuBox.height + 12;
+      effectiveContextClickY >= nodeMenuBox.y - 12 &&
+      effectiveContextClickY <= nodeMenuBox.y + nodeMenuBox.height + 12;
 
     const nodeMenuClampedVertically =
       nodeMenuBox.y <= 13 ||

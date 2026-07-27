@@ -87,7 +87,7 @@ Status: closed at `Usable` by `0.0.1.8.12.6`. `0.0.1.8.12.1` closed the toolbar 
 
 Description: migrate graph toolbar, canvas controls, node cards, edge states, inspector, and filters.
 
-Status: active. `0.0.1.8.13.1` is closed at `Foundation`: the graph workbench now has clearer visible-slice counters, a human-readable hidden-slice notice, local sprite icons in toolbar/node metadata, tokenized node domain markers, and browser coverage for standard-slice/full-view refinement. Remaining Phase 7 work: edge state polish, graph inspector, overlay visual cleanup, file/CSS split and lifecycle bridge work from `BI-017` / `BI-018`.
+Status: active. `0.0.1.8.13.1` is closed at `Foundation`: the graph workbench now has clearer visible-slice counters, a human-readable hidden-slice notice, local sprite icons in toolbar/node metadata, tokenized node domain markers, and browser coverage for standard-slice/full-view refinement. `0.0.1.8.13.2` is closed at `Foundation`: selecting a canvas node now gives visible edge states, related/muted node states, a compact graph inspector dock with incoming/outgoing relationship counts and direct `Открыть` / `Соседи` actions, plus a fixed right-click menu anchor under the popup lifecycle. Remaining Phase 7 work: overlay visual cleanup, file/CSS split and lifecycle bridge work from `BI-017` / `BI-018`.
 
 0.0.1.8.14. Migration Phase 8: secondary screens.
 

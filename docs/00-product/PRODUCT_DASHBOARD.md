@@ -79,10 +79,11 @@ Recently closed:
 - `0.0.1.8.12.5` Campaign map scene-state inspector: the map stage now shows background, grid and fog readiness with direct actions into the existing map-image, Grid and Fog flows.
 - `0.0.1.8.12.6` Campaign map advanced contextual actions: multi-selected tokens and shapes now show visible/hidden counters and can be hidden from or shown to players as one group through the existing map store.
 - `0.0.1.8.13.1` Knowledge Graph visible-slice clarity: the graph now says `показано X из Y`, shows visible/total/hidden counters, explains hidden-by-filter/slice/limit states, and uses local sprite icons plus domain markers in toolbar and node cards.
+- `0.0.1.8.13.2` Knowledge Graph edge states and inspector: selecting a graph node now highlights its visible relationships, mutes unrelated canvas content, and opens a compact workbench inspector with incoming/outgoing counts, relationship rows and `Открыть` / `Соседи` actions.
 
 Next active block:
 
-- Continue `0.0.1.8.13` Migration Phase 7 knowledge graph with edge states, graph inspector, overlay visual cleanup, file/CSS split and lifecycle bridge work. Do not start `0.0.1.8.14` secondary screens yet.
+- Continue `0.0.1.8.13` Migration Phase 7 knowledge graph with overlay visual cleanup, file/CSS split and lifecycle bridge work from `BI-017` / `BI-018`. Do not start `0.0.1.8.14` secondary screens yet.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -104,7 +105,7 @@ This prevents "done" from meaning only "a model/helper was created".
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.
-- Knowledge Graph has a real visual canvas foundation and hidden-slice clarity, but lifecycle hardening, file split, edge-state polish and the graph inspector still need Phase 7 work before broader feature expansion.
+- Knowledge Graph has a real visual canvas foundation, hidden-slice clarity and a selected-node inspector with edge states, but lifecycle hardening, file split and final overlay cleanup still need Phase 7 work before broader feature expansion.
 - README, dashboard, bug inventory and plan must stay synchronized so the project remains understandable to the owner.
 
 ## Where To Read Next

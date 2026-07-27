@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.2`: selecting a graph node now applies active/muted edge states, related/muted node states and a compact workbench-local inspector with incoming/outgoing counts, relationship rows and `Открыть` / `Соседи` actions. The graph node context menu also now compensates for transformed shell offsets when anchoring to a right-click point.
 - UI redesign Phase 7 Knowledge Graph started with `0.0.1.8.13.1`: the graph canvas now exposes visible/total/hidden slice counters, explains hidden-by-filter/slice/limit states, offers `Все связи` / `Уточнить поиск` actions, and uses local sprite icons plus tokenized domain markers in toolbar and node cards.
 - UI redesign Phase 6 campaign map closed at `Usable` with `0.0.1.8.12.6`: multi-selected map tokens and shapes now show visible/hidden counters and support group `Скрыть` / `Показать` actions through the existing map store.
 - UI redesign Phase 6 campaign map advanced with `0.0.1.8.12.5`: the map stage now has a runtime scene-state inspector for map background, grid and fog status, with direct actions into the existing map-image, Grid and Fog flows and no saved HTML/runtime leakage.

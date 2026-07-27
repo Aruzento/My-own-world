@@ -210,6 +210,10 @@ export function renderKnowledgeGraphPage(
       documentElement
     );
 
+  const selectedNodeId =
+    documentElement.dataset.currentKnowledgeGraphSelectedNode ||
+    '';
+
   documentElement.removeAttribute(
     'data-knowledge-graph-layout'
   );
@@ -227,7 +231,8 @@ export function renderKnowledgeGraphPage(
       layout,
       filters,
       viewState,
-      connectState
+      connectState,
+      selectedNodeId
     )
   );
 
@@ -240,6 +245,10 @@ export function renderKnowledgeGraphPage(
   );
 
   initializeKnowledgeGraphCanvases(
+    documentElement
+  );
+
+  initializeGraphCanvasSelection(
     documentElement
   );
 
@@ -299,6 +308,10 @@ export function serializeKnowledgeGraphHTML(
 
   clone.removeAttribute(
     'data-current-knowledge-graph-view-preset'
+  );
+
+  clone.removeAttribute(
+    'data-current-knowledge-graph-selected-node'
   );
 
   clone.removeAttribute(
@@ -996,13 +1009,14 @@ function getKnowledgeGraphHTML(
   layout,
   filters,
   viewState,
-  connectState
+  connectState,
+  selectedNodeId
 ) {
 
   return `
     <div class="knowledge-graph-runtime" data-runtime="true" contenteditable="false">
       <section class="knowledge-graph-panel is-active" data-knowledge-graph-panel="visual">
-        ${getVisualGraphHTML(graph, layout, filters, viewState, connectState)}
+        ${getVisualGraphHTML(graph, layout, filters, viewState, connectState, selectedNodeId)}
       </section>
     </div>
   `;
@@ -1014,7 +1028,8 @@ function getVisualGraphHTML(
   layout,
   filters,
   viewState,
-  connectState
+  connectState,
+  selectedNodeId
 ) {
 
   const canvasModel =
@@ -1031,8 +1046,18 @@ function getVisualGraphHTML(
   const visibleNodes =
     canvasModel.nodes;
 
+  const activeNodeId =
+    getCanvasSelectedNodeId(
+      canvasModel,
+      selectedNodeId
+    );
+
   return `
-    <section class="knowledge-graph-workbench" data-knowledge-graph-migration="phase-7-slice">
+    <section
+      class="knowledge-graph-workbench"
+      data-knowledge-graph-migration="phase-7-slice"
+      data-knowledge-graph-selected-node="${escapeHTML(activeNodeId)}"
+    >
       <div class="knowledge-graph-canvas-card">
         <header class="knowledge-graph-canvas-toolbar">
           <div class="knowledge-graph-canvas-toolbar-group" aria-label="Представление графа">
@@ -1078,28 +1103,31 @@ function getVisualGraphHTML(
         ${getCanvasOverflowNoteHTML(canvasModel)}
         ${getCanvasConnectBannerHTML(connectState)}
         ${getCanvasConnectDetailsPopupHTML(connectState)}
-        <div
-          class="knowledge-graph-canvas-stage"
-          data-knowledge-graph-canvas-stage
-          data-layout="${escapeHTML(canvasModel.layout)}"
-          data-scale="1"
-          data-pan-x="0"
-          data-pan-y="0"
-        >
+        <div class="knowledge-graph-canvas-body${activeNodeId ? ' has-inspector' : ''}">
           <div
-            class="knowledge-graph-canvas-world"
-            data-knowledge-graph-canvas-world
-            style="width: ${escapeHTML(canvasModel.width)}px; height: ${escapeHTML(canvasModel.height)}px;"
+            class="knowledge-graph-canvas-stage"
+            data-knowledge-graph-canvas-stage
+            data-layout="${escapeHTML(canvasModel.layout)}"
+            data-scale="1"
+            data-pan-x="0"
+            data-pan-y="0"
           >
-            ${
-              visibleNodes.length === 0
-                ? getCanvasEmptyStateHTML()
-                : `
-                  ${getCanvasEdgesHTML(canvasModel)}
-                  ${getCanvasNodesHTML(canvasModel, connectState)}
-                `
-            }
+            <div
+              class="knowledge-graph-canvas-world"
+              data-knowledge-graph-canvas-world
+              style="width: ${escapeHTML(canvasModel.width)}px; height: ${escapeHTML(canvasModel.height)}px;"
+            >
+              ${
+                visibleNodes.length === 0
+                  ? getCanvasEmptyStateHTML()
+                  : `
+                    ${getCanvasEdgesHTML(canvasModel, activeNodeId)}
+                    ${getCanvasNodesHTML(canvasModel, connectState, activeNodeId)}
+                  `
+              }
+            </div>
           </div>
+          ${getCanvasInspectorHTML(canvasModel, activeNodeId)}
         </div>
         ${getCanvasContextMenuHTML()}
       </div>
@@ -1568,8 +1596,276 @@ function getReadableGraphFallbackHTML(
 }
 
 
+function getCanvasSelectedNodeId(
+  canvasModel,
+  selectedNodeId
+) {
+
+  const visibleIds =
+    new Set(
+      (canvasModel.nodes || []).map(node => node.id)
+    );
+
+  if (
+    selectedNodeId &&
+    visibleIds.has(
+      selectedNodeId
+    )
+  ) {
+
+    return selectedNodeId;
+  }
+
+  return canvasModel.nodes?.[0]?.id ||
+    '';
+}
+
+
+function getCanvasEdgeSelectionState(
+  edge,
+  selectedNodeId
+) {
+
+  if (!selectedNodeId) return 'neutral';
+
+  return edge.from === selectedNodeId ||
+    edge.to === selectedNodeId
+    ? 'active'
+    : 'muted';
+}
+
+
+function getCanvasInspectorHTML(
+  canvasModel,
+  selectedNodeId
+) {
+
+  if (!selectedNodeId) return '';
+
+  const selectedNode =
+    canvasModel.nodes.find(node =>
+      node.id === selectedNodeId
+    );
+
+  if (!selectedNode) return '';
+
+  return `
+    <aside
+      class="knowledge-graph-canvas-inspector"
+      data-knowledge-graph-inspector
+      data-node-id="${escapeHTML(selectedNode.id)}"
+      aria-label="Инспектор узла графа"
+    >
+      ${getCanvasInspectorInnerHTML(
+        selectedNode,
+        getCanvasInspectorRelationshipsFromModel(
+          canvasModel,
+          selectedNodeId
+        ),
+        canvasModel.filters.focusNodeId === selectedNodeId
+      )}
+    </aside>
+  `;
+}
+
+
+function getCanvasInspectorRelationshipsFromModel(
+  canvasModel,
+  selectedNodeId
+) {
+
+  const nodesById =
+    new Map(
+      (canvasModel.nodes || []).map(node => [
+        node.id,
+        node
+      ])
+    );
+
+  return (canvasModel.edges || [])
+    .filter(edge =>
+      edge.from === selectedNodeId ||
+      edge.to === selectedNodeId
+    )
+    .map(edge =>
+      getCanvasInspectorRelationship(
+        edge,
+        selectedNodeId,
+        nodesById
+      )
+    );
+}
+
+
+function getCanvasInspectorRelationship(
+  edge,
+  selectedNodeId,
+  nodesById
+) {
+
+  const isOutgoing =
+    edge.from === selectedNodeId;
+
+  const otherId =
+    isOutgoing
+      ? edge.to
+      : edge.from;
+
+  const otherNode =
+    nodesById.get(
+      otherId
+    );
+
+  return {
+    direction:
+      isOutgoing
+        ? 'outgoing'
+        : 'incoming',
+    otherId,
+    otherTitle:
+      otherNode?.title ||
+      otherId,
+    otherDomainLabel:
+      otherNode?.domainLabel ||
+      '',
+    type:
+      edge.type || '',
+    typeLabel:
+      getRelationshipLabel(
+        edge.type
+      ),
+    label:
+      edge.label || '',
+    source:
+      edge.source || ''
+  };
+}
+
+
+function getCanvasInspectorInnerHTML(
+  node,
+  relationships,
+  isFocused
+) {
+
+  const outgoingCount =
+    relationships.filter(relationship =>
+      relationship.direction === 'outgoing'
+    ).length;
+
+  const incomingCount =
+    relationships.length - outgoingCount;
+
+  return `
+    <header class="knowledge-graph-canvas-inspector-header">
+      <span class="knowledge-graph-canvas-inspector-icon" aria-hidden="true">
+        ${iconSvg(getCanvasNodeIcon(node), 'app-icon')}
+      </span>
+      <div class="knowledge-graph-canvas-inspector-heading">
+        <span>${escapeHTML(node.domainLabel || 'Заметки')} · ${escapeHTML(node.type || 'note')}</span>
+        <strong>${escapeHTML(node.title || node.id)}</strong>
+      </div>
+    </header>
+    <div class="knowledge-graph-canvas-inspector-stats">
+      ${getCanvasInspectorStatHTML('links', relationships.length, 'видимых связей')}
+      ${getCanvasInspectorStatHTML('outgoing', outgoingCount, 'исходит')}
+      ${getCanvasInspectorStatHTML('incoming', incomingCount, 'входит')}
+      ${getCanvasInspectorStatHTML('pin', node.isPinned ? 'Да' : 'Нет', 'закреплена')}
+    </div>
+    <section class="knowledge-graph-canvas-inspector-relations">
+      <strong>Связи в срезе</strong>
+      ${
+        relationships.length > 0
+          ? `
+            <div class="knowledge-graph-canvas-inspector-relation-list">
+              ${relationships
+                .slice(0, 7)
+                .map(getCanvasInspectorRelationshipHTML)
+                .join('')}
+            </div>
+          `
+          : `
+            <p class="knowledge-graph-canvas-inspector-empty">
+              В текущем срезе у этой страницы нет видимых связей.
+            </p>
+          `
+      }
+    </section>
+    <div class="knowledge-graph-canvas-inspector-actions">
+      <button
+        type="button"
+        data-knowledge-graph-inspector-action="open"
+      >
+        ${iconSvg('document', 'knowledge-graph-inspector-action-icon')}
+        <span>Открыть</span>
+      </button>
+      <button
+        type="button"
+        data-knowledge-graph-inspector-action="${isFocused ? 'clear-focus' : 'focus'}"
+      >
+        ${iconSvg(isFocused ? 'eye-off' : 'eye', 'knowledge-graph-inspector-action-icon')}
+        <span>${isFocused ? 'Весь граф' : 'Соседи'}</span>
+      </button>
+    </div>
+  `;
+}
+
+
+function getCanvasInspectorStatHTML(
+  key,
+  value,
+  label
+) {
+
+  return `
+    <span class="knowledge-graph-canvas-inspector-stat" data-knowledge-graph-inspector-stat="${escapeHTML(key)}">
+      <strong>${escapeHTML(value)}</strong>
+      <span>${escapeHTML(label)}</span>
+    </span>
+  `;
+}
+
+
+function getCanvasInspectorRelationshipHTML(
+  relationship
+) {
+
+  const directionLabel =
+    relationship.direction === 'outgoing'
+      ? 'к'
+      : 'от';
+
+  const detailParts =
+    [
+      relationship.typeLabel,
+      relationship.label,
+      relationship.otherDomainLabel
+    ].filter(Boolean);
+
+  return `
+    <button
+      class="knowledge-graph-canvas-inspector-relation"
+      type="button"
+      data-page-id="${escapeHTML(relationship.otherId)}"
+      data-knowledge-graph-inspector-relation
+      data-relation-direction="${escapeHTML(relationship.direction)}"
+      data-relation-other-id="${escapeHTML(relationship.otherId)}"
+      data-relation-type="${escapeHTML(relationship.type)}"
+      title="Открыть связанную страницу"
+    >
+      <span class="knowledge-graph-canvas-inspector-relation-direction">${escapeHTML(directionLabel)}</span>
+      <span class="knowledge-graph-canvas-inspector-relation-copy">
+        <strong>${escapeHTML(relationship.otherTitle)}</strong>
+        <span>${escapeHTML(detailParts.join(' · '))}</span>
+      </span>
+    </button>
+  `;
+}
+
+
 function getCanvasEdgesHTML(
-  canvasModel
+  canvasModel,
+  selectedNodeId
 ) {
 
   return `
@@ -1594,24 +1890,40 @@ function getCanvasEdgesHTML(
       </defs>
       <g>
         ${canvasModel.edges
-          .map(edge => `
+          .map(edge => {
+
+            const edgeState =
+              getCanvasEdgeSelectionState(
+                edge,
+                selectedNodeId
+              );
+
+            return `
             <path
-              class="knowledge-graph-canvas-edge knowledge-graph-canvas-edge_${escapeHTML(edge.type)}"
+              class="knowledge-graph-canvas-edge knowledge-graph-canvas-edge_${escapeHTML(edge.type)}${edgeState === 'active' ? ' is-active' : ''}${edgeState === 'muted' ? ' is-muted' : ''}"
               data-knowledge-graph-canvas-edge
               data-edge-from="${escapeHTML(edge.from)}"
               data-edge-to="${escapeHTML(edge.to)}"
+              data-edge-type="${escapeHTML(edge.type || '')}"
+              data-edge-type-label="${escapeHTML(getRelationshipLabel(edge.type))}"
+              data-edge-label="${escapeHTML(edge.label || '')}"
+              data-edge-source="${escapeHTML(edge.source || '')}"
+              data-edge-state="${escapeHTML(edgeState)}"
               d="M ${escapeHTML(edge.x1)} ${escapeHTML(edge.y1)} L ${escapeHTML(edge.x2)} ${escapeHTML(edge.y2)}"
               marker-end="url(#knowledge-graph-arrow)"
             ></path>
             <text
-              class="knowledge-graph-canvas-edge-label"
+              class="knowledge-graph-canvas-edge-label${edgeState === 'active' ? ' is-active' : ''}${edgeState === 'muted' ? ' is-muted' : ''}"
               data-knowledge-graph-canvas-edge-label
               data-edge-from="${escapeHTML(edge.from)}"
               data-edge-to="${escapeHTML(edge.to)}"
+              data-edge-type="${escapeHTML(edge.type || '')}"
+              data-edge-state="${escapeHTML(edgeState)}"
               x="${escapeHTML(edge.midX)}"
               y="${escapeHTML(edge.midY)}"
             >${escapeHTML(getRelationshipLabel(edge.type))}</text>
-          `)
+          `;
+          })
           .join('')}
       </g>
     </svg>
@@ -1621,13 +1933,14 @@ function getCanvasEdgesHTML(
 
 function getCanvasNodesHTML(
   canvasModel,
-  connectState
+  connectState,
+  selectedNodeId
 ) {
 
   return `
     <div class="knowledge-graph-canvas-nodes">
       ${canvasModel.nodes
-        .map((node, index) => {
+        .map(node => {
 
           const isConnectSource =
             connectState.activeSourceId === node.id;
@@ -1636,9 +1949,12 @@ function getCanvasNodesHTML(
             Boolean(connectState.activeSourceId) &&
             connectState.activeSourceId !== node.id;
 
+          const isSelected =
+            selectedNodeId === node.id;
+
           return `
           <article
-            class="knowledge-graph-canvas-node-card${index === 0 ? ' is-selected' : ''}${node.isHub ? ' is-hub' : ''}${node.isPinned ? ' is-pinned' : ''}${isConnectSource ? ' is-connect-source' : ''}${isConnectTarget ? ' is-connect-target' : ''}"
+            class="knowledge-graph-canvas-node-card${isSelected ? ' is-selected' : ''}${node.isHub ? ' is-hub' : ''}${node.isPinned ? ' is-pinned' : ''}${isConnectSource ? ' is-connect-source' : ''}${isConnectTarget ? ' is-connect-target' : ''}"
             data-knowledge-graph-canvas-card
             data-node-id="${escapeHTML(node.id)}"
             data-node-title="${escapeHTML(node.title || node.id)}"
@@ -1655,7 +1971,7 @@ function getCanvasNodesHTML(
               class="knowledge-graph-canvas-node-main"
               type="button"
               data-knowledge-graph-canvas-node="${escapeHTML(node.id)}"
-              aria-pressed="${index === 0 ? 'true' : 'false'}"
+              aria-pressed="${isSelected ? 'true' : 'false'}"
               title="Перетащить ноду. ПКМ - действия."
             >
               <strong>${escapeHTML(node.title || node.id)}</strong>
@@ -2364,6 +2680,21 @@ function setupKnowledgeGraphEvents(
         return;
       }
 
+      const inspectorAction =
+        event.target.closest(
+          '[data-knowledge-graph-inspector-action]'
+        );
+
+      if (inspectorAction) {
+
+        await handleGraphInspectorAction(
+          documentElement,
+          inspectorAction
+        );
+
+        return;
+      }
+
       const canvasAction =
         event.target.closest(
           '[data-knowledge-graph-canvas-action]'
@@ -2626,7 +2957,7 @@ function setupKnowledgeGraphEvents(
 
       if (
         event.target.closest(
-          '[data-knowledge-graph-node-menu], [data-knowledge-graph-connect-popup]'
+          '[data-knowledge-graph-node-menu], [data-knowledge-graph-connect-popup], [data-knowledge-graph-inspector]'
         )
       ) {
 
@@ -3683,6 +4014,65 @@ async function handleGraphNodeMenuAction(
 }
 
 
+async function handleGraphInspectorAction(
+  documentElement,
+  actionButton
+) {
+
+  const inspector =
+    actionButton.closest(
+      '[data-knowledge-graph-inspector]'
+    );
+
+  const nodeId =
+    inspector?.dataset.nodeId;
+
+  if (!nodeId) return;
+
+  const action =
+    actionButton.dataset.knowledgeGraphInspectorAction;
+
+  if (action === 'open') {
+
+    await openGraphPage(
+      nodeId
+    );
+
+    return;
+  }
+
+  documentElement.dataset.currentKnowledgeGraphSelectedNode =
+    nodeId;
+
+  if (action === 'focus') {
+
+    documentElement.dataset.currentKnowledgeGraphFocusNode =
+      nodeId;
+
+    setStatus(
+      'Показаны соседи выбранной страницы'
+    );
+  }
+
+  if (action === 'clear-focus') {
+
+    delete documentElement.dataset.currentKnowledgeGraphFocusNode;
+
+    setStatus(
+      'Показан весь текущий срез графа'
+    );
+  }
+
+  renderKnowledgeGraphPageAndFocus(
+    documentElement,
+    {
+      force:
+        true
+    }
+  );
+}
+
+
 async function handleGraphRelationshipMenuAction(
   documentElement,
   actionButton
@@ -3849,6 +4239,20 @@ function showGraphNodeContextMenu(
   menu.dataset.nodeId =
     card.dataset.nodeId;
 
+  menu.dataset.anchorX =
+    String(
+      Math.round(
+        clientX
+      )
+    );
+
+  menu.dataset.anchorY =
+    String(
+      Math.round(
+        clientY
+      )
+    );
+
   const viewState =
     readKnowledgeGraphViewState(
       documentElement
@@ -3917,7 +4321,9 @@ function showGraphNodeContextMenu(
   );
 
   adjustGraphNodeMenuToViewport(
-    menu
+    menu,
+    clientX,
+    clientY
   );
 }
 
@@ -3965,19 +4371,33 @@ function hideGraphNodeContextMenuElement(
   );
 
   delete menu.dataset.nodeId;
+  delete menu.dataset.anchorX;
+  delete menu.dataset.anchorY;
 }
 
 
 function adjustGraphNodeMenuToViewport(
-  menu
+  menu,
+  anchorX = null,
+  anchorY = null
 ) {
 
   const rect =
     menu.getBoundingClientRect();
 
+  const preferredLeft =
+    Number.isFinite(anchorX)
+      ? anchorX
+      : rect.left;
+
+  const preferredTop =
+    Number.isFinite(anchorY)
+      ? anchorY
+      : rect.top;
+
   const targetLeft =
     clampGraphCanvasPosition(
-      rect.left,
+      preferredLeft,
       12,
       Math.max(
         12,
@@ -3987,7 +4407,7 @@ function adjustGraphNodeMenuToViewport(
 
   const targetTop =
     clampGraphCanvasPosition(
-      rect.top,
+      preferredTop,
       12,
       Math.max(
         12,
@@ -4479,6 +4899,55 @@ function initializeKnowledgeGraphCanvases(
 }
 
 
+function initializeGraphCanvasSelection(
+  documentElement
+) {
+
+  const requestedNodeId =
+    documentElement.dataset.currentKnowledgeGraphSelectedNode ||
+    '';
+
+  const requestedCard =
+    requestedNodeId
+      ? findGraphCanvasNodeCard(
+        documentElement,
+        requestedNodeId
+      )
+      : null;
+
+  const selectedCard =
+    requestedCard ||
+    documentElement.querySelector(
+      '[data-knowledge-graph-canvas-card].is-selected'
+    ) ||
+    documentElement.querySelector(
+      '[data-knowledge-graph-canvas-card]'
+    );
+
+  if (!selectedCard?.dataset.nodeId) {
+
+    delete documentElement.dataset.currentKnowledgeGraphSelectedNode;
+
+    updateGraphCanvasSelectionState(
+      documentElement,
+      ''
+    );
+
+    updateGraphCanvasSelectionInspector(
+      documentElement,
+      ''
+    );
+
+    return;
+  }
+
+  selectGraphCanvasNode(
+    documentElement,
+    selectedCard.dataset.nodeId
+  );
+}
+
+
 function handleGraphCanvasAction(
   actionButton
 ) {
@@ -4661,6 +5130,26 @@ function selectGraphCanvasNode(
   nodeId
 ) {
 
+  if (!nodeId) {
+
+    delete documentElement.dataset.currentKnowledgeGraphSelectedNode;
+
+    updateGraphCanvasSelectionState(
+      documentElement,
+      ''
+    );
+
+    updateGraphCanvasSelectionInspector(
+      documentElement,
+      ''
+    );
+
+    return;
+  }
+
+  documentElement.dataset.currentKnowledgeGraphSelectedNode =
+    nodeId;
+
   documentElement
     .querySelectorAll(
       '[data-knowledge-graph-canvas-card]'
@@ -4685,6 +5174,280 @@ function selectGraphCanvasNode(
         );
 
     });
+
+  updateGraphCanvasSelectionState(
+    documentElement,
+    nodeId
+  );
+
+  updateGraphCanvasSelectionInspector(
+    documentElement,
+    nodeId
+  );
+}
+
+
+function updateGraphCanvasSelectionState(
+  documentElement,
+  nodeId
+) {
+
+  const stage =
+    documentElement.querySelector(
+      '[data-knowledge-graph-canvas-stage]'
+    );
+
+  if (!stage) return;
+
+  const relatedNodeIds =
+    new Set();
+
+  stage
+    .querySelectorAll(
+      '[data-knowledge-graph-canvas-edge]'
+    )
+    .forEach(edge => {
+
+      const isActive =
+        Boolean(nodeId) &&
+        (
+          edge.dataset.edgeFrom === nodeId ||
+          edge.dataset.edgeTo === nodeId
+        );
+
+      if (isActive) {
+
+        relatedNodeIds.add(
+          edge.dataset.edgeFrom
+        );
+
+        relatedNodeIds.add(
+          edge.dataset.edgeTo
+        );
+      }
+
+      const edgeState =
+        !nodeId
+          ? 'neutral'
+          : isActive
+            ? 'active'
+            : 'muted';
+
+      edge.dataset.edgeState =
+        edgeState;
+
+      edge.classList.toggle(
+        'is-active',
+        edgeState === 'active'
+      );
+
+      edge.classList.toggle(
+        'is-muted',
+        edgeState === 'muted'
+      );
+    });
+
+  stage
+    .querySelectorAll(
+      '[data-knowledge-graph-canvas-edge-label]'
+    )
+    .forEach(label => {
+
+      const isActive =
+        Boolean(nodeId) &&
+        (
+          label.dataset.edgeFrom === nodeId ||
+          label.dataset.edgeTo === nodeId
+        );
+
+      const edgeState =
+        !nodeId
+          ? 'neutral'
+          : isActive
+            ? 'active'
+            : 'muted';
+
+      label.dataset.edgeState =
+        edgeState;
+
+      label.classList.toggle(
+        'is-active',
+        edgeState === 'active'
+      );
+
+      label.classList.toggle(
+        'is-muted',
+        edgeState === 'muted'
+      );
+    });
+
+  stage.classList.toggle(
+    'has-node-selection',
+    Boolean(nodeId)
+  );
+
+  stage
+    .querySelectorAll(
+      '[data-knowledge-graph-canvas-card]'
+    )
+    .forEach(card => {
+
+      const isSelected =
+        card.dataset.nodeId === nodeId;
+
+      const isRelated =
+        Boolean(nodeId) &&
+        !isSelected &&
+        relatedNodeIds.has(
+          card.dataset.nodeId
+        );
+
+      card.classList.toggle(
+        'is-related',
+        isRelated
+      );
+
+      card.classList.toggle(
+        'is-muted',
+        Boolean(nodeId) &&
+          !isSelected &&
+          !isRelated
+      );
+    });
+}
+
+
+function updateGraphCanvasSelectionInspector(
+  documentElement,
+  nodeId
+) {
+
+  const inspector =
+    documentElement.querySelector(
+      '[data-knowledge-graph-inspector]'
+    );
+
+  if (!inspector) return;
+
+  const card =
+    nodeId
+      ? findGraphCanvasNodeCard(
+        documentElement,
+        nodeId
+      )
+      : null;
+
+  if (!card) {
+
+    inspector.hidden =
+      true;
+
+    delete inspector.dataset.nodeId;
+
+    return;
+  }
+
+  inspector.hidden =
+    false;
+
+  inspector.dataset.nodeId =
+    nodeId;
+
+  inspector.innerHTML =
+    getCanvasInspectorInnerHTML(
+      getCanvasInspectorNodeFromCard(
+        card
+      ),
+      getCanvasInspectorRelationshipsFromStage(
+        card.closest(
+          '[data-knowledge-graph-canvas-stage]'
+        ),
+        nodeId
+      ),
+      documentElement.dataset.currentKnowledgeGraphFocusNode === nodeId
+    );
+}
+
+
+function getCanvasInspectorNodeFromCard(
+  card
+) {
+
+  return {
+    id:
+      card.dataset.nodeId || '',
+    title:
+      card.dataset.nodeTitle || card.dataset.nodeId || '',
+    type:
+      card.dataset.nodeType || 'note',
+    domain:
+      card.dataset.nodeDomain || 'note',
+    domainLabel:
+      card.dataset.nodeDomainLabel || 'Заметки',
+    edgeCount:
+      Number(
+        card.dataset.nodeEdgeCount
+      ) || 0,
+    isPinned:
+      card.dataset.nodePinned === 'true'
+  };
+}
+
+
+function getCanvasInspectorRelationshipsFromStage(
+  stage,
+  selectedNodeId
+) {
+
+  if (
+    !stage ||
+    !selectedNodeId
+  ) {
+
+    return [];
+  }
+
+  const nodesById =
+    new Map(
+      [
+        ...stage.querySelectorAll(
+          '[data-knowledge-graph-canvas-card]'
+        )
+      ].map(card => [
+        card.dataset.nodeId,
+        getCanvasInspectorNodeFromCard(
+          card
+        )
+      ])
+    );
+
+  return [
+    ...stage.querySelectorAll(
+      '[data-knowledge-graph-canvas-edge]'
+    )
+  ]
+    .filter(edge =>
+      edge.dataset.edgeFrom === selectedNodeId ||
+      edge.dataset.edgeTo === selectedNodeId
+    )
+    .map(edge =>
+      getCanvasInspectorRelationship(
+        {
+          from:
+            edge.dataset.edgeFrom || '',
+          to:
+            edge.dataset.edgeTo || '',
+          type:
+            edge.dataset.edgeType || '',
+          label:
+            edge.dataset.edgeLabel || '',
+          source:
+            edge.dataset.edgeSource || ''
+        },
+        selectedNodeId,
+        nodesById
+      )
+    );
 }
 
 

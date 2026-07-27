@@ -113,7 +113,7 @@ For the closing `0.0.1.8.9` overlay adoption:
 
 - `itemSetPicker` registers as a non-modal popover overlay with shared state and ARIA metadata;
 - `onboardingPopup` registers as a non-modal dialog overlay and uses the static controller `open()` path so its fixed panel placement is preserved;
-- Knowledge Graph node actions register as a non-modal popover because the node surface mixes commands with relationship edit fields;
+- Knowledge Graph node actions register as a non-modal popover because the node surface mixes commands with relationship edit fields; its context-menu positioning must compensate against the real right-click anchor because graph/shell containers can add transform or offset context;
 - Knowledge Graph connect details register as a non-modal dialog overlay and close stale DOM state before rerendering the graph runtime.
 
 ## Position

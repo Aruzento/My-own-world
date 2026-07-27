@@ -85,6 +85,9 @@ Visual canvas есть как usable workbench:
 - graph canvas has local undo/redo for node moves, saved position reset and manual relationship creation;
 - readable view presets separate `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`;
 - visible-slice UI explains `показано X из Y` and separates nodes hidden by filters, the standard root/depth slice and the 96-node canvas cap;
+- selected-node UI stores selection only as runtime dataset state, not in the graph page HTML;
+- selected-node UI marks visible edges as `active` or `muted`, marks neighbor nodes as `related`, and keeps unrelated visible nodes visually muted;
+- graph inspector UI is a workbench-local dock beside/below the canvas. It is built from the current visible canvas DOM/model and shows node identity, visible incoming/outgoing relationship counts, pinned state, relationship rows and direct open/focus-neighbors actions;
 - canvas world dynamically expands when a node is dragged near an edge;
 - canvas transform-layer общий для SVG edges and node cards, поэтому pan двигает граф целиком;
 - fixed background domain labels, bottom node list and visual tabs are not part of the current first screen.
