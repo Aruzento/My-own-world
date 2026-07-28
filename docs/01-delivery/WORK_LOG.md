@@ -6,6 +6,200 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.13.3 Knowledge Graph Overlay Visual Cleanup
+
+### What Changed
+
+- Continued `0.0.1.8.13` Migration Phase 7 with the Knowledge Graph overlay cleanup slice.
+- Reworked the right-click node menu into a darker editor-grade context menu with a compact header, grouped icon actions and a dedicated manual-relationships panel.
+- Reworked editable relationship rows so type, label, save and delete controls fit in a compact inspector-like row without clipped text or visible internal scrollbars.
+- Reworked the connection-details popup into the same overlay language: icon header, source-to-target path, grouped fields and clearer action buttons.
+- Kept the existing graph model, relationship persistence, undo/redo, canvas filters and selected-node inspector behavior intact.
+- Added visual-regression coverage for the node menu attachment and strengthened `knowledge-graph.spec.mjs` assertions for overlay markers, menu semantics, grouped sections and popup layout.
+
+### Readiness
+
+Foundation for Phase 7 overlay cleanup. A human can right-click a graph node or create a connection without seeing the old plain/clipped popup styling, but the full `0.0.1.8.13` phase remains active for `BI-017` file/CSS split and `BI-018` lifecycle bridge work.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `node --check tests\uiMigrationBaselines.test.mjs`.
+- Passed twice: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests per run.
+- Passed twice: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests per run.
+- Visual QA: generated and reviewed `C:\Users\Aruko\AppData\Local\Temp\mow-knowledge-graph-node-menu-13-3.png`; the node menu shows three editable relationships without clipped rows or visible scrollbars.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify`.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with `BI-017` / `BI-018`; do not start `0.0.1.8.14` until the graph phase architecture/lifecycle work is closed or explicitly deferred.
+
+## 2026-07-28: 0.0.1.8.12.10 Campaign Map Toolbar Full-Size Dock Correction
+
+### What Changed
+
+- Corrected the campaign-map toolbar after human visual review of `0.0.1.8.12.9`.
+- Removed internal scrollbars from the map scene/session bar and the left canvas tool rail.
+- Expanded the top scene/session bar into a full-width workbench zone and expanded the left rail into a full-height stage dock, so future tools have real space to grow by section.
+- Moved toolbar labels out of clipped button pseudo-elements into one body-level floating tooltip layer for hover/focus.
+- Kept buttons icon-only, kept Hand/pan in the canvas tool rail, and kept scene/session actions in the top bar.
+- Preserved the existing map business logic, action selectors, popup flows, Inspector behavior, custom object right-click menu and runtime-only safe HTML boundary.
+
+### Readiness
+
+Usable correction for the Phase 6 campaign-map UI. The map toolbar now reads as a graphic editor workbench surface instead of a tiny clipped strip.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\safeHtmlSanitizer.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed twice: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 17 browser tests per run.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: generated and reviewed `C:\Users\Aruko\AppData\Local\Temp\mow-map-editor-toolbar-rework-desktop.png`, `C:\Users\Aruko\AppData\Local\Temp\mow-map-editor-toolbar-rework-tooltip.png` and `C:\Users\Aruko\AppData\Local\Temp\mow-map-editor-toolbar-rework-mobile.png`; no internal toolbar scrollbars or clipped tooltips were visible.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+
+### Follow-Up
+
+- Future map tools should extend the full-height rail or full-width scene/session bar by real section, not by adding fake placeholder panels.
+
+## 2026-07-28: 0.0.1.8.12.9 Campaign Map Graphic Editor Toolbar Correction
+
+### What Changed
+
+- Corrected the campaign-map toolbar again after human review: the map now uses a graphic-editor split layout instead of one top strip that mixed canvas tools and scene/session actions.
+- Kept the compact title chip and moved canvas tools into a left vertical rail inside the map stage: pan/hand, shapes, drawing and fog.
+- Kept scene/session actions in the top bar: add token, grid, change map, layers, presentation, initiative and music.
+- Added toolbar region markers for tests and future work: `data-map-toolbar-region="scene-bar"` and `data-map-toolbar-region="tool-rail"`, both on `data-map-ui-migration="0.0.1.8.12.9"`.
+- Added section markers for future expansion without drawing fake placeholder buttons: `creation`, `scene`, `presentation`, `navigation`, `drawing` and `fog`.
+- Preserved all existing legacy action selectors so map add, grid, layers, drawing, fog, initiative, music, presentation and pan controller flows continue to work.
+- Updated click/selection guards so clicking the left tool rail does not clear selected map objects or start selection-box behavior.
+- Kept the rail runtime-only through the safe HTML boundary; it is not saved into the map page HTML.
+
+### Readiness
+
+Usable correction for Phase 6 campaign-map UI. The default map now reads more like a real graphic editor: canvas tools live on the left edge of the stage, while scene/session actions stay in a small top control row.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapPointerController.js`.
+- Passed: `node --check js\editor\safeHtmlSanitizer.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 17 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: generated and reviewed `C:\Users\Aruko\AppData\Local\Temp\mow-map-editor-toolbar-desktop.png` and `C:\Users\Aruko\AppData\Local\Temp\mow-map-editor-toolbar-mobile.png`; the toolbar is split, icon-only, compact and does not create duplicate scene/layer panels.
+- Passed after final docs state: `python tools\generate_manual_docx.py`.
+- Passed after final docs state: `node tools\docs_index.mjs`.
+- Passed after encoding note correction: `npm run check:encoding`.
+- Passed after final code/docs/manual state: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+
+### Follow-Up
+
+- Future map tools should extend the left rail by section, not return to a wide top toolbar.
+- Future multi-pane workbench behavior remains tracked by `BI-025`: up to 3 real work areas can be designed later, but not as decorative placeholder panels.
+
+## 2026-07-27: 0.0.1.8.12.8 Campaign Map Property Inspector Correction
+
+### What Changed
+
+- Corrected `0.0.1.8.12` again after human review of the campaign-map object interaction.
+- Replaced the bottom selected-object dock as the primary click result with a right-side `Inspector` style property panel inside the map stage.
+- The new property panel shows editable map properties instead of only identity text: token name, X/Y, size, rotation and player visibility; shape type, X/Y, width/height, rotation, stroke/fill colors, stroke width and player visibility.
+- Added real shape `rotation` support to the map model, DOM adapter, renderer, serializer and presentation item sync instead of showing a fake disabled field.
+- Updated the safe HTML allowlist and browser coverage so persistent map token/shape attributes keep `data-rotation`, shape style fields and token `data-armor-class` through sanitization.
+- Kept quick selected-object actions as small icon-only buttons with tooltips, and removed the panel `more` action from normal click flow.
+- Added a custom map `contextmenu` path: right-click on a token or shape suppresses the browser menu, selects the object if needed, and opens the same compact action popup used by hover.
+- Tightened the map topbar so the editable map title is a compact chip and the toolbar remains a small graphic-editor-like icon strip that can grow by adding future tool groups.
+- Deliberately did not change add/picker, grid, drawing, fog, layers, initiative, music, presentation storage or graph behavior.
+
+### Readiness
+
+Usable correction for Phase 6 campaign-map UI. A human can now left-click an object to edit concrete properties in a Unity/Godot-like inspector, right-click for quick context actions, and keep more canvas space because the toolbar and title no longer behave like large card panels.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMapSelectionInspector.js`.
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapModel.js`.
+- Passed: `node --check js\editor\campaignMapDataSerializer.js`.
+- Passed: `node --check js\editor\campaignMapPresentationItemSync.js`.
+- Passed: `node --check js\editor\campaignMapRenderAdapter.js`.
+- Passed: `node --check js\editor\campaignMapShapes.js`.
+- Passed: `node --check js\editor\campaignMapToolbar.js`.
+- Passed: `node --check js\editor\safeHtmlSanitizer.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\safe-html.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-inspector)|safe-html-sanitizer-enforces"` with 6 browser tests.
+- Passed again after full verification: focused `npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-inspector)|safe-html-sanitizer-enforces"` with 6 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs tests/browser/safe-html.spec.mjs` with 23 browser tests.
+- Passed: `node --test tests\campaignMapModel.test.mjs tests\campaignMapDataSerializer.test.mjs` with 10 node tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs tests/browser/campaign-map-performance.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-initiative.spec.mjs` with 18 browser tests.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 552 files, 2 delete candidates and 0 mojibake candidates.
+- Passed: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- First `npm run desktop:gate` hit one unrelated full-smoke timeout in `knowledge-graph-can-be-created-and-opens-orphan-pages`; the same test passed immediately when run alone.
+- Passed after rerun: `npm run desktop:gate`, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+- Visual QA: generated and reviewed `C:\Users\Aruko\AppData\Local\Temp\mow-map-properties-panel-qa-2.png`; the map has a compact title chip, compact icon toolbar and a right-side editable property inspector.
+
+### Follow-Up
+
+- Future campaign-map tools should be added as new compact toolbar groups or inspector sections, not as permanent duplicate stage panels.
+- The right-click action popup remains for quick commands; editable properties belong in the Inspector panel.
+
+## 2026-07-27: 0.0.1.8.12.7 Campaign Map Toolbar Post-Review Correction
+
+### What Changed
+
+- Corrected `0.0.1.8.12` after human review of the campaign-map UI.
+- Removed the default runtime creation of the stage-level scene-state inspector and layer/object dock because they duplicated the toolbar/popups and made the map feel busier than needed.
+- Kept the real map functions in the compact toolbar: map image, Grid, Layers, Drawing, Fog, Initiative, Music and Presentation still open through the existing popup/controller flows.
+- Reworked the map toolbar into a thin icon-only strip inspired by graphic-editor toolbars: stable 30px buttons, no visible button text, hover/focus tooltips, compact separators and no large card-like action groups.
+- Moved `Рука` into the tools group so pan is treated as a real map tool, not a creation action.
+- Updated the visual regression map capture so it no longer manually renders the removed scene/layer panels.
+- Deliberately did not change map storage, layer model semantics, fog algorithms, token/shape actions, initiative, music, presentation or Knowledge Graph behavior.
+
+### Readiness
+
+Usable correction for Phase 6 campaign-map UI. A human opening a map now gets a quieter canvas-first screen: a small toolbar, existing settings popups, selected-object dock only when selection exists, and no duplicate scene/layer panels taking space on the stage.
+
+### Verification
+
+- Passed: `node --check js\editor\campaignMap.js`.
+- Passed: `node --check js\editor\campaignMapToolbar.js`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: focused `npm run test:browser -- --grep "campaign-map-toolbar-uses-migrated-mode-action-groups"`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 15 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed again after final CSS/docs updates: `npm run test:browser -- --grep "campaign-map-toolbar-uses-migrated-mode-action-groups"`.
+- Passed again after final CSS/docs updates: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 15 browser tests.
+- Passed again after final CSS/docs updates: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs tests/browser/campaign-map-performance.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-initiative.spec.mjs` with 18 browser tests.
+- Visual QA: generated and reviewed `C:\Users\Aruko\AppData\Local\Temp\mow-map-toolbar-qa.png`; the toolbar is a single thin desktop strip, buttons are icon-only, and scene/layer panels are absent from the default map stage.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 552 files, 2 delete candidates and 0 mojibake candidates.
+- Passed: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 110 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Future campaign-map UI work should stay concrete and user-visible: toolbar disappearance `BI-010`, creature skills encoding `BI-011`, map polish or real workflow bugs.
+- Do not reintroduce persistent or always-visible map panels unless a specific workflow needs them and the user can explain why they are useful.
+
 ## 2026-07-27: 0.0.1.8.13.2 Knowledge Graph Edge States And Inspector
 
 ### What Changed

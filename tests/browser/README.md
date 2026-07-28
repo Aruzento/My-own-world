@@ -7,7 +7,7 @@
 - `popup-lifecycle.spec.mjs` now also verifies `data-overlay-*` state synchronization, modal focus trap and focus return in addition to viewport fit, Escape, outside click, z-index and trigger lifecycle behavior.
 - `editor-formatting.spec.mjs` now includes the block-level pointer DnD regression: a real mouse drag moves a block, shows preview/placeholder feedback, writes one save, and removes runtime drag UI after drop.
 - `property-blocks.spec.mjs` now guards the redesigned Add block picker: local sprite icons, option roles/labels, group labels, hidden first-step actions and focus styling.
-- `visual-regression.spec.mjs` now also guards the `0.0.1.8.11.7` core-content contract and the `0.0.1.8.12.1`-`0.0.1.8.12.3` campaign-map baselines: card editor header/toolbar local icons and overlay placement, shared card block type badges/markers, shared card-block select styling, command palette/deep search styling, map toolbar grouping/fit through visual map capture, map popup shared-frame coverage, selected-object dock capture, plus the updated Properties visual baseline.
+- `visual-regression.spec.mjs` now also guards the `0.0.1.8.11.7` core-content contract, the `0.0.1.8.12.10` campaign-map baseline and the `0.0.1.8.13.3` Knowledge Graph overlay baseline: card editor header/toolbar local icons and overlay placement, shared card block type badges/markers, shared card-block select styling, command palette/deep search styling, split full-size map scene bar/tool rail and title-chip fit through visual map capture, map toolbar floating tooltip/no-scrollbar coverage, map popup shared-frame coverage, right-side property Inspector capture, custom right-click menu coverage, no duplicate scene/layer stage panels, the graph node context menu screenshot, plus the updated Properties visual baseline.
 - `property-blocks.spec.mjs` now guards the `0.0.1.8.11.4` Properties field-state contract: semantic variants/states, local sprite field badges, tokenized field surfaces and no character skill/death-save overlap.
 
 Эта папка хранит браузерные smoke/regression тесты и сценарии для их расширения.
@@ -71,7 +71,7 @@ npm run test:browser -- tests/browser/knowledge-graph.spec.mjs
 6. `task-tracker-dnd-persistence` — перенос задач/колонок и сохранение.
 7. `popup-viewport-fit` — popup не выходит за видимую область.
 8. `template-create-card` — создание карточки по шаблону.
-9. `visual-core-surfaces` — screenshots AppShell, sidebar/tree, card editor, Add block popup, Properties, Properties popup, campaign map, Knowledge Graph, task tracker и shared popover плюс layout guards.
+9. `visual-core-surfaces` — screenshots AppShell, sidebar/tree, card editor, Add block popup, Properties, Properties popup, campaign map, Knowledge Graph, Knowledge Graph node menu, task tracker и shared popover плюс layout guards.
 10. `popup-trigger-toggle-lifecycle` — единый lifecycle popup: open/toggle/close/Escape/outside click.
 11. `popup-modal-focus-lifecycle` — modal popup keeps Tab/Shift+Tab inside and returns focus to the trigger on close.
 

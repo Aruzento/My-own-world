@@ -63,6 +63,7 @@ test(
       y: 34,
       width: 56,
       height: 78,
+      rotation: 12,
       points: '50,6 94,94 6,94',
       strokeColor: '#aa33cc',
       fillColor: '#74c69d',
@@ -131,13 +132,18 @@ test(
     );
 
     assert.match(
-      html,
-      /data-shape-id="shape-1"/
-    );
+    html,
+    /data-shape-id="shape-1"/
+  );
 
-    assert.match(
-      html,
-      /data-stroke-color="#aa33cc"/
+  assert.match(
+    html,
+    /data-rotation="12"/
+  );
+
+  assert.match(
+    html,
+    /data-stroke-color="#aa33cc"/
     );
 
     assert.match(

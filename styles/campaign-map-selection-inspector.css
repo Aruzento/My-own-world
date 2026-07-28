@@ -506,3 +506,498 @@
       nowrap;
   }
 }
+
+
+.campaign-map-properties-panel {
+
+  left:
+    auto;
+
+  right:
+    12px;
+
+  top:
+    12px;
+
+  bottom:
+    12px;
+
+  width:
+    min(292px, calc(100% - 24px));
+
+  padding:
+    10px;
+
+  grid-template-columns:
+    1fr;
+
+  grid-template-rows:
+    auto minmax(0, 1fr) auto;
+
+  align-items:
+    stretch;
+
+  gap:
+    10px;
+
+  border-radius:
+    10px;
+
+  background:
+    rgba(13, 15, 14, 0.94);
+
+  backdrop-filter:
+    blur(16px);
+
+  box-shadow:
+    0 20px 46px rgba(0,0,0,0.34),
+    inset 0 1px 0 rgba(255, 246, 222, 0.07);
+
+  overflow:
+    hidden;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-header {
+
+  grid-template-columns:
+    30px minmax(0, 1fr);
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-icon {
+
+  width:
+    30px;
+
+  height:
+    30px;
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(255, 246, 222, 0.055);
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-icon .app-icon {
+
+  width:
+    15px;
+
+  height:
+    15px;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-heading {
+
+  gap:
+    2px;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-heading > span {
+
+  color:
+    rgba(241,211,142,0.72);
+
+  font:
+    800 9px/1 var(--mow-font-sans, system-ui, sans-serif);
+
+  text-transform:
+    uppercase;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-heading strong {
+
+  font:
+    800 13px/1.12 var(--mow-font-sans, system-ui, sans-serif);
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-heading small {
+
+  min-width:
+    0;
+
+  overflow:
+    hidden;
+
+  color:
+    var(--mow-text-muted, rgba(255,248,230,0.58));
+
+  font:
+    650 10px/1.15 var(--mow-font-sans, system-ui, sans-serif);
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.campaign-map-properties-panel-body {
+
+  min-height:
+    0;
+
+  display:
+    grid;
+
+  align-content:
+    start;
+
+  gap:
+    10px;
+
+  overflow:
+    auto;
+
+  padding-right:
+    2px;
+}
+
+
+.campaign-map-property-section {
+
+  display:
+    grid;
+
+  gap:
+    8px;
+
+  padding:
+    0 0 0 9px;
+
+  border-left:
+    2px solid rgba(241,211,142,0.42);
+}
+
+
+.campaign-map-property-section h3 {
+
+  margin:
+    0;
+
+  color:
+    rgba(255,248,230,0.82);
+
+  font:
+    800 10px/1 var(--mow-font-sans, system-ui, sans-serif);
+
+  text-transform:
+    uppercase;
+}
+
+
+.campaign-map-property-grid {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap:
+    7px;
+}
+
+
+.campaign-map-property-field,
+.campaign-map-property-toggle {
+
+  min-width:
+    0;
+
+  display:
+    grid;
+
+  gap:
+    4px;
+
+  color:
+    rgba(255,248,230,0.64);
+
+  font:
+    700 10px/1 var(--mow-font-sans, system-ui, sans-serif);
+}
+
+
+.campaign-map-property-field.is-wide {
+
+  grid-column:
+    1 / -1;
+}
+
+
+.campaign-map-property-field > span:first-child {
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+}
+
+
+.campaign-map-property-field input,
+.campaign-map-property-field select {
+
+  min-width:
+    0;
+
+  width:
+    100%;
+
+  height:
+    28px;
+
+  padding:
+    0 8px;
+
+  border:
+    1px solid rgba(247,220,164,0.12);
+
+  border-radius:
+    7px;
+
+  background:
+    rgba(255,255,255,0.045);
+
+  color:
+    rgba(255,248,230,0.92);
+
+  box-sizing:
+    border-box;
+
+  font:
+    750 11px/1 var(--mow-font-sans, system-ui, sans-serif);
+}
+
+
+.campaign-map-property-field input[type="color"] {
+
+  padding:
+    3px;
+
+  cursor:
+    pointer;
+}
+
+
+.campaign-map-property-field select {
+
+  appearance:
+    none;
+
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(241,211,142,0.82) 50%),
+    linear-gradient(135deg, rgba(241,211,142,0.82) 50%, transparent 50%);
+
+  background-position:
+    calc(100% - 13px) 11px,
+    calc(100% - 8px) 11px;
+
+  background-size:
+    5px 5px,
+    5px 5px;
+
+  background-repeat:
+    no-repeat;
+}
+
+
+.campaign-map-property-field input:focus,
+.campaign-map-property-field select:focus,
+.campaign-map-property-toggle input:focus-visible {
+
+  outline:
+    2px solid rgba(241,211,142,0.38);
+
+  outline-offset:
+    1px;
+
+  border-color:
+    rgba(241,211,142,0.34);
+}
+
+
+.campaign-map-property-input-shell {
+
+  position:
+    relative;
+
+  display:
+    block;
+}
+
+
+.campaign-map-property-input-shell em {
+
+  position:
+    absolute;
+
+  right:
+    7px;
+
+  top:
+    50%;
+
+  transform:
+    translateY(-50%);
+
+  color:
+    rgba(255,248,230,0.42);
+
+  font:
+    800 10px/1 var(--mow-font-sans, system-ui, sans-serif);
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-property-input-shell input {
+
+  padding-right:
+    22px;
+}
+
+
+.campaign-map-property-toggle {
+
+  grid-template-columns:
+    16px minmax(0, 1fr);
+
+  align-items:
+    center;
+
+  min-height:
+    28px;
+}
+
+
+.campaign-map-property-toggle input {
+
+  width:
+    14px;
+
+  height:
+    14px;
+
+  accent-color:
+    var(--mow-accent-primary, #f1d38e);
+}
+
+
+.campaign-map-property-note {
+
+  margin:
+    0;
+
+  color:
+    rgba(255,248,230,0.56);
+
+  font:
+    650 11px/1.35 var(--mow-font-sans, system-ui, sans-serif);
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-stats {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-stat {
+
+  min-width:
+    0;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-dock-actions {
+
+  justify-content:
+    flex-start;
+
+  gap:
+    5px;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-action {
+
+  width:
+    30px;
+
+  min-width:
+    30px;
+
+  height:
+    30px;
+
+  padding:
+    0;
+
+  border-radius:
+    7px;
+}
+
+
+.campaign-map-properties-panel .campaign-map-selection-action span {
+
+  position:
+    absolute;
+
+  width:
+    1px;
+
+  height:
+    1px;
+
+  overflow:
+    hidden;
+
+  clip:
+    rect(0 0 0 0);
+
+  white-space:
+    nowrap;
+}
+
+
+@media (max-width: 760px) {
+
+  .campaign-map-properties-panel {
+
+    top:
+      auto;
+
+    left:
+      10px;
+
+    right:
+      10px;
+
+    bottom:
+      10px;
+
+    width:
+      auto;
+
+    max-height:
+      min(420px, calc(100% - 20px));
+  }
+}

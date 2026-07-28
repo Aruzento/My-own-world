@@ -185,6 +185,7 @@ function serializeShape(
                     'data-y': Math.round(shape.y),
                     'data-w': Math.round(shape.width),
                     'data-h': Math.round(shape.height),
+                    'data-rotation': shape.rotation,
                     'data-points': shape.points,
                     'data-stroke-color': shape.strokeColor,
                     'data-fill-color': shape.fillColor,

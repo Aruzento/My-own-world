@@ -181,8 +181,31 @@ test(
                 type="submit"
                 data-token-id="token-1"
                 data-page-id="hero"
+                data-name="Hero"
+                data-x="11"
+                data-y="22"
+                data-size="1.5"
+                data-rotation="15"
+                data-armor-class="17"
+                data-player-token="true"
+                data-layer-id="map-creatures"
+                data-z-index="40"
                 data-extra="drop"
               >Token</button>
+              <div
+                class="campaign-map-shape bad-shape"
+                data-shape-id="shape-1"
+                data-shape-type="square"
+                data-x="10"
+                data-y="20"
+                data-w="30"
+                data-h="40"
+                data-rotation="12"
+                data-stroke-color="#aa33cc"
+                data-fill-color="#74c69d"
+                data-stroke-width="5"
+                data-extra="drop"
+              ></div>
             </div>
             <x-unsafe data-extra="drop"><span class="text-block-body random-class">Keep text</span></x-unsafe>
             <math><mi>Math text</mi></math>
@@ -210,6 +233,17 @@ test(
     expect(result.saved).toContain('width="300"');
     expect(result.saved).toContain('height="200"');
     expect(result.saved).toContain('data-token-id="token-1"');
+    expect(result.saved).toContain('data-name="Hero"');
+    expect(result.saved).toContain('data-size="1.5"');
+    expect(result.saved).toContain('data-armor-class="17"');
+    expect(result.saved).toContain('data-player-token="true"');
+    expect(result.saved).toContain('data-layer-id="map-creatures"');
+    expect(result.saved).toContain('data-z-index="40"');
+    expect(result.saved).toContain('data-shape-id="shape-1"');
+    expect(result.saved).toContain('data-rotation="12"');
+    expect(result.saved).toContain('data-stroke-color="#aa33cc"');
+    expect(result.saved).toContain('data-fill-color="#74c69d"');
+    expect(result.saved).toContain('data-stroke-width="5"');
     expect(result.saved).toContain('type="button"');
     expect(result.saved).toContain('Keep text');
     expect(result.saved).toContain('Math text');
@@ -224,6 +258,7 @@ test(
     expect(result.saved).not.toContain('imported-table');
     expect(result.saved).not.toContain('is-selected');
     expect(result.saved).not.toContain('bad-token');
+    expect(result.saved).not.toContain('bad-shape');
     expect(result.saved).not.toContain('bad-image');
     expect(result.saved).not.toContain('contenteditable="maybe"');
     expect(result.saved).not.toContain('type="submit"');

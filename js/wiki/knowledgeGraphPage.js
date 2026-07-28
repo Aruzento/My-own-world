@@ -1299,36 +1299,56 @@ function getCanvasConnectDetailsPopupHTML(
     <section
       class="knowledge-graph-connect-popup"
       data-knowledge-graph-connect-popup
+      data-knowledge-graph-overlay-ui="0.0.1.8.13.3"
       role="dialog"
       aria-modal="false"
       aria-label="Создание связи графа"
     >
-      <strong>
-        ${escapeHTML(connectState.sourceTitle)} -> ${escapeHTML(connectState.targetTitle)}
-      </strong>
-      <label>
-        <span>Тип связи</span>
-        <select data-knowledge-graph-connect-type>
-          ${EDITABLE_RELATIONSHIP_TYPES
-            .map(type => `
-              <option value="${escapeHTML(type.value)}"${type.value === connectState.type ? ' selected' : ''}>
-                ${escapeHTML(type.label)}
-              </option>
-            `)
-            .join('')}
-        </select>
-      </label>
-      <label>
-        <span>Подпись</span>
-        <input
-          data-knowledge-graph-connect-label
-          type="text"
-          placeholder="Например: союз, владеет, конфликт"
-        >
-      </label>
+      <header class="knowledge-graph-overlay-header">
+        <span class="knowledge-graph-overlay-header-icon">
+          ${iconSvg('link', 'knowledge-graph-overlay-icon')}
+        </span>
+        <div>
+          <span>Новая связь</span>
+          <strong>Параметры связи</strong>
+        </div>
+      </header>
+      <div class="knowledge-graph-connect-path">
+        <span>${escapeHTML(connectState.sourceTitle)}</span>
+        ${iconSvg('link', 'knowledge-graph-connect-path-icon')}
+        <span>${escapeHTML(connectState.targetTitle)}</span>
+      </div>
+      <div class="knowledge-graph-overlay-fieldset">
+        <label>
+          <span>Тип связи</span>
+          <select data-knowledge-graph-connect-type>
+            ${EDITABLE_RELATIONSHIP_TYPES
+              .map(type => `
+                <option value="${escapeHTML(type.value)}"${type.value === connectState.type ? ' selected' : ''}>
+                  ${escapeHTML(type.label)}
+                </option>
+              `)
+              .join('')}
+          </select>
+        </label>
+        <label>
+          <span>Подпись</span>
+          <input
+            data-knowledge-graph-connect-label
+            type="text"
+            placeholder="Например: союз, владеет, конфликт"
+          >
+        </label>
+      </div>
       <div class="knowledge-graph-connect-popup-actions">
-        <button type="button" data-knowledge-graph-connect-action="create">Создать</button>
-        <button type="button" data-knowledge-graph-connect-action="cancel">Отмена</button>
+        <button type="button" data-knowledge-graph-connect-action="create">
+          ${iconSvg('check', 'knowledge-graph-node-menu-action-svg')}
+          <span>Создать</span>
+        </button>
+        <button type="button" data-knowledge-graph-connect-action="cancel">
+          ${iconSvg('x', 'knowledge-graph-node-menu-action-svg')}
+          <span>Отмена</span>
+        </button>
       </div>
     </section>
   `;
@@ -2073,25 +2093,67 @@ function getCanvasContextMenuHTML() {
     <div
       class="knowledge-graph-node-menu hidden"
       data-knowledge-graph-node-menu
-      role="dialog"
+      data-knowledge-graph-overlay-ui="0.0.1.8.13.3"
+      role="menu"
+      aria-orientation="vertical"
       aria-modal="false"
       aria-label="Действия узла графа"
       hidden
     >
-      <strong data-knowledge-graph-node-menu-title></strong>
-      <button type="button" data-knowledge-graph-node-menu-action="open">Открыть</button>
-      <button type="button" data-knowledge-graph-node-menu-action="focus">Показать соседей</button>
-      <button type="button" data-knowledge-graph-node-menu-action="clear-focus">Показать весь граф</button>
-      <hr>
-      <button type="button" data-knowledge-graph-node-menu-action="pin-position">Закрепить здесь</button>
-      <button type="button" data-knowledge-graph-node-menu-action="reset-position">Сбросить позицию</button>
-      <button type="button" data-knowledge-graph-node-menu-action="connect">Связать...</button>
-      <hr>
-      <div
-        class="knowledge-graph-node-menu-relationships"
-        data-knowledge-graph-node-menu-relationships
-      ></div>
+      <header class="knowledge-graph-overlay-header">
+        <span class="knowledge-graph-overlay-header-icon">
+          ${iconSvg('document', 'knowledge-graph-overlay-icon')}
+        </span>
+        <div>
+          <span>Узел графа</span>
+          <strong data-knowledge-graph-node-menu-title></strong>
+        </div>
+      </header>
+      <div class="knowledge-graph-node-menu-section" data-knowledge-graph-node-menu-section="navigation">
+        ${getGraphNodeMenuActionHTML('open', 'document', 'Открыть')}
+        ${getGraphNodeMenuActionHTML('focus', 'search', 'Показать соседей')}
+        ${getGraphNodeMenuActionHTML('clear-focus', 'eye', 'Показать весь граф')}
+      </div>
+      <div class="knowledge-graph-node-menu-section" data-knowledge-graph-node-menu-section="layout">
+        ${getGraphNodeMenuActionHTML('pin-position', 'grip', 'Закрепить здесь')}
+        ${getGraphNodeMenuActionHTML('reset-position', 'x', 'Сбросить позицию')}
+        ${getGraphNodeMenuActionHTML('connect', 'link', 'Связать...')}
+      </div>
+      <section class="knowledge-graph-node-menu-relationship-panel">
+        <header class="knowledge-graph-node-menu-section-header">
+          <span>
+            ${iconSvg('link', 'knowledge-graph-node-menu-section-icon')}
+            Ручные связи
+          </span>
+          <small data-knowledge-graph-node-menu-relationship-count>0</small>
+        </header>
+        <div
+          class="knowledge-graph-node-menu-relationships"
+          data-knowledge-graph-node-menu-relationships
+        ></div>
+      </section>
     </div>
+  `;
+}
+
+
+function getGraphNodeMenuActionHTML(
+  action,
+  icon,
+  label
+) {
+
+  return `
+    <button
+      class="knowledge-graph-node-menu-action"
+      type="button"
+      data-knowledge-graph-node-menu-action="${escapeHTML(action)}"
+    >
+      <span class="knowledge-graph-node-menu-action-icon">
+        ${iconSvg(icon, 'knowledge-graph-node-menu-action-svg')}
+      </span>
+      <span>${escapeHTML(label)}</span>
+    </button>
   `;
 }
 
@@ -2185,15 +2247,16 @@ function getNodeRelationshipsMenuHTML(
         data-relationship-index="${escapeHTML(relationship.index)}"
       >
         <span class="knowledge-graph-node-menu-relationship-title">
-          ${escapeHTML(relationship.sourceTitle)} -&gt; ${escapeHTML(relationship.targetTitle)}
+          ${iconSvg('link', 'knowledge-graph-node-menu-relationship-icon')}
+          <span>${escapeHTML(relationship.sourceTitle)} -&gt; ${escapeHTML(relationship.targetTitle)}</span>
         </span>
-        <label>
+        <label class="knowledge-graph-node-menu-relationship-field is-type">
           <span>Тип</span>
           <select data-knowledge-graph-relationship-field="type">
             ${getEditableRelationshipTypeOptionsHTML(relationship.type)}
           </select>
         </label>
-        <label>
+        <label class="knowledge-graph-node-menu-relationship-field is-label">
           <span>Подпись</span>
           <input
             data-knowledge-graph-relationship-field="label"
@@ -2206,12 +2269,22 @@ function getNodeRelationshipsMenuHTML(
           <button
             type="button"
             data-knowledge-graph-relationship-menu-action="save"
-          >Сохранить</button>
+            aria-label="Сохранить связь"
+            title="Сохранить связь"
+          >
+            ${iconSvg('check', 'knowledge-graph-node-menu-action-svg')}
+            <span>Сохранить</span>
+          </button>
           <button
             class="is-danger"
             type="button"
             data-knowledge-graph-relationship-menu-action="delete"
-          >Удалить</button>
+            aria-label="Удалить связь"
+            title="Удалить связь"
+          >
+            ${iconSvg('trash', 'knowledge-graph-node-menu-action-svg')}
+            <span>Удалить</span>
+          </button>
         </div>
       </section>
     `)
@@ -2447,7 +2520,7 @@ function ensureGraphNodeMenuController(
       key:
         'knowledge-graph-node-menu',
       kind:
-        'popover',
+        'context-menu',
       modal:
         false
     });
@@ -4298,6 +4371,21 @@ function showGraphNodeContextMenu(
       );
   }
 
+  const relationshipCountElement =
+    menu.querySelector(
+      '[data-knowledge-graph-node-menu-relationship-count]'
+    );
+
+  if (relationshipCountElement) {
+
+    relationshipCountElement.textContent =
+      String(
+        getEditableNodeRelationships(
+          card.dataset.nodeId
+        ).length
+      );
+  }
+
   menu.hidden =
     false;
 
@@ -4315,8 +4403,8 @@ function showGraphNodeContextMenu(
     clientX,
     clientY,
     {
-      fallbackWidth: 260,
-      fallbackHeight: 360
+      fallbackWidth: 336,
+      fallbackHeight: 460
     }
   );
 

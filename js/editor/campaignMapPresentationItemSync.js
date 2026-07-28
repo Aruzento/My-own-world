@@ -138,6 +138,9 @@ function applyShapeRecord(
   targetItem.dataset.h =
     String(Math.round(record.height));
 
+  targetItem.dataset.rotation =
+    String(record.rotation || 0);
+
   if (record.points) {
 
     targetItem.dataset.points =

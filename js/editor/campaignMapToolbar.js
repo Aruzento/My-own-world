@@ -20,21 +20,13 @@ import {
 export function getMapControlsHTML() {
 
   return `
-    <div class="campaign-map-control-group" data-map-control-group="create" role="group" aria-label="Создание и навигация">
+    <div class="campaign-map-control-group" data-map-control-group="create" role="group" aria-label="Создание">
       <span class="campaign-map-control-group-label">Создание</span>
       <div class="campaign-map-control-actions">
         ${getMapToolButton({
           className: 'campaign-add-btn',
           icon: 'plus',
-          label: 'Добавить',
           tooltip: 'Добавить токен'
-        })}
-        ${getMapToolButton({
-          className: 'campaign-pan-btn',
-          icon: 'hand',
-          label: 'Рука',
-          tooltip: 'Двигать карту',
-          pressed: false
         })}
       </div>
     </div>
@@ -45,20 +37,17 @@ export function getMapControlsHTML() {
         ${getMapToolButton({
           className: 'campaign-grid-btn',
           icon: 'grid',
-          label: 'Сетка',
           tooltip: 'Настроить сетку',
           pressed: false
         })}
         ${getMapToolButton({
           className: 'campaign-change-map-btn',
           icon: 'image',
-          label: 'Карта',
           tooltip: 'Сменить карту'
         })}
         ${getMapToolButton({
           className: 'campaign-layers-btn',
           icon: 'eye',
-          label: 'Слои',
           tooltip: 'Слои карты'
         })}
       </div>
@@ -68,22 +57,25 @@ export function getMapControlsHTML() {
       <span class="campaign-map-control-group-label">Инструменты</span>
       <div class="campaign-map-control-actions">
         ${getMapToolButton({
+          className: 'campaign-pan-btn',
+          icon: 'hand',
+          tooltip: 'Двигать карту',
+          pressed: false
+        })}
+        ${getMapToolButton({
           className: 'campaign-shapes-btn',
           icon: 'shapes',
-          label: 'Фигуры',
           tooltip: 'Фигуры'
         })}
         ${getMapToolButton({
           className: 'campaign-drawing-btn',
           icon: 'brush',
-          label: 'Рис.',
           tooltip: 'Рисование',
           pressed: false
         })}
         ${getMapToolButton({
           className: 'campaign-fog-btn',
           icon: 'fog',
-          label: 'Туман',
           tooltip: 'Туман войны',
           pressed: false
         })}
@@ -96,19 +88,16 @@ export function getMapControlsHTML() {
         ${getMapToolButton({
           className: 'campaign-open-presentation-btn',
           icon: 'presentation',
-          label: 'Показ',
           tooltip: 'Открыть презентацию'
         })}
         ${getMapToolButton({
           className: 'campaign-initiative-btn',
           icon: 'skill',
-          label: 'Иниц.',
           tooltip: 'Инициатива'
         })}
         ${getMapToolButton({
           className: 'campaign-music-btn',
           icon: 'music',
-          label: 'Музыка',
           tooltip: 'Музыка карты'
         })}
       </div>
@@ -120,7 +109,6 @@ export function getMapControlsHTML() {
 function getMapToolButton({
   className,
   icon,
-  label,
   tooltip,
   pressed = null
 }) {
@@ -139,7 +127,6 @@ function getMapToolButton({
       aria-label="${escapeAttribute(tooltip)}"${pressedAttribute}
     >
       ${iconSvg(icon)}
-      <span class="campaign-map-button-label">${escapeHTML(label)}</span>
     </button>
   `;
 }

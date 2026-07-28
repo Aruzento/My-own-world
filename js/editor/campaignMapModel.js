@@ -718,18 +718,19 @@ function readShapeElement(
     'shapeId'
   );
 
-  return {
-    shapeId: shape.dataset.shapeId || '',
-    type: shape.dataset.shapeType || 'square',
-    x: shape.dataset.x,
-    y: shape.dataset.y,
-    width: shape.dataset.w,
-    height: shape.dataset.h,
-    points: shape.dataset.points || '',
-    strokeColor: shape.dataset.strokeColor || '',
-    fillColor: shape.dataset.fillColor || '',
-    strokeWidth: shape.dataset.strokeWidth || '',
-    layerId: shape.dataset.layerId || '',
+    return {
+      shapeId: shape.dataset.shapeId || '',
+      type: shape.dataset.shapeType || 'square',
+      x: shape.dataset.x,
+      y: shape.dataset.y,
+      width: shape.dataset.w,
+      height: shape.dataset.h,
+      rotation: shape.dataset.rotation,
+      points: shape.dataset.points || '',
+      strokeColor: shape.dataset.strokeColor || '',
+      fillColor: shape.dataset.fillColor || '',
+      strokeWidth: shape.dataset.strokeWidth || '',
+      layerId: shape.dataset.layerId || '',
     zIndex: shape.dataset.zIndex,
     presentationHidden: shape.dataset.presentationHidden === 'true'
   };
@@ -1189,6 +1190,9 @@ function normalizeShape(
     y: clampNumber(shape.y, 0, WORLD_HEIGHT, 0),
     width: clampNumber(shape.width, 1, WORLD_WIDTH, DEFAULT_GRID_SIZE),
     height: clampNumber(shape.height, 1, WORLD_HEIGHT, DEFAULT_GRID_SIZE),
+    rotation: Number.isFinite(Number(shape.rotation))
+      ? Number(shape.rotation)
+      : 0,
     points: String(shape.points || ''),
     strokeColor:
       isHexColor(shape.strokeColor)

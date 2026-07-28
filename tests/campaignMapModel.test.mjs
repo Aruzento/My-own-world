@@ -256,6 +256,7 @@ test(
         y: 99999,
         width: 0,
         height: 99999,
+        rotation: 33,
         points: '50,0 100,100 0,100',
         presentationHidden: true
       });
@@ -283,6 +284,11 @@ test(
     assert.equal(
       shape.height,
       1200
+    );
+
+    assert.equal(
+      shape.rotation,
+      33
     );
 
     assert.equal(

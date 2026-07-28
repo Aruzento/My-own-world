@@ -52,6 +52,11 @@ export function renderMapShape(
     `${Number(shape.dataset.strokeWidth || 3)}px`
   );
 
+  shape.style.setProperty(
+    '--campaign-shape-rotation',
+    `${Number(shape.dataset.rotation || 0)}deg`
+  );
+
   shape
     .querySelectorAll('.campaign-map-shape-handle')
     .forEach(handle => markRuntime(handle));

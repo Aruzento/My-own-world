@@ -88,6 +88,7 @@ Visual canvas есть как usable workbench:
 - selected-node UI stores selection only as runtime dataset state, not in the graph page HTML;
 - selected-node UI marks visible edges as `active` or `muted`, marks neighbor nodes as `related`, and keeps unrelated visible nodes visually muted;
 - graph inspector UI is a workbench-local dock beside/below the canvas. It is built from the current visible canvas DOM/model and shows node identity, visible incoming/outgoing relationship counts, pinned state, relationship rows and direct open/focus-neighbors actions;
+- since `0.0.1.8.13.3`, the node context menu and connect-details popup are runtime-only graph overlays marked with `data-knowledge-graph-overlay-ui="0.0.1.8.13.3"`; they change UI presentation, not the relationship data model;
 - canvas world dynamically expands when a node is dragged near an edge;
 - canvas transform-layer общий для SVG edges and node cards, поэтому pan двигает граф целиком;
 - fixed background domain labels, bottom node list and visual tabs are not part of the current first screen.

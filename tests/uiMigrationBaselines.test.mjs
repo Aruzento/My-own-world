@@ -20,6 +20,7 @@ const REQUIRED_BASELINE_ATTACHMENTS = [
   'visual-properties-popup',
   'visual-campaign-map',
   'visual-knowledge-graph',
+  'visual-knowledge-graph-node-menu',
   'visual-task-tracker',
   'visual-component-catalogue-popover'
 ];

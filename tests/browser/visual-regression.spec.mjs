@@ -15,6 +15,7 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-properties-popup',
   'visual-campaign-map',
   'visual-knowledge-graph',
+  'visual-knowledge-graph-node-menu',
   'visual-task-tracker',
   'visual-component-catalogue-popover'
 ];
@@ -329,14 +330,6 @@ test(
         } = await import('/js/editor/campaignMapSelectionInspector.js');
 
         const {
-          ensureMapLayerDock
-        } = await import('/js/editor/campaignMapLayerDock.js');
-
-        const {
-          ensureMapSceneInspector
-        } = await import('/js/editor/campaignMapSceneInspector.js');
-
-        const {
           selectMapToken
         } = await import('/js/editor/campaignMapRuntime.js');
 
@@ -495,22 +488,6 @@ test(
           }
         );
 
-        ensureMapLayerDock(
-          map,
-          {
-            async saveAndSync() {}
-          }
-        );
-
-        ensureMapSceneInspector(
-          map,
-          {
-            async changeMapImage() {},
-            openFogPopup() {},
-            openGridPopup() {}
-          }
-        );
-
         selectMapToken(
           map.querySelector('[data-token-id="visual-token"]')
         );
@@ -627,6 +604,28 @@ test(
       page.locator('.knowledge-graph-document'),
       testInfo,
       'visual-knowledge-graph'
+    );
+
+    const graphHeroCard =
+      page.locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]');
+
+    await expect(
+      graphHeroCard
+    ).toBeVisible();
+
+    await graphHeroCard.click({
+      button:
+        'right'
+    });
+
+    await expect(
+      page.locator('[data-knowledge-graph-node-menu]')
+    ).toBeVisible();
+
+    await attachLocatorScreenshot(
+      page.locator('[data-knowledge-graph-node-menu]'),
+      testInfo,
+      'visual-knowledge-graph-node-menu'
     );
 
     await page.evaluate(
@@ -1447,7 +1446,7 @@ test(
     expect(
       Math.round(result.toolbarWidthAfter)
     ).toBe(
-      454
+      Math.round(result.toolbarWidthBefore)
     );
 
     expect(

@@ -430,6 +430,10 @@ test(
           } = await import('/js/editor/campaignMap.js');
 
           const {
+            getMapControlsHTML
+          } = await import('/js/editor/campaignMapToolbar.js');
+
+          const {
             setDrawingTool
           } = await import('/js/editor/campaignMapDrawing.js');
 
@@ -454,8 +458,61 @@ test(
           const map =
             editor.querySelector('.campaign-map-document');
 
-          const toolbar =
-            map.querySelector('.campaign-map-controls');
+          const sceneBar =
+            map.querySelector('[data-map-toolbar-region="scene-bar"]');
+
+          const toolRail =
+            map.querySelector('[data-map-toolbar-region="tool-rail"]');
+
+          const toolbarRegions =
+            [
+              sceneBar,
+              toolRail
+            ];
+
+          const knownSelectors =
+            [
+              '.campaign-add-btn',
+              '.campaign-pan-btn',
+              '.campaign-grid-btn',
+              '.campaign-change-map-btn',
+              '.campaign-open-presentation-btn',
+              '.campaign-shapes-btn',
+              '.campaign-drawing-btn',
+              '.campaign-layers-btn',
+              '.campaign-fog-btn',
+              '.campaign-initiative-btn',
+              '.campaign-music-btn'
+            ];
+
+          const getButtonKey =
+            button =>
+              knownSelectors
+                .find(selector =>
+                  button.matches(selector)
+                )
+                ?.slice(1) || '';
+
+          const legacyToolbar =
+            document.createElement('div');
+
+          legacyToolbar.innerHTML =
+            getMapControlsHTML();
+
+          const legacyTooltipOrder =
+            [
+              '.campaign-add-btn',
+              '.campaign-grid-btn',
+              '.campaign-change-map-btn',
+              '.campaign-layers-btn',
+              '.campaign-pan-btn',
+              '.campaign-shapes-btn',
+              '.campaign-drawing-btn',
+              '.campaign-fog-btn',
+              '.campaign-open-presentation-btn',
+              '.campaign-initiative-btn',
+              '.campaign-music-btn'
+            ];
 
           toggleGrid(
             map
@@ -467,7 +524,7 @@ test(
           );
 
           const panPressed =
-            toolbar
+            toolRail
               .querySelector('.campaign-pan-btn')
               .getAttribute('aria-pressed');
 
@@ -477,7 +534,7 @@ test(
           );
 
           const drawingPressed =
-            toolbar
+            toolRail
               .querySelector('.campaign-drawing-btn')
               .getAttribute('aria-pressed');
 
@@ -489,63 +546,271 @@ test(
           const mapRect =
             map.getBoundingClientRect();
 
-          const toolbarRect =
-            toolbar.getBoundingClientRect();
+          const stageRect =
+            map
+              .querySelector('.campaign-map-stage')
+              .getBoundingClientRect();
+
+          const sceneBarRect =
+            sceneBar.getBoundingClientRect();
+
+          const toolRailRect =
+            toolRail.getBoundingClientRect();
+
+          const sceneButtons =
+            [...sceneBar.querySelectorAll('.campaign-map-tool-button')];
+
+          const railButtons =
+            [...toolRail.querySelectorAll('.campaign-map-tool-button')];
+
+          const allToolbarButtons =
+            toolbarRegions
+              .flatMap(region =>
+                [...region.querySelectorAll('.campaign-map-tool-button')]
+              );
+
+          const waitFrame =
+            () => new Promise(resolve =>
+              requestAnimationFrame(resolve)
+            );
+
+          const tooltipAnchor =
+            toolRail.querySelector('.campaign-pan-btn');
+
+          tooltipAnchor.dispatchEvent(
+            new MouseEvent(
+              'pointerover',
+              {
+                bubbles:
+                  true
+              }
+            )
+          );
+
+          await waitFrame();
+          await waitFrame();
+
+          const floatingTooltip =
+            document.querySelector('.campaign-map-toolbar-tooltip');
+
+          const floatingTooltipRect =
+            floatingTooltip?.getBoundingClientRect();
+
+          const sceneBarStyle =
+            getComputedStyle(
+              sceneBar
+            );
+
+          const toolRailStyle =
+            getComputedStyle(
+              toolRail
+            );
+
+          const anchorAfterStyle =
+            getComputedStyle(
+              tooltipAnchor,
+              '::after'
+            );
 
           return {
-            migration:
-              toolbar.dataset.mapUiMigration,
-            role:
-              toolbar.getAttribute('role'),
+            migrations:
+              toolbarRegions
+                .map(region => region.dataset.mapUiMigration),
+            regions:
+              toolbarRegions
+                .map(region => region.dataset.mapToolbarRegion),
+            roles:
+              toolbarRegions
+                .map(region => region.getAttribute('role')),
+            orientations:
+              toolbarRegions
+                .map(region => region.getAttribute('aria-orientation') || ''),
+            ariaLabelsPresent:
+              toolbarRegions
+                .every(region => Boolean(region.getAttribute('aria-label'))),
             label:
-              toolbar.getAttribute('aria-label'),
+              sceneBar.getAttribute('aria-label'),
             groupKeys:
-              [...toolbar.querySelectorAll('.campaign-map-control-group')]
+              [...legacyToolbar.querySelectorAll('.campaign-map-control-group')]
                 .map(group => group.dataset.mapControlGroup),
             groupLabels:
-              [...toolbar.querySelectorAll('.campaign-map-control-group-label')]
+              [...legacyToolbar.querySelectorAll('.campaign-map-control-group-label')]
                 .map(label => label.textContent.trim()),
+            sceneGroupKeys:
+              [...sceneBar.querySelectorAll('.campaign-map-control-group')]
+                .map(group => group.dataset.mapControlGroup),
+            railGroupKeys:
+              [...toolRail.querySelectorAll('.campaign-map-control-group')]
+                .map(group => group.dataset.mapControlGroup),
+            sceneSections:
+              [...sceneBar.querySelectorAll('.campaign-map-control-group')]
+                .map(group => group.dataset.mapToolSection),
+            railSections:
+              [...toolRail.querySelectorAll('.campaign-map-control-group')]
+                .map(group => group.dataset.mapToolSection),
             buttonLabels:
-              [...toolbar.querySelectorAll('.campaign-map-button-label')]
+              toolbarRegions
+                .flatMap(region =>
+                  [...region.querySelectorAll('.campaign-map-button-label')]
+                )
                 .map(label => label.textContent.trim()),
+            buttonText:
+              allToolbarButtons
+                .map(button => button.textContent.trim())
+                .filter(Boolean),
+            buttonTooltips:
+              legacyTooltipOrder
+                .map(selector =>
+                  map.querySelector(selector)?.dataset.tooltip || ''
+                ),
+            buttonsWithoutTooltip:
+              allToolbarButtons
+                .filter(button => !button.dataset.tooltip).length,
             buttonsWithoutAria:
-              [...toolbar.querySelectorAll('button')]
+              toolbarRegions
+                .flatMap(region =>
+                  [...region.querySelectorAll('button')]
+                )
                 .filter(button => !button.getAttribute('aria-label')).length,
+            unsectionedGroups:
+              toolbarRegions
+                .flatMap(region =>
+                  [...region.querySelectorAll('.campaign-map-control-group')]
+                )
+                .filter(group => !group.dataset.mapToolSection).length,
+            panGroup:
+              toolRail
+                .querySelector('.campaign-pan-btn')
+                .closest('.campaign-map-control-group')
+                .dataset.mapControlGroup,
             gridPressed:
-              toolbar
+              sceneBar
                 .querySelector('.campaign-grid-btn')
                 .getAttribute('aria-pressed'),
             panPressed,
             drawingPressed,
             fogPressed:
-              toolbar
+              toolRail
                 .querySelector('.campaign-fog-btn')
                 .getAttribute('aria-pressed'),
             drawingPressedAfterFog:
-              toolbar
+              toolRail
                 .querySelector('.campaign-drawing-btn')
                 .getAttribute('aria-pressed'),
             toolButtonCount:
-              toolbar.querySelectorAll('.campaign-map-tool-button').length,
-            toolbarFitsMap:
-              Math.ceil(toolbarRect.right) <=
-              Math.ceil(mapRect.right),
-            legacySelectorsStillPresent:
+              allToolbarButtons.length,
+            sceneButtonKeys:
+              sceneButtons.map(getButtonKey),
+            railButtonKeys:
+              railButtons.map(getButtonKey),
+            toolbarHeight:
+              Math.ceil(sceneBarRect.height),
+            sceneBarHeight:
+              Math.ceil(sceneBarRect.height),
+            railWidth:
+              Math.ceil(toolRailRect.width),
+            sceneBarWidth:
+              Math.ceil(sceneBarRect.width),
+            sceneBarFillsAvailableRow:
+              sceneBarRect.width >=
+              mapRect.width - 330,
+            railHeight:
+              Math.ceil(toolRailRect.height),
+            stageHeight:
+              Math.ceil(stageRect.height),
+            sceneBarOverflow:
               [
-                '.campaign-add-btn',
-                '.campaign-pan-btn',
-                '.campaign-grid-btn',
-                '.campaign-change-map-btn',
-                '.campaign-open-presentation-btn',
-                '.campaign-shapes-btn',
-                '.campaign-drawing-btn',
-                '.campaign-layers-btn',
-                '.campaign-fog-btn',
-                '.campaign-initiative-btn',
-                '.campaign-music-btn'
-              ].every(selector =>
+                sceneBarStyle.overflowX,
+                sceneBarStyle.overflowY
+              ],
+            railOverflow:
+              [
+                toolRailStyle.overflowX,
+                toolRailStyle.overflowY
+              ],
+            floatingTooltip:
+              floatingTooltip
+                ? {
+                  parent:
+                    floatingTooltip.parentElement?.tagName || '',
+                  visible:
+                    floatingTooltip.classList.contains('is-visible'),
+                  text:
+                    floatingTooltip.textContent.trim(),
+                  left:
+                    Math.floor(floatingTooltipRect.left),
+                  right:
+                    Math.ceil(floatingTooltipRect.right),
+                  top:
+                    Math.floor(floatingTooltipRect.top),
+                  bottom:
+                    Math.ceil(floatingTooltipRect.bottom)
+                }
+                : null,
+            viewportWidth:
+              window.innerWidth,
+            buttonPseudoTooltip:
+              anchorAfterStyle.content,
+            maxButtonWidth:
+              Math.max(
+                ...sceneButtons
+                  .map(button =>
+                    Math.ceil(
+                      button.getBoundingClientRect().width
+                    )
+                  )
+              ),
+            maxSceneButtonWidth:
+              Math.max(
+                ...sceneButtons
+                  .map(button =>
+                    Math.ceil(
+                      button.getBoundingClientRect().width
+                    )
+                  )
+              ),
+            maxRailButtonWidth:
+              Math.max(
+                ...railButtons
+                  .map(button =>
+                    Math.ceil(
+                      button.getBoundingClientRect().width
+                    )
+                  )
+              ),
+            sceneBarFitsMap:
+              Math.ceil(sceneBarRect.right) <=
+              Math.ceil(mapRect.right),
+            toolbarFitsMap:
+              Math.ceil(sceneBarRect.right) <=
+              Math.ceil(mapRect.right),
+            railInsideStage:
+              Math.floor(toolRailRect.left) >=
+              Math.floor(stageRect.left) &&
+              Math.ceil(toolRailRect.right) <=
+              Math.ceil(stageRect.right) &&
+              Math.floor(toolRailRect.top) >=
+              Math.floor(stageRect.top) &&
+              Math.ceil(toolRailRect.bottom) <=
+              Math.ceil(stageRect.bottom),
+            duplicateRuntimePanels:
+              {
+                scene:
+                  map.querySelectorAll('.campaign-map-scene-inspector').length,
+                layers:
+                  map.querySelectorAll('.campaign-map-layer-dock').length
+              },
+            titleWidth:
+              Math.ceil(
+                map
+                  .querySelector('.campaign-map-title')
+                  .getBoundingClientRect()
+                  .width
+              ),
+            legacySelectorsStillPresent:
+              knownSelectors.every(selector =>
                 Boolean(
-                  toolbar.querySelector(selector)
+                  map.querySelector(selector)
                 )
               )
           };
@@ -553,15 +818,96 @@ test(
       );
 
     expect(
-      result.migration
+      result.migrations
+    ).toEqual([
+      '0.0.1.8.12.10',
+      '0.0.1.8.12.10'
+    ]);
+
+    expect(
+      result.regions
+    ).toEqual([
+      'scene-bar',
+      'tool-rail'
+    ]);
+
+    expect(
+      result.roles
+    ).toEqual([
+      'toolbar',
+      'toolbar'
+    ]);
+
+    expect(
+      result.orientations
+    ).toEqual([
+      '',
+      'vertical'
+    ]);
+
+    expect(
+      result.ariaLabelsPresent
     ).toBe(
-      '0.0.1.8.12.1'
+      true
     );
 
     expect(
-      result.role
+      result.sceneGroupKeys
+    ).toEqual([
+      'create',
+      'scene',
+      'live'
+    ]);
+
+    expect(
+      result.railGroupKeys
+    ).toEqual([
+      'navigation',
+      'drawing',
+      'fog'
+    ]);
+
+    expect(
+      result.sceneSections
+    ).toEqual([
+      'creation',
+      'scene',
+      'presentation'
+    ]);
+
+    expect(
+      result.railSections
+    ).toEqual([
+      'navigation',
+      'drawing',
+      'fog'
+    ]);
+
+    expect(
+      result.sceneButtonKeys
+    ).toEqual([
+      'campaign-add-btn',
+      'campaign-grid-btn',
+      'campaign-change-map-btn',
+      'campaign-layers-btn',
+      'campaign-open-presentation-btn',
+      'campaign-initiative-btn',
+      'campaign-music-btn'
+    ]);
+
+    expect(
+      result.railButtonKeys
+    ).toEqual([
+      'campaign-pan-btn',
+      'campaign-shapes-btn',
+      'campaign-drawing-btn',
+      'campaign-fog-btn'
+    ]);
+
+    expect(
+      result.unsectionedGroups
     ).toBe(
-      'toolbar'
+      0
     );
 
     expect(
@@ -590,19 +936,33 @@ test(
 
     expect(
       result.buttonLabels
+    ).toEqual([]);
+
+    expect(
+      result.buttonText
+    ).toEqual([]);
+
+    expect(
+      result.buttonTooltips
     ).toEqual([
-      'Добавить',
-      'Рука',
-      'Сетка',
-      'Карта',
-      'Слои',
+      'Добавить токен',
+      'Выключить сетку',
+      'Сменить карту',
+      'Слои карты',
+      'Двигать карту',
       'Фигуры',
-      'Рис.',
-      'Туман',
-      'Показ',
-      'Иниц.',
-      'Музыка'
+      'Рисование',
+      'Туман войны',
+      'Открыть презентацию',
+      'Инициатива',
+      'Музыка карты'
     ]);
+
+    expect(
+      result.buttonsWithoutTooltip
+    ).toBe(
+      0
+    );
 
     expect(
       result.buttonsWithoutAria
@@ -647,13 +1007,304 @@ test(
     );
 
     expect(
+      result.panGroup
+    ).toBe(
+      'navigation'
+    );
+
+    expect(
+      result.toolbarHeight
+    ).toBeLessThanOrEqual(
+      56
+    );
+
+    expect(
+      result.maxButtonWidth
+    ).toBeLessThanOrEqual(
+      34
+    );
+
+    expect(
+      result.maxSceneButtonWidth
+    ).toBeLessThanOrEqual(
+      34
+    );
+
+    expect(
+      result.railWidth
+    ).toBeGreaterThanOrEqual(
+      52
+    );
+
+    expect(
+      result.railWidth
+    ).toBeLessThanOrEqual(
+      60
+    );
+
+    expect(
+      result.maxRailButtonWidth
+    ).toBeLessThanOrEqual(
+      40
+    );
+
+    expect(
+      result.sceneBarWidth
+    ).toBeGreaterThan(
+      500
+    );
+
+    expect(
+      result.sceneBarFillsAvailableRow
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.railHeight
+    ).toBeGreaterThanOrEqual(
+      result.stageHeight - 32
+    );
+
+    expect(
+      result.sceneBarOverflow
+    ).toEqual([
+      'visible',
+      'visible'
+    ]);
+
+    expect(
+      result.railOverflow
+    ).toEqual([
+      'visible',
+      'visible'
+    ]);
+
+    expect(
+      result.floatingTooltip
+    ).toMatchObject({
+      parent:
+        'BODY',
+      visible:
+        true,
+      text:
+        'Двигать карту'
+    });
+
+    expect(
+      result.floatingTooltip.left
+    ).toBeGreaterThanOrEqual(
+      0
+    );
+
+    expect(
+      result.floatingTooltip.right
+    ).toBeLessThanOrEqual(
+      result.viewportWidth
+    );
+
+    expect(
+      result.buttonPseudoTooltip
+    ).toBe(
+      'none'
+    );
+
+    expect(
+      result.titleWidth
+    ).toBeLessThanOrEqual(
+      290
+    );
+
+    expect(
       result.toolbarFitsMap
     ).toBe(
       true
     );
 
     expect(
+      result.sceneBarFitsMap
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.railInsideStage
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.duplicateRuntimePanels
+    ).toEqual({
+      scene:
+        0,
+      layers:
+        0
+    });
+
+    expect(
       result.legacySelectorsStillPresent
+    ).toBe(
+      true
+    );
+  }
+);
+
+
+test(
+  'campaign-map-contextmenu-opens-custom-object-actions',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setupCampaignMaps
+          } = await import('/js/editor/campaignMap.js');
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          setupCampaignMaps(
+            editor,
+            async () => {}
+          );
+
+          const map =
+            editor.querySelector('.campaign-map-document');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const tokenRecord =
+            store.addToken({
+              tokenId:
+                'context-menu-token',
+              type:
+                'creature',
+              name:
+                'Context target',
+              x:
+                30,
+              y:
+                30
+            });
+
+          const token =
+            createMapTokenElement(
+              tokenRecord
+            );
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              token
+            );
+
+          const event =
+            new MouseEvent(
+              'contextmenu',
+              {
+                bubbles:
+                  true,
+                cancelable:
+                  true,
+                button:
+                  2,
+                clientX:
+                  120,
+                clientY:
+                  140
+              }
+            );
+
+          const dispatchResult =
+            token.dispatchEvent(
+              event
+            );
+
+          await Promise.resolve();
+
+          const popup =
+            document.getElementById('campaignTokenPopup');
+
+          return {
+            dispatchResult,
+            defaultPrevented:
+              event.defaultPrevented,
+            selected:
+              token.classList.contains('is-selected'),
+            popupHidden:
+              popup?.classList.contains('hidden') ?? true,
+            popupCompact:
+              popup?.classList.contains('campaign-token-popup-compact') ?? false,
+            hasMoreAction:
+              Boolean(
+                popup?.querySelector('.campaign-token-popup-more')
+              )
+          };
+        }
+      );
+
+    expect(
+      result.dispatchResult
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.defaultPrevented
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.selected
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.popupHidden
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.popupCompact
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.hasMoreAction
     ).toBe(
       true
     );
@@ -1494,34 +2145,103 @@ test(
                 dock.classList.contains('hidden'),
               migration:
                 dock.dataset.mapSelectionUiMigration,
+              panel:
+                dock.classList.contains('campaign-map-properties-panel'),
               title:
                 dock.querySelector('.campaign-map-selection-dock-heading strong')
                   ?.textContent
                   ?.trim(),
-              stats:
-                [...dock.querySelectorAll('.campaign-map-selection-stat')]
-                  .map(stat => [
-                    stat.dataset.selectionStat,
-                    stat.querySelector('strong')?.textContent?.trim()
-                  ]),
+              sections:
+                [...dock.querySelectorAll('.campaign-map-property-section')]
+                  .map(section => section.dataset.mapPropertySection),
+              fields:
+                [...dock.querySelectorAll('[data-map-property]')]
+                  .map(field => field.dataset.mapProperty),
               actions:
                 [...dock.querySelectorAll('[data-map-selection-action]')]
-                  .map(button => button.dataset.mapSelectionAction)
+                  .map(button => button.dataset.mapSelectionAction),
+              actionText:
+                [...dock.querySelectorAll('[data-map-selection-action]')]
+                  .map(button => button.textContent.trim())
+                  .filter(Boolean)
             };
 
-          await dock
-            .querySelector('[data-map-selection-action="visibility"]')
-            .click();
+          const setField =
+            (
+              property,
+              value,
+              type = 'input'
+            ) => {
+
+              const field =
+                dock.querySelector(`[data-map-property="${property}"]`);
+
+              if (field.type === 'checkbox') {
+
+                field.checked =
+                  value;
+
+              } else {
+
+                field.value =
+                  value;
+              }
+
+              field.dispatchEvent(
+                new Event(
+                  type,
+                  {
+                    bubbles:
+                      true
+                  }
+                )
+              );
+            };
+
+          setField(
+            'token-name',
+            '\u0421\u0442\u0440\u0430\u0436 \u0441\u0435\u0432\u0435\u0440\u0430'
+          );
+
+          setField(
+            'token-x',
+            '41.5'
+          );
+
+          setField(
+            'token-size',
+            '1.8'
+          );
+
+          setField(
+            'token-rotation',
+            '27'
+          );
+
+          setField(
+            'item-visible',
+            false,
+            'change'
+          );
 
           await flushAction();
 
-          const afterVisibility =
+          const afterProperties =
             {
+              name:
+                token.dataset.name,
+              x:
+                token.dataset.x,
+              size:
+                token.dataset.size,
+              rotation:
+                token.dataset.rotation,
               hidden:
                 token.dataset.presentationHidden,
-              actionLabel:
-                dock
-                  .querySelector('[data-map-selection-action="visibility"] span')
+              model:
+                store.getModel().getToken('selection-inspector-token'),
+              header:
+                dock.querySelector('.campaign-map-selection-dock-heading strong')
                   ?.textContent
                   ?.trim()
             };
@@ -1548,7 +2268,7 @@ test(
             expectedMigration:
               MAP_SELECTION_UI_MIGRATION,
             before,
-            afterVisibility,
+            afterProperties,
             afterRemove
           };
         }
@@ -1573,44 +2293,80 @@ test(
     );
 
     expect(
-      result.before.stats
+      result.before.panel
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.before.sections
+    ).toEqual([
+      'identity',
+      'transform',
+      'display'
+    ]);
+
+    expect(
+      result.before.fields
+    ).toEqual([
+      'token-name',
+      'token-x',
+      'token-y',
+      'token-size',
+      'token-rotation',
+      'item-visible'
+    ]);
+
+    expect(
+      result.before.actionText
     ).toEqual(
-      expect.arrayContaining([
-        [
-          'hp',
-          '8/12'
-        ],
-        [
-          'armor',
-          '14'
-        ],
-        [
-          'speed',
-          '30'
-        ]
-      ])
+      []
     );
 
     expect(
       result.before.actions
     ).toEqual([
       'open',
-      'visibility',
       'duplicate',
-      'more',
       'remove'
     ]);
 
     expect(
-      result.afterVisibility.hidden
-    ).toBe(
-      'true'
-    );
+      result.afterProperties
+    ).toMatchObject({
+      name:
+        '\u0421\u0442\u0440\u0430\u0436 \u0441\u0435\u0432\u0435\u0440\u0430',
+      x:
+        '41.500',
+      size:
+        '1.800',
+      rotation:
+        '27',
+      hidden:
+        'true',
+      header:
+        '\u0421\u0442\u0440\u0430\u0436 \u0441\u0435\u0432\u0435\u0440\u0430'
+    });
 
     expect(
-      result.afterVisibility.actionLabel
+      result.afterProperties.model
+    ).toMatchObject({
+      name:
+        '\u0421\u0442\u0440\u0430\u0436 \u0441\u0435\u0432\u0435\u0440\u0430',
+      x:
+        41.5,
+      size:
+        1.8,
+      rotation:
+        27,
+      presentationHidden:
+        true
+    });
+
+    expect(
+      result.afterProperties.hidden
     ).toBe(
-      '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c'
+      'true'
     );
 
     expect(
@@ -1623,16 +2379,329 @@ test(
       modelTokens:
         0,
       saveLog:
-        [
-          'selection-action',
+        expect.arrayContaining([
           'dock-remove'
-        ]
+        ])
     });
+
+    expect(
+      result.afterRemove.saveLog.length
+    ).toBeGreaterThanOrEqual(
+      6
+    );
 
     expect(
       result.afterRemove.statusLog.at(-1)
     ).toContain(
       '1'
+    );
+  }
+);
+
+
+test(
+  'campaign-map-selection-inspector-edits-shape-transform-style',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapShapeElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            ensureMapSelectionInspector
+          } = await import('/js/editor/campaignMapSelectionInspector.js');
+
+          const {
+            selectMapShape
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const record =
+            store.addShape({
+              shapeId:
+                'selection-inspector-shape',
+              type:
+                'square',
+              x:
+                120,
+              y:
+                160,
+              width:
+                90,
+              height:
+                80,
+              strokeColor:
+                '#fff4d6',
+              fillColor:
+                '#f1d38e',
+              strokeWidth:
+                3
+            });
+
+          const shape =
+            createMapShapeElement(
+              record
+            );
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              shape
+            );
+
+          renderMapShapeElement(
+            shape
+          );
+
+          const saveLog =
+            [];
+
+          const flushAction =
+            async () => {
+
+              await Promise.resolve();
+              await Promise.resolve();
+            };
+
+          ensureMapSelectionInspector(
+            map,
+            {
+              closeTokenPopup() {},
+              getSelectionActionDeps() {
+
+                return {};
+              },
+              getTokenActionDeps() {
+
+                return {};
+              },
+              openTokenPopup() {},
+              async saveAndSync() {
+
+                saveLog.push(
+                  'shape-property'
+                );
+              },
+              setStatus() {}
+            }
+          );
+
+          selectMapShape(
+            shape
+          );
+
+          const dock =
+            map.querySelector('.campaign-map-selection-dock');
+
+          const setField =
+            (
+              property,
+              value,
+              type = 'input'
+            ) => {
+
+              const field =
+                dock.querySelector(`[data-map-property="${property}"]`);
+
+              if (field.type === 'checkbox') {
+
+                field.checked =
+                  value;
+
+              } else {
+
+                field.value =
+                  value;
+              }
+
+              field.dispatchEvent(
+                new Event(
+                  type,
+                  {
+                    bubbles:
+                      true
+                  }
+                )
+              );
+            };
+
+          setField(
+            'shape-type',
+            'circle',
+            'change'
+          );
+
+          setField(
+            'shape-width',
+            '144'
+          );
+
+          setField(
+            'shape-height',
+            '96'
+          );
+
+          setField(
+            'shape-rotation',
+            '33'
+          );
+
+          setField(
+            'shape-stroke-color',
+            '#74c69d'
+          );
+
+          setField(
+            'shape-fill-color',
+            '#7db6ff'
+          );
+
+          setField(
+            'item-visible',
+            false,
+            'change'
+          );
+
+          await flushAction();
+
+          return {
+            fields:
+              [...dock.querySelectorAll('[data-map-property]')]
+                .map(field => field.dataset.mapProperty),
+            actions:
+              [...dock.querySelectorAll('[data-map-selection-action]')]
+                .map(button => button.dataset.mapSelectionAction),
+            dataset: {
+              type:
+                shape.dataset.shapeType,
+              width:
+                shape.dataset.w,
+              height:
+                shape.dataset.h,
+              rotation:
+                shape.dataset.rotation,
+              stroke:
+                shape.dataset.strokeColor,
+              fill:
+                shape.dataset.fillColor,
+              hidden:
+                shape.dataset.presentationHidden
+            },
+            cssRotation:
+              shape.style.getPropertyValue('--campaign-shape-rotation'),
+            model:
+              store.getModel().getShape('selection-inspector-shape'),
+            saveCount:
+              saveLog.length
+          };
+        }
+      );
+
+    expect(
+      result.fields
+    ).toEqual([
+      'shape-type',
+      'shape-x',
+      'shape-y',
+      'shape-width',
+      'shape-height',
+      'shape-rotation',
+      'shape-stroke-color',
+      'shape-fill-color',
+      'shape-stroke-width',
+      'item-visible'
+    ]);
+
+    expect(
+      result.actions
+    ).toEqual([
+      'duplicate',
+      'remove'
+    ]);
+
+    expect(
+      result.dataset
+    ).toEqual({
+      type:
+        'circle',
+      width:
+        '144',
+      height:
+        '96',
+      rotation:
+        '33',
+      stroke:
+        '#74c69d',
+      fill:
+        '#7db6ff',
+      hidden:
+        'true'
+    });
+
+    expect(
+      result.cssRotation
+    ).toBe(
+      '33deg'
+    );
+
+    expect(
+      result.model
+    ).toMatchObject({
+      type:
+        'circle',
+      width:
+        144,
+      height:
+        96,
+      rotation:
+        33,
+      strokeColor:
+        '#74c69d',
+      fillColor:
+        '#7db6ff',
+      presentationHidden:
+        true
+    });
+
+    expect(
+      result.saveCount
+    ).toBeGreaterThanOrEqual(
+      7
     );
   }
 );

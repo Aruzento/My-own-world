@@ -429,9 +429,11 @@ data-image-kind
 <div class="campaign-map-stage" ...>
 ```
 
-Runtime-инспекторы карты, включая selection dock, layer/object dock и scene-state inspector, должны иметь `data-runtime="true"` и не должны попадать в persistent HTML.
+Runtime-инспекторы карты должны иметь `data-runtime="true"` и не должны попадать в persistent HTML. После `0.0.1.8.12.8` default map render создает правый property Inspector только по выбору объекта; layer/object dock и scene-state inspector не должны появляться в обычной карте как постоянные duplicate panels. Стандартное браузерное ПКМ на объекте карты подавляется runtime-обработчиком и открывает компактное объектное меню, которое также не сохраняется.
 
 Разрешенные data-поля карты:
+
+After `0.0.1.8.12.10`, the map tool rail (`.campaign-map-tool-rail`) and body-level map toolbar tooltip (`.campaign-map-toolbar-tooltip`) are runtime-only. They must be recreated by `renderCampaignMap()` / toolbar hover-focus handling, carry `data-runtime="true"` through `markRuntime()`, and be stripped by the safe HTML boundary if they appear in saved or pasted map HTML.
 
 ```text
 data-campaign-map
@@ -453,12 +455,28 @@ data-view-scale
 data-token-id
 data-page-id
 data-token-type
+data-name
 data-source-mode
 data-x
 data-y
-data-width
-data-height
+data-size
 data-rotation
+data-hp
+data-hp-max
+data-hp-temp
+data-hp-percent
+data-hp-state
+data-armor-class
+data-speed
+data-initiative-modifier
+data-condition-count
+data-effect-count
+data-effects-summary
+data-incapacitated
+data-speed-zero
+data-player-token
+data-layer-id
+data-z-index
 data-presentation-hidden
 data-image-asset
 ```
@@ -471,9 +489,14 @@ data-shape-type
 data-points
 data-x
 data-y
-data-width
-data-height
+data-w
+data-h
 data-rotation
+data-stroke-color
+data-fill-color
+data-stroke-width
+data-layer-id
+data-z-index
 data-presentation-hidden
 ```
 

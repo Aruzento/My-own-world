@@ -89,6 +89,7 @@ export function createCampaignMapPointerController(
       event.shiftKey &&
       stage &&
       !event.target.closest('.campaign-map-controls') &&
+      !event.target.closest('.campaign-map-tool-rail') &&
       !event.target.closest('.campaign-map-popup')
     ) {
 

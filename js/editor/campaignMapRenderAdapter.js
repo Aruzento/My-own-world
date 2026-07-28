@@ -170,6 +170,9 @@ export function applyShapeRecordToElement(
   shapeElement.dataset.h =
     String(Math.round(shapeRecord.height));
 
+  shapeElement.dataset.rotation =
+    String(shapeRecord.rotation || 0);
+
   syncOptionalDatasetValue(
     shapeElement,
     'points',

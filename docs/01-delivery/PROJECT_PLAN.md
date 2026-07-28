@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-27
+Updated: 2026-07-29
 
 Planning version: 1
 
@@ -81,13 +81,13 @@ Status: closed at `Usable` by `0.0.1.8.11.7`: `BI-013` block drag-and-drop is re
 
 Description: migrate map toolbar, scene/list surfaces, layers, token dock, map inspector, and map contextual actions without changing map business logic.
 
-Status: closed at `Usable` by `0.0.1.8.12.6`. `0.0.1.8.12.1` closed the toolbar foundation: the map toolbar is grouped into creation, scene/view, tools and live-session actions, uses local sprite icons/shared tokens, keeps legacy action selectors and has browser coverage for accessibility/active states/no right-edge overflow. `0.0.1.8.12.2` closed the shared popup surface for add/picker, grid, drawing, fog, shapes, layers, initiative and music. `0.0.1.8.12.3` closed the selected-object dock with identity, position, visibility, token stats and safe `Убрать с карты`. `0.0.1.8.12.4` closed the layer/object dock with token/shape/hidden counters, per-layer summaries and quick layer visibility toggles. `0.0.1.8.12.5` closed the scene-state inspector for map background, grid and fog state. `0.0.1.8.12.6` closed advanced contextual action coverage: multi-selected tokens/shapes now show visible/hidden counters and offer direct group `Скрыть` / `Показать` actions through the existing `CampaignMapStore`, with one save/sync and no saved runtime UI or map business-logic fork.
+Status: closed at `Usable` by `0.0.1.8.12.10` after human post-review corrections. `0.0.1.8.12.1` closed the toolbar foundation, and `0.0.1.8.12.7`-`0.0.1.8.12.10` correct it into the current product shape: a compact title chip, a full-width top scene/session action bar, and a full-height left canvas tool rail with icon-only buttons, body-level hover/focus tooltips, Hand/pan as a real tool, stable compact buttons, no visible toolbar text, no clipped labels and no internal toolbar scrollbars. `0.0.1.8.12.2` closed the shared popup surface for add/picker, grid, drawing, fog, shapes, layers, initiative and music. `0.0.1.8.12.3`-`0.0.1.8.12.8` evolved selected-object UI from a bottom info dock into a right-side editable `Inspector`: token name, X/Y, size, rotation and player visibility; shape type, X/Y, width/height, rotation, stroke/fill colors, stroke width and player visibility. Shape rotation is now part of the map model/serializer instead of a fake UI-only field. `0.0.1.8.12.4` / `0.0.1.8.12.5` explored layer/object and scene-state stage docks, but `0.0.1.8.12.7` removes them from default map render because they duplicated the toolbar/popup workflows and made the stage feel overloaded. `0.0.1.8.12.6` closed group contextual action coverage, `0.0.1.8.12.8` adds custom right-click on map objects, `0.0.1.8.12.9` split canvas tools left / scene commands top, and `0.0.1.8.12.10` makes those zones full-size and unclipped.
 
 0.0.1.8.13. Migration Phase 7: knowledge graph.
 
 Description: migrate graph toolbar, canvas controls, node cards, edge states, inspector, and filters.
 
-Status: active. `0.0.1.8.13.1` is closed at `Foundation`: the graph workbench now has clearer visible-slice counters, a human-readable hidden-slice notice, local sprite icons in toolbar/node metadata, tokenized node domain markers, and browser coverage for standard-slice/full-view refinement. `0.0.1.8.13.2` is closed at `Foundation`: selecting a canvas node now gives visible edge states, related/muted node states, a compact graph inspector dock with incoming/outgoing relationship counts and direct `Открыть` / `Соседи` actions, plus a fixed right-click menu anchor under the popup lifecycle. Remaining Phase 7 work: overlay visual cleanup, file/CSS split and lifecycle bridge work from `BI-017` / `BI-018`.
+Status: active. `0.0.1.8.13.1` is closed at `Foundation`: the graph workbench now has clearer visible-slice counters, a human-readable hidden-slice notice, local sprite icons in toolbar/node metadata, tokenized node domain markers, and browser coverage for standard-slice/full-view refinement. `0.0.1.8.13.2` is closed at `Foundation`: selecting a canvas node now gives visible edge states, related/muted node states, a compact graph inspector dock with incoming/outgoing relationship counts and direct `Открыть` / `Соседи` actions, plus a fixed right-click menu anchor under the popup lifecycle. `0.0.1.8.13.3` is closed at `Foundation`: the node context menu and connection-details popup now use a darker editor-grade overlay style, grouped icon actions, compact editable relationship rows and explicit visual-regression coverage. Remaining Phase 7 work: file/CSS split and lifecycle bridge work from `BI-017` / `BI-018`.
 
 0.0.1.8.14. Migration Phase 8: secondary screens.
 

@@ -824,7 +824,14 @@ aliases: []
       nodeMenu
     ).toHaveAttribute(
       'data-overlay-kind',
-      'popover'
+      'context-menu'
+    );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-knowledge-graph-overlay-ui',
+      '0.0.1.8.13.3'
     );
 
     await expect(
@@ -847,6 +854,86 @@ aliases: []
       'aria-modal',
       'false'
     );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'role',
+      'menu'
+    );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'aria-orientation',
+      'vertical'
+    );
+
+    await expect(
+      nodeMenu.locator('.knowledge-graph-overlay-header')
+    ).toContainText(
+      'Узел графа'
+    );
+
+    await expect(
+      nodeMenu.locator('[data-knowledge-graph-node-menu-section]')
+    ).toHaveCount(
+      2
+    );
+
+    await expect(
+      nodeMenu.locator('[data-knowledge-graph-node-menu-relationship-count]')
+    ).toHaveText(
+      '3'
+    );
+
+    const nodeMenuVisualContract =
+      await nodeMenu.evaluate(menu => {
+
+        const style =
+          getComputedStyle(menu);
+
+        const header =
+          menu.querySelector(
+            '.knowledge-graph-overlay-header'
+          );
+
+        const action =
+          menu.querySelector(
+            '.knowledge-graph-node-menu-action'
+          );
+
+        const relationshipPanel =
+          menu.querySelector(
+            '.knowledge-graph-node-menu-relationship-panel'
+          );
+
+        return {
+          overflow:
+            style.overflow,
+          background:
+            style.backgroundColor,
+          headerDisplay:
+            header ? getComputedStyle(header).display : '',
+          actionDisplay:
+            action ? getComputedStyle(action).display : '',
+          relationshipPanelDisplay:
+            relationshipPanel ? getComputedStyle(relationshipPanel).display : ''
+        };
+      });
+
+    expect(
+      nodeMenuVisualContract
+    ).toMatchObject({
+      overflow:
+        'auto',
+      headerDisplay:
+        'grid',
+      actionDisplay:
+        'flex',
+      relationshipPanelDisplay:
+        'grid'
+    });
 
     const nodeMenuBox =
       await nodeMenu.boundingBox();
@@ -1007,6 +1094,13 @@ aliases: []
     await expect(
       connectPopup
     ).toHaveAttribute(
+      'data-knowledge-graph-overlay-ui',
+      '0.0.1.8.13.3'
+    );
+
+    await expect(
+      connectPopup
+    ).toHaveAttribute(
       'data-overlay-kind',
       'dialog'
     );
@@ -1031,6 +1125,56 @@ aliases: []
       'aria-modal',
       'false'
     );
+
+    await expect(
+      connectPopup.locator('.knowledge-graph-overlay-header')
+    ).toContainText(
+      'Новая связь'
+    );
+
+    await expect(
+      connectPopup.locator('.knowledge-graph-connect-path')
+    ).toContainText(
+      'Hero'
+    );
+
+    await expect(
+      connectPopup.locator('.knowledge-graph-connect-path')
+    ).toContainText(
+      'World'
+    );
+
+    const connectPopupVisualContract =
+      await connectPopup.evaluate(popup => {
+
+        const style =
+          getComputedStyle(popup);
+
+        const actions =
+          popup.querySelector(
+            '.knowledge-graph-connect-popup-actions'
+          );
+
+        return {
+          position:
+            style.position,
+          display:
+            style.display,
+          actionsDisplay:
+            actions ? getComputedStyle(actions).display : ''
+        };
+      });
+
+    expect(
+      connectPopupVisualContract
+    ).toEqual({
+      position:
+        'fixed',
+      display:
+        'grid',
+      actionsDisplay:
+        'flex'
+    });
 
     await connectPopup
       .locator('[data-knowledge-graph-connect-type]')

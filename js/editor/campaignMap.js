@@ -23,10 +23,7 @@ import {
 } from './campaignMapPopupController.js';
 
 import {
-  handleCampaignMapToolbarClick,
-  openFogPopup,
-  openGridPopup,
-  openLayersPopup
+  handleCampaignMapToolbarClick
 } from './campaignMapToolbarController.js';
 
 import {
@@ -156,13 +153,8 @@ import {
 } from './campaignMapSelectionInspector.js';
 
 import {
-  ensureMapLayerDock,
   updateMapLayerDock
 } from './campaignMapLayerDock.js';
-
-import {
-  ensureMapSceneInspector
-} from './campaignMapSceneInspector.js';
 
 import {
   setStatus
@@ -176,6 +168,12 @@ export {
 
 let saveCurrentPageCallback = null;
 let pointerController = null;
+let mapToolbarTooltip = null;
+let mapToolbarTooltipAnchor = null;
+
+const MAP_TOOLBAR_TOOLTIP_SELECTOR =
+  '.campaign-map-controls [data-tooltip], .campaign-map-tool-rail [data-tooltip]';
+
 export function setupCampaignMaps(
   editor,
   saveCurrentPage
@@ -192,6 +190,11 @@ export function setupCampaignMaps(
   editor.addEventListener(
     'click',
     handleMapClick
+  );
+
+  editor.addEventListener(
+    'contextmenu',
+    handleMapContextMenu
   );
 
   editor.addEventListener(
@@ -451,16 +454,6 @@ export async function renderCampaignMap(
     getSelectionInspectorDeps()
   );
 
-  ensureMapLayerDock(
-    map,
-    getLayerDockDeps()
-  );
-
-  ensureMapSceneInspector(
-    map,
-    getSceneInspectorDeps()
-  );
-
   await playFirstCampaignMapMusicForMapSwitch(
     map
   );
@@ -550,19 +543,34 @@ function ensureMapControls(
   const topbar =
     map.querySelector('.campaign-map-topbar');
 
+  const stage =
+    map.querySelector('.campaign-map-stage');
+
   if (
-    !topbar ||
-    topbar.querySelector('.campaign-map-controls')
+    !topbar
   ) return;
 
-  const controls =
-    document.createElement('div');
+  let controls =
+    topbar.querySelector(
+      '[data-map-toolbar-region="scene-bar"]'
+    );
+
+  if (!controls) {
+
+    controls =
+      topbar.querySelector('.campaign-map-controls');
+  }
+
+  if (!controls) {
+
+    controls =
+      document.createElement('div');
 
   controls.className =
     'campaign-map-controls';
 
   controls.dataset.mapUiMigration =
-    '0.0.1.8.12.1';
+    '0.0.1.8.12.8';
 
   controls.setAttribute(
     'role',
@@ -585,6 +593,33 @@ function ensureMapControls(
     controls
   );
 
+  }
+
+  configureMapToolbarRegion(
+    controls,
+    {
+      region:
+        'scene-bar',
+      label:
+        controls.getAttribute('aria-label') ||
+        'Действия сцены и сессии'
+    }
+  );
+
+  markSceneToolbarGroups(
+    controls
+  );
+
+  ensureMapToolRail(
+    map,
+    controls,
+    stage
+  );
+
+  ensureMapToolbarTooltips(
+    map
+  );
+
   updateGridButton(
     map
   );
@@ -604,6 +639,567 @@ function ensureMapControls(
   updateGridSize(
     map
   );
+}
+
+
+function ensureMapToolbarTooltips(
+  map
+) {
+
+  if (
+    map.dataset.mapToolbarTooltipEvents === 'true'
+  ) return;
+
+  map.dataset.mapToolbarTooltipEvents =
+    'true';
+
+  map.addEventListener(
+    'pointerover',
+    handleMapToolbarTooltipOver
+  );
+
+  map.addEventListener(
+    'pointerout',
+    handleMapToolbarTooltipOut
+  );
+
+  map.addEventListener(
+    'focusin',
+    handleMapToolbarTooltipFocusIn
+  );
+
+  map.addEventListener(
+    'focusout',
+    handleMapToolbarTooltipFocusOut
+  );
+}
+
+
+function handleMapToolbarTooltipOver(
+  event
+) {
+
+  const anchor =
+    getMapToolbarTooltipAnchor(
+      event.target
+    );
+
+  if (!anchor) return;
+
+  showMapToolbarTooltip(
+    anchor
+  );
+}
+
+
+function handleMapToolbarTooltipOut(
+  event
+) {
+
+  const anchor =
+    getMapToolbarTooltipAnchor(
+      event.target
+    );
+
+  if (!anchor) return;
+
+  if (
+    event.relatedTarget instanceof Node &&
+    anchor.contains(
+      event.relatedTarget
+    )
+  ) return;
+
+  hideMapToolbarTooltip(
+    anchor
+  );
+}
+
+
+function handleMapToolbarTooltipFocusIn(
+  event
+) {
+
+  const anchor =
+    getMapToolbarTooltipAnchor(
+      event.target
+    );
+
+  if (!anchor) return;
+
+  showMapToolbarTooltip(
+    anchor
+  );
+}
+
+
+function handleMapToolbarTooltipFocusOut(
+  event
+) {
+
+  const anchor =
+    getMapToolbarTooltipAnchor(
+      event.target
+    );
+
+  if (!anchor) return;
+
+  hideMapToolbarTooltip(
+    anchor
+  );
+}
+
+
+function getMapToolbarTooltipAnchor(
+  target
+) {
+
+  const element =
+    target instanceof Element
+      ? target
+      : null;
+
+  return element?.closest(
+    MAP_TOOLBAR_TOOLTIP_SELECTOR
+  ) || null;
+}
+
+
+function showMapToolbarTooltip(
+  anchor
+) {
+
+  const text =
+    anchor.dataset.tooltip || '';
+
+  if (!text) return;
+
+  const tooltip =
+    ensureMapToolbarTooltip();
+
+  mapToolbarTooltipAnchor =
+    anchor;
+
+  if (
+    anchor.hasAttribute('title')
+  ) {
+
+    anchor.dataset.nativeTitle =
+      anchor.getAttribute('title') || '';
+
+    anchor.removeAttribute(
+      'title'
+    );
+  }
+
+  tooltip.textContent =
+    text;
+
+  positionMapToolbarTooltip(
+    anchor,
+    tooltip
+  );
+
+  requestAnimationFrame(
+    () => {
+
+      if (
+        mapToolbarTooltipAnchor === anchor
+      ) {
+
+        tooltip.classList.add(
+          'is-visible'
+        );
+      }
+    }
+  );
+}
+
+
+function hideMapToolbarTooltip(
+  anchor = mapToolbarTooltipAnchor
+) {
+
+  if (anchor?.dataset.nativeTitle) {
+
+    anchor.setAttribute(
+      'title',
+      anchor.dataset.nativeTitle
+    );
+
+    delete anchor.dataset.nativeTitle;
+  }
+
+  if (
+    mapToolbarTooltipAnchor === anchor
+  ) {
+
+    mapToolbarTooltipAnchor =
+      null;
+  }
+
+  mapToolbarTooltip?.classList.remove(
+    'is-visible'
+  );
+}
+
+
+function ensureMapToolbarTooltip() {
+
+  if (mapToolbarTooltip) {
+
+    return mapToolbarTooltip;
+  }
+
+  mapToolbarTooltip =
+    document.createElement('div');
+
+  mapToolbarTooltip.className =
+    'campaign-map-toolbar-tooltip';
+
+  markRuntime(
+    mapToolbarTooltip
+  );
+
+  document.body.appendChild(
+    mapToolbarTooltip
+  );
+
+  return mapToolbarTooltip;
+}
+
+
+function positionMapToolbarTooltip(
+  anchor,
+  tooltip
+) {
+
+  const anchorRect =
+    anchor.getBoundingClientRect();
+
+  const isRail =
+    Boolean(
+      anchor.closest('.campaign-map-tool-rail')
+    );
+
+  tooltip.style.left =
+    '0';
+
+  tooltip.style.top =
+    '0';
+
+  const tooltipRect =
+    tooltip.getBoundingClientRect();
+
+  const viewportPadding =
+    10;
+
+  const left =
+    isRail
+      ? anchorRect.right + 10
+      : anchorRect.left + (anchorRect.width - tooltipRect.width) / 2;
+
+  const top =
+    isRail
+      ? anchorRect.top + (anchorRect.height - tooltipRect.height) / 2
+      : anchorRect.bottom + 10;
+
+  tooltip.style.left =
+    `${clampViewportPosition(
+      left,
+      tooltipRect.width,
+      viewportPadding,
+      window.innerWidth
+    )}px`;
+
+  tooltip.style.top =
+    `${clampViewportPosition(
+      top,
+      tooltipRect.height,
+      viewportPadding,
+      window.innerHeight
+    )}px`;
+}
+
+
+function clampViewportPosition(
+  value,
+  size,
+  padding,
+  viewportSize
+) {
+
+  return Math.min(
+    Math.max(
+      value,
+      padding
+    ),
+    Math.max(
+      padding,
+      viewportSize - size - padding
+    )
+  );
+}
+
+
+function configureMapToolbarRegion(
+  element,
+  {
+    region,
+    label,
+    orientation = null
+  }
+) {
+
+  element.dataset.mapUiMigration =
+    '0.0.1.8.12.10';
+
+  element.dataset.mapToolbarRegion =
+    region;
+
+  element.setAttribute(
+    'role',
+    'toolbar'
+  );
+
+  element.setAttribute(
+    'aria-label',
+    label
+  );
+
+  if (orientation) {
+
+    element.setAttribute(
+      'aria-orientation',
+      orientation
+    );
+  }
+
+  markRuntime(
+    element
+  );
+}
+
+
+function markSceneToolbarGroups(
+  controls
+) {
+
+  setMapControlGroupSection(
+    controls,
+    'create',
+    'creation'
+  );
+
+  setMapControlGroupSection(
+    controls,
+    'scene',
+    'scene'
+  );
+
+  setMapControlGroupSection(
+    controls,
+    'live',
+    'presentation'
+  );
+}
+
+
+function ensureMapToolRail(
+  map,
+  controls,
+  stage
+) {
+
+  if (!stage) return;
+
+  let rail =
+    stage.querySelector(
+      '[data-map-toolbar-region="tool-rail"]'
+    );
+
+  if (!rail) {
+
+    rail =
+      document.createElement('div');
+
+    rail.className =
+      'campaign-map-tool-rail';
+
+    stage.appendChild(
+      rail
+    );
+  }
+
+  configureMapToolbarRegion(
+    rail,
+    {
+      region:
+        'tool-rail',
+      label:
+        'Инструменты холста карты',
+      orientation:
+        'vertical'
+    }
+  );
+
+  if (
+    rail.querySelector('.campaign-map-control-group')
+  ) return;
+
+  const legacyToolGroup =
+    controls.querySelector(
+      '[data-map-control-group="tools"]'
+    );
+
+  [
+    {
+      key:
+        'navigation',
+      section:
+        'navigation',
+      label:
+        'Навигация',
+      selectors:
+        [
+          '.campaign-pan-btn'
+        ]
+    },
+    {
+      key:
+        'drawing',
+      section:
+        'drawing',
+      label:
+        'Создание и рисование',
+      selectors:
+        [
+          '.campaign-shapes-btn',
+          '.campaign-drawing-btn'
+        ]
+    },
+    {
+      key:
+        'fog',
+      section:
+        'fog',
+      label:
+        'Туман войны',
+      selectors:
+        [
+          '.campaign-fog-btn'
+        ]
+    }
+  ].forEach(group => {
+
+    const element =
+      createMapToolRailGroup(
+        group
+      );
+
+    const actions =
+      element.querySelector('.campaign-map-control-actions');
+
+    group.selectors.forEach(selector => {
+
+      const button =
+        controls.querySelector(selector) ||
+        map.querySelector(selector);
+
+      if (button) {
+
+        actions.appendChild(
+          button
+        );
+      }
+    });
+
+    if (
+      actions.children.length > 0
+    ) {
+
+      rail.appendChild(
+        element
+      );
+    }
+  });
+
+  if (
+    legacyToolGroup &&
+    !legacyToolGroup.querySelector('.campaign-map-tool-button')
+  ) {
+
+    legacyToolGroup.remove();
+  }
+}
+
+
+function createMapToolRailGroup(
+  {
+    key,
+    section,
+    label
+  }
+) {
+
+  const group =
+    document.createElement('div');
+
+  group.className =
+    'campaign-map-control-group';
+
+  group.dataset.mapControlGroup =
+    key;
+
+  group.dataset.mapToolSection =
+    section;
+
+  group.setAttribute(
+    'role',
+    'group'
+  );
+
+  group.setAttribute(
+    'aria-label',
+    label
+  );
+
+  const groupLabel =
+    document.createElement('span');
+
+  groupLabel.className =
+    'campaign-map-control-group-label';
+
+  groupLabel.textContent =
+    label;
+
+  const actions =
+    document.createElement('div');
+
+  actions.className =
+    'campaign-map-control-actions';
+
+  group.append(
+    groupLabel,
+    actions
+  );
+
+  return group;
+}
+
+
+function setMapControlGroupSection(
+  root,
+  groupKey,
+  section
+) {
+
+  root
+    .querySelector(`[data-map-control-group="${groupKey}"]`)
+    ?.setAttribute(
+      'data-map-tool-section',
+      section
+    );
 }
 
 
@@ -635,6 +1231,9 @@ async function handleMapClick(
 
   if (token) {
 
+    clearTokenPopupTimer();
+    closeTokenPopup();
+
     selectMapToken(
       token,
       {
@@ -642,6 +1241,9 @@ async function handleMapClick(
       }
     );
   } else if (shape) {
+
+    clearTokenPopupTimer();
+    closeTokenPopup();
 
     selectMapShape(
       shape,
@@ -651,6 +1253,7 @@ async function handleMapClick(
     );
   } else if (
     !event.target.closest('.campaign-map-controls') &&
+    !event.target.closest('.campaign-map-tool-rail') &&
     !event.target.closest('.campaign-map-popup')
   ) {
 
@@ -667,6 +1270,74 @@ async function handleMapClick(
     event,
     map,
     getToolbarControllerDeps()
+  );
+}
+
+
+function handleMapContextMenu(
+  event
+) {
+
+  const map =
+    event.target.closest('.campaign-map-document');
+
+  if (!map) return;
+
+  event.preventDefault();
+  event.stopPropagation();
+
+  const token =
+    event.target.closest('.campaign-map-token');
+
+  const shape =
+    event.target.closest('.campaign-map-shape');
+
+  const item =
+    token || shape;
+
+  if (!item) {
+
+    closeTokenPopup();
+    closeMapPopup();
+    return;
+  }
+
+  clearTokenPopupTimer();
+  closeMapPopup();
+
+  if (
+    !item.classList.contains('is-selected')
+  ) {
+
+    if (token) {
+
+      selectMapToken(
+        token,
+        {
+          additive:
+            event.shiftKey ||
+            event.ctrlKey ||
+            event.metaKey
+        }
+      );
+
+    } else {
+
+      selectMapShape(
+        shape,
+        {
+          additive:
+            event.shiftKey ||
+            event.ctrlKey ||
+            event.metaKey
+        }
+      );
+    }
+  }
+
+  openTokenPopup(
+    item,
+    getTokenPopupDeps()
   );
 }
 
@@ -739,53 +1410,6 @@ function getSelectionInspectorDeps() {
     removeSelectedCampaignMapItems,
     saveAndSync,
     setStatus
-  };
-}
-
-
-function getLayerDockDeps() {
-
-  return {
-    openLayersPopup: (
-      map,
-      anchor
-    ) => openLayersPopup(
-      map,
-      anchor,
-      getToolbarControllerDeps()
-    ),
-    saveAndSync
-  };
-}
-
-
-function getSceneInspectorDeps() {
-
-  return {
-    changeMapImage: async map => {
-
-      await changeMapImage(
-        map
-      );
-
-      await saveAndSync();
-    },
-    openFogPopup: (
-      map,
-      anchor
-    ) => openFogPopup(
-      map,
-      anchor,
-      getToolbarControllerDeps()
-    ),
-    openGridPopup: (
-      map,
-      anchor
-    ) => openGridPopup(
-      map,
-      anchor,
-      getToolbarControllerDeps()
-    )
   };
 }
 

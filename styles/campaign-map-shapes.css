@@ -13,6 +13,12 @@
 
   cursor:
     grab;
+
+  transform:
+    rotate(var(--campaign-shape-rotation, 0deg));
+
+  transform-origin:
+    center;
 }
 
 
