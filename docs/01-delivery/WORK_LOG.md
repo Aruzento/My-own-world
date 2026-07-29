@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.13.9 Knowledge Graph Canvas Actions JS Split
+
+### What Changed
+
+- Continued `0.0.1.8.13` Migration Phase 7 with the next JavaScript owner split from `BI-017`.
+- Added `js/wiki/knowledgeGraphCanvasActions.js` as the owner for runtime canvas-control actions:
+  - graph runtime filter dataset reads;
+  - layout button action;
+  - view/filter/orphan/reset actions;
+  - hidden-slice `show-all` / `refine` actions;
+  - zoom-in, zoom-out and fit toolbar actions.
+- Kept `knowledgeGraphPage.js` as the owner for event registration, node/connect menu actions, relationship edits, drag/pan, history, view-state persistence and relationship persistence while the split continues.
+- Passed render/transform callbacks into the actions module instead of importing the page renderer, so the new module stays free of global `state` and persistence writes.
+- Kept visible Knowledge Graph behavior unchanged: filters, presets, slice actions, layout buttons, zoom/fit, selected node and context actions still use the same selectors and user-facing text.
+
+### Readiness
+
+Foundation for graph maintainability. The filter/layout/slice/zoom action side of `BI-017` now has its own JS owner, but `0.0.1.8.13` remains active for node/connect overlay actions, context-menu/overlay split and `BI-018` lifecycle hardening.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check js\wiki\knowledgeGraphCanvasActions.js`.
+- Passed twice: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests per run.
+- Passed twice: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests per run.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with the remaining `BI-017` JavaScript split: node/connect overlay actions and context-menu/overlay ownership.
+- Then address `BI-018`: graph relationship/view-state persistence must move through the page lifecycle/write queue or a dedicated graph command bridge.
+- Keep `BI-026` in the mini-backlog before adding more visible Knowledge Graph features.
+
 ## 2026-07-29: 0.0.1.8.13.8 Knowledge Graph Canvas Renderer JS Split
 
 ### What Changed

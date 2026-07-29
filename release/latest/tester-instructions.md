@@ -43,7 +43,7 @@ npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-insp
 npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs
 ```
 
-For the Knowledge Graph visible-slice, selected-node inspector, edge-state, overlay-cleanup, laconic first-layer, CSS split and inspector/labels/canvas-controls/canvas-renderer JS split slices, use:
+For the Knowledge Graph visible-slice, selected-node inspector, edge-state, overlay-cleanup, laconic first-layer, CSS split and inspector/labels/canvas-controls/canvas-renderer/canvas-actions JS split slices, use:
 
 ```powershell
 npm run test:browser -- tests/browser/knowledge-graph.spec.mjs
@@ -116,7 +116,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Desktop installed-app behavior can still differ from browser smoke.
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
-- Knowledge Graph is currently a useful visual workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer and split CSS/renderer ownership, not the final JavaScript-split/lifecycle-hardened surface.
+- Knowledge Graph is currently a useful visual workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer and split CSS/renderer/actions ownership, not the final JavaScript-split/lifecycle-hardened surface.
 - Restore preview, partial restore, link cleanup and asset repair remain unfinished.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo

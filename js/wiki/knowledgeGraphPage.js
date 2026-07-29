@@ -43,9 +43,17 @@ import {
   getCanvasFilterBarHTML,
   getCanvasHiddenReasonLabels,
   getCanvasLayoutButtonHTML,
-  getCanvasSliceSummaryLabel,
-  getKnowledgeGraphViewPreset
+  getCanvasSliceSummaryLabel
 } from './knowledgeGraphCanvasControls.js';
+
+import {
+  getRuntimeGraphFilters,
+  handleGraphCanvasAction,
+  handleGraphFilterAction,
+  handleGraphFilterChange,
+  handleGraphLayoutChange,
+  handleGraphSliceAction
+} from './knowledgeGraphCanvasActions.js';
 
 import {
   getCanvasContentHTML,
@@ -544,6 +552,18 @@ function renderKnowledgeGraphPageAndFocus(
       '.knowledge-graph-document'
     ) || documentElement,
     options
+  );
+}
+
+
+function renderKnowledgeGraphDocument(
+  documentElement
+) {
+
+  renderKnowledgeGraphPage(
+    documentElement.closest(
+      '#editorArea'
+    ) || document
   );
 }
 
@@ -1943,7 +1963,11 @@ function setupKnowledgeGraphEvents(
 
         handleGraphSliceAction(
           documentElement,
-          sliceAction.dataset.knowledgeGraphSliceAction
+          sliceAction.dataset.knowledgeGraphSliceAction,
+          {
+            render:
+              renderKnowledgeGraphDocument
+          }
         );
 
         return;
@@ -1958,7 +1982,11 @@ function setupKnowledgeGraphEvents(
 
         handleGraphFilterAction(
           documentElement,
-          filterAction.dataset.knowledgeGraphFilterAction
+          filterAction.dataset.knowledgeGraphFilterAction,
+          {
+            render:
+              renderKnowledgeGraphDocument
+          }
         );
 
         return;
@@ -1973,7 +2001,11 @@ function setupKnowledgeGraphEvents(
 
         handleGraphLayoutChange(
           documentElement,
-          layoutButton.dataset.knowledgeGraphLayout
+          layoutButton.dataset.knowledgeGraphLayout,
+          {
+            render:
+              renderKnowledgeGraphDocument
+          }
         );
 
         return;
@@ -2017,7 +2049,17 @@ function setupKnowledgeGraphEvents(
       if (canvasAction) {
 
         handleGraphCanvasAction(
-          canvasAction
+          canvasAction,
+          {
+            applyTransform:
+              applyGraphCanvasTransform,
+            clampScale:
+              clampGraphCanvasScale,
+            fitCanvas:
+              fitGraphCanvas,
+            zoomStep:
+              GRAPH_CANVAS_ZOOM_STEP
+          }
         );
 
         return;
@@ -2161,7 +2203,11 @@ function setupKnowledgeGraphEvents(
 
       handleGraphFilterChange(
         documentElement,
-        event.target
+        event.target,
+        {
+          render:
+            renderKnowledgeGraphDocument
+        }
       );
     }
   );
@@ -2217,7 +2263,12 @@ function setupKnowledgeGraphEvents(
         event.preventDefault();
 
         handleGraphFilterChange(
-          documentElement
+          documentElement,
+          null,
+          {
+            render:
+              renderKnowledgeGraphDocument
+          }
         );
       }
     }
@@ -2723,52 +2774,6 @@ function setupKnowledgeGraphEvents(
 }
 
 
-function handleGraphLayoutChange(
-  documentElement,
-  layout
-) {
-
-  documentElement.dataset.currentKnowledgeGraphLayout =
-    layout === 'hub'
-      ? 'hub'
-      : layout === 'domain'
-        ? 'domain'
-        : 'tree';
-
-  renderKnowledgeGraphPage(
-    documentElement.closest(
-      '#editorArea'
-    ) || document
-  );
-}
-
-
-function getRuntimeGraphFilters(
-  documentElement
-) {
-
-  return {
-    domain:
-      documentElement.dataset.currentKnowledgeGraphFilterDomain ||
-      'all',
-    relationshipType:
-      documentElement.dataset.currentKnowledgeGraphFilterRelationship ||
-      'all',
-    search:
-      documentElement.dataset.currentKnowledgeGraphFilterSearch ||
-      '',
-    orphanOnly:
-      documentElement.dataset.currentKnowledgeGraphFilterOrphans === 'true',
-    focusNodeId:
-      documentElement.dataset.currentKnowledgeGraphFocusNode ||
-      '',
-    viewPreset:
-      documentElement.dataset.currentKnowledgeGraphViewPreset ||
-      'standard'
-  };
-}
-
-
 function getRuntimeGraphConnectState(
   documentElement
 ) {
@@ -2800,159 +2805,6 @@ function getRuntimeGraphConnectState(
         : '',
     type
   };
-}
-
-
-function handleGraphFilterChange(
-  documentElement,
-  changedElement = null
-) {
-
-  const viewPreset =
-    changedElement?.matches(
-      '[data-knowledge-graph-filter="viewPreset"]'
-    )
-      ? getKnowledgeGraphViewPreset(
-        changedElement.value
-      )
-      : null;
-
-  const domain =
-    viewPreset
-      ? 'all'
-      : documentElement.querySelector(
-        '[data-knowledge-graph-filter="domain"]'
-      )?.value ||
-        'all';
-
-  const relationshipType =
-    viewPreset
-      ? viewPreset.relationshipType
-      : documentElement.querySelector(
-        '[data-knowledge-graph-filter="relationshipType"]'
-      )?.value ||
-        'all';
-
-  const search =
-    viewPreset
-      ? ''
-      : documentElement.querySelector(
-        '[data-knowledge-graph-filter="search"]'
-      )?.value ||
-        '';
-
-  documentElement.dataset.currentKnowledgeGraphFilterDomain =
-    domain;
-
-  documentElement.dataset.currentKnowledgeGraphFilterRelationship =
-    relationshipType;
-
-  documentElement.dataset.currentKnowledgeGraphFilterSearch =
-    search.trim();
-
-  if (viewPreset) {
-
-    documentElement.dataset.currentKnowledgeGraphViewPreset =
-      viewPreset.value;
-
-    documentElement.dataset.currentKnowledgeGraphFilterOrphans =
-      viewPreset.orphanOnly
-        ? 'true'
-        : 'false';
-
-    delete documentElement.dataset.currentKnowledgeGraphFocusNode;
-  } else {
-
-    delete documentElement.dataset.currentKnowledgeGraphViewPreset;
-  }
-
-  renderKnowledgeGraphPage(
-    documentElement.closest(
-      '#editorArea'
-    ) || document
-  );
-}
-
-
-function handleGraphSliceAction(
-  documentElement,
-  action
-) {
-
-  if (action === 'show-all') {
-
-    documentElement.dataset.currentKnowledgeGraphFilterDomain =
-      'all';
-
-    documentElement.dataset.currentKnowledgeGraphFilterRelationship =
-      'all';
-
-    documentElement.dataset.currentKnowledgeGraphFilterOrphans =
-      'false';
-
-    documentElement.dataset.currentKnowledgeGraphViewPreset =
-      'all';
-
-    delete documentElement.dataset.currentKnowledgeGraphFilterSearch;
-    delete documentElement.dataset.currentKnowledgeGraphFocusNode;
-
-    renderKnowledgeGraphPage(
-      documentElement.closest(
-        '#editorArea'
-      ) || document
-    );
-
-    return;
-  }
-
-  if (action === 'refine') {
-
-    const searchInput =
-      documentElement.querySelector(
-        '[data-knowledge-graph-filter="search"]'
-      );
-
-    searchInput?.focus();
-    searchInput?.select?.();
-
-    setStatus(
-      'Уточни поиск или выбери фильтр графа'
-    );
-  }
-}
-
-
-function handleGraphFilterAction(
-  documentElement,
-  action
-) {
-
-  if (action === 'orphans') {
-
-    documentElement.dataset.currentKnowledgeGraphFilterOrphans =
-      documentElement.dataset.currentKnowledgeGraphFilterOrphans === 'true'
-        ? 'false'
-        : 'true';
-  }
-
-  if (action === 'clear') {
-
-    delete documentElement.dataset.currentKnowledgeGraphFilterDomain;
-    delete documentElement.dataset.currentKnowledgeGraphFilterRelationship;
-    delete documentElement.dataset.currentKnowledgeGraphFilterSearch;
-    delete documentElement.dataset.currentKnowledgeGraphFilterOrphans;
-    delete documentElement.dataset.currentKnowledgeGraphFocusNode;
-    delete documentElement.dataset.currentKnowledgeGraphViewPreset;
-    delete documentElement.dataset.currentKnowledgeGraphConnectSource;
-    delete documentElement.dataset.currentKnowledgeGraphConnectType;
-    delete documentElement.dataset.currentKnowledgeGraphConnectTarget;
-  }
-
-  renderKnowledgeGraphPage(
-    documentElement.closest(
-      '#editorArea'
-    ) || document
-  );
 }
 
 
@@ -4293,63 +4145,6 @@ function initializeGraphCanvasSelection(
   selectGraphCanvasNode(
     documentElement,
     selectedCard.dataset.nodeId
-  );
-}
-
-
-function handleGraphCanvasAction(
-  actionButton
-) {
-
-  const stage =
-    actionButton
-      .closest(
-        '.knowledge-graph-canvas-card'
-      )
-      ?.querySelector(
-        '[data-knowledge-graph-canvas-stage]'
-      );
-
-  if (!stage) return;
-
-  const action =
-    actionButton.dataset.knowledgeGraphCanvasAction;
-
-  const scale =
-    getGraphCanvasNumber(
-      stage.dataset.scale,
-      1
-    );
-
-  if (action === 'zoom-in') {
-
-    stage.dataset.scale =
-      String(
-        clampGraphCanvasScale(
-          scale + GRAPH_CANVAS_ZOOM_STEP
-        )
-      );
-  }
-
-  if (action === 'zoom-out') {
-
-    stage.dataset.scale =
-      String(
-        clampGraphCanvasScale(
-          scale - GRAPH_CANVAS_ZOOM_STEP
-        )
-      );
-  }
-
-  if (action === 'fit') {
-
-    fitGraphCanvas(
-      stage
-    );
-  }
-
-  applyGraphCanvasTransform(
-    stage
   );
 }
 
