@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 559.
+Всего файлов в аудите: 560.
 
 ## Два Независимых Прохода
 
@@ -39,7 +39,7 @@ owner_zone: "delivery"
 | docs/testing | 13 |
 | docs/user-release | 4 |
 | editor | 45 |
-| knowledge graph | 7 |
+| knowledge graph | 8 |
 | maturity | 7 |
 | page repository | 3 |
 | presentation | 3 |
@@ -75,11 +75,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5596442 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5600974 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 948429 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 591004 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 164535 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 948825 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 593620 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 164807 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -532,6 +532,7 @@ owner_zone: "delivery"
 | `js/wiki/knowledgeGraphCanvasControls.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphCanvasIcons.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphCanvasInspector.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/wiki/knowledgeGraphCanvasRenderer.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphLabels.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphPage.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/references.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |

@@ -411,6 +411,8 @@ Use: same canvas-control language as map where possible; do not bypass page life
 
 `0.0.1.8.13.7` continues the graph JavaScript ownership split: graph filterbar controls, readable view presets, slice-meter helpers, hidden-reason labels and layout-button HTML must stay in `knowledgeGraphCanvasControls.js`. The page module may pass in page-title lookup, but the controls module must not read global `state` or mutate graph persistence.
 
+`0.0.1.8.13.8` continues the graph JavaScript ownership split: graph canvas visible-node fallback, empty state, SVG edge/label HTML and node-card HTML must stay in `knowledgeGraphCanvasRenderer.js`. The renderer module may consume the canvas model, connect state, local icon mapping and relationship labels, but it must not read global `state`, register events or mutate graph persistence.
+
 ### Task Tracker
 
 Owns: board toolbar, columns, task cards, checklists, labels, drag previews, empty states.

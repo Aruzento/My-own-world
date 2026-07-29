@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.13.8 Knowledge Graph Canvas Renderer JS Split
+
+### What Changed
+
+- Continued `0.0.1.8.13` Migration Phase 7 with the next JavaScript owner split from `BI-017`.
+- Added `js/wiki/knowledgeGraphCanvasRenderer.js` as the owner for graph canvas node/edge rendering:
+  - selected visible-node fallback;
+  - canvas empty state;
+  - SVG edge and edge-label HTML;
+  - node-card HTML and connect/selected state classes;
+  - edge active/muted selection state.
+- Kept `knowledgeGraphPage.js` as the runtime coordinator for graph workbench layout, toolbar/actions, overlays, events and persistence while the split continues.
+- Removed the old unused readable fallback helper from `knowledgeGraphPage.js`; browser coverage still guards that the legacy bottom node list is absent from the current first screen.
+- Kept visible Knowledge Graph behavior unchanged: node cards, SVG edges, selected node, active/muted edges, connect-source/target styling and empty-filter state still use the same selectors and user-facing text.
+
+### Readiness
+
+Foundation for graph maintainability. The node/edge renderer side of `BI-017` now has its own JS owner, but `0.0.1.8.13` remains active for toolbar/action handlers, context-menu/overlay split and `BI-018` lifecycle hardening.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check js\wiki\knowledgeGraphCanvasRenderer.js`.
+- Passed twice: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests per run.
+- Passed twice: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests per run.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with the remaining `BI-017` JavaScript split: graph toolbar/action handlers and node/connect overlays.
+- Then address `BI-018`: graph relationship/view-state persistence must move through the page lifecycle/write queue or a dedicated graph command bridge.
+- Keep `BI-026` in the mini-backlog before adding more visible Knowledge Graph features.
+
 ## 2026-07-29: 0.0.1.8.13.7 Knowledge Graph Canvas Controls JS Split
 
 ### What Changed

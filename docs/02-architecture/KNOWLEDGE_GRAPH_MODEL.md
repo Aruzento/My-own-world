@@ -84,6 +84,7 @@ Visual canvas есть как usable workbench:
 - right-click node actions can start a simple canvas connection mode for creating manual relationships;
 - graph canvas has local undo/redo for node moves, saved position reset and manual relationship creation;
 - readable view presets separate `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`; the preset/filterbar/slice-meter UI is owned by `js/wiki/knowledgeGraphCanvasControls.js`;
+- visible-node fallback, canvas empty state, SVG edge/label HTML and node-card HTML are owned by `js/wiki/knowledgeGraphCanvasRenderer.js`;
 - visible-slice UI explains `показано X из Y` and separates nodes hidden by filters, the standard root/depth slice and the 96-node canvas cap;
 - selected-node UI stores selection only as runtime dataset state, not in the graph page HTML;
 - selected-node UI marks visible edges as `active` or `muted`, marks neighbor nodes as `related`, and keeps unrelated visible nodes visually muted;
