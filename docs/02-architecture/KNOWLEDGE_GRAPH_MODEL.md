@@ -86,6 +86,7 @@ Visual canvas есть как usable workbench:
 - readable view presets separate `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`; the preset/filterbar/slice-meter UI is owned by `js/wiki/knowledgeGraphCanvasControls.js`;
 - visible-node fallback, canvas empty state, SVG edge/label HTML and node-card HTML are owned by `js/wiki/knowledgeGraphCanvasRenderer.js`;
 - runtime filter reads, layout/filter/slice actions and zoom/fit toolbar actions are owned by `js/wiki/knowledgeGraphCanvasActions.js`; it receives render/transform callbacks and must not mutate relationship persistence;
+- connect-state reads, node/connect popup controller registration, node-menu show/hide, node-menu actions and connect-popup actions are owned by `js/wiki/knowledgeGraphCanvasOverlays.js`; it receives page opening, relationship creation, render and view-state callbacks and must not import global `state` or write graph persistence directly;
 - visible-slice UI explains `показано X из Y` and separates nodes hidden by filters, the standard root/depth slice and the 96-node canvas cap;
 - selected-node UI stores selection only as runtime dataset state, not in the graph page HTML;
 - selected-node UI marks visible edges as `active` or `muted`, marks neighbor nodes as `related`, and keeps unrelated visible nodes visually muted;

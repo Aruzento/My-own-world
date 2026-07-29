@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.10`: graph connect-state reads, node/connect popup controllers, node-menu actions and connect-popup actions now live in a dedicated canvas-overlays JS owner module.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.7`: graph canvas filterbar, view presets, slice-meter helpers, hidden-reason labels and layout-button HTML now live in a dedicated canvas-controls JS owner module.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.8`: graph canvas visible-node fallback, empty state, SVG edges, edge labels and node-card HTML now live in a dedicated canvas-renderer JS owner module.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.9`: graph runtime filters, layout/filter/slice actions and zoom/fit toolbar actions now live in a dedicated canvas-actions JS owner module.

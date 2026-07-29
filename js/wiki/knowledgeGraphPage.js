@@ -27,11 +27,6 @@ import {
 } from '../ui/ui.js';
 
 import {
-  openPopupAtPoint,
-  registerPopup
-} from '../ui/popupManager.js';
-
-import {
   buildKnowledgeGraphCanvasModel,
   buildKnowledgeGraph,
   getKnowledgeGraphDomainDefinitions,
@@ -69,8 +64,22 @@ import {
 
 import {
   EDITABLE_RELATIONSHIP_TYPES,
+  getEditableRelationshipType,
   getRelationshipLabel
 } from './knowledgeGraphLabels.js';
+
+import {
+  getRuntimeGraphConnectState,
+  handleGraphCanvasNodeConnectClick,
+  handleGraphConnectAction,
+  handleGraphConnectTypeChange,
+  handleGraphNodeMenuAction,
+  hideGraphNodeContextMenu,
+  isGraphOverlayEventTarget,
+  setupKnowledgeGraphOverlayControllers,
+  showGraphNodeContextMenu,
+  toggleGraphNodeRelationshipsPanel
+} from './knowledgeGraphCanvasOverlays.js';
 
 
 const GRAPH_CANVAS_MIN_SCALE =
@@ -98,12 +107,6 @@ const graphCanvasHistoryByDocument =
   new WeakMap();
 
 const graphCanvasKeyboardHandlersByDocument =
-  new WeakMap();
-
-const graphNodeMenuControllersByDocument =
-  new WeakMap();
-
-const graphConnectPopupControllersByDocument =
   new WeakMap();
 
 export function isKnowledgeGraphPage(
@@ -153,7 +156,8 @@ export function renderKnowledgeGraphPage(
 
   const connectState =
     getRuntimeGraphConnectState(
-      documentElement
+      documentElement,
+      getGraphOverlayActionOptions()
     );
 
   const selectedNodeId =
@@ -565,6 +569,39 @@ function renderKnowledgeGraphDocument(
       '#editorArea'
     ) || document
   );
+}
+
+
+function getGraphOverlayActionOptions() {
+
+  return {
+    addRelationship:
+      addRelationshipBetweenPages,
+    findNodeCard:
+      findGraphCanvasNodeCard,
+    getPageTitle:
+      getGraphPageTitle,
+    getRelationshipCount:
+      nodeId => getEditableNodeRelationships(
+        nodeId
+      ).length,
+    getRelationshipCountHTML:
+      getRelationshipCountDotsHTML,
+    getRelationshipsHTML:
+      getNodeRelationshipsMenuHTML,
+    openPage:
+      openGraphPage,
+    persistPosition:
+      persistGraphCanvasPosition,
+    readViewState:
+      readKnowledgeGraphViewState,
+    render:
+      renderKnowledgeGraphDocument,
+    renderFocus:
+      renderKnowledgeGraphPageAndFocus,
+    resetPosition:
+      resetGraphCanvasPosition
+  };
 }
 
 
@@ -1690,158 +1727,9 @@ function setupKnowledgeGraphOverlays(
   documentElement
 ) {
 
-  const nodeMenu =
-    documentElement.querySelector(
-      '[data-knowledge-graph-node-menu]'
-    );
-
-  if (nodeMenu) {
-
-    ensureGraphNodeMenuController(
-      documentElement,
-      nodeMenu
-    );
-  }
-
-  const connectPopup =
-    documentElement.querySelector(
-      '[data-knowledge-graph-connect-popup]'
-    );
-
-  if (connectPopup) {
-
-    ensureGraphConnectPopupController(
-      documentElement,
-      connectPopup
-    );
-  }
-}
-
-
-function ensureGraphNodeMenuController(
-  documentElement,
-  menu
-) {
-
-  const existing =
-    graphNodeMenuControllersByDocument.get(
-      documentElement
-    );
-
-  if (
-    existing?.menu === menu
-  ) {
-
-    return existing.controller;
-  }
-
-  const controller =
-    registerPopup({
-      popup:
-        menu,
-      close:
-        () => hideGraphNodeContextMenuElement(
-          menu
-        ),
-      key:
-        'knowledge-graph-node-menu',
-      kind:
-        'context-menu',
-      modal:
-        false
-    });
-
-  graphNodeMenuControllersByDocument.set(
+  setupKnowledgeGraphOverlayControllers(
     documentElement,
-    {
-      menu,
-      controller
-    }
-  );
-
-  return controller;
-}
-
-
-function ensureGraphConnectPopupController(
-  documentElement,
-  popup
-) {
-
-  const existing =
-    graphConnectPopupControllersByDocument.get(
-      documentElement
-    );
-
-  if (
-    existing?.popup === popup
-  ) {
-
-    return existing.controller;
-  }
-
-  const controller =
-    registerPopup({
-      popup,
-      close:
-        () => closeGraphConnectPopup(
-          documentElement
-        ),
-      key:
-        'knowledge-graph-connect-popup',
-      kind:
-        'dialog',
-      modal:
-        false
-    });
-
-  graphConnectPopupControllersByDocument.set(
-    documentElement,
-    {
-      popup,
-      controller
-    }
-  );
-
-  return controller;
-}
-
-
-function closeGraphConnectPopup(
-  documentElement
-) {
-
-  const popup =
-    documentElement.querySelector(
-      '[data-knowledge-graph-connect-popup]'
-    );
-
-  popup?.classList.add(
-    'hidden'
-  );
-
-  const hadConnectState =
-    Boolean(
-      documentElement.dataset.currentKnowledgeGraphConnectSource
-    );
-
-  delete documentElement.dataset.currentKnowledgeGraphConnectSource;
-  delete documentElement.dataset.currentKnowledgeGraphConnectType;
-  delete documentElement.dataset.currentKnowledgeGraphConnectTarget;
-
-  if (hadConnectState) {
-
-    setStatus(
-      'Создание связи отменено'
-    );
-  }
-
-  renderKnowledgeGraphPageAndFocus(
-    documentElement,
-    {
-      force:
-        true
-    }
+    getGraphOverlayActionOptions()
   );
 }
 
@@ -1854,6 +1742,9 @@ function setupKnowledgeGraphEvents(
 
   documentElement.dataset.knowledgeGraphReady =
     'true';
+
+  const graphOverlayOptions =
+    getGraphOverlayActionOptions();
 
   setupGraphCanvasKeyboardHistory(
     documentElement
@@ -1887,28 +1778,9 @@ function setupKnowledgeGraphEvents(
 
         event.preventDefault();
 
-        const relationshipPanel =
-          relationshipsToggle.closest(
-            '.knowledge-graph-node-menu-relationship-panel'
-          );
-
-        if (relationshipPanel) {
-
-          const isExpanded =
-            relationshipPanel.dataset.knowledgeGraphRelationshipsExpanded === 'true';
-
-          relationshipPanel.dataset.knowledgeGraphRelationshipsExpanded =
-            isExpanded
-              ? 'false'
-              : 'true';
-
-          relationshipsToggle.setAttribute(
-            'aria-expanded',
-            isExpanded
-              ? 'false'
-              : 'true'
-          );
-        }
+        toggleGraphNodeRelationshipsPanel(
+          relationshipsToggle
+        );
 
         return;
       }
@@ -1922,7 +1794,8 @@ function setupKnowledgeGraphEvents(
 
         await handleGraphNodeMenuAction(
           documentElement,
-          nodeMenuAction
+          nodeMenuAction,
+          graphOverlayOptions
         );
 
         return;
@@ -1935,7 +1808,8 @@ function setupKnowledgeGraphEvents(
       ) {
 
         hideGraphNodeContextMenu(
-          documentElement
+          documentElement,
+          graphOverlayOptions
         );
       }
 
@@ -1948,7 +1822,8 @@ function setupKnowledgeGraphEvents(
 
         await handleGraphConnectAction(
           documentElement,
-          connectAction.dataset.knowledgeGraphConnectAction
+          connectAction.dataset.knowledgeGraphConnectAction,
+          graphOverlayOptions
         );
 
         return;
@@ -2080,7 +1955,8 @@ function setupKnowledgeGraphEvents(
         if (
           await handleGraphCanvasNodeConnectClick(
             documentElement,
-            canvasNode.dataset.knowledgeGraphCanvasNode
+            canvasNode.dataset.knowledgeGraphCanvasNode,
+            graphOverlayOptions
           )
         ) {
 
@@ -2184,10 +2060,10 @@ function setupKnowledgeGraphEvents(
 
       if (connectType) {
 
-        documentElement.dataset.currentKnowledgeGraphConnectType =
-          getEditableRelationshipType(
-            connectType.value
-          );
+        handleGraphConnectTypeChange(
+          documentElement,
+          connectType.value
+        );
 
         return;
       }
@@ -2244,7 +2120,8 @@ function setupKnowledgeGraphEvents(
       ) {
 
         hideGraphNodeContextMenu(
-          documentElement
+          documentElement,
+          graphOverlayOptions
         );
 
         return;
@@ -2304,7 +2181,8 @@ function setupKnowledgeGraphEvents(
         documentElement,
         card,
         event.clientX,
-        event.clientY
+        event.clientY,
+        graphOverlayOptions
       );
     }
   );
@@ -2320,11 +2198,7 @@ function setupKnowledgeGraphEvents(
 
       if (!stage) return;
 
-      if (
-        event.target.closest(
-          '[data-knowledge-graph-node-menu], [data-knowledge-graph-connect-popup], [data-knowledge-graph-inspector]'
-        )
-      ) {
+      if (isGraphOverlayEventTarget(event.target)) {
 
         return;
       }
@@ -2332,7 +2206,8 @@ function setupKnowledgeGraphEvents(
       event.preventDefault();
 
       hideGraphNodeContextMenu(
-        documentElement
+        documentElement,
+        graphOverlayOptions
       );
 
       focusKnowledgeGraphDocument(
@@ -2391,7 +2266,8 @@ function setupKnowledgeGraphEvents(
     ) => {
 
       hideGraphNodeContextMenu(
-        documentElement
+        documentElement,
+        graphOverlayOptions
       );
 
       selectGraphCanvasNode(
@@ -2774,55 +2650,6 @@ function setupKnowledgeGraphEvents(
 }
 
 
-function getRuntimeGraphConnectState(
-  documentElement
-) {
-
-  const activeSourceId =
-    documentElement.dataset.currentKnowledgeGraphConnectSource ||
-    '';
-
-  const type =
-    getEditableRelationshipType(
-      documentElement.dataset.currentKnowledgeGraphConnectType ||
-      'related'
-    );
-
-  return {
-    activeSourceId,
-    sourceTitle:
-      activeSourceId
-        ? getGraphPageTitle(activeSourceId)
-        : '',
-    targetId:
-      documentElement.dataset.currentKnowledgeGraphConnectTarget ||
-      '',
-    targetTitle:
-      documentElement.dataset.currentKnowledgeGraphConnectTarget
-        ? getGraphPageTitle(
-          documentElement.dataset.currentKnowledgeGraphConnectTarget
-        )
-        : '',
-    type
-  };
-}
-
-
-function getEditableRelationshipType(
-  value
-) {
-
-  const normalizedValue =
-    String(value || '').trim();
-
-  return EDITABLE_RELATIONSHIP_TYPES.some(type =>
-    type.value === normalizedValue
-  )
-    ? normalizedValue
-    : 'related';
-}
-
-
 function getRelationshipTargetId(
   relationship
 ) {
@@ -2965,210 +2792,6 @@ function getEditableNodeRelationships(
 }
 
 
-async function handleGraphConnectAction(
-  documentElement,
-  action
-) {
-
-  if (action === 'create') {
-
-    const connectState =
-      getRuntimeGraphConnectState(
-        documentElement
-      );
-
-    const label =
-      documentElement.querySelector(
-        '[data-knowledge-graph-connect-label]'
-      )?.value || '';
-
-    const added =
-      await addRelationshipBetweenPages(
-        documentElement,
-        {
-          sourceId:
-            connectState.activeSourceId,
-          targetId:
-            connectState.targetId,
-          type:
-            connectState.type,
-          label
-        }
-      );
-
-    if (!added) return;
-  }
-
-  if (
-    action !== 'cancel' &&
-    action !== 'create'
-  ) {
-
-    return;
-  }
-
-  documentElement
-    .querySelector(
-      '[data-knowledge-graph-connect-popup]'
-    )
-    ?.classList.add(
-      'hidden'
-    );
-
-  delete documentElement.dataset.currentKnowledgeGraphConnectSource;
-  delete documentElement.dataset.currentKnowledgeGraphConnectType;
-  delete documentElement.dataset.currentKnowledgeGraphConnectTarget;
-
-  setStatus(
-    action === 'create'
-      ? 'Связь добавлена'
-      : 'Создание связи отменено'
-  );
-
-  renderKnowledgeGraphPageAndFocus(
-    documentElement,
-    {
-      force:
-        true
-    }
-  );
-}
-
-
-async function handleGraphCanvasNodeConnectClick(
-  documentElement,
-  targetId
-) {
-
-  const connectState =
-    getRuntimeGraphConnectState(
-      documentElement
-    );
-
-  if (!connectState.activeSourceId) return false;
-
-  if (
-    !targetId ||
-    connectState.activeSourceId === targetId
-  ) {
-
-    setStatus(
-      'Выберите другую страницу для связи'
-    );
-
-    return true;
-  }
-
-  documentElement.dataset.currentKnowledgeGraphConnectTarget =
-    targetId;
-
-  setStatus(
-    'Проверь свойства новой связи'
-  );
-
-  renderKnowledgeGraphPageAndFocus(
-    documentElement,
-    {
-      force:
-        true
-    }
-  );
-
-  return true;
-}
-
-
-async function handleGraphNodeMenuAction(
-  documentElement,
-  actionButton
-) {
-
-  const menu =
-    actionButton.closest(
-      '[data-knowledge-graph-node-menu]'
-    );
-
-  const nodeId =
-    menu?.dataset.nodeId;
-
-  if (!nodeId) return;
-
-  const action =
-    actionButton.dataset.knowledgeGraphNodeMenuAction;
-
-  hideGraphNodeContextMenu(
-    documentElement
-  );
-
-  if (action === 'open') {
-
-    await openGraphPage(
-      nodeId
-    );
-
-    return;
-  }
-
-  if (action === 'focus') {
-
-    documentElement.dataset.currentKnowledgeGraphFocusNode =
-      nodeId;
-  }
-
-  if (action === 'clear-focus') {
-
-    delete documentElement.dataset.currentKnowledgeGraphFocusNode;
-  }
-
-  if (action === 'pin-position') {
-
-    const card =
-      findGraphCanvasNodeCard(
-        documentElement,
-        nodeId
-      );
-
-    if (card) {
-
-      persistGraphCanvasPosition(
-        documentElement,
-        card
-      );
-    }
-  }
-
-  if (action === 'reset-position') {
-
-    resetGraphCanvasPosition(
-      documentElement,
-      nodeId
-    );
-  }
-
-  if (action === 'connect') {
-
-    documentElement.dataset.currentKnowledgeGraphConnectSource =
-      nodeId;
-
-      documentElement.dataset.currentKnowledgeGraphConnectType =
-        documentElement.dataset.currentKnowledgeGraphConnectType ||
-      'related';
-
-    delete documentElement.dataset.currentKnowledgeGraphConnectTarget;
-
-    setStatus(
-      'Выберите цель связи на canvas'
-    );
-  }
-
-  renderKnowledgeGraphPage(
-    documentElement.closest(
-      '#editorArea'
-    ) || document
-  );
-}
-
-
 async function handleGraphInspectorAction(
   documentElement,
   actionButton
@@ -3282,7 +2905,8 @@ async function handleGraphRelationshipMenuAction(
     if (removed) {
 
       hideGraphNodeContextMenu(
-        documentElement
+        documentElement,
+        getGraphOverlayActionOptions()
       );
 
       renderKnowledgeGraphPageAndFocus(
@@ -3347,7 +2971,8 @@ async function handleGraphRelationshipMenuAction(
   if (updated) {
 
     hideGraphNodeContextMenu(
-      documentElement
+      documentElement,
+      getGraphOverlayActionOptions()
     );
 
     renderKnowledgeGraphPageAndFocus(
@@ -3358,279 +2983,6 @@ async function handleGraphRelationshipMenuAction(
       }
     );
   }
-}
-
-
-function showGraphNodeContextMenu(
-  documentElement,
-  card,
-  clientX,
-  clientY
-) {
-
-  const menu =
-    documentElement.querySelector(
-      '[data-knowledge-graph-node-menu]'
-    );
-
-  if (!menu) return;
-
-  const title =
-    card.dataset.nodeTitle ||
-    card.dataset.nodeId ||
-    '';
-
-  const titleElement =
-    menu.querySelector(
-      '[data-knowledge-graph-node-menu-title]'
-    );
-
-  if (titleElement) {
-
-    titleElement.textContent =
-      title;
-  }
-
-  menu.dataset.nodeId =
-    card.dataset.nodeId;
-
-  menu.dataset.anchorX =
-    String(
-      Math.round(
-        clientX
-      )
-    );
-
-  menu.dataset.anchorY =
-    String(
-      Math.round(
-        clientY
-      )
-    );
-
-  const viewState =
-    readKnowledgeGraphViewState(
-      documentElement
-    );
-
-  const hasPinnedPosition =
-    Boolean(
-      viewState.positions[card.dataset.nodeId]
-    );
-
-  const pinButton =
-    menu.querySelector(
-      '[data-knowledge-graph-node-menu-action="pin-position"]'
-    );
-
-  const resetButton =
-    menu.querySelector(
-      '[data-knowledge-graph-node-menu-action="reset-position"]'
-    );
-
-  if (pinButton) {
-
-    pinButton.hidden =
-      hasPinnedPosition;
-  }
-
-  if (resetButton) {
-
-    resetButton.hidden =
-      !hasPinnedPosition;
-  }
-
-  const relationshipsElement =
-    menu.querySelector(
-      '[data-knowledge-graph-node-menu-relationships]'
-    );
-
-  if (relationshipsElement) {
-
-    relationshipsElement.innerHTML =
-      getNodeRelationshipsMenuHTML(
-        card.dataset.nodeId
-      );
-  }
-
-  const relationshipCount =
-    getEditableNodeRelationships(
-      card.dataset.nodeId
-    ).length;
-
-  const relationshipCountElement =
-    menu.querySelector(
-      '[data-knowledge-graph-node-menu-relationship-count]'
-    );
-
-  if (relationshipCountElement) {
-
-    relationshipCountElement.innerHTML =
-      getRelationshipCountDotsHTML(
-        relationshipCount
-      );
-
-    relationshipCountElement.setAttribute(
-      'aria-label',
-      `${relationshipCount} ручных связей`
-    );
-
-    relationshipCountElement.setAttribute(
-      'title',
-      `${relationshipCount} ручных связей`
-    );
-  }
-
-  const relationshipPanel =
-    menu.querySelector(
-      '.knowledge-graph-node-menu-relationship-panel'
-    );
-
-  if (relationshipPanel) {
-
-    relationshipPanel.dataset.knowledgeGraphRelationshipsExpanded =
-      'false';
-
-    relationshipPanel
-      .querySelector('[data-knowledge-graph-relationships-toggle]')
-      ?.setAttribute(
-        'aria-expanded',
-        'false'
-      );
-  }
-
-  menu.hidden =
-    false;
-
-  menu.classList.add(
-    'hidden'
-  );
-
-  ensureGraphNodeMenuController(
-    documentElement,
-    menu
-  );
-
-  openPopupAtPoint(
-    menu,
-    clientX,
-    clientY,
-    {
-      fallbackWidth: 336,
-      fallbackHeight: 460
-    }
-  );
-
-  adjustGraphNodeMenuToViewport(
-    menu,
-    clientX,
-    clientY
-  );
-}
-
-
-function hideGraphNodeContextMenu(
-  documentElement
-) {
-
-  const menu =
-    documentElement.querySelector(
-      '[data-knowledge-graph-node-menu]'
-    );
-
-  if (!menu) return;
-
-  const controller =
-    ensureGraphNodeMenuController(
-      documentElement,
-      menu
-    );
-
-  if (
-    controller?.isOpen()
-  ) {
-
-    controller.close();
-    return;
-  }
-
-  hideGraphNodeContextMenuElement(
-    menu
-  );
-}
-
-
-function hideGraphNodeContextMenuElement(
-  menu
-) {
-
-  menu.hidden =
-    true;
-
-  menu.classList.add(
-    'hidden'
-  );
-
-  delete menu.dataset.nodeId;
-  delete menu.dataset.anchorX;
-  delete menu.dataset.anchorY;
-}
-
-
-function adjustGraphNodeMenuToViewport(
-  menu,
-  anchorX = null,
-  anchorY = null
-) {
-
-  const rect =
-    menu.getBoundingClientRect();
-
-  const preferredLeft =
-    Number.isFinite(anchorX)
-      ? anchorX
-      : rect.left;
-
-  const preferredTop =
-    Number.isFinite(anchorY)
-      ? anchorY
-      : rect.top;
-
-  const targetLeft =
-    clampGraphCanvasPosition(
-      preferredLeft,
-      12,
-      Math.max(
-        12,
-        window.innerWidth - rect.width - 12
-      )
-    );
-
-  const targetTop =
-    clampGraphCanvasPosition(
-      preferredTop,
-      12,
-      Math.max(
-        12,
-        window.innerHeight - rect.height - 12
-      )
-    );
-
-  const styleLeft =
-    Number.parseFloat(
-      menu.style.left
-    ) || 0;
-
-  const styleTop =
-    Number.parseFloat(
-      menu.style.top
-    ) || 0;
-
-  menu.style.left =
-    `${Math.round(styleLeft + targetLeft - rect.left)}px`;
-
-  menu.style.top =
-    `${Math.round(styleTop + targetTop - rect.top)}px`;
 }
 
 
@@ -4960,24 +4312,6 @@ function clampGraphCanvasScale(
       Number.isFinite(scale)
         ? scale
       : 1
-    )
-  );
-}
-
-
-function clampGraphCanvasPosition(
-  value,
-  min,
-  max
-) {
-
-  return Math.min(
-    max,
-    Math.max(
-      min,
-      Number.isFinite(value)
-        ? value
-        : min
     )
   );
 }

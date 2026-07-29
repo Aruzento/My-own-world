@@ -29,6 +29,22 @@ export const EDITABLE_RELATIONSHIP_TYPES = [
   }
 ];
 
+
+export function getEditableRelationshipType(
+  value
+) {
+
+  const normalizedValue =
+    String(value || '').trim();
+
+  return EDITABLE_RELATIONSHIP_TYPES.some(type =>
+    type.value === normalizedValue
+  )
+    ? normalizedValue
+    : 'related';
+}
+
+
 const RELATIONSHIP_LABELS = {
   treeParent: 'В дереве',
   wikiLink: 'Wiki-ссылка',
