@@ -43,7 +43,7 @@ npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-insp
 npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs
 ```
 
-For the Knowledge Graph visible-slice, selected-node inspector, edge-state, overlay-cleanup, laconic first-layer, CSS split and inspector/labels JS split slices, use:
+For the Knowledge Graph visible-slice, selected-node inspector, edge-state, overlay-cleanup, laconic first-layer, CSS split and inspector/labels/canvas-controls JS split slices, use:
 
 ```powershell
 npm run test:browser -- tests/browser/knowledge-graph.spec.mjs
