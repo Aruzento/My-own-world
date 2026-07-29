@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.14.3 Help Support And Release Guide UI
+
+### What Changed
+
+- Continued `0.0.1.8.14` Migration Phase 8 with the existing Tools help/onboarding popup as the next real secondary-screen surface.
+- Reworked Tools help routes into compact icon rows for `Быстрый старт`, `Как устроено`, `Релиз`, `Поддержка` and `Checklist`.
+- Migrated `#onboardingPopup` to `data-help-ui-migration="0.0.1.8.14.3"` with a local sprite header mark, internal section navigation, status chips and two-column support cards.
+- Added release-check guidance cards for `verify`, browser smoke, desktop gate and large-workspace handoff without creating a fake release build UI.
+- Added support cards for Settings diagnostics, asset health, backup/restore and the current import/export status. Import/export is explicitly marked `planned` because World Package model/storage exists, but user-facing import/export UI is still a remaining Phase 8 task.
+- Kept the existing popupManager lifecycle and Tools topbar entry; no new router, import/export workflow or persistent workspace data path was added.
+
+### Readiness
+
+`Usable` for the existing Help/Support/Release guide surface. A human can open Tools, pick the needed help route, switch sections inside the popup, see what checks/support surfaces exist, and see that import/export UI is not ready yet. The broader `0.0.1.8.14` phase remains active for user-facing import/export flows and deeper backup/import/release handoff UX where needed.
+
+### Verification
+
+- Passed: `node --check` for changed Help/Support JS and browser spec files.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs` with 6 browser tests, including Help/Support route markers, section navigation, planned import/export marker, no horizontal overflow and card radius guard.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`, now including the Help/Support screenshot attachment.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`, including the new Help/Support screenshot attachment and system inventory row.
+- Passed after updating the legacy Tools count guard: `npm run test:browser -- tests/browser/component-catalogue.spec.mjs`.
+- Passed: `python tools\generate_manual_docx.py`, regenerating `docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `node tools\audit_project_files.mjs`, refreshing `docs\01-delivery\PROJECT_FILE_AUDIT.md`.
+- Passed: `node tools\docs_index.mjs`, `node tools\validate_agent_skills.mjs`, `npm run check:encoding` and `git diff --check`.
+- Passed: `npm run verify` with 273 node tests, large-workspace performance smoke and manual docx zip validation.
+- First `npm run desktop:gate` attempt caught one stale regression guard in `component-catalogue-exposes-shared-primitives-and-states`: the test still expected 4 Tools buttons after the Help/Support route expansion. The guard was updated to expect 5 help routes plus the component catalogue action.
+- Passed after rerun: `npm run desktop:gate`, including docs index, skills validation, verify, 114 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+- Manual visual review: generated and inspected local screenshots of the Support section; corrected dark unreadable local sprite icons by adding scoped fill/stroke rules.
+
+### Follow-Up
+
+- Continue `0.0.1.8.14` with the actual user-facing World Package import/export UI or deeper backup/import/release handoff UX. Do not treat the planned import/export marker as implementation of import/export.
+
 ## 2026-07-29: 0.0.1.8.14.2 Task Tracker Button Fix And Settings Maintenance UI
 
 ### What Changed

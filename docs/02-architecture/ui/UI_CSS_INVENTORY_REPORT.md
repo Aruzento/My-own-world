@@ -118,10 +118,10 @@ index.html
 
 | File | Lines | Role |
 | --- | ---: | --- |
+| `styles/app-topbar.css` | 2,442 | App topbar, compact Tools help routes and the `0.0.1.8.14.2` Settings maintenance popup surface for appearance, backup, asset health and workspace diagnostics. |
 | `styles/block-properties.css` | 2,171 | Properties grid, field controls, settings popup, DnD/resize states, character layout polish and select styling. |
 | `styles/campaign-map-popups.css` | 2,151 | Map popups, playlists, layers, drawing, settings and scene controls. |
 | `styles/ui.css` | 1,779 | Shared primitive seeds, including Button, IconButton, Input, Select, Checkbox, SegmentedControl, Toolbar, Panel, Popover and toast/status primitives. |
-| `styles/app-topbar.css` | 2,292 | App topbar, Tools popup and the `0.0.1.8.14.2` Settings maintenance popup surface for appearance, backup, asset health and workspace diagnostics. |
 | `styles/knowledge-graph.css` | 1,311 | Graph document, workbench, canvas, toolbar, filterbar, node cards, edge states and responsive base after `0.0.1.8.13.5`. Slice, inspector and overlay/menu styles now have separate owner files. |
 | `styles/blocks.css` | 1,204 | Generic blocks toolbar, shared card block surfaces, type badges, markers, runtime controls and card-block select styling. |
 | `styles/tree.css` | 1,053 | Sidebar tree, context menu and virtualized rows. |
@@ -130,6 +130,7 @@ index.html
 | `styles/editor.css` | 903 | Editor shell, empty states and navigation controls. |
 | `styles/document.css` | 697 | Persistent document typography and card body styles. |
 | `styles/campaign-map-layout.css` | 673 | Campaign map document/stage layout, split toolbar shell and title chip. |
+| `styles/onboarding.css` | 672 | Help/Support/Release guide popup, internal help routes, status chips and support/release cards after `0.0.1.8.14.3`. |
 | `styles/layout.css` | 671 | Global app shell layout, rail, sidebars, right-panel reserve and statusbar composition. |
 | `styles/brand-system.css` | 633 | Final brand skin, shared state overrides and popup motion. |
 | `styles/campaign-map-token-popup.css` | 628 | Token popup and token quick actions. |
@@ -295,7 +296,8 @@ styles/block-*.css             specific block families
 styles/campaign-map*.css       map feature UI, no global control rules
 styles/knowledge-graph*.css    graph feature UI; base, slice, inspector and overlays are split, JS split/lifecycle bridge remain
 styles/task-tracker.css        task tracker feature UI; `0.0.1.8.14.1` migrated board/column/card/checklist surfaces to shared tokens and local sprite actions, and `0.0.1.8.14.2` guards nested icon-button clicks
-styles/app-topbar.css          topbar plus Settings maintenance UI; `0.0.1.8.14.2` scopes the migrated Settings popup through `data-settings-ui-migration`
+styles/app-topbar.css          topbar plus Settings maintenance UI and compact Tools help routes; `0.0.1.8.14.2` scopes Settings and `0.0.1.8.14.3` scopes Tools help routes
+styles/onboarding.css          Help/Support/Release guide popup; `0.0.1.8.14.3` scopes internal help routes, status chips and support cards
 ```
 
 Future JS ownership model:
@@ -324,7 +326,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.11` Core content | Closed at `Usable` by `0.0.1.8.11.7`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects, saved-template creation, deep search and command palette are migrated to the shared design direction. | `BI-013` and `BI-014` are closed; command palette reuses PageRepository, popupManager and existing app action hooks instead of adding a command registry; keep `BI-025` as future pane-planning material. |
 | `0.0.1.8.12` Campaign map | Closed at `Usable` by `0.0.1.8.12.10`: compact title chip, full-width top scene/session bar, full-height left canvas tool rail, unclipped floating toolbar tooltips, shared map popups, right-side property Inspector, custom object right-click menu and group contextual visibility actions are the current default UI; duplicate layer/object and scene-state panels are not auto-rendered. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke for future map bugfixes. |
 | `0.0.1.8.13` Knowledge graph | Closed at `Usable` by `0.0.1.8.13.11`: visible-slice clarity, selected-node edge states/inspector, node/connect overlay visuals, laconic first layer, CSS owner files, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. | `BI-017`, `BI-018` and `BI-019` are closed for Phase 7. Keep `BI-026` before adding new visible graph features. |
-| `0.0.1.8.14` Secondary screens | Active. `0.0.1.8.14.1` closed the task tracker UI slice at `Usable`, and `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup for appearance, backup, asset health and diagnostics. | Remaining Phase 8 scope: imports, release/help screens, support panels and deeper backup/import/release handoff UX where needed. |
+| `0.0.1.8.14` Secondary screens | Active. `0.0.1.8.14.1` closed the task tracker UI slice at `Usable`; `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup; `0.0.1.8.14.3` migrated the existing Help/Support/Release guide surface in Tools. | Remaining Phase 8 scope: user-facing import/export flows and deeper backup/import/release handoff UX where needed. |
 
 ## Browser And Tauri Risks
 
@@ -370,7 +372,7 @@ When the redesign reaches these areas, check the small backlog before marking th
 
 - `BI-013`: editor block drag-and-drop regression, closed in `0.0.1.8.11.2`.
 - `BI-014`: Add block popup visual cleanup, closed in `0.0.1.8.11.2`.
-- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map Phase 6 is closed at `Usable` by `0.0.1.8.12.10`; Knowledge Graph Phase 7 is closed at `Usable` by `0.0.1.8.13.11`; Phase 8 secondary screens are active with task tracker and Settings maintenance slices closed through `0.0.1.8.14.2`.
+- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map Phase 6 is closed at `Usable` by `0.0.1.8.12.10`; Knowledge Graph Phase 7 is closed at `Usable` by `0.0.1.8.13.11`; Phase 8 secondary screens are active with task tracker, Settings maintenance and Help/Support guide slices closed through `0.0.1.8.14.3`.
 - `BI-017`: Knowledge Graph CSS/JS ownership split is closed for Phase 7 in `0.0.1.8.13.11`.
 - `BI-018`: Knowledge Graph manual relationship persistence now uses the command lifecycle/write queue in `0.0.1.8.13.11`.
 - `BI-019`: graph hidden-slice clarity is closed in `0.0.1.8.13.1`; selected-node edge-state/inspector clarity is covered by `0.0.1.8.13.2`; future hidden-state work should be a concrete graph bug or an extension of the graph inspector.

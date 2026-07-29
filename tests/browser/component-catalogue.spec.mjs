@@ -74,7 +74,19 @@ test(
     await expect(
       toolsPopup.locator('.mow-button')
     ).toHaveCount(
-      4
+      6
+    );
+
+    await expect(
+      toolsPopup.locator('[data-help-tool-action]')
+    ).toHaveCount(
+      5
+    );
+
+    await expect(
+      toolsPopup.locator('[data-component-catalogue-open="true"]')
+    ).toHaveCount(
+      1
     );
 
     await page

@@ -18,6 +18,7 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-knowledge-graph',
   'visual-knowledge-graph-node-menu',
   'visual-task-tracker',
+  'visual-help-support',
   'visual-component-catalogue-popover'
 ];
 
@@ -674,6 +675,24 @@ test(
       testInfo,
       'visual-task-tracker'
     );
+
+    await page.locator('#appToolsBtn').click();
+
+    await page
+      .locator('[data-onboarding-open="support"]')
+      .click();
+
+    await expect(
+      page.locator('#onboardingPopup[data-help-ui-migration="0.0.1.8.14.3"]')
+    ).toBeVisible();
+
+    await attachLocatorScreenshot(
+      page.locator('#onboardingPopup'),
+      testInfo,
+      'visual-help-support'
+    );
+
+    await page.locator('#onboardingCloseBtn').click();
 
     await page.locator('#appToolsBtn').click();
 

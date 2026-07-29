@@ -605,6 +605,19 @@ test(
 
     await page.locator('#appToolsBtn').click();
 
+    await expect(
+      page.locator('#appToolsPopup')
+    ).toHaveAttribute(
+      'data-tools-ui-migration',
+      '0.0.1.8.14.3'
+    );
+
+    await expect(
+      page.locator('#appToolsPopup [data-help-tool-action]')
+    ).toHaveCount(
+      5
+    );
+
     await page
       .getByRole(
         'button',
@@ -624,6 +637,84 @@ test(
       page.locator('.onboarding-card')
     ).toHaveCount(
       4
+    );
+
+    const quickstartHelpSurface =
+      await page.evaluate(
+        () => {
+
+          const popup =
+            document.querySelector('#onboardingPopup');
+
+          const body =
+            document.querySelector('#onboardingBody');
+
+          const firstCard =
+            document.querySelector('.onboarding-card');
+
+          return {
+            migration:
+              popup?.dataset.helpUiMigration || '',
+            section:
+              popup?.dataset.helpSection || '',
+            routes:
+              popup?.querySelectorAll('[data-help-route]').length || 0,
+            statuses:
+              popup?.querySelectorAll('[data-help-status]').length || 0,
+            plannedCards:
+              popup?.querySelectorAll('[data-help-card-state="planned"]').length || 0,
+            noHorizontalOverflow:
+              body
+                ? body.scrollWidth <= body.clientWidth + 1
+                : false,
+            cardRadius:
+              firstCard
+                ? Number.parseFloat(
+                  getComputedStyle(firstCard).borderRadius
+                )
+                : 0
+          };
+        }
+      );
+
+    expect(
+      quickstartHelpSurface
+    ).toMatchObject({
+      migration:
+        '0.0.1.8.14.3',
+      section:
+        'quickstart',
+      routes:
+        5,
+      statuses:
+        3,
+      plannedCards:
+        0,
+      noHorizontalOverflow:
+        true
+    });
+
+    expect(
+      quickstartHelpSurface.cardRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    await page
+      .locator('[data-help-route="support"]')
+      .click();
+
+    await expect(
+      page.locator('#onboardingPopup')
+    ).toHaveAttribute(
+      'data-help-section',
+      'support'
+    );
+
+    await expect(
+      page.locator('[data-help-card-state="planned"]')
+    ).toHaveCount(
+      1
     );
 
     await page.evaluate(

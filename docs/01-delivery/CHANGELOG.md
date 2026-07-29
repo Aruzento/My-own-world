@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.3`: the existing Tools help/onboarding popup is now a Help/Support/Release guide with compact icon routes, internal navigation, status chips, release-check cards, support diagnostics cards, visual-safety coverage and an explicit planned marker for import/export UI.
 - UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.2`: task tracker icon-button clicks now work when the user clicks the nested SVG icon, and the topbar Settings popup now uses one maintenance section system for appearance, backup, asset health and workspace diagnostics with health/backup/restore/asset/danger markers plus visual-safety coverage.
 - UI redesign Phase 8 secondary screens started with `0.0.1.8.14.1`: task tracker now has a compact workbench toolbar, local sprite icon actions, column/task/checklist counters, checklist progress bars and tokenized board/column/card surfaces without changing task tracker persistence.
 - UI redesign Phase 7 Knowledge Graph closed with `0.0.1.8.13.11`: relationship/context-menu HTML, graph view-state helpers and manual relationship persistence now have dedicated owners, and relationship writes use the command lifecycle/write queue instead of direct graph-page storage writes.

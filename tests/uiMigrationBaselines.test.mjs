@@ -22,6 +22,7 @@ const REQUIRED_BASELINE_ATTACHMENTS = [
   'visual-knowledge-graph',
   'visual-knowledge-graph-node-menu',
   'visual-task-tracker',
+  'visual-help-support',
   'visual-component-catalogue-popover'
 ];
 
@@ -33,6 +34,7 @@ const REQUIRED_SYSTEM_ROWS = [
   'Campaign map and live scene',
   'Knowledge graph and canvas',
   'Task tracker',
+  'Help, support and release guide `0.0.1.8.14.3`',
   'Shared primitives and overlays'
 ];
 
