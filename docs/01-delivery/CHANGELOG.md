@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 8 secondary screens started with `0.0.1.8.14.1`: task tracker now has a compact workbench toolbar, local sprite icon actions, column/task/checklist counters, checklist progress bars and tokenized board/column/card surfaces without changing task tracker persistence.
 - UI redesign Phase 7 Knowledge Graph closed with `0.0.1.8.13.11`: relationship/context-menu HTML, graph view-state helpers and manual relationship persistence now have dedicated owners, and relationship writes use the command lifecycle/write queue instead of direct graph-page storage writes.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.10`: graph connect-state reads, node/connect popup controllers, node-menu actions and connect-popup actions now live in a dedicated canvas-overlays JS owner module.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.7`: graph canvas filterbar, view presets, slice-meter helpers, hidden-reason labels and layout-button HTML now live in a dedicated canvas-controls JS owner module.

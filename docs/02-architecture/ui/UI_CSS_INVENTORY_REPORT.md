@@ -294,7 +294,7 @@ styles/blocks.css              generic block frame and runtime controls only
 styles/block-*.css             specific block families
 styles/campaign-map*.css       map feature UI, no global control rules
 styles/knowledge-graph*.css    graph feature UI; base, slice, inspector and overlays are split, JS split/lifecycle bridge remain
-styles/task-tracker.css        task tracker feature UI
+styles/task-tracker.css        task tracker feature UI; `0.0.1.8.14.1` migrated board/column/card/checklist surfaces to shared tokens and local sprite actions
 ```
 
 Future JS ownership model:
@@ -323,6 +323,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.11` Core content | Closed at `Usable` by `0.0.1.8.11.7`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects, saved-template creation, deep search and command palette are migrated to the shared design direction. | `BI-013` and `BI-014` are closed; command palette reuses PageRepository, popupManager and existing app action hooks instead of adding a command registry; keep `BI-025` as future pane-planning material. |
 | `0.0.1.8.12` Campaign map | Closed at `Usable` by `0.0.1.8.12.10`: compact title chip, full-width top scene/session bar, full-height left canvas tool rail, unclipped floating toolbar tooltips, shared map popups, right-side property Inspector, custom object right-click menu and group contextual visibility actions are the current default UI; duplicate layer/object and scene-state panels are not auto-rendered. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke for future map bugfixes. |
 | `0.0.1.8.13` Knowledge graph | Closed at `Usable` by `0.0.1.8.13.11`: visible-slice clarity, selected-node edge states/inspector, node/connect overlay visuals, laconic first layer, CSS owner files, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. | `BI-017`, `BI-018` and `BI-019` are closed for Phase 7. Keep `BI-026` before adding new visible graph features. |
+| `0.0.1.8.14` Secondary screens | Active. `0.0.1.8.14.1` closed the task tracker UI slice at `Usable`: compact board toolbar, local sprite icon actions, quiet counters, checklist progress and tokenized board/column/card surfaces. | Remaining Phase 8 scope: settings, imports, backup/restore, release/help screens, diagnostics and support panels. |
 
 ## Browser And Tauri Risks
 

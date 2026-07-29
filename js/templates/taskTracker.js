@@ -27,6 +27,7 @@ export function createTaskTrackerTemplate() {
       <div
         class="task-tracker-document"
         data-task-tracker="v1"
+        data-task-tracker-ui-migration="0.0.1.8.14.1"
         contenteditable="false"
       >
         <div class="task-tracker-topbar" contenteditable="false">

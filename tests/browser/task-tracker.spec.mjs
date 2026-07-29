@@ -253,3 +253,213 @@ aliases: []
     );
   }
 );
+
+test(
+  'task-tracker-ui-migration-uses-compact-workbench-surface',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createTaskTrackerTemplate
+          } = await import('/js/templates/taskTracker.js');
+
+          const {
+            renderTaskTracker
+          } = await import('/js/taskTracker/taskTrackerRender.js');
+
+          const {
+            writeTaskTrackerData
+          } = await import('/js/taskTracker/taskTrackerWriteData.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createTaskTrackerTemplate().content;
+
+          const tracker =
+            editor.querySelector('.task-tracker-document');
+
+          writeTaskTrackerData(
+            tracker,
+            {
+              version: 1,
+              columns: [
+                {
+                  id: 'todo',
+                  title: 'Идеи',
+                  taskIds: [
+                    'task-1',
+                    'task-2'
+                  ]
+                },
+                {
+                  id: 'done',
+                  title: 'Готово',
+                  taskIds: []
+                }
+              ],
+              tasks: [
+                {
+                  id: 'task-1',
+                  title: 'Подготовить сцену',
+                  description: 'Собрать заметки и проверить карту.',
+                  checklist: [
+                    {
+                      id: 'check-1',
+                      text: 'Карта',
+                      done: true
+                    },
+                    {
+                      id: 'check-2',
+                      text: 'Музыка',
+                      done: false
+                    }
+                  ]
+                },
+                {
+                  id: 'task-2',
+                  title: 'Проверить NPC',
+                  description: '',
+                  checklist: []
+                }
+              ]
+            }
+          );
+
+          renderTaskTracker(
+            editor
+          );
+
+          const board =
+            tracker.querySelector('.task-tracker-board');
+
+          const firstColumn =
+            tracker.querySelector('.task-column');
+
+          const firstCard =
+            tracker.querySelector('.task-card');
+
+          const secondCard =
+            tracker.querySelectorAll('.task-card')[1];
+
+          const progress =
+            firstCard.querySelector('.task-card-progress');
+
+          const columns =
+            tracker.querySelector('.task-columns');
+
+          const iconNames =
+            [
+              ...tracker.querySelectorAll('.task-tracker-action-icon, .task-tracker-stat-icon')
+            ].map(icon =>
+              icon.dataset.iconName
+            );
+
+          const columnsRect =
+            columns.getBoundingClientRect();
+
+          const columnsChildrenOverflow =
+            [
+              ...columns.children
+            ].some(child => {
+
+              const rect =
+                child.getBoundingClientRect();
+
+              return rect.left < columnsRect.left - 1 ||
+                rect.right > columnsRect.right + 1;
+            });
+
+          return {
+            documentMarker:
+              tracker.dataset.taskTrackerUiMigration,
+            boardMarker:
+              board.dataset.taskTrackerBoardUi,
+            columnCountText:
+              firstColumn.querySelector('.task-column-count')?.textContent?.trim(),
+            progressValue:
+              progress?.style.getPropertyValue('--task-progress').trim(),
+            secondCardHasProgress:
+              Boolean(
+                secondCard.querySelector('.task-card-progress')
+              ),
+            iconNames,
+            cardRadius:
+              Number.parseFloat(
+                getComputedStyle(firstCard).borderRadius
+              ),
+            columnsChildrenOverflow,
+            boardOverflowStyle:
+              getComputedStyle(board).overflowX
+          };
+        }
+      );
+
+    expect(
+      result.documentMarker
+    ).toBe(
+      '0.0.1.8.14.1'
+    );
+
+    expect(
+      result.boardMarker
+    ).toBe(
+      '0.0.1.8.14.1'
+    );
+
+    expect(
+      result.columnCountText
+    ).toBe(
+      '2'
+    );
+
+    expect(
+      result.progressValue
+    ).toBe(
+      '50%'
+    );
+
+    expect(
+      result.secondCardHasProgress
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.iconNames
+    ).toEqual(
+      expect.arrayContaining([
+        'grip',
+        'plus',
+        'trash',
+        'check'
+      ])
+    );
+
+    expect(
+      result.cardRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      result.columnsChildrenOverflow
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.boardOverflowStyle
+    ).toBe(
+      'visible'
+    );
+  }
+);

@@ -49,6 +49,12 @@ For the Knowledge Graph visible-slice, selected-node inspector, edge-state, over
 npm run test:browser -- tests/browser/knowledge-graph.spec.mjs
 ```
 
+For the task tracker `0.0.1.8.14.1` workbench UI slice, use:
+
+```powershell
+npm run test:browser -- tests/browser/task-tracker.spec.mjs
+```
+
 For the editor block DnD and Add block redesign slice, use:
 
 ```powershell
@@ -109,7 +115,8 @@ Card editor design check: select text in the card title and in a normal text blo
 16. In the Knowledge Graph, click a node and confirm its connected lines become active, unrelated visible lines/nodes become muted, and the workbench inspector stays light: title, icon actions and short relation chips instead of visible stat grids.
 17. In the Knowledge Graph, drag a node, undo/redo, right-click a node and check relationship actions. The context menu should open near the clicked node, stay inside the viewport, use grouped icon actions, and show editable relationship rows only after expanding `Связи`; expanded rows should not clip fields or show visible internal scrollbars.
 18. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should use the same dark editor-grade icon/header/field language, stay within the viewport and close cleanly by Escape/outside click.
-19. Run backup manually before any repair action; schema repair must stop if backup fails.
+19. Create or open a task tracker. The board should have a compact top toolbar with local icons, quiet column/task/checklist counters and the add-column action. Columns should be full-height work surfaces with small icon actions, task cards should feel raised but compact, checklist progress should appear only on cards that have checklist items, and drag/drop placeholders should be readable without creating internal horizontal scrollbars.
+20. Run backup manually before any repair action; schema repair must stop if backup fails.
 
 ### 4. Known Risks To Watch
 

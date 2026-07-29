@@ -26,6 +26,11 @@ export function renderTaskTracker(
 
   if (!tracker) return;
 
+  tracker.setAttribute(
+    'data-task-tracker-ui-migration',
+    '0.0.1.8.14.1'
+  );
+
   const data =
     readTaskTrackerData(
       tracker

@@ -93,6 +93,8 @@ Status: closed at `Usable` by `0.0.1.8.13.11`. `0.0.1.8.13.1`-`0.0.1.8.13.4` mig
 
 Description: migrate task tracker, settings, imports, backup/restore, release/help screens, diagnostics, and support panels.
 
+Status: active. `0.0.1.8.14.1` closed the task tracker UI slice at `Usable`: the board now has a compact workbench toolbar, local sprite icon actions, column/task/checklist counters, checklist progress bars and tokenized column/card surfaces without changing the data model or persistence path. Remaining Phase 8 work: settings, imports, backup/restore, release/help screens, diagnostics and support panels.
+
 0.0.1.8.15. Migration Phase 9: polish and cleanup.
 
 Description: run accessibility audit, performance pass, visual regression, theme presets, animation review, dead CSS removal, and documentation updates.

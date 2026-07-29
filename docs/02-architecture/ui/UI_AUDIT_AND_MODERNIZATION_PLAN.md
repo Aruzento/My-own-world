@@ -271,6 +271,8 @@ owner_zone: "architecture"
 
 ### Phase 6 - Task Tracker Refresh
 
+Status: started and partially closed by `0.0.1.8.14.1`. The board/column/card/checklist UI is migrated to the shared workbench language; remaining secondary-screen work lives in `0.0.1.8.14` rather than this older phase label.
+
 - Колонки.
 - Карточки задач.
 - Drag states.

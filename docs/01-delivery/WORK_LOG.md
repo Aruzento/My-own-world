@@ -6,6 +6,39 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.14.1 Secondary Screens Task Tracker UI
+
+### What Changed
+
+- Started `0.0.1.8.14` Migration Phase 8 with the task tracker, the safest secondary-screen slice because it already has data-first model, persistence and browser smoke coverage.
+- Added `data-task-tracker-ui-migration="0.0.1.8.14.1"` to task tracker documents at template/render time and `data-task-tracker-board-ui="0.0.1.8.14.1"` to the runtime board.
+- Reworked task tracker runtime HTML owners:
+  - the board now has a compact workbench toolbar with board icon, column/task/checklist counters and the add-column action;
+  - column headers use local sprite grip/add/delete actions, a compact task count and an empty-state row instead of large placeholder panels;
+  - task cards use local sprite actions, quieter editable fields and checklist progress bars that appear only when a checklist exists.
+- Replaced the old task tracker CSS surface with shared-token board, column, card, checklist, focus, hover, drag-preview and drop-placeholder styling.
+- Kept the task tracker model, JSON script, autosave/special-save path and legacy page upgrade behavior unchanged.
+
+### Readiness
+
+`Usable` for the task tracker UI slice. A human can open/create a task tracker, read the board as a compact production-style workbench, add columns/tasks/checklist items, drag cards/columns and keep the existing save/reload behavior. The broader `0.0.1.8.14` phase remains active for settings, imports, backup/restore, release/help screens, diagnostics and support panels.
+
+### Verification
+
+- Passed twice: `node --check` for changed task tracker JS and browser spec files.
+- Passed twice: `npm run test:browser -- tests/browser/task-tracker.spec.mjs` with 3 browser tests, including the new compact workbench surface guard.
+- Passed twice: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Manual visual review: generated and inspected a local Playwright screenshot of `.task-tracker-document`; corrected the first review issue by moving add-column from a large grid tile into the compact board toolbar.
+- Passed: `python tools\generate_manual_docx.py`, regenerating `docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `node tools\docs_index.mjs`, `node tools\audit_project_files.mjs`, `npm run check:encoding` and `git diff --check`.
+- Passed: `npm run verify` with 273 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 113 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.14` with settings/imports/backup/diagnostics surfaces.
+- Do not treat the task tracker UI slice as completion of all secondary screens.
+
 ## 2026-07-29: 0.0.1.8.13.11 Knowledge Graph Phase 7 Lifecycle Closure
 
 ### What Changed
