@@ -41,7 +41,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 ### Verification Snapshot
 
 - `npm run verify` passed locally with 272 node tests and large-workspace smoke; the same verify step also passed inside `npm run desktop:gate`.
-- Full browser smoke passed inside `npm run desktop:gate` with 110 browser tests after the AppShell rail/profile, Explorer action, block DnD, Add block popup, card editor toolbar, card-block select, template picker, command-palette/deep-search, campaign-map toolbar/popup/selection/group-action and Knowledge Graph visible-slice plus selected-node inspector corrections. The later `0.0.1.8.13.3` graph overlay cleanup is covered by focused Knowledge Graph and visual-regression browser runs plus the full `npm run verify` gate.
+- Full browser smoke passed inside `npm run desktop:gate` with 112 browser tests after the AppShell rail/profile, Explorer action, block DnD, Add block popup, card editor toolbar, card-block select, template picker, command-palette/deep-search, campaign-map toolbar/popup/selection/group-action and Knowledge Graph `0.0.1.8.13.1`-`0.0.1.8.13.5` corrections, including laconic graph UI and CSS ownership split.
 - `npm run test:browser -- --grep "editor-block-pointer-dnd|add-block-picker|visual-safety"` passed locally with 3 focused browser tests for block reorder cleanup, Add block icon/focus contract and visual smoke capture.
 - `npm run test:browser -- --grep "card-editor-core-content-controls|app-shell-empty-state"` passed locally with 2 focused browser tests for the card editor toolbar/header visual contract and AppShell empty-state guard.
 - `npm run test:browser -- component-catalogue` passed locally with the expanded shared primitive and overlay marker coverage.
@@ -56,7 +56,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - After the AppShell rail simplification, Explorer action, rail/profile, right-panel reserve, `0.0.1.8.11.3` core editor corrections, `0.0.1.8.11.4` Properties polish, `0.0.1.8.11.5` shared card block visual language, `0.0.1.8.11.6` card-select/template-picker pass and `0.0.1.8.11.7` command-palette/deep-search pass, focused Properties/AppShell/editor/template/search browser checks passed twice, the nearby page-template/visual-regression/popup/property/editor specs passed, and final full verification is recorded in `docs/01-delivery/WORK_LOG.md`.
 - `npm run test:browser -- --grep schema-recovery` passed locally with 5 focused browser tests.
 - `node tools/docs_index.mjs`, `node tools/audit_project_files.mjs`, `npm run check:encoding` and `node tools/validate_agent_skills.mjs` passed locally.
-- `npm run desktop:gate` passed locally, including docs index, skills validation, verify, 109 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. The large-workspace desktop smoke was skipped because no external workspace path was provided.
+- `npm run desktop:gate` passed locally, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. The large-workspace desktop smoke was skipped because no external workspace path was provided.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 

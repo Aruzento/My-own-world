@@ -36,6 +36,7 @@ Foundation for graph maintainability. The CSS side of `BI-017` is now split enou
 - Passed: `node tools\audit_project_files.mjs`.
 - Passed: `npm run check:encoding`.
 - Passed twice: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
 
 ### Follow-Up
 

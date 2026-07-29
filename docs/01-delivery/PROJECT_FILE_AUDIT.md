@@ -66,9 +66,6 @@ owner_zone: "delivery"
 |---|---|
 | `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 | `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
-| `styles/knowledge-graph-inspector.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
-| `styles/knowledge-graph-overlays.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
-| `styles/knowledge-graph-slice.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -81,7 +78,7 @@ owner_zone: "delivery"
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5574791 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
 | `debug.log` | 944865 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 585666 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 585957 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 164489 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -592,9 +589,9 @@ owner_zone: "delivery"
 | `styles/document.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/editor.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/internal-rules-workspace.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
-| `styles/knowledge-graph-inspector.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
-| `styles/knowledge-graph-overlays.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
-| `styles/knowledge-graph-slice.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/knowledge-graph-inspector.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `styles/knowledge-graph-overlays.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `styles/knowledge-graph-slice.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/knowledge-graph.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/layout.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/legacy-fields.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
