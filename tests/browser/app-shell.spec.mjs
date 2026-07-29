@@ -485,6 +485,64 @@ test(
     await page.locator('#appSettingsBtn').click();
 
     await expect(
+      page.locator('#appSettingsPopup')
+    ).toHaveAttribute(
+      'data-settings-ui-migration',
+      '0.0.1.8.14.2'
+    );
+
+    await expect(
+      page.locator('.app-settings-chrome')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.app-settings-body > [data-settings-section]')
+    ).toHaveCount(
+      4
+    );
+
+    const settingsSurface =
+      await page.locator('#appSettingsPopup').evaluate(
+        popup => {
+
+          const body =
+            popup.querySelector('.app-settings-body');
+
+          const firstSection =
+            popup.querySelector('[data-settings-section]');
+
+          return {
+            hasHorizontalOverflow:
+              body.scrollWidth > body.clientWidth + 1,
+            sectionRadius:
+              Number.parseFloat(
+                getComputedStyle(firstSection).borderRadius
+              ),
+            chipCount:
+              popup.querySelectorAll('.app-settings-status-chip').length
+          };
+        }
+      );
+
+    expect(
+      settingsSurface.hasHorizontalOverflow
+    ).toBe(
+      false
+    );
+
+    expect(
+      settingsSurface.sectionRadius
+    ).toBeLessThanOrEqual(
+      8
+    );
+
+    expect(
+      settingsSurface.chipCount
+    ).toBe(
+      4
+    );
+
+    await expect(
       page.locator('.app-backup-retention input')
     ).toHaveValue(
       '20'

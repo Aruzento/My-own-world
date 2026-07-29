@@ -157,7 +157,11 @@ function handleTaskTrackerClick(
     event.target.closest('.task-check-item');
 
   if (
-    event.target.classList.contains('task-column-add')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-column-add'
+    )
   ) {
 
     model.addColumn();
@@ -167,7 +171,11 @@ function handleTaskTrackerClick(
 
   if (
     column &&
-    event.target.classList.contains('task-add-btn')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-add-btn'
+    )
   ) {
 
     model.addTask(
@@ -179,7 +187,11 @@ function handleTaskTrackerClick(
 
   if (
     column &&
-    event.target.classList.contains('task-column-delete')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-column-delete'
+    )
   ) {
 
     model.deleteColumn(
@@ -191,7 +203,11 @@ function handleTaskTrackerClick(
 
   if (
     task &&
-    event.target.classList.contains('task-delete-btn')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-delete-btn'
+    )
   ) {
 
     model.deleteTask(
@@ -203,7 +219,11 @@ function handleTaskTrackerClick(
 
   if (
     task &&
-    event.target.classList.contains('task-checklist-add')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-checklist-add'
+    )
   ) {
 
     model.addChecklistItem(
@@ -216,7 +236,11 @@ function handleTaskTrackerClick(
   if (
     task &&
     check &&
-    event.target.classList.contains('task-check-delete')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-check-delete'
+    )
   ) {
 
     model.deleteChecklistItem(
@@ -230,7 +254,11 @@ function handleTaskTrackerClick(
   if (
     task &&
     check &&
-    event.target.classList.contains('task-check-toggle')
+    getTrackerAction(
+      event,
+      tracker,
+      '.task-check-toggle'
+    )
   ) {
 
     model.updateChecklistItem(
@@ -242,6 +270,26 @@ function handleTaskTrackerClick(
     );
     commitTaskTrackerData(tracker, model);
   }
+}
+
+
+function getTrackerAction(
+  event,
+  tracker,
+  selector
+) {
+
+  const action =
+    event.target.closest(
+      selector
+    );
+
+  return action &&
+    tracker.contains(
+      action
+    )
+    ? action
+    : null;
 }
 
 

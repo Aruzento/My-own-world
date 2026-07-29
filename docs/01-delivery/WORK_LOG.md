@@ -6,6 +6,39 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.14.2 Task Tracker Button Fix And Settings Maintenance UI
+
+### What Changed
+
+- Fixed the task tracker button regression introduced by the compact SVG icon pass: delegated click handling now resolves the nearest task tracker action with `closest()` instead of checking only `event.target.classList`, so clicks on nested SVG/use nodes still trigger add/delete/checklist actions.
+- Continued `0.0.1.8.14` Migration Phase 8 with the existing topbar Settings popup as the next secondary-screen slice.
+- Added `data-settings-ui-migration="0.0.1.8.14.2"` and a single Settings maintenance chrome around appearance, backup, asset health and workspace diagnostics.
+- Added shared maintenance section/action helpers in `js/ui/settingsPanelUI.js` so those sections use the same local sprite icon header and action-button language.
+- Added explicit markers for the data-safety surfaces: `[data-settings-section]`, `[data-health-badge]`, `[data-backup-manifest-card]`, `[data-restore-preview]`, `[data-asset-verification-row]` and `[data-danger-zone]`.
+- Kept backup, restore, asset cleanup, diagnostics collection and task tracker persistence/business logic on their existing service paths.
+
+### Readiness
+
+`Usable` for the task tracker button fix and the existing Settings maintenance popup slice. A human can open Settings from the topbar, recognize appearance/backup/assets/diagnostics as one maintenance panel, run the existing checks/actions, and use task tracker icon buttons without needing to click only the invisible button background. The broader `0.0.1.8.14` phase remains active for imports, release/help screens, support panels and deeper backup/import/release handoff UX where needed.
+
+### Verification
+
+- Passed: `node --check` for changed task tracker, Settings, asset health, diagnostics and browser spec files.
+- Passed twice: `npm run test:browser -- tests/browser/task-tracker.spec.mjs` with 4 browser tests, including the new nested SVG icon-button regression.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs` with 6 browser tests, including the Settings migration marker/section/overflow guard.
+- Passed: `npm run test:browser -- tests/browser/asset-health.spec.mjs` with 2 browser tests for asset health and workspace diagnostics markers.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`, now including the Settings maintenance screenshot attachment.
+- Manual visual review: generated and inspected local screenshots of the Settings popup top and Diagnostics scroll state; corrected mixed old/new section styling by moving section header/action rendering into a shared helper.
+- Passed: `python tools\generate_manual_docx.py`, regenerating `docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `node tools\audit_project_files.mjs`, refreshing `docs\01-delivery\PROJECT_FILE_AUDIT.md`.
+- Passed: `node tools\docs_index.mjs`, `node tools\validate_agent_skills.mjs`, `npm run check:encoding` and `git diff --check`.
+- Passed: `npm run verify` with 273 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 114 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.14` with imports, release/help screens, support panels and deeper backup/import/release UX where a real user workflow needs it.
+
 ## 2026-07-29: 0.0.1.8.14.1 Secondary Screens Task Tracker UI
 
 ### What Changed

@@ -54,7 +54,7 @@ owner_zone: "architecture"
 ### 2026-07-21 Migration Phase 0 Baselines
 
 - Confirmed: `0.0.1.8.6` added [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) as the UI/CSS/icon/popup/screenshot baseline manifest for future migration phases.
-- Confirmed: `tests/browser/visual-regression.spec.mjs` now attaches baseline screenshots for AppShell, empty workspace start, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker and shared component catalogue popover.
+- Confirmed: `tests/browser/visual-regression.spec.mjs` now attaches baseline screenshots for AppShell, empty workspace start, Settings maintenance, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker and shared component catalogue popover.
 - Confirmed: `tests/uiMigrationBaselines.test.mjs` keeps the baseline manifest synchronized with the visual smoke attachment names and required system inventory rows.
 - Confirmed: this phase makes no broad visual migration; it is the controlled comparison layer for `0.0.1.8.7+`.
 - Next action completed by `0.0.1.8.7`; semantic AppShell foundation tokens are now applied to app-level surfaces.
@@ -173,6 +173,7 @@ owner_zone: "architecture"
 - Устарело: MVP стал полезным, но визуально пока слабее карты и карточек.
 - Перегружено: при росте количества колонок нужен лучший rhythm.
 - Иерархия: колонка, задача, чеклист и actions должны иметь четкий порядок.
+- `0.0.1.8.14.2`: nested SVG icon clicks are now guarded, so compact icon actions remain functional after the visual migration.
 - Отступы: 5 колонок в ряд требуют стабильной сетки.
 - Состояния: drag preview уже хороший ориентир, но нужны единые selected/hover/focus.
 - Анимации: drag preview можно сохранять плавным; нельзя добавлять длительные перестройки колонок.
@@ -191,6 +192,7 @@ owner_zone: "architecture"
 - Устарело: настройки пока пустые и могут выглядеть как заглушка.
 - Перегружено: нет, зона пока легкая.
 - Иерархия: topbar должен быть тонким и не спорить с workspace.
+- `0.0.1.8.14.2`: the Settings popup is no longer a loose topbar append-only panel. Appearance, backup, asset health and diagnostics now share one maintenance section system with local sprite actions and explicit health/backup/restore/asset/danger markers. Imports, release/help and support screens remain future Phase 8 work.
 - Отступы: кнопки справа должны быть стабильными.
 - Состояния: hover/focus нужны единые.
 - Анимации: можно мягко открывать popup.
@@ -271,7 +273,7 @@ owner_zone: "architecture"
 
 ### Phase 6 - Task Tracker Refresh
 
-Status: started and partially closed by `0.0.1.8.14.1`. The board/column/card/checklist UI is migrated to the shared workbench language; remaining secondary-screen work lives in `0.0.1.8.14` rather than this older phase label.
+Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button regression fixed by `0.0.1.8.14.2`. The board/column/card/checklist UI is migrated to the shared workbench language; remaining secondary-screen work lives in `0.0.1.8.14` rather than this older phase label.
 
 - Колонки.
 - Карточки задач.

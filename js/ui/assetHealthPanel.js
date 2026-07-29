@@ -21,6 +21,11 @@ import {
   listWorkspaceAssetPaths
 } from '../storage/assetWorkspaceService.js';
 
+import {
+  createSettingsSectionHeader,
+  setButtonContent
+} from './settingsPanelUI.js';
+
 
 export async function renderAssetHealthPanel(
   popup,
@@ -37,17 +42,18 @@ export async function renderAssetHealthPanel(
   panel.className =
     'app-asset-health-panel';
 
-  const title =
-    document.createElement('h3');
+  panel.dataset.settingsSection =
+    'assets';
 
-  title.textContent =
-    'Проверка ассетов';
-
-  const description =
-    document.createElement('p');
-
-  description.textContent =
-    'Проверяет сломанные ссылки и orphan-файлы в workspace assets.';
+  const header =
+    createSettingsSectionHeader({
+      iconName:
+        'image',
+      title:
+        'Проверка ассетов',
+      description:
+        'Сломанные ссылки и orphan-файлы в workspace assets.'
+    });
 
   const checkButton =
     document.createElement('button');
@@ -58,8 +64,11 @@ export async function renderAssetHealthPanel(
   checkButton.type =
     'button';
 
-  checkButton.textContent =
-    'Проверить assets';
+  setButtonContent(
+    checkButton,
+    'search',
+    'Проверить assets'
+  );
 
   const result =
     document.createElement('div');
@@ -68,8 +77,7 @@ export async function renderAssetHealthPanel(
     'app-asset-health-result';
 
   panel.append(
-    title,
-    description,
+    header,
     checkButton,
     result
   );
@@ -191,6 +199,12 @@ function renderAssetHealthResult(
       ? 'app-asset-health-summary is-warning'
       : 'app-asset-health-summary is-ok';
 
+  summary.dataset.healthBadge =
+    broken.length > 0 ||
+    orphan.length > 0
+      ? 'warning'
+      : 'ok';
+
   summary.textContent =
     broken.length > 0 ||
     orphan.length > 0
@@ -252,6 +266,9 @@ function createBrokenAssetList(
 
     item.className =
       'app-asset-health-item';
+
+    item.dataset.assetVerificationRow =
+      'broken-reference';
 
     const path =
       document.createElement('strong');
@@ -317,6 +334,9 @@ function createOrphanAssetList(
 
     item.className =
       'app-asset-health-item app-asset-health-item-with-action';
+
+    item.dataset.assetVerificationRow =
+      'orphan-file';
 
     const meta =
       document.createElement('div');
@@ -398,6 +418,9 @@ function renderOrphanDeleteConfirm(
 
   confirm.className =
     'app-asset-health-confirm';
+
+  confirm.dataset.dangerZone =
+    'orphan-asset-delete';
 
   const text =
     document.createElement('p');

@@ -49,10 +49,18 @@ For the Knowledge Graph visible-slice, selected-node inspector, edge-state, over
 npm run test:browser -- tests/browser/knowledge-graph.spec.mjs
 ```
 
-For the task tracker `0.0.1.8.14.1` workbench UI slice, use:
+For the task tracker `0.0.1.8.14.1` / `0.0.1.8.14.2` workbench UI and icon-button regression slice, use:
 
 ```powershell
 npm run test:browser -- tests/browser/task-tracker.spec.mjs
+```
+
+For the Settings maintenance `0.0.1.8.14.2` slice, use:
+
+```powershell
+npm run test:browser -- tests/browser/app-shell.spec.mjs
+npm run test:browser -- tests/browser/asset-health.spec.mjs
+npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces
 ```
 
 For the editor block DnD and Add block redesign slice, use:
@@ -95,7 +103,7 @@ npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампани�
 ### 3. Manual Smoke Priority
 
 1. Open a copied workspace.
-2. Open Settings diagnostics and check that workspace path, write access, schema status and backup status are readable.
+2. Open Settings from the topbar. The popup should look like one maintenance panel, not four unrelated blocks: appearance, backup, asset health and diagnostics should share the same section rhythm, local icons and clear health/backup/restore/asset/danger states. Then open Settings diagnostics and check that workspace path, write access, schema status and backup status are readable.
 3. On the empty start screen, check that there is one clear action card with `Карточка`, `Карта`, `Задачи`, `Правила` and `Граф связей`. It should not show internal `Workspace`, `Context` or `Diagnostics` demo panels, and the actions should not overlap on desktop or mobile. In the sidebar tree area, when no workspace is open, there should be one clear `Открыть папку` button.
 4. Check the left AppShell rail: it should show `Дерево`, `Поиск и команды`, and the profile/user button. `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` should remain reachable through the world tree/create flows, not as duplicated rail tabs. The tree sidebar should not repeat `MyWorld` / `Дерево мира` and should not contain workspace/open or create buttons in a header; after opening a workspace, the `Корень` row should show the root `+` create action and the folder-create action.
 5. Click `Дерево` in the rail to hide and reopen the tree sidebar, then resize the visible sidebar with the separator by dragging or using Left/Right arrow keys while it is focused. The editor should expand while the tree is hidden, the workspace should stay readable, and the resize handle should be hidden on mobile.
@@ -115,7 +123,7 @@ Card editor design check: select text in the card title and in a normal text blo
 16. In the Knowledge Graph, click a node and confirm its connected lines become active, unrelated visible lines/nodes become muted, and the workbench inspector stays light: title, icon actions and short relation chips instead of visible stat grids.
 17. In the Knowledge Graph, drag a node, undo/redo, right-click a node and check relationship actions. The context menu should open near the clicked node, stay inside the viewport, use grouped icon actions, and show editable relationship rows only after expanding `Связи`; expanded rows should not clip fields or show visible internal scrollbars.
 18. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should use the same dark editor-grade icon/header/field language, stay within the viewport and close cleanly by Escape/outside click.
-19. Create or open a task tracker. The board should have a compact top toolbar with local icons, quiet column/task/checklist counters and the add-column action. Columns should be full-height work surfaces with small icon actions, task cards should feel raised but compact, checklist progress should appear only on cards that have checklist items, and drag/drop placeholders should be readable without creating internal horizontal scrollbars.
+19. Create or open a task tracker. The board should have a compact top toolbar with local icons, quiet column/task/checklist counters and the add-column action. Click directly on the icons inside add/delete/checklist buttons: columns, tasks and checklist items should still be created or removed. Columns should be full-height work surfaces with small icon actions, task cards should feel raised but compact, checklist progress should appear only on cards that have checklist items, and drag/drop placeholders should be readable without creating internal horizontal scrollbars.
 20. Run backup manually before any repair action; schema repair must stop if backup fails.
 
 ### 4. Known Risks To Watch

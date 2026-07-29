@@ -7,6 +7,7 @@ import {
 const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-app-shell',
   'visual-app-shell-empty-workbench',
+  'visual-app-settings-maintenance',
   'visual-sidebar-tree',
   'visual-command-palette',
   'visual-card-editor',
@@ -48,6 +49,23 @@ test(
       testInfo,
       'visual-app-shell'
     );
+
+    await page.locator('#appSettingsBtn').click();
+
+    await expect(
+      page.locator('#appSettingsPopup')
+    ).toHaveAttribute(
+      'data-settings-ui-migration',
+      '0.0.1.8.14.2'
+    );
+
+    await attachLocatorScreenshot(
+      page.locator('#appSettingsPopup'),
+      testInfo,
+      'visual-app-settings-maintenance'
+    );
+
+    await page.locator('#appSettingsCloseBtn').click();
 
     await expect(
       page.locator('[data-app-shell-surface="empty-workspace"]')

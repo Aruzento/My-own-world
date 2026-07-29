@@ -463,3 +463,245 @@ test(
     );
   }
 );
+
+test(
+  'task-tracker-action-buttons-work-when-inner-icons-are-clicked',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          createTaskTrackerTemplate
+        } = await import('/js/templates/taskTracker.js');
+
+        const {
+          renderTaskTracker
+        } = await import('/js/taskTracker/taskTrackerRender.js');
+
+        const {
+          writeTaskTrackerData
+        } = await import('/js/taskTracker/taskTrackerWriteData.js');
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML =
+          createTaskTrackerTemplate().content;
+
+        const tracker =
+          editor.querySelector('.task-tracker-document');
+
+        writeTaskTrackerData(
+          tracker,
+          {
+            version: 1,
+            columns: [
+              {
+                id: 'todo',
+                title: 'Todo',
+                taskIds: [
+                  'task-1'
+                ]
+              }
+            ],
+            tasks: [
+              {
+                id: 'task-1',
+                title: 'Seed task',
+                description: '',
+                checklist: []
+              }
+            ]
+          }
+        );
+
+        renderTaskTracker(
+          editor
+        );
+      }
+    );
+
+    await dispatchInnerTaskTrackerClick(
+      page,
+      '.task-column-add .task-tracker-action-icon use'
+    );
+
+    await expectTaskTrackerCounts(
+      page,
+      {
+        columns: 2,
+        tasks: 1,
+        todoTasks: 1,
+        taskOneChecks: 0
+      }
+    );
+
+    await dispatchInnerTaskTrackerClick(
+      page,
+      '.task-column[data-column-id="todo"] .task-add-btn .task-tracker-action-icon use'
+    );
+
+    await expectTaskTrackerCounts(
+      page,
+      {
+        columns: 2,
+        tasks: 2,
+        todoTasks: 2,
+        taskOneChecks: 0
+      }
+    );
+
+    await dispatchInnerTaskTrackerClick(
+      page,
+      '.task-card[data-task-id="task-1"] .task-checklist-add .task-tracker-action-icon use'
+    );
+
+    await expectTaskTrackerCounts(
+      page,
+      {
+        columns: 2,
+        tasks: 2,
+        todoTasks: 2,
+        taskOneChecks: 1
+      }
+    );
+
+    await dispatchInnerTaskTrackerClick(
+      page,
+      '.task-card[data-task-id="task-1"] .task-check-delete .task-tracker-action-icon use'
+    );
+
+    await expectTaskTrackerCounts(
+      page,
+      {
+        columns: 2,
+        tasks: 2,
+        todoTasks: 2,
+        taskOneChecks: 0
+      }
+    );
+
+    await dispatchInnerTaskTrackerClick(
+      page,
+      '.task-card[data-task-id="task-1"] .task-delete-btn .task-tracker-action-icon use'
+    );
+
+    await expectTaskTrackerCounts(
+      page,
+      {
+        columns: 2,
+        tasks: 1,
+        todoTasks: 1,
+        taskOneChecks: 0
+      }
+    );
+
+    await dispatchInnerTaskTrackerClick(
+      page,
+      '.task-column:not([data-column-id="todo"]) .task-column-delete .task-tracker-action-icon use'
+    );
+
+    await expectTaskTrackerCounts(
+      page,
+      {
+        columns: 1,
+        tasks: 1,
+        todoTasks: 1,
+        taskOneChecks: 0
+      }
+    );
+  }
+);
+
+
+async function dispatchInnerTaskTrackerClick(
+  page,
+  selector
+) {
+
+  await page.evaluate(
+    clickSelector => {
+
+      const target =
+        document.querySelector(
+          clickSelector
+        );
+
+      if (!target) {
+
+        throw new Error(
+          `Task tracker click target not found: ${clickSelector}`
+        );
+      }
+
+      target.dispatchEvent(
+        new MouseEvent(
+          'click',
+          {
+            bubbles: true,
+            cancelable: true,
+            view: window
+          }
+        )
+      );
+    },
+    selector
+  );
+}
+
+
+async function expectTaskTrackerCounts(
+  page,
+  expected
+) {
+
+  const actual =
+    await page.evaluate(
+      async () => {
+
+        const {
+          readTaskTrackerData
+        } = await import('/js/taskTracker/taskTrackerReadData.js');
+
+        const tracker =
+          document.querySelector('.task-tracker-document');
+
+        const data =
+          readTaskTrackerData(
+            tracker
+          );
+
+        const todo =
+          data.columns.find(column =>
+            column.id === 'todo'
+          );
+
+        const taskOne =
+          data.tasks.find(task =>
+            task.id === 'task-1'
+          );
+
+        return {
+          columns:
+            data.columns.length,
+          tasks:
+            data.tasks.length,
+          todoTasks:
+            todo?.taskIds.length || 0,
+          taskOneChecks:
+            taskOne?.checklist?.length || 0
+        };
+      }
+    );
+
+  expect(
+    actual
+  ).toEqual(
+    expected
+  );
+}

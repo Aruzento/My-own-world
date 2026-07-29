@@ -15,6 +15,15 @@ import {
 } from './componentCatalogue.js';
 
 import {
+  createSettingsSectionHeader,
+  setButtonContent
+} from './settingsPanelUI.js';
+
+import {
+  iconSvg
+} from '../core/icons.js';
+
+import {
   state
 } from '../state.js';
 
@@ -143,20 +152,25 @@ export function setupAppTopbar() {
 
       closeTools();
 
+      const settingsBody =
+        renderSettingsChrome(
+          settingsPopup
+        );
+
       await renderBackupPanel(
-        settingsPopup
+        settingsBody
       );
 
       await renderAssetHealthPanel(
-        settingsPopup
+        settingsBody
       );
 
       await renderWorkspaceDiagnosticsPanel(
-        settingsPopup
+        settingsBody
       );
 
       renderAppearancePanel(
-        settingsPopup
+        settingsBody
       );
 
       const opened =
@@ -164,7 +178,7 @@ export function setupAppTopbar() {
         settingsPopup,
         settingsButton,
         {
-          fallbackWidth: 340,
+          fallbackWidth: 440,
           offset: 8
         }
       );
@@ -206,6 +220,121 @@ export function setupAppTopbar() {
 }
 
 
+function renderSettingsChrome(
+  popup
+) {
+
+  popup.setAttribute(
+    'data-settings-ui-migration',
+    '0.0.1.8.14.2'
+  );
+
+  popup
+    .querySelector('.app-settings-chrome')
+    ?.remove();
+
+  const chrome =
+    document.createElement('div');
+
+  chrome.className =
+    'app-settings-chrome';
+
+  const header =
+    document.createElement('div');
+
+  header.className =
+    'app-settings-header';
+
+  const mark =
+    document.createElement('span');
+
+  mark.className =
+    'app-settings-header-mark';
+
+  mark.innerHTML =
+    iconSvg(
+      'settings',
+      'app-settings-header-icon'
+    );
+
+  const text =
+    document.createElement('div');
+
+  text.className =
+    'app-settings-header-text';
+
+  const kicker =
+    document.createElement('span');
+
+  kicker.className =
+    'app-settings-kicker';
+
+  kicker.textContent =
+    'Maintenance';
+
+  const title =
+    document.createElement('h2');
+
+  title.textContent =
+    'Настройки';
+
+  text.append(
+    kicker,
+    title
+  );
+
+  header.append(
+    mark,
+    text
+  );
+
+  const statusStrip =
+    document.createElement('div');
+
+  statusStrip.className =
+    'app-settings-status-strip';
+
+  [
+    ['Оформление', 'settings'],
+    ['Backup', 'copy'],
+    ['Assets', 'image'],
+    ['Diagnostics', 'check']
+  ].forEach(([label, iconName]) => {
+
+    const item =
+      document.createElement('span');
+
+    item.className =
+      'app-settings-status-chip';
+
+    item.innerHTML =
+      `${iconSvg(iconName, 'app-settings-chip-icon', { size: 'sm' })}<span>${label}</span>`;
+
+    statusStrip.appendChild(
+      item
+    );
+  });
+
+  const body =
+    document.createElement('div');
+
+  body.className =
+    'app-settings-body';
+
+  chrome.append(
+    header,
+    statusStrip,
+    body
+  );
+
+  popup.appendChild(
+    chrome
+  );
+
+  return body;
+}
+
+
 function renderAppearancePanel(
   popup
 ) {
@@ -223,17 +352,18 @@ function renderAppearancePanel(
   panel.className =
     'app-appearance-panel';
 
-  const title =
-    document.createElement('h3');
+  panel.dataset.settingsSection =
+    'appearance';
 
-  title.textContent =
-    'Оформление';
-
-  const description =
-    document.createElement('p');
-
-  description.textContent =
-    'Быстрый визуальный слой: фон, акцент и плотность интерфейса.';
+  const header =
+    createSettingsSectionHeader({
+      iconName:
+        'settings',
+      title:
+        'Оформление',
+      description:
+        'Фон, акцент и плотность интерфейса.'
+    });
 
   const presets =
     createAppearanceSwatchGroup({
@@ -286,8 +416,7 @@ function renderAppearancePanel(
     });
 
   panel.append(
-    title,
-    description,
+    header,
     presets,
     backgrounds,
     scale
@@ -498,17 +627,18 @@ async function renderBackupPanel(
   panel.className =
     'app-backup-panel';
 
-  const title =
-    document.createElement('h3');
+  panel.dataset.settingsSection =
+    'backup';
 
-  title.textContent =
-    'Резервные копии';
-
-  const description =
-    document.createElement('p');
-
-  description.textContent =
-    'Snapshot сохраняет текущие markdown-страницы workspace перед восстановлением или рискованными операциями.';
+  const header =
+    createSettingsSectionHeader({
+      iconName:
+        'copy',
+      title:
+        'Резервные копии',
+      description:
+        'Точки восстановления перед рискованными действиями.'
+    });
 
   const createButton =
     document.createElement('button');
@@ -519,8 +649,11 @@ async function renderBackupPanel(
   createButton.type =
     'button';
 
-  createButton.textContent =
-    'Создать резервную копию';
+  setButtonContent(
+    createButton,
+    'plus',
+    'Создать резервную копию'
+  );
 
   const list =
     document.createElement('div');
@@ -568,8 +701,7 @@ async function renderBackupPanel(
     });
 
   panel.append(
-    title,
-    description,
+    header,
     createButton,
     retention,
     incompleteControls,
@@ -672,6 +804,9 @@ function createBackupRetentionControls({
   wrapper.className =
     'app-backup-retention';
 
+  wrapper.dataset.settingsControl =
+    'backup-retention';
+
   const label =
     document.createElement('label');
 
@@ -704,8 +839,11 @@ function createBackupRetentionControls({
   saveButton.type =
     'button';
 
-  saveButton.textContent =
-    'Применить';
+  setButtonContent(
+    saveButton,
+    'check',
+    'Применить'
+  );
 
   const cleanupButton =
     document.createElement('button');
@@ -713,8 +851,11 @@ function createBackupRetentionControls({
   cleanupButton.type =
     'button';
 
-  cleanupButton.textContent =
-    'Очистить старые';
+  setButtonContent(
+    cleanupButton,
+    'trash',
+    'Очистить старые'
+  );
 
   saveButton.addEventListener(
     'click',
@@ -810,14 +951,20 @@ function createIncompleteBackupControls({
   wrapper.className =
     'app-backup-retention';
 
+  wrapper.dataset.settingsControl =
+    'incomplete-backups';
+
   const scanButton =
     document.createElement('button');
 
   scanButton.type =
     'button';
 
-  scanButton.textContent =
-    'Проверить недособранные';
+  setButtonContent(
+    scanButton,
+    'search',
+    'Проверить недособранные'
+  );
 
   const cleanupButton =
     document.createElement('button');
@@ -828,8 +975,11 @@ function createIncompleteBackupControls({
   cleanupButton.className =
     'app-backup-danger';
 
-  cleanupButton.textContent =
-    'Удалить найденные';
+  setButtonContent(
+    cleanupButton,
+    'trash',
+    'Удалить найденные'
+  );
 
   cleanupButton.disabled =
     true;
@@ -1002,6 +1152,9 @@ async function renderIncompleteBackupList(
     item.className =
       'app-backup-item';
 
+    item.dataset.backupManifestCard =
+      'incomplete';
+
     item.dataset.backupId =
       backup.id;
 
@@ -1093,6 +1246,9 @@ async function renderBackupList(
     item.className =
       'app-backup-item';
 
+    item.dataset.backupManifestCard =
+      'complete';
+
     const meta =
       document.createElement('div');
 
@@ -1127,8 +1283,11 @@ async function renderBackupList(
     restoreButton.className =
       'app-backup-restore';
 
-    restoreButton.textContent =
-      'Восстановить';
+    setButtonContent(
+      restoreButton,
+      'arrow-left',
+      'Восстановить'
+    );
 
     restoreButton.addEventListener(
       'click',
@@ -1166,6 +1325,9 @@ function renderRestoreConfirm(
     'hidden'
   );
 
+  confirm.dataset.restorePreview =
+    'true';
+
   const text =
     document.createElement('p');
 
@@ -1184,8 +1346,11 @@ function renderRestoreConfirm(
   cancelButton.type =
     'button';
 
-  cancelButton.textContent =
-    'Отмена';
+  setButtonContent(
+    cancelButton,
+    'x',
+    'Отмена'
+  );
 
   const confirmButton =
     document.createElement('button');
@@ -1196,8 +1361,11 @@ function renderRestoreConfirm(
   confirmButton.className =
     'app-backup-danger';
 
-  confirmButton.textContent =
-    'Восстановить';
+  setButtonContent(
+    confirmButton,
+    'arrow-left',
+    'Восстановить'
+  );
 
   cancelButton.addEventListener(
     'click',

@@ -88,6 +88,11 @@ test(
             requestAnimationFrame(resolve)
           );
 
+          const dangerZone =
+            popup
+              .querySelector('.app-asset-health-confirm')
+              ?.dataset.dangerZone || '';
+
           popup
             .querySelector('.app-asset-health-danger')
             .click();
@@ -99,6 +104,21 @@ test(
           );
 
           return {
+            sectionMarker:
+              popup
+                .querySelector('.app-asset-health-panel')
+                ?.dataset.settingsSection || '',
+            summaryHealth:
+              popup
+                .querySelector('.app-asset-health-summary')
+                ?.dataset.healthBadge || '',
+            rowKinds:
+              [
+                ...popup.querySelectorAll('[data-asset-verification-row]')
+              ].map(item =>
+                item.dataset.assetVerificationRow
+              ),
+            dangerZone,
             summary:
               popup
                 .querySelector('.app-asset-health-summary')
@@ -121,6 +141,32 @@ test(
       result.summary
     ).toContain(
       '1'
+    );
+
+    expect(
+      result.sectionMarker
+    ).toBe(
+      'assets'
+    );
+
+    expect(
+      result.summaryHealth
+    ).toBe(
+      'warning'
+    );
+
+    expect(
+      result.rowKinds
+    ).toEqual(
+      [
+        'broken-reference'
+      ]
+    );
+
+    expect(
+      result.dangerZone
+    ).toBe(
+      'orphan-asset-delete'
     );
 
     expect(
@@ -256,6 +302,16 @@ test(
           );
 
           return {
+            sectionMarker:
+              popup
+                .querySelector('.app-workspace-diagnostics-panel')
+                ?.dataset.settingsSection || '',
+            healthBadges:
+              [
+                ...popup.querySelectorAll('[data-health-badge]')
+              ].map(item =>
+                item.dataset.healthBadge
+              ),
             text:
               popup.textContent,
             cardCount:
@@ -280,6 +336,22 @@ test(
       result.cardCount
     ).toBe(
       9
+    );
+
+    expect(
+      result.sectionMarker
+    ).toBe(
+      'diagnostics'
+    );
+
+    expect(
+      result.healthBadges
+    ).toEqual(
+      expect.arrayContaining([
+        'страниц',
+        'backup',
+        'pending-ops'
+      ])
     );
 
     expect(

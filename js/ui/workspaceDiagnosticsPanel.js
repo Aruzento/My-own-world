@@ -50,6 +50,11 @@ import {
   renderTree
 } from '../tree/tree.js';
 
+import {
+  createSettingsSectionHeader,
+  setButtonContent
+} from './settingsPanelUI.js';
+
 const LARGE_PAGE_BYTES =
   250 * 1024;
 
@@ -72,17 +77,18 @@ export async function renderWorkspaceDiagnosticsPanel(
   panel.className =
     'app-workspace-diagnostics-panel';
 
-  const title =
-    document.createElement('h3');
+  panel.dataset.settingsSection =
+    'diagnostics';
 
-  title.textContent =
-    'Диагностика workspace';
-
-  const description =
-    document.createElement('p');
-
-  description.textContent =
-    'Короткая проверка размера мира, ассетов, тяжелых карт, схемы и последних медленных операций.';
+  const header =
+    createSettingsSectionHeader({
+      iconName:
+        'check',
+      title:
+        'Диагностика workspace',
+      description:
+        'Размер мира, ассеты, тяжелые карты, схема и операции.'
+    });
 
   const refreshButton =
     document.createElement('button');
@@ -93,8 +99,11 @@ export async function renderWorkspaceDiagnosticsPanel(
   refreshButton.type =
     'button';
 
-  refreshButton.textContent =
-    'Обновить диагностику';
+  setButtonContent(
+    refreshButton,
+    'check',
+    'Обновить диагностику'
+  );
 
   const result =
     document.createElement('div');
@@ -103,8 +112,7 @@ export async function renderWorkspaceDiagnosticsPanel(
     'app-workspace-diagnostics-result';
 
   panel.append(
-    title,
-    description,
+    header,
     refreshButton,
     result
   );
@@ -761,6 +769,9 @@ function renderDiagnosticsResult(
     ok.className =
       'app-workspace-diagnostics-summary is-ok';
 
+    ok.dataset.healthBadge =
+      'ok';
+
     ok.textContent =
       'Критичных предупреждений не найдено.';
 
@@ -847,6 +858,9 @@ function createSchemaRecoverySection(
 
     ok.className =
       'app-workspace-diagnostics-summary is-ok';
+
+    ok.dataset.healthBadge =
+      'schema-ok';
 
     ok.textContent =
       'Схема workspace выглядит нормально. Repair actions не нужны.';
@@ -1459,6 +1473,11 @@ function createSummaryGrid(
     item.className =
       'app-workspace-diagnostics-card';
 
+    item.dataset.healthBadge =
+      normalizeHealthBadgeName(
+        label
+      );
+
     const number =
       document.createElement('strong');
 
@@ -1482,6 +1501,18 @@ function createSummaryGrid(
   });
 
   return grid;
+}
+
+
+function normalizeHealthBadgeName(
+  value
+) {
+
+  return String(value || 'status')
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яё]+/gi, '-')
+    .replace(/^-+|-+$/g, '') ||
+    'status';
 }
 
 
