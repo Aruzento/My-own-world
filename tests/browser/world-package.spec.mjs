@@ -66,7 +66,7 @@ test(
       popup
     ).toHaveAttribute(
       'data-world-package-ui-migration',
-      '0.0.1.8.14.4'
+      '0.0.1.8.14.5'
     );
 
     await expect(
@@ -138,6 +138,75 @@ test(
       page.locator('[data-world-package-apply-state]')
     ).toContainText(
       'конфликты'
+    );
+
+    await page
+      .locator('[data-world-package-conflict-mode="copy"]')
+      .click();
+
+    await expect(
+      page.locator('.world-package-preview')
+    ).toHaveAttribute(
+      'data-world-package-preview',
+      'ready'
+    );
+
+    await expect(
+      page.locator('[data-world-package-apply="true"]')
+    ).toBeEnabled();
+
+    await page
+      .locator('[data-world-package-apply="true"]')
+      .click();
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'копий: 2'
+    );
+
+    const copiedBranch =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          return {
+            pageIds:
+              state.pages.map(item => item.id),
+            copiedRoot:
+              state.pages.find(item =>
+                item.id === 'root-import'
+              ),
+            copiedChild:
+              state.pages.find(item =>
+                item.id === 'child-import'
+              )
+          };
+        }
+      );
+
+    expect(
+      copiedBranch.pageIds
+    ).toEqual(
+      expect.arrayContaining([
+        'root-import',
+        'child-import'
+      ])
+    );
+
+    expect(
+      copiedBranch.copiedRoot.title
+    ).toBe(
+      'Root (import)'
+    );
+
+    expect(
+      copiedBranch.copiedChild.parent
+    ).toBe(
+      'root-import'
     );
 
     const externalPackage =

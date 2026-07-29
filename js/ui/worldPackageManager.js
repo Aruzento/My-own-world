@@ -52,7 +52,7 @@ import {
 
 
 const WORLD_PACKAGE_UI_MIGRATION =
-  '0.0.1.8.14.4';
+  '0.0.1.8.14.5';
 
 
 export function setupWorldPackageManager() {
@@ -179,7 +179,9 @@ function renderWorldPackagePopup({
     packageData:
       null,
     preview:
-      null
+      null,
+    conflictStrategy:
+      'block'
   };
 
   popup.replaceChildren();
@@ -876,6 +878,20 @@ function createPreviewPanel({
   preview.textContent =
     'Выберите package-файл или вставьте JSON, чтобы увидеть preview до записи.';
 
+  const conflictResolution =
+    createConflictResolutionControl({
+      model,
+      onChange() {
+
+        if (model.packageData) {
+
+          renderPreview(
+            model.packageData
+          );
+        }
+      }
+    });
+
   actions.append(
     previewButton,
     applyButton
@@ -883,6 +899,7 @@ function createPreviewPanel({
 
   panel.body.append(
     textarea,
+    conflictResolution.element,
     actions,
     preview
   );
@@ -921,7 +938,9 @@ function createPreviewPanel({
         applyButton,
         packageData:
           normalized,
-        previewData
+        previewData,
+        conflictStrategy:
+          model.conflictStrategy
       });
     };
 
@@ -977,7 +996,8 @@ function createPreviewPanel({
       if (
         !model.packageData ||
         !canApplyPreview(
-          model.preview
+          model.preview,
+          model.conflictStrategy
         )
       ) return;
 
@@ -1002,13 +1022,17 @@ function createPreviewPanel({
           await applyWorldPackagePageImport({
             packageData:
               model.packageData,
-            backupManifest
+            backupManifest,
+            conflictStrategy:
+              model.conflictStrategy
           });
 
         renderTree();
 
         finishProgressStatus(
-          `Импортировано страниц: ${result.importedPages}`
+          createImportResultMessage(
+            result
+          )
         );
 
         renderPreview(
@@ -1036,7 +1060,8 @@ function createPreviewPanel({
 
         applyButton.disabled =
           !canApplyPreview(
-            model.preview
+            model.preview,
+            model.conflictStrategy
           );
       }
     }
@@ -1050,20 +1075,172 @@ function createPreviewPanel({
 }
 
 
+function createConflictResolutionControl({
+  model,
+  onChange
+}) {
+
+  const element =
+    document.createElement('div');
+
+  element.className =
+    'world-package-conflict-control';
+
+  element.dataset.worldPackageResolution =
+    'true';
+
+  const label =
+    document.createElement('span');
+
+  label.className =
+    'world-package-conflict-label';
+
+  label.textContent =
+    'Конфликты';
+
+  const options =
+    document.createElement('div');
+
+  options.className =
+    'world-package-conflict-options';
+
+  const modes =
+    [
+      {
+        value:
+          'block',
+        iconName:
+          'stop',
+        label:
+          'Стоп',
+        description:
+          'Блокировать импорт, если страницы уже есть в мире.'
+      },
+      {
+        value:
+          'skip',
+        iconName:
+          'skip-forward',
+        label:
+          'Только новые',
+        description:
+          'Импортировать только страницы без конфликтов.'
+      },
+      {
+        value:
+          'copy',
+        iconName:
+          'copy',
+        label:
+          'Копии',
+        description:
+          'Создать новые страницы для конфликтующих карточек.'
+      }
+    ];
+
+  const buttons =
+    modes.map(mode => {
+
+      const button =
+        document.createElement('button');
+
+      button.type =
+        'button';
+
+      button.className =
+        'world-package-conflict-mode';
+
+      button.dataset.worldPackageConflictMode =
+        mode.value;
+
+      button.title =
+        mode.description;
+
+      button.setAttribute(
+        'aria-label',
+        mode.description
+      );
+
+      button.innerHTML =
+        `${iconSvg(mode.iconName, 'world-package-action-icon', { size: 'sm' })}<span>${escapeHtml(mode.label)}</span>`;
+
+      button.addEventListener(
+        'click',
+        () => {
+
+          model.conflictStrategy =
+            mode.value;
+
+          refresh();
+
+          onChange?.();
+        }
+      );
+
+      options.appendChild(
+        button
+      );
+
+      return button;
+    });
+
+  const refresh =
+    () => {
+
+      buttons.forEach(button => {
+
+        const isActive =
+          button.dataset.worldPackageConflictMode ===
+          model.conflictStrategy;
+
+        button.dataset.worldPackageConflictActive =
+          isActive
+            ? 'true'
+            : 'false';
+
+        button.setAttribute(
+          'aria-pressed',
+          String(isActive)
+        );
+      });
+    };
+
+  element.append(
+    label,
+    options
+  );
+
+  refresh();
+
+  return {
+    element,
+    refresh
+  };
+}
+
+
 function renderPreviewResult({
   preview,
   applyButton,
   packageData,
-  previewData
+  previewData,
+  conflictStrategy = 'block'
 }) {
 
   const reasons =
     getPreviewBlockers(
-      previewData
+      previewData,
+      conflictStrategy
     );
 
   const canApply =
     reasons.length === 0;
+
+  const planCounts =
+    getPreviewPlanCounts(
+      previewData,
+      conflictStrategy
+    );
 
   applyButton.disabled =
     !canApply;
@@ -1091,7 +1268,7 @@ function renderPreviewResult({
     document.createElement('span');
 
   meta.textContent =
-    `${previewData.counts.pages} стр. · ${previewData.counts.conflicts} конфликтов · backup обязателен`;
+    `${previewData.counts.pages} стр. · ${previewData.counts.conflicts} конфликтов · ${getConflictStrategyLabel(conflictStrategy)}`;
 
   summary.append(
     title,
@@ -1107,6 +1284,7 @@ function renderPreviewResult({
   [
     ['Новые', previewData.newPages.length, 'ready'],
     ['Конфликты', previewData.counts.conflicts, previewData.counts.conflicts ? 'danger' : 'ready'],
+    ['План', planCounts.pagesToImport, planCounts.pagesToImport ? 'ready' : 'warning'],
     ['Assets', previewData.counts.assets, previewData.counts.assets ? 'warning' : 'ready']
   ].forEach(([label, value, stateName]) => {
 
@@ -1137,7 +1315,10 @@ function renderPreviewResult({
 
   blockers.textContent =
     canApply
-      ? 'Можно применить: package без конфликтов, assets и rulePackages.'
+      ? createPreviewReadyText(
+        planCounts,
+        conflictStrategy
+      )
       : `Применение заблокировано: ${reasons.join('; ')}.`;
 
   preview.append(
@@ -1145,6 +1326,19 @@ function renderPreviewResult({
     meters,
     blockers
   );
+
+  appendPreviewList({
+    preview,
+    title:
+      'План импорта',
+    items:
+      createPreviewPlanItems(
+        planCounts,
+        conflictStrategy
+      ),
+    emptyText:
+      'Нет действий для импорта.'
+  });
 
   appendPreviewList({
     preview,
@@ -1253,8 +1447,148 @@ function appendPreviewList({
 }
 
 
+function getPreviewPlanCounts(
+  preview,
+  conflictStrategy
+) {
+
+  if (!preview) {
+
+    return {
+      pagesToImport:
+        0,
+      copied:
+        0,
+      skipped:
+        0
+    };
+  }
+
+  if (conflictStrategy === 'skip') {
+
+    return {
+      pagesToImport:
+        preview.newPages.length,
+      copied:
+        0,
+      skipped:
+        preview.counts.conflicts
+    };
+  }
+
+  if (conflictStrategy === 'copy') {
+
+    return {
+      pagesToImport:
+        preview.counts.pages,
+      copied:
+        preview.counts.conflicts,
+      skipped:
+        0
+    };
+  }
+
+  return {
+    pagesToImport:
+      preview.counts.pages,
+    copied:
+      0,
+    skipped:
+      0
+  };
+}
+
+
+function getConflictStrategyLabel(
+  conflictStrategy
+) {
+
+  if (conflictStrategy === 'skip') {
+
+    return 'только новые';
+  }
+
+  if (conflictStrategy === 'copy') {
+
+    return 'копии конфликтов';
+  }
+
+  return 'стоп при конфликте';
+}
+
+
+function createPreviewReadyText(
+  planCounts,
+  conflictStrategy
+) {
+
+  const parts =
+    [
+      `Будет импортировано: ${planCounts.pagesToImport}`
+    ];
+
+  if (planCounts.copied > 0) {
+
+    parts.push(
+      `копий: ${planCounts.copied}`
+    );
+  }
+
+  if (planCounts.skipped > 0) {
+
+    parts.push(
+      `пропущено: ${planCounts.skipped}`
+    );
+  }
+
+  parts.push(
+    'backup обязателен'
+  );
+
+  if (conflictStrategy === 'block') {
+
+    parts.push(
+      'без конфликтов'
+    );
+  }
+
+  return parts.join(
+    ' · '
+  );
+}
+
+
+function createPreviewPlanItems(
+  planCounts,
+  conflictStrategy
+) {
+
+  const items =
+    [
+      `Импорт: ${planCounts.pagesToImport}`
+    ];
+
+  if (conflictStrategy === 'copy') {
+
+    items.push(
+      `Копии конфликтов: ${planCounts.copied}`
+    );
+  }
+
+  if (conflictStrategy === 'skip') {
+
+    items.push(
+      `Пропуск конфликтов: ${planCounts.skipped}`
+    );
+  }
+
+  return items;
+}
+
+
 function getPreviewBlockers(
-  preview
+  preview,
+  conflictStrategy = 'block'
 ) {
 
   if (!preview) {
@@ -1274,10 +1608,24 @@ function getPreviewBlockers(
     );
   }
 
-  if (preview.counts.conflicts > 0) {
+  if (
+    preview.counts.conflicts > 0 &&
+    conflictStrategy === 'block'
+  ) {
 
     blockers.push(
       'есть конфликты страниц'
+    );
+  }
+
+  if (
+    conflictStrategy === 'skip' &&
+    preview.counts.conflicts > 0 &&
+    preview.newPages.length === 0
+  ) {
+
+    blockers.push(
+      'в режиме "только новые" нечего импортировать'
     );
   }
 
@@ -1307,11 +1655,13 @@ function getPreviewBlockers(
 
 
 function canApplyPreview(
-  preview
+  preview,
+  conflictStrategy = 'block'
 ) {
 
   return getPreviewBlockers(
-    preview
+    preview,
+    conflictStrategy
   ).length === 0;
 }
 
@@ -1537,6 +1887,35 @@ function finishProgressStatus(
     delayMs:
       options.delayMs
   });
+}
+
+
+function createImportResultMessage(
+  result
+) {
+
+  const parts =
+    [
+      `Импортировано страниц: ${result.importedPages}`
+    ];
+
+  if (result.copiedPages > 0) {
+
+    parts.push(
+      `копий: ${result.copiedPages}`
+    );
+  }
+
+  if (result.skippedPages > 0) {
+
+    parts.push(
+      `пропущено: ${result.skippedPages}`
+    );
+  }
+
+  return parts.join(
+    ' · '
+  );
 }
 
 

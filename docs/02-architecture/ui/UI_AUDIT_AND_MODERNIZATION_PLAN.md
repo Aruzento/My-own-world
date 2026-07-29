@@ -194,7 +194,8 @@ owner_zone: "architecture"
 - Иерархия: topbar должен быть тонким и не спорить с workspace.
 - `0.0.1.8.14.2`: the Settings popup is no longer a loose topbar append-only panel. Appearance, backup, asset health and diagnostics now share one maintenance section system with local sprite actions and explicit health/backup/restore/asset/danger markers.
 - `0.0.1.8.14.3`: Tools help routes and the embedded onboarding popup now form one Help/Support/Release guide with compact local-icon routes, internal section navigation, status chips and support/release cards.
-- `0.0.1.8.14.4`: Tools now also opens the World Package manager MVP for branch/world export, package library, JSON import preview and backup-gated page-only import. Asset/rulePackage apply and conflict-resolution choices remain future Phase 8 work.
+- `0.0.1.8.14.4`: Tools now also opens the World Package manager MVP for branch/world export, package library, JSON import preview and backup-gated page-only import.
+- `0.0.1.8.14.5`: World Package import preview now has non-destructive conflict choices (`Стоп`, `Только новые`, `Копии`) with plan counts before backup/apply. Asset/rulePackage apply remains future Phase 8 work.
 - Отступы: кнопки справа должны быть стабильными.
 - Состояния: hover/focus нужны единые.
 - Анимации: можно мягко открывать popup.
@@ -275,7 +276,7 @@ owner_zone: "architecture"
 
 ### Phase 6 - Task Tracker Refresh
 
-Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button regression fixed by `0.0.1.8.14.2`. The board/column/card/checklist UI is migrated to the shared workbench language. Phase 8 has also migrated Settings maintenance, Help/Support guide and World Package manager MVP slices through `0.0.1.8.14.4`; remaining secondary-screen work lives in `0.0.1.8.14` rather than this older phase label.
+Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button regression fixed by `0.0.1.8.14.2`. The board/column/card/checklist UI is migrated to the shared workbench language. Phase 8 has also migrated Settings maintenance, Help/Support guide and World Package manager slices through `0.0.1.8.14.5`; remaining secondary-screen work lives in `0.0.1.8.14` rather than this older phase label.
 
 - Колонки.
 - Карточки задач.

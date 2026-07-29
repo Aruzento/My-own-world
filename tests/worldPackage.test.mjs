@@ -356,6 +356,222 @@ test(
 
 
 test(
+  'World Package page import skips conflicts without losing new children',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages([
+      {
+        id:
+          'root',
+        title:
+          'Root',
+        parent:
+          null
+      }
+    ]);
+
+    const packageData =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'root',
+            title:
+              'Root',
+            parent:
+              null,
+            body:
+              '<h1>Root</h1>'
+          },
+          {
+            id:
+              'new-child',
+            title:
+              'New Child',
+            parent:
+              'root',
+            body:
+              '<h1>New Child</h1>'
+          }
+        ],
+        {
+          title:
+            'Skip Conflicts'
+        }
+      );
+
+    await assert.rejects(
+      () => applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-block'
+        },
+        storageAdapter:
+          adapter
+      }),
+      /conflicts/
+    );
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-skip'
+        },
+        storageAdapter:
+          adapter,
+        conflictStrategy:
+          'skip'
+      });
+
+    assert.equal(
+      result.importedPages,
+      1
+    );
+
+    assert.equal(
+      result.skippedPages,
+      1
+    );
+
+    assert.equal(
+      state.pages.find(page => page.id === 'new-child').parent,
+      'root'
+    );
+
+    const content =
+      await adapter.readText(
+        result.paths[0]
+      );
+
+    assert.match(
+      content,
+      /id: new-child/
+    );
+
+    assert.match(
+      content,
+      /parent: root/
+    );
+  }
+);
+
+
+test(
+  'World Package page import copies conflicts and rewires imported children',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages([
+      {
+        id:
+          'root',
+        title:
+          'Root',
+        parent:
+          null
+      }
+    ]);
+
+    const packageData =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'root',
+            title:
+              'Root',
+            parent:
+              null,
+            body:
+              '<h1>Root</h1><p>Package root.</p>'
+          },
+          {
+            id:
+              'copied-child',
+            title:
+              'Copied Child',
+            parent:
+              'root',
+            body:
+              '<h1>Copied Child</h1>'
+          }
+        ],
+        {
+          title:
+            'Copy Conflicts'
+        }
+      );
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-copy'
+        },
+        storageAdapter:
+          adapter,
+        conflictStrategy:
+          'copy'
+      });
+
+    assert.equal(
+      result.importedPages,
+      2
+    );
+
+    assert.equal(
+      result.copiedPages,
+      1
+    );
+
+    assert.equal(
+      result.renamedPages,
+      1
+    );
+
+    const copiedRoot =
+      state.pages.find(page =>
+        page.id === 'root-import'
+      );
+
+    assert.equal(
+      copiedRoot.title,
+      'Root (import)'
+    );
+
+    assert.equal(
+      state.pages.find(page => page.id === 'copied-child').parent,
+      'root-import'
+    );
+
+    const copiedRootContent =
+      await adapter.readText(
+        result.paths[0]
+      );
+
+    assert.match(
+      copiedRootContent,
+      /id: root-import/
+    );
+
+    assert.match(
+      copiedRootContent,
+      /<h1>Root \(import\)<\/h1>/
+    );
+  }
+);
+
+
+test(
   'World Package dependency report marks unresolved required packages',
   () => {
 

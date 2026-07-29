@@ -6,6 +6,47 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.14.5 World Package Conflict Import UX
+
+### What Changed
+
+- Continued `0.0.1.8.14` Migration Phase 8 inside the existing World Package manager instead of opening another secondary screen.
+- Updated `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.5"]` with a compact conflict-mode control: `Стоп`, `Только новые`, `Копии`.
+- Kept the default safe behavior: `Стоп` still blocks page conflicts and never overwrites workspace pages.
+- Added page-only conflict strategies to `applyWorldPackagePageImport()`:
+  - `skip` imports only non-conflicting pages and can attach imported children to an existing parent when the skipped conflict was the same page id.
+  - `copy` creates imported copies for conflicts with unique page ids, unique titles when needed, rewritten first `<h1>` titles and rewired parent links for imported descendants.
+- Extended import preview with a concise import plan so the user sees how many pages will be imported, copied or skipped before the backup/apply step.
+- Kept asset and embedded rulePackage contents as preview blockers; those still belong to future Asset Lifecycle and Rule Package apply work.
+
+### Readiness
+
+`Usable` for page-only World Package import/export conflict handling. A human can now export a branch, preview a conflicting package, choose whether to stop, import only new pages or create copies, and apply only after backup. Full World Package migration remains unfinished until asset files and embedded rulePackages can be applied.
+
+### Verification
+
+- Passed: `node --check js\worldPackage\worldPackageImportService.js`.
+- Passed: `node --check js\ui\worldPackageManager.js`.
+- Passed: `node --check tests\worldPackage.test.mjs`.
+- Passed: `node --check tests\browser\world-package.spec.mjs`.
+- Passed: `node --test tests\worldPackage.test.mjs` with 10 tests, including skip/copy conflict strategies.
+- Passed: `npm run test:browser -- tests/browser/world-package.spec.mjs`, covering default conflict blocking, copy-mode conflict import, parent rewiring, later external page-only import, backup creation and sanitizer guards.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/component-catalogue.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `python tools\generate_manual_docx.py`, regenerating `docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `node tools\audit_project_files.mjs`, refreshing `docs\01-delivery\PROJECT_FILE_AUDIT.md`.
+- Passed: `node tools\docs_index.mjs`, `node tools\validate_agent_skills.mjs`, `npm run check:encoding` and `git diff --check`.
+- Passed: `npm run verify` with 277 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- First `npm run desktop:gate` run reached 114/115 browser tests and timed out in `knowledge-graph-can-be-created-and-opens-orphan-pages`; the focused `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` rerun passed 2/2.
+- Passed on second full run: `npm run desktop:gate`, including docs index, skills validation, verify, 115 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.14` with asset file copy/apply and embedded rulePackage apply paths for World Packages.
+- Keep replacement/overwrite import out of the UI until there is a clear restore/preview story; current conflict modes intentionally avoid destructive writes.
+
 ## 2026-07-29: 0.0.1.8.14.4 World Package Manager MVP
 
 ### What Changed
@@ -42,7 +83,6 @@ owner_zone: "delivery"
 ### Follow-Up
 
 - Continue `0.0.1.8.14` with asset file copy/apply and embedded rulePackage apply paths for World Packages.
-- Add conflict-resolution UX beyond blocking, likely rename/skip/replace preview choices after the data-safety contract is explicit.
 - Keep the Help/Support copy honest: World Packages are now MVP for page-only import/export, not fully complete package migration.
 
 ## 2026-07-29: 0.0.1.8.14.3 Help Support And Release Guide UI

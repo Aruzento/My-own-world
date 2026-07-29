@@ -36,7 +36,7 @@ const REQUIRED_SYSTEM_ROWS = [
   'Knowledge graph and canvas',
   'Task tracker',
   'Help, support and release guide `0.0.1.8.14.3`',
-  'World Package manager `0.0.1.8.14.4`',
+  'World Package manager `0.0.1.8.14.5`',
   'Shared primitives and overlays'
 ];
 

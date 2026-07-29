@@ -98,10 +98,14 @@ No import should write to workspace before:
 
 Current UI apply boundary:
 
-- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.4"]`.
+- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.5"]`.
 - The UI may export a current page branch or the whole workspace page set into `world-packages/*.world-package.json`.
 - The UI may apply page-only packages after preview and backup.
-- Page conflicts block apply in this slice; they are not auto-renamed or overwritten.
+- Page conflicts are resolved by an explicit mode:
+  - `block` is the default and blocks apply when any package page conflicts by id/title.
+  - `skip` imports only non-conflicting package pages. If a new imported child points to a skipped parent whose id already exists in the workspace, the child may attach to that existing parent; otherwise the parent is cleared.
+  - `copy` imports conflicting package pages as new copies with unique ids, unique titles when needed and rewired parent links for imported descendants.
+- No current mode overwrites or replaces an existing workspace page.
 - Packages with `contents.assets` or `contents.rulePackages` block apply in this slice. They can be previewed, but file copy/rule apply belongs to future Asset Lifecycle and Rule Package work.
 - Imported page `body` must be sanitized with the persistent save sanitizer before writing PageRecord content.
 
@@ -136,6 +140,7 @@ Implemented:
 - package model;
 - workspace storage;
 - import preview;
+- page-only conflict import strategies: block, skip and copy;
 - dependency report;
 - schema validation;
 - user-facing `Пакеты мира` manager for export, package library, JSON import preview and backup-gated page-only import;
@@ -145,5 +150,4 @@ Not implemented yet:
 
 - asset file copy/apply from a World Package;
 - embedded rulePackage apply;
-- conflict-resolution choices beyond blocking;
 - Workshop/fork publishing.

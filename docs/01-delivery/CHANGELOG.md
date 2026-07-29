@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.5`: World Package page-only import now has conflict modes for stopping, importing only new pages, or creating copied conflict pages with unique ids/titles and rewired parent links after backup.
 - UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.4`: Tools now includes `Пакеты мира`, a World Package manager MVP for branch/world export, package library preview/delete, JSON import preview and backup-gated page-only import with conflict/assets/rulePackage blockers.
 - UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.3`: the existing Tools help/onboarding popup is now a Help/Support/Release guide with compact icon routes, internal navigation, status chips, release-check cards, support diagnostics cards and visual-safety coverage.
 - UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.2`: task tracker icon-button clicks now work when the user clicks the nested SVG icon, and the topbar Settings popup now uses one maintenance section system for appearance, backup, asset health and workspace diagnostics with health/backup/restore/asset/danger markers plus visual-safety coverage.
