@@ -21,6 +21,8 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.5`: graph styles are now split into base canvas, slice state, selected-node inspector and node/connect overlay owner files, while the remaining Phase 7 work stays on JavaScript split and lifecycle hardening.
+- UI redesign Phase 7 Knowledge Graph corrected with `0.0.1.8.13.4`: the graph first layer now uses compact status chips, a visual slice meter, icon-first actions, a lighter selected-node inspector and collapsed relationship editing instead of always-visible explanatory counters and rows.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.3`: node right-click actions and connection creation now use darker editor-grade overlays, grouped icon actions, compact editable relationship rows and visual-regression coverage for the node menu.
 - UI redesign Phase 6 campaign map corrected with `0.0.1.8.12.10`: the split scene/session bar and left canvas tool rail are now full-size workbench zones without internal scrollbars, and map toolbar labels use a body-level floating tooltip layer so hover text is not clipped inside buttons.
 - UI redesign Phase 6 campaign map corrected with `0.0.1.8.12.9`: the map toolbar now follows a graphic-editor split layout, with canvas tools in a left vertical rail and scene/session actions in the compact top bar. Existing map actions keep their selectors and behavior, while the new rail is runtime-only and guarded by browser layout tests.

@@ -41,5 +41,8 @@
 @import url('./task-tracker.css');
 @import url('./rule-tree.css');
 @import url('./knowledge-graph.css');
+@import url('./knowledge-graph-slice.css');
+@import url('./knowledge-graph-inspector.css');
+@import url('./knowledge-graph-overlays.css');
 @import url('./internal-rules-workspace.css');
 @import url('./brand-system.css');

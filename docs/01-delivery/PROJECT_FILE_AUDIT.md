@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-07-28
+Дата: 2026-07-29
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 552.
+Всего файлов в аудите: 555.
 
 ## Два Независимых Прохода
 
@@ -50,7 +50,7 @@ owner_zone: "delivery"
 | schema | 12 |
 | storage | 26 |
 | story log | 1 |
-| styles | 56 |
+| styles | 59 |
 | tables | 8 |
 | task tracker | 17 |
 | templates | 9 |
@@ -66,6 +66,9 @@ owner_zone: "delivery"
 |---|---|
 | `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 | `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/knowledge-graph-inspector.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/knowledge-graph-overlays.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/knowledge-graph-slice.css` | Кандидат: untracked файл, проверить назначение перед удалением. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -75,11 +78,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5562174 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5574791 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 942291 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 581194 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 162698 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 944865 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 585666 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 164489 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -125,6 +128,9 @@ owner_zone: "delivery"
 | `styles/document.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/editor.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/internal-rules-workspace.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
+| `styles/knowledge-graph-inspector.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
+| `styles/knowledge-graph-overlays.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
+| `styles/knowledge-graph-slice.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/knowledge-graph.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/layout.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/legacy-fields.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
@@ -586,6 +592,9 @@ owner_zone: "delivery"
 | `styles/document.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/editor.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/internal-rules-workspace.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `styles/knowledge-graph-inspector.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/knowledge-graph-overlays.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `styles/knowledge-graph-slice.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `styles/knowledge-graph.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/layout.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/legacy-fields.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |

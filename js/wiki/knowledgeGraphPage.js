@@ -1074,7 +1074,7 @@ function getVisualGraphHTML(
               disabled
             >
               ${iconSvg('arrow-left', 'knowledge-graph-toolbar-icon')}
-              <span>Назад</span>
+              <span class="knowledge-graph-toolbar-label">Назад</span>
             </button>
             <button
               type="button"
@@ -1084,18 +1084,18 @@ function getVisualGraphHTML(
               disabled
             >
               ${iconSvg('skip-forward', 'knowledge-graph-toolbar-icon')}
-              <span>Вперед</span>
+              <span class="knowledge-graph-toolbar-label">Вперед</span>
             </button>
             <button type="button" data-knowledge-graph-canvas-action="zoom-out" title="Уменьшить" aria-label="Уменьшить">−</button>
-            <button type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф">
+            <button type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф" aria-label="Показать весь граф">
               ${iconSvg('link', 'knowledge-graph-toolbar-icon')}
-              <span>Центр</span>
+              <span class="knowledge-graph-toolbar-label">Центр</span>
             </button>
             <button type="button" data-knowledge-graph-canvas-action="zoom-in" title="Увеличить" aria-label="Увеличить">+</button>
-            <span data-knowledge-graph-canvas-scale>100%</span>
-            <button class="knowledge-graph-refresh" type="button" title="Обновить граф">
+            <span data-knowledge-graph-canvas-scale title="Масштаб 100%">100%</span>
+            <button class="knowledge-graph-refresh" type="button" title="Обновить граф" aria-label="Обновить граф">
               ${iconSvg('repeat', 'knowledge-graph-toolbar-icon')}
-              <span>Обновить</span>
+              <span class="knowledge-graph-toolbar-label">Обновить</span>
             </button>
           </div>
         </header>
@@ -1183,9 +1183,27 @@ function getCanvasFilterBarHTML(
         class="knowledge-graph-filter-toggle${canvasModel.filters.orphanOnly ? ' is-active' : ''}"
         data-knowledge-graph-filter-action="orphans"
         aria-pressed="${canvasModel.filters.orphanOnly ? 'true' : 'false'}"
-      >Одинокие</button>
-      <button type="button" data-knowledge-graph-filter-action="clear">Сброс</button>
-      <span class="knowledge-graph-canvas-filterbar-status" data-knowledge-graph-filter-status>
+        aria-label="Одинокие страницы"
+        title="Одинокие страницы"
+      >
+        ${iconSvg('eye-off', 'knowledge-graph-toolbar-icon')}
+        <span class="knowledge-graph-toolbar-label">Одинокие</span>
+      </button>
+      <button
+        type="button"
+        data-knowledge-graph-filter-action="clear"
+        aria-label="Сбросить фильтры"
+        title="Сбросить фильтры"
+      >
+        ×
+        <span class="knowledge-graph-toolbar-label">Сброс</span>
+      </button>
+      <span
+        class="knowledge-graph-canvas-filterbar-status"
+        data-knowledge-graph-filter-status
+        aria-label="${escapeHTML(getCanvasFilterStatusDetailText(graph, canvasModel))}"
+        title="${escapeHTML(getCanvasFilterStatusDetailText(graph, canvasModel))}"
+      >
         ${escapeHTML(getCanvasFilterStatusText(graph, canvasModel))}
       </span>
       ${getCanvasSliceStatsHTML(canvasModel)}
@@ -1198,11 +1216,37 @@ function getCanvasSliceStatsHTML(
   canvasModel
 ) {
 
+  const totalNodes =
+    Math.max(
+      Number(canvasModel.totalNodeCount) || 0,
+      1
+    );
+
+  const visiblePercent =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round((canvasModel.visibleNodeCount / totalNodes) * 100)
+      )
+    );
+
+  const hiddenPercent =
+    Math.max(
+      0,
+      100 - visiblePercent
+    );
+
   return `
-    <div class="knowledge-graph-canvas-slice-stats" data-knowledge-graph-slice-stats>
-      ${getCanvasSliceStatHTML('shown', canvasModel.visibleNodeCount, 'показано')}
-      ${getCanvasSliceStatHTML('total', canvasModel.totalNodeCount, 'в мире')}
-      ${getCanvasSliceStatHTML('hidden', canvasModel.hiddenTotalNodeCount, 'скрыто')}
+    <div
+      class="knowledge-graph-canvas-slice-stats"
+      data-knowledge-graph-slice-stats
+      aria-label="${escapeHTML(getCanvasSliceSummaryLabel(canvasModel))}"
+      title="${escapeHTML(getCanvasSliceSummaryLabel(canvasModel))}"
+    >
+      ${getCanvasSliceStatHTML('shown', canvasModel.visibleNodeCount, 'Показано', visiblePercent)}
+      ${getCanvasSliceStatHTML('hidden', canvasModel.hiddenTotalNodeCount, 'Скрыто', hiddenPercent)}
+      ${getCanvasSliceStatHTML('total', canvasModel.totalNodeCount, 'Всего', 0)}
     </div>
   `;
 }
@@ -1211,15 +1255,29 @@ function getCanvasSliceStatsHTML(
 function getCanvasSliceStatHTML(
   key,
   value,
-  label
+  label,
+  percent
 ) {
 
   return `
-    <span class="knowledge-graph-canvas-slice-stat" data-knowledge-graph-slice-stat="${escapeHTML(key)}">
-      <strong>${escapeHTML(value)}</strong>
-      <span>${escapeHTML(label)}</span>
+    <span
+      class="knowledge-graph-canvas-slice-stat"
+      data-knowledge-graph-slice-stat="${escapeHTML(key)}"
+      style="--graph-slice-part: ${escapeHTML(percent)}%; --graph-slice-min: ${percent > 0 ? '8px' : '0px'};"
+      aria-label="${escapeHTML(`${label}: ${value}`)}"
+      title="${escapeHTML(`${label}: ${value}`)}"
+    >
+      <span class="knowledge-graph-visually-hidden">${escapeHTML(value)}</span>
     </span>
   `;
+}
+
+
+function getCanvasSliceSummaryLabel(
+  canvasModel
+) {
+
+  return `Показано ${canvasModel.visibleNodeCount} из ${canvasModel.totalNodeCount}; скрыто ${canvasModel.hiddenTotalNodeCount}`;
 }
 
 
@@ -1309,8 +1367,8 @@ function getCanvasConnectDetailsPopupHTML(
           ${iconSvg('link', 'knowledge-graph-overlay-icon')}
         </span>
         <div>
-          <span>Новая связь</span>
-          <strong>Параметры связи</strong>
+          <span>Связь</span>
+          <strong>Новая</strong>
         </div>
       </header>
       <div class="knowledge-graph-connect-path">
@@ -1341,13 +1399,23 @@ function getCanvasConnectDetailsPopupHTML(
         </label>
       </div>
       <div class="knowledge-graph-connect-popup-actions">
-        <button type="button" data-knowledge-graph-connect-action="create">
+        <button
+          type="button"
+          data-knowledge-graph-connect-action="create"
+          aria-label="Создать связь"
+          title="Создать связь"
+        >
           ${iconSvg('check', 'knowledge-graph-node-menu-action-svg')}
-          <span>Создать</span>
+          <span class="knowledge-graph-toolbar-label">Создать</span>
         </button>
-        <button type="button" data-knowledge-graph-connect-action="cancel">
+        <button
+          type="button"
+          data-knowledge-graph-connect-action="cancel"
+          aria-label="Отмена"
+          title="Отмена"
+        >
           ${iconSvg('x', 'knowledge-graph-node-menu-action-svg')}
-          <span>Отмена</span>
+          <span class="knowledge-graph-toolbar-label">Отмена</span>
         </button>
       </div>
     </section>
@@ -1356,6 +1424,39 @@ function getCanvasConnectDetailsPopupHTML(
 
 
 function getCanvasFilterStatusText(
+  graph,
+  canvasModel
+) {
+
+  const filters =
+    canvasModel.filters;
+
+  if (filters.search) return 'Поиск';
+
+  if (filters.focusNodeId) return 'Соседи';
+
+  if (
+    filters.orphanOnly ||
+    filters.domain !== 'all' ||
+    filters.relationshipType !== 'all'
+  ) {
+
+    return 'Фильтр';
+  }
+
+  if (
+    canvasModel.hiddenTotalNodeCount > 0 ||
+    canvasModel.hiddenTotalEdgeCount > 0
+  ) {
+
+    return 'Фрагмент';
+  }
+
+  return 'Весь граф';
+}
+
+
+function getCanvasFilterStatusDetailText(
   graph,
   canvasModel
 ) {
@@ -1543,9 +1644,11 @@ function getCanvasLayoutButtonHTML(
       type="button"
       data-knowledge-graph-layout="${escapeHTML(layout)}"
       aria-pressed="${activeLayout === layout ? 'true' : 'false'}"
+      aria-label="${escapeHTML(label)}"
+      title="${escapeHTML(label)}"
     >
       ${iconSvg(getCanvasLayoutIcon(layout), 'knowledge-graph-toolbar-icon')}
-      <span>${escapeHTML(label)}</span>
+      <span class="knowledge-graph-toolbar-label">${escapeHTML(label)}</span>
     </button>
   `;
 }
@@ -1776,57 +1879,64 @@ function getCanvasInspectorInnerHTML(
   const incomingCount =
     relationships.length - outgoingCount;
 
+  const summaryText =
+    `${relationships.length} видимых связей: ${outgoingCount} исходящих, ${incomingCount} входящих${node.isPinned ? '; закреплена' : ''}`;
+
   return `
-    <header class="knowledge-graph-canvas-inspector-header">
+    <header
+      class="knowledge-graph-canvas-inspector-header"
+      title="${escapeHTML(summaryText)}"
+      aria-label="${escapeHTML(summaryText)}"
+    >
       <span class="knowledge-graph-canvas-inspector-icon" aria-hidden="true">
         ${iconSvg(getCanvasNodeIcon(node), 'app-icon')}
       </span>
       <div class="knowledge-graph-canvas-inspector-heading">
-        <span>${escapeHTML(node.domainLabel || 'Заметки')} · ${escapeHTML(node.type || 'note')}</span>
         <strong>${escapeHTML(node.title || node.id)}</strong>
+        <span>${escapeHTML(node.domainLabel || 'Заметки')}</span>
+      </div>
+      <div class="knowledge-graph-canvas-inspector-actions">
+        <button
+          type="button"
+          data-knowledge-graph-inspector-action="open"
+          aria-label="Открыть карточку"
+          title="Открыть карточку"
+        >
+          ${iconSvg('document', 'knowledge-graph-inspector-action-icon')}
+          <span class="knowledge-graph-toolbar-label">Открыть</span>
+        </button>
+        <button
+          type="button"
+          data-knowledge-graph-inspector-action="${isFocused ? 'clear-focus' : 'focus'}"
+          aria-label="${isFocused ? 'Показать весь граф' : 'Показать соседей'}"
+          title="${isFocused ? 'Показать весь граф' : 'Показать соседей'}"
+        >
+          ${iconSvg(isFocused ? 'eye-off' : 'eye', 'knowledge-graph-inspector-action-icon')}
+          <span class="knowledge-graph-toolbar-label">${isFocused ? 'Весь граф' : 'Соседи'}</span>
+        </button>
       </div>
     </header>
-    <div class="knowledge-graph-canvas-inspector-stats">
-      ${getCanvasInspectorStatHTML('links', relationships.length, 'видимых связей')}
-      ${getCanvasInspectorStatHTML('outgoing', outgoingCount, 'исходит')}
-      ${getCanvasInspectorStatHTML('incoming', incomingCount, 'входит')}
-      ${getCanvasInspectorStatHTML('pin', node.isPinned ? 'Да' : 'Нет', 'закреплена')}
-    </div>
-    <section class="knowledge-graph-canvas-inspector-relations">
-      <strong>Связи в срезе</strong>
+    <section
+      class="knowledge-graph-canvas-inspector-relations"
+      aria-label="${escapeHTML(summaryText)}"
+    >
       ${
         relationships.length > 0
           ? `
             <div class="knowledge-graph-canvas-inspector-relation-list">
               ${relationships
-                .slice(0, 7)
+                .slice(0, 5)
                 .map(getCanvasInspectorRelationshipHTML)
                 .join('')}
             </div>
           `
           : `
             <p class="knowledge-graph-canvas-inspector-empty">
-              В текущем срезе у этой страницы нет видимых связей.
+              Нет видимых связей
             </p>
           `
       }
     </section>
-    <div class="knowledge-graph-canvas-inspector-actions">
-      <button
-        type="button"
-        data-knowledge-graph-inspector-action="open"
-      >
-        ${iconSvg('document', 'knowledge-graph-inspector-action-icon')}
-        <span>Открыть</span>
-      </button>
-      <button
-        type="button"
-        data-knowledge-graph-inspector-action="${isFocused ? 'clear-focus' : 'focus'}"
-      >
-        ${iconSvg(isFocused ? 'eye-off' : 'eye', 'knowledge-graph-inspector-action-icon')}
-        <span>${isFocused ? 'Весь граф' : 'Соседи'}</span>
-      </button>
-    </div>
   `;
 }
 
@@ -1871,13 +1981,11 @@ function getCanvasInspectorRelationshipHTML(
       data-relation-direction="${escapeHTML(relationship.direction)}"
       data-relation-other-id="${escapeHTML(relationship.otherId)}"
       data-relation-type="${escapeHTML(relationship.type)}"
-      title="Открыть связанную страницу"
+      title="${escapeHTML(detailParts.length > 0 ? `${detailParts.join(' · ')}; открыть связанную страницу` : 'Открыть связанную страницу')}"
+      aria-label="${escapeHTML(`Открыть связанную страницу: ${relationship.otherTitle}`)}"
     >
       <span class="knowledge-graph-canvas-inspector-relation-direction">${escapeHTML(directionLabel)}</span>
-      <span class="knowledge-graph-canvas-inspector-relation-copy">
-        <strong>${escapeHTML(relationship.otherTitle)}</strong>
-        <span>${escapeHTML(detailParts.join(' · '))}</span>
-      </span>
+      <strong>${escapeHTML(relationship.otherTitle)}</strong>
     </button>
   `;
 }
@@ -2057,29 +2165,48 @@ function getCanvasOverflowNoteHTML(
       ? hiddenReasons.join(' · ')
       : 'часть связей сейчас вне видимой области';
 
+  const detailsText =
+    `${getCanvasSliceSummaryLabel(canvasModel)}; ${reasonText}; скрыто связей: ${canvasModel.hiddenTotalEdgeCount}`;
+
   const showAllAction =
     canvasModel.hiddenBySliceNodeCount > 0 &&
     canvasModel.filters.viewPreset !== 'all'
       ? `
-        <button type="button" data-knowledge-graph-slice-action="show-all">
-          Все связи
+        <button
+          type="button"
+          data-knowledge-graph-slice-action="show-all"
+          aria-label="Показать все связи"
+          title="Показать все связи"
+        >
+          ${iconSvg('eye', 'knowledge-graph-slice-action-icon')}
+          <span class="knowledge-graph-toolbar-label">Все связи</span>
         </button>
       `
       : '';
 
   return `
-    <aside class="knowledge-graph-canvas-slice-note" data-knowledge-graph-slice-note>
+    <aside
+      class="knowledge-graph-canvas-slice-note"
+      data-knowledge-graph-slice-note
+      aria-label="${escapeHTML(detailsText)}"
+      title="${escapeHTML(detailsText)}"
+    >
       <span class="knowledge-graph-canvas-slice-note-icon">
         ${iconSvg('eye-off', 'knowledge-graph-slice-note-icon-svg')}
       </span>
       <div>
-        <strong>Показано ${escapeHTML(canvasModel.visibleNodeCount)} из ${escapeHTML(canvasModel.totalNodeCount)} страниц</strong>
-        <p>${escapeHTML(reasonText)}. Скрыто ${escapeHTML(canvasModel.hiddenTotalEdgeCount)} связей; уточни фильтры или открой полный вид, если нужен весь контекст.</p>
+        <strong>Фрагмент</strong>
       </div>
       <div class="knowledge-graph-canvas-slice-actions">
         ${showAllAction}
-        <button type="button" data-knowledge-graph-slice-action="refine">
-          Уточнить поиск
+        <button
+          type="button"
+          data-knowledge-graph-slice-action="refine"
+          aria-label="Уточнить поиск"
+          title="Уточнить поиск"
+        >
+          ${iconSvg('search', 'knowledge-graph-slice-action-icon')}
+          <span class="knowledge-graph-toolbar-label">Уточнить поиск</span>
         </button>
       </div>
     </aside>
@@ -2119,14 +2246,26 @@ function getCanvasContextMenuHTML() {
         ${getGraphNodeMenuActionHTML('reset-position', 'x', 'Сбросить позицию')}
         ${getGraphNodeMenuActionHTML('connect', 'link', 'Связать...')}
       </div>
-      <section class="knowledge-graph-node-menu-relationship-panel">
-        <header class="knowledge-graph-node-menu-section-header">
+      <section
+        class="knowledge-graph-node-menu-relationship-panel"
+        data-knowledge-graph-relationships-expanded="false"
+      >
+        <button
+          type="button"
+          class="knowledge-graph-node-menu-section-header"
+          data-knowledge-graph-relationships-toggle
+          aria-expanded="false"
+        >
           <span>
             ${iconSvg('link', 'knowledge-graph-node-menu-section-icon')}
-            Ручные связи
+            Связи
           </span>
-          <small data-knowledge-graph-node-menu-relationship-count>0</small>
-        </header>
+          <small
+            data-knowledge-graph-node-menu-relationship-count
+            aria-label="0 ручных связей"
+            title="0 ручных связей"
+          ></small>
+        </button>
         <div
           class="knowledge-graph-node-menu-relationships"
           data-knowledge-graph-node-menu-relationships
@@ -2148,13 +2287,38 @@ function getGraphNodeMenuActionHTML(
       class="knowledge-graph-node-menu-action"
       type="button"
       data-knowledge-graph-node-menu-action="${escapeHTML(action)}"
+      aria-label="${escapeHTML(label)}"
+      title="${escapeHTML(label)}"
     >
       <span class="knowledge-graph-node-menu-action-icon">
         ${iconSvg(icon, 'knowledge-graph-node-menu-action-svg')}
       </span>
-      <span>${escapeHTML(label)}</span>
+      <span class="knowledge-graph-node-menu-action-label">${escapeHTML(label)}</span>
     </button>
   `;
+}
+
+
+function getRelationshipCountDotsHTML(
+  count
+) {
+
+  const dotCount =
+    Math.max(
+      0,
+      Math.min(
+        Number(count) || 0,
+        3
+      )
+    );
+
+  return Array.from(
+    {
+      length:
+        dotCount
+    },
+    () => '<span aria-hidden="true"></span>'
+  ).join('');
 }
 
 
@@ -2648,6 +2812,41 @@ function setupKnowledgeGraphEvents(
           documentElement,
           relationshipMenuAction
         );
+
+        return;
+      }
+
+      const relationshipsToggle =
+        event.target.closest(
+          '[data-knowledge-graph-relationships-toggle]'
+        );
+
+      if (relationshipsToggle) {
+
+        event.preventDefault();
+
+        const relationshipPanel =
+          relationshipsToggle.closest(
+            '.knowledge-graph-node-menu-relationship-panel'
+          );
+
+        if (relationshipPanel) {
+
+          const isExpanded =
+            relationshipPanel.dataset.knowledgeGraphRelationshipsExpanded === 'true';
+
+          relationshipPanel.dataset.knowledgeGraphRelationshipsExpanded =
+            isExpanded
+              ? 'false'
+              : 'true';
+
+          relationshipsToggle.setAttribute(
+            'aria-expanded',
+            isExpanded
+              ? 'false'
+              : 'true'
+          );
+        }
 
         return;
       }
@@ -4371,6 +4570,11 @@ function showGraphNodeContextMenu(
       );
   }
 
+  const relationshipCount =
+    getEditableNodeRelationships(
+      card.dataset.nodeId
+    ).length;
+
   const relationshipCountElement =
     menu.querySelector(
       '[data-knowledge-graph-node-menu-relationship-count]'
@@ -4378,11 +4582,37 @@ function showGraphNodeContextMenu(
 
   if (relationshipCountElement) {
 
-    relationshipCountElement.textContent =
-      String(
-        getEditableNodeRelationships(
-          card.dataset.nodeId
-        ).length
+    relationshipCountElement.innerHTML =
+      getRelationshipCountDotsHTML(
+        relationshipCount
+      );
+
+    relationshipCountElement.setAttribute(
+      'aria-label',
+      `${relationshipCount} ручных связей`
+    );
+
+    relationshipCountElement.setAttribute(
+      'title',
+      `${relationshipCount} ручных связей`
+    );
+  }
+
+  const relationshipPanel =
+    menu.querySelector(
+      '.knowledge-graph-node-menu-relationship-panel'
+    );
+
+  if (relationshipPanel) {
+
+    relationshipPanel.dataset.knowledgeGraphRelationshipsExpanded =
+      'false';
+
+    relationshipPanel
+      .querySelector('[data-knowledge-graph-relationships-toggle]')
+      ?.setAttribute(
+        'aria-expanded',
+        'false'
       );
   }
 

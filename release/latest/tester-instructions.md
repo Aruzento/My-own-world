@@ -43,7 +43,7 @@ npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-insp
 npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs
 ```
 
-For the Knowledge Graph visible-slice, selected-node inspector, edge-state and overlay-cleanup slices, use:
+For the Knowledge Graph visible-slice, selected-node inspector, edge-state, overlay-cleanup, laconic first-layer and CSS split slices, use:
 
 ```powershell
 npm run test:browser -- tests/browser/knowledge-graph.spec.mjs
@@ -105,9 +105,9 @@ Card editor design check: select text in the card title and in a normal text blo
 13. Open a campaign map; check that the map title is a compact chip, the top scene/session toolbar is a full-width icon-only workbench zone, and the left canvas tool rail is a full-height stage dock. Neither toolbar zone should show internal scrollbars. Toolbar labels should appear as floating hover/focus tooltips outside the button bounds, with no clipping. Hand/pan should sit with the tools, not with creation. No duplicate scene/layer panels should appear over the stage. Toggle grid, pan, drawing and fog: the active button should be visibly pressed. Open add, map image, grid, layers, drawing, fog, music and initiative popups from the toolbar; the map popups should share one compact dark frame with a local icon, readable title and labeled sections, close through normal controls/Escape/repeated trigger, avoid text clipping/overlap, and return keyboard focus where the popup is modal. Then select a token or shape. A right-side `Inspector` should appear with editable concrete properties: token name/X/Y/size/rotation/player visibility, or shape type/X/Y/width/height/rotation/stroke/fill/stroke width/player visibility. Changing a field should update the object and persist after save/reopen. Right-click a token or shape and confirm the browser menu does not appear; the custom compact object action popup should open instead. Multi-select at least two tokens/shapes with mixed player visibility; the Inspector should show visible/hidden counters and offer `Скрыть` / `Показать` for the group. `Убрать` should remove the object from this map only, not delete the linked card. Then move a token, hover/open token actions and open presentation.
    Map design note: the accepted `0.0.1.8.12.10` layout is split and full-size. Canvas tools (Hand/pan, shapes, drawing, fog) must be in the left full-height rail, while scene/session actions (add, grid, map image, layers, presentation, initiative, music) stay in the top full-width bar. Clipped tooltips, internal toolbar scrollbars, a single wide mixed toolbar or decorative placeholder panels should fail visual review.
 14. If music is part of the test build, add real audio files and test play/stop/next/previous in desktop.
-15. Create/open `Граф связей`; check that the filterbar shows visible/total/hidden counters and the status reads like `показано X из Y`. If the graph is only showing a slice, the note should explain whether nodes are hidden by filters, the standard slice or the canvas limit, and `Все связи` / `Уточнить поиск` should be clear actions.
-16. In the Knowledge Graph, click a node and confirm its connected lines become active, unrelated visible lines/nodes become muted, and the workbench inspector shows domain/type, incoming/outgoing relationship counts, pinned state, relationship rows and `Открыть` / `Соседи` actions without covering the canvas.
-17. In the Knowledge Graph, drag a node, undo/redo, right-click a node and check relationship actions. The context menu should open near the clicked node, stay inside the viewport, use grouped icon actions, and show editable relationship rows without clipped fields or visible internal scrollbars.
+15. Create/open `Граф связей`; check that the filterbar stays laconic: short status chip, visual slice meter and icon actions instead of permanent visible/total/hidden number cards. Detailed counts/reasons should still exist in hover/accessibility labels, and `Все связи` / search-refine actions should remain reachable as compact controls.
+16. In the Knowledge Graph, click a node and confirm its connected lines become active, unrelated visible lines/nodes become muted, and the workbench inspector stays light: title, icon actions and short relation chips instead of visible stat grids.
+17. In the Knowledge Graph, drag a node, undo/redo, right-click a node and check relationship actions. The context menu should open near the clicked node, stay inside the viewport, use grouped icon actions, and show editable relationship rows only after expanding `Связи`; expanded rows should not clip fields or show visible internal scrollbars.
 18. In the Knowledge Graph, create a connection through the connect popup; node/connect overlays should use the same dark editor-grade icon/header/field language, stay within the viewport and close cleanly by Escape/outside click.
 19. Run backup manually before any repair action; schema repair must stop if backup fails.
 
@@ -116,7 +116,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Desktop installed-app behavior can still differ from browser smoke.
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
-- Knowledge Graph is currently a useful visual workbench with visible-slice clarity, selected-node relationship clarity and cleaned-up node/connect overlays, not the final file-split/lifecycle-hardened surface.
+- Knowledge Graph is currently a useful visual workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer and split CSS ownership, not the final JavaScript-split/lifecycle-hardened surface.
 - Restore preview, partial restore, link cleanup and asset repair remain unfinished.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo

@@ -299,8 +299,15 @@ aliases: []
 
     await expect(
       page.locator('[data-knowledge-graph-filter-status]')
-    ).toContainText(
-      'Стандартный вид'
+    ).toHaveText(
+      'Фрагмент'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-filter-status]')
+    ).toHaveAttribute(
+      'aria-label',
+      /Стандартный вид/
     );
 
     await expect(
@@ -883,8 +890,55 @@ aliases: []
 
     await expect(
       nodeMenu.locator('[data-knowledge-graph-node-menu-relationship-count]')
-    ).toHaveText(
-      '3'
+    ).toHaveAttribute(
+      'aria-label',
+      '3 ручных связей'
+    );
+
+    await expect(
+      nodeMenu
+        .locator('[data-knowledge-graph-node-menu-relationship-count] span')
+    ).toHaveCount(
+      3
+    );
+
+    await expect(
+      nodeMenu.locator('[data-knowledge-graph-node-relationship]')
+    ).toHaveCount(
+      3
+    );
+
+    await expect(
+      nodeMenu
+        .locator('[data-knowledge-graph-node-relationship]')
+        .first()
+    ).toBeHidden();
+
+    await nodeMenu
+      .locator('[data-knowledge-graph-relationships-toggle]')
+      .click();
+
+    await expect(
+      nodeMenu
+        .locator('[data-knowledge-graph-node-relationship]')
+        .first()
+    ).toBeVisible();
+
+    await nodeMenu
+      .locator('[data-knowledge-graph-relationships-toggle]')
+      .click();
+
+    await expect(
+      nodeMenu
+        .locator('[data-knowledge-graph-node-relationship]')
+        .first()
+    ).toBeHidden();
+
+    await expect(
+      nodeMenu.locator('.knowledge-graph-node-menu-action-label').first()
+    ).toHaveCSS(
+      'position',
+      'absolute'
     );
 
     const nodeMenuVisualContract =
@@ -1129,7 +1183,7 @@ aliases: []
     await expect(
       connectPopup.locator('.knowledge-graph-overlay-header')
     ).toContainText(
-      'Новая связь'
+      'Связь'
     );
 
     await expect(
@@ -1285,6 +1339,10 @@ aliases: []
       button: 'right'
     });
 
+    await page
+      .locator('[data-knowledge-graph-relationships-toggle]')
+      .click();
+
     const heroWorldRelationship =
       page
         .locator('[data-knowledge-graph-node-relationship]')
@@ -1385,6 +1443,10 @@ aliases: []
     });
 
     await page
+      .locator('[data-knowledge-graph-relationships-toggle]')
+      .click();
+
+    await page
       .locator('[data-knowledge-graph-node-relationship]')
       .filter({
         hasText: 'Hero -> World'
@@ -1469,8 +1531,15 @@ aliases: []
 
     await expect(
       page.locator('[data-knowledge-graph-filter-status]')
-    ).toContainText(
-      'соседи'
+    ).toHaveText(
+      'Соседи'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-filter-status]')
+    ).toHaveAttribute(
+      'aria-label',
+      /соседи: Hero/
     );
 
     await page.locator('[data-knowledge-graph-filter-action="clear"]').click();
@@ -1733,38 +1802,56 @@ test(
 
     await expect(
       filterStatus
-    ).toContainText(
-      'показано 3 из 111 узл.'
+    ).toHaveText(
+      'Фрагмент'
     );
 
     await expect(
       filterStatus
-    ).toContainText(
-      'вне среза 108'
+    ).toHaveAttribute(
+      'aria-label',
+      /показано 3 из 111 узл\./
     );
 
     await expect(
-      page.locator('[data-knowledge-graph-slice-stat="shown"] strong')
-    ).toHaveText(
-      '3'
+      filterStatus
+    ).toHaveAttribute(
+      'aria-label',
+      /вне среза 108/
     );
 
     await expect(
-      page.locator('[data-knowledge-graph-slice-stat="total"] strong')
-    ).toHaveText(
-      '111'
+      page.locator('[data-knowledge-graph-slice-stats]')
+    ).toHaveAttribute(
+      'aria-label',
+      /Показано 3 из 111; скрыто 108/
     );
 
     await expect(
-      page.locator('[data-knowledge-graph-slice-stat="hidden"] strong')
-    ).toHaveText(
-      '108'
+      page.locator('[data-knowledge-graph-slice-stat="shown"]')
+    ).toHaveAttribute(
+      'aria-label',
+      'Показано: 3'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-stat="hidden"]')
+    ).toHaveAttribute(
+      'aria-label',
+      'Скрыто: 108'
     );
 
     await expect(
       page.locator('[data-knowledge-graph-slice-note]')
     ).toContainText(
-      'Показано 3 из 111 страниц'
+      'Фрагмент'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-slice-note]')
+    ).toHaveAttribute(
+      'aria-label',
+      /Показано 3 из 111/
     );
 
     await page
@@ -1773,14 +1860,22 @@ test(
 
     await expect(
       filterStatus
-    ).toContainText(
-      'показано 96 из 111 узл.'
+    ).toHaveText(
+      'Фрагмент'
     );
 
     await expect(
       filterStatus
-    ).toContainText(
-      'лимит скрыл 15'
+    ).toHaveAttribute(
+      'aria-label',
+      /показано 96 из 111 узл\./
+    );
+
+    await expect(
+      filterStatus
+    ).toHaveAttribute(
+      'aria-label',
+      /лимит скрыл 15/
     );
 
     await expect(

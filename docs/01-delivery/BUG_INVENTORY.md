@@ -238,7 +238,7 @@ Symptoms: the graph now has a visual canvas with nodes, edges, drag, zoom, filte
 
 Risk: adding more graph behavior without cleanup can reintroduce stale-state/save/undo errors and make the graph harder to trust in large worlds.
 
-Next check: use `BUGS_AND_IMPROVEMENTS_BACKLOG.md` BI-016 through BI-018 before adding graph features: relation operations, file split and PageCommandService/PageRecord lifecycle.
+Next check: use `BUGS_AND_IMPROVEMENTS_BACKLOG.md` BI-016 through BI-018 and BI-026 before adding graph features: relation operations, remaining JavaScript split, PageCommandService/PageRecord lifecycle and Knowledge Graph UX concept rethink. CSS ownership split is partly advanced in `0.0.1.8.13.5`.
 
 Regression target: graph canvas tests for filters/edges/orphans, plus lifecycle tests for relationship/view-state saves after the graph is moved to command-based persistence.
 

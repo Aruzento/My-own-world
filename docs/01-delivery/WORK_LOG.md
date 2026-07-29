@@ -6,6 +6,74 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.13.5 Knowledge Graph CSS Ownership Split
+
+### What Changed
+
+- Continued `0.0.1.8.13` Migration Phase 7 with the CSS side of `BI-017`.
+- Split the graph CSS monolith into explicit owner files:
+  - `styles/knowledge-graph.css` keeps the graph document, workbench, toolbar/filterbar, canvas, node cards and edge-state base.
+  - `styles/knowledge-graph-slice.css` owns the visual slice meter and hidden-slice note.
+  - `styles/knowledge-graph-inspector.css` owns the selected-node inspector dock.
+  - `styles/knowledge-graph-overlays.css` owns the connect banner/popup and node context menu.
+- Kept the graph behavior from `0.0.1.8.13.4` intact: compact status chips, visual slice meter, icon-first actions, selected-node relation chips and collapsed relationship editing.
+- Added `BI-026` to the lightweight backlog for a future Knowledge Graph UX concept rethink before adding more visible graph features.
+
+### Readiness
+
+Foundation for graph maintainability. The CSS side of `BI-017` is now split enough for safer visual work, but the JavaScript responsibility split and `BI-018` lifecycle bridge remain active Phase 7 work.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`.
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed twice: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests per run.
+- Passed twice: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests per run.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed twice: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with the `knowledgeGraphPage.js` responsibility split and lifecycle bridge work from `BI-017` / `BI-018`.
+- Before adding broader graph UI features, address new backlog item `BI-026`: rethink the Knowledge Graph concept and first-screen job for a GM.
+
+## 2026-07-29: 0.0.1.8.13.4 Knowledge Graph Laconic Surface Correction
+
+### What Changed
+
+- Corrected the Knowledge Graph after human visual review: the graph should show more visual state and less explanatory text/numbers on the first layer.
+- Replaced visible slice number cards with a thin visual slice meter; detailed counts remain in `aria-label` / `title` for tests and hover, not as permanent UI.
+- Shortened the filter status to compact modes such as `Фрагмент`, `Фильтр`, `Соседи` and `Поиск`.
+- Converted toolbar/filter actions and node-menu actions toward icon-first controls with accessible labels and titles.
+- Simplified the selected-node inspector: it now shows identity, direct icon actions and short relation chips instead of a stat grid.
+- Collapsed manual relationship editing in the right-click node menu behind a `Связи` toggle, so the menu opens as a compact action palette first.
+- Kept graph persistence, filters, relationship edit/delete, connect flow, undo/redo and selected-edge behavior intact.
+
+### Readiness
+
+Foundation correction for Phase 7 visual clarity. The graph is less noisy by default; details remain available through hover/accessibility labels, opening the linked page, or expanding the relationship editor.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check tests\browser\knowledge-graph.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests.
+- Visual QA: generated and reviewed `C:\Users\Aruko\AppData\Local\Temp\mow-knowledge-graph-laconic-workbench.png` and `C:\Users\Aruko\AppData\Local\Temp\mow-knowledge-graph-laconic-node-menu.png`; the node menu is compact, relationship rows are hidden until expanded, and the filterbar no longer clips the reset action.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with `BI-017` / `BI-018`; keep future graph UI changes in the same laconic direction.
+
 ## 2026-07-29: 0.0.1.8.13.3 Knowledge Graph Overlay Visual Cleanup
 
 ### What Changed

@@ -26,7 +26,7 @@ npm run test:browser
 - app shell открывается и может быть снят как screenshot-артефакт;
 - card editor рендерится без развала основной поверхности;
 - campaign map рендерит компактный title chip, full-width scene/session bar, full-height icon-only canvas tool rail, unclipped floating toolbar tooltip, правый property Inspector, токены, объект, фигуру, сетку и locked fog zone без duplicate scene/layer stage panels;
-- knowledge graph visual smoke captures both the whole workbench and `visual-knowledge-graph-node-menu`, so node right-click overlays, grouped actions and compact editable relationship rows remain visible during UI review;
+- knowledge graph visual smoke captures both the whole workbench and `visual-knowledge-graph-node-menu`, so the CSS-split slice meter, inspector, node right-click overlays, grouped icon actions and collapsed relationship editing remain visible during UI review;
 - task tracker рендерится как отдельная поверхность;
 - popup позиционируется внутри viewport;
 - floating toolbar сохраняет фиксированную ширину и не сжимается от выделения;
@@ -45,7 +45,8 @@ npm run test:browser
 5. Проверить презентацию: туман над токенами, locked fog zone выглядит как туман, скрытые player-токены показывают бейдж.
 6. Проверить массовое выделение на карте: Shift/selection-box выделяет сущности, обычный клик снимает выделение.
 7. Проверить task tracker: 5 колонок в ряд, перенос колонок/задач, компактность карточек задач.
-8. Проверить узкое окно: toolbar, popup и кнопки не выходят за видимую область.
+8. Проверить Knowledge Graph: после reload slice-meter, selected-node inspector и node/connect overlays должны сохранить один визуальный язык после CSS split.
+9. Проверить узкое окно: toolbar, popup и кнопки не выходят за видимую область.
 
 ## Правило Расширения
 
