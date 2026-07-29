@@ -116,7 +116,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Desktop installed-app behavior can still differ from browser smoke.
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
-- Knowledge Graph is currently a useful visual workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer and split CSS/renderer/actions/overlays ownership, not the final JavaScript-split/lifecycle-hardened surface.
+- Knowledge Graph is currently a useful migrated canvas workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. New visible graph features should wait for the `BI-026` concept rethink.
 - Restore preview, partial restore, link cleanup and asset repair remain unfinished.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo

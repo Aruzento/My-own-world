@@ -3,20 +3,8 @@
 } from '../state.js';
 
 import {
-  formatRelationshipsFrontMatter
-} from '../core/markdown.js';
-
-import {
   iconSvg
 } from '../core/icons.js';
-
-import {
-  notifyPageUpdated
-} from '../repository/pageRepository.js';
-
-import {
-  writePageContent
-} from '../storage/storage.js';
 
 import {
   escapeHTML
@@ -69,6 +57,10 @@ import {
 } from './knowledgeGraphLabels.js';
 
 import {
+  persistKnowledgeGraphRelationshipsCommand
+} from './knowledgeGraphCommandBridge.js';
+
+import {
   getRuntimeGraphConnectState,
   handleGraphCanvasNodeConnectClick,
   handleGraphConnectAction,
@@ -80,6 +72,18 @@ import {
   showGraphNodeContextMenu,
   toggleGraphNodeRelationshipsPanel
 } from './knowledgeGraphCanvasOverlays.js';
+
+import {
+  getCanvasContextMenuHTML,
+  getNodeRelationshipsMenuHTML as getNodeRelationshipsMenuRowsHTML,
+  getRelationshipCountDotsHTML,
+  getRelationshipEditorHTML as getRelationshipEditorFormHTML
+} from './knowledgeGraphRelationshipMenu.js';
+
+import {
+  readKnowledgeGraphViewState,
+  writeKnowledgeGraphViewState
+} from './knowledgeGraphViewState.js';
 
 
 const GRAPH_CANVAS_MIN_SCALE =
@@ -99,9 +103,6 @@ const GRAPH_CANVAS_LEADING_EXPAND_PADDING =
 
 const GRAPH_CANVAS_HISTORY_LIMIT =
   80;
-
-const KNOWLEDGE_GRAPH_VIEW_STATE_VERSION =
-  1;
 
 const graphCanvasHistoryByDocument =
   new WeakMap();
@@ -283,167 +284,6 @@ export function serializeKnowledgeGraphHTML(
     .forEach(element => element.remove());
 
   return clone.outerHTML;
-}
-
-
-function readKnowledgeGraphViewState(
-  documentElement
-) {
-
-  const script =
-    documentElement.querySelector(
-      '[data-knowledge-graph-view-state]'
-    );
-
-  if (!script) {
-
-    return createEmptyKnowledgeGraphViewState();
-  }
-
-  try {
-
-    return normalizeKnowledgeGraphViewState(
-      JSON.parse(
-        script.textContent || '{}'
-      )
-    );
-  } catch (error) {
-
-    console.warn(
-      'Knowledge graph view state is malformed and was ignored.',
-      error
-    );
-
-    return createEmptyKnowledgeGraphViewState();
-  }
-}
-
-
-function writeKnowledgeGraphViewState(
-  documentElement,
-  nextState
-) {
-
-  const viewState =
-    normalizeKnowledgeGraphViewState(
-      nextState
-    );
-
-  const script =
-    getKnowledgeGraphViewStateScript(
-      documentElement
-    );
-
-  script.textContent =
-    JSON.stringify(
-      viewState,
-      null,
-      2
-    ).replace(
-      /<\/script/gi,
-      '<\\/script'
-    );
-}
-
-
-function getKnowledgeGraphViewStateScript(
-  documentElement
-) {
-
-  let script =
-    documentElement.querySelector(
-      '[data-knowledge-graph-view-state]'
-    );
-
-  if (script) return script;
-
-  script =
-    documentElement.ownerDocument.createElement(
-      'script'
-    );
-
-  script.type =
-    'application/json';
-
-  script.className =
-    'knowledge-graph-view-state';
-
-  script.setAttribute(
-    'data-knowledge-graph-view-state',
-    ''
-  );
-
-  documentElement.insertBefore(
-    script,
-    documentElement.firstChild
-  );
-
-  return script;
-}
-
-
-function normalizeKnowledgeGraphViewState(
-  value
-) {
-
-  const positions =
-    {};
-
-  Object
-    .entries(
-      value?.positions || {}
-    )
-    .forEach(([
-      nodeId,
-      position
-    ]) => {
-
-      const x =
-        Number(
-          position?.x
-        );
-
-      const y =
-        Number(
-          position?.y
-        );
-
-      if (
-        !nodeId ||
-        !Number.isFinite(x) ||
-        !Number.isFinite(y) ||
-        position?.pinned === false
-      ) {
-
-        return;
-      }
-
-      positions[String(nodeId)] =
-        {
-          x:
-            Math.round(x),
-          y:
-            Math.round(y),
-          pinned:
-            true
-        };
-    });
-
-  return {
-    version:
-      KNOWLEDGE_GRAPH_VIEW_STATE_VERSION,
-    positions
-  };
-}
-
-
-function createEmptyKnowledgeGraphViewState() {
-
-  return {
-    version:
-      KNOWLEDGE_GRAPH_VIEW_STATE_VERSION,
-    positions: {}
-  };
 }
 
 
@@ -886,7 +726,6 @@ async function applyGraphCanvasHistoryEntry(
             entry.relationship,
             {
               recordHistory: false,
-              awaitWrite: false,
               silent: true
             }
           )
@@ -894,7 +733,6 @@ async function applyGraphCanvasHistoryEntry(
             documentElement,
             entry.relationship,
             {
-              awaitWrite: false,
               silent: true
             }
           );
@@ -925,7 +763,6 @@ async function applyGraphCanvasHistoryEntry(
             entry.relationship,
             {
               recordHistory: false,
-              awaitWrite: false,
               silent: true
             }
           )
@@ -934,7 +771,6 @@ async function applyGraphCanvasHistoryEntry(
             entry.relationship,
             {
               recordHistory: false,
-              awaitWrite: false,
               silent: true
             }
           );
@@ -973,7 +809,6 @@ async function applyGraphCanvasHistoryEntry(
         },
         {
           recordHistory: false,
-          awaitWrite: false,
           silent: true
         }
       );
@@ -1313,114 +1148,6 @@ function getCanvasOverflowNoteHTML(
 }
 
 
-function getCanvasContextMenuHTML() {
-
-  return `
-    <div
-      class="knowledge-graph-node-menu hidden"
-      data-knowledge-graph-node-menu
-      data-knowledge-graph-overlay-ui="0.0.1.8.13.3"
-      role="menu"
-      aria-orientation="vertical"
-      aria-modal="false"
-      aria-label="Действия узла графа"
-      hidden
-    >
-      <header class="knowledge-graph-overlay-header">
-        <span class="knowledge-graph-overlay-header-icon">
-          ${iconSvg('document', 'knowledge-graph-overlay-icon')}
-        </span>
-        <div>
-          <span>Узел графа</span>
-          <strong data-knowledge-graph-node-menu-title></strong>
-        </div>
-      </header>
-      <div class="knowledge-graph-node-menu-section" data-knowledge-graph-node-menu-section="navigation">
-        ${getGraphNodeMenuActionHTML('open', 'document', 'Открыть')}
-        ${getGraphNodeMenuActionHTML('focus', 'search', 'Показать соседей')}
-        ${getGraphNodeMenuActionHTML('clear-focus', 'eye', 'Показать весь граф')}
-      </div>
-      <div class="knowledge-graph-node-menu-section" data-knowledge-graph-node-menu-section="layout">
-        ${getGraphNodeMenuActionHTML('pin-position', 'grip', 'Закрепить здесь')}
-        ${getGraphNodeMenuActionHTML('reset-position', 'x', 'Сбросить позицию')}
-        ${getGraphNodeMenuActionHTML('connect', 'link', 'Связать...')}
-      </div>
-      <section
-        class="knowledge-graph-node-menu-relationship-panel"
-        data-knowledge-graph-relationships-expanded="false"
-      >
-        <button
-          type="button"
-          class="knowledge-graph-node-menu-section-header"
-          data-knowledge-graph-relationships-toggle
-          aria-expanded="false"
-        >
-          <span>
-            ${iconSvg('link', 'knowledge-graph-node-menu-section-icon')}
-            Связи
-          </span>
-          <small
-            data-knowledge-graph-node-menu-relationship-count
-            aria-label="0 ручных связей"
-            title="0 ручных связей"
-          ></small>
-        </button>
-        <div
-          class="knowledge-graph-node-menu-relationships"
-          data-knowledge-graph-node-menu-relationships
-        ></div>
-      </section>
-    </div>
-  `;
-}
-
-
-function getGraphNodeMenuActionHTML(
-  action,
-  icon,
-  label
-) {
-
-  return `
-    <button
-      class="knowledge-graph-node-menu-action"
-      type="button"
-      data-knowledge-graph-node-menu-action="${escapeHTML(action)}"
-      aria-label="${escapeHTML(label)}"
-      title="${escapeHTML(label)}"
-    >
-      <span class="knowledge-graph-node-menu-action-icon">
-        ${iconSvg(icon, 'knowledge-graph-node-menu-action-svg')}
-      </span>
-      <span class="knowledge-graph-node-menu-action-label">${escapeHTML(label)}</span>
-    </button>
-  `;
-}
-
-
-function getRelationshipCountDotsHTML(
-  count
-) {
-
-  const dotCount =
-    Math.max(
-      0,
-      Math.min(
-        Number(count) || 0,
-        3
-      )
-    );
-
-  return Array.from(
-    {
-      length:
-        dotCount
-    },
-    () => '<span aria-hidden="true"></span>'
-  ).join('');
-}
-
-
 function getRelationshipEditorHTML() {
 
   const pages =
@@ -1437,49 +1164,9 @@ function getRelationshipEditorHTML() {
         )
       );
 
-  return `
-    <form class="knowledge-graph-relationship-form">
-      <label>
-        <span>Откуда</span>
-        <select name="sourceId" required>
-          ${getPageOptionsHTML(pages)}
-        </select>
-      </label>
-      <label>
-        <span>Тип</span>
-        <select name="type" required>
-          ${EDITABLE_RELATIONSHIP_TYPES
-            .map(type => `
-              <option value="${escapeHTML(type.value)}">${escapeHTML(type.label)}</option>
-            `)
-            .join('')}
-        </select>
-      </label>
-      <label>
-        <span>Куда</span>
-        <select name="targetId" required>
-          ${getPageOptionsHTML(pages)}
-        </select>
-      </label>
-      <label>
-        <span>Подпись</span>
-        <input name="label" type="text" placeholder="Например: наставник, владелец, эффект">
-      </label>
-      <button type="submit">Добавить связь</button>
-    </form>
-  `;
-}
-
-
-function getPageOptionsHTML(
-  pages
-) {
-
-  return pages
-    .map(page => `
-      <option value="${escapeHTML(page.id)}">${escapeHTML(page.title || page.id)}</option>
-    `)
-    .join('');
+  return getRelationshipEditorFormHTML(
+    pages
+  );
 }
 
 
@@ -1492,85 +1179,9 @@ function getNodeRelationshipsMenuHTML(
       nodeId
     );
 
-  if (!relationships.length) {
-
-    return `
-      <p class="knowledge-graph-node-menu-empty">
-        Ручных связей у этой ноды пока нет.
-      </p>
-    `;
-  }
-
-  return relationships
-    .map(relationship => `
-      <section
-        class="knowledge-graph-node-menu-relationship"
-        data-knowledge-graph-node-relationship
-        data-relationship-source-id="${escapeHTML(relationship.sourceId)}"
-        data-relationship-index="${escapeHTML(relationship.index)}"
-      >
-        <span class="knowledge-graph-node-menu-relationship-title">
-          ${iconSvg('link', 'knowledge-graph-node-menu-relationship-icon')}
-          <span>${escapeHTML(relationship.sourceTitle)} -&gt; ${escapeHTML(relationship.targetTitle)}</span>
-        </span>
-        <label class="knowledge-graph-node-menu-relationship-field is-type">
-          <span>Тип</span>
-          <select data-knowledge-graph-relationship-field="type">
-            ${getEditableRelationshipTypeOptionsHTML(relationship.type)}
-          </select>
-        </label>
-        <label class="knowledge-graph-node-menu-relationship-field is-label">
-          <span>Подпись</span>
-          <input
-            data-knowledge-graph-relationship-field="label"
-            type="text"
-            value="${escapeHTML(relationship.label)}"
-            placeholder="Без подписи"
-          >
-        </label>
-        <div class="knowledge-graph-node-menu-relationship-actions">
-          <button
-            type="button"
-            data-knowledge-graph-relationship-menu-action="save"
-            aria-label="Сохранить связь"
-            title="Сохранить связь"
-          >
-            ${iconSvg('check', 'knowledge-graph-node-menu-action-svg')}
-            <span>Сохранить</span>
-          </button>
-          <button
-            class="is-danger"
-            type="button"
-            data-knowledge-graph-relationship-menu-action="delete"
-            aria-label="Удалить связь"
-            title="Удалить связь"
-          >
-            ${iconSvg('trash', 'knowledge-graph-node-menu-action-svg')}
-            <span>Удалить</span>
-          </button>
-        </div>
-      </section>
-    `)
-    .join('');
-}
-
-
-function getEditableRelationshipTypeOptionsHTML(
-  activeType
-) {
-
-  const currentType =
-    getEditableRelationshipType(
-      activeType
-    );
-
-  return EDITABLE_RELATIONSHIP_TYPES
-    .map(type => `
-      <option value="${escapeHTML(type.value)}"${type.value === currentType ? ' selected' : ''}>
-        ${escapeHTML(type.label)}
-      </option>
-    `)
-    .join('');
+  return getNodeRelationshipsMenuRowsHTML(
+    relationships
+  );
 }
 
 
@@ -4539,8 +4150,8 @@ async function addRelationshipBetweenPages(
       }
     ],
     {
-      awaitWrite:
-        options.awaitWrite
+      reason:
+        'knowledge-graph-relationship-create'
     }
   );
 
@@ -4600,41 +4211,18 @@ async function writeSourcePageRelationships(
   options = {}
 ) {
 
-  sourcePage.relationships =
-    relationships.map(relationship =>
-      normalizeRelationshipRecord(
-        relationship
-      )
-    );
-
-  sourcePage.content =
-    updateRelationshipsFrontMatter(
-      sourcePage.content,
-      sourcePage.relationships
-    );
-
-  notifyPageUpdated();
-
-  const writePromise =
-    writePageContent(
+  await persistKnowledgeGraphRelationshipsCommand({
+    page:
       sourcePage,
-      sourcePage.content
-    );
-
-  if (options.awaitWrite === false) {
-
-    writePromise.catch(error => {
-
-      console.error(
-        'Failed to persist knowledge graph relationship change.',
-        error
-      );
-    });
-
-    return;
-  }
-
-  await writePromise;
+    relationships:
+      relationships.map(relationship =>
+        normalizeRelationshipRecord(
+          relationship
+        )
+      ),
+    reason:
+      options.reason || 'knowledge-graph-relationship-change'
+  });
 }
 
 
@@ -4720,8 +4308,8 @@ async function replaceRelationshipAtIndex(
     sourcePage,
     nextRelationships,
     {
-      awaitWrite:
-        options.awaitWrite
+      reason:
+        'knowledge-graph-relationship-update'
     }
   );
 
@@ -4795,8 +4383,8 @@ async function insertRelationshipAtIndex(
     sourcePage,
     nextRelationships,
     {
-      awaitWrite:
-        options.awaitWrite
+      reason:
+        'knowledge-graph-relationship-restore'
     }
   );
 
@@ -4860,8 +4448,8 @@ async function removeRelationshipAtIndex(
     sourcePage,
     nextRelationships,
     {
-      awaitWrite:
-        options.awaitWrite
+      reason:
+        'knowledge-graph-relationship-delete'
     }
   );
 
@@ -4961,8 +4549,8 @@ async function removeRelationshipBetweenPages(
     sourcePage,
     nextRelationships,
     {
-      awaitWrite:
-        options.awaitWrite
+      reason:
+        'knowledge-graph-relationship-remove-between-pages'
     }
   );
 
@@ -4985,50 +4573,3 @@ function normalizeRelationshipForComparison(
     .trim()
     .toLowerCase();
 }
-
-
-function updateRelationshipsFrontMatter(
-  content,
-  relationships
-) {
-
-  const line =
-    formatRelationshipsFrontMatter(
-      relationships
-    ).trimEnd();
-
-  if (!String(content || '').startsWith('---')) {
-
-    return content;
-  }
-
-  if (
-    /^relationshipsJson:\s*.*$/im.test(
-      content
-    )
-  ) {
-
-    return content.replace(
-      /^relationshipsJson:\s*.*$/im,
-      line
-    );
-  }
-
-  if (
-    /^aliases:\s*\[.*?\]\s*$/im.test(
-      content
-    )
-  ) {
-
-    return content.replace(
-      /^(aliases:\s*\[.*?\]\s*)$/im,
-      `$1\n${line}`
-    );
-  }
-
-  return content.replace(
-    /^---\s*$/m,
-    `---\n${line}`
-  );
-}
-

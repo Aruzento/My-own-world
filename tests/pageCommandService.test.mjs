@@ -42,6 +42,10 @@ import {
 } from '../js/storage/storageAdapterContract.js';
 
 import {
+  updatePageRecordContent
+} from '../js/core/pageRecord.js';
+
+import {
   clearWriteRevisions
 } from '../js/storage/writeQueue.js';
 
@@ -635,6 +639,7 @@ test(
     clearPageCommandEvents();
     clearPageUndoEntries();
     clearWriteRevisions();
+    clearBackgroundCheckpointQueue();
 
     const adapter =
       createMemoryStorageAdapter();
@@ -779,6 +784,141 @@ test(
       ),
       newContent
     );
+  }
+);
+
+
+test(
+  'persistPageContentCommand restores relationship metadata on failed write',
+  async () => {
+
+    clearPageCommandEvents();
+    clearPageUndoEntries();
+    clearWriteRevisions();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page =
+      createTestPage(
+        'relationship-rollback',
+        null,
+        1000
+      );
+
+    page.relationships =
+      [
+        {
+          type:
+            'ally',
+          targetId:
+            'old-target',
+          label:
+            'Old'
+        }
+      ];
+
+    page.content =
+      updatePageRecordContent(
+        page.content,
+        {
+          relationships:
+            page.relationships
+        }
+      );
+
+    await adapter.writeText(
+      page.path,
+      page.content
+    );
+
+    setPages([
+      page
+    ]);
+
+    const previousPage =
+      snapshotPageForCommand(
+        page
+      );
+
+    const previousContent =
+      page.content;
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    adapter.writeText =
+      async (path, content) => {
+
+        if (
+          normalizeWorkspacePath(path) !==
+          normalizeWorkspacePath(page.path)
+        ) {
+
+          return originalWriteText(
+            path,
+            content
+          );
+        }
+
+        throw new Error(
+          'write denied'
+        );
+      };
+
+    page.relationships =
+      [
+        {
+          type:
+            'enemy',
+          targetId:
+            'new-target',
+          label:
+            'New'
+        }
+      ];
+
+    const nextContent =
+      updatePageRecordContent(
+        page.content,
+        {
+          relationships:
+            page.relationships
+        }
+      );
+
+    await assert.rejects(
+      () => persistPageContentCommand({
+        page,
+        content:
+          nextContent,
+        previousPage,
+        reason:
+          'relationship-rollback-test'
+      }),
+      /write denied/
+    );
+
+    assert.deepEqual(
+      page.relationships,
+      previousPage.relationships
+    );
+
+    assert.equal(
+      page.content,
+      previousContent
+    );
+
+    adapter.writeText =
+      originalWriteText;
+
+    await flushBackgroundCheckpoints();
   }
 );
 

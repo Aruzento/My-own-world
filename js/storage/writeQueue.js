@@ -176,6 +176,8 @@ export function queueWrite(
       }
     });
 
+  queued.catch(() => {});
+
   writeQueues.set(
     writeKey,
     queued

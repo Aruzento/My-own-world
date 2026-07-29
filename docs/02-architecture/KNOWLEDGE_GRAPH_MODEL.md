@@ -81,12 +81,15 @@ Visual canvas есть как usable workbench:
 - runtime node drag меняет координаты node на текущем canvas и сразу обновляет связанные SVG edges;
 - moved nodes can be saved as pinned positions in the Knowledge Graph page view state;
 - graph view state is stored as a safe `application/json` script inside the graph page and contains presentation state only;
+- graph view-state script reads/writes are owned by `js/wiki/knowledgeGraphViewState.js`; persistence of that script still flows through existing editor autosave/special-save commands because the script is part of the graph page body;
 - right-click node actions can start a simple canvas connection mode for creating manual relationships;
 - graph canvas has local undo/redo for node moves, saved position reset and manual relationship creation;
 - readable view presets separate `Стандартный вид`, `В дереве`, `Wiki-ссылки`, `Ручные связи`, `Все связи` and `Одинокие`; the preset/filterbar/slice-meter UI is owned by `js/wiki/knowledgeGraphCanvasControls.js`;
 - visible-node fallback, canvas empty state, SVG edge/label HTML and node-card HTML are owned by `js/wiki/knowledgeGraphCanvasRenderer.js`;
 - runtime filter reads, layout/filter/slice actions and zoom/fit toolbar actions are owned by `js/wiki/knowledgeGraphCanvasActions.js`; it receives render/transform callbacks and must not mutate relationship persistence;
 - connect-state reads, node/connect popup controller registration, node-menu show/hide, node-menu actions and connect-popup actions are owned by `js/wiki/knowledgeGraphCanvasOverlays.js`; it receives page opening, relationship creation, render and view-state callbacks and must not import global `state` or write graph persistence directly;
+- node context-menu HTML, relationship editor form HTML, compact relationship-count dots and relationship row HTML are owned by `js/wiki/knowledgeGraphRelationshipMenu.js`;
+- manual relationship persistence is owned by `js/wiki/knowledgeGraphCommandBridge.js`; it serializes relationships with `PageRecord` and writes through `PageCommandService` / the write queue instead of direct graph-page storage writes;
 - visible-slice UI explains `показано X из Y` and separates nodes hidden by filters, the standard root/depth slice and the 96-node canvas cap;
 - selected-node UI stores selection only as runtime dataset state, not in the graph page HTML;
 - selected-node UI marks visible edges as `active` or `muted`, marks neighbor nodes as `related`, and keeps unrelated visible nodes visually muted;

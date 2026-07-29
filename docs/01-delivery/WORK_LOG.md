@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.13.11 Knowledge Graph Phase 7 Lifecycle Closure
+
+### What Changed
+
+- Closed the remaining `0.0.1.8.13` Migration Phase 7 scope without changing the visible Knowledge Graph workflow.
+- Added `js/wiki/knowledgeGraphRelationshipMenu.js` as the owner for graph node context-menu HTML, relationship editor form HTML, relationship row HTML and compact relationship-count dots.
+- Added `js/wiki/knowledgeGraphViewState.js` as the owner for reading, normalizing and writing the graph page view-state JSON script. The view-state remains stored in the graph page body and is persisted by the existing editor autosave/special-save lifecycle.
+- Added `js/wiki/knowledgeGraphCommandBridge.js` as a dedicated graph relationship command bridge:
+  - manual relationship create/update/delete/restore now serializes through `PageRecord`;
+  - relationship writes now run through the command lifecycle and write queue instead of direct `writePageContent` from `knowledgeGraphPage.js`;
+  - command events use explicit `knowledge-graph-relationship-*` reasons.
+- Updated `PageCommandService` snapshots and rollback restoration so runtime `relationships` metadata is included with title, tags and aliases.
+- Fixed `writeQueue.queueWrite()` cleanup so a failed write still rejects the caller, but its internal cleanup promise no longer creates an unhandled rejection.
+- Kept `knowledgeGraphPage.js` as the graph coordinator for event registration, history, drag/pan, selection, page lookup and high-level relationship commands, while removing the remaining relationship-menu HTML and direct storage write responsibilities.
+
+### Readiness
+
+`Usable` for the Phase 7 migration. The graph remains the same daily canvas workbench from the user's point of view, while the remaining maintainability and lifecycle risks from `BI-017` / `BI-018` are closed enough to move the redesign plan to `0.0.1.8.14`. `BI-026` stays open as a future product/design rethink before adding new visible graph features.
+
+### Verification
+
+- Passed: `node --check` for `knowledgeGraphPage.js`, `knowledgeGraphRelationshipMenu.js`, `knowledgeGraphCommandBridge.js`, `knowledgeGraphViewState.js`, `pageCommandService.js` and `writeQueue.js`.
+- Passed twice: `node --test tests\pageCommandService.test.mjs`, including rollback coverage for relationship metadata.
+- Passed twice: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests covering graph canvas and relationship/menu flows.
+- Passed twice: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs` with 7 shared overlay lifecycle tests.
+- Passed: `python tools\generate_manual_docx.py`, regenerating `docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `node tools\docs_index.mjs`, `node tools\audit_project_files.mjs` and `npm run check:encoding`.
+- Passed: `npm run verify` with 273 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Start `0.0.1.8.14` Migration Phase 8 secondary screens next.
+- Keep `BI-026` in the mini-backlog: rethink the Knowledge Graph concept before adding more visible graph features.
+
 ## 2026-07-29: 0.0.1.8.13.10 Knowledge Graph Canvas Overlay Actions JS Split
 
 ### What Changed

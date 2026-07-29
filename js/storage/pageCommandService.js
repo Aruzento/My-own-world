@@ -357,7 +357,11 @@ export function snapshotPageForCommand(
         ? [
           ...page.aliases
         ]
-        : []
+        : [],
+    relationships:
+      clonePageRelationships(
+        page.relationships
+      )
   };
 }
 
@@ -397,6 +401,23 @@ function restorePageMetadata(
         ...snapshot.aliases
       ]
       : [];
+
+  page.relationships =
+    clonePageRelationships(
+      snapshot.relationships
+    );
+}
+
+
+function clonePageRelationships(
+  relationships
+) {
+
+  return Array.isArray(relationships)
+    ? relationships.map(relationship => ({
+        ...relationship
+      }))
+    : [];
 }
 
 

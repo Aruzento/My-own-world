@@ -92,10 +92,11 @@ Recently closed:
 - `0.0.1.8.13.8` Knowledge Graph canvas renderer JS split foundation: visible-node fallback, empty state, SVG edges, edge labels and node-card HTML now live in a dedicated JS owner module.
 - `0.0.1.8.13.9` Knowledge Graph canvas actions JS split foundation: runtime filters, layout/filter/slice actions and zoom/fit toolbar actions now live in a dedicated JS owner module.
 - `0.0.1.8.13.10` Knowledge Graph canvas overlay actions JS split foundation: connect-state reads, node/connect popup controllers, node-menu show/hide, node-menu actions and connect-popup actions now live in a dedicated JS owner module.
+- `0.0.1.8.13.11` Knowledge Graph Phase 7 closure: relationship/context-menu HTML, graph view-state helpers and manual relationship persistence now have dedicated owners, and relationship writes use the command lifecycle/write queue instead of direct graph-page storage writes.
 
 Next active block:
 
-- Continue `0.0.1.8.13` Migration Phase 7 knowledge graph with the remaining relationship-menu/context-menu HTML ownership and lifecycle bridge work from `BI-017` / `BI-018`. Do not start `0.0.1.8.14` secondary screens yet.
+- Start `0.0.1.8.14` Migration Phase 8 secondary screens. Do not add new visible Knowledge Graph features until `BI-026` rethinks the graph concept.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -117,7 +118,7 @@ This prevents "done" from meaning only "a model/helper was created".
 - Desktop release is functional, but installed-app and large-workspace click-through must stay part of release handoff.
 - Campaign map presentation, fog/drawing/layers and music require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.
-- Knowledge Graph has a real visual canvas foundation, hidden-slice clarity, a selected-node inspector with edge states, cleaned-up node/connect overlays, a more laconic first layer, CSS ownership split and first inspector/labels/canvas-controls/canvas-renderer/canvas-actions/canvas-overlays JS ownership split, but lifecycle hardening and the remaining relationship-menu/context-menu ownership still need Phase 7 work before broader feature expansion.
+- Knowledge Graph Phase 7 is now usable as a migrated canvas workbench with CSS/JS ownership split and command-lifecycle relationship persistence. The remaining risk is product direction, not hidden migration plumbing: `BI-026` should rethink what the graph helps a GM decide before new visible graph features.
 - README, dashboard, bug inventory and plan must stay synchronized so the project remains understandable to the owner.
 
 ## Where To Read Next
