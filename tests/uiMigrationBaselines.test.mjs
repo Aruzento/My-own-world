@@ -23,6 +23,7 @@ const REQUIRED_BASELINE_ATTACHMENTS = [
   'visual-knowledge-graph-node-menu',
   'visual-task-tracker',
   'visual-help-support',
+  'visual-world-packages',
   'visual-component-catalogue-popover'
 ];
 
@@ -35,6 +36,7 @@ const REQUIRED_SYSTEM_ROWS = [
   'Knowledge graph and canvas',
   'Task tracker',
   'Help, support and release guide `0.0.1.8.14.3`',
+  'World Package manager `0.0.1.8.14.4`',
   'Shared primitives and overlays'
 ];
 

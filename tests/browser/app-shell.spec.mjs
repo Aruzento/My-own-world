@@ -618,6 +618,12 @@ test(
       5
     );
 
+    await expect(
+      page.locator('#appToolsPopup [data-world-package-tool-action]')
+    ).toHaveCount(
+      1
+    );
+
     await page
       .getByRole(
         'button',
@@ -712,9 +718,15 @@ test(
     );
 
     await expect(
-      page.locator('[data-help-card-state="planned"]')
+      page.locator('[data-help-card-state="warning"]')
     ).toHaveCount(
       1
+    );
+
+    await expect(
+      page.locator('[data-help-card-state="planned"]')
+    ).toHaveCount(
+      0
     );
 
     await page.evaluate(

@@ -6,6 +6,45 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.14.4 World Package Manager MVP
+
+### What Changed
+
+- Continued `0.0.1.8.14` Migration Phase 8 with the first real user-facing World Package workflow instead of the previous Help/Support `planned` marker.
+- Added `Пакеты мира` to Tools and a dedicated `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.4"]` manager with a compact expensive-app surface: export, package library and import preview live in one predictable dialog, not in scattered prompts.
+- Added branch/world export from current workspace pages into `world-packages/*.world-package.json`, with runtime page content normalized so exported package page bodies do not contain nested PageRecord frontmatter.
+- Added package library preview and delete actions for saved `.world-package.json` files.
+- Added JSON import preview for external packages with counts, new-page list, conflict blockers and explicit asset/rulePackage blockers.
+- Added backup-gated page-only import through `PageCommandService`: a completed backup manifest is required before any page record is written, imported pages are appended to workspace state, tree refreshes, a workspace checkpoint is scheduled, and failed import rolls back page state plus created files best-effort.
+- Routed imported page HTML through the same persistent save sanitizer used by the editor when the app runs in the browser/Tauri DOM, so script-like package content is previewable as data but not persisted unsanitized.
+- Kept assets and embedded rule packages preview-only in this slice. They are intentionally blocked until the asset lifecycle and rule-package apply workflows are implemented.
+
+### Readiness
+
+`MVP` for World Package import/export. A human can open Tools, export a branch or the whole world, see saved packages, preview an external package and import new page-only content only after a backup. The workflow is not `Usable` yet for complete package migration because asset copying, rulePackage apply and conflict-resolution merge/rename UX remain future work.
+
+### Verification
+
+- Passed: `node --check js\worldPackage\worldPackageImportService.js`.
+- Passed: `node --check tests\browser\world-package.spec.mjs`.
+- Passed: `node --test tests\worldPackage.test.mjs` with 8 tests, including runtime-page export normalization and backup-gated page import.
+- Passed after a strict unsafe-HTML scenario correction: `npm run test:browser -- tests/browser/world-package.spec.mjs`, covering Tools entry, popup migration marker, layout guards, branch export/library refresh, conflict preview blocking, page-only preview, backup+import, sanitized imported HTML and no console/page errors.
+- Passed: `npm run test:browser -- tests/browser/component-catalogue.spec.mjs`, including the expanded Tools action count.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs` with 6 browser tests after Help/Support status changed from planned to World Package MVP.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`, now including `visual-world-packages`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`, including the new `visual-world-packages` attachment and World Package manager system row.
+- Passed: `python tools\generate_manual_docx.py`, regenerating `docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `node tools\audit_project_files.mjs`, refreshing `docs\01-delivery\PROJECT_FILE_AUDIT.md`.
+- Passed: `node tools\docs_index.mjs`, `node tools\validate_agent_skills.mjs`, `npm run check:encoding` and `git diff --check`.
+- Passed: `npm run verify` with 275 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 115 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.14` with asset file copy/apply and embedded rulePackage apply paths for World Packages.
+- Add conflict-resolution UX beyond blocking, likely rename/skip/replace preview choices after the data-safety contract is explicit.
+- Keep the Help/Support copy honest: World Packages are now MVP for page-only import/export, not fully complete package migration.
+
 ## 2026-07-29: 0.0.1.8.14.3 Help Support And Release Guide UI
 
 ### What Changed

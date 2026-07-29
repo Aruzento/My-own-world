@@ -19,6 +19,7 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-knowledge-graph-node-menu',
   'visual-task-tracker',
   'visual-help-support',
+  'visual-world-packages',
   'visual-component-catalogue-popover'
 ];
 
@@ -693,6 +694,69 @@ test(
     );
 
     await page.locator('#onboardingCloseBtn').click();
+
+    await page.locator('#appToolsBtn').click();
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        setStorageAdapter({
+          kind:
+            'browser',
+          getWorkspaceHandle() {
+            return {
+              name:
+                'Visual package workspace'
+            };
+          },
+          async pickWorkspace() {
+            return this.getWorkspaceHandle();
+          },
+          async restoreWorkspace() {
+            return this.getWorkspaceHandle();
+          },
+          async ensureDirectory() {},
+          async getDirectoryHandle() {
+            return {};
+          },
+          async readText() {
+            return '';
+          },
+          async writeText() {},
+          async readBinary() {
+            return new ArrayBuffer(0);
+          },
+          async writeBinary() {},
+          async listFiles() {
+            return [];
+          },
+          async removeFile() {},
+          async removeDirectory() {}
+        });
+      }
+    );
+
+    await page
+      .locator('[data-world-package-open="true"]')
+      .click();
+
+    await expect(
+      page.locator('#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.4"]')
+    ).toBeVisible();
+
+    await attachLocatorScreenshot(
+      page.locator('#worldPackagePopup'),
+      testInfo,
+      'visual-world-packages'
+    );
+
+    await page
+      .locator('#worldPackagePopup .app-popup-close')
+      .click();
 
     await page.locator('#appToolsBtn').click();
 

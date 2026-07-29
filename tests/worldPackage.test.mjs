@@ -19,6 +19,18 @@ import {
 } from '../js/worldPackage/worldPackageStorage.js';
 
 import {
+  applyWorldPackagePageImport
+} from '../js/worldPackage/worldPackageImportService.js';
+
+import {
+  state
+} from '../js/state.js';
+
+import {
+  setPages
+} from '../js/stateActions.js';
+
+import {
   validateWorkspaceSnapshot
 } from '../js/schema/workspaceSchema.js';
 
@@ -83,6 +95,46 @@ test(
         pkg
       ).errors,
       []
+    );
+  }
+);
+
+
+test(
+  'World Package export normalizes runtime page content to body only',
+  () => {
+
+    const pkg =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'runtime-page',
+            title:
+              'Runtime Page',
+            content:
+              [
+                '---',
+                'id: runtime-page',
+                'parent: null',
+                'tags: card',
+                'template: card',
+                'type: note',
+                '---',
+                '',
+                '<h1>Runtime Page</h1>'
+              ].join('\n')
+          }
+        ],
+        {
+          title:
+            'Runtime Export'
+        }
+      );
+
+    assert.equal(
+      pkg.contents.pages[0].body,
+      '<h1>Runtime Page</h1>'
     );
   }
 );
@@ -219,6 +271,85 @@ test(
     assert.equal(
       preview.conflicts.pages[0].reason,
       'id'
+    );
+  }
+);
+
+
+test(
+  'World Package page import requires backup and writes page records',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    const packageData =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'imported-page',
+            title:
+              'Imported Page',
+            parent:
+              null,
+            body:
+              '<h1>Imported Page</h1>'
+          }
+        ],
+        {
+          title:
+            'Importable'
+        }
+      );
+
+    await assert.rejects(
+      () => applyWorldPackagePageImport({
+        packageData,
+        storageAdapter:
+          adapter
+      }),
+      /backup manifest/
+    );
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-1'
+        },
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      result.importedPages,
+      1
+    );
+
+    assert.equal(
+      state.pages[0].id,
+      'imported-page'
+    );
+
+    const content =
+      await adapter.readText(
+        result.paths[0]
+      );
+
+    assert.match(
+      content,
+      /id: imported-page/
+    );
+
+    assert.match(
+      content,
+      /<h1>Imported Page<\/h1>/
     );
   }
 );

@@ -8,7 +8,7 @@ owner_zone: "architecture"
 ---
 # World Package Contract
 
-Date: 2026-07-07
+Date: 2026-07-29
 
 World Package is the project-level format for moving reusable world content between workspaces. It is not the same as Rule Tree package. Rule Tree package moves rules only; World Package can carry pages, asset references, rule packages, metadata, dependencies and future fork/workshop data.
 
@@ -96,6 +96,15 @@ No import should write to workspace before:
 3. applying import;
 4. running workspace validation.
 
+Current UI apply boundary:
+
+- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.4"]`.
+- The UI may export a current page branch or the whole workspace page set into `world-packages/*.world-package.json`.
+- The UI may apply page-only packages after preview and backup.
+- Page conflicts block apply in this slice; they are not auto-renamed or overwritten.
+- Packages with `contents.assets` or `contents.rulePackages` block apply in this slice. They can be previewed, but file copy/rule apply belongs to future Asset Lifecycle and Rule Package work.
+- Imported page `body` must be sanitized with the persistent save sanitizer before writing PageRecord content.
+
 ## Dependencies And Forks
 
 `dependencies` prepares packages that depend on another package, for example a campaign package depending on a core rules package.
@@ -122,13 +131,19 @@ Current validation checks:
 
 ## Current Status
 
-Foundation is implemented:
+Implemented:
 
 - package model;
 - workspace storage;
 - import preview;
 - dependency report;
 - schema validation;
-- unit tests.
+- user-facing `Пакеты мира` manager for export, package library, JSON import preview and backup-gated page-only import;
+- unit and browser tests.
 
-User-facing export/import UI is not implemented yet. This is intentional: the foundation must stay safe before bulk workspace writes are exposed.
+Not implemented yet:
+
+- asset file copy/apply from a World Package;
+- embedded rulePackage apply;
+- conflict-resolution choices beyond blocking;
+- Workshop/fork publishing.

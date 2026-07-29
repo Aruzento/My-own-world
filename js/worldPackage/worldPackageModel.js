@@ -3,6 +3,10 @@ import {
 } from '../storage/storageAdapterContract.js';
 
 import {
+  parsePageRecordContent
+} from '../core/pageRecord.js';
+
+import {
   createSchemaIssue,
   createValidationResult,
   isPlainObject
@@ -433,31 +437,45 @@ function createPackagePageRecord(
   page = {}
 ) {
 
+  const parsed =
+    page.body === undefined &&
+    page.content
+      ? parsePageRecordContent(
+        page.content,
+        {
+          generateId:
+            false
+        }
+      )
+      : null;
+
   return {
     id:
-      String(page.id || '').trim(),
+      String(page.id || parsed?.id || '').trim(),
     title:
-      String(page.title || '').trim(),
+      String(page.title || parsed?.title || '').trim(),
     parent:
-      page.parent ?? null,
+      page.parent ?? parsed?.parent ?? null,
     order:
-      Number.isFinite(Number(page.order))
-        ? Number(page.order)
+      Number.isFinite(Number(page.order ?? parsed?.order))
+        ? Number(page.order ?? parsed?.order)
         : 0,
     template:
-      String(page.template || 'card').trim(),
+      String(page.template || parsed?.template || 'card').trim(),
     type:
-      String(page.type || 'note').trim(),
+      String(page.type || parsed?.type || 'note').trim(),
     tags:
       normalizeStringArray(
-        page.tags
+        page.tags ||
+        parsed?.tags
       ),
     aliases:
       normalizeStringArray(
-        page.aliases
+        page.aliases ||
+        parsed?.aliases
       ),
     body:
-      String(page.body || page.content || '').trim()
+      String(page.body ?? parsed?.rawBody ?? page.content ?? '').trim()
   };
 }
 

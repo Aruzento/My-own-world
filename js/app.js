@@ -101,6 +101,10 @@ import {
 } from './ui/onboardingGuide.js';
 
 import {
+  setupWorldPackageManager
+} from './ui/worldPackageManager.js';
+
+import {
   loadPageTemplates
 } from './templates/pageTemplateStorage.js';
 
@@ -175,6 +179,9 @@ setupEditor();
 
 /* Инициализация верхней панели приложения */
 setupAppTopbar();
+
+/* Инициализация пользовательского менеджера World Packages. */
+setupWorldPackageManager();
 
 /* Запускает встроенную справку и стартовый onboarding. */
 setupOnboardingGuide();

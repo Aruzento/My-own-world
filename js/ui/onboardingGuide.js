@@ -163,7 +163,7 @@ const ONBOARDING_SECTIONS = {
     chips: [
       ['Diagnostics', 'check', 'ready'],
       ['Backup', 'copy', 'ready'],
-      ['Import/export', 'folder-open', 'planned']
+      ['Import/export', 'folder-open', 'warning']
     ],
     items: [
       {
@@ -189,10 +189,10 @@ const ONBOARDING_SECTIONS = {
       },
       {
         title: 'Import / export',
-        text: 'World Package модель и storage уже проверены автоматикой, но пользовательский import/export UI остается следующим Phase 8 work.',
-        meta: 'planned',
+        text: 'Tools -> Пакеты мира уже дает export, library, preview и backup-gated page-only import. Assets и rule packages пока остаются blocker states.',
+        meta: 'MVP',
         iconName: 'folder-open',
-        state: 'planned'
+        state: 'warning'
       }
     ]
   },

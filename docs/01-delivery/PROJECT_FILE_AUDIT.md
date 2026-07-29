@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 566.
+Всего файлов в аудите: 570.
 
 ## Два Независимых Прохода
 
@@ -26,7 +26,7 @@ owner_zone: "delivery"
 |---|---:|
 | agent workflow | 9 |
 | assets | 4 |
-| browser tests | 25 |
+| browser tests | 26 |
 | campaign map | 51 |
 | character | 5 |
 | ci | 1 |
@@ -50,15 +50,15 @@ owner_zone: "delivery"
 | schema | 12 |
 | storage | 26 |
 | story log | 1 |
-| styles | 59 |
+| styles | 60 |
 | tables | 8 |
 | task tracker | 17 |
 | templates | 9 |
 | tools | 19 |
 | tree | 11 |
-| ui | 27 |
+| ui | 28 |
 | unit tests | 57 |
-| world packages | 2 |
+| world packages | 3 |
 
 ## Кандидаты На Уборку
 
@@ -75,11 +75,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5685734 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5731359 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 994761 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 613197 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 166810 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 996345 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 617590 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 168585 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -151,6 +151,7 @@ owner_zone: "delivery"
 | `styles/ui.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/variables-block.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 | `styles/variables.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
+| `styles/world-package.css` | styles | Проверить при уборке подсистемы; не удалять автоматически. |
 
 ### Неразрешенные Относительные Ссылки
 
@@ -528,6 +529,7 @@ owner_zone: "delivery"
 | `js/ui/variables/variableCalculations.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/variables/variableDefinitions.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/ui/workspaceDiagnosticsPanel.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `js/ui/worldPackageManager.js` | ui | JavaScript модуль подсистемы: ui. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `js/validation/pageTitleValidation.js` | root | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraph.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphCanvasActions.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
@@ -542,6 +544,7 @@ owner_zone: "delivery"
 | `js/wiki/knowledgeGraphRelationshipMenu.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/knowledgeGraphViewState.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/wiki/references.js` | knowledge graph | JavaScript модуль подсистемы: knowledge graph. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `js/worldPackage/worldPackageImportService.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/worldPackage/worldPackageModel.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/worldPackage/worldPackageStorage.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `k` | root | Файл проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Кандидат: untracked файл, проверить назначение перед удалением. |
@@ -627,6 +630,7 @@ owner_zone: "delivery"
 | `styles/ui.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/variables-block.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `styles/variables.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
+| `styles/world-package.css` | styles | CSS слой: styles. | Проверять при росте файла и дублировании поведения. | Нет. |
 | `tests/assetBrokenChecker.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/assetOrphanDetector.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/assetReference.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
@@ -659,6 +663,7 @@ owner_zone: "delivery"
 | `tests/browser/tree-security.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tree-virtualization.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/visual-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/world-package.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browserSmokeRunner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/campaignMapDataSerializer.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/campaignMapInitiativeModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
