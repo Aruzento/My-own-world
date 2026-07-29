@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-29: 0.0.1.8.13.6 Knowledge Graph Inspector JS Split
+
+### What Changed
+
+- Continued `0.0.1.8.13` Migration Phase 7 with the JavaScript side of `BI-017`.
+- Split the selected-node inspector rendering/update logic out of `js/wiki/knowledgeGraphPage.js` into `js/wiki/knowledgeGraphCanvasInspector.js`.
+- Moved graph canvas node icon mapping into `js/wiki/knowledgeGraphCanvasIcons.js`.
+- Moved editable relationship types and relationship labels into `js/wiki/knowledgeGraphLabels.js`.
+- Kept Knowledge Graph behavior and visual UI unchanged: selecting a node still updates the same workbench-local inspector, relation chips, open/focus actions and active/muted edge states.
+
+### Readiness
+
+Foundation for graph maintainability. One real responsibility is now outside the large graph page file, but `0.0.1.8.13` remains active for canvas renderer/actions/context-menu split and `BI-018` lifecycle hardening.
+
+### Verification
+
+- Passed: `node --check js\wiki\knowledgeGraphPage.js`.
+- Passed: `node --check js\wiki\knowledgeGraphCanvasInspector.js`.
+- Passed: `node --check js\wiki\knowledgeGraphCanvasIcons.js`.
+- Passed: `node --check js\wiki\knowledgeGraphLabels.js`.
+- Passed twice: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` with 2 browser tests per run.
+- Passed twice: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 3 browser tests per run.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed twice: `npm run verify` with 272 node tests, large-workspace performance smoke, `git diff --check` and docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 112 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Follow-Up
+
+- Continue `0.0.1.8.13` with the next `BI-017` JavaScript split: canvas renderer, toolbar/actions and node/connect overlays.
+- Then address `BI-018`: graph relationship/view-state persistence must move through the page lifecycle/write queue or a dedicated graph command bridge.
+- Keep `BI-026` in the mini-backlog before adding more visible Knowledge Graph features: rethink what the graph should help a GM decide.
+
 ## 2026-07-29: 0.0.1.8.13.5 Knowledge Graph CSS Ownership Split
 
 ### What Changed

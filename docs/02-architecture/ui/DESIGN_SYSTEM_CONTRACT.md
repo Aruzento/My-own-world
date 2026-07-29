@@ -407,6 +407,8 @@ Use: same canvas-control language as map where possible; do not bypass page life
 
 `0.0.1.8.13.5` starts the graph maintainability split on the CSS side: graph base canvas styles, slice state, selected-node inspector and node/connect overlays must stay in their owning CSS files instead of returning to one `knowledge-graph.css` monolith. This does not close the `BI-017` JavaScript split or the `BI-018` lifecycle bridge.
 
+`0.0.1.8.13.6` starts the graph maintainability split on the JavaScript side: selected-node inspector rendering/update helpers, graph node icon mapping and relationship labels/editable type options must stay in their owning JS modules instead of drifting back into `knowledgeGraphPage.js`. This does not close the remaining canvas renderer/actions/context-menu split or the `BI-018` lifecycle bridge.
+
 ### Task Tracker
 
 Owns: board toolbar, columns, task cards, checklists, labels, drag previews, empty states.

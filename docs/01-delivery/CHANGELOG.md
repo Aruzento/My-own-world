@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.6`: selected-node inspector rendering/update logic, graph canvas node icon mapping and relationship labels/editable type options now live in dedicated JS owner modules instead of staying in the graph page monolith.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.5`: graph styles are now split into base canvas, slice state, selected-node inspector and node/connect overlay owner files, while the remaining Phase 7 work stays on JavaScript split and lifecycle hardening.
 - UI redesign Phase 7 Knowledge Graph corrected with `0.0.1.8.13.4`: the graph first layer now uses compact status chips, a visual slice meter, icon-first actions, a lighter selected-node inspector and collapsed relationship editing instead of always-visible explanatory counters and rows.
 - UI redesign Phase 7 Knowledge Graph advanced with `0.0.1.8.13.3`: node right-click actions and connection creation now use darker editor-grade overlays, grouped icon actions, compact editable relationship rows and visual-regression coverage for the node menu.
