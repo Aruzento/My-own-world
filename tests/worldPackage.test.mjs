@@ -19,7 +19,8 @@ import {
 } from '../js/worldPackage/worldPackageStorage.js';
 
 import {
-  applyWorldPackagePageImport
+  applyWorldPackagePageImport,
+  createWorldPackageAssetImportReport
 } from '../js/worldPackage/worldPackageImportService.js';
 
 import {
@@ -572,6 +573,312 @@ test(
 
 
 test(
+  'World Package import applies embedded rule packages without overwriting existing files',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    await adapter.writeText(
+      'rule-packages/core-rules.rule-package.json',
+      JSON.stringify(
+        {
+          version:
+            1,
+          activeRuleIds:
+            [
+              'old-rule'
+            ],
+          rules:
+            [
+              {
+                id:
+                  'old-rule',
+                title:
+                  'Old Rule'
+              }
+            ]
+        },
+        null,
+        2
+      )
+    );
+
+    const packageData =
+      normalizeWorldPackageData({
+        packageId:
+          'rules-import',
+        title:
+          'Rules Import',
+        contents: {
+          pages:
+            [],
+          rulePackages:
+            [
+              {
+                packageId:
+                  'core-rules',
+                title:
+                  'Core Rules',
+                data: {
+                  version:
+                    1,
+                  activeRuleIds:
+                    [
+                      'new-rule'
+                    ],
+                  rules:
+                    [
+                      {
+                        id:
+                          'new-rule',
+                        title:
+                          'New Rule'
+                      }
+                    ]
+                }
+              }
+            ]
+        }
+      });
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-rules'
+        },
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      result.importedPages,
+      0
+    );
+
+    assert.equal(
+      result.importedRulePackages,
+      1
+    );
+
+    assert.equal(
+      result.copiedRulePackages,
+      1
+    );
+
+    assert.deepEqual(
+      result.rulePackagePaths,
+      [
+        'rule-packages/core-rules-import.rule-package.json'
+      ]
+    );
+
+    const oldContent =
+      await adapter.readText(
+        'rule-packages/core-rules.rule-package.json'
+      );
+
+    const importedContent =
+      await adapter.readText(
+        result.rulePackagePaths[0]
+      );
+
+    assert.match(
+      oldContent,
+      /old-rule/
+    );
+
+    assert.doesNotMatch(
+      oldContent,
+      /new-rule/
+    );
+
+    assert.match(
+      importedContent,
+      /new-rule/
+    );
+  }
+);
+
+
+test(
+  'World Package import validates asset references before writing pages',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    await adapter.writeBinary(
+      'assets/portraits/hero.png',
+      new TextEncoder()
+        .encode(
+          'image-bytes'
+        )
+        .buffer
+    );
+
+    const report =
+      await createWorldPackageAssetImportReport({
+        storageAdapter:
+          adapter,
+        packageData: {
+          packageId:
+            'asset-report',
+          contents: {
+            assets:
+              [
+                {
+                  path:
+                    'assets/portraits/hero.png',
+                  required:
+                    true
+                },
+                {
+                  path:
+                    'assets/portraits/optional.png',
+                  required:
+                    false
+                }
+              ]
+          }
+        }
+      });
+
+    assert.equal(
+      report.ok,
+      true
+    );
+
+    assert.equal(
+      report.available.length,
+      1
+    );
+
+    assert.equal(
+      report.missingOptional.length,
+      1
+    );
+
+    const requiredMissingPackage =
+      normalizeWorldPackageData({
+        packageId:
+          'required-asset',
+        title:
+          'Required Asset',
+        contents: {
+          pages:
+            [
+              {
+                id:
+                  'asset-page',
+                title:
+                  'Asset Page',
+                body:
+                  '<h1>Asset Page</h1>'
+              }
+            ],
+          assets:
+            [
+              {
+                path:
+                  'assets/maps/missing.png',
+                required:
+                  true
+              }
+            ]
+        }
+      });
+
+    await assert.rejects(
+      () => applyWorldPackagePageImport({
+        packageData:
+          requiredMissingPackage,
+        backupManifest: {
+          id:
+            'backup-asset-block'
+        },
+        storageAdapter:
+          adapter
+      }),
+      /required assets are missing/
+    );
+
+    assert.equal(
+      state.pages.length,
+      0
+    );
+
+    const optionalMissingPackage =
+      normalizeWorldPackageData({
+        packageId:
+          'optional-asset',
+        title:
+          'Optional Asset',
+        contents: {
+          pages:
+            [
+              {
+                id:
+                  'optional-asset-page',
+                title:
+                  'Optional Asset Page',
+                body:
+                  '<h1>Optional Asset Page</h1>'
+              }
+            ],
+          assets:
+            [
+              {
+                path:
+                  'assets/maps/optional-missing.png',
+                required:
+                  false
+              }
+            ]
+        }
+      });
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData:
+          optionalMissingPackage,
+        backupManifest: {
+          id:
+            'backup-asset-optional'
+        },
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      result.importedPages,
+      1
+    );
+
+    assert.equal(
+      result.validatedAssets,
+      0
+    );
+
+    assert.equal(
+      result.missingOptionalAssets,
+      1
+    );
+  }
+);
+
+
+test(
   'World Package dependency report marks unresolved required packages',
   () => {
 
@@ -703,6 +1010,58 @@ function createMemoryStorageAdapter() {
       );
     },
 
+    async readBinary(path) {
+
+      const normalized =
+        normalize(path);
+
+      if (!files.has(normalized)) {
+
+        throw new Error(
+          `Missing file ${normalized}`
+        );
+      }
+
+      const content =
+        files.get(
+          normalized
+        );
+
+      if (content instanceof ArrayBuffer) {
+
+        return content;
+      }
+
+      if (ArrayBuffer.isView(content)) {
+
+        return content.buffer.slice(
+          content.byteOffset,
+          content.byteOffset + content.byteLength
+        );
+      }
+
+      return new TextEncoder()
+        .encode(
+          String(content)
+        )
+        .buffer;
+    },
+
+    async writeBinary(path, content) {
+
+      const normalized =
+        normalize(path);
+
+      directories.add(
+        normalized.split('/').slice(0, -1).join('/')
+      );
+
+      files.set(
+        normalized,
+        content
+      );
+    },
+
     async listFiles(path) {
 
       const prefix =
@@ -728,6 +1087,24 @@ function createMemoryStorageAdapter() {
       files.delete(
         normalize(path)
       );
+    },
+
+    async removeDirectory(path) {
+
+      const normalized =
+        normalize(path);
+
+      [...files.keys()]
+        .filter(filePath =>
+          filePath.startsWith(
+            `${normalized}/`
+          )
+        )
+        .forEach(filePath =>
+          files.delete(
+            filePath
+          )
+        );
     }
   };
 }

@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-07-30: 0.0.1.8.14.6 World Package Rule Package Apply And Asset Preflight
+
+### What Changed
+
+- Continued `0.0.1.8.14` Migration Phase 8 inside the existing World Package manager instead of adding another secondary screen.
+- Updated `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.6"]` so preview distinguishes page plan, embedded rulePackages and asset references.
+- Extended `applyWorldPackagePageImport()` beyond page-only packages: it now imports embedded rulePackages into `rule-packages/` after backup.
+- Kept imports non-destructive: if a rule package id already exists, the imported package is saved as a copied id such as `core-rules-import` instead of overwriting the existing file.
+- Added asset preflight before apply. Required missing asset references block the import before pages or rules are written; optional missing asset references stay visible as warnings and allow the page/rulePackage import to continue.
+- Kept binary asset copy out of scope because the current World Package format stores asset references, not file payload bytes.
+
+### Readiness
+
+`Usable` for World Package page import, conflict handling and embedded rulePackage apply. Asset support is `Foundation`: required/optional references are checked honestly, but actual file copy from a package still needs a package-format/payload extension.
+
+### Verification
+
+- Passed: `node --check js\worldPackage\worldPackageImportService.js`.
+- Passed: `node --check js\ui\worldPackageManager.js`.
+- Passed: `node --check tests\worldPackage.test.mjs`.
+- Passed: `node --check tests\browser\world-package.spec.mjs`.
+- Passed: `node --test tests\worldPackage.test.mjs` with 12 tests, including embedded rulePackage copy and asset preflight.
+- Passed: `npm run test:browser -- tests/browser/world-package.spec.mjs`, including required missing asset blocking, optional missing asset warning, embedded rulePackage file write, backup creation and sanitizer guards.
+- Passed second focused UI pass: `npm run test:browser -- tests/browser/world-package.spec.mjs`, `npm run test:browser -- tests/browser/component-catalogue.spec.mjs`, `npm run test:browser -- tests/browser/app-shell.spec.mjs` and `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed docs/tooling pass: `python tools\generate_manual_docx.py`, `node tools\docs_index.mjs`, `node tools\audit_project_files.mjs`, `npm run check:encoding` and `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed twice: `npm run verify`, including node tests, browser smoke, large-workspace performance smoke, diff check and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, agent skills validation, verify, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+
+### Next
+
+- Continue Phase 8 with binary asset file copy/apply for World Packages and any deeper backup/import/release handoff UX still needed.
+
 ## 2026-07-29: 0.0.1.8.14.5 World Package Conflict Import UX
 
 ### What Changed

@@ -42,6 +42,15 @@ Design check after step 15: the map must read as a graphic editor. Canvas tools 
 26. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
 27. Delete the test entities.
 
+## World Package
+
+1. Open Tools -> `Пакеты мира`.
+2. Export the current branch or whole world and confirm the saved package appears in the library.
+3. Preview a conflicting package. `Стоп` should block, `Только новые` should skip conflicts, and `Копии` should create copied pages after backup without overwriting existing pages.
+4. Preview an external JSON package with one embedded rulePackage and one optional missing asset reference. Preview should stay ready, mention `Rule packages` and `optional missing`, create a backup, import the page and write a new file under `rule-packages/`.
+5. Preview an external JSON package with a required missing asset reference. Apply should be blocked before backup/import.
+6. Remember the current limitation: World Package assets are references only; binary asset file copy is still future work.
+
 ## Desktop
 
 1. Start `src-tauri\target\release\my-own-world.exe`.

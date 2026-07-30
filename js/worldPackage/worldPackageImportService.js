@@ -38,6 +38,11 @@ import {
 } from './worldPackageModel.js';
 
 import {
+  listRulePackageFiles,
+  saveRulePackageFile
+} from '../ruleTree/ruleTreePackageStorage.js';
+
+import {
   normalizePageTitle
 } from '../validation/pageTitleValidation.js';
 
@@ -100,13 +105,17 @@ export async function applyWorldPackagePageImport({
     );
   }
 
-  if (
-    preview.counts.assets > 0 ||
-    preview.counts.rulePackages > 0
-  ) {
+  const assetReport =
+    await createWorldPackageAssetImportReport({
+      packageData:
+        pkg,
+      storageAdapter
+    });
+
+  if (!assetReport.ok) {
 
     throw new Error(
-      'World Package import can apply page-only packages in this UI slice.'
+      'World Package import is blocked because required assets are missing.'
     );
   }
 
@@ -120,13 +129,26 @@ export async function applyWorldPackagePageImport({
         strategy
     });
 
+  const rulePackagePlan =
+    await createWorldPackageRulePackageImportPlan({
+      packageData:
+        pkg,
+      storageAdapter
+    });
+
   const pagesToImport =
     importPlan.pagesToImport;
+
+  const rulePackagesToImport =
+    rulePackagePlan.rulePackagesToImport;
 
   const createdPages =
     [];
 
   const createdPaths =
+    [];
+
+  const createdRulePackagePaths =
     [];
 
   const previousPages =
@@ -136,7 +158,7 @@ export async function applyWorldPackagePageImport({
 
   return executePageCommand({
     type:
-      'world-package-import-pages',
+      'world-package-import',
     affectedPages:
       importPlan.entries
         .filter(entry =>
@@ -147,10 +169,13 @@ export async function applyWorldPackagePageImport({
         ),
     validate() {
 
-      if (pagesToImport.length === 0) {
+      if (
+        pagesToImport.length === 0 &&
+        rulePackagesToImport.length === 0
+      ) {
 
         throw new Error(
-          'World Package has no pages to import.'
+          'World Package has no pages or rule packages to import.'
         );
       }
     },
@@ -160,6 +185,9 @@ export async function applyWorldPackagePageImport({
         previousPages,
         createdPaths: [
           ...createdPaths
+        ],
+        createdRulePackagePaths: [
+          ...createdRulePackagePaths
         ]
       };
     },
@@ -230,6 +258,20 @@ export async function applyWorldPackagePageImport({
           runtimePage
         );
       }
+
+      for (const entry of rulePackagesToImport) {
+
+        const path =
+          await saveRulePackageFile(
+            storageAdapter,
+            entry.finalId,
+            entry.data
+          );
+
+        createdRulePackagePaths.push(
+          path
+        );
+      }
     },
     updateIndexes() {
 
@@ -262,12 +304,23 @@ export async function applyWorldPackagePageImport({
           importPlan.copiedPages.length,
         renamedPages:
           importPlan.renamedPages.length,
+        importedRulePackages:
+          rulePackagesToImport.length,
+        copiedRulePackages:
+          rulePackagePlan.copiedRulePackages.length,
+        validatedAssets:
+          assetReport.available.length,
+        missingOptionalAssets:
+          assetReport.missingOptional.length,
         conflictStrategy:
           strategy,
         backupId:
           backupManifest.id,
         paths: [
           ...createdPaths
+        ],
+        rulePackagePaths: [
+          ...createdRulePackagePaths
         ]
       };
     },
@@ -292,12 +345,163 @@ export async function applyWorldPackagePageImport({
           // Best-effort cleanup after a failed bulk import.
         }
       }
+
+      for (const path of createdRulePackagePaths) {
+
+        try {
+
+          await storageAdapter.removeFile(
+            path
+          );
+
+        } catch {
+          // Best-effort cleanup after a failed bulk import.
+        }
+      }
     },
     getResult(context) {
 
       return context.result;
     }
   });
+}
+
+
+export async function createWorldPackageAssetImportReport({
+  packageData,
+  storageAdapter = getStorageAdapter()
+} = {}) {
+
+  const pkg =
+    normalizeWorldPackageData(
+      packageData
+    );
+
+  const entries =
+    [];
+
+  for (const asset of pkg.contents.assets) {
+
+    const availability =
+      await checkAssetAvailability({
+        storageAdapter,
+        path:
+          asset.path
+      });
+
+    entries.push({
+      ...asset,
+      available:
+        availability.available,
+      error:
+        availability.error
+    });
+  }
+
+  const available =
+    entries.filter(asset =>
+      asset.available
+    );
+
+  const missingRequired =
+    entries.filter(asset =>
+      !asset.available &&
+      asset.required !== false
+    );
+
+  const missingOptional =
+    entries.filter(asset =>
+      !asset.available &&
+      asset.required === false
+    );
+
+  return {
+    ok:
+      missingRequired.length === 0,
+    total:
+      entries.length,
+    available,
+    missingRequired,
+    missingOptional,
+    entries
+  };
+}
+
+
+export async function createWorldPackageRulePackageImportPlan({
+  packageData,
+  storageAdapter = getStorageAdapter()
+} = {}) {
+
+  const pkg =
+    normalizeWorldPackageData(
+      packageData
+    );
+
+  const existingFiles =
+    await listRulePackageFiles(
+      storageAdapter
+    );
+
+  const usedIds =
+    new Set(
+      existingFiles
+        .map(file =>
+          file.id
+        )
+        .filter(Boolean)
+    );
+
+  const entries =
+    [];
+
+  for (const rulePackage of pkg.contents.rulePackages) {
+
+    const sourceId =
+      rulePackage.packageId;
+
+    const finalId =
+      createUniqueRulePackageId(
+        sourceId,
+        usedIds
+      );
+
+    usedIds.add(
+      finalId
+    );
+
+    entries.push({
+      sourceId,
+      sourceTitle:
+        rulePackage.title,
+      finalId,
+      action:
+        finalId === sourceId
+          ? 'import'
+          : 'copy',
+      data:
+        rulePackage.data
+    });
+  }
+
+  const copiedRulePackages =
+    entries.filter(entry =>
+      entry.action === 'copy'
+    );
+
+  return {
+    packageId:
+      pkg.packageId,
+    rulePackagesToImport:
+      entries,
+    copiedRulePackages,
+    counts: {
+      rulePackages:
+        entries.length,
+      copied:
+        copiedRulePackages.length
+    }
+  };
 }
 
 
@@ -572,6 +776,92 @@ function createUniqueImportedPageId(
     createSafeWorldPackageId(
       sourceId || 'imported-page'
     );
+
+  let index =
+    1;
+
+  let candidate =
+    `${base}-import`;
+
+  while (
+    usedIds.has(
+      candidate
+    )
+  ) {
+
+    index += 1;
+
+    candidate =
+      `${base}-import-${index}`;
+  }
+
+  return candidate;
+}
+
+
+async function checkAssetAvailability({
+  storageAdapter,
+  path
+}) {
+
+  if (
+    !storageAdapter ||
+    typeof storageAdapter.readBinary !== 'function'
+  ) {
+
+    return {
+      available:
+        false,
+      error:
+        'Storage adapter cannot read binary assets.'
+    };
+  }
+
+  try {
+
+    await storageAdapter.readBinary(
+      path
+    );
+
+    return {
+      available:
+        true,
+      error:
+        null
+    };
+
+  } catch (error) {
+
+    return {
+      available:
+        false,
+      error:
+        String(
+          error?.message || error || 'Asset is not readable.'
+        )
+    };
+  }
+}
+
+
+function createUniqueRulePackageId(
+  sourceId,
+  usedIds
+) {
+
+  const base =
+    createSafeWorldPackageId(
+      sourceId || 'rules'
+    );
+
+  if (
+    !usedIds.has(
+      base
+    )
+  ) {
+
+    return base;
+  }
 
   let index =
     1;

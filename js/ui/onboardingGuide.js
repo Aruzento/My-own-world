@@ -163,7 +163,7 @@ const ONBOARDING_SECTIONS = {
     chips: [
       ['Diagnostics', 'check', 'ready'],
       ['Backup', 'copy', 'ready'],
-      ['Import/export', 'folder-open', 'warning']
+      ['Import/export', 'folder-open', 'ready']
     ],
     items: [
       {
@@ -189,10 +189,10 @@ const ONBOARDING_SECTIONS = {
       },
       {
         title: 'Import / export',
-        text: 'Tools -> Пакеты мира уже дает export, library, preview и backup-gated page-only import. Assets и rule packages пока остаются blocker states.',
-        meta: 'MVP',
+        text: 'Tools -> Пакеты мира уже дает export, library, preview, backup-gated page/rulePackage import и asset preflight. Binary asset copy остается следующим шагом.',
+        meta: 'Usable',
         iconName: 'folder-open',
-        state: 'warning'
+        state: 'ready'
       }
     ]
   },

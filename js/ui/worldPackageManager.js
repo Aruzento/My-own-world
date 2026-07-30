@@ -25,7 +25,8 @@ import {
 } from '../state.js';
 
 import {
-  applyWorldPackagePageImport
+  applyWorldPackagePageImport,
+  createWorldPackageAssetImportReport
 } from '../worldPackage/worldPackageImportService.js';
 
 import {
@@ -52,7 +53,7 @@ import {
 
 
 const WORLD_PACKAGE_UI_MIGRATION =
-  '0.0.1.8.14.5';
+  '0.0.1.8.14.6';
 
 
 export function setupWorldPackageManager() {
@@ -180,6 +181,8 @@ function renderWorldPackagePopup({
       null,
     preview:
       null,
+    assetReport:
+      null,
     conflictStrategy:
       'block'
   };
@@ -296,7 +299,7 @@ function createHeader(
     'world-package-summary';
 
   summary.textContent =
-    'Сохраняйте ветки страниц в package-файлы, проверяйте импорт до записи и применяйте только page-only пакеты через backup.';
+    'Сохраняйте ветки страниц в package-файлы, проверяйте импорт до записи и применяйте страницы с embedded rule packages через backup.';
 
   text.append(
     kicker,
@@ -348,7 +351,9 @@ function createStatusStrip() {
   [
     ['Export', 'copy', 'ready'],
     ['Preview before write', 'search', 'ready'],
-    ['Backup gated', 'check', 'warning']
+    ['Backup gated', 'check', 'warning'],
+    ['Rule packages', 'grid', 'ready'],
+    ['Asset preflight', 'search', 'warning']
   ].forEach(([label, iconName, state]) => {
 
     const item =
@@ -885,7 +890,7 @@ function createPreviewPanel({
 
         if (model.packageData) {
 
-          renderPreview(
+          void renderPreview(
             model.packageData
           );
         }
@@ -905,7 +910,7 @@ function createPreviewPanel({
   );
 
   const renderPreview =
-    packageData => {
+    async packageData => {
 
       const normalized =
         normalizeWorldPackageData(
@@ -926,6 +931,9 @@ function createPreviewPanel({
       model.preview =
         previewData;
 
+      model.assetReport =
+        null;
+
       textarea.value =
         JSON.stringify(
           normalized,
@@ -933,12 +941,33 @@ function createPreviewPanel({
           2
         );
 
+      applyButton.disabled =
+        true;
+
+      preview.dataset.worldPackagePreview =
+        'blocked';
+
+      preview.textContent =
+        'Проверяю package, assets и план импорта...';
+
+      const assetReport =
+        await createWorldPackageAssetImportReport({
+          packageData:
+            normalized,
+          storageAdapter:
+            getStorageAdapter()
+        });
+
+      model.assetReport =
+        assetReport;
+
       renderPreviewResult({
         preview,
         applyButton,
         packageData:
           normalized,
         previewData,
+        assetReport,
         conflictStrategy:
           model.conflictStrategy
       });
@@ -947,18 +976,18 @@ function createPreviewPanel({
   const showPackage =
     async packageData => {
 
-      renderPreview(
+      await renderPreview(
         packageData
       );
     };
 
   previewButton.addEventListener(
     'click',
-    () => {
+    async () => {
 
       try {
 
-        renderPreview(
+        await renderPreview(
           JSON.parse(
             textarea.value
           )
@@ -970,6 +999,9 @@ function createPreviewPanel({
           null;
 
         model.preview =
+          null;
+
+        model.assetReport =
           null;
 
         applyButton.disabled =
@@ -997,7 +1029,8 @@ function createPreviewPanel({
         !model.packageData ||
         !canApplyPreview(
           model.preview,
-          model.conflictStrategy
+          model.conflictStrategy,
+          model.assetReport
         )
       ) return;
 
@@ -1035,7 +1068,7 @@ function createPreviewPanel({
           )
         );
 
-        renderPreview(
+        await renderPreview(
           model.packageData
         );
 
@@ -1061,7 +1094,8 @@ function createPreviewPanel({
         applyButton.disabled =
           !canApplyPreview(
             model.preview,
-            model.conflictStrategy
+            model.conflictStrategy,
+            model.assetReport
           );
       }
     }
@@ -1224,13 +1258,15 @@ function renderPreviewResult({
   applyButton,
   packageData,
   previewData,
+  assetReport = null,
   conflictStrategy = 'block'
 }) {
 
   const reasons =
     getPreviewBlockers(
       previewData,
-      conflictStrategy
+      conflictStrategy,
+      assetReport
     );
 
   const canApply =
@@ -1268,7 +1304,7 @@ function renderPreviewResult({
     document.createElement('span');
 
   meta.textContent =
-    `${previewData.counts.pages} стр. · ${previewData.counts.conflicts} конфликтов · ${getConflictStrategyLabel(conflictStrategy)}`;
+    `${previewData.counts.pages} стр. · ${previewData.counts.rulePackages} rules · ${previewData.counts.assets} assets · ${previewData.counts.conflicts} конфликтов · ${getConflictStrategyLabel(conflictStrategy)}`;
 
   summary.append(
     title,
@@ -1284,8 +1320,9 @@ function renderPreviewResult({
   [
     ['Новые', previewData.newPages.length, 'ready'],
     ['Конфликты', previewData.counts.conflicts, previewData.counts.conflicts ? 'danger' : 'ready'],
-    ['План', planCounts.pagesToImport, planCounts.pagesToImport ? 'ready' : 'warning'],
-    ['Assets', previewData.counts.assets, previewData.counts.assets ? 'warning' : 'ready']
+    ['План', planCounts.pagesToImport, planCounts.pagesToImport || planCounts.rulePackages ? 'ready' : 'warning'],
+    ['Rules', planCounts.rulePackages, planCounts.rulePackages ? 'ready' : 'warning'],
+    ['Assets', previewData.counts.assets, getAssetMeterState(previewData, assetReport)]
   ].forEach(([label, value, stateName]) => {
 
     const meter =
@@ -1317,7 +1354,8 @@ function renderPreviewResult({
     canApply
       ? createPreviewReadyText(
         planCounts,
-        conflictStrategy
+        conflictStrategy,
+        assetReport
       )
       : `Применение заблокировано: ${reasons.join('; ')}.`;
 
@@ -1334,7 +1372,8 @@ function renderPreviewResult({
     items:
       createPreviewPlanItems(
         planCounts,
-        conflictStrategy
+        conflictStrategy,
+        assetReport
       ),
     emptyText:
       'Нет действий для импорта.'
@@ -1353,6 +1392,31 @@ function renderPreviewResult({
   appendPreviewList({
     preview,
     title:
+      'Rule packages',
+    items:
+      createRulePackagePreviewItems(
+        packageData
+      ),
+    emptyText:
+      'Rule packages нет.'
+  });
+
+  appendPreviewList({
+    preview,
+    title:
+      'Assets',
+    items:
+      createAssetPreviewItems(
+        packageData,
+        assetReport
+      ),
+    emptyText:
+      'Asset references нет.'
+  });
+
+  appendPreviewList({
+    preview,
+    title:
       'Конфликты',
     items:
       previewData.conflicts.pages.map(conflict =>
@@ -1361,6 +1425,90 @@ function renderPreviewResult({
     emptyText:
       'Конфликтов нет.'
   });
+}
+
+
+function getAssetMeterState(
+  previewData,
+  assetReport
+) {
+
+  if (!previewData?.counts?.assets) {
+
+    return 'ready';
+  }
+
+  if (!assetReport) {
+
+    return 'warning';
+  }
+
+  if (assetReport.missingRequired.length > 0) {
+
+    return 'danger';
+  }
+
+  if (assetReport.missingOptional.length > 0) {
+
+    return 'warning';
+  }
+
+  return 'ready';
+}
+
+
+function createRulePackagePreviewItems(
+  packageData
+) {
+
+  return normalizeWorldPackageData(
+    packageData
+  )
+    .contents
+    .rulePackages
+    .map(rulePackage =>
+      `${rulePackage.title} · ${rulePackage.packageId}`
+    );
+}
+
+
+function createAssetPreviewItems(
+  packageData,
+  assetReport
+) {
+
+  const reportByPath =
+    new Map(
+      (assetReport?.entries || [])
+        .map(asset => [
+          asset.path,
+          asset
+        ])
+    );
+
+  return normalizeWorldPackageData(
+    packageData
+  )
+    .contents
+    .assets
+    .map(asset => {
+
+      const report =
+        reportByPath.get(
+          asset.path
+        );
+
+      const stateLabel =
+        report?.available
+          ? 'found'
+          : (
+            asset.required === false
+              ? 'optional missing'
+              : 'required missing'
+          );
+
+      return `${asset.path} · ${stateLabel}`;
+    });
 }
 
 
@@ -1460,13 +1608,25 @@ function getPreviewPlanCounts(
       copied:
         0,
       skipped:
+        0,
+      rulePackages:
+        0,
+      assets:
         0
     };
   }
 
+  const baseCounts = {
+    rulePackages:
+      preview.counts.rulePackages,
+    assets:
+      preview.counts.assets
+  };
+
   if (conflictStrategy === 'skip') {
 
     return {
+      ...baseCounts,
       pagesToImport:
         preview.newPages.length,
       copied:
@@ -1479,6 +1639,7 @@ function getPreviewPlanCounts(
   if (conflictStrategy === 'copy') {
 
     return {
+      ...baseCounts,
       pagesToImport:
         preview.counts.pages,
       copied:
@@ -1489,6 +1650,7 @@ function getPreviewPlanCounts(
   }
 
   return {
+    ...baseCounts,
     pagesToImport:
       preview.counts.pages,
     copied:
@@ -1519,13 +1681,35 @@ function getConflictStrategyLabel(
 
 function createPreviewReadyText(
   planCounts,
-  conflictStrategy
+  conflictStrategy,
+  assetReport = null
 ) {
 
   const parts =
     [
-      `Будет импортировано: ${planCounts.pagesToImport}`
+      `Страницы: ${planCounts.pagesToImport}`
     ];
+
+  if (planCounts.rulePackages > 0) {
+
+    parts.push(
+      `Rule packages: ${planCounts.rulePackages}`
+    );
+  }
+
+  if (assetReport?.total > 0) {
+
+    parts.push(
+      `Assets: ${assetReport.available.length}/${assetReport.total}`
+    );
+  }
+
+  if (assetReport?.missingOptional.length > 0) {
+
+    parts.push(
+      `optional missing: ${assetReport.missingOptional.length}`
+    );
+  }
 
   if (planCounts.copied > 0) {
 
@@ -1560,13 +1744,28 @@ function createPreviewReadyText(
 
 function createPreviewPlanItems(
   planCounts,
-  conflictStrategy
+  conflictStrategy,
+  assetReport = null
 ) {
 
   const items =
     [
       `Импорт: ${planCounts.pagesToImport}`
     ];
+
+  if (planCounts.rulePackages > 0) {
+
+    items.push(
+      `Rule packages: ${planCounts.rulePackages}`
+    );
+  }
+
+  if (assetReport?.total > 0) {
+
+    items.push(
+      `Asset preflight: ${assetReport.available.length}/${assetReport.total}`
+    );
+  }
 
   if (conflictStrategy === 'copy') {
 
@@ -1588,7 +1787,8 @@ function createPreviewPlanItems(
 
 function getPreviewBlockers(
   preview,
-  conflictStrategy = 'block'
+  conflictStrategy = 'block',
+  assetReport = null
 ) {
 
   if (!preview) {
@@ -1621,7 +1821,8 @@ function getPreviewBlockers(
   if (
     conflictStrategy === 'skip' &&
     preview.counts.conflicts > 0 &&
-    preview.newPages.length === 0
+    preview.newPages.length === 0 &&
+    preview.counts.rulePackages === 0
   ) {
 
     blockers.push(
@@ -1629,21 +1830,27 @@ function getPreviewBlockers(
     );
   }
 
-  if (preview.counts.assets > 0) {
+  if (
+    preview.counts.assets > 0 &&
+    !assetReport
+  ) {
 
     blockers.push(
-      'asset-файлы требуют отдельного копирования'
+      'asset preflight еще не завершен'
     );
   }
 
-  if (preview.counts.rulePackages > 0) {
+  if (assetReport?.missingRequired.length > 0) {
 
     blockers.push(
-      'rulePackages требуют отдельного импорта'
+      `required assets missing: ${assetReport.missingRequired.length}`
     );
   }
 
-  if (preview.counts.pages === 0) {
+  if (
+    preview.counts.pages === 0 &&
+    preview.counts.rulePackages === 0
+  ) {
 
     blockers.push(
       'нет страниц для импорта'
@@ -1656,12 +1863,14 @@ function getPreviewBlockers(
 
 function canApplyPreview(
   preview,
-  conflictStrategy = 'block'
+  conflictStrategy = 'block',
+  assetReport = null
 ) {
 
   return getPreviewBlockers(
     preview,
-    conflictStrategy
+    conflictStrategy,
+    assetReport
   ).length === 0;
 }
 
@@ -1910,6 +2119,27 @@ function createImportResultMessage(
 
     parts.push(
       `пропущено: ${result.skippedPages}`
+    );
+  }
+
+  if (result.importedRulePackages > 0) {
+
+    parts.push(
+      `rule packages: ${result.importedRulePackages}`
+    );
+  }
+
+  if (result.validatedAssets > 0) {
+
+    parts.push(
+      `assets checked: ${result.validatedAssets}`
+    );
+  }
+
+  if (result.missingOptionalAssets > 0) {
+
+    parts.push(
+      `optional assets missing: ${result.missingOptionalAssets}`
     );
   }
 

@@ -720,13 +720,25 @@ test(
     await expect(
       page.locator('[data-help-card-state="warning"]')
     ).toHaveCount(
-      1
+      0
     );
 
     await expect(
       page.locator('[data-help-card-state="planned"]')
     ).toHaveCount(
       0
+    );
+
+    await expect(
+      page.locator('#onboardingPopup')
+    ).toContainText(
+      'asset preflight'
+    );
+
+    await expect(
+      page.locator('#onboardingPopup')
+    ).toContainText(
+      'Binary asset copy'
     );
 
     await page.evaluate(

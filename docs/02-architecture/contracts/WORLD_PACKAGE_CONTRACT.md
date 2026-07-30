@@ -8,7 +8,7 @@ owner_zone: "architecture"
 ---
 # World Package Contract
 
-Date: 2026-07-29
+Date: 2026-07-30
 
 World Package is the project-level format for moving reusable world content between workspaces. It is not the same as Rule Tree package. Rule Tree package moves rules only; World Package can carry pages, asset references, rule packages, metadata, dependencies and future fork/workshop data.
 
@@ -74,7 +74,7 @@ The storage layer is `js/worldPackage/worldPackageStorage.js`.
 
 `contents.assets` stores workspace-relative asset references. Asset files are not duplicated by the model layer yet; future import/export UI must copy files through the Asset Lifecycle contract.
 
-`contents.rulePackages` stores embedded rule package data for future combined exports.
+`contents.rulePackages` stores embedded Rule Tree package data for combined exports. Current import applies these packages into `rule-packages/` after backup. If a package id already exists, the importer writes a copied id such as `core-rules-import` instead of overwriting the existing file.
 
 ## Import Preview
 
@@ -98,15 +98,16 @@ No import should write to workspace before:
 
 Current UI apply boundary:
 
-- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.5"]`.
+- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.6"]`.
 - The UI may export a current page branch or the whole workspace page set into `world-packages/*.world-package.json`.
-- The UI may apply page-only packages after preview and backup.
+- The UI may apply package pages and embedded rulePackages after preview and backup.
 - Page conflicts are resolved by an explicit mode:
   - `block` is the default and blocks apply when any package page conflicts by id/title.
   - `skip` imports only non-conflicting package pages. If a new imported child points to a skipped parent whose id already exists in the workspace, the child may attach to that existing parent; otherwise the parent is cleared.
   - `copy` imports conflicting package pages as new copies with unique ids, unique titles when needed and rewired parent links for imported descendants.
 - No current mode overwrites or replaces an existing workspace page.
-- Packages with `contents.assets` or `contents.rulePackages` block apply in this slice. They can be previewed, but file copy/rule apply belongs to future Asset Lifecycle and Rule Package work.
+- Packages with embedded rulePackages save those packages through the existing Rule Tree package storage. Existing rule package files are not overwritten; conflicts become imported copies with unique ids.
+- Packages with `contents.assets` run asset preflight before apply. Required missing asset references block import before writing pages or rules. Optional missing references warn and may still import pages/rules. Asset file bytes are not copied by this package format yet.
 - Imported page `body` must be sanitized with the persistent save sanitizer before writing PageRecord content.
 
 ## Dependencies And Forks
@@ -140,14 +141,15 @@ Implemented:
 - package model;
 - workspace storage;
 - import preview;
-- page-only conflict import strategies: block, skip and copy;
+- page conflict import strategies: block, skip and copy;
+- embedded rulePackage apply without overwriting existing rule package files;
+- asset preflight for required/optional asset references;
 - dependency report;
 - schema validation;
-- user-facing `Пакеты мира` manager for export, package library, JSON import preview and backup-gated page-only import;
+- user-facing `Пакеты мира` manager for export, package library, JSON import preview and backup-gated page/rulePackage import;
 - unit and browser tests.
 
 Not implemented yet:
 
-- asset file copy/apply from a World Package;
-- embedded rulePackage apply;
+- binary asset file copy/apply from a World Package;
 - Workshop/fork publishing.

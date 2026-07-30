@@ -5,7 +5,7 @@ import {
 
 
 test(
-  'world-package-manager-exports-previews-and-imports-page-only-package',
+  'world-package-manager-exports-previews-and-imports-package-contents',
   async ({ page }) => {
 
     const consoleErrors =
@@ -66,7 +66,7 @@ test(
       popup
     ).toHaveAttribute(
       'data-world-package-ui-migration',
-      '0.0.1.8.14.5'
+      '0.0.1.8.14.6'
     );
 
     await expect(
@@ -209,6 +209,79 @@ test(
       'root-import'
     );
 
+    const requiredAssetPackage =
+      {
+        packageId:
+          'missing-required-asset',
+        title:
+          'Missing Required Asset',
+        contents: {
+          pages: [
+            {
+              id:
+                'blocked-asset-page',
+              title:
+                'Blocked Asset Page',
+              parent:
+                null,
+              template:
+                'card',
+              type:
+                'location',
+              tags:
+                [],
+              aliases:
+                [],
+              body:
+                '<h1>Blocked Asset Page</h1>'
+            }
+          ],
+          assets: [
+            {
+              path:
+                'assets/maps/missing-required.png',
+              type:
+                'mapBackground',
+              required:
+                true
+            }
+          ],
+          rulePackages: []
+        }
+      };
+
+    await page
+      .locator('.world-package-json-input')
+      .fill(
+        JSON.stringify(
+          requiredAssetPackage,
+          null,
+          2
+        )
+      );
+
+    await page
+      .locator('[data-world-package-section="import"] .world-package-action')
+      .first()
+      .click();
+
+    await expect(
+      page.locator('.world-package-preview')
+    ).toHaveAttribute(
+      'data-world-package-preview',
+      'blocked'
+    );
+
+    await expect(
+      page.locator('[data-world-package-apply-state]')
+    ).toContainText(
+      'required assets missing'
+    );
+
+    await expect(
+      page.locator('[data-world-package-apply="true"]')
+    ).toBeDisabled();
+
     const externalPackage =
       {
         packageId:
@@ -243,8 +316,41 @@ test(
                 ].join('')
             }
           ],
-          assets: [],
-          rulePackages: []
+          assets: [
+            {
+              path:
+                'assets/portraits/optional-missing.png',
+              type:
+                'portrait',
+              required:
+                false
+            }
+          ],
+          rulePackages: [
+            {
+              packageId:
+                'external-rules',
+              title:
+                'External Rules',
+              data: {
+                version:
+                  1,
+                activeRuleIds:
+                  [
+                    'scene-rule'
+                  ],
+                rules:
+                  [
+                    {
+                      id:
+                        'scene-rule',
+                      title:
+                        'Scene Rule'
+                    }
+                  ]
+              }
+            }
+          ]
         }
       };
 
@@ -260,10 +366,7 @@ test(
 
     await page
       .locator('[data-world-package-section="import"] .world-package-action')
-      .filter({
-        hasText:
-          'Предпросмотр'
-      })
+      .first()
       .click();
 
     await expect(
@@ -271,6 +374,18 @@ test(
     ).toHaveAttribute(
       'data-world-package-preview',
       'ready'
+    );
+
+    await expect(
+      page.locator('.world-package-preview')
+    ).toContainText(
+      'Rules: 1'
+    );
+
+    await expect(
+      page.locator('.world-package-preview')
+    ).toContainText(
+      'optional missing'
     );
 
     await expect(
@@ -284,7 +399,7 @@ test(
     await expect(
       page.locator('#statusbar')
     ).toContainText(
-      'Импортировано страниц: 1'
+      'rule packages: 1'
     );
 
     const result =
@@ -307,6 +422,15 @@ test(
                 .filter(path =>
                   path.includes('.my-own-world-backups')
                 ),
+            rulePackageFiles:
+              [...window.__worldPackageTestFiles.keys()]
+                .filter(path =>
+                  path.includes('rule-packages')
+                ),
+            rulePackageContent:
+              window.__worldPackageTestFiles.get(
+                'rule-packages/external-rules.rule-package.json'
+              ),
             packageFiles:
               [...window.__worldPackageTestFiles.keys()]
                 .filter(path =>
@@ -350,6 +474,18 @@ test(
       result.backupFiles.length
     ).toBeGreaterThan(
       0
+    );
+
+    expect(
+      result.rulePackageFiles
+    ).toContain(
+      'rule-packages/external-rules.rule-package.json'
+    );
+
+    expect(
+      result.rulePackageContent
+    ).toContain(
+      'scene-rule'
     );
 
     expect(

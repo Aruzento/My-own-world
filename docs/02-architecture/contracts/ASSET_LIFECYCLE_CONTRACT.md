@@ -153,6 +153,15 @@ Asset lifecycle не должен зависеть от DOM-only или browser-
 
 Desktop adapter может отдавать локальные URLs или data URLs, browser adapter - workspace URLs, но persistent HTML/JSON хранит только workspace path.
 
+## World Package Import Preflight
+
+World Package `contents.assets` currently stores workspace-relative references, not binary file payloads. Import must therefore treat asset handling as preflight, not as file copy:
+
+- if a referenced asset is required and `StorageAdapter.readBinary(path)` cannot read it, World Package apply is blocked before pages or rulePackages are written;
+- if a referenced asset is optional and cannot be read, import may continue with a visible warning;
+- if a referenced asset is readable, import records it as validated but does not duplicate the file;
+- actual asset payload export/import needs a future package-format extension and must still write through the Asset Lifecycle storage APIs.
+
 ## Что Уже Есть В Проекте
 
 - `js/storage/assetStorage.js` отвечает за базовое сохранение файлов ассетов.
