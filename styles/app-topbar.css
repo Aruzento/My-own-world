@@ -376,12 +376,29 @@
 
 
 .app-appearance-swatch:hover,
-.app-appearance-swatch.is-selected {
+.app-appearance-swatch.is-selected,
+.app-appearance-swatch[aria-pressed="true"] {
 
   border-color:
     var(--mow-accent-border);
 
   box-shadow:
+    var(--mow-glow-accent);
+}
+
+
+.app-appearance-swatch:focus-visible,
+.app-appearance-segmented button:focus-visible {
+
+  outline:
+    2px solid
+    var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
+
+  box-shadow:
+    var(--mow-focus-shadow),
     var(--mow-glow-accent);
 }
 
@@ -433,7 +450,8 @@
 
 
 .app-appearance-segmented button:hover,
-.app-appearance-segmented button.is-selected {
+.app-appearance-segmented button.is-selected,
+.app-appearance-segmented button[aria-pressed="true"] {
 
   border-color:
     var(--mow-accent-border);

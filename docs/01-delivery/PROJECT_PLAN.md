@@ -103,6 +103,8 @@ Status: closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tra
 
 Description: run accessibility audit, performance pass, visual regression, theme presets, animation review, dead CSS removal, and documentation updates.
 
+`0.0.1.8.15.1` update: Phase 9 is started with a concrete polish/audit slice. Settings appearance now supports a `contrast` theme preset through the existing theme manager and body `data-theme` model; appearance swatches/segmented buttons expose `aria-pressed`; editor/table/property/item/wiki input focus gaps now use the warm MyOwnWorld focus ring; large campaign-map and Knowledge Graph inspectors no longer apply expensive backdrop blur; and `npm run verify` runs `tools/audit_ui_polish.mjs` to block `transition: all`, `will-change: all`, heavy blur on large workbench surfaces and `outline: none` without focus coverage. Remaining `0.0.1.8.15` work: deeper performance review, broader visual-regression review, dead CSS removal and final docs/release sync.
+
 0.0.1.8.16. Visual regression for design system.
 
 Description: add fixed viewport/theme/scale screenshots for shell, tree, editor, properties, map, graph, popups, empty/loading/error states, compact/comfortable density, dark and high-contrast themes.

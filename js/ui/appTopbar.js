@@ -383,6 +383,21 @@ function renderAppearancePanel(
         })
     });
 
+  const theme =
+    createAppearanceSegmented({
+      title: 'Тема',
+      field: 'theme',
+      value: appearance.theme,
+      options: [
+        ['dark', 'Темная'],
+        ['contrast', 'Контраст']
+      ],
+      onChange:
+        value => updateStoredAppearance({
+          theme: value
+        })
+    });
+
   const backgrounds =
     createAppearanceSwatchGroup({
       title: 'Фон',
@@ -417,6 +432,7 @@ function renderAppearancePanel(
 
   panel.append(
     header,
+    theme,
     presets,
     backgrounds,
     scale
@@ -499,16 +515,38 @@ function createAppearanceSwatchGroup({
       );
     }
 
+    button.setAttribute(
+      'aria-pressed',
+      optionValue === value
+        ? 'true'
+        : 'false'
+    );
+
     button.addEventListener(
       'click',
       () => {
 
         list
           .querySelectorAll('.app-appearance-swatch')
-          .forEach(item => item.classList.remove('is-selected'));
+          .forEach(item => {
+
+            item.classList.remove(
+              'is-selected'
+            );
+
+            item.setAttribute(
+              'aria-pressed',
+              'false'
+            );
+          });
 
         button.classList.add(
           'is-selected'
+        );
+
+        button.setAttribute(
+          'aria-pressed',
+          'true'
         );
 
         onChange(
@@ -581,16 +619,38 @@ function createAppearanceSegmented({
       );
     }
 
+    button.setAttribute(
+      'aria-pressed',
+      optionValue === value
+        ? 'true'
+        : 'false'
+    );
+
     button.addEventListener(
       'click',
       () => {
 
         control
           .querySelectorAll('button')
-          .forEach(item => item.classList.remove('is-selected'));
+          .forEach(item => {
+
+            item.classList.remove(
+              'is-selected'
+            );
+
+            item.setAttribute(
+              'aria-pressed',
+              'false'
+            );
+          });
 
         button.classList.add(
           'is-selected'
+        );
+
+        button.setAttribute(
+          'aria-pressed',
+          'true'
         );
 
         onChange(

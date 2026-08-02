@@ -78,6 +78,16 @@
 }
 
 
+.item-set-search:focus-visible {
+
+  border-color:
+    var(--mow-input-border-focus, rgba(241,211,142,0.30));
+
+  box-shadow:
+    var(--mow-focus-shadow, 0 0 0 3px rgba(241,211,142,0.08));
+}
+
+
 .item-set-search::placeholder {
 
   color:
@@ -280,6 +290,17 @@
   outline:
     none;
 }
+
+
+.item-set-create-title:focus-visible {
+
+  border-color:
+    var(--mow-input-border-focus, rgba(241,211,142,0.30));
+
+  box-shadow:
+    var(--mow-focus-shadow, 0 0 0 3px rgba(241,211,142,0.08));
+}
+
 
 /* =========================================
    CONFIRM POPUP

@@ -33,6 +33,17 @@
 }
 
 
+[contenteditable="true"]:focus-visible {
+
+  border-radius:
+    var(--mow-radius-xs);
+
+  box-shadow:
+    0 0 0 2px var(--mow-focus-ring),
+    var(--mow-focus-shadow);
+}
+
+
 [contenteditable="true"][data-placeholder]:empty::before {
 
   content:

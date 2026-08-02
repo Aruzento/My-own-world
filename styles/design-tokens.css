@@ -451,6 +451,34 @@
   --mow-focus-shadow: 0 0 0 3px rgba(167, 221, 144, 0.13);
 }
 
+[data-theme="contrast"] {
+  --mow-bg-app: #010201;
+  --mow-bg-app-2: #050705;
+  --mow-bg-panel: rgba(12, 15, 13, 0.96);
+  --mow-bg-panel-soft: rgba(17, 20, 17, 0.92);
+  --mow-bg-card: rgba(27, 27, 22, 0.94);
+  --mow-bg-card-hover: rgba(48, 42, 30, 0.98);
+  --mow-bg-card-active: rgba(62, 50, 29, 0.98);
+  --mow-bg-input: rgba(0, 0, 0, 0.62);
+  --mow-bg-toolbar: rgba(5, 7, 6, 0.88);
+  --mow-text-main: #fff8e8;
+  --mow-text-soft: #eadcc1;
+  --mow-text-muted: #b9ab92;
+  --mow-text-disabled: #736a5b;
+  --mow-border-soft: rgba(255, 232, 183, 0.16);
+  --mow-border-medium: rgba(255, 232, 183, 0.24);
+  --mow-border-strong: rgba(240, 207, 130, 0.56);
+  --mow-control-bg: rgba(255, 248, 232, 0.085);
+  --mow-control-bg-active: rgba(255, 248, 232, 0.14);
+  --mow-surface-embedded: rgba(255, 246, 222, 0.06);
+  --mow-shadow-panel: 0 22px 62px rgba(0, 0, 0, 0.58);
+  --mow-shadow-card: 0 12px 32px rgba(0, 0, 0, 0.46);
+  --mow-shadow-popup: 0 30px 86px rgba(0, 0, 0, 0.64);
+  --mow-bg-texture:
+    radial-gradient(circle at 50% 0%, rgba(240, 207, 130, 0.075), transparent 34%),
+    linear-gradient(180deg, #050705, #010201);
+}
+
 [data-bg="stone"] {
   --mow-bg-app: #030403;
   --mow-bg-app-2: #070907;

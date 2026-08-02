@@ -11,7 +11,7 @@ export const DEFAULT_APPEARANCE =
 
 export const SUPPORTED_APPEARANCE =
   Object.freeze({
-    themes: Object.freeze(['dark']),
+    themes: Object.freeze(['dark', 'contrast']),
     accents: Object.freeze(['gold', 'blue', 'green', 'purple', 'red']),
     backgrounds: Object.freeze(['stone', 'forest', 'arcane']),
     scales: Object.freeze(['compact', 'normal', 'large'])

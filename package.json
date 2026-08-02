@@ -17,6 +17,7 @@
     "docs:index": "node tools/docs_index.mjs",
     "agents:validate": "node tools/validate_agent_skills.mjs",
     "check:encoding": "node tools/check_text_encoding.mjs",
+    "ui:polish:audit": "node tools/audit_ui_polish.mjs",
     "diagnostics:workspace": "node tools/run_workspace_diagnostics.mjs",
     "test": "node --test \"tests/*.test.mjs\"",
     "test:large-workspace": "node tools/run_large_workspace_performance_smoke.mjs",

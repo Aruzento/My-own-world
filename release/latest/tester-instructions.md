@@ -36,6 +36,14 @@ npm run test:browser -- tests/browser/visual-regression.spec.mjs
 
 Then inspect the Playwright attachments named in `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`.
 
+For the Phase 9 polish/contrast/focus audit slice, use:
+
+```powershell
+npm run ui:polish:audit
+node --test tests/themeManager.test.mjs
+npm run test:browser -- tests/browser/app-shell.spec.mjs
+```
+
 For the campaign map split toolbar/tool rail, editable property Inspector, custom right-click popup and group contextual actions redesign slice, use:
 
 ```powershell
@@ -125,7 +133,7 @@ npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампани�
 6. Open `Поиск и команды` from the rail or press `Ctrl+K`. Search for a word that exists only in a page body; the palette should show the page title, path, matched field and excerpt, and opening the result should open the page. Reopen the palette, run `Скрыть дерево` or `Показать дерево`, and confirm it uses the same tree sidebar behavior as the rail button.
 7. Open any real page and check that no right page-info inspector appears. The editor should keep the freed width; the reserved right panel is hidden until a future real workflow owns it.
 Card editor design check: select text in the card title and in a normal text block; the floating format toolbar should appear as a compact overlay with accessible controls, stable width and no overlap with the card title.
-8. In Settings, switch UI scale between compact/normal/large and check that topbar, rail, sidebar controls, tree search, command palette and statusbar stay aligned instead of jumping or overlapping.
+8. In Settings, switch theme between `dark` and `contrast`, then switch UI scale between compact/normal/large and check that topbar, rail, sidebar controls, tree search, command palette and statusbar stay aligned instead of jumping or overlapping. Appearance controls should show a visible pressed state and warm focus ring.
 9. Open Tools -> `Поддержка`. The Tools popup should show compact icon rows, then close when the Help popup opens. The Help popup should have section buttons for start/system/release/support/checklist, status chips, readable support cards, no horizontal overflow and an honest World Package status. Escape or the close button should close the Help popup. Then open Tools -> `Пакеты мира`: export the current branch or whole world, confirm the saved package appears in the library, and if the branch references an image/map asset confirm the saved package contains `contents.assets[].payload`. Preview a conflicting package and confirm the default `Стоп` mode blocks apply. Switch to `Только новые` and check the plan skips conflicts; switch to `Копии` and check apply becomes available for page conflicts after backup, creating copied pages instead of overwriting existing ones. If the package asset path already exists in the workspace, import should write a copied asset path and imported pages should reference that copied path. Then preview an external JSON package with one embedded rulePackage, one valid asset payload and one optional missing asset reference: preview should stay ready, mention `Rule packages`, asset copy and `optional missing`, create a backup, import the page, write a new file under `rule-packages/` and write the asset file under `assets/`. Preview another JSON package with a required missing asset reference and no payload, then one with invalid base64 payload bytes; both should be blocked before backup/import.
 10. Open Tools -> `Компоненты`; check that the Button/Input/Panel/Popover examples appear, focus moves inside, and Escape closes the catalogue. For modal dialogs/popups in later checks, Tab/Shift+Tab should stay inside the dialog and close should return focus to the opener. Icon-only shell controls should show compact tooltip labels on hover/focus, and long operation progress should behave like a toast-style status surface.
    UI primitive note: the catalogue should now include IconButton, Select/Checkbox/Segmented field examples, Toolbar/Separator, Panel and Popover without text overlap at compact/normal/large scale.

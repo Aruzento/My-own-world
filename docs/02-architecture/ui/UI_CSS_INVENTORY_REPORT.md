@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI/CSS Inventory Report
 
-Updated: 2026-07-29
+Updated: 2026-08-02
 
 Plan ref: `0.0.1.8.1`
 
@@ -21,24 +21,24 @@ This report is the first inventory pass before the system UI/UX redesign. It doe
 
 ## Inventory Snapshot
 
-Collected from the current workspace on 2026-07-21.
+Collected from the current workspace on 2026-08-02.
 
 | Area | Count |
 | --- | ---: |
-| CSS files in `styles/` | 59 |
-| CSS lines | 30,484 |
-| JS files in `js/` | 258 |
-| JS lines | 84,043 |
-| CSS variable definitions | 119 |
-| CSS variable names used through `var(...)` | 94 |
-| Hardcoded CSS hex colors | 172 |
-| Hardcoded CSS `rgb/rgba(...)` colors | 1,288 |
-| CSS gradients | 62 |
-| CSS `!important` usages | 32 |
-| JS `innerHTML` usages | 146 |
+| CSS files in `styles/` | 60 |
+| CSS lines | 22,988 |
+| JS files in `js/` | 273 |
+| JS lines | 92,138 |
+| CSS variable definitions | 545 |
+| CSS variable names used through `var(...)` | 320 |
+| Hardcoded CSS hex colors | 217 |
+| Hardcoded CSS `rgb/rgba(...)` colors | 1,376 |
+| CSS gradients | 86 |
+| CSS `!important` usages | 34 |
+| JS `innerHTML` usages | 177 |
 | JS `insertAdjacentHTML` usages | 8 |
-| JS `document.createElement(...)` usages | 275 |
-| Popup registrations through `popupManager` | 14 |
+| JS `document.createElement(...)` usages | 368 |
+| Popup registrations through `popupManager` | 23 |
 
 The numbers are not all bugs. Some hardcoded values are deliberate fallbacks, dynamic map colors or presentation styles. The important finding is that the project already has design-system seeds, but feature CSS still owns too many local visual decisions.
 
@@ -47,6 +47,8 @@ Post-`0.0.1.8.7` delta: app-level shell CSS now has a named `--mow-shell-*` foun
 Post-`0.0.1.8.12.10` delta: campaign map CSS now treats the default map as a graphic-editor workbench with a compact title chip, a full-width top scene/session action bar, a full-height left vertical canvas tool rail, body-level floating toolbar tooltips and a right-side selected-object property Inspector only when selection exists. Toolbar zones must not create internal scrollbars. `styles/campaign-map-layer-dock.css` and `styles/campaign-map-scene-inspector.css` remain historical/internal owners, but default `renderCampaignMap()` no longer auto-creates those duplicate stage panels after user review.
 
 Post-`0.0.1.8.13.11` delta: Knowledge Graph Phase 7 is closed at usable migration level. `styles/knowledge-graph.css` owns the document/workbench/canvas/node-card base, while `styles/knowledge-graph-slice.css`, `styles/knowledge-graph-inspector.css` and `styles/knowledge-graph-overlays.css` own slice state, selected-node inspector and node/connect overlays. On the JS side, selected-node inspector helpers, graph node icon mapping, relationship labels/options, canvas controls/filterbar/slice-meter helpers, canvas node/edge renderer helpers, runtime filter/layout/slice/zoom actions, node/connect overlay actions, relationship/context-menu HTML, graph view-state helpers and manual relationship command persistence moved out of `knowledgeGraphPage.js`. The remaining graph risk is `BI-026` product concept rethink before adding new visible graph behavior.
+
+Post-`0.0.1.8.15.1` delta: Phase 9 now has a first automated UI polish gate. `tools/audit_ui_polish.mjs` is wired into `npm run verify` and currently checks 60 CSS files for broad `transition: all`, `will-change: all`, heavy backdrop blur on large workbench surfaces and `outline: none` without a visible focus companion. Large campaign-map and Knowledge Graph inspectors no longer apply expensive blur; the Settings appearance system also has a real `contrast` theme preset.
 
 ## Current CSS Entry Tree
 
@@ -140,6 +142,8 @@ index.html
 | `styles/command-palette.css` | 559 | Global command palette, deep search results and command rows. |
 | `styles/world-package.css` | 793 | World Package manager popup for export, saved package library, JSON import preview, backup/apply states, conflict-mode controls, rulePackage apply markers and `0.0.1.8.14.7` asset-payload/data-safety markers. |
 | `styles/block-character-sheet.css` | 467 | Runtime character sheet view backed by PropertiesModel. |
+
+Related audit tooling: `tools/audit_ui_polish.mjs` is the Phase 9 UI polish audit invoked by `npm run ui:polish:audit` and `npm run verify`; it guards motion, blur and focus regressions across CSS owners.
 
 ## Largest UI-Related JS Files
 

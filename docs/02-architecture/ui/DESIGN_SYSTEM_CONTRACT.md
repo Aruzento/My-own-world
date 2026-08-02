@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # Design System Contract
 
-Updated: 2026-07-28
+Updated: 2026-08-02
 
 Plan ref: `0.0.1.8.2`
 
@@ -32,7 +32,7 @@ This contract task did not migrate CSS or runtime UI by itself. The first runtim
 - все кнопки, поля, popup, меню, панели, toolbar и иконки должны постепенно прийти к общим правилам;
 - карта и граф не получают тяжёлые blur/анимации, потому что там важнее скорость;
 - уникальность дизайна должна идти от тёплого тёмного рабочего стола, аккуратных состояний, локального набора иконок, motion-токенов и понятной структуры, а не от случайных градиентов или декоративного fantasy-шума;
-- current next plan step: `0.0.1.8.11` Migration Phase 5 core content; [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) is now the comparison manifest for future UI migration patches.
+- current next plan step: `0.0.1.8.15` Migration Phase 9 polish and cleanup; [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) is the comparison manifest for future UI migration patches.
 
 ## Source Documents
 
@@ -169,7 +169,7 @@ body[data-theme][data-accent][data-bg][data-ui-scale]
 
 Required model:
 
-- `data-theme`: at minimum `dark`; future high-contrast variant belongs here.
+- `data-theme`: `dark` and `contrast`. `contrast` strengthens text, borders and workbench surfaces without changing saved content, workspace schema or the selected background mood.
 - `data-accent`: warm brand accents; default must remain Candle Gold style, not system blue.
 - `data-bg`: background mood/preset; must not change control semantics.
 - `data-ui-scale`: compact/comfortable density; must not change saved content.
@@ -677,5 +677,6 @@ The closing 2026-07-21 `0.0.1.8.9` follow-up completed the overlay migration ste
 - `0.0.1.8.12.8` corrects the selected-object flow: normal click selects a token/shape and opens a right-side property Inspector with editable name/type, position, size, rotation, visibility and style fields. It is a runtime-only stage panel inspired by Unity/Godot property inspectors, not a decorative object label popup. Right-click on a map object must suppress the browser context menu and open the compact custom object action popup at the pointer.
 - `0.0.1.8.12.10` supersedes the campaign-map toolbar layout: `.campaign-map-controls[data-map-toolbar-region="scene-bar"][data-map-ui-migration="0.0.1.8.12.10"]` owns scene/session actions in a full-width top bar, while `.campaign-map-tool-rail[data-map-toolbar-region="tool-rail"][data-map-ui-migration="0.0.1.8.12.10"]` owns canvas tools in a full-height stage rail. Both zones must be icon-only, runtime-only where applicable, sectioned by real `data-map-tool-section` groups, free of internal scrollbars and ready to grow with future tools. Map toolbar labels must use the body-level `.campaign-map-toolbar-tooltip` runtime overlay instead of pseudo-labels clipped inside button boxes.
 - The separate diagnostics/history bottom panel was not added as a decorative placeholder. It remains a secondary-screens migration target where it can attach to real diagnostics, backup, recovery and history data.
+- `0.0.1.8.15.1` starts Phase 9 with a concrete polish gate: contrast theme support, pressed appearance controls, focus coverage for older editable/select/search fields, removal of heavy blur from large map/graph inspectors and `tools/audit_ui_polish.mjs` inside `npm run verify`.
 
 `0.0.1.8.10` is closed. `0.0.1.8.11` Migration Phase 5 core content is closed at `Usable` level; tree/search, block DnD, first-level Add block picker, card editor header/toolbar controls, Properties, shared card block frames, card selects, saved template creation, deep search and the command palette now have migrated slices. `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; the current default map UI is a graphic-editor split toolbar with full-size unclipped top/left tool zones, shared popups, right-side selected-object property Inspector, custom object right-click menu and group contextual visibility actions, without duplicate scene/layer panels over the stage. `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`: visible-slice clarity, selected-node states/inspector, node/connect overlays, laconic first-layer correction, CSS ownership, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. `0.0.1.8.14.1` starts secondary screens by migrating task tracker UI to the shared workbench language: compact board toolbar, local sprite actions, quiet counters, checklist progress, tokenized columns/cards and no task data-model change. `0.0.1.8.14.2` fixes the task tracker nested-icon click regression and migrates the existing Settings maintenance popup for appearance, backup, asset health and workspace diagnostics. `0.0.1.8.14.3` migrates the existing Help/Support/Release guide surface inside Tools. `0.0.1.8.14.4` adds the first World Package manager MVP for branch/world export, package library, import preview and backup-gated page-only import. `0.0.1.8.14.5` adds non-destructive conflict modes and preview plan counts for page-only World Package imports. `0.0.1.8.14.6` adds embedded rulePackage apply and asset preflight. `0.0.1.8.14.7` closes Phase 8 secondary screens at `Usable` by adding asset payload export/import, non-overwrite asset copy and imported page reference rewrite. The active redesign phase is now `0.0.1.8.15` for polish and cleanup.

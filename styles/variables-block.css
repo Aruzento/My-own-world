@@ -131,6 +131,11 @@
   outline: none;
 }
 
+.variable-picker-search:focus-visible {
+  border-color: var(--mow-input-border-focus, var(--accent-strong));
+  box-shadow: var(--mow-focus-shadow, 0 0 0 2px var(--accent-soft));
+}
+
 .variable-picker-list {
   display: grid;
   gap: 6px;

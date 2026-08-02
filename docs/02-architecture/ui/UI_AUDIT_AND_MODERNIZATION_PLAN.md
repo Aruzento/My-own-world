@@ -198,6 +198,7 @@ owner_zone: "architecture"
 - `0.0.1.8.14.5`: World Package import preview now has non-destructive conflict choices (`Стоп`, `Только новые`, `Копии`) with plan counts before backup/apply.
 - `0.0.1.8.14.6`: World Package import applies embedded rulePackages into `rule-packages/` without overwriting existing files and runs asset preflight before backup/apply. Required missing assets block; optional missing assets warn.
 - `0.0.1.8.14.7`: World Package export/import now handles binary asset payloads. Readable referenced assets are embedded into package JSON, import writes payloads after backup without overwriting existing files, and imported page references are rewritten when copied asset paths change. Phase 8 secondary screens are closed at `Usable`.
+- `0.0.1.8.15.1`: Phase 9 polish starts with a guardrail, not another visible screen. Settings appearance now includes `contrast`, appearance controls expose `aria-pressed`, old editor/table/property/item/wiki focus gaps have visible warm rings, large map/graph inspectors drop expensive blur, and `npm run verify` runs `tools/audit_ui_polish.mjs`.
 - Отступы: кнопки справа должны быть стабильными.
 - Состояния: hover/focus нужны единые.
 - Анимации: можно мягко открывать popup.
@@ -293,6 +294,10 @@ Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button reg
 - App icon / window polish позже.
 - Проверки: desktop smoke checklist и browser presentation tests.
 
+### Phase 9 - Polish And Cleanup
+
+Status: active. `0.0.1.8.15.1` delivered the first slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. Remaining Phase 9 work should stay cleanup-oriented: deeper performance review, broader visual-regression review, dead CSS cleanup and final release/manual sync.
+
 ## Test Protection
 
 Для каждого этапа:
@@ -302,6 +307,7 @@ Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button reg
 - visual smoke / screenshots для ключевых поверхностей;
 - popup boundary check, если меняется popup;
 - hover/focus checks, если возможно;
+- `npm run ui:polish:audit` for Phase 9 UI polish and every later UI-heavy change;
 - отдельные tests карты, если меняются стили карты;
 - отдельные popup lifecycle tests, если меняются popup.
 

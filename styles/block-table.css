@@ -416,6 +416,16 @@ body.is-table-column-resize {
 }
 
 
+.table-cell-content:focus-visible {
+
+  border-radius:
+    var(--mow-radius-xs, 6px);
+
+  box-shadow:
+    0 0 0 2px var(--mow-focus-ring, rgba(241,211,142,0.30));
+}
+
+
 .table-cell-content:empty::before {
 
   /* Пустая ячейка не показывает мусорный текст */
@@ -528,6 +538,16 @@ body.is-table-column-resize {
 
   font:
     700 12px system-ui, sans-serif;
+}
+
+
+.table-toolbar-width-input:focus-visible {
+
+  border-color:
+    var(--mow-input-border-focus, rgba(241,211,142,0.30));
+
+  box-shadow:
+    var(--mow-focus-shadow, 0 0 0 3px rgba(241,211,142,0.08));
 }
 
 

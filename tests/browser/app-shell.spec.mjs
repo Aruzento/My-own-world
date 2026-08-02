@@ -552,6 +552,61 @@ test(
       page.locator('.app-appearance-panel')
     ).toBeVisible();
 
+    await expect(
+      page.locator('.app-appearance-segmented button[data-theme="dark"]')
+    ).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    await page
+      .locator('.app-appearance-segmented button[data-theme="contrast"]')
+      .click();
+
+    await expect(
+      page.locator('body')
+    ).toHaveAttribute(
+      'data-theme',
+      'contrast'
+    );
+
+    await expect(
+      page.locator('.app-appearance-segmented button[data-theme="contrast"]')
+    ).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    );
+
+    const contrastTokens =
+      await page.evaluate(
+        () => {
+
+          const style =
+            getComputedStyle(
+              document.body
+            );
+
+          return {
+            text:
+              style.getPropertyValue('--mow-text-main').trim(),
+            border:
+              style.getPropertyValue('--mow-border-medium').trim()
+          };
+        }
+      );
+
+    expect(
+      contrastTokens.text
+    ).toBe(
+      '#fff8e8'
+    );
+
+    expect(
+      contrastTokens.border
+    ).toContain(
+      '255, 232, 183'
+    );
+
     await page
       .locator('.app-appearance-swatch[data-accent="blue"]')
       .click();

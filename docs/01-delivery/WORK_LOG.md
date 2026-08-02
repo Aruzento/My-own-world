@@ -6,6 +6,48 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-02: 0.0.1.8.15.1 UI Polish Audit And Contrast Theme
+
+### What Changed
+
+- Started `0.0.1.8.15` Phase 9 with a focused polish/cleanup slice instead of adding another visible feature screen.
+- Added `contrast` as a real Settings appearance theme preset through `js/ui/themeManager.js` and the existing `body[data-theme]` contract.
+- Updated the Settings appearance controls so theme/scale segmented buttons and accent/background swatches expose `aria-pressed` and keep a warm focus ring.
+- Filled legacy focus gaps for contenteditable editor fields, table cells/table toolbar width input, Properties settings new-field inputs, variable picker search, item picker search/create title and wiki page search.
+- Removed expensive backdrop blur from the large campaign-map selection Inspector and Knowledge Graph canvas Inspector; both keep depth through dense surfaces, borders and shadows.
+- Added `tools/audit_ui_polish.mjs` and wired it into `npm run verify` to block `transition: all`, `will-change: all`, heavy blur on large workbench surfaces and `outline: none` without focus coverage.
+
+### Readiness
+
+`Usable` for this first Phase 9 polish slice. A human can open Settings, switch to the contrast theme, see the app keep its warm workbench language, and use keyboard focus through the touched inputs without losing the active control. The broader `0.0.1.8.15` phase remains active for deeper performance review, broader visual-regression review, dead CSS removal and final docs/release sync.
+
+### Verification
+
+- Passed: `node --check js\ui\themeManager.js`.
+- Passed: `node --check js\ui\appTopbar.js`.
+- Passed: `node --check tools\audit_ui_polish.mjs`.
+- Passed: `node --check tests\browser\app-shell.spec.mjs`.
+- Passed: `node --test tests\themeManager.test.mjs` with 6 tests, including the new contrast preset.
+- Passed: `node tools\audit_ui_polish.mjs` with 60 CSS files and 71/71 `outline:none` declarations covered.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `node tools\validate_agent_skills.mjs`.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify` with 285 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+- Passed second focused UI pass: `node tools\audit_ui_polish.mjs`, `node --test tests\themeManager.test.mjs`, `npm run test:browser -- tests/browser/app-shell.spec.mjs`, `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`, `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs` and `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 115 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+
+### Next
+
+- Continue `0.0.1.8.15` with the deeper performance review, dead CSS cleanup, broader visual regression review and final documentation/release sync.
+- Do not add new visible Knowledge Graph features until `BI-026` rethinks the graph concept.
+
 ## 2026-08-02: 0.0.1.8.14.7 World Package Asset Payload Copy
 
 ### What Changed

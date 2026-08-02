@@ -1154,6 +1154,17 @@
 }
 
 
+.property-settings-new input:focus-visible,
+.property-settings-new select:focus-visible {
+
+  border-color:
+    var(--mow-input-border-focus, rgba(241,211,142,0.30));
+
+  box-shadow:
+    var(--mow-focus-shadow, 0 0 0 3px rgba(241,211,142,0.08));
+}
+
+
 .property-settings-new input {
 
   padding:

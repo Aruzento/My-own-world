@@ -21,6 +21,7 @@ owner_zone: "delivery"
 
 ### Changed
 
+- UI redesign Phase 9 polish started with `0.0.1.8.15.1`: Settings now has a real `contrast` appearance theme, appearance controls expose pressed states, legacy focus gaps in editor/table/property/item/wiki fields are covered, large map/graph inspectors no longer use expensive blur, and `npm run verify` includes the new `tools/audit_ui_polish.mjs` guard.
 - UI redesign Phase 8 secondary screens closed at `Usable` with `0.0.1.8.14.7`: World Package export now embeds readable asset payloads, and backup-gated import writes valid base64 payloads without overwriting existing workspace files, rewriting imported page references when copied asset paths change.
 - UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.6`: World Package import now applies embedded rulePackages into `rule-packages/` after backup without overwriting existing files, and asset references run preflight so required missing assets block while optional missing assets warn.
 - UI redesign Phase 8 secondary screens continued with `0.0.1.8.14.5`: World Package page-only import now has conflict modes for stopping, importing only new pages, or creating copied conflict pages with unique ids/titles and rewired parent links after backup.

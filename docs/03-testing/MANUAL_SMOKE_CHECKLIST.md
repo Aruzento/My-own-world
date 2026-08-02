@@ -40,7 +40,8 @@ Design check after step 15: the map must read as a graphic editor. Canvas tools 
 24. Use tree search and open a result.
 25. Confirm opening a page does not show a right page-info panel; the reserved right panel should stay hidden in normal work.
 26. Click `Дерево` in the left rail once and confirm the tree sidebar hides and the editor expands; click it again and confirm the tree returns.
-27. Delete the test entities.
+27. Open Settings, switch theme between `dark` and `contrast`, then switch accent/background/scale. Confirm the app stays readable, no controls overlap, and the active appearance controls expose visible pressed/focus states.
+28. Delete the test entities.
 
 ## World Package
 
@@ -83,4 +84,4 @@ Use a copy of the large GM workspace for destructive checks.
 
 ## Pass Rule
 
-The pass is only clean if the user can understand what is happening after each action. If an operation takes time, the UI must show progress or a clear status.
+The pass is only clean if the user can understand what is happening after each action. If an operation takes time, the UI must show progress or a clear status. For UI polish work, `npm run ui:polish:audit` must also pass.

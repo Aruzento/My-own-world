@@ -103,6 +103,37 @@ test(
 
 
 test(
+  'contrast theme is a supported appearance preset',
+  () => {
+
+    const root =
+      createRoot();
+
+    const appearance =
+      applyAppearance(
+        {
+          theme: 'contrast',
+          accent: 'gold',
+          background: 'stone',
+          scale: 'normal'
+        },
+        root
+      );
+
+    assert.equal(
+      appearance.theme,
+      'contrast'
+    );
+
+    assert.equal(
+      root.dataset.theme,
+      'contrast'
+    );
+  }
+);
+
+
+test(
   'stored appearance falls back to defaults after invalid JSON',
   () => {
 

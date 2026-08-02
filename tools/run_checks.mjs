@@ -144,6 +144,13 @@ run(
   ]
 );
 
+run(
+  process.execPath,
+  [
+    'tools/audit_ui_polish.mjs'
+  ]
+);
+
 if (!jsOnly) {
 
   run(
