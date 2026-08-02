@@ -433,6 +433,64 @@ export function createSafeWorldPackageId(
 }
 
 
+export function normalizeBase64PayloadBytes(
+  value
+) {
+
+  const normalized =
+    String(value ?? '')
+      .replace(/\s+/g, '');
+
+  const paddingMatch =
+    normalized.match(/=+$/);
+
+  const paddingLength =
+    paddingMatch
+      ? paddingMatch[0].length
+      : 0;
+
+  if (paddingLength > 2) {
+
+    return null;
+  }
+
+  const body =
+    paddingLength > 0
+      ? normalized.slice(
+        0,
+        -paddingLength
+      )
+      : normalized;
+
+  if (
+    body.includes('=') ||
+    !/^[A-Za-z0-9+/]*$/.test(body)
+  ) {
+
+    return null;
+  }
+
+  if (
+    body.length === 0
+  ) {
+
+    return paddingLength > 0
+      ? null
+      : '';
+  }
+
+  if (body.length % 4 === 1) {
+
+    return null;
+  }
+
+  return body.padEnd(
+    Math.ceil(body.length / 4) * 4,
+    '='
+  );
+}
+
+
 function createPackagePageRecord(
   page = {}
 ) {
@@ -496,7 +554,10 @@ function normalizePackageAssets(
 
   if (!Array.isArray(assets)) return [];
 
-  return assets
+  const byPath =
+    new Map();
+
+  assets
     .map(asset => {
 
       if (!isPlainObject(asset)) {
@@ -514,12 +575,123 @@ function normalizePackageAssets(
         owner:
           asset.owner || null,
         required:
-          asset.required !== false
+          asset.required !== false,
+        payload:
+          normalizeAssetPayload(
+            asset.payload
+          )
       };
     })
     .filter(asset =>
       asset?.path
+    )
+    .forEach(asset => {
+
+      const existing =
+        byPath.get(
+          asset.path
+        );
+
+      if (!existing) {
+
+        byPath.set(
+          asset.path,
+          asset
+        );
+
+        return;
+      }
+
+      existing.required =
+        existing.required ||
+        asset.required;
+
+      if (
+        existing.type === 'futureMedia' &&
+        asset.type !== 'futureMedia'
+      ) {
+
+        existing.type =
+          asset.type;
+      }
+
+      if (
+        !existing.owner &&
+        asset.owner
+      ) {
+
+        existing.owner =
+          asset.owner;
+      }
+
+      if (
+        !existing.payload &&
+        asset.payload
+      ) {
+
+        existing.payload =
+          asset.payload;
+      }
+    });
+
+  return [
+    ...byPath.values()
+  ];
+}
+
+
+function normalizeAssetPayload(
+  payload
+) {
+
+  if (!isPlainObject(payload)) return null;
+
+  const rawBytes =
+    payload.bytes ??
+    payload.base64 ??
+    payload.data;
+
+  if (
+    rawBytes === undefined ||
+    rawBytes === null
+  ) {
+
+    return null;
+  }
+
+  const encoding =
+    String(payload.encoding || 'base64')
+      .trim()
+      .toLowerCase();
+
+  if (encoding !== 'base64') {
+
+    return null;
+  }
+
+  const bytes =
+    normalizeBase64PayloadBytes(
+      rawBytes
     );
+
+  if (bytes === null) {
+
+    return null;
+  }
+
+  return {
+    encoding:
+      'base64',
+    mediaType:
+      String(
+        payload.mediaType ||
+        payload.mimeType ||
+        'application/octet-stream'
+      ).trim() ||
+      'application/octet-stream',
+    bytes:
+      bytes
+  };
 }
 
 

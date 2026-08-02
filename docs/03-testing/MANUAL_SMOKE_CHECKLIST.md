@@ -46,10 +46,12 @@ Design check after step 15: the map must read as a graphic editor. Canvas tools 
 
 1. Open Tools -> `Пакеты мира`.
 2. Export the current branch or whole world and confirm the saved package appears in the library.
-3. Preview a conflicting package. `Стоп` should block, `Только новые` should skip conflicts, and `Копии` should create copied pages after backup without overwriting existing pages.
-4. Preview an external JSON package with one embedded rulePackage and one optional missing asset reference. Preview should stay ready, mention `Rule packages` and `optional missing`, create a backup, import the page and write a new file under `rule-packages/`.
-5. Preview an external JSON package with a required missing asset reference. Apply should be blocked before backup/import.
-6. Remember the current limitation: World Package assets are references only; binary asset file copy is still future work.
+3. If the exported branch contains an image or map asset, open the saved `.world-package.json` and confirm `contents.assets` contains a `payload` with `encoding: "base64"`.
+4. Preview a conflicting package. `Стоп` should block, `Только новые` should skip conflicts, and `Копии` should create copied pages after backup without overwriting existing pages.
+5. Import a package with an asset payload whose target path already exists. The existing file should stay unchanged, the imported asset should be written as a copied path such as `*-import.png`, and the imported page should reference that copied path.
+6. Preview an external JSON package with one embedded rulePackage and one optional missing asset reference. Preview should stay ready, mention `Rule packages` and `optional missing`, create a backup, import the page and write a new file under `rule-packages/`.
+7. Preview an external JSON package with a required missing asset reference and no payload. Apply should be blocked before backup/import.
+8. Preview an external JSON package with a required asset and invalid base64 payload bytes. Apply should be blocked before backup/import, the same as a missing required asset.
 
 ## Desktop
 

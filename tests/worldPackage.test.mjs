@@ -20,7 +20,9 @@ import {
 
 import {
   applyWorldPackagePageImport,
-  createWorldPackageAssetImportReport
+  createWorldPackageAssetImportPlan,
+  createWorldPackageAssetImportReport,
+  createWorldPackageAssetPayloadExportReport
 } from '../js/worldPackage/worldPackageImportService.js';
 
 import {
@@ -873,6 +875,510 @@ test(
     assert.equal(
       result.missingOptionalAssets,
       1
+    );
+  }
+);
+
+
+test(
+  'World Package export embeds readable asset payloads and reports missing files',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    await adapter.writeBinary(
+      'assets/portraits/hero.png',
+      new TextEncoder()
+        .encode(
+          'portrait-bytes'
+        )
+        .buffer
+    );
+
+    const pages =
+      [
+        {
+          id:
+            'asset-page',
+          title:
+            'Asset Page',
+          body:
+            '<h1>Asset Page</h1><img data-asset="portraits/hero.png"><img data-asset="portraits/missing.png">'
+        }
+      ];
+
+    const report =
+      await createWorldPackageAssetPayloadExportReport({
+        pages,
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      report.total,
+      2
+    );
+
+    assert.equal(
+      report.embedded.length,
+      1
+    );
+
+    assert.equal(
+      report.missing.length,
+      1
+    );
+
+    assert.equal(
+      report.assets[0].path,
+      'portraits/hero.png'
+    );
+
+    assert.equal(
+      Buffer.from(
+        report.assets[0].payload.bytes,
+        'base64'
+      )
+        .toString(
+          'utf8'
+        ),
+      'portrait-bytes'
+    );
+
+    assert.equal(
+      report.assets[1].payload,
+      null
+    );
+
+    const pkg =
+      createWorldPackageFromPages(
+        pages,
+        {
+          title:
+            'Asset Payload Package',
+          assets:
+            report.assets
+        }
+      );
+
+    assert.equal(
+      pkg.contents.assets[0].payload.encoding,
+      'base64'
+    );
+  }
+);
+
+
+test(
+  'World Package import copies asset payloads without overwriting and rewrites page references',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    await adapter.writeBinary(
+      'assets/portraits/hero.png',
+      new TextEncoder()
+        .encode(
+          'old-image'
+        )
+        .buffer
+    );
+
+    const packageData =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'asset-page',
+            title:
+              'Asset Page',
+            parent:
+              null,
+            body:
+              '<h1>Asset Page</h1><img data-asset="portraits/hero.png">'
+          }
+        ],
+        {
+          title:
+            'Asset Import',
+          assets:
+            [
+              {
+                path:
+                  'portraits/hero.png',
+                type:
+                  'portrait',
+                payload: {
+                  encoding:
+                    'base64',
+                  mediaType:
+                    'image/png',
+                  bytes:
+                    Buffer.from(
+                      'new-image'
+                    )
+                      .toString(
+                        'base64'
+                      )
+                }
+              }
+            ]
+        }
+      );
+
+    const plan =
+      await createWorldPackageAssetImportPlan({
+        packageData,
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      plan.assetsToImport.length,
+      1
+    );
+
+    assert.equal(
+      plan.copiedAssets.length,
+      1
+    );
+
+    assert.equal(
+      plan.rewrittenAssets[0].finalPath,
+      'portraits/hero-import.png'
+    );
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-assets'
+        },
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      result.importedPages,
+      1
+    );
+
+    assert.equal(
+      result.importedAssets,
+      1
+    );
+
+    assert.equal(
+      result.copiedAssets,
+      1
+    );
+
+    assert.deepEqual(
+      result.assetPaths,
+      [
+        'assets/portraits/hero-import.png'
+      ]
+    );
+
+    const originalBytes =
+      new TextDecoder()
+        .decode(
+          await adapter.readBinary(
+            'assets/portraits/hero.png'
+          )
+        );
+
+    const importedBytes =
+      new TextDecoder()
+        .decode(
+          await adapter.readBinary(
+            result.assetPaths[0]
+          )
+        );
+
+    assert.equal(
+      originalBytes,
+      'old-image'
+    );
+
+    assert.equal(
+      importedBytes,
+      'new-image'
+    );
+
+    const importedPageContent =
+      await adapter.readText(
+        result.paths[0]
+      );
+
+    assert.match(
+      importedPageContent,
+      /data-asset="portraits\/hero-import\.png"/
+    );
+
+    assert.doesNotMatch(
+      importedPageContent,
+      /data-asset="portraits\/hero\.png"/
+    );
+  }
+);
+
+
+test(
+  'World Package import can apply an asset-only payload package after backup',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    const packageData =
+      normalizeWorldPackageData({
+        packageId:
+          'asset-only',
+        title:
+          'Asset Only',
+        contents: {
+          pages:
+            [],
+          assets:
+            [
+              {
+                path:
+                  'maps/keep.png',
+                type:
+                  'mapBackground',
+                payload: {
+                  encoding:
+                    'base64',
+                  mediaType:
+                    'image/png',
+                  bytes:
+                    Buffer.from(
+                      'map-bytes'
+                    )
+                      .toString(
+                        'base64'
+                      )
+                }
+              }
+            ],
+          rulePackages:
+            []
+        }
+      });
+
+    const result =
+      await applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-asset-only'
+        },
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      result.importedPages,
+      0
+    );
+
+    assert.equal(
+      result.importedAssets,
+      1
+    );
+
+    assert.equal(
+      new TextDecoder()
+        .decode(
+          await adapter.readBinary(
+            'assets/maps/keep.png'
+          )
+        ),
+      'map-bytes'
+    );
+  }
+);
+
+
+test(
+  'World Package import blocks unsafe asset payload paths before writing pages',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    const packageData =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'unsafe-page',
+            title:
+              'Unsafe Page',
+            parent:
+              null,
+            body:
+              '<h1>Unsafe Page</h1><img data-asset="../pages/hack.md">'
+          }
+        ],
+        {
+          title:
+            'Unsafe Asset',
+          assets:
+            [
+              {
+                path:
+                  '../pages/hack.md',
+                type:
+                  'image',
+                payload: {
+                  encoding:
+                    'base64',
+                  mediaType:
+                    'text/plain',
+                  bytes:
+                    Buffer.from(
+                      'hack'
+                    )
+                      .toString(
+                        'base64'
+                      )
+                }
+              }
+            ]
+        }
+      );
+
+    const report =
+      await createWorldPackageAssetImportReport({
+        packageData,
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      report.ok,
+      false
+    );
+
+    await assert.rejects(
+      () => applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-unsafe-asset'
+        },
+        storageAdapter:
+          adapter
+      }),
+      /required assets are missing/
+    );
+
+    assert.equal(
+      state.pages.length,
+      0
+    );
+  }
+);
+
+
+test(
+  'World Package import blocks invalid asset payload bytes before writing pages',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setPages(
+      []
+    );
+
+    const packageData =
+      createWorldPackageFromPages(
+        [
+          {
+            id:
+              'invalid-payload-page',
+            title:
+              'Invalid Payload Page',
+            parent:
+              null,
+            body:
+              '<h1>Invalid Payload Page</h1><img data-asset="portraits/broken.png">'
+          }
+        ],
+        {
+          title:
+            'Invalid Payload',
+          assets:
+            [
+              {
+                path:
+                  'portraits/broken.png',
+                type:
+                  'portrait',
+                payload: {
+                  encoding:
+                    'base64',
+                  mediaType:
+                    'image/png',
+                  bytes:
+                    'not base64?'
+                }
+              }
+            ]
+        }
+      );
+
+    const report =
+      await createWorldPackageAssetImportReport({
+        packageData,
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      report.ok,
+      false
+    );
+
+    assert.equal(
+      report.missingRequired.length,
+      1
+    );
+
+    await assert.rejects(
+      () => applyWorldPackagePageImport({
+        packageData,
+        backupManifest: {
+          id:
+            'backup-invalid-payload'
+        },
+        storageAdapter:
+          adapter
+      }),
+      /required assets are missing/
+    );
+
+    assert.equal(
+      state.pages.length,
+      0
     );
   }
 );

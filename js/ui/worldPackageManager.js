@@ -26,6 +26,7 @@ import {
 
 import {
   applyWorldPackagePageImport,
+  createWorldPackageAssetPayloadExportReport,
   createWorldPackageAssetImportReport
 } from '../worldPackage/worldPackageImportService.js';
 
@@ -53,7 +54,7 @@ import {
 
 
 const WORLD_PACKAGE_UI_MIGRATION =
-  '0.0.1.8.14.6';
+  '0.0.1.8.14.7';
 
 
 export function setupWorldPackageManager() {
@@ -299,7 +300,7 @@ function createHeader(
     'world-package-summary';
 
   summary.textContent =
-    'Сохраняйте ветки страниц в package-файлы, проверяйте импорт до записи и применяйте страницы с embedded rule packages через backup.';
+    'Сохраняйте ветки страниц вместе с доступными ассетами, проверяйте импорт до записи и применяйте страницы, rule packages и payload-ассеты через backup.';
 
   text.append(
     kicker,
@@ -353,7 +354,7 @@ function createStatusStrip() {
     ['Preview before write', 'search', 'ready'],
     ['Backup gated', 'check', 'warning'],
     ['Rule packages', 'grid', 'ready'],
-    ['Asset preflight', 'search', 'warning']
+    ['Asset payload copy', 'copy', 'ready']
   ].forEach(([label, iconName, state]) => {
 
     const item =
@@ -391,7 +392,7 @@ function createExportPanel({
       title:
         'Экспорт',
       description:
-        'Создает page-only package из текущей ветки или всего workspace.'
+        'Создает package из текущей ветки или всего workspace и встраивает доступные ассеты.'
     });
 
   const form =
@@ -509,13 +510,23 @@ function createExportPanel({
         true;
 
       result.textContent =
-        'Сохраняю package...';
+        'Собираю assets для package...';
 
       try {
 
         const title =
           titleInput.value.trim() ||
           createDefaultPackageTitle();
+
+        const assetExportReport =
+          await createWorldPackageAssetPayloadExportReport({
+            pages,
+            storageAdapter:
+              getStorageAdapter()
+          });
+
+        result.textContent =
+          'Сохраняю package...';
 
         const packageData =
           createWorldPackageFromPages(
@@ -527,7 +538,9 @@ function createExportPanel({
               scope:
                 pages.length === state.pages.length
                   ? 'world'
-                  : 'selection'
+                  : 'selection',
+              assets:
+                assetExportReport.assets
             }
           );
 
@@ -549,10 +562,16 @@ function createExportPanel({
           });
 
         result.textContent =
-          `Сохранено: ${path}`;
+          createExportResultText({
+            path,
+            assetExportReport
+          });
 
         setStatus(
-          `World Package сохранен: ${packageData.title}`
+          createExportStatusText({
+            packageData,
+            assetExportReport
+          })
         );
 
         await previewPanel.showPackage(
@@ -1320,7 +1339,7 @@ function renderPreviewResult({
   [
     ['Новые', previewData.newPages.length, 'ready'],
     ['Конфликты', previewData.counts.conflicts, previewData.counts.conflicts ? 'danger' : 'ready'],
-    ['План', planCounts.pagesToImport, planCounts.pagesToImport || planCounts.rulePackages ? 'ready' : 'warning'],
+    ['План', planCounts.pagesToImport, planCounts.pagesToImport || planCounts.rulePackages || getAssetCopyCount(assetReport) ? 'ready' : 'warning'],
     ['Rules', planCounts.rulePackages, planCounts.rulePackages ? 'ready' : 'warning'],
     ['Assets', previewData.counts.assets, getAssetMeterState(previewData, assetReport)]
   ].forEach(([label, value, stateName]) => {
@@ -1457,6 +1476,31 @@ function getAssetMeterState(
 }
 
 
+function getAssetCopyCount(
+  assetReport
+) {
+
+  return (assetReport?.entries || [])
+    .filter(asset =>
+      asset.payloadAvailable
+    )
+    .length;
+}
+
+
+function getAssetReuseCount(
+  assetReport
+) {
+
+  return (assetReport?.entries || [])
+    .filter(asset =>
+      asset.workspaceAvailable &&
+      !asset.payloadAvailable
+    )
+    .length;
+}
+
+
 function createRulePackagePreviewItems(
   packageData
 ) {
@@ -1499,13 +1543,17 @@ function createAssetPreviewItems(
         );
 
       const stateLabel =
-        report?.available
-          ? 'found'
-          : (
-            asset.required === false
-              ? 'optional missing'
-              : 'required missing'
-          );
+        report?.payloadAvailable && report?.workspaceAvailable
+          ? 'copy without overwrite'
+          : report?.payloadAvailable
+            ? 'payload ready'
+            : report?.workspaceAvailable
+              ? 'already in workspace'
+              : (
+                asset.required === false
+                  ? 'optional missing'
+                  : 'required missing'
+              );
 
       return `${asset.path} · ${stateLabel}`;
     });
@@ -1704,6 +1752,20 @@ function createPreviewReadyText(
     );
   }
 
+  if (getAssetCopyCount(assetReport) > 0) {
+
+    parts.push(
+      `asset copy: ${getAssetCopyCount(assetReport)}`
+    );
+  }
+
+  if (getAssetReuseCount(assetReport) > 0) {
+
+    parts.push(
+      `asset reuse: ${getAssetReuseCount(assetReport)}`
+    );
+  }
+
   if (assetReport?.missingOptional.length > 0) {
 
     parts.push(
@@ -1762,9 +1824,37 @@ function createPreviewPlanItems(
 
   if (assetReport?.total > 0) {
 
-    items.push(
-      `Asset preflight: ${assetReport.available.length}/${assetReport.total}`
-    );
+    if (getAssetCopyCount(assetReport) > 0) {
+
+      items.push(
+        `Asset copy: ${getAssetCopyCount(assetReport)}`
+      );
+    }
+
+    if (getAssetReuseCount(assetReport) > 0) {
+
+      items.push(
+        `Asset reuse: ${getAssetReuseCount(assetReport)}`
+      );
+    }
+
+    if (assetReport.missingOptional.length > 0) {
+
+      items.push(
+        `optional missing: ${assetReport.missingOptional.length}`
+      );
+    }
+
+    if (
+      getAssetCopyCount(assetReport) === 0 &&
+      getAssetReuseCount(assetReport) === 0 &&
+      assetReport.missingOptional.length === 0
+    ) {
+
+      items.push(
+        `Asset check: ${assetReport.available.length}/${assetReport.total}`
+      );
+    }
   }
 
   if (conflictStrategy === 'copy') {
@@ -1822,7 +1912,8 @@ function getPreviewBlockers(
     conflictStrategy === 'skip' &&
     preview.counts.conflicts > 0 &&
     preview.newPages.length === 0 &&
-    preview.counts.rulePackages === 0
+    preview.counts.rulePackages === 0 &&
+    getAssetCopyCount(assetReport) === 0
   ) {
 
     blockers.push(
@@ -1849,11 +1940,12 @@ function getPreviewBlockers(
 
   if (
     preview.counts.pages === 0 &&
-    preview.counts.rulePackages === 0
+    preview.counts.rulePackages === 0 &&
+    getAssetCopyCount(assetReport) === 0
   ) {
 
     blockers.push(
-      'нет страниц для импорта'
+      'нет данных для импорта'
     );
   }
 
@@ -2129,10 +2221,28 @@ function createImportResultMessage(
     );
   }
 
-  if (result.validatedAssets > 0) {
+  if (
+    result.validatedAssets > 0 &&
+    result.importedAssets === 0 &&
+    result.reusedAssets === 0
+  ) {
 
     parts.push(
       `assets checked: ${result.validatedAssets}`
+    );
+  }
+
+  if (result.importedAssets > 0) {
+
+    parts.push(
+      `assets copied: ${result.importedAssets}`
+    );
+  }
+
+  if (result.reusedAssets > 0) {
+
+    parts.push(
+      `assets reused: ${result.reusedAssets}`
     );
   }
 
@@ -2140,6 +2250,66 @@ function createImportResultMessage(
 
     parts.push(
       `optional assets missing: ${result.missingOptionalAssets}`
+    );
+  }
+
+  return parts.join(
+    ' · '
+  );
+}
+
+
+function createExportResultText({
+  path,
+  assetExportReport
+}) {
+
+  const parts =
+    [
+      `Сохранено: ${path}`
+    ];
+
+  if (assetExportReport.total > 0) {
+
+    parts.push(
+      `assets: ${assetExportReport.embedded.length}/${assetExportReport.total}`
+    );
+  }
+
+  if (assetExportReport.missing.length > 0) {
+
+    parts.push(
+      `missing: ${assetExportReport.missing.length}`
+    );
+  }
+
+  return parts.join(
+    ' · '
+  );
+}
+
+
+function createExportStatusText({
+  packageData,
+  assetExportReport
+}) {
+
+  const parts =
+    [
+      `World Package сохранен: ${packageData.title}`
+    ];
+
+  if (assetExportReport.total > 0) {
+
+    parts.push(
+      `assets ${assetExportReport.embedded.length}/${assetExportReport.total}`
+    );
+  }
+
+  if (assetExportReport.missing.length > 0) {
+
+    parts.push(
+      `missing ${assetExportReport.missing.length}`
     );
   }
 

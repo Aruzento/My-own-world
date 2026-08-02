@@ -138,7 +138,7 @@ index.html
 | `styles/block-table.css` | 576 | Table block, selection toolbar and resize states. |
 | `styles/rule-tree.css` | 570 | Internal rules workspace and Rule Tree surfaces. |
 | `styles/command-palette.css` | 559 | Global command palette, deep search results and command rows. |
-| `styles/world-package.css` | 793 | World Package manager popup for export, saved package library, JSON import preview, backup/apply states, conflict-mode controls, rulePackage apply markers and `0.0.1.8.14.6` data-safety markers. |
+| `styles/world-package.css` | 793 | World Package manager popup for export, saved package library, JSON import preview, backup/apply states, conflict-mode controls, rulePackage apply markers and `0.0.1.8.14.7` asset-payload/data-safety markers. |
 | `styles/block-character-sheet.css` | 467 | Runtime character sheet view backed by PropertiesModel. |
 
 ## Largest UI-Related JS Files
@@ -299,7 +299,7 @@ styles/knowledge-graph*.css    graph feature UI; base, slice, inspector and over
 styles/task-tracker.css        task tracker feature UI; `0.0.1.8.14.1` migrated board/column/card/checklist surfaces to shared tokens and local sprite actions, and `0.0.1.8.14.2` guards nested icon-button clicks
 styles/app-topbar.css          topbar plus Settings maintenance UI and compact Tools help routes; `0.0.1.8.14.2` scopes Settings and `0.0.1.8.14.3` scopes Tools help routes
 styles/onboarding.css          Help/Support/Release guide popup; `0.0.1.8.14.3` scopes internal help routes, status chips and support cards
-styles/world-package.css       World Package manager popup; `0.0.1.8.14.6` scopes branch/world export, package library, JSON import preview, conflict-mode controls, asset preflight and backup-gated page/rulePackage import
+styles/world-package.css       World Package manager popup; `0.0.1.8.14.7` scopes branch/world export, package library, JSON import preview, conflict-mode controls, asset preflight and backup-gated page/rulePackage/asset payload import
 ```
 
 Future JS ownership model:
@@ -328,7 +328,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.11` Core content | Closed at `Usable` by `0.0.1.8.11.7`: tree/search has a core-content marker and local search icon; editor block DnD, first-level Add block popup, card editor header/runtime toolbar layer, Properties field-state layer, shared card block frames, card-block selects, saved-template creation, deep search and command palette are migrated to the shared design direction. | `BI-013` and `BI-014` are closed; command palette reuses PageRepository, popupManager and existing app action hooks instead of adding a command registry; keep `BI-025` as future pane-planning material. |
 | `0.0.1.8.12` Campaign map | Closed at `Usable` by `0.0.1.8.12.10`: compact title chip, full-width top scene/session bar, full-height left canvas tool rail, unclipped floating toolbar tooltips, shared map popups, right-side property Inspector, custom object right-click menu and group contextual visibility actions are the current default UI; duplicate layer/object and scene-state panels are not auto-rendered. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke for future map bugfixes. |
 | `0.0.1.8.13` Knowledge graph | Closed at `Usable` by `0.0.1.8.13.11`: visible-slice clarity, selected-node edge states/inspector, node/connect overlay visuals, laconic first layer, CSS owner files, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. | `BI-017`, `BI-018` and `BI-019` are closed for Phase 7. Keep `BI-026` before adding new visible graph features. |
-| `0.0.1.8.14` Secondary screens | Active. `0.0.1.8.14.1` closed the task tracker UI slice at `Usable`; `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup; `0.0.1.8.14.3` migrated the existing Help/Support/Release guide surface in Tools; `0.0.1.8.14.4` added the World Package manager MVP; `0.0.1.8.14.5` added non-destructive World Package conflict import modes; `0.0.1.8.14.6` added embedded rulePackage apply and asset preflight. | Remaining Phase 8 scope: binary asset copy/apply from World Package files and deeper backup/import/release handoff UX where needed. |
+| `0.0.1.8.14` Secondary screens | Closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tracker UI slice; `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup; `0.0.1.8.14.3` migrated the existing Help/Support/Release guide surface in Tools; `0.0.1.8.14.4` added the World Package manager MVP; `0.0.1.8.14.5` added non-destructive World Package conflict import modes; `0.0.1.8.14.6` added embedded rulePackage apply and asset preflight; `0.0.1.8.14.7` added asset payload export/import, non-overwrite copy and imported page reference rewrite. | Next work: `0.0.1.8.15` polish/cleanup and design-system audit, not another hidden Phase 8 feature. |
 
 ## Browser And Tauri Risks
 
@@ -374,7 +374,7 @@ When the redesign reaches these areas, check the small backlog before marking th
 
 - `BI-013`: editor block drag-and-drop regression, closed in `0.0.1.8.11.2`.
 - `BI-014`: Add block popup visual cleanup, closed in `0.0.1.8.11.2`.
-- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map Phase 6 is closed at `Usable` by `0.0.1.8.12.10`; Knowledge Graph Phase 7 is closed at `Usable` by `0.0.1.8.13.11`; Phase 8 secondary screens are active with task tracker, Settings maintenance, Help/Support and World Package manager slices closed through `0.0.1.8.14.6`.
+- Card editor header/toolbar polish advanced in `0.0.1.8.11.3`, Properties field-state polish advanced in `0.0.1.8.11.4`, shared card block frames advanced in `0.0.1.8.11.5`, card selects/template picker advanced in `0.0.1.8.11.6`, and command palette/deep search closed Phase 5 in `0.0.1.8.11.7`; future core-content work should be a specific bug/backlog item, not another broad Phase 5 restyle. Campaign map Phase 6 is closed at `Usable` by `0.0.1.8.12.10`; Knowledge Graph Phase 7 is closed at `Usable` by `0.0.1.8.13.11`; Phase 8 secondary screens are closed at `Usable` by `0.0.1.8.14.7`.
 - `BI-017`: Knowledge Graph CSS/JS ownership split is closed for Phase 7 in `0.0.1.8.13.11`.
 - `BI-018`: Knowledge Graph manual relationship persistence now uses the command lifecycle/write queue in `0.0.1.8.13.11`.
 - `BI-019`: graph hidden-slice clarity is closed in `0.0.1.8.13.1`; selected-node edge-state/inspector clarity is covered by `0.0.1.8.13.2`; future hidden-state work should be a concrete graph bug or an extension of the graph inspector.

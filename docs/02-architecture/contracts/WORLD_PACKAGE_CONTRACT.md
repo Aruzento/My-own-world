@@ -8,9 +8,9 @@ owner_zone: "architecture"
 ---
 # World Package Contract
 
-Date: 2026-07-30
+Date: 2026-08-02
 
-World Package is the project-level format for moving reusable world content between workspaces. It is not the same as Rule Tree package. Rule Tree package moves rules only; World Package can carry pages, asset references, rule packages, metadata, dependencies and future fork/workshop data.
+World Package is the project-level format for moving reusable world content between workspaces. It is not the same as Rule Tree package. Rule Tree package moves rules only; World Package can carry pages, asset references with optional file payloads, rule packages, metadata, dependencies and future fork/workshop data.
 
 ## Goals
 
@@ -72,7 +72,27 @@ The storage layer is `js/worldPackage/worldPackageStorage.js`.
 - `aliases`
 - `body`
 
-`contents.assets` stores workspace-relative asset references. Asset files are not duplicated by the model layer yet; future import/export UI must copy files through the Asset Lifecycle contract.
+`contents.assets` stores workspace-relative asset references. New packages may also include an optional binary payload:
+
+```json
+{
+  "path": "portraits/hero.png",
+  "type": "portrait",
+  "owner": {
+    "pageId": "hero",
+    "entityId": "",
+    "scope": "card"
+  },
+  "required": true,
+  "payload": {
+    "encoding": "base64",
+    "mediaType": "image/png",
+    "bytes": "..."
+  }
+}
+```
+
+`payload.encoding` must be `base64`, and `payload.bytes` must contain valid base64 data after whitespace is removed. `path` remains the persistent reference used by page HTML or JSON. If it does not start with `assets/`, storage operations still read/write the physical file under `assets/<path>`. Older reference-only packages remain valid: required missing references still block import, optional missing references still warn, and existing readable workspace files can still satisfy the reference.
 
 `contents.rulePackages` stores embedded Rule Tree package data for combined exports. Current import applies these packages into `rule-packages/` after backup. If a package id already exists, the importer writes a copied id such as `core-rules-import` instead of overwriting the existing file.
 
@@ -98,8 +118,8 @@ No import should write to workspace before:
 
 Current UI apply boundary:
 
-- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.6"]`.
-- The UI may export a current page branch or the whole workspace page set into `world-packages/*.world-package.json`.
+- `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.7"]`.
+- The UI may export a current page branch or the whole workspace page set into `world-packages/*.world-package.json`, including readable asset payloads referenced by those pages.
 - The UI may apply package pages and embedded rulePackages after preview and backup.
 - Page conflicts are resolved by an explicit mode:
   - `block` is the default and blocks apply when any package page conflicts by id/title.
@@ -107,7 +127,11 @@ Current UI apply boundary:
   - `copy` imports conflicting package pages as new copies with unique ids, unique titles when needed and rewired parent links for imported descendants.
 - No current mode overwrites or replaces an existing workspace page.
 - Packages with embedded rulePackages save those packages through the existing Rule Tree package storage. Existing rule package files are not overwritten; conflicts become imported copies with unique ids.
-- Packages with `contents.assets` run asset preflight before apply. Required missing asset references block import before writing pages or rules. Optional missing references warn and may still import pages/rules. Asset file bytes are not copied by this package format yet.
+- Packages with `contents.assets` run asset preflight before apply. Required missing assets block import only when neither the workspace nor the package payload can provide the file. Optional missing references warn and may still import pages/rules/assets.
+- Invalid or unsupported asset payloads are treated as unavailable payloads. If the asset is required and the workspace cannot read the target file, apply is blocked before pages, rulePackages or assets are written.
+- Asset payloads are written through `StorageAdapter.writeBinary()` only after a backup manifest exists.
+- Asset import is non-destructive. If the target asset file already exists, the importer writes a copied path such as `portraits/hero-import.png` / `assets/portraits/hero-import.png` instead of overwriting the existing file.
+- When an imported asset path changes because of a non-destructive copy, imported page bodies are rewritten from the source asset reference to the final reference before the persistent HTML sanitizer writes the PageRecord.
 - Imported page `body` must be sanitized with the persistent save sanitizer before writing PageRecord content.
 
 ## Dependencies And Forks
@@ -144,12 +168,13 @@ Implemented:
 - page conflict import strategies: block, skip and copy;
 - embedded rulePackage apply without overwriting existing rule package files;
 - asset preflight for required/optional asset references;
+- asset payload export/import through `StorageAdapter.readBinary()` and `StorageAdapter.writeBinary()`;
+- non-destructive asset copy with imported page reference rewrite;
 - dependency report;
 - schema validation;
-- user-facing `Пакеты мира` manager for export, package library, JSON import preview and backup-gated page/rulePackage import;
+- user-facing `Пакеты мира` manager for export, package library, JSON import preview and backup-gated page/rulePackage/asset import;
 - unit and browser tests.
 
 Not implemented yet:
 
-- binary asset file copy/apply from a World Package;
 - Workshop/fork publishing.

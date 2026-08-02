@@ -153,14 +153,19 @@ Asset lifecycle не должен зависеть от DOM-only или browser-
 
 Desktop adapter может отдавать локальные URLs или data URLs, browser adapter - workspace URLs, но persistent HTML/JSON хранит только workspace path.
 
-## World Package Import Preflight
+## World Package Import And Payload Copy
 
-World Package `contents.assets` currently stores workspace-relative references, not binary file payloads. Import must therefore treat asset handling as preflight, not as file copy:
+World Package `contents.assets` stores persistent workspace-relative references and may include a base64 file payload. Import must handle both legacy reference-only packages and new portable payload packages:
 
-- if a referenced asset is required and `StorageAdapter.readBinary(path)` cannot read it, World Package apply is blocked before pages or rulePackages are written;
-- if a referenced asset is optional and cannot be read, import may continue with a visible warning;
-- if a referenced asset is readable, import records it as validated but does not duplicate the file;
-- actual asset payload export/import needs a future package-format extension and must still write through the Asset Lifecycle storage APIs.
+- if a referenced asset is required and neither `StorageAdapter.readBinary(assetStoragePath)` nor package payload can provide it, World Package apply is blocked before pages, rulePackages or assets are written;
+- if a referenced asset is optional and cannot be read and has no payload, import may continue with a visible warning;
+- if a referenced asset is readable in the target workspace and the package has no payload, import records it as reused and does not duplicate the file;
+- if a package includes a valid base64 payload, import writes it through `StorageAdapter.writeBinary()` after backup;
+- if payload bytes are invalid or use an unsupported encoding, import treats the payload as unavailable and blocks required missing assets before any write;
+- if the target asset already exists, import writes a safe copied path such as `portraits/hero-import.png` instead of overwriting;
+- if the persistent asset reference path changes during copy, imported page bodies must be rewritten before the persistent HTML sanitizer writes PageRecord content.
+
+Persistent references may appear as `portraits/hero.png` or `assets/portraits/hero.png`. Storage operations normalize both forms to the physical `assets/` folder.
 
 ## Что Уже Есть В Проекте
 

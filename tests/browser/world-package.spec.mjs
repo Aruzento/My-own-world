@@ -66,7 +66,7 @@ test(
       popup
     ).toHaveAttribute(
       'data-world-package-ui-migration',
-      '0.0.1.8.14.6'
+      '0.0.1.8.14.7'
     );
 
     await expect(
@@ -127,6 +127,33 @@ test(
       page.locator('[data-world-package-file="root-package"]')
     ).toBeVisible();
 
+    const exportedPackage =
+      await page.evaluate(
+        () => JSON.parse(
+          window.__worldPackageTestFiles.get(
+            'world-packages/root-package.world-package.json'
+          )
+        )
+      );
+
+    expect(
+      exportedPackage.contents.assets
+    ).toHaveLength(
+      1
+    );
+
+    expect(
+      Buffer.from(
+        exportedPackage.contents.assets[0].payload.bytes,
+        'base64'
+      )
+        .toString(
+          'utf8'
+        )
+    ).toBe(
+      'root-portrait'
+    );
+
     await expect(
       page.locator('.world-package-preview')
     ).toHaveAttribute(
@@ -165,6 +192,12 @@ test(
       'копий: 2'
     );
 
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'assets copied: 1'
+    );
+
     const copiedBranch =
       await page.evaluate(
         async () => {
@@ -183,7 +216,24 @@ test(
             copiedChild:
               state.pages.find(item =>
                 item.id === 'child-import'
-              )
+              ),
+            copiedRootContent:
+              [...window.__worldPackageTestFiles.values()]
+                .find(content =>
+                  String(content).includes('id: root-import')
+                ),
+            copiedAssetText:
+              (() => {
+
+                const content =
+                  window.__worldPackageTestFiles.get(
+                    'assets/portraits/root-import.png'
+                  );
+
+                return content instanceof ArrayBuffer
+                  ? new TextDecoder().decode(content)
+                  : String(content || '');
+              })()
           };
         }
       );
@@ -207,6 +257,18 @@ test(
       copiedBranch.copiedChild.parent
     ).toBe(
       'root-import'
+    );
+
+    expect(
+      copiedBranch.copiedRootContent
+    ).toContain(
+      'portraits/root-import.png'
+    );
+
+    expect(
+      copiedBranch.copiedAssetText
+    ).toBe(
+      'root-portrait'
     );
 
     const requiredAssetPackage =
@@ -311,6 +373,7 @@ test(
                 [
                   '<h1>Imported Scene</h1>',
                   '<p>New scene from package.</p>',
+                  '<div data-map-asset="assets/maps/imported-scene.png"></div>',
                   '<a href="javascript:alert(1)" onclick="window.__worldPackageUnsafe = true">Unsafe link</a>',
                   '<script>window.__worldPackageUnsafe = true</script>'
                 ].join('')
@@ -324,6 +387,27 @@ test(
                 'portrait',
               required:
                 false
+            },
+            {
+              path:
+                'assets/maps/imported-scene.png',
+              type:
+                'mapBackground',
+              required:
+                true,
+              payload: {
+                encoding:
+                  'base64',
+                mediaType:
+                  'image/png',
+                bytes:
+                  Buffer.from(
+                    'scene-image'
+                  )
+                    .toString(
+                      'base64'
+                    )
+              }
             }
           ],
           rulePackages: [
@@ -402,6 +486,12 @@ test(
       'rule packages: 1'
     );
 
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'assets copied: 1'
+    );
+
     const result =
       await page.evaluate(
         async () => {
@@ -431,6 +521,18 @@ test(
               window.__worldPackageTestFiles.get(
                 'rule-packages/external-rules.rule-package.json'
               ),
+            importedAssetText:
+              (() => {
+
+                const content =
+                  window.__worldPackageTestFiles.get(
+                    'assets/maps/imported-scene.png'
+                  );
+
+                return content instanceof ArrayBuffer
+                  ? new TextDecoder().decode(content)
+                  : String(content || '');
+              })(),
             packageFiles:
               [...window.__worldPackageTestFiles.keys()]
                 .filter(path =>
@@ -486,6 +588,12 @@ test(
       result.rulePackageContent
     ).toContain(
       'scene-rule'
+    );
+
+    expect(
+      result.importedAssetText
+    ).toBe(
+      'scene-image'
     );
 
     expect(
@@ -551,7 +659,8 @@ async function seedWorldPackageWorkspace(
           title,
           parent = null,
           type = 'note',
-          tags = ['card']
+          tags = ['card'],
+          bodyExtra = ''
         }) => [
           '---',
           `id: ${id}`,
@@ -563,7 +672,7 @@ async function seedWorldPackageWorkspace(
           'aliases:',
           '---',
           '',
-          `<h1>${title}</h1><p>Source body.</p>`
+          `<h1>${title}</h1><p>Source body.</p>${bodyExtra}`
         ].join('\n');
 
       const adapter =
@@ -630,13 +739,37 @@ async function seedWorldPackageWorkspace(
             }
           },
           async readBinary(path) {
+
+            const content =
+              await this.readText(path);
+
+            if (content instanceof ArrayBuffer) {
+
+              return content;
+            }
+
+            if (ArrayBuffer.isView(content)) {
+
+              return content.buffer.slice(
+                content.byteOffset,
+                content.byteOffset + content.byteLength
+              );
+            }
+
             return new TextEncoder().encode(
-              await this.readText(path)
+              String(content)
             ).buffer;
           },
           async writeBinary(path, content) {
+            const normalized =
+              normalize(path);
+
+            directories.add(
+              normalized.split('/').slice(0, -1).join('/')
+            );
+
             files.set(
-              normalize(path),
+              normalized,
               content
             );
           },
@@ -723,7 +856,9 @@ async function seedWorldPackageWorkspace(
             [
               'card',
               'folder'
-            ]
+            ],
+          bodyExtra:
+            '<img data-asset="portraits/root.png">'
         });
 
       const childContent =
@@ -744,6 +879,19 @@ async function seedWorldPackageWorkspace(
       files.set(
         'pages/child.md',
         childContent
+      );
+
+      directories.add(
+        'assets'
+      );
+
+      directories.add(
+        'assets/portraits'
+      );
+
+      files.set(
+        'assets/portraits/root.png',
+        'root-portrait'
       );
 
       const pages =

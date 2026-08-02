@@ -6,6 +6,51 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-02: 0.0.1.8.14.7 World Package Asset Payload Copy
+
+### What Changed
+
+- Closed the remaining `0.0.1.8.14` Phase 8 World Package gap inside the existing `Tools -> Пакеты мира` manager instead of adding another secondary screen.
+- Updated `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.7"]` so export, preview and apply copy say what actually happens with assets.
+- World Package export now scans referenced page assets and embeds readable files into `contents.assets[].payload` as valid base64.
+- World Package import now writes asset payload files through the shared storage adapter only after a completed backup manifest.
+- Existing asset files are not overwritten. If a package payload targets a file that already exists, import writes a copied path such as `portraits/hero-import.png`.
+- Imported page bodies are rewritten to copied asset references before the persistent HTML sanitizer writes the PageRecord.
+- Asset-only payload packages can now be applied after backup when there are no pages or rule packages.
+- Invalid base64 payload bytes and unsafe asset paths are treated as unavailable required assets, blocking import before page/rulePackage/asset writes.
+- The Help/Support copy, manual smoke checklist, release notes, tester instructions, contracts and UI migration docs now describe World Package asset payload copy as implemented instead of future work.
+
+### Readiness
+
+`Usable` for World Package branch/world export and backup-gated import of pages, embedded rulePackages and asset payloads. A human can export a branch with images, preview the package, import it safely, keep existing files untouched and see copied page references point at copied asset files. Workshop/fork publishing remains future work.
+
+### Verification
+
+- Passed: `node --check js\worldPackage\worldPackageModel.js`.
+- Passed: `node --check js\worldPackage\worldPackageImportService.js`.
+- Passed: `node --check js\ui\worldPackageManager.js`.
+- Passed: `node --check tests\worldPackage.test.mjs`.
+- Passed: `node --check tests\browser\world-package.spec.mjs`.
+- Passed: `node --test tests\worldPackage.test.mjs` with 17 tests, including asset payload export, non-overwrite copy, page reference rewrite, asset-only import, unsafe asset path blocking and invalid base64 payload blocking.
+- Passed: `npm run test:browser -- tests/browser/world-package.spec.mjs`, covering Tools entry, branch export with payload, library refresh, conflict blocking/copy mode, backup-gated page/rulePackage/asset import, non-overwrite asset copy, required/optional asset states, sanitizer guards and layout checks.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `node tools\validate_agent_skills.mjs`.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify`.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, browser smoke, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke is still optional unless a workspace path is passed.
+- Passed: `git diff --check`.
+
+### Next
+
+- Continue with `0.0.1.8.15` Migration Phase 9 polish and cleanup: accessibility audit, performance pass, visual regression review, theme preset review, animation review, dead CSS cleanup and documentation sync.
+- Do not add new visible Knowledge Graph features until `BI-026` rethinks the graph concept.
+
 ## 2026-07-30: 0.0.1.8.14.6 World Package Rule Package Apply And Asset Preflight
 
 ### What Changed

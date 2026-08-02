@@ -20,6 +20,14 @@ import {
 } from '../storage/storageAdapter.js';
 
 import {
+  collectAssetReferencesFromPages
+} from '../storage/assetReferenceScanner.js';
+
+import {
+  normalizeWorkspacePath
+} from '../storage/storageAdapterContract.js';
+
+import {
   scheduleWorkspaceCheckpoint
 } from '../storage/workspaceCheckpointTasks.js';
 
@@ -34,6 +42,7 @@ import {
 import {
   createWorldPackageImportPreview,
   createSafeWorldPackageId,
+  normalizeBase64PayloadBytes,
   normalizeWorldPackageData
 } from './worldPackageModel.js';
 
@@ -136,16 +145,29 @@ export async function applyWorldPackagePageImport({
       storageAdapter
     });
 
+  const assetPlan =
+    await createWorldPackageAssetImportPlan({
+      packageData:
+        pkg,
+      storageAdapter
+    });
+
   const pagesToImport =
     importPlan.pagesToImport;
 
   const rulePackagesToImport =
     rulePackagePlan.rulePackagesToImport;
 
+  const assetsToImport =
+    assetPlan.assetsToImport;
+
   const createdPages =
     [];
 
   const createdPaths =
+    [];
+
+  const createdAssetPaths =
     [];
 
   const createdRulePackagePaths =
@@ -171,11 +193,12 @@ export async function applyWorldPackagePageImport({
 
       if (
         pagesToImport.length === 0 &&
-        rulePackagesToImport.length === 0
+        rulePackagesToImport.length === 0 &&
+        assetsToImport.length === 0
       ) {
 
         throw new Error(
-          'World Package has no pages or rule packages to import.'
+          'World Package has no pages, rule packages or assets to import.'
         );
       }
     },
@@ -186,6 +209,9 @@ export async function applyWorldPackagePageImport({
         createdPaths: [
           ...createdPaths
         ],
+        createdAssetPaths: [
+          ...createdAssetPaths
+        ],
         createdRulePackagePaths: [
           ...createdRulePackagePaths
         ]
@@ -193,9 +219,38 @@ export async function applyWorldPackagePageImport({
     },
     async persist() {
 
-      await storageAdapter.ensureDirectory(
-        'pages'
-      );
+      for (const entry of assetsToImport) {
+
+        const parentPath =
+          getParentPath(
+            entry.storagePath
+          );
+
+        if (parentPath) {
+
+          await storageAdapter.ensureDirectory(
+            parentPath
+          );
+        }
+
+        await storageAdapter.writeBinary(
+          entry.storagePath,
+          decodeAssetPayloadToArrayBuffer(
+            entry.payload
+          )
+        );
+
+        createdAssetPaths.push(
+          entry.storagePath
+        );
+      }
+
+      if (pagesToImport.length > 0) {
+
+        await storageAdapter.ensureDirectory(
+          'pages'
+        );
+      }
 
       for (const entry of pagesToImport) {
 
@@ -205,13 +260,19 @@ export async function applyWorldPackagePageImport({
         const page =
           entry.page;
 
+        const rewrittenBody =
+          rewriteImportedPageAssetPaths(
+            page.body,
+            assetPlan.pathMap
+          );
+
         const body =
           entry.titleChanged
             ? updateImportedPageTitleInBody(
-              page.body,
+              rewrittenBody,
               entry.finalTitle
             )
-            : page.body;
+            : rewrittenBody;
 
         const content =
           buildPageRecordContent({
@@ -310,6 +371,14 @@ export async function applyWorldPackagePageImport({
           rulePackagePlan.copiedRulePackages.length,
         validatedAssets:
           assetReport.available.length,
+        importedAssets:
+          assetsToImport.length,
+        copiedAssets:
+          assetPlan.copiedAssets.length,
+        reusedAssets:
+          assetPlan.reusedAssets.length,
+        rewrittenAssetReferences:
+          assetPlan.rewrittenAssets.length,
         missingOptionalAssets:
           assetReport.missingOptional.length,
         conflictStrategy:
@@ -318,6 +387,9 @@ export async function applyWorldPackagePageImport({
           backupManifest.id,
         paths: [
           ...createdPaths
+        ],
+        assetPaths: [
+          ...createdAssetPaths
         ],
         rulePackagePaths: [
           ...createdRulePackagePaths
@@ -334,6 +406,19 @@ export async function applyWorldPackagePageImport({
       );
 
       for (const path of createdPaths) {
+
+        try {
+
+          await storageAdapter.removeFile(
+            path
+          );
+
+        } catch {
+          // Best-effort cleanup after a failed bulk import.
+        }
+      }
+
+      for (const path of createdAssetPaths) {
 
         try {
 
@@ -389,12 +474,32 @@ export async function createWorldPackageAssetImportReport({
           asset.path
       });
 
+    const payload =
+      validateAssetPayload(
+        asset.payload
+      );
+
+    const payloadAvailable =
+      Boolean(availability.storagePath) &&
+      payload.available;
+
     entries.push({
       ...asset,
       available:
+        availability.available ||
+        payloadAvailable,
+      workspaceAvailable:
         availability.available,
+      payloadAvailable:
+        payloadAvailable,
+      storagePath:
+        availability.storagePath,
       error:
-        availability.error
+        availability.error,
+      payloadError:
+        availability.storagePath
+          ? payload.error
+          : availability.error
     });
   }
 
@@ -421,9 +526,292 @@ export async function createWorldPackageAssetImportReport({
     total:
       entries.length,
     available,
+    payloadAssets:
+      entries.filter(asset =>
+        asset.payloadAvailable
+      ),
+    workspaceAssets:
+      entries.filter(asset =>
+        asset.workspaceAvailable
+      ),
     missingRequired,
     missingOptional,
     entries
+  };
+}
+
+
+export async function createWorldPackageAssetPayloadExportReport({
+  pages = [],
+  storageAdapter = getStorageAdapter()
+} = {}) {
+
+  const references =
+    dedupeAssetReferences(
+      collectAssetReferencesFromPages(
+        pages
+      )
+    );
+
+  const assets =
+    [];
+
+  const embedded =
+    [];
+
+  const missing =
+    [];
+
+  for (const reference of references) {
+
+    const asset =
+      {
+        path:
+          reference.path,
+        type:
+          reference.type,
+        owner:
+          reference.owner,
+        required:
+          true,
+        payload:
+          null
+      };
+
+    try {
+
+      const storagePath =
+        getAssetStoragePath(
+          reference.path
+        );
+
+      const buffer =
+        await storageAdapter.readBinary(
+          storagePath
+        );
+
+      asset.payload =
+        {
+          encoding:
+            'base64',
+          mediaType:
+            inferMimeType(
+              storagePath
+            ),
+          bytes:
+            arrayBufferToBase64(
+              buffer
+            )
+        };
+
+      embedded.push(
+        asset
+      );
+
+    } catch (error) {
+
+      missing.push({
+        path:
+          reference.path,
+        type:
+          reference.type,
+        error:
+          String(
+            error?.message || error || 'Asset is not readable.'
+          )
+      });
+    }
+
+    assets.push(
+      asset
+    );
+  }
+
+  return {
+    total:
+      references.length,
+    embedded,
+    missing,
+    assets
+  };
+}
+
+
+export async function createWorldPackageAssetImportPlan({
+  packageData,
+  storageAdapter = getStorageAdapter()
+} = {}) {
+
+  const pkg =
+    normalizeWorldPackageData(
+      packageData
+    );
+
+  const usedStoragePaths =
+    new Set();
+
+  const entries =
+    [];
+
+  const pathMap =
+    new Map();
+
+  for (const asset of pkg.contents.assets) {
+
+    const availability =
+      await checkAssetAvailability({
+        storageAdapter,
+        path:
+          asset.path
+      });
+
+    const payload =
+      validateAssetPayload(
+        asset.payload
+      );
+
+    const payloadAvailable =
+      Boolean(availability.storagePath) &&
+      payload.available;
+
+    if (payloadAvailable) {
+
+      const finalPath =
+        availability.available
+          ? await createUniqueAssetReferencePath({
+            sourcePath:
+              asset.path,
+            usedStoragePaths,
+            storageAdapter
+          })
+          : asset.path;
+
+      const storagePath =
+        getAssetStoragePath(
+          finalPath
+        );
+
+      usedStoragePaths.add(
+        storagePath
+      );
+
+      if (finalPath !== asset.path) {
+
+        pathMap.set(
+          asset.path,
+          finalPath
+        );
+      }
+
+      entries.push({
+        ...asset,
+        action:
+          'copy',
+        sourcePath:
+          asset.path,
+        finalPath,
+        storagePath,
+        conflict:
+          availability.available,
+        payload:
+          asset.payload
+      });
+
+      continue;
+    }
+
+    if (availability.available) {
+
+      entries.push({
+        ...asset,
+        action:
+          'reuse',
+        sourcePath:
+          asset.path,
+        finalPath:
+          asset.path,
+        storagePath:
+          availability.storagePath,
+        conflict:
+          false,
+        payload:
+          null
+      });
+
+      continue;
+    }
+
+    entries.push({
+      ...asset,
+      action:
+        asset.required === false
+          ? 'missingOptional'
+          : 'missingRequired',
+      sourcePath:
+        asset.path,
+      finalPath:
+        asset.path,
+      storagePath:
+        availability.storagePath,
+      conflict:
+        false,
+      payload:
+        null,
+      error:
+        payload.error ||
+        availability.error
+    });
+  }
+
+  const assetsToImport =
+    entries.filter(entry =>
+      entry.action === 'copy'
+    );
+
+  const copiedAssets =
+    assetsToImport.filter(entry =>
+      entry.conflict
+    );
+
+  const reusedAssets =
+    entries.filter(entry =>
+      entry.action === 'reuse'
+    );
+
+  const rewrittenAssets =
+    [...pathMap.entries()]
+      .map(([sourcePath, finalPath]) => ({
+        sourcePath,
+        finalPath
+      }));
+
+  return {
+    packageId:
+      pkg.packageId,
+    assetsToImport,
+    copiedAssets,
+    reusedAssets,
+    missingRequired:
+      entries.filter(entry =>
+        entry.action === 'missingRequired'
+      ),
+    missingOptional:
+      entries.filter(entry =>
+        entry.action === 'missingOptional'
+      ),
+    rewrittenAssets,
+    pathMap,
+    entries,
+    counts: {
+      assets:
+        entries.length,
+      assetsToImport:
+        assetsToImport.length,
+      copied:
+        copiedAssets.length,
+      reused:
+        reusedAssets.length
+    }
   };
 }
 
@@ -804,6 +1192,30 @@ async function checkAssetAvailability({
   path
 }) {
 
+  let storagePath =
+    '';
+
+  try {
+
+    storagePath =
+      getAssetStoragePath(
+        path
+      );
+
+  } catch (error) {
+
+    return {
+      available:
+        false,
+      storagePath:
+        '',
+      error:
+        String(
+          error?.message || error || 'Asset path is not safe.'
+        )
+    };
+  }
+
   if (
     !storageAdapter ||
     typeof storageAdapter.readBinary !== 'function'
@@ -812,6 +1224,7 @@ async function checkAssetAvailability({
     return {
       available:
         false,
+      storagePath,
       error:
         'Storage adapter cannot read binary assets.'
     };
@@ -820,7 +1233,286 @@ async function checkAssetAvailability({
   try {
 
     await storageAdapter.readBinary(
+      storagePath
+    );
+
+    return {
+      available:
+        true,
+      storagePath,
+      error:
+        null
+    };
+
+  } catch (error) {
+
+    return {
+      available:
+        false,
+      storagePath,
+      error:
+        String(
+          error?.message || error || 'Asset is not readable.'
+        )
+    };
+  }
+}
+
+
+function getAssetStoragePath(
+  path
+) {
+
+  const normalized =
+    normalizeSafeAssetReferencePath(
       path
+    );
+
+  const assetRelativePath =
+    normalized.replace(
+      /^assets\//,
+      ''
+    );
+
+  if (!assetRelativePath) {
+
+    throw new Error(
+      'Asset path is empty.'
+    );
+  }
+
+  return `assets/${assetRelativePath}`;
+}
+
+
+function normalizeSafeAssetReferencePath(
+  path
+) {
+
+  const normalized =
+    normalizeWorkspacePath(
+      path
+    );
+
+  const parts =
+    normalized.split('/');
+
+  if (
+    !normalized ||
+    normalized.startsWith('.') ||
+    normalized.includes(':') ||
+    parts.some(part =>
+      part === '..' ||
+      part === '.'
+    )
+  ) {
+
+    throw new Error(
+      'Asset path must be a safe workspace-relative path.'
+    );
+  }
+
+  return normalized;
+}
+
+
+async function createUniqueAssetReferencePath({
+  sourcePath,
+  usedStoragePaths,
+  storageAdapter
+}) {
+
+  const normalized =
+    normalizeSafeAssetReferencePath(
+      sourcePath || 'asset'
+    );
+
+  const keepsAssetPrefix =
+    normalized.startsWith(
+      'assets/'
+    );
+
+  const assetRelativePath =
+    normalized.replace(
+      /^assets\//,
+      ''
+    );
+
+  const parts =
+    assetRelativePath.split('/');
+
+  const filename =
+    parts.pop() ||
+    'asset';
+
+  const directory =
+    parts.join('/');
+
+  const {
+    base,
+    extension
+  } =
+    splitFilename(
+      filename
+    );
+
+  let index =
+    1;
+
+  let candidateRelative =
+    joinPath(
+      directory,
+      `${base}-import${extension}`
+    );
+
+  while (
+    usedStoragePaths.has(
+      `assets/${candidateRelative}`
+    ) ||
+    (
+      await assetExistsAtStoragePath({
+        storageAdapter,
+        storagePath:
+          `assets/${candidateRelative}`
+      })
+    )
+  ) {
+
+    index += 1;
+
+    candidateRelative =
+      joinPath(
+        directory,
+        `${base}-import-${index}${extension}`
+      );
+  }
+
+  return keepsAssetPrefix
+    ? `assets/${candidateRelative}`
+    : candidateRelative;
+}
+
+
+async function assetExistsAtStoragePath({
+  storageAdapter,
+  storagePath
+}) {
+
+  if (
+    !storageAdapter ||
+    typeof storageAdapter.readBinary !== 'function'
+  ) {
+
+    return false;
+  }
+
+  try {
+
+    await storageAdapter.readBinary(
+      storagePath
+    );
+
+    return true;
+
+  } catch {
+
+    return false;
+  }
+}
+
+
+function splitFilename(
+  filename
+) {
+
+  const safeFilename =
+    String(filename || 'asset');
+
+  const index =
+    safeFilename.lastIndexOf('.');
+
+  if (index <= 0) {
+
+    return {
+      base:
+        safeFilename,
+      extension:
+        ''
+    };
+  }
+
+  return {
+    base:
+      safeFilename.slice(
+        0,
+        index
+      ),
+    extension:
+      safeFilename.slice(
+        index
+      )
+  };
+}
+
+
+function joinPath(
+  directory,
+  filename
+) {
+
+  return [
+    directory,
+    filename
+  ]
+    .filter(Boolean)
+    .join('/');
+}
+
+
+function getParentPath(
+  path
+) {
+
+  const parts =
+    normalizeWorkspacePath(
+      path
+    )
+      .split('/');
+
+  parts.pop();
+
+  return parts.join('/');
+}
+
+
+function validateAssetPayload(
+  payload
+) {
+
+  if (!payload) {
+
+    return {
+      available:
+        false,
+      error:
+        null
+    };
+  }
+
+  if (payload.encoding !== 'base64') {
+
+    return {
+      available:
+        false,
+      error:
+        'Asset payload encoding is not supported.'
+    };
+  }
+
+  try {
+
+    decodeAssetPayloadToArrayBuffer(
+      payload
     );
 
     return {
@@ -837,10 +1529,318 @@ async function checkAssetAvailability({
         false,
       error:
         String(
-          error?.message || error || 'Asset is not readable.'
+          error?.message || error || 'Asset payload is not readable.'
         )
     };
   }
+}
+
+
+function decodeAssetPayloadToArrayBuffer(
+  payload
+) {
+
+  if (
+    !payload ||
+    payload.encoding !== 'base64'
+  ) {
+
+    throw new Error(
+      'Asset payload must use base64 encoding.'
+    );
+  }
+
+  const base64 =
+    normalizeBase64PayloadBytes(
+      payload.bytes
+    );
+
+  if (base64 === null) {
+
+    throw new Error(
+      'Asset payload bytes must be valid base64.'
+    );
+  }
+
+  if (typeof Buffer !== 'undefined') {
+
+    const buffer =
+      Buffer.from(
+        base64,
+        'base64'
+      );
+
+    return buffer.buffer.slice(
+      buffer.byteOffset,
+      buffer.byteOffset + buffer.byteLength
+    );
+  }
+
+  if (typeof atob !== 'function') {
+
+    throw new Error(
+      'Base64 decoder is not available.'
+    );
+  }
+
+  const binary =
+    atob(
+      base64
+    );
+
+  const bytes =
+    new Uint8Array(
+      binary.length
+    );
+
+  for (
+    let index = 0;
+    index < binary.length;
+    index += 1
+  ) {
+
+    bytes[index] =
+      binary.charCodeAt(
+        index
+      );
+  }
+
+  return bytes.buffer;
+}
+
+
+function arrayBufferToBase64(
+  buffer
+) {
+
+  const bytes =
+    new Uint8Array(
+      buffer
+    );
+
+  if (typeof Buffer !== 'undefined') {
+
+    return Buffer.from(
+      bytes
+    )
+      .toString(
+        'base64'
+      );
+  }
+
+  let binary =
+    '';
+
+  const chunkSize =
+    0x8000;
+
+  for (
+    let index = 0;
+    index < bytes.length;
+    index += chunkSize
+  ) {
+
+    binary += String.fromCharCode(
+      ...bytes.subarray(
+        index,
+        index + chunkSize
+      )
+    );
+  }
+
+  return btoa(
+    binary
+  );
+}
+
+
+function inferMimeType(
+  path
+) {
+
+  const extension =
+    String(path || '')
+      .split('.')
+      .pop()
+      .toLowerCase();
+
+  if (extension === 'png') return 'image/png';
+  if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+  if (extension === 'webp') return 'image/webp';
+  if (extension === 'gif') return 'image/gif';
+  if (extension === 'svg') return 'image/svg+xml';
+  if (extension === 'mp3') return 'audio/mpeg';
+  if (extension === 'wav') return 'audio/wav';
+  if (extension === 'ogg') return 'audio/ogg';
+  if (extension === 'm4a') return 'audio/mp4';
+  if (extension === 'aac') return 'audio/aac';
+  if (extension === 'flac') return 'audio/flac';
+  if (extension === 'webm') return 'audio/webm';
+
+  return 'application/octet-stream';
+}
+
+
+function dedupeAssetReferences(
+  references
+) {
+
+  const byPath =
+    new Map();
+
+  for (const reference of references) {
+
+    if (
+      !reference?.path ||
+      byPath.has(
+        reference.path
+      )
+    ) {
+
+      continue;
+    }
+
+    byPath.set(
+      reference.path,
+      reference
+    );
+  }
+
+  return [
+    ...byPath.values()
+  ];
+}
+
+
+function rewriteImportedPageAssetPaths(
+  body,
+  pathMap
+) {
+
+  if (
+    !pathMap ||
+    pathMap.size === 0
+  ) {
+
+    return String(body || '');
+  }
+
+  let result =
+    String(body || '');
+
+  const replacements =
+    [];
+
+  for (const [sourcePath, finalPath] of pathMap.entries()) {
+
+    replacements.push(
+      ...createAssetPathReplacementPairs(
+        sourcePath,
+        finalPath
+      )
+    );
+  }
+
+  replacements
+    .sort((left, right) =>
+      right.source.length - left.source.length
+    )
+    .forEach(({ source, target }) => {
+
+      if (!source || source === target) return;
+
+      result =
+        result.replaceAll(
+          source,
+          target
+        );
+    });
+
+  return result;
+}
+
+
+function createAssetPathReplacementPairs(
+  sourcePath,
+  finalPath
+) {
+
+  const source =
+    normalizeWorkspacePath(
+      sourcePath
+    );
+
+  const target =
+    normalizeWorkspacePath(
+      finalPath
+    );
+
+  const sourceWithoutPrefix =
+    source.replace(
+      /^assets\//,
+      ''
+    );
+
+  const targetWithoutPrefix =
+    target.replace(
+      /^assets\//,
+      ''
+    );
+
+  const rawPairs =
+    [
+      [
+        source,
+        target
+      ],
+      [
+        sourceWithoutPrefix,
+        targetWithoutPrefix
+      ],
+      [
+        `assets/${sourceWithoutPrefix}`,
+        `assets/${targetWithoutPrefix}`
+      ]
+    ];
+
+  const pairs =
+    [];
+
+  for (const [rawSource, rawTarget] of rawPairs) {
+
+    [
+      [
+        rawSource,
+        rawTarget
+      ],
+      [
+        escapeHtml(
+          rawSource
+        ),
+        escapeHtml(
+          rawTarget
+        )
+      ],
+      [
+        encodeURIComponent(
+          rawSource
+        ),
+        encodeURIComponent(
+          rawTarget
+        )
+      ]
+    ].forEach(([replacementSource, replacementTarget]) => {
+
+      pairs.push({
+        source:
+          replacementSource,
+        target:
+          replacementTarget
+      });
+    });
+  }
+
+  return pairs;
 }
 
 

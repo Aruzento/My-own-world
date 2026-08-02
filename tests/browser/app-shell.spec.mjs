@@ -738,7 +738,7 @@ test(
     await expect(
       page.locator('#onboardingPopup')
     ).toContainText(
-      'Binary asset copy'
+      'non-overwrite asset copy'
     );
 
     await page.evaluate(

@@ -189,7 +189,7 @@ const ONBOARDING_SECTIONS = {
       },
       {
         title: 'Import / export',
-        text: 'Tools -> Пакеты мира уже дает export, library, preview, backup-gated page/rulePackage import и asset preflight. Binary asset copy остается следующим шагом.',
+        text: 'Tools -> Пакеты мира уже дает export, library, preview, backup-gated page/rulePackage/asset import, asset preflight и non-overwrite asset copy.',
         meta: 'Usable',
         iconName: 'folder-open',
         state: 'ready'

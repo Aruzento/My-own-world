@@ -745,7 +745,7 @@ test(
       .click();
 
     await expect(
-      page.locator('#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.6"]')
+      page.locator('#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.7"]')
     ).toBeVisible();
 
     await attachLocatorScreenshot(
