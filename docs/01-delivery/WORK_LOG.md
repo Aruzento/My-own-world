@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-02: 0.0.1.8.15.2 UI Runtime Performance Smoke
+
+### What Changed
+
+- Defined `0.0.1.8.15` as five subpoints: polish audit/theme guard, performance pass, broader visual-regression/theme-scale coverage, dead CSS cleanup and final docs/release sync.
+- Added `tests/browser/ui-polish-performance.spec.mjs` as the Phase 9 performance guard for migrated UI surfaces.
+- The new browser smoke renders a synthetic 420-page tree, a 180-token / 80-shape campaign map, an expanded Knowledge Graph canvas and a 96-card task tracker.
+- The scenario checks that each surface renders the expected DOM workload and stays inside soft runtime budgets, while preserving tree virtualization instead of forcing all tree rows into the DOM.
+- Added the scenario to the browser smoke catalog as `ui-polish-runtime-performance`.
+
+### Readiness
+
+`Foundation` for the Phase 9 performance pass. The product UI is unchanged, but future polish work now has an automated browser guard for large migrated workbench surfaces.
+
+### Verification
+
+- Passed: `node --check tests/browser/ui-polish-performance.spec.mjs`.
+- Passed twice after stabilization: `npm run test:browser -- tests/browser/ui-polish-performance.spec.mjs`.
+- Passed: `node --check tests/browser/scenarios.mjs`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 572 files.
+- Passed: `python tools\generate_manual_docx.py`.
+- Passed: `npm run check:encoding`.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run ui:polish:audit` with 60 CSS files, 98 transition declarations, 18 animation declarations, 9 keyframes, 32 backdrop-filter declarations and 71/71 `outline:none` declarations covered.
+- Passed: `npm run verify` with 285 node tests, large-workspace smoke, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Continue `0.0.1.8.15.3` with broader visual-regression and theme-scale coverage.
+- Keep `BI-026` as the gate before adding new visible Knowledge Graph concepts.
+
 ## 2026-08-02: 0.0.1.8.15.1 UI Polish Audit And Contrast Theme
 
 ### What Changed

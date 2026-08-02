@@ -84,4 +84,4 @@ Use a copy of the large GM workspace for destructive checks.
 
 ## Pass Rule
 
-The pass is only clean if the user can understand what is happening after each action. If an operation takes time, the UI must show progress or a clear status. For UI polish work, `npm run ui:polish:audit` must also pass.
+The pass is only clean if the user can understand what is happening after each action. If an operation takes time, the UI must show progress or a clear status. For UI polish work, `npm run ui:polish:audit` must also pass; for Phase 9 performance-sensitive changes, also run `npm run test:browser -- tests/browser/ui-polish-performance.spec.mjs`.

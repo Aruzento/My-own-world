@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 571.
+Всего файлов в аудите: 572.
 
 ## Два Независимых Прохода
 
@@ -26,7 +26,7 @@ owner_zone: "delivery"
 |---|---:|
 | agent workflow | 9 |
 | assets | 4 |
-| browser tests | 26 |
+| browser tests | 27 |
 | campaign map | 51 |
 | character | 5 |
 | ci | 1 |
@@ -66,7 +66,6 @@ owner_zone: "delivery"
 |---|---|
 | `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 | `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
-| `tools/audit_ui_polish.mjs` | Кандидат: untracked файл, проверить назначение перед удалением. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -76,11 +75,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5844533 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5849670 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 1012977 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 630558 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 167833 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 1013373 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 633598 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 168485 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -663,6 +662,7 @@ owner_zone: "delivery"
 | `tests/browser/tree-dnd-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tree-security.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tree-virtualization.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/ui-polish-performance.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/visual-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/world-package.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browserSmokeRunner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
@@ -716,7 +716,7 @@ owner_zone: "delivery"
 | `tests/workspacePerformance.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/worldPackage.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tools/audit_project_files.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: новый повторяемый инструмент аудита, нужен для будущих уборок. |
-| `tools/audit_ui_polish.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Кандидат: untracked файл, проверить назначение перед удалением. |
+| `tools/audit_ui_polish.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/check_desktop_environment.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/check_desktop_packaging_smoke.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `tools/check_import_paths.mjs` | tools | Служебный инструмент проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |

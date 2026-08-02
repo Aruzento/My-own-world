@@ -44,6 +44,12 @@ node --test tests/themeManager.test.mjs
 npm run test:browser -- tests/browser/app-shell.spec.mjs
 ```
 
+For the Phase 9 migrated-surface performance guard, use:
+
+```powershell
+npm run test:browser -- tests/browser/ui-polish-performance.spec.mjs
+```
+
 For the campaign map split toolbar/tool rail, editable property Inspector, custom right-click popup and group contextual actions redesign slice, use:
 
 ```powershell

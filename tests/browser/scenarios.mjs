@@ -218,6 +218,22 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'ui-polish-runtime-performance',
+    priority: 'P1',
+    area: 'ui',
+    title: 'Migrated workbench surfaces render large synthetic workloads inside soft budgets',
+    description:
+      'Render a large virtualized tree, campaign map, Knowledge Graph full canvas and task tracker board in one browser scenario, then verify DOM counts and soft runtime budgets.',
+    automationStatus:
+      'automated: ui-polish-runtime-surfaces-render-large-workloads-inside-budgets',
+    automatesChecklist: [
+      'UI polish: performance',
+      'Large Workspace: 1',
+      'Large Workspace: 2',
+      'Large Workspace: 8'
+    ]
+  },
+  {
     id: 'template-create-card',
     priority: 'P2',
     area: 'templates',

@@ -103,7 +103,17 @@ Status: closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tra
 
 Description: run accessibility audit, performance pass, visual regression, theme presets, animation review, dead CSS removal, and documentation updates.
 
-`0.0.1.8.15.1` update: Phase 9 is started with a concrete polish/audit slice. Settings appearance now supports a `contrast` theme preset through the existing theme manager and body `data-theme` model; appearance swatches/segmented buttons expose `aria-pressed`; editor/table/property/item/wiki input focus gaps now use the warm MyOwnWorld focus ring; large campaign-map and Knowledge Graph inspectors no longer apply expensive backdrop blur; and `npm run verify` runs `tools/audit_ui_polish.mjs` to block `transition: all`, `will-change: all`, heavy blur on large workbench surfaces and `outline: none` without focus coverage. Remaining `0.0.1.8.15` work: deeper performance review, broader visual-regression review, dead CSS removal and final docs/release sync.
+Planned subpoints:
+
+- `0.0.1.8.15.1` UI polish audit, contrast theme and motion/focus guard - closed at `Foundation`.
+- `0.0.1.8.15.2` migrated-surface runtime performance smoke - closed at `Foundation`.
+- `0.0.1.8.15.3` broader visual-regression/theme-scale coverage.
+- `0.0.1.8.15.4` dead CSS and unused owner cleanup.
+- `0.0.1.8.15.5` final documentation, release notes and Phase 9 closure sync.
+
+`0.0.1.8.15.1` update: Phase 9 is started with a concrete polish/audit slice. Settings appearance now supports a `contrast` theme preset through the existing theme manager and body `data-theme` model; appearance swatches/segmented buttons expose `aria-pressed`; editor/table/property/item/wiki input focus gaps now use the warm MyOwnWorld focus ring; large campaign-map and Knowledge Graph inspectors no longer apply expensive backdrop blur; and `npm run verify` runs `tools/audit_ui_polish.mjs` to block `transition: all`, `will-change: all`, heavy blur on large workbench surfaces and `outline: none` without focus coverage.
+
+`0.0.1.8.15.2` update: the performance pass now has a browser-level guard for the migrated UI systems. `tests/browser/ui-polish-performance.spec.mjs` renders a synthetic 420-page tree, 180-token / 80-shape campaign map, expanded Knowledge Graph canvas and 96-card task tracker, then checks DOM counts plus soft runtime budgets. This does not change visible product behavior; it makes future redesign work safer on large workspaces. Remaining `0.0.1.8.15` work: broader visual-regression/theme-scale review, dead CSS removal and final docs/release sync.
 
 0.0.1.8.16. Visual regression for design system.
 

@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI Migration Baselines
 
-Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is active, with the first audit/theme slice delivered in `0.0.1.8.15.1`.
+Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is active, with audit/theme delivered in `0.0.1.8.15.1` and migrated-surface performance guarded in `0.0.1.8.15.2`.
 
 This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must compare against.
 
@@ -80,6 +80,8 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 `0.0.1.8.14.7` update: the World Package baseline now includes `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.7"]` opened from Tools. The manager supports branch/world export with readable asset payload embedding, saved package library, JSON import preview, backup-gated page/rulePackage/asset import, non-destructive conflict modes (`Стоп`, `Только новые`, `Копии`), embedded rulePackage apply into `rule-packages/`, asset preflight, binary asset payload copy, non-overwrite copied asset paths and imported page reference rewrite.
 
 `0.0.1.8.15.1` update: the Settings appearance baseline now includes `body[data-theme="contrast"]` and a `contrast` segmented theme option. The app-shell browser spec verifies the contrast token preset, `aria-pressed` state on appearance controls and visual-safety baseline after switching theme/accent/background/scale. The broader Phase 9 baseline is also guarded by `tools/audit_ui_polish.mjs`, which blocks broad motion, large-surface blur and focus-removal regressions.
+
+`0.0.1.8.15.2` update: the Phase 9 performance baseline now includes `tests/browser/ui-polish-performance.spec.mjs`. The spec renders a large virtualized tree, heavy campaign map, expanded Knowledge Graph canvas and dense task tracker board, then checks DOM counts and soft runtime budgets. This is a runtime baseline, not a new screenshot attachment.
 
 ## Baseline Rules
 
@@ -200,7 +202,8 @@ Before a UI migration patch:
 4. Keep business logic out of visual migration unless the active plan explicitly says otherwise.
 5. Run the focused browser test for the surface plus `npm run test:browser`.
 6. Run `npm run ui:polish:audit` for Phase 9 and later UI-heavy changes.
-7. Update this document and the work log if the baseline changes intentionally.
+7. Run `npm run test:browser -- tests/browser/ui-polish-performance.spec.mjs` when changing Phase 9 performance-sensitive surfaces.
+8. Update this document and the work log if the baseline changes intentionally.
 
 ## Current Boundary
 
