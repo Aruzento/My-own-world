@@ -36,6 +36,12 @@ npm run test:browser -- tests/browser/visual-regression.spec.mjs
 
 Then inspect the Playwright attachments named in `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`.
 
+For the Phase 9 theme-scale workbench visual guard, use:
+
+```powershell
+npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-theme-scale-captures-workbench-baselines
+```
+
 For the Phase 9 polish/contrast/focus audit slice, use:
 
 ```powershell

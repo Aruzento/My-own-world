@@ -342,7 +342,7 @@
 
 .card-property-resize-dot-n {
   top:
-    -5px;
+    2px;
 
   left:
     50%;
@@ -357,7 +357,7 @@
 
 .card-property-resize-dot-s {
   bottom:
-    -5px;
+    2px;
 
   left:
     50%;
@@ -375,7 +375,7 @@
     50%;
 
   right:
-    -5px;
+    2px;
 
   transform:
     translateY(-50%);
@@ -390,7 +390,7 @@
     50%;
 
   left:
-    -5px;
+    2px;
 
   transform:
     translateY(-50%);
@@ -402,10 +402,10 @@
 
 .card-property-resize-dot-ne {
   top:
-    -5px;
+    2px;
 
   right:
-    -5px;
+    2px;
 
   cursor:
     nesw-resize;
@@ -414,10 +414,10 @@
 
 .card-property-resize-dot-nw {
   top:
-    -5px;
+    2px;
 
   left:
-    -5px;
+    2px;
 
   cursor:
     nwse-resize;
@@ -426,10 +426,10 @@
 
 .card-property-resize-dot-se {
   right:
-    -5px;
+    2px;
 
   bottom:
-    -5px;
+    2px;
 
   cursor:
     nwse-resize;
@@ -438,10 +438,10 @@
 
 .card-property-resize-dot-sw {
   left:
-    -5px;
+    2px;
 
   bottom:
-    -5px;
+    2px;
 
   cursor:
     nesw-resize;

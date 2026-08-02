@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-02: 0.0.1.8.15.3 Visual Theme Scale Baselines
+
+### What Changed
+
+- Added `visual-theme-scale-captures-workbench-baselines` to `tests/browser/visual-regression.spec.mjs`.
+- The new visual guard builds a synthetic workspace with the left rail, expanded tree, hidden right-panel foundation and a populated card editor.
+- Added three Playwright screenshot attachment names to the UI migration baseline contract: `visual-theme-dark-compact-workbench`, `visual-theme-contrast-large-workbench` and `visual-theme-contrast-narrow-workbench`.
+- Added the `visual-theme-scale-workbench` scenario to the browser smoke catalog so the risk is discoverable outside the spec file.
+- Fixed hidden horizontal overflow caught by the new guard: `.app` now sizes as a border-box shell, `.app-topbar` contains its action row, and Properties resize handles stay inside their fields instead of widening the page.
+- Updated dashboard, plan, UI baselines, UI audit plan, CSS inventory, manual smoke checklist, tester instructions and release notes.
+
+### Readiness
+
+`Foundation` for broader theme-scale visual regression. A human can now compare dark compact, contrast large and narrower desktop workbench captures before future polish changes, but this is still screenshot attachment coverage rather than strict pixel locking.
+
+### Verification
+
+- Passed: `node --check tests/browser/visual-regression.spec.mjs`.
+- Passed: `node --check tests/browser/scenarios.mjs`.
+- Passed: `node --test tests/uiMigrationBaselines.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-theme-scale-captures-workbench-baselines`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 4 browser tests.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs` with 6 browser tests.
+- Passed: `node tools\docs_index.mjs` with 80 markdown files.
+- Passed: `node tools\audit_project_files.mjs` with 572 files.
+- Passed: `python tools\generate_manual_docx.py` with 1308 files in the generated manual.
+- Passed: `npm run check:encoding`.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `git diff --check`.
+- Passed: `npm run ui:polish:audit` with 60 CSS files, 98 transition declarations, 18 animation declarations, 9 keyframes, 32 backdrop-filter declarations and 71/71 `outline:none` declarations covered.
+- Passed: `npm run verify` with 285 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 117 browser tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+
+### Next
+
+- Continue `0.0.1.8.15.4` with dead CSS and unused owner cleanup.
+- Keep `BI-026` as the gate before adding new visible Knowledge Graph concepts.
+
 ## 2026-08-02: 0.0.1.8.15.2 UI Runtime Performance Smoke
 
 ### What Changed

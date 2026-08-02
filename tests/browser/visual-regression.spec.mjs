@@ -20,7 +20,61 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-task-tracker',
   'visual-help-support',
   'visual-world-packages',
-  'visual-component-catalogue-popover'
+  'visual-component-catalogue-popover',
+  'visual-theme-dark-compact-workbench',
+  'visual-theme-contrast-large-workbench',
+  'visual-theme-contrast-narrow-workbench'
+];
+
+const THEME_SCALE_BASELINE_CASES = [
+  {
+    attachment:
+      'visual-theme-dark-compact-workbench',
+    viewport: {
+      width: 1280,
+      height: 820
+    },
+    appearance: {
+      theme: 'dark',
+      accent: 'gold',
+      background: 'forest',
+      scale: 'compact'
+    },
+    minEditorWidth:
+      560
+  },
+  {
+    attachment:
+      'visual-theme-contrast-large-workbench',
+    viewport: {
+      width: 1280,
+      height: 820
+    },
+    appearance: {
+      theme: 'contrast',
+      accent: 'blue',
+      background: 'stone',
+      scale: 'large'
+    },
+    minEditorWidth:
+      520
+  },
+  {
+    attachment:
+      'visual-theme-contrast-narrow-workbench',
+    viewport: {
+      width: 1000,
+      height: 680
+    },
+    appearance: {
+      theme: 'contrast',
+      accent: 'green',
+      background: 'arcane',
+      scale: 'normal'
+    },
+    minEditorWidth:
+      420
+  }
 ];
 
 
@@ -773,6 +827,135 @@ test(
       testInfo,
       'visual-component-catalogue-popover'
     );
+  }
+);
+
+
+test(
+  'visual-theme-scale-captures-workbench-baselines',
+  async ({ page }, testInfo) => {
+
+    await page.addInitScript(
+      () => {
+
+        localStorage.setItem(
+          'my-own-world:app-shell-sidebar-state',
+          'expanded'
+        );
+
+        localStorage.setItem(
+          'my-own-world:app-shell-sidebar-width',
+          '292'
+        );
+      }
+    );
+
+    await page.goto(
+      '/'
+    );
+
+    await prepareThemeScaleWorkbench(
+      page
+    );
+
+    for (const baseline of THEME_SCALE_BASELINE_CASES) {
+
+      await page.setViewportSize(
+        baseline.viewport
+      );
+
+      await applyThemeScaleAppearance(
+        page,
+        baseline.appearance
+      );
+
+      await expect(
+        page.locator('body')
+      ).toHaveAttribute(
+        'data-theme',
+        baseline.appearance.theme
+      );
+
+      await expect(
+        page.locator('body')
+      ).toHaveAttribute(
+        'data-ui-scale',
+        baseline.appearance.scale
+      );
+
+      await expect(
+        page.locator('.app[data-visual-theme-scale-baseline="0.0.1.8.15.3"]')
+      ).toBeVisible();
+
+      await expect(
+        page.locator('.tree-item').first()
+      ).toBeVisible();
+
+      await expect(
+        page.locator('.editor-surface')
+      ).toBeVisible();
+
+      const metrics =
+        await getThemeScaleWorkbenchMetrics(
+          page
+        );
+
+      expect(
+        metrics.bodyHasHorizontalOverflow,
+        JSON.stringify(metrics, null, 2)
+      ).toBe(
+        false
+      );
+
+      expect(
+        metrics.appHasHorizontalOverflow,
+        JSON.stringify(metrics, null, 2)
+      ).toBe(
+        false
+      );
+
+      expect(
+        metrics.editorWidth
+      ).toBeGreaterThanOrEqual(
+        baseline.minEditorWidth
+      );
+
+      expect(
+        metrics.sidebarState
+      ).toBe(
+        'expanded'
+      );
+
+      expect(
+        metrics.rightPanelState
+      ).toBe(
+        'hidden'
+      );
+
+      expect(
+        metrics.focusToken
+      ).not.toBe(
+        ''
+      );
+
+      expect(
+        metrics.surfaceToken
+      ).not.toBe(
+        ''
+      );
+
+      expect(
+        metrics.visibleShellControls
+      ).toBeGreaterThanOrEqual(
+        4
+      );
+
+      await attachScreenshot(
+        page,
+        testInfo,
+        baseline.attachment
+      );
+    }
   }
 );
 
@@ -1593,6 +1776,362 @@ test(
     );
   }
 );
+
+
+async function prepareThemeScaleWorkbench(
+  page
+) {
+
+  await page.evaluate(
+    async () => {
+
+      const {
+        setCurrentPage,
+        setPages,
+        setWorkspaceHandle
+      } = await import('/js/stateActions.js');
+
+      const {
+        renderTree
+      } = await import('/js/tree/tree.js');
+
+      const {
+        createCardShellTemplate
+      } = await import('/js/templates/cardShell.js');
+
+      const {
+        createListBlock,
+        createPropertiesBlock,
+        createTableBlock,
+        createTextBlock
+      } = await import('/js/templates/blockTypes.js');
+
+      const {
+        applyBlockSystemContract
+      } = await import('/js/editor/blocks/blockContract.js');
+
+      const {
+        renderCustomBlocks,
+        setupCustomBlocks
+      } = await import('/js/editor/customBlocks.js');
+
+      const {
+        renderCardType
+      } = await import('/js/ui/cardType.js');
+
+      const pages = [
+        {
+          id: 'theme-scale-root',
+          name: 'theme-scale-root.md',
+          title: 'Theme Scale Root',
+          order: 1,
+          template: 'card',
+          type: 'folder',
+          tags: [
+            'folder'
+          ],
+          content: '<h1>Theme Scale Root</h1>'
+        },
+        {
+          id: 'theme-scale-page',
+          name: 'theme-scale-city.md',
+          title: 'Theme Scale City',
+          parent: 'theme-scale-root',
+          order: 1,
+          template: 'card',
+          type: 'location',
+          tags: [
+            'card',
+            'location'
+          ],
+          content: '<h1>Theme Scale City</h1>'
+        },
+        {
+          id: 'theme-scale-npc',
+          name: 'theme-scale-envoy.md',
+          title: 'Theme Scale Envoy',
+          parent: 'theme-scale-root',
+          order: 2,
+          template: 'card',
+          type: 'character',
+          tags: [
+            'card',
+            'character'
+          ],
+          content: '<h1>Theme Scale Envoy</h1>'
+        }
+      ];
+
+      setWorkspaceHandle({
+        name: 'Theme scale visual workspace'
+      });
+
+      setPages(
+        pages
+      );
+
+      setCurrentPage(
+        pages[1]
+      );
+
+      renderTree();
+
+      const app =
+        document.querySelector('.app');
+
+      app.dataset.visualThemeScaleBaseline =
+        '0.0.1.8.15.3';
+
+      app.dataset.sidebarState =
+        'expanded';
+
+      app.dataset.rightPanelState =
+        'hidden';
+
+      app.style.setProperty(
+        '--mow-shell-sidebar-width',
+        '292px'
+      );
+
+      const rightPanel =
+        document.getElementById('appRightPanel');
+
+      rightPanel?.classList.add(
+        'hidden'
+      );
+
+      rightPanel?.setAttribute(
+        'aria-hidden',
+        'true'
+      );
+
+      rightPanel?.replaceChildren();
+
+      const editor =
+        document.querySelector('#editorArea');
+
+      editor.innerHTML =
+        createCardShellTemplate().content;
+
+      editor.querySelector('h1').textContent =
+        'Theme Scale City';
+
+      editor.querySelector('.card-short-description').textContent =
+        'A stable card used to review premium workbench density across themes.';
+
+      const main =
+        editor.querySelector('.entity-main');
+
+      main.insertAdjacentHTML(
+        'beforeend',
+        [
+          createTextBlock({
+            title: 'Scene Notes',
+            placeholder: 'Notes'
+          }),
+          createListBlock({
+            title: 'Scene Hooks',
+            kind: 'items'
+          }),
+          createTableBlock({
+            title: 'Signals',
+            rows: 2,
+            columns: 2
+          }),
+          createPropertiesBlock({
+            title: 'City Properties',
+            cardType: 'location'
+          })
+        ].join('')
+      );
+
+      editor
+        .querySelectorAll('.rich-text-field')
+        .forEach((field, index) => {
+
+          field.textContent =
+            index === 0
+              ? 'Quiet editor surface with enough content to show rhythm.'
+              : 'Compact notes stay readable when interface scale changes.';
+        });
+
+      setupCustomBlocks(
+        editor,
+        () => {}
+      );
+
+      applyBlockSystemContract(
+        editor
+      );
+
+      renderCustomBlocks(
+        editor
+      );
+
+      renderCardType();
+    }
+  );
+}
+
+
+async function applyThemeScaleAppearance(
+  page,
+  appearance
+) {
+
+  await page.evaluate(
+    async value => {
+
+      const {
+        applyAppearance
+      } = await import('/js/ui/themeManager.js');
+
+      applyAppearance(
+        value
+      );
+    },
+    appearance
+  );
+}
+
+
+async function getThemeScaleWorkbenchMetrics(
+  page
+) {
+
+  return page.evaluate(
+    () => {
+
+      const app =
+        document.querySelector('.app');
+
+      const editorSurface =
+        document.querySelector('.editor-surface');
+
+      const style =
+        getComputedStyle(
+          document.body
+        );
+
+      const visibleShellControls =
+        [
+          ...document.querySelectorAll(
+            '.app-nav-rail button, .tree-root-action, #appSettingsBtn, #appToolsBtn'
+          )
+        ].filter(control => {
+
+          const rect =
+            control.getBoundingClientRect();
+
+          const controlStyle =
+            getComputedStyle(
+              control
+            );
+
+          return (
+            rect.width > 0 &&
+            rect.height > 0 &&
+            controlStyle.display !== 'none' &&
+            controlStyle.visibility !== 'hidden'
+          );
+        }).length;
+
+      const viewportRight =
+        window.innerWidth;
+
+      const overflowElements =
+        [
+          ...document.body.querySelectorAll('*')
+        ].map(element => {
+
+          const rect =
+            element.getBoundingClientRect();
+
+          return {
+            className:
+              String(element.className || ''),
+            id:
+              element.id || '',
+            rectRight:
+              Math.round(rect.right),
+            tagName:
+              element.tagName.toLowerCase()
+          };
+        }).filter(item =>
+          item.rectRight > viewportRight + 1
+        ).sort((a, b) =>
+          b.rectRight - a.rectRight
+        ).slice(0, 8);
+
+      const appChildren =
+        app
+          ? [
+            ...app.children
+          ].map(element => {
+
+            const rect =
+              element.getBoundingClientRect();
+
+            return {
+              className:
+                String(element.className || ''),
+              clientWidth:
+                element.clientWidth,
+              id:
+                element.id || '',
+              rectWidth:
+                Math.round(rect.width),
+              scrollWidth:
+                element.scrollWidth,
+              tagName:
+                element.tagName.toLowerCase()
+            };
+          })
+          : [];
+
+      return {
+        appBoxSizing:
+          app
+            ? getComputedStyle(app).boxSizing
+            : '',
+        appClientWidth:
+          app?.clientWidth || 0,
+        appHasHorizontalOverflow:
+          app
+            ? app.scrollWidth > app.clientWidth + 1
+            : true,
+        appOffsetWidth:
+          app?.offsetWidth || 0,
+        appScrollWidth:
+          app?.scrollWidth || 0,
+        bodyHasHorizontalOverflow:
+          Math.max(
+            document.documentElement.scrollWidth,
+            document.body.scrollWidth
+          ) > window.innerWidth + 1,
+        bodyScrollWidth:
+          document.body.scrollWidth,
+        documentScrollWidth:
+          document.documentElement.scrollWidth,
+        editorWidth:
+          editorSurface?.getBoundingClientRect().width || 0,
+        focusToken:
+          style.getPropertyValue('--mow-focus-ring').trim(),
+        appChildren,
+        overflowElements,
+        rightPanelState:
+          app?.dataset.rightPanelState || '',
+        sidebarState:
+          app?.dataset.sidebarState || '',
+        surfaceToken:
+          style.getPropertyValue('--mow-surface-raised').trim(),
+        viewportWidth:
+          window.innerWidth,
+        visibleShellControls
+      };
+    }
+  );
+}
 
 
 async function attachScreenshot(

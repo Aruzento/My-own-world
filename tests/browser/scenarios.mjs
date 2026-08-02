@@ -218,6 +218,21 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'visual-theme-scale-workbench',
+    priority: 'P1',
+    area: 'ui',
+    title: 'Workbench keeps visual density across theme and scale presets',
+    description:
+      'Open the app shell with a populated tree and card editor, then capture dark compact, contrast large and contrast narrow baseline screenshots while checking horizontal overflow and shell state.',
+    automationStatus:
+      'automated: visual-theme-scale-captures-workbench-baselines',
+    automatesChecklist: [
+      'Visual Regression: theme-scale',
+      'UI polish: contrast',
+      'UI polish: scale'
+    ]
+  },
+  {
     id: 'ui-polish-runtime-performance',
     priority: 'P1',
     area: 'ui',

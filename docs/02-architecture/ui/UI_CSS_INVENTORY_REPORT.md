@@ -52,6 +52,8 @@ Post-`0.0.1.8.15.1` delta: Phase 9 now has a first automated UI polish gate. `to
 
 Post-`0.0.1.8.15.2` delta: Phase 9 performance now has a focused browser guard in `tests/browser/ui-polish-performance.spec.mjs`. It exercises the current CSS/JS owners for tree virtualization, campaign map, Knowledge Graph and task tracker with large synthetic workloads and soft runtime budgets, without changing visible UI.
 
+Post-`0.0.1.8.15.3` delta: Phase 9 visual regression now has a theme-scale workbench guard in `tests/browser/visual-regression.spec.mjs`. It captures dark compact, contrast large and contrast narrow AppShell/tree/card-editor baselines and blocks hidden horizontal overflow. The pass also tightens `styles/layout.css` AppShell sizing, `styles/app-topbar.css` topbar containment and `styles/block-properties.css` resize-dot placement so shell padding, topbar actions and Properties handles do not widen the page.
+
 ## Current CSS Entry Tree
 
 The browser and desktop app load one CSS entry point:
@@ -335,7 +337,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.12` Campaign map | Closed at `Usable` by `0.0.1.8.12.10`: compact title chip, full-width top scene/session bar, full-height left canvas tool rail, unclipped floating toolbar tooltips, shared map popups, right-side property Inspector, custom object right-click menu and group contextual visibility actions are the current default UI; duplicate layer/object and scene-state panels are not auto-rendered. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke for future map bugfixes. |
 | `0.0.1.8.13` Knowledge graph | Closed at `Usable` by `0.0.1.8.13.11`: visible-slice clarity, selected-node edge states/inspector, node/connect overlay visuals, laconic first layer, CSS owner files, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. | `BI-017`, `BI-018` and `BI-019` are closed for Phase 7. Keep `BI-026` before adding new visible graph features. |
 | `0.0.1.8.14` Secondary screens | Closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tracker UI slice; `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup; `0.0.1.8.14.3` migrated the existing Help/Support/Release guide surface in Tools; `0.0.1.8.14.4` added the World Package manager MVP; `0.0.1.8.14.5` added non-destructive World Package conflict import modes; `0.0.1.8.14.6` added embedded rulePackage apply and asset preflight; `0.0.1.8.14.7` added asset payload export/import, non-overwrite copy and imported page reference rewrite. | Next work: `0.0.1.8.15` polish/cleanup and design-system audit, not another hidden Phase 8 feature. |
-| `0.0.1.8.15` Polish and cleanup | Active. `0.0.1.8.15.1` added the UI polish audit, contrast theme and focus/motion guard. `0.0.1.8.15.2` added a browser performance smoke for large migrated surfaces. | Remaining work: broader visual-regression/theme-scale review, dead CSS cleanup and final documentation/release sync. |
+| `0.0.1.8.15` Polish and cleanup | Active. `0.0.1.8.15.1` added the UI polish audit, contrast theme and focus/motion guard. `0.0.1.8.15.2` added a browser performance smoke for large migrated surfaces. `0.0.1.8.15.3` added theme-scale visual baselines and fixed hidden shell/topbar/Properties horizontal overflow. | Remaining work: dead CSS cleanup and final documentation/release sync. |
 
 ## Browser And Tauri Risks
 

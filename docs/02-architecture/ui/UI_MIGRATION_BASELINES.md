@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI Migration Baselines
 
-Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is active, with audit/theme delivered in `0.0.1.8.15.1` and migrated-surface performance guarded in `0.0.1.8.15.2`.
+Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is active, with audit/theme delivered in `0.0.1.8.15.1`, migrated-surface performance guarded in `0.0.1.8.15.2` and theme-scale visual baselines captured in `0.0.1.8.15.3`.
 
 This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must compare against.
 
@@ -83,6 +83,8 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 
 `0.0.1.8.15.2` update: the Phase 9 performance baseline now includes `tests/browser/ui-polish-performance.spec.mjs`. The spec renders a large virtualized tree, heavy campaign map, expanded Knowledge Graph canvas and dense task tracker board, then checks DOM counts and soft runtime budgets. This is a runtime baseline, not a new screenshot attachment.
 
+`0.0.1.8.15.3` update: the visual baseline now includes theme/scale workbench attachments from `tests/browser/visual-regression.spec.mjs`. The new browser test builds one synthetic workspace with the left rail, expanded tree, hidden right panel and card editor, then captures dark compact, contrast large and contrast narrow states while checking horizontal overflow, shell state and required design tokens.
+
 ## Baseline Rules
 
 - Do not commit generated PNG screenshots. `tests/browser/visual-regression.spec.mjs` attaches them to the Playwright run as current baseline evidence.
@@ -113,6 +115,9 @@ These names are the current visual baseline contract. They are produced by `npm 
 | `visual-help-support.png` | Help, support and release guide | `#onboardingPopup[data-help-ui-migration="0.0.1.8.14.3"]` opened through Tools -> Support | Captures the migrated Help/Support surface with compact internal routes, status chips, release/support cards, local sprite icons and the current World Package MVP status. |
 | `visual-world-packages.png` | World Package manager | `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.7"]` opened through Tools -> Пакеты мира | Captures the import/export manager with export controls, package library, JSON preview, backup/apply state, conflict-mode segmented control, rulePackage/asset payload markers, local sprite icons, data-safety markers and compact two-column layout. |
 | `visual-component-catalogue-popover.png` | Shared primitives and popover | `#componentCataloguePopover` opened through Tools -> Components | Captures shared Button, IconButton, Field, Toolbar, Panel and Popover states that future migrations should consume. |
+| `visual-theme-dark-compact-workbench.png` | Theme and scale workbench | synthetic workspace/card page with `body[data-theme="dark"][data-ui-scale="compact"]` | Captures the expensive-app workbench density in dark theme with compact scale, open tree, hidden right panel and a populated card editor. |
+| `visual-theme-contrast-large-workbench.png` | Theme and scale workbench | synthetic workspace/card page with `body[data-theme="contrast"][data-ui-scale="large"]` | Captures the same shell/tree/editor stack in the high-contrast preset and large UI scale so later polish does not break spacing or panel balance. |
+| `visual-theme-contrast-narrow-workbench.png` | Theme and scale workbench | 1000px-wide synthetic workspace/card page with `body[data-theme="contrast"][data-ui-scale="normal"]` | Captures the narrower desktop workbench composition so the left rail, tree, editor and hidden right panel foundation stay usable without horizontal overflow before the responsive sidebar breakpoint. |
 
 ## System Inventory Baseline
 

@@ -200,6 +200,7 @@ owner_zone: "architecture"
 - `0.0.1.8.14.7`: World Package export/import now handles binary asset payloads. Readable referenced assets are embedded into package JSON, import writes payloads after backup without overwriting existing files, and imported page references are rewritten when copied asset paths change. Phase 8 secondary screens are closed at `Usable`.
 - `0.0.1.8.15.1`: Phase 9 polish starts with a guardrail, not another visible screen. Settings appearance now includes `contrast`, appearance controls expose `aria-pressed`, old editor/table/property/item/wiki focus gaps have visible warm rings, large map/graph inspectors drop expensive blur, and `npm run verify` runs `tools/audit_ui_polish.mjs`.
 - `0.0.1.8.15.2`: Phase 9 performance pass now has a browser guard for migrated workbench surfaces. The smoke renders a large virtualized tree, heavy campaign map, expanded Knowledge Graph canvas and dense task tracker board, then checks DOM counts and soft runtime budgets.
+- `0.0.1.8.15.3`: Phase 9 visual coverage now includes theme-scale workbench baselines. The visual regression suite captures dark compact, contrast large and contrast narrow shell/tree/card-editor states, checks hidden right-panel foundation, blocks horizontal overflow and keeps Properties resize handles from widening the page.
 - Отступы: кнопки справа должны быть стабильными.
 - Состояния: hover/focus нужны единые.
 - Анимации: можно мягко открывать popup.
@@ -297,7 +298,7 @@ Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button reg
 
 ### Phase 9 - Polish And Cleanup
 
-Status: active. `0.0.1.8.15.1` delivered the first slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. `0.0.1.8.15.2` adds the migrated-surface runtime performance guard. Remaining Phase 9 work should stay cleanup-oriented: broader visual-regression/theme-scale review, dead CSS cleanup and final release/manual sync.
+Status: active. `0.0.1.8.15.1` delivered the first slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. `0.0.1.8.15.2` adds the migrated-surface runtime performance guard. `0.0.1.8.15.3` adds the theme-scale visual guard for the shell/tree/card-editor workbench and fixes hidden horizontal overflow in shell/topbar/Properties handles. Remaining Phase 9 work should stay cleanup-oriented: dead CSS cleanup and final release/manual sync.
 
 ## Test Protection
 

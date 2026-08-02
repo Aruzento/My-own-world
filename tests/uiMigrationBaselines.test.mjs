@@ -24,7 +24,10 @@ const REQUIRED_BASELINE_ATTACHMENTS = [
   'visual-task-tracker',
   'visual-help-support',
   'visual-world-packages',
-  'visual-component-catalogue-popover'
+  'visual-component-catalogue-popover',
+  'visual-theme-dark-compact-workbench',
+  'visual-theme-contrast-large-workbench',
+  'visual-theme-contrast-narrow-workbench'
 ];
 
 const REQUIRED_SYSTEM_ROWS = [

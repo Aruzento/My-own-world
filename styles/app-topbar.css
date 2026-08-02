@@ -9,6 +9,9 @@
   display:
     flex;
 
+  min-width:
+    0;
+
   align-items:
     center;
 
@@ -17,6 +20,9 @@
 
   padding:
     0 4px;
+
+  overflow:
+    hidden;
 
   color:
     var(--mow-shell-topbar-color);
@@ -27,6 +33,9 @@
 
   display:
     inline-flex;
+
+  min-width:
+    0;
 
   align-items:
     center;
