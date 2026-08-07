@@ -298,7 +298,7 @@ Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button reg
 
 ### Phase 9 - Polish And Cleanup
 
-Status: active. `0.0.1.8.15.1` delivered the first slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. `0.0.1.8.15.2` adds the migrated-surface runtime performance guard. `0.0.1.8.15.3` adds the theme-scale visual guard for the shell/tree/card-editor workbench and fixes hidden horizontal overflow in shell/topbar/Properties handles. Remaining Phase 9 work should stay cleanup-oriented: dead CSS cleanup and final release/manual sync.
+Status: closed at `Foundation` by `0.0.1.8.15.5`. `0.0.1.8.15.1` delivered the first slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. `0.0.1.8.15.2` adds the migrated-surface runtime performance guard. `0.0.1.8.15.3` adds the theme-scale visual guard for the shell/tree/card-editor workbench and fixes hidden horizontal overflow in shell/topbar/Properties handles. `0.0.1.8.15.4` removes the retired campaign-map layer/object dock and scene-state inspector CSS/JS owners from the active bundle. `0.0.1.8.15.5` synchronizes the plan, dashboard, work log, release notes, tester instructions, architecture docs, project file audit and generated manual. The next design-system work is `0.0.1.8.16` broader visual regression coverage.
 
 ## Test Protection
 

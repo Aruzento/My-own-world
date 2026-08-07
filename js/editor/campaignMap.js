@@ -153,10 +153,6 @@ import {
 } from './campaignMapSelectionInspector.js';
 
 import {
-  updateMapLayerDock
-} from './campaignMapLayerDock.js';
-
-import {
   setStatus
 } from '../ui/ui.js';
 
@@ -362,10 +358,6 @@ export function removeSelectedCampaignMapItems(
   });
 
   notifyMapSelectionChanged(
-    map
-  );
-
-  updateMapLayerDock(
     map
   );
 

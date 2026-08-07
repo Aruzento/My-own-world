@@ -56,6 +56,12 @@ For the Phase 9 migrated-surface performance guard, use:
 npm run test:browser -- tests/browser/ui-polish-performance.spec.mjs
 ```
 
+For the Phase 9 dead CSS cleanup around retired campaign-map stage panels, use:
+
+```powershell
+npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep campaign-map-toolbar-uses-migrated-mode-action-groups
+```
+
 For the campaign map split toolbar/tool rail, editable property Inspector, custom right-click popup and group contextual actions redesign slice, use:
 
 ```powershell

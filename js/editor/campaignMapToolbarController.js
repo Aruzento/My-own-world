@@ -58,14 +58,6 @@ import {
   setCampaignMapLayerVisibility
 } from './campaignMapLayers.js';
 
-import {
-  updateMapLayerDock
-} from './campaignMapLayerDock.js';
-
-import {
-  updateMapSceneInspector
-} from './campaignMapSceneInspector.js';
-
 
 // Controller тулбара карты: маршрутизирует клики по кнопкам и управляет
 // popup-ами сетки, тумана и фигур.
@@ -140,10 +132,6 @@ export async function handleCampaignMapToolbarClick(
   ) {
 
     await deps.changeMapImage(
-      map
-    );
-
-    updateMapSceneInspector(
       map
     );
 
@@ -461,10 +449,6 @@ function bindLayerPopupEvents(
               event.target.checked
             );
 
-            updateMapLayerDock(
-              map
-            );
-
             await deps.saveAndSync();
           }
         );
@@ -484,10 +468,6 @@ function bindLayerPopupEvents(
             );
 
             applyCampaignMapLayers(
-              map
-            );
-
-            updateMapLayerDock(
               map
             );
 
@@ -511,10 +491,6 @@ function bindLayerPopupEvents(
             );
 
             applyCampaignMapLayers(
-              map
-            );
-
-            updateMapLayerDock(
               map
             );
 
@@ -560,10 +536,6 @@ export function openGridPopup(
             ? 'Выключить сетку'
             : 'Включить сетку';
 
-        updateMapSceneInspector(
-          map
-        );
-
         await deps.saveAndSync();
       }
     );
@@ -591,10 +563,6 @@ export function openGridPopup(
           map
         );
 
-        updateMapSceneInspector(
-          map
-        );
-
         await deps.saveAndSync();
       }
     );
@@ -619,10 +587,6 @@ export function openGridPopup(
         );
 
         updateGridSize(
-          map
-        );
-
-        updateMapSceneInspector(
           map
         );
 
@@ -667,10 +631,6 @@ export function openFogPopup(
           'draw'
         );
 
-        updateMapSceneInspector(
-          map
-        );
-
         await deps.saveAndSync();
       }
     );
@@ -685,10 +645,6 @@ export function openFogPopup(
         deps.setFogMode(
           map,
           'erase'
-        );
-
-        updateMapSceneInspector(
-          map
         );
 
         await deps.saveAndSync();
@@ -709,10 +665,6 @@ export function openFogPopup(
         store?.updateFog({
           brushSize: event.target.value
         });
-
-        updateMapSceneInspector(
-          map
-        );
 
         await deps.saveAndSync();
       }
@@ -782,10 +734,6 @@ export function openFogPopup(
           map
         );
 
-        updateMapSceneInspector(
-          map
-        );
-
         await deps.saveAndSync();
       }
     );
@@ -801,10 +749,6 @@ export function openFogPopup(
           map
         );
 
-        updateMapSceneInspector(
-          map
-        );
-
         await deps.saveAndSync();
       }
     );
@@ -817,10 +761,6 @@ export function openFogPopup(
 
         event.preventDefault();
         clearFog(
-          map
-        );
-
-        updateMapSceneInspector(
           map
         );
 

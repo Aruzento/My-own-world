@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-07: 0.0.1.8.15.4-0.0.1.8.15.5 Dead CSS And Phase 9 Closure Sync
+
+### What Changed
+
+- Removed the retired campaign-map layer/object dock and scene-state inspector from the active code and CSS bundle.
+- Deleted `js/editor/campaignMapLayerDock.js`, `js/editor/campaignMapSceneInspector.js`, `styles/campaign-map-layer-dock.css` and `styles/campaign-map-scene-inspector.css`.
+- Removed the unused no-op refresh calls from map runtime, toolbar, viewport, fog and selected-object Inspector flows.
+- Kept the accepted map UI path intact: compact top scene/session bar, full-height left tool rail, shared map popups, token hover/right-click popup and right-side selected-object property Inspector.
+- Removed the obsolete browser tests that manually created the retired stage panels; kept the current default-render guard that verifies duplicate scene/layer panels are absent.
+- Updated the dashboard, plan, design-system contract, UI baselines, CSS inventory, UI audit plan, release notes and tester instructions.
+- Closed Phase 9 documentation sync by regenerating the project file audit and full manual after verification.
+
+### Readiness
+
+`Foundation` for Phase 9 cleanup and closure sync. This is not a new user workflow; it reduces dead design surface, makes the current map design harder to accidentally regress back into duplicate stage panels and leaves Phase 9 documentation/release handoff synchronized.
+
+### Verification
+
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --check` for `js\editor\campaignMap.js`, `campaignMapRuntime.js`, `campaignMapToolbarController.js`, `campaignMapSelectionInspector.js`, `campaignMapFog.js` and `campaignMapViewport.js`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep campaign-map-toolbar-uses-migrated-mode-action-groups`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 15 browser tests.
+- Passed: `npm run ui:polish:audit` with 58 CSS files, 95 transition declarations, 18 animation declarations, 9 keyframes, 32 backdrop-filter declarations and 71/71 `outline:none` declarations covered.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 4 browser tests.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `node tools\docs_index.mjs` with 80 markdown files.
+- Passed: `node tools\audit_project_files.mjs` with 568 files.
+- Passed: `python tools\generate_manual_docx.py` with 1304 files in the generated manual.
+- Passed: `npm run check:encoding`.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify` with 285 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 115 browser tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check.
+
+### Next
+
+- Continue `0.0.1.8.16` with broader design-system visual regression coverage.
+- Keep `BI-026` as the gate before adding new visible Knowledge Graph concepts.
+
 ## 2026-08-02: 0.0.1.8.15.3 Visual Theme Scale Baselines
 
 ### What Changed

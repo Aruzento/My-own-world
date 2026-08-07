@@ -36,10 +36,6 @@ import {
   toggleMapItemPresentationVisibility
 } from './campaignMapTokenActions.js';
 
-import {
-  updateMapLayerDock
-} from './campaignMapLayerDock.js';
-
 
 export const MAP_SELECTION_UI_MIGRATION =
   '0.0.1.8.12.8';
@@ -275,9 +271,6 @@ async function handleDockClick(
     updateMapSelectionInspector(
       map
     );
-    updateMapLayerDock(
-      map
-    );
 
     return;
   }
@@ -305,9 +298,6 @@ async function handleDockClick(
     }
 
     updateMapSelectionInspector(
-      map
-    );
-    updateMapLayerDock(
       map
     );
 
@@ -342,9 +332,6 @@ async function handleDockClick(
     updateMapSelectionInspector(
       map
     );
-    updateMapLayerDock(
-      map
-    );
 
     return;
   }
@@ -365,9 +352,6 @@ async function handleDockClick(
     );
 
     updateMapSelectionInspector(
-      map
-    );
-    updateMapLayerDock(
       map
     );
   }
@@ -433,10 +417,6 @@ async function handleDockPropertyInput(
   syncPropertyPanelHeader(
     dock,
     primary
-  );
-
-  updateMapLayerDock(
-    map
   );
 
   await deps.saveAndSync?.();

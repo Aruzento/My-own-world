@@ -33,10 +33,6 @@ import {
   getCampaignMapStore
 } from './campaignMapStore.js';
 
-import {
-  updateMapSceneInspector
-} from './campaignMapSceneInspector.js';
-
 
 // Fog of war держится отдельно от token/shape логики:
 // здесь только canvas, режим кисти и UI-состояние fog-кнопок.
@@ -108,10 +104,6 @@ export function fillFog(
     map
   );
 
-  updateMapSceneInspector(
-    map
-  );
-
   schedulePresentationSync();
 }
 
@@ -152,10 +144,6 @@ export function clearFog(
   );
 
   persistFogCanvas(
-    map
-  );
-
-  updateMapSceneInspector(
     map
   );
 
@@ -718,10 +706,6 @@ export function setMapTool(
       stage
     );
   }
-
-  updateMapSceneInspector(
-    map
-  );
 }
 
 

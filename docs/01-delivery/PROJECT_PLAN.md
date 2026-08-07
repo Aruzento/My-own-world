@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-07-29
+Updated: 2026-08-07
 
 Planning version: 1
 
@@ -103,19 +103,25 @@ Status: closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tra
 
 Description: run accessibility audit, performance pass, visual regression, theme presets, animation review, dead CSS removal, and documentation updates.
 
+Status: closed at `Foundation` by `0.0.1.8.15.5`: polish audit, contrast/focus/motion guard, large migrated-surface performance smoke, theme-scale visual baselines, dead CSS cleanup and final docs/release sync are in place.
+
 Planned subpoints:
 
 - `0.0.1.8.15.1` UI polish audit, contrast theme and motion/focus guard - closed at `Foundation`.
 - `0.0.1.8.15.2` migrated-surface runtime performance smoke - closed at `Foundation`.
 - `0.0.1.8.15.3` broader visual-regression/theme-scale coverage - closed at `Foundation`.
-- `0.0.1.8.15.4` dead CSS and unused owner cleanup.
-- `0.0.1.8.15.5` final documentation, release notes and Phase 9 closure sync.
+- `0.0.1.8.15.4` dead CSS and unused owner cleanup - closed at `Foundation`.
+- `0.0.1.8.15.5` final documentation, release notes and Phase 9 closure sync - closed at `Foundation`.
 
 `0.0.1.8.15.1` update: Phase 9 is started with a concrete polish/audit slice. Settings appearance now supports a `contrast` theme preset through the existing theme manager and body `data-theme` model; appearance swatches/segmented buttons expose `aria-pressed`; editor/table/property/item/wiki input focus gaps now use the warm MyOwnWorld focus ring; large campaign-map and Knowledge Graph inspectors no longer apply expensive backdrop blur; and `npm run verify` runs `tools/audit_ui_polish.mjs` to block `transition: all`, `will-change: all`, heavy blur on large workbench surfaces and `outline: none` without focus coverage.
 
 `0.0.1.8.15.2` update: the performance pass now has a browser-level guard for the migrated UI systems. `tests/browser/ui-polish-performance.spec.mjs` renders a synthetic 420-page tree, 180-token / 80-shape campaign map, expanded Knowledge Graph canvas and 96-card task tracker, then checks DOM counts plus soft runtime budgets. This does not change visible product behavior; it makes future redesign work safer on large workspaces. Remaining `0.0.1.8.15` work: broader visual-regression/theme-scale review, dead CSS removal and final docs/release sync.
 
 `0.0.1.8.15.3` update: broader visual-regression/theme-scale coverage now has a focused browser baseline. `tests/browser/visual-regression.spec.mjs` adds `visual-theme-scale-captures-workbench-baselines`, which builds a synthetic workspace with the left rail, open tree, hidden right-panel foundation and populated card editor, then captures dark compact, contrast large and contrast narrow workbench states while checking horizontal overflow, shell state and required theme tokens. Remaining `0.0.1.8.15` work: dead CSS/unused owner cleanup and final docs/release sync.
+
+`0.0.1.8.15.4` update: dead CSS cleanup now removes the retired campaign-map layer/object dock and scene-state inspector from the active bundle. The removed owners are `styles/campaign-map-layer-dock.css`, `styles/campaign-map-scene-inspector.css`, `js/editor/campaignMapLayerDock.js` and `js/editor/campaignMapSceneInspector.js`; map runtime no longer calls no-op refresh hooks for those obsolete panels. The accepted default map path remains the compact top scene/session bar, full-height left tool rail, shared map popups, token hover/right-click popup and right-side selected-object Inspector. Remaining `0.0.1.8.15` work: final documentation, release notes and Phase 9 closure sync.
+
+`0.0.1.8.15.5` update: Phase 9 closure sync is complete. Dashboard, work log, active plan, design-system contract, UI baselines, CSS inventory, UI audit plan, release notes, tester instructions, project file audit and generated manual now describe the current Phase 9 state: retired map stage panel owners are removed, active visual/performance/polish guards are green, and the next design-system work moves to `0.0.1.8.16`.
 
 0.0.1.8.16. Visual regression for design system.
 

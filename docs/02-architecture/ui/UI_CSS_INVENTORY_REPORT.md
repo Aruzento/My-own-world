@@ -25,26 +25,26 @@ Collected from the current workspace on 2026-08-02.
 
 | Area | Count |
 | --- | ---: |
-| CSS files in `styles/` | 60 |
-| CSS lines | 22,988 |
-| JS files in `js/` | 273 |
-| JS lines | 92,138 |
-| CSS variable definitions | 545 |
-| CSS variable names used through `var(...)` | 320 |
-| Hardcoded CSS hex colors | 217 |
-| Hardcoded CSS `rgb/rgba(...)` colors | 1,376 |
-| CSS gradients | 86 |
+| CSS files in `styles/` | 58 |
+| CSS lines | 22,367 |
+| JS files in `js/` | 271 |
+| JS lines | 91,372 |
+| CSS variable definitions | 530 |
+| CSS variable names used through `var(...)` | 316 |
+| Hardcoded CSS hex colors | 211 |
+| Hardcoded CSS `rgb/rgba(...)` colors | 1,320 |
+| CSS gradients | 84 |
 | CSS `!important` usages | 34 |
-| JS `innerHTML` usages | 177 |
+| JS `innerHTML` usages | 161 |
 | JS `insertAdjacentHTML` usages | 8 |
-| JS `document.createElement(...)` usages | 368 |
+| JS `document.createElement(...)` usages | 366 |
 | Popup registrations through `popupManager` | 23 |
 
 The numbers are not all bugs. Some hardcoded values are deliberate fallbacks, dynamic map colors or presentation styles. The important finding is that the project already has design-system seeds, but feature CSS still owns too many local visual decisions.
 
 Post-`0.0.1.8.7` delta: app-level shell CSS now has a named `--mow-shell-*` foundation for layout, density, surface, divider, elevation and control states. Future inventory passes should treat `styles/design-tokens.css` as the owner of AppShell shell tokens, while `styles/layout.css`, `styles/app-topbar.css`, `styles/sidebar.css`, `styles/editor.css` and `styles/brand-system.css` consume those tokens during the transition.
 
-Post-`0.0.1.8.12.10` delta: campaign map CSS now treats the default map as a graphic-editor workbench with a compact title chip, a full-width top scene/session action bar, a full-height left vertical canvas tool rail, body-level floating toolbar tooltips and a right-side selected-object property Inspector only when selection exists. Toolbar zones must not create internal scrollbars. `styles/campaign-map-layer-dock.css` and `styles/campaign-map-scene-inspector.css` remain historical/internal owners, but default `renderCampaignMap()` no longer auto-creates those duplicate stage panels after user review.
+Post-`0.0.1.8.12.10` delta: campaign map CSS now treats the default map as a graphic-editor workbench with a compact title chip, a full-width top scene/session action bar, a full-height left vertical canvas tool rail, body-level floating toolbar tooltips and a right-side selected-object property Inspector only when selection exists. Toolbar zones must not create internal scrollbars. Duplicate layer/object and scene-state stage panels are not part of the default render after user review.
 
 Post-`0.0.1.8.13.11` delta: Knowledge Graph Phase 7 is closed at usable migration level. `styles/knowledge-graph.css` owns the document/workbench/canvas/node-card base, while `styles/knowledge-graph-slice.css`, `styles/knowledge-graph-inspector.css` and `styles/knowledge-graph-overlays.css` own slice state, selected-node inspector and node/connect overlays. On the JS side, selected-node inspector helpers, graph node icon mapping, relationship labels/options, canvas controls/filterbar/slice-meter helpers, canvas node/edge renderer helpers, runtime filter/layout/slice/zoom actions, node/connect overlay actions, relationship/context-menu HTML, graph view-state helpers and manual relationship command persistence moved out of `knowledgeGraphPage.js`. The remaining graph risk is `BI-026` product concept rethink before adding new visible graph behavior.
 
@@ -53,6 +53,8 @@ Post-`0.0.1.8.15.1` delta: Phase 9 now has a first automated UI polish gate. `to
 Post-`0.0.1.8.15.2` delta: Phase 9 performance now has a focused browser guard in `tests/browser/ui-polish-performance.spec.mjs`. It exercises the current CSS/JS owners for tree virtualization, campaign map, Knowledge Graph and task tracker with large synthetic workloads and soft runtime budgets, without changing visible UI.
 
 Post-`0.0.1.8.15.3` delta: Phase 9 visual regression now has a theme-scale workbench guard in `tests/browser/visual-regression.spec.mjs`. It captures dark compact, contrast large and contrast narrow AppShell/tree/card-editor baselines and blocks hidden horizontal overflow. The pass also tightens `styles/layout.css` AppShell sizing, `styles/app-topbar.css` topbar containment and `styles/block-properties.css` resize-dot placement so shell padding, topbar actions and Properties handles do not widen the page.
+
+Post-`0.0.1.8.15.4` / `0.0.1.8.15.5` delta: Phase 9 dead CSS cleanup retires the obsolete campaign-map stage panel owners and closes the phase documentation sync. `styles/campaign-map-layer-dock.css`, `styles/campaign-map-scene-inspector.css`, `js/editor/campaignMapLayerDock.js` and `js/editor/campaignMapSceneInspector.js` were removed, and `styles/campaign-map.css` no longer imports those panels. The active map paths remain the compact top scene/session bar, left tool rail, shared map popups, token hover/right-click popup and right-side selected-object property Inspector. The next design-system work is `0.0.1.8.16` broader visual regression coverage.
 
 ## Current CSS Entry Tree
 
@@ -104,7 +106,6 @@ index.html
       -> campaign-map-tokens.css
       -> campaign-map-shapes.css
       -> campaign-map-selection-inspector.css
-      -> campaign-map-layer-dock.css
       -> campaign-map-token-popup.css
       -> campaign-map-popups.css
       -> campaign-map-responsive.css
@@ -140,7 +141,6 @@ index.html
 | `styles/layout.css` | 671 | Global app shell layout, rail, sidebars, right-panel reserve and statusbar composition. |
 | `styles/brand-system.css` | 633 | Final brand skin, shared state overrides and popup motion. |
 | `styles/campaign-map-token-popup.css` | 628 | Token popup and token quick actions. |
-| `styles/campaign-map-layer-dock.css` | 579 | Runtime campaign map layer/object dock and per-layer summary rows. |
 | `styles/block-table.css` | 576 | Table block, selection toolbar and resize states. |
 | `styles/rule-tree.css` | 570 | Internal rules workspace and Rule Tree surfaces. |
 | `styles/command-palette.css` | 559 | Global command palette, deep search results and command rows. |
@@ -337,7 +337,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.12` Campaign map | Closed at `Usable` by `0.0.1.8.12.10`: compact title chip, full-width top scene/session bar, full-height left canvas tool rail, unclipped floating toolbar tooltips, shared map popups, right-side property Inspector, custom object right-click menu and group contextual visibility actions are the current default UI; duplicate layer/object and scene-state panels are not auto-rendered. | Also check `BI-008`, `BI-009`, `BI-010`, `BI-011` and map performance smoke for future map bugfixes. |
 | `0.0.1.8.13` Knowledge graph | Closed at `Usable` by `0.0.1.8.13.11`: visible-slice clarity, selected-node edge states/inspector, node/connect overlay visuals, laconic first layer, CSS owner files, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. | `BI-017`, `BI-018` and `BI-019` are closed for Phase 7. Keep `BI-026` before adding new visible graph features. |
 | `0.0.1.8.14` Secondary screens | Closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tracker UI slice; `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup; `0.0.1.8.14.3` migrated the existing Help/Support/Release guide surface in Tools; `0.0.1.8.14.4` added the World Package manager MVP; `0.0.1.8.14.5` added non-destructive World Package conflict import modes; `0.0.1.8.14.6` added embedded rulePackage apply and asset preflight; `0.0.1.8.14.7` added asset payload export/import, non-overwrite copy and imported page reference rewrite. | Next work: `0.0.1.8.15` polish/cleanup and design-system audit, not another hidden Phase 8 feature. |
-| `0.0.1.8.15` Polish and cleanup | Active. `0.0.1.8.15.1` added the UI polish audit, contrast theme and focus/motion guard. `0.0.1.8.15.2` added a browser performance smoke for large migrated surfaces. `0.0.1.8.15.3` added theme-scale visual baselines and fixed hidden shell/topbar/Properties horizontal overflow. | Remaining work: dead CSS cleanup and final documentation/release sync. |
+| `0.0.1.8.15` Polish and cleanup | Closed at `Foundation` by `0.0.1.8.15.5`. `0.0.1.8.15.1` added the UI polish audit, contrast theme and focus/motion guard. `0.0.1.8.15.2` added a browser performance smoke for large migrated surfaces. `0.0.1.8.15.3` added theme-scale visual baselines and fixed hidden shell/topbar/Properties horizontal overflow. `0.0.1.8.15.4` removed the retired map layer/object dock and scene-state inspector CSS/JS owners from the active bundle, and `0.0.1.8.15.5` synchronized documentation/release handoff. | Next work: `0.0.1.8.16` broader design-system visual regression coverage. |
 
 ## Browser And Tauri Risks
 

@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-07-29
+Updated: 2026-08-07
 
 ## Current Product
 
@@ -103,10 +103,12 @@ Recently closed:
 - `0.0.1.8.15.1` polish and cleanup start: Settings appearance now has a real contrast theme preset, appearance controls expose pressed states for assistive tech, legacy focus gaps in editor/table/property/item/wiki fields are covered, large map/graph inspectors no longer use heavy blur, and `npm run verify` now includes `tools/audit_ui_polish.mjs`.
 - `0.0.1.8.15.2` polish performance guard: a focused browser smoke now renders large synthetic tree, map, graph and task-tracker workloads and fails if migrated workbench surfaces miss DOM expectations or drift beyond soft runtime budgets.
 - `0.0.1.8.15.3` visual theme-scale guard: the visual regression suite now captures dark compact, contrast large and contrast narrow workbench baselines with an open tree, hidden right-panel foundation and populated card editor.
+- `0.0.1.8.15.4` dead CSS cleanup: retired campaign-map layer/object dock and scene-state inspector CSS/JS owners are removed from the active bundle, so the accepted map UI stays on the split toolbar, shared popups and right-side selected-object Inspector instead of quietly carrying old duplicate stage panels.
+- `0.0.1.8.15.5` Phase 9 closure sync: plan, dashboard, work log, architecture docs, release notes, tester instructions, project file audit and generated manual are synchronized after the polish/performance/visual/dead-CSS pass.
 
 Next active block:
 
-- Continue with `0.0.1.8.15.4` Migration Phase 9 polish and cleanup: accessibility/theme/motion, migrated-surface performance and theme-scale visual guards are in place; the next work is dead CSS/unused owner cleanup before final documentation sync. Do not add new visible Knowledge Graph features until `BI-026` rethinks the graph concept.
+- Continue with `0.0.1.8.16` Visual regression for design system: Phase 9 polish/cleanup is closed at `Foundation`, and the next work is broader fixed viewport/theme/scale screenshots for shell, tree, editor, Properties, map, graph, popups and states. Do not add new visible Knowledge Graph features until `BI-026` rethinks the graph concept.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

@@ -35,14 +35,6 @@ import {
 } from './campaignMapLayers.js';
 
 import {
-  updateMapLayerDock
-} from './campaignMapLayerDock.js';
-
-import {
-  updateMapSceneInspector
-} from './campaignMapSceneInspector.js';
-
-import {
   renderMapShapeElement,
   renderMapTokenElement
 } from './campaignMapRenderer.js';
@@ -184,10 +176,6 @@ export async function addMapToken(
   );
 
   applyCampaignMapLayers(
-    map
-  );
-
-  updateMapLayerDock(
     map
   );
 }
@@ -808,10 +796,6 @@ export function addMapShape(
   applyCampaignMapLayers(
     map
   );
-
-  updateMapLayerDock(
-    map
-  );
 }
 
 
@@ -898,10 +882,6 @@ export async function changeMapImage(
   );
 
   await restoreFogCanvas(
-    map
-  );
-
-  updateMapSceneInspector(
     map
   );
 }
