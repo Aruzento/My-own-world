@@ -42,6 +42,12 @@ For the Phase 9 theme-scale workbench visual guard, use:
 npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-theme-scale-captures-workbench-baselines
 ```
 
+For the `0.0.1.8.16` fixed viewport design-system state matrix, use:
+
+```powershell
+npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-design-system-captures-fixed-viewport-state-matrix
+```
+
 For the Phase 9 polish/contrast/focus audit slice, use:
 
 ```powershell

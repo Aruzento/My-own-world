@@ -27,7 +27,12 @@ const REQUIRED_BASELINE_ATTACHMENTS = [
   'visual-component-catalogue-popover',
   'visual-theme-dark-compact-workbench',
   'visual-theme-contrast-large-workbench',
-  'visual-theme-contrast-narrow-workbench'
+  'visual-theme-contrast-narrow-workbench',
+  'visual-ds-dark-compact-shell-states',
+  'visual-ds-contrast-large-editor-properties',
+  'visual-ds-dark-normal-map-popup',
+  'visual-ds-contrast-large-graph-overlay',
+  'visual-ds-dark-compact-task-empty'
 ];
 
 const REQUIRED_SYSTEM_ROWS = [

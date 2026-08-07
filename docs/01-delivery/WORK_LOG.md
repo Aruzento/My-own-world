@@ -6,6 +6,37 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-07: 0.0.1.8.16 Design-System Visual State Matrix
+
+### What Changed
+
+- Added `visual-design-system-captures-fixed-viewport-state-matrix` to `tests/browser/visual-regression.spec.mjs`.
+- Added five fixed viewport screenshot attachments: empty shell/tree/error state, card editor Properties, campaign map popup plus selected-object Inspector, Knowledge Graph context overlay and empty task tracker board.
+- The new guard applies dark/contrast themes plus compact/large scale, then checks no horizontal overflow, expected theme/scale markers, labeled icon-only buttons, visible target surfaces and zero retired campaign-map duplicate stage panels.
+- Synchronized the UI migration baseline manifest, browser smoke scenario catalog, plan, dashboard, design-system contract, UI audit plan, CSS inventory, release notes and tester instructions.
+- Marked the current `0.0.1.8` redesign track as paused for owner review before non-design work resumes.
+
+### Readiness
+
+`Foundation` for design-system visual regression. This does not add a new user workflow; it makes the accepted expensive-app UI harder to regress silently while preserving screenshot evidence for human review.
+
+### Verification
+
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `node --check tests\browser\scenarios.mjs`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-design-system-captures-fixed-viewport-state-matrix`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 5 browser tests.
+- Passed: `node tools\audit_project_files.mjs` with 568 files.
+- Passed: `python tools\generate_manual_docx.py` with 1300 files in the generated manual.
+- Passed: `npm run verify` with 285 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 116 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+
+### Next
+
+- Pause for the owner's pending post-design task before moving beyond the current `0.0.1.8` redesign track.
+- Keep `BI-026` as the gate before adding new visible Knowledge Graph concepts.
+
 ## 2026-08-07: 0.0.1.8.15.4-0.0.1.8.15.5 Dead CSS And Phase 9 Closure Sync
 
 ### What Changed

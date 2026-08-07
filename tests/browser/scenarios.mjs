@@ -233,6 +233,21 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'visual-design-system-fixed-viewport-matrix',
+    priority: 'P1',
+    area: 'ui',
+    title: 'Design-system fixed viewport matrix preserves key premium workbench states',
+    description:
+      'Capture fixed viewport screenshots for empty shell/error state, card editor Properties, map popup plus Inspector, Knowledge Graph context overlay and empty task board across dark/contrast themes and compact/large scale.',
+    automationStatus:
+      'automated: visual-design-system-captures-fixed-viewport-state-matrix',
+    automatesChecklist: [
+      'Visual Regression: shell/tree/editor',
+      'Visual Regression: map/graph/popups',
+      'Visual Regression: empty/loading/error states'
+    ]
+  },
+  {
     id: 'ui-polish-runtime-performance',
     priority: 'P1',
     area: 'ui',

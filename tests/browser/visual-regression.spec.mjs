@@ -23,7 +23,12 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-component-catalogue-popover',
   'visual-theme-dark-compact-workbench',
   'visual-theme-contrast-large-workbench',
-  'visual-theme-contrast-narrow-workbench'
+  'visual-theme-contrast-narrow-workbench',
+  'visual-ds-dark-compact-shell-states',
+  'visual-ds-contrast-large-editor-properties',
+  'visual-ds-dark-normal-map-popup',
+  'visual-ds-contrast-large-graph-overlay',
+  'visual-ds-dark-compact-task-empty'
 ];
 
 const THEME_SCALE_BASELINE_CASES = [
@@ -74,6 +79,93 @@ const THEME_SCALE_BASELINE_CASES = [
     },
     minEditorWidth:
       420
+  }
+];
+
+const DESIGN_SYSTEM_FIXED_VIEWPORT_CASES = [
+  {
+    attachment:
+      'visual-ds-dark-compact-shell-states',
+    kind:
+      'shell-states',
+    viewport: {
+      width: 1200,
+      height: 760
+    },
+    appearance: {
+      theme: 'dark',
+      accent: 'gold',
+      background: 'forest',
+      scale: 'compact'
+    }
+  },
+  {
+    attachment:
+      'visual-ds-contrast-large-editor-properties',
+    kind:
+      'editor-properties',
+    viewport: {
+      width: 1366,
+      height: 860
+    },
+    appearance: {
+      theme: 'contrast',
+      accent: 'green',
+      background: 'stone',
+      scale: 'large'
+    },
+    locator:
+      '.editor-surface'
+  },
+  {
+    attachment:
+      'visual-ds-dark-normal-map-popup',
+    kind:
+      'map-popup',
+    viewport: {
+      width: 1366,
+      height: 860
+    },
+    appearance: {
+      theme: 'dark',
+      accent: 'purple',
+      background: 'arcane',
+      scale: 'normal'
+    }
+  },
+  {
+    attachment:
+      'visual-ds-contrast-large-graph-overlay',
+    kind:
+      'graph-overlay',
+    viewport: {
+      width: 1366,
+      height: 860
+    },
+    appearance: {
+      theme: 'contrast',
+      accent: 'blue',
+      background: 'stone',
+      scale: 'large'
+    }
+  },
+  {
+    attachment:
+      'visual-ds-dark-compact-task-empty',
+    kind:
+      'task-empty',
+    viewport: {
+      width: 1180,
+      height: 760
+    },
+    appearance: {
+      theme: 'dark',
+      accent: 'gold',
+      background: 'stone',
+      scale: 'compact'
+    },
+    locator:
+      '.task-tracker-document'
   }
 ];
 
@@ -955,6 +1047,121 @@ test(
         testInfo,
         baseline.attachment
       );
+    }
+  }
+);
+
+
+test(
+  'visual-design-system-captures-fixed-viewport-state-matrix',
+  async ({ page }, testInfo) => {
+
+    for (const baseline of DESIGN_SYSTEM_FIXED_VIEWPORT_CASES) {
+
+      await page.addInitScript(
+        () => {
+
+          localStorage.setItem(
+            'my-own-world:app-shell-sidebar-state',
+            'expanded'
+          );
+
+          localStorage.setItem(
+            'my-own-world:app-shell-sidebar-width',
+            '292'
+          );
+        }
+      );
+
+      await page.setViewportSize(
+        baseline.viewport
+      );
+
+      await page.goto(
+        '/'
+      );
+
+      await applyThemeScaleAppearance(
+        page,
+        baseline.appearance
+      );
+
+      await prepareDesignSystemFixedViewportSurface(
+        page,
+        baseline.kind
+      );
+
+      const metrics =
+        await getDesignSystemFixedViewportMetrics(
+          page,
+          baseline.kind
+        );
+
+      expect(
+        metrics.bodyHasHorizontalOverflow,
+        JSON.stringify(metrics, null, 2)
+      ).toBe(
+        false
+      );
+
+      expect(
+        metrics.appHasHorizontalOverflow,
+        JSON.stringify(metrics, null, 2)
+      ).toBe(
+        false
+      );
+
+      expect(
+        metrics.theme
+      ).toBe(
+        baseline.appearance.theme
+      );
+
+      expect(
+        metrics.scale
+      ).toBe(
+        baseline.appearance.scale
+      );
+
+      expect(
+        metrics.visualBaseline
+      ).toBe(
+        '0.0.1.8.16'
+      );
+
+      expect(
+        metrics.visibleSurfaceCount
+      ).toBeGreaterThanOrEqual(
+        1
+      );
+
+      expect(
+        metrics.unlabeledIconButtonCount
+      ).toBe(
+        0
+      );
+
+      expectDesignSystemFixedViewportMetrics(
+        baseline.kind,
+        metrics
+      );
+
+      if (baseline.locator) {
+
+        await attachLocatorScreenshot(
+          page.locator(baseline.locator),
+          testInfo,
+          baseline.attachment
+        );
+
+      } else {
+
+        await attachScreenshot(
+          page,
+          testInfo,
+          baseline.attachment
+        );
+      }
     }
   }
 );
@@ -2130,6 +2337,901 @@ async function getThemeScaleWorkbenchMetrics(
         visibleShellControls
       };
     }
+  );
+}
+
+
+async function prepareDesignSystemFixedViewportSurface(
+  page,
+  kind
+) {
+
+  if (kind === 'shell-states') {
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          renderEmptyEditor
+        } = await import('/js/editor/editor.js');
+
+        const {
+          renderTree
+        } = await import('/js/tree/tree.js');
+
+        const {
+          finishProgressStatus,
+          setProgressStatus,
+          setSaveStatus
+        } = await import('/js/ui/ui.js');
+
+        const app =
+          document.querySelector('.app');
+
+        if (app) {
+
+          app.dataset.visualDesignSystemBaseline =
+            '0.0.1.8.16';
+        }
+
+        renderEmptyEditor();
+        renderTree();
+
+        setProgressStatus({
+          label:
+            'Visual baseline',
+          current:
+            5,
+          total:
+            12,
+          stage:
+            'Fixed viewport guard',
+          elapsedMs:
+            1320
+        });
+
+        finishProgressStatus(
+          'Visual baseline failed state',
+          {
+            status:
+              'failed',
+            delayMs:
+              60000
+          }
+        );
+
+        setSaveStatus(
+          'error',
+          'Visual baseline save error'
+        );
+      }
+    );
+
+    await expect(
+      page.locator('[data-app-shell-surface="empty-workspace"]')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.tree-empty-workspace')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.operation-progress')
+    ).toHaveClass(
+      /is-failed/
+    );
+
+    return;
+  }
+
+  if (kind === 'editor-properties') {
+
+    await prepareThemeScaleWorkbench(
+      page
+    );
+
+    await page.evaluate(
+      () => {
+
+        const app =
+          document.querySelector('.app');
+
+        if (app) {
+
+          app.dataset.visualDesignSystemBaseline =
+            '0.0.1.8.16';
+        }
+      }
+    );
+
+    await expect(
+      page.locator('.editor-surface')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.card-properties-block')
+    ).toBeVisible();
+
+    return;
+  }
+
+  if (kind === 'map-popup') {
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          createCampaignMapTemplate
+        } = await import('/js/templates/campaignMap.js');
+
+        const {
+          renderCampaignMap
+        } = await import('/js/editor/campaignMap.js');
+
+        const {
+          refreshCampaignMapStore
+        } = await import('/js/editor/campaignMapStore.js');
+
+        const {
+          createMapShapeElement,
+          createMapTokenElement
+        } = await import('/js/editor/campaignMapElementFactory.js');
+
+        const {
+          renderMapShapeElement,
+          renderMapTokenElement
+        } = await import('/js/editor/campaignMapRenderer.js');
+
+        const {
+          renderLockedFogZones
+        } = await import('/js/editor/campaignMapFog.js');
+
+        const {
+          selectMapToken
+        } = await import('/js/editor/campaignMapRuntime.js');
+
+        const {
+          openGridPopup
+        } = await import('/js/editor/campaignMapToolbarController.js');
+
+        const app =
+          document.querySelector('.app');
+
+        if (app) {
+
+          app.dataset.visualDesignSystemBaseline =
+            '0.0.1.8.16';
+        }
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML =
+          createCampaignMapTemplate().content;
+
+        const map =
+          editor.querySelector('.campaign-map-document');
+
+        map.querySelector('.campaign-map-title').textContent =
+          'Visual Map Baseline';
+
+        const stage =
+          map.querySelector('.campaign-map-stage');
+
+        const viewport =
+          map.querySelector('.campaign-map-viewport');
+
+        stage.style.height =
+          '560px';
+
+        stage.dataset.grid =
+          'true';
+
+        stage.dataset.viewZoom =
+          '1';
+
+        viewport.style.width =
+          '1900px';
+
+        viewport.style.height =
+          '1100px';
+
+        await renderCampaignMap(
+          editor
+        );
+
+        const layer =
+          map.querySelector('.campaign-map-object-layer');
+
+        const store =
+          refreshCampaignMapStore(
+            map
+          );
+
+        const token =
+          store.addToken({
+            tokenId:
+              'ds-map-token',
+            type:
+              'creature',
+            name:
+              'Sentinel',
+            x:
+              16,
+            y:
+              18,
+            size:
+              1,
+            hp:
+              8,
+            hpMax:
+              12,
+            armorClass:
+              14,
+            presentationHidden:
+              true,
+            isPlayerToken:
+              true
+          });
+
+        const shape =
+          store.addShape({
+            shapeId:
+              'ds-map-shape',
+            type:
+              'square',
+            x:
+              480,
+            y:
+              240,
+            width:
+              170,
+            height:
+              120,
+            rotation:
+              18
+          });
+
+        store.updateFog({
+          lockedZones: [
+            {
+              id:
+                'ds-map-fog',
+              x:
+                700,
+              y:
+                230,
+              width:
+                220,
+              height:
+                150
+            }
+          ]
+        });
+
+        const tokenElement =
+          createMapTokenElement(
+            token
+          );
+
+        const shapeElement =
+          createMapShapeElement(
+            shape
+          );
+
+        layer.append(
+          tokenElement,
+          shapeElement
+        );
+
+        await renderMapTokenElement(
+          tokenElement
+        );
+
+        renderMapShapeElement(
+          shapeElement
+        );
+
+        renderLockedFogZones(
+          map
+        );
+
+        store.commitToDOM();
+
+        selectMapToken(
+          tokenElement
+        );
+
+        openGridPopup(
+          map,
+          map.querySelector('.campaign-grid-btn'),
+          {
+            async saveAndSync() {}
+          }
+        );
+      }
+    );
+
+    await expect(
+      page.locator('.campaign-map-document')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#campaignMapPopup')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.campaign-map-properties-panel')
+    ).toBeVisible();
+
+    return;
+  }
+
+  if (kind === 'graph-overlay') {
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const {
+          createKnowledgeGraphTemplate
+        } = await import('/js/templates/knowledgeGraph.js');
+
+        const {
+          renderKnowledgeGraphPage
+        } = await import('/js/wiki/knowledgeGraphPage.js');
+
+        const app =
+          document.querySelector('.app');
+
+        if (app) {
+
+          app.dataset.visualDesignSystemBaseline =
+            '0.0.1.8.16';
+        }
+
+        state.pages = [
+          {
+            id:
+              'world',
+            name:
+              'world.md',
+            path:
+              '/pages/world.md',
+            order:
+              1,
+            title:
+              'World',
+            parent:
+              null,
+            template:
+              'card',
+            type:
+              'note',
+            tags:
+              [],
+            aliases:
+              [],
+            content:
+              '<h1>World</h1>[[Hero]]'
+          },
+          {
+            id:
+              'hero',
+            name:
+              'hero.md',
+            path:
+              '/pages/hero.md',
+            order:
+              2,
+            title:
+              'Hero',
+            parent:
+              'world',
+            template:
+              'card',
+            type:
+              'character',
+            tags:
+              [],
+            aliases:
+              [],
+            relationships: [
+              {
+                type:
+                  'equipped',
+                targetId:
+                  'sword',
+                label:
+                  'Main hand'
+              },
+              {
+                type:
+                  'ally',
+                targetId:
+                  'guild',
+                label:
+                  'Faction'
+              }
+            ],
+            content:
+              '<h1>Hero</h1>'
+          },
+          {
+            id:
+              'sword',
+            name:
+              'sword.md',
+            path:
+              '/pages/sword.md',
+            order:
+              3,
+            title:
+              'Sword',
+            parent:
+              null,
+            template:
+              'card',
+            type:
+              'item',
+            tags:
+              [],
+            aliases:
+              [],
+            content:
+              '<h1>Sword</h1>'
+          },
+          {
+            id:
+              'guild',
+            name:
+              'guild.md',
+            path:
+              '/pages/guild.md',
+            order:
+              4,
+            title:
+              'Guild',
+            parent:
+              null,
+            template:
+              'card',
+            type:
+              'note',
+            tags: [
+              'organization'
+            ],
+            aliases:
+              [],
+            content:
+              '<h1>Guild</h1>'
+          }
+        ];
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML =
+          createKnowledgeGraphTemplate().content;
+
+        renderKnowledgeGraphPage(
+          editor
+        );
+      }
+    );
+
+    await expect(
+      page.locator('.knowledge-graph-workbench')
+    ).toBeVisible();
+
+    await page
+      .locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]')
+      .click({
+        button:
+          'right'
+      });
+
+    await expect(
+      page.locator('[data-knowledge-graph-node-menu]')
+    ).toBeVisible();
+
+    return;
+  }
+
+  if (kind === 'task-empty') {
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          createTaskTrackerTemplate
+        } = await import('/js/templates/taskTracker.js');
+
+        const {
+          renderTaskTracker
+        } = await import('/js/taskTracker/taskTrackerRender.js');
+
+        const app =
+          document.querySelector('.app');
+
+        if (app) {
+
+          app.dataset.visualDesignSystemBaseline =
+            '0.0.1.8.16';
+        }
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML =
+          createTaskTrackerTemplate().content;
+
+        editor.querySelector('.task-tracker-title').textContent =
+          'Visual Task Baseline';
+
+        renderTaskTracker(
+          editor
+        );
+      }
+    );
+
+    await expect(
+      page.locator('.task-tracker-document')
+    ).toBeVisible();
+
+    return;
+  }
+
+  throw new Error(
+    `Unknown design system fixed viewport kind: ${kind}`
+  );
+}
+
+
+async function getDesignSystemFixedViewportMetrics(
+  page,
+  kind
+) {
+
+  return page.evaluate(
+    surfaceKind => {
+
+      const app =
+        document.querySelector('.app');
+
+      const statusbar =
+        document.getElementById('statusbar');
+
+      const progress =
+        document.querySelector('.operation-progress');
+
+      const popup =
+        document.getElementById('campaignMapPopup');
+
+      const isVisible =
+        element => {
+
+          if (!element) return false;
+
+          const style =
+            getComputedStyle(element);
+
+          const rect =
+            element.getBoundingClientRect();
+
+          return style.display !== 'none' &&
+            style.visibility !== 'hidden' &&
+            !element.hasAttribute('hidden') &&
+            !element.classList.contains('hidden') &&
+            rect.width > 0 &&
+            rect.height > 0;
+        };
+
+      const surfaceSelectorsByKind =
+        {
+          'shell-states': [
+            '[data-app-shell-surface="empty-workspace"]',
+            '.tree-empty-workspace',
+            '.operation-progress',
+            '#statusbar[data-save-state="error"]'
+          ],
+          'editor-properties': [
+            '.editor-surface',
+            '.card-properties-block',
+            '.tree-item'
+          ],
+          'map-popup': [
+            '.campaign-map-document',
+            '[data-map-toolbar-region="scene-bar"]',
+            '[data-map-toolbar-region="tool-rail"]',
+            '#campaignMapPopup',
+            '.campaign-map-properties-panel'
+          ],
+          'graph-overlay': [
+            '.knowledge-graph-document',
+            '.knowledge-graph-workbench',
+            '[data-knowledge-graph-node-menu]'
+          ],
+          'task-empty': [
+            '.task-tracker-document',
+            '.task-tracker-board',
+            '.task-column-empty'
+          ]
+        };
+
+      const surfaceSelectors =
+        surfaceSelectorsByKind[surfaceKind] || [];
+
+      const visibleSurfaceCount =
+        surfaceSelectors.reduce(
+          (count, selector) => {
+
+            const visibleCount =
+              Array
+                .from(document.querySelectorAll(selector))
+                .filter(isVisible)
+                .length;
+
+            return count + visibleCount;
+          },
+          0
+        );
+
+      const unlabeledIconButtonCount =
+        Array
+          .from(document.querySelectorAll('button'))
+          .filter(button => {
+
+            if (!isVisible(button)) return false;
+
+            const hasIcon =
+              Boolean(
+                button.querySelector('svg, .app-icon')
+              );
+
+            if (!hasIcon) return false;
+
+            const hasVisibleText =
+              button.textContent.trim().length > 0;
+
+            return !hasVisibleText &&
+              !button.getAttribute('aria-label') &&
+              !button.getAttribute('title');
+          })
+          .length;
+
+      const mapPopupShell =
+        popup?.querySelector('.campaign-map-popup-shell');
+
+      const bodyScrollWidth =
+        Math.max(
+          document.documentElement.scrollWidth,
+          document.body.scrollWidth
+        );
+
+      return {
+        appClientWidth:
+          app?.clientWidth || 0,
+        appHasHorizontalOverflow:
+          app
+            ? app.scrollWidth > app.clientWidth + 1
+            : true,
+        appScrollWidth:
+          app?.scrollWidth || 0,
+        bodyHasHorizontalOverflow:
+          bodyScrollWidth > window.innerWidth + 1,
+        bodyScrollWidth,
+        documentScrollWidth:
+          document.documentElement.scrollWidth,
+        graphMenuVisible:
+          isVisible(
+            document.querySelector('[data-knowledge-graph-node-menu]')
+          ),
+        hasEditor:
+          isVisible(
+            document.querySelector('.editor-surface')
+          ),
+        hasMap:
+          isVisible(
+            document.querySelector('.campaign-map-document')
+          ),
+        hasMapInspector:
+          isVisible(
+            document.querySelector('.campaign-map-properties-panel')
+          ),
+        hasMapSceneBar:
+          isVisible(
+            document.querySelector('[data-map-toolbar-region="scene-bar"]')
+          ),
+        hasMapToolRail:
+          isVisible(
+            document.querySelector('[data-map-toolbar-region="tool-rail"]')
+          ),
+        hasProperties:
+          isVisible(
+            document.querySelector('.card-properties-block')
+          ),
+        hasShellEmpty:
+          isVisible(
+            document.querySelector('[data-app-shell-surface="empty-workspace"]')
+          ),
+        hasTask:
+          isVisible(
+            document.querySelector('.task-tracker-document')
+          ),
+        mapPopupMigration:
+          popup?.dataset.mapPopupUiMigration ||
+          mapPopupShell?.dataset.mapPopupUiMigration ||
+          '',
+        mapPopupOpen:
+          isVisible(
+            popup
+          ),
+        oldMapPanelCount:
+          document.querySelectorAll(
+            '.campaign-map-layer-dock, .campaign-map-scene-inspector'
+          ).length,
+        operationProgressState:
+          progress?.classList.contains('is-failed')
+            ? 'failed'
+            : progress?.dataset.toastState || '',
+        scale:
+          document.body.dataset.uiScale || '',
+        statusbarSaveState:
+          statusbar?.dataset.saveState || '',
+        taskEmptyColumns:
+          document.querySelectorAll('.task-column-empty').length,
+        theme:
+          document.body.dataset.theme || '',
+        unlabeledIconButtonCount,
+        viewportWidth:
+          window.innerWidth,
+        visibleSurfaceCount,
+        visualBaseline:
+          app?.dataset.visualDesignSystemBaseline || ''
+      };
+    },
+    kind
+  );
+}
+
+
+function expectDesignSystemFixedViewportMetrics(
+  kind,
+  metrics
+) {
+
+  if (kind === 'shell-states') {
+
+    expect(
+      metrics.hasShellEmpty,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.operationProgressState
+    ).toBe(
+      'failed'
+    );
+
+    expect(
+      metrics.statusbarSaveState
+    ).toBe(
+      'error'
+    );
+
+    expect(
+      metrics.visibleSurfaceCount
+    ).toBeGreaterThanOrEqual(
+      3
+    );
+
+    return;
+  }
+
+  if (kind === 'editor-properties') {
+
+    expect(
+      metrics.hasEditor,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.hasProperties
+    ).toBe(
+      true
+    );
+
+    return;
+  }
+
+  if (kind === 'map-popup') {
+
+    expect(
+      metrics.hasMap,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.hasMapSceneBar
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.hasMapToolRail
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.hasMapInspector
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.mapPopupOpen
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.mapPopupMigration
+    ).toBe(
+      '0.0.1.8.12.2'
+    );
+
+    expect(
+      metrics.oldMapPanelCount
+    ).toBe(
+      0
+    );
+
+    return;
+  }
+
+  if (kind === 'graph-overlay') {
+
+    expect(
+      metrics.graphMenuVisible,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      true
+    );
+
+    return;
+  }
+
+  if (kind === 'task-empty') {
+
+    expect(
+      metrics.hasTask,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.taskEmptyColumns
+    ).toBeGreaterThanOrEqual(
+      3
+    );
+
+    return;
+  }
+
+  throw new Error(
+    `Unknown design system fixed viewport kind: ${kind}`
   );
 }
 

@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # UI Migration Baselines
 
-Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is closed at `Foundation` by `0.0.1.8.15.5`; the next design-system work is `0.0.1.8.16` broader visual regression coverage.
+Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is closed at `Foundation` by `0.0.1.8.15.5`; `0.0.1.8.16` design-system visual regression is closed at `Foundation` with fixed viewport state-matrix attachments. The redesign track now pauses for owner review before non-design work continues.
 
 This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must compare against.
 
@@ -89,6 +89,8 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 
 `0.0.1.8.15.5` update: Phase 9 closure sync is complete. Current visual baseline evidence is still attachment-based rather than pixel-locked; `0.0.1.8.16` should broaden fixed viewport/theme/scale screenshots across shell, tree, editor, Properties, map, graph, popups and empty/loading/error states.
 
+`0.0.1.8.16` update: the design-system visual baseline now includes `visual-design-system-captures-fixed-viewport-state-matrix` in `tests/browser/visual-regression.spec.mjs`. It captures fixed viewport screenshots for empty shell/tree/error state, card editor Properties, campaign map popup plus selected-object Inspector, Knowledge Graph context overlay and empty task tracker board across dark/contrast themes and compact/large scale. The guard checks theme/scale markers, no horizontal overflow, labeled icon-only buttons, hidden right-panel foundation and absence of retired campaign-map stage panels.
+
 ## Baseline Rules
 
 - Do not commit generated PNG screenshots. `tests/browser/visual-regression.spec.mjs` attaches them to the Playwright run as current baseline evidence.
@@ -122,6 +124,11 @@ These names are the current visual baseline contract. They are produced by `npm 
 | `visual-theme-dark-compact-workbench.png` | Theme and scale workbench | synthetic workspace/card page with `body[data-theme="dark"][data-ui-scale="compact"]` | Captures the expensive-app workbench density in dark theme with compact scale, open tree, hidden right panel and a populated card editor. |
 | `visual-theme-contrast-large-workbench.png` | Theme and scale workbench | synthetic workspace/card page with `body[data-theme="contrast"][data-ui-scale="large"]` | Captures the same shell/tree/editor stack in the high-contrast preset and large UI scale so later polish does not break spacing or panel balance. |
 | `visual-theme-contrast-narrow-workbench.png` | Theme and scale workbench | 1000px-wide synthetic workspace/card page with `body[data-theme="contrast"][data-ui-scale="normal"]` | Captures the narrower desktop workbench composition so the left rail, tree, editor and hidden right panel foundation stay usable without horizontal overflow before the responsive sidebar breakpoint. |
+| `visual-ds-dark-compact-shell-states.png` | Fixed viewport shell, tree and status states | 1200px app screenshot with empty workspace, no-workspace tree action, failed operation toast and save-error status in dark compact mode | Captures the start-screen/tree/status error state that must remain clean and understandable instead of looking broken. |
+| `visual-ds-contrast-large-editor-properties.png` | Fixed viewport editor and Properties | `.editor-surface` in contrast large mode with populated synthetic card and Properties block | Captures the shared card/editor/block/property language under large scale so spacing and field styling do not diverge again. |
+| `visual-ds-dark-normal-map-popup.png` | Fixed viewport campaign map popup and Inspector | app screenshot with campaign map, split toolbar, selected token Inspector, grid popup, shape and locked fog in dark normal mode | Captures the graphic-editor map direction: top scene bar, left tool rail, shared popup, right property Inspector and no retired duplicate stage panels. |
+| `visual-ds-contrast-large-graph-overlay.png` | Fixed viewport Knowledge Graph context overlay | app screenshot with Knowledge Graph workbench and node context menu in contrast large mode | Captures the laconic graph first layer plus compact relationship/action overlay without introducing more visible graph concepts. |
+| `visual-ds-dark-compact-task-empty.png` | Fixed viewport empty task tracker | `.task-tracker-document` in dark compact mode with empty board columns | Captures the secondary-screen board density and empty column states without verbose placeholder clutter. |
 
 ## System Inventory Baseline
 

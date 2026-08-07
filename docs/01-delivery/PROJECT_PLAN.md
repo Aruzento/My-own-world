@@ -121,8 +121,12 @@ Planned subpoints:
 
 `0.0.1.8.15.4` update: dead CSS cleanup now removes the retired campaign-map layer/object dock and scene-state inspector from the active bundle. The removed owners are `styles/campaign-map-layer-dock.css`, `styles/campaign-map-scene-inspector.css`, `js/editor/campaignMapLayerDock.js` and `js/editor/campaignMapSceneInspector.js`; map runtime no longer calls no-op refresh hooks for those obsolete panels. The accepted default map path remains the compact top scene/session bar, full-height left tool rail, shared map popups, token hover/right-click popup and right-side selected-object Inspector. Remaining `0.0.1.8.15` work: final documentation, release notes and Phase 9 closure sync.
 
-`0.0.1.8.15.5` update: Phase 9 closure sync is complete. Dashboard, work log, active plan, design-system contract, UI baselines, CSS inventory, UI audit plan, release notes, tester instructions, project file audit and generated manual now describe the current Phase 9 state: retired map stage panel owners are removed, active visual/performance/polish guards are green, and the next design-system work moves to `0.0.1.8.16`.
+`0.0.1.8.15.5` update: Phase 9 closure sync is complete. Dashboard, work log, active plan, design-system contract, UI baselines, CSS inventory, UI audit plan, release notes, tester instructions, project file audit and generated manual now describe the current Phase 9 state: retired map stage panel owners are removed, active visual/performance/polish guards are green, and the follow-up design-system visual regression pass is tracked as `0.0.1.8.16`.
 
 0.0.1.8.16. Visual regression for design system.
 
 Description: add fixed viewport/theme/scale screenshots for shell, tree, editor, properties, map, graph, popups, empty/loading/error states, compact/comfortable density, dark and high-contrast themes.
+
+Status: closed at `Foundation` by `0.0.1.8.16`. `tests/browser/visual-regression.spec.mjs` now captures a fixed viewport design-system matrix for empty shell/tree/error state, card editor Properties, campaign map popup plus selected-object Inspector, Knowledge Graph context overlay and empty task tracker board across dark/contrast themes and compact/large scale. `tests/uiMigrationBaselines.test.mjs` and `UI_MIGRATION_BASELINES.md` require the five new attachment names.
+
+Design-track gate: the current `0.0.1.8` redesign plan has no next implementation item after `0.0.1.8.16`. Before moving back to non-design product work, pause for owner review and the user's pending design-completion task.
