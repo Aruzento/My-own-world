@@ -12,13 +12,21 @@ const CATALOGUE_BUTTON_ID =
 const CATALOGUE_POPOVER_ID =
   'componentCataloguePopover';
 
+const CATALOGUE_DEV_STORAGE_KEY =
+  'my-own-world:show-component-catalogue';
+
 
 export function setupComponentCatalogue({
-  toolsPopup
+  toolsPopup,
+  force = false
 } = {}) {
 
   if (
     !toolsPopup ||
+    (
+      !force &&
+      !isComponentCatalogueEnabled()
+    ) ||
     toolsPopup.querySelector(`[data-component-catalogue-open="true"]`)
   ) return;
 
@@ -127,6 +135,29 @@ export function setupComponentCatalogue({
   toolsPopup.appendChild(
     trigger
   );
+}
+
+
+export function isComponentCatalogueEnabled() {
+
+  if (
+    globalThis.MOW_ENABLE_COMPONENT_CATALOGUE === true
+  ) return true;
+
+  if (
+    document.body?.dataset.enableComponentCatalogue === 'true'
+  ) return true;
+
+  try {
+
+    return localStorage.getItem(
+      CATALOGUE_DEV_STORAGE_KEY
+    ) === 'true';
+
+  } catch {
+
+    return false;
+  }
 }
 
 

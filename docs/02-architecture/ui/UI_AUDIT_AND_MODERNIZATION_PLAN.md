@@ -37,7 +37,7 @@ owner_zone: "architecture"
 
 ### 2026-07-21 Component Catalogue POC
 
-- Confirmed: `0.0.1.8.4` added `Tools -> Компоненты` as a visible proof-of-concept catalogue for shared Button, Input, Panel and Popover primitives.
+- Confirmed: `0.0.1.8.4` added `Tools -> Компоненты` as a visible proof-of-concept catalogue for shared Button, Input, Panel and Popover primitives; `0.0.1.8.17` later moved that catalogue behind a dev/test flag so normal Tools stays product-focused.
 - Confirmed: the catalogue uses the existing popup lifecycle instead of creating another overlay controller.
 - Confirmed: the samples cover focus, keyboard close, disabled, readonly, invalid, pressed, loading, compact/large density and reduced-motion-safe overlay behavior.
 - Confirmed: this is a reference surface only; feature screens are not migrated in this step.
@@ -54,7 +54,7 @@ owner_zone: "architecture"
 ### 2026-07-21 Migration Phase 0 Baselines
 
 - Confirmed: `0.0.1.8.6` added [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) as the UI/CSS/icon/popup/screenshot baseline manifest for future migration phases.
-- Confirmed: `tests/browser/visual-regression.spec.mjs` now attaches baseline screenshots for AppShell, empty workspace start, Settings maintenance, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker and shared component catalogue popover.
+- Confirmed: `tests/browser/visual-regression.spec.mjs` now attaches baseline screenshots for AppShell, empty workspace start, Settings maintenance, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker, dev/test component catalogue popover and the `0.0.1.8.17` owner evidence matrix.
 - Confirmed: `tests/uiMigrationBaselines.test.mjs` keeps the baseline manifest synchronized with the visual smoke attachment names and required system inventory rows.
 - Confirmed: this phase makes no broad visual migration; it is the controlled comparison layer for `0.0.1.8.7+`.
 - Next action completed by `0.0.1.8.7`; semantic AppShell foundation tokens are now applied to app-level surfaces.
@@ -70,7 +70,7 @@ owner_zone: "architecture"
 ### 2026-07-21 Migration Phase 2 Primitives
 
 - Confirmed: `0.0.1.8.8` added shared IconButton, Select, Checkbox, SegmentedControl, Toolbar and Separator tokens/styles without touching map, graph, editor, Properties or task-tracker business logic.
-- Confirmed: `Tools -> Компоненты` now exposes Button, IconButton, Field, Toolbar, Panel and Popover states as a living primitive reference.
+- Confirmed: the dev/test component catalogue now exposes Button, IconButton, Field, Toolbar, Panel and Popover states as a living primitive reference without appearing in normal Tools usage.
 - Confirmed: the app Tools popup is a real consumer of shared `.mow-button`, so the primitive layer is not catalogue-only.
 - Confirmed: the same slice started the overlay foundation with `data-overlay-kind`, `data-overlay-lifecycle` and `data-overlay-state` on topbar/component catalogue popovers through `popupManager`.
 - Next action completed by `0.0.1.8.10` and corrected by `0.0.1.8.10.2`-`0.0.1.8.10.4`; the real AppShell now has a rail that keeps `Дерево` as the only current content navigation entry and tree-panel show/hide control, tree-preserving sidebar behavior, Explorer-style root actions and resize without adding fake content-type tabs or bottom-panel placeholders.
@@ -298,7 +298,7 @@ Status: started and partially closed by `0.0.1.8.14.1`, with the icon-button reg
 
 ### Phase 9 - Polish And Cleanup
 
-Status: closed at `Foundation` by `0.0.1.8.15.5`. `0.0.1.8.15.1` delivered the first slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. `0.0.1.8.15.2` adds the migrated-surface runtime performance guard. `0.0.1.8.15.3` adds the theme-scale visual guard for the shell/tree/card-editor workbench and fixes hidden horizontal overflow in shell/topbar/Properties handles. `0.0.1.8.15.4` removes the retired campaign-map layer/object dock and scene-state inspector CSS/JS owners from the active bundle. `0.0.1.8.15.5` synchronizes the plan, dashboard, work log, release notes, tester instructions, architecture docs, project file audit and generated manual. `0.0.1.8.16` closes the broader fixed viewport visual-regression coverage at `Foundation` for shell/tree/error, editor Properties, map popup/Inspector, graph overlay and task tracker empty states. The current redesign plan now pauses for owner review before non-design work resumes.
+Status: closed at `Usable` by `0.0.1.8.17`. `0.0.1.8.15.1` delivered the first polish slice: a real `contrast` theme in Settings, pressed/focus states for appearance controls, focus rings for old editable/select/search fields, heavy blur removal from large map/graph inspectors and an automated UI polish audit. `0.0.1.8.15.2` adds the migrated-surface runtime performance guard. `0.0.1.8.15.3` adds the theme-scale visual guard for the shell/tree/card-editor workbench and fixes hidden horizontal overflow in shell/topbar/Properties handles. `0.0.1.8.15.4` removes the retired campaign-map layer/object dock and scene-state inspector CSS/JS owners from the active bundle. `0.0.1.8.15.5` synchronizes the plan, dashboard, work log, release notes, tester instructions, architecture docs, project file audit and generated manual. `0.0.1.8.16` closes the broader fixed viewport visual-regression coverage at `Foundation`. `0.0.1.8.17` completes the owner visual pass with quieter user-facing surfaces, dev/test-only component catalogue access, map popup/Inspector non-overlap, 1440x900/1280x720 evidence and a separate future mini-backlog. The project now pauses for the owner's planned post-design task before non-design work resumes.
 
 ## Test Protection
 

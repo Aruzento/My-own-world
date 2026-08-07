@@ -32,7 +32,19 @@ const REQUIRED_BASELINE_ATTACHMENTS = [
   'visual-ds-contrast-large-editor-properties',
   'visual-ds-dark-normal-map-popup',
   'visual-ds-contrast-large-graph-overlay',
-  'visual-ds-dark-compact-task-empty'
+  'visual-ds-dark-compact-task-empty',
+  'visual-owner-1440-shell-states',
+  'visual-owner-1280-shell-states',
+  'visual-owner-1440-editor-properties',
+  'visual-owner-1280-editor-properties',
+  'visual-owner-1440-map-popup',
+  'visual-owner-1280-map-popup',
+  'visual-owner-1440-graph-overlay',
+  'visual-owner-1280-graph-overlay',
+  'visual-owner-1440-task-empty',
+  'visual-owner-1280-task-empty',
+  'visual-owner-1440-settings-diagnostics',
+  'visual-owner-1280-settings-diagnostics'
 ];
 
 const REQUIRED_SYSTEM_ROWS = [

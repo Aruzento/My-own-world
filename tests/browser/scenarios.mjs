@@ -248,6 +248,21 @@ export const browserSmokeScenarios = [
     ]
   },
   {
+    id: 'visual-owner-completion-matrix',
+    priority: 'P1',
+    area: 'ui',
+    title: 'Owner visual completion evidence stays clean at primary and secondary desktop sizes',
+    description:
+      'Capture 1440x900 and 1280x720 screenshots for shell/tree states, editor Properties, map popup plus Inspector, Knowledge Graph overlay, empty task board and Settings diagnostics while checking overflow, icon labels and map popup/Inspector non-overlap.',
+    automationStatus:
+      'automated: visual-owner-completion-captures-primary-secondary-evidence',
+    automatesChecklist: [
+      'Visual Regression: owner evidence',
+      'Visual Regression: map popup inspector',
+      'Visual Regression: settings diagnostics'
+    ]
+  },
+  {
     id: 'ui-polish-runtime-performance',
     priority: 'P1',
     area: 'ui',

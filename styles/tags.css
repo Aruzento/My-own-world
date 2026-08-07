@@ -526,3 +526,116 @@
     scale(0.95);
 }
 
+
+/* 0.0.1.8.17: keep editor metadata controls in the shared workbench language. */
+
+.card-meta,
+.aliases-meta {
+
+  gap:
+    6px;
+}
+
+
+.inline-tag-input,
+.inline-alias-input {
+
+  width:
+    clamp(92px, 12ch, 132px);
+
+  height:
+    var(--mow-control-height-sm);
+
+  padding:
+    0 9px;
+
+  border:
+    1px solid rgba(247, 220, 164, 0.12);
+
+  border-radius:
+    var(--mow-radius-control);
+
+  background:
+    rgba(255, 246, 222, 0.035);
+
+  color:
+    var(--mow-text-primary);
+
+  font:
+    600 var(--mow-font-size-xs)/1 var(--mow-font-ui);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 246, 222, 0.035);
+}
+
+
+.inline-tag-input::placeholder,
+.inline-alias-input::placeholder {
+
+  color:
+    rgba(226, 209, 178, 0.46);
+}
+
+
+.inline-tag-input:focus,
+.inline-alias-input:focus {
+
+  border-color:
+    var(--mow-border-focus);
+
+  background:
+    var(--mow-control-bg-active);
+
+  box-shadow:
+    var(--mow-focus-shadow);
+}
+
+
+.inline-add-tag-btn,
+.inline-add-alias-btn {
+
+  width:
+    var(--mow-control-height-sm);
+
+  height:
+    var(--mow-control-height-sm);
+
+  min-height:
+    var(--mow-control-height-sm);
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  border:
+    1px solid rgba(247, 220, 164, 0.13);
+
+  border-radius:
+    var(--mow-radius-control);
+
+  background:
+    rgba(255, 246, 222, 0.045);
+
+  color:
+    rgba(236, 213, 171, 0.88);
+
+  font:
+    750 13px/1 var(--mow-font-ui);
+}
+
+
+.inline-add-tag-btn:focus-visible,
+.inline-add-alias-btn:focus-visible {
+
+  outline:
+    none;
+
+  box-shadow:
+    var(--mow-focus-shadow);
+}
+

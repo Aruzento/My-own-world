@@ -1134,7 +1134,13 @@ test(
             lifecycle:
               tokenPopup.dataset.overlayLifecycle,
             label:
-              tokenPopup.getAttribute('aria-label')
+              tokenPopup.getAttribute('aria-label'),
+            missingButtonLabels:
+              [
+                ...tokenPopup.querySelectorAll('button')
+              ].filter(button =>
+                !button.getAttribute('aria-label')
+              ).length
           };
 
           document.dispatchEvent(
@@ -1280,6 +1286,14 @@ test(
           };
         }
       );
+
+    expect(
+      featureOverlayResult.tokenOpen.missingButtonLabels
+    ).toBe(
+      0
+    );
+
+    delete featureOverlayResult.tokenOpen.missingButtonLabels;
 
     expect(
       featureOverlayResult

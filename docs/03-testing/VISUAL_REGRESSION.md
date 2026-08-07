@@ -36,6 +36,8 @@ npm run test:browser
 
 Скриншоты сохраняются как Playwright attachments. Они не являются pixel-perfect эталоном, чтобы CI не падал от мелких различий шрифтов и рендера, но дают быстрый визуальный след при разборе падений.
 
+Design gate `0.0.1.8.17` adds an owner evidence matrix: `1440x900` and `1280x720` screenshots for shell/tree empty/error/loading, editor/Properties, campaign map popup/Inspector, Knowledge Graph overlay, empty Task Tracker and Settings/diagnostics. The map state also guards that shared map popups do not overlap the right-side property Inspector.
+
 ## Ручной Review Перед Push
 
 1. Открыть пустой экран: виден текст приветствия, сетка создания не налезает на sidebar.

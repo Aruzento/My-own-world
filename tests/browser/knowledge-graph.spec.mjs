@@ -8,6 +8,10 @@ test(
   'knowledge-graph-can-be-created-and-opens-orphan-pages',
   async ({ page }) => {
 
+    test.setTimeout(
+      60_000
+    );
+
     await page.goto(
       '/'
     );

@@ -144,7 +144,19 @@ function canStartTreePointerDrag(
 
   if (
     event.target.closest(
-      '.tree-actions, .tree-toggle, button, input, textarea, select, a'
+      '.tree-actions, .tree-toggle, input, textarea, select, a'
+    )
+  ) return false;
+
+  const buttonTarget =
+    event.target.closest(
+      'button'
+    );
+
+  if (
+    buttonTarget &&
+    !buttonTarget.classList.contains(
+      'tree-title'
     )
   ) return false;
 

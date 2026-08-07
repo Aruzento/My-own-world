@@ -149,6 +149,16 @@ export function renderFilteredTree(
   const previousScrollTop =
     tree.scrollTop;
 
+  tree.setAttribute(
+    'role',
+    'tree'
+  );
+
+  tree.setAttribute(
+    'aria-label',
+    'World tree'
+  );
+
   detachTreeVirtualization(
     tree
   );

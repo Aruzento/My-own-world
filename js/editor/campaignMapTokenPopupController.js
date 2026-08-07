@@ -159,6 +159,10 @@ export function openTokenPopup(
     <button class="campaign-token-popup-icon campaign-token-popup-image" type="button" title="Открыть изображение">${iconSvg('image')}</button>
   `;
 
+  applyPopupButtonLabels(
+    popup
+  );
+
   popup
     .querySelector('.campaign-token-popup-delete')
     .addEventListener(
@@ -309,6 +313,10 @@ function openCreatureTokenPopup(
     </button>
     <button class="campaign-token-popup-more" type="button" title="Действия">${iconSvg('more')}</button>
   `;
+
+  applyPopupButtonLabels(
+    popup
+  );
 
   popup
     .querySelector('.campaign-token-popup-hide')
@@ -903,6 +911,26 @@ function getTokenPopup() {
   );
 
   return popup;
+}
+
+
+function applyPopupButtonLabels(
+  popup
+) {
+
+  popup
+    .querySelectorAll('button[title]')
+    .forEach(button => {
+
+      if (
+        button.getAttribute('aria-label')
+      ) return;
+
+      button.setAttribute(
+        'aria-label',
+        button.title
+      );
+    });
 }
 
 

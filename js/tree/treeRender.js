@@ -130,6 +130,19 @@ export function createTreePageElement(
   item.dataset.pageId =
     page.id;
 
+  const titleText =
+    page.title || 'Untitled page';
+
+  item.setAttribute(
+    'role',
+    'treeitem'
+  );
+
+  item.setAttribute(
+    'aria-level',
+    String(level + 1)
+  );
+
   item.style.setProperty(
     '--tree-level',
     level
@@ -169,6 +182,38 @@ export function createTreePageElement(
       : '';
 
 
+  if (hasChildren) {
+
+    toggle.setAttribute(
+      'aria-label',
+      `${isCollapsed ? 'Expand' : 'Collapse'} ${titleText}`
+    );
+
+    toggle.setAttribute(
+      'aria-expanded',
+      String(!isCollapsed)
+    );
+
+    item.setAttribute(
+      'aria-expanded',
+      String(!isCollapsed)
+    );
+
+  } else {
+
+    toggle.tabIndex =
+      -1;
+
+    toggle.disabled =
+      true;
+
+    toggle.setAttribute(
+      'aria-hidden',
+      'true'
+    );
+  }
+
+
   toggle.addEventListener(
     'click',
     event => {
@@ -205,10 +250,28 @@ export function createTreePageElement(
 
 
   const title =
-    document.createElement('span');
+    document.createElement('button');
 
   title.className =
     'tree-title';
+
+  title.type =
+    'button';
+
+  title.setAttribute(
+    'aria-label',
+    titleText
+  );
+
+  if (
+    state.currentPage?.id === page.id
+  ) {
+
+    title.setAttribute(
+      'aria-current',
+      'page'
+    );
+  }
 
   const searchResult =
     renderOptions.searchResultByPageId?.get(
@@ -297,6 +360,17 @@ export function createTreePageElement(
   actions.className =
     'tree-actions';
 
+  actions.type =
+    'button';
+
+  actions.setAttribute(
+    'aria-label',
+    `Page actions: ${titleText}`
+  );
+
+  actions.title =
+    `Page actions: ${titleText}`;
+
   actions.textContent =
     '⋯';
 
@@ -338,13 +412,36 @@ export function createTreePageElement(
   );
 
 
-  item.onclick =
+  const openTreePage =
     () => openPage(
       page,
       {
         source: 'tree'
       }
     );
+
+  title.addEventListener(
+    'click',
+    event => {
+
+      event.stopPropagation();
+      openTreePage();
+    }
+  );
+
+  item.addEventListener(
+    'click',
+    event => {
+
+      if (
+        event.target.closest(
+          '.tree-actions, .tree-toggle, .tree-title'
+        )
+      ) return;
+
+      openTreePage();
+    }
+  );
 
 
   return item;

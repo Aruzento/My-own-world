@@ -3,6 +3,15 @@ import {
   test
 } from '@playwright/test';
 
+import {
+  mkdir,
+  writeFile
+} from 'node:fs/promises';
+
+import {
+  join
+} from 'node:path';
+
 
 const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-app-shell',
@@ -28,7 +37,19 @@ const UI_MIGRATION_BASELINE_ATTACHMENTS = [
   'visual-ds-contrast-large-editor-properties',
   'visual-ds-dark-normal-map-popup',
   'visual-ds-contrast-large-graph-overlay',
-  'visual-ds-dark-compact-task-empty'
+  'visual-ds-dark-compact-task-empty',
+  'visual-owner-1440-shell-states',
+  'visual-owner-1280-shell-states',
+  'visual-owner-1440-editor-properties',
+  'visual-owner-1280-editor-properties',
+  'visual-owner-1440-map-popup',
+  'visual-owner-1280-map-popup',
+  'visual-owner-1440-graph-overlay',
+  'visual-owner-1280-graph-overlay',
+  'visual-owner-1440-task-empty',
+  'visual-owner-1280-task-empty',
+  'visual-owner-1440-settings-diagnostics',
+  'visual-owner-1280-settings-diagnostics'
 ];
 
 const THEME_SCALE_BASELINE_CASES = [
@@ -169,6 +190,120 @@ const DESIGN_SYSTEM_FIXED_VIEWPORT_CASES = [
   }
 ];
 
+const OWNER_VISUAL_COMPLETION_VIEWPORTS = [
+  {
+    name:
+      '1440',
+    viewport: {
+      width: 1440,
+      height: 900
+    }
+  },
+  {
+    name:
+      '1280',
+    viewport: {
+      width: 1280,
+      height: 720
+    }
+  }
+];
+
+const OWNER_VISUAL_COMPLETION_SURFACES = [
+  {
+    name:
+      'shell-states',
+    kind:
+      'shell-states',
+    appearance: {
+      theme: 'dark',
+      accent: 'gold',
+      background: 'forest',
+      scale: 'compact'
+    }
+  },
+  {
+    name:
+      'editor-properties',
+    kind:
+      'editor-properties',
+    appearance: {
+      theme: 'dark',
+      accent: 'gold',
+      background: 'forest',
+      scale: 'normal'
+    },
+    locator:
+      '.editor-surface'
+  },
+  {
+    name:
+      'map-popup',
+    kind:
+      'map-popup',
+    appearance: {
+      theme: 'dark',
+      accent: 'purple',
+      background: 'arcane',
+      scale: 'normal'
+    }
+  },
+  {
+    name:
+      'graph-overlay',
+    kind:
+      'graph-overlay',
+    appearance: {
+      theme: 'contrast',
+      accent: 'blue',
+      background: 'stone',
+      scale: 'normal'
+    }
+  },
+  {
+    name:
+      'task-empty',
+    kind:
+      'task-empty',
+    appearance: {
+      theme: 'dark',
+      accent: 'gold',
+      background: 'stone',
+      scale: 'compact'
+    },
+    locator:
+      '.task-tracker-document'
+  },
+  {
+    name:
+      'settings-diagnostics',
+    kind:
+      'settings-diagnostics',
+    appearance: {
+      theme: 'dark',
+      accent: 'blue',
+      background: 'stone',
+      scale: 'normal'
+    },
+    locator:
+      '#appSettingsPopup'
+  }
+];
+
+const OWNER_VISUAL_COMPLETION_CASES =
+  OWNER_VISUAL_COMPLETION_SURFACES.flatMap(
+    surface =>
+      OWNER_VISUAL_COMPLETION_VIEWPORTS.map(
+        viewportCase => ({
+          ...surface,
+          viewport:
+            viewportCase.viewport,
+          attachment:
+            `visual-owner-${viewportCase.name}-${surface.name}`
+        })
+      )
+  );
+
 
 // P1 visual smoke: тест не сравнивает пиксели с эталоном, а сохраняет
 // скриншоты ключевых экранов и проверяет частые визуальные поломки layout.
@@ -176,6 +311,16 @@ const DESIGN_SYSTEM_FIXED_VIEWPORT_CASES = [
 test(
   'visual-safety-captures-core-surfaces',
   async ({ page }, testInfo) => {
+
+    await page.addInitScript(
+      () => {
+
+        localStorage.setItem(
+          'my-own-world:show-component-catalogue',
+          'true'
+        );
+      }
+    );
 
     await page.setViewportSize({
       width: 1280,
@@ -1137,6 +1282,129 @@ test(
 
       expect(
         metrics.unlabeledIconButtonCount
+      ).toBe(
+        0
+      );
+
+      expectDesignSystemFixedViewportMetrics(
+        baseline.kind,
+        metrics
+      );
+
+      if (baseline.locator) {
+
+        await attachLocatorScreenshot(
+          page.locator(baseline.locator),
+          testInfo,
+          baseline.attachment
+        );
+
+      } else {
+
+        await attachScreenshot(
+          page,
+          testInfo,
+          baseline.attachment
+        );
+      }
+    }
+  }
+);
+
+test(
+  'visual-owner-completion-captures-primary-secondary-evidence',
+  async ({ page }, testInfo) => {
+
+    await page.addInitScript(
+      () => {
+
+        localStorage.setItem(
+          'my-own-world:app-shell-sidebar-state',
+          'expanded'
+        );
+
+        localStorage.setItem(
+          'my-own-world:app-shell-sidebar-width',
+          '292'
+        );
+      }
+    );
+
+    for (const baseline of OWNER_VISUAL_COMPLETION_CASES) {
+
+      await page.setViewportSize(
+        baseline.viewport
+      );
+
+      await page.goto(
+        '/'
+      );
+
+      await applyThemeScaleAppearance(
+        page,
+        baseline.appearance
+      );
+
+      await prepareDesignSystemFixedViewportSurface(
+        page,
+        baseline.kind
+      );
+
+      await page.evaluate(
+        () => {
+
+          const app =
+            document.querySelector('.app');
+
+          if (app) {
+
+            app.dataset.visualDesignSystemBaseline =
+              '0.0.1.8.17';
+          }
+        }
+      );
+
+      const metrics =
+        await getDesignSystemFixedViewportMetrics(
+          page,
+          baseline.kind
+        );
+
+      expect(
+        metrics.bodyHasHorizontalOverflow,
+        JSON.stringify(metrics, null, 2)
+      ).toBe(
+        false
+      );
+
+      expect(
+        metrics.appHasHorizontalOverflow,
+        JSON.stringify(metrics, null, 2)
+      ).toBe(
+        false
+      );
+
+      expect(
+        metrics.theme
+      ).toBe(
+        baseline.appearance.theme
+      );
+
+      expect(
+        metrics.scale
+      ).toBe(
+        baseline.appearance.scale
+      );
+
+      expect(
+        metrics.visualBaseline
+      ).toBe(
+        '0.0.1.8.17'
+      );
+
+      expect(
+        metrics.unlabeledIconButtonCount,
+        JSON.stringify(metrics, null, 2)
       ).toBe(
         0
       );
@@ -2885,6 +3153,33 @@ async function prepareDesignSystemFixedViewportSurface(
     return;
   }
 
+  if (kind === 'settings-diagnostics') {
+
+    await page.locator('#appSettingsBtn').click();
+
+    await expect(
+      page.locator('#appSettingsPopup')
+    ).toHaveAttribute(
+      'data-settings-ui-migration',
+      '0.0.1.8.14.2'
+    );
+
+    await expect(
+      page.locator('.app-settings-body > [data-settings-section]')
+        .first()
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.app-workspace-diagnostics-panel')
+    ).toBeVisible();
+
+    await page
+      .locator('.app-workspace-diagnostics-panel')
+      .scrollIntoViewIfNeeded();
+
+    return;
+  }
+
   throw new Error(
     `Unknown design system fixed viewport kind: ${kind}`
   );
@@ -2930,6 +3225,16 @@ async function getDesignSystemFixedViewportMetrics(
             rect.height > 0;
         };
 
+      const rectsOverlap =
+        (
+          first,
+          second
+        ) =>
+          first.left < second.right &&
+          first.right > second.left &&
+          first.top < second.bottom &&
+          first.bottom > second.top;
+
       const surfaceSelectorsByKind =
         {
           'shell-states': [
@@ -2959,6 +3264,11 @@ async function getDesignSystemFixedViewportMetrics(
             '.task-tracker-document',
             '.task-tracker-board',
             '.task-column-empty'
+          ],
+          'settings-diagnostics': [
+            '#appSettingsPopup',
+            '.app-settings-body > [data-settings-section]',
+            '.app-workspace-diagnostics-panel'
           ]
         };
 
@@ -3005,6 +3315,17 @@ async function getDesignSystemFixedViewportMetrics(
 
       const mapPopupShell =
         popup?.querySelector('.campaign-map-popup-shell');
+
+      const inspector =
+        document.querySelector('.campaign-map-properties-panel');
+
+      const mapPopupInspectorOverlap =
+        isVisible(popup) &&
+        isVisible(inspector) &&
+        rectsOverlap(
+          popup.getBoundingClientRect(),
+          inspector.getBoundingClientRect()
+        );
 
       const bodyScrollWidth =
         Math.max(
@@ -3058,6 +3379,12 @@ async function getDesignSystemFixedViewportMetrics(
           isVisible(
             document.querySelector('[data-app-shell-surface="empty-workspace"]')
           ),
+        hasSettings:
+          isVisible(
+            document.querySelector(
+              '#appSettingsPopup[data-settings-ui-migration="0.0.1.8.14.2"]'
+            )
+          ),
         hasTask:
           isVisible(
             document.querySelector('.task-tracker-document')
@@ -3066,6 +3393,7 @@ async function getDesignSystemFixedViewportMetrics(
           popup?.dataset.mapPopupUiMigration ||
           mapPopupShell?.dataset.mapPopupUiMigration ||
           '',
+        mapPopupInspectorOverlap,
         mapPopupOpen:
           isVisible(
             popup
@@ -3080,6 +3408,15 @@ async function getDesignSystemFixedViewportMetrics(
             : progress?.dataset.toastState || '',
         scale:
           document.body.dataset.uiScale || '',
+        settingsSectionCount:
+          Array
+            .from(
+              document.querySelectorAll(
+                '.app-settings-body > [data-settings-section]'
+              )
+            )
+            .filter(isVisible)
+            .length,
         statusbarSaveState:
           statusbar?.dataset.saveState || '',
         taskEmptyColumns:
@@ -3186,6 +3523,13 @@ function expectDesignSystemFixedViewportMetrics(
     );
 
     expect(
+      metrics.mapPopupInspectorOverlap,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      false
+    );
+
+    expect(
       metrics.mapPopupMigration
     ).toBe(
       '0.0.1.8.12.2'
@@ -3230,6 +3574,24 @@ function expectDesignSystemFixedViewportMetrics(
     return;
   }
 
+  if (kind === 'settings-diagnostics') {
+
+    expect(
+      metrics.hasSettings,
+      JSON.stringify(metrics, null, 2)
+    ).toBe(
+      true
+    );
+
+    expect(
+      metrics.settingsSectionCount
+    ).toBeGreaterThanOrEqual(
+      3
+    );
+
+    return;
+  }
+
   throw new Error(
     `Unknown design system fixed viewport kind: ${kind}`
   );
@@ -3248,14 +3610,12 @@ async function attachScreenshot(
     name
   );
 
-  await testInfo.attach(
-    `${name}.png`,
-    {
-      body: await page.screenshot({
-        fullPage: false
-      }),
-      contentType: 'image/png'
-    }
+  await attachScreenshotBuffer(
+    testInfo,
+    name,
+    await page.screenshot({
+      fullPage: false
+    })
   );
 }
 
@@ -3272,11 +3632,57 @@ async function attachLocatorScreenshot(
     name
   );
 
+  await attachScreenshotBuffer(
+    testInfo,
+    name,
+    await locator.screenshot()
+  );
+}
+
+
+async function attachScreenshotBuffer(
+  testInfo,
+  name,
+  body
+) {
+
   await testInfo.attach(
     `${name}.png`,
     {
-      body: await locator.screenshot(),
+      body,
       contentType: 'image/png'
     }
   );
+
+  const evidenceDir =
+    process.env.MOW_VISUAL_EVIDENCE_DIR;
+
+  if (!evidenceDir) return;
+
+  await mkdir(
+    evidenceDir,
+    {
+      recursive: true
+    }
+  );
+
+  await writeFile(
+    join(
+      evidenceDir,
+      `${sanitizeEvidenceName(name)}.png`
+    ),
+    body
+  );
+}
+
+
+function sanitizeEvidenceName(
+  name
+) {
+
+  return String(name)
+    .replace(
+      /[^a-z0-9_.-]+/gi,
+      '-'
+    );
 }

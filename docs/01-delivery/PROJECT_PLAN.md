@@ -130,3 +130,17 @@ Description: add fixed viewport/theme/scale screenshots for shell, tree, editor,
 Status: closed at `Foundation` by `0.0.1.8.16`. `tests/browser/visual-regression.spec.mjs` now captures a fixed viewport design-system matrix for empty shell/tree/error state, card editor Properties, campaign map popup plus selected-object Inspector, Knowledge Graph context overlay and empty task tracker board across dark/contrast themes and compact/large scale. `tests/uiMigrationBaselines.test.mjs` and `UI_MIGRATION_BASELINES.md` require the five new attachment names.
 
 Design-track gate: the current `0.0.1.8` redesign plan has no next implementation item after `0.0.1.8.16`. Before moving back to non-design product work, pause for owner review and the user's pending design-completion task.
+
+0.0.1.8.17. Owner visual completion and post-design backlog gate.
+
+Description: complete the owner-requested final design pass before returning to non-design product work. The work is visual-system completion, not new feature delivery: inspect the accepted references and current screenshots, reduce AI-slop/noise, make the primary workbench surfaces feel coherent and premium, verify with fixed screenshots and automated tests, then create a separate future mini-backlog for owner-approved next-feature ideas without implementing those ideas in this block.
+
+Scope:
+
+- `0.0.1.8.17.1` - intake, active-plan setup, baseline screenshots and specialist read-only critiques.
+- `0.0.1.8.17.2` - AppShell, left rail, tree/search, card editor and Properties consistency pass.
+- `0.0.1.8.17.3` - shared menus/popovers/dialogs plus task tracker, Knowledge Graph and campaign map visual pass.
+- `0.0.1.8.17.4` - Settings/diagnostics, empty/loading/error states, accessibility and reduced-motion checks.
+- `0.0.1.8.17.5` - create `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`, synchronize project docs/release notes/manual and close the design gate only after verification evidence is recorded.
+
+Status: closed at `Usable` by `0.0.1.8.17`. The final owner visual pass reduced visible noise across shell/tree/editor/task tracker/graph/map surfaces, hid the component catalogue from normal Tools usage behind a dev/test flag, improved tree keyboard semantics, made map popups avoid the right-side Inspector, added 1440x900 and 1280x720 owner evidence screenshots, and created `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` for future product ideas without implementing them here. Post-design gate: pause for the owner's planned task before scheduling or starting non-design work.

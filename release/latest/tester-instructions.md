@@ -48,6 +48,12 @@ For the `0.0.1.8.16` fixed viewport design-system state matrix, use:
 npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-design-system-captures-fixed-viewport-state-matrix
 ```
 
+For the `0.0.1.8.17` owner visual completion matrix, use:
+
+```powershell
+npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-owner-completion-captures-primary-secondary-evidence
+```
+
 For the Phase 9 polish/contrast/focus audit slice, use:
 
 ```powershell

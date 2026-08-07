@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 568.
+Всего файлов в аудите: 569.
 
 ## Два Независимых Прохода
 
@@ -33,7 +33,7 @@ owner_zone: "delivery"
 | desktop | 11 |
 | docs/architecture | 36 |
 | docs/archive | 5 |
-| docs/delivery | 15 |
+| docs/delivery | 16 |
 | docs/product | 8 |
 | docs/root | 3 |
 | docs/testing | 13 |
@@ -75,10 +75,10 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5805531 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5805532 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 1016145 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 641991 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 1081881 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 644511 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 167212 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -205,6 +205,7 @@ owner_zone: "delivery"
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_PLAN.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/RELEASE_PROCESS.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |

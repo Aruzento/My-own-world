@@ -679,6 +679,12 @@ test(
       1
     );
 
+    await expect(
+      page.locator('#appToolsPopup [data-component-catalogue-open="true"]')
+    ).toHaveCount(
+      0
+    );
+
     await page
       .getByRole(
         'button',
@@ -1027,6 +1033,137 @@ test(
     await expect(
       page.locator('.tree-item[data-page-id="map-context"]')
     ).toBeVisible();
+
+    const treeA11y =
+      await page.evaluate(
+        () => {
+
+          const tree =
+            document.getElementById('tree');
+
+          const rootItem =
+            document.querySelector('.tree-item[data-page-id="map-context"]');
+
+          const childItem =
+            document.querySelector('.tree-item[data-page-id="map-child"]');
+
+          const rootToggle =
+            rootItem?.querySelector('.tree-toggle');
+
+          const childToggle =
+            childItem?.querySelector('.tree-toggle');
+
+          const childTitle =
+            childItem?.querySelector('.tree-title');
+
+          const childActions =
+            childItem?.querySelector('.tree-actions');
+
+          return {
+            treeRole:
+              tree?.getAttribute('role') || '',
+            treeLabel:
+              tree?.getAttribute('aria-label') || '',
+            rootRole:
+              rootItem?.getAttribute('role') || '',
+            rootExpanded:
+              rootItem?.getAttribute('aria-expanded') || '',
+            rootToggleExpanded:
+              rootToggle?.getAttribute('aria-expanded') || '',
+            childTitleTag:
+              childTitle?.tagName || '',
+            childTitleName:
+              childTitle?.getAttribute('aria-label') || '',
+            childToggleDisabled:
+              Boolean(childToggle?.disabled),
+            childToggleTabIndex:
+              childToggle?.tabIndex,
+            childToggleHidden:
+              childToggle?.getAttribute('aria-hidden') || '',
+            childActionsName:
+              childActions?.getAttribute('aria-label') || ''
+          };
+        }
+      );
+
+    expect(
+      treeA11y.treeRole
+    ).toBe(
+      'tree'
+    );
+
+    expect(
+      treeA11y.treeLabel
+    ).toBe(
+      'World tree'
+    );
+
+    expect(
+      treeA11y.rootRole
+    ).toBe(
+      'treeitem'
+    );
+
+    expect(
+      treeA11y.rootExpanded
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      treeA11y.rootToggleExpanded
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      treeA11y.childTitleTag
+    ).toBe(
+      'BUTTON'
+    );
+
+    expect(
+      treeA11y.childTitleName.length
+    ).toBeGreaterThan(
+      0
+    );
+
+    expect(
+      treeA11y.childToggleDisabled
+    ).toBe(
+      true
+    );
+
+    expect(
+      treeA11y.childToggleTabIndex
+    ).toBe(
+      -1
+    );
+
+    expect(
+      treeA11y.childToggleHidden
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      treeA11y.childActionsName
+    ).toContain(
+      'Page actions:'
+    );
+
+    await page.locator('.tree-item[data-page-id="map-child"] .tree-title').focus();
+
+    await page.keyboard.press(
+      'Enter'
+    );
+
+    await expect(
+      page.locator('.tree-item[data-page-id="map-child"] .tree-title')
+    ).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
 
     await expect(
       page.locator('.tree-root-drop-zone')

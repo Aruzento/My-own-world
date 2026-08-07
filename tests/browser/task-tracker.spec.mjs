@@ -383,6 +383,22 @@ test(
               tracker.dataset.taskTrackerUiMigration,
             boardMarker:
               board.dataset.taskTrackerBoardUi,
+            boardbarTitleTextDisplay:
+              getComputedStyle(
+                tracker.querySelector('.task-tracker-boardbar-title > span:not(.task-tracker-boardbar-icon)')
+              ).display,
+            columnAddTextDisplay:
+              getComputedStyle(
+                tracker.querySelector('.task-column-add span')
+              ).display,
+            emptyTextDisplay:
+              getComputedStyle(
+                tracker.querySelector('.task-column-empty span')
+              ).display,
+            statFontSize:
+              getComputedStyle(
+                tracker.querySelector('.task-tracker-stat')
+              ).fontSize,
             columnCountText:
               firstColumn.querySelector('.task-column-count')?.textContent?.trim(),
             progressValue:
@@ -413,6 +429,30 @@ test(
       result.boardMarker
     ).toBe(
       '0.0.1.8.14.1'
+    );
+
+    expect(
+      result.boardbarTitleTextDisplay
+    ).toBe(
+      'none'
+    );
+
+    expect(
+      result.columnAddTextDisplay
+    ).toBe(
+      'none'
+    );
+
+    expect(
+      result.emptyTextDisplay
+    ).toBe(
+      'none'
+    );
+
+    expect(
+      result.statFontSize
+    ).toBe(
+      '0px'
     );
 
     expect(

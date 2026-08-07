@@ -6,6 +6,42 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-07: 0.0.1.8.17 Owner Visual Completion Gate
+
+### What Changed
+
+- Closed the final owner-requested design pass before returning to non-design product work.
+- Hid the shared component catalogue from normal Tools usage; it remains available to tests/dev sessions through `my-own-world:show-component-catalogue`.
+- Made tree rows proper accessible tree items: page titles are keyboard-openable buttons, folder toggles expose expanded state, leaf toggles are not fake focus targets, and row actions have page-specific labels.
+- Quieted the card editor surface by aligning tag/alias inputs and the add-block button with the current dark control language.
+- Quieted the empty Task Tracker board: boardbar status and add controls are icon-first, empty columns no longer print helper text, and the layout keeps the same functional board model.
+- Reduced Knowledge Graph first-layer visual noise without changing the graph concept or adding new visible graph features.
+- Improved campaign map popup layering and positioning: shared map popups use a solid dark surface and move away from the right-side Inspector when they would overlap.
+- Added owner evidence screenshots at `1440x900` and `1280x720` for shell/tree states, editor/Properties, campaign map popup/Inspector, Knowledge Graph overlay, empty Task Tracker and Settings/diagnostics.
+- Created `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` as a plan-only list for future product ideas after the owner handoff pause.
+
+### Readiness
+
+`Usable` for the current redesign pass. The UI is not pixel-locked, and Knowledge Graph still has a separate concept rethink in `BI-026`, but the accepted expensive-app direction now has visual evidence, anti-slop cleanup, a11y guardrails and project-doc synchronization.
+
+### Verification
+
+- Passed: `node --check` for changed JS/browser test files during the implementation pass.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs --grep knowledge-graph-can-be-created-and-opens-orphan-pages` after increasing the single heavy graph smoke timeout to 60 seconds.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run ui:polish:audit` with 58 CSS files, 95 transition declarations, 18 animation declarations, 9 keyframes, 32 backdrop-filter declarations and 74/74 `outline:none` declarations covered.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs` with 6 browser tests, including the new owner evidence matrix.
+- Passed: `node tools\docs_index.mjs`, `node tools\audit_project_files.mjs`, `python tools\generate_manual_docx.py`, `npm run check:encoding` and `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify` with 285 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run desktop:gate`, including docs index, skills validation, verify, 117 browser smoke tests, desktop frontend prepare, packaging smoke, desktop environment check and Tauri cargo check. Large-workspace desktop smoke was skipped because no external workspace path was provided.
+- Evidence saved outside the repo in `C:\Users\Aruko\.codex\visualizations\2026\07\20\019f81b9-0855-7f72-9b96-6e3dfab01616\myownworld-0.0.1.8.17\final-owner-matrix`.
+
+### Next
+
+- Pause for the owner's planned post-design task before scheduling non-design work.
+- Use `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` as the holding list for future product work.
+- Keep `BI-026` as the gate before adding new visible Knowledge Graph concepts.
+
 ## 2026-08-07: 0.0.1.8.16 Design-System Visual State Matrix
 
 ### What Changed

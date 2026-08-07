@@ -144,6 +144,10 @@ export function showMapPopup(
           fallbackHeight: 260
         }
       );
+
+      avoidMapInspectorOverlap(
+        popup
+      );
     }
   );
 }
@@ -229,4 +233,99 @@ function getAnchorKey(
   }
 
   return anchor.dataset.popupAnchorId;
+}
+
+
+function avoidMapInspectorOverlap(
+  popup
+) {
+
+  const inspector =
+    document.querySelector('.campaign-map-properties-panel:not(.hidden)');
+
+  if (
+    !isVisibleElement(popup) ||
+    !isVisibleElement(inspector)
+  ) {
+
+    return;
+  }
+
+  const popupRect =
+    popup.getBoundingClientRect();
+
+  const inspectorRect =
+    inspector.getBoundingClientRect();
+
+  if (
+    !rectsOverlap(
+      popupRect,
+      inspectorRect
+    )
+  ) {
+
+    return;
+  }
+
+  const gap =
+    12;
+
+  const nextLeft =
+    clamp(
+      inspectorRect.left - popupRect.width - gap,
+      gap,
+      window.innerWidth - popupRect.width - gap
+    );
+
+  popup.style.left =
+    `${nextLeft}px`;
+}
+
+
+function rectsOverlap(
+  first,
+  second
+) {
+
+  return first.left < second.right &&
+    first.right > second.left &&
+    first.top < second.bottom &&
+    first.bottom > second.top;
+}
+
+
+function isVisibleElement(
+  element
+) {
+
+  if (!element) return false;
+
+  const style =
+    getComputedStyle(element);
+
+  const rect =
+    element.getBoundingClientRect();
+
+  return style.display !== 'none' &&
+    style.visibility !== 'hidden' &&
+    !element.hasAttribute('hidden') &&
+    !element.classList.contains('hidden') &&
+    rect.width > 0 &&
+    rect.height > 0;
+}
+
+
+function clamp(
+  value,
+  min,
+  max
+) {
+
+  return Math.max(
+    min,
+    Math.min(
+      value,
+      Math.max(min, max)
+    )
+  );
 }

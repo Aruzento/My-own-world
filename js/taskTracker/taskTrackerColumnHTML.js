@@ -80,7 +80,12 @@ export function getColumnHTML(
 function getColumnEmptyHTML() {
 
   return `
-    <div class="task-column-empty" data-runtime="true">
+    <div
+      class="task-column-empty"
+      data-runtime="true"
+      role="status"
+      aria-label="Empty column"
+    >
       ${iconSvg('plus', 'task-column-empty-icon', { size: 'sm' })}
       <span>Пусто</span>
     </div>

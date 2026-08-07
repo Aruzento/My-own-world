@@ -27,6 +27,16 @@ test(
     const pageErrors =
       [];
 
+    await page.addInitScript(
+      () => {
+
+        localStorage.setItem(
+          'my-own-world:show-component-catalogue',
+          'true'
+        );
+      }
+    );
+
     page.on(
       'pageerror',
       error => {

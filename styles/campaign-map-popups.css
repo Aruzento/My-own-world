@@ -39,7 +39,11 @@
     var(--mow-radius-overlay);
 
   background:
-    var(--mow-popover-bg);
+    linear-gradient(
+      180deg,
+      #11120f,
+      #050706
+    );
 
   border:
     1px solid

@@ -4,11 +4,12 @@
   align-items: stretch;
   width: min(260px, 100%);
   flex: 1 1 180px;
-  height: 9px;
-  padding: 2px;
+  height: 6px;
+  padding: 1px;
   border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.10);
+  opacity: 0.66;
 }
 
 .knowledge-graph-canvas-slice-stat {
@@ -24,7 +25,7 @@
 }
 
 .knowledge-graph-canvas-slice-stat[data-knowledge-graph-slice-stat="shown"] {
-  --graph-slice-stat-accent: var(--mow-status-success-text, #6faf5d);
+  --graph-slice-stat-accent: color-mix(in srgb, var(--mow-accent-bright, #f0cf82) 62%, transparent);
   min-width: var(--graph-slice-min, 0);
 }
 
@@ -33,8 +34,8 @@
 }
 
 .knowledge-graph-canvas-slice-stat[data-knowledge-graph-slice-stat="hidden"] {
-  --graph-slice-stat-accent: var(--mow-status-danger-text, #b65045);
-  opacity: 0.58;
+  --graph-slice-stat-accent: color-mix(in srgb, var(--mow-status-danger-text, #b65045) 58%, transparent);
+  opacity: 0.42;
 }
 
 .knowledge-graph-canvas-slice-note {
