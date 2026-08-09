@@ -6,6 +6,63 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.6 Independent Visual Critic & Owner Evidence Gate
+
+### What Changed
+
+- Ran the `0.0.1.8.18.6` owner visual QA gate with an independent read-only critic sub-agent, not the implementation agent.
+- Saved the six curated final `1440x900` owner screenshots in `docs/03-testing/visual-evidence/0.0.1.8.18/`.
+- Added `docs/03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md` with critic identity, implementation identity, screenshot names, first-pass scores, two correction rounds, final scores and unresolved concerns.
+- Applied only limited visual/evidence corrections from the critic findings: localized fixture/UI strings touched by the owner matrix, quieter editor/task/graph/shell evidence states, stable graph overlay capture, and repository screenshot export hooks.
+- Updated the active plan, design-system contract, visual regression checklist and owner finding inventory to show that this is now an owner decision gate.
+- Did not start `0.0.1.8.18.7`.
+
+### Readiness
+
+`BLOCKED FOR OWNER REVIEW`. The gate produced evidence and two correction rounds, but all six final surfaces still fail the required scorecard. Per the leaf contract, work stops instead of continuing indefinite polishing.
+
+### Critic Result
+
+- AppShell + Tree + empty/error/loading: final average `3.19`, FAIL.
+- Editor + Properties: final average `3.06`, FAIL.
+- Campaign Map + popup + Inspector: final average `3.50`, FAIL.
+- Knowledge Graph + overlay: final average `3.13`, FAIL; concept concerns are `DEFERRED TO BI-026`.
+- Empty Task Tracker: final average `3.50`, FAIL.
+- Settings + diagnostics: final average `3.19`, FAIL.
+
+### Verification
+
+- Passed: `node --check tests\browser\visual-regression.spec.mjs`.
+- Passed: `node --check js\templates\cardShell.js`.
+- Passed: `node --check js\editor\images.js`.
+- Passed: `node --check js\editor\blocks\blockRuntimeControls.js`.
+- Passed: `node --check js\ui\appTopbar.js`.
+- Passed: `node --check js\ui\assetHealthPanel.js`.
+- Passed: `node --check js\ui\workspaceDiagnosticsPanel.js`.
+- Passed: `node --check js\editor\campaignMapSelectionInspector.js`.
+- Passed: `node --check js\taskTracker\taskTrackerDefaults.js`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs -g visual-owner-completion-captures-primary-secondary-evidence`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs -g "campaign-map-popup-avoids-selection-inspector-through-shared-positioning|campaign-map-selection-inspector-shows-context-and-safe-actions"`.
+- Passed: `npm run test:browser -- tests/browser/task-tracker.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs -g knowledge-graph-can-be-created-and-opens-orphan-pages`.
+- Passed: `npm run test:browser -- tests/browser/asset-health.spec.mjs -g workspace-diagnostics-panel-reports-heavy-map-assets-and-slow-operations`.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs -g "app-shell-empty-state|app-shell-empty-start-stays-readable-on-mobile"`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs -g visual-layout-guards-common-regressions`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `node tools\docs_index.mjs` with 84 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 580 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `python tools\generate_manual_docx.py` with 1304 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: `npm run verify` with 290 node tests, large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Stop for owner review. Do not start `0.0.1.8.18.7` until the owner explicitly chooses the next direction.
+- Use `docs/03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md` as the decision record.
+
 ## 2026-08-09: 0.0.1.8.18.5 Shared Popup Positioning Ownership
 
 ### What Changed

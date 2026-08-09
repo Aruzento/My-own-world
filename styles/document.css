@@ -35,7 +35,7 @@
 
   grid-template-columns:
     minmax(0, 1fr)
-    clamp(180px, 18vw, 260px);
+    clamp(160px, 16vw, 220px);
 
   gap:
     var(--mow-space-6);
@@ -505,10 +505,10 @@
     transparent;
 
   color:
-    var(--mow-text-muted);
+    rgba(236, 213, 171, 0.54);
 
   font-size:
-    13px;
+    12px;
 
   cursor:
     pointer;

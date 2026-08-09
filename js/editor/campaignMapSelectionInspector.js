@@ -832,7 +832,7 @@ function getSelectionDockHTML(
     <div class="campaign-map-selection-dock-header">
       <span class="campaign-map-selection-dock-icon">${iconSvg(summary.icon)}</span>
       <div class="campaign-map-selection-dock-heading">
-        <span>Inspector</span>
+        <span>Инспектор</span>
         <strong>${escapeHTML(summary.title)}</strong>
         <small>${escapeHTML(summary.meta)}</small>
       </div>
@@ -890,7 +890,7 @@ function getTokenPropertiesHTML(
       `
     })}
     ${getPropertySectionHTML({
-      title: 'Transform',
+      title: 'Положение',
       key: 'transform',
       children: `
         <div class="campaign-map-property-grid">
@@ -968,7 +968,7 @@ function getShapePropertiesHTML(
       })
     })}
     ${getPropertySectionHTML({
-      title: 'Transform',
+      title: 'Положение',
       key: 'transform',
       children: `
         <div class="campaign-map-property-grid">

@@ -38,6 +38,8 @@ npm run test:browser
 
 Design gate `0.0.1.8.17` adds an owner evidence matrix: `1440x900` and `1280x720` screenshots for shell/tree empty/error/loading, editor/Properties, campaign map popup/Inspector, Knowledge Graph overlay, empty Task Tracker and Settings/diagnostics. The map state also guards that shared map popups do not overlap the right-side property Inspector.
 
+Correction gate `0.0.1.8.18.6` adds optional repository evidence export for the owner matrix. Set `MOW_OWNER_REVIEW_SCREENSHOT_DIR` to save the full temporary `visual-owner-*` review set, and set `MOW_OWNER_FINAL_EVIDENCE_DIR=docs\03-testing\visual-evidence\0.0.1.8.18` to save only the six curated final `1440x900` screenshots: `shell.png`, `editor-properties.png`, `map-popup-inspector.png`, `graph-overlay.png`, `task-empty.png` and `settings-diagnostics.png`. The current critic report is `docs/03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md`; its status is `BLOCKED FOR OWNER REVIEW`, not a passed visual baseline.
+
 ## Ручной Review Перед Push
 
 1. Открыть пустой экран: виден текст приветствия, сетка создания не налезает на sidebar.

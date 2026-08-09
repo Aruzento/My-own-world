@@ -52,7 +52,7 @@ export async function renderAssetHealthPanel(
       title:
         'Проверка ассетов',
       description:
-        'Сломанные ссылки и orphan-файлы в workspace assets.'
+        'Сломанные ссылки и лишние файлы в ассетах рабочей папки.'
     });
 
   const checkButton =
@@ -67,7 +67,7 @@ export async function renderAssetHealthPanel(
   setButtonContent(
     checkButton,
     'search',
-    'Проверить assets'
+    'Проверить ассеты'
   );
 
   const result =
@@ -103,7 +103,7 @@ export async function renderAssetHealthPanel(
       true;
 
     result.textContent =
-      'Workspace не выбран.';
+      'Рабочая папка не выбрана.';
 
     return;
   }
@@ -116,7 +116,7 @@ export async function renderAssetHealthPanel(
         true;
 
       result.textContent =
-        'Проверяю assets...';
+        'Проверяю ассеты...';
 
       try {
 
@@ -148,12 +148,12 @@ export async function renderAssetHealthPanel(
       } catch (error) {
 
         console.error(
-          'Не удалось проверить assets.',
+          'Не удалось проверить ассеты.',
           error
         );
 
         result.textContent =
-          'Не удалось проверить assets.';
+          'Не удалось проверить ассеты.';
 
       } finally {
 
@@ -208,8 +208,8 @@ function renderAssetHealthResult(
   summary.textContent =
     broken.length > 0 ||
     orphan.length > 0
-      ? `Проблемы: broken ${broken.length}, orphan ${orphan.length}`
-      : `Assets в порядке. Файлов в assets: ${assetPaths.length}`;
+      ? `Проблемы: сломанные ссылки ${broken.length}, лишние файлы ${orphan.length}`
+      : `Ассеты в порядке. Файлов: ${assetPaths.length}`;
 
   container.appendChild(
     summary
@@ -354,7 +354,7 @@ function createOrphanAssetList(
       document.createElement('span');
 
     details.textContent =
-      'Файл есть в assets, но persistent-ссылок на него не найдено';
+      'Файл есть в ассетах, но постоянных ссылок на него не найдено';
 
     meta.append(
       title,
@@ -426,7 +426,7 @@ function renderOrphanDeleteConfirm(
     document.createElement('p');
 
   text.textContent =
-    `Удалить orphan-файл "${path}"? Перед удалением будет создан backup.`;
+    `Удалить лишний файл "${path}"? Перед удалением будет создана резервная копия.`;
 
   const actions =
     document.createElement('div');
@@ -489,12 +489,12 @@ function renderOrphanDeleteConfirm(
       } catch (error) {
 
         console.error(
-          'Не удалось удалить orphan asset.',
+          'Не удалось удалить лишний ассет.',
           error
         );
 
         text.textContent =
-          'Не удалось удалить файл. Проверьте доступ к workspace.';
+          'Не удалось удалить файл. Проверьте доступ к рабочей папке.';
 
       } finally {
 

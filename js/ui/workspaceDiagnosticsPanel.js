@@ -85,7 +85,7 @@ export async function renderWorkspaceDiagnosticsPanel(
       iconName:
         'check',
       title:
-        'Диагностика workspace',
+        'Диагностика рабочей папки',
       description:
         'Размер мира, ассеты, тяжелые карты, схема и операции.'
     });
@@ -133,7 +133,7 @@ export async function renderWorkspaceDiagnosticsPanel(
       true;
 
     result.textContent =
-      'Workspace не выбран.';
+      'Рабочая папка не выбрана.';
 
     return;
   }
@@ -167,12 +167,12 @@ export async function renderWorkspaceDiagnosticsPanel(
       } catch (error) {
 
         console.error(
-          'Не удалось собрать диагностику workspace.',
+          'Не удалось собрать диагностику рабочей папки.',
           error
         );
 
         result.textContent =
-          'Не удалось собрать диагностику workspace.';
+          'Не удалось собрать диагностику рабочей папки.';
 
       } finally {
 
@@ -423,9 +423,9 @@ async function createWorkspaceStatus(
 
   return {
     mode:
-      adapter.kind || 'unknown',
+      adapter.kind || 'неизвестно',
     path:
-      path || 'Workspace not selected',
+      path || 'Рабочая папка не выбрана',
     hasAccess:
       Boolean(hasAccess),
     canWrite:
@@ -434,7 +434,7 @@ async function createWorkspaceStatus(
     backupPath:
       path && adapter.kind === 'desktop'
         ? `${path}\\${BACKUP_ROOT_DIR}`
-        : `${BACKUP_ROOT_DIR} inside selected workspace`
+        : `${BACKUP_ROOT_DIR} в выбранной рабочей папке`
   };
 }
 
@@ -863,7 +863,7 @@ function createSchemaRecoverySection(
       'schema-ok';
 
     ok.textContent =
-      'Схема workspace выглядит нормально. Repair actions не нужны.';
+      'Схема рабочей папки выглядит нормально. Исправления не нужны.';
 
     section.appendChild(
       ok
@@ -934,11 +934,11 @@ function createRecoveryStatsGrid(
       report.errorCount
     ],
     [
-      'Legacy',
+      'Устаревшие',
       report.legacyWarningCount
     ],
     [
-      'После backup',
+      'После копии',
       report.safeActionCount
     ]
   ].forEach(([label, value]) => {
@@ -990,7 +990,7 @@ function createRecoveryGroupList(
           label:
             'Нет групп',
           description:
-            'Schema validator не вернул группируемых проблем.',
+            'Проверка схемы не вернула группируемых проблем.',
           issueCount:
             0,
           examples:
@@ -1111,7 +1111,7 @@ function createRecoveryRepairControls(
 
     status.textContent =
       report.safeActionCount
-        ? 'Есть безопасные model-level repair actions, но для них еще нет надежной записи в workspace. Сейчас они оставлены как preview.'
+        ? 'Есть безопасные исправления модели, но для них еще нет надежной записи в рабочую папку. Сейчас они оставлены как предпросмотр.'
         : 'Автоматических безопасных действий нет. Эти проблемы нужно разбирать вручную или через отдельный repair-сценарий.';
 
     wrap.appendChild(
@@ -1131,7 +1131,7 @@ function createRecoveryRepairControls(
     'button';
 
   button.textContent =
-    `Создать backup и исправить безопасное (${actions.length})`;
+    `Создать копию и исправить безопасное (${actions.length})`;
 
   status.textContent =
     'Сейчас можно безопасно очистить отсутствующих родителей страниц и вывести такие страницы в корень дерева.';
@@ -1170,7 +1170,7 @@ async function applySchemaRecoveryRepairs({
   try {
 
     status.textContent =
-      'Создаю backup перед schema repair...';
+      'Создаю резервную копию перед исправлением схемы...';
 
     const backupManifest =
       await createSchemaRecoveryBackup(
@@ -1372,7 +1372,7 @@ function formatRecoveryProgress(
       : String(current || '');
 
   return [
-    progress.label || 'Backup',
+    progress.label || 'Резервная копия',
     progress.stage || '',
     count
   ]
@@ -1397,7 +1397,7 @@ function formatRecoveryGroupMeta(
       ],
       [
         group.safeActionCount,
-        'можно после backup'
+        'можно после копии'
       ],
       [
         group.manualActionCount,
@@ -1459,12 +1459,12 @@ function createSummaryGrid(
     ['Страниц', summary.pages],
     ['Карт', summary.campaignMaps],
     ['Ассетов', summary.assets],
-    ['Broken refs', summary.brokenAssets],
-    ['Orphan refs', summary.orphanAssets],
+    ['Сломанные ссылки', summary.brokenAssets],
+    ['Лишние ассеты', summary.orphanAssets],
     ['Проблем схемы', summary.schemaIssues],
-    ['Backup', summary.backups],
-    ['Недособр. backup', summary.incompleteBackups],
-    ['Pending ops', summary.pendingOperations]
+    ['Резервные копии', summary.backups],
+    ['Незавершённые копии', summary.incompleteBackups],
+    ['Операции', summary.pendingOperations]
   ].forEach(([label, value]) => {
 
     const item =
@@ -1530,16 +1530,16 @@ function createWorkspaceStatusSection(
         diagnostics.workspace.mode
       ],
       [
-        'Workspace',
+        'Рабочая папка',
         diagnostics.workspace.path
       ],
       [
-        'Location',
-        diagnostics.workspace.access?.location?.summary || 'unknown'
+        'Расположение',
+        diagnostics.workspace.access?.location?.summary || 'неизвестно'
       ],
       [
-        'Access matrix',
-        diagnostics.workspace.access?.matrixSummary || 'not checked'
+        'Матрица доступа',
+        diagnostics.workspace.access?.matrixSummary || 'не проверялась'
       ],
       [
         'Запись',
@@ -1548,17 +1548,17 @@ function createWorkspaceStatusSection(
           : 'Нет доступа на запись'
       ],
       [
-        'Write probe',
-        diagnostics.workspace.access?.writeProbe?.message || 'not checked'
+        'Проба записи',
+        diagnostics.workspace.access?.writeProbe?.message || 'не проверялась'
       ],
       [
         'Схема',
         diagnostics.schema.ok
           ? 'OK'
-          : `${diagnostics.summary.schemaIssues} issues, ${diagnostics.summary.schemaErrors} errors`
+          : `${diagnostics.summary.schemaIssues} проблем, ${diagnostics.summary.schemaErrors} ошибок`
       ],
       [
-        'Checkpoint',
+        'Проверка',
         diagnostics.checkpoint.ok === null
           ? 'Еще не запускался'
           : diagnostics.checkpoint.ok
@@ -1566,25 +1566,25 @@ function createWorkspaceStatusSection(
             : `Есть проблемы (${formatDateTime(diagnostics.checkpoint.checkedAt)})`
       ],
       [
-        'Backup',
+        'Резервные копии',
         diagnostics.backup.latestId
           ? `${diagnostics.backup.completeCount} шт., последний: ${diagnostics.backup.latestReason || diagnostics.backup.latestId}`
           : `${diagnostics.backup.completeCount} шт.`
       ],
       [
-        'Папка backup',
+        'Папка резервных копий',
         diagnostics.workspace.backupPath
       ],
       [
         'Последняя операция',
         latestOperation
-          ? `${latestOperation.operation}: ${latestOperation.durationMs} ms (${latestOperation.status})`
-          : 'Нет данных'
+            ? `${latestOperation.operation}: ${latestOperation.durationMs} мс (${latestOperation.status})`
+            : 'Нет данных'
       ]
     ];
 
   return createListSection(
-    'Desktop workspace status',
+    'Состояние рабочей папки',
     rows,
     ([label, value]) => `${label}: ${value}`
   );
@@ -1666,7 +1666,7 @@ function createWarnings({
   if (!workspace.hasAccess) {
 
     warnings.push(
-      'Workspace не выбран.'
+      'Рабочая папка не выбрана.'
     );
   }
 
@@ -1676,42 +1676,42 @@ function createWarnings({
   ) {
 
     warnings.push(
-      'Нет доступа на запись в workspace.'
+      'Нет доступа на запись в рабочую папку.'
     );
   }
 
   if (!schema.ok) {
 
     warnings.push(
-      `Схема workspace содержит ошибки: ${schema.issues.length}`
+      `Схема рабочей папки содержит ошибки: ${schema.issues.length}`
     );
   }
 
   if (checkpoint.ok === false) {
 
     warnings.push(
-      'Последний background checkpoint нашел проблемы.'
+      'Последняя фоновая проверка нашла проблемы.'
     );
   }
 
   if (pendingOperations.length) {
 
     warnings.push(
-      `Есть незавершенные операции workspace: ${pendingOperations.length}`
+      `Есть незавершённые операции рабочей папки: ${pendingOperations.length}`
     );
   }
 
   if (backup.incompleteCount) {
 
     warnings.push(
-      `Есть недособранные backup: ${backup.incompleteCount}`
+      `Есть незавершённые резервные копии: ${backup.incompleteCount}`
     );
   }
 
   if (backup.error) {
 
     warnings.push(
-      `Не удалось проверить backup: ${backup.error}`
+      `Не удалось проверить резервные копии: ${backup.error}`
     );
   }
 
@@ -1725,7 +1725,7 @@ function createWarnings({
   if (orphanAssets.length) {
 
     warnings.push(
-      `Есть orphan assets: ${orphanAssets.length}`
+      `Есть лишние ассеты: ${orphanAssets.length}`
     );
   }
 

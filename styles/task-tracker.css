@@ -4,7 +4,7 @@
     calc(100vh - 90px);
 
   padding:
-    clamp(16px, 2vw, 24px);
+    clamp(18px, 2vw, 24px);
 
   display:
     flex;
@@ -73,7 +73,7 @@
     rgba(255,250,236,0.96);
 
   font:
-    700 24px/1.18 var(--mow-font-title);
+    760 20px/1.25 var(--mow-font-ui);
 
   letter-spacing:
     0;
@@ -387,7 +387,7 @@
 .task-column {
 
   min-height:
-    360px;
+    330px;
 
   padding:
     10px;
@@ -418,7 +418,7 @@
     0 auto 0 0;
 
   width:
-    3px;
+    2px;
 
   border-radius:
     8px 0 0 8px;
@@ -431,7 +431,7 @@
     );
 
   opacity:
-    0.34;
+    0.22;
 }
 
 
@@ -517,10 +517,7 @@
     rgba(255, 246, 222, 0.92);
 
   font:
-    750 12px/1.2 var(--mow-font-ui);
-
-  text-transform:
-    uppercase;
+    730 12px/1.2 var(--mow-font-ui);
 }
 
 
@@ -591,7 +588,7 @@
 .task-column-empty {
 
   min-height:
-    72px;
+    56px;
 
   padding:
     10px;
@@ -609,19 +606,34 @@
     7px;
 
   border:
-    1px dashed rgba(247, 220, 164, 0.14);
+    1px solid rgba(247, 220, 164, 0.08);
 
   border-radius:
     8px;
 
   background:
-    rgba(255, 246, 222, 0.018);
+    rgba(255, 246, 222, 0.012);
 
   color:
-    rgba(236, 213, 171, 0.48);
+    rgba(236, 213, 171, 0.38);
 
   font:
     650 12px/1 var(--mow-font-ui);
+}
+
+
+.task-column[data-task-count="0"] .task-column-delete {
+
+  opacity:
+    0.42;
+}
+
+
+.task-column[data-task-count="0"] .task-column-delete:hover,
+.task-column[data-task-count="0"] .task-column-delete:focus-visible {
+
+  opacity:
+    1;
 }
 
 
@@ -977,7 +989,7 @@
 .task-column-drop-placeholder {
 
   min-height:
-    360px;
+    330px;
 }
 
 

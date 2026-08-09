@@ -10,12 +10,16 @@
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 18px;
+  min-height: 58px;
+  overflow: visible;
+  padding-top: 18px;
 }
 
 .knowledge-graph-title {
   margin: 0;
-  font-size: 30px;
-  line-height: 1.15;
+  font-size: 26px;
+  line-height: 1.38;
+  padding-block: 4px 2px;
 }
 
 .knowledge-graph-summary {
@@ -716,7 +720,7 @@
   height: calc(100vh - 120px);
   min-height: 0;
   overflow: hidden;
-  padding: 16px;
+  padding: 24px 16px 16px;
 }
 
 .knowledge-graph-panel[data-knowledge-graph-panel="visual"] {
@@ -842,11 +846,11 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid rgba(247, 220, 164, 0.09);
   border-radius: 8px;
-  background: var(--mow-surface-raised, rgba(255, 252, 244, 0.72));
+  background: rgba(255, 246, 222, 0.024);
 }
 
 .knowledge-graph-canvas-filterbar label {
@@ -875,12 +879,12 @@
 .knowledge-graph-canvas-filterbar select,
 .knowledge-graph-canvas-filterbar input,
 .knowledge-graph-canvas-filterbar button {
-  min-height: 32px;
-  border: 1px solid var(--mow-border, rgba(120, 106, 82, 0.28));
+  min-height: 30px;
+  border: 1px solid rgba(247, 220, 164, 0.13);
   border-radius: 7px;
   background: var(--mow-surface, #fffaf0);
   color: var(--mow-text, #211a13);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .knowledge-graph-canvas-filterbar select,
@@ -917,11 +921,11 @@
   min-width: 0;
   min-height: 26px;
   padding: 5px 9px;
-  border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
+  border: 1px solid rgba(247, 220, 164, 0.09);
   border-radius: 999px;
-  background: rgba(255, 246, 222, 0.045);
+  background: rgba(255, 246, 222, 0.024);
   color: var(--mow-text-muted, #8b8374);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1109,6 +1113,11 @@
 }
 
 .knowledge-graph-canvas-edge-label {
+  font-size: 12px;
+  paint-order: stroke;
+  stroke: rgba(4, 6, 6, 0.82);
+  stroke-linejoin: round;
+  stroke-width: 3px;
   transition:
     opacity 160ms ease,
     fill 160ms ease,

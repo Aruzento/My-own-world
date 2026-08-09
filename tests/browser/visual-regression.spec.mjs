@@ -270,9 +270,7 @@ const OWNER_VISUAL_COMPLETION_SURFACES = [
       accent: 'gold',
       background: 'stone',
       scale: 'compact'
-    },
-    locator:
-      '.task-tracker-document'
+    }
   },
   {
     name:
@@ -307,6 +305,35 @@ const OWNER_VISUAL_COMPLETION_CASES =
 
 // P1 visual smoke: тест не сравнивает пиксели с эталоном, а сохраняет
 // скриншоты ключевых экранов и проверяет частые визуальные поломки layout.
+
+const OWNER_FINAL_EVIDENCE_SCREENSHOTS =
+  new Map([
+    [
+      'visual-owner-1440-shell-states',
+      'shell.png'
+    ],
+    [
+      'visual-owner-1440-editor-properties',
+      'editor-properties.png'
+    ],
+    [
+      'visual-owner-1440-map-popup',
+      'map-popup-inspector.png'
+    ],
+    [
+      'visual-owner-1440-graph-overlay',
+      'graph-overlay.png'
+    ],
+    [
+      'visual-owner-1440-task-empty',
+      'task-empty.png'
+    ],
+    [
+      'visual-owner-1440-settings-diagnostics',
+      'settings-diagnostics.png'
+    ]
+  ]);
+
 
 test(
   'visual-safety-captures-core-surfaces',
@@ -672,6 +699,9 @@ test(
         stage.dataset.grid =
           'true';
 
+        stage.dataset.gridColor =
+          '#8c846f';
+
         stage.dataset.viewZoom =
           '1';
 
@@ -904,6 +934,27 @@ test(
         renderKnowledgeGraphPage(
           editor
         );
+
+        const stage =
+          editor.querySelector('[data-knowledge-graph-canvas-stage]');
+
+        const world =
+          stage?.querySelector('[data-knowledge-graph-canvas-world]');
+
+        if (stage && world) {
+
+          stage.dataset.scale =
+            '0.72';
+
+          stage.dataset.panX =
+            '82';
+
+          stage.dataset.panY =
+            '96';
+
+          world.style.transform =
+            'translate(82px, 96px) scale(0.72)';
+        }
       }
     );
 
@@ -2359,19 +2410,19 @@ async function prepareThemeScaleWorkbench(
         {
           id: 'theme-scale-root',
           name: 'theme-scale-root.md',
-          title: 'Theme Scale Root',
+          title: 'Северные рубежи',
           order: 1,
           template: 'card',
           type: 'folder',
           tags: [
             'folder'
           ],
-          content: '<h1>Theme Scale Root</h1>'
+          content: '<h1>Северные рубежи</h1>'
         },
         {
           id: 'theme-scale-page',
           name: 'theme-scale-city.md',
-          title: 'Theme Scale City',
+          title: 'Гавань Серых Башен',
           parent: 'theme-scale-root',
           order: 1,
           template: 'card',
@@ -2380,12 +2431,12 @@ async function prepareThemeScaleWorkbench(
             'card',
             'location'
           ],
-          content: '<h1>Theme Scale City</h1>'
+          content: '<h1>Гавань Серых Башен</h1>'
         },
         {
           id: 'theme-scale-npc',
           name: 'theme-scale-envoy.md',
-          title: 'Theme Scale Envoy',
+          title: 'Посланница гавани',
           parent: 'theme-scale-root',
           order: 2,
           template: 'card',
@@ -2394,12 +2445,12 @@ async function prepareThemeScaleWorkbench(
             'card',
             'character'
           ],
-          content: '<h1>Theme Scale Envoy</h1>'
+          content: '<h1>Посланница гавани</h1>'
         }
       ];
 
       setWorkspaceHandle({
-        name: 'Theme scale visual workspace'
+        name: 'Гавань Серых Башен'
       });
 
       setPages(
@@ -2450,10 +2501,10 @@ async function prepareThemeScaleWorkbench(
         createCardShellTemplate().content;
 
       editor.querySelector('h1').textContent =
-        'Theme Scale City';
+        'Гавань Серых Башен';
 
       editor.querySelector('.card-short-description').textContent =
-        'A stable card used to review premium workbench density across themes.';
+        'Опорная карточка города: заметки, зацепки и свойства остаются рядом с текстом.';
 
       const main =
         editor.querySelector('.entity-main');
@@ -2462,20 +2513,20 @@ async function prepareThemeScaleWorkbench(
         'beforeend',
         [
           createTextBlock({
-            title: 'Scene Notes',
-            placeholder: 'Notes'
+            title: 'Заметки сцены',
+            placeholder: 'Короткие заметки'
           }),
           createListBlock({
-            title: 'Scene Hooks',
+            title: 'Зацепки сцены',
             kind: 'items'
           }),
           createTableBlock({
-            title: 'Signals',
+            title: 'Сигналы',
             rows: 2,
             columns: 2
           }),
           createPropertiesBlock({
-            title: 'City Properties',
+            title: 'Свойства города',
             cardType: 'location'
           })
         ].join('')
@@ -2487,8 +2538,8 @@ async function prepareThemeScaleWorkbench(
 
           field.textContent =
             index === 0
-              ? 'Quiet editor surface with enough content to show rhythm.'
-              : 'Compact notes stay readable when interface scale changes.';
+              ? 'Портовый совет закрывает ворота после второго колокола.'
+              : 'Складские метки, слухи и поручения держатся в одном рабочем ритме.';
         });
 
       setupCustomBlocks(
@@ -2708,19 +2759,19 @@ async function prepareDesignSystemFixedViewportSurface(
 
         setProgressStatus({
           label:
-            'Visual baseline',
+            'Проверка рабочей папки',
           current:
             5,
           total:
             12,
           stage:
-            'Fixed viewport guard',
+            'Синхронизация состояния',
           elapsedMs:
             1320
         });
 
         finishProgressStatus(
-          'Visual baseline failed state',
+          'Проверка требует внимания',
           {
             status:
               'failed',
@@ -2731,7 +2782,7 @@ async function prepareDesignSystemFixedViewportSurface(
 
         setSaveStatus(
           'error',
-          'Visual baseline save error'
+          'Не удалось сохранить изменения'
         );
       }
     );
@@ -2842,7 +2893,7 @@ async function prepareDesignSystemFixedViewportSurface(
           editor.querySelector('.campaign-map-document');
 
         map.querySelector('.campaign-map-title').textContent =
-          'Visual Map Baseline';
+          'Перевал Черного Камня';
 
         const stage =
           map.querySelector('.campaign-map-stage');
@@ -2884,7 +2935,7 @@ async function prepareDesignSystemFixedViewportSurface(
             type:
               'creature',
             name:
-              'Sentinel',
+              'Дозорный',
             x:
               16,
             y:
@@ -3033,7 +3084,7 @@ async function prepareDesignSystemFixedViewportSurface(
             order:
               1,
             title:
-              'World',
+              'Северные рубежи',
             parent:
               null,
             template:
@@ -3045,7 +3096,7 @@ async function prepareDesignSystemFixedViewportSurface(
             aliases:
               [],
             content:
-              '<h1>World</h1>[[Hero]]'
+              '<h1>Северные рубежи</h1>[[Разведчица]]'
           },
           {
             id:
@@ -3057,7 +3108,7 @@ async function prepareDesignSystemFixedViewportSurface(
             order:
               2,
             title:
-              'Hero',
+              'Разведчица',
             parent:
               'world',
             template:
@@ -3075,7 +3126,7 @@ async function prepareDesignSystemFixedViewportSurface(
                 targetId:
                   'sword',
                 label:
-                  'Main hand'
+                  'Основное оружие'
               },
               {
                 type:
@@ -3083,11 +3134,11 @@ async function prepareDesignSystemFixedViewportSurface(
                 targetId:
                   'guild',
                 label:
-                  'Faction'
+                  'Союзники'
               }
             ],
             content:
-              '<h1>Hero</h1>'
+              '<h1>Разведчица</h1>'
           },
           {
             id:
@@ -3099,7 +3150,7 @@ async function prepareDesignSystemFixedViewportSurface(
             order:
               3,
             title:
-              'Sword',
+              'Клинок',
             parent:
               null,
             template:
@@ -3111,7 +3162,7 @@ async function prepareDesignSystemFixedViewportSurface(
             aliases:
               [],
             content:
-              '<h1>Sword</h1>'
+              '<h1>Клинок</h1>'
           },
           {
             id:
@@ -3123,7 +3174,7 @@ async function prepareDesignSystemFixedViewportSurface(
             order:
               4,
             title:
-              'Guild',
+              'Гильдия',
             parent:
               null,
             template:
@@ -3136,7 +3187,7 @@ async function prepareDesignSystemFixedViewportSurface(
             aliases:
               [],
             content:
-              '<h1>Guild</h1>'
+              '<h1>Гильдия</h1>'
           }
         ];
 
@@ -3146,9 +3197,97 @@ async function prepareDesignSystemFixedViewportSurface(
         editor.innerHTML =
           createKnowledgeGraphTemplate().content;
 
+        const graphDocument =
+          editor.querySelector('.knowledge-graph-document');
+
+        const viewState =
+          document.createElement('script');
+
+        viewState.type =
+          'application/json';
+
+        viewState.className =
+          'knowledge-graph-view-state';
+
+        viewState.setAttribute(
+          'data-knowledge-graph-view-state',
+          ''
+        );
+
+        if (graphDocument) {
+
+          viewState.textContent =
+            JSON.stringify(
+              {
+                version:
+                  1,
+                positions: {
+                  world: {
+                    x:
+                      40,
+                    y:
+                      80,
+                    pinned:
+                      true
+                  },
+                  hero: {
+                    x:
+                      170,
+                    y:
+                      170,
+                    pinned:
+                      true
+                  },
+                  sword: {
+                    x:
+                      300,
+                    y:
+                      80,
+                    pinned:
+                      true
+                  },
+                  guild: {
+                    x:
+                      300,
+                    y:
+                      260,
+                    pinned:
+                      true
+                  }
+                }
+              }
+            );
+
+          graphDocument.insertBefore(
+            viewState,
+            graphDocument.firstChild
+          );
+        }
+
         renderKnowledgeGraphPage(
           editor
         );
+
+        const stage =
+          editor.querySelector('[data-knowledge-graph-canvas-stage]');
+
+        const world =
+          stage?.querySelector('[data-knowledge-graph-canvas-world]');
+
+        if (stage && world) {
+
+          stage.dataset.scale =
+            '0.82';
+
+          stage.dataset.panX =
+            '52';
+
+          stage.dataset.panY =
+            '60';
+
+          world.style.transform =
+            'translate(52px, 60px) scale(0.82)';
+        }
       }
     );
 
@@ -3156,12 +3295,26 @@ async function prepareDesignSystemFixedViewportSurface(
       page.locator('.knowledge-graph-workbench')
     ).toBeVisible();
 
-    await page
-      .locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]')
-      .click({
+    const heroNodeBox =
+      await page
+        .locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]')
+        .boundingBox();
+
+    if (!heroNodeBox) {
+
+      throw new Error(
+        'Knowledge Graph hero node was not measurable for visual evidence.'
+      );
+    }
+
+    await page.mouse.click(
+      heroNodeBox.x + heroNodeBox.width / 2,
+      heroNodeBox.y + heroNodeBox.height / 2,
+      {
         button:
           'right'
-      });
+      }
+    );
 
     await expect(
       page.locator('[data-knowledge-graph-node-menu]')
@@ -3199,7 +3352,7 @@ async function prepareDesignSystemFixedViewportSurface(
           createTaskTrackerTemplate().content;
 
         editor.querySelector('.task-tracker-title').textContent =
-          'Visual Task Baseline';
+          'Подготовка сессии';
 
         renderTaskTracker(
           editor
@@ -3233,10 +3386,6 @@ async function prepareDesignSystemFixedViewportSurface(
     await expect(
       page.locator('.app-workspace-diagnostics-panel')
     ).toBeVisible();
-
-    await page
-      .locator('.app-workspace-diagnostics-panel')
-      .scrollIntoViewIfNeeded();
 
     return;
   }
@@ -3671,12 +3820,20 @@ async function attachScreenshot(
     name
   );
 
+  const body =
+    await page.screenshot({
+      fullPage: false
+    });
+
+  await writeOptionalOwnerVisualScreenshot(
+    name,
+    body
+  );
+
   await attachScreenshotBuffer(
     testInfo,
     name,
-    await page.screenshot({
-      fullPage: false
-    })
+    body
   );
 }
 
@@ -3693,10 +3850,78 @@ async function attachLocatorScreenshot(
     name
   );
 
+  const body =
+    await locator.screenshot();
+
+  await writeOptionalOwnerVisualScreenshot(
+    name,
+    body
+  );
+
   await attachScreenshotBuffer(
     testInfo,
     name,
-    await locator.screenshot()
+    body
+  );
+}
+
+
+async function writeOptionalOwnerVisualScreenshot(
+  name,
+  body
+) {
+
+  if (
+    process.env.MOW_OWNER_REVIEW_SCREENSHOT_DIR &&
+    name.startsWith('visual-owner-')
+  ) {
+
+    await writeScreenshotFile(
+      process.env.MOW_OWNER_REVIEW_SCREENSHOT_DIR,
+      `${name}.png`,
+      body
+    );
+  }
+
+  const finalFileName =
+    OWNER_FINAL_EVIDENCE_SCREENSHOTS.get(
+      name
+    );
+
+  if (
+    process.env.MOW_OWNER_FINAL_EVIDENCE_DIR &&
+    finalFileName
+  ) {
+
+    await writeScreenshotFile(
+      process.env.MOW_OWNER_FINAL_EVIDENCE_DIR,
+      finalFileName,
+      body
+    );
+  }
+}
+
+
+async function writeScreenshotFile(
+  directory,
+  fileName,
+  body
+) {
+
+  await mkdir(
+    directory,
+    {
+      recursive:
+        true
+    }
+  );
+
+  await writeFile(
+    join(
+      directory,
+      fileName
+    ),
+    body
   );
 }
 

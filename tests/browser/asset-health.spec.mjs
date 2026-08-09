@@ -349,8 +349,8 @@ test(
     ).toEqual(
       expect.arrayContaining([
         'страниц',
-        'backup',
-        'pending-ops'
+        'резервные-копии',
+        'операции'
       ])
     );
 
@@ -375,7 +375,7 @@ test(
     expect(
       result.text
     ).toContain(
-      'Broken refs'
+      'сломанные ссылки'
     );
 
     expect(

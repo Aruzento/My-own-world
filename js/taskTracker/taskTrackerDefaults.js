@@ -16,17 +16,17 @@ export function createDefaultTaskTrackerData() {
     columns: [
       {
         id: ideasId,
-        title: 'ИДЕИ',
+        title: 'Идеи',
         taskIds: []
       },
       {
         id: progressId,
-        title: 'В РАБОТЕ',
+        title: 'В работе',
         taskIds: []
       },
       {
         id: doneId,
-        title: 'СДЕЛАНО',
+        title: 'Готово',
         taskIds: []
       }
     ],

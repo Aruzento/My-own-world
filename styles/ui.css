@@ -1575,10 +1575,10 @@
     var(--mow-z-toast);
 
   width:
-    min(360px, calc(100vw - 28px));
+    min(320px, calc(100vw - 28px));
 
   padding:
-    14px;
+    12px;
 
   border:
     1px solid var(--mow-popover-border);
@@ -1696,7 +1696,7 @@
 
 .operation-progress-track {
   height:
-    7px;
+    5px;
 
   margin-top:
     12px;
@@ -1767,13 +1767,13 @@
 
 .operation-progress.is-failed {
   border-color:
-    rgba(255,120,120,0.35);
+    rgba(220,110,100,0.24);
 }
 
 
 .operation-progress.is-failed .operation-progress-fill {
   background:
-    rgba(255,120,120,0.80);
+    rgba(220,110,100,0.64);
 }
 
 

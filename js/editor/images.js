@@ -257,7 +257,7 @@ function deleteImage(
   appendUploadButton(
     container,
     'upload-portrait-btn',
-    '+ Image'
+    '+ Изображение'
   );
 }
 

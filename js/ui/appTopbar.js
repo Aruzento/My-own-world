@@ -270,7 +270,7 @@ function renderSettingsChrome(
     'app-settings-kicker';
 
   kicker.textContent =
-    'Maintenance';
+    'Обслуживание';
 
   const title =
     document.createElement('h2');
@@ -296,9 +296,9 @@ function renderSettingsChrome(
 
   [
     ['Оформление', 'settings'],
-    ['Backup', 'copy'],
-    ['Assets', 'image'],
-    ['Diagnostics', 'check']
+    ['Резервные копии', 'copy'],
+    ['Ассеты', 'image'],
+    ['Диагностика', 'check']
   ].forEach(([label, iconName]) => {
 
     const item =
@@ -780,7 +780,7 @@ async function renderBackupPanel(
       true;
 
     list.textContent =
-      'Workspace не выбран.';
+      'Рабочая папка не выбрана.';
 
     incompleteControls
       .querySelectorAll('button')
@@ -814,7 +814,7 @@ async function renderBackupPanel(
           });
 
         finishProgressStatus(
-          `Backup создан: ${manifest.pageCount} страниц`
+          `Резервная копия создана: ${manifest.pageCount} страниц`
         );
 
         await renderBackupList(
@@ -825,12 +825,12 @@ async function renderBackupPanel(
       } catch (error) {
 
         console.error(
-          'Не удалось создать backup.',
+          'Не удалось создать резервную копию.',
           error
         );
 
         finishProgressStatus(
-          'Не удалось создать backup',
+          'Не удалось создать резервную копию',
           {
             status:
               'failed',
@@ -871,7 +871,7 @@ function createBackupRetentionControls({
     document.createElement('label');
 
   label.textContent =
-    'Хранить backup';
+    'Хранить копий';
 
   const input =
     document.createElement('input');
@@ -929,7 +929,7 @@ function createBackupRetentionControls({
         );
 
       setStatus(
-        `Backup retention: ${input.value}`
+        `Хранение копий: ${input.value}`
       );
     }
   );
@@ -942,7 +942,7 @@ function createBackupRetentionControls({
         true;
 
       setStatus(
-        'Очищаю старые backup...'
+        'Очищаю старые резервные копии...'
       );
 
       try {
@@ -956,7 +956,7 @@ function createBackupRetentionControls({
           });
 
         finishProgressStatus(
-          `Backup cleanup: удалено ${result.removed}`
+          `Очистка резервных копий: удалено ${result.removed}`
         );
 
         await onCleanup?.();
@@ -964,12 +964,12 @@ function createBackupRetentionControls({
       } catch (error) {
 
         console.error(
-          'Не удалось очистить backup.',
+          'Не удалось очистить резервные копии.',
           error
         );
 
         finishProgressStatus(
-          'Не удалось очистить backup',
+          'Не удалось очистить резервные копии',
           {
             status:
               'failed',
@@ -1052,7 +1052,7 @@ function createIncompleteBackupControls({
         true;
 
       setStatus(
-        'Проверяю недособранные backup...'
+        'Проверяю незавершённые резервные копии...'
       );
 
       try {
@@ -1066,18 +1066,18 @@ function createIncompleteBackupControls({
           incomplete.length === 0;
 
         finishProgressStatus(
-          `Недособранные backup: ${incomplete.length}`
+          `Незавершённые резервные копии: ${incomplete.length}`
         );
 
       } catch (error) {
 
         console.error(
-          'Не удалось проверить недособранные backup.',
+          'Не удалось проверить незавершённые резервные копии.',
           error
         );
 
         finishProgressStatus(
-          'Не удалось проверить недособранные backup',
+          'Не удалось проверить незавершённые резервные копии',
           {
             status:
               'failed',
@@ -1107,7 +1107,7 @@ function createIncompleteBackupControls({
 
       const confirmed =
         window.confirm(
-          `Удалить недособранные backup (${ids.length})? Валидные backup не будут затронуты.`
+          `Удалить незавершённые резервные копии (${ids.length})? Валидные копии не будут затронуты.`
         );
 
       if (!confirmed) return;
@@ -1116,7 +1116,7 @@ function createIncompleteBackupControls({
         true;
 
       setStatus(
-        'Удаляю недособранные backup...'
+        'Удаляю незавершённые резервные копии...'
       );
 
       try {
@@ -1130,7 +1130,7 @@ function createIncompleteBackupControls({
           });
 
         finishProgressStatus(
-          `Недособранные backup удалены: ${result.removed}`
+          `Незавершённые резервные копии удалены: ${result.removed}`
         );
 
         await onCleanup?.();
@@ -1138,12 +1138,12 @@ function createIncompleteBackupControls({
       } catch (error) {
 
         console.error(
-          'Не удалось удалить недособранные backup.',
+          'Не удалось удалить незавершённые резервные копии.',
           error
         );
 
         finishProgressStatus(
-          'Не удалось удалить недособранные backup',
+          'Не удалось удалить незавершённые резервные копии',
           {
             status:
               'failed',
@@ -1187,7 +1187,7 @@ async function renderIncompleteBackupList(
   if (incomplete.length === 0) {
 
     container.textContent =
-      'Недособранных backup не найдено.';
+      'Незавершённых резервных копий не найдено.';
 
     return incomplete;
   }
@@ -1196,7 +1196,7 @@ async function renderIncompleteBackupList(
     document.createElement('strong');
 
   title.textContent =
-    'Недособранные backup';
+    'Незавершённые резервные копии';
 
   const list =
     document.createElement('div');
@@ -1392,7 +1392,7 @@ function renderRestoreConfirm(
     document.createElement('p');
 
   text.textContent =
-    'Восстановить страницы из этой резервной копии? Новые файлы, созданные после backup, не удаляются.';
+    'Восстановить страницы из этой резервной копии? Новые файлы, созданные после неё, не удаляются.';
 
   const actions =
     document.createElement('div');
@@ -1440,7 +1440,7 @@ function renderRestoreConfirm(
         true;
 
       setStatus(
-        'Восстанавливаю backup...'
+        'Восстанавливаю резервную копию...'
       );
 
       try {
@@ -1458,7 +1458,7 @@ function renderRestoreConfirm(
         await reloadWorkspaceAfterRestore();
 
         finishProgressStatus(
-          `Backup восстановлен: ${result.restoredPages} страниц`
+          `Резервная копия восстановлена: ${result.restoredPages} страниц`
         );
 
         confirm.classList.add(
@@ -1470,12 +1470,12 @@ function renderRestoreConfirm(
       } catch (error) {
 
         console.error(
-          'Не удалось восстановить backup.',
+          'Не удалось восстановить резервную копию.',
           error
         );
 
         finishProgressStatus(
-          'Не удалось восстановить backup',
+          'Не удалось восстановить резервную копию',
           {
             status:
               'failed',
@@ -1532,7 +1532,7 @@ function formatBackupDate(
 
   if (Number.isNaN(date.getTime())) {
 
-    return 'Backup';
+    return 'Резервная копия';
   }
 
   return date.toLocaleString(

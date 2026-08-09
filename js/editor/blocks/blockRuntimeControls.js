@@ -72,7 +72,7 @@ function ensureCardShellControls(
           meta,
           '.inline-tag-input',
           'inline-tag-input',
-          'tag'
+          'тег'
         ),
         'Тег'
       );
@@ -97,7 +97,7 @@ function ensureCardShellControls(
           meta,
           '.inline-alias-input',
           'inline-alias-input',
-          'alias'
+          'псевдоним'
         ),
         'Псевдоним'
       );
@@ -121,7 +121,7 @@ function ensureCardShellControls(
         mediaBox,
         '.upload-portrait-btn',
         'upload-portrait-btn',
-        '+ Image'
+        '+ Изображение'
       );
     });
 }

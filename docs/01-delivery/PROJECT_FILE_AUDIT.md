@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 573.
+Всего файлов в аудите: 580.
 
 ## Два Независимых Прохода
 
@@ -36,7 +36,7 @@ owner_zone: "delivery"
 | docs/delivery | 18 |
 | docs/product | 8 |
 | docs/root | 3 |
-| docs/testing | 13 |
+| docs/testing | 20 |
 | docs/user-release | 4 |
 | editor | 45 |
 | knowledge graph | 13 |
@@ -72,10 +72,12 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5841489 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5848736 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 659617 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 169149 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 664242 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 170894 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -254,8 +256,15 @@ owner_zone: "delivery"
 | `docs/03-testing/sample-workspace/pages/0003-task-tracker.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/03-testing/sample-workspace/README.md` | docs/testing | Главная инструкция и обзор проекта. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/03-testing/SMOKE_TESTS.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/03-testing/UX_ONBOARDING_CHECKLIST.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/03-testing/VISUAL_REGRESSION.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/editor-properties.png` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/settings-diagnostics.png` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/shell.png` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
+| `docs/03-testing/visual-evidence/0.0.1.8.18/task-empty.png` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/03-testing/WORKSPACE_ACCESS_MATRIX.md` | docs/testing | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/04-user-release/HOW_TO_INSTALL.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/04-user-release/KNOWN_ISSUES.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
