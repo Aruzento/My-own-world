@@ -345,6 +345,83 @@ aliases: []
       page.locator('.knowledge-graph-canvas-filterbar')
     ).toBeVisible();
 
+    const graphControlContract =
+      await page.evaluate(
+        () => {
+
+          const controls = [
+            ...document.querySelectorAll(
+              '.knowledge-graph-canvas-toolbar button, .knowledge-graph-canvas-filterbar button'
+            )
+          ];
+
+          const rects =
+            controls.map(control =>
+              control.getBoundingClientRect()
+            );
+
+          const backgrounds =
+            controls.map(control =>
+              getComputedStyle(control).backgroundColor
+            );
+
+          return {
+            count:
+              controls.length,
+            withoutSharedIconButton:
+              controls.filter(control =>
+                !control.classList.contains('mow-icon-button')
+              ).length,
+            withoutAccessibleName:
+              controls.filter(control =>
+                !control.getAttribute('aria-label') &&
+                !control.textContent.trim()
+              ).length,
+            blackBackgrounds:
+              backgrounds.filter(background =>
+                background === 'rgb(0, 0, 0)' ||
+                background === 'rgba(0, 0, 0, 0)'
+              ).length,
+            maxWidth:
+              Math.max(
+                ...rects.map(rect =>
+                  Math.ceil(rect.width)
+                )
+              )
+          };
+        }
+      );
+
+    expect(
+      graphControlContract.count
+    ).toBeGreaterThan(
+      0
+    );
+
+    expect(
+      graphControlContract.withoutSharedIconButton
+    ).toBe(
+      0
+    );
+
+    expect(
+      graphControlContract.withoutAccessibleName
+    ).toBe(
+      0
+    );
+
+    expect(
+      graphControlContract.blackBackgrounds
+    ).toBe(
+      0
+    );
+
+    expect(
+      graphControlContract.maxWidth
+    ).toBeLessThanOrEqual(
+      34
+    );
+
     await page.locator('[data-knowledge-graph-filter="domain"]').selectOption('item');
 
     await expect(

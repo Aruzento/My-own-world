@@ -79,6 +79,20 @@ export function renderBackButtonIfNeeded(
     );
   }
 
+  const navSlot =
+    editor.querySelector(
+      '.entity-header-nav-slot'
+    );
+
+  if (navSlot) {
+
+    navSlot.replaceChildren(
+      nav
+    );
+
+    return;
+  }
+
   title.parentElement.prepend(
     nav
   );

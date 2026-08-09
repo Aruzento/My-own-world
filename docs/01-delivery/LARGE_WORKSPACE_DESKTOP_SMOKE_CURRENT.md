@@ -8,37 +8,37 @@ owner_zone: "delivery"
 
 # Desktop Large Workspace Smoke Current
 
-Run date: 2026-08-09T19:08:15.748Z
+Run date: 2026-08-09T22:45:30.927Z
 
 Plan ref: `0.0.1.2.2`
 
-Workspace: `X:\ДНД\Мастер\По кампаниям\База`
+Workspace: `X:\ДНД\Мастер\По кампаниям\2`
 
 ## Automated Read-Only Checks
 
-- workspace diagnostics: passed (281 ms)
+- workspace diagnostics: passed (1686 ms)
 
-- read-only tree probe: passed (188 ms)
+- read-only tree probe: passed (75 ms)
 
 ## Desktop Environment Checks
 
-- desktop environment: passed (704 ms)
-- desktop packaging smoke: passed (369 ms)
+- desktop environment: passed (473 ms)
+- desktop packaging smoke: passed (250 ms)
 
 ## Workspace Summary
 
 - Location: different drive, possible external drive, outside HOME
 - Write probe: Write probe OK.
 - Access matrix: Workspace on another disk: matched; Workspace in network folder: not-detected; Workspace on external drive: possible; Workspace outside HOME: matched; Read-only / no write access: ok
-- Pages: 695
-- Campaign maps: 26
-- Task trackers: 1
-- Assets: 142
-- Asset references: 527
+- Pages: 287
+- Campaign maps: 15
+- Task trackers: 0
+- Assets: 76
+- Asset references: 463
 - Missing asset references: 0
-- Complete backups: 5
+- Complete backups: 20
 - Incomplete backups: 0
-- Diagnostics duration: 218 ms
+- Diagnostics duration: 1646 ms
 
 ## Manual Native Targets
 
@@ -46,32 +46,30 @@ Open these first during the native Tauri click-through.
 
 ### Heavy Maps
 
-- 1779484665129-7a321d25 - 321 KB, tokens: 52, fog zones: 7, file/id: `65424f19-be36-46b9-8a59-79f39a4fc230`
-- 1779530830476-a9517dfe - 398 KB, tokens: 0, fog zones: 14, file/id: `c3717b06-5105-45e2-8271-f4ded70a83f2`
-- 1779482139467-a52d5cd6 - 200 KB, tokens: 42, fog zones: 5, file/id: `84627022-32c1-4652-ac5a-35eb4d842c85`
-- 1779483383627-c77aa6a2 - 204 KB, tokens: 30, fog zones: 7, file/id: `64ab9434-f525-4964-9631-c1f87b2d4f4c`
-- 1778954209902-4b0ed25b - 109 KB, tokens: 50, fog zones: 8, file/id: `080c5f78-2bf1-4df8-8a7b-b1ed22eaaee0`
+- 1783847921808-d1f31b78 - 400 KB, tokens: 0, fog zones: 17, file/id: `9f32ba81-0bce-4b86-b66d-0c634427719d`
+- 1783801969130-3f86616f - 156 KB, tokens: 32, fog zones: 9, file/id: `59e2ffdd-8492-4fa2-b9e5-cce7fb0cc1e3`
+- 1783801971380-3065331b - 153 KB, tokens: 26, fog zones: 9, file/id: `71018711-d0bf-4d0b-9d88-42fb3bc583d5`
+- 1783801648004-f52fe318 - 149 KB, tokens: 22, fog zones: 9, file/id: `f8f6b0a9-0f80-41e2-9634-0a53dddd4728`
+- 1783808813695-5bd02537 - 148 KB, tokens: 16, fog zones: 9, file/id: `cc750c06-13ce-48a2-a99c-a8b128aecb5a`
 
 ### Large Assets
 
-- `Castle_01.jpg` - 36.9 MB
-- `Group 1.png` - 33.7 MB
-- `КорабльКаюты.png` - 15.3 MB
-- `КорабльВерх.png` - 14.7 MB
-- `Деревня full_01.jpg` - 10.3 MB
+- `music/HOYO-MiX_Yu-Peng_Chen_-_Rite_of_Battle_74698732.mp3` - 10.0 MB
+- `music/HOYO-MiX - Irresistible Force _audiovk.com_.mp3` - 9.6 MB
+- `music/HOYO-MiX - Inevitable Conflict _audiovk.com_.mp3` - 9.5 MB
+- `music/HOYO-MiX_Yu-Peng_Chen_-_Caelestinum_Finale_Termini_74698725.mp3` - 8.0 MB
+- `Улица у воды.jpg` - 5.0 MB
 
 ### Diagnostics Warnings
 
-- large_pages (2): Some pages are larger than 250 KB. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB.
-- large_assets (4): Some assets are larger than 12 MB. Examples: Castle_01.jpg 36.9 MB; Group 1.png 33.7 MB; КорабльВерх.png 14.7 MB.
-- heavy_maps: At least one map has many render objects or a large page payload. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB; 1779482139467-a52d5cd6 200 KB.
+- large_pages (1): Some pages are larger than 250 KB. Examples: 1783847921808-d1f31b78 400 KB.
 
 ## Tree Probe Summary
 
-- Pages: 695
+- Pages: 287
 - Root pages: 8
 - pages.readDirectory: 1 ms
-- pages.readAndParse: 130 ms
+- pages.readAndParse: 35 ms
 - tree.buildParentIndex: 0 ms
 
 ## Desktop Artifacts

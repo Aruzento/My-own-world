@@ -5,3 +5,4 @@ dist-desktop/
 src-tauri/target/
 legacy/
 legasy/
+debug.log

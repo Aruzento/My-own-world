@@ -28,14 +28,17 @@ export function createCardShellTemplate() {
 
         <section class="entity-header" contenteditable="false">
 
-          <div class="entity-header-main" contenteditable="false">
-
+          <div class="entity-header-toolbar" contenteditable="false">
+            <div class="entity-header-nav-slot" contenteditable="false"></div>
             <div class="card-meta" contenteditable="false">
               <span class="card-meta-label">Теги</span>
               <div class="inline-tag-list"></div>
               <input class="inline-tag-input mow-input" data-size="sm" data-runtime="true" type="text" placeholder="тег" aria-label="Тег">
               <button class="inline-add-tag-btn mow-icon-button" data-size="sm" data-runtime="true" type="button" aria-label="Добавить тег" title="Добавить тег">+</button>
             </div>
+          </div>
+
+          <div class="entity-header-main" contenteditable="false">
 
             <div class="template-block hero-block" contenteditable="false">
 
@@ -75,6 +78,7 @@ export function createCardShellTemplate() {
               <div
   contenteditable="true"
   class="card-short-description rich-text-field"
+  aria-label="Краткое описание карточки, до 250 символов"
   data-placeholder="Краткое описание карточки"
 ></div>
 

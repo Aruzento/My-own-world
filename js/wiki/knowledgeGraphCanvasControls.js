@@ -108,7 +108,8 @@ export function getCanvasFilterBarHTML(
       </label>
       <button
         type="button"
-        class="knowledge-graph-filter-toggle${canvasModel.filters.orphanOnly ? ' is-active' : ''}"
+        class="knowledge-graph-filter-toggle mow-icon-button${canvasModel.filters.orphanOnly ? ' is-active' : ''}"
+        data-size="sm"
         data-knowledge-graph-filter-action="orphans"
         aria-pressed="${canvasModel.filters.orphanOnly ? 'true' : 'false'}"
         aria-label="Одинокие страницы"
@@ -119,6 +120,8 @@ export function getCanvasFilterBarHTML(
       </button>
       <button
         type="button"
+        class="mow-icon-button"
+        data-size="sm"
         data-knowledge-graph-filter-action="clear"
         aria-label="Сбросить фильтры"
         title="Сбросить фильтры"
@@ -188,7 +191,8 @@ export function getCanvasLayoutButtonHTML(
 
   return `
     <button
-      class="knowledge-graph-layout-button${activeLayout === layout ? ' is-active' : ''}"
+      class="knowledge-graph-layout-button mow-icon-button${activeLayout === layout ? ' is-active' : ''}"
+      data-size="sm"
       type="button"
       data-knowledge-graph-layout="${escapeHTML(layout)}"
       aria-pressed="${activeLayout === layout ? 'true' : 'false'}"

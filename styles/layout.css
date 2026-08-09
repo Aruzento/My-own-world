@@ -504,7 +504,7 @@
   overflow-x: hidden;
 
   padding:
-  clamp(10px, 1.8vw, 26px);
+    clamp(10px, 1.35vw, 22px);
 }
 
 

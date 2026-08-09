@@ -1074,11 +1074,19 @@ test(
     ]);
 
     expect(
-      result.railOverflow
-    ).toEqual([
-      'visible',
-      'visible'
-    ]);
+      result.railOverflow[1]
+    ).toBe(
+      'auto'
+    );
+
+    expect(
+      [
+        'hidden',
+        'auto'
+      ]
+    ).toContain(
+      result.railOverflow[0]
+    );
 
     expect(
       result.floatingTooltip

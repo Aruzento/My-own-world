@@ -4,6 +4,12 @@
 
 .card-meta {
 
+  flex:
+    1 1 auto;
+
+  min-width:
+    min(260px, 100%);
+
   display: flex;
 
   align-items: center;
@@ -12,7 +18,8 @@
 
   gap: var(--mow-space-2);
 
-  margin-bottom: var(--mow-space-3);
+  margin:
+    0;
 }
 
 
@@ -188,7 +195,7 @@
     var(--mow-space-2);
 
   margin:
-    var(--mow-space-1) 0 var(--mow-space-3);
+    0;
 }
 
 

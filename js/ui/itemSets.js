@@ -347,7 +347,7 @@ function openItemSetPicker(
       activeSetKind
     );
 
-  updateUniversalListRuntimeText(
+  normalizeUniversalListBlock(
     block
   );
 
@@ -438,7 +438,7 @@ document.addEventListener(
           );
         });
 
-      updateUniversalListRuntimeText(
+      normalizeUniversalListBlock(
         block
       );
 
@@ -641,36 +641,10 @@ async function addItemToSet(
     page.id;
 
   chip.innerHTML =
-    activeSetKind === 'spells' ||
-    activeSetKind === 'skills' ||
-    activeSetKind === 'characters' ||
-    activeSetKind === 'creatures' ||
-    activeSetKind === 'objects'
-      ? createSpellChipHTML(page)
-      : `
-        ${getPageIcon(page.tags)}
-
-        <span class="item-set-title">
-          ${escapeHTML(page.title || 'Без названия')}
-        </span>
-
-        <label class="item-set-quantity-label" title="Количество">
-          <input
-            class="item-set-quantity"
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            value="1"
-          >
-        </label>
-
-        <span
-          class="item-set-remove"
-          title="Убрать из набора"
-        >
-          ×
-        </span>
-      `;
+    createSetChipHTML(
+      page,
+      activeSetKind
+    );
 
   activeSetList.appendChild(
     chip
@@ -890,17 +864,49 @@ function createSetOptionHTML(
 }
 
 
-function createSpellChipHTML(
-  page
+function createSetChipHTML(
+  page,
+  kind = activeSetKind,
+  quantity = '1'
 ) {
 
+  if (
+    kind === 'items'
+  ) {
+
+    return `
+      ${getPageIcon(page.tags)}
+
+      <span class="item-set-title">
+        ${escapeHTML(page.title || 'Без названия')}
+      </span>
+
+      <label class="item-set-quantity-label" title="Количество">
+        <input
+          class="item-set-quantity"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          value="${escapeHTML(quantity)}"
+        >
+      </label>
+
+      <span
+        class="item-set-remove"
+        title="Убрать из набора"
+      >
+        ×
+      </span>
+    `;
+  }
+
   const textClass =
-    activeSetKind === 'skills'
+    kind === 'skills'
       ? 'skill-set-text'
       : 'spell-set-text';
 
   const removeClass =
-    activeSetKind === 'skills'
+    kind === 'skills'
       ? 'skill-set-remove'
       : 'spell-set-remove';
 
@@ -945,7 +951,89 @@ function getChipClassForKind(
 
   if (kind === 'spells') return 'spell-set-chip';
   if (kind === 'skills') return 'skill-set-chip';
+  if (
+    kind === 'characters' ||
+    kind === 'creatures' ||
+    kind === 'objects'
+  ) return 'spell-set-chip';
+
   return 'item-set-chip';
+}
+
+
+function normalizeUniversalListBlock(
+  block
+) {
+
+  if (
+    !block?.classList?.contains(
+      'universal-list-block'
+    )
+  ) return;
+
+  updateUniversalListRuntimeText(
+    block
+  );
+
+  const kind =
+    getSetKindFromBlock(
+      block
+    );
+
+  block
+    .querySelectorAll('.universal-list-chip')
+    .forEach(chip =>
+      normalizeUniversalListChip(
+        chip,
+        kind
+      )
+    );
+}
+
+
+function normalizeUniversalListChip(
+  chip,
+  kind
+) {
+
+  const page =
+    state.pages.find(candidate =>
+      candidate.id === chip.dataset.pageId
+    ) || {
+      title:
+        chip.textContent.trim() ||
+        'Без названия',
+      tags:
+        [],
+      content:
+        ''
+    };
+
+  const quantity =
+    chip.querySelector('.item-set-quantity')
+      ?.value ||
+    chip.querySelector('.item-set-quantity')
+      ?.getAttribute('value') ||
+    '1';
+
+  chip.classList.remove(
+    'item-set-chip',
+    'spell-set-chip',
+    'skill-set-chip'
+  );
+
+  chip.classList.add(
+    getChipClassForKind(
+      kind
+    )
+  );
+
+  chip.innerHTML =
+    createSetChipHTML(
+      page,
+      kind,
+      quantity
+    );
 }
 
 

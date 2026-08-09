@@ -332,11 +332,11 @@
   align-content:
     start;
 
-  overflow-x:
-    visible;
+  overflow:
+    hidden auto;
 
-  overflow-y:
-    visible;
+  overscroll-behavior:
+    contain;
 
   border:
     1px solid var(--mow-map-control-border);
@@ -399,6 +399,9 @@
 
   display:
     grid;
+
+  min-height:
+    0;
 
   gap:
     6px;

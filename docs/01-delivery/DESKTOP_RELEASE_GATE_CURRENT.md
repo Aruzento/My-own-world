@@ -8,28 +8,28 @@ owner_zone: "delivery"
 
 # Desktop Release Gate Current
 
-Run started: 2026-08-09T19:06:24.743Z
+Run started: 2026-08-09T22:44:18.620Z
 
-Run finished: 2026-08-09T19:08:17.306Z
+Run finished: 2026-08-09T22:45:33.419Z
 
 Plan ref: `0.0.1.2.4`
 
-Large workspace: `X:\ДНД\Мастер\По кампаниям\База`
+Large workspace: `X:\ДНД\Мастер\По кампаниям\2`
 
 Overall: PASSED
 
 ## Steps
 
 - desktop release handoff preflight: passed (0 ms) - Required release handoff files exist. Required npm scripts exist.
-- documentation index: passed (69 ms)
-- agent skills validation: passed (46 ms)
-- verify: passed (17035 ms)
-- browser smoke: passed (91346 ms)
-- desktop frontend prepare: passed (311 ms)
-- desktop packaging smoke: passed (52 ms)
-- desktop environment: passed (402 ms)
-- tauri cargo check: passed (1692 ms)
-- large workspace desktop smoke: passed (1606 ms)
+- documentation index: passed (54 ms)
+- agent skills validation: passed (38 ms)
+- verify: passed (13275 ms)
+- browser smoke: passed (58003 ms)
+- desktop frontend prepare: passed (226 ms)
+- desktop packaging smoke: passed (38 ms)
+- desktop environment: passed (267 ms)
+- tauri cargo check: passed (373 ms)
+- large workspace desktop smoke: passed (2522 ms)
 
 ## Release Rule
 

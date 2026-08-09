@@ -508,6 +508,254 @@ test(
 
 
 test(
+  'card-header-aligns-navigation-tags-identity-and-limits-short-description',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createCardShellTemplate
+          } = await import('/js/templates/cardShell.js');
+
+          const {
+            ensureRuntimeControls
+          } = await import('/js/editor/blocks/blockRuntimeControls.js');
+
+          const {
+            renderBackButtonIfNeeded
+          } = await import('/js/editor/editorNavigation.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          state.currentPage = {
+            id:
+              'header-card',
+            title:
+              'Проверка шапки',
+            template:
+              'card',
+            type:
+              'location',
+            tags:
+              [
+                'card',
+                'location'
+              ],
+            aliases:
+              []
+          };
+
+          state.pages = [
+            state.currentPage
+          ];
+
+          const editor =
+            document.createElement('div');
+
+          editor.id =
+            'header-card-test-editor';
+
+          editor.innerHTML =
+            createCardShellTemplate().content;
+
+          document.body.appendChild(
+            editor
+          );
+
+          editor.querySelector('h1').textContent =
+            'Гавань Серых Башен';
+
+          ensureRuntimeControls(
+            editor
+          );
+
+          renderBackButtonIfNeeded(
+            editor,
+            {
+              template:
+                'card',
+              type:
+                'location'
+            },
+            () => {}
+          );
+
+          const description =
+            editor.querySelector('.card-short-description');
+
+          description.focus();
+
+          const range =
+            document.createRange();
+
+          range.selectNodeContents(
+            description
+          );
+
+          const selection =
+            window.getSelection();
+
+          selection.removeAllRanges();
+          selection.addRange(
+            range
+          );
+
+          description.dispatchEvent(
+            new InputEvent(
+              'beforeinput',
+              {
+                bubbles:
+                  true,
+                cancelable:
+                  true,
+                inputType:
+                  'insertText',
+                data:
+                  'x'.repeat(
+                    280
+                  )
+              }
+            )
+          );
+
+          const header =
+            editor.querySelector('.entity-header');
+
+          const toolbar =
+            header.querySelector(':scope > .entity-header-toolbar');
+
+          const main =
+            header.querySelector(':scope > .entity-header-main');
+
+          const media =
+            header.querySelector(':scope > .media-box');
+
+          const hero =
+            main.querySelector('.hero-block');
+
+          const toolbarStyle =
+            getComputedStyle(
+              toolbar
+            );
+
+          const navStyle =
+            getComputedStyle(
+              toolbar.querySelector('.editor-page-nav')
+            );
+
+          const heroRect =
+            hero.getBoundingClientRect();
+
+          const mediaRect =
+            media.getBoundingClientRect();
+
+          return {
+            toolbarIsDirectHeaderChild:
+              toolbar.parentElement === header,
+            toolbarDisplay:
+              toolbarStyle.display,
+            navInToolbar:
+              toolbar.contains(
+                editor.querySelector('.editor-page-nav')
+              ),
+            tagsInToolbar:
+              toolbar.contains(
+                editor.querySelector('.card-meta')
+              ),
+            navPosition:
+              navStyle.position,
+            titleStartsAfterToolbar:
+              heroRect.top >=
+              toolbar.getBoundingClientRect().bottom,
+            heroAndMediaAligned:
+              Math.abs(
+                Math.round(heroRect.top) -
+                Math.round(mediaRect.top)
+              ) <= 1,
+            shortDescriptionLength:
+              description.textContent.length,
+            shortDescriptionCounter:
+              editor
+                .querySelector('.card-short-description-counter')
+                ?.textContent,
+            shortDescriptionLabel:
+              description.getAttribute('aria-label')
+          };
+        }
+      );
+
+    expect(
+      result.toolbarIsDirectHeaderChild
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.toolbarDisplay
+    ).toBe(
+      'flex'
+    );
+
+    expect(
+      result.navInToolbar
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.tagsInToolbar
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.navPosition
+    ).toBe(
+      'relative'
+    );
+
+    expect(
+      result.titleStartsAfterToolbar
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.heroAndMediaAligned
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.shortDescriptionLength
+    ).toBe(
+      250
+    );
+
+    expect(
+      result.shortDescriptionCounter
+    ).toBe(
+      '250/250'
+    );
+
+    expect(
+      result.shortDescriptionLabel
+    ).toBe(
+      'Краткое описание карточки, до 250 символов'
+    );
+  }
+);
+
+
+test(
   'add-block-picker-uses-design-system-icons-and-focus-states',
   async ({ page }) => {
 
@@ -4295,6 +4543,32 @@ test(
             createListBlock
           } = await import('/js/templates/blockTypes.js');
 
+          await import('/js/ui/itemSets.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          state.pages = [
+            {
+              id:
+                'owlbear',
+              title:
+                'Совомедведь',
+              type:
+                'creature',
+              tags:
+                [
+                  'card',
+                  'creature'
+                ],
+              aliases:
+                [],
+              content:
+                '<div class="card-short-description">Большая угроза на тракте.</div>'
+            }
+          ];
+
           const wrapper =
             document.createElement('div');
 
@@ -4306,6 +4580,25 @@ test(
 
           const block =
             wrapper.firstElementChild;
+
+          block
+            .querySelector('.universal-list-list')
+            .insertAdjacentHTML(
+              'beforeend',
+              `
+                <button
+                  class="universal-list-chip item-set-chip"
+                  type="button"
+                  data-page-id="owlbear"
+                >
+                  <span class="item-set-title">Старый вид</span>
+                  <label class="item-set-quantity-label">
+                    <input class="item-set-quantity" value="3">
+                  </label>
+                  <span class="item-set-remove">×</span>
+                </button>
+              `
+            );
 
           document.body.appendChild(
             block
@@ -4339,17 +4632,84 @@ test(
               block.dataset.listKind,
             selected:
               block.querySelector('option[value="creatures"]')
-                ?.hasAttribute('selected')
+                ?.hasAttribute('selected'),
+            addButtonText:
+              block
+                .querySelector('.universal-list-add-btn')
+                ?.textContent
+                .trim(),
+            chipClass:
+              block
+                .querySelector('.universal-list-chip')
+                ?.className,
+            chipHasQuantity:
+              Boolean(
+                block.querySelector('.item-set-quantity')
+              ),
+            chipHasCardText:
+              Boolean(
+                block.querySelector('.spell-set-text strong')
+              ),
+            chipRemoveClass:
+              block
+                .querySelector('.universal-list-chip span:last-child')
+                ?.className
           };
         }
       );
 
     expect(
-      result
-    ).toEqual({
-      blockType: 'list',
-      listKind: 'creatures',
-      selected: true
-    });
+      result.blockType
+    ).toBe(
+      'list'
+    );
+
+    expect(
+      result.listKind
+    ).toBe(
+      'creatures'
+    );
+
+    expect(
+      result.selected
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.addButtonText
+    ).toBe(
+      '+ Добавить существо'
+    );
+
+    expect(
+      result.chipClass
+    ).toContain(
+      'spell-set-chip'
+    );
+
+    expect(
+      result.chipClass
+    ).not.toContain(
+      'item-set-chip'
+    );
+
+    expect(
+      result.chipHasQuantity
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.chipHasCardText
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.chipRemoveClass
+    ).toBe(
+      'spell-set-remove'
+    );
   }
 );

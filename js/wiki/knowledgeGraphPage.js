@@ -895,9 +895,11 @@ function getVisualGraphHTML(
           <div class="knowledge-graph-canvas-toolbar-group" aria-label="Управление визуальной картой">
             <button
               type="button"
-              class="knowledge-graph-history-button"
+              class="knowledge-graph-history-button mow-icon-button"
+              data-size="sm"
               data-knowledge-graph-history-action="undo"
               title="Отменить действие графа (Ctrl+Z)"
+              aria-label="Отменить действие графа"
               disabled
             >
               ${iconSvg('arrow-left', 'knowledge-graph-toolbar-icon')}
@@ -905,22 +907,24 @@ function getVisualGraphHTML(
             </button>
             <button
               type="button"
-              class="knowledge-graph-history-button"
+              class="knowledge-graph-history-button mow-icon-button"
+              data-size="sm"
               data-knowledge-graph-history-action="redo"
               title="Повторить действие графа (Ctrl+Y)"
+              aria-label="Повторить действие графа"
               disabled
             >
               ${iconSvg('skip-forward', 'knowledge-graph-toolbar-icon')}
               <span class="knowledge-graph-toolbar-label">Вперед</span>
             </button>
-            <button type="button" data-knowledge-graph-canvas-action="zoom-out" title="Уменьшить" aria-label="Уменьшить">−</button>
-            <button type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф" aria-label="Показать весь граф">
+            <button class="knowledge-graph-zoom-button mow-icon-button" data-size="sm" type="button" data-knowledge-graph-canvas-action="zoom-out" title="Уменьшить" aria-label="Уменьшить">−</button>
+            <button class="knowledge-graph-fit-button mow-icon-button" data-size="sm" type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф" aria-label="Показать весь граф">
               ${iconSvg('link', 'knowledge-graph-toolbar-icon')}
               <span class="knowledge-graph-toolbar-label">Центр</span>
             </button>
-            <button type="button" data-knowledge-graph-canvas-action="zoom-in" title="Увеличить" aria-label="Увеличить">+</button>
+            <button class="knowledge-graph-zoom-button mow-icon-button" data-size="sm" type="button" data-knowledge-graph-canvas-action="zoom-in" title="Увеличить" aria-label="Увеличить">+</button>
             <span data-knowledge-graph-canvas-scale title="Масштаб 100%">100%</span>
-            <button class="knowledge-graph-refresh" type="button" title="Обновить граф" aria-label="Обновить граф">
+            <button class="knowledge-graph-refresh mow-icon-button" data-size="sm" type="button" title="Обновить граф" aria-label="Обновить граф">
               ${iconSvg('repeat', 'knowledge-graph-toolbar-icon')}
               <span class="knowledge-graph-toolbar-label">Обновить</span>
             </button>

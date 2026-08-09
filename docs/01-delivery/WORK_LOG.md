@@ -6,6 +6,27 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-10: Owner UI polish for editor, graph and map surfaces
+
+### What Changed
+
+- Tightened the card editor composition: navigation, find-in-tree and tags now sit in one top control row, while identity/meta content and the image block align as a balanced header below it.
+- Reduced excessive empty editor margins and gave the app background a quieter premium workbench treatment using existing CSS tokens only.
+- Added a 250-character limit and live counter to the short card description so longer writing stays in content blocks.
+- Fixed the universal list style drift when switching list kinds by normalizing the chip DOM/classes to the selected kind instead of hiding the bug with CSS.
+- Brought Knowledge Graph controls back onto the shared icon-button/input contract so the graph no longer looks like a separate black-toolbar mini-app.
+- Contained the Campaign Map vertical tool rail inside the visible stage; when it needs more height, it scrolls internally instead of spilling below the viewport.
+
+### Verification
+
+- Passed: focused browser coverage for card/property blocks, Knowledge Graph and Campaign Map UI.
+- Passed: visual regression suite.
+- Passed: `npm run test`.
+- Passed: `npm run check:js`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run verify`.
+- Passed: `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\2"`.
+
 ## 2026-08-09: 0.0.1.8.18.8 Final Owner Design Correction Gate
 
 ### What Changed

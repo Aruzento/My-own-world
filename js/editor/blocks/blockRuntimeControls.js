@@ -18,6 +18,12 @@ import {
   markRuntime
 } from './blockRuntime.js';
 
+const CARD_SHORT_DESCRIPTION_LIMIT =
+  250;
+
+const boundShortDescriptionFields =
+  new WeakSet();
+
 export function ensureRuntimeControls(
   editor
 ) {
@@ -62,6 +68,10 @@ export function ensureRuntimeControls(
 function ensureCardShellControls(
   editor
 ) {
+
+  ensureCardHeaderLayout(
+    editor
+  );
 
   editor
     .querySelectorAll('.card-meta')
@@ -113,6 +123,10 @@ function ensureCardShellControls(
       );
     });
 
+  ensureCardShortDescriptionLimits(
+    editor
+  );
+
   editor
     .querySelectorAll('.media-box.is-portrait')
     .forEach(mediaBox => {
@@ -124,6 +138,418 @@ function ensureCardShellControls(
         '+ Изображение'
       );
     });
+}
+
+function ensureCardHeaderLayout(
+  editor
+) {
+
+  editor
+    .querySelectorAll('.entity-header')
+    .forEach(header => {
+
+      const main =
+        header.querySelector(':scope > .entity-header-main');
+
+      if (!main) return;
+
+      let toolbar =
+        header.querySelector(':scope > .entity-header-toolbar');
+
+      if (!toolbar) {
+
+        toolbar =
+          document.createElement('div');
+
+        toolbar.className =
+          'entity-header-toolbar';
+
+        toolbar.setAttribute(
+          'contenteditable',
+          'false'
+        );
+
+        header.insertBefore(
+          toolbar,
+          main
+        );
+      }
+
+      let navSlot =
+        toolbar.querySelector(':scope > .entity-header-nav-slot');
+
+      if (!navSlot) {
+
+        navSlot =
+          document.createElement('div');
+
+        navSlot.className =
+          'entity-header-nav-slot';
+
+        navSlot.setAttribute(
+          'contenteditable',
+          'false'
+        );
+
+        toolbar.prepend(
+          navSlot
+        );
+      }
+
+      const cardMeta =
+        header.querySelector('.card-meta');
+
+      if (
+        cardMeta &&
+        cardMeta.parentElement !== toolbar
+      ) {
+
+        toolbar.appendChild(
+          cardMeta
+        );
+      }
+
+      const nav =
+        header.querySelector('.editor-page-nav');
+
+      if (
+        nav &&
+        nav.parentElement !== navSlot
+      ) {
+
+        navSlot.appendChild(
+          nav
+        );
+      }
+    });
+}
+
+function ensureCardShortDescriptionLimits(
+  editor
+) {
+
+  editor
+    .querySelectorAll('.card-short-description')
+    .forEach(field => {
+
+      field.setAttribute(
+        'aria-label',
+        'Краткое описание карточки, до 250 символов'
+      );
+
+      const counter =
+        ensureShortDescriptionCounter(
+          field
+        );
+
+      normalizeShortDescriptionField(
+        field,
+        counter
+      );
+
+      if (
+        boundShortDescriptionFields.has(
+          field
+        )
+      ) return;
+
+      field.addEventListener(
+        'beforeinput',
+        handleShortDescriptionBeforeInput
+      );
+
+      field.addEventListener(
+        'input',
+        () => normalizeShortDescriptionField(
+          field,
+          counter
+        )
+      );
+
+      boundShortDescriptionFields.add(
+        field
+      );
+    });
+}
+
+function ensureShortDescriptionCounter(
+  field
+) {
+
+  const existing =
+    field.nextElementSibling?.classList?.contains(
+      'card-short-description-counter'
+    )
+      ? field.nextElementSibling
+      : null;
+
+  if (existing) {
+
+    return markRuntime(
+      existing
+    );
+  }
+
+  const counter =
+    document.createElement('span');
+
+  counter.className =
+    'card-short-description-counter';
+
+  counter.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+
+  markRuntime(
+    counter
+  );
+
+  field.after(
+    counter
+  );
+
+  return counter;
+}
+
+function handleShortDescriptionBeforeInput(
+  event
+) {
+
+  const field =
+    event.currentTarget;
+
+  if (
+    !field ||
+    isShortDescriptionDeletion(
+      event.inputType
+    )
+  ) return;
+
+  const incoming =
+    getShortDescriptionIncomingText(
+      event
+    );
+
+  if (!incoming) return;
+
+  const currentLength =
+    field.textContent.length;
+
+  const selectedLength =
+    getSelectionLengthInside(
+      field
+    );
+
+  const available =
+    CARD_SHORT_DESCRIPTION_LIMIT -
+    (currentLength - selectedLength);
+
+  if (
+    available >= incoming.length
+  ) return;
+
+  event.preventDefault();
+
+  if (
+    available <= 0
+  ) return;
+
+  insertPlainTextAtSelection(
+    field,
+    incoming.slice(
+      0,
+      available
+    )
+  );
+
+  field.dispatchEvent(
+    new Event(
+      'input',
+      {
+        bubbles:
+          true
+      }
+    )
+  );
+}
+
+function normalizeShortDescriptionField(
+  field,
+  counter
+) {
+
+  const text =
+    field.textContent || '';
+
+  if (
+    text.length >
+    CARD_SHORT_DESCRIPTION_LIMIT
+  ) {
+
+    field.textContent =
+      text.slice(
+        0,
+        CARD_SHORT_DESCRIPTION_LIMIT
+      );
+
+    if (
+      document.activeElement === field
+    ) {
+
+      placeCaretAtEnd(
+        field
+      );
+    }
+  }
+
+  updateShortDescriptionCounter(
+    field,
+    counter
+  );
+}
+
+function updateShortDescriptionCounter(
+  field,
+  counter
+) {
+
+  if (!counter) return;
+
+  counter.textContent =
+    `${field.textContent.length}/${CARD_SHORT_DESCRIPTION_LIMIT}`;
+}
+
+function isShortDescriptionDeletion(
+  inputType
+) {
+
+  return String(
+    inputType || ''
+  ).startsWith(
+    'delete'
+  );
+}
+
+function getShortDescriptionIncomingText(
+  event
+) {
+
+  if (event.data) {
+
+    return event.data;
+  }
+
+  if (
+    event.clipboardData
+  ) {
+
+    return event.clipboardData.getData(
+      'text/plain'
+    );
+  }
+
+  if (
+    event.dataTransfer
+  ) {
+
+    return event.dataTransfer.getData(
+      'text/plain'
+    );
+  }
+
+  return '';
+}
+
+function getSelectionLengthInside(
+  field
+) {
+
+  const selection =
+    window.getSelection?.();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0 ||
+    !field.contains(selection.anchorNode) ||
+    !field.contains(selection.focusNode)
+  ) return 0;
+
+  return selection
+    .toString()
+    .length;
+}
+
+function insertPlainTextAtSelection(
+  field,
+  text
+) {
+
+  const selection =
+    window.getSelection?.();
+
+  if (
+    !selection ||
+    selection.rangeCount === 0 ||
+    !field.contains(selection.anchorNode) ||
+    !field.contains(selection.focusNode)
+  ) {
+
+    field.textContent =
+      `${field.textContent}${text}`;
+
+    placeCaretAtEnd(
+      field
+    );
+
+    return;
+  }
+
+  const range =
+    selection.getRangeAt(
+      0
+    );
+
+  range.deleteContents();
+  range.insertNode(
+    document.createTextNode(
+      text
+    )
+  );
+  range.collapse(
+    false
+  );
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
+}
+
+function placeCaretAtEnd(
+  element
+) {
+
+  const range =
+    document.createRange();
+
+  range.selectNodeContents(
+    element
+  );
+
+  range.collapse(
+    false
+  );
+
+  const selection =
+    window.getSelection?.();
+
+  if (!selection) return;
+
+  selection.removeAllRanges();
+  selection.addRange(
+    range
+  );
 }
 
 function configureInlineMetaInput(
