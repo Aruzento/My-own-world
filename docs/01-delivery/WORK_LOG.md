@@ -6,6 +6,37 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-07: Local Legacy Hub Cleanup
+
+### What Changed
+
+- Created the local-only ignored `legacy/` hub for obsolete, accidental and diagnostic files that should not be committed or used as project source.
+- Added `.gitignore` coverage for both `legacy/` and `legasy/`.
+- Moved untracked `debug.log` and `k` into `legacy/local-audit-2026-08-07/`.
+- Added `docs/01-delivery/LEGACY_LOCAL_HUB.md` with the usage rule: do not use `legacy/` as product truth, source code, documentation, test fixtures or design references.
+- Updated `AGENTS.md` and `tools/audit_project_files.mjs` so future agent work and project file audits ignore the local legacy hub.
+- Kept tracked `docs/archive/`, `Тех. зрелость/` and `Лог особенный/` in the repo because they are intentional project history, not accidental local files.
+
+### Readiness
+
+`Foundation` for local obsolete-file hygiene. The ignored hub now exists and the first safe candidates are moved, but moving tracked historical material still requires a separate reference audit.
+
+### Verification
+
+- Passed: `node --check tools\audit_project_files.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 568 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `node tools\docs_index.mjs` with 82 markdown files and 0 invalid metadata.
+- Passed: `npm run check:encoding`.
+- Passed: `python tools\generate_manual_docx.py` with 1302 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `git check-ignore -v legacy\local-audit-2026-08-07\debug.log legacy\local-audit-2026-08-07\k`.
+- Passed: `npm run verify` with 285 node tests, large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Leave `legacy/` uncommitted and unused unless the owner explicitly asks to inspect it.
+- Treat future tracked-file cleanup as a separate, reference-aware migration instead of moving active history blindly.
+
 ## 2026-08-07: 0.0.1.8.17 Owner Visual Completion Gate
 
 ### What Changed

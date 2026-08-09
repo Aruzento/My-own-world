@@ -10,6 +10,8 @@ const EXCLUDED_DIRS = new Set([
   '.git',
   'node_modules',
   'dist-desktop',
+  'legacy',
+  'legasy',
   'src-tauri/target',
   'test-results',
   'playwright-report',
@@ -382,7 +384,7 @@ function main() {
   lines.push('');
   lines.push(`Дата: ${today}`);
   lines.push('');
-  lines.push('Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.');
+  lines.push('Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.');
   lines.push('');
   lines.push(`Всего файлов в аудите: ${rows.length}.`);
   lines.push('');

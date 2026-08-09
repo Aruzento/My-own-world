@@ -10,9 +10,9 @@ owner_zone: "delivery"
 
 Дата: 2026-08-07
 
-Исключены из построчного аудита как generated/dependency зоны: `.git/`, `node_modules/`, `dist-desktop/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
+Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 569.
+Всего файлов в аудите: 568.
 
 ## Два Независимых Прохода
 
@@ -33,7 +33,7 @@ owner_zone: "delivery"
 | desktop | 11 |
 | docs/architecture | 36 |
 | docs/archive | 5 |
-| docs/delivery | 16 |
+| docs/delivery | 17 |
 | docs/product | 8 |
 | docs/root | 3 |
 | docs/testing | 13 |
@@ -45,7 +45,7 @@ owner_zone: "delivery"
 | presentation | 3 |
 | properties | 9 |
 | release handoff | 7 |
-| root | 22 |
+| root | 20 |
 | rules | 19 |
 | schema | 12 |
 | storage | 26 |
@@ -62,10 +62,7 @@ owner_zone: "delivery"
 
 ## Кандидаты На Уборку
 
-| Файл | Причина |
-|---|---|
-| `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
-| `k` | Кандидат: untracked файл, проверить назначение перед удалением. |
+Явных кандидатов на удаление не найдено.
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -75,11 +72,10 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5805532 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5826208 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `debug.log` | 1081881 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
-| `docs/01-delivery/WORK_LOG.md` | 644511 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 167212 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 647513 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 166891 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -186,7 +182,6 @@ owner_zone: "delivery"
 | `assets/icons/README.md` | assets | Главная инструкция и обзор проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/icons/rpg-ui.svg` | assets | Иконки и sprite приложения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/rules/internal-rules-workspace.json` | assets | Seed-данные внутреннего пространства правил. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `debug.log` | root | Локальный debug-лог, не является исходником проекта. | Нет смысла оптимизировать: кандидат на удаление после подтверждения. | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 | `docs/00-product/BRANDBOOK.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/CURRENT_MILESTONE.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PO_DISCOVERY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -205,6 +200,7 @@ owner_zone: "delivery"
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/LEGACY_LOCAL_HUB.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_PLAN.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -544,7 +540,6 @@ owner_zone: "delivery"
 | `js/worldPackage/worldPackageImportService.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/worldPackage/worldPackageModel.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `js/worldPackage/worldPackageStorage.js` | world packages | JavaScript модуль подсистемы: world packages. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `k` | root | Файл проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Кандидат: untracked файл, проверить назначение перед удалением. |
 | `package-lock.json` | root | Зафиксированное дерево npm-зависимостей. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `package.json` | root | NPM scripts, зависимости и метаданные приложения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `playwright.config.mjs` | root | Конфигурация browser smoke/regression tests. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |

@@ -1,5 +1,12 @@
 # AGENTS.md
 
+## Local Legacy Hub
+
+- `legacy/` is a local-only ignored holding area for obsolete or accidental files.
+- Do not commit `legacy/` or `legasy/`.
+- Do not use files from `legacy/` as product truth, source code, documentation, test fixtures or design references unless the owner explicitly asks to inspect that folder.
+- Intentional historical project documents stay in tracked `docs/archive/`, not in local `legacy/`.
+
 Этот файл - главный вход для Codex/AI-агента в проект MyOwnWorld.
 
 Проект растет через AI-разработку, поэтому агент обязан работать не только быстро, но и объяснимо: читать план, проверять контракты, не ломать release handoff и оставлять понятный след выполненной задачи.
