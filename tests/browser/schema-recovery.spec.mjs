@@ -484,7 +484,7 @@ test(
     expect(
       result.beforeText
     ).toContain(
-      'Создать backup и исправить безопасное'
+      'Создать копию и исправить безопасное'
     );
 
     expect(

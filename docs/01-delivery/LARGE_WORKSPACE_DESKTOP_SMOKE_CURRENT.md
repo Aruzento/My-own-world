@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Desktop Large Workspace Smoke Current
 
-Run date: 2026-07-19T17:36:08.744Z
+Run date: 2026-08-09T19:08:15.748Z
 
 Plan ref: `0.0.1.2.2`
 
@@ -16,29 +16,29 @@ Workspace: `X:\ДНД\Мастер\По кампаниям\База`
 
 ## Automated Read-Only Checks
 
-- workspace diagnostics: passed (181 ms)
+- workspace diagnostics: passed (281 ms)
 
-- read-only tree probe: passed (135 ms)
+- read-only tree probe: passed (188 ms)
 
 ## Desktop Environment Checks
 
-- desktop environment: passed (511 ms)
-- desktop packaging smoke: passed (282 ms)
+- desktop environment: passed (704 ms)
+- desktop packaging smoke: passed (369 ms)
 
 ## Workspace Summary
 
 - Location: different drive, possible external drive, outside HOME
 - Write probe: Write probe OK.
 - Access matrix: Workspace on another disk: matched; Workspace in network folder: not-detected; Workspace on external drive: possible; Workspace outside HOME: matched; Read-only / no write access: ok
-- Pages: 690
-- Campaign maps: 25
-- Task trackers: 0
-- Assets: 141
+- Pages: 695
+- Campaign maps: 26
+- Task trackers: 1
+- Assets: 142
 - Asset references: 527
 - Missing asset references: 0
 - Complete backups: 5
 - Incomplete backups: 0
-- Diagnostics duration: 133 ms
+- Diagnostics duration: 218 ms
 
 ## Manual Native Targets
 
@@ -68,10 +68,10 @@ Open these first during the native Tauri click-through.
 
 ## Tree Probe Summary
 
-- Pages: 690
-- Root pages: 3
+- Pages: 695
+- Root pages: 8
 - pages.readDirectory: 1 ms
-- pages.readAndParse: 90 ms
+- pages.readAndParse: 130 ms
 - tree.buildParentIndex: 0 ms
 
 ## Desktop Artifacts

@@ -6,6 +6,44 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.8 Final Owner Design Correction Gate
+
+### What Changed
+
+- Ran the final correction gate as a verification/closure task only.
+- Confirmed `HEAD BEFORE GATE` was `0b0f798` (`Expand next product mini backlog`) with a clean working tree.
+- Confirmed `0.0.1.8.18.1`, `.2`, `.3`, `.4`, `.5` and `.7` have closure evidence.
+- Confirmed `0.0.1.8.18.6` remains `BLOCKED FOR OWNER REVIEW`: the independent critic report exists, but all six final surfaces failed the owner scorecard and no explicit owner waiver is recorded.
+- Reviewed the cumulative `0.0.1.8.18` diff from `dec5438` to `0b0f798`: no new dependencies, combat/dice/effects/collaboration implementation, new map workflow, new graph concept implementation or persistent format migration was found. The NF/combat/dice/effects/collaboration references are plan-only text in `NEXT_PRODUCT_MINI_BACKLOG.md`.
+- Updated the owner finding inventory so finding I is marked closed by the plan-only `0.0.1.8.18.7` backlog expansion.
+- Corrected one stale browser test expectation to the current Russian recovery button copy: `Создать копию и исправить безопасное`. Production code was not changed.
+- Updated the current desktop release gate and real large-workspace smoke reports through real repository commands.
+
+### Readiness
+
+`BLOCKED`. The automated repository, browser, visual, desktop and real large-workspace checks are green, but `0.0.1.8.18` cannot close because the required Visual Critic result is not PASS and no explicit owner waiver exists.
+
+### Verification
+
+- Passed: focused leaf unit tests: `node --test tests\designSystemCorrections.test.mjs tests\taskTrackerStructuralIconOnly.test.mjs tests\popupPosition.test.mjs tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run test` with 290 node tests.
+- Passed: Tree/AppShell browser coverage: `npm run test:browser -- tests/browser/tree-accessibility.spec.mjs tests/browser/app-shell.spec.mjs tests/browser/tree-dnd-regression.spec.mjs tests/browser/tree-virtualization.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/task-tracker.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs tests/browser/campaign-map-initiative.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs`.
+- Visual regression: first full run had one transient Knowledge Graph menu visibility failure in `visual-design-system-captures-fixed-viewport-state-matrix`; the isolated rerun passed and the second full visual suite passed 7/7.
+- Passed after test-contract correction: full `npm run test:browser` with 125 browser tests.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run verify` with encoding, JS syntax/import checks, UI polish audit, 290 node tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: real large-workspace desktop smoke on `X:\ДНД\Мастер\По кампаниям\База`: 695 pages, 26 maps, 142 assets, 527 asset references, 0 missing asset references.
+- Passed: `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` including docs index, agent skills validation, verify, 125 browser tests, desktop frontend prepare, packaging smoke, desktop environment, Tauri cargo check and large-workspace desktop smoke.
+
+### Next
+
+- Stop here. Do not start `0.0.1.9.0`.
+- The owner must either record an explicit waiver for the failed visual critic scorecard or request the next visual decision path before `0.0.1.8.18` can close.
+
 ## 2026-08-09: 0.0.1.8.18.7 Expand NEXT_PRODUCT_MINI_BACKLOG
 
 ### What Changed
