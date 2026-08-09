@@ -67,18 +67,24 @@ function ensureCardShellControls(
     .querySelectorAll('.card-meta')
     .forEach(meta => {
 
-      ensureRuntimeInput(
-        meta,
-        '.inline-tag-input',
-        'inline-tag-input',
-        'tag'
+      configureInlineMetaInput(
+        ensureRuntimeInput(
+          meta,
+          '.inline-tag-input',
+          'inline-tag-input',
+          'tag'
+        ),
+        'Тег'
       );
 
-      ensureRuntimeButton(
-        meta,
-        '.inline-add-tag-btn',
-        'inline-add-tag-btn',
-        '+'
+      configureInlineMetaButton(
+        ensureRuntimeButton(
+          meta,
+          '.inline-add-tag-btn',
+          'inline-add-tag-btn',
+          '+'
+        ),
+        'Добавить тег'
       );
     });
 
@@ -86,18 +92,24 @@ function ensureCardShellControls(
     .querySelectorAll('.aliases-meta')
     .forEach(meta => {
 
-      ensureRuntimeInput(
-        meta,
-        '.inline-alias-input',
-        'inline-alias-input',
-        'alias'
+      configureInlineMetaInput(
+        ensureRuntimeInput(
+          meta,
+          '.inline-alias-input',
+          'inline-alias-input',
+          'alias'
+        ),
+        'Псевдоним'
       );
 
-      ensureRuntimeButton(
-        meta,
-        '.inline-add-alias-btn',
-        'inline-add-alias-btn',
-        '+'
+      configureInlineMetaButton(
+        ensureRuntimeButton(
+          meta,
+          '.inline-add-alias-btn',
+          'inline-add-alias-btn',
+          '+'
+        ),
+        'Добавить псевдоним'
       );
     });
 
@@ -112,6 +124,56 @@ function ensureCardShellControls(
         '+ Image'
       );
     });
+}
+
+function configureInlineMetaInput(
+  input,
+  label
+) {
+
+  if (!input) return;
+
+  input.classList.add(
+    'mow-input'
+  );
+
+  input.dataset.size =
+    'sm';
+
+  input.type =
+    'text';
+
+  input.setAttribute(
+    'aria-label',
+    label
+  );
+}
+
+
+function configureInlineMetaButton(
+  button,
+  label
+) {
+
+  if (!button) return;
+
+  button.classList.add(
+    'mow-icon-button'
+  );
+
+  button.dataset.size =
+    'sm';
+
+  button.type =
+    'button';
+
+  button.setAttribute(
+    'aria-label',
+    label
+  );
+
+  button.title =
+    label;
 }
 
 function ensureImageBlockControls(

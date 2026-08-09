@@ -83,8 +83,8 @@ export function ensureBlocksToolbar(
   );
 
   toolbar.innerHTML = `
-    <button class="add-block-btn" type="button">
-      ${iconSvg('plus')} Добавить блок
+    <button class="add-block-btn mow-button" type="button">
+      ${iconSvg('plus', 'app-icon', { size: 'sm' })} Добавить блок
     </button>
   `;
 

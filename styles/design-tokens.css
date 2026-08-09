@@ -95,6 +95,7 @@
   --mow-surface-panel: var(--mow-bg-panel);
   --mow-surface-raised: var(--mow-bg-card);
   --mow-surface-overlay: var(--mow-bg-panel-soft);
+  --mow-surface-overlay-opaque: var(--mow-bg-app-2);
   --mow-surface-sunken: var(--mow-bg-input);
   --mow-surface-embedded: rgba(255, 246, 222, 0.035);
   --mow-surface: var(--mow-surface-raised);

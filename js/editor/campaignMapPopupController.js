@@ -57,7 +57,7 @@ export function getMapPopup() {
     'campaignMapPopup';
 
   popup.className =
-    'campaign-map-popup hidden';
+    'campaign-map-popup mow-popover hidden';
 
   popup.dataset.mapPopupUiMigration =
     MAP_POPUP_UI_MIGRATION;

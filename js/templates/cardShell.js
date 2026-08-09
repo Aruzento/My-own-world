@@ -33,8 +33,8 @@ export function createCardShellTemplate() {
             <div class="card-meta" contenteditable="false">
               <span class="card-meta-label">Теги</span>
               <div class="inline-tag-list"></div>
-              <input class="inline-tag-input" data-runtime="true" placeholder="tag">
-              <button class="inline-add-tag-btn" data-runtime="true">+</button>
+              <input class="inline-tag-input mow-input" data-size="sm" data-runtime="true" type="text" placeholder="tag" aria-label="Тег">
+              <button class="inline-add-tag-btn mow-icon-button" data-size="sm" data-runtime="true" type="button" aria-label="Добавить тег" title="Добавить тег">+</button>
             </div>
 
             <div class="template-block hero-block" contenteditable="false">
@@ -68,8 +68,8 @@ export function createCardShellTemplate() {
               <div class="aliases-meta" contenteditable="false">
                 <span class="aliases-label">Так же известный как:</span>
                 <div class="inline-alias-list"></div>
-                <input class="inline-alias-input" data-runtime="true" placeholder="alias">
-                <button class="inline-add-alias-btn" data-runtime="true">+</button>
+                <input class="inline-alias-input mow-input" data-size="sm" data-runtime="true" type="text" placeholder="alias" aria-label="Псевдоним">
+                <button class="inline-add-alias-btn mow-icon-button" data-size="sm" data-runtime="true" type="button" aria-label="Добавить псевдоним" title="Добавить псевдоним">+</button>
               </div>
 
               <div

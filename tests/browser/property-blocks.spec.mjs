@@ -188,6 +188,326 @@ test(
 
 
 test(
+  'add-block-trigger-uses-shared-button-contract-and-still-opens-picker',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const waitFrames =
+            () => new Promise(resolve =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(resolve)
+              )
+            );
+
+          const {
+            renderCustomBlocks
+          } = await import('/js/editor/customBlocks.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <div class="entity-layout card-shell" contenteditable="false">
+              <section class="entity-main" contenteditable="false"></section>
+            </div>
+          `;
+
+          renderCustomBlocks(
+            editor
+          );
+
+          const button =
+            editor.querySelector('.add-block-btn');
+
+          const buttonStyle =
+            getComputedStyle(
+              button
+            );
+
+          button.click();
+
+          await waitFrames();
+
+          const popup =
+            document.getElementById('blockPopup');
+
+          return {
+            hasSharedButton:
+              button.classList.contains('mow-button'),
+            backgroundImage:
+              buttonStyle.backgroundImage,
+            iconSize:
+              button.querySelector('.app-icon')?.dataset.iconSize || '',
+            popupVisible:
+              Boolean(popup) &&
+              !popup.classList.contains('hidden'),
+            popupView:
+              popup?.dataset.blockPopupView || '',
+            pickerRole:
+              popup
+                ?.querySelector('.block-type-picker')
+                ?.getAttribute('role') || ''
+          };
+        }
+      );
+
+    expect(
+      result.hasSharedButton
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.backgroundImage
+    ).toBe(
+      'none'
+    );
+
+    expect(
+      result.iconSize
+    ).toBe(
+      'sm'
+    );
+
+    expect(
+      result.popupVisible
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.popupView
+    ).toBe(
+      'type-picker'
+    );
+
+    expect(
+      result.pickerRole
+    ).toBe(
+      'listbox'
+    );
+  }
+);
+
+
+test(
+  'card-tag-and-alias-controls-consume-shared-input-and-icon-button-primitives',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createCardShellTemplate
+          } = await import('/js/templates/cardShell.js');
+
+          const {
+            ensureRuntimeControls
+          } = await import('/js/editor/blocks/blockRuntimeControls.js');
+
+          const host =
+            document.createElement('div');
+
+          host.innerHTML =
+            createCardShellTemplate().content;
+
+          document.body.appendChild(
+            host
+          );
+
+          const legacyHost =
+            document.createElement('div');
+
+          legacyHost.innerHTML = `
+            <div class="entity-layout card-shell" contenteditable="false">
+              <div class="card-meta" contenteditable="false">
+                <input class="inline-tag-input">
+                <button class="inline-add-tag-btn">+</button>
+              </div>
+              <div class="aliases-meta" contenteditable="false">
+                <input class="inline-alias-input">
+                <button class="inline-add-alias-btn">+</button>
+              </div>
+            </div>
+          `;
+
+          document.body.appendChild(
+            legacyHost
+          );
+
+          ensureRuntimeControls(
+            host
+          );
+
+          ensureRuntimeControls(
+            legacyHost
+          );
+
+          const readControls =
+            root => {
+
+              const tagInput =
+                root.querySelector('.inline-tag-input');
+
+              const aliasInput =
+                root.querySelector('.inline-alias-input');
+
+              const tagButton =
+                root.querySelector('.inline-add-tag-btn');
+
+              const aliasButton =
+                root.querySelector('.inline-add-alias-btn');
+
+              tagInput.focus();
+
+              const focusedInputStyle =
+                getComputedStyle(
+                  tagInput
+                );
+
+              return {
+                tagInputShared:
+                  tagInput.classList.contains('mow-input'),
+                aliasInputShared:
+                  aliasInput.classList.contains('mow-input'),
+                tagInputSize:
+                  tagInput.dataset.size,
+                aliasInputSize:
+                  aliasInput.dataset.size,
+                tagButtonShared:
+                  tagButton.classList.contains('mow-icon-button'),
+                aliasButtonShared:
+                  aliasButton.classList.contains('mow-icon-button'),
+                tagButtonSize:
+                  tagButton.dataset.size,
+                aliasButtonSize:
+                  aliasButton.dataset.size,
+                tagLabel:
+                  tagInput.getAttribute('aria-label'),
+                aliasLabel:
+                  aliasInput.getAttribute('aria-label'),
+                tagButtonLabel:
+                  tagButton.getAttribute('aria-label'),
+                aliasButtonLabel:
+                  aliasButton.getAttribute('aria-label'),
+                focusedInputShadow:
+                  focusedInputStyle.boxShadow
+              };
+            };
+
+          return {
+            template:
+              readControls(
+                host
+              ),
+            legacy:
+              readControls(
+                legacyHost
+              )
+          };
+        }
+      );
+
+    for (const controls of [
+      result.template,
+      result.legacy
+    ]) {
+
+      expect(
+        controls.tagInputShared
+      ).toBe(
+        true
+      );
+
+      expect(
+        controls.aliasInputShared
+      ).toBe(
+        true
+      );
+
+      expect(
+        controls.tagInputSize
+      ).toBe(
+        'sm'
+      );
+
+      expect(
+        controls.aliasInputSize
+      ).toBe(
+        'sm'
+      );
+
+      expect(
+        controls.tagButtonShared
+      ).toBe(
+        true
+      );
+
+      expect(
+        controls.aliasButtonShared
+      ).toBe(
+        true
+      );
+
+      expect(
+        controls.tagButtonSize
+      ).toBe(
+        'sm'
+      );
+
+      expect(
+        controls.aliasButtonSize
+      ).toBe(
+        'sm'
+      );
+
+      expect(
+        controls.tagLabel
+      ).toBe(
+        'Тег'
+      );
+
+      expect(
+        controls.aliasLabel
+      ).toBe(
+        'Псевдоним'
+      );
+
+      expect(
+        controls.tagButtonLabel
+      ).toBe(
+        'Добавить тег'
+      );
+
+      expect(
+        controls.aliasButtonLabel
+      ).toBe(
+        'Добавить псевдоним'
+      );
+
+      expect(
+        controls.focusedInputShadow
+      ).not.toBe(
+        'none'
+      );
+    }
+  }
+);
+
+
+test(
   'add-block-picker-uses-design-system-icons-and-focus-states',
   async ({ page }) => {
 

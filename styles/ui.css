@@ -662,6 +662,18 @@
 }
 
 
+.mow-input[data-size="sm"] {
+  min-height:
+    var(--mow-control-height-sm);
+
+  padding:
+    0 var(--mow-space-2);
+
+  font-size:
+    var(--mow-font-size-xs);
+}
+
+
 .mow-select {
   padding-right:
     calc(var(--mow-space-3) + 18px);

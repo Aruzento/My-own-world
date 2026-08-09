@@ -51,7 +51,7 @@ export function ensureRuntimeInput(
       existingInput
     );
 
-    return;
+    return existingInput;
   }
 
   const input =
@@ -70,6 +70,8 @@ export function ensureRuntimeInput(
   container.appendChild(
     input
   );
+
+  return input;
 }
 
 export function ensureRuntimeButton(
@@ -88,7 +90,7 @@ export function ensureRuntimeButton(
       existingButton
     );
 
-    return;
+    return existingButton;
   }
 
   const button =
@@ -110,4 +112,6 @@ export function ensureRuntimeButton(
   container.appendChild(
     button
   );
+
+  return button;
 }

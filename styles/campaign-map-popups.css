@@ -39,19 +39,14 @@
     var(--mow-radius-overlay);
 
   background:
-    linear-gradient(
-      180deg,
-      #11120f,
-      #050706
-    );
+    var(--mow-surface-overlay-opaque);
 
   border:
     1px solid
     var(--mow-popover-border);
 
   box-shadow:
-    var(--mow-elevation-overlay),
-    inset 0 1px 0 rgba(255, 246, 222, 0.08);
+    var(--mow-elevation-overlay);
 
   color:
     var(--mow-text-primary);
@@ -95,17 +90,13 @@
     6px;
 
   border:
-    1px solid rgba(247, 220, 164, 0.1);
+    1px solid var(--mow-border-subtle);
 
   border-radius:
     var(--mow-radius-md);
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(255, 246, 222, 0.055),
-      rgba(5, 7, 6, 0.18)
-    );
+    var(--mow-surface-embedded);
 }
 
 

@@ -154,49 +154,8 @@
 ========================================= */
 
 .inline-tag-input {
-
-  width: 74px;
-
-  height: 22px;
-
-  padding:
-    0 6px;
-
-  border: none;
-
-  outline: none;
-
-  border-radius:
-    var(--mow-radius-xs);
-
-  background:
-    var(--mow-input-bg);
-
-  color:
-    var(--mow-text-primary);
-
-  font-size: var(--mow-font-size-xs);
-
-  transition:
-    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
-    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
-}
-
-
-.inline-tag-input::placeholder {
-
-  color:
-    rgba(255,255,255,0.28);
-}
-
-
-.inline-tag-input:focus {
-
-  background:
-    var(--mow-control-bg-active);
-
-  box-shadow:
-    var(--mow-focus-shadow);
+  width:
+    clamp(92px, 12ch, 132px);
 }
 
 
@@ -206,51 +165,8 @@
 ========================================= */
 
 .inline-add-tag-btn {
-
-  width: 22px;
-
-  height: 22px;
-
-  min-height: 22px;
-
-  padding: 0;
-
-  border: none;
-
-  border-radius:
-    var(--mow-radius-xs);
-
-  background:
-    var(--mow-control-bg);
-
-  color:
-    var(--mow-text-secondary);
-
-  font-size: 12px;
-
-  cursor: pointer;
-
-  transition:
-    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
-    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
-    transform var(--mow-motion-press-duration) var(--mow-ease-press);
-}
-
-
-.inline-add-tag-btn:hover {
-
-  background:
-    var(--mow-control-bg-hover);
-
-  color:
-    var(--mow-text-primary);
-}
-
-
-.inline-add-tag-btn:active {
-
-  transform:
-    scale(0.95);
+  flex:
+    0 0 auto;
 }
 
 /* =========================================
@@ -422,108 +338,14 @@
 .inline-alias-input {
 
   width:
-    86px;
-
-  height:
-    22px;
-
-  padding:
-    0 6px;
-
-  border:
-    none;
-
-  outline:
-    none;
-
-  border-radius:
-    var(--mow-radius-xs);
-
-  background:
-    var(--mow-input-bg);
-
-  color:
-    var(--mow-text-primary);
-
-  font-size:
-    var(--mow-font-size-xs);
-
-  transition:
-    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
-    box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
-}
-
-
-.inline-alias-input::placeholder {
-
-  color:
-    rgba(255,248,230,0.26);
-}
-
-
-.inline-alias-input:focus {
-
-  background:
-    var(--mow-control-bg-active);
-
-  box-shadow:
-    var(--mow-focus-shadow);
+    clamp(92px, 12ch, 132px);
 }
 
 
 .inline-add-alias-btn {
 
-  width:
-    22px;
-
-  height:
-    22px;
-
-  min-height:
-    22px;
-
-  padding:
-    0;
-
-  border:
-    none;
-
-  border-radius:
-    var(--mow-radius-xs);
-
-  background:
-    var(--mow-control-bg);
-
-  color:
-    var(--mow-text-secondary);
-
-  font-size:
-    12px;
-
-  cursor:
-    pointer;
-
-  transition:
-    background var(--mow-motion-hover-duration) var(--mow-ease-standard),
-    color var(--mow-motion-hover-duration) var(--mow-ease-standard),
-    transform var(--mow-motion-press-duration) var(--mow-ease-press);
-}
-
-
-.inline-add-alias-btn:hover {
-
-  background:
-    var(--mow-control-bg-hover);
-
-  color:
-    var(--mow-text-primary);
-}
-
-
-.inline-add-alias-btn:active {
-
-  transform:
-    scale(0.95);
+  flex:
+    0 0 auto;
 }
 
 
@@ -534,108 +356,5 @@
 
   gap:
     6px;
-}
-
-
-.inline-tag-input,
-.inline-alias-input {
-
-  width:
-    clamp(92px, 12ch, 132px);
-
-  height:
-    var(--mow-control-height-sm);
-
-  padding:
-    0 9px;
-
-  border:
-    1px solid rgba(247, 220, 164, 0.12);
-
-  border-radius:
-    var(--mow-radius-control);
-
-  background:
-    rgba(255, 246, 222, 0.035);
-
-  color:
-    var(--mow-text-primary);
-
-  font:
-    600 var(--mow-font-size-xs)/1 var(--mow-font-ui);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255, 246, 222, 0.035);
-}
-
-
-.inline-tag-input::placeholder,
-.inline-alias-input::placeholder {
-
-  color:
-    rgba(226, 209, 178, 0.46);
-}
-
-
-.inline-tag-input:focus,
-.inline-alias-input:focus {
-
-  border-color:
-    var(--mow-border-focus);
-
-  background:
-    var(--mow-control-bg-active);
-
-  box-shadow:
-    var(--mow-focus-shadow);
-}
-
-
-.inline-add-tag-btn,
-.inline-add-alias-btn {
-
-  width:
-    var(--mow-control-height-sm);
-
-  height:
-    var(--mow-control-height-sm);
-
-  min-height:
-    var(--mow-control-height-sm);
-
-  display:
-    inline-flex;
-
-  align-items:
-    center;
-
-  justify-content:
-    center;
-
-  border:
-    1px solid rgba(247, 220, 164, 0.13);
-
-  border-radius:
-    var(--mow-radius-control);
-
-  background:
-    rgba(255, 246, 222, 0.045);
-
-  color:
-    rgba(236, 213, 171, 0.88);
-
-  font:
-    750 13px/1 var(--mow-font-ui);
-}
-
-
-.inline-add-tag-btn:focus-visible,
-.inline-add-alias-btn:focus-visible {
-
-  outline:
-    none;
-
-  box-shadow:
-    var(--mow-focus-shadow);
 }
 

@@ -1469,11 +1469,22 @@ test(
             const shell =
               popup.querySelector('.campaign-map-popup-shell');
 
+            const popupStyle =
+              getComputedStyle(
+                popup
+              );
+
             snapshots.push({
               key:
                 spec.key,
               visible:
                 !popup.classList.contains('hidden'),
+              usesSharedPopover:
+                popup.classList.contains('mow-popover'),
+              backgroundImage:
+                popupStyle.backgroundImage,
+              backgroundColor:
+                popupStyle.backgroundColor,
               popupMigration:
                 popup.dataset.mapPopupUiMigration,
               shellMigration:
@@ -1517,6 +1528,24 @@ test(
         snapshot.popupMigration
       ).toBe(
         '0.0.1.8.12.2'
+      );
+
+      expect(
+        snapshot.usesSharedPopover
+      ).toBe(
+        true
+      );
+
+      expect(
+        snapshot.backgroundImage
+      ).toBe(
+        'none'
+      );
+
+      expect(
+        snapshot.backgroundColor.startsWith('rgb(')
+      ).toBe(
+        true
       );
 
       expect(

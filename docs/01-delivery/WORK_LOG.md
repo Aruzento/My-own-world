@@ -6,6 +6,45 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.2 Design System Corrections A-C
+
+### What Changed
+
+- Closed the first implementation leaf of the owner correction gate without adding product functionality.
+- Moved the editor Add Block trigger back onto the shared `.mow-button` primitive, removed its local decorative gradient/inset/hover/focus styling and kept the existing icon plus picker behavior.
+- Added one shared semantic token, `--mow-surface-overlay-opaque`, and used it for the generic Campaign Map popup root together with `.mow-popover` so the popup stays opaque/readable without hardcoded local colors.
+- Moved inline tag and alias inputs/buttons onto shared `.mow-input[data-size="sm"]` and `.mow-icon-button[data-size="sm"]` contracts in both the card template and runtime normalization path.
+- Reduced `styles/tags.css` ownership for tag/alias add controls to feature-specific width/flex layout only; generic input/button visual states now come from `styles/ui.css`.
+- Added focused regression coverage for the A-C contracts and live browser behavior.
+
+### Readiness
+
+`Foundation` for findings A-C. The design drift identified in `0.0.1.8.18.1` is corrected for Add Block, generic Campaign Map popup surface and tag/alias metadata controls. `0.0.1.8.18.3` was not started.
+
+### Verification
+
+- Passed: `node --check js\editor\blocks\blockControls.js`.
+- Passed: `node --check js\editor\blocks\blockRuntime.js`.
+- Passed: `node --check js\editor\blocks\blockRuntimeControls.js`.
+- Passed: `node --check js\templates\cardShell.js`.
+- Passed: `node --check js\editor\campaignMapPopupController.js`.
+- Passed: `node --test tests\designSystemCorrections.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs --grep "add-block-trigger|card-tag-and-alias-controls|add-block-picker"`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep "campaign-map-popups-use-migrated-shared-frame"`.
+- Passed: `node --test tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `node tools\docs_index.mjs` with 83 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 570 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `python tools\generate_manual_docx.py` with 1303 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Continue with `0.0.1.8.18.3` only after this leaf is committed.
+- Keep later Task Tracker cleanup, Russian label cleanup, shared popup positioning and critic-loop work out of this commit.
+
 ## 2026-08-09: 0.0.1.8.18.1 Owner Design Correction Inventory
 
 ### What Changed
