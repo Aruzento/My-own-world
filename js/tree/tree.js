@@ -1068,11 +1068,18 @@ function setTreePageCollapsed(
   saveTreeExpansionState();
   renderTree();
 
-  requestAnimationFrame(
-    () => focusTreePageById(
+  if (
+    !focusTreePageById(
       page.id
     )
-  );
+  ) {
+
+    requestAnimationFrame(
+      () => focusTreePageById(
+        page.id
+      )
+    );
+  }
 }
 
 
