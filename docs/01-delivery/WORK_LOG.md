@@ -6,6 +6,36 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.1 Owner Design Correction Inventory
+
+### What Changed
+
+- Opened `0.0.1.8.18 Owner Design Correction & Evidence Gate` in the active plan after the owner review of `0.0.1.8.17`.
+- Added `docs/01-delivery/OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md` as the exact A-I inventory.
+- Verified the current correction baseline: accepted historical commit `454a3f0`, current HEAD before this leaf `dec5438`, and no production UI code changed after `454a3f0`.
+- Confirmed findings A, B, C, D, E, G, H and I; partially confirmed F because tree semantics exist, but full Arrow/Home/End keyboard-contract implementation/evidence is missing.
+- Added `0.0.1.9.0 Repository Architecture / Maintainability / AI-Slop Audit` as a blocked audit-only block that must wait until `0.0.1.8.18` passes.
+
+### Readiness
+
+`Foundation` for the correction gate. The evidence map exists and production code remains untouched; implementation must continue leaf-by-leaf starting with `0.0.1.8.18.2` for findings A-C only.
+
+### Verification
+
+- Passed: `node tools\docs_index.mjs` with 83 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 569 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `npm run check:encoding`.
+- Passed: `python tools\generate_manual_docx.py` with 1303 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `git diff --check`.
+- Passed: `npm run verify` with 285 node tests, large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Stop after this inventory leaf.
+- Continue with `0.0.1.8.18.2` only after this leaf is committed.
+- Do not start product backlog items or repository cleanup implementation.
+
 ## 2026-08-07: Local Legacy Hub Cleanup
 
 ### What Changed

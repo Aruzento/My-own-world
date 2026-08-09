@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-07
+Updated: 2026-08-09
 
 Planning version: 1
 
@@ -144,3 +144,26 @@ Scope:
 - `0.0.1.8.17.5` - create `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`, synchronize project docs/release notes/manual and close the design gate only after verification evidence is recorded.
 
 Status: closed at `Usable` by `0.0.1.8.17`. The final owner visual pass reduced visible noise across shell/tree/editor/task tracker/graph/map surfaces, hid the component catalogue from normal Tools usage behind a dev/test flag, improved tree keyboard semantics, made map popups avoid the right-side Inspector, added 1440x900 and 1280x720 owner evidence screenshots, and created `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` for future product ideas without implementing them here. Post-design gate: pause for the owner's planned task before scheduling or starting non-design work.
+
+0.0.1.8.18. Owner Design Correction & Evidence Gate.
+
+Description: correction gate opened after owner review found concrete quality problems left by `0.0.1.8.17`. This is not another redesign and must not add product features. The accepted visual direction stays intact; the work is limited to removing local design-system drift, correcting accessibility/keyboard contracts, centralizing duplicated popup positioning ownership, proving the result through an independent visual critic loop, and expanding the future product backlog into implementation-ready planning.
+
+Scope:
+
+- `0.0.1.8.18.1` - baseline and exact finding inventory for owner findings A-I; production code remains read-only.
+- `0.0.1.8.18.2` - design-system correction for Add Block, Campaign Map popup surface, and tag/alias controls.
+- `0.0.1.8.18.3` - Task Tracker structural icon-only cleanup without presentation hacks.
+- `0.0.1.8.18.4` - Russian accessibility labels and complete desktop tree keyboard contract.
+- `0.0.1.8.18.5` - shared popup positioning ownership for map Inspector avoidance.
+- `0.0.1.8.18.6` - independent read-only visual critic loop and final owner evidence set.
+- `0.0.1.8.18.7` - deterministic expansion of `NEXT_PRODUCT_MINI_BACKLOG.md`.
+- `0.0.1.8.18.8` - final correction gate, full verification, documentation sync, and closure only if all evidence passes.
+
+Status: active at `Foundation`; `0.0.1.8.18.1` is in progress. Current inventory lives in [OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md](./OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md). Do not start `0.0.1.9.0` until this correction gate is closed.
+
+### 0.0.1.9.0. Repository Architecture / Maintainability / AI-Slop Audit
+
+Goal: after `0.0.1.8.18` passes, perform a repository-wide audit-only review for architecture, maintainability, duplicated ownership, accessibility debt, CSS debt, test/documentation slop, performance risks and safety issues.
+
+Status: blocked until `0.0.1.8.18` closes. This block must create an audit report and cleanup backlog for owner review, but it must not execute the cleanup or start NF-001...NF-017 product work.
