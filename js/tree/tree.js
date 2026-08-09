@@ -67,6 +67,9 @@ let treeVirtualScrollHandler =
 let treeVirtualState =
   null;
 
+let focusedTreePageId =
+  null;
+
 loadTreeExpansionState();
 
 const draggedPageState = {
@@ -156,7 +159,11 @@ export function renderFilteredTree(
 
   tree.setAttribute(
     'aria-label',
-    'World tree'
+    'Дерево мира'
+  );
+
+  setupTreeKeyboardNavigation(
+    tree
   );
 
   detachTreeVirtualization(
@@ -241,6 +248,10 @@ export function renderFilteredTree(
       );
     });
 
+    syncTreeRovingFocus(
+      tree
+    );
+
     tree.scrollTop =
       previousScrollTop;
 
@@ -261,6 +272,10 @@ export function renderFilteredTree(
       renderOptions
     );
   });
+
+  syncTreeRovingFocus(
+    tree
+  );
 
   tree.scrollTop =
     previousScrollTop;
@@ -464,6 +479,10 @@ function renderVirtualTreeWindow() {
   items.replaceChildren(
     fragment
   );
+
+  syncTreeRovingFocus(
+    tree
+  );
 }
 
 
@@ -513,6 +532,591 @@ function scrollVirtualTreePageIntoView(
   });
 
   renderVirtualTreeWindow();
+}
+
+
+function setupTreeKeyboardNavigation(
+  tree
+) {
+
+  if (
+    tree.dataset.keyboardTreeContract === 'true'
+  ) return;
+
+  tree.dataset.keyboardTreeContract =
+    'true';
+
+  tree.addEventListener(
+    'focusin',
+    event => {
+
+      const item =
+        event.target.closest?.(
+          '.tree-item[data-page-id]'
+        );
+
+      if (
+        !item ||
+        !tree.contains(
+          item
+        )
+      ) return;
+
+      focusedTreePageId =
+        item.dataset.pageId || null;
+
+      syncTreeRovingFocus(
+        tree,
+        focusedTreePageId
+      );
+    }
+  );
+
+  tree.addEventListener(
+    'keydown',
+    handleTreeKeyboardNavigation
+  );
+}
+
+
+function handleTreeKeyboardNavigation(
+  event
+) {
+
+  const tree =
+    event.currentTarget;
+
+  const item =
+    event.target.closest?.(
+      '.tree-item[data-page-id]'
+    );
+
+  if (
+    !item ||
+    event.target !== item
+  ) return;
+
+  const page =
+    getTreePageById(
+      item.dataset.pageId
+    );
+
+  if (!page) return;
+
+  if (event.key === 'ArrowDown') {
+
+    event.preventDefault();
+    focusTreeItemByOffset(
+      tree,
+      item,
+      1
+    );
+
+    return;
+  }
+
+  if (event.key === 'ArrowUp') {
+
+    event.preventDefault();
+    focusTreeItemByOffset(
+      tree,
+      item,
+      -1
+    );
+
+    return;
+  }
+
+  if (event.key === 'ArrowRight') {
+
+    event.preventDefault();
+    handleTreeArrowRight(
+      tree,
+      item,
+      page
+    );
+
+    return;
+  }
+
+  if (event.key === 'ArrowLeft') {
+
+    event.preventDefault();
+    handleTreeArrowLeft(
+      page
+    );
+
+    return;
+  }
+
+  if (event.key === 'Home') {
+
+    event.preventDefault();
+    focusTreeBoundaryItem(
+      tree,
+      'first'
+    );
+
+    return;
+  }
+
+  if (event.key === 'End') {
+
+    event.preventDefault();
+    focusTreeBoundaryItem(
+      tree,
+      'last'
+    );
+
+    return;
+  }
+
+  if (event.key === 'Enter') {
+
+    event.preventDefault();
+    openFocusedTreePage(
+      item
+    );
+  }
+}
+
+
+function handleTreeArrowRight(
+  tree,
+  item,
+  page
+) {
+
+  if (
+    !hasTreePageChildren(
+      page
+    )
+  ) return;
+
+  if (
+    isTreePageCollapsed(
+      page
+    )
+  ) {
+
+    setTreePageCollapsed(
+      page,
+      false
+    );
+
+    return;
+  }
+
+  const childPageId =
+    getFirstVisibleChildPageId(
+      tree,
+      item
+    );
+
+  if (!childPageId) return;
+
+  focusTreePageById(
+    childPageId
+  );
+}
+
+
+function handleTreeArrowLeft(
+  page
+) {
+
+  if (
+    hasTreePageChildren(
+      page
+    ) &&
+    !isTreePageCollapsed(
+      page
+    )
+  ) {
+
+    setTreePageCollapsed(
+      page,
+      true
+    );
+
+    return;
+  }
+
+  if (!page.parent) return;
+
+  focusTreePageById(
+    page.parent
+  );
+}
+
+
+function focusTreeItemByOffset(
+  tree,
+  item,
+  offset
+) {
+
+  const rows =
+    getKeyboardTreeRows(
+      tree
+    );
+
+  const index =
+    rows.findIndex(row =>
+      row.pageId === item.dataset.pageId
+    );
+
+  if (index < 0) return;
+
+  const nextRow =
+    rows[
+      Math.min(
+        rows.length - 1,
+        Math.max(
+          0,
+          index + offset
+        )
+      )
+    ];
+
+  focusTreePageById(
+    nextRow?.pageId
+  );
+}
+
+
+function focusTreeBoundaryItem(
+  tree,
+  boundary
+) {
+
+  const rows =
+    getKeyboardTreeRows(
+      tree
+    );
+
+  if (!rows.length) return;
+
+  const row =
+    boundary === 'last'
+      ? rows[rows.length - 1]
+      : rows[0];
+
+  focusTreePageById(
+    row.pageId
+  );
+}
+
+
+function getFirstVisibleChildPageId(
+  tree,
+  item
+) {
+
+  const rows =
+    getKeyboardTreeRows(
+      tree
+    );
+
+  const index =
+    rows.findIndex(row =>
+      row.pageId === item.dataset.pageId
+    );
+
+  if (index < 0) return null;
+
+  const currentLevel =
+    rows[index].level;
+
+  const nextRow =
+    rows[index + 1];
+
+  if (
+    !nextRow ||
+    nextRow.level <= currentLevel
+  ) return null;
+
+  return nextRow.pageId;
+}
+
+
+function getKeyboardTreeRows(
+  tree
+) {
+
+  if (
+    treeVirtualState?.tree === tree
+  ) {
+
+    return treeVirtualState.rows.map(row => ({
+      pageId:
+        row.page.id,
+      level:
+        row.level + 1
+    }));
+  }
+
+  return getTreeItems(
+    tree
+  ).map(item => ({
+    pageId:
+      item.dataset.pageId,
+    level:
+      Number(
+        item.getAttribute(
+          'aria-level'
+        )
+      ) || 1
+  }));
+}
+
+
+function focusTreePageById(
+  pageId
+) {
+
+  if (!pageId) return false;
+
+  focusedTreePageId =
+    pageId;
+
+  const tree =
+    document.getElementById(
+      'tree'
+    );
+
+  if (!tree) return false;
+
+  ensureVirtualTreePageRendered(
+    pageId
+  );
+
+  const item =
+    tree.querySelector(
+      `.tree-item[data-page-id="${CSS.escape(pageId)}"]`
+    );
+
+  if (!item) {
+
+    syncTreeRovingFocus(
+      tree
+    );
+
+    return false;
+  }
+
+  syncTreeRovingFocus(
+    tree,
+    pageId
+  );
+
+  item.focus({
+    preventScroll: true
+  });
+
+  item.scrollIntoView({
+    block: 'nearest'
+  });
+
+  return true;
+}
+
+
+function ensureVirtualTreePageRendered(
+  pageId
+) {
+
+  if (!treeVirtualState) return;
+
+  const index =
+    treeVirtualState.rows.findIndex(row =>
+      row.page.id === pageId
+    );
+
+  if (index < 0) return;
+
+  const existing =
+    treeVirtualState.tree.querySelector(
+      `.tree-item[data-page-id="${CSS.escape(pageId)}"]`
+    );
+
+  if (existing) return;
+
+  treeVirtualState.tree.scrollTop =
+    getTreeRootOffset(
+      treeVirtualState.tree
+    ) + index * TREE_VIRTUAL_ROW_HEIGHT;
+
+  renderVirtualTreeWindow();
+}
+
+
+function syncTreeRovingFocus(
+  tree,
+  preferredPageId = focusedTreePageId
+) {
+
+  const items =
+    getTreeItems(
+      tree
+    );
+
+  if (!items.length) {
+
+    focusedTreePageId =
+      null;
+
+    return;
+  }
+
+  const visiblePageIds =
+    new Set(
+      items.map(item =>
+        item.dataset.pageId
+      )
+    );
+
+  let targetPageId =
+    visiblePageIds.has(
+      preferredPageId
+    )
+      ? preferredPageId
+      : null;
+
+  if (
+    !targetPageId &&
+    state.currentPage?.id &&
+    visiblePageIds.has(
+      state.currentPage.id
+    )
+  ) {
+
+    targetPageId =
+      state.currentPage.id;
+  }
+
+  if (!targetPageId) {
+
+    targetPageId =
+      items[0].dataset.pageId;
+  }
+
+  items.forEach(item => {
+
+    const isTarget =
+      item.dataset.pageId === targetPageId;
+
+    item.tabIndex =
+      isTarget
+        ? 0
+        : -1;
+
+    const actions =
+      item.querySelector(
+        '.tree-actions'
+      );
+
+    if (actions) {
+
+      actions.tabIndex =
+        isTarget
+          ? 0
+          : -1;
+    }
+  });
+
+  focusedTreePageId =
+    targetPageId;
+}
+
+
+function getTreeItems(
+  tree
+) {
+
+  return Array.from(
+    tree.querySelectorAll(
+      '.tree-item[data-page-id]'
+    )
+  );
+}
+
+
+function setTreePageCollapsed(
+  page,
+  shouldCollapse
+) {
+
+  getTreePageKeys(
+    page
+  ).forEach(key => {
+
+    if (shouldCollapse) {
+
+      collapsedPages.add(
+        key
+      );
+
+      return;
+    }
+
+    collapsedPages.delete(
+      key
+    );
+  });
+
+  saveTreeExpansionState();
+  renderTree();
+
+  requestAnimationFrame(
+    () => focusTreePageById(
+      page.id
+    )
+  );
+}
+
+
+function hasTreePageChildren(
+  page
+) {
+
+  return Boolean(
+    page?.children?.length
+  );
+}
+
+
+function isTreePageCollapsed(
+  page
+) {
+
+  return getTreePageKeys(
+    page
+  ).some(key =>
+    collapsedPages.has(
+      key
+    )
+  );
+}
+
+
+function getTreePageById(
+  pageId
+) {
+
+  return state.pages.find(page =>
+    page.id === pageId
+  ) || null;
+}
+
+
+function openFocusedTreePage(
+  item
+) {
+
+  item.querySelector(
+    '.tree-title'
+  )?.click();
 }
 
 

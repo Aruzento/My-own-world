@@ -1066,14 +1066,24 @@ test(
               tree?.getAttribute('aria-label') || '',
             rootRole:
               rootItem?.getAttribute('role') || '',
+            rootName:
+              rootItem?.getAttribute('aria-label') || '',
             rootExpanded:
               rootItem?.getAttribute('aria-expanded') || '',
-            rootToggleExpanded:
-              rootToggle?.getAttribute('aria-expanded') || '',
+            rootTabIndex:
+              rootItem?.tabIndex,
+            rootToggleTitle:
+              rootToggle?.getAttribute('title') || '',
+            rootToggleTabIndex:
+              rootToggle?.tabIndex,
+            rootToggleHidden:
+              rootToggle?.getAttribute('aria-hidden') || '',
+            childRole:
+              childItem?.getAttribute('role') || '',
+            childName:
+              childItem?.getAttribute('aria-label') || '',
             childTitleTag:
               childTitle?.tagName || '',
-            childTitleName:
-              childTitle?.getAttribute('aria-label') || '',
             childToggleDisabled:
               Boolean(childToggle?.disabled),
             childToggleTabIndex:
@@ -1095,7 +1105,7 @@ test(
     expect(
       treeA11y.treeLabel
     ).toBe(
-      'World tree'
+      'Дерево мира'
     );
 
     expect(
@@ -1105,27 +1115,57 @@ test(
     );
 
     expect(
+      treeA11y.rootName
+    ).toBe(
+      'Тихая переправа'
+    );
+
+    expect(
       treeA11y.rootExpanded
     ).toBe(
       'true'
     );
 
     expect(
-      treeA11y.rootToggleExpanded
+      treeA11y.rootTabIndex
+    ).toBe(
+      0
+    );
+
+    expect(
+      treeA11y.rootToggleTitle
+    ).toBe(
+      'Свернуть: Тихая переправа'
+    );
+
+    expect(
+      treeA11y.rootToggleTabIndex
+    ).toBe(
+      -1
+    );
+
+    expect(
+      treeA11y.rootToggleHidden
     ).toBe(
       'true'
     );
 
     expect(
-      treeA11y.childTitleTag
+      treeA11y.childRole
     ).toBe(
-      'BUTTON'
+      'treeitem'
     );
 
     expect(
-      treeA11y.childTitleName.length
-    ).toBeGreaterThan(
-      0
+      treeA11y.childName
+    ).toBe(
+      'Старый мост'
+    );
+
+    expect(
+      treeA11y.childTitleTag
+    ).toBe(
+      'SPAN'
     );
 
     expect(
@@ -1149,17 +1189,17 @@ test(
     expect(
       treeA11y.childActionsName
     ).toContain(
-      'Page actions:'
+      'Действия страницы:'
     );
 
-    await page.locator('.tree-item[data-page-id="map-child"] .tree-title').focus();
+    await page.locator('.tree-item[data-page-id="map-child"]').focus();
 
     await page.keyboard.press(
       'Enter'
     );
 
     await expect(
-      page.locator('.tree-item[data-page-id="map-child"] .tree-title')
+      page.locator('.tree-item[data-page-id="map-child"]')
     ).toHaveAttribute(
       'aria-current',
       'page'

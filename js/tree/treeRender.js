@@ -131,7 +131,7 @@ export function createTreePageElement(
     page.id;
 
   const titleText =
-    page.title || 'Untitled page';
+    page.title || 'Без названия';
 
   item.setAttribute(
     'role',
@@ -139,9 +139,17 @@ export function createTreePageElement(
   );
 
   item.setAttribute(
+    'aria-label',
+    titleText
+  );
+
+  item.setAttribute(
     'aria-level',
     String(level + 1)
   );
+
+  item.tabIndex =
+    -1;
 
   item.style.setProperty(
     '--tree-level',
@@ -174,6 +182,19 @@ export function createTreePageElement(
   toggle.type =
     'button';
 
+  toggle.tabIndex =
+    -1;
+
+  toggle.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+
+  toggle.title =
+    hasChildren
+      ? `${isCollapsed ? 'Развернуть' : 'Свернуть'}: ${titleText}`
+      : '';
+
   toggle.textContent =
     hasChildren
       ? isCollapsed
@@ -184,16 +205,6 @@ export function createTreePageElement(
 
   if (hasChildren) {
 
-    toggle.setAttribute(
-      'aria-label',
-      `${isCollapsed ? 'Expand' : 'Collapse'} ${titleText}`
-    );
-
-    toggle.setAttribute(
-      'aria-expanded',
-      String(!isCollapsed)
-    );
-
     item.setAttribute(
       'aria-expanded',
       String(!isCollapsed)
@@ -201,16 +212,8 @@ export function createTreePageElement(
 
   } else {
 
-    toggle.tabIndex =
-      -1;
-
     toggle.disabled =
       true;
-
-    toggle.setAttribute(
-      'aria-hidden',
-      'true'
-    );
   }
 
 
@@ -250,24 +253,16 @@ export function createTreePageElement(
 
 
   const title =
-    document.createElement('button');
+    document.createElement('span');
 
   title.className =
     'tree-title';
-
-  title.type =
-    'button';
-
-  title.setAttribute(
-    'aria-label',
-    titleText
-  );
 
   if (
     state.currentPage?.id === page.id
   ) {
 
-    title.setAttribute(
+    item.setAttribute(
       'aria-current',
       'page'
     );
@@ -363,13 +358,16 @@ export function createTreePageElement(
   actions.type =
     'button';
 
+  actions.tabIndex =
+    -1;
+
   actions.setAttribute(
     'aria-label',
-    `Page actions: ${titleText}`
+    `Действия страницы: ${titleText}`
   );
 
   actions.title =
-    `Page actions: ${titleText}`;
+    `Действия страницы: ${titleText}`;
 
   actions.textContent =
     '⋯';

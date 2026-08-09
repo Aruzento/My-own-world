@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 571.
+Всего файлов в аудите: 572.
 
 ## Два Независимых Прохода
 
@@ -26,7 +26,7 @@ owner_zone: "delivery"
 |---|---:|
 | agent workflow | 9 |
 | assets | 4 |
-| browser tests | 27 |
+| browser tests | 28 |
 | campaign map | 49 |
 | character | 5 |
 | ci | 1 |
@@ -72,10 +72,10 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5828513 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5837327 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 654857 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 167935 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 657490 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 168343 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -649,6 +649,7 @@ owner_zone: "delivery"
 | `tests/browser/schema-recovery.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tables.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/task-tracker.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/browser/tree-accessibility.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tree-delete.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tree-dnd-regression.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/browser/tree-security.spec.mjs` | browser tests | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |

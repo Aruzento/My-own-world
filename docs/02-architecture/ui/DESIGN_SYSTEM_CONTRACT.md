@@ -373,6 +373,8 @@ Owns: tree rows, active page state, duplicate/warning/link states, search result
 
 Use: virtualized rows, shared row states, shared context menu.
 
+`0.0.1.8.18.4` correction: the world tree is a real Russian-language desktop tree contract, not ARIA-only markup. `#tree` uses `aria-label="Дерево мира"`; every page row is the roving `role="treeitem"` focus target with a meaningful Russian accessible name, `aria-level`, current `aria-expanded` for parents and `aria-current="page"` for the active page. ArrowDown/ArrowUp move through visible rows, ArrowRight expands collapsed parents or enters the first visible child, ArrowLeft collapses expanded parents or returns to the visible parent, Home/End jump to visible boundaries, and Enter opens the focused page. Leaf toggles stay out of the focus model; row actions remain reachable from the current roving row and keep Russian accessible names. Keyboard navigation must not start pointer-DnD, and virtualized rows must preserve boundary focus behavior.
+
 ### Card Editor And Blocks
 
 Owns: document surface, block frames, block handles, inline toolbar, selection toolbar, insert menu, drop indicators.

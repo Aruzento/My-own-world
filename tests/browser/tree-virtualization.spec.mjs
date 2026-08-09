@@ -90,3 +90,115 @@ test(
     ).toBeVisible();
   }
 );
+
+
+test(
+  'tree-virtualization-keeps-keyboard-boundary-focus-visible',
+  async ({ page }) => {
+
+    await page.addInitScript(
+      () => {
+
+        localStorage.removeItem(
+          'my-own-world:tree-expansion-state'
+        );
+
+        localStorage.removeItem(
+          'my-own-world:collapsed-tree-pages'
+        );
+      }
+    );
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setPages,
+          setWorkspaceHandle
+        } = await import('/js/stateActions.js');
+
+        const {
+          renderTree
+        } = await import('/js/tree/tree.js');
+
+        const pages =
+          Array.from(
+            {
+              length: 520
+            },
+            (_, index) => ({
+              id:
+                `keyboard-page-${index}`,
+              name:
+                `keyboard-page-${index}.md`,
+              title:
+                `Страница ${index}`,
+              parent:
+                null,
+              order:
+                index,
+              tags:
+                [],
+              html:
+                '<p></p>'
+            })
+          );
+
+        setWorkspaceHandle({
+          name:
+            'Virtual keyboard workspace'
+        });
+
+        setPages(
+          pages
+        );
+
+        renderTree();
+      }
+    );
+
+    const first =
+      page.locator(
+        '.tree-item[data-page-id="keyboard-page-0"]'
+      );
+
+    await first.focus();
+
+    await expect(
+      first
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'End'
+    );
+
+    const last =
+      page.locator(
+        '.tree-item[data-page-id="keyboard-page-519"]'
+      );
+
+    await expect(
+      last
+    ).toBeVisible();
+
+    await expect(
+      last
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Home'
+    );
+
+    await expect(
+      first
+    ).toBeVisible();
+
+    await expect(
+      first
+    ).toBeFocused();
+  }
+);

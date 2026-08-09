@@ -227,13 +227,29 @@
 }
 
 
-.tree-title:focus-visible {
+.tree-item:focus-visible {
 
   outline:
-    none;
+    2px solid var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
 
   box-shadow:
-    0 0 0 2px var(--mow-border-focus);
+    var(--mow-focus-shadow);
+}
+
+
+.tree-actions:focus-visible {
+
+  opacity:
+    1;
+
+  outline:
+    2px solid var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
 }
 
 

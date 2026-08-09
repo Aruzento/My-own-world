@@ -6,6 +6,42 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.4 Tree Accessibility Correction
+
+### What Changed
+
+- Closed the Tree accessibility correction leaf without adding Tree product features or changing page persistence behavior.
+- Replaced new English Tree accessibility strings with Russian product language: `Дерево мира`, `Без названия`, `Развернуть: ...`, `Свернуть: ...`, and `Действия страницы: ...`.
+- Made the page row itself the roving `role="treeitem"` focus target instead of relying on a nested title button.
+- Implemented the desktop tree keyboard contract: ArrowDown/ArrowUp move through visible rows, ArrowRight expands or enters the first child, ArrowLeft collapses or returns to the parent, Home/End jump to visible boundaries, and Enter opens the focused page.
+- Kept Space unassigned for Tree rows, so no new toggle/open behavior was invented.
+- Removed leaf toggles from the focus model and kept row action menus reachable from the current roving row.
+- Preserved pointer-based Tree DnD behavior and added virtualization coverage for keyboard boundary focus.
+
+### Readiness
+
+`Foundation` for findings E-F. Tree accessibility labels and keyboard behavior now match the Russian desktop app contract. `0.0.1.8.18.5` was not started.
+
+### Verification
+
+- Passed: `npm run test:browser -- tests/browser/tree-accessibility.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-dnd-regression.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-virtualization.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs -g visual-theme-scale-captures-workbench-baselines`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `node tools\docs_index.mjs` with 83 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 572 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `python tools\generate_manual_docx.py` with 1303 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify` with 287 node tests, large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Continue with `0.0.1.8.18.5` only after this leaf is committed.
+- Keep shared popup positioning, visual critic loop and backlog expansion out of this commit.
+
 ## 2026-08-09: 0.0.1.8.18.3 Task Tracker Structural Icon-Only Cleanup
 
 ### What Changed
