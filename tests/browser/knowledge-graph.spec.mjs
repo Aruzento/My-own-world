@@ -377,17 +377,20 @@ aliases: []
                 !control.getAttribute('aria-label') &&
                 !control.textContent.trim()
               ).length,
+            withoutSmallSize:
+              controls.filter(control =>
+                control.dataset.size !== 'sm'
+              ).length,
             blackBackgrounds:
               backgrounds.filter(background =>
-                background === 'rgb(0, 0, 0)' ||
-                background === 'rgba(0, 0, 0, 0)'
+                background === 'rgb(0, 0, 0)'
               ).length,
-            maxWidth:
-              Math.max(
-                ...rects.map(rect =>
-                  Math.ceil(rect.width)
-                )
+            zeroAreaControls:
+              rects.filter(rect =>
+                rect.width <= 0 ||
+                rect.height <= 0
               )
+                .length
           };
         }
       );
@@ -417,9 +420,15 @@ aliases: []
     );
 
     expect(
-      graphControlContract.maxWidth
-    ).toBeLessThanOrEqual(
-      34
+      graphControlContract.withoutSmallSize
+    ).toBe(
+      0
+    );
+
+    expect(
+      graphControlContract.zeroAreaControls
+    ).toBe(
+      0
     );
 
     await page.locator('[data-knowledge-graph-filter="domain"]').selectOption('item');

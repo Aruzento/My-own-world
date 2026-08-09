@@ -3295,21 +3295,16 @@ async function prepareDesignSystemFixedViewportSurface(
       page.locator('.knowledge-graph-workbench')
     ).toBeVisible();
 
-    const heroNodeBox =
-      await page
-        .locator('[data-knowledge-graph-canvas-card][data-node-id="hero"]')
-        .boundingBox();
-
-    if (!heroNodeBox) {
-
-      throw new Error(
-        'Knowledge Graph hero node was not measurable for visual evidence.'
+    const heroNode =
+      page.locator(
+        '[data-knowledge-graph-canvas-card][data-node-id="hero"]'
       );
-    }
 
-    await page.mouse.click(
-      heroNodeBox.x + heroNodeBox.width / 2,
-      heroNodeBox.y + heroNodeBox.height / 2,
+    await expect(
+      heroNode
+    ).toBeVisible();
+
+    await heroNode.click(
       {
         button:
           'right'
