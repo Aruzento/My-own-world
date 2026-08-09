@@ -6,6 +6,46 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.3 Task Tracker Structural Icon-Only Cleanup
+
+### What Changed
+
+- Closed the Task Tracker structural icon-only cleanup leaf without changing Task Tracker data model, task lifecycle or drag/drop semantics.
+- Removed the old hidden boardbar title text from the rendered boardbar; the icon-only board identity keeps an accessible label instead of a hidden visual span.
+- Rebuilt board stats as explicit icon + visible value chips, so column/task/checklist values are still meaningful and no longer depend on `font-size: 0`.
+- Removed the hidden `Колонка` label from the Add Column action and made it a real icon-only shared `.mow-icon-button` with `aria-label`, `title` and existing tooltip text.
+- Removed the hidden empty-column text span; the empty state remains visually quiet and screen-reader understandable through `role="status"` plus `aria-label`.
+- Moved Task Tracker icon-only actions to shared `.mow-icon-button` while preserving existing task selector classes used by event handling and drag/drop.
+- Kept the visible `Чек` checklist-add action as a short text button and moved it to shared `.mow-button`.
+
+### Readiness
+
+`Foundation` for finding D. The presentation hacks from the `0.0.1.8.18.1` inventory are removed from Task Tracker UI structure and CSS. `0.0.1.8.18.4` was not started.
+
+### Verification
+
+- Passed: `node --check js\taskTracker\taskTrackerBoardHTML.js`.
+- Passed: `node --check js\taskTracker\taskTrackerColumnHTML.js`.
+- Passed: `node --check js\taskTracker\taskTrackerTaskHTML.js`.
+- Passed: `node --test tests\taskTrackerStructuralIconOnly.test.mjs`.
+- Passed: `node --test tests\taskTrackerModel.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/task-tracker.spec.mjs` with 5 browser tests, including shared icon-only controls, accessible names, visible focus, add/edit actions and pointer drag/drop.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep "visual-task-tracker-structural-icon-only-state"`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `node tools\docs_index.mjs` with 83 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 571 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `python tools\generate_manual_docx.py` with 1303 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: `npm run verify` with 287 node tests, large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+- Deferred: broad `visual-design-system-captures-fixed-viewport-state-matrix` was attempted and failed on the pre-existing Campaign Map popup/Inspector overlap guard; Campaign Map is explicitly out of scope for this leaf.
+
+### Next
+
+- Continue with `0.0.1.8.18.4` only after this leaf is committed.
+- Keep Russian accessibility cleanup outside this commit unless it belongs directly to the Task Tracker controls touched here.
+
 ## 2026-08-09: 0.0.1.8.18.2 Design System Corrections A-C
 
 ### What Changed

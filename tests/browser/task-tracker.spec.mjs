@@ -383,22 +383,52 @@ test(
               tracker.dataset.taskTrackerUiMigration,
             boardMarker:
               board.dataset.taskTrackerBoardUi,
-            boardbarTitleTextDisplay:
-              getComputedStyle(
+            boardbarTextNodeExists:
+              Boolean(
                 tracker.querySelector('.task-tracker-boardbar-title > span:not(.task-tracker-boardbar-icon)')
-              ).display,
-            columnAddTextDisplay:
-              getComputedStyle(
+              ),
+            columnAddTextNodeExists:
+              Boolean(
                 tracker.querySelector('.task-column-add span')
-              ).display,
-            emptyTextDisplay:
-              getComputedStyle(
+              ),
+            emptyTextNodeExists:
+              Boolean(
                 tracker.querySelector('.task-column-empty span')
-              ).display,
-            statFontSize:
-              getComputedStyle(
-                tracker.querySelector('.task-tracker-stat')
-              ).fontSize,
+              ),
+            emptyLabel:
+              tracker
+                .querySelector('.task-column-empty')
+                ?.getAttribute('aria-label') || '',
+            statFontSizes:
+              [
+                ...tracker.querySelectorAll('.task-tracker-stat')
+              ].map(stat =>
+                getComputedStyle(stat).fontSize
+              ),
+            statValues:
+              [
+                ...tracker.querySelectorAll('.task-tracker-stat-value')
+              ].map(value =>
+                value.textContent.trim()
+              ),
+            statLabels:
+              [
+                ...tracker.querySelectorAll('.task-tracker-stat')
+              ].map(stat =>
+                stat.getAttribute('aria-label')
+              ),
+            iconOnlyActionsUseSharedPrimitive:
+              [
+                ...tracker.querySelectorAll(
+                  '.task-column-add, .task-add-btn, .task-column-delete, .task-drag-handle, .task-column-drag-handle, .task-delete-btn, .task-check-delete'
+                )
+              ].every(button =>
+                button.classList.contains('mow-icon-button')
+              ),
+            checklistAddUsesSharedButton:
+              tracker
+                .querySelector('.task-checklist-add')
+                ?.classList.contains('mow-button') || false,
             columnCountText:
               firstColumn.querySelector('.task-column-count')?.textContent?.trim(),
             progressValue:
@@ -432,27 +462,61 @@ test(
     );
 
     expect(
-      result.boardbarTitleTextDisplay
+      result.boardbarTextNodeExists
     ).toBe(
-      'none'
+      false
     );
 
     expect(
-      result.columnAddTextDisplay
+      result.columnAddTextNodeExists
     ).toBe(
-      'none'
+      false
     );
 
     expect(
-      result.emptyTextDisplay
+      result.emptyTextNodeExists
     ).toBe(
-      'none'
+      false
     );
 
     expect(
-      result.statFontSize
+      result.emptyLabel
     ).toBe(
+      'Колонка пуста'
+    );
+
+    expect(
+      result.statFontSizes
+    ).not.toContain(
       '0px'
+    );
+
+    expect(
+      result.statValues
+    ).toEqual([
+      '2',
+      '2',
+      '1/2'
+    ]);
+
+    expect(
+      result.statLabels
+    ).toEqual([
+      'Колонки: 2',
+      'Задачи: 2',
+      'Чеклист: 1 из 2'
+    ]);
+
+    expect(
+      result.iconOnlyActionsUseSharedPrimitive
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.checklistAddUsesSharedButton
+    ).toBe(
+      true
     );
 
     expect(
@@ -500,6 +564,67 @@ test(
       result.boardOverflowStyle
     ).toBe(
       'visible'
+    );
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Добавить колонку'
+      })
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Добавить задачу'
+      }).first()
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole('button', {
+        name: 'Удалить задачу'
+      }).first()
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole('status', {
+        name: 'Колонка пуста'
+      })
+    ).toBeVisible();
+
+    const addColumnButton =
+      page.getByRole('button', {
+        name: 'Добавить колонку'
+      });
+
+    await addColumnButton.focus();
+
+    await expect(
+      addColumnButton
+    ).toBeFocused();
+
+    const focusStyle =
+      await addColumnButton.evaluate(button => {
+
+        const style =
+          getComputedStyle(button);
+
+        return {
+          outlineStyle:
+            style.outlineStyle,
+          outlineWidth:
+            style.outlineWidth
+        };
+      });
+
+    expect(
+      focusStyle.outlineStyle
+    ).not.toBe(
+      'none'
+    );
+
+    expect(
+      focusStyle.outlineWidth
+    ).not.toBe(
+      '0px'
     );
   }
 );
@@ -596,6 +721,19 @@ test(
       }
     );
 
+    await page
+      .locator('.task-column[data-column-id="todo"] .task-card-title')
+      .last()
+      .fill('Edited task from shared controls');
+
+    await expectTaskTrackerTitles(
+      page,
+      [
+        'Seed task',
+        'Edited task from shared controls'
+      ]
+    );
+
     await dispatchInnerTaskTrackerClick(
       page,
       '.task-card[data-task-id="task-1"] .task-checklist-add .task-tracker-action-icon use'
@@ -659,6 +797,123 @@ test(
 );
 
 
+test(
+  'task-tracker-drag-drop-still-persists-with-shared-icon-buttons',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          createTaskTrackerTemplate
+        } = await import('/js/templates/taskTracker.js');
+
+        const {
+          renderTaskTracker
+        } = await import('/js/taskTracker/taskTrackerRender.js');
+
+        const {
+          writeTaskTrackerData
+        } = await import('/js/taskTracker/taskTrackerWriteData.js');
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML =
+          createTaskTrackerTemplate().content;
+
+        const tracker =
+          editor.querySelector('.task-tracker-document');
+
+        writeTaskTrackerData(
+          tracker,
+          {
+            version: 1,
+            columns: [
+              {
+                id: 'todo',
+                title: 'Todo',
+                taskIds: [
+                  'task-1'
+                ]
+              },
+              {
+                id: 'done',
+                title: 'Done',
+                taskIds: []
+              }
+            ],
+            tasks: [
+              {
+                id: 'task-1',
+                title: 'Dragged task',
+                description: '',
+                checklist: []
+              }
+            ]
+          }
+        );
+
+        renderTaskTracker(
+          editor
+        );
+      }
+    );
+
+    await dragLocatorToLocator(
+      page,
+      page.locator('.task-card[data-task-id="task-1"] .task-drag-handle'),
+      page.locator('.task-column[data-column-id="done"] .task-list')
+    );
+
+    await expectTaskTrackerColumnOrder(
+      page,
+      [
+        {
+          id: 'todo',
+          taskIds: []
+        },
+        {
+          id: 'done',
+          taskIds: [
+            'task-1'
+          ]
+        }
+      ]
+    );
+
+    await dragLocatorToLocator(
+      page,
+      page.locator('.task-column[data-column-id="done"] .task-column-drag-handle'),
+      page.locator('.task-column[data-column-id="todo"]'),
+      {
+        targetXRatio: 0.18
+      }
+    );
+
+    await expectTaskTrackerColumnOrder(
+      page,
+      [
+        {
+          id: 'done',
+          taskIds: [
+            'task-1'
+          ]
+        },
+        {
+          id: 'todo',
+          taskIds: []
+        }
+      ]
+    );
+  }
+);
+
+
 async function dispatchInnerTaskTrackerClick(
   page,
   selector
@@ -691,6 +946,125 @@ async function dispatchInnerTaskTrackerClick(
       );
     },
     selector
+  );
+}
+
+
+async function dragLocatorToLocator(
+  page,
+  source,
+  target,
+  options = {}
+) {
+
+  const sourceBox =
+    await source.boundingBox();
+
+  const targetBox =
+    await target.boundingBox();
+
+  expect(
+    sourceBox
+  ).not.toBeNull();
+
+  expect(
+    targetBox
+  ).not.toBeNull();
+
+  const sourceX =
+    sourceBox.x + sourceBox.width / 2;
+
+  const sourceY =
+    sourceBox.y + sourceBox.height / 2;
+
+  const targetX =
+    targetBox.x + targetBox.width * (options.targetXRatio || 0.5);
+
+  const targetY =
+    targetBox.y + targetBox.height * (options.targetYRatio || 0.5);
+
+  await page.mouse.move(
+    sourceX,
+    sourceY
+  );
+
+  await page.mouse.down();
+
+  await page.mouse.move(
+    targetX,
+    targetY,
+    {
+      steps: 10
+    }
+  );
+
+  await page.mouse.up();
+}
+
+
+async function expectTaskTrackerColumnOrder(
+  page,
+  expected
+) {
+
+  const actual =
+    await page.evaluate(
+      async () => {
+
+        const {
+          readTaskTrackerData
+        } = await import('/js/taskTracker/taskTrackerReadData.js');
+
+        const tracker =
+          document.querySelector('.task-tracker-document');
+
+        return readTaskTrackerData(
+          tracker
+        ).columns.map(column => ({
+          id:
+            column.id,
+          taskIds:
+            column.taskIds
+        }));
+      }
+    );
+
+  expect(
+    actual
+  ).toEqual(
+    expected
+  );
+}
+
+
+async function expectTaskTrackerTitles(
+  page,
+  expected
+) {
+
+  const actual =
+    await page.evaluate(
+      async () => {
+
+        const {
+          readTaskTrackerData
+        } = await import('/js/taskTracker/taskTrackerReadData.js');
+
+        const tracker =
+          document.querySelector('.task-tracker-document');
+
+        return readTaskTrackerData(
+          tracker
+        ).tasks.map(task =>
+          task.title
+        );
+      }
+    );
+
+  expect(
+    actual
+  ).toEqual(
+    expected
   );
 }
 

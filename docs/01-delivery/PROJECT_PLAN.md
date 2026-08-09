@@ -160,7 +160,7 @@ Scope:
 - `0.0.1.8.18.7` - deterministic expansion of `NEXT_PRODUCT_MINI_BACKLOG.md`.
 - `0.0.1.8.18.8` - final correction gate, full verification, documentation sync, and closure only if all evidence passes.
 
-Status: active at `Foundation`; `0.0.1.8.18.1` is closed as the read-only inventory leaf, and `0.0.1.8.18.2` is closed as the A-C design-system correction leaf. Current inventory lives in [OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md](./OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md). Next planned leaf is `0.0.1.8.18.3`; it has not been started. Do not start `0.0.1.9.0` until this correction gate is closed.
+Status: active at `Foundation`; `0.0.1.8.18.1` is closed as the read-only inventory leaf, `0.0.1.8.18.2` is closed as the A-C design-system correction leaf, and `0.0.1.8.18.3` is closed as the Task Tracker structural icon-only cleanup leaf. Current inventory lives in [OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md](./OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md). Next planned leaf is `0.0.1.8.18.4`; it has not been started. Do not start `0.0.1.9.0` until this correction gate is closed.
 
 ### 0.0.1.9.0. Repository Architecture / Maintainability / AI-Slop Audit
 

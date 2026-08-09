@@ -48,36 +48,37 @@ export function getTaskTrackerBoardHTML(
       data-task-tracker-board-ui="0.0.1.8.14.1"
     >
       <div class="task-tracker-boardbar" data-runtime="true">
-        <div class="task-tracker-boardbar-title">
+        <div
+          class="task-tracker-boardbar-title"
+          aria-label="Доска задач"
+        >
           <span class="task-tracker-boardbar-icon">
             ${iconSvg('task-tracker', 'task-tracker-icon')}
           </span>
-          <span>Доска задач</span>
         </div>
         <div class="task-tracker-boardbar-tools">
           <div class="task-tracker-boardbar-stats" aria-label="Сводка доски задач">
-            <span class="task-tracker-stat" title="Колонки">
+            <span class="task-tracker-stat" title="Колонки" aria-label="Колонки: ${data.columns.length}">
               ${iconSvg('hash', 'task-tracker-stat-icon', { size: 'sm' })}
-              ${data.columns.length}
+              <span class="task-tracker-stat-value">${data.columns.length}</span>
             </span>
-            <span class="task-tracker-stat" title="Задачи">
+            <span class="task-tracker-stat" title="Задачи" aria-label="Задачи: ${totalTasks}">
               ${iconSvg('task-tracker', 'task-tracker-stat-icon', { size: 'sm' })}
-              ${totalTasks}
+              <span class="task-tracker-stat-value">${totalTasks}</span>
             </span>
-            <span class="task-tracker-stat task-tracker-stat-progress" title="Чеклист выполнен на ${progress}%">
+            <span class="task-tracker-stat task-tracker-stat-progress" title="Чеклист выполнен на ${progress}%" aria-label="Чеклист: ${completedChecklistItems} из ${checklistItems.length}">
               ${iconSvg('check', 'task-tracker-stat-icon', { size: 'sm' })}
-              ${completedChecklistItems}/${checklistItems.length}
+              <span class="task-tracker-stat-value">${completedChecklistItems}/${checklistItems.length}</span>
             </span>
           </div>
           <button
-            class="task-column-add"
+            class="task-column-add mow-icon-button"
             type="button"
             data-tooltip="Добавить колонку"
             aria-label="Добавить колонку"
             title="Добавить колонку"
           >
-            ${iconSvg('plus', 'task-tracker-action-icon')}
-            <span>Колонка</span>
+            ${iconSvg('plus', 'task-tracker-action-icon', { size: 'sm' })}
           </button>
         </div>
       </div>

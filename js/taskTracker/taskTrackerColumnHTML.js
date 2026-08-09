@@ -29,13 +29,15 @@ export function getColumnHTML(
     >
       <header class="task-column-header">
         <button
-          class="task-column-drag-handle"
+          class="task-column-drag-handle mow-icon-button"
+          data-size="sm"
+          data-variant="ghost"
           type="button"
           data-tooltip="Перетащить колонку"
           aria-label="Перетащить колонку"
           title="Перетащить колонку"
         >
-          ${iconSvg('grip', 'task-tracker-action-icon')}
+          ${iconSvg('grip', 'task-tracker-action-icon', { size: 'sm' })}
         </button>
         <input
           class="task-column-title"
@@ -45,24 +47,27 @@ export function getColumnHTML(
         >
         <span class="task-column-count" title="Задач в колонке">${tasks.length}</span>
         <button
-          class="task-add-btn"
+          class="task-add-btn mow-icon-button"
+          data-size="sm"
           type="button"
           data-runtime="true"
           data-tooltip="Добавить задачу"
           aria-label="Добавить задачу"
           title="Добавить задачу"
         >
-          ${iconSvg('plus', 'task-tracker-action-icon')}
+          ${iconSvg('plus', 'task-tracker-action-icon', { size: 'sm' })}
         </button>
         <button
-          class="task-column-delete"
+          class="task-column-delete mow-icon-button"
+          data-size="sm"
+          data-variant="danger"
           type="button"
           data-runtime="true"
           data-tooltip="Удалить колонку"
           aria-label="Удалить колонку"
           title="Удалить колонку"
         >
-          ${iconSvg('trash', 'task-tracker-action-icon')}
+          ${iconSvg('trash', 'task-tracker-action-icon', { size: 'sm' })}
         </button>
       </header>
       <div class="task-list">
@@ -84,10 +89,9 @@ function getColumnEmptyHTML() {
       class="task-column-empty"
       data-runtime="true"
       role="status"
-      aria-label="Empty column"
+      aria-label="Колонка пуста"
     >
       ${iconSvg('plus', 'task-column-empty-icon', { size: 'sm' })}
-      <span>Пусто</span>
     </div>
   `;
 }

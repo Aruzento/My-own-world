@@ -1312,6 +1312,67 @@ test(
 );
 
 test(
+  'visual-task-tracker-structural-icon-only-state',
+  async ({ page }, testInfo) => {
+
+    const baseline =
+      DESIGN_SYSTEM_FIXED_VIEWPORT_CASES.find(item =>
+        item.kind === 'task-empty'
+      );
+
+    await page.addInitScript(
+      () => {
+
+        localStorage.setItem(
+          'my-own-world:app-shell-sidebar-state',
+          'expanded'
+        );
+
+        localStorage.setItem(
+          'my-own-world:app-shell-sidebar-width',
+          '292'
+        );
+      }
+    );
+
+    await page.setViewportSize(
+      baseline.viewport
+    );
+
+    await page.goto(
+      '/'
+    );
+
+    await applyThemeScaleAppearance(
+      page,
+      baseline.appearance
+    );
+
+    await prepareDesignSystemFixedViewportSurface(
+      page,
+      baseline.kind
+    );
+
+    const metrics =
+      await getDesignSystemFixedViewportMetrics(
+        page,
+        baseline.kind
+      );
+
+    expectDesignSystemFixedViewportMetrics(
+      baseline.kind,
+      metrics
+    );
+
+    await attachLocatorScreenshot(
+      page.locator(baseline.locator),
+      testInfo,
+      baseline.attachment
+    );
+  }
+);
+
+test(
   'visual-owner-completion-captures-primary-secondary-evidence',
   async ({ page }, testInfo) => {
 

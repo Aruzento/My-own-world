@@ -30,13 +30,15 @@ export function getTaskHTML(
     <article class="task-card" data-task-id="${escapeHTML(task.id)}">
       <div class="task-card-head" data-runtime="true">
         <button
-          class="task-drag-handle"
+          class="task-drag-handle mow-icon-button"
           type="button"
+          data-size="sm"
+          data-variant="ghost"
           data-tooltip="Перетащить"
           aria-label="Перетащить задачу"
           title="Перетащить"
         >
-          ${iconSvg('grip', 'task-tracker-action-icon')}
+          ${iconSvg('grip', 'task-tracker-action-icon', { size: 'sm' })}
         </button>
         <input
           class="task-card-title"
@@ -46,13 +48,15 @@ export function getTaskHTML(
           aria-label="Название задачи"
         >
         <button
-          class="task-delete-btn"
+          class="task-delete-btn mow-icon-button"
           type="button"
+          data-size="sm"
+          data-variant="danger"
           data-tooltip="Удалить задачу"
           aria-label="Удалить задачу"
           title="Удалить задачу"
         >
-          ${iconSvg('trash', 'task-tracker-action-icon')}
+          ${iconSvg('trash', 'task-tracker-action-icon', { size: 'sm' })}
         </button>
       </div>
       <textarea
@@ -68,7 +72,14 @@ export function getTaskHTML(
       <div class="task-checklist">
         ${checklist.map(item => getChecklistItemHTML(item)).join('')}
       </div>
-      <button class="task-checklist-add" type="button" data-runtime="true">
+      <button
+        class="task-checklist-add mow-button"
+        type="button"
+        data-runtime="true"
+        data-tooltip="Добавить пункт чеклиста"
+        aria-label="Добавить пункт чеклиста"
+        title="Добавить пункт чеклиста"
+      >
         ${iconSvg('plus', 'task-tracker-action-icon', { size: 'sm' })}
         <span>Чек</span>
       </button>
@@ -123,9 +134,11 @@ function getChecklistItemHTML(
         aria-label="Пункт чеклиста"
       >
       <button
-        class="task-check-delete"
+        class="task-check-delete mow-icon-button"
         type="button"
         data-runtime="true"
+        data-size="sm"
+        data-variant="danger"
         data-tooltip="Удалить пункт"
         aria-label="Удалить пункт"
         title="Удалить пункт"

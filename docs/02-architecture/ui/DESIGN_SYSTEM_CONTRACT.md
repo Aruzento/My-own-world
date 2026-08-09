@@ -425,6 +425,8 @@ Owns: board toolbar, columns, task cards, checklists, labels, drag previews, emp
 
 Use: shared card/badge/checkbox primitives.
 
+`0.0.1.8.18.3` correction: Task Tracker icon-only actions must be rendered structurally as icon-only controls using the shared `.mow-icon-button` contract while keeping the existing task action selector classes for behavior. Do not render old text spans and hide them with CSS. Board stats are meaningful dynamic values and must remain visible/readable, not hidden with `font-size: 0`. Empty column state should stay visually quiet, but keep an accessible status name.
+
 ### Rules And Compendium
 
 Owns: reference entries, source badges, search results, import preview, local-copy state.
