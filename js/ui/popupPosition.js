@@ -9,7 +9,9 @@ export function positionPopupNearAnchor(
     offset,
     preferred = 'bottom',
     fallbackWidth = 280,
-    fallbackHeight = 180
+    fallbackHeight = 180,
+    avoid = null,
+    avoidGap = VIEWPORT_PADDING
   } = {}
 ) {
 
@@ -52,7 +54,11 @@ export function positionPopupNearAnchor(
     popup,
     left,
     top,
-    size
+    size,
+    {
+      avoid,
+      avoidGap
+    }
   );
 }
 
@@ -63,7 +69,9 @@ export function positionPopupAtPoint(
   y,
   {
     fallbackWidth = 280,
-    fallbackHeight = 180
+    fallbackHeight = 180,
+    avoid = null,
+    avoidGap = VIEWPORT_PADDING
   } = {}
 ) {
 
@@ -80,8 +88,94 @@ export function positionPopupAtPoint(
     popup,
     x,
     y,
-    size
+    size,
+    {
+      avoid,
+      avoidGap
+    }
   );
+}
+
+
+export function resolvePopupPosition({
+  left,
+  top,
+  width,
+  height,
+  viewportWidth,
+  viewportHeight,
+  padding = VIEWPORT_PADDING,
+  avoidRect = null,
+  gap = VIEWPORT_PADDING
+}) {
+
+  const size = {
+    width:
+      Number(width) || 0,
+    height:
+      Number(height) || 0
+  };
+
+  const viewport = {
+    width:
+      Number(viewportWidth) || 0,
+    height:
+      Number(viewportHeight) || 0
+  };
+
+  const base =
+    clampPopupPosition({
+      left,
+      top,
+      size,
+      viewport,
+      padding
+    });
+
+  const obstacle =
+    normalizeRect(
+      avoidRect
+    );
+
+  if (
+    !obstacle ||
+    !rectsOverlap(
+      toPositionRect(
+        base,
+        size
+      ),
+      obstacle
+    )
+  ) {
+
+    return base;
+  }
+
+  const candidates =
+    getAvoidanceCandidates({
+      base,
+      size,
+      obstacle,
+      gap
+    })
+      .map(candidate =>
+        clampPopupPosition({
+          ...candidate,
+          size,
+          viewport,
+          padding
+        })
+      );
+
+  return candidates.find(candidate =>
+    !rectsOverlap(
+      toPositionRect(
+        candidate,
+        size
+      ),
+      obstacle
+    )
+  ) || base;
 }
 
 
@@ -132,7 +226,11 @@ function applyPopupPosition(
   popup,
   left,
   top,
-  size
+  size,
+  {
+    avoid = null,
+    avoidGap = VIEWPORT_PADDING
+  } = {}
 ) {
 
   popup.style.maxWidth =
@@ -144,11 +242,254 @@ function applyPopupPosition(
   popup.style.overflow =
     'auto';
 
+  const position =
+    resolvePopupPosition({
+      left,
+      top,
+      width:
+        size.width,
+      height:
+        size.height,
+      viewportWidth:
+        window.innerWidth,
+      viewportHeight:
+        window.innerHeight,
+      padding:
+        VIEWPORT_PADDING,
+      avoidRect:
+        getAvoidRect(
+          avoid
+        ),
+      gap:
+        avoidGap
+    });
+
   popup.style.left =
-    `${clamp(left, VIEWPORT_PADDING, window.innerWidth - size.width - VIEWPORT_PADDING)}px`;
+    `${position.left}px`;
 
   popup.style.top =
-    `${clamp(top, VIEWPORT_PADDING, window.innerHeight - size.height - VIEWPORT_PADDING)}px`;
+    `${position.top}px`;
+}
+
+
+function getAvoidanceCandidates({
+  base,
+  size,
+  obstacle,
+  gap
+}) {
+
+  const leftOfObstacle = {
+    left:
+      obstacle.left - size.width - gap,
+    top:
+      base.top
+  };
+
+  const rightOfObstacle = {
+    left:
+      obstacle.right + gap,
+    top:
+      base.top
+  };
+
+  const aboveObstacle = {
+    left:
+      base.left,
+    top:
+      obstacle.top - size.height - gap
+  };
+
+  const belowObstacle = {
+    left:
+      base.left,
+    top:
+      obstacle.bottom + gap
+  };
+
+  const horizontal =
+    base.left < obstacle.left
+      ? [
+        leftOfObstacle,
+        rightOfObstacle
+      ]
+      : [
+        rightOfObstacle,
+        leftOfObstacle
+      ];
+
+  return [
+    ...horizontal,
+    aboveObstacle,
+    belowObstacle
+  ];
+}
+
+
+function clampPopupPosition({
+  left,
+  top,
+  size,
+  viewport,
+  padding
+}) {
+
+  return {
+    left:
+      clamp(
+        Number(left) || 0,
+        padding,
+        viewport.width - size.width - padding
+      ),
+    top:
+      clamp(
+        Number(top) || 0,
+        padding,
+        viewport.height - size.height - padding
+      )
+  };
+}
+
+
+function getAvoidRect(
+  avoid
+) {
+
+  const target =
+    typeof avoid === 'function'
+      ? avoid()
+      : avoid;
+
+  if (!target) return null;
+
+  if (
+    typeof target.getBoundingClientRect === 'function'
+  ) {
+
+    return getVisibleElementRect(
+      target
+    );
+  }
+
+  return normalizeRect(
+    target
+  );
+}
+
+
+function getVisibleElementRect(
+  element
+) {
+
+  if (!element) return null;
+
+  const style =
+    getComputedStyle(
+      element
+    );
+
+  if (
+    style.display === 'none' ||
+    style.visibility === 'hidden' ||
+    element.hasAttribute('hidden') ||
+    element.classList.contains('hidden')
+  ) {
+
+    return null;
+  }
+
+  return normalizeRect(
+    element.getBoundingClientRect()
+  );
+}
+
+
+function normalizeRect(
+  rect
+) {
+
+  if (!rect) return null;
+
+  const left =
+    Number(rect.left);
+
+  const top =
+    Number(rect.top);
+
+  const width =
+    Number.isFinite(Number(rect.width))
+      ? Number(rect.width)
+      : Number(rect.right) - left;
+
+  const height =
+    Number.isFinite(Number(rect.height))
+      ? Number(rect.height)
+      : Number(rect.bottom) - top;
+
+  const right =
+    Number.isFinite(Number(rect.right))
+      ? Number(rect.right)
+      : left + width;
+
+  const bottom =
+    Number.isFinite(Number(rect.bottom))
+      ? Number(rect.bottom)
+      : top + height;
+
+  if (
+    !Number.isFinite(left) ||
+    !Number.isFinite(top) ||
+    !Number.isFinite(right) ||
+    !Number.isFinite(bottom) ||
+    width <= 0 ||
+    height <= 0
+  ) {
+
+    return null;
+  }
+
+  return {
+    left,
+    top,
+    right,
+    bottom,
+    width,
+    height
+  };
+}
+
+
+function toPositionRect(
+  position,
+  size
+) {
+
+  return {
+    left:
+      position.left,
+    top:
+      position.top,
+    right:
+      position.left + size.width,
+    bottom:
+      position.top + size.height,
+    width:
+      size.width,
+    height:
+      size.height
+  };
+}
+
+
+function rectsOverlap(
+  first,
+  second
+) {
+
+  return first.left < second.right &&
+    first.right > second.left &&
+    first.top < second.bottom &&
+    first.bottom > second.top;
 }
 
 

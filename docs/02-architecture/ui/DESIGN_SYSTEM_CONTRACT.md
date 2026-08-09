@@ -359,6 +359,8 @@ Overlay rules:
 7. Do not create a new popup controller when `popupManager` and future overlay primitives can cover the case.
 8. Overlay animation must use state-driven classes/attributes, not feature-specific one-off keyframes.
 
+`0.0.1.8.18.5` correction: generic popup geometry belongs to `js/ui/popupPosition.js`. The shared positioning layer may clamp a popup to the viewport and, for an existing use case, avoid one visible element or rectangle supplied by the feature owner. Feature controllers must not duplicate generic rectangle overlap, visible-element geometry or clamp helpers just to position a popup. Campaign Map may pass its current Inspector as the avoid target, but it does not own the collision math.
+
 ## System Ownership Boundaries
 
 ### AppShell
@@ -392,6 +394,8 @@ Use: structured metadata attached to cards; avoid making the grid louder than co
 Owns: map toolbar, mode buttons, action groups, layer list, object property Inspector, fog controls, presentation status.
 
 Use: mode/action split, compact controls, no heavy stage effects, no business-logic changes during visual migration.
+
+`0.0.1.8.18.5` correction: Campaign Map popup controllers own only map-specific context, such as "the active object Inspector should be avoided." The shared popup positioning layer owns viewport fit, overlap detection and alternate placement for that avoid target. Map popup styling and map workflows must stay unchanged when this ownership boundary is maintained.
 
 ### Knowledge Graph
 

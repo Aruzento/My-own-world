@@ -6,6 +6,45 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.5 Shared Popup Positioning Ownership
+
+### What Changed
+
+- Closed the popup positioning ownership leaf without redesigning popups or adding Campaign Map product features.
+- Moved generic obstacle avoidance into `js/ui/popupPosition.js`: the shared layer now owns overlap checks, viewport clamp and alternative placement when a popup needs to avoid a visible obstacle.
+- Kept Campaign Map product-specific ownership narrow: `campaignMapPopupController` now only passes the current `.campaign-map-properties-panel` as the avoid target for map popups.
+- Removed the Campaign Map-local geometry toolkit that duplicated shared popup responsibility: feature-local overlap, visibility and clamp helpers are gone from the map popup controller.
+- Added focused regression coverage for ordinary anchored popups, viewport clamp, Inspector avoidance at `1280x720`, Escape, outside click and repeated-trigger close behavior.
+
+### Readiness
+
+`Foundation` for finding G. Popup positioning ownership is centralized in the shared popup layer, while Campaign Map only declares the Inspector obstacle. `0.0.1.8.18.6` was not started.
+
+### Verification
+
+- Passed: `node --check js\ui\popupPosition.js`.
+- Passed: `node --check js\editor\campaignMapPopupController.js`.
+- Passed: `node --check tests\popupPosition.test.mjs`.
+- Passed: `node --check tests\browser\popup-lifecycle.spec.mjs`.
+- Passed: `node --check tests\browser\campaign-map-ui.spec.mjs`.
+- Passed: `node --test tests\popupPosition.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs -g "campaign-map-popups-use-migrated-shared-frame|campaign-map-popup-avoids-selection-inspector-through-shared-positioning"`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs -g visual-owner-completion-captures-primary-secondary-evidence`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `node tools\docs_index.mjs` with 83 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 573 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `python tools\generate_manual_docx.py` with 1303 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: `npm run verify` with 290 node tests, large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Continue with `0.0.1.8.18.6` only after this leaf is committed.
+- Keep the next visual critic work read-only unless the owner explicitly approves implementation changes in that leaf.
+
 ## 2026-08-09: 0.0.1.8.18.4 Tree Accessibility Correction
 
 ### What Changed

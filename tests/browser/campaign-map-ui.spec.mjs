@@ -1583,6 +1583,406 @@ test(
 
 
 test(
+  'campaign-map-popup-avoids-selection-inspector-through-shared-positioning',
+  async ({ page }) => {
+
+    await page.setViewportSize({
+      width: 1280,
+      height: 720
+    });
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const waitFrames =
+            () => new Promise(resolve =>
+              requestAnimationFrame(() =>
+                requestAnimationFrame(resolve)
+              )
+            );
+
+          const isVisible =
+            element => {
+
+              if (!element) return false;
+
+              const style =
+                getComputedStyle(
+                  element
+                );
+
+              return style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                !element.classList.contains('hidden') &&
+                element.getBoundingClientRect().width > 0 &&
+                element.getBoundingClientRect().height > 0;
+            };
+
+          const rectsOverlap =
+            (
+              first,
+              second
+            ) =>
+              first.left < second.right &&
+              first.right > second.left &&
+              first.top < second.bottom &&
+              first.bottom > second.top;
+
+          const isInsideViewport =
+            rect =>
+              rect.left >= 0 &&
+              rect.top >= 0 &&
+              rect.right <= window.innerWidth &&
+              rect.bottom <= window.innerHeight;
+
+          const snapshot =
+            () => {
+
+              const popup =
+                document.getElementById(
+                  'campaignMapPopup'
+                );
+
+              const inspector =
+                document.querySelector(
+                  '.campaign-map-properties-panel'
+                );
+
+              const popupRect =
+                popup?.getBoundingClientRect();
+
+              const inspectorRect =
+                inspector?.getBoundingClientRect();
+
+              return {
+                popupVisible:
+                  isVisible(
+                    popup
+                  ),
+                inspectorVisible:
+                  isVisible(
+                    inspector
+                  ),
+                popupInsideViewport:
+                  popupRect
+                    ? isInsideViewport(
+                      popupRect
+                    )
+                    : false,
+                inspectorOverlap:
+                  popupRect && inspectorRect
+                    ? rectsOverlap(
+                      popupRect,
+                      inspectorRect
+                    )
+                    : true,
+                popupRight:
+                  Math.round(
+                    popupRect?.right || 0
+                  ),
+                inspectorLeft:
+                  Math.round(
+                    inspectorRect?.left || 0
+                  ),
+                overlayState:
+                  popup?.dataset.overlayState || '',
+                popupOpen:
+                  popup?.dataset.popupOpen || '',
+                popupKey:
+                  popup?.dataset.popupKey || '',
+                viewport:
+                  {
+                    width:
+                      window.innerWidth,
+                    height:
+                      window.innerHeight
+                  }
+              };
+            };
+
+          const {
+            createCampaignMapTemplate
+          } = await import('/js/templates/campaignMap.js');
+
+          const {
+            renderCampaignMap
+          } = await import('/js/editor/campaignMap.js');
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapTokenElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            selectMapToken
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          const {
+            openGridPopup
+          } = await import('/js/editor/campaignMapToolbarController.js');
+
+          const {
+            toggleMapPopupForAnchor
+          } = await import('/js/editor/campaignMapPopupController.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            createCampaignMapTemplate().content;
+
+          await renderCampaignMap(
+            editor
+          );
+
+          const map =
+            editor.querySelector('.campaign-map-document');
+
+          const stage =
+            map.querySelector('.campaign-map-stage');
+
+          const viewport =
+            map.querySelector('.campaign-map-viewport');
+
+          stage.style.height =
+            '560px';
+
+          stage.dataset.grid =
+            'true';
+
+          viewport.style.width =
+            '1900px';
+
+          viewport.style.height =
+            '1100px';
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const tokenRecord =
+            store.addToken({
+              tokenId:
+                'shared-positioning-token',
+              type:
+                'creature',
+              name:
+                'Sentinel',
+              x:
+                16,
+              y:
+                18,
+              hp:
+                8,
+              hpMax:
+                12,
+              armorClass:
+                14
+            });
+
+          const token =
+            createMapTokenElement(
+              tokenRecord
+            );
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              token
+            );
+
+          await renderMapTokenElement(
+            token
+          );
+
+          store.commitToDOM();
+
+          selectMapToken(
+            token
+          );
+
+          const anchor =
+            map.querySelector('.campaign-grid-btn');
+
+          const deps =
+            {
+              async saveAndSync() {}
+            };
+
+          openGridPopup(
+            map,
+            anchor,
+            deps
+          );
+
+          await waitFrames();
+
+          const open =
+            snapshot();
+
+          document.dispatchEvent(
+            new KeyboardEvent(
+              'keydown',
+              {
+                key:
+                  'Escape',
+                bubbles:
+                  true,
+                cancelable:
+                  true
+              }
+            )
+          );
+
+          await waitFrames();
+
+          const afterEscape =
+            snapshot();
+
+          openGridPopup(
+            map,
+            anchor,
+            deps
+          );
+
+          await waitFrames();
+
+          document.body.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles:
+                  true,
+                clientX:
+                  24,
+                clientY:
+                  24
+              }
+            )
+          );
+
+          await waitFrames();
+
+          const afterOutside =
+            snapshot();
+
+          openGridPopup(
+            map,
+            anchor,
+            deps
+          );
+
+          await waitFrames();
+
+          const repeatedTriggerClosed =
+            toggleMapPopupForAnchor(
+              anchor,
+              'grid'
+            );
+
+          await waitFrames();
+
+          const afterRepeatedTrigger =
+            snapshot();
+
+          return {
+            open,
+            afterEscape,
+            afterOutside,
+            repeatedTriggerClosed,
+            afterRepeatedTrigger
+          };
+        }
+      );
+
+    expect(
+      result.open
+    ).toMatchObject({
+      popupVisible:
+        true,
+      inspectorVisible:
+        true,
+      popupInsideViewport:
+        true,
+      inspectorOverlap:
+        false,
+      overlayState:
+        'open',
+      popupOpen:
+        'true',
+      popupKey:
+        'grid',
+      viewport:
+        {
+          width:
+            1280,
+          height:
+            720
+        }
+    });
+
+    expect(
+      result.open.popupRight
+    ).toBeLessThanOrEqual(
+      result.open.inspectorLeft
+    );
+
+    expect(
+      result.afterEscape
+    ).toMatchObject({
+      popupVisible:
+        false,
+      overlayState:
+        'closed',
+      popupOpen:
+        'false'
+    });
+
+    expect(
+      result.afterOutside
+    ).toMatchObject({
+      popupVisible:
+        false,
+      overlayState:
+        'closed',
+      popupOpen:
+        'false'
+    });
+
+    expect(
+      result.repeatedTriggerClosed
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.afterRepeatedTrigger
+    ).toMatchObject({
+      popupVisible:
+        false,
+      overlayState:
+        'closed',
+      popupOpen:
+        'false'
+    });
+  }
+);
+
+
+test(
   'campaign-map-drawing-tools-create-fill-and-erase-map-shapes',
   async ({ page }) => {
 

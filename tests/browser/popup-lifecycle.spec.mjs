@@ -226,6 +226,258 @@ test(
 
 
 test(
+  'popup-positioning-uses-shared-avoid-target-for-anchored-popups',
+  async ({ page }) => {
+
+    await page.setViewportSize({
+      width: 720,
+      height: 480
+    });
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            registerPopup
+          } = await import('/js/ui/popupManager.js');
+
+          const createAnchor =
+            (
+              id,
+              styles
+            ) => {
+
+              const anchor =
+                document.createElement('button');
+
+              anchor.id =
+                id;
+
+              anchor.textContent =
+                id;
+
+              Object.assign(
+                anchor.style,
+                {
+                  position: 'fixed',
+                  width: '28px',
+                  height: '28px',
+                  ...styles
+                }
+              );
+
+              document.body.appendChild(
+                anchor
+              );
+
+              return anchor;
+            };
+
+          const createPopup =
+            (
+              id,
+              width,
+              height
+            ) => {
+
+              const popup =
+                document.createElement('div');
+
+              popup.id =
+                id;
+
+              popup.className =
+                'ui-panel hidden';
+
+              Object.assign(
+                popup.style,
+                {
+                  position: 'fixed',
+                  width: `${width}px`,
+                  height: `${height}px`
+                }
+              );
+
+              document.body.appendChild(
+                popup
+              );
+
+              return popup;
+            };
+
+          const isInsideViewport =
+            rect =>
+              rect.left >= 0 &&
+              rect.top >= 0 &&
+              rect.right <= window.innerWidth &&
+              rect.bottom <= window.innerHeight;
+
+          const rectsOverlap =
+            (
+              first,
+              second
+            ) =>
+              first.left < second.right &&
+              first.right > second.left &&
+              first.top < second.bottom &&
+              first.bottom > second.top;
+
+          const ordinaryAnchor =
+            createAnchor(
+              'ordinary-anchor',
+              {
+                right: '4px',
+                bottom: '4px'
+              }
+            );
+
+          const ordinaryPopup =
+            createPopup(
+              'ordinary-popup',
+              340,
+              260
+            );
+
+          const ordinaryController =
+            registerPopup({
+              popup:
+                ordinaryPopup,
+              close:
+                () => ordinaryPopup.classList.add('hidden'),
+              anchors:
+                [ordinaryAnchor],
+              key:
+                'ordinary-positioning-popup'
+            });
+
+          ordinaryController.openNearAnchor(
+            ordinaryAnchor,
+            {
+              fallbackWidth:
+                340,
+              fallbackHeight:
+                260
+            }
+          );
+
+          const ordinaryRect =
+            ordinaryPopup.getBoundingClientRect();
+
+          ordinaryController.close();
+
+          const obstacle =
+            document.createElement('aside');
+
+          obstacle.id =
+            'popup-position-obstacle';
+
+          Object.assign(
+            obstacle.style,
+            {
+              position: 'fixed',
+              right: '12px',
+              top: '48px',
+              width: '220px',
+              height: '360px'
+            }
+          );
+
+          document.body.appendChild(
+            obstacle
+          );
+
+          const avoidedAnchor =
+            createAnchor(
+              'avoided-anchor',
+              {
+                left: '560px',
+                top: '108px'
+              }
+            );
+
+          const avoidedPopup =
+            createPopup(
+              'avoided-popup',
+              260,
+              180
+            );
+
+          const avoidedController =
+            registerPopup({
+              popup:
+                avoidedPopup,
+              close:
+                () => avoidedPopup.classList.add('hidden'),
+              anchors:
+                [avoidedAnchor],
+              key:
+                'avoided-positioning-popup'
+            });
+
+          avoidedController.openNearAnchor(
+            avoidedAnchor,
+            {
+              fallbackWidth:
+                260,
+              fallbackHeight:
+                180,
+              avoid:
+                obstacle
+            }
+          );
+
+          const avoidedRect =
+            avoidedPopup.getBoundingClientRect();
+
+          const obstacleRect =
+            obstacle.getBoundingClientRect();
+
+          return {
+            ordinaryInside:
+              isInsideViewport(
+                ordinaryRect
+              ),
+            avoidedInside:
+              isInsideViewport(
+                avoidedRect
+              ),
+            avoidedOverlap:
+              rectsOverlap(
+                avoidedRect,
+                obstacleRect
+              ),
+            avoidedMovedLeft:
+              avoidedRect.right <= obstacleRect.left - 1,
+            avoidedState:
+              avoidedPopup.dataset.overlayState
+          };
+        }
+      );
+
+    expect(
+      result
+    ).toEqual({
+      ordinaryInside:
+        true,
+      avoidedInside:
+        true,
+      avoidedOverlap:
+        false,
+      avoidedMovedLeft:
+        true,
+      avoidedState:
+        'open'
+    });
+  }
+);
+
+
+test(
   'popup-manager-traps-modal-focus-and-returns-focus-to-trigger',
   async ({ page }) => {
 

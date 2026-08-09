@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 572.
+Всего файлов в аудите: 573.
 
 ## Два Независимых Прохода
 
@@ -57,7 +57,7 @@ owner_zone: "delivery"
 | tools | 20 |
 | tree | 11 |
 | ui | 28 |
-| unit tests | 59 |
+| unit tests | 60 |
 | world packages | 3 |
 
 ## Кандидаты На Уборку
@@ -72,10 +72,10 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5837327 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5841489 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 657490 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 168343 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 659617 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 169149 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
 
@@ -682,6 +682,7 @@ owner_zone: "delivery"
 | `tests/pageRecord.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/pageRepository.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/pageTitleValidation.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/popupPosition.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/propertiesCalculationEngine.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/propertyBlocks.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/rulesWorkspace.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
