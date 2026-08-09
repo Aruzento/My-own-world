@@ -6,6 +6,46 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-09: 0.0.1.8.18.7 Expand NEXT_PRODUCT_MINI_BACKLOG
+
+### What Changed
+
+- Expanded `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` from a short idea table into a plan-only staging backlog for `NF-001` through `NF-017`.
+- Kept all NF items and both rejected ideas exactly in scope: no `Ctrl+drag` creature duplication and no user-configurable health-stage system returned as recommendations.
+- Added a plain dependency overview with `NEXT`, `LATER`, `SPIKE`, `NOT NOW` and a text dependency sketch because repository docs do not currently use Mermaid diagrams.
+- Researched and documented current owners for future work: `PageCommandService`, `PageRecord`, `writeQueue`, `CharacterModel`, `Properties`, `CampaignMapModel/Store/serializer`, initiative, popup/overlay, Rule Workspace, Rule Packages, World Package, storage/Tauri and presentation mode.
+- Marked unsupported architecture assumptions as `TBD` instead of inventing schemas, especially for combat session storage, event log storage, saved AoE/templates, walls/light/vision data, local-hosted collaboration, declarative extension capabilities and 3D dice preferences.
+- Updated `PROJECT_PLAN.md`, `PRODUCT_DASHBOARD.md` and `DESIGN_SYSTEM_CONTRACT.md` to show that `0.0.1.8.18.7` is closed as a separate owner-approved planning leaf, while `0.0.1.8.18.6` remains `BLOCKED FOR OWNER REVIEW`.
+
+### Reviewer Result
+
+- A separate read-only architecture reviewer failed the first draft because four entries still made a future implementation agent guess ownership or workflow.
+- Fixed confirmed doc-only findings:
+  - `NF-004` now lists `NF-001` as required before persistent combat-session writes.
+  - `NF-008` now stays character-sheet/Properties-first until `NF-005` exists for combat-surface rest actions.
+  - `NF-013` now starts from a concrete Tools `Компендиум` manager entry path instead of an unresolved UI choice.
+  - `NF-015` is explicitly read-only for the first usable mobile companion slice; player actions are deferred.
+
+### Readiness
+
+`Foundation`. The future product backlog is now detailed enough for one NF slice to be promoted into `PROJECT_PLAN.md` without inventing parallel subsystems. This does not close the visual owner gate and does not start `0.0.1.8.18.8`.
+
+### Verification
+
+- Passed: `node tools\docs_index.mjs` with 84 markdown files and 0 invalid metadata.
+- Passed: `node tools\audit_project_files.mjs` with 580 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: `python tools\generate_manual_docx.py` with 1304 files in the generated manual.
+- Passed: `python -m zipfile -t docs\MY_OWN_WORLD_FULL_MANUAL.docx`.
+- Passed: `npm run verify` with 290 node tests, large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+- Production feature code was not changed.
+
+### Next
+
+- Stop after the documentation/planning commit.
+- Do not start `0.0.1.8.18.8`.
+
 ## 2026-08-09: 0.0.1.8.18.6 Independent Visual Critic & Owner Evidence Gate
 
 ### What Changed

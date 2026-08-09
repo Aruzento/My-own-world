@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-08-07
+Updated: 2026-08-09
 
 ## Current Product
 
@@ -107,10 +107,11 @@ Recently closed:
 - `0.0.1.8.15.5` Phase 9 closure sync: plan, dashboard, work log, architecture docs, release notes, tester instructions, project file audit and generated manual are synchronized after the polish/performance/visual/dead-CSS pass.
 - `0.0.1.8.16` design-system visual matrix: fixed viewport screenshots now cover empty shell/tree/error state, card editor Properties, campaign map popup plus Inspector, Knowledge Graph context overlay and empty task tracker board across dark/contrast themes and compact/large scale.
 - `0.0.1.8.17` owner visual completion gate: the accepted design direction is now closed for this pass with quieter user-facing surfaces, dev-only component catalogue access, better tree semantics, map popups that avoid the Inspector, 1440x900/1280x720 owner evidence screenshots and a separate future mini-backlog.
+- `0.0.1.8.18.7` plan-only future backlog expansion: `NEXT_PRODUCT_MINI_BACKLOG.md` now breaks NF-001...NF-017 into owner/reuse/dependency/persistence/UI/test notes, while the visual owner gate from `0.0.1.8.18.6` remains blocked for review.
 
 Next active block:
 
-- Post-design owner handoff pause: do not start non-design work yet. The owner asked to be warned when design work is complete and has a task before the project moves beyond the redesign track. Future product ideas live in `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`, and Knowledge Graph concept work still gates on `BI-026`.
+- Owner design gate pause: do not start `0.0.1.8.18.8`, `0.0.1.9.0` or NF implementation until the owner decides how to handle the blocked visual evidence gate. Future product ideas live in `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`, and Knowledge Graph concept work still gates on `BI-026`.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
