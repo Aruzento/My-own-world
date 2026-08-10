@@ -1,18 +1,26 @@
 ---
-summary: "UI audit and phased modernization plan for MyOwnWorld design system rollout."
+summary: "Archived UI modernization implementation plan superseded by the current master project plan."
 read_when:
-  - "Before planning visual refresh work"
-  - "Before changing popup, buttons, app shell, cards, campaign map UI, or task tracker UI"
-owner_zone: "architecture"
+  - "When historical UI migration planning context is needed"
+  - "Do not use as the active UI implementation roadmap"
+owner_zone: "archive"
 ---
 
 # UI Audit And Modernization Plan
 
+Archived: 2026-08-10.
+
+Original path: `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md`.
+
+Superseded by: `docs/01-delivery/PROJECT_PLAN.md`.
+
+Historical only: do not use this file as the active implementation queue. Current UI rules live in `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`, `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md`, `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`, and `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md`.
+
 Дата обновления: 27.07.2026
 
-Подробный инвентаризационный снимок для версии 1: [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md).
+Подробный инвентаризационный снимок для версии 1: [UI_CSS_INVENTORY_REPORT.md](../02-architecture/ui/UI_CSS_INVENTORY_REPORT.md).
 
-Референсы конкурентов и visual craft для систем MyOwnWorld: [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md).
+Референсы конкурентов и visual craft для систем MyOwnWorld: [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](../02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md).
 
 ## Цель
 
@@ -53,7 +61,7 @@ owner_zone: "architecture"
 
 ### 2026-07-21 Migration Phase 0 Baselines
 
-- Confirmed: `0.0.1.8.6` added [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) as the UI/CSS/icon/popup/screenshot baseline manifest for future migration phases.
+- Confirmed: `0.0.1.8.6` added [UI_MIGRATION_BASELINES.md](../02-architecture/ui/UI_MIGRATION_BASELINES.md) as the UI/CSS/icon/popup/screenshot baseline manifest for future migration phases.
 - Confirmed: `tests/browser/visual-regression.spec.mjs` now attaches baseline screenshots for AppShell, empty workspace start, Settings maintenance, sidebar/tree, card editor, Properties, Properties popup, campaign map, Knowledge Graph, task tracker, dev/test component catalogue popover and the `0.0.1.8.17` owner evidence matrix.
 - Confirmed: `tests/uiMigrationBaselines.test.mjs` keeps the baseline manifest synchronized with the visual smoke attachment names and required system inventory rows.
 - Confirmed: this phase makes no broad visual migration; it is the controlled comparison layer for `0.0.1.8.7+`.

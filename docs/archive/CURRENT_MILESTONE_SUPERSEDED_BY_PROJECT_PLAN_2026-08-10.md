@@ -1,11 +1,19 @@
 ---
-summary: "Current milestone and definition of done."
+summary: "Archived current milestone document superseded by the current master project plan."
 read_when:
-  - "Before product planning"
-  - "When changing product direction"
-owner_zone: "product"
+  - "When historical milestone context is needed"
+  - "Do not use as the active implementation roadmap"
+owner_zone: "archive"
 ---
 # Current Milestone
+
+Archived: 2026-08-10.
+
+Original path: `docs/00-product/CURRENT_MILESTONE.md`.
+
+Superseded by: `docs/01-delivery/PROJECT_PLAN.md`.
+
+Historical only: do not use this file as the active implementation queue.
 
 ## 0.0.0.2 Project Structure & Release Handoff Reorganization
 

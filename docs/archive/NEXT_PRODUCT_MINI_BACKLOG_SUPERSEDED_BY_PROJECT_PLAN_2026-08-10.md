@@ -1,13 +1,20 @@
 ---
-summary: "Plan-only staging backlog for next product feature slices after the design correction gate."
+summary: "Archived plan-only staging backlog superseded by the current master project plan."
 read_when:
-  - "Before promoting NF-001...NF-017 into PROJECT_PLAN.md"
-  - "Before starting non-design feature work"
-  - "When deciding whether a future idea belongs in the active plan"
-owner_zone: "delivery"
+  - "When historical context for NF-001...NF-017 planning is needed"
+  - "Do not use as the active implementation roadmap"
+owner_zone: "archive"
 ---
 
 # Next Product Mini Backlog
+
+Archived: 2026-08-10.
+
+Original path: `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`.
+
+Superseded by: `docs/01-delivery/PROJECT_PLAN.md`.
+
+Historical only: do not use this file as the active implementation queue.
 
 Updated: 2026-08-09
 

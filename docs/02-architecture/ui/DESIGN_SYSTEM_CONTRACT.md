@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 # Design System Contract
 
-Updated: 2026-08-02
+Updated: 2026-08-10
 
 Plan ref: `0.0.1.8.2`
 
@@ -32,7 +32,7 @@ This contract task did not migrate CSS or runtime UI by itself. The first runtim
 - все кнопки, поля, popup, меню, панели, toolbar и иконки должны постепенно прийти к общим правилам;
 - карта и граф не получают тяжёлые blur/анимации, потому что там важнее скорость;
 - уникальность дизайна должна идти от тёплого тёмного рабочего стола, аккуратных состояний, локального набора иконок, motion-токенов и понятной структуры, а не от случайных градиентов или декоративного fantasy-шума;
-- current design status: `0.0.1.8.18.8` has run as a verification gate and the automated checks are green, including real large-workspace desktop smoke. The correction gate still cannot close because `0.0.1.8.18.6` remains `BLOCKED FOR OWNER REVIEW`: the independent critic report is not PASS and no explicit owner waiver exists. [NEXT_PRODUCT_MINI_BACKLOG.md](../../01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md) is a staging backlog for future NF work, not permission to start `0.0.1.9.0`.
+- current design status: `0.0.1.8.18` is closed by explicit owner waiver on 2026-08-10. The independent Visual Critic FAIL from `0.0.1.8.18.6` remains historical evidence and future polish debt, but it no longer blocks `0.0.1.9.0`. The active roadmap is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md).
 
 ## Source Documents
 
@@ -42,7 +42,7 @@ Read these before changing UI:
 - [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md) - current UI/CSS inventory, duplicate control families, popup/icon/color risks and migration map.
 - [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) - Phase 0 baseline manifest for UI, CSS, icon, popup and screenshot migration evidence.
 - [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) - reference-backed UX/UI patterns for each MyOwnWorld system.
-- [UI_AUDIT_AND_MODERNIZATION_PLAN.md](./UI_AUDIT_AND_MODERNIZATION_PLAN.md) - phased UI modernization plan.
+- [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md) - active implementation roadmap and final polish phase.
 - `styles/design-tokens.css` - current token foundation and compatibility aliases.
 - `styles/ui.css` - current primitive seeds.
 - `styles/brand-system.css` - current compatibility skin; this file should shrink over time.
@@ -397,7 +397,7 @@ Use: mode/action split, compact controls, no heavy stage effects, no business-lo
 
 `0.0.1.8.18.5` correction: Campaign Map popup controllers own only map-specific context, such as "the active object Inspector should be avoided." The shared popup positioning layer owns viewport fit, overlap detection and alternate placement for that avoid target. Map popup styling and map workflows must stay unchanged when this ownership boundary is maintained.
 
-`0.0.1.8.18.6` gate: visual owner evidence must be reviewed by an independent read-only critic sub-agent using the six required surfaces, `1440x900` and `1280x720` viewports, and the owner scorecard. If any surface still fails after two correction rounds, the correct status is `BLOCKED FOR OWNER REVIEW`; do not continue polishing indefinitely and do not start `0.0.1.8.18.7`. Knowledge Graph concept concerns from this gate stay `DEFERRED TO BI-026`.
+`0.0.1.8.18.6` gate: visual owner evidence was reviewed by an independent read-only critic sub-agent using the six required surfaces, `1440x900` and `1280x720` viewports, and the owner scorecard. All six final surfaces failed, so the gate correctly stopped for owner review instead of continuing indefinite polishing. On 2026-08-10 the owner accepted the current design for this stage; unresolved critic findings remain future polish debt. Knowledge Graph concept concerns from this gate stay `DEFERRED TO BI-026`.
 
 ### Knowledge Graph
 
@@ -691,9 +691,9 @@ The closing 2026-07-21 `0.0.1.8.9` follow-up completed the overlay migration ste
 - `0.0.1.8.15.5` closes Phase 9 at `Foundation`: polish, performance, theme-scale visual baselines, dead CSS cleanup and documentation/release sync are in place.
 - `0.0.1.8.16` closes the design-system visual regression pass at `Foundation`: fixed viewport screenshot attachments now cover empty shell/tree/error state, editor Properties, campaign map popup plus Inspector, Knowledge Graph context overlay and empty task tracker board across dark/contrast themes and compact/large scale.
 - `0.0.1.8.17` closes the owner visual completion gate at `Usable`: the component catalogue is dev/test-only, tree rows have stronger keyboard/ARIA semantics, editor controls and empty Task Tracker are quieter, Knowledge Graph first-layer noise is reduced without adding new graph features, campaign map popups avoid the right-side Inspector, and primary/secondary owner evidence screenshots cover the accepted design direction.
-- `0.0.1.8.18.6` does not close the correction gate: the independent visual critic evidence exists, but all six final surfaces failed the scorecard after two allowed correction rounds. Treat this as an owner decision point, not as permission to continue broad visual redesign.
-- `0.0.1.8.18.7` closes a plan-only backlog expansion leaf: `NEXT_PRODUCT_MINI_BACKLOG.md` now records NF-001...NF-017 with existing owners, reuse boundaries, non-duplication rules, dependencies, persistence TBDs, UI surfaces and regression targets. No NF product functionality was implemented, and this does not start `0.0.1.8.18.8`.
-- `0.0.1.8.18.8` has run as the final verification gate and remains `BLOCKED`: focused leaf tests, full browser smoke, visual regression, UI polish audit, `npm run verify`, real large-workspace desktop smoke and `npm run desktop:gate` are green, but the Visual Critic result from `0.0.1.8.18.6` is still not PASS or waived. `0.0.1.9.0` must not start from this state.
+- `0.0.1.8.18.6` produced real independent visual critic evidence. The FAIL result was not erased; it is now future polish debt by owner waiver.
+- `0.0.1.8.18.7` closed a plan-only backlog expansion leaf. That source material is now absorbed into [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md), and the former mini backlog is archived for history.
+- `0.0.1.8.18.8` ran the final verification gate with focused leaf tests, full browser smoke, visual regression, UI polish audit, `npm run verify`, real large-workspace desktop smoke and `npm run desktop:gate` green. `0.0.1.8.18` is closed by the 2026-08-10 owner waiver, and `0.0.1.9.0` is unlocked as the next audit-only phase.
 - `0.0.1.8.18.2` closes the first owner correction leaf for findings A-C: Add Block uses the shared `.mow-button`, generic Campaign Map popups use `.mow-popover` plus `--mow-surface-overlay-opaque`, and tag/alias metadata controls use shared `.mow-input[data-size="sm"]` / `.mow-icon-button[data-size="sm"]` instead of local generic styling.
 
 `0.0.1.8.10` is closed. `0.0.1.8.11` Migration Phase 5 core content is closed at `Usable` level; tree/search, block DnD, first-level Add block picker, card editor header/toolbar controls, Properties, shared card block frames, card selects, saved template creation, deep search and the command palette now have migrated slices. `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; the current default map UI is a graphic-editor split toolbar with full-size unclipped top/left tool zones, shared popups, right-side selected-object property Inspector, custom object right-click menu and group contextual visibility actions, without duplicate scene/layer panels over the stage. `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`: visible-slice clarity, selected-node states/inspector, node/connect overlays, laconic first-layer correction, CSS ownership, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. `0.0.1.8.14.1` starts secondary screens by migrating task tracker UI to the shared workbench language: compact board toolbar, local sprite actions, quiet counters, checklist progress, tokenized columns/cards and no task data-model change. `0.0.1.8.14.2` fixes the task tracker nested-icon click regression and migrates the existing Settings maintenance popup for appearance, backup, asset health and workspace diagnostics. `0.0.1.8.14.3` migrates the existing Help/Support/Release guide surface inside Tools. `0.0.1.8.14.4` adds the first World Package manager MVP for branch/world export, package library, import preview and backup-gated page-only import. `0.0.1.8.14.5` adds non-destructive conflict modes and preview plan counts for page-only World Package imports. `0.0.1.8.14.6` adds embedded rulePackage apply and asset preflight. `0.0.1.8.14.7` closes Phase 8 secondary screens at `Usable` by adding asset payload export/import, non-overwrite asset copy and imported page reference rewrite. `0.0.1.8.15` closes Phase 9 polish and cleanup at `Foundation` with audit/theme, performance, theme-scale visual baselines, retired CSS/JS owner cleanup and release/documentation sync. `0.0.1.8.16` closes the broader fixed viewport visual-regression track at `Foundation`. `0.0.1.8.17` closes owner visual completion at `Usable`; pause for the owner's planned post-design task before moving to non-design work.

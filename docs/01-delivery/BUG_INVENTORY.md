@@ -335,4 +335,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in `PROJECT_PLAN.md`. Current next step: `0.0.1.8.2` Design system contract, unless a P0/P1 backlog item is promoted first.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current next step: `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit. It is audit-only; do not start cleanup or product feature work inside that phase.

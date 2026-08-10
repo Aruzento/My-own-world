@@ -16,7 +16,9 @@ description: "UI, visual style, design tokens, shell refresh, popups, buttons, p
 - `docs/01-delivery/PROJECT_PLAN.md`
 - `docs/01-delivery/WORK_LOG.md`
 - `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`
-- `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md`
+- `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md`
+- `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`
+- `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md`
 
 ## Что Обновить После Задачи
 

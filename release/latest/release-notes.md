@@ -44,7 +44,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Large real workspaces can still reveal subjective UI delay even when synthetic performance checks are green.
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
-- The `0.0.1.8` redesign pass is closed, but the project is paused for the owner's planned post-design task; do not quietly switch to unrelated product work until the owner gives that task.
+- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt; the next active project phase is the audit-only `0.0.1.9.0` in `docs/01-delivery/PROJECT_PLAN.md`.
 - Restore preview, partial restore, link cleanup and asset repair are still future data-safety work.
 
 ### Verification Snapshot

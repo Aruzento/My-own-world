@@ -8,7 +8,9 @@ owner_zone: "testing"
 
 # UI Owner Visual Critic 0.0.1.8.18
 
-Status: `BLOCKED FOR OWNER REVIEW`
+Status: `FAIL - WAIVED BY OWNER FOR CURRENT STAGE`
+
+Owner waiver added 2026-08-10: the failed scorecard remains historical evidence and future polish debt. It does not block the next audit-only phase, and it does not mean the critic passed the design.
 
 HEAD reviewed: `4220226` (`Centralize popup obstacle positioning`)
 
@@ -97,7 +99,7 @@ The diagnostics target is not clearly visible in the final evidence state, asset
 
 ## Decision
 
-After the maximum two correction rounds, all six surfaces still failed the independent scorecard. Per the `0.0.1.8.18.6` task contract, the work stops here as `BLOCKED FOR OWNER REVIEW`.
+After the maximum two correction rounds, all six surfaces still failed the independent scorecard. Per the `0.0.1.8.18.6` task contract, the work stopped for owner review. On 2026-08-10 the owner accepted the current design for this stage, so this report remains future polish debt instead of blocking the active roadmap.
 
 No Knowledge Graph concept redesign was attempted. Conceptual weakness is `DEFERRED TO BI-026`.
 

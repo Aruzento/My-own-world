@@ -1,11 +1,19 @@
 ---
-summary: "Product roadmap for near and future work."
+summary: "Archived product roadmap superseded by the current master project plan."
 read_when:
-  - "Before product planning"
-  - "When changing product direction"
-owner_zone: "product"
+  - "When historical product-roadmap context is needed"
+  - "Do not use as the active implementation roadmap"
+owner_zone: "archive"
 ---
 # Roadmap
+
+Archived: 2026-08-10.
+
+Original path: `docs/00-product/ROADMAP.md`.
+
+Superseded by: `docs/01-delivery/PROJECT_PLAN.md`.
+
+Historical only: do not use this file as the active implementation queue.
 
 ## Сейчас
 

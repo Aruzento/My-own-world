@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Owner Design Correction Findings 0.0.1.8.18
 
-Updated: 2026-08-09
+Updated: 2026-08-10
 
 ## Baseline
 
@@ -19,8 +19,8 @@ Updated: 2026-08-09
 
 ## Inspected Sources
 
-- Plan and delivery docs: `docs/01-delivery/PROJECT_PLAN.md`, `docs/01-delivery/WORK_LOG.md`, `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`.
-- UI contract docs: `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`, `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md`, `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`, `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md`.
+- Plan and delivery docs: `docs/01-delivery/PROJECT_PLAN.md`, `docs/01-delivery/WORK_LOG.md`. The former mini backlog is now archived at `docs/archive/NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md`.
+- UI contract docs: `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`, `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md`, `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`. The old UI modernization implementation plan is now archived at `docs/archive/UI_AUDIT_AND_MODERNIZATION_PLAN_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md`.
 - Shared design owners: `styles/design-tokens.css`, `styles/ui.css`, `styles/variables.css`.
 - Popup owners: `js/ui/popupManager.js`, `js/ui/popupPosition.js`.
 - Tree owners: `js/tree/tree.js`, `js/tree/treeRender.js`, `js/tree/treeKeys.js`, `js/tree/treeDragDrop.js`, `styles/tree.css`, `tests/browser/app-shell.spec.mjs`, tree browser/unit tests.
@@ -40,11 +40,11 @@ Updated: 2026-08-09
 | E. New accessibility labels contain English strings inside the Russian product. | CLOSED | `0.0.1.8.18.4` changes Tree labels to Russian: `Дерево мира`, `Без названия`, `Развернуть: ...`, `Свернуть: ...`, `Действия страницы: ...`. Task Tracker `Empty column` was already corrected in `0.0.1.8.18.3` to `Колонка пуста` and was not touched by this Tree leaf. | `0.0.1.8.18.4` |
 | F. Tree semantics improved, but complete ARIA tree keyboard evidence is missing. | CLOSED | `0.0.1.8.18.4` makes `role="treeitem"` the roving focus target, keeps `aria-expanded` and `aria-current` on the actual treeitem, removes leaf toggle from the focus model, and adds browser coverage for ArrowUp/Down, ArrowLeft/Right, Home, End, Enter, current page state, visible focus, virtualization and pointer-DnD non-regression. | `0.0.1.8.18.4` |
 | G. Campaign Map has local geometry helpers while shared popup positioning already owns viewport positioning. | CLOSED | `0.0.1.8.18.5` moves the generic avoid-target contract into `js/ui/popupPosition.js`: shared positioning now owns viewport clamp, overlap checks and alternate placement. `js/editor/campaignMapPopupController.js` only passes the current `.campaign-map-properties-panel` as the map-specific avoid target and no longer defines local rectangle overlap, visibility or clamp helpers. Coverage now includes pure positioning tests, popup lifecycle regression, Campaign Map popup regression at `1280x720`, and owner visual evidence for map popup/Inspector non-overlap. | `0.0.1.8.18.5` |
-| H. `0.0.1.8.17` lacks a real independent visual critic report with first-pass failures and final scores. | BLOCKED FOR OWNER REVIEW | `0.0.1.8.18.6` created `docs/03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md` and curated final screenshots in `docs/03-testing/visual-evidence/0.0.1.8.18/`. The independent read-only critic reviewed all six required surfaces at `1440x900` and `1280x720`, then re-reviewed two limited correction rounds. All six final surfaces still failed the scorecard, so the finding is no longer missing-evidence work but an owner decision gate. Knowledge Graph concept concerns are `DEFERRED TO BI-026`. | `0.0.1.8.18.6` |
+| H. `0.0.1.8.17` lacks a real independent visual critic report with first-pass failures and final scores. | WAIVED BY OWNER FOR CURRENT STAGE | `0.0.1.8.18.6` created `docs/03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md` and curated final screenshots in `docs/03-testing/visual-evidence/0.0.1.8.18/`. The independent read-only critic reviewed all six required surfaces at `1440x900` and `1280x720`, then re-reviewed two limited correction rounds. All six final surfaces still failed the scorecard. On 2026-08-10 the owner accepted the current design for this product stage; the Visual Critic FAIL remains future polish debt and historical evidence, not a blocker. Knowledge Graph concept concerns are `DEFERRED TO BI-026`. | `0.0.1.8.18.6`, owner waiver 2026-08-10 |
 | I. `NEXT_PRODUCT_MINI_BACKLOG.md` is an idea index, not deterministic implementation-ready planning. | CLOSED | `0.0.1.8.18.7` expands `NEXT_PRODUCT_MINI_BACKLOG.md` into deterministic plan-only sections for `NF-001` through `NF-017`: user problem, first usable behavior, existing owners/reuse, non-duplication rules, dependencies, persistence notes, UI surfaces, test targets, implementation outline, Definition of Usable, open decisions and decision source. No NF product functionality was implemented. | `0.0.1.8.18.7` |
 
 ## Stop Gate For This Leaf
 
 - Production code was not modified in `0.0.1.8.18.1`.
-- Findings A-G and I have dedicated closure evidence. Finding H remains `BLOCKED FOR OWNER REVIEW` until the owner records a visual PASS or explicit waiver.
-- `0.0.1.9.0` remains blocked until all `0.0.1.8.18` correction/evidence leaves pass.
+- Findings A-G and I have dedicated closure evidence. Finding H is explicitly waived by the owner for the current product stage on 2026-08-10.
+- `0.0.1.8.18` is closed by owner waiver. `0.0.1.9.0` is unlocked as the next audit-only phase, but it is not started by this closure.

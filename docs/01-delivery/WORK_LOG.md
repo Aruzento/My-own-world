@@ -6,6 +6,37 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-10: 0.0.1.8.18 Owner Waiver And Master Plan Reset
+
+### What Changed
+
+- Recorded the owner decision that the current MyOwnWorld design is accepted for this product stage.
+- Closed `0.0.1.8.18` by explicit owner waiver: the failed `0.0.1.8.18.6` Visual Critic report remains historical evidence and future polish debt, but it no longer blocks product development.
+- Replaced the old accumulated active plan with a single current master roadmap in `docs/01-delivery/PROJECT_PLAN.md`.
+- Promoted open relevant BI items into the new roadmap while keeping `BUGS_AND_IMPROVEMENTS_BACKLOG.md` as the living intake backlog.
+- Absorbed NF-001 through NF-017 from the former mini backlog into the new roadmap and archived the superseded planning documents in `docs/archive/`.
+- Preserved the rejected ideas: no Ctrl+drag creature duplication, and no user-configurable health-stage thresholds/colors/names for now.
+
+### Readiness
+
+`Usable` for planning. Future Codex runs have one active implementation roadmap, a clear next phase and archived historical context. No product feature implementation was started.
+
+### Verification
+
+- Passed: `node tools\docs_index.mjs` with 85 markdown files and 0 metadata issues.
+- Passed: `node tools\audit_project_files.mjs` with 582 files, 1 local delete candidate (`debug.log`) and 0 mojibake candidates.
+- Passed: `npm run check:encoding`.
+- Passed: `node tools\validate_agent_skills.mjs`.
+- Passed: read-only markdown `.md` link existence check for docs.
+- Passed after one correction: Reviewer A architecture check. The original Phase 13 `LATER` ordering conflict was fixed by marking it `SPIKE`.
+- Passed after one correction: Reviewer B product/roadmap check. The original bug-inventory reconciliation and NF scope wording issues were fixed in `PROJECT_PLAN.md`.
+- Passed: stale active-planning reference search for old blocker/mini-backlog/current-plan pointers.
+- Passed: `git diff --check`.
+
+### Next
+
+- `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit is the next phase, but it has not been started by this closure task.
+
 ## 2026-08-10: Owner UI polish for editor, graph and map surfaces
 
 ### What Changed

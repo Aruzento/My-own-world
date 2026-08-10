@@ -1,5 +1,5 @@
 ---
-summary: "Active project plan for MyOwnWorld version 1 work."
+summary: "Single active master roadmap for MyOwnWorld implementation work."
 read_when:
   - "Before choosing the next task"
   - "When updating delivery status"
@@ -8,162 +8,510 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-09
+Updated: 2026-08-10
 
-Planning version: 1
+Planning version: 2
 
-Numbering starts at `0.0.1.0.0`.
+This file is the only active implementation roadmap for MyOwnWorld. Completed history lives in [WORK_LOG.md](./WORK_LOG.md). Superseded plans live in [docs/archive](../archive/README.md) and are historical only.
 
-This file contains only active and unfinished work. Completed history lives in [WORK_LOG.md](./WORK_LOG.md) and archived plans in [docs/archive](../archive/README.md).
+## Current State
 
-## Rules
+`0.0.1.8.18` is `DONE` by explicit owner waiver recorded on 2026-08-10.
 
-- Bugs and broken user flows have priority over new features.
-- Completed work moves to `WORK_LOG.md` or an archive, not to the active plan.
-- Partially completed work stays here as a smaller unfinished task.
-- P0/P1 work needs an automated test or a clear note explaining why automation is not possible yet.
-- If user-visible behavior changes, update release notes, tester instructions, or the manual.
-- Future work is allowed here only when it is still actionable and should not be forgotten.
-- Completed work must state a readiness level from [DEFINITION_OF_DONE.md](./DEFINITION_OF_DONE.md): `Foundation`, `MVP`, `Usable`, or `Release-ready`.
-- Do not remove a plan item when only `Foundation` was completed and user-facing work remains.
+Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-## Active Plan
+Current next phase: `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit.
 
-### 0.0.1.0.0. P0 Bug Triage & Stabilization
+Important stop note: the owner decision unlocked `0.0.1.9.0`, but this planning/archive task does not start it.
 
-Goal: restore confidence in the core product before adding more features. MyOwnWorld must feel predictable in browser and desktop on both small and large workspaces.
+## Execution Rules
 
-Current inventory: [BUG_INVENTORY.md](./BUG_INVENTORY.md).
+1. Work strictly in active plan order.
+2. Only one major phase may be `ACTIVE` at a time.
+3. Inside a major phase, work on one leaf implementation slice at a time.
+4. Do not start the next phase until the current phase exit criteria are met.
+5. Do not implement `LATER` or spike-only ideas "also".
+6. Adjacent bugs may be fixed only if reproduced, low-risk, inside the current subsystem and not expanding architecture scope. Otherwise, record or keep them in [BUGS_AND_IMPROVEMENTS_BACKLOG.md](./BUGS_AND_IMPROVEMENTS_BACKLOG.md).
+7. Do not create a second owner for an existing system.
+8. Inspect the current repository before designing new architecture.
+9. Do not invent a schema, API, dependency or subsystem without evidence.
+10. If an unusual action is needed, stop and ask the owner first.
 
-Deferred bugs and improvement notes: [BUGS_AND_IMPROVEMENTS_BACKLOG.md](./BUGS_AND_IMPROVEMENTS_BACKLOG.md).
+Unusual actions include new production dependencies, rendering engine changes, networking/server architecture, data format migrations, destructive cleanup, mass file movement outside an explicitly authorized archive task, new external services, large binary assets, arbitrary plugin execution and architecture rewrites.
 
-Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md).
+## Status Model
 
-Manual smoke checklist: [MANUAL_SMOKE_CHECKLIST.md](../03-testing/MANUAL_SMOKE_CHECKLIST.md).
+Allowed roadmap statuses:
 
-No currently confirmed P0/P1 code failure remains in the small-workspace smoke pass. The external-audit security/docs cleanup for `0.0.1.0.4`-`0.0.1.0.7` is closed at usable project-process level. The next priority is page/workspace lifecycle hardening before new feature work.
+- `DONE`
+- `ACTIVE`
+- `NEXT`
+- `BLOCKED`
+- `LATER`
+- `SPIKE`
+- `OWNER REVIEW`
 
-### 0.0.1.1.0. Workspace Operations & Page Lifecycle Hardening
+Readiness levels for completed work still come from [DEFINITION_OF_DONE.md](./DEFINITION_OF_DONE.md): `Foundation`, `MVP`, `Usable`, `Release-ready`.
 
-Goal: make page operations reliable, reversible and diagnosable on real large workspaces.
+## Roadmap
 
-### 0.0.1.2.0. Desktop Product Hardening
+### Phase 0 - 0.0.1.8.18 Owner Design Correction & Evidence Gate
 
-Goal: desktop should feel like a real app, not a fragile wrapper around the browser build.
+ID: `0.0.1.8.18`
 
-### 0.0.1.3.0. Campaign Map Stabilization & UX
+NAME: Owner Design Correction & Evidence Gate
 
-Goal: map tools must be simple, fast, and usable during a live game.
+STATUS: `DONE`
 
-### 0.0.1.6.0. Data Safety & Recovery
+GOAL: close the owner design correction gate without pretending the visual quality bar is final.
 
-Goal: protect user content while the product grows.
+WHY NOW: the blocked Visual Critic gate prevented non-design work even though the owner accepted the current design for this stage.
 
-### 0.0.1.7.0. Documentation, Manual & Release
+SCOPE: record owner waiver; keep Visual Critic report as evidence; move future design polish to a late product-polish phase; archive superseded planning files.
 
-Goal: the owner and testers should understand what changed and how to verify it.
+DEPENDENCIES: completed leaves `0.0.1.8.18.1` through `0.0.1.8.18.8`; owner waiver on 2026-08-10.
 
-### 0.0.1.8.0. System UI/UX Redesign
+EXIT CRITERIA: owner waiver recorded; `0.0.1.9.0` unlocked; no product implementation started during closure.
 
-Goal: turn MyOwnWorld into a coherent professional desktop workbench for a GM: dense, readable, local-first, and calm, with dark fantasy used as accents rather than visual noise.
+### Phase 1 - 0.0.1.9.0 Repository Audit
 
-Source: `C:\Users\Aruko\Downloads\MyOwnWorld UI-UX Redesign.docx`.
+ID: `0.0.1.9.0`
 
-Principles: do not rewrite the whole interface in one pass; do not create separate mini design systems for map, graph, cards, or task tracker; do not mix visual restyle with business logic changes. Every migrated area must keep browser and Tauri behavior working.
+NAME: Repository Architecture / Maintainability / AI-Slop Audit
 
-0.0.1.8.11. Migration Phase 5: core content.
+STATUS: `NEXT`
 
-Description: migrate tree, card editor, properties, templates, search, and command palette into the shared design system.
+GOAL: understand real repository health before new feature work.
 
-Status: closed at `Usable` by `0.0.1.8.11.7`: `BI-013` block drag-and-drop is restored, `BI-014` Add block popup is redesigned, the card editor header/runtime controls now follow shared tokens and local sprite icons, Properties use field variants/states with local sprite badges, ordinary card blocks share one visual language with runtime-only type badges/thin markers/tokenized surfaces, card-block selects use the shared dark select contract, saved page templates are reachable from the create menu, and the left rail now has a real `Поиск и команды` tool with deep PageRepository-backed page search and command execution through the shared popup lifecycle.
+WHY NOW: recent UI/design work touched many surfaces; the next product phases will be safer if duplicate ownership, dead code and AI-slop patterns are identified first.
 
-0.0.1.8.12. Migration Phase 6: campaign map.
+SCOPE: audit-only review for dead code, duplicate ownership, mini design systems, duplicated generic utilities, god-files, over-fragmentation, listener lifecycle, CSS debt, accessibility debt, test/documentation slop, data ownership, unsafe write paths, performance risks, generated/debug artifacts and recent editor/header runtime logic. Reconcile current [BUG_INVENTORY.md](./BUG_INVENTORY.md) items as current/stale/promoted/deferred before cleanup or new product work.
 
-Description: migrate map toolbar, scene/list surfaces, layers, token dock, map inspector, and map contextual actions without changing map business logic.
+DEPENDENCIES: `0.0.1.8.18` owner waiver and closure.
 
-Status: closed at `Usable` by `0.0.1.8.12.10` after human post-review corrections. `0.0.1.8.12.1` closed the toolbar foundation, and `0.0.1.8.12.7`-`0.0.1.8.12.10` correct it into the current product shape: a compact title chip, a full-width top scene/session action bar, and a full-height left canvas tool rail with icon-only buttons, body-level hover/focus tooltips, Hand/pan as a real tool, stable compact buttons, no visible toolbar text, no clipped labels and no internal toolbar scrollbars. `0.0.1.8.12.2` closed the shared popup surface for add/picker, grid, drawing, fog, shapes, layers, initiative and music. `0.0.1.8.12.3`-`0.0.1.8.12.8` evolved selected-object UI from a bottom info dock into a right-side editable `Inspector`: token name, X/Y, size, rotation and player visibility; shape type, X/Y, width/height, rotation, stroke/fill colors, stroke width and player visibility. Shape rotation is now part of the map model/serializer instead of a fake UI-only field. `0.0.1.8.12.4` / `0.0.1.8.12.5` explored layer/object and scene-state stage docks, but `0.0.1.8.12.7` removes them from default map render because they duplicated the toolbar/popup workflows and made the stage feel overloaded. `0.0.1.8.12.6` closed group contextual action coverage, `0.0.1.8.12.8` adds custom right-click on map objects, `0.0.1.8.12.9` split canvas tools left / scene commands top, and `0.0.1.8.12.10` makes those zones full-size and unclipped.
+EXIT CRITERIA: maintainability audit exists; cleanup backlog is deterministic; bug-inventory items have a current disposition; findings are classified P0/P1/P2/P3; readiness for future NF work is assessed; no mass cleanup or product feature implementation is performed; owner review gate is ready.
 
-0.0.1.8.13. Migration Phase 7: knowledge graph.
+### Phase 2 - 0.0.1.10.0 Repository Cleanup & Consolidation
 
-Description: migrate graph toolbar, canvas controls, node cards, edge states, inspector, and filters.
+ID: `0.0.1.10.0`
 
-Status: closed at `Usable` by `0.0.1.8.13.11`. `0.0.1.8.13.1`-`0.0.1.8.13.4` migrated the visible graph surface: hidden-slice clarity, selected-node edge states, a compact inspector, darker node/connect overlays and a laconic first layer. `0.0.1.8.13.5`-`0.0.1.8.13.11` closed the maintainability/lifecycle side: graph CSS is split by owner, JS ownership now covers inspector, labels, canvas controls, renderer, canvas actions, canvas overlays, relationship/context-menu HTML and view-state helpers, and manual relationship persistence now goes through a dedicated graph command bridge using `PageRecord`, `PageCommandService` and the write queue. `BI-017` / `BI-018` are closed for Phase 7 scope. Future graph concept changes belong to `BI-026`, not another hidden Phase 7 slice.
+NAME: Repository Cleanup & Consolidation
 
-0.0.1.8.14. Migration Phase 8: secondary screens.
+STATUS: `BLOCKED`
 
-Description: migrate task tracker, settings, imports, backup/restore, release/help screens, diagnostics, and support panels.
+GOAL: perform only owner-approved cleanup from the audit.
 
-Status: closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tracker UI slice at `Usable`: the board now has a compact workbench toolbar, local sprite icon actions, column/task/checklist counters, checklist progress bars and tokenized column/card surfaces without changing the data model or persistence path. `0.0.1.8.14.2` fixed the task tracker icon-button click regression and migrated the existing topbar Settings maintenance popup at `Usable` level for appearance, backup, asset health and workspace diagnostics: it now has one section system, health/backup/restore/asset/danger markers, local sprite icon actions and a visual-safety screenshot. `0.0.1.8.14.3` migrated the existing Tools help/onboarding popup at `Usable` level as a Help/Support/Release guide: compact tool routes, internal help navigation, status chips and support/release cards. `0.0.1.8.14.4` added the first real user-facing World Package manager at `MVP` level: Tools opens `Пакеты мира` for branch/world export, package library preview/delete, JSON import preview and backup-gated page-only import. `0.0.1.8.14.5` upgrades that slice to a safer page-import workflow: conflicts no longer force a hard stop only; the user can block, import only new pages, or create copied pages with unique ids/titles while parent links are rewired and persistent HTML is sanitized before write.
+WHY NOW: cleanup must be based on evidence, not taste. It should follow the audit and owner review.
 
-`0.0.1.8.14.6` update: the World Package manager now applies embedded rulePackages into `rule-packages/` after backup, never overwrites an existing rule package file, and runs asset preflight before apply. Required missing asset references block import; optional missing references warn and allow page/rulePackage import.
+SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-`0.0.1.8.14.7` update: World Package export now embeds readable asset payloads from referenced workspace files, and import writes valid base64 payloads after backup through the shared storage adapter. Existing asset files are not overwritten: conflicting payloads are copied to unique asset paths and imported page bodies are rewritten to the copied references before sanitization. Invalid payload bytes are treated as unavailable required assets and block before page writes. Phase 8 secondary screens are closed; remaining design-system work continues in `0.0.1.8.15`.
+DEPENDENCIES: Phase 1 audit; owner review approval.
 
-0.0.1.8.15. Migration Phase 9: polish and cleanup.
+EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
 
-Description: run accessibility audit, performance pass, visual regression, theme presets, animation review, dead CSS removal, and documentation updates.
+### Phase 3 - 0.0.1.11.0 Existing P1 Stabilization
 
-Status: closed at `Foundation` by `0.0.1.8.15.5`: polish audit, contrast/focus/motion guard, large migrated-surface performance smoke, theme-scale visual baselines, dead CSS cleanup and final docs/release sync are in place.
+ID: `0.0.1.11.0`
 
-Planned subpoints:
+NAME: Existing P1 Stabilization
 
-- `0.0.1.8.15.1` UI polish audit, contrast theme and motion/focus guard - closed at `Foundation`.
-- `0.0.1.8.15.2` migrated-surface runtime performance smoke - closed at `Foundation`.
-- `0.0.1.8.15.3` broader visual-regression/theme-scale coverage - closed at `Foundation`.
-- `0.0.1.8.15.4` dead CSS and unused owner cleanup - closed at `Foundation`.
-- `0.0.1.8.15.5` final documentation, release notes and Phase 9 closure sync - closed at `Foundation`.
+STATUS: `BLOCKED`
 
-`0.0.1.8.15.1` update: Phase 9 is started with a concrete polish/audit slice. Settings appearance now supports a `contrast` theme preset through the existing theme manager and body `data-theme` model; appearance swatches/segmented buttons expose `aria-pressed`; editor/table/property/item/wiki input focus gaps now use the warm MyOwnWorld focus ring; large campaign-map and Knowledge Graph inspectors no longer apply expensive backdrop blur; and `npm run verify` runs `tools/audit_ui_polish.mjs` to block `transition: all`, `will-change: all`, heavy blur on large workbench surfaces and `outline: none` without focus coverage.
+GOAL: close or deliberately reclassify the known user-visible P1/P2 stabilization items before live-session features.
 
-`0.0.1.8.15.2` update: the performance pass now has a browser-level guard for the migrated UI systems. `tests/browser/ui-polish-performance.spec.mjs` renders a synthetic 420-page tree, 180-token / 80-shape campaign map, expanded Knowledge Graph canvas and 96-card task tracker, then checks DOM counts plus soft runtime budgets. This does not change visible product behavior; it makes future redesign work safer on large workspaces. Remaining `0.0.1.8.15` work: broader visual-regression/theme-scale review, dead CSS removal and final docs/release sync.
+WHY NOW: new session/combat work should not sit on top of known map and regression fragility.
 
-`0.0.1.8.15.3` update: broader visual-regression/theme-scale coverage now has a focused browser baseline. `tests/browser/visual-regression.spec.mjs` adds `visual-theme-scale-captures-workbench-baselines`, which builds a synthetic workspace with the left rail, open tree, hidden right-panel foundation and populated card editor, then captures dark compact, contrast large and contrast narrow workbench states while checking horizontal overflow, shell state and required theme tokens. Remaining `0.0.1.8.15` work: dead CSS/unused owner cleanup and final docs/release sync.
+SCOPE: `BI-003`, `BI-008`, `BI-009`, `BI-010`, `BI-011`, `BI-022`; current P1 bug-inventory items if still reproduced after Phase 1 audit, especially `BUG-001`, `BUG-003`, `BUG-004`, `BUG-005`, `BUG-006`, `BUG-007`, `BUG-008` and `BUG-009`. Reproduce the disappearing map toolbar, fix the creature skills mojibake, close the P1 regression bundle when its real children are closed, and decide whether circle center points / shape rotation controls are small usability fixes here or should move to a later Campaign Map phase.
 
-`0.0.1.8.15.4` update: dead CSS cleanup now removes the retired campaign-map layer/object dock and scene-state inspector from the active bundle. The removed owners are `styles/campaign-map-layer-dock.css`, `styles/campaign-map-scene-inspector.css`, `js/editor/campaignMapLayerDock.js` and `js/editor/campaignMapSceneInspector.js`; map runtime no longer calls no-op refresh hooks for those obsolete panels. The accepted default map path remains the compact top scene/session bar, full-height left tool rail, shared map popups, token hover/right-click popup and right-side selected-object Inspector. Remaining `0.0.1.8.15` work: final documentation, release notes and Phase 9 closure sync.
+DEPENDENCIES: Phase 2 cleanup.
 
-`0.0.1.8.15.5` update: Phase 9 closure sync is complete. Dashboard, work log, active plan, design-system contract, UI baselines, CSS inventory, UI audit plan, release notes, tester instructions, project file audit and generated manual now describe the current Phase 9 state: retired map stage panel owners are removed, active visual/performance/polish guards are green, and the follow-up design-system visual regression pass is tracked as `0.0.1.8.16`.
+EXIT CRITERIA: each included BI has a current repro/result, root cause where applicable, regression target and final disposition; no P1 item stays indefinitely "ready" without a decision.
 
-0.0.1.8.16. Visual regression for design system.
+### Phase 4 - 0.0.1.12.0 Data Safety Completion
 
-Description: add fixed viewport/theme/scale screenshots for shell, tree, editor, properties, map, graph, popups, empty/loading/error states, compact/comfortable density, dark and high-contrast themes.
+ID: `0.0.1.12.0`
 
-Status: closed at `Foundation` by `0.0.1.8.16`. `tests/browser/visual-regression.spec.mjs` now captures a fixed viewport design-system matrix for empty shell/tree/error state, card editor Properties, campaign map popup plus selected-object Inspector, Knowledge Graph context overlay and empty task tracker board across dark/contrast themes and compact/large scale. `tests/uiMigrationBaselines.test.mjs` and `UI_MIGRATION_BASELINES.md` require the five new attachment names.
+NAME: Data Safety Completion
 
-Design-track gate: the current `0.0.1.8` redesign plan has no next implementation item after `0.0.1.8.16`. Before moving back to non-design product work, pause for owner review and the user's pending design-completion task.
+STATUS: `BLOCKED`
 
-0.0.1.8.17. Owner visual completion and post-design backlog gate.
+GOAL: complete the remaining recovery and link-safety work before durable live-session automation.
 
-Description: complete the owner-requested final design pass before returning to non-design product work. The work is visual-system completion, not new feature delivery: inspect the accepted references and current screenshots, reduce AI-slop/noise, make the primary workbench surfaces feel coherent and premium, verify with fixed screenshots and automated tests, then create a separate future mini-backlog for owner-approved next-feature ideas without implementing those ideas in this block.
+WHY NOW: future combat/session/event systems will write more frequently; unsafe restore and link repair flows would make that risky.
 
-Scope:
+SCOPE: `BI-006` restore preview, partial restore, backup manifests, asset verification. `BI-020` broken wiki links, relation links, ordinary links, orphan review, grouped diagnostics, non-destructive repair preview and deliberate persistent repair flow. Include `BUG-011` restore/recovery validation if still current after Phase 1 audit.
 
-- `0.0.1.8.17.1` - intake, active-plan setup, baseline screenshots and specialist read-only critiques.
-- `0.0.1.8.17.2` - AppShell, left rail, tree/search, card editor and Properties consistency pass.
-- `0.0.1.8.17.3` - shared menus/popovers/dialogs plus task tracker, Knowledge Graph and campaign map visual pass.
-- `0.0.1.8.17.4` - Settings/diagnostics, empty/loading/error states, accessibility and reduced-motion checks.
-- `0.0.1.8.17.5` - create `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`, synchronize project docs/release notes/manual and close the design gate only after verification evidence is recorded.
+DEPENDENCIES: Phase 3 stabilization.
 
-Status: closed at `Usable` by `0.0.1.8.17`. The final owner visual pass reduced visible noise across shell/tree/editor/task tracker/graph/map surfaces, hid the component catalogue from normal Tools usage behind a dev/test flag, improved tree keyboard semantics, made map popups avoid the right-side Inspector, added 1440x900 and 1280x720 owner evidence screenshots, and created `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` for future product ideas without implementing them here. Post-design gate: pause for the owner's planned task before scheduling or starting non-design work.
+EXIT CRITERIA: recovery previews are readable and non-destructive; persistent repair flows are backup-gated where needed; asset/link verification has tests or documented smoke paths; no durable write path bypasses existing safety owners.
 
-0.0.1.8.18. Owner Design Correction & Evidence Gate.
+### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 
-Description: correction gate opened after owner review found concrete quality problems left by `0.0.1.8.17`. This is not another redesign and must not add product features. The accepted visual direction stays intact; the work is limited to removing local design-system drift, correcting accessibility/keyboard contracts, centralizing duplicated popup positioning ownership, proving the result through an independent visual critic loop, and expanding the future product backlog into implementation-ready planning.
+ID: `0.0.1.13.0`
 
-Scope:
+NAME: NF-001 Edit Session Conflict Protection
 
-- `0.0.1.8.18.1` - baseline and exact finding inventory for owner findings A-I; production code remains read-only.
-- `0.0.1.8.18.2` - design-system correction for Add Block, Campaign Map popup surface, and tag/alias controls.
-- `0.0.1.8.18.3` - Task Tracker structural icon-only cleanup without presentation hacks.
-- `0.0.1.8.18.4` - Russian accessibility labels and complete desktop tree keyboard contract.
-- `0.0.1.8.18.5` - shared popup positioning ownership for map Inspector avoidance.
-- `0.0.1.8.18.6` - independent read-only visual critic loop and final owner evidence set.
-- `0.0.1.8.18.7` - deterministic expansion of `NEXT_PRODUCT_MINI_BACKLOG.md`.
-- `0.0.1.8.18.8` - final correction gate, full verification, documentation sync, and closure only if all evidence passes.
+STATUS: `BLOCKED`
 
-Status: active at `Foundation`; `0.0.1.8.18.1` is closed as the read-only inventory leaf, `0.0.1.8.18.2` is closed as the A-C design-system correction leaf, `0.0.1.8.18.3` is closed as the Task Tracker structural icon-only cleanup leaf, `0.0.1.8.18.4` is closed as the Tree accessibility correction leaf, `0.0.1.8.18.5` is closed as the shared popup positioning ownership leaf, and `0.0.1.8.18.7` is closed as an owner-approved plan-only expansion of [NEXT_PRODUCT_MINI_BACKLOG.md](./NEXT_PRODUCT_MINI_BACKLOG.md). `0.0.1.8.18.8` has run as the final verification gate: focused leaf tests, full node tests, full browser smoke, visual regression, UI polish audit, `npm run verify`, real large-workspace desktop smoke and `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` are green after one test-only Russian label contract correction. The gate is still `BLOCKED`, not closed, because `0.0.1.8.18.6` remains `BLOCKED FOR OWNER REVIEW`: the independent critic report exists, but all six reviewed surfaces failed the owner scorecard and no explicit owner waiver exists. Current inventory lives in [OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md](./OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md); the critic report lives in [UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md](../03-testing/UI_OWNER_VISUAL_CRITIC_0.0.1.8.18.md). Do not start `0.0.1.9.0` until the owner records a Visual Critic PASS/waiver path and the final gate is accepted.
+GOAL: prevent stale editor writes from silently overwriting newer durable state.
 
-### 0.0.1.9.0. Repository Architecture / Maintainability / AI-Slop Audit
+WHY NOW: conflict-safe writes should exist before persistent session logs, combat state and player-facing actions increase write frequency.
 
-Goal: after `0.0.1.8.18` passes, perform a repository-wide audit-only review for architecture, maintainability, duplicated ownership, accessibility debt, CSS debt, test/documentation slop, performance risks and safety issues.
+SCOPE: protect field/page edits; preserve unrelated changes; surface conflict state; provide safe recovery; keep PageCommandService/write lifecycle as owner.
 
-Status: blocked until `0.0.1.8.18` closes. This block must create an audit report and cleanup backlog for owner review, but it must not execute the cleanup or start NF-001...NF-017 product work.
+DEPENDENCIES: Phase 4 data safety; existing `PageCommandService`, `PageRecord`, `writeQueue`, `StorageAdapter`, `PageRepository` notifications.
+
+EXIT CRITERIA: stale writes cannot silently overwrite current state; conflict UI is understandable; recovery path is safe; regression coverage proves field/page edit protection and unrelated-change preservation.
+
+### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
+
+ID: `0.0.1.14.0`
+
+NAME: NF-002 Safe Dice Engine
+
+STATUS: `BLOCKED`
+
+GOAL: create a safe, deterministic dice/rules engine.
+
+WHY NOW: rolls should be structured and testable before event logs and combat actions consume them.
+
+SCOPE: safe grammar, no `eval`, no `Function`, deterministic RNG tests, limits, arithmetic, modifiers, advantage/disadvantage, critical behavior and reusable structured results. Existing initiative random rolls may move to the engine only after parity verification.
+
+DEPENDENCIES: roadmap order follows Phase 5. Pure dice parsing has no hard technical dependency on NF-001, but durable roll logging waits for Phase 7.
+
+EXIT CRITERIA: parser/evaluator is safe; roll results are structured; no arbitrary code execution path exists; initiative parity is either migrated with tests or explicitly deferred.
+
+### Phase 7 - 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions
+
+ID: `0.0.1.15.0`
+
+NAME: NF-003 Event / Roll / Combat Log + Transactions
+
+STATUS: `BLOCKED`
+
+GOAL: create the durable live-session event foundation.
+
+WHY NOW: combat and session actions need a coherent log and undo model before complex state changes.
+
+SCOPE: roll, action, damage, healing, effect, resource change, turn, round, rest, movement where applicable, scene transition, manual correction and undo. One user operation equals one coherent transaction. Undo must not silently erase history.
+
+DEPENDENCIES: Phase 5 conflict-safe durable writes; Phase 6 dice result structures; page command lifecycle; editor history; CharacterModel; CampaignMapStore.
+
+EXIT CRITERIA: event owner and source of truth are explicit; append/read tests exist; at least one safe action type logs and undoes correctly; no log is hidden inside arbitrary card HTML without a contract.
+
+### Phase 8 - 0.0.1.16.0 NF-004 Persistent Combat Session
+
+ID: `0.0.1.16.0`
+
+NAME: NF-004 Persistent Combat Session
+
+STATUS: `BLOCKED`
+
+GOAL: make active combat reload-safe without creating a second initiative engine.
+
+WHY NOW: live combat must survive app close/reopen before broader action automation.
+
+SCOPE: start, pause, resume, finish combat, participants, initiative, current turn, rounds, delayed/ready state where supported, temporary battle flags, save/reload and continue session after reopening the app.
+
+DEPENDENCIES: Phase 5 for conflict-safe writes; Phase 7 strongly recommended for session log; existing Campaign Map initiative/model/store and CharacterModel.
+
+EXIT CRITERIA: active combat state persists and reloads; invalid references produce readable warnings; existing initiative architecture remains owner.
+
+### Phase 9 - 0.0.1.17.0 NF-005 Combat Action Pipeline
+
+ID: `0.0.1.17.0`
+
+NAME: NF-005 Combat Action Pipeline
+
+STATUS: `BLOCKED`
+
+GOAL: route combat operations through one safe pipeline.
+
+WHY NOW: damage, healing and checks should not become scattered UI-specific mutations.
+
+SCOPE: actor -> action -> targets -> range/LoS where available -> roll/save -> components -> defenses -> HP/temp HP/resources/effects -> transaction -> event log -> undo. Support attack, check, save, damage, healing, temp HP, resource cost and manual GM correction. Mixed damage components stay independently resolvable.
+
+DEPENDENCIES: Phase 6 dice, Phase 7 event log, Phase 8 persistent combat; CharacterModel; Properties; CampaignMapStore; PageCommandService.
+
+EXIT CRITERIA: one owner pipeline handles at least the selected first action slice; writes/logs/undo stay coherent; full DnD taxonomy remains deferred until owner chooses the next action slice.
+
+### Phase 10 - 0.0.1.18.0 NF-006 Effects & Conditions Engine
+
+ID: `0.0.1.18.0`
+
+NAME: NF-006 Effects & Conditions Engine
+
+STATUS: `BLOCKED`
+
+GOAL: make effects and conditions a real reusable domain model.
+
+WHY NOW: combat actions and rest flows need consistent temporary and persistent modifiers.
+
+SCOPE: source, target, duration, stacking, refresh, modifiers, turn/round triggers, periodic damage/healing, repeated saves, resource modifications, pause/remove, concentration-like relationships where rules require, persistence, log and undo. System-neutral engine first; DnD presets later.
+
+DEPENDENCIES: Phase 8/9 for combat expiry/application; Phase 7 for log/undo; CharacterModel; Properties; Rule Tree provider.
+
+EXIT CRITERIA: existing effects model is hardened; at least one add/remove condition flow works and persists where intended; turn expiry and rest integration have clear follow-up boundaries.
+
+### Phase 11 - 0.0.1.19.0 NF-007 Targeting / Range / AoE
+
+ID: `0.0.1.19.0`
+
+NAME: NF-007 Targeting / Range / AoE
+
+STATUS: `BLOCKED`
+
+GOAL: support tactical targeting and area templates through Campaign Map architecture.
+
+WHY NOW: combat actions need range and target context, but decorative map shapes must not become tactical source of truth.
+
+SCOPE: single/multi target, range, optional LoS, grid snap, free angle, token/caster origin, auto candidate targets and manual include/exclude. The target tactical geometry vocabulary includes circle, cone, line, rectangle and cylinder, but the first usable slice may be smaller after the spike. Persistent aura/template support is a later sub-slice and needs an explicit CampaignMapModel/serializer design before any persistent schema is added.
+
+DEPENDENCIES: CampaignMapModel/Store/Geometry; map toolbar and Inspector; Phase 9 for combat application.
+
+EXIT CRITERIA: measurement/target preview works; the first approved AoE shape set is testable; combat integration waits until action pipeline is ready; any saved template/aura schema is explicitly approved; decorative shape storage is not abused as tactical truth.
+
+### Phase 12 - 0.0.1.20.0 Live Session Map Package
+
+ID: `0.0.1.20.0`
+
+NAME: Live Session Map Package
+
+STATUS: `BLOCKED`
+
+GOAL: add the next map/session slices one at a time after combat foundations exist.
+
+WHY NOW: these features improve live play, but they should not land as one giant map rewrite.
+
+SCOPE: sequential slices only: `NF-008` Short / Long Rest, `NF-009` Adaptive Token UI by zoom, `NF-010` Map Pings, `NF-011` Scene Transitions / Portals. NF-008 needs preview before apply plus transaction/log/undo. NF-009 defines low/mid/high zoom information density. NF-010 covers normal/danger/go/target/GM-secret pings. NF-011 covers map link, spawn, selected/players/all, relative formation and optional presentation/music transition.
+
+DEPENDENCIES: Phase 7 event log; Phase 9 combat pipeline where rest or scene transition affects combat; CampaignMapModel/Store/presentation.
+
+EXIT CRITERIA: each NF slice is implemented separately with owner approval, tests and no unrelated map feature bundle.
+
+### Phase 13 - 0.0.1.21.0 NF-012 Renderer Spike + Walls / Light / Vision
+
+ID: `0.0.1.21.0`
+
+NAME: NF-012 Renderer Spike + Walls / Doors / Windows / Light / Vision
+
+STATUS: `SPIKE`
+
+GOAL: design tactical vision and barriers without confusing data model with renderer choice.
+
+WHY NOW: walls/light/vision are high-value VTT features, but they are risky enough to require evidence first.
+
+SCOPE: first leaf is a research/performance spike. Separate domain data model from rendering backend. Investigate PixiJS or another backend only if evidence supports it. After owner-approved spike: walls, doors, secret doors, windows, terrain barriers, open/close/lock, light sources, token light, bright/dim, cone/angle, player-specific vision, GM omniscience and fog/vision interaction.
+
+DEPENDENCIES: CampaignMapModel/Store/serializer; fog/layers; presentation privacy; Phase 11 geometry/targeting helps but does not replace the spike.
+
+EXIT CRITERIA: spike proves or rejects renderer direction; no persistent map rewrite happens just to adopt a renderer; production implementation starts only after owner-approved evidence.
+
+### Phase 14 - 0.0.1.22.0 NF-013 Local Compendium
+
+ID: `0.0.1.22.0`
+
+NAME: NF-013 Local Compendium
+
+STATUS: `BLOCKED`
+
+GOAL: make local reusable rules/content searchable and safely importable.
+
+WHY NOW: combat and character workflows will need spells, items, creatures, actions and rules without a second package ecosystem.
+
+SCOPE: reuse Rule Workspace, Rule Packages, World Package, PageRepository and current content models. Target content categories include spells, items, creatures, actions, effects, rules, classes, species, feats, backgrounds and custom entries, but the first v1 content set remains TBD during implementation design. Search/filter/favorites/recent are allowed only if justified during implementation design. Package update must not overwrite user-owned copies.
+
+DEPENDENCIES: Phase 5 recommended before bulk imports; Rule Workspace/Rule Packages/World Package/PageRepository/Safe HTML/backup gate.
+
+EXIT CRITERIA: one clear Tools entry exists; preview/apply flow is safe; no second package source of truth is created.
+
+### Phase 15 - 0.0.1.23.0 Knowledge Graph UX 2.0
+
+ID: `0.0.1.23.0`
+
+NAME: Knowledge Graph UX 2.0
+
+STATUS: `BLOCKED`
+
+GOAL: decide what the graph is for before adding more visible graph features.
+
+WHY NOW: owner feedback says the current graph concept still feels off. More controls would hide the concept problem.
+
+SCOPE: resolve `BI-026` and `BUG-010` first with UX research, design note and references. Answer why a GM opens Graph, navigation vs analysis, primary first-screen workflow, dominant vs hidden information, relationship creation/editing and whether the current inspector/filter model is right. After owner approval, consider remaining `BI-016` richer graph operations.
+
+DEPENDENCIES: Phase 2 cleanup; current Knowledge Graph model and relationship persistence; owner approval of concept direction.
+
+EXIT CRITERIA: design note is approved; `BI-026` has a disposition; no new graph feature is added to compensate for unclear purpose.
+
+### Phase 16 - 0.0.1.24.0 Workspace Usability
+
+ID: `0.0.1.24.0`
+
+NAME: Workspace Usability
+
+STATUS: `BLOCKED`
+
+GOAL: improve everyday workbench ergonomics without decorative empty panels.
+
+WHY NOW: the owner explicitly wants future pane support and Properties field locking, but both need deliberate interaction design.
+
+SCOPE: `BI-023` Properties field lock toggle. `BI-025` up to three workspace panes. Multi-pane requires an interaction/design spike for focus model, split behavior, persistence, card+map, map+graph, card+card, keyboard behavior, narrow-window fallback and performance impact.
+
+DEPENDENCIES: Phase 2 cleanup; current AppShell/tree/editor contracts.
+
+EXIT CRITERIA: lock toggle prevents accidental layout movement without changing field values; multi-pane design is approved before runtime implementation; no placeholder panes ship.
+
+### Phase 17 - 0.0.1.25.0 NF-014 Local-Hosted Collaborative Session
+
+ID: `0.0.1.25.0`
+
+NAME: NF-014 Local-Hosted Collaborative Session
+
+STATUS: `LATER`
+
+GOAL: let the Tauri GM app host an explicit LAN session for browser clients.
+
+WHY NOW: collaboration/player surfaces need an authority model before mobile or writable player actions.
+
+SCOPE: research/spike before production. Target direction: Tauri desktop GM host -> explicit LAN session -> browser clients. Roles: GM, player, viewer. Principles: GM authoritative, validated commands, filtered state, revisions/sequencing, reconnect, no direct filesystem access, no cloud requirement and disabled until explicitly started.
+
+DEPENDENCIES: Phase 5 conflict-safe writes; Phase 7 events if client actions are accepted; presentation privacy; Tauri command boundary.
+
+EXIT CRITERIA: owner approves networking/library architecture before production; no external service or server dependency is added without approval.
+
+### Phase 18 - 0.0.1.26.0 NF-015 Mobile Player Companion
+
+ID: `0.0.1.26.0`
+
+NAME: NF-015 Mobile Player Companion
+
+STATUS: `BLOCKED`
+
+GOAL: create a player-facing mobile companion, not a full mobile GM app.
+
+WHY NOW: players need a limited surface after the local-hosted session model exists.
+
+SCOPE: character, HP/resources, actions, rolls, initiative, effects, inventory, map view, permitted own-token interaction, targeting, pings and public event feed. First usable companion should be read-only unless authority and permissions are already proven.
+
+DEPENDENCIES: Phase 17 collaborative protocol; presentation privacy; responsive shell primitives.
+
+EXIT CRITERIA: mobile surface consumes GM-authoritative state; first slice has clear reconnect/status behavior; writable player actions stay deferred until owner selects and approves them.
+
+### Phase 19 - 0.0.1.27.0 NF-016 Declarative Extension API
+
+ID: `0.0.1.27.0`
+
+NAME: NF-016 Declarative Extension API
+
+STATUS: `LATER`
+
+GOAL: allow safe declarative extension definitions without arbitrary executable plugins.
+
+WHY NOW: future content/rules/features may need extension points, but runtime code plugins are too risky early.
+
+SCOPE: declarative definitions for compendium, Properties schemas, actions, effects, roll variables, rule presets, icons and localization. Trusted code extensions, if ever added, require versioned API, user trust, capability scopes, isolation and no raw filesystem access.
+
+DEPENDENCIES: Phase 14 compendium/package source model; Rule Packages; World Package; Properties; CharacterIntegrationAPI; Safe HTML.
+
+EXIT CRITERIA: one supported declarative capability previews and applies safely; unsupported capabilities block with diagnostics; no executable plugin surface is introduced.
+
+### Phase 20 - 0.0.1.28.0 NF-017 Optional 3D Dice
+
+ID: `0.0.1.28.0`
+
+NAME: NF-017 Optional 3D Dice
+
+STATUS: `LATER`
+
+GOAL: add optional dice presentation without making visuals the source of truth.
+
+WHY NOW: this is late polish after dice and event logs are useful on their own.
+
+SCOPE: optional 3D visualizer receives predetermined outcomes/results from NF-002, can be disabled, respects reduced-motion and does not regress Campaign Map performance.
+
+DEPENDENCIES: Phase 6 dice engine; Phase 7 roll/event log; presentation mode; possible future rendering spike.
+
+EXIT CRITERIA: gameplay result always comes from NF-002; visual failure cannot affect gameplay; performance/reduced-motion tests exist.
+
+### Phase 21 - 0.0.1.29.0 Final Product Polish
+
+ID: `0.0.1.29.0`
+
+NAME: Final Product Polish
+
+STATUS: `LATER`
+
+GOAL: return to visual quality when mature real workflows exist.
+
+WHY NOW: owner accepted the current design for this stage, but the final visual bar still matters later.
+
+SCOPE: full visual critic, editor polish, Graph polish, Map/live-session polish, settings, animations, atmosphere/background, accessibility, performance and consistency. Include `BI-007` and unresolved `0.0.1.8.18.6` critic findings as historical input.
+
+DEPENDENCIES: mature real workflows from earlier phases; owner-approved polish scope.
+
+EXIT CRITERIA: critic evaluates mature workflows, not mostly empty/pre-feature surfaces; final design issues are fixed or explicitly waived; release handoff reflects the final visual state.
+
+## Promoted Backlog Items
+
+These living backlog items are now represented in this master roadmap. Their detailed intake record remains in [BUGS_AND_IMPROVEMENTS_BACKLOG.md](./BUGS_AND_IMPROVEMENTS_BACKLOG.md).
+
+| BI | Promoted To |
+| --- | --- |
+| `BI-003` Campaign map stabilization | Phase 3 `0.0.1.11.0` |
+| `BI-006` data safety remaining work | Phase 4 `0.0.1.12.0` |
+| `BI-007` UI/design future polish | Phase 21 `0.0.1.29.0` |
+| `BI-008` circle center point | Phase 3 `0.0.1.11.0`, with decision gate for later Campaign Map phase if not small |
+| `BI-009` shape rotation controls | Phase 3 `0.0.1.11.0`, with decision gate for later Campaign Map phase if not small |
+| `BI-010` disappearing map toolbar | Phase 3 `0.0.1.11.0` |
+| `BI-011` creature skills mojibake | Phase 3 `0.0.1.11.0` |
+| `BI-016` richer graph operations | Phase 15 `0.0.1.23.0`, only after `BI-026` concept approval |
+| `BI-020` link cleanup and repair | Phase 4 `0.0.1.12.0` |
+| `BI-022` P1 regression bundle | Phase 3 `0.0.1.11.0` |
+| `BI-023` Properties field lock toggle | Phase 16 `0.0.1.24.0` |
+| `BI-024` documentation/status automation | Phase 2 `0.0.1.10.0`, only if confirmed by audit as recurring drift |
+| `BI-025` up to three workspace panes | Phase 16 `0.0.1.24.0` |
+| `BI-026` Knowledge Graph UX concept | Phase 15 `0.0.1.23.0` |
+
+## Bug Inventory Reconciliation
+
+[BUG_INVENTORY.md](./BUG_INVENTORY.md) remains the confirmed/high-risk bug register. Phase 1 must verify currentness before fixes. This table prevents hidden disagreement between the bug register and the active roadmap.
+
+| Bug | Roadmap Disposition |
+| --- | --- |
+| `BUG-001` large workspace operations feel frozen | Phase 1 audit currentness check; Phase 3 if native UI delay is still reproduced. |
+| `BUG-002` broad unknown broken functions | Watch list only; split into a concrete bug when the owner reports steps. |
+| `BUG-003` desktop installed-app verification | Phase 1 audit currentness check; Phase 2/3 if release desktop coverage is still insufficient. |
+| `BUG-004` campaign map presentation fragility | Phase 3 if still reproduced. |
+| `BUG-005` map drawing UX verification | Phase 3 if still reproduced. |
+| `BUG-006` map music desktop/audio fragility | Phase 3 if still reproduced. |
+| `BUG-007` Properties real-card layout risk | Phase 3 if still reproduced; Phase 21 if only visual polish remains. |
+| `BUG-008` Character calculations to map trust | Phase 3 if regression is still missing; later combat phases depend on this being trusted. |
+| `BUG-009` legacy task tracker verification | Phase 3 if older workspace tracker data still needs a fixture/regression. |
+| `BUG-010` Knowledge Graph daily-use concept | Phase 15 with `BI-016` and `BI-026`. |
+| `BUG-011` restore and recovery validation | Phase 4 with data safety completion. |
+| `BUG-012` docs readability/encoding watch | Phase 1 audit; Phase 2 only if recurring drift is confirmed. |
+| `BUG-013` manual regeneration watch | Release handoff rule; no separate active implementation unless it becomes stale again. |
+| `BUG-014` local `debug.log` noise | Phase 2 only as owner-approved cleanup; do not delete during unrelated tasks. |
+
+## NF Items Included
+
+The old mini backlog has been absorbed into this roadmap and archived at [NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md](../archive/NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md).
+
+Included NF items: `NF-001`, `NF-002`, `NF-003`, `NF-004`, `NF-005`, `NF-006`, `NF-007`, `NF-008`, `NF-009`, `NF-010`, `NF-011`, `NF-012`, `NF-013`, `NF-014`, `NF-015`, `NF-016`, `NF-017`.
+
+## Deliberately Not Planned
+
+These ideas are explicitly rejected for now so future planning does not reintroduce them as "obvious" improvements:
+
+1. Ctrl+drag creature duplication - rejected for now.
+2. User-configurable health-stage thresholds/colors/names - rejected for now.
+
+## Historical Planning Sources
+
+The following files are historical only and must not be used as active implementation roadmaps:
+
+- [PROJECT_PLAN_BEFORE_MASTER_ROADMAP_2026-08-10.md](../archive/PROJECT_PLAN_BEFORE_MASTER_ROADMAP_2026-08-10.md)
+- [NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md](../archive/NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md)
+- [ROADMAP_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md](../archive/ROADMAP_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md)
+- [CURRENT_MILESTONE_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md](../archive/CURRENT_MILESTONE_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md)
+- [UI_AUDIT_AND_MODERNIZATION_PLAN_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md](../archive/UI_AUDIT_AND_MODERNIZATION_PLAN_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md)

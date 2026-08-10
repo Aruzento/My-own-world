@@ -18,6 +18,11 @@ This folder stores documents that are no longer the active source of truth. Do n
 | `PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md` | Old maturity plan merged into the active project plan and product dashboard. | `docs/01-delivery/PROJECT_PLAN.md`, `docs/00-product/PRODUCT_DASHBOARD.md` |
 | `ARCHIVED_EXPERIMENTS.md` | The document itself is an archive of old experiments and should not live in active architecture docs. | `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md`, `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md`, `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` |
 | `PROJECT_PLAN_BEFORE_0.0.1.0.0_2026-07-14.md` | Previous active plan archived before starting version 1 numbering from `0.0.1.0.0`. | `docs/01-delivery/PROJECT_PLAN.md` |
+| `PROJECT_PLAN_BEFORE_MASTER_ROADMAP_2026-08-10.md` | Previous active plan archived before owner waiver closure and the single master-roadmap reset. Original path: `docs/01-delivery/PROJECT_PLAN.md`. | `docs/01-delivery/PROJECT_PLAN.md` |
+| `NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | Plan-only NF staging backlog absorbed into the new master roadmap. Original path: `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md`. | `docs/01-delivery/PROJECT_PLAN.md` |
+| `ROADMAP_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | Old product roadmap was stale and would duplicate the new active implementation roadmap. Original path: `docs/00-product/ROADMAP.md`. | `docs/01-delivery/PROJECT_PLAN.md`, `docs/00-product/PRODUCT_DASHBOARD.md` |
+| `CURRENT_MILESTONE_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | Old current-milestone document pointed to a completed docs/release reorganization milestone. Original path: `docs/00-product/CURRENT_MILESTONE.md`. | `docs/01-delivery/PROJECT_PLAN.md`, `docs/00-product/PRODUCT_DASHBOARD.md` |
+| `UI_AUDIT_AND_MODERNIZATION_PLAN_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | Completed UI modernization implementation plan archived so the active UI roadmap is not duplicated. Original path: `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md`. | `docs/01-delivery/PROJECT_PLAN.md`, `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` |
 
 ## Rule
 

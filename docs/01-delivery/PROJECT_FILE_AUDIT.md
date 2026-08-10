@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 580.
+Всего файлов в аудите: 582.
 
 ## Два Независимых Прохода
 
@@ -31,10 +31,10 @@ owner_zone: "delivery"
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
-| docs/architecture | 36 |
-| docs/archive | 5 |
-| docs/delivery | 18 |
-| docs/product | 8 |
+| docs/architecture | 35 |
+| docs/archive | 10 |
+| docs/delivery | 17 |
+| docs/product | 6 |
 | docs/root | 3 |
 | docs/testing | 20 |
 | docs/user-release | 4 |
@@ -45,7 +45,7 @@ owner_zone: "delivery"
 | presentation | 3 |
 | properties | 9 |
 | release handoff | 7 |
-| root | 20 |
+| root | 21 |
 | rules | 19 |
 | schema | 12 |
 | storage | 26 |
@@ -62,7 +62,9 @@ owner_zone: "delivery"
 
 ## Кандидаты На Уборку
 
-Явных кандидатов на удаление не найдено.
+| Файл | Причина |
+|---|---|
+| `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -72,11 +74,11 @@ owner_zone: "delivery"
 
 | Файл | Размер | Что сделать |
 |---|---:|---|
-| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5877565 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
+| `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 670874 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 674346 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 170894 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 172001 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -184,13 +186,12 @@ owner_zone: "delivery"
 | `assets/icons/README.md` | assets | Главная инструкция и обзор проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/icons/rpg-ui.svg` | assets | Иконки и sprite приложения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/rules/internal-rules-workspace.json` | assets | Seed-данные внутреннего пространства правил. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
+| `debug.log` | root | Локальный debug-лог, не является исходником проекта. | Нет смысла оптимизировать: кандидат на удаление после подтверждения. | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 | `docs/00-product/BRANDBOOK.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
-| `docs/00-product/CURRENT_MILESTONE.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PO_DISCOVERY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PRODUCT_DASHBOARD.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PRODUCT_STRATEGY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PRODUCT_VISION.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
-| `docs/00-product/ROADMAP.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/USER_PERSONAS.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/BUG_INVENTORY.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/BUGS_AND_IMPROVEMENTS_BACKLOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -203,7 +204,6 @@ owner_zone: "delivery"
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-15.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/LEGACY_LOCAL_HUB.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
-| `docs/01-delivery/NEXT_PRODUCT_MINI_BACKLOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/OWNER_DESIGN_CORRECTION_FINDINGS_0.0.1.8.18.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_PLAN.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -242,7 +242,6 @@ owner_zone: "delivery"
 | `docs/02-architecture/security/CLOUD_THREAT_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/storage/.gitkeep` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
-| `docs/02-architecture/ui/UI_AUDIT_AND_MODERNIZATION_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -271,10 +270,15 @@ owner_zone: "delivery"
 | `docs/04-user-release/README_FOR_TESTERS.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/04-user-release/TEST_SCENARIOS.md` | docs/user-release | Документация зоны docs/user-release. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/archive/ARCHIVED_EXPERIMENTS.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
+| `docs/archive/CURRENT_MILESTONE_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
+| `docs/archive/NEXT_PRODUCT_MINI_BACKLOG_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/PLANS_AND_TECH_DEBT.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/PROJECT_DEVELOPMENT_AND_MATURITY_PLAN.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/PROJECT_PLAN_BEFORE_0.0.1.0.0_2026-07-14.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
+| `docs/archive/PROJECT_PLAN_BEFORE_MASTER_ROADMAP_2026-08-10.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/archive/README.md` | docs/archive | Главная инструкция и обзор проекта. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
+| `docs/archive/ROADMAP_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
+| `docs/archive/UI_AUDIT_AND_MODERNIZATION_PLAN_SUPERSEDED_BY_PROJECT_PLAN_2026-08-10.md` | docs/archive | Архивный документ, сохранен для истории и трассировки решений. | Не оптимизировать: архив не должен быть рабочим источником правды. | Нет: архив хранит историю решений. |
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | docs/root | Документация зоны docs/root. | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. | Нет. |
 | `docs/PROJECT_STRATEGY_PRESENTATION.html` | docs/root | Документация зоны docs/root. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/README.md` | docs/root | Главная инструкция и обзор проекта. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: карта документации нужна после разделения docs по зонам. |
