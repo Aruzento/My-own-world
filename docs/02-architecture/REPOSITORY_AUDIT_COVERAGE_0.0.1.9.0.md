@@ -235,8 +235,8 @@ Subagent assertions were not accepted on their own. New P1/P2 candidates were op
 
 | Finding | Priority | Classification | Cleanup impact |
 | --- | --- | --- | --- |
-| RA-021 | P1 | CLOSED BY RCB-021 / `0.0.1.10.1` | First cleanup leaf completed; RA-001, RA-001B, RA-002 and RA-003 are now closed, and RA-022 is the next recommended P1 slice. |
-| RA-022 | P1 | NEW FINDING | Adds an accessibility P1, but data/release P1 work still comes first. |
+| RA-021 | P1 | CLOSED BY RCB-021 / `0.0.1.10.1` | First cleanup leaf completed; RA-001, RA-001B, RA-002 and RA-003 are now closed. |
+| RA-022 | P1 | CLOSED BY RCB-022 / `0.0.1.10.6` | Tree row actions are reachable from keyboard with `Shift+F10` and ContextMenu while preserving roving tree focus. |
 | RA-023 | P2 | NEW FINDING | Adds workspace load lifecycle cleanup. |
 | RA-024 | P2 | NEW FINDING | Adds workspace-scoped asset cache cleanup. |
 | RA-025 | P2 | NEW FINDING | Adds write queue durability cleanup. |
@@ -283,7 +283,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 | `js/editor/characterSheetBlock.js`, properties calculations | Character sheet | Character UI/calculations | REVIEWED - EXISTING FINDING COVERS IT | Main | Character/Properties | Editor save | Medium | Character/property tests | RA-020 | Token debt covered. |
 | `js/taskTracker/*.js` model/render/html | Task Tracker | Board model and rendering | REVIEWED - EXISTING FINDING COVERS IT | Main, reviewer 3 | Tracker page JSON | Special save/page actions | High | Task tracker browser tests | RA-006 | Structural icon-only cleanup remains closed. |
 | `js/taskTracker/taskTrackerDnd.js`, page actions | Task Tracker interaction | DnD and page action writes | REVIEWED - FINDING | Main, reviewer 3 | Tracker runtime | Direct page action write | High | Task tracker tests | RA-006, RA-028 | Keyboard reorder decision added. |
-| `js/tree/tree*.js` render/keyboard | Tree | Tree rendering and keyboard contract | REVIEWED - FINDING | Main, reviewer 3 | Runtime tree over pages | Opens/current page | High | Tree accessibility tests | RA-022 | Action menu keyboard gap. |
+| `js/tree/tree*.js` render/keyboard | Tree | Tree rendering and keyboard contract | REVIEWED - CLOSED BY RCB-022 | Main, reviewer 3 | Runtime tree over pages | Opens/current page | High | Tree accessibility tests | RA-022 | Action menu keyboard gap closed with focused treeitem ContextMenu/Shift+F10 route. |
 | `js/tree/treeDragDrop.js`, context/order files | Tree DnD/context | Tree move/reorder/context menu | REVIEWED - FINDING | Main, reviewer 3 | Page parent/order | Tree position writes | High | Tree DnD tests | RA-002, RA-028 | Pointer DnD remains working. |
 | `js/ui/appShell.js`, app topbar/sidebar/profile | AppShell/UI shell | Shell zones and top-level controls | REVIEWED - EXISTING FINDING COVERS IT | Main | Runtime shell | Settings/workspace actions | Medium | AppShell tests | RA-020 | Token debt in topbar covered. |
 | `js/ui/popupManager.js`, `popupPosition.js`, confirm/popup helpers | Popup system | Overlay lifecycle/positioning | REVIEWED - NO MATERIAL FINDING | Main, reviewer 3 | Runtime overlay owner | No durable write | High | Popup lifecycle tests | none | Shared lifecycle looked coherent. |
@@ -312,7 +312,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 | `tests/*.test.mjs` storage/repository/page command | Unit tests | Storage and command coverage | REVIEWED - EXISTING FINDING COVERS IT | Main | N/A | N/A | Medium | 59 files reviewed | RA-001, RA-002, RA-025 | Missing failure-path tests inform backlog. |
 | `tests/*.test.mjs` schema/safe html/world/rules/characters/properties | Unit tests | Domain model/sanitizer coverage | REVIEWED - NO MATERIAL FINDING | Main | N/A | N/A | Medium | 59 files reviewed | none | No `.only`/`.skip`. |
 | `tests/*.test.mjs` task tracker/graph/ui/design | Unit tests | UI/domain regressions | REVIEWED - EXISTING FINDING COVERS IT | Main | N/A | N/A | Medium | 59 files reviewed | RA-010, RA-027 | Some control gaps are browser-level. |
-| `tests/browser/*app-shell*`, tree specs | Browser tests | Shell/tree/accessibility/DnD | REVIEWED - FINDING | Main, reviewer 3 | N/A | N/A | High | 26 specs reviewed | RA-022, RA-028 | Tree action keyboard gap not covered. |
+| `tests/browser/*app-shell*`, tree specs | Browser tests | Shell/tree/accessibility/DnD | REVIEWED - PARTIAL FINDING CLOSED | Main, reviewer 3 | N/A | N/A | High | 26 specs reviewed | RA-022, RA-028 | RA-022 keyboard action gap is now covered; RA-028 keyboard reorder decision remains. |
 | `tests/browser/campaign-map*.spec.mjs` | Browser tests | Campaign Map UI/data/presentation | REVIEWED - EXISTING FINDING COVERS IT | Main | N/A | N/A | High | 26 specs reviewed | RA-006, RA-011 | No new map finding. |
 | `tests/browser/task-tracker.spec.mjs` | Browser tests | Task Tracker workflows | REVIEWED - FINDING | Main, reviewer 3 | N/A | N/A | High | 26 specs reviewed | RA-006, RA-028 | Pointer DnD covered, keyboard reorder not. |
 | `tests/browser/knowledge-graph`, popup, property, tables specs | Browser tests | Graph/popup/properties/tables | REVIEWED - EXISTING FINDING COVERS IT | Main | N/A | N/A | High | 26 specs reviewed | RA-017, RA-018, RA-019 | Existing accessibility findings stand. |
@@ -398,7 +398,7 @@ This should not block the audit closure, but future cleanup should avoid growing
 | Rule Packages | No new data-safety finding; helper duplication remains low severity. |
 | World Packages | Import safety looked intentional; overlay/modality and manager size remain existing cleanup concerns. |
 | AppShell | No new shell product finding; topbar token debt confirmed. |
-| Tree | New keyboard action menu finding RA-022; pointer DnD remains functional. |
+| Tree | RA-022 keyboard action-menu finding is closed; pointer DnD remains functional. |
 | Presentation | No new material finding. |
 | Assets | New workspace-scoped render cache finding RA-024. |
 

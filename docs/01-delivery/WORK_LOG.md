@@ -6,6 +6,35 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.6 RCB-022 Tree Page Action Menu Keyboard Access
+
+### What Changed
+
+- Closed `RCB-022`, the sixth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-022 root cause with a failing browser regression: a focused tree row had no keyboard route to the same per-page action menu, and the focused row action button was becoming an extra Tab stop.
+- Updated the Tree keyboard handler so `Shift+F10`, the ContextMenu key and the Apps key open the existing row action menu for the focused `treeitem`.
+- Kept visible row action buttons outside the Tab order with `tabindex="-1"`, preserving the roving tree focus model instead of adding one stop per row.
+- Reused the existing tree context menu and shared popup lifecycle so menu arrow navigation, Escape close and focus return stay owned by the current overlay system.
+
+### Verification
+
+- Expected failure before fix: `npm run test:browser -- tests/browser/tree-accessibility.spec.mjs`.
+- Passed after fix: `npm run test:browser -- tests/browser/tree-accessibility.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-dnd-regression.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-virtualization.spec.mjs`.
+- Passed: `node --test tests\treeVirtualization.test.mjs tests\treeDropIntent.test.mjs tests\treeMovePlanner.test.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 587 files, 1 local delete candidate and 0 mojibake candidates.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run test` with 301 node tests.
+- Passed: `npm run verify` with 301 node tests, UI polish audit, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `git diff --check`.
+
+### Next
+
+- Next recommended RCB: `RCB-004`.
+
 ## 2026-08-11: 0.0.1.10.5 RCB-003 Native Desktop Smoke Failure Semantics
 
 ### What Changed
@@ -36,7 +65,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Next recommended RCB: `RCB-022`.
+- Completed by follow-up `0.0.1.10.6`; next recommended RCB is `RCB-004`.
 
 ## 2026-08-11: 0.0.1.10.4 RCB-002 Durable Tree Batch Rollback
 
@@ -63,7 +92,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Completed by follow-up `0.0.1.10.5`; next recommended RCB is `RCB-022`.
+- Completed by follow-ups `0.0.1.10.5` and `0.0.1.10.6`; next recommended RCB is `RCB-004`.
 
 ## 2026-08-11: 0.0.1.10.3 RCB-001B Metadata Index Consistency
 

@@ -58,11 +58,19 @@ let contextMenu =
 export function openTreeContextMenu(
   event,
   page,
-  renderTree
+  renderTree,
+  options =
+    {}
 ) {
 
   contextMenu =
     ensureTreeContextMenu();
+
+  const point =
+    getTreeContextMenuPoint(
+      event,
+      options
+    );
 
   /* Очищает старые кнопки меню */
   contextMenu.innerHTML = '';
@@ -246,8 +254,8 @@ export function openTreeContextMenu(
 
       openPopupAtPoint(
         contextMenu,
-        event.clientX,
-        event.clientY,
+        point.x,
+        point.y,
         {
           fallbackWidth: 220,
           fallbackHeight: 190
@@ -255,6 +263,72 @@ export function openTreeContextMenu(
       );
     }
   );
+}
+
+
+function getTreeContextMenuPoint(
+  event,
+  {
+    anchor = null,
+    point = null
+  } =
+    {}
+) {
+
+  if (
+    point &&
+    Number.isFinite(
+      point.x
+    ) &&
+    Number.isFinite(
+      point.y
+    )
+  ) {
+
+    return point;
+  }
+
+  if (
+    event &&
+    Number.isFinite(
+      event.clientX
+    ) &&
+    Number.isFinite(
+      event.clientY
+    ) &&
+    (
+      event.clientX !== 0 ||
+      event.clientY !== 0
+    )
+  ) {
+
+    return {
+      x:
+        event.clientX,
+      y:
+        event.clientY
+    };
+  }
+
+  const rect =
+    anchor?.getBoundingClientRect?.();
+
+  if (rect) {
+
+    return {
+      x:
+        rect.left + rect.width / 2,
+      y:
+        rect.top + rect.height / 2
+    };
+  }
+
+  return {
+    x:
+      0,
+    y:
+      0
+  };
 }
 
 

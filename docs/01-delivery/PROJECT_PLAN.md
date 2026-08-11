@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.10.0` Repository Cleanup & Consolidation.
 
-Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021` is closed; do not start the next RCB automatically.
+Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003` and `RCB-022` are closed; do not start the next RCB automatically.
 
 ## Execution Rules
 
@@ -123,7 +123,7 @@ WHY NOW: cleanup must be based on evidence, not taste. It should follow the audi
 
 SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11; `RCB-021` is closed in `0.0.1.10.1`, `RCB-001` is closed in `0.0.1.10.2`, `RCB-001B` is closed in `0.0.1.10.3`, `RCB-002` is closed in `0.0.1.10.4`, `RCB-003` is closed in `0.0.1.10.5` and the next recommended leaf is `RCB-022`.
+DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11; `RCB-021` is closed in `0.0.1.10.1`, `RCB-001` is closed in `0.0.1.10.2`, `RCB-001B` is closed in `0.0.1.10.3`, `RCB-002` is closed in `0.0.1.10.4`, `RCB-003` is closed in `0.0.1.10.5`, `RCB-022` is closed in `0.0.1.10.6` and the next recommended leaf is `RCB-004`.
 
 EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
 

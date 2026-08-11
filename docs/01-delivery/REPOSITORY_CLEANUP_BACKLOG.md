@@ -36,7 +36,7 @@ Owner approved starting `0.0.1.10.0` cleanup on 2026-08-11. Work remains one RCB
 | RCB-001B | P1 | Card metadata / repository | Done in `0.0.1.10.3` | Fix metadata edits so title, aliases, tags and type remove old index keys before storing new ones. | Unit tests mutate metadata before the command snapshot, prove old title/alias/tag/type lookups are removed, new lookups are present, empty transitions stay consistent and no full index rebuild runs. |
 | RCB-002 | P1 | Tree/storage data safety | Done in `0.0.1.10.4` | Make multi-page tree-position writes durable-all-or-rollback. | Storage tests force mid-batch write failure, prove already-written files plus memory/indexes are restored, and separately prove durable rollback write failure is surfaced with the original error attached. |
 | RCB-003 | P1 | Desktop smoke | Done in `0.0.1.10.5` | Make native desktop click-through fail on captured page/console errors with a narrow allowlist. | Native smoke status helper coverage proves clean pass, pageerror fail, console.error fail, console.warning diagnostic-only and exact allowlisted Chromium ResizeObserver pass. |
-| RCB-022 | P1 | Tree accessibility | Awaiting owner approval | Make the per-page tree action menu reachable from keyboard without adding multiple tab stops per row. | Browser test for focused tree item opening the same action menu by an approved keyboard command such as ContextMenu/Shift+F10. |
+| RCB-022 | P1 | Tree accessibility | Done in `0.0.1.10.6` | Make the per-page tree action menu reachable from keyboard without adding multiple tab stops per row. | Browser regression proves focused tree items open the same menu with `Shift+F10` and ContextMenu, menu arrows/Escape work, focus returns to the tree item, row actions stay out of Tab order and mouse opening still works. |
 | RCB-004 | P2 | Desktop gate / large workspace | Awaiting owner approval | Make `desktop:gate` status explicit when real large-workspace smoke is skipped, blocked or warning-bearing. | Gate tests for no workspace path, invalid workspace path and warning classification. |
 | RCB-005 | P2 | Backup / restore | Owner decision required | Add or explicitly defer pre-restore backup gate for `restoreWorkspaceBackup()`. | Browser/storage test for restore confirmation path; failed pre-restore backup must stop restore if implemented. |
 | RCB-006 | P2 | Page write boundary | Awaiting owner approval | Classify and migrate direct feature `writePageContent()` callers. | Focused tests for task tracker page action, template page creation, item picker create, token/map serializer save paths. |
@@ -80,13 +80,12 @@ These are not approved by this backlog:
 
 ## Owner Review Checklist
 
-After `RCB-002`, choose the next cleanup leaf before implementation starts:
+After `RCB-022`, choose the next cleanup leaf before implementation starts:
 
-1. Next approved backlog item or slice bundle. Current recommendation after `RCB-003`: `RCB-022`, then `RCB-004`.
-2. Whether `RCB-022` should follow immediately after data/release P1 work or wait for the broader accessibility slice.
-3. Whether RA-005/RCB-005 is urgent.
-4. Whether local artifact cleanup is allowed.
-5. Whether docs root exceptions should stay.
-6. Whether the next commit after this audit may touch production code.
+1. Next approved backlog item or slice bundle. Current recommendation after `RCB-022`: `RCB-004`.
+2. Whether RA-005/RCB-005 is urgent.
+3. Whether local artifact cleanup is allowed.
+4. Whether docs root exceptions should stay.
+5. Whether the next commit after this audit may touch production code.
 
 Until the next leaf is explicitly started, no further cleanup leaf should be implemented automatically.

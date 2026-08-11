@@ -258,7 +258,7 @@ test(
       )
     ).toHaveAttribute(
       'tabindex',
-      '0'
+      '-1'
     );
 
     await expect(
@@ -269,6 +269,118 @@ test(
       'tabindex',
       '-1'
     );
+
+    await page.keyboard.press(
+      'Shift+F10'
+    );
+
+    const treeContextMenu =
+      page.locator(
+        '#treeContextMenu'
+      );
+
+    await expect(
+      treeContextMenu
+    ).toBeVisible();
+
+    await expect(
+      treeContextMenu
+    ).toHaveAttribute(
+      'data-overlay-kind',
+      'context-menu'
+    );
+
+    await expect(
+      treeContextMenu
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'open'
+    );
+
+    await expect(
+      treeContextMenu
+    ).toHaveAttribute(
+      'role',
+      'menu'
+    );
+
+    const firstMenuItem =
+      treeContextMenu.locator(
+        '[role="menuitem"]'
+      ).first();
+
+    const secondMenuItem =
+      treeContextMenu.locator(
+        '[role="menuitem"]'
+      ).nth(
+        1
+      );
+
+    await expect(
+      firstMenuItem
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'ArrowDown'
+    );
+
+    await expect(
+      secondMenuItem
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      treeContextMenu
+    ).toBeHidden();
+
+    await expect(
+      root
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'ContextMenu'
+    );
+
+    await expect(
+      treeContextMenu
+    ).toBeVisible();
+
+    await expect(
+      firstMenuItem
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      root
+    ).toBeFocused();
+
+    await root.locator(
+      '.tree-actions'
+    ).click();
+
+    await expect(
+      treeContextMenu
+    ).toBeVisible();
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      treeContextMenu
+    ).toBeHidden();
+
+    await root.focus();
+
+    await expect(
+      root
+    ).toBeFocused();
 
     const focusRing =
       await root.evaluate(
@@ -323,7 +435,7 @@ test(
       )
     ).toHaveAttribute(
       'tabindex',
-      '0'
+      '-1'
     );
 
     await expect(

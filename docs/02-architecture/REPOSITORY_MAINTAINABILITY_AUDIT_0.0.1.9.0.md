@@ -23,7 +23,7 @@ The repository is usable and has many strong contracts, but the next work should
 
 Most UI design debt is now documented and contained by contracts, but several feature zones still carry local mini-systems from fast AI-assisted iteration: Knowledge Graph coordination, Properties popup layout ownership, map popup helper duplication and CSS token drift.
 
-Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002` and `RCB-003` are closed; the next recommended leaf is `RCB-022`.
+Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003` and `RCB-022` are closed; the next recommended leaf is `RCB-004`.
 
 ## Readiness For Future NF Work
 
@@ -443,6 +443,8 @@ Impact: keyboard users can navigate/open pages, but cannot reach per-page action
 
 Recommended cleanup leaf: add a real keyboard route for the tree row actions while preserving the roving tree focus model.
 
+Cleanup status: closed by `RCB-022` in `0.0.1.10.6`. The Tree keyboard owner now opens the existing row action menu from the focused `treeitem` with `Shift+F10`, ContextMenu and Apps keys; row action buttons remain visible/clickable but out of the Tab order, and the existing popup lifecycle handles menu focus, Escape close and focus return.
+
 ### RA-023 - P2 - Workspace load lacks a generation/cancel guard
 
 Evidence:
@@ -599,7 +601,7 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 
 ## Owner Decisions Needed
 
-1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001, `RCB-001B` / RA-001B, `RCB-002` / RA-002 and `RCB-003` / RA-003 are closed; the next recommendation is RA-022 tree action-menu keyboard access.
+1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001, `RCB-001B` / RA-001B, `RCB-002` / RA-002, `RCB-003` / RA-003 and `RCB-022` / RA-022 are closed; the next recommendation is RA-004 desktop gate/large-workspace status semantics.
 2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
 3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
 4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.

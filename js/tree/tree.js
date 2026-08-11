@@ -22,6 +22,10 @@ import {
 } from './treeRender.js';
 
 import {
+  openTreeContextMenu
+} from './treeContextMenu.js';
+
+import {
   getTreePageKeys
 } from './treeKeys.js';
 
@@ -671,6 +675,25 @@ function handleTreeKeyboardNavigation(
     return;
   }
 
+  if (
+    event.key === 'ContextMenu' ||
+    event.key === 'Apps' ||
+    (
+      event.key === 'F10' &&
+      event.shiftKey
+    )
+  ) {
+
+    event.preventDefault();
+    openFocusedTreeActionMenu(
+      event,
+      item,
+      page
+    );
+
+    return;
+  }
+
   if (event.key === 'Enter') {
 
     event.preventDefault();
@@ -678,6 +701,58 @@ function handleTreeKeyboardNavigation(
       item
     );
   }
+}
+
+
+function openFocusedTreeActionMenu(
+  event,
+  item,
+  page
+) {
+
+  focusedTreePageId =
+    page.id;
+
+  syncTreeRovingFocus(
+    event.currentTarget,
+    page.id
+  );
+
+  openTreeContextMenu(
+    event,
+    page,
+    renderTree,
+    {
+      anchor:
+        item,
+      point:
+        getTreeActionMenuKeyboardPoint(
+          item
+        )
+    }
+  );
+}
+
+
+function getTreeActionMenuKeyboardPoint(
+  item
+) {
+
+  const anchor =
+    item.querySelector(
+      '.tree-actions'
+    ) ||
+    item;
+
+  const rect =
+    anchor.getBoundingClientRect();
+
+  return {
+    x:
+      rect.left + rect.width / 2,
+    y:
+      rect.top + rect.height / 2
+  };
 }
 
 
@@ -1019,9 +1094,7 @@ function syncTreeRovingFocus(
     if (actions) {
 
       actions.tabIndex =
-        isTarget
-          ? 0
-          : -1;
+        -1;
     }
   });
 
