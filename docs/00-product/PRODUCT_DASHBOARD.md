@@ -23,7 +23,7 @@ Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
 2. Continue `0.0.1.10.0` cleanup only one RCB leaf at a time.
-3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024` and `RCB-025`. Continue only after the owner selects the next RCB leaf.
+3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025` and `RCB-006A`. `RCB-006` remains split; continue only after the owner selects the next sub-leaf.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -124,6 +124,7 @@ Recently closed:
 - `0.0.1.10.10 / RCB-023` workspace load generation guard: overlapping workspace loads now publish only from the latest load, so delayed scans cannot mix old pages into the active workspace.
 - `0.0.1.10.11 / RCB-024` workspace-scoped asset render cache: renderable image URL cache now includes workspace identity, preventing same-path image URLs/placeholders from leaking across workspace switches.
 - `0.0.1.10.12 / RCB-025` write queue durability semantics: `superseded-after-write` now depends on a newer write accepted into the queue, and successful queue settlement leaves the durable page file at the newest queued revision.
+- `0.0.1.10.13 / RCB-006A` Task Tracker page action write boundary: direct Task Tracker page action writes now go through `PageCommandService`, with rollback coverage; page templates, item sets and Campaign Map writes remain pending sub-leaves.
 
 Next owner action:
 

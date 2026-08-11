@@ -7,8 +7,8 @@ import {
 } from '../core/pageRecord.js';
 
 import {
-  writePageContent
-} from '../storage/storage.js';
+  persistPageContentCommand
+} from '../storage/pageCommandService.js';
 
 import {
   TaskTrackerModel
@@ -97,13 +97,15 @@ export async function addTaskToTrackerPage(
       }
     );
 
-  await writePageContent(
-    trackerPage,
-    content
-  );
-
-  trackerPage.content =
-    content;
+  await persistPageContentCommand({
+    page:
+      trackerPage,
+    content,
+    type:
+      'task-tracker-add-task',
+    reason:
+      'task-tracker-page-action'
+  });
 
   return task;
 }

@@ -255,6 +255,338 @@ aliases: []
 );
 
 test(
+  'task-tracker-page-action-adds-task-through-page-command-boundary',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            parseMarkdown
+          } = await import('/js/core/markdown.js');
+
+          const {
+            createTaskTrackerTemplate
+          } = await import('/js/templates/taskTracker.js');
+
+          const {
+            addTaskToTrackerPage
+          } = await import('/js/taskTracker/taskTrackerPageActions.js');
+
+          const {
+            readTaskTrackerData
+          } = await import('/js/taskTracker/taskTrackerReadData.js');
+
+          const {
+            clearPageCommandEvents,
+            getPageCommandEvents
+          } = await import('/js/storage/pageCommandService.js');
+
+          const {
+            clearWriteRevisions
+          } = await import('/js/storage/writeQueue.js');
+
+          const files =
+            new Map();
+
+          const failingPaths =
+            new Set();
+
+          const workspaceHandle = {
+            name:
+              'Task tracker command test workspace'
+          };
+
+          const adapter = {
+            kind:
+              'memory',
+            getWorkspaceHandle() {
+              return workspaceHandle;
+            },
+            setWorkspaceHandle() {},
+            async pickWorkspace() {
+              return workspaceHandle;
+            },
+            async restoreWorkspace() {
+              return workspaceHandle;
+            },
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+              return {};
+            },
+            async readText(path) {
+              if (!files.has(path)) {
+                throw new Error(`Missing file: ${path}`);
+              }
+
+              return files.get(path);
+            },
+            async writeText(path, content) {
+              if (failingPaths.has(path)) {
+                throw new Error('task tracker write denied');
+              }
+
+              files.set(
+                path,
+                String(content)
+              );
+            },
+            async readBinary() {
+              return new ArrayBuffer(0);
+            },
+            async writeBinary() {},
+            async listFiles() {
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          };
+
+          setStorageAdapter(
+            adapter
+          );
+
+          clearPageCommandEvents();
+          clearWriteRevisions();
+
+          function createTrackerPage(
+            id,
+            title
+          ) {
+
+            const template =
+              createTaskTrackerTemplate();
+
+            const content = `---
+id: ${id}
+parent: null
+order: 1
+tags: [task-tracker]
+template: taskTracker
+type: taskTracker
+aliases: []
+---
+
+${template.content}`;
+
+            return {
+              id,
+              path:
+                `/pages/${id}.md`,
+              name:
+                `${id}.md`,
+              parent:
+                null,
+              order:
+                1,
+              title,
+              tags:
+                ['task-tracker'],
+              template:
+                'taskTracker',
+              type:
+                'taskTracker',
+              aliases:
+                [],
+              relationships:
+                [],
+              content
+            };
+          }
+
+          function readTrackerDataFromContent(
+            content
+          ) {
+
+            const parsed =
+              parseMarkdown(
+                content
+              );
+
+            const wrapper =
+              document.createElement('div');
+
+            wrapper.innerHTML =
+              parsed.body;
+
+            return readTaskTrackerData(
+              wrapper.querySelector(
+                '.task-tracker-document'
+              )
+            );
+          }
+
+          const trackerPage =
+            createTrackerPage(
+              'tracker-command-page',
+              'Tracker Command Page'
+            );
+
+          const rollbackPage =
+            createTrackerPage(
+              'tracker-command-rollback-page',
+              'Tracker Command Rollback Page'
+            );
+
+          const rollbackOriginalContent =
+            rollbackPage.content;
+
+          files.set(
+            trackerPage.path,
+            trackerPage.content
+          );
+
+          files.set(
+            rollbackPage.path,
+            rollbackPage.content
+          );
+
+          setPages([
+            trackerPage,
+            rollbackPage
+          ]);
+
+          const task =
+            await addTaskToTrackerPage(
+              trackerPage
+            );
+
+          const savedContent =
+            await adapter.readText(
+              trackerPage.path
+            );
+
+          const savedData =
+            readTrackerDataFromContent(
+              savedContent
+            );
+
+          const commandEvents =
+            getPageCommandEvents();
+
+          failingPaths.add(
+            rollbackPage.path
+          );
+
+          let rollbackError =
+            '';
+
+          try {
+
+            await addTaskToTrackerPage(
+              rollbackPage
+            );
+
+          } catch (error) {
+
+            rollbackError =
+              String(
+                error?.message || error
+              );
+          }
+
+          return {
+            taskCreated:
+              Boolean(
+                task?.id
+              ),
+            savedTaskCount:
+              savedData.tasks.length,
+            savedTaskInFirstColumn:
+              savedData.columns[0]?.taskIds.includes(
+                task?.id
+              ),
+            pageRuntimeUpdated:
+              trackerPage.content === savedContent,
+            commandEvent:
+              commandEvents.find(event =>
+                event.type === 'task-tracker-add-task'
+              ) || null,
+            rollbackError,
+            rollbackRuntimeUnchanged:
+              rollbackPage.content === rollbackOriginalContent,
+            rollbackDurableUnchanged:
+              files.get(
+                rollbackPage.path
+              ) === rollbackOriginalContent
+          };
+        }
+      );
+
+    expect(
+      result.taskCreated
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.savedTaskCount
+    ).toBe(
+      1
+    );
+
+    expect(
+      result.savedTaskInFirstColumn
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.pageRuntimeUpdated
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.commandEvent
+    ).toMatchObject({
+      type: 'task-tracker-add-task',
+      status: 'completed',
+      affectedPages: [
+        'tracker-command-page'
+      ]
+    });
+
+    expect(
+      result.commandEvent?.writeRevision?.metadata?.reason
+    ).toBe(
+      'task-tracker-page-action'
+    );
+
+    expect(
+      result.rollbackError
+    ).toContain(
+      'task tracker write denied'
+    );
+
+    expect(
+      result.rollbackRuntimeUnchanged
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.rollbackDurableUnchanged
+    ).toBe(
+      true
+    );
+  }
+);
+
+test(
   'task-tracker-ui-migration-uses-compact-workbench-surface',
   async ({ page }) => {
 

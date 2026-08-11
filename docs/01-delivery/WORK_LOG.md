@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.13 RCB-006A Task Tracker Page Action Write Boundary
+
+### What Changed
+
+- Started split cleanup for `RCB-006` and deliberately kept it to one feature path instead of a giant rewrite.
+- Classified current direct `writePageContent()` callers:
+  - `ALLOWED LOW-LEVEL OWNER`: `writeQueue`, `PageCommandService` command/undo internals and `pageStorage` page/tree metadata writes.
+  - `ALLOWED APPROVED COMMAND WRAPPER`: `knowledgeGraphCommandBridge`.
+  - `MIGRATED`: `taskTrackerPageActions`.
+  - `BOUNDARY VIOLATION - PENDING`: page template creation, item picker creation and Campaign Map serializer/token helper writes.
+- Migrated Task Tracker page action task creation from direct `writePageContent()` to `persistPageContentCommand()`.
+- Preserved the existing behavior of adding a task to the first/backlog column, while making revision, rollback and repository notification use the shared page command boundary.
+- Did not change Task Tracker data model, UI, drag/drop or special-save behavior.
+
+### Verification
+
+- Passed: `node tools/run_browser_smoke.mjs task-tracker.spec.mjs`.
+- Passed: `npm run test` with 317 node tests.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser` with 130 browser tests.
+
+### Next
+
+- Continue `RCB-006` only after owner selection of the next sub-leaf: page templates, item sets or Campaign Map writes.
+
 ## 2026-08-11: 0.0.1.10.12 RCB-025 Write Queue Superseded-After-Write Durability
 
 ### What Changed
