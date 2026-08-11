@@ -6,6 +6,33 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.9 RCB-016 Async Page Open Generation Guard
+
+### What Changed
+
+- Closed `RCB-016`, the ninth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-016 root cause with a failing browser regression: a slow Campaign Map open could finish after a faster card open and overwrite the status bar with stale page-open completion text.
+- Added a monotonic page-open generation in `openPage()` at navigation intent time, before any pending autosave flush, so older queued opens cannot publish after a newer intent.
+- Updated `editorOpenPage` to re-check the generation before and after async render boundaries and before final status/tree completion.
+- Added optional `shouldContinue` hooks to Campaign Map render/restore paths for background assets, token image restore, fog canvas presentation sync and map music autoplay, without creating a global cancellation framework.
+- Kept already-safe read/restore work allowed to finish when useful, but stopped stale DOM/status/tree/presentation/store publication.
+
+### Verification
+
+- Expected failure before fix: `node tools/run_browser_smoke.mjs editor-autosave.spec.mjs -g "stale-async-campaign-map"` ended with `Открыта slow-map.md` in the status bar after the fast card was current.
+- Passed after fix: `node tools/run_browser_smoke.mjs editor-autosave.spec.mjs -g "stale-async-campaign-map"`.
+- Passed: `node tools/run_browser_smoke.mjs editor-autosave.spec.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs campaign-map-data.spec.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs campaign-map-ui.spec.mjs`.
+- Passed: `npm run test` with 312 node tests.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser` with 129 browser tests.
+
+### Next
+
+- Next cleanup leaf needs owner selection; do not start the next RCB automatically.
+
 ## 2026-08-11: 0.0.1.10.8 RCB-005 Pre-Restore Safety Backup
 
 ### What Changed

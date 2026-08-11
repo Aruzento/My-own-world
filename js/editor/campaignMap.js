@@ -385,8 +385,14 @@ function isEditableKeyTarget(
 
 
 export async function renderCampaignMap(
-  editor
+  editor,
+  options = {}
 ) {
+
+  const shouldContinue =
+    getCampaignMapRenderShouldContinue(
+      options
+    );
 
   const map =
     editor.querySelector('.campaign-map-document');
@@ -406,16 +412,31 @@ export async function renderCampaignMap(
   );
 
   await restoreMapBackground(
-    map
+    map,
+    {
+      shouldContinue
+    }
   );
+
+  if (!shouldContinue()) return;
 
   await restoreMapTokens(
-    map
+    map,
+    {
+      shouldContinue
+    }
   );
 
+  if (!shouldContinue()) return;
+
   await restoreFogCanvas(
-    map
+    map,
+    {
+      shouldContinue
+    }
   );
+
+  if (!shouldContinue()) return;
 
   restoreMapShapes(
     map
@@ -447,10 +468,25 @@ export async function renderCampaignMap(
   );
 
   await playFirstCampaignMapMusicForMapSwitch(
-    map
+    map,
+    {
+      shouldContinue
+    }
   );
 
+  if (!shouldContinue()) return;
+
   schedulePresentationSync();
+}
+
+
+function getCampaignMapRenderShouldContinue(
+  options = {}
+) {
+
+  return typeof options.shouldContinue === 'function'
+    ? options.shouldContinue
+    : () => true;
 }
 
 

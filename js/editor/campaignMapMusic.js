@@ -302,10 +302,18 @@ export async function playCampaignMapMusic(
 
 
 export async function playFirstCampaignMapMusicForMapSwitch(
-  map
+  map,
+  options = {}
 ) {
 
+  const shouldContinue =
+    typeof options.shouldContinue === 'function'
+      ? options.shouldContinue
+      : () => true;
+
   if (!map) return null;
+
+  if (!shouldContinue()) return null;
 
   if (
     activePlaybackMap &&
@@ -322,13 +330,25 @@ export async function playFirstCampaignMapMusicForMapSwitch(
 
   try {
 
-    return await playCampaignMapMusic(
+    const track =
+      await playCampaignMapMusic(
       map,
       {
         direction:
           'first'
       }
     );
+
+    if (!shouldContinue()) {
+
+      stopCampaignMapMusic(
+        map
+      );
+
+      return null;
+    }
+
+    return track;
 
   } catch (error) {
 

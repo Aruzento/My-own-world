@@ -98,6 +98,9 @@ import {
   state
 } from '../state.js';
 
+let openPageGeneration =
+  0;
+
 export function setupEditor() {
 
   setupAutosave(
@@ -190,24 +193,36 @@ export function openPage(
   options = {}
 ) {
 
-  const open =
-    () => openPageInEditor(
-      editor,
-      page,
-      {
-        ...options,
-        updateNavigationStack,
-        saveCurrentPage,
-        renderBackButtonIfNeeded: parsed => {
+  const openGeneration =
+    ++openPageGeneration;
 
-          renderEditorBackButton(
-            editor,
-            parsed,
-            openPage
-          );
+  const isOpenCurrent =
+    () => openGeneration === openPageGeneration;
+
+  const open =
+    () => {
+
+      if (!isOpenCurrent()) return false;
+
+      return openPageInEditor(
+        editor,
+        page,
+        {
+          ...options,
+          isOpenCurrent,
+          updateNavigationStack,
+          saveCurrentPage,
+          renderBackButtonIfNeeded: parsed => {
+
+            renderEditorBackButton(
+              editor,
+              parsed,
+              openPage
+            );
+          }
         }
-      }
-    );
+      );
+    };
 
   const pendingFlush =
     flushPendingAutosave(

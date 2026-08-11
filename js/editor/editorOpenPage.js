@@ -111,10 +111,14 @@ export async function openPageInEditor(
   options
 ) {
 
+  if (!isOpenCurrent(options)) return false;
+
   options.updateNavigationStack(
     page,
     options
   );
+
+  if (!isOpenCurrent(options)) return false;
 
   setCurrentPage(
     page
@@ -138,13 +142,18 @@ export async function openPageInEditor(
       )
     );
 
+  if (!isOpenCurrent(options)) return false;
+
   if (
     await renderSpecialPageIfNeeded(
       editor,
       page,
-      parsed
+      parsed,
+      options
     )
   ) return;
+
+  if (!isOpenCurrent(options)) return false;
 
   await renderCardPage(
     editor,
@@ -180,7 +189,8 @@ function applyParsedMetadataToCurrentPage(
 async function renderSpecialPageIfNeeded(
   editor,
   page,
-  parsed
+  parsed,
+  options
 ) {
 
   if (
@@ -197,7 +207,8 @@ async function renderSpecialPageIfNeeded(
     );
 
     completeOpenPage(
-      page
+      page,
+      options
     );
 
     return true;
@@ -210,11 +221,16 @@ async function renderSpecialPageIfNeeded(
   ) {
 
     await renderCampaignMap(
-      editor
+      editor,
+      {
+        shouldContinue:
+          () => isOpenCurrent(options)
+      }
     );
 
     completeOpenPage(
-      page
+      page,
+      options
     );
 
     return true;
@@ -231,7 +247,8 @@ async function renderSpecialPageIfNeeded(
     );
 
     completeOpenPage(
-      page
+      page,
+      options
     );
 
     return true;
@@ -248,7 +265,8 @@ async function renderSpecialPageIfNeeded(
     );
 
     completeOpenPage(
-      page
+      page,
+      options
     );
 
     return true;
@@ -265,7 +283,8 @@ async function renderSpecialPageIfNeeded(
     );
 
     completeOpenPage(
-      page
+      page,
+      options
     );
 
     return true;
@@ -346,22 +365,40 @@ async function renderCardPage(
     editor
   );
 
+  if (!isOpenCurrent(options)) return false;
+
   options.renderBackButtonIfNeeded(
     parsed
   );
 
   completeOpenPage(
-    page
+    page,
+    options
   );
 }
 
 function completeOpenPage(
-  page
+  page,
+  options = {}
 ) {
+
+  if (!isOpenCurrent(options)) return false;
 
   setStatus(
     `Открыта ${page.name}`
   );
 
   renderTree();
+
+  return true;
+}
+
+
+function isOpenCurrent(
+  options = {}
+) {
+
+  return typeof options.isOpenCurrent === 'function'
+    ? options.isOpenCurrent()
+    : true;
 }

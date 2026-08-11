@@ -182,8 +182,14 @@ export async function addMapToken(
 
 
 export async function restoreMapTokens(
-  map
+  map,
+  options = {}
 ) {
+
+  const shouldContinue =
+    typeof options.shouldContinue === 'function'
+      ? options.shouldContinue
+      : () => true;
 
   const pageLookup =
     createPageLookup();
@@ -243,9 +249,13 @@ export async function restoreMapTokens(
         pageLookup
       }
     );
+
+    if (!shouldContinue()) return;
   }
 
   if (playerTokenStateChanged) {
+
+    if (!shouldContinue()) return;
 
     refreshCampaignMapStore(
       map
@@ -888,8 +898,14 @@ export async function changeMapImage(
 
 
 export async function restoreMapBackground(
-  map
+  map,
+  options = {}
 ) {
+
+  const shouldContinue =
+    typeof options.shouldContinue === 'function'
+      ? options.shouldContinue
+      : () => true;
 
   const stage =
     map.querySelector('.campaign-map-stage');
@@ -909,6 +925,8 @@ export async function restoreMapBackground(
         asset
       );
 
+    if (!shouldContinue()) return;
+
     background.style.backgroundImage =
       `url("${url}")`;
 
@@ -916,7 +934,11 @@ export async function restoreMapBackground(
       map
     );
 
+    if (!shouldContinue()) return;
+
   } catch (error) {
+
+    if (!shouldContinue()) return;
 
     background.style.backgroundImage =
       '';

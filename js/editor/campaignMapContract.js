@@ -71,8 +71,14 @@ export function serializeCampaignMapHTML(
 
 
 export function restoreFogCanvas(
-  map
+  map,
+  options = {}
 ) {
+
+  const shouldContinue =
+    typeof options.shouldContinue === 'function'
+      ? options.shouldContinue
+      : () => true;
 
   const stage =
     map.querySelector('.campaign-map-stage');
@@ -101,6 +107,8 @@ export function restoreFogCanvas(
 
   if (!fogImage) {
 
+    if (!shouldContinue()) return Promise.resolve();
+
     syncPresentation();
     return Promise.resolve();
   }
@@ -111,6 +119,12 @@ export function restoreFogCanvas(
   return new Promise(resolve => {
 
     image.onload = () => {
+
+      if (!shouldContinue()) {
+
+        resolve();
+        return;
+      }
 
       context.clearRect(
         0,
@@ -132,6 +146,12 @@ export function restoreFogCanvas(
     };
 
     image.onerror = () => {
+
+      if (!shouldContinue()) {
+
+        resolve();
+        return;
+      }
 
       syncPresentation();
       resolve();

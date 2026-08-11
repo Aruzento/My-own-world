@@ -448,3 +448,318 @@ aliases: []
     );
   }
 );
+
+
+test(
+  'editor-open-page-ignores-stale-async-campaign-map-completion',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setAssetAdapter
+          } = await import('/js/storage/assetAdapter.js');
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            openPage
+          } = await import('/js/editor/editor.js');
+
+          const {
+            renderTree
+          } = await import('/js/tree/tree.js');
+
+          const files =
+            new Map();
+
+          setStorageAdapter({
+            kind:
+              'memory',
+            getWorkspaceHandle() {
+              return {
+                name:
+                  'Async open test workspace'
+              };
+            },
+            setWorkspaceHandle() {},
+            async pickWorkspace() {
+              return {};
+            },
+            async restoreWorkspace() {
+              return {};
+            },
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+              return {};
+            },
+            async readText(path) {
+              return files.get(path) || '';
+            },
+            async writeText(path, content) {
+              files.set(
+                path,
+                String(content)
+              );
+            },
+            async readBinary() {
+              return new TextEncoder()
+                .encode('<svg xmlns="http://www.w3.org/2000/svg"></svg>')
+                .buffer;
+            },
+            async writeBinary() {},
+            async listFiles() {
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          });
+
+          let releaseSlowAsset;
+
+          const slowAssetReleased =
+            new Promise(resolve => {
+
+              releaseSlowAsset =
+                resolve;
+            });
+
+          setAssetAdapter({
+            async importFile() {
+              return {
+                path:
+                  'unused.png',
+                url:
+                  ''
+              };
+            },
+            async resolveUrl(path) {
+
+              if (path === 'slow-bg.png') {
+
+                await slowAssetReleased;
+              }
+
+              return 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==';
+            },
+            async exists() {
+              return true;
+            },
+            async remove() {},
+            async findOrphans() {
+              return [];
+            }
+          });
+
+          const createMapContent =
+            title => `---
+id: slow-map
+parent: null
+order: 1
+tags: [campaign-map]
+template: campaignMap
+type: campaignMap
+aliases: []
+---
+
+<div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+  <div class="campaign-map-topbar" contenteditable="false">
+    <h1 class="campaign-map-title singleline-field" contenteditable="true">${title}</h1>
+  </div>
+  <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" data-map-asset="slow-bg.png" data-map-music-state="" contenteditable="false">
+    <div class="campaign-map-viewport">
+      <div class="campaign-map-background"></div>
+      <div class="campaign-map-object-layer"></div>
+      <canvas class="campaign-map-fog-canvas"></canvas>
+    </div>
+  </div>
+</div>`;
+
+          const createCardContent =
+            title => `---
+id: fast-card
+parent: null
+order: 2
+tags: []
+template: card
+type: note
+aliases: []
+---
+
+<div class="entity-layout card-shell" contenteditable="false">
+  <h1>${title}</h1>
+  <div class="rich-text-field" contenteditable="true" data-persistent-editable="true">Fast card body</div>
+</div>`;
+
+          const slowMap =
+            {
+              id:
+                'slow-map',
+              name:
+                'slow-map.md',
+              path:
+                '/pages/slow-map.md',
+              parent:
+                null,
+              order:
+                1,
+              title:
+                'Slow Map',
+              template:
+                'campaignMap',
+              type:
+                'campaignMap',
+              tags:
+                ['campaign-map'],
+              aliases:
+                [],
+              relationships:
+                [],
+              content:
+                createMapContent(
+                  'Slow Map'
+                )
+            };
+
+          const fastCard =
+            {
+              id:
+                'fast-card',
+              name:
+                'fast-card.md',
+              path:
+                '/pages/fast-card.md',
+              parent:
+                null,
+              order:
+                2,
+              title:
+                'Fast Card',
+              template:
+                'card',
+              type:
+                'note',
+              tags:
+                [],
+              aliases:
+                [],
+              relationships:
+                [],
+              content:
+                createCardContent(
+                  'Fast Card'
+                )
+            };
+
+          state.pages =
+            [
+              slowMap,
+              fastCard
+            ];
+
+          renderTree();
+
+          const slowOpen =
+            openPage(
+              slowMap
+            );
+
+          await Promise.resolve();
+
+          await openPage(
+            fastCard
+          );
+
+          releaseSlowAsset();
+
+          await slowOpen;
+
+          await new Promise(resolve => {
+
+            requestAnimationFrame(
+              () => requestAnimationFrame(
+                resolve
+              )
+            );
+          });
+
+          const editor =
+            document.querySelector(
+              '#editorArea'
+            );
+
+          const statusbar =
+            document.querySelector(
+              '#statusbar'
+            );
+
+          return {
+            currentPageId:
+              state.currentPage?.id || '',
+            editorTitle:
+              editor.querySelector('h1')?.textContent?.trim() || '',
+            hasStaleCampaignMap:
+              Boolean(
+                editor.querySelector(
+                  '.campaign-map-document'
+                )
+              ),
+            status:
+              statusbar?.textContent || '',
+            currentTreeItem:
+              document.querySelector(
+                '[role="treeitem"][aria-current="page"]'
+              )?.textContent || ''
+          };
+        }
+      );
+
+    expect(
+      result.currentPageId
+    ).toBe(
+      'fast-card'
+    );
+
+    expect(
+      result.editorTitle
+    ).toBe(
+      'Fast Card'
+    );
+
+    expect(
+      result.hasStaleCampaignMap
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.status
+    ).toContain(
+      'fast-card.md'
+    );
+
+    expect(
+      result.status
+    ).not.toContain(
+      'slow-map.md'
+    );
+
+    expect(
+      result.currentTreeItem
+    ).toContain(
+      'Fast Card'
+    );
+  }
+);

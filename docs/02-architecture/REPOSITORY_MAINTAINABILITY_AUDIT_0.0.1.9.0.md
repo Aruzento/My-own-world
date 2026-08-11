@@ -327,6 +327,8 @@ Impact: intermittent stale DOM/state behavior can appear when moving quickly bet
 
 Recommended cleanup leaf: add an `openPageToken` or `AbortController` guard and re-check the current page after awaited render phases.
 
+Cleanup status: closed by `RCB-016` in `0.0.1.10.9`. `openPage()` now assigns a monotonic generation at navigation intent time, before any pending autosave flush. `editorOpenPage` rechecks that generation before and after awaited render boundaries, and Campaign Map render/restore helpers receive an optional `shouldContinue` hook so stale map asset/fog/token/music completion cannot publish store, status, tree or presentation side effects after a newer page is open.
+
 ### RA-017 - P2 - Table toolbar has weak keyboard/accessibility ownership
 
 Evidence:
