@@ -419,19 +419,33 @@ async function persistCurrentPage(
     'saving'
   );
 
-  const result =
-    await persistPageContentCommand({
-    page:
-      state.currentPage,
-    content,
-    previousPage,
-    type:
-      previousPage?.title !== state.currentPage.title
-        ? 'rename-page'
-        : 'update-page-content',
-    reason:
-      'special-save'
-  });
+  let result;
+
+  try {
+
+    result =
+      await persistPageContentCommand({
+        page:
+          state.currentPage,
+        content,
+        previousPage,
+        type:
+          previousPage?.title !== state.currentPage.title
+            ? 'rename-page'
+            : 'update-page-content',
+        reason:
+          'special-save'
+      });
+
+  } catch (error) {
+
+    setSaveStatus(
+      'error',
+      `Save error: ${error?.message || error}`
+    );
+
+    throw error;
+  }
 
   if (result?.stale) {
 

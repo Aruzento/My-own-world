@@ -6,6 +6,25 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.15 RCB-026 Rule Tree Save Ownership
+
+### What Changed
+
+- Traced the Rule Tree save lifecycle and confirmed the ambiguity from `RA-026`: Rule Tree UI actions already committed JSON and called the editor special-save path, but ordinary `input` autosave did not dispatch to the Rule Tree serializer.
+- Made `editor/autosave.js` treat Rule Tree as a special entity for generic autosave: it now has a Rule Tree editor/current-page mismatch guard and serializes through `serializeRuleTreeHTML()`.
+- Kept Rule Tree user/model behavior unchanged: `ruleTreeEvents.js` still mutates only `RuleTreeModel`, commits JSON to `data-rule-tree-data`, re-renders runtime UI and calls the existing editor save callback.
+- Fixed special-save error state ownership by making the existing `editorSpecialSave.js` persist helper set `saveState=error` before rethrowing write failures.
+- Documented the owner split for normal input, autosave, explicit save, navigation flush and error state in `RULE_TREE_CONTRACT.md`.
+
+### Verification
+
+- Passed: `node tools/run_browser_smoke.mjs rule-tree.spec.mjs`.
+- The new browser regression covers edit+autosave, edit+immediate explicit save, edit+navigation flush, save failure and repeated save. It also proves durable Rule Tree content keeps `data-rule-tree-data` and excludes runtime `.rule-tree-board`.
+
+### Next
+
+- Continue cleanup only after owner selection of the next RCB leaf.
+
 ## 2026-08-11: 0.0.1.10.14 RCB-007A Item Sets Page Read Boundary
 
 ### What Changed

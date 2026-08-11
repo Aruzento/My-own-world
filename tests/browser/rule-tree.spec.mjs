@@ -501,6 +501,486 @@ test(
 
 
 test(
+  'rule-tree-save-ownership-is-consistent-across-autosave-explicit-navigation-and-failure',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            setCurrentPage,
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            openPage,
+            saveCurrentPage
+          } = await import('/js/editor/editor.js');
+
+          const {
+            buildPageRecordContent
+          } = await import('/js/core/pageRecord.js');
+
+          const {
+            createRuleTreeTemplate
+          } = await import('/js/templates/ruleTree.js');
+
+          const {
+            readRuleTreeDataFromHTML
+          } = await import('/js/ruleTree/ruleTreeReadData.js');
+
+          const files =
+            new Map();
+
+          const failingPaths =
+            new Set();
+
+          const writes =
+            [];
+
+          setStorageAdapter({
+            kind:
+              'memory',
+            getWorkspaceHandle() {
+              return {
+                name:
+                  'Rule Tree save ownership workspace'
+              };
+            },
+            setWorkspaceHandle() {},
+            async pickWorkspace() {
+              return {};
+            },
+            async restoreWorkspace() {
+              return {};
+            },
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+              return {};
+            },
+            async readText(path) {
+              return files.get(path) || '';
+            },
+            async writeText(path, content) {
+              writes.push({
+                path,
+                content:
+                  String(content)
+              });
+
+              if (
+                failingPaths.has(
+                  path
+                )
+              ) {
+
+                throw new Error(
+                  'rule tree write denied'
+                );
+              }
+
+              files.set(
+                path,
+                String(content)
+              );
+            },
+            async readBinary() {
+              return new ArrayBuffer(0);
+            },
+            async writeBinary() {},
+            async listFiles() {
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          });
+
+          function createPage(
+            id,
+            title,
+            body,
+            metadata = {}
+          ) {
+
+            const content =
+              buildPageRecordContent({
+                id,
+                parent:
+                  null,
+                order:
+                  metadata.order || 1,
+                tags:
+                  metadata.tags || [],
+                template:
+                  metadata.template || 'card',
+                type:
+                  metadata.type || 'note',
+                aliases:
+                  [],
+                relationships:
+                  [],
+                body
+              });
+
+            return {
+              id,
+              title,
+              path:
+                `/pages/${id}.md`,
+              name:
+                `${id}.md`,
+              parent:
+                null,
+              order:
+                metadata.order || 1,
+              tags:
+                metadata.tags || [],
+              template:
+                metadata.template || 'card',
+              type:
+                metadata.type || 'note',
+              aliases:
+                [],
+              relationships:
+                [],
+              content
+            };
+          }
+
+          const template =
+            createRuleTreeTemplate();
+
+          const ruleTreePage =
+            createPage(
+              'rules',
+              'Rules',
+              template.content,
+              {
+                tags:
+                  ['rule-tree'],
+                template:
+                  'ruleTree',
+                type:
+                  'ruleTree'
+              }
+            );
+
+          const notePage =
+            createPage(
+              'note',
+              'Note',
+              '<h1>Note</h1><p>Plain page</p>',
+              {
+                tags:
+                  ['card'],
+                template:
+                  'card',
+                type:
+                  'note',
+                order:
+                  2
+              }
+            );
+
+          files.set(
+            ruleTreePage.path,
+            ruleTreePage.content
+          );
+
+          files.set(
+            notePage.path,
+            notePage.content
+          );
+
+          setPages([
+            ruleTreePage,
+            notePage
+          ]);
+
+          await openPage(
+            ruleTreePage
+          );
+
+          const editor =
+            document.querySelector(
+              '#editorArea'
+            );
+
+          const wait =
+            ms => new Promise(resolve =>
+              setTimeout(
+                resolve,
+                ms
+              )
+            );
+
+          function setRuleTreeTitle(
+            title
+          ) {
+
+            const titleElement =
+              editor.querySelector(
+                '.rule-tree-title'
+              );
+
+            titleElement.textContent =
+              title;
+
+            titleElement.dispatchEvent(
+              new InputEvent(
+                'input',
+                {
+                  bubbles:
+                    true,
+                  inputType:
+                    'insertText',
+                  data:
+                    title
+                }
+              )
+            );
+          }
+
+          function readSavedRuleTreeState() {
+
+            const content =
+              files.get(
+                ruleTreePage.path
+              );
+
+            const body =
+              content.split('---').slice(2).join('---');
+
+            return {
+              content,
+              hasRuntimeBoard:
+                content.includes(
+                  'rule-tree-board'
+                ),
+              hasRuleTreeData:
+                content.includes(
+                  'data-rule-tree-data'
+                ),
+              data:
+                readRuleTreeDataFromHTML(
+                  body
+                )
+            };
+          }
+
+          setRuleTreeTitle(
+            'Autosave Rules'
+          );
+
+          await wait(
+            650
+          );
+
+          const autosaveState =
+            readSavedRuleTreeState();
+
+          setRuleTreeTitle(
+            'Explicit Rules'
+          );
+
+          await saveCurrentPage();
+
+          const explicitState =
+            readSavedRuleTreeState();
+
+          setRuleTreeTitle(
+            'Navigation Rules'
+          );
+
+          await openPage(
+            notePage
+          );
+
+          const navigationState =
+            readSavedRuleTreeState();
+
+          await openPage(
+            ruleTreePage
+          );
+
+          setRuleTreeTitle(
+            'Failure Rules'
+          );
+
+          failingPaths.add(
+            ruleTreePage.path
+          );
+
+          let failureMessage =
+            '';
+
+          try {
+
+            await saveCurrentPage();
+
+          } catch (error) {
+
+            failureMessage =
+              String(
+                error?.message || error
+              );
+          }
+
+          const failureStatus =
+            document
+              .getElementById(
+                'statusbar'
+              )
+              ?.dataset
+              ?.saveState || '';
+
+          const afterFailureState =
+            readSavedRuleTreeState();
+
+          failingPaths.delete(
+            ruleTreePage.path
+          );
+
+          setRuleTreeTitle(
+            'Repeated Rules'
+          );
+
+          await saveCurrentPage();
+          await saveCurrentPage();
+
+          const repeatedState =
+            readSavedRuleTreeState();
+
+          return {
+            autosave:
+              autosaveState,
+            explicit:
+              explicitState,
+            navigation:
+              navigationState,
+            failureMessage,
+            failureStatus,
+            afterFailureTitle:
+              afterFailureState.content.includes(
+                'Failure Rules'
+              ),
+            repeated:
+              repeatedState,
+            finalCurrentPage:
+              state.currentPage?.id || null,
+            writeCount:
+              writes.length
+          };
+        }
+      );
+
+    expect(
+      result.autosave.content
+    ).toContain(
+      'Autosave Rules'
+    );
+
+    expect(
+      result.autosave.hasRuleTreeData
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.autosave.hasRuntimeBoard
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.explicit.content
+    ).toContain(
+      'Explicit Rules'
+    );
+
+    expect(
+      result.explicit.hasRuntimeBoard
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.navigation.content
+    ).toContain(
+      'Navigation Rules'
+    );
+
+    expect(
+      result.navigation.hasRuntimeBoard
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.failureMessage
+    ).toContain(
+      'rule tree write denied'
+    );
+
+    expect(
+      result.failureStatus
+    ).toBe(
+      'error'
+    );
+
+    expect(
+      result.afterFailureTitle
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.repeated.content
+    ).toContain(
+      'Repeated Rules'
+    );
+
+    expect(
+      result.repeated.hasRuntimeBoard
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.repeated.data.version
+    ).toBe(
+      1
+    );
+
+    expect(
+      result.finalCurrentPage
+    ).toBe(
+      'rules'
+    );
+
+    expect(
+      result.writeCount
+    ).toBeGreaterThanOrEqual(
+      5
+    );
+  }
+);
+
+
+test(
   'rule-tree-package-manager-saves-loads-and-reports-conflicts',
   async ({ page }) => {
 

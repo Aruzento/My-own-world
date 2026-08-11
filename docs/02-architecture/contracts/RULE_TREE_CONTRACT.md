@@ -174,7 +174,16 @@ Runtime UI Rule Tree может редактировать группу, кат�
 - `ruleTreeEvents.js` меняет данные только через `RuleTreeModel`.
 - `ruleTreeContract.js` отвечает за `isRuleTreePage()` и `serializeRuleTreeHTML()`.
 - `editorSpecialSave.js` сохраняет Rule Tree как special entity с `template: ruleTree` и `type: ruleTree`.
+- `editor/autosave.js` also treats Rule Tree as a special entity for generic input autosave and uses `serializeRuleTreeHTML()` instead of the ordinary card/block serializer.
 - `safeHtmlSanitizer.js` разрешает только безопасный JSON script `data-rule-tree-data`.
+
+Save ownership after `0.0.1.10.15 / RCB-026`:
+
+- normal Rule Tree UI actions: `ruleTreeEvents.js` mutates only `RuleTreeModel`, commits JSON to `data-rule-tree-data`, re-renders runtime UI and calls the existing editor save callback;
+- normal title/input autosave: `editor/autosave.js` owns debounce, mismatch protection, `reason: autosave`, and delegates Rule Tree body serialization to `serializeRuleTreeHTML()`;
+- explicit save: `editorSpecialSave.js` owns immediate special-entity save, `reason: special-save`, and delegates Rule Tree body serialization to `serializeRuleTreeHTML()`;
+- close/navigation: `editor.js` flushes the pending autosave before opening another page, so Rule Tree input changes have the same deterministic path as ordinary editor input;
+- error state: autosave and explicit special-save set `saveState=error` and rethrow/report the write failure; the failed write must not silently replace durable Rule Tree content.
 
 ## Legacy Bridge
 

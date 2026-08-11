@@ -23,7 +23,7 @@ Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
 2. Continue `0.0.1.10.0` cleanup only one RCB leaf at a time.
-3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A` and `RCB-007A`. `RCB-006` and `RCB-007` remain split; continue only after the owner selects the next sub-leaf.
+3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-007A` and `RCB-026`. `RCB-006` and `RCB-007` remain split; continue only after the owner selects the next sub-leaf.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -126,6 +126,7 @@ Recently closed:
 - `0.0.1.10.12 / RCB-025` write queue durability semantics: `superseded-after-write` now depends on a newer write accepted into the queue, and successful queue settlement leaves the durable page file at the newest queued revision.
 - `0.0.1.10.13 / RCB-006A` Task Tracker page action write boundary: direct Task Tracker page action writes now go through `PageCommandService`, with rollback coverage; page templates, item sets and Campaign Map writes remain pending sub-leaves.
 - `0.0.1.10.14 / RCB-007A` Item Sets page read boundary: item set picker/chip lookups now read through `PageRepository`, while Knowledge Graph, World Package and tree-adjacent read slices remain pending.
+- `0.0.1.10.15 / RCB-026` Rule Tree save ownership: Rule Tree autosave now uses the same clean serializer contract as explicit special-save, navigation flush is covered, and special-save failures set an error state instead of leaving `saving`.
 
 Next owner action:
 

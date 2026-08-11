@@ -32,6 +32,10 @@ import {
 } from '../taskTracker/taskTracker.js';
 
 import {
+  serializeRuleTreeHTML
+} from '../ruleTree/ruleTree.js';
+
+import {
   serializeKnowledgeGraphHTML
 } from '../wiki/knowledgeGraphPage.js';
 
@@ -156,6 +160,20 @@ export async function saveCurrentPage(
 
     console.warn(
       'Autosave skipped: current page and knowledge graph editor state are out of sync.'
+    );
+
+    return;
+  }
+
+  if (
+    isRuleTreeEditorMismatch(
+      editor,
+      page
+    )
+  ) {
+
+    console.warn(
+      'Autosave skipped: current page and rule tree editor state are out of sync.'
     );
 
     return;
@@ -434,6 +452,24 @@ function isKnowledgeGraphEditorMismatch(
 }
 
 
+function isRuleTreeEditorMismatch(
+  editor,
+  page = state.currentPage
+) {
+
+  const editorHasRuleTree =
+    Boolean(
+      editor.querySelector('.rule-tree-document')
+    );
+
+  const currentIsRuleTree =
+    page?.template === 'ruleTree' ||
+    page?.type === 'ruleTree';
+
+  return editorHasRuleTree !== currentIsRuleTree;
+}
+
+
 function getSerializedEditorHTML(
   editor,
   page = state.currentPage
@@ -458,6 +494,18 @@ function getSerializedEditorHTML(
 
     return sanitizePersistentHTMLOnSave(
       serializeTaskTrackerHTML(
+        editor
+      )
+    );
+  }
+
+  if (
+    page?.template === 'ruleTree' ||
+    page?.type === 'ruleTree'
+  ) {
+
+    return sanitizePersistentHTMLOnSave(
+      serializeRuleTreeHTML(
         editor
       )
     );

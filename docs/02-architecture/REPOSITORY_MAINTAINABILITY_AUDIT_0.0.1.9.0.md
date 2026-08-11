@@ -541,6 +541,14 @@ Impact: Rule Tree persistence depends on which save path fires, increasing the c
 
 Recommended cleanup leaf: consolidate or explicitly document Rule Tree save ownership and add a save-path regression for autosave versus explicit save.
 
+Cleanup status: closed by `RCB-026` in `0.0.1.10.15`. Rule Tree save ownership is now explicit:
+
+- `ruleTreeEvents.js` owns UI action mutation through `RuleTreeModel`, commits JSON to `data-rule-tree-data`, re-renders runtime UI and calls the existing editor save callback.
+- `editor/autosave.js` owns debounced normal input/autosave, now guards Rule Tree editor/current-page mismatch and serializes Rule Tree bodies through `serializeRuleTreeHTML()`.
+- `editorSpecialSave.js` owns immediate explicit special-save and uses the same Rule Tree serializer contract.
+- `editor.js` owns navigation flush through `flushPendingAutosave()` before page open.
+- autosave and explicit special-save now both set error save state on write failure. Browser regression covers autosave, explicit save, navigation flush, failed write and repeated save.
+
 ### RA-027 - P2 - Card type custom select lacks accessible menu semantics
 
 Evidence:
