@@ -31,14 +31,22 @@ This backlog is plan-only. Do not implement these items until the owner approves
 
 | ID | Priority | Owner area | Status | Cleanup slice | Regression target |
 | --- | --- | --- | --- | --- | --- |
+| RCB-021 | P1 | Editor autosave lifecycle | Awaiting owner approval | Prevent pending autosave loss when switching pages during the debounce window. | Browser test for edit text, immediately open another page, then confirm the original page content was saved or explicitly flushed/cancelled safely. |
 | RCB-001 | P1 | Page command / repository | Awaiting owner approval | Fix rollback notification so `PageRepository/PageIndex` tracks the restored live page after failed page command rollback. | Unit test for failed `persistPageContentCommand`; repository object and `state.pages` object remain aligned. |
 | RCB-001B | P1 | Card metadata / repository | Awaiting owner approval | Fix metadata edits so title, aliases, tags and type remove old index keys before storing new ones. | Unit tests for changing/removing title, alias, tag and type; PageRepository queries must not return old metadata buckets. |
 | RCB-002 | P1 | Tree/storage data safety | Awaiting owner approval | Make multi-page tree-position writes durable-all-or-rollback. | Storage test that forces a mid-batch write failure and proves disk and memory are restored. |
 | RCB-003 | P1 | Desktop smoke | Awaiting owner approval | Make native desktop click-through fail on captured page/console errors with a narrow allowlist. | Native smoke unit/helper coverage plus a simulated page error fixture if practical. |
+| RCB-022 | P1 | Tree accessibility | Awaiting owner approval | Make the per-page tree action menu reachable from keyboard without adding multiple tab stops per row. | Browser test for focused tree item opening the same action menu by an approved keyboard command such as ContextMenu/Shift+F10. |
 | RCB-004 | P2 | Desktop gate / large workspace | Awaiting owner approval | Make `desktop:gate` status explicit when real large-workspace smoke is skipped, blocked or warning-bearing. | Gate tests for no workspace path, invalid workspace path and warning classification. |
 | RCB-005 | P2 | Backup / restore | Owner decision required | Add or explicitly defer pre-restore backup gate for `restoreWorkspaceBackup()`. | Browser/storage test for restore confirmation path; failed pre-restore backup must stop restore if implemented. |
 | RCB-006 | P2 | Page write boundary | Awaiting owner approval | Classify and migrate direct feature `writePageContent()` callers. | Focused tests for task tracker page action, template page creation, item picker create, token/map serializer save paths. |
 | RCB-007 | P2 | Page read boundary | Awaiting owner approval | Reduce feature-level `state.pages` lookups using existing PageRepository APIs. | Unit/browser coverage for graph lookup, item picker, world package preview and tree drag paths touched by the slice. |
+| RCB-023 | P2 | Workspace load lifecycle | Awaiting owner approval | Add a load generation/cancel guard so overlapping restore/open workspace loads cannot mix `state.pages`. | Unit or browser harness with delayed storage scans proving stale load completion cannot publish pages after a newer load. |
+| RCB-024 | P2 | Asset cache / workspace switching | Awaiting owner approval | Scope or clear renderable image URL cache when the active workspace changes. | Browser/unit test for two workspaces with the same relative asset path and different renderable URLs/placeholders. |
+| RCB-025 | P2 | Write queue durability | Awaiting owner approval | Decide and harden the `superseded-after-write` crash window for page writes. | Write queue test where an older write is superseded during storage write and the final durable state is explicit. |
+| RCB-026 | P2 | Rule Tree save ownership | Awaiting owner approval | Consolidate or document Rule Tree autosave versus explicit special-save ownership. | Regression proving Rule Tree edits persist through the same expected save path after input/autosave and explicit save. |
+| RCB-027 | P2 | Card type control accessibility | Awaiting owner approval | Give the custom card type control shared/select-like keyboard, ARIA and overlay-layer behavior. | Browser accessibility test for name, expanded state, Escape, arrow navigation and selection without mouse. |
+| RCB-028 | P2 | Keyboard reorder accessibility | Owner decision required | Decide whether Tree and Task Tracker reordering need keyboard alternatives in v1 stabilization or are deferred. | If implemented: keyboard reorder regression for tree rows, task cards and task columns; if deferred: documented limitation. |
 | RCB-008 | P2 | Knowledge Graph architecture | Awaiting owner approval | Split one proven responsibility from `knowledgeGraphPage.js`; do not redesign the graph. | Existing graph browser tests and visual regression for the touched surface. |
 | RCB-009 | P2 | Properties layout architecture | Awaiting owner approval | Move pure layout/collision decisions from popup orchestration toward existing layout model ownership. | Property block drag/resize browser tests and representative visual regression. |
 | RCB-010 | P2 | Design system / CSS | Awaiting owner approval | Remove remaining icon-only structural CSS hack in Knowledge Graph and migrate only the touched controls to shared accessibility patterns. | Targeted graph accessibility/visual tests and `npm run ui:polish:audit`. |
@@ -52,6 +60,8 @@ This backlog is plan-only. Do not implement these items until the owner approves
 | RCB-013 | P3 | Docs/status drift | Awaiting owner approval | Implement `BI-024` only as a lightweight stale-pointer check for plan/dashboard/work-log status. | Docs check that catches old next-block pointers without brittle generated narrative. |
 | RCB-014 | P3 | Local ignored artifacts | Owner decision required | Move/delete local `debug.log` outside active workspace only in an approved local cleanup task. | `git status --short` and `node tools/audit_project_files.mjs` confirm no tracked source changes. |
 | RCB-015 | P3 | Historical docs placement | Owner decision required | Keep root historical docs as explicit exceptions or move them into a tracked docs zone. | Docs index and link audit after any move. |
+| RCB-029 | P3 | Rules workspace module boundary | Awaiting owner approval | Move the internal-rule-page status side effect out of the rule page data/render module when that area is next touched. | Focused internal rule page smoke plus no production behavior change beyond owner-approved cleanup. |
+| RCB-030 | P3 | CSS token/layer guard | Awaiting owner approval | Extend token cleanup with undefined no-fallback tokens and hard-coded high overlay z-index checks. | Static CSS token/layer guard and focused visual coverage for command palette, settings/topbar and card type menu. |
 
 ## Not Cleanup Without New Approval
 
@@ -72,10 +82,11 @@ These are not approved by this backlog:
 
 Before starting `0.0.1.10.0`, choose:
 
-1. First approved backlog item or slice bundle.
-2. Whether RA-005/RCB-005 is urgent.
-3. Whether local artifact cleanup is allowed.
-4. Whether docs root exceptions should stay.
-5. Whether the next commit after this audit may touch production code.
+1. First approved backlog item or slice bundle. Current recommendation after `0.0.1.9.1`: `RCB-021`, then `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`.
+2. Whether `RCB-022` should follow immediately after data/release P1 work or wait for the broader accessibility slice.
+3. Whether RA-005/RCB-005 is urgent.
+4. Whether local artifact cleanup is allowed.
+5. Whether docs root exceptions should stay.
+6. Whether the next commit after this audit may touch production code.
 
 Until those choices are made, `0.0.1.10.0` stays blocked.

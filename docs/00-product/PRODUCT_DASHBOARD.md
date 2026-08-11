@@ -22,8 +22,8 @@ Active plan: `docs/01-delivery/PROJECT_PLAN.md`.
 Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
-2. Review the completed `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit.
-3. Choose the first owner-approved cleanup slice before starting `0.0.1.10.0`.
+2. Review the completed `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit and the `0.0.1.9.1` completeness addendum.
+3. Choose the first owner-approved cleanup slice before starting `0.0.1.10.0`. Current recommendation starts with `RCB-021` pending autosave loss, then the original data-consistency P1 slices.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 

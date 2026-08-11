@@ -376,6 +376,189 @@ Impact: contrast/theme polish can silently drift by surface, and undefined varia
 
 Recommended cleanup leaf: either formalize sheet tokens as semantic design tokens or document the exception, and add a static undefined-token check.
 
+## 0.0.1.9.1 Completeness Verification Addendum
+
+Verification date: 2026-08-11
+
+Head reviewed: `679e5a1`
+
+Status: `DONE - MATERIAL BLIND SPOTS FOUND`
+
+Result: `C - AUDIT HAD MATERIAL BLIND SPOTS`
+
+The original `0.0.1.9.0` audit remained useful, but the completeness pass found additional material issues. No production cleanup was implemented during this pass. The current first cleanup order changes because an editor autosave loss path is more urgent than the previously recommended first slice.
+
+Production delta after audited head `11c0ce2`: documentation/status evidence only. No production JS/CSS/Rust changed before this verification pass.
+
+### Previous P1 Recheck
+
+| Finding | Result | Evidence | Notes |
+| --- | --- | --- | --- |
+| RA-001 | CONFIRMED | `js/storage/pageCommandService.js:282`, `js/storage/pageCommandService.js:302`, `js/repository/pageIndex.js:721` | Rollback restores the live page object, but repository notification can still be fed rollback snapshot data instead of the restored live object. |
+| RA-001B | CONFIRMED | `js/editor/autosave.js:151`, `js/editor/autosave.js:156`, `js/repository/pageIndex.js:721`, `js/repository/pageIndex.js:785` | Metadata mutation happens before the command snapshot/update flow can remove old title/alias/tag/type index keys. The duplicate-title reject path also mutates runtime title before returning. |
+| RA-002 | CONFIRMED | `js/storage/pageStorage.js:1508`, `js/storage/pageStorage.js:2024`, `js/storage/pageStorage.js:2039` | Batch tree-position changes write pages one by one; memory rollback does not durably restore earlier successful writes after a later failure. |
+| RA-003 | CONFIRMED | `tools/run_desktop_native_clickthrough.mjs:76`, `tools/run_desktop_native_clickthrough.mjs:603`, `tools/run_desktop_native_clickthrough.mjs:617`, `tools/run_desktop_native_clickthrough.mjs:993` | Console/page errors are recorded in the report but are not part of the final `ok` status. |
+
+### P0 Challenge Result
+
+No P0 was confirmed after a deliberate challenge pass. The pass checked destructive restore/import paths, Tauri workspace boundary logic, write queue durability, desktop smoke false-positive risk and batch write failure paths. Several P1/P2 risks remain, but the review did not prove immediate unrecoverable corruption, workspace escape or destructive user-data loss that should be classified as P0.
+
+### RA-021 - P1 - Pending autosave can be lost on page switch
+
+Evidence:
+
+- `js/editor/autosave.js:48`
+- `js/editor/autosave.js:71`
+- `js/editor/autosave.js:85`
+- `js/editor/editorOpenPage.js:119`
+- `js/editor/editorOpenPage.js:134`
+
+`setupAutosave()` stores a single debounce timer and later calls `saveCurrentPage(editor)`. It does not capture the dirty page id, dirty HTML snapshot or pending write revision. Opening another page replaces `state.currentPage` and `editor.innerHTML` before the timer fires.
+
+Impact: edits made less than the debounce window before a page switch can be dropped or evaluated against the wrong page/editor state.
+
+Recommended cleanup leaf: make navigation flush or cancel pending autosave with an explicit page/content snapshot and add a browser regression for rapid edit-then-open-page.
+
+### RA-022 - P1 - Tree page action menu is not keyboard-reachable
+
+Evidence:
+
+- `js/tree/treeRender.js:361`
+- `js/tree/treeRender.js:376`
+- `js/tree/tree.js:674`
+- `tests/browser/tree-accessibility.spec.mjs`
+
+The tree action button is rendered with `tabIndex = -1`, and the only opener found is the pointer click handler. The tree keyboard handler opens the page on Enter but does not provide a ContextMenu/Shift+F10 route to the same row action menu.
+
+Impact: keyboard users can navigate/open pages, but cannot reach per-page actions such as context actions through the tree row. This contradicts the tree accessibility correction intent that the row action menu remains reachable without creating many tab stops per row.
+
+Recommended cleanup leaf: add a real keyboard route for the tree row actions while preserving the roving tree focus model.
+
+### RA-023 - P2 - Workspace load lacks a generation/cancel guard
+
+Evidence:
+
+- `js/app.js:123`
+- `js/app.js:228`
+- `js/storage/workspaceStorage.js:143`
+- `js/storage/workspaceStorage.js:155`
+- `js/storage/pageStorage.js:2345`
+
+Startup restore/load and manual workspace open can both call `loadWorkspace()`. The load path clears global pages, awaits async scanning, and scanners push into `state.pages` during traversal. The audit did not find a load generation token, cancellation guard or last-load-wins protection.
+
+Impact: overlapping load operations could mix or overwrite in-memory page state if a manual open races with restore/startup loading.
+
+Recommended cleanup leaf: add a load generation guard around workspace loading and scanning, with a focused test using delayed storage adapter reads.
+
+### RA-024 - P2 - Renderable image cache is not scoped by workspace
+
+Evidence:
+
+- `js/storage/assetStorage.js:14`
+- `js/storage/assetStorage.js:33`
+- `js/storage/assetStorage.js:39`
+- `js/stateActions.js:21`
+- `js/stateActions.js:34`
+- `js/editor/images.js:281`
+
+`renderableImageUrlCache` keys only on normalized asset filename. Workspace changes sync the storage/asset roots, but the cache is not cleared or scoped by workspace id/root.
+
+Impact: switching workspaces can reuse an old renderable URL or missing-placeholder result for the same relative asset path.
+
+Recommended cleanup leaf: scope or clear renderable asset cache on workspace root changes and cover image restore after workspace switch.
+
+### RA-025 - P2 - Superseded writes can leave old content durable until the next write repairs it
+
+Evidence:
+
+- `js/storage/writeQueue.js:334`
+- `js/storage/writeQueue.js:356`
+- `js/storage/writeQueue.js:378`
+- `js/storage/writeQueue.js:394`
+- `js/storage/pageCommandService.js:322`
+
+`writePageContent()` checks for stale revision before writing. If a newer revision appears during the actual write, `finishWriteResult()` returns `superseded-after-write` after old content is already durable. The next queued write usually repairs this, but an app close/crash between writes can leave stale disk content.
+
+Impact: rapid save sequences are mostly self-healing, but the durability model has a crash window.
+
+Recommended cleanup leaf: add a targeted write-queue durability test and decide whether superseded-after-write must trigger immediate repair, retry or explicit dirty-state surfacing.
+
+### RA-026 - P2 - Rule Tree has overlapping special-page save authorities
+
+Evidence:
+
+- `js/editor/editor.js:100`
+- `js/editor/editor.js:228`
+- `js/editor/editorSpecialSave.js:97`
+- `js/editor/editorSpecialSave.js:282`
+- `js/editor/autosave.js:321`
+
+The editor wires input autosave through the generic autosave path, while explicit save routes through `saveCurrentSpecialPage()`. `editorSpecialSave.js` handles Rule Tree explicitly, but the generic autosave serializer dispatch covers campaign map, task tracker and knowledge graph, not Rule Tree.
+
+Impact: Rule Tree persistence depends on which save path fires, increasing the chance of inconsistent save semantics compared with other special pages.
+
+Recommended cleanup leaf: consolidate or explicitly document Rule Tree save ownership and add a save-path regression for autosave versus explicit save.
+
+### RA-027 - P2 - Card type custom select lacks accessible menu semantics
+
+Evidence:
+
+- `styles/card-type.css:27`
+- `styles/card-type.css:131`
+- `js/ui/cardType.js:77`
+- `js/ui/cardType.js:198`
+
+The native select is hidden with `display: none`, and the replacement is a button plus div menu without the expected `aria-expanded`, menu/listbox roles, Escape handling or arrow-key behavior. The menu also uses a hard-coded high `z-index: 10020` outside the shared overlay layer tokens.
+
+Impact: the visual control looks polished, but its accessibility and overlay ownership are weaker than shared popup/select contracts.
+
+Recommended cleanup leaf: either use the existing shared Select/popup contract or give the custom control a complete keyboard/ARIA/layering contract.
+
+### RA-028 - P2 - Major reorder workflows remain pointer-only
+
+Evidence:
+
+- `js/tree/treeDragDrop.js:71`
+- `js/taskTracker/taskTrackerDnd.js:24`
+- `js/taskTracker/taskTrackerTaskHTML.js:33`
+- `js/taskTracker/taskTrackerColumnHTML.js:32`
+- `tests/browser/task-tracker.spec.mjs:986`
+
+Tree and Task Tracker reorder behavior is covered through pointer DnD. The pass did not find a keyboard reorder alternative for these major sortable surfaces.
+
+Impact: pointer DnD remains functional, but keyboard-only users cannot complete equivalent reorder workflows.
+
+Recommended cleanup leaf: owner should decide whether keyboard reorder is required for v1 stabilization or whether it is deferred as accessibility debt.
+
+### RA-029 - P3 - Rules workspace data module owns a UI status side effect
+
+Evidence:
+
+- `js/rulesWorkspace/internalRulePage.js:1`
+- `js/rulesWorkspace/internalRulePage.js:16`
+
+`internalRulePage.js` defines internal rule page identity/render behavior and imports `setStatus` directly from UI.
+
+Impact: small boundary leak between rule page ownership and global UI status behavior.
+
+Recommended cleanup leaf: defer unless touching internal rules workspace; move the status side effect to the caller/orchestrator then.
+
+### RA-030 - P3 - Remaining CSS token and layer debt is more specific than RA-020 recorded
+
+Evidence:
+
+- `styles/command-palette.css:157`
+- `styles/app-topbar.css:2251`
+- `styles/app-topbar.css:2385`
+- `styles/card-type.css:131`
+- `styles/design-tokens.css:284`
+
+The completeness pass confirmed the RA-020 token issue and found one additional overlay-layer symptom: `.card-type-menu` hard-codes `z-index: 10020` while design tokens define shared layer values up to `--mow-z-toast`.
+
+Impact: token/layer drift can produce inconsistent focus/overlay rendering.
+
+Recommended cleanup leaf: extend the design-token cleanup with an undefined-token/static-layer check; do not do a broad CSS rewrite.
+
 ## No-Material-Finding Areas
 
 - Tauri filesystem boundary was reviewed at source level: path escapes and workspace-root deletion are rejected, and writes use temp/rename semantics.
@@ -384,6 +567,7 @@ Recommended cleanup leaf: either formalize sheet tokens as semantic design token
 - Safe HTML boundaries have broad sanitizer and contract coverage; the audit did not confirm a direct unsafe user-input-to-HTML sink.
 - Task Tracker UI structure was recently corrected; remaining Task Tracker risk is the page-action write boundary, not a new visible feature request.
 - No new dependencies, product features, persistent format migrations, collaboration, combat, dice or effects implementation were found during this audit.
+- `0.0.1.9.1` rechecked Safe HTML sink patterns, Tauri path boundaries, World Package import backup requirements, popup lifecycle tests and PageRepository index basics. No additional material finding was confirmed in those areas.
 
 ## Bug Inventory Reconciliation
 
@@ -406,7 +590,7 @@ Recommended cleanup leaf: either formalize sheet tokens as semantic design token
 
 ## Owner Decisions Needed
 
-1. Approve the first `0.0.1.10.0` cleanup slice. Recommended first slice: RA-001 and RA-002 data consistency.
+1. Approve the first `0.0.1.10.0` cleanup slice. Updated recommendation after `0.0.1.9.1`: start with RA-021 autosave page-switch data loss, then RA-001/RA-001B/RA-002 data consistency.
 2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
 3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
 4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.

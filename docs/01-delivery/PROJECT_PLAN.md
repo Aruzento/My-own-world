@@ -91,6 +91,24 @@ DEPENDENCIES: `0.0.1.8.18` owner waiver and closure.
 
 EXIT CRITERIA: closed at audit-only `Foundation` on 2026-08-11. Evidence: [REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md](../02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md), [REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md](../02-architecture/REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md), [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). The audit classifies findings, reconciles bug/backlog state, assesses NF readiness and creates an owner-review cleanup gate. No mass cleanup or product feature implementation was performed.
 
+### Phase 1A - 0.0.1.9.1 Audit Completeness Verification
+
+ID: `0.0.1.9.1`
+
+NAME: Audit Completeness Verification
+
+STATUS: `DONE`
+
+GOAL: prove whether the `0.0.1.9.0` audit covered the first-party repository well enough before cleanup starts.
+
+WHY NOW: owner review found the original coverage ledger too aggregated. Cleanup should not start until the project can prove what was reviewed and whether any P1/P2 blind spots were missed.
+
+SCOPE: docs/evidence-only completeness pass: current HEAD review, granular file/family coverage ledger, second blind sweep, previous P1 recheck, no-P0 challenge, source-of-truth map, write-path map, recent UI polish review and three read-only independent reviewers.
+
+DEPENDENCIES: `0.0.1.9.0` audit artifacts.
+
+EXIT CRITERIA: closed at audit-only `Foundation` on 2026-08-11. Result: `C - AUDIT HAD MATERIAL BLIND SPOTS`. Evidence was appended to [REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md](../02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md), [REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md](../02-architecture/REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md) and [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). New P1 findings RA-021 and RA-022 were recorded. No production cleanup, product functionality or real workspace mutation was performed.
+
 ### Phase 2 - 0.0.1.10.0 Repository Cleanup & Consolidation
 
 ID: `0.0.1.10.0`
@@ -105,7 +123,7 @@ WHY NOW: cleanup must be based on evidence, not taste. It should follow the audi
 
 SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-DEPENDENCIES: Phase 1 audit; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md).
+DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md).
 
 EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
 
