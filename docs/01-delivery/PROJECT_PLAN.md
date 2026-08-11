@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-10
+Updated: 2026-08-11
 
 Planning version: 2
 
@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.10.0` Repository Cleanup & Consolidation.
 
-Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016` and `RCB-023` are closed; do not start the next RCB automatically.
+Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023` and `RCB-024` are closed; do not start the next RCB automatically.
 
 ## Execution Rules
 

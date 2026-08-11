@@ -486,6 +486,8 @@ Impact: switching workspaces can reuse an old renderable URL or missing-placehol
 
 Recommended cleanup leaf: scope or clear renderable asset cache on workspace root changes and cover image restore after workspace switch.
 
+Cleanup status: closed by `RCB-024` in `0.0.1.10.11`. `assetStorage` remains the renderable image cache owner, but cache keys now include the active storage workspace scope: desktop workspace root when available, browser workspace handle identity when available, and storage adapter identity as a fallback. The fix keeps `AssetAdapter` responsible for product asset URL resolution while preventing identical relative paths from carrying old primary URLs, fallback data URLs or missing placeholders across workspace transitions.
+
 ### RA-025 - P2 - Superseded writes can leave old content durable until the next write repairs it
 
 Evidence:

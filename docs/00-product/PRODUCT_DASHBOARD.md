@@ -23,7 +23,7 @@ Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
 2. Continue `0.0.1.10.0` cleanup only one RCB leaf at a time.
-3. `RCB-021` pending autosave loss, `RCB-001` page rollback/repository consistency, `RCB-001B` metadata index consistency, `RCB-002` durable tree batch rollback, `RCB-003` native desktop smoke failure semantics, `RCB-022` tree action-menu keyboard access and `RCB-004` desktop gate truthfulness are closed. Next cleanup choice is owner-priority between `RCB-005` and `RCB-006`.
+3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023` and `RCB-024`. Continue only after the owner selects the next RCB leaf.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -119,10 +119,14 @@ Recently closed:
 - `0.0.1.10.5 / RCB-003` native desktop smoke cleanup: unexpected `pageerror` and `console.error` now fail the click-through runner, warnings stay diagnostic, and the report explains unexpected and allowlisted runtime events.
 - `0.0.1.10.6 / RCB-022` tree accessibility cleanup: a focused tree row can open the same page action menu through `Shift+F10` or the ContextMenu key, the menu keeps the existing lifecycle, and row action buttons do not add extra Tab stops.
 - `0.0.1.10.7 / RCB-004` desktop gate truthfulness cleanup: `desktop:gate` now reports normal-workspace-only confidence, large-workspace validation, skipped large-workspace coverage and advisory diagnostics separately.
+- `0.0.1.10.8 / RCB-005` pre-restore backup gate: restore now creates and verifies a fresh safety backup before destructive writes and stops before touching the workspace if that gate fails.
+- `0.0.1.10.9 / RCB-016` async page-open generation guard: stale slow page opens can no longer publish DOM/status/map side effects after a newer page is current.
+- `0.0.1.10.10 / RCB-023` workspace load generation guard: overlapping workspace loads now publish only from the latest load, so delayed scans cannot mix old pages into the active workspace.
+- `0.0.1.10.11 / RCB-024` workspace-scoped asset render cache: renderable image URL cache now includes workspace identity, preventing same-path image URLs/placeholders from leaking across workspace switches.
 
 Next owner action:
 
-- Choose the next `0.0.1.10.0` RCB leaf. Recommended next decision: `RCB-005` or `RCB-006`.
+- Choose the next `0.0.1.10.0` RCB leaf. Do not start it automatically.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

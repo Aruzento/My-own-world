@@ -945,6 +945,207 @@ test(
 
 
 test(
+  'getRenderableImageURL scopes cached primary URLs by workspace identity',
+  async () => {
+
+    const previousImage =
+      globalThis.Image;
+
+    let activeAssetRoot =
+      'workspace-a';
+
+    setAssetAdapter({
+      kind: 'workspace-primary-url',
+
+      async importFile() {},
+
+      async resolveUrl(path) {
+
+        return `asset://${activeAssetRoot}/${path}`;
+      },
+
+      async exists() {
+
+        return true;
+      },
+
+      async remove() {},
+
+      async findOrphans() {
+
+        return [];
+      }
+    });
+
+    globalThis.Image =
+      class RenderableImage {
+
+        set src(
+          value
+        ) {
+
+          this.currentSrc =
+            value;
+
+          queueMicrotask(
+            () => this.onload?.()
+          );
+        }
+      };
+
+    try {
+
+      setStorageAdapter(
+        createMemoryStorageAdapter({
+          workspaceRoot:
+            'workspace-a'
+        })
+      );
+
+      const firstUrl =
+        await getRenderableImageURL(
+          'portraits/shared-render-cache.png'
+        );
+
+      activeAssetRoot =
+        'workspace-b';
+
+      setStorageAdapter(
+        createMemoryStorageAdapter({
+          workspaceRoot:
+            'workspace-b'
+        })
+      );
+
+      const secondUrl =
+        await getRenderableImageURL(
+          'portraits/shared-render-cache.png'
+        );
+
+      assert.equal(
+        firstUrl,
+        'asset://workspace-a/portraits/shared-render-cache.png'
+      );
+
+      assert.equal(
+        secondUrl,
+        'asset://workspace-b/portraits/shared-render-cache.png'
+      );
+
+    } finally {
+
+      globalThis.Image =
+        previousImage;
+    }
+  }
+);
+
+
+test(
+  'getRenderableImageURL scopes cached placeholder and fallback URLs by workspace identity',
+  async () => {
+
+    const previousImage =
+      globalThis.Image;
+
+    setAssetAdapter({
+      kind: 'workspace-broken-primary',
+
+      async importFile() {},
+
+      async resolveUrl() {
+
+        return 'asset://broken/portraits/shared-fallback-cache.png';
+      },
+
+      async exists() {
+
+        return true;
+      },
+
+      async remove() {},
+
+      async findOrphans() {
+
+        return [];
+      }
+    });
+
+    globalThis.Image =
+      class BrokenImage {
+
+        set src(
+          value
+        ) {
+
+          this.currentSrc =
+            value;
+
+          queueMicrotask(
+            () => this.onerror?.()
+          );
+        }
+      };
+
+    try {
+
+      setStorageAdapter(
+        createMemoryStorageAdapter({
+          workspaceRoot:
+            'workspace-a'
+        })
+      );
+
+      const firstUrl =
+        await getRenderableImageURL(
+          'portraits/shared-fallback-cache.png'
+        );
+
+      const workspaceB =
+        createMemoryStorageAdapter({
+          workspaceRoot:
+            'workspace-b'
+        });
+
+      await workspaceB.writeBinary(
+        'assets/portraits/shared-fallback-cache.png',
+        new Uint8Array([
+          137,
+          80,
+          78,
+          71
+        ]).buffer
+      );
+
+      setStorageAdapter(
+        workspaceB
+      );
+
+      const secondUrl =
+        await getRenderableImageURL(
+          'portraits/shared-fallback-cache.png'
+        );
+
+      assert.match(
+        firstUrl,
+        /^data:image\/svg\+xml;base64,/
+      );
+
+      assert.equal(
+        secondUrl,
+        'data:image/png;base64,iVBORw=='
+      );
+
+    } finally {
+
+      globalThis.Image =
+        previousImage;
+    }
+  }
+);
+
+
+test(
   'createMissingAssetPlaceholderURL creates a renderable svg data url',
   () => {
 
@@ -2429,7 +2630,9 @@ aliases: []
 }
 
 
-function createMemoryStorageAdapter() {
+function createMemoryStorageAdapter(
+  options = {}
+) {
 
   const files =
     new Map();
@@ -2439,22 +2642,26 @@ function createMemoryStorageAdapter() {
       ''
     ]);
 
+  const workspaceRoot =
+    options.workspaceRoot ||
+    'memory-workspace';
+
   return {
     kind: 'desktop',
 
     getWorkspaceRoot() {
 
-      return 'memory-workspace';
+      return workspaceRoot;
     },
 
     async pickWorkspace() {
 
-      return 'memory-workspace';
+      return workspaceRoot;
     },
 
     async restoreWorkspace() {
 
-      return 'memory-workspace';
+      return workspaceRoot;
     },
 
     async ensureDirectory(

@@ -14,6 +14,15 @@ import {
 const renderableImageUrlCache =
   new Map();
 
+const browserWorkspaceCacheIds =
+  new WeakMap();
+
+const storageAdapterCacheIds =
+  new WeakMap();
+
+let nextWorkspaceCacheId =
+  1;
+
 
 export async function getImageURL(
   filename
@@ -31,7 +40,7 @@ export async function getRenderableImageURL(
 ) {
 
   const cacheKey =
-    normalizeWorkspacePath(
+    createRenderableImageCacheKey(
       filename
     );
 
@@ -76,6 +85,82 @@ export async function getRenderableImageURL(
   );
 
   return fallbackUrl;
+}
+
+
+function createRenderableImageCacheKey(
+  filename
+) {
+
+  return [
+    getRenderableImageWorkspaceScope(),
+    normalizeWorkspacePath(
+      filename
+    )
+  ].join('\n');
+}
+
+
+function getRenderableImageWorkspaceScope() {
+
+  const storageAdapter =
+    getStorageAdapter();
+
+  const workspaceRoot =
+    storageAdapter.getWorkspaceRoot?.();
+
+  if (workspaceRoot) {
+
+    return `${storageAdapter.kind || 'storage'}:root:${String(workspaceRoot)}`;
+  }
+
+  const workspaceHandle =
+    storageAdapter.getWorkspaceHandle?.();
+
+  if (workspaceHandle) {
+
+    return `${storageAdapter.kind || 'storage'}:handle:${getWorkspaceCacheId(
+      browserWorkspaceCacheIds,
+      workspaceHandle
+    )}`;
+  }
+
+  return `${storageAdapter.kind || 'storage'}:adapter:${getWorkspaceCacheId(
+    storageAdapterCacheIds,
+    storageAdapter
+  )}`;
+}
+
+
+function getWorkspaceCacheId(
+  cacheIds,
+  value
+) {
+
+  if (
+    value === null ||
+    (
+      typeof value !== 'object' &&
+      typeof value !== 'function'
+    )
+  ) {
+
+    return `primitive:${String(value)}`;
+  }
+
+  if (!cacheIds.has(value)) {
+
+    cacheIds.set(
+      value,
+      nextWorkspaceCacheId
+    );
+
+    nextWorkspaceCacheId += 1;
+  }
+
+  return cacheIds.get(
+    value
+  );
 }
 
 

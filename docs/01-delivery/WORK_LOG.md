@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.11 RCB-024 Workspace-Scoped Asset Render Cache
+
+### What Changed
+
+- Closed `RCB-024`, the eleventh owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-024 root cause with failing unit regressions: workspace B could reuse workspace A's cached primary renderable URL for the same relative image path, and a missing-placeholder result from workspace A could hide a valid fallback binary in workspace B.
+- Kept cache ownership in `assetStorage` and scoped `renderableImageUrlCache` keys by active workspace identity instead of creating another asset store.
+- The cache scope uses the desktop workspace root when available, the browser workspace handle identity when available, and the storage adapter identity as a no-workspace fallback.
+- Preserved `AssetAdapter` ownership of product-specific asset URL resolution and did not change image rendering workflows.
+
+### Verification
+
+- Expected failure before fix: `node --test tests/storageAdapter.test.mjs` returned `asset://workspace-a/...` for workspace B and returned the old SVG placeholder instead of workspace B's `data:image/png;base64,iVBORw==` fallback.
+- Passed after fix: `node --test tests/storageAdapter.test.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs asset-health.spec.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs campaign-map-data.spec.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs property-blocks.spec.mjs -g "image|asset|inventory|character"`.
+- Passed: `npm run test` with 315 node tests.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser` with 129 browser tests.
+
+### Next
+
+- Next cleanup leaf needs owner selection; do not start the next RCB automatically.
+
 ## 2026-08-11: 0.0.1.10.10 RCB-023 Workspace Load Generation Guard
 
 ### What Changed
