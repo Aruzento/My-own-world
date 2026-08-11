@@ -149,6 +149,8 @@ npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кам�
 
 The runners write `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` and `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md` by default. They cover the measurable part: workspace diagnostics, tree parsing, asset/backups health, desktop environment, packaging smoke, native settings diagnostics, native tree search, heavy map open, presentation open and failed WebView resources.
 
+`npm run desktop:native-smoke` must fail on any unexpected `pageerror` or `console.error` captured from the native WebView. Console warnings stay visible in the report as diagnostics. The only runtime allowlist is narrow and documented in `tools/run_desktop_native_clickthrough.mjs`.
+
 Manual owner testing is still useful for subjective smoothness, speaker/output-device behavior and destructive create/move/delete checks on a copied workspace.
 
 ## Ручной Release Smoke

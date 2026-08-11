@@ -3,12 +3,41 @@ import path from 'node:path';
 import process from 'node:process';
 import { spawn, spawnSync } from 'node:child_process';
 import net from 'node:net';
+import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 
+export const NATIVE_SMOKE_RUNTIME_ALLOWLIST =
+  Object.freeze(
+    [
+      Object.freeze({
+        source:
+          'pageerror',
+        text:
+          'ResizeObserver loop completed with undelivered notifications.',
+        reason:
+          'Chromium WebView can emit this non-fatal ResizeObserver notification while layout observers settle after a resize.'
+      })
+    ]
+  );
+
+
+if (isMainModule()) {
+
+  await main(
+    process.argv.slice(2)
+  );
+}
+
+
+async function main(
+  rawArgs =
+    []
+) {
+
 const args =
   parseArgs(
-    process.argv.slice(2)
+    rawArgs
   );
 
 const workspace =
@@ -445,12 +474,14 @@ console.log(
 
 if (
   fatalError ||
-  report.steps.some(step => !step.ok) ||
-  report.resourceIssues.length > 0
+  !getNativeSmokeStatus(
+    report
+  ).ok
 ) {
 
   process.exitCode =
     1;
+}
 }
 
 
@@ -963,13 +994,161 @@ function countMatches(
 }
 
 
-function createMarkdownReport(
+export function getNativeSmokeStatus(
+  report,
+  options =
+    {}
+) {
+
+  const classification =
+    classifyNativeSmokeRuntimeEvents(
+      report,
+      options
+    );
+
+  const failedSteps =
+    (report?.steps || []).filter(step =>
+      !step.ok
+    );
+
+  const resourceIssues =
+    report?.resourceIssues || [];
+
+  const fatalError =
+    report?.fatalError || null;
+
+  return {
+    ok:
+      !fatalError &&
+      failedSteps.length === 0 &&
+      resourceIssues.length === 0 &&
+      classification.runtimeIssues.length === 0,
+    fatalError,
+    failedSteps,
+    resourceIssues,
+    runtimeIssues:
+      classification.runtimeIssues,
+    allowlistedRuntimeEvents:
+      classification.allowlistedRuntimeEvents,
+    diagnosticConsoleWarnings:
+      classification.diagnosticConsoleWarnings
+  };
+}
+
+
+export function classifyNativeSmokeRuntimeEvents(
+  report,
+  {
+    allowlist =
+      NATIVE_SMOKE_RUNTIME_ALLOWLIST
+  } =
+    {}
+) {
+
+  const runtimeIssues =
+    [];
+
+  const allowlistedRuntimeEvents =
+    [];
+
+  const diagnosticConsoleWarnings =
+    [];
+
+  for (const entry of report?.consoleErrors || []) {
+
+    const event =
+      normalizeConsoleEvent(
+        entry
+      );
+
+    if (event.type !== 'error') {
+
+      diagnosticConsoleWarnings.push(
+        event
+      );
+
+      continue;
+    }
+
+    const allowlisted =
+      findAllowlistedRuntimeEvent(
+        event,
+        allowlist
+      );
+
+    if (allowlisted) {
+
+      allowlistedRuntimeEvents.push({
+        ...event,
+        reason:
+          allowlisted.reason
+      });
+
+      continue;
+    }
+
+    runtimeIssues.push({
+      ...event,
+      failure:
+        'unexpected console.error'
+    });
+  }
+
+  for (const entry of report?.pageErrors || []) {
+
+    const event =
+      {
+        source:
+          'pageerror',
+        type:
+          'pageerror',
+        text:
+          String(entry || '')
+      };
+
+    const allowlisted =
+      findAllowlistedRuntimeEvent(
+        event,
+        allowlist
+      );
+
+    if (allowlisted) {
+
+      allowlistedRuntimeEvents.push({
+        ...event,
+        reason:
+          allowlisted.reason
+      });
+
+      continue;
+    }
+
+    runtimeIssues.push({
+      ...event,
+      failure:
+        'unexpected pageerror'
+    });
+  }
+
+  return {
+    runtimeIssues,
+    allowlistedRuntimeEvents,
+    diagnosticConsoleWarnings
+  };
+}
+
+
+export function createMarkdownReport(
   report
 ) {
 
+  const status =
+    getNativeSmokeStatus(
+      report
+    );
+
   const ok =
-    report.steps.every(step => step.ok) &&
-    report.resourceIssues.length === 0;
+    status.ok;
 
   return [
     '---',
@@ -1020,6 +1199,18 @@ function createMarkdownReport(
     '',
     ...formatErrors(
       report
+    ),
+    '',
+    '## Unexpected Runtime Errors',
+    '',
+    ...formatRuntimeIssues(
+      status.runtimeIssues
+    ),
+    '',
+    '## Allowlisted Runtime Events',
+    '',
+    ...formatAllowlistedRuntimeEvents(
+      status.allowlistedRuntimeEvents
     ),
     '',
     '## Resource Issues',
@@ -1081,6 +1272,46 @@ function formatErrors(
     20
   ).map(entry =>
     `- ${entry}`
+  );
+}
+
+
+function formatRuntimeIssues(
+  issues
+) {
+
+  if (!issues.length) {
+
+    return [
+      '- No unexpected runtime errors captured.'
+    ];
+  }
+
+  return issues.slice(
+    0,
+    20
+  ).map(issue =>
+    `- ${issue.failure}: ${issue.text}`
+  );
+}
+
+
+function formatAllowlistedRuntimeEvents(
+  events
+) {
+
+  if (!events.length) {
+
+    return [
+      '- No allowlisted runtime events captured.'
+    ];
+  }
+
+  return events.slice(
+    0,
+    20
+  ).map(event =>
+    `- ${event.source}: ${event.text} (${event.reason})`
   );
 }
 
@@ -1423,4 +1654,55 @@ function parseArgs(
   }
 
   return parsed;
+}
+
+
+function normalizeConsoleEvent(
+  entry
+) {
+
+  if (
+    entry &&
+    typeof entry === 'object'
+  ) {
+
+    return {
+      source:
+        'console',
+      type:
+        String(entry.type || 'error').toLowerCase(),
+      text:
+        String(entry.text || '')
+    };
+  }
+
+  return {
+    source:
+      'console',
+    type:
+      'error',
+    text:
+      String(entry || '')
+  };
+}
+
+
+function findAllowlistedRuntimeEvent(
+  event,
+  allowlist
+) {
+
+  return (allowlist || []).find(candidate =>
+    candidate.source === event.source &&
+    (!candidate.type || candidate.type === event.type) &&
+    candidate.text === event.text
+  );
+}
+
+
+function isMainModule() {
+
+  return fileURLToPath(
+    import.meta.url
+  ) === process.argv[1];
 }

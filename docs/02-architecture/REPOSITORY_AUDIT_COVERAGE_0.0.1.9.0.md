@@ -203,7 +203,7 @@ Notes:
 | RA-001 | CLOSED BY RCB-001 / `0.0.1.10.2` | Rollback and repository update paths in `js/storage/pageCommandService.js` plus index bucket behavior in `js/repository/pageIndex.js`. |
 | RA-001B | CLOSED BY RCB-001B / `0.0.1.10.3` | Metadata mutation before snapshot is covered by repository regressions for title, aliases, tags, type, empty transitions and TreeIndex parent buckets. |
 | RA-002 | CLOSED BY RCB-002 / `0.0.1.10.4` | Tree-position batch storage regressions prove mid-batch write failure restores already-written files, memory and indexes; rollback write failure is surfaced explicitly. |
-| RA-003 | CONFIRMED | Native click-through report captures console/page errors but final status ignores them in `tools/run_desktop_native_clickthrough.mjs`. |
+| RA-003 | CLOSED BY RCB-003 / `0.0.1.10.5` | Native click-through status now fails on unexpected `pageerror` and `console.error`, keeps warnings diagnostic and documents the exact Chromium ResizeObserver allowlist. |
 
 ### Second Blind Sweep
 
@@ -235,7 +235,7 @@ Subagent assertions were not accepted on their own. New P1/P2 candidates were op
 
 | Finding | Priority | Classification | Cleanup impact |
 | --- | --- | --- | --- |
-| RA-021 | P1 | CLOSED BY RCB-021 / `0.0.1.10.1` | First cleanup leaf completed; RA-001, RA-001B and RA-002 are now closed, and RA-003 remains the next recommended P1 slice. |
+| RA-021 | P1 | CLOSED BY RCB-021 / `0.0.1.10.1` | First cleanup leaf completed; RA-001, RA-001B, RA-002 and RA-003 are now closed, and RA-022 is the next recommended P1 slice. |
 | RA-022 | P1 | NEW FINDING | Adds an accessibility P1, but data/release P1 work still comes first. |
 | RA-023 | P2 | NEW FINDING | Adds workspace load lifecycle cleanup. |
 | RA-024 | P2 | NEW FINDING | Adds workspace-scoped asset cache cleanup. |

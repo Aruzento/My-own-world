@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.5 RCB-003 Native Desktop Smoke Failure Semantics
+
+### What Changed
+
+- Closed `RCB-003`, the fifth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-003 root cause: `tools/run_desktop_native_clickthrough.mjs` collected console and page runtime errors in the report, but final status only checked failed steps and resource issues.
+- Made the native smoke runner import-safe for focused helper regression coverage without changing the click-through workflow.
+- Added one shared status path for the runner and markdown report: unexpected `pageerror` and `console.error` now fail the smoke; `console.warning` remains visible diagnostic evidence instead of becoming fatal.
+- Added one narrow documented allowlist for the exact Chromium WebView ResizeObserver notification: `ResizeObserver loop completed with undelivered notifications.`.
+- Added explicit report sections for unexpected runtime errors and allowlisted runtime events so a failed native run explains the reason.
+
+### Verification
+
+- Expected failure before fix: `node --test tests\desktopNativeSmokeStatus.test.mjs`.
+- Passed after fix: `node --test tests\desktopNativeSmokeStatus.test.mjs`.
+- Passed: `node --test tests\desktopNativeSmokeStatus.test.mjs tests\desktopLargeWorkspaceSmoke.test.mjs`.
+- Passed: `npm run test` with 301 node tests.
+- Real native smoke run: `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\2"` returned `exit 1` with no unexpected runtime errors and existing resource failures.
+- Real native smoke run: `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` returned `exit 1` with no unexpected runtime errors and existing resource failures.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 587 files, 1 local delete candidate and 0 mojibake candidates.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify` with 301 node tests, synthetic large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+
+### Residual
+
+- Deferred to a later desktop/resource cleanup slice: the real native smoke currently records `net::ERR_ABORTED` resource issues for `http://tauri.localhost/js/...` module requests during the desktop reload path. This leaf did not add a broad resource allowlist or change resource semantics.
+
+### Next
+
+- Next recommended RCB: `RCB-022`.
+
 ## 2026-08-11: 0.0.1.10.4 RCB-002 Durable Tree Batch Rollback
 
 ### What Changed
@@ -31,7 +63,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Next recommended RCB: `RCB-003`.
+- Completed by follow-up `0.0.1.10.5`; next recommended RCB is `RCB-022`.
 
 ## 2026-08-11: 0.0.1.10.3 RCB-001B Metadata Index Consistency
 
