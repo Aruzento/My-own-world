@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.12 RCB-025 Write Queue Superseded-After-Write Durability
+
+### What Changed
+
+- Closed `RCB-025`, the twelfth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-025 root cause with a failing write queue regression: an old write already in the storage-write phase returned `superseded-after-write` after only a newer revision object was created, even though no newer write task had been accepted into the queue.
+- Kept ownership in `writeQueue` and added a narrow queue-accepted revision tracker next to the existing write revision state.
+- `stale` and `superseded-after-write` now mean "a newer write for this key has actually been accepted by the queue", not merely "some newer revision exists".
+- The explicit guarantee is settlement safety: after queued writes finish successfully, the durable page file matches the newest queue-accepted revision.
+- Full atomic crash protection between the old physical write and the later physical write would require journal/schema work; no migration or journal change was introduced in this cleanup leaf.
+
+### Verification
+
+- Expected failure before fix: `node --test tests/storageAdapter.test.mjs` failed `writePageContent does not supersede a durable write until a newer write is queued`, returning `superseded-after-write` instead of `saved`.
+- Passed after fix: `node --test tests/storageAdapter.test.mjs`.
+- Passed: `node --test tests/pageCommandService.test.mjs`.
+- Passed: `npm run test` with 317 node tests.
+- Passed: `node tools/run_browser_smoke.mjs editor-autosave.spec.mjs page-templates.spec.mjs world-package.spec.mjs`.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser` with 129 browser tests.
+
+### Next
+
+- Next cleanup leaf needs owner selection; do not start the next RCB automatically.
+
 ## 2026-08-11: 0.0.1.10.11 RCB-024 Workspace-Scoped Asset Render Cache
 
 ### What Changed

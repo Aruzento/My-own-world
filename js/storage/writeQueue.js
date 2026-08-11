@@ -4,6 +4,9 @@ const writeQueues =
 const writeRevisions =
   new Map();
 
+const acceptedWriteRevisions =
+  new Map();
+
 
 let storageAdapterProvider =
   null;
@@ -144,6 +147,8 @@ export function getWriteRevisionState(
 export function clearWriteRevisions() {
 
   writeRevisions.clear();
+
+  acceptedWriteRevisions.clear();
 }
 
 
@@ -215,13 +220,19 @@ export function writeFile(
       key
     );
 
+  acceptWriteRevisionForQueue(
+    writeKey,
+    options.revision
+  );
+
   return queueWrite(
     writeKey,
     async () => {
 
       if (
         isStaleRevision(
-          options.revision
+          options.revision,
+          writeKey
         )
       ) {
 
@@ -326,13 +337,19 @@ export function writePageContent(
       );
     }
 
+    acceptWriteRevisionForQueue(
+      writeKey,
+      options.revision
+    );
+
     return queueWrite(
       writeKey,
       async () => {
 
         if (
           isStaleRevision(
-            options.revision
+            options.revision,
+            writeKey
           )
         ) {
 
@@ -382,8 +399,9 @@ function finishWriteResult(
 
   if (
     revision &&
-    !isWriteRevisionCurrent(
-      revision
+    !isAcceptedWriteRevisionCurrent(
+      revision,
+      key
     )
   ) {
 
@@ -414,14 +432,107 @@ function finishWriteResult(
 
 
 function isStaleRevision(
-  revision
+  revision,
+  key
 ) {
 
   return Boolean(
     revision &&
+    !isAcceptedWriteRevisionCurrent(
+      revision,
+      key
+    )
+  );
+}
+
+
+function acceptWriteRevisionForQueue(
+  key,
+  revision
+) {
+
+  if (!revision?.key) return null;
+
+  if (
     !isWriteRevisionCurrent(
       revision
     )
+  ) {
+
+    return null;
+  }
+
+  const acceptedRevision = {
+    key:
+      normalizeWriteKey(
+        key || revision.key
+      ),
+    revision:
+      Number(
+        revision.revision
+      )
+  };
+
+  acceptedWriteRevisions.set(
+    acceptedRevision.key,
+    acceptedRevision
+  );
+
+  const revisionKey =
+    normalizeWriteKey(
+      revision.key
+    );
+
+  if (
+    revisionKey !== acceptedRevision.key
+  ) {
+
+    acceptedWriteRevisions.set(
+      revisionKey,
+      acceptedRevision
+    );
+  }
+
+  return {
+    ...acceptedRevision
+  };
+}
+
+
+function isAcceptedWriteRevisionCurrent(
+  revision,
+  key
+) {
+
+  if (!revision?.key) return true;
+
+  const writeKey =
+    normalizeWriteKey(
+      key || revision.key
+    );
+
+  const revisionKey =
+    normalizeWriteKey(
+      revision.key
+    );
+
+  const acceptedRevision =
+    acceptedWriteRevisions.get(
+      writeKey
+    ) ||
+    acceptedWriteRevisions.get(
+      revisionKey
+    );
+
+  if (!acceptedRevision) {
+
+    return isWriteRevisionCurrent(
+      revision
+    );
+  }
+
+  return acceptedRevision.revision === Number(
+    revision.revision
   );
 }
 
@@ -473,8 +584,9 @@ function createWriteResult({
       Boolean(skipped),
     current:
       revision
-        ? isWriteRevisionCurrent(
-          revision
+        ? isAcceptedWriteRevisionCurrent(
+          revision,
+          key
         )
         : true
   };

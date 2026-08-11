@@ -1263,6 +1263,274 @@ test(
 
 
 test(
+  'writePageContent does not supersede a durable write until a newer write is queued',
+  async () => {
+
+    clearWriteRevisions();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page =
+      {
+        id:
+          'page-created-revision-only',
+        path:
+          '/pages/created-revision-only.md',
+        name:
+          'created-revision-only.md',
+        content:
+          'initial content'
+      };
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    let releaseOldWrite;
+
+    const oldWriteReleased =
+      new Promise(resolve => {
+
+        releaseOldWrite =
+          resolve;
+      });
+
+    let oldWriteStarted;
+
+    const oldWriteStart =
+      new Promise(resolve => {
+
+        oldWriteStarted =
+          resolve;
+      });
+
+    adapter.writeText =
+      async (
+        path,
+        content
+      ) => {
+
+        if (
+          String(content) === 'old durable content'
+        ) {
+
+          oldWriteStarted();
+
+          await oldWriteReleased;
+        }
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    const key =
+      getPageWriteKey(
+        page
+      );
+
+    const oldRevision =
+      createWriteRevision(
+        key,
+        {
+          reason:
+            'old-queued-write'
+        }
+      );
+
+    const oldSave =
+      writePageContent(
+        page,
+        'old durable content',
+        {
+          revision:
+            oldRevision
+        }
+      );
+
+    await oldWriteStart;
+
+    createWriteRevision(
+      key,
+      {
+        reason:
+          'newer-created-but-not-queued'
+      }
+    );
+
+    releaseOldWrite();
+
+    const oldResult =
+      await oldSave;
+
+    assert.equal(
+      oldResult.state,
+      'saved'
+    );
+
+    assert.equal(
+      await adapter.readText(
+        page.path
+      ),
+      'old durable content'
+    );
+  }
+);
+
+
+test(
+  'writePageContent settles durable file to newest queued revision after superseded write',
+  async () => {
+
+    clearWriteRevisions();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page =
+      {
+        id:
+          'page-superseded-after-write',
+        path:
+          '/pages/superseded-after-write.md',
+        name:
+          'superseded-after-write.md',
+        content:
+          'initial content'
+      };
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    let releaseOldWrite;
+
+    const oldWriteReleased =
+      new Promise(resolve => {
+
+        releaseOldWrite =
+          resolve;
+      });
+
+    let oldWriteStarted;
+
+    const oldWriteStart =
+      new Promise(resolve => {
+
+        oldWriteStarted =
+          resolve;
+      });
+
+    adapter.writeText =
+      async (
+        path,
+        content
+      ) => {
+
+        if (
+          String(content) === 'old queued content'
+        ) {
+
+          oldWriteStarted();
+
+          await oldWriteReleased;
+        }
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    const key =
+      getPageWriteKey(
+        page
+      );
+
+    const oldRevision =
+      createWriteRevision(
+        key,
+        {
+          reason:
+            'old-queued-write'
+        }
+      );
+
+    const oldSave =
+      writePageContent(
+        page,
+        'old queued content',
+        {
+          revision:
+            oldRevision
+        }
+      );
+
+    await oldWriteStart;
+
+    const newestRevision =
+      createWriteRevision(
+        key,
+        {
+          reason:
+            'newest-queued-write'
+        }
+      );
+
+    const newestSave =
+      writePageContent(
+        page,
+        'newest queued content',
+        {
+          revision:
+            newestRevision
+        }
+      );
+
+    releaseOldWrite();
+
+    const [
+      oldResult,
+      newestResult
+    ] =
+      await Promise.all([
+        oldSave,
+        newestSave
+      ]);
+
+    assert.equal(
+      oldResult.state,
+      'superseded-after-write'
+    );
+
+    assert.equal(
+      newestResult.state,
+      'saved'
+    );
+
+    assert.equal(
+      await adapter.readText(
+        page.path
+      ),
+      'newest queued content'
+    );
+  }
+);
+
+
+test(
   'deletePageBranch removes stale page records when file is already missing',
   async () => {
 

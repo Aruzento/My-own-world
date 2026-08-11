@@ -504,6 +504,8 @@ Impact: rapid save sequences are mostly self-healing, but the durability model h
 
 Recommended cleanup leaf: add a targeted write-queue durability test and decide whether superseded-after-write must trigger immediate repair, retry or explicit dirty-state surfacing.
 
+Cleanup status: closed by `RCB-025` in `0.0.1.10.12`. `writeQueue` now separates created revisions from revisions accepted into the write queue. A write is considered stale or `superseded-after-write` only when a newer revision has an actual queued write task behind it; merely creating a newer revision no longer makes an in-flight durable write stale. The explicit guarantee is queue-settlement safety: after the write queue settles successfully, the durable file matches the newest queue-accepted revision. Full atomic crash protection between two physical storage writes would require journal/schema work and remains outside this leaf.
+
 ### RA-026 - P2 - Rule Tree has overlapping special-page save authorities
 
 Evidence:
