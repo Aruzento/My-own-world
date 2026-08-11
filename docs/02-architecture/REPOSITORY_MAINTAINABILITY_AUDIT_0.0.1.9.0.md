@@ -161,6 +161,8 @@ Impact: restore can be difficult to reverse if the chosen backup is incomplete o
 
 Recommended cleanup leaf: either implement the pre-restore backup gate or explicitly update the contract if the owner decides a different restore safety model is acceptable.
 
+Cleanup status: closed by `RCB-005` in `0.0.1.10.8`. `restoreWorkspaceBackup()` now creates a fresh `pre-restore` safety backup through the existing `BackupService` before any page or asset restore writes. The gate verifies the backup manifest, blocks restore if backup creation or verification fails, avoids retention cleanup during the safety snapshot so the restore source is not removed, and returns the `preRestoreBackupId` for recovery evidence.
+
 ### RA-006 - P2 - Feature modules still bypass the page command/read boundary
 
 Evidence:

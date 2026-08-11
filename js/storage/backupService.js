@@ -40,6 +40,15 @@ export const BACKUP_MAX_RETENTION =
 export const BACKUP_RETENTION_STORAGE_KEY =
   'myOwnWorld.backup.retentionLimit';
 
+const PRE_RESTORE_BACKUP_REASON =
+  'pre-restore';
+
+const PRE_RESTORE_BACKUP_BLOCKED_MESSAGE =
+  'Restore blocked: pre-restore safety backup was not created.';
+
+const PRE_RESTORE_BACKUP_VERIFY_MESSAGE =
+  'Restore blocked: pre-restore safety backup could not be verified.';
+
 
 export function createBackupId(
   reason = 'manual',
@@ -738,6 +747,12 @@ async function restoreWorkspaceBackupMeasured(
     );
   }
 
+  const preRestoreManifest =
+    await createAndVerifyPreRestoreBackup({
+      storageAdapter,
+      options
+    });
+
   await storageAdapter.ensureDirectory(
     'pages'
   );
@@ -799,9 +814,93 @@ async function restoreWorkspaceBackupMeasured(
 
   return {
     backupId,
+    preRestoreBackupId:
+      preRestoreManifest.id,
     restoredPages,
     restoredAssets
   };
+}
+
+
+async function createAndVerifyPreRestoreBackup({
+  storageAdapter,
+  options = {}
+}) {
+
+  let manifest;
+
+  try {
+
+    manifest =
+      await requireWorkspaceBackupBeforeRiskyOperation(
+        options.preRestoreBackupReason ||
+          PRE_RESTORE_BACKUP_REASON,
+        {
+          storageAdapter,
+          pages:
+            options.preRestorePages ||
+            options.pages ||
+            state.pages ||
+            [],
+          assetReferences:
+            options.preRestoreAssetReferences,
+          includeAssets:
+            options.preRestoreIncludeAssets !== false,
+          cleanup:
+            false,
+          id:
+            options.preRestoreBackupId,
+          onProgress:
+            options.onProgress
+        }
+      );
+
+  } catch (error) {
+
+    throw new Error(
+      PRE_RESTORE_BACKUP_BLOCKED_MESSAGE,
+      {
+        cause:
+          error
+      }
+    );
+  }
+
+  const verified =
+    await readBackupManifest(
+      storageAdapter,
+      `${BACKUP_ROOT_DIR}/${manifest.id}`
+    );
+
+  if (
+    !backupManifestMatches(
+      verified,
+      manifest
+    )
+  ) {
+
+    throw new Error(
+      PRE_RESTORE_BACKUP_VERIFY_MESSAGE
+    );
+  }
+
+  return verified;
+}
+
+
+function backupManifestMatches(
+  actual,
+  expected
+) {
+
+  if (!actual || !expected) return false;
+
+  return (
+    actual.id === expected.id &&
+    actual.reason === expected.reason &&
+    actual.pageCount === expected.pageCount &&
+    actual.assetCount === expected.assetCount
+  );
 }
 
 

@@ -1474,6 +1474,25 @@ function renderRestoreConfirm(
           error
         );
 
+        if (
+          isPreRestoreBackupFailure(
+            error
+          )
+        ) {
+
+          finishProgressStatus(
+            'Восстановление не начато: не удалось создать страховочную резервную копию.',
+            {
+              status:
+                'failed',
+              delayMs:
+                4200
+            }
+          );
+
+          return;
+        }
+
         finishProgressStatus(
           'Не удалось восстановить резервную копию',
           {
@@ -1500,6 +1519,24 @@ function renderRestoreConfirm(
   confirm.append(
     text,
     actions
+  );
+}
+
+
+function isPreRestoreBackupFailure(
+  error
+) {
+
+  const message =
+    [
+      error?.message,
+      error?.cause?.message
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+  return /pre-restore|safety backup|backup was not created/i.test(
+    message
   );
 }
 

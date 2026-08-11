@@ -81,6 +81,8 @@ Snapshot должен создаваться перед:
 
 ## Restore
 
+Since `0.0.1.10.8`, `restoreWorkspaceBackup()` must create a fresh `pre-restore` safety backup before any page or asset restore write starts. The safety backup uses the existing `BackupService` format, includes assets by default, disables automatic retention cleanup for that one snapshot so the chosen restore source cannot be removed mid-restore, and must be manifest-readable before restore proceeds. If safety backup creation or verification fails, restore is blocked and no workspace page/asset restore writes may start.
+
 Restore первого слоя работает осторожно:
 
 - восстанавливает файлы страниц из snapshot;

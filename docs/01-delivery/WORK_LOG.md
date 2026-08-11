@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.8 RCB-005 Pre-Restore Safety Backup
+
+### What Changed
+
+- Closed `RCB-005`, the eighth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-005 root cause: `restoreWorkspaceBackup()` could read a backup manifest and then start page/asset restore writes without first creating a fresh safety backup of the current workspace.
+- Moved the safety gate into `BackupService`, so the protection applies to UI restore and direct service restore calls through the same owner.
+- The restore path now creates a `pre-restore` backup through the existing backup format, includes assets by default, verifies that the manifest is readable, and blocks restore before any workspace write if the safety backup fails.
+- The pre-restore backup uses `cleanup: false` so creating the safety snapshot cannot delete the chosen restore source through retention cleanup.
+- The restore result exposes `preRestoreBackupId` as recovery evidence, and the Settings restore UI now shows a specific message when restore was not started because the safety backup failed.
+- Partial restore rollback remains deferred to the future Data Safety phase; this leaf only prevents starting restore without a fresh safety backup.
+
+### Verification
+
+- Expected failure before fix: `node --test tests/backupService.test.mjs` failed the new pre-restore safety regressions.
+- Passed after fix: `node --test tests/backupService.test.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs app-shell.spec.mjs -g "backup restore confirmation cancel"`.
+- Passed: `node --test tests/storageAdapter.test.mjs`.
+- Passed: `npm run test` with 312 node tests.
+- Passed: `npm run verify` with encoding, JS syntax, 312 node tests, synthetic large-workspace performance smoke, `git diff --check` and docx zip validation.
+
+### Next
+
+- Next cleanup leaf needs owner selection; do not start the next RCB automatically.
+
 ## 2026-08-11: 0.0.1.10.7 RCB-004 Desktop Gate Truthfulness
 
 ### What Changed

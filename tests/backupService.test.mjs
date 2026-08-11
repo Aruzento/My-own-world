@@ -17,6 +17,14 @@ import {
   setBackupRetentionLimit
 } from '../js/storage/backupService.js';
 
+import {
+  createBrowserStorageAdapter
+} from '../js/storage/browserStorageAdapter.js';
+
+import {
+  state
+} from '../js/state.js';
+
 
 test(
   'createBackupId создает безопасное имя snapshot',
@@ -255,6 +263,333 @@ test(
       ),
       'original-image'
     );
+  }
+);
+
+
+test(
+  'restore creates and verifies a fresh pre-restore backup before destructive writes',
+  async () => {
+
+    const workspace =
+      new MemoryDirectoryHandle();
+
+    const snapshotPage =
+      createBackupTestPage({
+        content: '<div data-asset="portraits/hero.png">snapshot</div>'
+      });
+
+    await writeWorkspacePage(
+      workspace,
+      snapshotPage.name,
+      snapshotPage.content
+    );
+
+    await writeWorkspaceAsset(
+      workspace,
+      'portraits/hero.png',
+      'snapshot-asset'
+    );
+
+    await createWorkspaceBackup({
+      workspaceHandle:
+        workspace,
+      pages:
+        [snapshotPage],
+      id:
+        'restore-source',
+      cleanup:
+        false
+    });
+
+    const currentPage =
+      createBackupTestPage({
+        content: '<div data-asset="portraits/hero.png">current-before-restore</div>'
+      });
+
+    state.pages =
+      [currentPage];
+
+    await writeWorkspacePage(
+      workspace,
+      currentPage.name,
+      currentPage.content
+    );
+
+    await writeWorkspaceAsset(
+      workspace,
+      'portraits/hero.png',
+      'current-asset'
+    );
+
+    try {
+
+      const result =
+        await restoreWorkspaceBackup(
+          'restore-source',
+          workspace,
+          {
+            preRestoreBackupId:
+              'pre-restore-success'
+          }
+        );
+
+      assert.equal(
+        result.restoredPages,
+        1
+      );
+
+      assert.equal(
+        result.preRestoreBackupId,
+        'pre-restore-success'
+      );
+
+      assert.equal(
+        await readWorkspacePage(
+          workspace,
+          currentPage.name
+        ),
+        snapshotPage.content
+      );
+
+      assert.equal(
+        await readWorkspaceAsset(
+          workspace,
+          'portraits/hero.png'
+        ),
+        'snapshot-asset'
+      );
+
+      assert.equal(
+        await readBackupPage(
+          workspace,
+          'pre-restore-success',
+          currentPage.name
+        ),
+        currentPage.content
+      );
+
+      assert.equal(
+        await readBackupAsset(
+          workspace,
+          'pre-restore-success',
+          'portraits/hero.png'
+        ),
+        'current-asset'
+      );
+
+    } finally {
+
+      state.pages =
+        [];
+    }
+  }
+);
+
+
+test(
+  'restore stops before workspace writes when the pre-restore backup fails',
+  async () => {
+
+    const workspace =
+      new MemoryDirectoryHandle();
+
+    const snapshotPage =
+      createBackupTestPage({
+        content: 'snapshot'
+      });
+
+    await writeWorkspacePage(
+      workspace,
+      snapshotPage.name,
+      snapshotPage.content
+    );
+
+    await createWorkspaceBackup({
+      workspaceHandle:
+        workspace,
+      pages:
+        [snapshotPage],
+      id:
+        'restore-source',
+      cleanup:
+        false
+    });
+
+    const currentPage =
+      createBackupTestPage({
+        content: 'current-before-restore'
+      });
+
+    state.pages =
+      [currentPage];
+
+    await writeWorkspacePage(
+      workspace,
+      currentPage.name,
+      currentPage.content
+    );
+
+    let restorePageWrites =
+      0;
+
+    const adapter =
+      createInstrumentedWorkspaceAdapter(
+        workspace,
+        {
+          async ensureDirectory(path) {
+
+            if (
+              String(path).includes(
+                'pre-restore-failure'
+              )
+            ) {
+
+              throw new Error(
+                'pre-restore disk full'
+              );
+            }
+          },
+          async writeText(path) {
+
+            if (
+              String(path)
+                .replace(/^\/+/, '')
+                .startsWith('pages/')
+            ) {
+
+              restorePageWrites += 1;
+            }
+          }
+        }
+      );
+
+    try {
+
+      await assert.rejects(
+        () => restoreWorkspaceBackup(
+          'restore-source',
+          adapter,
+          {
+            preRestoreBackupId:
+              'pre-restore-failure'
+          }
+        ),
+        /pre-restore|backup/i
+      );
+
+      assert.equal(
+        restorePageWrites,
+        0
+      );
+
+      assert.equal(
+        await readWorkspacePage(
+          workspace,
+          currentPage.name
+        ),
+        currentPage.content
+      );
+
+    } finally {
+
+      state.pages =
+        [];
+    }
+  }
+);
+
+
+test(
+  'restore failure after pre-restore backup keeps the safety backup readable',
+  async () => {
+
+    const workspace =
+      new MemoryDirectoryHandle();
+
+    const snapshotPage =
+      createBackupTestPage({
+        content: 'snapshot'
+      });
+
+    await writeWorkspacePage(
+      workspace,
+      snapshotPage.name,
+      snapshotPage.content
+    );
+
+    await createWorkspaceBackup({
+      workspaceHandle:
+        workspace,
+      pages:
+        [snapshotPage],
+      id:
+        'restore-source',
+      cleanup:
+        false
+    });
+
+    const currentPage =
+      createBackupTestPage({
+        content: 'current-before-restore'
+      });
+
+    state.pages =
+      [currentPage];
+
+    await writeWorkspacePage(
+      workspace,
+      currentPage.name,
+      currentPage.content
+    );
+
+    const adapter =
+      createInstrumentedWorkspaceAdapter(
+        workspace,
+        {
+          async writeText(path) {
+
+            if (
+              String(path)
+                .replace(/^\/+/, '') === 'pages/card.md'
+            ) {
+
+              throw new Error(
+                'restore write failed'
+              );
+            }
+          }
+        }
+      );
+
+    try {
+
+      await assert.rejects(
+        () => restoreWorkspaceBackup(
+          'restore-source',
+          adapter,
+          {
+            preRestoreBackupId:
+              'pre-restore-before-failed-restore'
+          }
+        ),
+        /restore write failed/
+      );
+
+      assert.equal(
+        await readBackupPage(
+          workspace,
+          'pre-restore-before-failed-restore',
+          currentPage.name
+        ),
+        currentPage.content
+      );
+
+    } finally {
+
+      state.pages =
+        [];
+    }
   }
 );
 
@@ -510,6 +845,28 @@ test(
 );
 
 
+function createBackupTestPage({
+  content
+}) {
+
+  return {
+    id:
+      'card-1',
+    title:
+      'Card',
+    type:
+      'character',
+    template:
+      'card',
+    name:
+      'card.md',
+    path:
+      '/pages/card.md',
+    content
+  };
+}
+
+
 async function writeWorkspacePage(
   workspace,
   fileName,
@@ -609,6 +966,63 @@ async function readWorkspaceAsset(
 }
 
 
+async function readBackupPage(
+  workspace,
+  backupId,
+  fileName
+) {
+
+  const backupDir =
+    await getBackupDirectory(
+      workspace,
+      backupId
+    );
+
+  const pagesDir =
+    await backupDir.getDirectoryHandle(
+      'pages'
+    );
+
+  const fileHandle =
+    await pagesDir.getFileHandle(
+      fileName
+    );
+
+  return (
+    await fileHandle.getFile()
+  ).text();
+}
+
+
+async function readBackupAsset(
+  workspace,
+  backupId,
+  path
+) {
+
+  const backupDir =
+    await getBackupDirectory(
+      workspace,
+      backupId
+    );
+
+  const assetsDir =
+    await backupDir.getDirectoryHandle(
+      'assets'
+    );
+
+  const fileHandle =
+    await getNestedMemoryFileHandle(
+      assetsDir,
+      path
+    );
+
+  return (
+    await fileHandle.getFile()
+  ).text();
+}
+
+
 async function getBackupDirectory(
   workspace,
   id
@@ -622,6 +1036,58 @@ async function getBackupDirectory(
   return root.getDirectoryHandle(
     id
   );
+}
+
+
+function createInstrumentedWorkspaceAdapter(
+  workspace,
+  hooks = {}
+) {
+
+  const adapter =
+    createBrowserStorageAdapter();
+
+  adapter.setWorkspaceHandle(
+    workspace
+  );
+
+  return {
+    ...adapter,
+    async ensureDirectory(path) {
+
+      await hooks.ensureDirectory?.(
+        path
+      );
+
+      return adapter.ensureDirectory(
+        path
+      );
+    },
+    async writeText(path, content) {
+
+      await hooks.writeText?.(
+        path,
+        content
+      );
+
+      return adapter.writeText(
+        path,
+        content
+      );
+    },
+    async writeBinary(path, content) {
+
+      await hooks.writeBinary?.(
+        path,
+        content
+      );
+
+      return adapter.writeBinary(
+        path,
+        content
+      );
+    }
+  };
 }
 
 
