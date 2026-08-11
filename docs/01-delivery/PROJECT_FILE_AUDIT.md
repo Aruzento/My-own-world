@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-08-09
+Дата: 2026-08-11
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 582.
+Всего файлов в аудите: 585.
 
 ## Два Независимых Прохода
 
@@ -31,9 +31,9 @@ owner_zone: "delivery"
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
-| docs/architecture | 35 |
+| docs/architecture | 37 |
 | docs/archive | 10 |
-| docs/delivery | 17 |
+| docs/delivery | 18 |
 | docs/product | 6 |
 | docs/root | 3 |
 | docs/testing | 20 |
@@ -76,9 +76,9 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 674346 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 676531 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 172001 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 173097 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -208,6 +208,7 @@ owner_zone: "delivery"
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/PROJECT_PLAN.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/RELEASE_PROCESS.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/01-delivery/REPOSITORY_CLEANUP_BACKLOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/SMOKE_PASS_2026-07-14.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/01-delivery/WORK_LOG.md` | docs/delivery | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/adapters/BACKEND_STORAGE_API_PLAN.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -239,6 +240,8 @@ owner_zone: "delivery"
 | `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/KNOWLEDGE_GRAPH_ENTITY_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/KNOWLEDGE_GRAPH_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
+| `docs/02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/security/CLOUD_THREAT_MODEL.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/02-architecture/storage/.gitkeep` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет. |
 | `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` | docs/architecture | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |

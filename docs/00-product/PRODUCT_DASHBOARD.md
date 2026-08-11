@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-08-10
+Updated: 2026-08-11
 
 ## Current Product
 
@@ -22,8 +22,8 @@ Active plan: `docs/01-delivery/PROJECT_PLAN.md`.
 Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
-2. Start next with `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit, but only when the owner asks to begin that phase.
-3. Keep the audit read-only: classify repository debt before cleanup or new feature work.
+2. Review the completed `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit.
+3. Choose the first owner-approved cleanup slice before starting `0.0.1.10.0`.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -110,10 +110,11 @@ Recently closed:
 - `0.0.1.8.18.7` plan-only future backlog expansion: NF-001...NF-017 were broken into owner/reuse/dependency/persistence/UI/test notes without implementing product functionality.
 - `0.0.1.8.18.8` final verification gate: focused tests, full browser smoke, visual regression, `npm run verify`, real large-workspace desktop smoke and `npm run desktop:gate` were green, but closure needed an owner decision.
 - `0.0.1.8.18` owner waiver closure: the owner accepted the current design for this product stage on 2026-08-10. The failed Visual Critic evidence remains future polish debt, not a blocker.
+- `0.0.1.9.0` repository maintainability audit: audit-only evidence, coverage ledger and cleanup backlog were created. No cleanup or product functionality was implemented.
 
-Next active block:
+Next owner action:
 
-- `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit. This is audit-only; do not start cleanup, NF implementation or product features inside the audit.
+- Review `docs/02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md` and `docs/01-delivery/REPOSITORY_CLEANUP_BACKLOG.md`, then approve the first `0.0.1.10.0` cleanup slice. Until that happens, cleanup, NF implementation and product features stay blocked.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

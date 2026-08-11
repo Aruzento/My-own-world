@@ -20,9 +20,9 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current next phase: `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit.
+Current next phase: owner review of `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit.
 
-Important stop note: the owner decision unlocked `0.0.1.9.0`, but this planning/archive task does not start it.
+Important stop note: `0.0.1.9.0` produced audit evidence only. Do not start `0.0.1.10.0` cleanup until the owner reviews the audit and approves a cleanup slice.
 
 ## Execution Rules
 
@@ -79,7 +79,7 @@ ID: `0.0.1.9.0`
 
 NAME: Repository Architecture / Maintainability / AI-Slop Audit
 
-STATUS: `NEXT`
+STATUS: `DONE`
 
 GOAL: understand real repository health before new feature work.
 
@@ -89,7 +89,7 @@ SCOPE: audit-only review for dead code, duplicate ownership, mini design systems
 
 DEPENDENCIES: `0.0.1.8.18` owner waiver and closure.
 
-EXIT CRITERIA: maintainability audit exists; cleanup backlog is deterministic; bug-inventory items have a current disposition; findings are classified P0/P1/P2/P3; readiness for future NF work is assessed; no mass cleanup or product feature implementation is performed; owner review gate is ready.
+EXIT CRITERIA: closed at audit-only `Foundation` on 2026-08-11. Evidence: [REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md](../02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md), [REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md](../02-architecture/REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md), [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). The audit classifies findings, reconciles bug/backlog state, assesses NF readiness and creates an owner-review cleanup gate. No mass cleanup or product feature implementation was performed.
 
 ### Phase 2 - 0.0.1.10.0 Repository Cleanup & Consolidation
 
@@ -105,7 +105,7 @@ WHY NOW: cleanup must be based on evidence, not taste. It should follow the audi
 
 SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-DEPENDENCIES: Phase 1 audit; owner review approval.
+DEPENDENCIES: Phase 1 audit; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md).
 
 EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
 

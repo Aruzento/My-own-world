@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.9.0 Repository Maintainability Audit
+
+### What Changed
+
+- Completed the audit-only repository architecture / maintainability / AI-slop review at head `11c0ce2`.
+- Created [REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md](../02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md) with prioritized findings, no-material-finding areas, bug-inventory reconciliation and owner decisions.
+- Created [REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md](../02-architecture/REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md) as the coverage ledger for inventory, specialist review passes, searches and limitations.
+- Created [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md) as the owner-review backlog for `0.0.1.10.0`.
+- Updated `PROJECT_PLAN.md` and `PRODUCT_DASHBOARD.md` so the next action is owner review, not automatic cleanup.
+
+### Key Findings
+
+- P1: page command rollback can desync the live page and `PageIndex`.
+- P1: card metadata edits can leave old title/alias/tag/type index keys behind.
+- P1: multi-page tree-position writes can partially persist before memory rollback.
+- P1: native desktop smoke records console/page errors without failing the run.
+- P2/P3: restore pre-backup gate, feature write/read boundary drift, Knowledge Graph coordinator debt, Properties layout ownership, CSS/token debt, table accessibility and overlay semantics need cleanup decisions.
+
+### Readiness
+
+`Foundation` for audit evidence. `0.0.1.10.0` cleanup remains blocked until the owner reviews the audit and approves a cleanup slice. No repository cleanup, product functionality or real workspace mutation was performed.
+
+### Verification
+
+- Passed: `node tools\docs_index.mjs` with 88 markdown files and 0 metadata issues.
+- Passed: `node tools\audit_project_files.mjs` with 585 files, 1 local delete candidate (`debug.log`) and 0 mojibake candidates.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check` with Windows LF-to-CRLF working-copy warnings only.
+- Runtime unit/browser/desktop tests were not run because this task changed documentation/evidence only and did not touch production JS/CSS/Rust.
+
+### Next
+
+- Owner review of the audit and cleanup backlog.
+
 ## 2026-08-10: 0.0.1.8.18 Owner Waiver And Master Plan Reset
 
 ### What Changed
