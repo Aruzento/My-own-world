@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.1 RCB-021 Pending Autosave Loss
+
+### What Changed
+
+- Closed `RCB-021`, the first owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-021 root cause: pending autosave stored only one debounce timer and later re-read `state.currentPage`, so switching pages before the debounce fired could drop the dirty page edit.
+- Added `tests/browser/editor-autosave.spec.mjs` to reproduce quick edit-then-open-page loss, return to the original page from durable content and several quick page transitions with pending edits.
+- Updated `js/editor/autosave.js` so the autosave owner tracks pending page identity, cancels stale timers and exposes a flush for the current editor.
+- Updated `js/editor/editor.js` so page navigation flushes pending autosave before changing `state.currentPage` or replacing editor DOM.
+- Synced the cleanup backlog, audit, coverage ledger, project plan and dashboard so `RCB-021` is no longer shown as awaiting owner approval.
+
+### Verification
+
+- Expected failure before fix: `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`.
+- Passed after fix and stricter A/B/C regression expansion: `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/editor-formatting.spec.mjs tests/browser/app-shell.spec.mjs`.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser` with 127 browser tests.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`; [PROJECT_FILE_AUDIT.md](./PROJECT_FILE_AUDIT.md) now includes the new browser regression file.
+
+### Next
+
+- Next recommended RCB: `RCB-001`.
+
 ## 2026-08-11: 0.0.1.9.1 Audit Completeness Verification
 
 ### What Changed

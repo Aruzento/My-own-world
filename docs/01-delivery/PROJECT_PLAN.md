@@ -20,9 +20,9 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current next phase: owner review of `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit.
+Current phase: `0.0.1.10.0` Repository Cleanup & Consolidation.
 
-Important stop note: `0.0.1.9.0` produced audit evidence only. Do not start `0.0.1.10.0` cleanup until the owner reviews the audit and approves a cleanup slice.
+Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021` is closed; do not start the next RCB automatically.
 
 ## Execution Rules
 
@@ -115,7 +115,7 @@ ID: `0.0.1.10.0`
 
 NAME: Repository Cleanup & Consolidation
 
-STATUS: `BLOCKED`
+STATUS: `ACTIVE`
 
 GOAL: perform only owner-approved cleanup from the audit.
 
@@ -123,7 +123,7 @@ WHY NOW: cleanup must be based on evidence, not taste. It should follow the audi
 
 SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md).
+DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11; `RCB-021` is closed in `0.0.1.10.1` and the next recommended leaf is `RCB-001`.
 
 EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
 

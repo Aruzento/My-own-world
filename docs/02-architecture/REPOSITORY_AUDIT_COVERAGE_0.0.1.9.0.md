@@ -235,7 +235,7 @@ Subagent assertions were not accepted on their own. New P1/P2 candidates were op
 
 | Finding | Priority | Classification | Cleanup impact |
 | --- | --- | --- | --- |
-| RA-021 | P1 | NEW FINDING | Changes first cleanup order; should precede original RA-001/RA-002 slice. |
+| RA-021 | P1 | CLOSED BY RCB-021 / `0.0.1.10.1` | First cleanup leaf completed; original RA-001/RA-002 data-consistency slices remain next recommended P1 work. |
 | RA-022 | P1 | NEW FINDING | Adds an accessibility P1, but data/release P1 work still comes first. |
 | RA-023 | P2 | NEW FINDING | Adds workspace load lifecycle cleanup. |
 | RA-024 | P2 | NEW FINDING | Adds workspace-scoped asset cache cleanup. |
@@ -404,6 +404,6 @@ This should not block the audit closure, but future cleanup should avoid growing
 
 ### Completeness Verdict
 
-The `0.0.1.9.0` audit was useful but not complete enough to proceed as-is. The new P1 autosave and Tree accessibility findings mean the previous first cleanup order must be revised before `0.0.1.10.0` starts.
+The `0.0.1.9.0` audit was useful but not complete enough to proceed as-is. The new P1 autosave and Tree accessibility findings changed the cleanup order before `0.0.1.10.0` started. RA-021 is now closed by `RCB-021`; the remaining P1 cleanup order continues from the repository/data-consistency slices.
 
-`0.0.1.10.0` remains blocked pending owner review.
+`0.0.1.10.0` has owner approval for one cleanup leaf at a time. No next RCB leaf should start without an explicit task.

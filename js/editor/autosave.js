@@ -48,36 +48,64 @@ import {
 } from './safeHtmlSanitizer.js';
 
 
+const AUTOSAVE_DELAY_MS =
+  500;
+
+let pendingAutosave =
+  null;
+
+
 export function setupAutosave(
   editor
 ) {
-
-  let timeout =
-    null;
 
   editor.addEventListener(
     'input',
     () => {
 
-      setSaveStatus(
-        'changed'
+      schedulePendingAutosave(
+        editor
       );
-
-      clearTimeout(
-        timeout
-      );
-
-      timeout =
-        setTimeout(
-          () => {
-
-            saveCurrentPage(
-              editor
-            );
-          },
-          500
-        );
     }
+  );
+}
+
+
+export function flushPendingAutosave(
+  editor = null
+) {
+
+  const pending =
+    pendingAutosave;
+
+  if (!pending) return null;
+
+  if (
+    editor &&
+    pending.editor !== editor
+  ) {
+
+    return null;
+  }
+
+  clearTimeout(
+    pending.timeout
+  );
+
+  pendingAutosave =
+    null;
+
+  if (
+    !isPendingAutosaveCurrent(
+      pending
+    )
+  ) {
+
+    return null;
+  }
+
+  return saveCurrentPage(
+    pending.editor
   );
 }
 
@@ -261,6 +289,94 @@ export async function saveCurrentPage(
   renderTree();
 
   syncCampaignMapPresentation();
+}
+
+
+function schedulePendingAutosave(
+  editor
+) {
+
+  setSaveStatus(
+    'changed'
+  );
+
+  if (pendingAutosave?.timeout) {
+
+    clearTimeout(
+      pendingAutosave.timeout
+    );
+  }
+
+  const pending = {
+    editor,
+    pageId:
+      state.currentPage?.id || null,
+    timeout:
+      null
+  };
+
+  pending.timeout =
+    setTimeout(
+      () => {
+
+        void runPendingAutosave(
+          pending
+        ).catch(error => {
+
+          console.error(
+            'Autosave failed',
+            error
+          );
+        });
+      },
+      AUTOSAVE_DELAY_MS
+    );
+
+  pendingAutosave =
+    pending;
+}
+
+
+async function runPendingAutosave(
+  pending
+) {
+
+  if (
+    pendingAutosave !== pending
+  ) {
+
+    return false;
+  }
+
+  pendingAutosave =
+    null;
+
+  if (
+    !isPendingAutosaveCurrent(
+      pending
+    )
+  ) {
+
+    return false;
+  }
+
+  await saveCurrentPage(
+    pending.editor
+  );
+
+  return true;
+}
+
+
+function isPendingAutosaveCurrent(
+  pending
+) {
+
+  return Boolean(
+    pending?.editor &&
+    pending.pageId &&
+    state.currentPage?.id === pending.pageId
+  );
 }
 
 

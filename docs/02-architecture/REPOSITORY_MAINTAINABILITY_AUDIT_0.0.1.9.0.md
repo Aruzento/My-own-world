@@ -13,7 +13,7 @@ Audit date: 2026-08-11
 
 Head audited: `11c0ce2`
 
-Status: `DONE - OWNER REVIEW REQUIRED`
+Status: `DONE - CLEANUP ACTIVE`
 
 This is an audit-only artifact. It records findings, evidence, risk and cleanup candidates. It does not implement any cleanup and does not change product behavior.
 
@@ -23,7 +23,7 @@ The repository is usable and has many strong contracts, but the next work should
 
 Most UI design debt is now documented and contained by contracts, but several feature zones still carry local mini-systems from fast AI-assisted iteration: Knowledge Graph coordination, Properties popup layout ownership, map popup helper duplication and CSS token drift.
 
-Recommended next action: owner reviews [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md), approves a narrow first cleanup slice, and only then starts `0.0.1.10.0`.
+Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021` is closed; the next recommended leaf is `RCB-001`.
 
 ## Readiness For Future NF Work
 
@@ -40,7 +40,7 @@ Minimum before large NF work:
 ## Preconditions Checked
 
 - `0.0.1.8.18` is closed by explicit owner waiver recorded in [PROJECT_PLAN.md](../01-delivery/PROJECT_PLAN.md).
-- [PROJECT_PLAN.md](../01-delivery/PROJECT_PLAN.md) identifies `0.0.1.9.0` as the next phase and `0.0.1.10.0` as blocked pending audit and owner review.
+- At audit time, [PROJECT_PLAN.md](../01-delivery/PROJECT_PLAN.md) identified `0.0.1.9.0` as the next phase and `0.0.1.10.0` as blocked pending audit and owner review. Owner approval has since started `0.0.1.10.0` cleanup one RCB leaf at a time.
 - Previous active plans are archived in [docs/archive](../archive/README.md) and are not current source of truth.
 - [PROJECT_FILE_AUDIT.md](../01-delivery/PROJECT_FILE_AUDIT.md) was treated only as an input. This audit has its own coverage ledger.
 
@@ -419,6 +419,8 @@ Impact: edits made less than the debounce window before a page switch can be dro
 
 Recommended cleanup leaf: make navigation flush or cancel pending autosave with an explicit page/content snapshot and add a browser regression for rapid edit-then-open-page.
 
+Cleanup status: closed by `RCB-021` in `0.0.1.10.1`. The editor autosave owner now tracks a pending page id, navigation flushes the pending save before changing pages, stale pending timers do not save after a page switch, and `tests/browser/editor-autosave.spec.mjs` covers rapid edit-then-open-page, reopening the original page and rapid B/C transitions.
+
 ### RA-022 - P1 - Tree page action menu is not keyboard-reachable
 
 Evidence:
@@ -590,7 +592,7 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 
 ## Owner Decisions Needed
 
-1. Approve the first `0.0.1.10.0` cleanup slice. Updated recommendation after `0.0.1.9.1`: start with RA-021 autosave page-switch data loss, then RA-001/RA-001B/RA-002 data consistency.
+1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021 autosave page-switch data loss is closed; the next recommendation is RA-001, then RA-001B and RA-002 data consistency.
 2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
 3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
 4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.
@@ -602,4 +604,4 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 - No repository cleanup findings were implemented.
 - No product functionality was implemented.
 - No real user workspace was mutated.
-- `0.0.1.10.0` cleanup was not started.
+- `0.0.1.10.0` cleanup has started under owner approval. `RCB-021` is closed; no later RCB leaf is started by this audit document.

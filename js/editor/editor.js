@@ -10,6 +10,7 @@ import {
 
 import {
   setupAutosave,
+  flushPendingAutosave,
   saveCurrentPage as saveCurrentPageWithEditor
 } from './autosave.js';
 
@@ -189,23 +190,46 @@ export function openPage(
   options = {}
 ) {
 
-  openPageInEditor(
-    editor,
-    page,
-    {
-      ...options,
-      updateNavigationStack,
-      saveCurrentPage,
-      renderBackButtonIfNeeded: parsed => {
+  const open =
+    () => openPageInEditor(
+      editor,
+      page,
+      {
+        ...options,
+        updateNavigationStack,
+        saveCurrentPage,
+        renderBackButtonIfNeeded: parsed => {
 
-        renderEditorBackButton(
-          editor,
-          parsed,
-          openPage
-        );
+          renderEditorBackButton(
+            editor,
+            parsed,
+            openPage
+          );
+        }
       }
-    }
-  );
+    );
+
+  const pendingFlush =
+    flushPendingAutosave(
+      editor
+    );
+
+  if (!pendingFlush) {
+
+    return open();
+  }
+
+  return pendingFlush
+    .then(
+      open
+    )
+    .catch(error => {
+
+      console.error(
+        'Page open stopped because pending autosave failed.',
+        error
+      );
+    });
 }
 
 export function renderEmptyEditor() {

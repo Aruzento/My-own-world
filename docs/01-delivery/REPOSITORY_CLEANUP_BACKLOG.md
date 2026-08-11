@@ -13,9 +13,9 @@ Created: 2026-08-11
 
 Source audit: [REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md](../02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md)
 
-Status: `OWNER REVIEW REQUIRED`
+Status: `CLEANUP ACTIVE`
 
-This backlog is plan-only. Do not implement these items until the owner approves `0.0.1.10.0` and chooses the first slice.
+Owner approved starting `0.0.1.10.0` cleanup on 2026-08-11. Work remains one RCB leaf at a time: confirm the finding on current code, add regression coverage, fix the real owner, update docs, commit, then stop before the next RCB.
 
 ## Rules For 0.0.1.10.0
 
@@ -31,7 +31,7 @@ This backlog is plan-only. Do not implement these items until the owner approves
 
 | ID | Priority | Owner area | Status | Cleanup slice | Regression target |
 | --- | --- | --- | --- | --- | --- |
-| RCB-021 | P1 | Editor autosave lifecycle | Awaiting owner approval | Prevent pending autosave loss when switching pages during the debounce window. | Browser test for edit text, immediately open another page, then confirm the original page content was saved or explicitly flushed/cancelled safely. |
+| RCB-021 | P1 | Editor autosave lifecycle | Done in `0.0.1.10.1` | Prevent pending autosave loss when switching pages during the debounce window. | Browser test for edit text, immediately open another page, wait for background work, confirm the original page content was saved, the next page did not receive it, reopening the original page shows the durable edit, and rapid B/C transitions keep their own content. |
 | RCB-001 | P1 | Page command / repository | Awaiting owner approval | Fix rollback notification so `PageRepository/PageIndex` tracks the restored live page after failed page command rollback. | Unit test for failed `persistPageContentCommand`; repository object and `state.pages` object remain aligned. |
 | RCB-001B | P1 | Card metadata / repository | Awaiting owner approval | Fix metadata edits so title, aliases, tags and type remove old index keys before storing new ones. | Unit tests for changing/removing title, alias, tag and type; PageRepository queries must not return old metadata buckets. |
 | RCB-002 | P1 | Tree/storage data safety | Awaiting owner approval | Make multi-page tree-position writes durable-all-or-rollback. | Storage test that forces a mid-batch write failure and proves disk and memory are restored. |
@@ -80,13 +80,13 @@ These are not approved by this backlog:
 
 ## Owner Review Checklist
 
-Before starting `0.0.1.10.0`, choose:
+After `RCB-021`, choose the next cleanup leaf before implementation starts:
 
-1. First approved backlog item or slice bundle. Current recommendation after `0.0.1.9.1`: `RCB-021`, then `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`.
+1. Next approved backlog item or slice bundle. Current recommendation after `RCB-021`: `RCB-001`, then `RCB-001B`, `RCB-002`, `RCB-003`.
 2. Whether `RCB-022` should follow immediately after data/release P1 work or wait for the broader accessibility slice.
 3. Whether RA-005/RCB-005 is urgent.
 4. Whether local artifact cleanup is allowed.
 5. Whether docs root exceptions should stay.
 6. Whether the next commit after this audit may touch production code.
 
-Until those choices are made, `0.0.1.10.0` stays blocked.
+Until the next leaf is explicitly started, no further cleanup leaf should be implemented automatically.
