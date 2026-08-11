@@ -34,7 +34,7 @@ Owner approved starting `0.0.1.10.0` cleanup on 2026-08-11. Work remains one RCB
 | RCB-021 | P1 | Editor autosave lifecycle | Done in `0.0.1.10.1` | Prevent pending autosave loss when switching pages during the debounce window. | Browser test for edit text, immediately open another page, wait for background work, confirm the original page content was saved, the next page did not receive it, reopening the original page shows the durable edit, and rapid B/C transitions keep their own content. |
 | RCB-001 | P1 | Page command / repository | Done in `0.0.1.10.2` | Fix rollback notification so `PageRepository/PageIndex` tracks the restored live page after failed page command rollback. | Unit test forces failed `persistPageContentCommand`, proves `state.pages`, `PageRepository`, PageIndex title/alias/search lookups share the restored live page, and proves a subsequent successful save still works. |
 | RCB-001B | P1 | Card metadata / repository | Done in `0.0.1.10.3` | Fix metadata edits so title, aliases, tags and type remove old index keys before storing new ones. | Unit tests mutate metadata before the command snapshot, prove old title/alias/tag/type lookups are removed, new lookups are present, empty transitions stay consistent and no full index rebuild runs. |
-| RCB-002 | P1 | Tree/storage data safety | Awaiting owner approval | Make multi-page tree-position writes durable-all-or-rollback. | Storage test that forces a mid-batch write failure and proves disk and memory are restored. |
+| RCB-002 | P1 | Tree/storage data safety | Done in `0.0.1.10.4` | Make multi-page tree-position writes durable-all-or-rollback. | Storage tests force mid-batch write failure, prove already-written files plus memory/indexes are restored, and separately prove durable rollback write failure is surfaced with the original error attached. |
 | RCB-003 | P1 | Desktop smoke | Awaiting owner approval | Make native desktop click-through fail on captured page/console errors with a narrow allowlist. | Native smoke unit/helper coverage plus a simulated page error fixture if practical. |
 | RCB-022 | P1 | Tree accessibility | Awaiting owner approval | Make the per-page tree action menu reachable from keyboard without adding multiple tab stops per row. | Browser test for focused tree item opening the same action menu by an approved keyboard command such as ContextMenu/Shift+F10. |
 | RCB-004 | P2 | Desktop gate / large workspace | Awaiting owner approval | Make `desktop:gate` status explicit when real large-workspace smoke is skipped, blocked or warning-bearing. | Gate tests for no workspace path, invalid workspace path and warning classification. |
@@ -80,9 +80,9 @@ These are not approved by this backlog:
 
 ## Owner Review Checklist
 
-After `RCB-001B`, choose the next cleanup leaf before implementation starts:
+After `RCB-002`, choose the next cleanup leaf before implementation starts:
 
-1. Next approved backlog item or slice bundle. Current recommendation after `RCB-001B`: `RCB-002`, then `RCB-003`, `RCB-022`.
+1. Next approved backlog item or slice bundle. Current recommendation after `RCB-002`: `RCB-003`, then `RCB-022`, `RCB-004`.
 2. Whether `RCB-022` should follow immediately after data/release P1 work or wait for the broader accessibility slice.
 3. Whether RA-005/RCB-005 is urgent.
 4. Whether local artifact cleanup is allowed.

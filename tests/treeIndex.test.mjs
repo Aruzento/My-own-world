@@ -261,5 +261,31 @@ test(
         child
       ]
     );
+
+    child.parent =
+      null;
+
+    const lateRootPrevious = {
+      ...child
+    };
+
+    index.updatePage(
+      lateRootPrevious,
+      child
+    );
+
+    assert.deepEqual(
+      index.getChildren('parent-b-late'),
+      []
+    );
+
+    assert.deepEqual(
+      index.getChildren(null),
+      [
+        parentA,
+        parentB,
+        child
+      ]
+    );
   }
 );

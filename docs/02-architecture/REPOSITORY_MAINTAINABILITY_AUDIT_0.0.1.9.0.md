@@ -23,7 +23,7 @@ The repository is usable and has many strong contracts, but the next work should
 
 Most UI design debt is now documented and contained by contracts, but several feature zones still carry local mini-systems from fast AI-assisted iteration: Knowledge Graph coordination, Properties popup layout ownership, map popup helper duplication and CSS token drift.
 
-Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001` and `RCB-001B` are closed; the next recommended leaf is `RCB-002`.
+Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B` and `RCB-002` are closed; the next recommended leaf is `RCB-003`.
 
 ## Readiness For Future NF Work
 
@@ -108,6 +108,8 @@ Evidence:
 Impact: failed bulk move/reorder can leave disk and memory out of sync.
 
 Recommended cleanup leaf: track successfully written page snapshots and durably restore them on failure, or change the batch operation to a journaled all-or-rollback path.
+
+Cleanup status: closed by `RCB-002` in `0.0.1.10.4`. The existing page storage batch owner now tracks already-written changes and restores their original durable content before restoring memory/indexes. A separate regression proves durable rollback write failure is reported explicitly with the original batch error attached.
 
 ### RA-003 - P1 - Native desktop smoke records console/page errors without failing the run
 
@@ -399,7 +401,7 @@ Production delta after audited head `11c0ce2`: documentation/status evidence onl
 | --- | --- | --- | --- |
 | RA-001 | CLOSED BY RCB-001 / `0.0.1.10.2` | `js/storage/pageCommandService.js:282`, `js/storage/pageCommandService.js:302`, `js/repository/pageIndex.js:721` | Rollback now notifies the repository with the restored live page object instead of the rollback snapshot. |
 | RA-001B | CLOSED BY RCB-001B / `0.0.1.10.3` | `js/repository/pageIndex.js`, `js/repository/treeIndex.js`, `tests/pageRepository.test.mjs`, `tests/treeIndex.test.mjs` | Incremental indexes now remove old buckets from indexed state even when callers already mutated the live page before snapshot. |
-| RA-002 | CONFIRMED | `js/storage/pageStorage.js:1508`, `js/storage/pageStorage.js:2024`, `js/storage/pageStorage.js:2039` | Batch tree-position changes write pages one by one; memory rollback does not durably restore earlier successful writes after a later failure. |
+| RA-002 | CLOSED BY RCB-002 / `0.0.1.10.4` | `js/storage/pageStorage.js`, `tests/storageAdapter.test.mjs`, `tests/treeIndex.test.mjs` | Batch tree-position failure now restores already-written files plus memory/indexes; rollback write failure is surfaced explicitly. |
 | RA-003 | CONFIRMED | `tools/run_desktop_native_clickthrough.mjs:76`, `tools/run_desktop_native_clickthrough.mjs:603`, `tools/run_desktop_native_clickthrough.mjs:617`, `tools/run_desktop_native_clickthrough.mjs:993` | Console/page errors are recorded in the report but are not part of the final `ok` status. |
 
 ### P0 Challenge Result
@@ -595,7 +597,7 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 
 ## Owner Decisions Needed
 
-1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001 and `RCB-001B` / RA-001B are closed; the next recommendation is RA-002 data consistency.
+1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001, `RCB-001B` / RA-001B and `RCB-002` / RA-002 are closed; the next recommendation is RA-003 desktop smoke hardening.
 2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
 3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
 4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.

@@ -1551,32 +1551,45 @@ async function updatePageTreePositionsMeasured(
       )
       : null;
 
+  const writtenChanges =
+    [];
+
   try {
 
-  for (
-    let index = 0;
-    index < changes.length;
-    index += 1
-  ) {
+    for (
+      let index = 0;
+      index < changes.length;
+      index += 1
+    ) {
 
-    const change =
-      changes[index];
+      const change =
+        changes[index];
 
-    await applyPageTreePositionChange(
-      change
-    );
+      await applyPageTreePositionChange(
+        change
+      );
 
-    options.onProgress?.({
-      label: 'Перенос',
-      stage: 'страницы',
-      current: index + 1,
-      total: changes.length,
-      elapsedMs:
-        Date.now() - moveStartedAt
-    });
-  }
+      writtenChanges.push(
+        change
+      );
+
+      options.onProgress?.({
+        label: 'Перенос',
+        stage: 'страницы',
+        current: index + 1,
+        total: changes.length,
+        elapsedMs:
+          Date.now() - moveStartedAt
+      });
+    }
 
   } catch (error) {
+
+    const rollbackError =
+      await restoreDurablePageTreePositionChanges(
+        writtenChanges,
+        error
+      );
 
     rollbackPageTreePositionChanges(
       changes
@@ -1586,8 +1599,13 @@ async function updatePageTreePositionsMeasured(
 
       await failWorkspaceOperation(
         journalEntry,
-        error
+        rollbackError || error
       );
+    }
+
+    if (rollbackError) {
+
+      throw rollbackError;
     }
 
     throw error;
@@ -1673,6 +1691,9 @@ async function applyPageTreePositionChanges(
       )
       : null;
 
+  const writtenChanges =
+    [];
+
   try {
 
     for (const change of changes) {
@@ -1680,9 +1701,19 @@ async function applyPageTreePositionChanges(
       await applyPageTreePositionChange(
         change
       );
+
+      writtenChanges.push(
+        change
+      );
     }
 
   } catch (error) {
+
+    const rollbackError =
+      await restoreDurablePageTreePositionChanges(
+        writtenChanges,
+        error
+      );
 
     rollbackPageTreePositionChanges(
       changes
@@ -1692,8 +1723,13 @@ async function applyPageTreePositionChanges(
 
       await failWorkspaceOperation(
         journalEntry,
-        error
+        rollbackError || error
       );
+    }
+
+    if (rollbackError) {
+
+      throw rollbackError;
     }
 
     throw error;
@@ -2033,6 +2069,61 @@ async function applyPageTreePositionChange({
     previousPage,
     livePage
   );
+}
+
+
+async function restoreDurablePageTreePositionChanges(
+  writtenChanges = [],
+  originalError
+) {
+
+  const rollbackErrors =
+    [];
+
+  for (const change of writtenChanges) {
+
+    if (
+      typeof change?.previousContent !== 'string'
+    ) continue;
+
+    try {
+
+      await writePageContent(
+        change.livePage,
+        change.previousContent
+      );
+
+    } catch (error) {
+
+      rollbackErrors.push({
+        pageId:
+          change.livePage?.id || '',
+        error
+      });
+    }
+  }
+
+  if (rollbackErrors.length === 0) return null;
+
+  const message =
+    rollbackErrors
+      .map(entry =>
+        `${entry.pageId || 'unknown'}: ${entry.error?.message || entry.error}`
+      )
+      .join('; ');
+
+  const rollbackError =
+    new Error(
+      `Durable tree batch rollback failed after write failure: ${message}. Original error: ${originalError?.message || originalError}`
+    );
+
+  rollbackError.originalError =
+    originalError;
+
+  rollbackError.rollbackErrors =
+    rollbackErrors;
+
+  return rollbackError;
 }
 
 

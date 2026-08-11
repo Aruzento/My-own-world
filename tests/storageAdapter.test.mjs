@@ -80,6 +80,13 @@ import {
   getBackgroundCheckpointSnapshot
 } from '../js/performance/backgroundCheckpointQueue.js';
 
+import {
+  getChildren,
+  getPageById,
+  getTreeIndex,
+  validateTreeIndex
+} from '../js/repository/pageRepository.js';
+
 
 test(
   'StorageAdapter contract requires the full public API',
@@ -1774,6 +1781,362 @@ aliases: []
         event.operation === 'tree.moveBatch' &&
         event.counts.changedPages === 2
       )
+    );
+  }
+);
+
+
+test(
+  'updatePageTreePositions restores durable files after mid-batch write failure',
+  async () => {
+
+    clearWriteRevisions();
+    clearBackgroundCheckpointQueue();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    const pages =
+      [
+        createTreePage(
+          'rollback-batch-a',
+          null,
+          1
+        ),
+        createTreePage(
+          'rollback-batch-b',
+          null,
+          2
+        )
+      ];
+
+    for (const page of pages) {
+
+      await originalWriteText(
+        page.path,
+        page.content
+      );
+    }
+
+    const originalDurableA =
+      await adapter.readText(
+        pages[0].path
+      );
+
+    const originalDurableB =
+      await adapter.readText(
+        pages[1].path
+      );
+
+    const pageWrites =
+      [];
+
+    adapter.writeText =
+      async (
+        path,
+        content
+      ) => {
+
+        const normalized =
+          normalizeWorkspacePath(
+            path
+          );
+
+        if (
+          normalized === 'pages/rollback-batch-a.md' ||
+          normalized === 'pages/rollback-batch-b.md'
+        ) {
+
+          pageWrites.push(
+            normalized
+          );
+        }
+
+        if (
+          normalized === 'pages/rollback-batch-b.md' &&
+          String(content).includes('parent: next-parent')
+        ) {
+
+          throw new Error(
+            'forced mid-batch tree write failure'
+          );
+        }
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    setStorageAdapter(
+      adapter
+    );
+
+    setPages(
+      pages
+    );
+
+    await assert.rejects(
+      () => updatePageTreePositions([
+        {
+          page:
+            pages[0],
+          parentId:
+            'next-parent',
+          order:
+            10
+        },
+        {
+          page:
+            pages[1],
+          parentId:
+            'next-parent',
+          order:
+            20
+        }
+      ]),
+      /forced mid-batch tree write failure/
+    );
+
+    assert.ok(
+      pageWrites.includes(
+        'pages/rollback-batch-a.md'
+      )
+    );
+
+    assert.equal(
+      await adapter.readText(
+        pages[0].path
+      ),
+      originalDurableA
+    );
+
+    assert.equal(
+      await adapter.readText(
+        pages[1].path
+      ),
+      originalDurableB
+    );
+
+    assert.equal(
+      pages[0].parent,
+      null
+    );
+
+    assert.equal(
+      pages[1].parent,
+      null
+    );
+
+    assert.equal(
+      pages[0].order,
+      1
+    );
+
+    assert.equal(
+      pages[1].order,
+      2
+    );
+
+    assert.equal(
+      getPageById(
+        'rollback-batch-a'
+      ),
+      pages[0]
+    );
+
+    assert.deepEqual(
+      getChildren(null),
+      pages
+    );
+
+    assert.deepEqual(
+      getChildren('next-parent'),
+      []
+    );
+
+    assert.deepEqual(
+      getTreeIndex().getChildren(null),
+      pages
+    );
+
+    assert.equal(
+      validateTreeIndex().valid,
+      true
+    );
+  }
+);
+
+
+test(
+  'updatePageTreePositions surfaces durable rollback write failure',
+  async () => {
+
+    clearWriteRevisions();
+    clearBackgroundCheckpointQueue();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    const pages =
+      [
+        createTreePage(
+          'rollback-fail-a',
+          null,
+          1
+        ),
+        createTreePage(
+          'rollback-fail-b',
+          null,
+          2
+        )
+      ];
+
+    for (const page of pages) {
+
+      await originalWriteText(
+        page.path,
+        page.content
+      );
+    }
+
+    let shouldFailRollbackWrite =
+      false;
+
+    adapter.writeText =
+      async (
+        path,
+        content
+      ) => {
+
+        const normalized =
+          normalizeWorkspacePath(
+            path
+          );
+
+        if (
+          normalized === 'pages/rollback-fail-b.md' &&
+          String(content).includes('parent: next-parent')
+        ) {
+
+          shouldFailRollbackWrite =
+            true;
+
+          throw new Error(
+            'forced original batch write failure'
+          );
+        }
+
+        if (
+          shouldFailRollbackWrite &&
+          normalized === 'pages/rollback-fail-a.md' &&
+          String(content).includes('parent: null')
+        ) {
+
+          throw new Error(
+            'forced rollback restore failure'
+          );
+        }
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    setStorageAdapter(
+      adapter
+    );
+
+    setPages(
+      pages
+    );
+
+    await assert.rejects(
+      () => updatePageTreePositions([
+        {
+          page:
+            pages[0],
+          parentId:
+            'next-parent',
+          order:
+            10
+        },
+        {
+          page:
+            pages[1],
+          parentId:
+            'next-parent',
+          order:
+            20
+        }
+      ]),
+      error => {
+
+        assert.match(
+          error.message,
+          /Durable tree batch rollback failed/
+        );
+
+        assert.match(
+          error.message,
+          /forced rollback restore failure/
+        );
+
+        assert.match(
+          error.message,
+          /forced original batch write failure/
+        );
+
+        assert.equal(
+          error.originalError?.message,
+          'forced original batch write failure'
+        );
+
+        assert.equal(
+          error.rollbackErrors?.[0]?.error?.message,
+          'forced rollback restore failure'
+        );
+
+        return true;
+      }
+    );
+
+    assert.match(
+      await adapter.readText(
+        pages[0].path
+      ),
+      /parent:\s*next-parent/
+    );
+
+    assert.equal(
+      pages[0].parent,
+      null
+    );
+
+    assert.equal(
+      pages[1].parent,
+      null
+    );
+
+    assert.deepEqual(
+      getChildren(null),
+      pages
+    );
+
+    assert.deepEqual(
+      getChildren('next-parent'),
+      []
     );
   }
 );

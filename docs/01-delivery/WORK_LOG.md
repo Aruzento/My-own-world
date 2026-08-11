@@ -6,6 +6,33 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.4 RCB-002 Durable Tree Batch Rollback
+
+### What Changed
+
+- Closed `RCB-002`, the fourth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-002 root cause with a failing storage regression: a multi-page tree-position batch could write page A durably, fail on page B, restore memory, but leave page A moved on disk.
+- Updated `js/storage/pageStorage.js` so tree-position batch failures restore the original durable content for pages already written before restoring memory and indexes.
+- Kept the fix inside the existing page storage/write path; no general transaction framework or persistent format change was added.
+- Added a separate rollback-write-failure regression so a failed durable rollback is reported as its own error and keeps the original write failure attached instead of being silently masked.
+- Corrected `TreeIndex` root-parent deletion handling so indexed `null` parent buckets are treated as real previous state during rollback/update.
+
+### Verification
+
+- Expected failure before fix: `node --test tests\storageAdapter.test.mjs`.
+- Passed after fix: `node --test tests\storageAdapter.test.mjs`.
+- Passed: `node --test tests\treeIndex.test.mjs`.
+- Passed: `node --test tests\treeIndex.test.mjs tests\pageCommandService.test.mjs tests\lightweightWorkspaceOperationsGate.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-dnd-regression.spec.mjs`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Next recommended RCB: `RCB-003`.
+
 ## 2026-08-11: 0.0.1.10.3 RCB-001B Metadata Index Consistency
 
 ### What Changed
@@ -29,7 +56,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Next recommended RCB: `RCB-002`.
+- Completed by follow-up `0.0.1.10.4`; next recommended RCB is `RCB-003`.
 
 ## 2026-08-11: 0.0.1.10.2 RCB-001 Page Rollback / Repository Consistency
 

@@ -275,7 +275,9 @@ export class TreeIndex {
 
     const parentKey =
       normalizeParentId(
-        indexedParent ?? page?.parent ?? existing?.parent
+        indexedParent !== undefined
+          ? indexedParent
+          : page?.parent ?? existing?.parent
       );
 
     const siblings =
