@@ -6,6 +6,30 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.16 RCB-027 Card Type Control Accessibility
+
+### What Changed
+
+- Confirmed the `RA-027` issue on the current code: the real `<select>` was hidden with `display: none`, while the visual replacement was a click-only trigger/menu without `aria-expanded`, listbox semantics, Escape handling or arrow-key selection.
+- Chose the semantic contract deliberately: Card Type is a select-only combobox/listbox, not a menu button, because it represents a single selected value rather than a list of commands.
+- Reworked `js/ui/cardType.js` so `.card-type-trigger` exposes `role="combobox"`, `aria-haspopup="listbox"`, `aria-expanded`, `aria-controls`, `aria-labelledby` and `aria-activedescendant`.
+- Reworked the options into `role="option"` items inside `role="listbox"` and added keyboard behavior: ArrowUp/ArrowDown/Home/End move the active option, Enter/Space commit, Escape closes without changing the current type, Tab commits and exits, and focus returns to the trigger after cancel/selection.
+- Moved the listbox popup to the body-level shared `popupManager` popover layer when opened, so z-order and viewport placement are shared overlay ownership instead of a local hard-coded `z-index`.
+- Kept the visual design of the Card Type control intact except for necessary keyboard-focus state and layer ownership cleanup.
+
+### Verification
+
+- Failed first as expected before the production fix: `npm run test:browser -- tests/browser/card-type-accessibility.spec.mjs` could not find the combobox role.
+- Passed: `npm run test:browser -- tests/browser/card-type-accessibility.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Continue cleanup only after owner selection of the next RCB leaf.
+
 ## 2026-08-11: 0.0.1.10.15 RCB-026 Rule Tree Save Ownership
 
 ### What Changed

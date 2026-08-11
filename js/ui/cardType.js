@@ -13,6 +13,10 @@ import {
 } from './ui.js';
 
 import {
+  registerPopup
+} from './popupManager.js';
+
+import {
   markRuntime
 } from '../editor/blocks/blockContract.js';
 
@@ -33,6 +37,9 @@ const CARD_TYPE_LABELS = {
   lore: 'Лор',
   note: 'Заметка'
 };
+
+let nextCardTypeControlId =
+  0;
 
 
 export function setupCardType() {
@@ -110,6 +117,11 @@ export function setupCardType() {
       closeAllCardTypeDropdowns();
     }
   );
+
+  document.addEventListener(
+    'keydown',
+    handleCardTypeKeyDown
+  );
 }
 
 
@@ -123,6 +135,8 @@ export function renderCardType() {
     );
 
   if (!select) return;
+
+  cleanupDetachedCardTypeMenus();
 
   ensureNativeCardTypeOptions(
     select
@@ -177,8 +191,16 @@ function ensureCustomCardType(
     select.nextElementSibling?.classList.contains('card-type-custom')
   ) {
 
+    const custom =
+      select.nextElementSibling;
+
     markRuntime(
-      select.nextElementSibling
+      custom
+    );
+
+    ensureCardTypeControlContract(
+      select,
+      custom
     );
 
     return;
@@ -195,27 +217,32 @@ function ensureCustomCardType(
   );
 
   custom.innerHTML = `
-    <button class="card-type-trigger" type="button">
+    <div class="card-type-trigger">
       <span class="card-type-current"></span>
       <span class="card-type-arrow"></span>
-    </button>
+    </div>
 
     <div class="card-type-menu hidden">
       ${Object
         .entries(CARD_TYPE_LABELS)
         .map(([value, label]) => `
-          <button
+          <div
             class="card-type-option"
-            type="button"
             data-value="${value}"
+            data-popup-drag-ignore="true"
           >
             ${getPageIcon([value])}
             <span class="card-type-option-label">${label}</span>
-          </button>
+          </div>
         `)
         .join('')}
     </div>
   `;
+
+  ensureCardTypeControlContract(
+    select,
+    custom
+  );
 
   select.after(
     custom
@@ -228,7 +255,7 @@ function syncCustomCardType(
 ) {
 
   const custom =
-    select.nextElementSibling;
+    select?.nextElementSibling;
 
   if (
     !custom?.classList.contains('card-type-custom')
@@ -237,18 +264,57 @@ function syncCustomCardType(
   const value =
     select.value || 'note';
 
-  custom.querySelector('.card-type-current').textContent =
-    CARD_TYPE_LABELS[value] || CARD_TYPE_LABELS.note;
+  const trigger =
+    custom.querySelector('.card-type-trigger');
+
+  const isOpen =
+    custom.classList.contains('is-open');
 
   custom
-    .querySelectorAll('.card-type-option')
+    .querySelector('.card-type-current')
+    .textContent =
+      CARD_TYPE_LABELS[value] || CARD_TYPE_LABELS.note;
+
+  getCardTypeOptions(
+    custom
+  )
     .forEach(option => {
+
+      const isSelected =
+        option.dataset.value === value;
 
       option.classList.toggle(
         'is-selected',
-        option.dataset.value === value
+        isSelected
       );
+
+      if (!isOpen) {
+
+        option.classList.remove(
+          'is-active'
+        );
+
+        option.setAttribute(
+          'aria-selected',
+          String(isSelected)
+        );
+      }
     });
+
+  if (
+    trigger &&
+    !isOpen
+  ) {
+
+    trigger.setAttribute(
+      'aria-expanded',
+      'false'
+    );
+
+    trigger.removeAttribute(
+      'aria-activedescendant'
+    );
+  }
 }
 
 
@@ -259,74 +325,174 @@ function toggleCustomCardType(
   if (!custom) return;
 
   const menu =
-    custom.querySelector('.card-type-menu');
+    getCardTypeMenu(
+      custom
+    );
 
   const willOpen =
-    menu.classList.contains('hidden');
+    menu?.classList.contains('hidden');
 
-  closeAllCardTypeDropdowns();
+  if (!willOpen) {
 
-  if (willOpen) {
-
-    custom.classList.add(
-      'is-open'
-    );
-
-    menu.classList.remove(
-      'hidden'
-    );
-
-    positionCardTypeMenu(
+    closeCardTypeDropdown(
       custom,
-      menu
+      {
+        restoreFocus:
+          true
+      }
     );
+
+    return;
   }
+
+  openCardTypeDropdown(
+    custom
+  );
 }
 
 
-function positionCardTypeMenu(
+function openCardTypeDropdown(
   custom,
-  menu
+  {
+    activeValue = null
+  } = {}
 ) {
+
+  if (!custom) return;
+
+  const select =
+    custom.previousElementSibling;
+
+  const trigger =
+    custom.querySelector('.card-type-trigger');
+
+  const menu =
+    getCardTypeMenu(
+      custom
+    );
+
+  if (
+    !select ||
+    !trigger ||
+    !menu
+  ) return;
+
+  closeAllCardTypeDropdowns(
+    custom
+  );
+
+  custom.classList.add(
+    'is-open'
+  );
+
+  trigger.setAttribute(
+    'aria-expanded',
+    'true'
+  );
+
+  setActiveCardTypeOption(
+    custom,
+    activeValue || select.value || 'note'
+  );
+
+  attachCardTypeMenuToOverlayLayer(
+    custom
+  );
+
+  const controller =
+    ensureCardTypePopupController(
+      custom
+    );
+
+  const positioningOptions = {
+    gap:
+      6,
+    fallbackWidth:
+      360,
+    fallbackHeight:
+      280
+  };
+
+  controller?.openNearAnchor(
+    custom
+      .querySelector('.card-type-trigger'),
+    positioningOptions
+  );
 
   requestAnimationFrame(
     () => {
 
-      const customRect =
-        custom.getBoundingClientRect();
+      if (
+        !custom.classList.contains('is-open')
+      ) return;
 
-      const menuRect =
-        menu.getBoundingClientRect();
-
-      const overflowRight =
-        menuRect.right - window.innerWidth + 12;
-
-      const overflowBottom =
-        menuRect.bottom - window.innerHeight + 12;
-
-      menu.style.left =
-        overflowRight > 0
-          ? `${Math.min(0, -overflowRight)}px`
-          : '0';
-
-      if (overflowBottom > 0) {
-
-        menu.style.top =
-          'auto';
-
-        menu.style.bottom =
-          `${customRect.height + 6}px`;
-
-        return;
-      }
-
-      menu.style.top =
-        'calc(100% + 6px)';
-
-      menu.style.bottom =
-        'auto';
+      controller?.openNearAnchor(
+        trigger,
+        positioningOptions
+      );
     }
   );
+}
+
+
+function closeCardTypeDropdown(
+  custom,
+  {
+    restoreFocus = false
+  } = {}
+) {
+
+  if (!custom) return;
+
+  const trigger =
+    custom.querySelector('.card-type-trigger');
+
+  const menu =
+    getCardTypeMenu(
+      custom
+    );
+
+  custom.classList.remove(
+    'is-open'
+  );
+
+  menu?.classList.add(
+    'hidden'
+  );
+
+  if (menu) {
+
+    menu.dataset.popupOpen =
+      'false';
+
+    menu.dataset.overlayState =
+      'closed';
+  }
+
+  trigger?.setAttribute(
+    'aria-expanded',
+    'false'
+  );
+
+  trigger?.removeAttribute(
+    'aria-activedescendant'
+  );
+
+  syncCustomCardType(
+    custom.previousElementSibling
+  );
+
+  if (
+    restoreFocus &&
+    trigger &&
+    typeof trigger.focus === 'function'
+  ) {
+
+    trigger.focus({
+      preventScroll:
+        true
+    });
+  }
 }
 
 
@@ -335,6 +501,9 @@ function selectCustomCardType(
 ) {
 
   const custom =
+    option
+      .closest('.card-type-menu')
+      ?.__cardTypeCustom ||
     option.closest('.card-type-custom');
 
   const select =
@@ -345,6 +514,10 @@ function selectCustomCardType(
   select.value =
     option.dataset.value;
 
+  syncCustomCardType(
+    select
+  );
+
   select.dispatchEvent(
     new Event(
       'change',
@@ -354,24 +527,726 @@ function selectCustomCardType(
     )
   );
 
-  closeAllCardTypeDropdowns();
+  closeCardTypeDropdown(
+    custom,
+    {
+      restoreFocus:
+        true
+    }
+  );
 }
 
 
-function closeAllCardTypeDropdowns() {
+function closeAllCardTypeDropdowns(
+  exceptCustom = null
+) {
 
   document
     .querySelectorAll('.card-type-custom')
     .forEach(custom => {
 
-      custom.classList.remove(
-        'is-open'
+      if (custom === exceptCustom) return;
+
+      closeCardTypeDropdown(
+        custom
+      );
+    });
+}
+
+
+function getCardTypeMenu(
+  custom
+) {
+
+  return custom?.__cardTypeMenu ||
+    custom?.querySelector('.card-type-menu') ||
+    null;
+}
+
+
+function attachCardTypeMenuToOverlayLayer(
+  custom
+) {
+
+  const menu =
+    getCardTypeMenu(
+      custom
+    );
+
+  if (!menu) return null;
+
+  custom.__cardTypeMenu =
+    menu;
+
+  menu.__cardTypeCustom =
+    custom;
+
+  menu.dataset.cardTypeOverlay =
+    'true';
+
+  if (menu.parentElement !== document.body) {
+
+    document.body.appendChild(
+      menu
+    );
+  }
+
+  return menu;
+}
+
+
+function cleanupDetachedCardTypeMenus() {
+
+  document
+    .querySelectorAll('.card-type-menu[data-card-type-overlay="true"]')
+    .forEach(menu => {
+
+      if (
+        menu.__cardTypeCustom?.isConnected
+      ) return;
+
+      menu.remove();
+    });
+}
+
+
+function ensureCardTypeControlContract(
+  select,
+  custom
+) {
+
+  if (
+    !select ||
+    !custom
+  ) return;
+
+  const controlId =
+    select.dataset.cardTypeControlId ||
+    `card-type-${++nextCardTypeControlId}`;
+
+  select.dataset.cardTypeControlId =
+    controlId;
+
+  select.tabIndex =
+    -1;
+
+  select.setAttribute(
+    'aria-hidden',
+    'true'
+  );
+
+  const row =
+    select.closest('.card-type-row');
+
+  const label =
+    row?.querySelector('.card-type-label');
+
+  if (
+    label &&
+    !label.id
+  ) {
+
+    label.id =
+      `${controlId}-label`;
+  }
+
+  const trigger =
+    custom.querySelector('.card-type-trigger');
+
+  const menu =
+    getCardTypeMenu(
+      custom
+    );
+
+  if (
+    !trigger ||
+    !menu
+  ) return;
+
+  custom.__cardTypeMenu =
+    menu;
+
+  menu.__cardTypeCustom =
+    custom;
+
+  menu.dataset.cardTypeOverlay =
+    'true';
+
+  trigger.id =
+    `${controlId}-combobox`;
+
+  trigger.tabIndex =
+    0;
+
+  trigger.setAttribute(
+    'role',
+    'combobox'
+  );
+
+  trigger.setAttribute(
+    'aria-haspopup',
+    'listbox'
+  );
+
+  trigger.setAttribute(
+    'aria-expanded',
+    'false'
+  );
+
+  trigger.setAttribute(
+    'aria-controls',
+    `${controlId}-listbox`
+  );
+
+  if (label?.id) {
+
+    trigger.setAttribute(
+      'aria-labelledby',
+      label.id
+    );
+
+  } else {
+
+    trigger.setAttribute(
+      'aria-label',
+      'Тип карточки'
+    );
+  }
+
+  menu.id =
+    `${controlId}-listbox`;
+
+  menu.setAttribute(
+    'role',
+    'listbox'
+  );
+
+  menu.dataset.overlayKind =
+    'popover';
+
+  menu.dataset.overlayModal =
+    'false';
+
+  if (label?.id) {
+
+    menu.setAttribute(
+      'aria-labelledby',
+      label.id
+    );
+
+  } else {
+
+    menu.setAttribute(
+      'aria-label',
+      'Тип карточки'
+    );
+  }
+
+  getCardTypeOptions(
+    custom
+  )
+    .forEach(option => {
+
+      const value =
+        option.dataset.value || 'note';
+
+      option.id =
+        `${controlId}-option-${value}`;
+
+      option.setAttribute(
+        'role',
+        'option'
       );
 
-      custom
-        .querySelector('.card-type-menu')
-        ?.classList.add(
-          'hidden'
-        );
+      option.setAttribute(
+        'aria-selected',
+        'false'
+      );
+
+      option.setAttribute(
+        'data-popup-drag-ignore',
+        'true'
+      );
     });
+
+  ensureCardTypePopupController(
+    custom
+  );
+}
+
+
+function ensureCardTypePopupController(
+  custom
+) {
+
+  if (!custom) return null;
+
+  if (custom.__cardTypePopupController) {
+
+    return custom.__cardTypePopupController;
+  }
+
+  const trigger =
+    custom.querySelector('.card-type-trigger');
+
+  const menu =
+    getCardTypeMenu(
+      custom
+    );
+
+  if (
+    !trigger ||
+    !menu
+  ) return null;
+
+  custom.__cardTypePopupController =
+    registerPopup({
+      popup:
+        menu,
+      close:
+        () => closeCardTypeDropdown(
+          custom
+        ),
+      anchors:
+        [
+          trigger
+        ],
+      key:
+        menu.id,
+      kind:
+        'popover'
+    });
+
+  return custom.__cardTypePopupController;
+}
+
+
+function handleCardTypeKeyDown(
+  event
+) {
+
+  const trigger =
+    event.target?.closest?.('.card-type-trigger');
+
+  if (!trigger) return;
+
+  const custom =
+    trigger.closest('.card-type-custom');
+
+  if (!custom) return;
+
+  const isOpen =
+    custom.classList.contains('is-open');
+
+  if (
+    event.key === 'ArrowDown'
+  ) {
+
+    event.preventDefault();
+
+    if (!isOpen) {
+
+      openCardTypeDropdown(
+        custom
+      );
+
+      return;
+    }
+
+    moveActiveCardTypeOption(
+      custom,
+      1
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'ArrowUp'
+  ) {
+
+    event.preventDefault();
+
+    if (!isOpen) {
+
+      openCardTypeDropdown(
+        custom
+      );
+
+      return;
+    }
+
+    moveActiveCardTypeOption(
+      custom,
+      -1
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'Home' &&
+    isOpen
+  ) {
+
+    event.preventDefault();
+
+    setActiveCardTypeOptionByIndex(
+      custom,
+      0
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'End' &&
+    isOpen
+  ) {
+
+    event.preventDefault();
+
+    const options =
+      getCardTypeOptions(
+        custom
+      );
+
+    setActiveCardTypeOptionByIndex(
+      custom,
+      options.length - 1
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'Escape' &&
+    isOpen
+  ) {
+
+    event.preventDefault();
+
+    closeCardTypeDropdown(
+      custom,
+      {
+        restoreFocus:
+          true
+      }
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'Enter' ||
+    event.key === ' '
+  ) {
+
+    event.preventDefault();
+
+    if (!isOpen) {
+
+      openCardTypeDropdown(
+        custom
+      );
+
+      return;
+    }
+
+    selectActiveCardTypeOption(
+      custom
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'Tab' &&
+    isOpen
+  ) {
+
+    selectActiveCardTypeOption(
+      custom,
+      {
+        restoreFocus:
+          false
+      }
+    );
+
+    return;
+  }
+
+  if (
+    isPrintableKey(
+      event
+    )
+  ) {
+
+    event.preventDefault();
+
+    focusCardTypeOptionByPrefix(
+      custom,
+      event.key
+    );
+  }
+}
+
+
+function selectActiveCardTypeOption(
+  custom,
+  {
+    restoreFocus = true
+  } = {}
+) {
+
+  const trigger =
+    custom?.querySelector('.card-type-trigger');
+
+  const activeId =
+    trigger?.getAttribute('aria-activedescendant');
+
+  const option =
+    activeId
+      ? document.getElementById(activeId)
+      : getSelectedCardTypeOption(custom);
+
+  if (!option) return;
+
+  if (!restoreFocus) {
+
+    const select =
+      custom.previousElementSibling;
+
+    select.value =
+      option.dataset.value;
+
+    syncCustomCardType(
+      select
+    );
+
+    select.dispatchEvent(
+      new Event(
+        'change',
+        {
+          bubbles:
+            true
+        }
+      )
+    );
+
+    closeCardTypeDropdown(
+      custom
+    );
+
+    return;
+  }
+
+  selectCustomCardType(
+    option
+  );
+}
+
+
+function moveActiveCardTypeOption(
+  custom,
+  direction
+) {
+
+  const options =
+    getCardTypeOptions(
+      custom
+    );
+
+  if (!options.length) return;
+
+  const trigger =
+    custom.querySelector('.card-type-trigger');
+
+  const activeId =
+    trigger?.getAttribute('aria-activedescendant');
+
+  const activeIndex =
+    options.findIndex(option =>
+      option.id === activeId
+    );
+
+  const selectedIndex =
+    options.indexOf(
+      getSelectedCardTypeOption(
+        custom
+      )
+    );
+
+  const baseIndex =
+    activeIndex >= 0
+      ? activeIndex
+      : Math.max(0, selectedIndex);
+
+  setActiveCardTypeOptionByIndex(
+    custom,
+    baseIndex + direction
+  );
+}
+
+
+function setActiveCardTypeOptionByIndex(
+  custom,
+  index
+) {
+
+  const options =
+    getCardTypeOptions(
+      custom
+    );
+
+  if (!options.length) return;
+
+  const nextIndex =
+    (index + options.length) % options.length;
+
+  setActiveCardTypeOption(
+    custom,
+    options[nextIndex].dataset.value
+  );
+}
+
+
+function setActiveCardTypeOption(
+  custom,
+  value
+) {
+
+  const trigger =
+    custom?.querySelector('.card-type-trigger');
+
+  const options =
+    getCardTypeOptions(
+      custom
+    );
+
+  const activeOption =
+    options.find(option =>
+      option.dataset.value === value
+    ) || options[0];
+
+  if (
+    !trigger ||
+    !activeOption
+  ) return;
+
+  options.forEach(option => {
+
+    const isActive =
+      option === activeOption;
+
+    option.classList.toggle(
+      'is-active',
+      isActive
+    );
+
+    option.setAttribute(
+      'aria-selected',
+      String(isActive)
+    );
+  });
+
+  trigger.setAttribute(
+    'aria-activedescendant',
+    activeOption.id
+  );
+
+  activeOption.scrollIntoView({
+    block:
+      'nearest',
+    inline:
+      'nearest'
+  });
+}
+
+
+function getCardTypeOptions(
+  custom
+) {
+
+  return Array.from(
+    getCardTypeMenu(
+      custom
+    )?.querySelectorAll('.card-type-option') || []
+  );
+}
+
+
+function getSelectedCardTypeOption(
+  custom
+) {
+
+  const select =
+    custom?.previousElementSibling;
+
+  const value =
+    select?.value || 'note';
+
+  return getCardTypeOptions(
+    custom
+  ).find(option =>
+    option.dataset.value === value
+  );
+}
+
+
+function focusCardTypeOptionByPrefix(
+  custom,
+  prefix
+) {
+
+  if (
+    !custom.classList.contains('is-open')
+  ) {
+
+    openCardTypeDropdown(
+      custom
+    );
+  }
+
+  const normalizedPrefix =
+    String(prefix || '')
+      .trim()
+      .toLocaleLowerCase();
+
+  if (!normalizedPrefix) return;
+
+  const option =
+    getCardTypeOptions(
+      custom
+    ).find(candidate => {
+
+      const label =
+        candidate
+          .querySelector('.card-type-option-label')
+          ?.textContent
+          ?.trim()
+          ?.toLocaleLowerCase() || '';
+
+      return label.startsWith(
+        normalizedPrefix
+      );
+    });
+
+  if (!option) return;
+
+  setActiveCardTypeOption(
+    custom,
+    option.dataset.value
+  );
+}
+
+
+function isPrintableKey(
+  event
+) {
+
+  return event.key?.length === 1 &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey;
 }

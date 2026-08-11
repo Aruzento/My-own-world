@@ -564,6 +564,8 @@ Impact: the visual control looks polished, but its accessibility and overlay own
 
 Recommended cleanup leaf: either use the existing shared Select/popup contract or give the custom control a complete keyboard/ARIA/layering contract.
 
+Cleanup status: closed by `RCB-027` in `0.0.1.10.16`. The Card Type control is now a select-only combobox/listbox rather than a hidden native select plus click-only visual shell. It exposes a Russian accessible label through the visible `Тип` label, `aria-expanded`, `aria-controls`, `aria-activedescendant`, `role="listbox"`/`role="option"`, keyboard open/navigation, Enter/Space commit, Escape cancel and focus return. The listbox is moved to the body-level shared `popupManager` popover layer for z-index and viewport placement instead of using a local hard-coded `z-index`.
+
 ### RA-028 - P2 - Major reorder workflows remain pointer-only
 
 Evidence:
