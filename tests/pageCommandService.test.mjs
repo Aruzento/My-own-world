@@ -42,6 +42,12 @@ import {
 } from '../js/storage/storageAdapterContract.js';
 
 import {
+  findPageByTitleOrAlias,
+  getPageById,
+  searchPageResults
+} from '../js/repository/pageRepository.js';
+
+import {
   updatePageRecordContent
 } from '../js/core/pageRecord.js';
 
@@ -919,6 +925,254 @@ test(
       originalWriteText;
 
     await flushBackgroundCheckpoints();
+  }
+);
+
+
+test(
+  'persistPageContentCommand rollback keeps PageRepository aligned to restored live page',
+  async () => {
+
+    clearPageCommandEvents();
+    clearPageUndoEntries();
+    clearWriteRevisions();
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const page =
+      createTestPage(
+        'rollback-repository',
+        null,
+        1000
+      );
+
+    page.title =
+      'Rollback Original';
+
+    page.aliases =
+      [
+        'Original Alias'
+      ];
+
+    page.tags =
+      [
+        'card',
+        'original-tag'
+      ];
+
+    page.content =
+      page.content.replace(
+        '<h1>rollback-repository</h1>',
+        '<h1>Rollback Original</h1><p>original durable marker</p>'
+      );
+
+    await adapter.writeText(
+      page.path,
+      page.content
+    );
+
+    setPages([
+      page
+    ]);
+
+    assert.equal(
+      getPageById(
+        page.id
+      ),
+      page
+    );
+
+    const previousPage =
+      snapshotPageForCommand(
+        page
+      );
+
+    const previousContent =
+      page.content;
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    adapter.writeText =
+      async (path, content) => {
+
+        if (
+          normalizeWorkspacePath(path) ===
+          normalizeWorkspacePath(page.path) &&
+          String(content).includes(
+            'failed write marker'
+          )
+        ) {
+
+          throw new Error(
+            'forced rollback write failure'
+          );
+        }
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    page.title =
+      'Failed Runtime Title';
+
+    page.aliases =
+      [
+        'Failed Alias'
+      ];
+
+    page.tags =
+      [
+        'card',
+        'failed-tag'
+      ];
+
+    page.type =
+      'character';
+
+    const failedContent =
+      previousContent.replace(
+        'original durable marker',
+        'failed write marker'
+      );
+
+    await assert.rejects(
+      () => persistPageContentCommand({
+        page,
+        content:
+          failedContent,
+        previousPage,
+        reason:
+          'rollback-repository-test'
+      }),
+      /forced rollback write failure/
+    );
+
+    assert.equal(
+      state.pages[0],
+      page
+    );
+
+    assert.equal(
+      page.title,
+      'Rollback Original'
+    );
+
+    assert.equal(
+      page.type,
+      'note'
+    );
+
+    assert.deepEqual(
+      page.aliases,
+      [
+        'Original Alias'
+      ]
+    );
+
+    assert.deepEqual(
+      page.tags,
+      [
+        'card',
+        'original-tag'
+      ]
+    );
+
+    assert.equal(
+      page.content,
+      previousContent
+    );
+
+    assert.equal(
+      getPageById(
+        page.id
+      ),
+      page
+    );
+
+    assert.equal(
+      findPageByTitleOrAlias(
+        'Rollback Original'
+      ),
+      page
+    );
+
+    assert.equal(
+      findPageByTitleOrAlias(
+        'Original Alias'
+      ),
+      page
+    );
+
+    assert.equal(
+      searchPageResults(
+        'original durable marker'
+      )[0]?.page,
+      page
+    );
+
+    assert.equal(
+      findPageByTitleOrAlias(
+        'Failed Alias'
+      ),
+      null
+    );
+
+    assert.equal(
+      searchPageResults(
+        'failed write marker'
+      ).length,
+      0
+    );
+
+    const successfulContent =
+      previousContent.replace(
+        'original durable marker',
+        'successful save marker'
+      );
+
+    await persistPageContentCommand({
+      page,
+      content:
+        successfulContent,
+      previousPage:
+        snapshotPageForCommand(
+          page
+        ),
+      reason:
+        'rollback-followup-success'
+    });
+
+    assert.equal(
+      page.content,
+      successfulContent
+    );
+
+    assert.equal(
+      getPageById(
+        page.id
+      ),
+      page
+    );
+
+    assert.equal(
+      searchPageResults(
+        'successful save marker'
+      )[0]?.page,
+      page
+    );
+
+    adapter.writeText =
+      originalWriteText;
   }
 );
 

@@ -200,7 +200,7 @@ Notes:
 
 | Finding | Verification result | Evidence summary |
 | --- | --- | --- |
-| RA-001 | CONFIRMED | Rollback and repository update paths in `js/storage/pageCommandService.js` plus index bucket behavior in `js/repository/pageIndex.js`. |
+| RA-001 | CLOSED BY RCB-001 / `0.0.1.10.2` | Rollback and repository update paths in `js/storage/pageCommandService.js` plus index bucket behavior in `js/repository/pageIndex.js`. |
 | RA-001B | CONFIRMED | Autosave and special-save mutate page metadata before validation/snapshot in `js/editor/autosave.js` and `js/editor/editorSpecialSave.js`. |
 | RA-002 | CONFIRMED | `updatePageTreePositionsMeasured()` writes each page before in-memory rollback in `js/storage/pageStorage.js`. |
 | RA-003 | CONFIRMED | Native click-through report captures console/page errors but final status ignores them in `tools/run_desktop_native_clickthrough.mjs`. |

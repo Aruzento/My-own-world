@@ -6,6 +6,30 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.2 RCB-001 Page Rollback / Repository Consistency
+
+### What Changed
+
+- Closed `RCB-001`, the second owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-001 root cause with a failing unit regression: failed `persistPageContentCommand()` rollback restored the live `state.pages` object, but notified `PageRepository/PageIndex` with rollback snapshot data as the next page.
+- Updated `js/storage/pageCommandService.js` so rollback still uses the existing rollback path, but publishes the restored live page object to `notifyPageUpdated()`.
+- Extended `tests/pageCommandService.test.mjs` to force a write failure, prove `state.pages`, `PageRepository`, `PageIndex` title/alias/search lookups all point to the restored live page and verify a later successful save remains normal.
+- Synced the cleanup backlog, audit, coverage ledger, project plan and dashboard so `RCB-001` is closed and `RCB-001B` is the next recommended leaf.
+
+### Verification
+
+- Expected failure before fix: `node --test tests\pageCommandService.test.mjs`.
+- Passed after fix: `node --test tests\pageCommandService.test.mjs`.
+- Passed: `node --test tests\pageCommandService.test.mjs tests\pageRepository.test.mjs tests\pageIndex.test.mjs`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Next recommended RCB: `RCB-001B`.
+
 ## 2026-08-11: 0.0.1.10.1 RCB-021 Pending Autosave Loss
 
 ### What Changed
@@ -29,7 +53,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Next recommended RCB: `RCB-001`.
+- Completed by follow-up `0.0.1.10.2`; next recommended RCB is `RCB-001B`.
 
 ## 2026-08-11: 0.0.1.9.1 Audit Completeness Verification
 

@@ -300,10 +300,8 @@ export async function persistPageContentCommand({
         );
 
         notifyPageUpdated(
-          snapshotPageForCommand(
-            page
-          ),
-          context.rollbackData.beforePage
+          context.rollbackData.beforePage,
+          page
         );
       }
     },
