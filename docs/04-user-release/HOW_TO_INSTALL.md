@@ -61,6 +61,12 @@ docs\01-delivery\DESKTOP_RELEASE_GATE_CURRENT.md
 
 Do not send an installer if the gate report says `FAILED`.
 
+Also check the report confidence:
+
+- `NORMAL_WORKSPACE_VALIDATED` or `PASSED - NORMAL WORKSPACE ONLY`: good for local developer checks, but not enough for a large GM workspace handoff.
+- `LARGE_WORKSPACE_VALIDATED`: the large workspace smoke ran and passed.
+- `LARGE_WORKSPACE_BLOCKED_OR_FAILED`: do not send the installer as a large-workspace-ready build.
+
 Expected installer:
 
 ```text

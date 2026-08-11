@@ -23,7 +23,7 @@ The repository is usable and has many strong contracts, but the next work should
 
 Most UI design debt is now documented and contained by contracts, but several feature zones still carry local mini-systems from fast AI-assisted iteration: Knowledge Graph coordination, Properties popup layout ownership, map popup helper duplication and CSS token drift.
 
-Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003` and `RCB-022` are closed; the next recommended leaf is `RCB-004`.
+Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022` and `RCB-004` are closed; the next cleanup leaf needs owner selection.
 
 ## Readiness For Future NF Work
 
@@ -143,6 +143,8 @@ Evidence:
 Impact: release confidence can be overstated if a real large workspace was not tested or if warnings are present but not surfaced as gate status.
 
 Recommended cleanup leaf: make the gate result explicitly `normal-workspace-only`, `large-workspace-blocked`, or `large-workspace-validated`; classify diagnostics warnings.
+
+Cleanup status: closed by `RCB-004` in `0.0.1.10.7`. The desktop release gate now reports `Overall`, `Confidence`, normal workspace validation, large workspace validation and advisory diagnostics separately. A skipped large workspace smoke produces normal-workspace-only confidence instead of full release-looking `PASSED`; failed or unavailable large-workspace validation is hard failure when requested or required.
 
 ### RA-005 - P2 - Restore flow appears to lack an explicit pre-restore backup gate
 
@@ -585,7 +587,7 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 | Item | Current disposition after audit |
 | --- | --- |
 | `BUG-001` large workspace operations | Still current. RA-002 and RA-004 strengthen the case for cleanup before more large-workspace feature work. |
-| `BUG-003` desktop release verification | Still current for release hardening. RA-003 is closed by `RCB-003`; RA-004 remains for desktop gate/large-workspace status semantics. |
+| `BUG-003` desktop release verification | Still current for release hardening. RA-003 is closed by `RCB-003`; RA-004 is closed by `RCB-004`; installed-app release discipline still belongs to release handoff. |
 | `BUG-004` Campaign Map presentation | Still current but not directly changed by this audit. Keep in Phase 3. |
 | `BUG-005` Campaign Map drawing tools | Still current but not directly changed by this audit. Keep in Phase 3. |
 | `BUG-006` map music | Still current. RA-011 notes local helper duplication, but feature validation remains Phase 3. |
@@ -601,7 +603,7 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 
 ## Owner Decisions Needed
 
-1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001, `RCB-001B` / RA-001B, `RCB-002` / RA-002, `RCB-003` / RA-003 and `RCB-022` / RA-022 are closed; the next recommendation is RA-004 desktop gate/large-workspace status semantics.
+1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001, `RCB-001B` / RA-001B, `RCB-002` / RA-002, `RCB-003` / RA-003, `RCB-022` / RA-022 and `RCB-004` / RA-004 are closed; the next cleanup leaf needs owner selection.
 2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
 3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
 4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.

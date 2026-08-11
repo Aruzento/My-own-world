@@ -56,6 +56,14 @@ npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампани�
 
 If no workspace is provided, the large workspace smoke is explicitly marked as skipped in the report.
 
+Since `0.0.1.10.7`, the gate report must also state the confidence level explicitly:
+
+- `NORMAL_WORKSPACE_VALIDATED` means the normal desktop gate passed, but no real large workspace was validated. This is acceptable for local developer checks.
+- `LARGE_WORKSPACE_VALIDATED` means the normal desktop gate and the real large-workspace smoke passed.
+- `LARGE_WORKSPACE_BLOCKED_OR_FAILED` means large-workspace validation was required or requested but unavailable or failed.
+
+The top-level `Overall` line must not imply full large-workspace release confidence when the large workspace smoke was skipped. Advisory diagnostics warnings are reported separately from hard failures: they require human review, but they do not fail the gate by themselves.
+
 ## Production Frontend Output
 
 `npm run desktop:prepare` создает `dist-desktop/`.

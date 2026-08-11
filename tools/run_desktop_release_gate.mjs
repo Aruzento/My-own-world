@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 
 const ROOT =
@@ -10,32 +11,47 @@ const ROOT =
 const DEFAULT_REPORT =
   'docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md';
 
-const args =
-  parseArgs(
+const LARGE_WORKSPACE_STEP =
+  'large workspace desktop smoke';
+
+
+if (isMainModule()) {
+
+  main(
     process.argv.slice(2)
   );
-
-const workspace =
-  args.workspace ||
-  process.env.MOW_DESKTOP_RELEASE_WORKSPACE ||
-  '';
-
-const requireLargeWorkspace =
-  args['require-large-workspace'] === true ||
-  process.env.MOW_REQUIRE_LARGE_WORKSPACE === '1';
-
-const output =
-  args.output ||
-  DEFAULT_REPORT;
-
-const results =
-  [];
+}
 
 
-main();
+function main(
+  rawArgs =
+    []
+) {
 
+  const args =
+    parseArgs(
+      rawArgs
+    );
 
-function main() {
+  const workspace =
+    args.workspace ||
+    process.env.MOW_DESKTOP_RELEASE_WORKSPACE ||
+    '';
+
+  const requireLargeWorkspace =
+    args['require-large-workspace'] === true ||
+    process.env.MOW_REQUIRE_LARGE_WORKSPACE === '1';
+
+  const output =
+    args.output ||
+    DEFAULT_REPORT;
+
+  const largeWorkspaceReport =
+    args['large-workspace-output'] ||
+    'docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md';
+
+  const results =
+    [];
 
   const startedAt =
     new Date();
@@ -112,19 +128,23 @@ function main() {
   if (workspace) {
 
     commands.push({
-      name: 'large workspace desktop smoke',
+      name: LARGE_WORKSPACE_STEP,
       command: process.execPath,
       args: [
         'tools/run_desktop_large_workspace_smoke.mjs',
         '--workspace',
-        workspace
-      ]
+        workspace,
+        '--output',
+        largeWorkspaceReport
+      ],
+      advisoryReport:
+        largeWorkspaceReport
     });
 
   } else if (requireLargeWorkspace) {
 
     results.push({
-      name: 'large workspace desktop smoke',
+      name: LARGE_WORKSPACE_STEP,
       ok: false,
       skipped: false,
       durationMs: 0,
@@ -135,7 +155,7 @@ function main() {
   } else {
 
     results.push({
-      name: 'large workspace desktop smoke',
+      name: LARGE_WORKSPACE_STEP,
       ok: null,
       skipped: true,
       durationMs: 0,
@@ -146,7 +166,11 @@ function main() {
 
   for (const command of commands) {
 
-    if (hasFailure()) {
+    if (
+      hasFailure(
+        results
+      )
+    ) {
 
       results.push({
         name:
@@ -175,10 +199,21 @@ function main() {
     startedAt,
     finishedAt:
       new Date(),
-    workspace
+    workspace,
+    requireLargeWorkspace,
+    output,
+    results
   });
 
-  if (hasFailure()) {
+  if (
+    getDesktopReleaseGateStatus(
+      results,
+      {
+        workspace,
+        requireLargeWorkspace
+      }
+    ).failed
+  ) {
 
     console.error(
       '\nDesktop release gate failed. See docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md.'
@@ -292,7 +327,8 @@ function runCommand(
       }
     );
 
-  return {
+  const commandResult =
+    {
     name:
       command.name,
     ok:
@@ -306,13 +342,29 @@ function runCommand(
     detail:
       result.error?.message || ''
   };
+
+  if (
+    command.advisoryReport &&
+    commandResult.ok
+  ) {
+
+    commandResult.advisoryWarnings =
+      readLargeWorkspaceAdvisoryWarnings(
+        command.advisoryReport
+      );
+  }
+
+  return commandResult;
 }
 
 
 function writeReport({
   startedAt,
   finishedAt,
-  workspace
+  workspace,
+  requireLargeWorkspace,
+  output,
+  results
 }) {
 
   const reportPath =
@@ -330,58 +382,107 @@ function writeReport({
     }
   );
 
-  const failed =
-    results.filter(result => result.ok === false);
-
   const skipped =
     results.filter(result => result.skipped);
 
+  const status =
+    getDesktopReleaseGateStatus(
+      results,
+      {
+        workspace,
+        requireLargeWorkspace
+      }
+    );
+
   const lines =
-    [
-      '---',
-      'summary: "Current desktop release gate report."',
-      'read_when:',
-      '  - "Before desktop installer handoff"',
-      '  - "When validating desktop release readiness"',
-      'owner_zone: "delivery"',
-      '---',
-      '',
-      '# Desktop Release Gate Current',
-      '',
-      `Run started: ${startedAt.toISOString()}`,
-      '',
-      `Run finished: ${finishedAt.toISOString()}`,
-      '',
-      'Plan ref: `0.0.1.2.4`',
-      '',
-      `Large workspace: ${workspace ? `\`${workspace}\`` : 'not provided'}`,
-      '',
-      `Overall: ${failed.length ? 'FAILED' : 'PASSED'}`,
-      '',
-      '## Steps',
-      '',
-      ...results.map(formatResult),
-      '',
-      '## Release Rule',
-      '',
-      '- Do not build or hand off a desktop installer if any required step failed.',
-      '- If the large workspace smoke is skipped, the release can only be treated as a normal workspace build, not a validated large-GM-workspace build.',
-      '- Before sending an installer to another person, run the manual native desktop checklist from `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md` when the target user has a large workspace.',
-      '- Keep `release/latest/release-notes.md` and `release/latest/tester-instructions.md` aligned with the build being sent.',
-      '',
-      '## Skipped Steps',
-      '',
-      skipped.length
-        ? skipped.map(result => `- ${result.name}: ${result.detail}`).join('\n')
-        : '- None',
-      ''
-    ];
+    createDesktopReleaseGateReport({
+      startedAt,
+      finishedAt,
+      workspace,
+      results,
+      skipped,
+      status
+    });
 
   fs.writeFileSync(
     reportPath,
     lines.join('\n'),
     'utf8'
   );
+}
+
+
+export function createDesktopReleaseGateReport({
+  startedAt,
+  finishedAt,
+  workspace,
+  results,
+  skipped,
+  status
+}) {
+
+  return [
+    '---',
+    'summary: "Current desktop release gate report."',
+    'read_when:',
+    '  - "Before desktop installer handoff"',
+    '  - "When validating desktop release readiness"',
+    'owner_zone: "delivery"',
+    '---',
+    '',
+    '# Desktop Release Gate Current',
+    '',
+    `Run started: ${startedAt.toISOString()}`,
+    '',
+    `Run finished: ${finishedAt.toISOString()}`,
+    '',
+    'Plan ref: `0.0.1.2.4`',
+    '',
+    `Large workspace: ${workspace ? `\`${workspace}\`` : 'not provided'}`,
+    '',
+    `Overall: ${status.overallLabel}`,
+    '',
+    `Confidence: ${status.confidenceLabel}`,
+    '',
+    `Normal workspace validation: ${status.normalWorkspaceLabel}`,
+    '',
+    `Large workspace validation: ${status.largeWorkspaceLabel}`,
+    '',
+    `Advisory diagnostics: ${status.advisoryLabel}`,
+    '',
+    '## Steps',
+    '',
+    ...results.map(formatResult),
+    '',
+    '## Release Rule',
+    '',
+    '- Do not build or hand off a desktop installer if any required step failed.',
+    '- `NORMAL_WORKSPACE_VALIDATED` is useful for local developer checks, but it is not equivalent to a large-workspace release validation.',
+    '- If the large workspace smoke is skipped, the release can only be treated as a normal workspace build, not a validated large-GM-workspace build.',
+    '- Advisory diagnostics warnings must be reviewed, but they are reported separately from hard gate failures.',
+    '- Before sending an installer to another person, run the manual native desktop checklist from `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md` when the target user has a large workspace.',
+    '- Keep `release/latest/release-notes.md` and `release/latest/tester-instructions.md` aligned with the build being sent.',
+    '',
+    '## Confidence Levels',
+    '',
+    '- `NORMAL_WORKSPACE_VALIDATED`: core desktop gate passed; no real large workspace was validated in this run.',
+    '- `LARGE_WORKSPACE_VALIDATED`: core desktop gate and real large-workspace smoke passed.',
+    '- `LARGE_WORKSPACE_SKIPPED`: large-workspace smoke did not run and must not be treated as full release confidence.',
+    '- `LARGE_WORKSPACE_BLOCKED_OR_FAILED`: required large-workspace coverage was unavailable or the smoke failed.',
+    '',
+    '## Skipped Steps',
+    '',
+    skipped.length
+      ? skipped.map(result => `- ${result.name}: ${result.detail}`).join('\n')
+      : '- None',
+    '',
+    '## Advisory Diagnostics',
+    '',
+    ...formatAdvisoryDiagnostics(
+      status.advisoryWarnings
+    ),
+    ''
+  ];
 }
 
 
@@ -408,7 +509,350 @@ function formatResult(
 }
 
 
-function hasFailure() {
+export function getDesktopReleaseGateStatus(
+  results,
+  {
+    workspace = '',
+    requireLargeWorkspace = false
+  } =
+    {}
+) {
+
+  const failedResults =
+    results.filter(result => result.ok === false);
+
+  const largeWorkspaceResult =
+    results.find(result =>
+      result.name === LARGE_WORKSPACE_STEP
+    );
+
+  const advisoryWarnings =
+    results.flatMap(result =>
+      result.ok === true &&
+      Array.isArray(result.advisoryWarnings)
+        ? result.advisoryWarnings
+        : []
+    );
+
+  const nonLargeFailures =
+    failedResults.filter(result =>
+      result.name !== LARGE_WORKSPACE_STEP
+    );
+
+  const largeWorkspaceState =
+    getLargeWorkspaceState({
+      workspace,
+      requireLargeWorkspace,
+      largeWorkspaceResult,
+      nonLargeFailures
+    });
+
+  const failed =
+    failedResults.length > 0;
+
+  const normalWorkspaceState =
+    nonLargeFailures.length
+      ? 'failed'
+      : 'validated';
+
+  const confidence =
+    getConfidenceLevel({
+      failed,
+      largeWorkspaceState,
+      normalWorkspaceState
+    });
+
+  return {
+    failed,
+    confidence,
+    confidenceLabel:
+      formatConfidenceLabel(
+        confidence
+      ),
+    overallLabel:
+      formatOverallLabel({
+        failed,
+        confidence,
+        advisoryWarnings
+      }),
+    normalWorkspaceState,
+    normalWorkspaceLabel:
+      normalWorkspaceState === 'validated'
+        ? 'VALIDATED'
+        : 'FAILED',
+    largeWorkspaceState,
+    largeWorkspaceLabel:
+      formatLargeWorkspaceLabel(
+        largeWorkspaceState
+      ),
+    advisoryWarnings,
+    advisoryLabel:
+      advisoryWarnings.length
+        ? `PRESENT (${advisoryWarnings.length}, non-blocking)`
+        : 'NONE'
+  };
+}
+
+
+function getLargeWorkspaceState({
+  workspace,
+  requireLargeWorkspace,
+  largeWorkspaceResult,
+  nonLargeFailures
+}) {
+
+  if (!workspace && !requireLargeWorkspace) {
+
+    return 'skipped';
+  }
+
+  if (!workspace && requireLargeWorkspace) {
+
+    return 'blocked';
+  }
+
+  if (
+    nonLargeFailures.length &&
+    largeWorkspaceResult?.skipped
+  ) {
+
+    return 'blocked';
+  }
+
+  if (largeWorkspaceResult?.ok === true) {
+
+    return 'validated';
+  }
+
+  if (largeWorkspaceResult?.ok === false) {
+
+    return 'failed';
+  }
+
+  if (largeWorkspaceResult?.skipped) {
+
+    return 'skipped';
+  }
+
+  return 'blocked';
+}
+
+
+function getConfidenceLevel({
+  failed,
+  largeWorkspaceState,
+  normalWorkspaceState
+}) {
+
+  if (
+    largeWorkspaceState === 'validated' &&
+    !failed
+  ) {
+
+    return 'large-workspace-validated';
+  }
+
+  if (
+    largeWorkspaceState === 'skipped' &&
+    normalWorkspaceState === 'validated' &&
+    !failed
+  ) {
+
+    return 'normal-workspace-validated';
+  }
+
+  if (
+    largeWorkspaceState === 'blocked' ||
+    largeWorkspaceState === 'failed'
+  ) {
+
+    return 'large-workspace-blocked-or-failed';
+  }
+
+  return 'hard-failure';
+}
+
+
+function formatOverallLabel({
+  failed,
+  confidence,
+  advisoryWarnings
+}) {
+
+  if (failed) {
+
+    return 'FAILED';
+  }
+
+  if (confidence === 'normal-workspace-validated') {
+
+    return 'PASSED - NORMAL WORKSPACE ONLY';
+  }
+
+  if (advisoryWarnings.length) {
+
+    return 'PASSED - ADVISORY WARNINGS';
+  }
+
+  return 'PASSED';
+}
+
+
+function formatConfidenceLabel(
+  confidence
+) {
+
+  if (confidence === 'large-workspace-validated') {
+
+    return 'LARGE_WORKSPACE_VALIDATED';
+  }
+
+  if (confidence === 'normal-workspace-validated') {
+
+    return 'NORMAL_WORKSPACE_VALIDATED';
+  }
+
+  if (confidence === 'large-workspace-blocked-or-failed') {
+
+    return 'LARGE_WORKSPACE_BLOCKED_OR_FAILED';
+  }
+
+  return 'HARD_FAILURE';
+}
+
+
+function formatLargeWorkspaceLabel(
+  state
+) {
+
+  if (state === 'validated') {
+
+    return 'VALIDATED';
+  }
+
+  if (state === 'skipped') {
+
+    return 'SKIPPED';
+  }
+
+  if (state === 'blocked') {
+
+    return 'BLOCKED';
+  }
+
+  return 'FAILED';
+}
+
+
+function formatAdvisoryDiagnostics(
+  advisoryWarnings
+) {
+
+  if (!advisoryWarnings.length) {
+
+    return [
+      '- None'
+    ];
+  }
+
+  return advisoryWarnings.map(warning =>
+    `- ${warning}`
+  );
+}
+
+
+export function readLargeWorkspaceAdvisoryWarnings(
+  report
+) {
+
+  const reportPath =
+    path.isAbsolute(
+      report
+    )
+      ? report
+      : path.join(
+        ROOT,
+        report
+      );
+
+  if (
+    !fs.existsSync(
+      reportPath
+    )
+  ) {
+
+    return [];
+  }
+
+  return parseLargeWorkspaceAdvisoryWarnings(
+    fs.readFileSync(
+      reportPath,
+      'utf8'
+    )
+  );
+}
+
+
+export function parseLargeWorkspaceAdvisoryWarnings(
+  markdown
+) {
+
+  const lines =
+    String(markdown || '').split(/\r?\n/);
+
+  const start =
+    lines.findIndex(line =>
+      line.trim() === '### Diagnostics Warnings'
+    );
+
+  if (start < 0) {
+
+    return [];
+  }
+
+  const warnings =
+    [];
+
+  for (
+    let index = start + 1;
+    index < lines.length;
+    index += 1
+  ) {
+
+    const line =
+      lines[index].trim();
+
+    if (
+      line.startsWith('## ') ||
+      line.startsWith('### ')
+    ) {
+
+      break;
+    }
+
+    if (
+      !line ||
+      line === '- No diagnostics warnings.'
+    ) {
+
+      continue;
+    }
+
+    if (line.startsWith('- ')) {
+
+      warnings.push(
+        line.slice(2)
+      );
+    }
+  }
+
+  return warnings;
+}
+
+
+function hasFailure(
+  results
+) {
 
   return results.some(result => result.ok === false);
 }
@@ -506,4 +950,15 @@ function parseArgs(
   }
 
   return parsed;
+}
+
+
+function isMainModule() {
+
+  return process.argv[1] &&
+    path.resolve(
+      process.argv[1]
+    ) === fileURLToPath(
+      import.meta.url
+    );
 }

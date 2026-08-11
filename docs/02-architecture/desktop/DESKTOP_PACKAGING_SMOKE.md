@@ -53,6 +53,8 @@ npm run desktop:packaging-smoke
 npm run desktop:gate
 ```
 
+The generated gate report includes an explicit confidence label. `PASSED - NORMAL WORKSPACE ONLY` is a useful local developer result, but it is not equivalent to a validated large-GM-workspace handoff. For that, run the gate with `--workspace`.
+
 Production build:
 
 ```powershell

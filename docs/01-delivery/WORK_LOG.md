@@ -6,6 +6,32 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.7 RCB-004 Desktop Gate Truthfulness
+
+### What Changed
+
+- Closed `RCB-004`, the seventh owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-004 root cause: `desktop:gate` could print `Overall: PASSED` while the real large-workspace smoke was skipped.
+- Updated `tools/run_desktop_release_gate.mjs` so the report separates normal workspace validation, large workspace validation, skipped large-workspace coverage and blocked/failed large-workspace coverage.
+- Added explicit confidence labels: `NORMAL_WORKSPACE_VALIDATED`, `LARGE_WORKSPACE_VALIDATED` and `LARGE_WORKSPACE_BLOCKED_OR_FAILED`.
+- Kept advisory diagnostics warnings separate from hard failures; advisory warnings appear in the report without failing the gate by themselves.
+- Kept large workspace validation optional for local developer checks unless `--require-large-workspace` or a workspace path is provided.
+
+### Verification
+
+- Passed: `node --test tests\desktopReleaseGateStatus.test.mjs`.
+- Passed: `node --test tests\desktopReleaseGateStatus.test.mjs tests\desktopLargeWorkspaceSmoke.test.mjs tests\desktopNativeSmokeStatus.test.mjs` with 15 tests.
+- Passed: `npm run desktop:gate` with 127 browser tests and generated `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md` as `Overall: PASSED - NORMAL WORKSPACE ONLY`, `Confidence: NORMAL_WORKSPACE_VALIDATED`, `Large workspace validation: SKIPPED`.
+- Passed: `node tools\audit_project_files.mjs` with 588 files, 1 local delete candidate and 0 mojibake candidates.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run test` with 309 node tests.
+- Passed: `npm run verify` with 309 node tests, synthetic large-workspace performance smoke status `passed`, `git diff --check` and manual docx zip validation.
+
+### Next
+
+- Next cleanup leaf needs owner selection: likely `RCB-005` or `RCB-006`.
+
 ## 2026-08-11: 0.0.1.10.6 RCB-022 Tree Page Action Menu Keyboard Access
 
 ### What Changed
@@ -33,7 +59,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Next recommended RCB: `RCB-004`.
+- Completed by follow-up `0.0.1.10.7`; next cleanup leaf needs owner selection.
 
 ## 2026-08-11: 0.0.1.10.5 RCB-003 Native Desktop Smoke Failure Semantics
 
@@ -65,7 +91,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Completed by follow-up `0.0.1.10.6`; next recommended RCB is `RCB-004`.
+- Completed by follow-ups `0.0.1.10.6` and `0.0.1.10.7`; next cleanup leaf needs owner selection.
 
 ## 2026-08-11: 0.0.1.10.4 RCB-002 Durable Tree Batch Rollback
 
@@ -92,7 +118,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Completed by follow-ups `0.0.1.10.5` and `0.0.1.10.6`; next recommended RCB is `RCB-004`.
+- Completed by follow-ups `0.0.1.10.5`, `0.0.1.10.6` and `0.0.1.10.7`; next cleanup leaf needs owner selection.
 
 ## 2026-08-11: 0.0.1.10.3 RCB-001B Metadata Index Consistency
 
