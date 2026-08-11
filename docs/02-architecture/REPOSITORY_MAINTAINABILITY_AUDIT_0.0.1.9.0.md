@@ -23,7 +23,7 @@ The repository is usable and has many strong contracts, but the next work should
 
 Most UI design debt is now documented and contained by contracts, but several feature zones still carry local mini-systems from fast AI-assisted iteration: Knowledge Graph coordination, Properties popup layout ownership, map popup helper duplication and CSS token drift.
 
-Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021` and `RCB-001` are closed; the next recommended leaf is `RCB-001B`.
+Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001` and `RCB-001B` are closed; the next recommended leaf is `RCB-002`.
 
 ## Readiness For Future NF Work
 
@@ -91,6 +91,8 @@ Tag, alias, card type and title controls can mutate `state.currentPage` before t
 Impact: search, wiki lookup, tree/current metadata and duplicate-title/type/tag queries can see stale metadata after ordinary card edits.
 
 Recommended cleanup leaf: snapshot current metadata before mutation or introduce a narrow metadata update command; add regressions for removing old tag, alias, type and title lookup keys.
+
+Cleanup status: closed by `RCB-001B` in `0.0.1.10.3`. `PageIndex` now removes old keys from the last indexed metadata shape before storing the new live page shape, and `TreeIndex` uses its indexed parent bucket when the live page was already mutated. The regressions prove title, alias, tag and type updates, including empty-value transitions, without a full index rebuild.
 
 ### RA-002 - P1 - Multi-page tree-position writes can partially persist before memory rollback
 
@@ -396,7 +398,7 @@ Production delta after audited head `11c0ce2`: documentation/status evidence onl
 | Finding | Result | Evidence | Notes |
 | --- | --- | --- | --- |
 | RA-001 | CLOSED BY RCB-001 / `0.0.1.10.2` | `js/storage/pageCommandService.js:282`, `js/storage/pageCommandService.js:302`, `js/repository/pageIndex.js:721` | Rollback now notifies the repository with the restored live page object instead of the rollback snapshot. |
-| RA-001B | CONFIRMED | `js/editor/autosave.js:151`, `js/editor/autosave.js:156`, `js/repository/pageIndex.js:721`, `js/repository/pageIndex.js:785` | Metadata mutation happens before the command snapshot/update flow can remove old title/alias/tag/type index keys. The duplicate-title reject path also mutates runtime title before returning. |
+| RA-001B | CLOSED BY RCB-001B / `0.0.1.10.3` | `js/repository/pageIndex.js`, `js/repository/treeIndex.js`, `tests/pageRepository.test.mjs`, `tests/treeIndex.test.mjs` | Incremental indexes now remove old buckets from indexed state even when callers already mutated the live page before snapshot. |
 | RA-002 | CONFIRMED | `js/storage/pageStorage.js:1508`, `js/storage/pageStorage.js:2024`, `js/storage/pageStorage.js:2039` | Batch tree-position changes write pages one by one; memory rollback does not durably restore earlier successful writes after a later failure. |
 | RA-003 | CONFIRMED | `tools/run_desktop_native_clickthrough.mjs:76`, `tools/run_desktop_native_clickthrough.mjs:603`, `tools/run_desktop_native_clickthrough.mjs:617`, `tools/run_desktop_native_clickthrough.mjs:993` | Console/page errors are recorded in the report but are not part of the final `ok` status. |
 
@@ -593,7 +595,7 @@ Recommended cleanup leaf: extend the design-token cleanup with an undefined-toke
 
 ## Owner Decisions Needed
 
-1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021 and `RCB-001` / RA-001 are closed; the next recommendation is RA-001B, then RA-002 data consistency.
+1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001 and `RCB-001B` / RA-001B are closed; the next recommendation is RA-002 data consistency.
 2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
 3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
 4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.

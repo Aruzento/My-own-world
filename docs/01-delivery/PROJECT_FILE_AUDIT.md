@@ -76,7 +76,7 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 681971 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 683474 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 173502 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |

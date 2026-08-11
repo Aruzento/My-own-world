@@ -23,7 +23,7 @@ Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
 2. Continue `0.0.1.10.0` cleanup only one RCB leaf at a time.
-3. `RCB-021` pending autosave loss and `RCB-001` page rollback/repository consistency are closed. Next recommendation is `RCB-001B`, then `RCB-002` and `RCB-003`.
+3. `RCB-021` pending autosave loss, `RCB-001` page rollback/repository consistency and `RCB-001B` metadata index consistency are closed. Next recommendation is `RCB-002`, then `RCB-003` and `RCB-022`.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -114,10 +114,11 @@ Recently closed:
 - `0.0.1.9.1` audit completeness verification: second pass found RA-021 through RA-030 and reordered the first cleanup slice.
 - `0.0.1.10.1 / RCB-021` editor autosave lifecycle cleanup: quick edit-then-open-page now flushes pending autosave before navigation, survives reopening the original page and keeps rapid B/C transitions isolated.
 - `0.0.1.10.2 / RCB-001` page rollback/repository consistency cleanup: failed page-content writes now rollback into one restored live page object shared by `state.pages`, `PageRepository` and `PageIndex`.
+- `0.0.1.10.3 / RCB-001B` metadata index consistency cleanup: title, alias, tag and type changes no longer leave stale PageIndex lookup buckets when metadata was mutated before the command snapshot.
 
 Next owner action:
 
-- Choose the next `0.0.1.10.0` RCB leaf. Recommended next leaf: `RCB-001B`.
+- Choose the next `0.0.1.10.0` RCB leaf. Recommended next leaf: `RCB-002`.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

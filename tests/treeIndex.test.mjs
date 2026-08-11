@@ -205,3 +205,61 @@ test(
     );
   }
 );
+
+
+test(
+  'TreeIndex removes the old parent bucket when page was mutated before update',
+  () => {
+
+    const parentA =
+      page({
+        id: 'parent-a-late'
+      });
+
+    const parentB =
+      page({
+        id: 'parent-b-late'
+      });
+
+    const child =
+      page({
+        id: 'child-late',
+        parent: 'parent-a-late',
+        order: 1
+      });
+
+    const index =
+      new TreeIndex([
+        parentA,
+        parentB,
+        child
+      ]);
+
+    child.parent =
+      'parent-b-late';
+
+    child.order =
+      5;
+
+    const latePrevious = {
+      ...child
+    };
+
+    index.updatePage(
+      latePrevious,
+      child
+    );
+
+    assert.deepEqual(
+      index.getChildren('parent-a-late'),
+      []
+    );
+
+    assert.deepEqual(
+      index.getChildren('parent-b-late'),
+      [
+        child
+      ]
+    );
+  }
+);

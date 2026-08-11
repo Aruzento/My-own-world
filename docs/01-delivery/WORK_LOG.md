@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.3 RCB-001B Metadata Index Consistency
+
+### What Changed
+
+- Closed `RCB-001B`, the third owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-001B root cause with a failing repository regression: if metadata was mutated before a command snapshot, old PageIndex title/alias/tag/type buckets were not removed.
+- Updated `js/repository/pageIndex.js` so incremental updates remove old keys from the last indexed metadata shape, then store the new live page shape.
+- Updated `js/repository/treeIndex.js` so incremental tree updates remove a page from the parent bucket recorded by the index when the live object was already mutated.
+- Added regressions for title rename, title empty transition, alias removal/replacement/empty transition, tag removal/empty transition, type change/empty transition and late parent mutation without full index rebuild.
+
+### Verification
+
+- Expected failure before fix: `node --test tests\pageRepository.test.mjs`.
+- Passed after fix: `node --test tests\pageRepository.test.mjs`.
+- Passed: `node --test tests\pageRepository.test.mjs tests\pageIndex.test.mjs tests\treeIndex.test.mjs tests\pageCommandService.test.mjs`.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `node tools\audit_project_files.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`.
+
+### Next
+
+- Next recommended RCB: `RCB-002`.
+
 ## 2026-08-11: 0.0.1.10.2 RCB-001 Page Rollback / Repository Consistency
 
 ### What Changed
@@ -28,7 +53,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Next recommended RCB: `RCB-001B`.
+- Completed by follow-up `0.0.1.10.3`; next recommended RCB is `RCB-002`.
 
 ## 2026-08-11: 0.0.1.10.1 RCB-021 Pending Autosave Loss
 

@@ -55,6 +55,9 @@ export class PageIndex {
     this.searchDocuments =
       new Map();
 
+    this.indexedPageSnapshots =
+      new Map();
+
     this.pages.forEach(page => {
 
       this.addToIndexes(
@@ -635,8 +638,13 @@ export class PageIndex {
 
     if (!pageId) return this;
 
+    const indexedPage =
+      this.indexedPageSnapshots.get(
+        pageId
+      );
+
     this.removeFromIndexes(
-      previousPage || nextPage,
+      indexedPage || previousPage || nextPage,
       pageId
     );
 
@@ -766,6 +774,15 @@ export class PageIndex {
         page
       )
     );
+
+    this.indexedPageSnapshots.set(
+      normalizeId(
+        page.id
+      ),
+      snapshotIndexedPage(
+        page
+      )
+    );
   }
 
 
@@ -823,6 +840,10 @@ export class PageIndex {
     });
 
     this.searchDocuments.delete(
+      pageId
+    );
+
+    this.indexedPageSnapshots.delete(
       pageId
     );
   }
@@ -905,6 +926,33 @@ export function normalizeSearchText(
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
+}
+
+
+function snapshotIndexedPage(
+  page
+) {
+
+  return {
+    id:
+      page?.id || '',
+    parent:
+      page?.parent ?? null,
+    title:
+      page?.title || '',
+    template:
+      page?.template || '',
+    type:
+      page?.type || '',
+    tags:
+      Array.isArray(page?.tags)
+        ? [...page.tags]
+        : [],
+    aliases:
+      Array.isArray(page?.aliases)
+        ? [...page.aliases]
+        : []
+  };
 }
 
 

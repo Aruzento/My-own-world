@@ -11,7 +11,9 @@ import {
   getPageIndex,
   getPageById,
   getPagePath,
+  getPagesByAlias,
   getPagesByTag,
+  getPagesByTitle,
   getPagesByType,
   getRecentlyEditedPages,
   getRecentPages,
@@ -41,6 +43,24 @@ function makePage(
     aliases: overrides.aliases || [],
     content: overrides.content || '',
     ...overrides
+  };
+}
+
+
+function snapshotPageForMetadataTest(
+  page
+) {
+
+  return {
+    ...page,
+    tags:
+      Array.isArray(page.tags)
+        ? [...page.tags]
+        : [],
+    aliases:
+      Array.isArray(page.aliases)
+        ? [...page.aliases]
+        : []
   };
 }
 
@@ -451,6 +471,250 @@ test(
 
       index.rebuild =
         originalRebuild;
+
+      rebuildPageRepository();
+    }
+  }
+);
+
+
+test(
+  'PageRepository removes stale metadata keys when previous snapshot was taken after mutation',
+  () => {
+
+    const page =
+      makePage({
+        id:
+          'metadata-stale-snapshot',
+        title:
+          'Old Metadata Title',
+        type:
+          'old-type',
+        tags:
+          [
+            'old-tag',
+            'replace-tag'
+          ],
+        aliases:
+          [
+            'Old Alias',
+            'Replace Alias'
+          ]
+      });
+
+    setPages([
+      page
+    ]);
+
+    const pageIndex =
+      getPageIndex();
+
+    const treeIndex =
+      getTreeIndex();
+
+    const originalPageRebuild =
+      pageIndex.rebuild;
+
+    const originalTreeRebuild =
+      treeIndex.rebuild;
+
+    pageIndex.rebuild =
+      () => {
+
+        throw new Error(
+          'full PageIndex rebuild should not run for metadata delta update'
+        );
+      };
+
+    treeIndex.rebuild =
+      () => {
+
+        throw new Error(
+          'full TreeIndex rebuild should not run for metadata delta update'
+        );
+      };
+
+    const notifyWithLateSnapshot =
+      () => {
+
+        notifyPageUpdated(
+          snapshotPageForMetadataTest(
+            page
+          ),
+          page
+        );
+      };
+
+    try {
+
+      page.title =
+        'New Metadata Title';
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByTitle('Old Metadata Title'),
+        []
+      );
+
+      assert.equal(
+        findPageByTitleOrAlias('New Metadata Title'),
+        page
+      );
+
+      page.title =
+        '';
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByTitle('New Metadata Title'),
+        []
+      );
+
+      assert.equal(
+        getPageById(page.id).title,
+        ''
+      );
+
+      page.aliases =
+        [
+          'Replace Alias'
+        ];
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByAlias('Old Alias'),
+        []
+      );
+
+      assert.equal(
+        findPageByTitleOrAlias('Replace Alias'),
+        page
+      );
+
+      page.aliases =
+        [
+          'New Alias'
+        ];
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByAlias('Replace Alias'),
+        []
+      );
+
+      assert.equal(
+        findPageByTitleOrAlias('New Alias'),
+        page
+      );
+
+      page.aliases =
+        [];
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByAlias('New Alias'),
+        []
+      );
+
+      assert.deepEqual(
+        getPageById(page.id).aliases,
+        []
+      );
+
+      page.tags =
+        [
+          'new-tag'
+        ];
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByTag('old-tag'),
+        []
+      );
+
+      assert.deepEqual(
+        getPagesByTag('replace-tag'),
+        []
+      );
+
+      assert.deepEqual(
+        getPagesByTag('new-tag'),
+        [page]
+      );
+
+      page.tags =
+        [];
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByTag('new-tag'),
+        []
+      );
+
+      assert.deepEqual(
+        getPageById(page.id).tags,
+        []
+      );
+
+      page.type =
+        'new-type';
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByType('old-type'),
+        []
+      );
+
+      assert.deepEqual(
+        getPagesByType('new-type'),
+        [page]
+      );
+
+      page.type =
+        '';
+
+      notifyWithLateSnapshot();
+
+      assert.deepEqual(
+        getPagesByType('new-type'),
+        []
+      );
+
+      assert.equal(
+        getPageById(page.id).type,
+        ''
+      );
+
+      assert.deepEqual(
+        getChildren(null),
+        [page]
+      );
+
+      assert.deepEqual(
+        getTreeIndex().getChildren(null),
+        [page]
+      );
+
+      assert.equal(
+        validateTreeIndex().valid,
+        true
+      );
+
+    } finally {
+
+      pageIndex.rebuild =
+        originalPageRebuild;
+
+      treeIndex.rebuild =
+        originalTreeRebuild;
 
       rebuildPageRepository();
     }

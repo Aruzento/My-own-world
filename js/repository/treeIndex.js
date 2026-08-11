@@ -247,6 +247,15 @@ export class TreeIndex {
         pageId
       ) || page;
 
+    const indexedParent =
+      this.parentByPageId.has(
+        pageId
+      )
+        ? this.parentByPageId.get(
+          pageId
+        )
+        : undefined;
+
     this.byId.delete(
       pageId
     );
@@ -266,7 +275,7 @@ export class TreeIndex {
 
     const parentKey =
       normalizeParentId(
-        page?.parent ?? existing?.parent
+        indexedParent ?? page?.parent ?? existing?.parent
       );
 
     const siblings =
