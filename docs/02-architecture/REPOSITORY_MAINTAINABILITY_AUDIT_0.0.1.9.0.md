@@ -467,6 +467,8 @@ Impact: overlapping load operations could mix or overwrite in-memory page state 
 
 Recommended cleanup leaf: add a load generation guard around workspace loading and scanning, with a focused test using delayed storage adapter reads.
 
+Cleanup status: closed by `RCB-023` in `0.0.1.10.10`. `loadWorkspace()` now owns a monotonic workspace-load generation, passes a narrow `shouldContinue` guard to the existing adapter scan path, and publishes pages/schema recovery only if that load is still current. Adapter workspace scanning now returns a local page list instead of pushing directly into global `state.pages`, so stale scans cannot mix pages or asset references into the newer workspace state.
+
 ### RA-024 - P2 - Renderable image cache is not scoped by workspace
 
 Evidence:

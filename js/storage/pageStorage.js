@@ -2382,29 +2382,49 @@ export async function scanDirectory(
 
 
 export async function scanWorkspacePagesByAdapter(
-  storageAdapter
+  storageAdapter,
+  options = {}
 ) {
+
+  const pages =
+    [];
 
   await scanAdapterDirectory(
     storageAdapter,
     'pages',
-    '/pages'
+    '/pages',
+    {
+      ...options,
+      pages
+    }
   );
+
+  return pages;
 }
 
 
 async function scanAdapterDirectory(
   storageAdapter,
   adapterPath,
-  displayPath
+  displayPath,
+  options = {}
 ) {
+
+  const pages =
+    options.pages || [];
+
+  if (!isWorkspaceScanCurrent(options)) return pages;
 
   const entries =
     await storageAdapter.listFiles(
       adapterPath
     );
 
+  if (!isWorkspaceScanCurrent(options)) return pages;
+
   for (const entry of entries) {
+
+    if (!isWorkspaceScanCurrent(options)) return pages;
 
     const currentAdapterPath =
       `${adapterPath}/${entry.name}`;
@@ -2417,7 +2437,8 @@ async function scanAdapterDirectory(
       await scanAdapterDirectory(
         storageAdapter,
         currentAdapterPath,
-        currentDisplayPath
+        currentDisplayPath,
+        options
       );
 
       continue;
@@ -2433,7 +2454,9 @@ async function scanAdapterDirectory(
         currentAdapterPath
       );
 
-    state.pages.push(
+    if (!isWorkspaceScanCurrent(options)) return pages;
+
+    pages.push(
       createPageRecord({
         name: entry.name,
         path: currentDisplayPath,
@@ -2441,6 +2464,18 @@ async function scanAdapterDirectory(
       })
     );
   }
+
+  return pages;
+}
+
+
+function isWorkspaceScanCurrent(
+  options = {}
+) {
+
+  return typeof options.shouldContinue === 'function'
+    ? options.shouldContinue()
+    : true;
 }
 
 

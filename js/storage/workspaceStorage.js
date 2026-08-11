@@ -33,6 +33,10 @@ import {
 } from './assetAdapter.js';
 
 
+let workspaceLoadGeneration =
+  0;
+
+
 // Открывает workspace через активный storage adapter.
 export async function openWorkspace() {
 
@@ -140,20 +144,39 @@ export async function loadWorkspace() {
     return;
   }
 
+  const loadGeneration =
+    ++workspaceLoadGeneration;
+
+  const isLoadCurrent =
+    () => loadGeneration === workspaceLoadGeneration;
+
   setPages([]);
 
-  await scanWorkspacePagesByAdapter(
-    storageAdapter
+  const pages =
+    await scanWorkspacePagesByAdapter(
+      storageAdapter,
+      {
+        shouldContinue:
+          isLoadCurrent
+      }
   );
 
-  finishWorkspaceLoad();
+  if (!isLoadCurrent()) return false;
+
+  finishWorkspaceLoad(
+    pages
+  );
+
+  return true;
 }
 
 
-function finishWorkspaceLoad() {
+function finishWorkspaceLoad(
+  pages
+) {
 
   setPages(
-    [...state.pages]
+    pages
   );
 
   const validation =

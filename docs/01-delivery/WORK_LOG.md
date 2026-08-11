@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.10 RCB-023 Workspace Load Generation Guard
+
+### What Changed
+
+- Closed `RCB-023`, the tenth owner-approved production cleanup leaf for `0.0.1.10.0`.
+- Confirmed the RA-023 root cause with a failing unit regression: delayed workspace A finished after workspace B and left `state.pages` with both `b-page` and stale `a-page`.
+- Moved adapter workspace scanning to return a local page list for the active load instead of mutating global `state.pages` during traversal.
+- Added a monotonic workspace-load generation in `loadWorkspace()` and passed a narrow `shouldContinue` guard into the existing scan path.
+- Kept publication ownership in `loadWorkspace()`: only the current load can call `setPages()`, validation, recovery report creation and repository rebuild.
+- Did not reuse the page-open generation guard because workspace loading has a separate owner and lifecycle.
+
+### Verification
+
+- Expected failure before fix: `node --test tests/workspaceStorage.test.mjs` produced final page ids `['b-page', 'a-page']`.
+- Passed after fix: `node --test tests/workspaceStorage.test.mjs`.
+- Passed: `node --test tests/storageAdapter.test.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs app-shell.spec.mjs`.
+- Passed: `npm run test` with 313 node tests.
+- Passed: `npm run verify`.
+- Passed: `npm run test:browser` with 129 browser tests.
+
+### Next
+
+- Next cleanup leaf needs owner selection; do not start the next RCB automatically.
+
 ## 2026-08-11: 0.0.1.10.9 RCB-016 Async Page Open Generation Guard
 
 ### What Changed
