@@ -1425,12 +1425,12 @@ test(
           } = await import('/js/ui/itemSets.js');
 
           const {
-            state
-          } = await import('/js/state.js');
+            setPages
+          } = await import('/js/stateActions.js');
 
           setupItemSets();
 
-          state.pages = [
+          setPages([
             {
               id:
                 'sword',
@@ -1443,7 +1443,7 @@ test(
               content:
                 ''
             }
-          ];
+          ]);
 
           const block =
             document.createElement('div');

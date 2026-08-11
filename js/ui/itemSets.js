@@ -27,6 +27,9 @@ import {
 } from './popupManager.js';
 
 import {
+  getPageById,
+  getPagesByTag,
+  getPagesByType,
   notifyPageUpdated
 } from '../repository/pageRepository.js';
 
@@ -105,8 +108,8 @@ export function setupItemSets() {
           chip.dataset.pageId;
 
         const page =
-          state.pages.find(candidate =>
-            candidate.id === pageId
+          getPageById(
+            pageId
           );
 
         if (!page) return;
@@ -507,23 +510,9 @@ function renderItemSetOptions() {
 
 
   const items =
-    state.pages.filter(page => {
-
-      const expectedType =
-        getExpectedPageType(
-          activeSetKind
-        );
-
-      if (
-        page.type !== expectedType &&
-        (
-          !page.tags ||
-          !page.tags.includes(expectedType)
-        )
-      ) {
-
-        return false;
-      }
+    getItemSetCandidatePages(
+      activeSetKind
+    ).filter(page => {
 
       if (
         state.currentPage &&
@@ -796,6 +785,42 @@ function getExpectedPageType(
 }
 
 
+function getItemSetCandidatePages(
+  kind
+) {
+
+  const expectedType =
+    getExpectedPageType(
+      kind
+    );
+
+  const byId =
+    new Map();
+
+  getPagesByType(
+    expectedType
+  )
+    .concat(
+      getPagesByTag(
+        expectedType
+      )
+    )
+    .forEach(page => {
+
+      if (!page?.id) return;
+
+      byId.set(
+        page.id,
+        page
+      );
+    });
+
+  return [
+    ...byId.values()
+  ];
+}
+
+
 function getSearchPlaceholder(
   kind
 ) {
@@ -997,8 +1022,8 @@ function normalizeUniversalListChip(
 ) {
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === chip.dataset.pageId
+    getPageById(
+      chip.dataset.pageId
     ) || {
       title:
         chip.textContent.trim() ||

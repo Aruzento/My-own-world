@@ -209,6 +209,14 @@ Impact: large-workspace performance and stale read behavior become harder to rea
 
 Recommended cleanup leaf: create a narrow migration list by consumer and replace read-only lookups with PageRepository APIs where behavior is equivalent.
 
+Cleanup status: split by `RCB-007A` in `0.0.1.10.14`. Current classification:
+
+- `MIGRATED IN RCB-007A`: `js/ui/itemSets.js` no longer uses direct `state.pages.find/filter` for picker/chip page reads; it now uses `getPageById()`, `getPagesByType()` and `getPagesByTag()`.
+- `RUNTIME STORE ACCESS - ALLOWED FOR NOW`: `state.currentPage` reads in item set code remain runtime selection access, not page collection lookup.
+- `BOUNDARY VIOLATION - PENDING`: `js/wiki/knowledgeGraphPage.js` still has graph coordinator lookups that should move to repository-backed read helpers in a dedicated graph slice.
+- `BOUNDARY VIOLATION - PENDING`: `js/ui/worldPackageManager.js` still has branch/package preview reads that should move through repository APIs where they are lookup/query behavior.
+- `BOUNDARY VIOLATION - PENDING`: tree-adjacent drag/context reads still need a separate tree slice so render/runtime tree access is not confused with page lookup queries.
+
 ### RA-008 - P2 - Knowledge Graph still has a large coordinator/god-file risk
 
 Evidence:

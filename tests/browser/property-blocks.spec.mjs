@@ -4546,10 +4546,10 @@ test(
           await import('/js/ui/itemSets.js');
 
           const {
-            state
-          } = await import('/js/state.js');
+            setPages
+          } = await import('/js/stateActions.js');
 
-          state.pages = [
+          setPages([
             {
               id:
                 'owlbear',
@@ -4567,7 +4567,7 @@ test(
               content:
                 '<div class="card-short-description">Большая угроза на тракте.</div>'
             }
-          ];
+          ]);
 
           const wrapper =
             document.createElement('div');

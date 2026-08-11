@@ -6,6 +6,30 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-11: 0.0.1.10.14 RCB-007A Item Sets Page Read Boundary
+
+### What Changed
+
+- Started split cleanup for `RCB-007` and kept it to one feature path instead of replacing every `state.pages` access mechanically.
+- Classified the first RA-007 candidates:
+  - `RUNTIME STORE ACCESS`: tree rendering/export-like flows that intentionally need the full live page list remain pending for a later owner-specific pass.
+  - `BOUNDARY VIOLATION`: item set picker/chip lookups were read/query access and should use `PageRepository`.
+  - `BOUNDARY VIOLATION - PENDING`: Knowledge Graph coordinator lookups, World Package branch/preview reads and tree-adjacent drag/context lookups still need their own slices.
+- Migrated `js/ui/itemSets.js` page lookup/filter paths from direct `state.pages.find/filter` to `PageRepository` APIs: `getPageById()`, `getPagesByType()` and `getPagesByTag()`.
+- Kept `state.currentPage` usage unchanged because it is the current runtime selection, not a page collection lookup.
+- Did not touch item creation/write behavior; `createItemFromPicker()` remains part of the pending `RCB-006` write-boundary sub-leaves.
+
+### Verification
+
+- Passed: `node tools/run_browser_smoke.mjs item-sets.spec.mjs`.
+- Passed: `node tools/run_browser_smoke.mjs popup-lifecycle.spec.mjs`.
+- Passed after isolated rerun: `node tools/run_browser_smoke.mjs property-blocks.spec.mjs`.
+- Initial parallel `property-blocks` run was invalid because another browser smoke stopped the reused static server mid-run; the isolated rerun passed all 27 tests.
+
+### Next
+
+- Continue `RCB-007` only after owner selection of the next sub-leaf: Knowledge Graph, World Package or tree-adjacent reads.
+
 ## 2026-08-11: 0.0.1.10.13 RCB-006A Task Tracker Page Action Write Boundary
 
 ### What Changed
