@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import {
+  readFile
+} from 'node:fs/promises';
 import test from 'node:test';
 
 import {
@@ -15,6 +18,31 @@ import {
   loadInternalRulesWorkspaceContent,
   setInternalRulesWorkspaceContent
 } from '../js/rulesWorkspace/rulesWorkspaceIndex.js';
+
+
+test(
+  'internal rule page renderer stays free of status UI ownership',
+  async () => {
+
+    const source =
+      await readFile(
+        'js/rulesWorkspace/internalRulePage.js',
+        'utf8'
+      );
+
+    assert.doesNotMatch(
+      source,
+      /from ['"]\.\.\/ui\/ui\.js['"]/,
+      'Internal rule page renderer must not import the UI status owner.'
+    );
+
+    assert.doesNotMatch(
+      source,
+      /\bsetStatus\s*\(/,
+      'Internal rule page renderer must not publish statusbar side effects.'
+    );
+  }
+);
 
 
 test(

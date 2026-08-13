@@ -6,6 +6,32 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.27 RCB-029 Rules Workspace Module Boundary
+
+### Boundary Confirmed
+
+- Confirmed `RA-029` on current `HEAD`: `js/rulesWorkspace/internalRulePage.js` imported `setStatus()` from global UI and published a statusbar message from inside the internal-rule read-only renderer.
+- Classified the side effect as UI/open-page orchestration, not Rules Workspace data/render ownership.
+- Chose the existing owner `js/editor/editorOpenPage.js`, because it already owns page-open flow, statusbar updates, current-page completion and tree refresh.
+
+### What Changed
+
+- Removed the UI import and `setStatus()` call from `internalRulePage.js`.
+- Kept `internalRulePage.js` focused on internal rule identity detection and read-only DOM hardening.
+- Moved the same internal-rule-open status publication into the internal rule branch of `editorOpenPage.js`, immediately after read-only rendering and before the existing page-open completion.
+- Added a static module-boundary regression so the Rules Workspace renderer cannot quietly re-import `setStatus()`.
+- Extended the focused browser smoke that opens an internal rule from the Properties rule picker: it still opens `armor-class`, remains `contenteditable="false"` and leaves the statusbar on the opened rule.
+- No Rules Workspace product behavior, page format, rule data or save behavior changed.
+
+### Verification
+
+- Passed: `node --test tests\rulesWorkspace.test.mjs tests\wikiLinkLookup.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs --grep property-settings-gear-opens-soft-settings-popup`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` and `RCB-007` still have remaining split sub-leaves; `RCB-012`, `RCB-014`, `RCB-015` and `RCB-030` still need owner selection/approval.
+
 ## 2026-08-13: 0.0.1.10.26 RCB-013 Lightweight Documentation Status Drift Guard
 
 ### Drift Confirmed

@@ -206,6 +206,10 @@ async function renderSpecialPageIfNeeded(
       editor
     );
 
+    setStatus(
+      'Открыто внутреннее правило'
+    );
+
     completeOpenPage(
       page,
       options

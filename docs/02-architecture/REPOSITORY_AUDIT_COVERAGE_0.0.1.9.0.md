@@ -243,7 +243,7 @@ Subagent assertions were not accepted on their own. New P1/P2 candidates were op
 | RA-026 | P2 | NEW FINDING | Adds Rule Tree save ownership cleanup. |
 | RA-027 | P2 | NEW FINDING | Adds custom card type control accessibility/layer cleanup. |
 | RA-028 | P2 | CLOSED BY RCB-028 / `0.0.1.10.20` | Owner chose implementation in V1 stabilization; Tree and Task Tracker now have keyboard reorder through existing move owners. |
-| RA-029 | P3 | NEW FINDING | Small module boundary leak; defer unless touching rules workspace. |
+| RA-029 | P3 | CLOSED BY RCB-029 / `0.0.1.10.27` | Internal rule page status side effect moved to editor open-page orchestration. |
 | RA-030 | P3 | NEW/EXISTING MIX | Extends RA-020 with specific token/layer evidence. |
 
 ### Granular File And Family Coverage Ledger
@@ -291,7 +291,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 | `js/ui/worldPackageManager.js` | World Package UI | Import/export UI manager | REVIEWED - EXISTING FINDING COVERS IT | Main, reviewer 2 | Package preview/runtime UI | Import/export services | High | World package tests | RA-019 | God-file note not escalated. |
 | `js/worldPackage/*.js` | World Package model/import/storage | Package data and import service | REVIEWED - NO MATERIAL FINDING | Main, reviewers 1/2 | Package data | Requires backup manifest | High | World package tests | none | No new import P0. |
 | `js/ruleTree/*.js` | Rule Tree | Rule tree model/render/events/storage | REVIEWED - EXISTING FINDING COVERS IT | Main, reviewer 2 | Rule tree JSON/package files | Rule package storage | Medium | Rule tree tests | RA-026 | Save route owner covered by RA-026. |
-| `js/rulesWorkspace/*.js`, `js/rules/*.js` | Rules workspace | Internal rules and rule provider | REVIEWED - FINDING | Main, reviewer 2 | Internal rules assets/data | Mostly read-only | Medium | Rule provider tests | RA-029 | Small UI side effect. |
+| `js/rulesWorkspace/*.js`, `js/rules/*.js` | Rules workspace | Internal rules and rule provider | REVIEWED - FINDING CLOSED | Main, reviewer 2 | Internal rules assets/data | Mostly read-only | Medium | Rule provider tests | RA-029 | `RCB-029` moved the internal rule statusbar side effect to editor open-page orchestration. |
 | `js/presentation/*.js` | Presentation | Player/presentation rendering | REVIEWED - NO MATERIAL FINDING | Main | Presentation runtime | Reads map payload | Medium | Presentation browser tests | none | No new persistent owner issue. |
 | `js/performance/*.js` | Performance | Metrics/perf helpers | REVIEWED - NO MATERIAL FINDING | Main | Runtime metrics | No durable write | Low | Performance smoke | none | No material issue. |
 | `js/wiki/knowledgeGraphPage.js` | Knowledge Graph coordinator | Graph page orchestration | REVIEWED - PARTIAL FINDING REDUCED | Main, reviewer 2 | Graph read/runtime | Relationship writes | High | Graph browser tests | RA-007, RA-008, RA-018 | `RCB-008` extracted canvas history ownership; coordinator still owns graph events, drag/pan, selection and page lookup. |
@@ -338,7 +338,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 | Task Tracker | Task tracker page script/data | TaskTracker model/DOM | Special save/page actions | TaskTracker model | TaskTracker serializer | Page command/direct write mixed | Page action direct write | RA-006 |
 | Knowledge Graph | Page relationships metadata/content | Graph model/canvas state | Graph command bridge/page writes | Graph modules/PageRepository | Graph relationship/page serializers | Graph command bridge/history | Direct state lookups/coordinator | RA-007, RA-008, RA-018 |
 | Relationships | Page relationship metadata | PageRecord/graph runtime | Graph command bridge | PageRepository/Graph | PageRecord relationship fields | Page command/graph command | Coordinator direct paths | RA-008 |
-| Rules | Internal rules assets and rule pages | Rule provider/runtime pages | Mostly read-only/provider import | RuleTreeProvider | Rule provider/model | N/A or rule tree storage | Internal rule UI side effect | RA-029 |
+| Rules | Internal rules assets and rule pages | Rule provider/runtime pages | Mostly read-only/provider import | RuleTreeProvider | Rule provider/model | N/A or rule tree storage | Internal rule UI side effect closed by `RCB-029` | RA-029 |
 | Rule Packages | `rule-packages/*.json` | Rule package storage/model | Rule package storage/import | Rule tree storage/provider | Rule package storage/model | Import rollback best effort | Package storage duplication | RA-011, RA-029 |
 | World Packages | package JSON/assets | WorldPackage model/manager preview | Import/export services | WorldPackage manager/model | WorldPackage model/import service | Import service rollback | UI manager size/modality | RA-019 |
 | Assets | `assets/*` workspace files | Asset adapters/render cache | Asset storage/adapters/imports | Asset storage/adapters | Asset references | Backup/import cleanup | Render cache not workspace-scoped | RA-024 |
@@ -394,7 +394,7 @@ This should not block the audit closure, but future cleanup should avoid growing
 | Campaign Map | Aggregation did not hide a new P1. Existing direct write/helper debt remains RA-006/RA-011. |
 | Task Tracker | Structural icon-only cleanup remains good; direct page actions and keyboard reorder limitation remain RA-006/RA-028. |
 | Tauri | No workspace escape/root delete P0 found. |
-| Rules | New small module-boundary leak RA-029. |
+| Rules | Small module-boundary leak RA-029 is closed by `RCB-029`; no new Rules Workspace product behavior was added. |
 | Rule Packages | No new data-safety finding; helper duplication remains low severity. |
 | World Packages | Import safety looked intentional; overlay/modality and manager size remain existing cleanup concerns. |
 | AppShell | No new shell product finding; topbar token debt confirmed. |

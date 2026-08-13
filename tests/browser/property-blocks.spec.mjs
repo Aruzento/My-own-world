@@ -2543,6 +2543,12 @@ test(
             )
           );
 
+          const internalRuleDocument =
+            editor?.querySelector('.internal-rule-document');
+
+          const statusbar =
+            document.getElementById('statusbar');
+
           return {
             hasButton:
               Boolean(button),
@@ -2570,10 +2576,14 @@ test(
               Boolean(search),
             hiddenAfterSearch,
             openedRule:
-              editor
-                ?.querySelector('.internal-rule-document')
+              internalRuleDocument
                 ?.dataset
-                ?.internalRuleId || ''
+                ?.internalRuleId || '',
+            internalRuleEditable:
+              internalRuleDocument
+                ?.getAttribute('contenteditable') || '',
+            status:
+              statusbar?.textContent || ''
           };
         }
       );
@@ -2594,7 +2604,13 @@ test(
       hiddenAfterSearch:
         expect.any(Number),
       openedRule:
-        'armor-class'
+        'armor-class',
+      internalRuleEditable:
+        'false',
+      status:
+        expect.stringContaining(
+          'Класс доспеха'
+        )
     });
 
     expect(

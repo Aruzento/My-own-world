@@ -615,6 +615,8 @@ Impact: small boundary leak between rule page ownership and global UI status beh
 
 Recommended cleanup leaf: defer unless touching internal rules workspace; move the status side effect to the caller/orchestrator then.
 
+Cleanup status: closed by `RCB-029` in `0.0.1.10.27`. `internalRulePage.js` now owns only internal rule identity/read-only rendering. The open-page UI status side effect lives in `editorOpenPage.js`, which already owns page-open orchestration, status updates and tree refresh. Behavior remains the same for internal rule opening.
+
 ### RA-030 - P3 - Remaining CSS token and layer debt is more specific than RA-020 recorded
 
 Evidence:

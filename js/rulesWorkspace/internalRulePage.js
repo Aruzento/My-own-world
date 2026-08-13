@@ -1,8 +1,3 @@
-import {
-  setStatus
-} from '../ui/ui.js';
-
-
 export function isInternalRulePage(
   parsedOrPage
 ) {
@@ -38,8 +33,4 @@ export function renderInternalRulePage(
       element.disabled =
         true;
     });
-
-  setStatus(
-    'Открыто внутреннее правило'
-  );
 }
