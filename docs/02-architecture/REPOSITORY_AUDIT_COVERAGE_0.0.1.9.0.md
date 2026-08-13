@@ -120,7 +120,7 @@ The initial Reviewer C failed with `403 Forbidden`, so the C slot was replaced i
 | CSS/design system | Broad | Remaining token/hack debt identified; no broad rewrite recommended. |
 | Tests/browser smoke | Deep | Native smoke/gate/visual-regression semantics risks identified. |
 | Docs/plan/archive | Broad | Active source-of-truth reviewed; old plans archive-only; new cleanup docs created. |
-| Local artifacts | Targeted | `debug.log` exists locally, ignored and untracked. |
+| Local artifacts | Targeted | `debug.log` was deleted by owner-approved `RCB-014`; project file audit now reports 0 delete candidates. |
 
 ## Searches And Evidence Inputs
 
@@ -193,7 +193,7 @@ No production cleanup was implemented. No product functionality was implemented.
 Notes:
 
 - `git ls-files` was the source for tracked first-party counts.
-- `node tools/audit_project_files.mjs` may report one extra local ignored file (`debug.log`); that is not tracked first-party source.
+- `node tools/audit_project_files.mjs` reported 0 delete candidates after `RCB-014`; the previously ignored local `debug.log` is gone.
 - The original audit head was `11c0ce2`. Current head `679e5a1` only changed docs/evidence after that head before this verification pass, so production code coverage remains current.
 
 ### Previous P1 Recheck

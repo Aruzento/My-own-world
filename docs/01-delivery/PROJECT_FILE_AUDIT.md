@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 602.
+Всего файлов в аудите: 603.
 
 ## Два Независимых Прохода
 
@@ -45,7 +45,7 @@ owner_zone: "delivery"
 | presentation | 3 |
 | properties | 9 |
 | release handoff | 7 |
-| root | 21 |
+| root | 20 |
 | rules | 19 |
 | schema | 12 |
 | storage | 26 |
@@ -57,14 +57,12 @@ owner_zone: "delivery"
 | tools | 22 |
 | tree | 11 |
 | ui | 28 |
-| unit tests | 70 |
+| unit tests | 72 |
 | world packages | 3 |
 
 ## Кандидаты На Уборку
 
-| Файл | Причина |
-|---|---|
-| `debug.log` | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
+Явных кандидатов на удаление не найдено.
 
 Удалять эти файлы можно только после отдельного подтверждения владельца продукта.
 
@@ -76,10 +74,9 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 735152 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `debug.log` | 249300 | Нет смысла оптимизировать: кандидат на удаление после подтверждения. |
+| `docs/01-delivery/WORK_LOG.md` | 754914 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 179000 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 179041 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -187,7 +184,6 @@ owner_zone: "delivery"
 | `assets/icons/README.md` | assets | Главная инструкция и обзор проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/icons/rpg-ui.svg` | assets | Иконки и sprite приложения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
 | `assets/rules/internal-rules-workspace.json` | assets | Seed-данные внутреннего пространства правил. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет. |
-| `debug.log` | root | Локальный debug-лог, не является исходником проекта. | Нет смысла оптимизировать: кандидат на удаление после подтверждения. | Да, после подтверждения: локальный лог, не должен попадать в коммит. |
 | `docs/00-product/BRANDBOOK.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PO_DISCOVERY.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
 | `docs/00-product/PRODUCT_DASHBOARD.md` | docs/product | Документация зоны docs/product. | Да: держать metadata, актуальность и кодировку под контролем. | Нет: валидный markdown-документ с metadata, даже если еще untracked до коммита. |
@@ -703,6 +699,7 @@ owner_zone: "delivery"
 | `tests/inventoryModel.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/knowledgeGraph.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/knowledgeGraphCanvasHistory.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/knowledgeGraphPageReadBoundary.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/knowledgeGraphStructuralIconOnly.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/lightweightWorkspaceOperationsGate.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/locationMusic.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
@@ -732,6 +729,7 @@ owner_zone: "delivery"
 | `tests/treeIndex.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/treeMovePlanner.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/treeOrderCompaction.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
+| `tests/treePageReadBoundary.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/treeVirtualization.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/uiMigrationBaselines.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |
 | `tests/visualRegressionPolicy.test.mjs` | unit tests | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Нет: regression test, проверять через тесты и code review перед коммитом. |

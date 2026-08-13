@@ -58,7 +58,7 @@ Owner approved starting `0.0.1.10.0` cleanup on 2026-08-11. Work remains one RCB
 | RCB-011 | P3 | Map helper duplication | Done in `0.0.1.10.25` | Centralized exact map popup escape helpers and initiative `rollD20` duplication through nearby existing owners. | Static helper ownership regression, initiative unit tests, Campaign Map initiative/popup/music/toolbar browser tests and popup lifecycle browser tests. |
 | RCB-012 | P3 | Visual regression policy | Done in `0.0.1.10.29` | Documented the owner-selected evidence-smoke policy instead of adding a heavy strict pixel-baseline system. Current visual coverage is structured browser assertions plus screenshot attachments for human review, not automatic pixel comparison. | Static policy regression proves the docs distinguish structured browser regression, screenshot evidence, human review and strict pixel regression, and that the current visual spec does not use strict pixel matchers. |
 | RCB-013 | P3 | Docs/status drift | Done in `0.0.1.10.26` | Implemented `BI-024` as a lightweight active-status drift guard for plan/dashboard/current status pointers without documentation generation. | Static docs status guard proves stale fixtures fail and the current repository passes through `docs:index`. |
-| RCB-014 | P3 | Local ignored artifacts | Owner decision required | Move/delete local `debug.log` outside active workspace only in an approved local cleanup task. | `git status --short` and `node tools/audit_project_files.mjs` confirm no tracked source changes. |
+| RCB-014 | P3 | Local ignored artifacts | Done in `0.0.1.10.38` | Deleted only the owner-approved ignored/untracked root `debug.log` Chromium/GPU diagnostic log. No general filesystem cleanup was performed. | Pre-delete checks confirmed exact path, git ignore/untracked status, non-source usage and Chromium/GPU diagnostic content; post-delete `git status --short` stayed free of tracked deletion and `node tools/audit_project_files.mjs` reports 0 delete candidates. |
 | RCB-015 | P3 | Historical docs placement | Done in `0.0.1.10.31` | Kept tracked root historical folders `Тех. зрелость/` and `Лог особенный/` in place as intentional exceptions. They are historical evidence only, not active source of truth, and must not be moved to ignored `legacy/` or `docs/archive/` without a future owner-approved placement task. | Docs map, AGENTS guard, local legacy policy and project file audit now document the exception; docs index and project file audit pass. |
 | RCB-029 | P3 | Rules workspace module boundary | Done in `0.0.1.10.27` | Moved the internal-rule-page status side effect out of the Rules Workspace data/render module and into the existing editor open-page orchestration owner. | Static boundary regression proves `internalRulePage.js` stays free of UI status ownership; focused browser smoke proves internal rules still open read-only through the Properties rule picker. |
 | RCB-030 | P3 | CSS token/layer guard | Done in `0.0.1.10.28` | Added a focused static guard for undefined `--mow-*` tokens without fallback and hard-coded extreme overlay z-index values in command palette, settings/topbar and card type menu CSS; corrected the command palette focus shadow token to the existing semantic focus token. | Deliberate bad fixture fails, current repo passes, `ui:polish:audit` runs the guard, and focused visual/browser coverage for command palette, settings/topbar and card type menu passed. |
@@ -82,9 +82,9 @@ These are not approved by this backlog:
 
 Before each next cleanup leaf, choose the next owner-approved item before implementation starts:
 
-1. Next approved backlog item or slice bundle. `RCB-006` and `RCB-007` are closed; `RCB-014` local debug artifact decision is the next named cleanup decision.
-2. Whether any already-open non-split cleanup item should take priority over `RCB-014`.
-3. Whether local artifact cleanup is allowed.
+1. Next approved backlog item or slice bundle. `RCB-006`, `RCB-007` and `RCB-014` are closed; the next named step is `0.0.1.10.FINAL` cleanup consolidation gate.
+2. Whether any already-open non-split cleanup item should take priority over the final gate.
+3. Whether any future local artifact cleanup is allowed.
 4. Whether docs root exceptions should stay.
 5. Whether the next commit after this audit may touch production code.
 

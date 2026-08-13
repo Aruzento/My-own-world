@@ -313,11 +313,13 @@ Evidence:
 - `.gitignore`
 - `docs/01-delivery/LEGACY_LOCAL_HUB.md`
 
-`debug.log` is ignored and not tracked, but it exists locally again. This is not product code and was not moved/deleted during the audit.
+`debug.log` was ignored and not tracked, but it existed locally again. This was not product code and was not moved/deleted during the audit.
 
 Impact: local audits will continue reporting it until the owner allows local cleanup or it is moved to `legacy/`.
 
 Recommended cleanup leaf: owner-approved local file cleanup only; do not commit the file and do not treat it as source truth.
+
+Cleanup status: closed by `RCB-014` in `0.0.1.10.38`. The owner explicitly approved deleting only the previously audited root `debug.log`; pre-delete checks confirmed the exact path, ignored/untracked status, no source/test required-input usage and Chromium/GPU diagnostic contents. Post-delete `node tools/audit_project_files.mjs` reports 0 delete candidates. No other local artifact was deleted.
 
 ### RA-014 - P3 - Visual regression is mostly structured UI smoke, not strict pixel regression
 

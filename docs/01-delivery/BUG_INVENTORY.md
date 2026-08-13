@@ -292,19 +292,19 @@ Next check: keep the manual regeneration step in release handoff when user-visib
 
 Regression target: keep `python -m zipfile -t docs/MY_OWN_WORLD_FULL_MANUAL.docx` in verify.
 
-### BUG-014. `debug.log` is still local untracked noise
+### BUG-014. `debug.log` local untracked noise
 
 Area: repo hygiene
 
-Status: Needs cleanup decision
+Status: Closed by `RCB-014` / `0.0.1.10.38`
 
 Source: `git status --short`.
 
-Symptoms: local `debug.log` is untracked.
+Symptoms: local `debug.log` was untracked and ignored.
 
 Risk: accidental commit noise or confusing file audit output.
 
-Next check: inspect if needed, then delete only with explicit cleanup approval or ignore it deliberately.
+Resolution: owner approved deleting only the previously audited root `debug.log`; post-delete project file audit reports 0 delete candidates.
 
 Regression target: keep safe commit rules and file audit checks.
 

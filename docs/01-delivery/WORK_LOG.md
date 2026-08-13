@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.38 RCB-014 Local Debug Artifact
+
+### Pre-Delete Check
+
+- Owner explicitly approved deleting only the previously audited local `debug.log`.
+- Exact path reconfirmed: `C:\Users\Aruko\Documents\New project\My own world\debug.log`.
+- File name was exactly `debug.log`.
+- File was ignored by git through `.gitignore:8:debug.log`.
+- File was untracked: `git ls-files -- debug.log` returned no tracked path, and `git status --short --ignored -- debug.log` showed `!! debug.log`.
+- Source/tests did not use `debug.log` as required input. The only active code references were the project-file audit classifier rules; docs references were status/audit notes.
+- File contents were Chromium/GPU diagnostic output (`gpu\command_buffer\service\shared_image\shared_image_manager.cc` repeated errors).
+- File lived in the repository root and was not a real workspace/user-content file under `pages/`, `assets/` or another user workspace.
+
+### What Changed
+
+- Deleted only `C:\Users\Aruko\Documents\New project\My own world\debug.log`.
+- Did not search/delete other logs, temp folders, browser profiles, test artifacts or real workspace files.
+- Did not modify `.gitignore`.
+- Re-ran `node tools\audit_project_files.mjs`, which regenerated `PROJECT_FILE_AUDIT.md` with 0 delete candidates and removed the `debug.log` rows from the generated report.
+
+### Verification
+
+- Passed: `git status --short` immediately after deletion showed no tracked production deletion.
+- Passed: `Test-Path .\debug.log` returned `False`.
+- Passed: `node tools\audit_project_files.mjs` with 603 files, 0 delete candidates and 0 mojibake candidates.
+
+### Next
+
+- Stop before the final cleanup gate.
+- Next named step: `0.0.1.10.FINAL` Repository Cleanup & Consolidation Gate.
+- No production functionality was changed.
+
 ## 2026-08-13: 0.0.1.10.37 RCB-007D Tree-Adjacent Page Read Boundary
 
 ### Boundary Confirmed
