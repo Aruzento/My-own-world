@@ -5,8 +5,15 @@ import {
 } from '../editor/editor.js';
 
 import {
-  createPage,
-  writePageContent
+  buildPageRecordContent
+} from '../core/pageRecord.js';
+
+import {
+  templates
+} from '../templates/templates.js';
+
+import {
+  createPageFromRecordContent
 } from '../storage/storage.js';
 
 import {
@@ -27,10 +34,13 @@ import {
 } from './popupManager.js';
 
 import {
+  setStatus
+} from './ui.js';
+
+import {
   getPageById,
   getPagesByTag,
-  getPagesByType,
-  notifyPageUpdated
+  getPagesByType
 } from '../repository/pageRepository.js';
 
 
@@ -252,7 +262,21 @@ function setupItemSetPicker() {
         event.preventDefault();
         event.stopPropagation();
 
-        await createItemFromPicker();
+        try {
+
+          await createItemFromPicker();
+
+        } catch (error) {
+
+          console.error(
+            'Не удалось создать предмет:',
+            error
+          );
+
+          setStatus(
+            'Не удалось создать предмет'
+          );
+        }
       }
     );
 
@@ -672,35 +696,81 @@ async function createItemFromPicker() {
   }
 
   const page =
-    await createPage(
-      'card',
-      null,
+    await createItemPage(
       title
     );
-
-  page.type =
-    'item';
-
-  page.tags =
-    ['card', 'item'];
-
-  page.content =
-    page.content
-      .replace(/^tags:\s*\[[^\]]*\]/m, 'tags: [card, item]')
-      .replace(/^type:\s*.*$/m, 'type: item');
-
-  await writePageContent(
-    page,
-    page.content
-  );
-
-  notifyPageUpdated();
 
   renderTree();
 
   await addItemToSet(
     page
   );
+}
+
+
+async function createItemPage(
+  title
+) {
+
+  const template =
+    templates.card;
+
+  const content =
+    buildPageRecordContent({
+      id:
+        crypto.randomUUID(),
+      parent:
+        null,
+      order:
+        Date.now(),
+      tags:
+        [
+          'card',
+          'item'
+        ],
+      template:
+        'card',
+      type:
+        'item',
+      aliases:
+        [],
+      relationships:
+        [],
+      body:
+        applyItemPageTitle(
+          template.content,
+          title
+        )
+    });
+
+  return createPageFromRecordContent(
+    content
+  );
+}
+
+
+function applyItemPageTitle(
+  html,
+  title
+) {
+
+  if (!title) return html;
+
+  const wrapper =
+    document.createElement('div');
+
+  wrapper.innerHTML =
+    html;
+
+  const heading =
+    wrapper.querySelector('h1');
+
+  if (!heading) return html;
+
+  heading.textContent =
+    title;
+
+  return wrapper.innerHTML;
 }
 
 

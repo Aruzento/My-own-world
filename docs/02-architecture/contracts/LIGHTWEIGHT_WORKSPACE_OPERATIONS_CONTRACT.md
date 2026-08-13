@@ -140,6 +140,7 @@ Current coverage:
 - special entity saves for campaign map, task tracker, Rule Tree and Knowledge Graph;
 - template-created pages;
 - task tracker quick-created pages;
+- item picker-created pages;
 - map token conversion metadata updates.
 
 Known follow-up work:

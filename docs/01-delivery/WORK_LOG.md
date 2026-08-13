@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.33 RCB-006C Item Creation Write Boundary
+
+### Boundary Confirmed
+
+- Reconfirmed `RCB-006A` and `RCB-006B` closed on current HEAD before touching item creation.
+- Traced the current item creation path through the real item picker UI: item set add button -> create panel -> `createItemFromPicker()` -> item page write -> `addItemToSet()` -> parent-card `saveCurrentPage()`.
+- Classified `createItemFromPicker()` as the only confirmed item-page write boundary violation: it created a blank card page, mutated `type/tags/content`, wrote directly with `writePageContent()` and manually notified the repository.
+- Classified existing item set reads as already handled by `RCB-007A`, existing chip add/remove saves as parent-card editor saves, and Campaign Map writes as a separate pending `RCB-006` target.
+- Reproduced the old failure mode with a forced item-page write failure: a failed rewrite could leave a runtime/repository/index/durable ghost item page before the inventory chip was added.
+
+### What Changed
+
+- Changed item picker creation to build the final item PageRecord content up front with `tags: [card, item]` and `type: item`.
+- Routed durable item page creation through the existing `pageStorage.createPageFromRecordContent()` / create-page command lifecycle instead of direct `writePageContent()`.
+- Removed manual item-page metadata mutation and manual repository notification from `itemSets`.
+- Kept the item picker failure path human-readable through the existing statusbar message `Не удалось создать предмет`.
+- Preserved item schema, generated ids, card template body, picker UX, inventory chip behavior and parent-card save behavior.
+- Did not touch Campaign Map serializer/token helper writes.
+
+### Verification
+
+- Expected pre-fix failure: `npm run test:browser -- tests/browser/item-sets.spec.mjs --grep "item-picker-create-item-uses-page-command-boundary"` failed with a ghost runtime item after forced write failure.
+- Passed: `npm run test:browser -- tests/browser/item-sets.spec.mjs --grep "item-picker-create-item-uses-page-command-boundary"`.
+- Passed: `npm run test:browser -- tests/browser/item-sets.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs --grep "inventory|item"`.
+- Passed: `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`.
+- Passed: `node --test tests\pageRepository.test.mjs tests\pageIndex.test.mjs tests\propertyBlocks.test.mjs tests\propertiesCalculationEngine.test.mjs`.
+- Passed: `node --test tests\pageCommandService.test.mjs tests\storageAdapter.test.mjs`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` remains split/open; the remaining target is Campaign Map serializer/token helper write boundary cleanup.
+
 ## 2026-08-13: 0.0.1.10.32 RCB-006B Page Template Creation Write Boundary
 
 ### Boundary Confirmed
