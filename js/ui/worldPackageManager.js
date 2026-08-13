@@ -62,6 +62,9 @@ export function setupWorldPackageManager() {
   const trigger =
     document.getElementById('worldPackageManagerBtn');
 
+  const toolsButton =
+    document.getElementById('appToolsBtn');
+
   const popup =
     document.getElementById('worldPackagePopup');
 
@@ -94,14 +97,15 @@ export function setupWorldPackageManager() {
         closeManager,
       anchors:
         [
-          trigger
+          trigger,
+          toolsButton
         ],
       key:
         'world-package-popup',
       kind:
         'dialog',
       modal:
-        false
+        true
     });
 
   trigger.addEventListener(
@@ -319,6 +323,11 @@ function createHeader(
 
   closeButton.title =
     'Закрыть';
+
+  closeButton.setAttribute(
+    'aria-label',
+    closeButton.title
+  );
 
   closeButton.innerHTML =
     iconSvg(

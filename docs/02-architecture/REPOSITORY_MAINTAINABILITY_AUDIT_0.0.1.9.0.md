@@ -396,6 +396,8 @@ Impact: World Package can look like a dialog while behaving like a non-modal pan
 
 Recommended cleanup leaf: choose the contract deliberately: modal dialog lifecycle or documented non-modal tool panel.
 
+Cleanup status: closed by `RCB-019` in `0.0.1.10.19`. Owner chose the modal dialog contract. `worldPackageManager` now registers the existing `#worldPackagePopup` through shared `popupManager` with `modal: true`; `popupManager` owns modal ARIA/focus markers, Tab trapping, Escape close and focus return. The Tools-popover launch path returns focus to the visible Tools button when the internal package trigger is no longer focusable. World Package export/import behavior and persistent format were not changed.
+
 ### RA-020 - P2 - Design token debt remains in character sheet and settings styles
 
 Evidence:

@@ -119,6 +119,7 @@ No import should write to workspace before:
 Current UI apply boundary:
 
 - `Tools -> Пакеты мира` opens `#worldPackagePopup[data-world-package-ui-migration="0.0.1.8.14.7"]`.
+- The manager is a modal dialog because export/import preview and backup-gated apply are interruptive workspace operations. It registers through shared `popupManager` with modal focus movement, Tab trapping, Escape close and focus return to the visible Tools launcher.
 - The UI may export a current page branch or the whole workspace page set into `world-packages/*.world-package.json`, including readable asset payloads referenced by those pages.
 - The UI may apply package pages and embedded rulePackages after preview and backup.
 - Page conflicts are resolved by an explicit mode:

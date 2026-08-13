@@ -619,6 +619,120 @@ test(
 );
 
 
+test(
+  'world-package-manager-uses-modal-dialog-focus-contract',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.locator('#appToolsBtn').click();
+
+    const trigger =
+      page.locator('#worldPackageManagerBtn');
+
+    await trigger.click();
+
+    const popup =
+      page.locator('#worldPackagePopup');
+
+    await expect(
+      popup
+    ).toBeVisible();
+
+    await expect(
+      popup
+    ).toHaveAttribute(
+      'data-overlay-kind',
+      'dialog'
+    );
+
+    await expect(
+      popup
+    ).toHaveAttribute(
+      'data-overlay-modal',
+      'true'
+    );
+
+    await expect(
+      popup
+    ).toHaveAttribute(
+      'aria-modal',
+      'true'
+    );
+
+    await expect(
+      popup
+    ).toHaveAttribute(
+      'aria-labelledby',
+      'worldPackageTitle'
+    );
+
+    await expect(
+      popup.locator('#worldPackageTitle')
+    ).toBeVisible();
+
+    await expect(
+      popup.locator('.world-package-form input').first()
+    ).toBeFocused();
+
+    await popup.locator('.app-popup-close').focus();
+
+    await page.keyboard.press(
+      'Shift+Tab'
+    );
+
+    expect(
+      await popup.evaluate(element =>
+        element.contains(
+          document.activeElement
+        )
+      )
+    ).toBe(
+      true
+    );
+
+    await page.evaluate(
+      () => document.getElementById('appToolsBtn')?.focus()
+    );
+
+    await page.keyboard.press(
+      'Tab'
+    );
+
+    expect(
+      await popup.evaluate(element =>
+        element.contains(
+          document.activeElement
+        )
+      )
+    ).toBe(
+      true
+    );
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      popup
+    ).toBeHidden();
+
+    await expect(
+      page.locator('#appToolsBtn')
+    ).toBeFocused();
+
+    await expect(
+      trigger
+    ).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+  }
+);
+
+
 async function seedWorldPackageWorkspace(
   page
 ) {

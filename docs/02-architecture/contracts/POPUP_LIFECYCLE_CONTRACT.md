@@ -71,10 +71,11 @@ Registered popups must keep these runtime markers synchronized:
 For registered modal popups:
 
 - `registerPopup({ modal: true })` makes the popup a dialog overlay by default;
-- the manager adds `role="dialog"`, `aria-modal="true"` and a focusable container fallback when the popup does not already define them;
+- the manager adds `role="dialog"` and a focusable container fallback when the popup does not already define them, and registered modal dialogs always expose `aria-modal="true"`;
 - opening the modal moves focus to `[data-overlay-autofocus="true"]`, `[autofocus]`, the first focusable child or the popup container;
 - Tab and Shift+Tab stay inside the topmost open modal popup;
 - closing the modal returns focus to the element that opened it, or to a connected anchor when possible.
+- `worldPackagePopup` uses this modal contract because World Package import/export is a backup-gated workspace operation, not a background popover.
 
 For registered menu-like popups:
 

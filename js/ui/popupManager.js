@@ -460,13 +460,10 @@ function ensureOverlayContract(
       );
     }
 
-    if (!popup.hasAttribute('aria-modal')) {
-
-      popup.setAttribute(
-        'aria-modal',
-        'true'
-      );
-    }
+    popup.setAttribute(
+      'aria-modal',
+      'true'
+    );
   }
 
   if (
@@ -643,7 +640,7 @@ function capturePopupRestoreFocus(
     activeElement !== document.body &&
     activeElement !== document.documentElement &&
     !entry.popup.contains(activeElement) &&
-    typeof activeElement.focus === 'function'
+    isFocusableElement(activeElement)
       ? activeElement
       : null;
 }
@@ -728,11 +725,16 @@ function restorePopupFocus(
   ) return;
 
   const restoreTarget =
-    entry.restoreFocusElement?.isConnected
+    entry.restoreFocusElement?.isConnected &&
+    isFocusableElement(
+      entry.restoreFocusElement
+    )
       ? entry.restoreFocusElement
       : entry.anchors.find(anchor =>
         anchor?.isConnected &&
-        typeof anchor.focus === 'function'
+        isFocusableElement(
+          anchor
+        )
       );
 
   entry.restoreFocusElement =

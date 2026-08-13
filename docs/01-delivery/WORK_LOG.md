@@ -6,6 +6,29 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.19 RCB-019 World Package Overlay Contract
+
+### What Changed
+
+- Applied the owner decision for `RCB-019`: World Package manager is a modal dialog, not a non-modal tool panel.
+- Confirmed the current contradiction before fixing it: `#worldPackagePopup` declared `role="dialog"` / `data-overlay-kind="dialog"` while `aria-modal` and the `popupManager` registration were non-modal.
+- Moved ownership to the existing shared popup lifecycle: `worldPackageManager` now registers the popup with `modal: true`, and `popupManager` forces registered modal dialogs to expose `aria-modal="true"`.
+- Kept the World Package product workflow unchanged: export, preview, backup-gated import, conflict handling and asset payload behavior were not modified.
+- Fixed focus lifecycle for the real launch path from the Tools popover: focus moves into the modal, Tab stays inside, Escape closes it, and focus returns to the visible Tools button when the internal menu trigger has been hidden.
+- Added an explicit Russian accessible name to the icon-only close button.
+
+### Verification
+
+- Failed first as expected before the production fix: `node tools/run_browser_smoke.mjs tests/browser/world-package.spec.mjs --grep "world-package-manager-uses-modal-dialog-focus-contract"` reported `data-overlay-modal="false"`.
+- Passed after fix: `node tools/run_browser_smoke.mjs tests/browser/world-package.spec.mjs --grep "world-package-manager-uses-modal-dialog-focus-contract"`.
+- Passed: `node tools/run_browser_smoke.mjs tests/browser/world-package.spec.mjs`.
+- Passed after isolated reruns and full rerun: `node tools/run_browser_smoke.mjs tests/browser/popup-lifecycle.spec.mjs`.
+- Passed: `node --check js/ui/worldPackageManager.js`, `node --check js/ui/popupManager.js`, `node --check tests/browser/world-package.spec.mjs`.
+
+### Next
+
+- Owner also approved `RCB-028` for V1 stabilization; implement it as the next separate cleanup commit using existing reorder owners.
+
 ## 2026-08-13: 0.0.1.10.18 RCB-018 Knowledge Graph Domain Switcher Semantics
 
 ### What Changed
