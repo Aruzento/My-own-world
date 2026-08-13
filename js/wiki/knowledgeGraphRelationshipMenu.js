@@ -177,23 +177,25 @@ export function getNodeRelationshipsMenuHTML(
         </label>
         <div class="knowledge-graph-node-menu-relationship-actions">
           <button
+            class="mow-icon-button"
+            data-size="sm"
             type="button"
             data-knowledge-graph-relationship-menu-action="save"
             aria-label="Сохранить связь"
             title="Сохранить связь"
           >
             ${iconSvg('check', 'knowledge-graph-node-menu-action-svg')}
-            <span>Сохранить</span>
           </button>
           <button
-            class="is-danger"
+            class="mow-icon-button"
+            data-size="sm"
+            data-variant="danger"
             type="button"
             data-knowledge-graph-relationship-menu-action="delete"
             aria-label="Удалить связь"
             title="Удалить связь"
           >
             ${iconSvg('trash', 'knowledge-graph-node-menu-action-svg')}
-            <span>Удалить</span>
           </button>
         </div>
       </section>
@@ -210,7 +212,8 @@ function getGraphNodeMenuActionHTML(
 
   return `
     <button
-      class="knowledge-graph-node-menu-action"
+      class="knowledge-graph-node-menu-action mow-icon-button"
+      data-size="sm"
       type="button"
       data-knowledge-graph-node-menu-action="${escapeHTML(action)}"
       aria-label="${escapeHTML(label)}"
@@ -219,7 +222,6 @@ function getGraphNodeMenuActionHTML(
       <span class="knowledge-graph-node-menu-action-icon">
         ${iconSvg(icon, 'knowledge-graph-node-menu-action-svg')}
       </span>
-      <span class="knowledge-graph-node-menu-action-label">${escapeHTML(label)}</span>
     </button>
   `;
 }

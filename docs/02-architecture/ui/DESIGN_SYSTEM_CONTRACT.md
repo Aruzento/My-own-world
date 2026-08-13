@@ -431,6 +431,8 @@ Use: same canvas-control language as map where possible; do not bypass page life
 
 `0.0.1.10.21` updates the graph ownership boundary: canvas history state, history button enablement and Ctrl/Cmd+Z/Y shortcut handling must stay in `knowledgeGraphCanvasHistory.js`. The page coordinator may pass explicit callbacks for graph-specific entry application, focus restoration and status messages, but it should not re-own the undo/redo stacks or shortcut contract.
 
+`0.0.1.10.23` corrects the graph icon-only control structure: toolbar, filterbar, inspector, node-menu, relationship-menu, connect-popup and slice-note icon actions must render as real icon-only buttons with an icon, Russian `aria-label` / `title` names and the shared `.mow-icon-button` contract where the touched control is icon-only. Do not render old visible text spans and hide them with `font-size: 0`, transparent text, offscreen menu-label CSS or local dimension tricks. The canvas scale indicator remains visible text and keeps its accessible name synchronized with the displayed scale.
+
 ### Task Tracker
 
 Owns: board toolbar, columns, task cards, checklists, labels, drag previews, empty states.

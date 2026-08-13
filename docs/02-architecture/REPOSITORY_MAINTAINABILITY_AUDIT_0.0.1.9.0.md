@@ -265,6 +265,8 @@ Impact: individual surfaces can still drift into mini design systems.
 
 Recommended cleanup leaf: target one CSS owner per cleanup commit. Start with Knowledge Graph icon-only structural cleanup, then token migration where visual regressions exist.
 
+Cleanup status: Knowledge Graph icon-only structural cleanup closed by `RCB-010` in `0.0.1.10.23`. Touched graph controls now render as structural icon-only buttons with icons plus Russian accessible names, old hidden toolbar/menu label spans were removed, and the graph scale indicator is a readable chip instead of `font-size: 0`/transparent text. Broader raw-token and local-palette cleanup remains under `RCB-020` / RA-020 and RA-030.
+
 ### RA-011 - P3 - Map helper duplication remains in popup/initiative modules
 
 Evidence:

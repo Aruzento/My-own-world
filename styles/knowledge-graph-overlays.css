@@ -453,12 +453,3 @@
   padding: 0;
   text-align: center;
 }
-
-.knowledge-graph-node-menu-relationship-actions span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}

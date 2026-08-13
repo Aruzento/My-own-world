@@ -611,7 +611,6 @@ function getVisualGraphHTML(
               disabled
             >
               ${iconSvg('arrow-left', 'knowledge-graph-toolbar-icon')}
-              <span class="knowledge-graph-toolbar-label">Назад</span>
             </button>
             <button
               type="button"
@@ -623,18 +622,20 @@ function getVisualGraphHTML(
               disabled
             >
               ${iconSvg('skip-forward', 'knowledge-graph-toolbar-icon')}
-              <span class="knowledge-graph-toolbar-label">Вперед</span>
             </button>
             <button class="knowledge-graph-zoom-button mow-icon-button" data-size="sm" type="button" data-knowledge-graph-canvas-action="zoom-out" title="Уменьшить" aria-label="Уменьшить">−</button>
             <button class="knowledge-graph-fit-button mow-icon-button" data-size="sm" type="button" data-knowledge-graph-canvas-action="fit" title="Показать весь граф" aria-label="Показать весь граф">
               ${iconSvg('link', 'knowledge-graph-toolbar-icon')}
-              <span class="knowledge-graph-toolbar-label">Центр</span>
             </button>
             <button class="knowledge-graph-zoom-button mow-icon-button" data-size="sm" type="button" data-knowledge-graph-canvas-action="zoom-in" title="Увеличить" aria-label="Увеличить">+</button>
-            <span data-knowledge-graph-canvas-scale title="Масштаб 100%">100%</span>
+            <span
+              class="knowledge-graph-canvas-scale"
+              data-knowledge-graph-canvas-scale
+              aria-label="Масштаб 100%"
+              title="Масштаб 100%"
+            >100%</span>
             <button class="knowledge-graph-refresh mow-icon-button" data-size="sm" type="button" title="Обновить граф" aria-label="Обновить граф">
               ${iconSvg('repeat', 'knowledge-graph-toolbar-icon')}
-              <span class="knowledge-graph-toolbar-label">Обновить</span>
             </button>
           </div>
         </header>
@@ -756,21 +757,23 @@ function getCanvasConnectDetailsPopupHTML(
       <div class="knowledge-graph-connect-popup-actions">
         <button
           type="button"
+          class="mow-icon-button"
+          data-size="sm"
           data-knowledge-graph-connect-action="create"
           aria-label="Создать связь"
           title="Создать связь"
         >
           ${iconSvg('check', 'knowledge-graph-node-menu-action-svg')}
-          <span class="knowledge-graph-toolbar-label">Создать</span>
         </button>
         <button
           type="button"
+          class="mow-icon-button"
+          data-size="sm"
           data-knowledge-graph-connect-action="cancel"
           aria-label="Отмена"
           title="Отмена"
         >
           ${iconSvg('x', 'knowledge-graph-node-menu-action-svg')}
-          <span class="knowledge-graph-toolbar-label">Отмена</span>
         </button>
       </div>
     </section>
@@ -820,12 +823,13 @@ function getCanvasOverflowNoteHTML(
       ? `
         <button
           type="button"
+          class="mow-icon-button"
+          data-size="sm"
           data-knowledge-graph-slice-action="show-all"
           aria-label="Показать все связи"
           title="Показать все связи"
         >
           ${iconSvg('eye', 'knowledge-graph-slice-action-icon')}
-          <span class="knowledge-graph-toolbar-label">Все связи</span>
         </button>
       `
       : '';
@@ -847,12 +851,13 @@ function getCanvasOverflowNoteHTML(
         ${showAllAction}
         <button
           type="button"
+          class="mow-icon-button"
+          data-size="sm"
           data-knowledge-graph-slice-action="refine"
           aria-label="Уточнить поиск"
           title="Уточнить поиск"
         >
           ${iconSvg('search', 'knowledge-graph-slice-action-icon')}
-          <span class="knowledge-graph-toolbar-label">Уточнить поиск</span>
         </button>
       </div>
     </aside>
@@ -3660,8 +3665,19 @@ function applyGraphCanvasTransform(
 
   if (scaleLabel) {
 
-    scaleLabel.textContent =
+    const scaleText =
       `${Math.round(scale * 100)}%`;
+
+    scaleLabel.textContent =
+      scaleText;
+
+    scaleLabel.title =
+      `Масштаб ${scaleText}`;
+
+    scaleLabel.setAttribute(
+      'aria-label',
+      `Масштаб ${scaleText}`
+    );
   }
 }
 

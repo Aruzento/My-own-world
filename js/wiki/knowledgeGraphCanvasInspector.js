@@ -81,22 +81,24 @@ export function getCanvasInspectorInnerHTML(
       </div>
       <div class="knowledge-graph-canvas-inspector-actions">
         <button
+          class="mow-icon-button"
+          data-size="sm"
           type="button"
           data-knowledge-graph-inspector-action="open"
           aria-label="Открыть карточку"
           title="Открыть карточку"
         >
           ${iconSvg('document', 'knowledge-graph-inspector-action-icon')}
-          <span class="knowledge-graph-toolbar-label">Открыть</span>
         </button>
         <button
+          class="mow-icon-button"
+          data-size="sm"
           type="button"
           data-knowledge-graph-inspector-action="${isFocused ? 'clear-focus' : 'focus'}"
           aria-label="${isFocused ? 'Показать весь граф' : 'Показать соседей'}"
           title="${isFocused ? 'Показать весь граф' : 'Показать соседей'}"
         >
           ${iconSvg(isFocused ? 'eye-off' : 'eye', 'knowledge-graph-inspector-action-icon')}
-          <span class="knowledge-graph-toolbar-label">${isFocused ? 'Весь граф' : 'Соседи'}</span>
         </button>
       </div>
     </header>

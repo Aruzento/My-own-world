@@ -116,7 +116,6 @@ export function getCanvasFilterBarHTML(
         title="Одинокие страницы"
       >
         ${iconSvg('eye-off', 'knowledge-graph-toolbar-icon')}
-        <span class="knowledge-graph-toolbar-label">Одинокие</span>
       </button>
       <button
         type="button"
@@ -127,7 +126,6 @@ export function getCanvasFilterBarHTML(
         title="Сбросить фильтры"
       >
         ×
-        <span class="knowledge-graph-toolbar-label">Сброс</span>
       </button>
       <span
         class="knowledge-graph-canvas-filterbar-status"
@@ -200,7 +198,6 @@ export function getCanvasLayoutButtonHTML(
       title="${escapeHTML(label)}"
     >
       ${iconSvg(getCanvasLayoutIcon(layout), 'knowledge-graph-toolbar-icon')}
-      <span class="knowledge-graph-toolbar-label">${escapeHTML(label)}</span>
     </button>
   `;
 }

@@ -6,6 +6,29 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.23 RCB-010 Knowledge Graph CSS Structural Cleanup
+
+### What Changed
+
+- Confirmed the `RA-010` Knowledge Graph structural CSS debt on current code: icon-only controls still rendered hidden text labels, and the canvas scale chip used a `font-size: 0` / transparent-text presentation hack.
+- Removed the hidden `knowledge-graph-toolbar-label` and `knowledge-graph-node-menu-action-label` markup from the graph toolbar, filterbar, inspector actions, node menu, relationship actions, connect popup and slice-note controls.
+- Kept those controls as real semantic buttons with visible icons, Russian `aria-label` / `title` names and the shared `.mow-icon-button` contract where the touched control was already icon-only.
+- Replaced the canvas scale marker with a readable compact scale chip and kept its accessible label synchronized when zoom changes.
+- Removed the graph-only CSS selectors that hid old text labels. The remaining `.knowledge-graph-visually-hidden` utility is still the intentional screen-reader pattern, not an icon-only presentation hack.
+- No Knowledge Graph product behavior, concept, persistence, drag/pan, relationship or layout workflow was changed.
+
+### Verification
+
+- Passed: `node --test tests\knowledgeGraphStructuralIconOnly.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs --grep knowledge-graph-domain-switcher-implements-real-tabs-semantics`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run ui:polish:audit`.
+
+### Next
+
+- Stop before the next RCB leaf. Broader design-token cleanup remains under `RCB-020`; split read/write boundary work remains under `RCB-006` and `RCB-007`.
+
 ## 2026-08-13: 0.0.1.10.22 RCB-009 Properties Layout Ownership
 
 ### Responsibility Inventory

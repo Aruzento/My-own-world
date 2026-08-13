@@ -365,6 +365,11 @@ aliases: []
               getComputedStyle(control).backgroundColor
             );
 
+          const scale =
+            document.querySelector(
+              '[data-knowledge-graph-canvas-scale]'
+            );
+
           return {
             count:
               controls.length,
@@ -390,7 +395,17 @@ aliases: []
                 rect.width <= 0 ||
                 rect.height <= 0
               )
-                .length
+                .length,
+            hiddenToolbarLabels:
+              document.querySelectorAll(
+                '.knowledge-graph-canvas-toolbar .knowledge-graph-toolbar-label'
+              ).length,
+            scaleText:
+              scale?.textContent?.trim() || '',
+            scaleAccessibleName:
+              scale?.getAttribute('aria-label') || '',
+            scaleFontSize:
+              scale ? getComputedStyle(scale).fontSize : ''
           };
         }
       );
@@ -428,6 +443,32 @@ aliases: []
     expect(
       graphControlContract.zeroAreaControls
     ).toBe(
+      0
+    );
+
+    expect(
+      graphControlContract.hiddenToolbarLabels
+    ).toBe(
+      0
+    );
+
+    expect(
+      graphControlContract.scaleText
+    ).toMatch(
+      /^\d+%$/
+    );
+
+    expect(
+      graphControlContract.scaleAccessibleName
+    ).toBe(
+      `Масштаб ${graphControlContract.scaleText}`
+    );
+
+    expect(
+      Number.parseFloat(
+        graphControlContract.scaleFontSize
+      )
+    ).toBeGreaterThan(
       0
     );
 
@@ -1025,10 +1066,63 @@ aliases: []
     ).toBeHidden();
 
     await expect(
-      nodeMenu.locator('.knowledge-graph-node-menu-action-label').first()
-    ).toHaveCSS(
-      'position',
-      'absolute'
+      nodeMenu.locator('.knowledge-graph-node-menu-action-label')
+    ).toHaveCount(
+      0
+    );
+
+    const nodeMenuIconActionContract =
+      await nodeMenu.evaluate(menu => {
+
+        const actions =
+          [
+            ...menu.querySelectorAll(
+              '[data-knowledge-graph-node-menu-action], [data-knowledge-graph-relationship-menu-action]'
+            )
+          ];
+
+        return {
+          count:
+            actions.length,
+          withoutSharedIconButton:
+            actions.filter(action =>
+              !action.classList.contains('mow-icon-button')
+            ).length,
+          withoutAccessibleName:
+            actions.filter(action =>
+              !action.getAttribute('aria-label')
+            ).length,
+          withRenderedHiddenLabel:
+            actions.filter(action =>
+              action.querySelector(
+                '.knowledge-graph-node-menu-action-label, .knowledge-graph-toolbar-label'
+              )
+            ).length
+        };
+      });
+
+    expect(
+      nodeMenuIconActionContract.count
+    ).toBeGreaterThan(
+      0
+    );
+
+    expect(
+      nodeMenuIconActionContract.withoutSharedIconButton
+    ).toBe(
+      0
+    );
+
+    expect(
+      nodeMenuIconActionContract.withoutAccessibleName
+    ).toBe(
+      0
+    );
+
+    expect(
+      nodeMenuIconActionContract.withRenderedHiddenLabel
+    ).toBe(
+      0
     );
 
     const nodeMenuVisualContract =

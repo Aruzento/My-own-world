@@ -787,9 +787,7 @@
     box-shadow var(--mow-motion-hover-duration) var(--mow-ease-standard);
 }
 
-.knowledge-graph-visually-hidden,
-.knowledge-graph-toolbar-label,
-.knowledge-graph-node-menu-action-label {
+.knowledge-graph-visually-hidden {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -827,26 +825,19 @@
 }
 
 .knowledge-graph-canvas-toolbar [data-knowledge-graph-canvas-scale] {
-  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  min-width: 24px;
-  height: 18px;
-  overflow: hidden;
+  min-width: 38px;
+  min-height: 22px;
+  padding: 0 7px;
   border: 1px solid var(--mow-border-subtle, rgba(120, 106, 82, 0.16));
   border-radius: 999px;
-  color: transparent;
-  font-size: 0;
-}
-
-.knowledge-graph-canvas-toolbar [data-knowledge-graph-canvas-scale]::before {
-  content: '';
-  width: 12px;
-  height: 3px;
-  border-radius: 999px;
-  background: var(--mow-text-muted, #665f55);
+  background: var(--mow-surface-sunken, rgba(255, 246, 222, 0.035));
+  color: var(--mow-text-muted, #665f55);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .knowledge-graph-canvas-filterbar {
