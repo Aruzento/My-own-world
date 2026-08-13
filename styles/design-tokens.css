@@ -15,6 +15,7 @@
   --mow-font-size-title: 20px;
   --mow-line-height-tight: 1.1;
   --mow-line-height-compact: 1.25;
+  --mow-line-height-normal: var(--mow-line-height-body);
   --mow-line-height-body: 1.45;
   --mow-line-height-relaxed: 1.6;
   --mow-font-weight-regular: 400;
@@ -170,6 +171,7 @@
   --mow-icon-button-color-hover: var(--mow-button-color-hover);
   --mow-input-bg: var(--mow-surface-sunken);
   --mow-input-border: var(--mow-control-border);
+  --mow-input-color: var(--mow-text-primary);
   --mow-input-border-focus: var(--mow-border-focus);
   --mow-input-invalid-bg: var(--mow-status-danger-bg);
   --mow-input-invalid-border: var(--mow-status-danger-border);
@@ -349,6 +351,13 @@
   --mow-field-bg: var(--mow-surface-sunken);
   --mow-field-border: var(--mow-border-subtle);
   --mow-field-focus-border: var(--mow-border-focus);
+
+  --mow-character-sheet-ink: #191714;
+  --mow-character-sheet-muted: #5d5850;
+  --mow-character-sheet-line: rgba(25, 23, 20, 0.42);
+  --mow-character-sheet-line-soft: rgba(25, 23, 20, 0.18);
+  --mow-character-sheet-paper: #fbfaf5;
+  --mow-character-sheet-danger: #b9554e;
 
   --mow-task-column-bg: var(--mow-surface-panel);
   --mow-task-card-bg: var(--mow-surface-raised);

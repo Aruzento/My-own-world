@@ -420,6 +420,8 @@ Impact: contrast/theme polish can silently drift by surface, and undefined varia
 
 Recommended cleanup leaf: either formalize sheet tokens as semantic design tokens or document the exception, and add a static undefined-token check.
 
+Cleanup status: closed by `RCB-020` in `0.0.1.10.24`. Character Sheet keeps its intentional light paper concept, but the used paper/ink/line/danger roles now belong to `styles/design-tokens.css` as compact `--mow-character-sheet-*` component tokens instead of a feature-local `--sheet-*` palette. Settings no-fallback tokens now resolve through shared `--mow-line-height-normal` and `--mow-input-color`. Remaining out-of-scope undefined token/layer debt stays under RA-030 / `RCB-030`.
+
 ## 0.0.1.9.1 Completeness Verification Addendum
 
 Verification date: 2026-08-11

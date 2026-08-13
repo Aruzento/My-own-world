@@ -145,6 +145,8 @@ The `0.0.1.8.3` foundation defines or normalizes the first shared set from these
 | Tasks | `--mow-task-card-*`, `--mow-task-column-*`, `--mow-task-label-*` |
 | Diagnostics | `--mow-health-*`, `--mow-backup-*`, `--mow-restore-*` |
 
+`0.0.1.10.24` token correction: Settings text and inputs may consume `--mow-line-height-normal` and `--mow-input-color` as shared semantic tokens. Character Sheet is an intentional light paper component inside the dark workbench, so its used paper/ink/line/danger roles belong to the compact `--mow-character-sheet-*` component token family in `styles/design-tokens.css`. Do not reintroduce a local `--sheet-*` palette in `styles/block-character-sheet.css`; unused sheet palette entries should be removed instead of promoted to shared tokens.
+
 ### Valid Local Variables
 
 Feature-state variables may remain local when they are real data state, not visual design drift:

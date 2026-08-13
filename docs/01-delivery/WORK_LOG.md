@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.24 RCB-020 Design Token Consistency
+
+### Token Inventory
+
+- Character Sheet local palette owner before cleanup: `styles/block-character-sheet.css` defined `--sheet-ink`, `--sheet-muted`, `--sheet-line`, `--sheet-soft-line`, `--sheet-paper`, `--sheet-paper-soft`, `--sheet-accent` and `--sheet-danger`.
+- Intentional semantic local value: Character Sheet stays a light paper-style character sheet inside the dark workbench, so the paper/ink/line roles are valid component semantics.
+- Design-system drift: those roles were owned by the feature CSS file instead of `styles/design-tokens.css`; unused local `paper-soft` and `accent` definitions were removed instead of formalized.
+- Settings undefined token owner before cleanup: `styles/app-topbar.css` consumed `--mow-line-height-normal` and `--mow-input-color` without fallback, while those tokens were absent from `styles/design-tokens.css`.
+- Deferred outside this leaf: full undefined-token scan still reports `--mow-block-type-color` and `--mow-focus-ring-soft`; these remain under RA-030 / `RCB-030`, not `RCB-020`.
+
+### What Changed
+
+- Added shared `--mow-line-height-normal` and `--mow-input-color` semantic tokens.
+- Added a compact `--mow-character-sheet-*` component token family for the used Character Sheet roles: ink, muted text, line, soft line, paper and danger.
+- Migrated Character Sheet CSS from the local `--sheet-*` palette to those shared tokens without changing the Character Sheet data model, behavior or visual concept.
+- Added static token consistency coverage and dark/contrast browser coverage for Settings and Character Sheet rendering.
+
+### Verification
+
+- Failed first as expected: `node --test tests\designTokenConsistency.test.mjs` caught the missing shared tokens before production CSS was updated.
+- Passed: `node --test tests\designTokenConsistency.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/design-token-consistency.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs --grep character-sheet`.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs --grep app-shell-empty-state`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-owner-completion-captures-primary-secondary-evidence`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Stop before the next RCB leaf. Remaining token/layer cleanup stays under `RCB-030`; map helper duplication stays under `RCB-011`.
+
 ## 2026-08-13: 0.0.1.10.23 RCB-010 Knowledge Graph CSS Structural Cleanup
 
 ### What Changed

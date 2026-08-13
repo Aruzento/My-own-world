@@ -11,15 +11,6 @@
 }
 
 .character-sheet-page {
-  --sheet-ink: #191714;
-  --sheet-muted: #5d5850;
-  --sheet-line: rgba(25, 23, 20, 0.42);
-  --sheet-soft-line: rgba(25, 23, 20, 0.18);
-  --sheet-paper: #fbfaf5;
-  --sheet-paper-soft: #f2efe6;
-  --sheet-accent: #c9ad67;
-  --sheet-danger: #b9554e;
-
   display: grid;
   gap: 12px;
   max-width: 1180px;
@@ -29,8 +20,8 @@
   border-radius: 8px;
   background:
     linear-gradient(180deg, rgba(255,255,255,0.97), rgba(241,238,226,0.96)),
-    var(--sheet-paper);
-  color: var(--sheet-ink);
+    var(--mow-character-sheet-paper);
+  color: var(--mow-character-sheet-ink);
   box-shadow:
     0 22px 70px rgba(0,0,0,0.24),
     inset 0 1px 0 rgba(255,255,255,0.72);
@@ -52,7 +43,7 @@
 .character-sheet-panel,
 .character-sheet-death-saves {
   position: relative;
-  border: 1px solid var(--sheet-line);
+  border: 1px solid var(--mow-character-sheet-line);
   border-radius: 4px;
   background: rgba(255,255,255,0.55);
 }
@@ -67,7 +58,7 @@
   position: absolute;
   width: 7px;
   height: 7px;
-  border-color: var(--sheet-line);
+  border-color: var(--mow-character-sheet-line);
   pointer-events: none;
 }
 
@@ -102,7 +93,7 @@
 .character-sheet-ability-score span,
 .character-sheet-panel h3,
 .character-sheet-death-saves > span {
-  color: var(--sheet-muted);
+  color: var(--mow-character-sheet-muted);
   font-size: 9px;
   font-weight: 900;
   letter-spacing: 0;
@@ -113,8 +104,8 @@
 .character-sheet-identity > strong {
   display: block;
   min-height: 27px;
-  border-bottom: 1px solid var(--sheet-line);
-  color: var(--sheet-ink);
+  border-bottom: 1px solid var(--mow-character-sheet-line);
+  color: var(--mow-character-sheet-ink);
   font: 700 19px/1.12 Georgia, "Times New Roman", serif;
 }
 
@@ -128,12 +119,12 @@
   display: grid;
   gap: 2px;
   min-width: 0;
-  border-bottom: 1px solid var(--sheet-soft-line);
+  border-bottom: 1px solid var(--mow-character-sheet-line-soft);
 }
 
 .character-sheet-line span {
   overflow: hidden;
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -160,8 +151,8 @@
 
 .character-sheet-pb {
   min-width: 64px;
-  border-bottom: 1px solid var(--sheet-line);
-  color: var(--sheet-ink);
+  border-bottom: 1px solid var(--mow-character-sheet-line);
+  color: var(--mow-character-sheet-ink);
   font-size: 11px;
   font-weight: 900;
   text-align: center;
@@ -210,7 +201,7 @@
 .character-sheet-logo::after {
   content: "";
   height: 1px;
-  border-top: 1px solid var(--sheet-line);
+  border-top: 1px solid var(--mow-character-sheet-line);
   border-bottom: 1px solid rgba(255,255,255,0.7);
 }
 
@@ -249,13 +240,13 @@
 }
 
 .character-sheet-metric strong {
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   font-size: 24px;
   line-height: 1;
 }
 
 .character-sheet-metric small {
-  color: var(--sheet-muted);
+  color: var(--mow-character-sheet-muted);
   font-size: 10px;
   font-weight: 800;
 }
@@ -298,10 +289,10 @@
   min-width: 0;
   height: 29px;
   border: 0;
-  border-bottom: 1px solid var(--sheet-line);
+  border-bottom: 1px solid var(--mow-character-sheet-line);
   border-radius: 0;
   background: transparent;
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   font: 900 20px/1 system-ui, sans-serif;
   text-align: center;
   outline: none;
@@ -330,8 +321,8 @@
 
 .character-sheet-ability h3 {
   margin: 0;
-  border-bottom: 1px solid var(--sheet-line);
-  color: var(--sheet-ink);
+  border-bottom: 1px solid var(--mow-character-sheet-line);
+  color: var(--mow-character-sheet-ink);
   font-size: 11px;
   font-weight: 950;
   text-align: center;
@@ -352,7 +343,7 @@
   height: 64px;
   border: 2px solid rgba(25, 23, 20, 0.26);
   border-radius: 50%;
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   background: rgba(255,255,255,0.76);
   font: 800 25px/1 Georgia, "Times New Roman", serif;
 }
@@ -380,26 +371,26 @@
   gap: 5px;
   min-height: 20px;
   border-bottom: 1px solid rgba(25, 23, 20, 0.12);
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   font-size: 11px;
 }
 
 .character-sheet-skill-dot {
   width: 10px;
   height: 10px;
-  border: 1px solid var(--sheet-line);
+  border: 1px solid var(--mow-character-sheet-line);
   border-radius: 50%;
   background: transparent;
 }
 
 .character-sheet-skill-dot.is-active {
-  border-color: var(--sheet-ink);
-  background: var(--sheet-ink);
-  box-shadow: inset 0 0 0 2px var(--sheet-paper);
+  border-color: var(--mow-character-sheet-ink);
+  background: var(--mow-character-sheet-ink);
+  box-shadow: inset 0 0 0 2px var(--mow-character-sheet-paper);
 }
 
 .character-sheet-skill strong {
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   font-size: 12px;
   text-align: right;
 }
@@ -435,7 +426,7 @@
 
 .character-sheet-death-track legend {
   grid-column: 1 / -1;
-  color: var(--sheet-muted);
+  color: var(--mow-character-sheet-muted);
   font-size: 8px;
   font-weight: 900;
   text-align: center;
@@ -448,10 +439,10 @@
   place-items: center;
   width: 19px;
   height: 19px;
-  border: 1px solid var(--sheet-line);
+  border: 1px solid var(--mow-character-sheet-line);
   border-radius: 50%;
   background: rgba(255,255,255,0.62);
-  color: var(--sheet-muted);
+  color: var(--mow-character-sheet-muted);
   cursor: pointer;
   font-size: 10px;
   font-weight: 900;
@@ -460,7 +451,7 @@
 .character-sheet-death-track label:has(input:checked) {
   border-color: rgba(185, 85, 78, 0.58);
   background: rgba(250, 218, 205, 0.82);
-  color: var(--sheet-danger);
+  color: var(--mow-character-sheet-danger);
 }
 
 .character-sheet-death-track input {
@@ -476,8 +467,8 @@
 
 .character-sheet-panel h3 {
   margin: 0 0 8px;
-  border-bottom: 1px solid var(--sheet-line);
-  color: var(--sheet-ink);
+  border-bottom: 1px solid var(--mow-character-sheet-line);
+  color: var(--mow-character-sheet-ink);
   text-align: center;
 }
 
@@ -496,13 +487,13 @@
   gap: 8px;
   min-height: 24px;
   border-bottom: 1px solid rgba(25, 23, 20, 0.12);
-  color: var(--sheet-ink);
+  color: var(--mow-character-sheet-ink);
   font-size: 12px;
 }
 
 .character-sheet-panel li.is-empty,
 .character-sheet-empty {
-  color: var(--sheet-muted);
+  color: var(--mow-character-sheet-muted);
   font-size: 13px;
 }
 
