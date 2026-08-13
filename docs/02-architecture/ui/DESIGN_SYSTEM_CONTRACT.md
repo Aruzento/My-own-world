@@ -147,6 +147,8 @@ The `0.0.1.8.3` foundation defines or normalizes the first shared set from these
 
 `0.0.1.10.24` token correction: Settings text and inputs may consume `--mow-line-height-normal` and `--mow-input-color` as shared semantic tokens. Character Sheet is an intentional light paper component inside the dark workbench, so its used paper/ink/line/danger roles belong to the compact `--mow-character-sheet-*` component token family in `styles/design-tokens.css`. Do not reintroduce a local `--sheet-*` palette in `styles/block-character-sheet.css`; unused sheet palette entries should be removed instead of promoted to shared tokens.
 
+`0.0.1.10.28` token/layer guard: `npm run ui:polish:audit` runs a focused static guard over the command palette, Settings/topbar and card type menu CSS. Those surfaces must not reference undefined `--mow-*` tokens without a deliberate fallback, and overlay layering must use the shared `--mow-z-dropdown`, `--mow-z-popover`, `--mow-z-modal` or `--mow-z-toast` tokens instead of hard-coded extreme numeric z-index values.
+
 ### Valid Local Variables
 
 Feature-state variables may remain local when they are real data state, not visual design drift:

@@ -633,6 +633,8 @@ Impact: token/layer drift can produce inconsistent focus/overlay rendering.
 
 Recommended cleanup leaf: extend the design-token cleanup with an undefined-token/static-layer check; do not do a broad CSS rewrite.
 
+Cleanup status: closed by `RCB-030` in `0.0.1.10.28`. `tools/css_token_layer_guard.mjs` now protects the focused RA-030 surfaces (`command-palette`, settings/topbar and card type menu) against undefined `--mow-*` references without fallback and hard-coded extreme numeric overlay z-index values. The command palette now uses the existing `--mow-focus-shadow` token instead of the undefined `--mow-focus-ring-soft`, and `npm run ui:polish:audit` runs the guard.
+
 ## No-Material-Finding Areas
 
 - Tauri filesystem boundary was reviewed at source level: path escapes and workspace-root deletion are rejected, and writes use temp/rename semantics.

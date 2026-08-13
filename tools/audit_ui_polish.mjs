@@ -9,6 +9,11 @@ import {
   relative
 } from 'node:path';
 
+import {
+  collectCssTokenLayerDrift,
+  formatCssTokenLayerIssue
+} from './css_token_layer_guard.mjs';
+
 
 const root =
   process.cwd();
@@ -135,6 +140,18 @@ for (const file of getFiles(stylesRoot, '.css')) {
       css
   });
 }
+
+collectCssTokenLayerDrift({
+  root
+})
+  .forEach(issue => {
+
+    report.errors.push(
+      formatCssTokenLayerIssue(
+        issue
+      )
+    );
+  });
 
 if (report.errors.length > 0) {
 

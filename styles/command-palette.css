@@ -154,7 +154,7 @@
     var(--mow-input-border-focus);
 
   box-shadow:
-    var(--mow-focus-ring-soft);
+    var(--mow-focus-shadow);
 }
 
 

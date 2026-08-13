@@ -93,6 +93,7 @@ For the first tooltip/toast foundation:
 - tooltip styling must use shared overlay tokens and must not add a new controller for static labels;
 - operation progress is the first toast-like surface and exposes `data-overlay-kind="toast"`, `data-overlay-state` and `data-toast-state`;
 - toast/progress styling must use `--mow-z-toast` and shared overlay surface/elevation tokens.
+- shared overlay layer ownership is the `--mow-z-*` scale in `styles/design-tokens.css`; feature CSS may use small local stacking values inside its own component, but focused overlays must not use hard-coded 9999/10000-style z-index values.
 
 This is a foundation step. Broader feature-specific popup styling and overlay adoption remain part of the active overlay migration.
 

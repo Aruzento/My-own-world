@@ -6,6 +6,39 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.28 RCB-030 CSS Token / Overlay Layer Guard
+
+### Drift Confirmed
+
+- Confirmed `RA-030` on current code before production CSS correction: `styles/command-palette.css` referenced `--mow-focus-ring-soft` without fallback, while the design-token contract defines `--mow-focus-ring`, `--mow-focus-ring-offset` and `--mow-focus-shadow`.
+- Confirmed the allowed overlay layer contract from `DESIGN_SYSTEM_CONTRACT.md` and `POPUP_LIFECYCLE_CONTRACT.md`: shared overlay stacking should use `--mow-z-dropdown`, `--mow-z-popover`, `--mow-z-modal` or `--mow-z-toast`.
+- Kept the guard focused on the owner-approved RA-030 targets: command palette, Settings/topbar and card type menu CSS.
+
+### What Changed
+
+- Added `tools/css_token_layer_guard.mjs`, a lightweight static guard for two proven drift classes only:
+  - undefined `--mow-*` token references without an explicit fallback;
+  - hard-coded extreme numeric `z-index` values in focused overlay CSS.
+- Integrated the guard into `tools/audit_ui_polish.mjs`, so `npm run ui:polish:audit` now catches this drift with the rest of the UI polish checks.
+- Added `tests/cssTokenLayerGuard.test.mjs` with a deliberate bad fixture that must fail and a current-repository assertion that must pass.
+- Replaced `var(--mow-focus-ring-soft)` in `styles/command-palette.css` with existing semantic `var(--mow-focus-shadow)`.
+- Updated the design-system and popup lifecycle contracts with the focused token/layer rule.
+- No broad CSS migration, redesign, raw-value ban or new visual system was introduced.
+
+### Verification
+
+- Failed first as expected: `node --test tests\cssTokenLayerGuard.test.mjs` caught `--mow-focus-ring-soft` in the current repo before the CSS correction.
+- Failed first as expected: `node tools\css_token_layer_guard.mjs` reported the same undefined token.
+- Passed: `node --test tests\cssTokenLayerGuard.test.mjs`.
+- Passed: `node tools\css_token_layer_guard.mjs`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run test:browser -- tests/browser/card-type-accessibility.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` and `RCB-007` still have remaining split sub-leaves; `RCB-012`, `RCB-014` and `RCB-015` still need owner selection/approval.
+
 ## 2026-08-13: 0.0.1.10.27 RCB-029 Rules Workspace Module Boundary
 
 ### Boundary Confirmed
