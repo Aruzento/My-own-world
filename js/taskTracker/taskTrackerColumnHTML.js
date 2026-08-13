@@ -33,6 +33,7 @@ export function getColumnHTML(
           data-size="sm"
           data-variant="ghost"
           type="button"
+          aria-keyshortcuts="Control+Shift+ArrowLeft Control+Shift+ArrowRight"
           data-tooltip="Перетащить колонку"
           aria-label="Перетащить колонку"
           title="Перетащить колонку"

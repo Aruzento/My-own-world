@@ -446,6 +446,379 @@ tags: []
 
 
 test(
+  'tree-keyboard-reorder-uses-existing-move-owner-and-announces-result',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const {
+          setCurrentPage,
+          setPages,
+          setWorkspaceHandle
+        } = await import('/js/stateActions.js');
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const {
+          renderTree
+        } = await import('/js/tree/tree.js');
+
+        const files =
+          new Map();
+
+        const writePaths =
+          [];
+
+        const createPageFile =
+          page => `---
+id: ${page.id}
+title: ${page.title}
+parent: ${page.parent ?? 'null'}
+order: ${page.order}
+template: card
+type: ${page.type}
+aliases: []
+tags: []
+---
+
+<h1>${page.title}</h1>
+`;
+
+        const pages = [
+          {
+            id: 'folder-a',
+            name: 'folder-a.md',
+            path: '/pages/folder-a.md',
+            title: 'Folder A',
+            parent: null,
+            order: 1,
+            template: 'card',
+            type: 'folder',
+            tags: [],
+            aliases: [],
+            content: '<h1>Folder A</h1>'
+          },
+          {
+            id: 'page-a',
+            name: 'page-a.md',
+            path: '/pages/page-a.md',
+            title: 'Page A',
+            parent: 'folder-a',
+            order: 1,
+            template: 'card',
+            type: 'note',
+            tags: [],
+            aliases: [],
+            content: '<h1>Page A</h1>'
+          },
+          {
+            id: 'page-b',
+            name: 'page-b.md',
+            path: '/pages/page-b.md',
+            title: 'Page B',
+            parent: 'folder-a',
+            order: 2,
+            template: 'card',
+            type: 'note',
+            tags: [],
+            aliases: [],
+            content: '<h1>Page B</h1>'
+          },
+          {
+            id: 'folder-b',
+            name: 'folder-b.md',
+            path: '/pages/folder-b.md',
+            title: 'Folder B',
+            parent: null,
+            order: 2,
+            template: 'card',
+            type: 'folder',
+            tags: [],
+            aliases: [],
+            content: '<h1>Folder B</h1>'
+          }
+        ];
+
+        for (const candidate of pages) {
+
+          files.set(
+            candidate.path,
+            createPageFile(
+              candidate
+            )
+          );
+        }
+
+        setWorkspaceHandle({
+          name:
+            'Tree keyboard reorder workspace'
+        });
+
+        setStorageAdapter({
+          kind: 'browser',
+          getWorkspaceHandle() {
+            return {};
+          },
+          setWorkspaceHandle() {},
+          async pickWorkspace() {
+            return {};
+          },
+          async restoreWorkspace() {
+            return {};
+          },
+          async ensureDirectory() {},
+          async getDirectoryHandle() {
+            return {};
+          },
+          async readText(path) {
+            if (!files.has(path)) {
+              throw new Error(`missing ${path}`);
+            }
+
+            return files.get(path);
+          },
+          async writeText(path, content) {
+            writePaths.push(
+              path
+            );
+
+            files.set(
+              path,
+              String(content)
+            );
+          },
+          async readBinary() {
+            return new ArrayBuffer(0);
+          },
+          async writeBinary() {},
+          async listFiles() {
+            return [];
+          },
+          async removeFile(path) {
+            files.delete(
+              path
+            );
+          },
+          async removeDirectory() {}
+        });
+
+        setPages(
+          pages
+        );
+
+        setCurrentPage(
+          pages[0]
+        );
+
+        state.__treeKeyboardReorderTest =
+          {
+            files,
+            writePaths
+          };
+
+        renderTree();
+      }
+    );
+
+    const pageA =
+      page.locator('.tree-item[data-page-id="page-a"]');
+
+    const pageB =
+      page.locator('.tree-item[data-page-id="page-b"]');
+
+    await pageB.focus();
+
+    await expect(
+      pageB
+    ).toBeFocused();
+
+    await expect(
+      pageB
+    ).toHaveAttribute(
+      'aria-keyshortcuts',
+      /Control\+Shift\+ArrowUp/
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowUp'
+    );
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'Страница перемещена'
+    );
+
+    await expect(
+      pageB
+    ).toBeFocused();
+
+    let result =
+      await readTreeKeyboardReorderState(
+        page
+      );
+
+    expect(
+      result.pageB.parent
+    ).toBe(
+      'folder-a'
+    );
+
+    expect(
+      result.pageB.order
+    ).toBeLessThan(
+      result.pageA.order
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowDown'
+    );
+
+    result =
+      await readTreeKeyboardReorderState(
+        page
+      );
+
+    expect(
+      result.pageB.order
+    ).toBeGreaterThan(
+      result.pageA.order
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowRight'
+    );
+
+    result =
+      await readTreeKeyboardReorderState(
+        page
+      );
+
+    expect(
+      result.pageB.parent
+    ).toBe(
+      'page-a'
+    );
+
+    await expect(
+      pageB
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowLeft'
+    );
+
+    result =
+      await readTreeKeyboardReorderState(
+        page
+      );
+
+    expect(
+      result.pageB.parent
+    ).toBe(
+      'folder-a'
+    );
+
+    expect(
+      result.pageB.order
+    ).toBeGreaterThan(
+      result.pageA.order
+    );
+
+    expect(
+      result.writePaths.filter(path =>
+        path === '/pages/page-b.md'
+      ).length
+    ).toBeGreaterThanOrEqual(
+      4
+    );
+
+    expect(
+      result.dragArtifacts
+    ).toEqual({
+      draggingRows:
+        0,
+      hasDragPreview:
+        false,
+      hasDropPlaceholder:
+        false
+    });
+
+    await expect(
+      page.locator('#statusbar')
+    ).toHaveAttribute(
+      'role',
+      'status'
+    );
+
+    await expect(
+      pageA
+    ).toBeVisible();
+  }
+);
+
+
+async function readTreeKeyboardReorderState(
+  page
+) {
+
+  return page.evaluate(
+    async () => {
+
+      const {
+        state
+      } = await import('/js/state.js');
+
+      const testState =
+        state.__treeKeyboardReorderTest;
+
+      return {
+        pageA:
+          state.pages.find(candidate =>
+            candidate.id === 'page-a'
+          ),
+        pageB:
+          state.pages.find(candidate =>
+            candidate.id === 'page-b'
+          ),
+        writePaths:
+          testState.writePaths,
+        dragArtifacts: {
+          draggingRows:
+            document.querySelectorAll(
+              '.tree-item.is-dragging'
+            ).length,
+          hasDragPreview:
+            Boolean(
+              document.querySelector(
+                '.tree-drag-preview'
+              )
+            ),
+          hasDropPlaceholder:
+            Boolean(
+              document.querySelector(
+                '.tree-drop-placeholder'
+              )
+            )
+        }
+      };
+    }
+  );
+}
+
+
+test(
   'tree-pointer-dnd-same-level-reorder-skips-backup-and-writes-one-page',
   async ({ page }) => {
 

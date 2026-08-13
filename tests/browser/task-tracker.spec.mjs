@@ -1246,6 +1246,240 @@ test(
 );
 
 
+test(
+  'task-tracker-keyboard-reorder-uses-existing-model-and-announces-result',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          createTaskTrackerTemplate
+        } = await import('/js/templates/taskTracker.js');
+
+        const {
+          renderTaskTracker
+        } = await import('/js/taskTracker/taskTrackerRender.js');
+
+        const {
+          writeTaskTrackerData
+        } = await import('/js/taskTracker/taskTrackerWriteData.js');
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML =
+          createTaskTrackerTemplate().content;
+
+        const tracker =
+          editor.querySelector('.task-tracker-document');
+
+        writeTaskTrackerData(
+          tracker,
+          {
+            version: 1,
+            columns: [
+              {
+                id: 'todo',
+                title: 'Todo',
+                taskIds: [
+                  'task-1',
+                  'task-2'
+                ]
+              },
+              {
+                id: 'done',
+                title: 'Done',
+                taskIds: []
+              }
+            ],
+            tasks: [
+              {
+                id: 'task-1',
+                title: 'First task',
+                description: '',
+                checklist: []
+              },
+              {
+                id: 'task-2',
+                title: 'Second task',
+                description: '',
+                checklist: []
+              }
+            ]
+          }
+        );
+
+        renderTaskTracker(
+          editor
+        );
+      }
+    );
+
+    const taskHandle =
+      page.locator('.task-card[data-task-id="task-2"] .task-drag-handle');
+
+    await taskHandle.focus();
+
+    await expect(
+      taskHandle
+    ).toBeFocused();
+
+    await expect(
+      taskHandle
+    ).toHaveAttribute(
+      'aria-keyshortcuts',
+      /Control\+Shift\+ArrowUp/
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowUp'
+    );
+
+    await expectTaskTrackerColumnOrder(
+      page,
+      [
+        {
+          id: 'todo',
+          taskIds: [
+            'task-2',
+            'task-1'
+          ]
+        },
+        {
+          id: 'done',
+          taskIds: []
+        }
+      ]
+    );
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'Задача перемещена'
+    );
+
+    await expect(
+      taskHandle
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowRight'
+    );
+
+    await expectTaskTrackerColumnOrder(
+      page,
+      [
+        {
+          id: 'todo',
+          taskIds: [
+            'task-1'
+          ]
+        },
+        {
+          id: 'done',
+          taskIds: [
+            'task-2'
+          ]
+        }
+      ]
+    );
+
+    await expect(
+      taskHandle
+    ).toBeFocused();
+
+    const columnHandle =
+      page.locator('.task-column[data-column-id="done"] .task-column-drag-handle');
+
+    await columnHandle.focus();
+
+    await expect(
+      columnHandle
+    ).toHaveAttribute(
+      'aria-keyshortcuts',
+      /Control\+Shift\+ArrowLeft/
+    );
+
+    await page.keyboard.press(
+      'Control+Shift+ArrowLeft'
+    );
+
+    await expectTaskTrackerColumnOrder(
+      page,
+      [
+        {
+          id: 'done',
+          taskIds: [
+            'task-2'
+          ]
+        },
+        {
+          id: 'todo',
+          taskIds: [
+            'task-1'
+          ]
+        }
+      ]
+    );
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'Колонка перемещена'
+    );
+
+    await expect(
+      columnHandle
+    ).toBeFocused();
+
+    await expect(
+      page.locator('#statusbar')
+    ).toHaveAttribute(
+      'role',
+      'status'
+    );
+
+    const dragArtifacts =
+      await page.evaluate(
+        () => ({
+          draggingCards:
+            document.querySelectorAll(
+              '.task-card.is-dragging, .task-column.is-dragging'
+            ).length,
+          hasPreview:
+            Boolean(
+              document.querySelector(
+                '.task-drag-preview, .task-column-drag-preview'
+              )
+            ),
+          hasPlaceholder:
+            Boolean(
+              document.querySelector(
+                '.task-drop-placeholder, .task-column-drop-placeholder'
+              )
+            )
+        })
+      );
+
+    expect(
+      dragArtifacts
+    ).toEqual({
+      draggingCards:
+        0,
+      hasPreview:
+        false,
+      hasPlaceholder:
+        false
+    });
+  }
+);
+
+
 async function dispatchInnerTaskTrackerClick(
   page,
   selector

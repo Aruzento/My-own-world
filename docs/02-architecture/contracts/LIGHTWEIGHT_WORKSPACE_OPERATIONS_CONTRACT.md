@@ -202,6 +202,7 @@ Examples:
 - map save when the map is stored in one page file;
 - task tracker save when stored in one page file;
 - simple metadata edit on one page when parent does not change.
+- keyboard reorder is not a separate write system: Tree shortcuts use the existing tree move planner/storage command, and Task Tracker shortcuts use the existing task/column model moves before the normal single-page tracker save.
 
 Rules:
 

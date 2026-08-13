@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.20 RCB-028 Keyboard Reorder Accessibility
+
+### What Changed
+
+- Applied the owner decision for `RCB-028`: keyboard reorder is implemented in V1 stabilization, not deferred.
+- Kept existing reorder owners. Tree keyboard reorder uses `createTreeMovePlan()` and `updatePageTreePositions()`; Task Tracker keyboard reorder uses `TaskTrackerModel.moveTask()` / `moveColumn()` followed by the existing commit/render path.
+- Added `Ctrl+Shift+ArrowUp/Down/Left/Right` for focused Tree rows. Up/Down move before/after the neighboring visible row, Right moves inside the previous visible row when valid, and Left promotes the page after its parent.
+- Added `Ctrl+Shift+ArrowUp/Down/Left/Right` for focused Task Tracker task drag handles and `Ctrl+Shift+ArrowLeft/Right` for focused column drag handles.
+- Added `aria-keyshortcuts` to the relevant controls and made the global statusbar a polite live `role="status"` region so movement results are announced.
+- Preserved pointer DnD and existing product behavior; no new Tree or Task Tracker features were added beyond the keyboard equivalent of existing reorder.
+
+### Verification
+
+- Failed first as expected before production code: the new Tree and Task Tracker keyboard reorder browser regressions reported missing `aria-keyshortcuts`.
+- Passed after fix: `node tools/run_browser_smoke.mjs tests/browser/tree-dnd-regression.spec.mjs --grep "tree-keyboard-reorder-uses-existing-move-owner-and-announces-result"`.
+- Passed after fix: `node tools/run_browser_smoke.mjs tests/browser/task-tracker.spec.mjs --grep "task-tracker-keyboard-reorder-uses-existing-model-and-announces-result"`.
+- Passed: `node tools/run_browser_smoke.mjs tests/browser/tree-accessibility.spec.mjs`.
+- Passed after sequential rerun: `node tools/run_browser_smoke.mjs tests/browser/tree-dnd-regression.spec.mjs`.
+- Passed after sequential rerun: `node tools/run_browser_smoke.mjs tests/browser/task-tracker.spec.mjs`.
+- Passed syntax checks for changed Tree and Task Tracker modules/specs.
+
+### Next
+
+- Continue cleanup only after owner selection of the next RCB leaf.
+
 ## 2026-08-13: 0.0.1.10.19 RCB-019 World Package Overlay Contract
 
 ### What Changed
@@ -27,7 +52,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Owner also approved `RCB-028` for V1 stabilization; implement it as the next separate cleanup commit using existing reorder owners.
+- Completed by follow-up `0.0.1.10.20`; next cleanup leaf needs owner selection.
 
 ## 2026-08-13: 0.0.1.10.18 RCB-018 Knowledge Graph Domain Switcher Semantics
 

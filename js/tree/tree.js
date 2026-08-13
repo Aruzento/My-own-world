@@ -9,6 +9,20 @@ import {
   hasWorkspaceAccess
 } from '../storage/storageAdapter.js';
 
+import {
+  setCurrentPage
+} from '../stateActions.js';
+
+import {
+  updatePageTreePositions
+} from '../storage/storage.js';
+
+import {
+  finishProgressStatus,
+  setProgressStatus,
+  setStatus
+} from '../ui/ui.js';
+
 
 /* Импорт из деревьев */
 
@@ -28,6 +42,14 @@ import {
 import {
   getTreePageKeys
 } from './treeKeys.js';
+
+import {
+  createTreeMovePlan
+} from './treeMovePlanner.js';
+
+import {
+  canMovePage
+} from './treeUtils.js';
 
 import {
   buildVisibleTreeRows,
@@ -73,6 +95,14 @@ let treeVirtualState =
 
 let focusedTreePageId =
   null;
+
+const TREE_KEYBOARD_REORDER_KEYS =
+  new Set([
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight'
+  ]);
 
 loadTreeExpansionState();
 
@@ -607,6 +637,24 @@ function handleTreeKeyboardNavigation(
 
   if (!page) return;
 
+  if (
+    isTreeKeyboardReorderEvent(
+      event
+    )
+  ) {
+
+    event.preventDefault();
+
+    handleTreeKeyboardReorder(
+      event,
+      tree,
+      item,
+      page
+    );
+
+    return;
+  }
+
   if (event.key === 'ArrowDown') {
 
     event.preventDefault();
@@ -701,6 +749,279 @@ function handleTreeKeyboardNavigation(
       item
     );
   }
+}
+
+
+function isTreeKeyboardReorderEvent(
+  event
+) {
+
+  return Boolean(
+    event.ctrlKey &&
+    event.shiftKey &&
+    !event.altKey &&
+    !event.metaKey &&
+    TREE_KEYBOARD_REORDER_KEYS.has(
+      event.key
+    )
+  );
+}
+
+
+async function handleTreeKeyboardReorder(
+  event,
+  tree,
+  item,
+  page
+) {
+
+  const request =
+    getTreeKeyboardReorderRequest(
+      tree,
+      item,
+      page,
+      event.key
+    );
+
+  if (!request) {
+
+    setStatus(
+      'Страницу нельзя переместить в этом направлении.'
+    );
+
+    return;
+  }
+
+  const {
+    mode,
+    targetPage
+  } = request;
+
+  if (
+    targetPage &&
+    !canMovePage(
+      page.id,
+      targetPage.id
+    )
+  ) {
+
+    setStatus(
+      'Страницу нельзя переместить сюда.'
+    );
+
+    return;
+  }
+
+  const plan =
+    createTreeMovePlan({
+      pages:
+        state.pages,
+      draggedId:
+        page.id,
+      targetId:
+        targetPage?.id || null,
+      mode
+    });
+
+  if (!plan.length) {
+
+    setStatus(
+      'Страницу нельзя переместить в этом направлении.'
+    );
+
+    return;
+  }
+
+  const title =
+    getTreeKeyboardReorderTitle(
+      page
+    );
+
+  setStatus(
+    `Страница перемещается: ${title}.`
+  );
+
+  try {
+
+    await updatePageTreePositions(
+      plan,
+      {
+        onProgress:
+          setProgressStatus
+      }
+    );
+
+    if (
+      mode === 'inside' &&
+      targetPage
+    ) {
+
+      expandTreePageWithoutRender(
+        targetPage
+      );
+    }
+
+    refreshTreeAfterKeyboardMove();
+
+    focusTreePageById(
+      page.id
+    );
+
+    finishProgressStatus(
+      `Страница перемещена: ${title}.`
+    );
+
+  } catch {
+
+    finishProgressStatus(
+      `Не удалось переместить страницу: ${title}.`,
+      {
+        status:
+          'error'
+      }
+    );
+  }
+}
+
+
+function getTreeKeyboardReorderRequest(
+  tree,
+  item,
+  page,
+  key
+) {
+
+  const rows =
+    getKeyboardTreeRows(
+      tree
+    );
+
+  const index =
+    rows.findIndex(row =>
+      row.pageId === item.dataset.pageId
+    );
+
+  if (index < 0) return null;
+
+  if (key === 'ArrowUp') {
+
+    return getTreeKeyboardReorderSiblingRequest(
+      rows[index - 1],
+      'before'
+    );
+  }
+
+  if (key === 'ArrowDown') {
+
+    return getTreeKeyboardReorderSiblingRequest(
+      rows[index + 1],
+      'after'
+    );
+  }
+
+  if (key === 'ArrowRight') {
+
+    const targetPage =
+      getTreePageById(
+        rows[index - 1]?.pageId
+      );
+
+    return targetPage
+      ? {
+        mode:
+          'inside',
+        targetPage
+      }
+      : null;
+  }
+
+  if (key === 'ArrowLeft') {
+
+    const parentPage =
+      getTreePageById(
+        page.parent
+      );
+
+    return parentPage
+      ? {
+        mode:
+          'after',
+        targetPage:
+          parentPage
+      }
+      : null;
+  }
+
+  return null;
+}
+
+
+function getTreeKeyboardReorderSiblingRequest(
+  row,
+  mode
+) {
+
+  const targetPage =
+    getTreePageById(
+      row?.pageId
+    );
+
+  return targetPage
+    ? {
+      mode,
+      targetPage
+    }
+    : null;
+}
+
+
+function getTreeKeyboardReorderTitle(
+  page
+) {
+
+  return page?.title ||
+    'Без названия';
+}
+
+
+function expandTreePageWithoutRender(
+  page
+) {
+
+  getTreePageKeys(
+    page
+  ).forEach(key => {
+
+    collapsedPages.delete(
+      key
+    );
+  });
+
+  saveTreeExpansionState();
+}
+
+
+function refreshTreeAfterKeyboardMove() {
+
+  const currentPageId =
+    state.currentPage?.id;
+
+  if (currentPageId) {
+
+    const refreshedCurrentPage =
+      state.pages.find(candidate =>
+        candidate.id === currentPageId
+      );
+
+    if (refreshedCurrentPage) {
+
+      setCurrentPage(
+        refreshedCurrentPage
+      );
+    }
+  }
+
+  renderTree();
 }
 
 

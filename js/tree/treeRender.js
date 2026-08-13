@@ -148,6 +148,11 @@ export function createTreePageElement(
     String(level + 1)
   );
 
+  item.setAttribute(
+    'aria-keyshortcuts',
+    'Control+Shift+ArrowUp Control+Shift+ArrowDown Control+Shift+ArrowLeft Control+Shift+ArrowRight'
+  );
+
   item.tabIndex =
     -1;
 

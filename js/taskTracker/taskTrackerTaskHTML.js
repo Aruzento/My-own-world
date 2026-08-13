@@ -34,6 +34,7 @@ export function getTaskHTML(
           type="button"
           data-size="sm"
           data-variant="ghost"
+          aria-keyshortcuts="Control+Shift+ArrowUp Control+Shift+ArrowDown Control+Shift+ArrowLeft Control+Shift+ArrowRight"
           data-tooltip="Перетащить"
           aria-label="Перетащить задачу"
           title="Перетащить"

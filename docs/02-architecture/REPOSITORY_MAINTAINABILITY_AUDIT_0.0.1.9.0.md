@@ -588,6 +588,8 @@ Impact: pointer DnD remains functional, but keyboard-only users cannot complete 
 
 Recommended cleanup leaf: owner should decide whether keyboard reorder is required for v1 stabilization or whether it is deferred as accessibility debt.
 
+Cleanup status: closed by `RCB-028` in `0.0.1.10.20`. Owner chose implementation in V1 stabilization. Tree keyboard reorder now routes through the existing tree move planner and `updatePageTreePositions()` write owner; Task Tracker keyboard reorder routes through `TaskTrackerModel.moveTask()` / `moveColumn()` and the existing commit/render path. The shortcuts are documented as `Ctrl+Shift+Arrow*`, exposed with `aria-keyshortcuts`, and announced through the shared statusbar live region. Pointer DnD behavior remains covered and unchanged.
+
 ### RA-029 - P3 - Rules workspace data module owns a UI status side effect
 
 Evidence:
