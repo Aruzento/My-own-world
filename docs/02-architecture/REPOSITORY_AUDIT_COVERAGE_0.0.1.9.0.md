@@ -320,7 +320,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 | `docs/00-product`, `docs/01-delivery` active docs | Active docs | Dashboard, plan, work log, backlog | REVIEWED - FINDING CLOSED | Main | Planning source of truth | Docs only | Medium | Docs index + docs status guard | RA-015 | `RCB-013` added a lightweight active-status drift guard; historical work-log entries remain outside active-state validation. |
 | `docs/02-architecture` active contracts | Active docs | Architecture contracts and audits | REVIEWED - FINDING | Main | Contract source of truth | Docs only | Medium | Docs index/link check | RA-001-RA-030 | Coverage expanded here. |
 | `docs/03-testing`, `docs/04-user-release`, `release` | Testing/release docs | Smoke, release handoff | REVIEWED - FINDING CLOSED | Main | Release evidence | Docs only | Medium | Docs index | RA-003, RA-004, RA-014 | `VISUAL_REGRESSION.md` now names the current guarantee as evidence smoke and distinguishes it from strict pixel regression. |
-| `docs/archive/*.md`, historical roots | Archive/history | Historical planning/evidence | HISTORICAL | Main | Not active truth | No write | Low | Docs index | RA-012 | Counted as historical, not unknown. |
+| `docs/archive/*.md`, historical roots | Archive/history | Historical planning/evidence | REVIEWED - FINDING CLOSED | Main | Not active truth | No write | Low | Docs index + project file audit | RA-012 | `RCB-015` keeps root historical evidence in place as an explicit tracked exception, not active truth and not local `legacy/`. |
 | `.agents/skills`, `AGENTS.md`, root config/assets/release metadata | Agent/config/assets | Workflow, config and static assets | REVIEWED - NO MATERIAL FINDING | Main | Workflow/config truth | Minimal | Low | Skill/docs validation | none | No unknown tracked first-party files. |
 
 ### Source-Of-Truth Map
@@ -372,7 +372,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 - Popup lifecycle: `popupManager` has Escape/outside-click/focus behavior covered by browser tests; no new generic popup lifecycle finding was confirmed.
 - CharacterModel ownership: Properties-first with legacy fallback is documented and tested; no duplicate durable source of truth was confirmed.
 - Tests: no `.only` or `.skip` markers were found in unit/browser tests; long waits are present but did not become a new material finding.
-- Current archive policy: `docs/archive/` is historical tracked truth; ignored `legacy/`/`legasy/` are local-only and not active product truth.
+- Current archive policy: `docs/archive/` is historical tracked truth; ignored `legacy/`/`legasy/` are local-only and not active product truth. `RCB-015` records `Тех. зрелость/` and `Лог особенный/` as tracked root historical exceptions, not active planning docs.
 
 ### Recent UI Polish Verdict
 

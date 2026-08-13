@@ -6,6 +6,35 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.31 RCB-015 Historical Docs Placement Decision
+
+### Placement Confirmed
+
+- Confirmed `RA-012` on current code: tracked root folders `Тех. зрелость/` and `Лог особенный/` exist outside `docs/` and are historical maturity/story evidence.
+- Confirmed they are tracked project evidence, not ignored local residue, not runtime/source/test fixtures and not active source of truth.
+- Checked active references: current working docs point Codex to `PRODUCT_DASHBOARD.md`, `PROJECT_PLAN.md`, architecture contracts, release handoff and `docs/archive/` for retired plans; the root historical folders are referenced only as history/audit exceptions.
+- Found no concrete operational benefit from moving them. A move would create path churn and owner-memory cost without improving runtime, docs index, tests or task selection.
+
+### What Changed
+
+- Kept both root folders in place.
+- Added an explicit AGENTS guard: `Тех. зрелость/` and `Лог особенный/` are tracked historical exceptions and must not be treated as active truth.
+- Updated the docs map and local legacy policy so future cleanup does not move tracked historical evidence into ignored `legacy/`.
+- Closed `RCB-015` in the cleanup backlog, audit finding, coverage ledger, plan and dashboard.
+- Refreshed `PROJECT_FILE_AUDIT.md` with the current file inventory after the check.
+- No files were moved, no production code changed and no mass docs reorganization was performed.
+
+### Verification
+
+- Passed: `node tools\audit_project_files.mjs` with 602 files, 1 local delete candidate (`debug.log`) and 0 mojibake candidates.
+- Passed: `npm run docs:index`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` and `RCB-007` still have remaining split sub-leaves; `RCB-014` still requires destructive-action approval before deleting local `debug.log`.
+
 ## 2026-08-13: 0.0.1.10.29 RCB-012 Visual Regression Policy
 
 ### Policy Confirmed

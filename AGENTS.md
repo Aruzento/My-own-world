@@ -6,6 +6,7 @@
 - Do not commit `legacy/` or `legasy/`.
 - Do not use files from `legacy/` as product truth, source code, documentation, test fixtures or design references unless the owner explicitly asks to inspect that folder.
 - Intentional historical project documents stay in tracked `docs/archive/`, not in local `legacy/`.
+- Root historical evidence folders `Тех. зрелость/` and `Лог особенный/` are tracked intentional exceptions. Treat them as historical evidence only, not as active source of truth, and do not move them to `legacy/` or `docs/archive/` without a separate owner-approved placement task.
 
 Этот файл - главный вход для Codex/AI-агента в проект MyOwnWorld.
 

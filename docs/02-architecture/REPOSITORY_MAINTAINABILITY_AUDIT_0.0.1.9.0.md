@@ -299,6 +299,8 @@ Impact: file audits can keep resurfacing these folders as suspicious unless the 
 
 Recommended cleanup leaf: owner decision only. Either keep the exception documented or move the historical evidence into a tracked docs zone in a separate docs task.
 
+Cleanup status: closed by `RCB-015` in `0.0.1.10.31`. The root folders `Тех. зрелость/` and `Лог особенный/` stay in place as tracked historical exceptions. `AGENTS.md`, `docs/README.md` and `docs/01-delivery/LEGACY_LOCAL_HUB.md` now say they are historical evidence only, not active source of truth, and must not be moved to ignored `legacy/` or `docs/archive/` without a future owner-approved placement task.
+
 ### RA-013 - P3 - Local ignored debug artifact exists again
 
 Evidence:

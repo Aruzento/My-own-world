@@ -19,6 +19,15 @@ owner_zone: "delivery"
 - `04-user-release` - материалы для пользователя и тестировщика: установка, known issues, tester instructions.
 - `archive` - старые планы и документы, которые больше не являются активным источником правды.
 
+## Корневые Исторические Исключения
+
+Две tracked root-зоны остаются вне `docs/` намеренно:
+
+- `Тех. зрелость/` - historical maturity evidence and old technical assessments.
+- `Лог особенный/` - narrative project chronicle.
+
+Они не являются активным планом, contract, release handoff или source of truth для текущей работы. Не перемещать их в ignored `legacy/`; не переносить в `docs/archive/` без отдельного owner-approved placement task.
+
 ## Правила
 
 - Перед изменениями в docs запускать `node tools/docs_index.mjs`.
