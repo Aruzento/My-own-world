@@ -5,6 +5,10 @@ import {
 
 import path from 'node:path';
 
+import {
+  collectDocsStatusDrift
+} from './docs_status_guard.mjs';
+
 
 const DOCS_ROOT =
   path.resolve(
@@ -75,7 +79,8 @@ const report = {
   skipped: [],
   missingMetadata: [],
   invalidMetadata: [],
-  wrongZone: []
+  wrongZone: [],
+  statusDrift: []
 };
 
 for (const file of markdownFiles) {
@@ -158,9 +163,21 @@ for (const file of markdownFiles) {
   }
 }
 
+report.statusDrift =
+  await collectDocsStatusDrift({
+    root:
+      process.cwd()
+  });
+
 printReport(
   report
 );
+
+if (report.statusDrift.length) {
+
+  process.exitCode =
+    1;
+}
 
 
 async function listMarkdownFiles(
@@ -353,10 +370,18 @@ function printReport(
     )
   );
 
+  printList(
+    'Documents with active status drift',
+    report.statusDrift.map(item =>
+      `${item.file} ${item.message}`
+    )
+  );
+
   if (
     !report.missingMetadata.length &&
     !report.invalidMetadata.length &&
-    !report.wrongZone.length
+    !report.wrongZone.length &&
+    !report.statusDrift.length
   ) {
 
     console.log(

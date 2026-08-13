@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-08-11
+Updated: 2026-08-13
 
 ## Current Product
 
@@ -23,7 +23,7 @@ Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
 2. Continue `0.0.1.10.0` cleanup only one RCB leaf at a time.
-3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-007A`, `RCB-026` and `RCB-027`. `RCB-006` and `RCB-007` remain split; continue only after the owner selects the next sub-leaf.
+3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-007A`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011` and `RCB-013`. `RCB-006` and `RCB-007` remain split; continue only after the owner selects the next sub-leaf.
 4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 5. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -128,6 +128,7 @@ Recently closed:
 - `0.0.1.10.14 / RCB-007A` Item Sets page read boundary: item set picker/chip lookups now read through `PageRepository`, while Knowledge Graph, World Package and tree-adjacent read slices remain pending.
 - `0.0.1.10.15 / RCB-026` Rule Tree save ownership: Rule Tree autosave now uses the same clean serializer contract as explicit special-save, navigation flush is covered, and special-save failures set an error state instead of leaving `saving`.
 - `0.0.1.10.16 / RCB-027` Card Type control accessibility: the custom card type picker now behaves as a select-only combobox/listbox with keyboard selection, Escape cancel, focus return and shared popover layer ownership.
+- `0.0.1.10.17`-`0.0.1.10.26` cleanup leaves closed table toolbar access, graph switcher semantics, World Package modal ownership, keyboard reorder, one graph coordinator seam, Properties layout ownership, graph icon-only CSS cleanup, token consistency, exact Campaign Map helper duplication and the lightweight docs status drift guard.
 
 Next owner action:
 

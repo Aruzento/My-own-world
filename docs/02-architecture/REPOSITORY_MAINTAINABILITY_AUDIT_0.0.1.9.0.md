@@ -340,6 +340,8 @@ Impact: Codex can follow stale docs if status is not synchronized.
 
 Recommended cleanup leaf: implement `BI-024` only if owner approves Phase 2 docs consistency automation; keep it lightweight.
 
+Cleanup status: closed by `RCB-013` in `0.0.1.10.26`. `tools/docs_status_guard.mjs` now checks only deterministic active-plan contradictions across `PROJECT_PLAN.md`, `PRODUCT_DASHBOARD.md`, `BUG_INVENTORY.md` and `release/latest/release-notes.md`, and `docs:index` runs it. Historical `WORK_LOG` entries and per-run desktop smoke plan refs are intentionally outside the guard.
+
 ### RA-016 - P2 - Async page opening can leak stale render completion into a newer page
 
 Evidence:

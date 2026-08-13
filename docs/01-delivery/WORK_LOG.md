@@ -6,6 +6,34 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.26 RCB-013 Lightweight Documentation Status Drift Guard
+
+### Drift Confirmed
+
+- Confirmed `RA-015` / `BI-024` on current code before syncing docs: `PRODUCT_DASHBOARD.md` still listed closed cleanup leaves only through `RCB-027`, `BUG_INVENTORY.md` still pointed at `0.0.1.9.0`, and `release/latest/release-notes.md` still called `0.0.1.9.0` the next active phase.
+- Did not scan historical `WORK_LOG` entries as active state; those are intentionally historical.
+- Did not treat desktop smoke `Plan ref` fields as active roadmap pointers because they belong to individual validation runs.
+
+### What Changed
+
+- Added `tools/docs_status_guard.mjs`, a lightweight deterministic guard for active-plan drift only.
+- Integrated the guard into `tools/docs_index.mjs`, so `npm run docs:index` now fails if active status pointers disagree with `PROJECT_PLAN.md`.
+- Added `tests/docsStatusGuard.test.mjs` with a stale fixture that reports drift and a current-repo regression that must pass.
+- Synced active status pointers in `PRODUCT_DASHBOARD.md`, `BUG_INVENTORY.md` and `release/latest/release-notes.md`.
+- No documentation generation framework, release-note generator or historical work-log validation was added.
+
+### Verification
+
+- Failed first as expected: `node --test tests\docsStatusGuard.test.mjs` caught current-repo drift after the guard was added.
+- Passed: `node --test tests\docsStatusGuard.test.mjs`.
+- Passed: `node tools\docs_status_guard.mjs`.
+- Passed: `npm run docs:index`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-012` still needs an owner decision; split read/write boundary work remains under `RCB-006` and `RCB-007`.
+
 ## 2026-08-13: 0.0.1.10.25 RCB-011 Exact Campaign Map Helper Duplication
 
 ### Semantic Comparison

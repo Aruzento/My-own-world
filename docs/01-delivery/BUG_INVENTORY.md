@@ -335,4 +335,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current next step: `0.0.1.9.0` Repository Architecture / Maintainability / AI-Slop Audit. It is audit-only; do not start cleanup or product feature work inside that phase.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current next step: `0.0.1.10.0` Repository Cleanup & Consolidation. Continue only one owner-approved RCB leaf at a time; do not start product feature work inside cleanup.
