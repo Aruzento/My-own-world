@@ -160,6 +160,7 @@ Rules:
 - autosave and special entity save flows should expose `changed`, `saving`, `saved`, `error` and `conflict` through the statusbar;
 - write revision state is runtime protection, not durable workspace metadata;
 - direct low-level `writePageContent()` callers may omit a revision only when the write is not an autosave/page content race path.
+- Campaign Map helper page writes for linked-card HP, duplicate-token page normalization and closed-map cleanup are page content commands; ordinary Campaign Map special-save remains the map save owner.
 
 Regression target:
 

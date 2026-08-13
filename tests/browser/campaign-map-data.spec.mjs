@@ -678,6 +678,747 @@ ${closedHTML}
 
 
 test(
+  'campaign-map-helper-page-writes-use-page-command-boundary',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            buildPageRecordContent,
+            createRuntimePageFromContent
+          } = await import('/js/core/pageRecord.js');
+
+          const {
+            clearPageCommandEvents,
+            clearWriteRevisions,
+            getPageCommandEvents,
+            setStorageAdapter
+          } = await import('/js/storage/storage.js');
+
+          const {
+            setCurrentPage,
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            getPageById
+          } = await import('/js/repository/pageRepository.js');
+
+          const {
+            changeTokenHp,
+            duplicateTokenAndPage
+          } = await import('/js/editor/campaignMapTokenActions.js');
+
+          const {
+            createMapTokenElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            removeTokensFromMapPageContent
+          } = await import('/js/editor/campaignMapSerializerHelpers.js');
+
+          const normalizePath =
+            value => String(value || '')
+              .replace(/\\/g, '/')
+              .replace(/^\/+/, '')
+              .replace(/\/+/g, '/');
+
+          const files =
+            new Map();
+
+          const writes =
+            [];
+
+          const removals =
+            [];
+
+          const failingPaths =
+            new Set();
+
+          const missingFileError =
+            () => {
+
+              const error =
+                new Error('not found');
+
+              error.name =
+                'NotFoundError';
+
+              return error;
+            };
+
+          const adapter = {
+            kind:
+              'desktop',
+            getWorkspaceRoot() {
+
+              return 'memory-campaign-map-write-boundary';
+            },
+            getFiles() {
+
+              return [
+                ...files.entries()
+              ];
+            },
+            getWrites() {
+
+              return [
+                ...writes
+              ];
+            },
+            getRemovals() {
+
+              return [
+                ...removals
+              ];
+            },
+            failPath(path) {
+
+              failingPaths.add(
+                normalizePath(path)
+              );
+            },
+            async pickWorkspace() {},
+            async restoreWorkspace() {},
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+
+              return {
+                async removeEntry(name) {
+
+                  const path =
+                    normalizePath(name);
+
+                  if (!files.delete(path)) {
+
+                    throw missingFileError();
+                  }
+                }
+              };
+            },
+            async readText(path) {
+
+              const key =
+                normalizePath(path);
+
+              if (!files.has(key)) {
+
+                throw missingFileError();
+              }
+
+              return files.get(
+                key
+              );
+            },
+            async writeText(path, content) {
+
+              const key =
+                normalizePath(path);
+
+              writes.push({
+                path:
+                  key,
+                content:
+                  String(content)
+              });
+
+              if (failingPaths.has(key)) {
+
+                throw new Error(
+                  `forced write failure: ${key}`
+                );
+              }
+
+              files.set(
+                key,
+                String(content)
+              );
+            },
+            async readBinary() {
+
+              return new ArrayBuffer(0);
+            },
+            async writeBinary() {},
+            async listFiles() {
+
+              return [
+                ...files.entries()
+              ]
+                .filter(([path]) =>
+                  path.startsWith('pages/')
+                )
+                .map(([path, content]) => ({
+                  path,
+                  name:
+                    path.split('/').pop(),
+                  text:
+                    content
+                }));
+            },
+            async removeFile(path) {
+
+              const key =
+                normalizePath(path);
+
+              removals.push(
+                key
+              );
+
+              if (!files.delete(key)) {
+
+                throw missingFileError();
+              }
+            },
+            async removeDirectory() {}
+          };
+
+          setStorageAdapter(
+            adapter
+          );
+
+          clearWriteRevisions();
+          clearPageCommandEvents();
+
+          const createPage =
+            ({
+              id,
+              title,
+              type = 'card',
+              template = 'card',
+              tags = ['card'],
+              body
+            }) => {
+
+              const content =
+                buildPageRecordContent({
+                  id,
+                  parent:
+                    null,
+                  order:
+                    1,
+                  tags,
+                  template,
+                  type,
+                  aliases:
+                    [],
+                  relationships:
+                    [],
+                  body
+                });
+
+              const path =
+                `/pages/${id}.md`;
+
+              const page =
+                createRuntimePageFromContent({
+                  content,
+                  name:
+                    `${id}.md`,
+                  path
+                });
+
+              page.title =
+                title;
+
+              files.set(
+                normalizePath(path),
+                content
+              );
+
+              return page;
+            };
+
+          const hpBody =
+            title => `
+              <div class="entity-layout card-shell">
+                <h1>${title}</h1>
+                <div class="dnd-stats-block">
+                  <input class="dnd-current-hp" value="10">
+                  <input class="dnd-max-hp" value="20">
+                </div>
+              </div>
+            `;
+
+          const mapBody =
+            (title, tokensHTML = '') => `
+              <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+                <div class="campaign-map-topbar" contenteditable="false">
+                  <h1 class="campaign-map-title singleline-field" contenteditable="true">${title}</h1>
+                </div>
+                <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                  <div class="campaign-map-viewport">
+                    <div class="campaign-map-background"></div>
+                    <div class="campaign-map-object-layer">${tokensHTML}</div>
+                    <canvas class="campaign-map-fog-canvas"></canvas>
+                  </div>
+                </div>
+              </div>
+            `;
+
+          const hpPage =
+            createPage({
+              id:
+                'map-hp-card',
+              title:
+                'HP Card',
+              type:
+                'creature',
+              tags:
+                ['card', 'creature'],
+              body:
+                hpBody('HP Card')
+            });
+
+          const failedHpPage =
+            createPage({
+              id:
+                'map-hp-card-failure',
+              title:
+                'HP Failure Card',
+              type:
+                'creature',
+              tags:
+                ['card', 'creature'],
+              body:
+                hpBody('HP Failure Card')
+            });
+
+          const closedMapPage =
+            createPage({
+              id:
+                'closed-map-page',
+              title:
+                'Closed Map',
+              type:
+                'campaignMap',
+              template:
+                'campaignMap',
+              tags:
+                ['campaign-map'],
+              body:
+                mapBody(
+                  'Closed Map',
+                  `
+                    <div class="campaign-map-token" data-token-id="closed-remove-token" data-page-id="removed-card" data-token-type="creature" data-name="Remove" data-x="10" data-y="20" data-size="1"></div>
+                    <div class="campaign-map-token" data-token-id="closed-keep-token" data-page-id="kept-card" data-token-type="creature" data-name="Keep" data-x="30" data-y="40" data-size="1"></div>
+                  `
+                )
+            });
+
+          const sourcePage =
+            createPage({
+              id:
+                'map-duplicate-source',
+              title:
+                'Duplicate Source',
+              type:
+                'creature',
+              tags:
+                ['card', 'creature'],
+              body:
+                hpBody('Duplicate Source')
+            });
+
+          const openMapPage =
+            createPage({
+              id:
+                'open-map-page',
+              title:
+                'Open Map',
+              type:
+                'campaignMap',
+              template:
+                'campaignMap',
+              tags:
+                ['campaign-map'],
+              body:
+                mapBody('Open Map')
+            });
+
+          setPages([
+            hpPage,
+            failedHpPage,
+            closedMapPage,
+            sourcePage,
+            openMapPage
+          ]);
+
+          setCurrentPage(
+            openMapPage
+          );
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML =
+            mapBody('Open Map');
+
+          const tokenDeps = {
+            closeTokenPopup() {},
+            applyTokenHealthState() {},
+            async saveAndSync() {
+
+              state.__mapSaveAndSyncCalls =
+                (state.__mapSaveAndSyncCalls || 0) + 1;
+            }
+          };
+
+          const hpToken =
+            document.createElement('div');
+
+          hpToken.className =
+            'campaign-map-token';
+
+          hpToken.dataset.pageId =
+            hpPage.id;
+
+          hpToken.dataset.tokenId =
+            'hp-token';
+
+          await changeTokenHp(
+            hpToken,
+            hpPage,
+            {
+              delta:
+                -3
+            },
+            tokenDeps
+          );
+
+          const hpSuccessContent =
+            await adapter.readText(
+              hpPage.path
+            );
+
+          adapter.failPath(
+            failedHpPage.path
+          );
+
+          const failedHpOriginalContent =
+            failedHpPage.content;
+
+          let failureMessage =
+            '';
+
+          try {
+
+            await changeTokenHp(
+              hpToken,
+              failedHpPage,
+              {
+                delta:
+                  -4
+              },
+              tokenDeps
+            );
+
+          } catch (error) {
+
+            failureMessage =
+              error?.message || String(error);
+          }
+
+          const failedHpDurableContent =
+            await adapter.readText(
+              failedHpPage.path
+            );
+
+          const closedChanged =
+            await removeTokensFromMapPageContent(
+              closedMapPage,
+              new Set(['removed-card'])
+            );
+
+          const closedContent =
+            await adapter.readText(
+              closedMapPage.path
+            );
+
+          const openMap =
+            editor.querySelector('.campaign-map-document');
+
+          const openStore =
+            refreshCampaignMapStore(
+              openMap
+            );
+
+          const layer =
+            openMap.querySelector('.campaign-map-object-layer');
+
+          const sourceTokenData =
+            openStore.addToken({
+              tokenId:
+                'duplicate-source-token',
+              pageId:
+                sourcePage.id,
+              type:
+                'object',
+              name:
+                sourcePage.title,
+              x:
+                10,
+              y:
+                20,
+              sourceMode:
+                'copy'
+            });
+
+          const sourceToken =
+            createMapTokenElement(
+              sourceTokenData,
+              openStore.getModel()
+            );
+
+          layer.appendChild(
+            sourceToken
+          );
+
+          await duplicateTokenAndPage(
+            sourceToken,
+            tokenDeps
+          );
+
+          const events =
+            getPageCommandEvents();
+
+          const duplicateUpdateEvent =
+            events.find(event =>
+              event.writeRevision?.metadata?.reason === 'campaign-map-token-duplicate-normalize' &&
+              event.status === 'completed'
+            );
+
+          const duplicatePage =
+            duplicateUpdateEvent
+              ? getPageById(
+                duplicateUpdateEvent.affectedPages[0]
+              )
+              : null;
+
+          const duplicateDurableContent =
+            duplicatePage
+              ? await adapter.readText(
+                duplicatePage.path
+              )
+              : '';
+
+          const tokenIds =
+            refreshCampaignMapStore(
+              openMap
+            )
+              .getModel()
+              .tokens
+              .map(token => token.tokenId);
+
+          const eventSummary =
+            events.map(event => ({
+              type:
+                event.type,
+              reason:
+                event.writeRevision?.metadata?.reason || '',
+              status:
+                event.status,
+              affectedPages:
+                event.affectedPages
+            }));
+
+          return {
+            hpSuccessContent,
+            hpRepositoryContent:
+              getPageById(hpPage.id)?.content || '',
+            failureMessage,
+            failedHpRuntimeContent:
+              failedHpPage.content,
+            failedHpDurableContent,
+            failedHpOriginalContent,
+            failedHpRepositoryContent:
+              getPageById(failedHpPage.id)?.content || '',
+            closedChanged,
+            closedContent,
+            closedRuntimeContent:
+              closedMapPage.content,
+            closedRepositoryContent:
+              getPageById(closedMapPage.id)?.content || '',
+            duplicatePage:
+              duplicatePage
+                ? {
+                  id:
+                    duplicatePage.id,
+                  type:
+                    duplicatePage.type,
+                  tags:
+                    duplicatePage.tags,
+                  content:
+                    duplicatePage.content
+                }
+                : null,
+            duplicateDurableContent,
+            tokenIds,
+            eventSummary,
+            writePaths:
+              adapter.getWrites()
+                .map(write => write.path)
+          };
+        }
+      );
+
+    expect(
+      result.hpSuccessContent
+    ).toContain(
+      'value="7"'
+    );
+
+    expect(
+      result.hpRepositoryContent
+    ).toContain(
+      'value="7"'
+    );
+
+    expect(
+      result.failureMessage
+    ).toContain(
+      'forced write failure'
+    );
+
+    expect(
+      result.failedHpRuntimeContent
+    ).toBe(
+      result.failedHpOriginalContent
+    );
+
+    expect(
+      result.failedHpDurableContent
+    ).toBe(
+      result.failedHpOriginalContent
+    );
+
+    expect(
+      result.failedHpRepositoryContent
+    ).toBe(
+      result.failedHpOriginalContent
+    );
+
+    expect(
+      result.closedChanged
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.closedContent
+    ).not.toContain(
+      'closed-remove-token'
+    );
+
+    expect(
+      result.closedContent
+    ).toContain(
+      'closed-keep-token'
+    );
+
+    expect(
+      result.closedRuntimeContent
+    ).toBe(
+      result.closedContent
+    );
+
+    expect(
+      result.closedRepositoryContent
+    ).toBe(
+      result.closedContent
+    );
+
+    expect(
+      result.duplicatePage
+    ).toEqual(
+      expect.objectContaining({
+        type:
+          'object'
+      })
+    );
+
+    expect(
+      result.duplicatePage.tags
+    ).toContain(
+      'object'
+    );
+
+    expect(
+      result.duplicateDurableContent
+    ).toContain(
+      'type: object'
+    );
+
+    expect(
+      result.tokenIds
+    ).toContain(
+      'duplicate-source-token'
+    );
+
+    expect(
+      result.tokenIds.length
+    ).toBe(
+      2
+    );
+
+    expect(
+      result.eventSummary
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          reason:
+            'campaign-map-token-health',
+          status:
+            'completed'
+        }),
+        expect.objectContaining({
+          reason:
+            'campaign-map-token-health',
+          status:
+            'failed'
+        }),
+        expect.objectContaining({
+          reason:
+            'campaign-map-closed-token-cleanup',
+          status:
+            'completed'
+        }),
+        expect.objectContaining({
+          reason:
+            'campaign-map-token-duplicate-normalize',
+          status:
+            'completed'
+        })
+      ])
+    );
+
+    expect(
+      result.writePaths
+    ).toEqual(
+      expect.arrayContaining([
+        'pages/map-hp-card.md',
+        'pages/map-hp-card-failure.md',
+        'pages/closed-map-page.md'
+      ])
+    );
+  }
+);
+
+
+test(
   'campaign-map-regression-gate-persists-core-systems-through-save-reload',
   async ({ page }) => {
 

@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.34 RCB-006D Campaign Map Write Boundary
+
+### Boundary Confirmed
+
+- Reconfirmed `RCB-006A`, `RCB-006B` and `RCB-006C` closed on current HEAD before touching Campaign Map.
+- Mapped ordinary map save, token move/update/create/delete, linked-character token changes, durable map settings, shapes, fog, layers, initiative and serializer helper paths.
+- Classified ordinary map save plus runtime token/map operations that save through `saveCampaignMapAndSync()` as legitimate Campaign Map save ownership.
+- Classified `campaignMapDataSerializer` and model/store helpers as internal serializer/model code that does not directly write page content.
+- Found three real feature-level page-write bypasses: closed-map token cleanup in `campaignMapSerializerHelpers`, linked-card HP updates in `changeTokenHp()` and duplicated-token page normalization in `campaignMapTokenActions`.
+- Reproduced the important failure mode before the fix: forced linked-card HP write failure left the runtime linked page mutated even though durable content stayed old.
+
+### What Changed
+
+- Routed closed-map token cleanup through `persistPageContentCommand()` with the existing page command revision, rollback and repository notification semantics.
+- Changed linked-token HP updates to edit a draft page first, then persist the resulting content through `persistPageContentCommand()` so failed writes roll back to the original live page.
+- Routed duplicate-token page normalization through `persistPageContentCommand()` instead of direct `writePageContent()` plus manual repository notification.
+- Kept Campaign Map's normal special-save path intact; no new Campaign Map repository, command service or transaction layer was introduced.
+- Added a static ownership regression proving Campaign Map helper files do not reintroduce direct `writePageContent()` calls.
+- Closed `RCB-006`: no inappropriate feature-level direct page-write boundary violations remain from the original scope.
+
+### Verification
+
+- Expected pre-fix failure: `node --test tests\campaignMapHelperOwnership.test.mjs` failed while Campaign Map helper files imported/called `writePageContent()`.
+- Expected pre-fix failure: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs --grep "campaign-map-helper-page-writes-use-page-command-boundary"` failed because forced linked-card HP write failure left runtime content mutated.
+- Passed: `node --test tests\campaignMapHelperOwnership.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs --grep "campaign-map-helper-page-writes-use-page-command-boundary"`.
+- Passed: `node --test tests\campaignMapDataSerializer.test.mjs tests\campaignMapModel.test.mjs tests\campaignMapStore.test.mjs tests\campaignMapInitiativeModel.test.mjs tests\campaignMapLayerModel.test.mjs tests\campaignMapHelperOwnership.test.mjs tests\campaignMapPerformance.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs tests/browser/campaign-map-initiative.spec.mjs tests/browser/campaign-map-presentation.spec.mjs tests/browser/campaign-map-performance.spec.mjs`.
+- Passed: `npm run test`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` is closed; the next cleanup target is `RCB-007B` only if the owner chooses to continue split page read-boundary work.
+
 ## 2026-08-13: 0.0.1.10.33 RCB-006C Item Creation Write Boundary
 
 ### Boundary Confirmed

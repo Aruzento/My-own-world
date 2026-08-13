@@ -20,6 +20,11 @@ const INITIATIVE_MODEL_OWNER =
 const INITIATIVE_POPUP_CONSUMER =
   'js/editor/campaignMapInitiativePopup.js';
 
+const MAP_PAGE_WRITE_HELPER_CONSUMERS = [
+  'js/editor/campaignMapSerializerHelpers.js',
+  'js/editor/campaignMapTokenActions.js'
+];
+
 
 test(
   'Campaign Map popup template consumers use the shared escaping owner',
@@ -81,6 +86,34 @@ test(
         source,
         /function\s+escapeAttribute\s*\(/,
         `${filePath} should not define a local escapeAttribute duplicate`
+      );
+    }
+  }
+);
+
+
+test(
+  'Campaign Map feature helpers use the page command boundary for page writes',
+  async () => {
+
+    for (const filePath of MAP_PAGE_WRITE_HELPER_CONSUMERS) {
+
+      const source =
+        await readFile(
+          filePath,
+          'utf8'
+        );
+
+      assert.doesNotMatch(
+        source,
+        /\bwritePageContent\b/,
+        `${filePath} should not import or call low-level writePageContent directly`
+      );
+
+      assert.match(
+        source,
+        /\bpersistPageContentCommand\b/,
+        `${filePath} should route page writes through PageCommandService`
       );
     }
   }

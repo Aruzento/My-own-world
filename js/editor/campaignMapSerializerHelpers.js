@@ -1,5 +1,6 @@
 import {
-  writePageContent
+  persistPageContentCommand,
+  snapshotPageForCommand
 } from '../storage/storage.js';
 
 import {
@@ -53,13 +54,18 @@ export async function removeTokensFromMapPageContent(
       body
     );
 
-  await writePageContent(
+  await persistPageContentCommand({
     page,
-    content
-  );
-
-  page.content =
-    content;
+    content,
+    previousPage:
+      snapshotPageForCommand(
+        page
+      ),
+    type:
+      'update-page-content',
+    reason:
+      'campaign-map-closed-token-cleanup'
+  });
 
   return true;
 }

@@ -181,7 +181,7 @@ Impact: write revisions, undo/rollback, repository notifications and autosave se
 
 Recommended cleanup leaf: classify direct feature writes as allowed exceptions or migrate them to `persistPageContentCommand()` / a feature-specific command wrapper.
 
-Cleanup status: split by `RCB-006A` in `0.0.1.10.13`; updated by `RCB-006B` in `0.0.1.10.32` and `RCB-006C` in `0.0.1.10.33`. Current classification:
+Cleanup status: split by `RCB-006A` in `0.0.1.10.13`; updated by `RCB-006B` in `0.0.1.10.32`, `RCB-006C` in `0.0.1.10.33` and closed by `RCB-006D` in `0.0.1.10.34`. Current classification:
 
 - `ALLOWED LOW-LEVEL OWNER`: `js/storage/writeQueue.js` owns the low-level queue/write primitive.
 - `ALLOWED LOW-LEVEL OWNER`: `js/storage/pageCommandService.js` calls `writePageContent()` only inside approved command/undo paths.
@@ -190,7 +190,8 @@ Cleanup status: split by `RCB-006A` in `0.0.1.10.13`; updated by `RCB-006B` in `
 - `MIGRATED IN RCB-006A`: `js/taskTracker/taskTrackerPageActions.js` no longer calls `writePageContent()` directly; task creation now uses `persistPageContentCommand()`.
 - `MIGRATED IN RCB-006B`: `js/templates/pageTemplateStorage.js` no longer creates a blank page and rewrites it directly; template creation now builds final PageRecord content and routes durable creation through `pageStorage.createPageFromRecordContent()` / the existing create-page command lifecycle.
 - `MIGRATED IN RCB-006C`: `js/ui/itemSets.js` no longer creates a blank card and rewrites it directly; item picker creation now builds final item PageRecord content and routes durable creation through `pageStorage.createPageFromRecordContent()` / the existing create-page command lifecycle.
-- `BOUNDARY VIOLATION - PENDING`: `js/editor/campaignMapSerializerHelpers.js` and `js/editor/campaignMapTokenActions.js` still write map/token-related page content directly and need their own Campaign Map sub-leaf.
+- `MIGRATED IN RCB-006D`: `js/editor/campaignMapSerializerHelpers.js` and `js/editor/campaignMapTokenActions.js` no longer write page content directly from feature helpers; closed-map token cleanup, linked-token HP page updates and duplicate-token page normalization now use `persistPageContentCommand()` with existing rollback/repository notification semantics.
+- `RCB-006 CLOSURE`: no inappropriate feature-level direct page-write boundary violations remain from the original `RCB-006` scope. Allowed low-level write owners above remain intentionally low-level.
 
 ### RA-007 - P2 - `state.pages` direct lookup remains common in feature code
 

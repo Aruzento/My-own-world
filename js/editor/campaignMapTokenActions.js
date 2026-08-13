@@ -11,7 +11,8 @@ import {
 import {
   deletePageBranch,
   duplicatePageAsChild,
-  writePageContent
+  persistPageContentCommand,
+  snapshotPageForCommand
 } from '../storage/storage.js';
 
 import {
@@ -27,8 +28,7 @@ import {
 } from '../ui/ui.js';
 
 import {
-  getPageById,
-  notifyPageUpdated
+  getPageById
 } from '../repository/pageRepository.js';
 
 import {
@@ -193,9 +193,19 @@ export async function changeTokenHp(
     return;
   }
 
+  const previousPage =
+    snapshotPageForCommand(
+      page
+    );
+
+  const draftPage =
+    createDraftPage(
+      page
+    );
+
   const result =
     updatePageDndHealth(
-      page,
+      draftPage,
       options
     );
 
@@ -208,10 +218,16 @@ export async function changeTokenHp(
     return;
   }
 
-  await writePageContent(
+  await persistPageContentCommand({
     page,
-    page.content
-  );
+    content:
+      draftPage.content,
+    previousPage,
+    type:
+      'update-page-content',
+    reason:
+      'campaign-map-token-health'
+  });
 
   deps.applyTokenHealthState(
     token
@@ -643,13 +659,15 @@ async function normalizeDuplicatedTokenPage(
 
   if (!page) return;
 
-  page.template =
-    'card';
+  const previousPage =
+    snapshotPageForCommand(
+      page
+    );
 
-  page.type =
-    tokenType;
+  const previousContent =
+    page.content;
 
-  page.tags =
+  const nextTags =
     [
       ...new Set([
         'card',
@@ -661,9 +679,18 @@ async function normalizeDuplicatedTokenPage(
       ])
     ];
 
-  page.content =
+  page.template =
+    'card';
+
+  page.type =
+    tokenType;
+
+  page.tags =
+    nextTags;
+
+  const content =
     updatePageRecordContent(
-      page.content,
+      previousContent,
       {
         id:
           page.id,
@@ -684,12 +711,43 @@ async function normalizeDuplicatedTokenPage(
       }
     );
 
-  await writePageContent(
+  await persistPageContentCommand({
     page,
-    page.content
-  );
+    content,
+    previousPage,
+    type:
+      'update-page-content',
+    reason:
+      'campaign-map-token-duplicate-normalize'
+  });
+}
 
-  notifyPageUpdated();
+
+function createDraftPage(
+  page
+) {
+
+  return {
+    ...page,
+    tags:
+      Array.isArray(page?.tags)
+        ? [
+          ...page.tags
+        ]
+        : [],
+    aliases:
+      Array.isArray(page?.aliases)
+        ? [
+          ...page.aliases
+        ]
+        : [],
+    relationships:
+      Array.isArray(page?.relationships)
+        ? page.relationships.map(relationship => ({
+          ...relationship
+        }))
+        : []
+  };
 }
 
 
