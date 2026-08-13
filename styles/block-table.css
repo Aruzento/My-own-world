@@ -594,3 +594,19 @@ body.is-table-column-resize {
     rgba(255,248,230,0.96);
 }
 
+
+.table-selection-toolbar button:focus-visible {
+
+  outline:
+    none;
+
+  background:
+    rgba(241,211,142,0.14);
+
+  color:
+    rgba(255,248,230,0.98);
+
+  box-shadow:
+    var(--mow-focus-shadow, 0 0 0 3px rgba(241,211,142,0.08));
+}
+

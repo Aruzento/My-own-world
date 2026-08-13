@@ -22,6 +22,7 @@ import {
 
 let tableToolbar = null;
 let getCurrentSelection = () => null;
+let toolbarReturnFocusElement = null;
 
 
 export function setTableToolbarSelectionProvider(
@@ -34,13 +35,20 @@ export function setTableToolbarSelectionProvider(
 
 
 export function showTableToolbar(
-  selection
+  selection,
+  {
+    focusToolbar = false,
+    returnFocusElement = null
+  } = {}
 ) {
 
   if (!selection) return;
 
   const toolbar =
     getTableToolbar();
+
+  toolbarReturnFocusElement =
+    returnFocusElement;
 
   const widthInput =
     toolbar.querySelector('.table-toolbar-width-input');
@@ -63,10 +71,22 @@ export function showTableToolbar(
     toolbar,
     getSelectionRect(selection)
   );
+
+  if (focusToolbar) {
+
+    focusToolbarControl(
+      toolbar,
+      'left'
+    );
+  }
 }
 
 
-export function hideTableToolbar() {
+export function hideTableToolbar(
+  {
+    restoreFocus = false
+  } = {}
+) {
 
   getTableToolbar(
     false
@@ -74,6 +94,11 @@ export function hideTableToolbar() {
     ?.classList.add(
       'hidden'
     );
+
+  if (restoreFocus) {
+
+    restoreToolbarFocus();
+  }
 }
 
 
@@ -97,15 +122,55 @@ function getTableToolbar(
     'false'
   );
 
+  tableToolbar.setAttribute(
+    'role',
+    'toolbar'
+  );
+
+  tableToolbar.setAttribute(
+    'aria-label',
+    'Инструменты таблицы'
+  );
+
+  tableToolbar.setAttribute(
+    'aria-orientation',
+    'horizontal'
+  );
+
   tableToolbar.innerHTML = `
     <label class="table-toolbar-width">
-      <span>Ширина</span>
-      <input class="table-toolbar-width-input" type="number" min="${TABLE_MIN_COLUMN_WIDTH}" step="8">
+      <span>Ширина столбца</span>
+      <input
+        class="table-toolbar-width-input"
+        data-table-toolbar-control
+        type="number"
+        min="${TABLE_MIN_COLUMN_WIDTH}"
+        step="8"
+        aria-label="Ширина выбранного столбца"
+      >
     </label>
 
-    <button type="button" data-table-align="left" title="Выровнять влево">L</button>
-    <button type="button" data-table-align="center" title="Выровнять по центру">C</button>
-    <button type="button" data-table-align="right" title="Выровнять вправо">R</button>
+    <button
+      type="button"
+      data-table-align="left"
+      data-table-toolbar-control
+      title="Выровнять влево"
+      aria-label="Выровнять влево"
+    >L</button>
+    <button
+      type="button"
+      data-table-align="center"
+      data-table-toolbar-control
+      title="Выровнять по центру"
+      aria-label="Выровнять по центру"
+    >C</button>
+    <button
+      type="button"
+      data-table-align="right"
+      data-table-toolbar-control
+      title="Выровнять вправо"
+      aria-label="Выровнять вправо"
+    >R</button>
   `;
 
   tableToolbar.addEventListener(
@@ -124,6 +189,11 @@ function getTableToolbar(
   tableToolbar.addEventListener(
     'click',
     handleToolbarClick
+  );
+
+  tableToolbar.addEventListener(
+    'keydown',
+    handleToolbarKeydown
   );
 
   document.body.appendChild(
@@ -152,6 +222,87 @@ async function handleToolbarChange(
   );
 
   await saveCurrentPage();
+
+  restoreToolbarFocus();
+}
+
+
+function handleToolbarKeydown(
+  event
+) {
+
+  if (
+    event.key === 'Escape'
+  ) {
+
+    event.preventDefault();
+
+    hideTableToolbar({
+      restoreFocus:
+        true
+    });
+
+    return;
+  }
+
+  if (
+    event.target.classList.contains('table-toolbar-width-input')
+  ) return;
+
+  if (
+    event.key === 'ArrowRight'
+  ) {
+
+    event.preventDefault();
+
+    focusAdjacentToolbarControl(
+      event.target,
+      1
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'ArrowLeft'
+  ) {
+
+    event.preventDefault();
+
+    focusAdjacentToolbarControl(
+      event.target,
+      -1
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'Home'
+  ) {
+
+    event.preventDefault();
+
+    focusToolbarControlAt(
+      0
+    );
+
+    return;
+  }
+
+  if (
+    event.key === 'End'
+  ) {
+
+    event.preventDefault();
+
+    const controls =
+      getToolbarControls();
+
+    focusToolbarControlAt(
+      controls.length - 1
+    );
+  }
 }
 
 
@@ -174,6 +325,8 @@ async function handleToolbarClick(
   );
 
   await saveCurrentPage();
+
+  restoreToolbarFocus();
 }
 
 
@@ -238,6 +391,102 @@ function applySelectedCellAlignment(
       cell.style.textAlign =
         alignment;
     });
+}
+
+
+function focusToolbarControl(
+  toolbar,
+  preferredAlignment
+) {
+
+  const preferred =
+    toolbar.querySelector(
+      `[data-table-align="${preferredAlignment}"]`
+    );
+
+  const target =
+    preferred ||
+    toolbar.querySelector(
+      '[data-table-toolbar-control]'
+    );
+
+  target?.focus({
+    preventScroll:
+      true
+  });
+}
+
+
+function focusAdjacentToolbarControl(
+  current,
+  direction
+) {
+
+  const controls =
+    getToolbarControls();
+
+  const currentIndex =
+    controls.indexOf(
+      current
+    );
+
+  if (
+    currentIndex < 0 ||
+    controls.length === 0
+  ) return;
+
+  focusToolbarControlAt(
+    currentIndex + direction
+  );
+}
+
+
+function focusToolbarControlAt(
+  index
+) {
+
+  const controls =
+    getToolbarControls();
+
+  if (!controls.length) return;
+
+  const nextIndex =
+    (index + controls.length) % controls.length;
+
+  controls[nextIndex].focus({
+    preventScroll:
+      true
+  });
+}
+
+
+function getToolbarControls() {
+
+  return Array.from(
+    getTableToolbar(false)
+      ?.querySelectorAll('[data-table-toolbar-control]') ||
+    []
+  );
+}
+
+
+function restoreToolbarFocus() {
+
+  const target =
+    toolbarReturnFocusElement;
+
+  toolbarReturnFocusElement =
+    null;
+
+  if (
+    !target?.isConnected ||
+    typeof target.focus !== 'function'
+  ) return;
+
+  target.focus({
+    preventScroll:
+      true
+  });
 }
 
 

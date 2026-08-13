@@ -255,3 +255,197 @@ test(
     );
   }
 );
+
+
+test(
+  'table-toolbar-is-keyboard-accessible-from-table-cell-context',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      () => {
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML = `
+          <table class="custom-table" style="width: 240px">
+            <colgroup>
+              <col style="width: 120px">
+              <col style="width: 120px">
+            </colgroup>
+            <tbody>
+              <tr>
+                <td class="table-cell" contenteditable="false">
+                  <div class="table-cell-content" contenteditable="true">Alpha</div>
+                </td>
+                <td class="table-cell" contenteditable="false">
+                  <div class="table-cell-content" contenteditable="true">Beta</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        `;
+      }
+    );
+
+    const firstCell =
+      page.locator('.table-cell-content').first();
+
+    await firstCell.focus();
+
+    await page.keyboard.press(
+      'Alt+F10'
+    );
+
+    const toolbar =
+      page.getByRole(
+        'toolbar',
+        {
+          name:
+            'Инструменты таблицы'
+        }
+      );
+
+    await expect(
+      toolbar
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole(
+        'button',
+        {
+          name:
+            'Выровнять вправо'
+        }
+      )
+    ).toBeVisible();
+
+    await page.keyboard.press(
+      'ArrowRight'
+    );
+
+    await page.keyboard.press(
+      'ArrowRight'
+    );
+
+    await page.keyboard.press(
+      'Enter'
+    );
+
+    await expect(
+      firstCell
+    ).toBeFocused();
+
+    await expect
+      .poll(
+        async () =>
+          firstCell.evaluate(cell =>
+            cell.closest('.table-cell')?.style.textAlign ||
+            ''
+          )
+      )
+      .toBe(
+        'right'
+      );
+
+    await page.keyboard.press(
+      'Alt+F10'
+    );
+
+    await expect(
+      page.getByRole(
+        'button',
+        {
+          name:
+            'Выровнять влево'
+        }
+      )
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      toolbar
+    ).toBeHidden();
+
+    await expect(
+      firstCell
+    ).toBeFocused();
+
+    const mouseSelectionStillWorks =
+      await page.evaluate(
+        () => {
+
+          const cells =
+            document.querySelectorAll('.table-cell');
+
+          const first =
+            cells[0];
+
+          const second =
+            cells[1];
+
+          first.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles:
+                  true,
+                button:
+                  0
+              }
+            )
+          );
+
+          second.dispatchEvent(
+            new PointerEvent(
+              'pointermove',
+              {
+                bubbles:
+                  true,
+                button:
+                  0
+              }
+            )
+          );
+
+          document.dispatchEvent(
+            new PointerEvent(
+              'pointerup',
+              {
+                bubbles:
+                  true,
+                button:
+                  0
+              }
+            )
+          );
+
+          return {
+            selected:
+              document.querySelectorAll('.table-cell.is-selected').length,
+            toolbarVisible:
+              !document
+                .querySelector('.table-selection-toolbar')
+                ?.classList
+                .contains('hidden')
+          };
+        }
+      );
+
+    expect(
+      mouseSelectionStillWorks
+    ).toEqual({
+      selected:
+        2,
+      toolbarVisible:
+        true
+    });
+  }
+);

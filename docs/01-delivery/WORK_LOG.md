@@ -6,6 +6,32 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.17 RCB-017 Table Toolbar Accessibility
+
+### What Changed
+
+- Confirmed the `RA-017` issue on the current code: the table toolbar was pointer-only, had no toolbar role/name, and its alignment buttons exposed only compact `L/C/R` visual labels with `title` fallback.
+- Kept the existing interaction model deliberately: table cells remain ordinary `.table-cell-content[contenteditable="true"]`; this cleanup does not turn the table into an ARIA grid or add many per-cell Tab stops.
+- Added `Alt+F10` as the keyboard route from a focused table cell into the existing runtime toolbar. The focused cell becomes the selected target, the toolbar opens, and focus lands on the first alignment command.
+- Gave `.table-selection-toolbar` a semantic `role="toolbar"`, Russian accessible name `Инструменты таблицы` and horizontal orientation.
+- Gave alignment actions Russian accessible names while keeping the compact visual labels, added ArrowLeft/ArrowRight/Home/End movement across toolbar controls, and made Escape close the toolbar and return focus to the source cell.
+- Added a visible focus state for toolbar buttons using the existing focus-shadow token.
+
+### Verification
+
+- Expected failure before fix: `node tools/run_browser_smoke.mjs tests/browser/tables.spec.mjs -g table-toolbar-is-keyboard-accessible-from-table-cell-context` could not find `role="toolbar"` named `Инструменты таблицы`.
+- Passed after fix: `node tools/run_browser_smoke.mjs tests/browser/tables.spec.mjs -g table-toolbar-is-keyboard-accessible-from-table-cell-context`.
+- Passed: `node tools/run_browser_smoke.mjs tests/browser/tables.spec.mjs`.
+- Passed: `node --check js/ui/tables.js`.
+- Passed: `node --check js/ui/tables/tableToolbar.js`.
+- Passed: `node --check tests/browser/tables.spec.mjs`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Continue cleanup only after owner selection of the next RCB leaf.
+
 ## 2026-08-11: 0.0.1.10.16 RCB-027 Card Type Control Accessibility
 
 ### What Changed

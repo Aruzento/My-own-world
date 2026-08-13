@@ -266,6 +266,23 @@ function handleTableKeydown(
 
   if (!cell) return;
 
+  if (
+    event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey &&
+    !event.shiftKey &&
+    event.key === 'F10'
+  ) {
+
+    event.preventDefault();
+
+    openTableToolbarFromKeyboard(
+      cell
+    );
+
+    return;
+  }
+
   /* Enter переводит курсор в ячейку ниже, а Shift+Enter оставляет обычный
      перенос строки внутри текущей ячейки. */
   if (
@@ -277,6 +294,35 @@ function handleTableKeydown(
 
   focusCellBelow(
     cell
+  );
+}
+
+
+function openTableToolbarFromKeyboard(
+  cellContent
+) {
+
+  const tableCell =
+    cellContent.closest(
+      '.custom-table .table-cell'
+    );
+
+  if (!tableCell) return;
+
+  startTableSelection(
+    tableCell
+  );
+
+  finishTableSelectionDrag();
+
+  showTableToolbar(
+    getNormalizedSelection(),
+    {
+      focusToolbar:
+        true,
+      returnFocusElement:
+        cellContent
+    }
   );
 }
 

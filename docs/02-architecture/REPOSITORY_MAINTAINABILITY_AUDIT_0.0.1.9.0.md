@@ -363,6 +363,8 @@ Impact: table editing remains pointer-first and less consistent with the accessi
 
 Recommended cleanup leaf: add table toolbar semantics and keyboard coverage, or explicitly document the current pointer-only limitation before table UX work.
 
+Cleanup status: closed by `RCB-017` in `0.0.1.10.17`. The current table interaction model remains ordinary contenteditable cells, not an ARIA grid rewrite. A focused `.table-cell-content` now opens the existing runtime toolbar with `Alt+F10`, selects the current cell, focuses the first align action, exposes the toolbar as `role="toolbar"` with the Russian name `Инструменты таблицы`, gives align actions Russian accessible names, supports ArrowLeft/ArrowRight/Home/End between toolbar controls, closes on Escape and returns focus to the source cell. Pointer range selection behavior remains the existing path.
+
 ### RA-018 - P2 - Knowledge Graph tablist markup does not implement tab semantics
 
 Evidence:

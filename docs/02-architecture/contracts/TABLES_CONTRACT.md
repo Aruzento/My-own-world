@@ -117,6 +117,20 @@ Regression: `tests/browser/tables.spec.mjs` проверяет вставку `A
 
 Regression: `tests/browser/tables.spec.mjs` проверяет создание новой строки и перенос фокуса.
 
+## Accessibility
+
+Rules:
+
+- table editing keeps the existing contenteditable-cell model; this cleanup does not convert tables into an ARIA grid;
+- `Alt+F10` from a focused `.table-cell-content` selects the current cell, opens `.table-selection-toolbar` and moves focus to the first align action;
+- `.table-selection-toolbar` is runtime UI with `role="toolbar"`, `aria-label="Инструменты таблицы"` and horizontal orientation;
+- align actions keep the compact visual `L/C/R` labels, but expose Russian accessible names: `Выровнять влево`, `Выровнять по центру`, `Выровнять вправо`;
+- ArrowLeft/ArrowRight/Home/End move focus between toolbar controls when focus is on a toolbar button;
+- Escape closes the toolbar and returns focus to the source table cell;
+- pointer range selection remains the existing mouse path and must keep opening the same toolbar.
+
+Regression: `tests/browser/tables.spec.mjs` checks the keyboard entry route, toolbar role/name, align action accessible names, focus return, applied alignment and mouse selection stability.
+
 ## Save / Load Boundary
 
 Перед сохранением таблица проходит общий persistent serializer:
