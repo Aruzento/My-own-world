@@ -6,6 +6,33 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.21 RCB-008 Knowledge Graph Coordinator Cleanup
+
+### Responsibility Inventory
+
+- Reconfirmed the current `knowledgeGraphPage.js` responsibilities before changing code: page orchestration/render insertion, graph event delegation, overlay coordination, domain tabs, relationship mutations, canvas drag/pan/transform, page lookup coordination and canvas undo/redo history.
+- Chose the canvas history seam because it had a real owner concept with its own WeakMap state, bounded undo/redo stacks, button state, keyboard shortcut contract and history dispatch. Event delegation and PageRepository lookup cleanup were left untouched because they carry broader regression risk or belong to separate backlog work.
+
+### What Changed
+
+- Added `js/wiki/knowledgeGraphCanvasHistory.js` as the owner for Knowledge Graph canvas history state, Ctrl/Cmd+Z and Ctrl/Cmd+Y shortcut detection, history button enabled/disabled state and undo/redo stack transitions.
+- Kept `knowledgeGraphPage.js` as the coordinator for product-specific graph side effects. It now passes explicit `applyEntry`, `focusDocument` and `setStatus` callbacks to the history owner.
+- Preserved the existing BI-026 graph concept, canvas workflow, relationship persistence, drag/pan behavior, shortcuts and visual styling.
+
+### Verification
+
+- Passed: `node --check js/wiki/knowledgeGraphCanvasHistory.js`.
+- Passed: `node --check js/wiki/knowledgeGraphPage.js`.
+- Passed: `node --check tests/knowledgeGraphCanvasHistory.test.mjs`.
+- Passed: `node --test tests/knowledgeGraphCanvasHistory.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs`.
+- Initial visual grep `visual-knowledge-graph` found no standalone test name; reran the actual existing visual surface test.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+
+### Next
+
+- Stop before the next RCB leaf. Remaining Knowledge Graph read-boundary work stays under the split `RCB-007` backlog and BI-026 concept work remains untouched.
+
 ## 2026-08-13: 0.0.1.10.20 RCB-028 Keyboard Reorder Accessibility
 
 ### What Changed

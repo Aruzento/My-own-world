@@ -39,6 +39,15 @@ import {
 } from './knowledgeGraphCanvasActions.js';
 
 import {
+  getGraphCanvasHistoryActionFromKeyboardEvent,
+  handleGraphCanvasHistoryAction,
+  isGraphCanvasHistoryKeyboardShortcut,
+  pushGraphCanvasHistoryEntry,
+  setupGraphCanvasKeyboardHistory,
+  updateGraphCanvasHistoryControls
+} from './knowledgeGraphCanvasHistory.js';
+
+import {
   getCanvasContentHTML,
   getCanvasSelectedNodeId
 } from './knowledgeGraphCanvasRenderer.js';
@@ -101,17 +110,8 @@ const GRAPH_CANVAS_EXPAND_PADDING =
 const GRAPH_CANVAS_LEADING_EXPAND_PADDING =
   120;
 
-const GRAPH_CANVAS_HISTORY_LIMIT =
-  80;
-
 const KNOWLEDGE_GRAPH_DOMAIN_TABLIST_LABEL =
   'Домены связей';
-
-const graphCanvasHistoryByDocument =
-  new WeakMap();
-
-const graphCanvasKeyboardHandlersByDocument =
-  new WeakMap();
 
 let knowledgeGraphDomainTablistId =
   0;
@@ -297,73 +297,6 @@ export function serializeKnowledgeGraphHTML(
 }
 
 
-function getGraphCanvasHistoryState(
-  documentElement
-) {
-
-  let historyState =
-    graphCanvasHistoryByDocument.get(
-      documentElement
-    );
-
-  if (!historyState) {
-
-    historyState =
-      {
-        undo: [],
-        redo: []
-      };
-
-    graphCanvasHistoryByDocument.set(
-      documentElement,
-      historyState
-    );
-  }
-
-  return historyState;
-}
-
-
-function pushGraphCanvasHistoryEntry(
-  documentElement,
-  entry
-) {
-
-  if (!entry) return;
-
-  const historyState =
-    getGraphCanvasHistoryState(
-      documentElement
-    );
-
-  historyState.undo.push(
-    entry
-  );
-
-  if (
-    historyState.undo.length >
-    GRAPH_CANVAS_HISTORY_LIMIT
-  ) {
-
-    historyState.undo.splice(
-      0,
-      historyState.undo.length - GRAPH_CANVAS_HISTORY_LIMIT
-    );
-  }
-
-  historyState.redo =
-    [];
-
-  updateGraphCanvasHistoryControls(
-    documentElement
-  );
-
-  focusKnowledgeGraphDocument(
-    documentElement
-  );
-}
-
-
 function focusKnowledgeGraphDocument(
   documentElement,
   options = {}
@@ -455,250 +388,15 @@ function getGraphOverlayActionOptions() {
 }
 
 
-function updateGraphCanvasHistoryControls(
-  documentElement
-) {
+function getGraphCanvasHistoryOptions() {
 
-  const historyState =
-    getGraphCanvasHistoryState(
-      documentElement
-    );
-
-  documentElement
-    .querySelectorAll(
-      '[data-knowledge-graph-history-action]'
-    )
-    .forEach(button => {
-
-      const action =
-        button.dataset.knowledgeGraphHistoryAction;
-
-      const canUse =
-        action === 'undo'
-          ? historyState.undo.length > 0
-          : historyState.redo.length > 0;
-
-      button.disabled =
-        !canUse;
-
-      button.setAttribute(
-        'aria-disabled',
-        canUse ? 'false' : 'true'
-      );
-    });
-}
-
-
-function isGraphCanvasHistoryKeyboardShortcut(
-  event
-) {
-
-  if (
-    !(event.ctrlKey || event.metaKey) ||
-    event.altKey ||
-    event.target.closest?.(
-      'input, textarea, select, [contenteditable="true"]'
-    )
-  ) {
-
-    return false;
-  }
-
-  const key =
-    String(event.key || '').toLowerCase();
-
-  return (
-    event.code === 'KeyZ' ||
-    event.code === 'KeyY' ||
-    key === 'z' ||
-    key === 'y'
-  );
-}
-
-
-function getGraphCanvasHistoryActionFromKeyboardEvent(
-  event
-) {
-
-  const key =
-    String(event.key || '').toLowerCase();
-
-  if (
-    event.code === 'KeyY' ||
-    key === 'y' ||
-    (
-      (
-        event.code === 'KeyZ' ||
-        key === 'z'
-      ) &&
-      event.shiftKey
-    )
-  ) {
-
-    return 'redo';
-  }
-
-  return 'undo';
-}
-
-
-function isGraphCanvasHistoryKeyboardScope(
-  documentElement,
-  event
-) {
-
-  if (!documentElement?.isConnected) {
-
-    return false;
-  }
-
-  const ownerDocument =
-    documentElement.ownerDocument;
-
-  const activeElement =
-    ownerDocument.activeElement;
-
-  return (
-    documentElement.contains(event.target) ||
-    documentElement.contains(activeElement) ||
-    activeElement === ownerDocument.body ||
-    activeElement === ownerDocument.documentElement
-  );
-}
-
-
-function setupGraphCanvasKeyboardHistory(
-  documentElement
-) {
-
-  if (
-    graphCanvasKeyboardHandlersByDocument.has(
-      documentElement
-    )
-  ) {
-
-    return;
-  }
-
-  const ownerDocument =
-    documentElement.ownerDocument;
-
-  const handler =
-    async event => {
-
-      if (event.defaultPrevented) {
-
-        return;
-      }
-
-      if (!documentElement.isConnected) {
-
-        ownerDocument.removeEventListener(
-          'keydown',
-          handler,
-          true
-        );
-
-        graphCanvasKeyboardHandlersByDocument.delete(
-          documentElement
-        );
-
-        return;
-      }
-
-      if (
-        !isGraphCanvasHistoryKeyboardScope(
-          documentElement,
-          event
-        ) ||
-        !isGraphCanvasHistoryKeyboardShortcut(
-          event
-        )
-      ) {
-
-        return;
-      }
-
-      event.preventDefault();
-
-      await handleGraphCanvasHistoryAction(
-        documentElement,
-        getGraphCanvasHistoryActionFromKeyboardEvent(
-          event
-        )
-      );
-    };
-
-  graphCanvasKeyboardHandlersByDocument.set(
-    documentElement,
-    handler
-  );
-
-  ownerDocument.addEventListener(
-    'keydown',
-    handler,
-    true
-  );
-}
-
-
-async function handleGraphCanvasHistoryAction(
-  documentElement,
-  action
-) {
-
-  const historyState =
-    getGraphCanvasHistoryState(
-      documentElement
-    );
-
-  const sourceStack =
-    action === 'redo'
-      ? historyState.redo
-      : historyState.undo;
-
-  const targetStack =
-    action === 'redo'
-      ? historyState.undo
-      : historyState.redo;
-
-  if (!sourceStack.length) {
-
-    setStatus(
-      action === 'redo'
-        ? 'Нечего повторять в графе'
-        : 'Нечего отменять в графе'
-    );
-
-    updateGraphCanvasHistoryControls(
-      documentElement
-    );
-
-    return false;
-  }
-
-  const entry =
-    sourceStack.pop();
-
-  const applied =
-    await applyGraphCanvasHistoryEntry(
-      documentElement,
-      entry,
-      action
-    );
-
-  if (applied) {
-
-    targetStack.push(
-      entry
-    );
-  }
-
-  updateGraphCanvasHistoryControls(
-    documentElement
-  );
-
-  return applied;
+  return {
+    applyEntry:
+      applyGraphCanvasHistoryEntry,
+    focusDocument:
+      focusKnowledgeGraphDocument,
+    setStatus
+  };
 }
 
 
@@ -1408,7 +1106,8 @@ function setupKnowledgeGraphEvents(
     getGraphOverlayActionOptions();
 
   setupGraphCanvasKeyboardHistory(
-    documentElement
+    documentElement,
+    getGraphCanvasHistoryOptions()
   );
 
   documentElement.addEventListener(
@@ -1556,7 +1255,8 @@ function setupKnowledgeGraphEvents(
 
         await handleGraphCanvasHistoryAction(
           documentElement,
-          historyAction.dataset.knowledgeGraphHistoryAction
+          historyAction.dataset.knowledgeGraphHistoryAction,
+          getGraphCanvasHistoryOptions()
         );
 
         return;
@@ -1770,7 +1470,8 @@ function setupKnowledgeGraphEvents(
           documentElement,
           getGraphCanvasHistoryActionFromKeyboardEvent(
             event
-          )
+          ),
+          getGraphCanvasHistoryOptions()
         );
 
         return;
@@ -2992,7 +2693,8 @@ function persistGraphCanvasPosition(
           previousPosition,
         after:
           nextPosition
-      }
+      },
+      getGraphCanvasHistoryOptions()
     );
   }
 
@@ -3051,7 +2753,8 @@ function resetGraphCanvasPosition(
           previousPosition,
         after:
           nextPosition
-      }
+      },
+      getGraphCanvasHistoryOptions()
     );
   }
 
@@ -4593,7 +4296,8 @@ async function addRelationshipBetweenPages(
             type,
             label
           }
-      }
+      },
+      getGraphCanvasHistoryOptions()
     );
   }
 
@@ -4748,7 +4452,8 @@ async function replaceRelationshipAtIndex(
         index,
         before,
         after
-      }
+      },
+      getGraphCanvasHistoryOptions()
     );
   }
 
@@ -4890,7 +4595,8 @@ async function removeRelationshipAtIndex(
             index,
             relationship
           }
-      }
+      },
+      getGraphCanvasHistoryOptions()
     );
   }
 

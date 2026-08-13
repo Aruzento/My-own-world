@@ -427,6 +427,8 @@ Use: same canvas-control language as map where possible; do not bypass page life
 
 `0.0.1.8.13.11` closes the Phase 7 graph migration: relationship/context-menu HTML must stay in `knowledgeGraphRelationshipMenu.js`, graph view-state script helpers must stay in `knowledgeGraphViewState.js`, and manual relationship persistence must stay behind `knowledgeGraphCommandBridge.js` using `PageRecord`, `PageCommandService` command events and the write queue. `knowledgeGraphPage.js` remains the coordinator for graph events/history/drag/pan/selection/page lookup, not the owner of every graph menu or persistence write.
 
+`0.0.1.10.21` updates the graph ownership boundary: canvas history state, history button enablement and Ctrl/Cmd+Z/Y shortcut handling must stay in `knowledgeGraphCanvasHistory.js`. The page coordinator may pass explicit callbacks for graph-specific entry application, focus restoration and status messages, but it should not re-own the undo/redo stacks or shortcut contract.
+
 ### Task Tracker
 
 Owns: board toolbar, columns, task cards, checklists, labels, drag previews, empty states.

@@ -231,6 +231,8 @@ Impact: future graph concept work can become risky because unrelated concerns st
 
 Recommended cleanup leaf: before `0.0.1.23.0`, split only one proven owner seam at a time, starting with event delegation/history or read-model access, not a broad rewrite.
 
+Cleanup status: first approved seam closed by `0.0.1.10.21` / `RCB-008`. Knowledge Graph canvas history state, shortcuts and history control state now live in `js/wiki/knowledgeGraphCanvasHistory.js`; `knowledgeGraphPage.js` still owns graph-specific history entry application and remains the coordinator for events, drag/pan, selection and page lookup. BI-026 product concept work was not started, and remaining graph read-boundary cleanup stays with split `RCB-007`.
+
 ### RA-009 - P2 - Properties popup owns feature-local layout infrastructure
 
 Evidence:
