@@ -6,6 +6,30 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.18 RCB-018 Knowledge Graph Domain Switcher Semantics
+
+### What Changed
+
+- Confirmed the `RA-018` issue on the current code: the legacy Knowledge Graph relationship-domain switcher declared `role="tablist"` but its controls were plain buttons without `role="tab"`, `aria-selected`, roving tabindex, keyboard navigation or associated `tabpanel` semantics.
+- Chose the real-tabs contract deliberately because that legacy/static surface switches one visible relationship-domain panel at a time. The current primary graph canvas domain filter remains the existing `<select>` control and was not redesigned.
+- Updated `knowledgeGraphPage.js` so generated and legacy domain switchers are initialized as Russian-labeled tablists named `Домены связей`, with tab/panel ownership, active selection state, ArrowLeft/ArrowRight/Home/End navigation and Enter/Space activation.
+- Kept Knowledge Graph product behavior unchanged: no new graph concept, no new graph controls and no relationship/persistence changes.
+- Used the WAI-ARIA Authoring Practices tabs pattern as the accessibility reference for the keyboard/ARIA contract.
+
+### Verification
+
+- Failed first as expected before the production fix: `node tools/run_browser_smoke.mjs tests/browser/knowledge-graph.spec.mjs --grep "knowledge-graph-domain-switcher-implements-real-tabs-semantics"` could not find a named `tablist`.
+- Passed after fix: `node tools/run_browser_smoke.mjs tests/browser/knowledge-graph.spec.mjs --grep "knowledge-graph-domain-switcher-implements-real-tabs-semantics"`.
+- Passed: `node tools/run_browser_smoke.mjs tests/browser/knowledge-graph.spec.mjs`.
+- Passed: `node --check js/wiki/knowledgeGraphPage.js`.
+- Passed: `node --check tests/browser/knowledge-graph.spec.mjs`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Continue cleanup only after owner selection of the next RCB leaf.
+
 ## 2026-08-13: 0.0.1.10.17 RCB-017 Table Toolbar Accessibility
 
 ### What Changed

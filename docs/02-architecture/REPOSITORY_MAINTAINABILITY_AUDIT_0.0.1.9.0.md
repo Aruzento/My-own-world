@@ -379,6 +379,8 @@ Impact: assistive-tech semantics overpromise behavior that is not implemented.
 
 Recommended cleanup leaf: either implement APG-style tabs or remove tab ARIA and treat this as a simpler button group.
 
+Cleanup status: closed by `RCB-018` in `0.0.1.10.18`. The legacy Knowledge Graph relationship-domain switcher is treated as real tabs because it switches one associated domain panel at a time. Generated and legacy switcher markup now exposes a Russian-named `tablist`, `role="tab"` controls, `aria-selected`, roving tabindex, tab/tabpanel associations and ArrowLeft/ArrowRight/Home/End/Enter keyboard behavior. The primary graph canvas domain filter remains the existing select control, and no graph concept or relationship persistence behavior changed.
+
 ### RA-019 - P2 - World Package overlay has ambiguous dialog modality
 
 Evidence:

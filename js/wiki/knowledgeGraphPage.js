@@ -104,11 +104,17 @@ const GRAPH_CANVAS_LEADING_EXPAND_PADDING =
 const GRAPH_CANVAS_HISTORY_LIMIT =
   80;
 
+const KNOWLEDGE_GRAPH_DOMAIN_TABLIST_LABEL =
+  'Домены связей';
+
 const graphCanvasHistoryByDocument =
   new WeakMap();
 
 const graphCanvasKeyboardHandlersByDocument =
   new WeakMap();
+
+let knowledgeGraphDomainTablistId =
+  0;
 
 export function isKnowledgeGraphPage(
   parsedOrPage
@@ -188,6 +194,10 @@ export function renderKnowledgeGraphPage(
   );
 
   setupKnowledgeGraphOverlays(
+    documentElement
+  );
+
+  initializeKnowledgeGraphDomainTablists(
     documentElement
   );
 
@@ -1197,26 +1207,62 @@ function getRelationshipFocusHTML(
     getKnowledgeGraphDomainDefinitions();
 
   return `
-    <div class="knowledge-graph-domain-tabs" role="tablist">
-      <button class="knowledge-graph-domain-tab is-active" type="button" data-knowledge-graph-domain="all">
+    <div
+      class="knowledge-graph-domain-tabs"
+      role="tablist"
+      aria-label="${KNOWLEDGE_GRAPH_DOMAIN_TABLIST_LABEL}"
+      aria-orientation="horizontal"
+    >
+      <button
+        class="knowledge-graph-domain-tab is-active"
+        type="button"
+        role="tab"
+        id="knowledge-graph-domain-tab-all"
+        data-knowledge-graph-domain="all"
+        aria-controls="knowledge-graph-domain-panel-all"
+        aria-selected="true"
+        tabindex="0"
+      >
         Все связи
       </button>
       ${domains
         .map(domain => `
-          <button class="knowledge-graph-domain-tab" type="button" data-knowledge-graph-domain="${escapeHTML(domain.key)}">
+          <button
+            class="knowledge-graph-domain-tab"
+            type="button"
+            role="tab"
+            id="knowledge-graph-domain-tab-${escapeHTML(domain.key)}"
+            data-knowledge-graph-domain="${escapeHTML(domain.key)}"
+            aria-controls="knowledge-graph-domain-panel-${escapeHTML(domain.key)}"
+            aria-selected="false"
+            tabindex="-1"
+          >
             ${escapeHTML(domain.label)}
           </button>
         `)
         .join('')}
     </div>
 
-    <div class="knowledge-graph-domain-panel is-active" data-knowledge-graph-domain-panel="all">
+    <div
+      class="knowledge-graph-domain-panel is-active"
+      id="knowledge-graph-domain-panel-all"
+      data-knowledge-graph-domain-panel="all"
+      role="tabpanel"
+      aria-labelledby="knowledge-graph-domain-tab-all"
+    >
       ${getRelationshipListHTML(graph)}
     </div>
 
     ${domains
       .map(domain => `
-        <div class="knowledge-graph-domain-panel" data-knowledge-graph-domain-panel="${escapeHTML(domain.key)}" hidden>
+        <div
+          class="knowledge-graph-domain-panel"
+          id="knowledge-graph-domain-panel-${escapeHTML(domain.key)}"
+          data-knowledge-graph-domain-panel="${escapeHTML(domain.key)}"
+          role="tabpanel"
+          aria-labelledby="knowledge-graph-domain-tab-${escapeHTML(domain.key)}"
+          hidden
+        >
           ${getRelationshipListHTML({
             ...graph,
             edges:
@@ -1738,6 +1784,23 @@ function setupKnowledgeGraphEvents(
           documentElement,
           graphOverlayOptions
         );
+
+        return;
+      }
+
+      const domainTab =
+        event.target.closest(
+          '[data-knowledge-graph-domain][role="tab"]'
+        );
+
+      if (
+        domainTab &&
+        handleKnowledgeGraphDomainTabKeydown(
+          documentElement,
+          domainTab,
+          event
+        )
+      ) {
 
         return;
       }
@@ -3971,8 +4034,24 @@ function activateTab(
 
 function activateDomain(
   documentElement,
-  domain
+  domain,
+  {
+    focusTab = false
+  } = {}
 ) {
+
+  const tabs =
+    getKnowledgeGraphDomainTabs(
+      documentElement
+    );
+
+  const normalizedDomain =
+    tabs.some(tab =>
+      tab.dataset.knowledgeGraphDomain === domain
+    )
+      ? domain
+      : tabs[0]?.dataset.knowledgeGraphDomain ||
+        domain;
 
   documentElement
     .querySelectorAll(
@@ -3980,10 +4059,39 @@ function activateDomain(
     )
     .forEach(tab => {
 
+      const active =
+        tab.dataset.knowledgeGraphDomain === normalizedDomain;
+
       tab.classList.toggle(
         'is-active',
-        tab.dataset.knowledgeGraphDomain === domain
+        active
       );
+
+      if (
+        tab.getAttribute('role') === 'tab'
+      ) {
+
+        tab.setAttribute(
+          'aria-selected',
+          String(active)
+        );
+
+        tab.tabIndex =
+          active
+            ? 0
+            : -1;
+
+        if (
+          active &&
+          focusTab
+        ) {
+
+          tab.focus({
+            preventScroll:
+              true
+          });
+        }
+      }
     });
 
   documentElement
@@ -3993,7 +4101,7 @@ function activateDomain(
     .forEach(panel => {
 
       const active =
-        panel.dataset.knowledgeGraphDomainPanel === domain;
+        panel.dataset.knowledgeGraphDomainPanel === normalizedDomain;
 
       panel.classList.toggle(
         'is-active',
@@ -4003,6 +4111,318 @@ function activateDomain(
       panel.hidden =
         !active;
     });
+}
+
+
+function initializeKnowledgeGraphDomainTablists(
+  documentElement
+) {
+
+  documentElement
+    .querySelectorAll(
+      '.knowledge-graph-domain-tabs'
+    )
+    .forEach(tablist => {
+
+      initializeKnowledgeGraphDomainTablist(
+        documentElement,
+        tablist
+      );
+    });
+}
+
+
+function initializeKnowledgeGraphDomainTablist(
+  documentElement,
+  tablist
+) {
+
+  const groupId =
+    tablist.dataset.knowledgeGraphDomainTablistId ||
+    `knowledge-graph-domain-tabs-${++knowledgeGraphDomainTablistId}`;
+
+  tablist.dataset.knowledgeGraphDomainTablistId =
+    groupId;
+
+  tablist.setAttribute(
+    'role',
+    'tablist'
+  );
+
+  tablist.setAttribute(
+    'aria-orientation',
+    'horizontal'
+  );
+
+  if (
+    !tablist.hasAttribute('aria-label') &&
+    !tablist.hasAttribute('aria-labelledby')
+  ) {
+
+    tablist.setAttribute(
+      'aria-label',
+      KNOWLEDGE_GRAPH_DOMAIN_TABLIST_LABEL
+    );
+  }
+
+  const tabs =
+    getKnowledgeGraphDomainTabs(
+      documentElement,
+      tablist
+    );
+
+  const panels =
+    getKnowledgeGraphDomainPanels(
+      documentElement
+    );
+
+  const activeDomain =
+    getActiveKnowledgeGraphDomain(
+      tabs,
+      panels
+    );
+
+  tabs.forEach(tab => {
+
+    const domain =
+      tab.dataset.knowledgeGraphDomain;
+
+    const panel =
+      panels.find(candidate =>
+        candidate.dataset.knowledgeGraphDomainPanel === domain
+      );
+
+    if (!domain || !panel) return;
+
+    const suffix =
+      getKnowledgeGraphDomainDomSuffix(
+        domain
+      );
+
+    if (!tab.id) {
+
+      tab.id =
+        `${groupId}-tab-${suffix}`;
+    }
+
+    if (!panel.id) {
+
+      panel.id =
+        `${groupId}-panel-${suffix}`;
+    }
+
+    tab.setAttribute(
+      'role',
+      'tab'
+    );
+
+    tab.setAttribute(
+      'aria-controls',
+      panel.id
+    );
+
+    panel.setAttribute(
+      'role',
+      'tabpanel'
+    );
+
+    panel.setAttribute(
+      'aria-labelledby',
+      tab.id
+    );
+
+    if (
+      !panel.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) &&
+      !panel.hasAttribute('tabindex')
+    ) {
+
+      panel.tabIndex =
+        0;
+    }
+  });
+
+  activateDomain(
+    documentElement,
+    activeDomain
+  );
+}
+
+
+function handleKnowledgeGraphDomainTabKeydown(
+  documentElement,
+  currentTab,
+  event
+) {
+
+  if (
+    event.key === 'Enter' ||
+    event.key === ' '
+  ) {
+
+    event.preventDefault();
+
+    activateDomain(
+      documentElement,
+      currentTab.dataset.knowledgeGraphDomain,
+      {
+        focusTab:
+          true
+      }
+    );
+
+    return true;
+  }
+
+  const direction =
+    event.key === 'ArrowRight'
+      ? 1
+      : event.key === 'ArrowLeft'
+        ? -1
+        : null;
+
+  if (direction !== null) {
+
+    event.preventDefault();
+
+    focusKnowledgeGraphDomainTabByOffset(
+      documentElement,
+      currentTab,
+      direction
+    );
+
+    return true;
+  }
+
+  if (
+    event.key === 'Home' ||
+    event.key === 'End'
+  ) {
+
+    event.preventDefault();
+
+    const tabs =
+      getKnowledgeGraphDomainTabs(
+        documentElement,
+        currentTab.closest('.knowledge-graph-domain-tabs')
+      );
+
+    const nextTab =
+      event.key === 'Home'
+        ? tabs[0]
+        : tabs[tabs.length - 1];
+
+    if (nextTab) {
+
+      activateDomain(
+        documentElement,
+        nextTab.dataset.knowledgeGraphDomain,
+        {
+          focusTab:
+            true
+        }
+      );
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+
+function focusKnowledgeGraphDomainTabByOffset(
+  documentElement,
+  currentTab,
+  offset
+) {
+
+  const tabs =
+    getKnowledgeGraphDomainTabs(
+      documentElement,
+      currentTab.closest('.knowledge-graph-domain-tabs')
+    );
+
+  const currentIndex =
+    tabs.indexOf(
+      currentTab
+    );
+
+  if (
+    currentIndex < 0 ||
+    tabs.length === 0
+  ) return;
+
+  const nextIndex =
+    (currentIndex + offset + tabs.length) %
+    tabs.length;
+
+  activateDomain(
+    documentElement,
+    tabs[nextIndex].dataset.knowledgeGraphDomain,
+    {
+      focusTab:
+        true
+    }
+  );
+}
+
+
+function getActiveKnowledgeGraphDomain(
+  tabs,
+  panels
+) {
+
+  return tabs.find(tab =>
+    tab.classList.contains('is-active')
+  )?.dataset.knowledgeGraphDomain ||
+    panels.find(panel =>
+      !panel.hidden ||
+      panel.classList.contains('is-active')
+    )?.dataset.knowledgeGraphDomainPanel ||
+    tabs[0]?.dataset.knowledgeGraphDomain ||
+    'all';
+}
+
+
+function getKnowledgeGraphDomainTabs(
+  documentElement,
+  tablist = null
+) {
+
+  return Array.from(
+    (tablist || documentElement)
+      .querySelectorAll('[data-knowledge-graph-domain]')
+  );
+}
+
+
+function getKnowledgeGraphDomainPanels(
+  documentElement
+) {
+
+  return Array.from(
+    documentElement
+      .querySelectorAll('[data-knowledge-graph-domain-panel]')
+  );
+}
+
+
+function getKnowledgeGraphDomainDomSuffix(
+  domain
+) {
+
+  return String(domain || 'all')
+    .trim()
+    .replace(
+      /[^a-z0-9_-]+/gi,
+      '-'
+    )
+    .replace(
+      /^-+|-+$/g,
+      ''
+    ) || 'all';
 }
 
 

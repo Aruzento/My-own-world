@@ -94,6 +94,8 @@ Domain focus - фильтр отображения, а не изменение �
 
 Domain labels не должны быть неподвижными фоновыми надписями на canvas. Если domain grouping нужен, он должен проявляться через layout, filters, color/accent или подвижные node groups.
 
+Legacy/static relationship-domain panel switchers, when rendered, are real tabs: `tablist` named `Домены связей`, `tab` buttons with selected/focus state and associated `tabpanel` surfaces. The primary canvas domain filter remains a select control, not a tab UI.
+
 ## Rule Tree / Rules Knowledge Base
 
 Rule Tree существует как отдельная сущность. Knowledge Graph не дублирует редактор правил, а показывает связи правил с персонажами, предметами, организациями и другими страницами через domain focus `rule` и typed relationships.

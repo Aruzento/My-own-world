@@ -1983,3 +1983,313 @@ test(
     ).toBeFocused();
   }
 );
+
+
+test(
+  'knowledge-graph-domain-switcher-implements-real-tabs-semantics',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const {
+          renderKnowledgeGraphPage
+        } = await import('/js/wiki/knowledgeGraphPage.js');
+
+        state.pages = [
+          {
+            id:
+              'hero',
+            name:
+              'hero.md',
+            path:
+              '/pages/hero.md',
+            parent:
+              null,
+            order:
+              1,
+            title:
+              'Hero',
+            template:
+              'card',
+            type:
+              'character',
+            tags:
+              [],
+            aliases:
+              [],
+            relationships:
+              [
+                {
+                  type:
+                    'equipped',
+                  targetId:
+                    'sword',
+                  label:
+                    'Main hand'
+                }
+              ],
+            content:
+              '<h1>Hero</h1>'
+          },
+          {
+            id:
+              'sword',
+            name:
+              'sword.md',
+            path:
+              '/pages/sword.md',
+            parent:
+              null,
+            order:
+              2,
+            title:
+              'Sword',
+            template:
+              'card',
+            type:
+              'item',
+            tags:
+              [],
+            aliases:
+              [],
+            relationships:
+              [],
+            content:
+              '<h1>Sword</h1>'
+          }
+        ];
+
+        const editor =
+          document.querySelector('#editorArea');
+
+        editor.innerHTML = `
+          <div
+            class="knowledge-graph-document"
+            data-knowledge-graph="v1"
+            contenteditable="false"
+          >
+            <div class="knowledge-graph-domain-tabs" role="tablist">
+              <button
+                class="knowledge-graph-domain-tab is-active"
+                type="button"
+                data-knowledge-graph-domain="all"
+              >
+                Все связи
+              </button>
+              <button
+                class="knowledge-graph-domain-tab"
+                type="button"
+                data-knowledge-graph-domain="item"
+              >
+                Предметы
+              </button>
+              <button
+                class="knowledge-graph-domain-tab"
+                type="button"
+                data-knowledge-graph-domain="rule"
+              >
+                Правила
+              </button>
+            </div>
+
+            <div
+              class="knowledge-graph-domain-panel is-active"
+              data-knowledge-graph-domain-panel="all"
+            >
+              Все связи panel
+            </div>
+            <div
+              class="knowledge-graph-domain-panel"
+              data-knowledge-graph-domain-panel="item"
+              hidden
+            >
+              Предметы panel
+            </div>
+            <div
+              class="knowledge-graph-domain-panel"
+              data-knowledge-graph-domain-panel="rule"
+              hidden
+            >
+              Правила panel
+            </div>
+          </div>
+        `;
+
+        renderKnowledgeGraphPage(
+          editor
+        );
+      }
+    );
+
+    const tablist =
+      page.getByRole(
+        'tablist',
+        {
+          name:
+            'Домены связей'
+        }
+      );
+
+    await expect(
+      tablist
+    ).toBeVisible();
+
+    const allTab =
+      page.getByRole(
+        'tab',
+        {
+          name:
+            'Все связи'
+        }
+      );
+
+    const itemTab =
+      page.getByRole(
+        'tab',
+        {
+          name:
+            'Предметы'
+        }
+      );
+
+    const ruleTab =
+      page.getByRole(
+        'tab',
+        {
+          name:
+            'Правила'
+        }
+      );
+
+    await expect(
+      allTab
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await expect(
+      itemTab
+    ).toHaveAttribute(
+      'aria-selected',
+      'false'
+    );
+
+    await expect(
+      allTab
+    ).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
+
+    await expect(
+      itemTab
+    ).toHaveAttribute(
+      'tabindex',
+      '-1'
+    );
+
+    await expect(
+      page.getByRole(
+        'tabpanel',
+        {
+          name:
+            'Все связи'
+        }
+      )
+    ).toBeVisible();
+
+    await allTab.focus();
+
+    await page.keyboard.press(
+      'ArrowRight'
+    );
+
+    await expect(
+      itemTab
+    ).toBeFocused();
+
+    await expect(
+      itemTab
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await expect(
+      page.getByRole(
+        'tabpanel',
+        {
+          name:
+            'Предметы'
+        }
+      )
+    ).toBeVisible();
+
+    await expect(
+      page.getByRole(
+        'tabpanel',
+        {
+          name:
+            'Все связи'
+        }
+      )
+    ).toBeHidden();
+
+    await page.keyboard.press(
+      'End'
+    );
+
+    await expect(
+      ruleTab
+    ).toBeFocused();
+
+    await expect(
+      ruleTab
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await page.keyboard.press(
+      'Home'
+    );
+
+    await expect(
+      allTab
+    ).toBeFocused();
+
+    await expect(
+      allTab
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await itemTab.focus();
+
+    await page.keyboard.press(
+      'Enter'
+    );
+
+    await expect(
+      itemTab
+    ).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-domain-panel="item"]')
+    ).toBeVisible();
+  }
+);
