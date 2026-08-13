@@ -845,8 +845,8 @@ test(
       async () => {
 
         const {
-          state
-        } = await import('/js/state.js');
+          setPages
+        } = await import('/js/stateActions.js');
 
         const {
           createKnowledgeGraphTemplate
@@ -856,7 +856,7 @@ test(
           renderKnowledgeGraphPage
         } = await import('/js/wiki/knowledgeGraphPage.js');
 
-        state.pages = [
+        setPages([
           {
             id: 'world',
             name: 'world.md',
@@ -923,7 +923,7 @@ test(
             aliases: [],
             content: '<h1>Guild</h1>'
           }
-        ];
+        ]);
 
         const editor =
           document.querySelector('#editorArea');
@@ -3053,8 +3053,8 @@ async function prepareDesignSystemFixedViewportSurface(
       async () => {
 
         const {
-          state
-        } = await import('/js/state.js');
+          setPages
+        } = await import('/js/stateActions.js');
 
         const {
           createKnowledgeGraphTemplate
@@ -3073,7 +3073,7 @@ async function prepareDesignSystemFixedViewportSurface(
             '0.0.1.8.16';
         }
 
-        state.pages = [
+        setPages([
           {
             id:
               'world',
@@ -3189,7 +3189,7 @@ async function prepareDesignSystemFixedViewportSurface(
             content:
               '<h1>Гильдия</h1>'
           }
-        ];
+        ]);
 
         const editor =
           document.querySelector('#editorArea');

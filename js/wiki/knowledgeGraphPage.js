@@ -1,8 +1,4 @@
 ﻿import {
-  state
-} from '../state.js';
-
-import {
   iconSvg
 } from '../core/icons.js';
 
@@ -13,6 +9,11 @@ import {
 import {
   setStatus
 } from '../ui/ui.js';
+
+import {
+  getAllPages,
+  getPageById
+} from '../repository/pageRepository.js';
 
 import {
   buildKnowledgeGraphCanvasModel,
@@ -144,7 +145,7 @@ export function renderKnowledgeGraphPage(
 
   const graph =
     buildKnowledgeGraph(
-      state.pages
+      getAllPages()
     );
 
   const layout =
@@ -785,8 +786,8 @@ function getGraphPageTitle(
   pageId
 ) {
 
-  return state.pages.find(page =>
-    page.id === pageId
+  return getPageById(
+    pageId
   )?.title ||
     pageId;
 }
@@ -868,7 +869,7 @@ function getCanvasOverflowNoteHTML(
 function getRelationshipEditorHTML() {
 
   const pages =
-    state.pages
+    getAllPages()
       .filter(page =>
         page?.id &&
         page.template !== 'knowledgeGraph' &&
@@ -2060,7 +2061,7 @@ function getRelationshipTargetId(
       targetTitle
     );
 
-  return state.pages.find(page =>
+  return getAllPages().find(page =>
     normalizeRelationshipForComparison(
       page.title
     ) === normalizedTitle
@@ -2134,7 +2135,7 @@ function getEditableNodeRelationships(
 
   if (!targetNodeId) return [];
 
-  return state.pages.flatMap(page =>
+  return getAllPages().flatMap(page =>
     (page.relationships || [])
       .map((relationship, index) => {
 
@@ -2440,7 +2441,7 @@ function getGraphCanvasComputedNodePosition(
 
   const graph =
     buildKnowledgeGraph(
-      state.pages
+      getAllPages()
     );
 
   const canvasModel =
@@ -4150,8 +4151,8 @@ async function openGraphPage(
 ) {
 
   const page =
-    state.pages.find(item =>
-      item.id === pageId
+    getPageById(
+      pageId
     );
 
   if (!page) return;
@@ -4246,8 +4247,8 @@ async function addRelationshipBetweenPages(
   }
 
   const sourcePage =
-    state.pages.find(page =>
-      page.id === sourceId
+    getPageById(
+      sourceId
     );
 
   if (!sourcePage) return false;
@@ -4334,8 +4335,8 @@ function getRelationshipAtIndex(
 ) {
 
   const sourcePage =
-    state.pages.find(page =>
-      page.id === sourceId
+    getPageById(
+      sourceId
     );
 
   const relationship =
@@ -4385,8 +4386,8 @@ async function replaceRelationshipAtIndex(
     );
 
   const sourcePage =
-    state.pages.find(page =>
-      page.id === sourceId
+    getPageById(
+      sourceId
     );
 
   if (
@@ -4494,8 +4495,8 @@ async function insertRelationshipAtIndex(
     String(relationshipInput.sourceId || '');
 
   const sourcePage =
-    state.pages.find(page =>
-      page.id === sourceId
+    getPageById(
+      sourceId
     );
 
   if (!sourcePage) return false;
@@ -4559,8 +4560,8 @@ async function removeRelationshipAtIndex(
     );
 
   const sourcePage =
-    state.pages.find(page =>
-      page.id === sourceId
+    getPageById(
+      sourceId
     );
 
   if (
@@ -4648,8 +4649,8 @@ async function removeRelationshipBetweenPages(
   }
 
   const sourcePage =
-    state.pages.find(page =>
-      page.id === sourceId
+    getPageById(
+      sourceId
     );
 
   if (!sourcePage) return false;

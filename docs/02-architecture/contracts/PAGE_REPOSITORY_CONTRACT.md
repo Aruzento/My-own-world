@@ -302,5 +302,5 @@ Browser regression tests добавлять после перевода перв
 - sidebar search получает страницы через `PageRepository`;
 - проверка дублей названий использует `PageIndex`;
 - campaign map picker, player lookup и external tree-drop на карту используют repository API;
-- создание задач по трекеру, создание по шаблону и backlinks/future graph references не добавляют новых прямых lookup по `state.pages`;
+- создание задач по трекеру, создание по шаблону, backlinks и Knowledge Graph coordinator page reads не добавляют новых прямых lookup по `state.pages`;
 - план обновлен и следующий P0-пункт — Safe HTML Boundary / Sanitizer.

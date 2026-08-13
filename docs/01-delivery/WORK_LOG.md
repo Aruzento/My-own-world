@@ -6,6 +6,42 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.35 RCB-007B Knowledge Graph Page Read Boundary
+
+### Boundary Confirmed
+
+- Reconfirmed current HEAD and the split `RCB-007` status before touching Knowledge Graph. `RCB-007A` was already closed for Item Sets; this leaf stayed only in Knowledge Graph.
+- Classified every direct `state.pages` access in `js/wiki/knowledgeGraphPage.js`:
+  - `PAGE LOOKUP / SEARCH`: graph model input, graph page title lookup, relationship editor page list, target-title resolution, editable relationship listing, computed canvas model source pages and open target lookup.
+  - `MUTATION OWNER`: relationship create/update/delete/undo helpers need a live source page for `persistKnowledgeGraphRelationshipsCommand()`, but the lookup itself can come from `PageRepository`.
+  - `CURRENT RUNTIME/SELECTION STATE`: graph selection, focus, pan/zoom, filters and history remain DOM/view-state owned and were not moved.
+  - `LEGACY/DEAD`: no dead `state.pages` graph reads were found in this slice.
+  - `OTHER`: graph browser/visual fixtures were test setup and now publish page fixtures through `setPages()` so PageRepository is notified.
+- Confirmed no new PageRepository API was needed: existing `getAllPages()` and `getPageById()` covered the graph use cases.
+
+### What Changed
+
+- Removed the `state` import from `knowledgeGraphPage.js`.
+- Routed Knowledge Graph page reads through `PageRepository`: graph build input, labels, relationship endpoint resolution, relationship editor options, selected-node relationship rows, computed node position rebuilds, open/focus targets and relationship source lookup.
+- Preserved relationship persistence behavior through the existing `persistKnowledgeGraphRelationshipsCommand()` owner.
+- Updated graph and visual browser fixtures to use `setPages()` instead of direct `state.pages = ...`, matching the real workspace/page lifecycle.
+- Added a static ownership regression that fails if `knowledgeGraphPage.js` imports `state` or reads `state.pages` again.
+- Added a focused browser regression where the runtime page array is intentionally stale while `PageRepository` contains renamed/type-updated pages; the graph must render labels, edges, missing endpoint safety, item filtering and inspector selection from the repository read model.
+
+### Verification
+
+- Expected pre-fix failure: `node --test tests\knowledgeGraphPageReadBoundary.test.mjs` failed while `knowledgeGraphPage.js` imported `state` and read `state.pages`.
+- Passed: `node --test tests\knowledgeGraphPageReadBoundary.test.mjs tests\knowledgeGraph.test.mjs tests\knowledgeGraphCanvasHistory.test.mjs tests\knowledgeGraphStructuralIconOnly.test.mjs tests\pageRepository.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs --grep "knowledge-graph-page-read-boundary-uses-page-repository-read-model"`.
+- Passed: `npm run test:browser -- tests/browser/knowledge-graph.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep "visual-safety-captures-core-surfaces|visual-design-system-captures-fixed-viewport-state-matrix"`.
+- Passed: `npm run test`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-007` remains split/open; remaining targets are World Package branch/preview reads and tree-adjacent drag/context reads.
+- BI-026 Knowledge Graph concept work was not started.
+
 ## 2026-08-13: 0.0.1.10.34 RCB-006D Campaign Map Write Boundary
 
 ### Boundary Confirmed

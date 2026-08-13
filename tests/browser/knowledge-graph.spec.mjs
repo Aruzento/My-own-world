@@ -24,8 +24,8 @@ test(
         } = await import('/js/storage/storageAdapter.js');
 
         const {
-          state
-        } = await import('/js/state.js');
+          setPages
+        } = await import('/js/stateActions.js');
 
         const {
           renderTree
@@ -73,7 +73,7 @@ test(
           async removeDirectory() {}
         });
 
-        state.pages = [
+        setPages([
           {
             id: 'world',
             name: 'world.md',
@@ -231,7 +231,7 @@ aliases: []
 
 <h1>Orphan</h1>`
           }
-        ];
+        ]);
 
         renderTree();
       }
@@ -1916,8 +1916,8 @@ test(
       async () => {
 
         const {
-          state
-        } = await import('/js/state.js');
+          setPages
+        } = await import('/js/stateActions.js');
 
         const {
           createKnowledgeGraphTemplate
@@ -1927,7 +1927,7 @@ test(
           renderKnowledgeGraphPage
         } = await import('/js/wiki/knowledgeGraphPage.js');
 
-        state.pages =
+        setPages(
           Array.from(
             {
               length:
@@ -1963,7 +1963,8 @@ test(
               content:
                 `<h1>Chain Node ${index}</h1>`
             })
-          );
+          )
+        );
 
         const editor =
           document.querySelector(
@@ -2080,6 +2081,234 @@ test(
 
 
 test(
+  'knowledge-graph-page-read-boundary-uses-page-repository-read-model',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setPages
+        } = await import('/js/stateActions.js');
+
+        const {
+          rebuildPageRepository
+        } = await import('/js/repository/pageRepository.js');
+
+        const {
+          createKnowledgeGraphTemplate
+        } = await import('/js/templates/knowledgeGraph.js');
+
+        const {
+          renderKnowledgeGraphPage
+        } = await import('/js/wiki/knowledgeGraphPage.js');
+
+        setPages([
+          {
+            id:
+              'source',
+            name:
+              'source.md',
+            path:
+              '/pages/source.md',
+            parent:
+              null,
+            order:
+              1,
+            title:
+              'Source',
+            template:
+              'card',
+            type:
+              'note',
+            tags:
+              [],
+            aliases:
+              [],
+            relationships:
+              [
+                {
+                  type:
+                    'ally',
+                  targetTitle:
+                    'Stale Relic',
+                  label:
+                    'Old link'
+                }
+              ],
+            content:
+              '<h1>Source</h1>'
+          },
+          {
+            id:
+              'relic',
+            name:
+              'relic.md',
+            path:
+              '/pages/relic.md',
+            parent:
+              null,
+            order:
+              2,
+            title:
+              'Stale Relic',
+            template:
+              'card',
+            type:
+              'character',
+            tags:
+              [
+                'character'
+              ],
+            aliases:
+              [],
+            content:
+              '<h1>Stale Relic</h1>'
+          }
+        ]);
+
+        rebuildPageRepository([
+          {
+            id:
+              'source',
+            name:
+              'source.md',
+            path:
+              '/pages/source.md',
+            parent:
+              null,
+            order:
+              1,
+            title:
+              'Source',
+            template:
+              'card',
+            type:
+              'note',
+            tags:
+              [],
+            aliases:
+              [],
+            relationships:
+              [
+                {
+                  type:
+                    'ally',
+                  targetTitle:
+                    'Renamed Relic',
+                  label:
+                    'Updated link'
+                },
+                {
+                  type:
+                    'enemy',
+                  targetTitle:
+                    'Missing Page',
+                  label:
+                    'Missing endpoint'
+                }
+              ],
+            content:
+              '<h1>Source</h1>'
+          },
+          {
+            id:
+              'relic',
+            name:
+              'relic.md',
+            path:
+              '/pages/relic.md',
+            parent:
+              null,
+            order:
+              2,
+            title:
+              'Renamed Relic',
+            template:
+              'card',
+            type:
+              'item',
+            tags:
+              [
+                'artifact'
+              ],
+            aliases:
+              [],
+            content:
+              '<h1>Renamed Relic</h1>'
+          }
+        ]);
+
+        const editor =
+          document.querySelector(
+            '#editorArea'
+          );
+
+        editor.innerHTML =
+          createKnowledgeGraphTemplate().content;
+
+        renderKnowledgeGraphPage(
+          editor
+        );
+      }
+    );
+
+    const relicCard =
+      page.locator(
+        '[data-knowledge-graph-canvas-card][data-node-id="relic"]'
+      );
+
+    await expect(
+      relicCard
+    ).toContainText(
+      'Renamed Relic'
+    );
+
+    await expect(
+      relicCard
+    ).not.toContainText(
+      'Stale Relic'
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-from="source"][data-edge-to="relic"]')
+    ).toHaveCount(
+      1
+    );
+
+    await expect(
+      page.locator('[data-knowledge-graph-canvas-edge][data-edge-to="missing"]')
+    ).toHaveCount(
+      0
+    );
+
+    await page
+      .locator('[data-knowledge-graph-filter="domain"]')
+      .selectOption('item');
+
+    await expect(
+      relicCard
+    ).toBeVisible();
+
+    await relicCard.click({
+      force:
+        true
+    });
+
+    await expect(
+      page.locator('[data-knowledge-graph-inspector]')
+    ).toContainText(
+      'Renamed Relic'
+    );
+  }
+);
+
+
+test(
   'knowledge-graph-domain-switcher-implements-real-tabs-semantics',
   async ({ page }) => {
 
@@ -2091,14 +2320,14 @@ test(
       async () => {
 
         const {
-          state
-        } = await import('/js/state.js');
+          setPages
+        } = await import('/js/stateActions.js');
 
         const {
           renderKnowledgeGraphPage
         } = await import('/js/wiki/knowledgeGraphPage.js');
 
-        state.pages = [
+        setPages([
           {
             id:
               'hero',
@@ -2160,7 +2389,7 @@ test(
             content:
               '<h1>Sword</h1>'
           }
-        ];
+        ]);
 
         const editor =
           document.querySelector('#editorArea');

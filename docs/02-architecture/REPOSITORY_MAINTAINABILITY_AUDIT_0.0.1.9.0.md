@@ -210,11 +210,11 @@ Impact: large-workspace performance and stale read behavior become harder to rea
 
 Recommended cleanup leaf: create a narrow migration list by consumer and replace read-only lookups with PageRepository APIs where behavior is equivalent.
 
-Cleanup status: split by `RCB-007A` in `0.0.1.10.14`. Current classification:
+Cleanup status: split by `RCB-007A` in `0.0.1.10.14`; updated by `RCB-007B` in `0.0.1.10.35`. Current classification:
 
 - `MIGRATED IN RCB-007A`: `js/ui/itemSets.js` no longer uses direct `state.pages.find/filter` for picker/chip page reads; it now uses `getPageById()`, `getPagesByType()` and `getPagesByTag()`.
+- `MIGRATED IN RCB-007B`: `js/wiki/knowledgeGraphPage.js` no longer imports `state` or reads `state.pages`; graph model input, labels, relationship editor options, relationship target resolution, editable relationship listing, open targets and relationship source lookup now use `PageRepository`.
 - `RUNTIME STORE ACCESS - ALLOWED FOR NOW`: `state.currentPage` reads in item set code remain runtime selection access, not page collection lookup.
-- `BOUNDARY VIOLATION - PENDING`: `js/wiki/knowledgeGraphPage.js` still has graph coordinator lookups that should move to repository-backed read helpers in a dedicated graph slice.
 - `BOUNDARY VIOLATION - PENDING`: `js/ui/worldPackageManager.js` still has branch/package preview reads that should move through repository APIs where they are lookup/query behavior.
 - `BOUNDARY VIOLATION - PENDING`: tree-adjacent drag/context reads still need a separate tree slice so render/runtime tree access is not confused with page lookup queries.
 
@@ -232,7 +232,7 @@ Impact: future graph concept work can become risky because unrelated concerns st
 
 Recommended cleanup leaf: before `0.0.1.23.0`, split only one proven owner seam at a time, starting with event delegation/history or read-model access, not a broad rewrite.
 
-Cleanup status: first approved seam closed by `0.0.1.10.21` / `RCB-008`. Knowledge Graph canvas history state, shortcuts and history control state now live in `js/wiki/knowledgeGraphCanvasHistory.js`; `knowledgeGraphPage.js` still owns graph-specific history entry application and remains the coordinator for events, drag/pan, selection and page lookup. BI-026 product concept work was not started, and remaining graph read-boundary cleanup stays with split `RCB-007`.
+Cleanup status: first approved seam closed by `0.0.1.10.21` / `RCB-008`. Knowledge Graph canvas history state, shortcuts and history control state now live in `js/wiki/knowledgeGraphCanvasHistory.js`; `knowledgeGraphPage.js` still owns graph-specific history entry application and remains the coordinator for events, drag/pan and selection. Page lookup/query cleanup for the coordinator is closed by `RCB-007B`; BI-026 product concept work was not started.
 
 ### RA-009 - P2 - Properties popup owns feature-local layout infrastructure
 
