@@ -389,6 +389,8 @@ Owns: field rows, field grid, lock/readonly/computed/invalid states, field resiz
 
 Use: structured metadata attached to cards; avoid making the grid louder than content.
 
+`0.0.1.10.22` ownership correction: `propertyLayoutModel.js` owns pure layout overlap and collision-resolution decisions. `propertiesSettingsPopup.js` remains the UI/orchestration owner for popup controls, drag/resize pointer events, placeholder/ghost DOM and applying resolved layout data back to fields. Do not change persisted `data-property-layout` schema when maintaining this boundary.
+
 ### Campaign Map
 
 Owns: map toolbar, mode buttons, action groups, layer list, object property Inspector, fog controls, presentation status.

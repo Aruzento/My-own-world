@@ -228,6 +228,124 @@ export function writePropertyLayoutToField(
 }
 
 
+export function propertyLayoutsOverlap(
+  first,
+  second
+) {
+
+  return !(
+    first.x + first.w <= second.x ||
+    second.x + second.w <= first.x ||
+    first.y + first.h <= second.y ||
+    second.y + second.h <= first.y
+  );
+}
+
+
+export function resolvePropertyLayoutCollisions(
+  layoutEntries,
+  activeKey = null
+) {
+
+  const original =
+    new Map(
+      layoutEntries.map((entry, order) => [
+        entry.key,
+        normalizePropertyLayout(
+          entry.layout,
+          {
+            order
+          }
+        )
+      ])
+    );
+
+  const ordered =
+    [
+      ...layoutEntries
+    ].sort((first, second) => {
+
+      if (first.key === activeKey) return -1;
+      if (second.key === activeKey) return 1;
+
+      const firstLayout =
+        original.get(
+          first.key
+        );
+
+      const secondLayout =
+        original.get(
+          second.key
+        );
+
+      return (
+        firstLayout.y - secondLayout.y ||
+        firstLayout.x - secondLayout.x ||
+        firstLayout.order - secondLayout.order
+      );
+    });
+
+  const placed =
+    [];
+
+  const resolved =
+    new Map();
+
+  ordered.forEach(entry => {
+
+    let layout =
+      normalizePropertyLayout(
+        original.get(
+          entry.key
+        )
+      );
+
+    let changed =
+      true;
+
+    while (changed) {
+
+      changed =
+        false;
+
+      for (const placedLayout of placed) {
+
+        if (
+          !propertyLayoutsOverlap(
+            layout,
+            placedLayout
+          )
+        ) continue;
+
+        layout =
+          normalizePropertyLayout(
+            {
+              ...layout,
+              y:
+                placedLayout.y + placedLayout.h
+            },
+            layout
+          );
+
+        changed =
+          true;
+      }
+    }
+
+    placed.push(
+      layout
+    );
+
+    resolved.set(
+      entry.key,
+      layout
+    );
+  });
+
+  return resolved;
+}
+
+
 function clampLayoutNumber(
   value,
   min,

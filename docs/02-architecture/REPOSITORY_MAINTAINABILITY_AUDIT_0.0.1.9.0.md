@@ -247,6 +247,8 @@ Impact: the popup is both UI shell and layout engine, which makes character-shee
 
 Recommended cleanup leaf: move pure layout decisions behind the existing `propertyLayoutModel` owner and keep the popup as orchestration/UI.
 
+Cleanup status: first approved seam closed by `0.0.1.10.22` / `RCB-009`. `propertyLayoutModel` now owns pure layout overlap and collision-resolution decisions; `propertiesSettingsPopup.js` still owns popup UI, drag/resize event orchestration, placeholder/ghost DOM and applying resolved layout data back to fields. Persisted layout schema was unchanged.
+
 ### RA-010 - P2 - CSS/design-system migration is incomplete outside corrected Task Tracker zones
 
 Evidence:

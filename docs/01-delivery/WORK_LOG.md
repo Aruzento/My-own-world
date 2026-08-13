@@ -6,6 +6,33 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.22 RCB-009 Properties Layout Ownership
+
+### Responsibility Inventory
+
+- Classified the current `propertiesSettingsPopup.js` responsibilities before changing code: UI DOM creation, popup/event orchestration, drag ghost/placeholder DOM, resize event handling, direct dataset/style application, persistence handoff, pure layout math and collision resolution.
+- Chose the collision-resolution seam because it is a pure layout decision that already depended on `normalizePropertyLayout()` semantics and did not require changing the Properties UI, drag lifecycle or persisted `data-property-layout` schema.
+
+### What Changed
+
+- Moved property layout overlap detection and deterministic collision resolution into `js/properties/propertyLayoutModel.js`.
+- Kept `propertiesSettingsPopup.js` as the UI/orchestration owner: it still reads field DOM, handles drag/resize/popup events, owns placeholder/ghost DOM and applies resolved layouts back to fields.
+- Left the persisted layout schema unchanged and did not redesign Properties.
+
+### Verification
+
+- Failed first as expected: the new model regression could not import `propertyLayoutsOverlap` before the production change.
+- Passed: `node --test tests/propertyBlocks.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-owner-completion-captures-primary-secondary-evidence`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run verify`.
+
+### Next
+
+- Stop before the next RCB leaf. Remaining Properties popup orchestration and DOM ownership stays intentionally in the popup unless a later owner-approved leaf selects another pure layout seam.
+
 ## 2026-08-13: 0.0.1.10.21 RCB-008 Knowledge Graph Coordinator Cleanup
 
 ### Responsibility Inventory

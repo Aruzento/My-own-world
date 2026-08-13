@@ -27,6 +27,11 @@ import {
 } from '../js/properties/propertiesModel.js';
 
 import {
+  propertyLayoutsOverlap,
+  resolvePropertyLayoutCollisions
+} from '../js/properties/propertyLayoutModel.js';
+
+import {
   getPropertySchema,
   getPropertyValueFields
 } from '../js/properties/propertySchemas.js';
@@ -106,20 +111,6 @@ function extractPropertyLayouts(html) {
   });
 
   return layoutByName;
-}
-
-
-function layoutsOverlap(
-  first,
-  second
-) {
-
-  return !(
-    first.x + first.w <= second.x ||
-    second.x + second.w <= first.x ||
-    first.y + first.h <= second.y ||
-    second.y + second.h <= first.y
-  );
 }
 
 
@@ -462,7 +453,7 @@ test(
           visibleLayouts[second];
 
         assert.equal(
-          layoutsOverlap(
+          propertyLayoutsOverlap(
             firstLayout,
             secondLayout
           ),
@@ -1008,6 +999,109 @@ test(
         collapsed: false,
         groupId: 'combat'
       }
+    );
+  }
+);
+
+
+test(
+  'property layout model resolves collisions without popup DOM ownership',
+  () => {
+
+    const resolved =
+      resolvePropertyLayoutCollisions(
+        [
+          {
+            key:
+              'active',
+            layout:
+              {
+                x: 0,
+                y: 0,
+                w: 4,
+                h: 2,
+                order: 1
+              }
+          },
+          {
+            key:
+              'blocked',
+            layout:
+              {
+                x: 2,
+                y: 0,
+                w: 4,
+                h: 2,
+                order: 0
+              }
+          },
+          {
+            key:
+              'after',
+            layout:
+              {
+                x: 0,
+                y: 2,
+                w: 4,
+                h: 1,
+                order: 2
+              }
+          }
+        ],
+        'active'
+      );
+
+    assert.deepEqual(
+      resolved.get(
+        'active'
+      ),
+      {
+        x: 0,
+        y: 0,
+        w: 4,
+        h: 2,
+        order: 1,
+        collapsed: false,
+        groupId: null
+      }
+    );
+
+    assert.equal(
+      propertyLayoutsOverlap(
+        resolved.get(
+          'active'
+        ),
+        resolved.get(
+          'blocked'
+        )
+      ),
+      false
+    );
+
+    assert.equal(
+      propertyLayoutsOverlap(
+        resolved.get(
+          'blocked'
+        ),
+        resolved.get(
+          'after'
+        )
+      ),
+      false
+    );
+
+    assert.equal(
+      resolved.get(
+        'blocked'
+      ).y,
+      2
+    );
+
+    assert.equal(
+      resolved.get(
+        'after'
+      ).y,
+      4
     );
   }
 );

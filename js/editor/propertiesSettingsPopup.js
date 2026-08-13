@@ -12,7 +12,9 @@ import {
   PROPERTY_LAYOUT_MAX_HEIGHT,
   PROPERTY_LAYOUT_MIN_HEIGHT,
   normalizePropertyLayout,
+  propertyLayoutsOverlap,
   readPropertyLayoutFromField,
+  resolvePropertyLayoutCollisions as resolvePropertyLayoutCollisionsModel,
   serializePropertyLayout,
   writePropertyLayoutToField
 } from '../properties/propertyLayoutModel.js';
@@ -1309,20 +1311,6 @@ function findNextPropertyFreeLayout(
     order:
       occupied.length
   });
-}
-
-
-function propertyLayoutsOverlap(
-  first,
-  second
-) {
-
-  return !(
-    first.x + first.w <= second.x ||
-    second.x + second.w <= first.x ||
-    first.y + first.h <= second.y ||
-    second.y + second.h <= first.y
-  );
 }
 
 
@@ -3502,102 +3490,23 @@ function createResolvedPropertyLayouts(
   activeField = null
 ) {
 
-  const original =
-    new Map(
-      fields.map((field, order) => [
+  const entries =
+    fields.map((field, order) => ({
+      key:
         field,
+      layout:
         readPropertyLayoutFromField(
           field,
           {
             order
           }
         )
-      ])
-    );
+    }));
 
-  const ordered =
-    [
-      ...fields
-    ].sort((first, second) => {
-
-      if (first === activeField) return -1;
-      if (second === activeField) return 1;
-
-      const firstLayout =
-        original.get(
-          first
-        );
-
-      const secondLayout =
-        original.get(
-          second
-        );
-
-      return (
-        firstLayout.y - secondLayout.y ||
-        firstLayout.x - secondLayout.x ||
-        firstLayout.order - secondLayout.order
-      );
-    });
-
-  const placed =
-    [];
-
-  const resolved =
-    new Map();
-
-  ordered.forEach(field => {
-
-    let layout =
-      normalizePropertyLayout(
-        original.get(
-          field
-        )
-      );
-
-    let changed =
-      true;
-
-    while (changed) {
-
-      changed =
-        false;
-
-      for (const placedLayout of placed) {
-
-        if (
-          !propertyLayoutsOverlap(
-            layout,
-            placedLayout
-          )
-        ) continue;
-
-        layout =
-          normalizePropertyLayout(
-            {
-              ...layout,
-              y:
-                placedLayout.y + placedLayout.h
-            },
-            layout
-          );
-
-        changed =
-          true;
-      }
-    }
-
-    placed.push(
-      layout
-    );
-
-    resolved.set(
-      field,
-      layout
-    );
-  });
-
-  return resolved;
+  return resolvePropertyLayoutCollisionsModel(
+    entries,
+    activeField
+  );
 }
 
 
