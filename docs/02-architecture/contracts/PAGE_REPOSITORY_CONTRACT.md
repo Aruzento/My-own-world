@@ -70,6 +70,7 @@ Large-workspace mutations should update `PageRepository` / `PageIndex` increment
 - низкоуровневые storage-модули, которые загружают и записывают страницы;
 - `stateActions.js`, который обновляет `state.pages`;
 - тесты, которые явно подготавливают fixture через `state.pages`;
+- import/restore owners, которым нужен целостный runtime snapshot для плана, rollback или публикации batch-мутаций;
 - временные legacy-модули до их перевода на repository.
 
 ## Public API
@@ -302,5 +303,5 @@ Browser regression tests добавлять после перевода перв
 - sidebar search получает страницы через `PageRepository`;
 - проверка дублей названий использует `PageIndex`;
 - campaign map picker, player lookup и external tree-drop на карту используют repository API;
-- создание задач по трекеру, создание по шаблону, backlinks и Knowledge Graph coordinator page reads не добавляют новых прямых lookup по `state.pages`;
+- создание задач по трекеру, создание по шаблону, backlinks, Knowledge Graph coordinator page reads и World Package preview/export reads не добавляют новых прямых lookup по `state.pages`;
 - план обновлен и следующий P0-пункт — Safe HTML Boundary / Sanitizer.

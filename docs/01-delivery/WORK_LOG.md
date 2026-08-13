@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.36 RCB-007C World Package Page Read Boundary
+
+### Boundary Confirmed
+
+- Reconfirmed current HEAD before touching World Package. `RCB-007A` and `RCB-007B` were already closed; this leaf stayed only on World Package feature-level page reads.
+- Classified every current World Package `state.pages` access:
+  - `PAGE QUERY`: `worldPackageManager` export-all availability, world-vs-selection scope checks, export preview existing-page reads and import preview conflict checks.
+  - `WORKSPACE SNAPSHOT ENUMERATION`: export-all/branch pages need a stable read-model snapshot for package creation; `PageRepository.getAllPages()` provides an equivalent array snapshot without treating `state.pages` as the feature database.
+  - `RUNTIME OPERATION STATE`: `state.currentPage` in branch/default-title logic remains the runtime selection source, not a page collection lookup.
+  - `IMPORT MUTATION`: `worldPackageImportService` appends imported pages through `setPages()` and notifies `PageRepository/PageIndex`.
+  - `IMPORT SNAPSHOT/ROLLBACK`: `worldPackageImportService` keeps `existingPages = state.pages` defaults, `previousPages` snapshots and rollback state as part of the backup-gated import owner. This was intentionally not changed in RCB-007C.
+- Confirmed no new repository API was needed: existing `getAllPages()` covered the changed World Package UI read paths.
+
+### What Changed
+
+- Imported `getAllPages()` into `worldPackageManager`.
+- Routed World Package export-all, branch traversal, world/selection scope checks, export preview and import preview existing-page reads through `PageRepository`.
+- Kept World Package import/write/restore behavior unchanged: backup gate, conflict modes, asset references, package schema, import rollback and durable write ownership stay in the existing import service.
+- Added a browser regression that intentionally makes runtime `state.pages` stale while `PageRepository` has renamed/type/tag-updated pages. Branch export must use repository titles/type/tags, preview must detect a repository title conflict, and a missing/new page package must stay safely importable.
+
+### Verification
+
+- Expected pre-fix failure: `npm run test:browser -- tests/browser/world-package.spec.mjs --grep world-package-manager-uses-page-repository-for-export-and-preview-page-reads` failed because branch export used stale `Root` / `Child` from `state.pages`.
+- Passed after fix: `npm run test:browser -- tests/browser/world-package.spec.mjs --grep world-package-manager-uses-page-repository-for-export-and-preview-page-reads`.
+- Passed: `node --test tests\worldPackage.test.mjs tests\pageRepository.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/world-package.spec.mjs`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-007` remains split/open; remaining target is tree-adjacent drag/context reads.
+- No World Package import/write/restore architecture was changed.
+
 ## 2026-08-13: 0.0.1.10.35 RCB-007B Knowledge Graph Page Read Boundary
 
 ### Boundary Confirmed

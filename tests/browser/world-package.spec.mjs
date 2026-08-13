@@ -620,6 +620,283 @@ test(
 
 
 test(
+  'world-package-manager-uses-page-repository-for-export-and-preview-page-reads',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await seedWorldPackageWorkspace(
+      page
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const {
+          rebuildPageRepository
+        } = await import('/js/repository/pageRepository.js');
+
+        const repositoryPages =
+          state.pages.map(pageRecord => {
+
+            if (pageRecord.id === 'root') {
+
+              return {
+                ...pageRecord,
+                title:
+                  'Repository Root',
+                type:
+                  'location',
+                tags:
+                  [
+                    'repository-root'
+                  ],
+                aliases:
+                  [
+                    'Repo Root'
+                  ],
+                content:
+                  pageRecord.content
+                    .replace(
+                      '<h1>Root</h1>',
+                      '<h1>Repository Root</h1>'
+                    )
+                    .replace(
+                      'type: folder',
+                      'type: location'
+                    )
+                    .replace(
+                      'tags: card,folder',
+                      'tags: repository-root'
+                    )
+              };
+            }
+
+            if (pageRecord.id === 'child') {
+
+              return {
+                ...pageRecord,
+                title:
+                  'Repository Child',
+                tags:
+                  [
+                    'repository-child'
+                  ],
+                aliases:
+                  [
+                    'Repo Child'
+                  ],
+                content:
+                  pageRecord.content
+                    .replace(
+                      '<h1>Child</h1>',
+                      '<h1>Repository Child</h1>'
+                    )
+                    .replace(
+                      'tags: card',
+                      'tags: repository-child'
+                    )
+              };
+            }
+
+            return pageRecord;
+          });
+
+        rebuildPageRepository(
+          repositoryPages
+        );
+      }
+    );
+
+    await page.locator('#appToolsBtn').click();
+    await page.locator('#worldPackageManagerBtn').click();
+
+    const popup =
+      page.locator('#worldPackagePopup');
+
+    await expect(
+      popup
+    ).toBeVisible();
+
+    await popup
+      .locator('[data-world-package-section="export"] input')
+      .fill(
+        'Repository Export'
+      );
+
+    await popup
+      .locator('[data-world-package-export="branch"]')
+      .click();
+
+    const exportedPackage =
+      await page.evaluate(
+        () => JSON.parse(
+          window.__worldPackageTestFiles.get(
+            'world-packages/repository-export.world-package.json'
+          )
+        )
+      );
+
+    expect(
+      exportedPackage.contents.pages.map(packagePage => ({
+        id:
+          packagePage.id,
+        title:
+          packagePage.title,
+        type:
+          packagePage.type,
+        tags:
+          packagePage.tags
+      }))
+    ).toEqual([
+      {
+        id:
+          'root',
+        title:
+          'Repository Root',
+        type:
+          'location',
+        tags:
+          [
+            'repository-root'
+          ]
+      },
+      {
+        id:
+          'child',
+        title:
+          'Repository Child',
+        type:
+          'note',
+        tags:
+          [
+            'repository-child'
+          ]
+      }
+    ]);
+
+    await popup
+      .locator('.world-package-json-input')
+      .fill(
+        JSON.stringify(
+          {
+            packageId:
+              'repository-title-conflict',
+            title:
+              'Repository Title Conflict',
+            contents: {
+              pages: [
+                {
+                  id:
+                    'new-id-with-existing-repository-title',
+                  title:
+                    'Repository Child',
+                  parent:
+                    null,
+                  template:
+                    'card',
+                  type:
+                    'note',
+                  tags:
+                    [],
+                  aliases:
+                    [],
+                  body:
+                    '<h1>Repository Child</h1>'
+                }
+              ],
+              assets:
+                [],
+              rulePackages:
+                []
+            }
+          },
+          null,
+          2
+        )
+      );
+
+    await popup
+      .locator('[data-world-package-section="import"] .world-package-action')
+      .first()
+      .click();
+
+    await expect(
+      popup.locator('.world-package-preview')
+    ).toHaveAttribute(
+      'data-world-package-preview',
+      'blocked'
+    );
+
+    await expect(
+      popup.locator('[data-world-package-apply-state]')
+    ).toContainText(
+      'конфликты'
+    );
+
+    await popup
+      .locator('.world-package-json-input')
+      .fill(
+        JSON.stringify(
+          {
+            packageId:
+              'repository-missing-safe',
+            title:
+              'Repository Missing Safe',
+            contents: {
+              pages: [
+                {
+                  id:
+                    'missing-safe-page',
+                  title:
+                    'Missing Safe Page',
+                  parent:
+                    null,
+                  template:
+                    'card',
+                  type:
+                    'note',
+                  tags:
+                    [],
+                  aliases:
+                    [],
+                  body:
+                    '<h1>Missing Safe Page</h1>'
+                }
+              ],
+              assets:
+                [],
+              rulePackages:
+                []
+            }
+          },
+          null,
+          2
+        )
+      );
+
+    await popup
+      .locator('[data-world-package-section="import"] .world-package-action')
+      .first()
+      .click();
+
+    await expect(
+      popup.locator('.world-package-preview')
+    ).toHaveAttribute(
+      'data-world-package-preview',
+      'ready'
+    );
+  }
+);
+
+
+test(
   'world-package-manager-uses-modal-dialog-focus-contract',
   async ({ page }) => {
 

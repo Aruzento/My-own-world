@@ -210,12 +210,13 @@ Impact: large-workspace performance and stale read behavior become harder to rea
 
 Recommended cleanup leaf: create a narrow migration list by consumer and replace read-only lookups with PageRepository APIs where behavior is equivalent.
 
-Cleanup status: split by `RCB-007A` in `0.0.1.10.14`; updated by `RCB-007B` in `0.0.1.10.35`. Current classification:
+Cleanup status: split by `RCB-007A` in `0.0.1.10.14`; updated by `RCB-007B` in `0.0.1.10.35`; updated by `RCB-007C` in `0.0.1.10.36`. Current classification:
 
 - `MIGRATED IN RCB-007A`: `js/ui/itemSets.js` no longer uses direct `state.pages.find/filter` for picker/chip page reads; it now uses `getPageById()`, `getPagesByType()` and `getPagesByTag()`.
 - `MIGRATED IN RCB-007B`: `js/wiki/knowledgeGraphPage.js` no longer imports `state` or reads `state.pages`; graph model input, labels, relationship editor options, relationship target resolution, editable relationship listing, open targets and relationship source lookup now use `PageRepository`.
+- `MIGRATED IN RCB-007C`: `js/ui/worldPackageManager.js` no longer uses `state.pages` as the World Package feature read database; export-all availability, world-vs-selection scope checks, branch traversal and import/export preview conflict reads now use `getAllPages()` from `PageRepository`. `state.currentPage` remains allowed runtime selection access.
+- `IMPORT SNAPSHOT/MUTATION OWNER - ALLOWED`: `js/worldPackage/worldPackageImportService.js` still accepts/defaults `existingPages = state.pages`, snapshots `previousPages`, appends `createdPages` through `setPages()` and rolls back failed imports. Those reads are part of backup-gated import planning, mutation and rollback ownership, not UI lookup/query behavior.
 - `RUNTIME STORE ACCESS - ALLOWED FOR NOW`: `state.currentPage` reads in item set code remain runtime selection access, not page collection lookup.
-- `BOUNDARY VIOLATION - PENDING`: `js/ui/worldPackageManager.js` still has branch/package preview reads that should move through repository APIs where they are lookup/query behavior.
 - `BOUNDARY VIOLATION - PENDING`: tree-adjacent drag/context reads still need a separate tree slice so render/runtime tree access is not confused with page lookup queries.
 
 ### RA-008 - P2 - Knowledge Graph still has a large coordinator/god-file risk

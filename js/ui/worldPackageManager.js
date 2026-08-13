@@ -25,6 +25,10 @@ import {
 } from '../state.js';
 
 import {
+  getAllPages
+} from '../repository/pageRepository.js';
+
+import {
   applyWorldPackagePageImport,
   createWorldPackageAssetPayloadExportReport,
   createWorldPackageAssetImportReport
@@ -498,7 +502,7 @@ function createExportPanel({
 
       allButton.disabled =
         !hasAccess ||
-        state.pages.length === 0;
+        getAllPages().length === 0;
 
       if (!hasAccess) {
 
@@ -545,7 +549,7 @@ function createExportPanel({
               description:
                 descriptionInput.value,
               scope:
-                pages.length === state.pages.length
+                pages.length === getAllPages().length
                   ? 'world'
                   : 'selection',
               assets:
@@ -567,7 +571,7 @@ function createExportPanel({
           createWorldPackageImportPreview({
             packageData,
             existingPages:
-              state.pages
+              getAllPages()
           });
 
         result.textContent =
@@ -619,7 +623,7 @@ function createExportPanel({
   allButton.addEventListener(
     'click',
     () => exportPages(
-      state.pages
+      getAllPages()
     )
   );
 
@@ -950,7 +954,7 @@ function createPreviewPanel({
           packageData:
             normalized,
           existingPages:
-            state.pages
+            getAllPages()
         });
 
       model.packageData =
@@ -2117,6 +2121,19 @@ function collectCurrentBranchPages() {
 
   if (!state.currentPage?.id) return [];
 
+  const repositoryPages =
+    getAllPages();
+
+  const pagesById =
+    new Map(
+      repositoryPages
+        .filter(page => page?.id)
+        .map(page => [
+          page.id,
+          page
+        ])
+    );
+
   const result =
     [];
 
@@ -2124,8 +2141,8 @@ function collectCurrentBranchPages() {
     pageId => {
 
       const page =
-        state.pages.find(candidate =>
-          candidate.id === pageId
+        pagesById.get(
+          pageId
         );
 
       if (!page) return;
@@ -2134,7 +2151,7 @@ function collectCurrentBranchPages() {
         page
       );
 
-      state.pages
+      repositoryPages
         .filter(candidate =>
           candidate.parent === pageId
         )
