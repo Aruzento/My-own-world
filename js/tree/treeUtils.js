@@ -1,9 +1,7 @@
-import { state } from '../state.js';
-
-
 export function canMovePage(
   draggedId,
-  targetId
+  targetId,
+  pages = []
 ) {
 
   if (!draggedId || !targetId) {
@@ -19,15 +17,15 @@ export function canMovePage(
 
 
   const draggedPage =
-    state.pages.find(
-      page =>
-        page.id === draggedId
+    findPageById(
+      pages,
+      draggedId
     );
 
   const targetPage =
-    state.pages.find(
-      page =>
-        page.id === targetId
+    findPageById(
+      pages,
+      targetId
     );
 
 
@@ -39,45 +37,55 @@ export function canMovePage(
 
   return !isDescendantOf(
     targetPage,
-    draggedPage
+    draggedPage,
+    pages
   );
 }
 
 
 export function isDescendantOf(
   possibleChild,
-  possibleParent
+  possibleParent,
+  pages = []
 ) {
 
   let current =
     possibleChild;
 
-
-  while (current.parent) {
+  while (
+    current?.parent
+  ) {
 
     if (
-      current.parent === possibleParent.id
+      current.parent === possibleParent?.id
     ) {
 
       return true;
     }
 
-
     current =
-      state.pages.find(
-        page =>
-          page.id === current.parent
+      findPageById(
+        pages,
+        current.parent
       );
 
-
-    if (!current) {
-
-      return false;
-    }
+    if (!current) return false;
   }
 
-
   return false;
+}
+
+
+function findPageById(
+  pages,
+  pageId
+) {
+
+  return Array.isArray(pages)
+    ? pages.find(page =>
+      page?.id === pageId
+    ) || null
+    : null;
 }
 
 

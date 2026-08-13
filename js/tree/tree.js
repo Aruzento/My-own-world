@@ -62,6 +62,12 @@ import {
   getDuplicatePageTitleIds
 } from '../validation/pageTitleValidation.js';
 
+import {
+  getAllPages,
+  getPageById,
+  getParentChain
+} from '../repository/pageRepository.js';
+
 /* --------------- */
 
 export function renderTree() {
@@ -127,8 +133,8 @@ export function revealPageInTree(
   if (!pageId) return;
 
   const page =
-    state.pages.find(candidate =>
-      candidate.id === pageId
+    getPageById(
+      pageId
     );
 
   if (!page) return;
@@ -801,7 +807,8 @@ async function handleTreeKeyboardReorder(
     targetPage &&
     !canMovePage(
       page.id,
-      targetPage.id
+      targetPage.id,
+      getAllPages()
     )
   ) {
 
@@ -1009,8 +1016,8 @@ function refreshTreeAfterKeyboardMove() {
   if (currentPageId) {
 
     const refreshedCurrentPage =
-      state.pages.find(candidate =>
-        candidate.id === currentPageId
+      getPageById(
+        currentPageId
       );
 
     if (refreshedCurrentPage) {
@@ -1505,9 +1512,9 @@ function getTreePageById(
   pageId
 ) {
 
-  return state.pages.find(page =>
-    page.id === pageId
-  ) || null;
+  return getPageById(
+    pageId
+  );
 }
 
 
@@ -1586,17 +1593,9 @@ function expandPageAncestors(
   page
 ) {
 
-  let parentId =
-    page.parent;
-
-  while (parentId) {
-
-    const parent =
-      state.pages.find(candidate =>
-        candidate.id === parentId
-      );
-
-    if (!parent) return;
+  getParentChain(
+    page.id
+  ).forEach(parent => {
 
     getTreePageKeys(
       parent
@@ -1605,10 +1604,7 @@ function expandPageAncestors(
         key
       )
     );
-
-    parentId =
-      parent.parent;
-  }
+  });
 }
 
 

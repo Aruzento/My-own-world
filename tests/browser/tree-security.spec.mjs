@@ -309,10 +309,10 @@ test(
           );
 
           const {
-            state
-          } = await import('/js/state.js');
+            setPages
+          } = await import('/js/stateActions.js');
 
-          state.pages = [
+          setPages([
             {
               id: 'source',
               title: malicious,
@@ -342,7 +342,7 @@ test(
               template: 'card',
               content: ''
             }
-          ];
+          ]);
 
           const {
             renderKnowledgeGraphPage

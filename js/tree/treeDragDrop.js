@@ -26,6 +26,11 @@ import {
   createTreeMovePlan
 } from './treeMovePlanner.js';
 
+import {
+  getAllPages,
+  getPageById
+} from '../repository/pageRepository.js';
+
 
 let treeDropPlaceholder = null;
 let treeDragPreview = null;
@@ -348,15 +353,16 @@ function updateTreeDropIntent(
   }
 
   const targetPage =
-    state.pages.find(page =>
-      page.id === targetItem.dataset.pageId
+    getPageById(
+      targetItem.dataset.pageId
     );
 
   if (
     !targetPage ||
     !canMovePage(
       dragState.page.id,
-      targetPage.id
+      targetPage.id,
+      getAllPages()
     )
   ) {
 
@@ -677,8 +683,8 @@ function refreshTreeAfterMove(
   if (currentPageId) {
 
     const refreshedCurrentPage =
-      state.pages.find(page =>
-        page.id === currentPageId
+      getPageById(
+        currentPageId
       );
 
     if (refreshedCurrentPage) {

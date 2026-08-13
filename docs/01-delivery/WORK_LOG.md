@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.37 RCB-007D Tree-Adjacent Page Read Boundary
+
+### Boundary Confirmed
+
+- Reconfirmed current HEAD and preconditions: `RCB-007A`, `RCB-007B` and `RCB-007C` were closed before touching tree-adjacent reads.
+- Classified current tree-adjacent direct `state.pages` access:
+  - `LOOKUP QUERY`: move validation in `treeUtils`, DnD target/current-page refresh, context delete branch/fallback resolution, reveal-in-tree ancestor lookup, keyboard reorder page resolution and editor back navigation.
+  - `TREE TRANSACTION SNAPSHOT`: `createTreeMovePlan({ pages: state.pages })` in pointer and keyboard reorder remains intentionally snapshot-based so the move operation plans from one consistent mutable tree state.
+  - `RENDER CACHE / PROJECTION`: `renderTree()` still renders the tree from `state.pages`, because Tree itself is the runtime projection of pages.
+  - `CURRENT SELECTION`: `state.currentPage` remains runtime selection state, not a page collection lookup.
+  - `MUTATION`: tree move writes still go through the existing tree/storage owner and were not redesigned.
+- Confirmed no new repository API was needed: `getAllPages()`, `getPageById()`, `getChildren()` and `getParentChain()` cover the migrated reads.
+
+### What Changed
+
+- Made `treeUtils.canMovePage()` a pure helper over an explicitly provided page snapshot, avoiding a repository import cycle with `TreeIndex`.
+- Updated tree/DnD call sites to pass a repository-backed snapshot from `getAllPages()` for move validation.
+- Routed DnD target resolution and post-move current-page refresh through `getPageById()`.
+- Routed context delete branch collection through `getChildren()` and fallback page selection through `getPageById()` / `getAllPages()`.
+- Routed reveal-in-tree and keyboard page resolution through `getPageById()` / `getParentChain()`.
+- Routed editor back navigation through `getPageById()`.
+- Updated one browser security fixture from direct `state.pages = [...]` to `setPages([...])` so it follows the repository lifecycle.
+- Added a unit regression that makes runtime `state.pages` stale while `PageRepository` contains the current tree read model; move validation must use the repository-backed snapshot.
+
+### Verification
+
+- Expected pre-fix failure: `node --test tests\treePageReadBoundary.test.mjs` failed because `canMovePage()` read the stale runtime page array.
+- Passed after fix: `node --test tests\treePageReadBoundary.test.mjs`.
+- Passed: `node --test tests\treePageReadBoundary.test.mjs tests\treeDropIntent.test.mjs tests\treeMovePlanner.test.mjs tests\treeOrderCompaction.test.mjs tests\treeVirtualization.test.mjs tests\treeIndex.test.mjs tests\pageRepository.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-accessibility.spec.mjs tests/browser/tree-dnd-regression.spec.mjs tests/browser/tree-delete.spec.mjs tests/browser/tree-virtualization.spec.mjs tests/browser/tree-security.spec.mjs`.
+
+### Next
+
+- `RCB-007` is closed. Remaining `state.pages` in the original RCB-007 scope is documented as legitimate render/transaction/import snapshot access.
+- Next named cleanup decision: `RCB-014` local debug artifact decision.
+- No Tree UX, page persistence behavior or product functionality was changed.
+
 ## 2026-08-13: 0.0.1.10.36 RCB-007C World Package Page Read Boundary
 
 ### Boundary Confirmed

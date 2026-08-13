@@ -7,6 +7,10 @@ import {
 } from '../tree/tree.js';
 
 import {
+  getPageById
+} from '../repository/pageRepository.js';
+
+import {
   iconSvg
 } from '../core/icons.js';
 
@@ -193,8 +197,8 @@ function createBackButton(
         navigationStack.pop();
 
       const previousPage =
-        state.pages.find(page =>
-          page.id === previousId
+        getPageById(
+          previousId
         );
 
       if (previousPage) {

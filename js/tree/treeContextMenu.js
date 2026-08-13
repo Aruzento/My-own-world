@@ -49,6 +49,12 @@ import {
   savePageAsTemplate
 } from '../templates/pageTemplateStorage.js';
 
+import {
+  getAllPages,
+  getChildren,
+  getPageById
+} from '../repository/pageRepository.js';
+
 
 let contextMenu =
   null;
@@ -469,10 +475,9 @@ function collectBranchIds(
       rootPage.id
     ]);
 
-  state.pages
-    .filter(page =>
-      page.parent === rootPage.id
-    )
+  getChildren(
+    rootPage.id
+  )
     .forEach(child => {
 
       collectBranchIds(child)
@@ -491,14 +496,21 @@ function openFallbackPageAfterDelete(
 ) {
 
   const parent =
-    state.pages.find(page =>
-      page.id === deletedRoot.parent &&
-      !deletedIds.has(page.id)
-    );
+    deletedRoot.parent
+      ? getPageById(
+        deletedRoot.parent
+      )
+      : null;
+
+  const safeParent =
+    parent &&
+      !deletedIds.has(parent.id)
+      ? parent
+      : null;
 
   const fallback =
-    parent ||
-    state.pages.find(page =>
+    safeParent ||
+    getAllPages().find(page =>
       !deletedIds.has(page.id)
     );
 
