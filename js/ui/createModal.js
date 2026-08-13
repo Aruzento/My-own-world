@@ -621,19 +621,33 @@ async function openTemplateCreatePicker(
 
         event.stopPropagation();
 
-        const page =
-          await createPageFromTemplate(
-            pageTemplate,
-            state.currentPage?.parent ?? null
+        try {
+
+          const page =
+            await createPageFromTemplate(
+              pageTemplate,
+              state.currentPage?.parent ?? null
+            );
+
+          closeMenu();
+          renderTree();
+
+          if (page) {
+
+            openPage(
+              page
+            );
+          }
+
+        } catch (error) {
+
+          console.error(
+            'Не удалось создать страницу из шаблона:',
+            error
           );
 
-        closeMenu();
-        renderTree();
-
-        if (page) {
-
-          openPage(
-            page
+          setStatus(
+            'Не удалось создать страницу из шаблона'
           );
         }
       }

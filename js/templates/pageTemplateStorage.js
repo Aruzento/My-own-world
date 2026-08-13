@@ -3,12 +3,11 @@ import {
 } from '../core/markdown.js';
 
 import {
-  updatePageRecordContent
+  buildPageRecordContent
 } from '../core/pageRecord.js';
 
 import {
-  createPage,
-  writePageContent
+  createPageFromRecordContent
 } from '../storage/storage.js';
 
 import {
@@ -19,10 +18,6 @@ import {
 import {
   getUniqueCopyTitle
 } from '../validation/pageTitleValidation.js';
-
-import {
-  notifyPageUpdated
-} from '../repository/pageRepository.js';
 
 import {
   sanitizePersistentHTMLOnSave
@@ -210,15 +205,6 @@ export async function createPageFromTemplate(
       pageTemplate.title
     );
 
-  const page =
-    await createPage(
-      'card',
-      parentId,
-      title
-    );
-
-  if (!page) return null;
-
   const body =
     applyTemplateTitle(
       pageTemplate.body,
@@ -226,11 +212,10 @@ export async function createPageFromTemplate(
     );
 
   const content =
-    updatePageRecordContent(
-      page.content,
+    buildPageRecordContent(
       {
         id:
-          page.id,
+          crypto.randomUUID(),
         parent:
           parentId ?? null,
         order:
@@ -244,7 +229,7 @@ export async function createPageFromTemplate(
         aliases:
           [],
         relationships:
-          page.relationships || [],
+          [],
         body:
           sanitizePersistentHTMLOnSave(
             body
@@ -252,26 +237,9 @@ export async function createPageFromTemplate(
       }
     );
 
-  await writePageContent(
-    page,
+  return createPageFromRecordContent(
     content
   );
-
-  Object.assign(
-    page,
-    {
-      title,
-      tags: pageTemplate.tags || [],
-      template: pageTemplate.template || 'card',
-      type: pageTemplate.type || 'note',
-      aliases: [],
-      content
-    }
-  );
-
-  notifyPageUpdated();
-
-  return page;
 }
 
 

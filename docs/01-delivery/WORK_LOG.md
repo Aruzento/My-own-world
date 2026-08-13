@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.32 RCB-006B Page Template Creation Write Boundary
+
+### Boundary Confirmed
+
+- Reconfirmed the `RCB-006` split on current HEAD and kept this leaf to page-template creation only.
+- Classified template JSON persistence in `pageTemplateStorage` as an allowed template-storage write owner.
+- Confirmed the violation in `createPageFromTemplate()`: it created a blank page through `pageStorage.createPage()`, then rewrote that page with direct `writePageContent()` and repaired indexes with a manual `notifyPageUpdated()` fallback.
+- Reproduced the failure mode with a forced durable write failure: the old implementation could leave a runtime/repository/index page ghost after the template rewrite failed.
+
+### What Changed
+
+- Added `createPageFromRecordContent()` to the existing `pageStorage` owner as a narrow wrapper around the existing create-page command lifecycle.
+- Changed template page creation to build the final PageRecord content up front and let the existing create-page command own durable write, journal, rollback, `setPages()` and `notifyPageCreated()`.
+- Removed direct `writePageContent()` and manual repository notification from page-template creation.
+- Kept the create-menu failure path human-readable: template picker failures now set the existing statusbar message instead of silently rejecting from the click handler.
+- Preserved the template schema, resulting page frontmatter/body format, generated ids, copied title behavior, parent selection, tags/type metadata and UI open flow.
+- Did not touch item picker/item creation or Campaign Map write cleanup.
+
+### Verification
+
+- Passed: `npm run test:browser -- tests/browser/page-templates.spec.mjs --grep "page-template-creation-uses-page-command-boundary"`.
+- Passed: `npm run test:browser -- tests/browser/page-templates.spec.mjs`.
+- Passed: `node --test tests\pageCommandService.test.mjs tests\pageRepository.test.mjs tests\pageIndex.test.mjs`.
+- Passed: `npm run docs:index`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run verify`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` remains split/open; next target is `RCB-006C` item creation write boundary. Campaign Map serializer/token helper writes remain pending after that.
+
 ## 2026-08-13: 0.0.1.10.31 RCB-015 Historical Docs Placement Decision
 
 ### Placement Confirmed

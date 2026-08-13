@@ -147,6 +147,23 @@ export async function createFolderPage(
 }
 
 
+export async function createPageFromRecordContent(
+  content
+) {
+
+  if (typeof content !== 'string') {
+
+    throw new Error(
+      'Create page command content must be a string.'
+    );
+  }
+
+  return writePageFile(
+    content
+  );
+}
+
+
 export async function duplicatePageAsChild(
   sourcePage,
   parentId,

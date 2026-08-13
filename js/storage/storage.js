@@ -46,6 +46,8 @@ export {
   /* Создание страницы */
   createPage,
 
+  createPageFromRecordContent,
+
   createFolderPage,
 
   duplicatePageAsChild,

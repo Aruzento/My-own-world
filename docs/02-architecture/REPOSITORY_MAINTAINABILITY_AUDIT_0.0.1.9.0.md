@@ -181,14 +181,14 @@ Impact: write revisions, undo/rollback, repository notifications and autosave se
 
 Recommended cleanup leaf: classify direct feature writes as allowed exceptions or migrate them to `persistPageContentCommand()` / a feature-specific command wrapper.
 
-Cleanup status: split by `RCB-006A` in `0.0.1.10.13`. Current classification:
+Cleanup status: split by `RCB-006A` in `0.0.1.10.13`; updated by `RCB-006B` in `0.0.1.10.32`. Current classification:
 
 - `ALLOWED LOW-LEVEL OWNER`: `js/storage/writeQueue.js` owns the low-level queue/write primitive.
 - `ALLOWED LOW-LEVEL OWNER`: `js/storage/pageCommandService.js` calls `writePageContent()` only inside approved command/undo paths.
 - `ALLOWED LOW-LEVEL OWNER`: `js/storage/pageStorage.js` owns page/tree metadata writes and durable rollback writes.
 - `ALLOWED APPROVED COMMAND WRAPPER`: `js/wiki/knowledgeGraphCommandBridge.js` already wraps relationship persistence in `executePageCommand()`.
 - `MIGRATED IN RCB-006A`: `js/taskTracker/taskTrackerPageActions.js` no longer calls `writePageContent()` directly; task creation now uses `persistPageContentCommand()`.
-- `BOUNDARY VIOLATION - PENDING`: `js/templates/pageTemplateStorage.js` page creation from template still writes page content directly.
+- `MIGRATED IN RCB-006B`: `js/templates/pageTemplateStorage.js` no longer creates a blank page and rewrites it directly; template creation now builds final PageRecord content and routes durable creation through `pageStorage.createPageFromRecordContent()` / the existing create-page command lifecycle.
 - `BOUNDARY VIOLATION - PENDING`: `js/ui/itemSets.js` item creation from picker still writes page content directly.
 - `BOUNDARY VIOLATION - PENDING`: `js/editor/campaignMapSerializerHelpers.js` and `js/editor/campaignMapTokenActions.js` still write map/token-related page content directly and need their own Campaign Map sub-leaf.
 
