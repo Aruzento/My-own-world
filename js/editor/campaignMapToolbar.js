@@ -9,6 +9,8 @@ import {
 } from './campaignMapConstants.js';
 
 import {
+  escapeAttribute,
+  escapeHTML,
   getMapPopupFrameHTML,
   getMapPopupSectionHTML
 } from './campaignMapPopupMarkup.js';
@@ -561,26 +563,4 @@ export function getLayersPopupHTML(
       `
     })
   });
-}
-
-
-function escapeHTML(
-  value
-) {
-
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-}
-
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHTML(
-    value
-  )
-    .replaceAll('"', '&quot;');
 }

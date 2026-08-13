@@ -6,6 +6,35 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.25 RCB-011 Exact Campaign Map Helper Duplication
+
+### Semantic Comparison
+
+- Confirmed the `RA-011` duplicate helpers on current code before production edits: `campaignMapToolbar.js`, `campaignMapMusic.js` and `campaignMapInitiativePopup.js` each carried local `escapeHTML()` / `escapeAttribute()` definitions.
+- Compared those helpers with `campaignMapPopupMarkup.js`; the semantics were exact for the touched popup/template consumers: stringify, escape `&`, `<`, `>`, and add `"` escaping for attributes.
+- Confirmed `campaignMapInitiativePopup.js` had a local `rollD20()` with the same default roll semantics as exported `rollD20()` in `campaignMapInitiativeModel.js`.
+- Left other local escaping helpers outside this leaf alone where ownership is different or not part of the exact RA-011 evidence, including serializer/selection/token/presentation helpers.
+
+### What Changed
+
+- Made `campaignMapPopupMarkup.js` the shared owner for popup/template escaping in the Campaign Map toolbar, music popup and initiative popup.
+- Removed the local `escapeHTML()` / `escapeAttribute()` duplicates from those three consumers.
+- Made `campaignMapInitiativePopup.js` use the existing `rollD20()` export from `campaignMapInitiativeModel.js`.
+- Added a focused ownership regression that fails if the exact duplicate helpers return to those Campaign Map surfaces.
+- No Dice Engine, broad utility module, map workflow change or product feature was introduced.
+
+### Verification
+
+- Failed first as expected: `node --test tests\campaignMapHelperOwnership.test.mjs` caught the duplicate/helper ownership issue before the production files were updated.
+- Passed: `node --test tests\campaignMapHelperOwnership.test.mjs`.
+- Passed: `node --test tests\campaignMapHelperOwnership.test.mjs tests\campaignMapInitiativeModel.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs tests/browser/campaign-map-ui.spec.mjs --grep "campaign-map-initiative-popup|campaign-map-popups-use-migrated-shared-frame|campaign-map-music-popup"`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs tests/browser/popup-lifecycle.spec.mjs --grep "campaign-map-toolbar-uses-migrated-mode-action-groups|popup-triggers-toggle-create-menu-tools-and-campaign-map-popup"`.
+
+### Next
+
+- Stop before the next RCB leaf. Split read/write boundary work remains under `RCB-006` and `RCB-007`; remaining token/layer cleanup stays under `RCB-030`.
+
 ## 2026-08-13: 0.0.1.10.24 RCB-020 Design Token Consistency
 
 ### Token Inventory

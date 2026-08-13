@@ -1,7 +1,8 @@
 import {
   CampaignMapInitiativeModel,
   createParticipantFromToken,
-  isTokenAlive
+  isTokenAlive,
+  rollD20
 } from './campaignMapInitiativeModel.js';
 
 import {
@@ -15,6 +16,8 @@ import {
 } from './campaignMapPopupController.js';
 
 import {
+  escapeAttribute,
+  escapeHTML,
   getMapPopupFrameHTML,
   getMapPopupSectionHTML
 } from './campaignMapPopupMarkup.js';
@@ -991,14 +994,6 @@ function syncActiveTokenHighlights(
 }
 
 
-function rollD20() {
-
-  return Math.floor(
-    Math.random() * 20
-  ) + 1;
-}
-
-
 function normalizeNumber(
   value,
   fallback = 0
@@ -1012,26 +1007,4 @@ function normalizeNumber(
   )
     ? number
     : fallback;
-}
-
-
-function escapeHTML(
-  value
-) {
-
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-}
-
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHTML(
-    value
-  )
-    .replaceAll('"', '&quot;');
 }

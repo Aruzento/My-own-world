@@ -20,6 +20,8 @@ import {
 } from './campaignMapPopupController.js';
 
 import {
+  escapeAttribute,
+  escapeHTML,
   getMapPopupFrameHTML,
   getMapPopupSectionHTML
 } from './campaignMapPopupMarkup.js';
@@ -1780,26 +1782,4 @@ function decodeHTMLAttribute(
     .replaceAll('&amp;', '&')
     .replaceAll('&lt;', '<')
     .replaceAll('&gt;', '>');
-}
-
-
-function escapeHTML(
-  value
-) {
-
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-}
-
-
-function escapeAttribute(
-  value
-) {
-
-  return escapeHTML(
-    value
-  )
-    .replaceAll('"', '&quot;');
 }

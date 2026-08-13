@@ -283,6 +283,8 @@ Impact: small behavior drift can appear in markup escaping or dice semantics.
 
 Recommended cleanup leaf: centralize only exact duplicates already owned by a nearby module. Do not create a broad utility dumping ground.
 
+Cleanup status: exact duplicates closed by `RCB-011` in `0.0.1.10.25`. `campaignMapPopupMarkup.js` owns popup/template escaping for the Campaign Map toolbar, music popup and initiative popup, and `campaignMapInitiativeModel.js` owns `rollD20()` for initiative. Other local escaping helpers with separate serializer/inspector/token/presentation ownership were not merged by this leaf.
+
 ### RA-012 - P3 - Root-level historical docs remain intentional but outside the docs map
 
 Evidence:
