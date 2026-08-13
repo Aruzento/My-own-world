@@ -326,6 +326,8 @@ Impact: visual polish regressions can still require human review.
 
 Recommended cleanup leaf: decide whether the project wants true screenshot baselines, a stricter critic gate, or the current evidence-smoke model with explicit limits.
 
+Cleanup status: closed by `RCB-012` in `0.0.1.10.29`. The owner chose the current evidence-smoke model instead of heavy strict pixel baselines. `docs/03-testing/VISUAL_REGRESSION.md` now distinguishes structured browser UI regression, screenshot evidence, human visual review and strict pixel regression, while `tests/visualRegressionPolicy.test.mjs` guards that the current suite is not documented as pixel-perfect and does not use strict pixel matchers.
+
 ### RA-015 - P3 - Documentation/status drift has improved but still needs a light guard
 
 Evidence:

@@ -6,6 +6,35 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-13: 0.0.1.10.29 RCB-012 Visual Regression Policy
+
+### Policy Confirmed
+
+- Confirmed `RA-014` on current code: `tests/browser/visual-regression.spec.mjs` creates structured Playwright states, layout/overflow/overlay assertions and screenshot attachments, but does not use strict pixel snapshot tooling.
+- Confirmed strict pixel baselines would require a separate owner-approved policy and likely committed golden images or snapshot infrastructure, so they were not added in this cleanup leaf.
+- Kept the existing suite name and screenshot attachment names for compatibility, but corrected documentation so the guarantee is not overstated.
+
+### What Changed
+
+- Renamed the testing policy doc heading to "Visual Evidence Smoke / UX Safety Checklist".
+- Documented the four distinct layers: structured browser UI regression, screenshot evidence, human visual review and strict pixel regression.
+- Clarified `UI_MIGRATION_BASELINES.md`, `UI_CSS_INVENTORY_REPORT.md` and the browser smoke README so current screenshots are evidence for review, not automatic pixel comparison.
+- Added `tests/visualRegressionPolicy.test.mjs` to guard that docs keep this distinction and that the current visual spec does not quietly use strict pixel matchers while the policy says evidence smoke.
+- Updated the cleanup backlog, audit coverage, audit finding and active status docs to close `RCB-012`.
+- No visual redesign, production UI behavior, new dependency, screenshot baseline storage or CI architecture change was introduced.
+
+### Verification
+
+- Passed: `node --test tests\visualRegressionPolicy.test.mjs tests\uiMigrationBaselines.test.mjs`.
+- Passed: `npm run docs:index`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Stop before the next RCB leaf. `RCB-006` and `RCB-007` still have remaining split sub-leaves; `RCB-014` and `RCB-015` still need owner selection/approval.
+
 ## 2026-08-13: 0.0.1.10.28 RCB-030 CSS Token / Overlay Layer Guard
 
 ### Drift Confirmed

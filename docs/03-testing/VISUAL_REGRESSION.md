@@ -5,11 +5,24 @@ read_when:
   - "When adding or changing tests"
 owner_zone: "testing"
 ---
-# Visual Regression / UX Safety Checklist
+# Visual Evidence Smoke / UX Safety Checklist
 
 Дата создания: 01.06.2026.
 
 Этот чеклист нужен перед push и перед крупными UI-изменениями. Он дополняет browser smoke: тесты ловят часть визуальных регрессий автоматически, а человек быстро проверяет то, что пока нельзя надежно оценить без глаз.
+
+## Current Policy
+
+Current policy: `EVIDENCE SMOKE`, not `STRICT PIXEL BASELINE`.
+
+`tests/browser/visual-regression.spec.mjs` has a historical filename. Today it provides a visual evidence smoke layer:
+
+- Structured Browser UI Regression: Playwright opens prepared workbench states and asserts user-visible structure, viewport fit, overflow boundaries, overlay lifecycle markers, focus/label contracts and selected visual guard conditions.
+- Screenshot Evidence: Playwright attaches current screenshots for key surfaces, owner matrices and prepared states so a reviewer can inspect what changed.
+- Human Visual Review: the owner/tester still reviews attached screenshots and the checklist below for taste, composition, density and "does this feel like the product?" quality.
+- Strict Pixel Regression: not active today. The suite does not use Playwright snapshot matchers, `pixelmatch` or committed golden PNG comparisons, and project docs must not describe the current guarantee as pixel-perfect.
+
+Strict pixel baselines may be added later only after an explicit owner-approved testing policy change. That future work must avoid large baseline churn, clarify CI expectations and keep screenshot storage maintainable.
 
 ## Автоматические Проверки
 
@@ -19,7 +32,7 @@ owner_zone: "testing"
 npm run test:browser
 ```
 
-В состав visual smoke входит `tests/browser/visual-regression.spec.mjs`.
+В состав visual evidence smoke входит `tests/browser/visual-regression.spec.mjs`.
 
 Он проверяет:
 

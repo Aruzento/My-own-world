@@ -9,9 +9,9 @@ owner_zone: "architecture"
 
 # UI Migration Baselines
 
-Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is closed at `Foundation` by `0.0.1.8.15.5`; `0.0.1.8.16` design-system visual regression is closed at `Foundation`; `0.0.1.8.17` owner visual completion is closed at `Usable` with primary/secondary evidence screenshots and a post-design handoff pause.
+Status: `0.0.1.8.10` AppShell migration closed and corrected by `0.0.1.8.10.1`-`0.0.1.8.10.4`; `0.0.1.8.11` core content is closed at `Usable` level by `0.0.1.8.11.7`; `0.0.1.8.12` campaign map migration is closed at `Usable` level by `0.0.1.8.12.10`; `0.0.1.8.13` knowledge graph migration is closed at `Usable` level by `0.0.1.8.13.11`; `0.0.1.8.14` secondary screens are closed at `Usable` level by `0.0.1.8.14.7`; `0.0.1.8.15` polish/cleanup is closed at `Foundation` by `0.0.1.8.15.5`; `0.0.1.8.16` design-system visual evidence smoke is closed at `Foundation`; `0.0.1.8.17` owner visual completion is closed at `Usable` with primary/secondary evidence screenshots and a post-design handoff pause.
 
-This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must compare against.
+This document is the Phase 0 baseline manifest for the version-1 UI migration. It does not approve a mass redesign. It records the current surfaces, CSS ownership, icon/overlay risks and screenshot attachments that future migration phases must review against as evidence. Current automation must not automatically pixel-compare these attachments unless a future owner-approved strict pixel-baseline task adds that policy and infrastructure.
 
 Owner note: this is the "before we repaint the house, photograph every room and label the wiring" step. It is intentionally practical and specific.
 
@@ -93,13 +93,15 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 
 `0.0.1.8.17` update: the owner visual-completion gate adds `visual-owner-completion-captures-primary-secondary-evidence` in `tests/browser/visual-regression.spec.mjs`. It captures the same prepared states at `1440x900` and `1280x720` for AppShell/tree empty/error/loading, editor plus Properties, campaign map popup/Inspector, Knowledge Graph context overlay, empty Task Tracker and Settings/diagnostics. The guard stays visual-only: it does not implement future backlog ideas or new visible Knowledge Graph behavior. The shared component catalogue is now dev/test-only instead of a normal Tools route, and map popup positioning checks that a popup does not overlap the right-side Inspector.
 
+`0.0.1.10.29` / `RCB-012` update: current screenshot coverage is explicitly an evidence smoke policy, not strict pixel regression. `tests/browser/visual-regression.spec.mjs` combines structured browser assertions with screenshot attachments for human review. It does not use Playwright snapshot matchers, `pixelmatch` or committed golden PNG comparisons.
+
 ## Baseline Rules
 
 - Do not commit generated PNG screenshots. `tests/browser/visual-regression.spec.mjs` attaches them to the Playwright run as current baseline evidence.
 - A future UI migration must update the matching row here when it intentionally changes a surface.
 - If a surface gets a new baseline screenshot name, add it both here and to `UI_MIGRATION_BASELINE_ATTACHMENTS` in `tests/browser/visual-regression.spec.mjs`.
 - Baselines are reference-backed: check [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) before changing the direction for a system.
-- Baselines are not pixel locks yet. The current guard is screenshot attachment plus layout assertions; later phases may add stricter visual snapshot comparison when the design stabilizes.
+- Baselines are not pixel locks yet. The current guard is screenshot attachment plus layout assertions; later phases may add stricter visual snapshot comparison when the design stabilizes and the owner accepts the maintenance cost.
 
 ## Screenshot Attachment Contract
 

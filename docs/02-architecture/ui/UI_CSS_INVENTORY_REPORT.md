@@ -56,9 +56,11 @@ Post-`0.0.1.8.15.3` delta: Phase 9 visual regression now has a theme-scale workb
 
 Post-`0.0.1.8.15.4` / `0.0.1.8.15.5` delta: Phase 9 dead CSS cleanup retires the obsolete campaign-map stage panel owners and closes the phase documentation sync. `styles/campaign-map-layer-dock.css`, `styles/campaign-map-scene-inspector.css`, `js/editor/campaignMapLayerDock.js` and `js/editor/campaignMapSceneInspector.js` were removed, and `styles/campaign-map.css` no longer imports those panels. The active map paths remain the compact top scene/session bar, left tool rail, shared map popups, token hover/right-click popup and right-side selected-object property Inspector.
 
-Post-`0.0.1.8.16` delta: fixed viewport design-system visual regression coverage now captures shell/tree/error, editor Properties, campaign map popup/Inspector, Knowledge Graph overlay and task tracker empty states across dark/contrast themes and compact/large scale. This is a browser-test/manifest pass, so no new CSS owner was added; it guards against future CSS drift.
+Post-`0.0.1.8.16` delta: fixed viewport design-system visual evidence coverage now captures shell/tree/error, editor Properties, campaign map popup/Inspector, Knowledge Graph overlay and task tracker empty states across dark/contrast themes and compact/large scale. This is a browser-test/manifest pass, so no new CSS owner was added; it guards common structural/layout drift and provides screenshot evidence, but it is not strict pixel comparison.
 
 Post-`0.0.1.8.17` delta: owner visual completion is closed at usable level for this design pass. Normal Tools usage no longer exposes the internal component catalogue; it remains a dev/test evidence route behind `my-own-world:show-component-catalogue`. Tree rows gained stronger keyboard/ARIA semantics, editor tag/alias/add-block controls moved closer to the shared dark control language, Task Tracker and Knowledge Graph first layers are quieter, and campaign map popups use solid dark surfaces plus Inspector-overlap avoidance. `tests/browser/visual-regression.spec.mjs` now captures 1440x900 and 1280x720 owner evidence for shell/tree states, editor/Properties, map popup/Inspector, graph overlay, empty Task Tracker and Settings/diagnostics.
+
+Post-`0.0.1.10.29` delta: `RCB-012` closes the visual-regression policy debt by documenting the current guarantee as evidence smoke. The browser suite still attaches screenshots and checks structural/layout guards; it does not use committed golden PNGs, Playwright snapshot matchers or `pixelmatch` as a strict pixel baseline system.
 
 ## Current CSS Entry Tree
 
@@ -342,7 +344,7 @@ Do not create this full folder structure in one pass. Introduce it when a primit
 | `0.0.1.8.13` Knowledge graph | Closed at `Usable` by `0.0.1.8.13.11`: visible-slice clarity, selected-node edge states/inspector, node/connect overlay visuals, laconic first layer, CSS owner files, JS owner modules, relationship/context-menu HTML, view-state helpers and command-lifecycle relationship persistence are in place. | `BI-017`, `BI-018` and `BI-019` are closed for Phase 7. Keep `BI-026` before adding new visible graph features. |
 | `0.0.1.8.14` Secondary screens | Closed at `Usable` by `0.0.1.8.14.7`. `0.0.1.8.14.1` closed the task tracker UI slice; `0.0.1.8.14.2` fixed task tracker nested-icon clicks plus migrated the Settings maintenance popup; `0.0.1.8.14.3` migrated the existing Help/Support/Release guide surface in Tools; `0.0.1.8.14.4` added the World Package manager MVP; `0.0.1.8.14.5` added non-destructive World Package conflict import modes; `0.0.1.8.14.6` added embedded rulePackage apply and asset preflight; `0.0.1.8.14.7` added asset payload export/import, non-overwrite copy and imported page reference rewrite. | Next work: `0.0.1.8.15` polish/cleanup and design-system audit, not another hidden Phase 8 feature. |
 | `0.0.1.8.15` Polish and cleanup | Closed at `Foundation` by `0.0.1.8.15.5`. `0.0.1.8.15.1` added the UI polish audit, contrast theme and focus/motion guard. `0.0.1.8.15.2` added a browser performance smoke for large migrated surfaces. `0.0.1.8.15.3` added theme-scale visual baselines and fixed hidden shell/topbar/Properties horizontal overflow. `0.0.1.8.15.4` removed the retired map layer/object dock and scene-state inspector CSS/JS owners from the active bundle, and `0.0.1.8.15.5` synchronized documentation/release handoff. | Follow-up: `0.0.1.8.16` broadened design-system visual regression coverage, then `0.0.1.8.17` closed owner visual completion. |
-| `0.0.1.8.16` Design-system visual regression | Closed at `Foundation`: fixed viewport screenshot attachments cover shell/tree/error, editor Properties, map popup/Inspector, graph overlay and task tracker empty states across theme/scale combinations. | UI baselines and `tests/uiMigrationBaselines.test.mjs` guard attachment-name drift. |
+| `0.0.1.8.16` Design-system visual evidence smoke | Closed at `Foundation`: fixed viewport screenshot attachments cover shell/tree/error, editor Properties, map popup/Inspector, graph overlay and task tracker empty states across theme/scale combinations. | UI baselines and `tests/uiMigrationBaselines.test.mjs` guard attachment-name drift; `0.0.1.10.29` clarifies that this is not strict pixel comparison. |
 | `0.0.1.8.17` Owner visual completion | Closed at `Usable`: user-facing noise is reduced, the component catalogue is dev/test-only, map popups avoid the Inspector, and owner evidence exists at 1440x900 and 1280x720. `0.0.1.8.18` was later closed by owner waiver for the current stage. | Active roadmap now lives only in `docs/01-delivery/PROJECT_PLAN.md`. Keep `BI-026` before adding visible Knowledge Graph concepts. |
 
 ## Browser And Tauri Risks
@@ -375,12 +377,12 @@ Use what already exists first:
 - local CSS variables;
 - local SVG sprite;
 - `popupManager`;
-- Playwright for browser and future visual baselines.
+- Playwright for browser smoke and screenshot evidence.
 
 Future optional tools, only if they solve a measured problem:
 
 - a tiny local CSS audit script for hardcoded colors and undefined tokens;
-- Playwright visual snapshots for design-system baselines;
+- Playwright visual snapshots for design-system baselines only after an explicit owner-approved strict-baseline policy;
 - no CDN fonts or icon packages without a separate contract update.
 
 ## Backlog Touchpoints
