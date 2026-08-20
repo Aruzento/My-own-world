@@ -235,3 +235,87 @@ test(
     );
   }
 );
+
+
+test(
+  'desktop native markdown report records image-card and map asset coverage',
+  () => {
+
+    const markdown =
+      createMarkdownReport(
+        createReport({
+          targets:
+            {
+              cards:
+                [],
+              imageCards:
+                [
+                  {
+                    title:
+                      'Portrait Card',
+                    file:
+                      'portrait-card.md',
+                    sizeBytes:
+                      2048,
+                    tokens:
+                      0,
+                    shapes:
+                      0,
+                    fogZones:
+                      0,
+                    imageCount:
+                      1,
+                    imageAssets:
+                      [
+                        'portraits/hero.png'
+                      ]
+                  }
+                ],
+              heavyMaps:
+                [
+                  {
+                    title:
+                      'Loaded Map',
+                    file:
+                      'loaded-map.md',
+                    sizeBytes:
+                      4096,
+                    tokens:
+                      2,
+                    shapes:
+                      1,
+                    fogZones:
+                      0,
+                    imageCount:
+                      0,
+                    imageAssets:
+                      [],
+                    mapAsset:
+                      'maps/castle.png'
+                  }
+                ]
+            }
+        })
+      );
+
+    assert.match(
+      markdown,
+      /Plan ref: `0\.0\.1\.11\.5`/
+    );
+
+    assert.match(
+      markdown,
+      /### Image Cards/
+    );
+
+    assert.match(
+      markdown,
+      /images: 1, image assets: 1/
+    );
+
+    assert.match(
+      markdown,
+      /map asset: `maps\/castle\.png`/
+    );
+  }
+);

@@ -8,9 +8,9 @@ owner_zone: "delivery"
 
 # Desktop Release Gate Current
 
-Run started: 2026-08-20T09:14:25.550Z
+Run started: 2026-08-20T11:00:18.699Z
 
-Run finished: 2026-08-20T09:15:46.631Z
+Run finished: 2026-08-20T11:01:46.300Z
 
 Plan ref: `0.0.1.2.4`
 
@@ -29,15 +29,15 @@ Advisory diagnostics: PRESENT (3, non-blocking)
 ## Steps
 
 - desktop release handoff preflight: passed (0 ms) - Required release handoff files exist. Required npm scripts exist.
-- documentation index: passed (57 ms)
-- agent skills validation: passed (40 ms)
-- verify: passed (13854 ms)
-- browser smoke: passed (65183 ms)
-- desktop frontend prepare: passed (229 ms)
-- desktop packaging smoke: passed (35 ms)
-- desktop environment: passed (261 ms)
-- tauri cargo check: passed (362 ms)
-- large workspace desktop smoke: passed (1057 ms)
+- documentation index: passed (59 ms)
+- agent skills validation: passed (39 ms)
+- verify: passed (14574 ms)
+- browser smoke: passed (70870 ms)
+- desktop frontend prepare: passed (232 ms)
+- desktop packaging smoke: passed (41 ms)
+- desktop environment: passed (283 ms)
+- tauri cargo check: passed (387 ms)
+- large workspace desktop smoke: passed (1114 ms)
 
 ## Release Rule
 

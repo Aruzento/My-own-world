@@ -270,13 +270,18 @@ try {
 
   await runStep(
     report,
-    'open representative card',
+    'open representative card with image when available',
     async () => {
+
+      const cardTargets =
+        report.targets.imageCards?.length
+          ? report.targets.imageCards
+          : report.targets.cards;
 
       const cardTarget =
         await findVisibleTreeTarget(
           page,
-          report.targets.cards
+          cardTargets
         );
 
       if (!cardTarget?.target) {
@@ -285,6 +290,10 @@ try {
           'No representative card target was found in the workspace.'
         );
       }
+
+      const expectsImage =
+        cardTarget.target.imageCount > 0 ||
+        cardTarget.target.imageAssets?.length > 0;
 
       const clicked =
         await page.evaluate(
@@ -332,6 +341,13 @@ try {
             30000
         }
       );
+
+      if (expectsImage) {
+
+        await waitForRenderableCardImage(
+          page
+        );
+      }
 
       report.metrics.card =
         {
@@ -484,6 +500,13 @@ try {
         timeout:
           timeoutMs
       });
+
+      if (mapTarget.mapAsset) {
+
+        await waitForRenderableMapBackground(
+          page
+        );
+      }
 
       report.metrics.map =
         await collectMapMetrics(
@@ -892,6 +915,86 @@ function getTargetSearchQueries(
 }
 
 
+async function waitForRenderableCardImage(
+  page
+) {
+
+  await page.waitForFunction(
+    () => {
+
+      const editor =
+        document.querySelector('#editorArea');
+
+      const images =
+        Array.from(
+          editor?.querySelectorAll('img[data-asset]') || []
+        );
+
+      return images.some(image => {
+
+        const rect =
+          image.getBoundingClientRect();
+
+        return Boolean(
+          image.complete &&
+          image.naturalWidth > 0 &&
+          rect.width > 0 &&
+          rect.height > 0
+        );
+      });
+    },
+    null,
+    {
+      timeout:
+        30000
+    }
+  );
+}
+
+
+async function waitForRenderableMapBackground(
+  page
+) {
+
+  await page.waitForFunction(
+    () => {
+
+      const map =
+        document.querySelector('.campaign-map-document');
+
+      const stage =
+        map?.querySelector('.campaign-map-stage');
+
+      const background =
+        map?.querySelector('.campaign-map-background');
+
+      const backgroundImage =
+        background
+          ? getComputedStyle(background).backgroundImage
+          : '';
+
+      const rect =
+        background?.getBoundingClientRect();
+
+      return Boolean(
+        stage?.dataset.mapAsset &&
+        background &&
+        backgroundImage &&
+        backgroundImage !== 'none' &&
+        rect &&
+        rect.width > 0 &&
+        rect.height > 0
+      );
+    },
+    null,
+    {
+      timeout:
+        30000
+    }
+  );
+}
+
+
 async function collectAppWorkspaceMetrics(
   page
 ) {
@@ -977,6 +1080,17 @@ async function collectCardMetrics(
       const editor =
         document.querySelector('#editorArea');
 
+      const images =
+        Array.from(
+          editor?.querySelectorAll('img[data-asset]') || []
+        );
+
+      const loadedImages =
+        images.filter(image =>
+          image.complete &&
+          image.naturalWidth > 0
+        );
+
       return {
         currentPageId:
           state.currentPage?.id || '',
@@ -987,6 +1101,24 @@ async function collectCardMetrics(
         hasCardShell:
           Boolean(
             editor?.querySelector('.card-shell, [data-card-shell]')
+          ),
+        imageCount:
+          images.length,
+        loadedImages:
+          loadedImages.length,
+        imageAssets:
+          images.map(image =>
+            image.dataset.asset || ''
+          ).filter(Boolean),
+        imageSources:
+          loadedImages.slice(
+            0,
+            3
+          ).map(image =>
+            (image.currentSrc || image.src || '').slice(
+              0,
+              120
+            )
           ),
         textLength:
           editor?.textContent?.trim().length || 0,
@@ -1008,13 +1140,35 @@ async function collectMapMetrics(
       const map =
         document.querySelector('.campaign-map-document');
 
+      const stage =
+        map?.querySelector('.campaign-map-stage');
+
+      const background =
+        map?.querySelector('.campaign-map-background');
+
+      const backgroundImage =
+        background
+          ? getComputedStyle(background).backgroundImage
+          : '';
+
+      const backgroundRect =
+        background?.getBoundingClientRect();
+
+      const backgroundImageSet =
+        Boolean(
+          backgroundImage &&
+          backgroundImage !== 'none'
+        );
+
       return {
         title:
           map?.querySelector('.campaign-map-title')?.textContent?.trim() || '',
         toolbar:
           Boolean(map?.querySelector('.campaign-map-controls')),
         stage:
-          Boolean(map?.querySelector('.campaign-map-stage')),
+          Boolean(stage),
+        mapAsset:
+          stage?.dataset.mapAsset || '',
         tokens:
           map?.querySelectorAll('.campaign-map-token').length || 0,
         shapes:
@@ -1022,7 +1176,23 @@ async function collectMapMetrics(
         fogCanvas:
           Boolean(map?.querySelector('.campaign-map-fog-canvas')),
         backgroundElement:
-          Boolean(map?.querySelector('.campaign-map-background'))
+          Boolean(background),
+        backgroundImageSet,
+        backgroundRenderable:
+          Boolean(
+            background &&
+            backgroundImageSet &&
+            backgroundRect &&
+            backgroundRect.width > 0 &&
+            backgroundRect.height > 0
+          ),
+        backgroundImagePreview:
+          backgroundImageSet
+            ? backgroundImage.slice(
+              0,
+              120
+            )
+            : ''
       };
     }
   );
@@ -1139,9 +1309,27 @@ async function inspectWorkspaceTargets(
         12
       );
 
+  const imageCards =
+    pages
+      .filter(page =>
+        isRepresentativeCardPage(
+          page
+        )
+      )
+      .filter(page =>
+        page.imageCount > 0 ||
+        page.imageAssets.length > 0
+      )
+      .sort(compareImageCardTargets)
+      .slice(
+        0,
+        12
+      );
+
   return {
     pages,
     heavyMaps,
+    imageCards,
     cards
   };
 }
@@ -1189,6 +1377,24 @@ function inspectPageFile(
       'fogLockedZones'
     );
 
+  const imageAssets =
+    extractAttributeValues(
+      body,
+      'data-asset'
+    );
+
+  const imageCount =
+    countRegexMatches(
+      body,
+      /<img\b/gi
+    );
+
+  const mapAsset =
+    extractAttributeValues(
+      body,
+      'data-map-asset'
+    )[0] || '';
+
   const sizeBytes =
     Buffer.byteLength(
       body,
@@ -1207,6 +1413,9 @@ function inspectPageFile(
     file:
       fileName,
     sizeBytes,
+    imageCount,
+    imageAssets,
+    mapAsset,
     tokens,
     shapes,
     fogZones,
@@ -1216,6 +1425,30 @@ function inspectPageFile(
       shapes * 1000 +
       fogZones * 5000
   };
+}
+
+
+function compareImageCardTargets(
+  a,
+  b
+) {
+
+  const imageDelta =
+    (
+      b.imageAssets.length +
+      b.imageCount
+    ) -
+    (
+      a.imageAssets.length +
+      a.imageCount
+    );
+
+  if (imageDelta) {
+
+    return imageDelta;
+  }
+
+  return b.sizeBytes - a.sizeBytes;
 }
 
 
@@ -1301,6 +1534,54 @@ function countMatches(
 ) {
 
   return String(value || '').split(pattern).length - 1;
+}
+
+
+function countRegexMatches(
+  value,
+  pattern
+) {
+
+  return Array.from(
+    String(value || '').matchAll(pattern)
+  ).length;
+}
+
+
+function extractAttributeValues(
+  value,
+  attributeName
+) {
+
+  const escapedName =
+    escapeRegExp(
+      attributeName
+    );
+
+  const pattern =
+    new RegExp(
+      `\\b${escapedName}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`,
+      'gi'
+    );
+
+  return Array.from(
+    String(value || '').matchAll(pattern)
+  )
+    .map(match =>
+      match[1] || match[2] || ''
+    )
+    .filter(Boolean);
+}
+
+
+function escapeRegExp(
+  value
+) {
+
+  return String(value || '').replace(
+    /[.*+?^${}()|[\]\\]/g,
+    '\\$&'
+  );
 }
 
 
@@ -1473,7 +1754,7 @@ export function createMarkdownReport(
     '',
     `Run date: ${report.runStartedAt.toISOString()}`,
     '',
-    'Plan ref: `0.0.1.11.4` (runner introduced in `0.0.1.2.2`)',
+    'Plan ref: `0.0.1.11.5` (runner introduced in `0.0.1.2.2`)',
     '',
     `Workspace: \`${report.workspacePath}\``,
     '',
@@ -1495,6 +1776,12 @@ export function createMarkdownReport(
     '',
     ...formatTargetList(
       report.targets.cards || []
+    ),
+    '',
+    '### Image Cards',
+    '',
+    ...formatTargetList(
+      report.targets.imageCards || []
     ),
     '',
     '### Heavy Maps',
@@ -1540,7 +1827,8 @@ export function createMarkdownReport(
     '## Notes',
     '',
     '- The runner uses WebView2 remote debugging to click the real Tauri WebView.',
-    '- It opens one representative card, then Settings diagnostics, tree search, a heavy map and presentation mode.',
+    '- It opens a card with an image when one exists, then Settings diagnostics, tree search, a heavy map and presentation mode.',
+    '- Image-card assets must load as visible `img[data-asset]` elements; map assets must produce a visible campaign map background.',
     '- It does not create, move or delete workspace pages.',
     '- It sets only `myOwnWorld.desktop.workspaceRoot` in the app WebView localStorage so the desktop adapter can restore the selected workspace.',
     ''
@@ -1559,9 +1847,26 @@ function formatTargetList(
     ];
   }
 
-  return targets.map(target =>
-    `- ${target.title} - ${formatBytes(target.sizeBytes)}, tokens: ${target.tokens}, shapes: ${target.shapes}, fog markers: ${target.fogZones}, file: \`${target.file}\``
-  );
+  return targets.map(target => {
+
+    const details =
+      [
+        `tokens: ${target.tokens}`,
+        `shapes: ${target.shapes}`,
+        `fog markers: ${target.fogZones}`,
+        `images: ${target.imageCount || 0}`,
+        `image assets: ${target.imageAssets?.length || 0}`
+      ];
+
+    if (target.mapAsset) {
+
+      details.push(
+        `map asset: \`${target.mapAsset}\``
+      );
+    }
+
+    return `- ${target.title} - ${formatBytes(target.sizeBytes)}, ${details.join(', ')}, file: \`${target.file}\``;
+  });
 }
 
 

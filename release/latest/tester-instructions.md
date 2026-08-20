@@ -161,6 +161,16 @@ For a large GM workspace handoff, include the workspace:
 npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
 ```
 
+For the current desktop real-app verification path, run the native smoke after a fresh desktop build:
+
+```powershell
+npm run desktop:build
+npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
+npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"
+```
+
+Expected current native result: workspace restore passes, the tree renders, a normal image card opens with at least one visible loaded `img[data-asset]`, a heavy Campaign Map opens with a visible renderable background, presentation opens with `status: ready`, Settings diagnostics opens, there are no failed WebView resources, and schema/large-asset diagnostics are treated as advisory rather than crashes.
+
 ### 3. Manual Smoke Priority
 
 1. Open a copied workspace.
@@ -361,7 +371,7 @@ npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кам�
 
 4. Expected result: both commands pass and update `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` and `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md`.
 5. Expected workspace summary on the current approved workspace: write probe OK, about 697 pages, 27 maps, 144 assets, 528 asset references, 0 missing asset references.
-6. Expected native summary: one representative card opens, Settings diagnostics opens, tree search works, a heavy campaign map opens, presentation opens, and the native report has no resource issues.
+6. Expected native summary: one image card opens when available, its image renders, Settings diagnostics opens, tree search works, a heavy campaign map opens with a renderable background, presentation opens, and the native report has no resource issues or unexpected runtime errors.
 7. Optional owner feel-check: open the release `.exe`, select `X:\ДНД\Мастер\По кампаниям\База`, open a representative card, open Settings diagnostics, search/open a heavy map and presentation, then check music/audio output manually.
 
 ## 2026-07-19: Real Large Workspace Desktop Matrix

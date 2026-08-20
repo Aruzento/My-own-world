@@ -6,6 +6,58 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.5 BUG-003 Desktop Real-App Verification
+
+### Disposition
+
+- `VERIFIED / CLOSED`.
+
+### Current Evidence
+
+- Real workspace: `X:\ДНД\Мастер\По кампаниям\База`.
+- Current release/native build passed and produced `src-tauri\target\release\my-own-world.exe` plus `src-tauri\target\release\bundle\nsis\MyOwnWorld_0.0.0_x64-setup.exe`.
+- Native WebView click-through passed with no fatal error, no failed resources and no unexpected runtime errors: launch 2853 ms, workspace restore 2201 ms, image card open 219 ms, Settings diagnostics 799 ms, tree scroll/search 185 ms, heavy Campaign Map open 230 ms and presentation open 1233 ms.
+- The native pass opened the card `Бард` with one `img[data-asset]`; `loadedImages` was `1`. It opened the heavy map `Горы-Пещеры`; `backgroundElement`, `backgroundImageSet` and `backgroundRenderable` were all `true`. Presentation opened at `presentation.html` with `status: ready`.
+- Desktop large-workspace smoke passed: 697 pages, 27 Campaign Maps, 1 task tracker, 144 assets, 528 asset references, 0 missing asset references, 5 complete backups and 0 incomplete backups.
+- Desktop release gate passed with `LARGE_WORKSPACE_VALIDATED` confidence and advisory diagnostics present.
+
+### Classification
+
+- Application failure: none reproduced.
+- Environment failure: none reproduced.
+- Workspace advisory: schema warnings in the native console and large page/asset/heavy map advisory diagnostics in the release gate; these are not classified as crashes.
+- Expected diagnostic: Settings diagnostics opened and reported workspace path, write probe OK, schema/checkpoint/backups/assets summary and recent operations.
+
+### Decision
+
+- `BUG-003` is closed as verified for the current native desktop executable and release gate.
+- No product desktop defect was reproduced, so no product runtime code was changed.
+- The only code change is in the native smoke evidence runner: it now prefers a normal image card when one exists, waits for a visible loaded `img[data-asset]`, waits for visible Campaign Map background render when the map has an asset, and records image/background metrics in the report.
+
+### Verification
+
+- Passed: `npm run desktop:build`.
+- Passed: `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`.
+- Passed: `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`.
+- Passed: `npm run desktop:packaging-smoke`.
+- Passed: `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`.
+- Passed: `node --check tools\run_desktop_native_clickthrough.mjs`.
+- Passed: `node --test tests\desktopNativeSmokeStatus.test.mjs`.
+- Passed: `npm run verify`.
+- Passed: final `git diff --check`.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not repaired, migrated, normalized or bulk-edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.6` Map Presentation.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.4 BUG-001 Large Workspace UX Stabilization
 
 ### Disposition

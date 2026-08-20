@@ -110,7 +110,7 @@ Regression target: each confirmed P0/P1 bug gets a specific browser/unit/desktop
 
 Area: desktop, release, storage adapters
 
-Status: Partially covered
+Status: VERIFIED / CLOSED
 
 Source: plan `0.0.1.2.0`, previous image/audio/workspace issues.
 
@@ -118,9 +118,9 @@ Symptoms: desktop-specific failures have happened with workspace picker, card im
 
 Risk: browser can be green while the desktop build is not usable.
 
-Next check: test the release executable and installed app against a real workspace with images, map background, card image, map presentation, and playlist.
+Current result: verified on 2026-08-20 in `0.0.1.11.5`. The current release executable launched through the native WebView runner against `X:\ДНД\Мастер\По кампаниям\База`, restored the workspace, rendered the tree, opened an image card with `loadedImages: 1`, rendered a Campaign Map with `backgroundRenderable: true`, opened presentation with status `ready`, opened Settings diagnostics, and reported no failed resources or unexpected runtime errors. Desktop release gate passed with real large-workspace validation; workspace schema/size warnings were advisory only.
 
-Regression target: desktop large-workspace smoke plus packaging smoke before every installer.
+Regression target: desktop native click-through, desktop large-workspace smoke and packaging smoke before every installer.
 
 ## P1
 
@@ -352,4 +352,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.4` `BUG-001` Large Workspace UX is `VERIFIED ACCEPTABLE`; next leaf: `0.0.1.11.5` Desktop Real-App Pass.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.5` `BUG-003` Desktop Real-App Verification is `VERIFIED / CLOSED`; next leaf: `0.0.1.11.6` Map Presentation.
