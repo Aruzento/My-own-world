@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import {
   deleteNote,
@@ -66,6 +68,44 @@ test(
         'Нет: allowed generated/local-only'
       ),
       true
+    );
+  }
+);
+
+
+test(
+  'git ignore rule keeps debug log exemption root-only',
+  () => {
+
+    const gitignorePath =
+      path.join(
+        process.cwd(),
+        '.gitignore'
+      );
+
+    const activeRules =
+      fs.readFileSync(
+        gitignorePath,
+        'utf8'
+      )
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(line =>
+          line &&
+          !line.startsWith('#')
+        );
+
+    assert.ok(
+      activeRules.includes(
+        '/debug.log'
+      )
+    );
+
+    assert.equal(
+      activeRules.includes(
+        'debug.log'
+      ),
+      false
     );
   }
 );

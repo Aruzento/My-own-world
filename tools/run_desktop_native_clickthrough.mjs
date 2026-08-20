@@ -181,6 +181,17 @@ try {
         }
       );
 
+      await waitForNativePageStableLoad(
+        page,
+        {
+          timeoutMs:
+            Math.min(
+              timeoutMs,
+              30000
+            )
+        }
+      );
+
       report.metrics.cdpEndpoint =
         endpoint;
     }
@@ -211,12 +222,34 @@ try {
 
       if (!alreadyLoaded) {
 
+        await waitForNativePageStableLoad(
+          page,
+          {
+            timeoutMs:
+              Math.min(
+                timeoutMs,
+                30000
+              )
+          }
+        );
+
         await page.reload({
           waitUntil:
-            'domcontentloaded',
+            'load',
           timeout:
             timeoutMs
         });
+
+        await waitForNativePageStableLoad(
+          page,
+          {
+            timeoutMs:
+              Math.min(
+                timeoutMs,
+                30000
+              )
+          }
+        );
       }
 
       await page.waitForFunction(
@@ -421,6 +454,19 @@ try {
         timeout:
           30000
       });
+
+      await waitForNativePageStableLoad(
+        presentationPage,
+        {
+          timeoutMs:
+            Math.min(
+              timeoutMs,
+              10000
+            ),
+          networkIdleTimeoutMs:
+            3000
+        }
+      );
 
       report.metrics.presentation =
         await collectPresentationMetrics(
@@ -1463,6 +1509,38 @@ function sleep(
       ms
     )
   );
+}
+
+
+async function waitForNativePageStableLoad(
+  page,
+  {
+    timeoutMs =
+      30000,
+    networkIdleTimeoutMs =
+      5000
+  } =
+    {}
+) {
+
+  await page.waitForLoadState(
+    'load',
+    {
+      timeout:
+        timeoutMs
+    }
+  );
+
+  await page.waitForLoadState(
+    'networkidle',
+    {
+      timeout:
+        Math.min(
+          timeoutMs,
+          networkIdleTimeoutMs
+        )
+    }
+  ).catch(() => {});
 }
 
 
