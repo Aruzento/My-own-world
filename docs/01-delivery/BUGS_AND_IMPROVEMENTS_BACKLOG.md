@@ -9,7 +9,7 @@ owner_zone: "delivery"
 
 # Bugs And Improvements Backlog
 
-Updated: 2026-08-10
+Updated: 2026-08-20
 
 This file is a lightweight holding area for issues that should not interrupt the current task immediately, but should not be forgotten.
 
@@ -66,6 +66,7 @@ It is not a replacement for [PROJECT_PLAN.md](./PROJECT_PLAN.md) or [BUG_INVENTO
 | BI-024 | P2 | Documentation / status automation | Ready for plan | `0.0.1.10.0` | PROMOTED TO PROJECT_PLAN PHASE 2. Add only if the audit confirms recurring status drift: a lightweight consistency check for stale `Next active block` pointers, outdated release handoff summaries and bug inventory statements. Keep it simple and avoid turning docs into a brittle generated system. |
 | BI-025 | P2 | AppShell / workspace panes | Ready for plan | `0.0.1.24.0` | PROMOTED TO PROJECT_PLAN PHASE 16. Future workbench model: allow up to 3 open work areas at once, such as card, campaign map and knowledge graph panes. Do not implement as a decorative panel; design persistence, focus, split behavior and mobile fallback deliberately before adding it to runtime. |
 | BI-026 | P2 | Knowledge graph / UX concept | New | `0.0.1.23.0` | PROMOTED TO PROJECT_PLAN PHASE 15. User feedback on 2026-07-29: the current Knowledge Graph concept still feels off. Before adding another visible graph feature, run a focused UX rethink: define what the graph should help a GM decide, separate navigation from analysis, choose the primary first-screen concept, review references again, and produce a small design note/mock direction. Regression target after implementation: visual smoke plus graph browser workflow checks for the chosen concept. |
+| BI-027 | P1 | AppShell / workspace switch | Done | `0.0.1.11.1` | Closed in Phase 3 stabilization: a permanent compact topbar `Открыть папку` action is visible while a workspace is active, cancel keeps the current workspace/page intact, successful A -> B switch reloads B and old page/assets do not leak. Browser regression covers cancel, A -> B, pending A edit flush and workspace-scoped asset URL. |
 
 ## Intake Template
 

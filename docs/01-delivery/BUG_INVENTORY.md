@@ -124,6 +124,20 @@ Regression target: desktop large-workspace smoke plus packaging smoke before eve
 
 ## P1
 
+### BUG-WS-001. Workspace switch action disappeared after opening a workspace
+
+Area: AppShell, workspace picker, editor save/load lifecycle
+
+Status: FIXED
+
+Source: owner report before `0.0.1.11.1`: while a workspace was active, the visible `Открыть папку` action existed only in the no-workspace tree empty state, so the user had no permanent way to switch/open another workspace from the populated UI.
+
+Root cause: `[data-open-workspace]` was rendered only by the no-workspace tree empty state. The global AppShell had Settings and Tools actions, but no compact workspace switch action. The switch path also opened the picker before flushing the current editor page, so a pending edit could be left behind or saved through the wrong workspace adapter after the adapter changed.
+
+Fix: `0.0.1.11.1` restores a permanent compact AppShell topbar `Открыть папку` action using the existing `[data-open-workspace]` click handler and existing workspace picker/open lifecycle. Before opening the picker, the handler saves the current page through the existing editor save lifecycle; cancel keeps the active workspace and page view; successful A -> B switch loads B, clears the old editor view through the existing empty-editor teardown and keeps asset render cache identity scoped to B.
+
+Regression target: `app-shell-global-workspace-switch-keeps-cancel-and-loads-next-workspace` opens workspace A, verifies the permanent action, cancels without state reset, switches to B, proves A pages disappear, B pages appear, B asset URL is workspace-scoped and A pending text is saved only to A.
+
 ### BUG-004. Campaign map presentation is historically fragile
 
 Area: campaign map, presentation
@@ -313,6 +327,7 @@ Regression target: keep safe commit rules, project file audit checks and the nar
 Covered by current browser smoke:
 
 - app shell empty state;
+- persistent AppShell workspace switch cancel/A-to-B/pending-edit/asset-cache path;
 - tree DnD planning, tree delete, and tree virtualization;
 - campaign map data save/reload, token removal, presentation sync, fog patches, hidden player token behavior, layers, drawing, playlist basics, initiative basics;
 - editor formatting boundary and history;
@@ -335,4 +350,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. Next leaf: `0.0.1.11.1` Workspace Switch Access.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.1` Workspace Switch Access is `FIXED`; next leaf: `0.0.1.11.2` `BI-010` Campaign Map Toolbar.

@@ -6,6 +6,53 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.1 Workspace Switch Access
+
+### Disposition
+
+- `FIXED`.
+
+### What Changed
+
+- Restored a permanent compact AppShell topbar `Открыть папку` action while a workspace is active.
+- Reused the existing `[data-open-workspace]` delegated click handler and existing `openWorkspace()` / `loadWorkspace()` lifecycle.
+- Saved the current page through the existing editor save lifecycle before opening the workspace picker, so pending page edits stay in workspace A before switching away.
+- Cleared the old editor view through the existing empty-editor teardown after a successful workspace switch, so A's open page does not remain visible after B loads.
+- Kept the no-workspace tree empty-state `Открыть папку` action intact.
+
+### Root Cause
+
+- The only visible `[data-open-workspace]` control was rendered by the no-workspace tree empty state. Once a workspace populated the tree, that control disappeared and AppShell had no persistent workspace switch action.
+- The switch path opened the picker before flushing the current editor page. If the user switched while an autosave was pending, the old page could be saved too late or through the new workspace adapter.
+
+### Regression
+
+- Added `app-shell-global-workspace-switch-keeps-cancel-and-loads-next-workspace`.
+- The regression opens workspace A, verifies the permanent switch action, cancels without resetting A/current page, switches A -> B, verifies B pages and workspace identity, verifies A-only page removal, proves the shared asset URL resolves under B, and proves pending A text is saved to A but not B.
+
+### Verification
+
+- Passed: `npm run test:browser -- --grep app-shell-global-workspace-switch-keeps-cancel-and-loads-next-workspace`.
+- Passed: `npm run test:browser -- tests/browser/app-shell.spec.mjs`.
+- Passed: `node --test tests\workspaceStorage.test.mjs`.
+- Passed: `node --test tests\storageAdapter.test.mjs --test-name-pattern "getRenderableImageURL.*workspace"`; the runner executed the full storage adapter file, including both workspace-scoped renderable image cache tests.
+- Passed: `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`.
+- Passed: `npm run verify` with encoding/syntax checks, 338 node tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run ui:polish:audit`.
+- Passed: final `git diff --check` with only Windows LF-to-CRLF working-copy warnings.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not opened, repaired, migrated, normalized or edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.2` `BI-010` Campaign Map Toolbar.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.0 Existing P1 Stabilization Phase Start
 
 ### What Changed

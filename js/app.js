@@ -27,6 +27,7 @@ import {
   setupEditor,
   renderEmptyEditor,
   renderWorkspaceRecoveryEditor,
+  saveCurrentPage,
 } from './editor/editor.js';
 
 import {
@@ -140,18 +141,33 @@ document.addEventListener(
 
 async function openSelectedWorkspace() {
 
+  try {
+
+    await saveCurrentPage();
+
+  } catch (error) {
+
+    console.error(
+      'Workspace switch stopped because current page save failed.',
+      error
+    );
+
+    return;
+  }
+
   const success =
     await openWorkspace();
 
   if (!success) return;
 
-  await loadWorkspace();
+  const loaded =
+    await loadWorkspace();
+
+  if (loaded === false) return;
 
   await loadPageTemplates();
 
   await restoreWorkspaceTreeExpansionState();
-
-  renderTree();
 
   if (
     shouldShowWorkspaceRecovery(
@@ -166,10 +182,7 @@ async function openSelectedWorkspace() {
     return;
   }
 
-  if (state.pages.length === 0) {
-
-    renderEmptyEditor();
-  }
+  renderEmptyEditor();
 }
 
 

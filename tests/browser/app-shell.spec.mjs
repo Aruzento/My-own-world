@@ -433,6 +433,20 @@ test(
     );
 
     await expect(
+      page.locator('#appWorkspaceSwitchBtn')
+    ).toHaveAttribute(
+      'data-tooltip',
+      'Открыть папку'
+    );
+
+    await expect(
+      page.locator('#appWorkspaceSwitchBtn')
+    ).toHaveAttribute(
+      'data-open-workspace',
+      'true'
+    );
+
+    await expect(
       page.locator('#appToolsBtn')
     ).toHaveAttribute(
       'data-tooltip',
@@ -461,22 +475,17 @@ test(
       page.locator('[data-tree-empty-workspace="true"]')
     ).toBeVisible();
 
+    const emptyTreeOpenWorkspaceButton =
+      page.locator(
+        '[data-tree-empty-workspace="true"] [data-open-workspace]'
+      );
+
     await expect(
-      page.getByRole(
-        'button',
-        {
-          name: 'Открыть папку'
-        }
-      )
+      emptyTreeOpenWorkspaceButton
     ).toBeVisible();
 
     await expect(
-      page.getByRole(
-        'button',
-        {
-          name: 'Открыть папку'
-        }
-      )
+      emptyTreeOpenWorkspaceButton
     ).toHaveAttribute(
       'data-open-workspace',
       'true'
@@ -891,6 +900,701 @@ test(
       consoleErrors
     ).toEqual(
       []
+    );
+  }
+);
+
+
+test(
+  'app-shell-global-workspace-switch-keeps-cancel-and-loads-next-workspace',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          buildPageRecordContent
+        } = await import('/js/core/pageRecord.js');
+
+        const {
+          setAssetAdapter
+        } = await import('/js/storage/assetAdapter.js');
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const normalize =
+          path => String(path || '')
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '')
+            .replace(/\/+/g, '/');
+
+        const getParentPath =
+          path => {
+
+            const parts =
+              normalize(path)
+                .split('/');
+
+            parts.pop();
+
+            return parts.join('/');
+          };
+
+        const ensureDirectoryPath =
+          (
+            directories,
+            path
+          ) => {
+
+            const parts =
+              normalize(path)
+                .split('/')
+                .filter(Boolean);
+
+            let current =
+              '';
+
+            for (const part of parts) {
+
+              current =
+                current
+                  ? `${current}/${part}`
+                  : part;
+
+              directories.add(
+                current
+              );
+            }
+          };
+
+        const listWorkspaceEntries =
+          (
+            workspace,
+            path = ''
+          ) => {
+
+            const normalized =
+              normalize(path);
+
+            const prefix =
+              normalized
+                ? `${normalized}/`
+                : '';
+
+            const entries =
+              new Map();
+
+            for (const directory of workspace.directories) {
+
+              if (!directory.startsWith(prefix)) continue;
+
+              const rest =
+                directory.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'directory'
+              );
+            }
+
+            for (const filePath of workspace.files.keys()) {
+
+              if (!filePath.startsWith(prefix)) continue;
+
+              const rest =
+                filePath.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'file'
+              );
+            }
+
+            return [...entries].map(([name, kind]) => ({
+              name,
+              kind
+            }));
+          };
+
+        const createPageContent =
+          ({
+            id,
+            title,
+            body
+          }) => buildPageRecordContent({
+            id,
+            parent:
+              null,
+            order:
+              1,
+            tags:
+              [
+                'card'
+              ],
+            template:
+              'card',
+            type:
+              'note',
+            aliases:
+              [],
+            relationships:
+              [],
+            body: `
+              <div class="entity-layout card-shell" contenteditable="false">
+                <h1>${title}</h1>
+                <div class="rich-text-field" contenteditable="true" data-persistent-editable="true">${body}</div>
+                <img data-asset="portraits/shared-render-cache.png" alt="">
+              </div>
+            `
+          });
+
+        const createWorkspace =
+          (
+            key,
+            page
+          ) => {
+
+            const workspace = {
+              key,
+              directories:
+                new Set([
+                  '',
+                  'pages',
+                  'assets',
+                  'assets/portraits'
+                ]),
+              files:
+                new Map(),
+              writes:
+                []
+            };
+
+            workspace.files.set(
+              `pages/${page.id}.md`,
+              createPageContent(
+                page
+              )
+            );
+
+            workspace.files.set(
+              'assets/portraits/shared-render-cache.png',
+              new Uint8Array([
+                137,
+                80,
+                78,
+                71
+              ]).buffer
+            );
+
+            return workspace;
+          };
+
+        const workspaces =
+          new Map([
+            [
+              'workspace-a',
+              createWorkspace(
+                'workspace-a',
+                {
+                  id:
+                    'workspace-a-page',
+                  title:
+                    'Workspace A Page',
+                  body:
+                    'Original A body'
+                }
+              )
+            ],
+            [
+              'workspace-b',
+              createWorkspace(
+                'workspace-b',
+                {
+                  id:
+                    'workspace-b-page',
+                  title:
+                    'Workspace B Page',
+                  body:
+                    'Original B body'
+                }
+              )
+            ]
+          ]);
+
+        const pickQueue =
+          [];
+
+        let activeWorkspaceKey =
+          null;
+
+        const getActiveWorkspace =
+          () => {
+
+            if (!activeWorkspaceKey) {
+
+              throw new Error(
+                'No active workspace.'
+              );
+            }
+
+            return workspaces.get(
+              activeWorkspaceKey
+            );
+          };
+
+        const adapter = {
+          kind:
+            'desktop',
+          getWorkspaceRoot() {
+            return activeWorkspaceKey;
+          },
+          setWorkspaceRoot(root) {
+            activeWorkspaceKey =
+              String(root || '') ||
+              null;
+          },
+          getWorkspaceHandle() {
+            return activeWorkspaceKey;
+          },
+          setWorkspaceHandle(handle) {
+            activeWorkspaceKey =
+              String(handle || '') ||
+              null;
+          },
+          async pickWorkspace() {
+
+            const next =
+              pickQueue.shift();
+
+            if (next === 'cancel') {
+
+              throw new DOMException(
+                'Dialog canceled',
+                'AbortError'
+              );
+            }
+
+            if (!workspaces.has(next)) {
+
+              throw new Error(
+                `Unknown test workspace: ${next}`
+              );
+            }
+
+            activeWorkspaceKey =
+              next;
+
+            return next;
+          },
+          async restoreWorkspace() {
+            return null;
+          },
+          async ensureDirectory(path) {
+            ensureDirectoryPath(
+              getActiveWorkspace().directories,
+              path
+            );
+          },
+          async getDirectoryHandle(path) {
+            return {
+              kind:
+                'directory',
+              path:
+                normalize(path)
+            };
+          },
+          async readText(path) {
+
+            const normalized =
+              normalize(path);
+
+            const value =
+              getActiveWorkspace().files.get(
+                normalized
+              );
+
+            if (value === undefined) {
+
+              throw new Error(
+                `File not found: ${normalized}`
+              );
+            }
+
+            return typeof value === 'string'
+              ? value
+              : new TextDecoder().decode(
+                value
+              );
+          },
+          async writeText(path, content) {
+
+            const workspace =
+              getActiveWorkspace();
+
+            const normalized =
+              normalize(path);
+
+            ensureDirectoryPath(
+              workspace.directories,
+              getParentPath(
+                normalized
+              )
+            );
+
+            workspace.files.set(
+              normalized,
+              String(content)
+            );
+
+            workspace.writes.push({
+              path:
+                normalized,
+              content:
+                String(content)
+            });
+          },
+          async readBinary(path) {
+
+            const value =
+              getActiveWorkspace().files.get(
+                normalize(path)
+              );
+
+            if (value === undefined) {
+
+              throw new Error(
+                `File not found: ${path}`
+              );
+            }
+
+            return typeof value === 'string'
+              ? new TextEncoder().encode(
+                value
+              ).buffer
+              : value;
+          },
+          async writeBinary(path, content) {
+
+            const workspace =
+              getActiveWorkspace();
+
+            const normalized =
+              normalize(path);
+
+            ensureDirectoryPath(
+              workspace.directories,
+              getParentPath(
+                normalized
+              )
+            );
+
+            workspace.files.set(
+              normalized,
+              content
+            );
+          },
+          async listFiles(path = '') {
+            return listWorkspaceEntries(
+              getActiveWorkspace(),
+              path
+            );
+          },
+          async removeFile(path) {
+            getActiveWorkspace().files.delete(
+              normalize(path)
+            );
+          },
+          async removeDirectory(path) {
+
+            const workspace =
+              getActiveWorkspace();
+
+            const normalized =
+              normalize(path);
+
+            for (const filePath of [...workspace.files.keys()]) {
+
+              if (
+                filePath === normalized ||
+                filePath.startsWith(`${normalized}/`)
+              ) {
+
+                workspace.files.delete(
+                  filePath
+                );
+              }
+            }
+
+            for (const directory of [...workspace.directories]) {
+
+              if (
+                directory === normalized ||
+                directory.startsWith(`${normalized}/`)
+              ) {
+
+                workspace.directories.delete(
+                  directory
+                );
+              }
+            }
+          }
+        };
+
+        setStorageAdapter(
+          adapter
+        );
+
+        setAssetAdapter({
+          kind:
+            'workspace-switch-assets',
+          async importFile() {},
+          async resolveUrl(path) {
+            return `asset://${adapter.getWorkspaceRoot()}/${normalize(path)}`;
+          },
+          async exists() {
+            return true;
+          },
+          async remove() {},
+          async findOrphans() {
+            return [];
+          }
+        });
+
+        window.Image =
+          class RenderableImage {
+
+            set src(value) {
+              this.currentSrc =
+                value;
+
+              queueMicrotask(
+                () => this.onload?.()
+              );
+            }
+          };
+
+        window.__workspaceSwitchAccessTest = {
+          pickQueue,
+          snapshot() {
+            return {
+              activeWorkspaceKey,
+              currentPageId:
+                window.__mowState?.currentPage?.id || null,
+              pages:
+                window.__mowState?.pages?.map(candidate => candidate.id) || [],
+              aFile:
+                workspaces.get('workspace-a')
+                  .files.get('pages/workspace-a-page.md'),
+              bFile:
+                workspaces.get('workspace-b')
+                  .files.get('pages/workspace-b-page.md'),
+              aWrites:
+                workspaces.get('workspace-a').writes,
+              bWrites:
+                workspaces.get('workspace-b').writes
+            };
+          }
+        };
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        window.__mowState =
+          state;
+      }
+    );
+
+    await page.evaluate(
+      () => window.__workspaceSwitchAccessTest.pickQueue.push(
+        'workspace-a'
+      )
+    );
+
+    await page
+      .locator('[data-tree-empty-workspace="true"] [data-open-workspace]')
+      .click();
+
+    await expect(
+      page.locator('.tree-item[data-page-id="workspace-a-page"]')
+    ).toBeVisible();
+
+    const globalSwitch =
+      page.locator('#appWorkspaceSwitchBtn[data-open-workspace]');
+
+    await expect(
+      globalSwitch
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#tree [data-open-workspace]')
+    ).toHaveCount(
+      0
+    );
+
+    await page
+      .locator('.tree-item[data-page-id="workspace-a-page"] .tree-title')
+      .click();
+
+    await expect(
+      page.locator('#editorArea h1')
+    ).toHaveText(
+      'Workspace A Page'
+    );
+
+    await expect(
+      page.locator('#editorArea img[data-asset]')
+    ).toHaveAttribute(
+      'src',
+      'asset://workspace-a/portraits/shared-render-cache.png'
+    );
+
+    await page
+      .locator('#editorArea .rich-text-field')
+      .fill(
+        'Pending A edit before workspace switch'
+      );
+
+    await page.evaluate(
+      () => window.__workspaceSwitchAccessTest.pickQueue.push(
+        'cancel'
+      )
+    );
+
+    await globalSwitch.click();
+
+    await expect(
+      page.locator('.tree-item[data-page-id="workspace-a-page"]')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#editorArea h1')
+    ).toHaveText(
+      'Workspace A Page'
+    );
+
+    await expect(
+      page.locator('#editorArea .rich-text-field')
+    ).toHaveText(
+      'Pending A edit before workspace switch'
+    );
+
+    const afterCancel =
+      await page.evaluate(
+        () => window.__workspaceSwitchAccessTest.snapshot()
+      );
+
+    expect(
+      afterCancel.activeWorkspaceKey
+    ).toBe(
+      'workspace-a'
+    );
+
+    expect(
+      afterCancel.currentPageId
+    ).toBe(
+      'workspace-a-page'
+    );
+
+    await page.evaluate(
+      () => window.__workspaceSwitchAccessTest.pickQueue.push(
+        'workspace-b'
+      )
+    );
+
+    await globalSwitch.click();
+
+    await expect(
+      page.locator('.tree-item[data-page-id="workspace-b-page"]')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('.tree-item[data-page-id="workspace-a-page"]')
+    ).toHaveCount(
+      0
+    );
+
+    await expect(
+      page.locator('#editorArea')
+    ).not.toContainText(
+      'Workspace A Page'
+    );
+
+    await page
+      .locator('.tree-item[data-page-id="workspace-b-page"] .tree-title')
+      .click();
+
+    await expect(
+      page.locator('#editorArea h1')
+    ).toHaveText(
+      'Workspace B Page'
+    );
+
+    await expect(
+      page.locator('#editorArea img[data-asset]')
+    ).toHaveAttribute(
+      'src',
+      'asset://workspace-b/portraits/shared-render-cache.png'
+    );
+
+    const afterSwitch =
+      await page.evaluate(
+        () => window.__workspaceSwitchAccessTest.snapshot()
+      );
+
+    expect(
+      afterSwitch.activeWorkspaceKey
+    ).toBe(
+      'workspace-b'
+    );
+
+    expect(
+      afterSwitch.pages
+    ).toEqual([
+      'workspace-b-page'
+    ]);
+
+    expect(
+      afterSwitch.aFile
+    ).toContain(
+      'Pending A edit before workspace switch'
+    );
+
+    expect(
+      afterSwitch.bFile
+    ).not.toContain(
+      'Pending A edit before workspace switch'
+    );
+
+    expect(
+      afterSwitch.aWrites.some(write =>
+        write.path === 'pages/workspace-a-page.md' &&
+        write.content.includes(
+          'Pending A edit before workspace switch'
+        )
+      )
+    ).toBe(
+      true
+    );
+
+    expect(
+      afterSwitch.bWrites.some(write =>
+        write.content.includes(
+          'Pending A edit before workspace switch'
+        )
+      )
+    ).toBe(
+      false
     );
   }
 );
