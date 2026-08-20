@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { spawn, spawnSync } from 'node:child_process';
@@ -56,10 +57,32 @@ const output =
 const timeoutMs =
   Number(args.timeout || 90000);
 
+const audioSmoke =
+  Boolean(
+    args['audio-smoke']
+  );
+
+const allowWorkspaceWrite =
+  Boolean(
+    args['allow-workspace-write']
+  );
+
 if (!workspace) {
 
   console.error(
-    'Usage: node tools/run_desktop_native_clickthrough.mjs --workspace "X:\\path\\to\\workspace" [--exe src-tauri/target/release/my-own-world.exe]'
+    'Usage: node tools/run_desktop_native_clickthrough.mjs --workspace "X:\\path\\to\\workspace" [--exe src-tauri/target/release/my-own-world.exe] [--audio-smoke --allow-workspace-write]'
+  );
+
+  process.exit(1);
+}
+
+if (
+  audioSmoke &&
+  !allowWorkspaceWrite
+) {
+
+  console.error(
+    'Audio smoke imports files and saves playlist state. Run it only on a disposable workspace and pass --allow-workspace-write.'
   );
 
   process.exit(1);
@@ -96,6 +119,15 @@ const report =
     runStartedAt,
     workspacePath,
     exePath,
+    planRef:
+      args['plan-ref'] || '0.0.1.11.5',
+    audioSmoke:
+      {
+        enabled:
+          audioSmoke,
+        writesAllowed:
+          allowWorkspaceWrite
+      },
     steps: [],
     metrics: {},
     targets:
@@ -120,6 +152,9 @@ let page =
   null;
 
 let fatalError =
+  null;
+
+let audioSmokeTempDir =
   null;
 
 try {
@@ -515,6 +550,47 @@ try {
     }
   );
 
+  if (audioSmoke) {
+
+    await runStep(
+      report,
+      'exercise campaign map music import and playback',
+      async () => {
+
+        audioSmokeTempDir =
+          await fs.mkdtemp(
+            path.join(
+              os.tmpdir(),
+              'mow-desktop-audio-smoke-'
+            )
+          );
+
+        const audioFiles =
+          await createAudioSmokeFiles(
+            audioSmokeTempDir
+          );
+
+        const audioProgress =
+          [];
+
+        report.metrics.audioProgress =
+          audioProgress;
+
+        report.metrics.audio =
+          await exerciseCampaignMapMusicAudioSmoke({
+            page,
+            workspacePath,
+            audioFiles,
+            mapTargets:
+              report.targets.heavyMaps || [],
+            timeoutMs,
+            progress:
+              audioProgress
+          });
+      }
+    );
+  }
+
   await runStep(
     report,
     'open presentation window from the heavy map',
@@ -595,6 +671,19 @@ try {
   await stopDesktopApp(
     appProcess
   );
+
+  if (audioSmokeTempDir) {
+
+    await fs.rm(
+      audioSmokeTempDir,
+      {
+        recursive:
+          true,
+        force:
+          true
+      }
+    ).catch(() => {});
+  }
 }
 
 await fs.mkdir(
@@ -1228,6 +1317,1011 @@ async function collectPresentationMetrics(
 }
 
 
+async function createAudioSmokeFiles(
+  directory
+) {
+
+  const files =
+    {
+      normalA:
+        path.join(
+          directory,
+          'desktop-normal-a.wav'
+        ),
+      normalB:
+        path.join(
+          directory,
+          'desktop-normal-b.wav'
+        ),
+      battleA:
+        path.join(
+          directory,
+          'desktop-battle-a.wav'
+        ),
+      battleB:
+        path.join(
+          directory,
+          'desktop-battle-b.wav'
+        )
+    };
+
+  await Promise.all(
+    Object.values(
+      files
+    ).map(filePath =>
+      fs.writeFile(
+        filePath,
+        createSilentWavBuffer()
+      )
+    )
+  );
+
+  return files;
+}
+
+
+async function exerciseCampaignMapMusicAudioSmoke({
+  page,
+  workspacePath,
+  audioFiles,
+  mapTargets,
+  timeoutMs,
+  progress = []
+}) {
+
+  const markProgress =
+    phase => {
+
+      progress.push({
+        phase,
+        at:
+          new Date().toISOString()
+      });
+    };
+
+  const currentMapId =
+    await getCurrentPageId(
+      page
+    );
+
+  if (!currentMapId) {
+
+    throw new Error(
+      'Audio smoke could not determine the currently open campaign map page.'
+    );
+  }
+
+  await openCampaignMapMusicPopupForSmoke(
+    page
+  );
+
+  markProgress(
+    'music-popup-open'
+  );
+
+  await importCampaignMapMusicFiles(
+    page,
+    [
+      audioFiles.normalA,
+      audioFiles.normalB
+    ],
+    [
+      'desktop normal a',
+      'desktop normal b'
+    ],
+    timeoutMs
+  );
+
+  markProgress(
+    'normal-imported'
+  );
+
+  const normal =
+    await exerciseActiveMusicPlaylistControls(
+      page,
+      timeoutMs
+    );
+
+  markProgress(
+    'normal-controls'
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-mode-btn[data-music-mode="battle"]'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await importCampaignMapMusicFiles(
+    page,
+    [
+      audioFiles.battleA,
+      audioFiles.battleB
+    ],
+    [
+      'desktop battle a',
+      'desktop battle b'
+    ],
+    timeoutMs
+  );
+
+  markProgress(
+    'battle-imported'
+  );
+
+  const battle =
+    await exerciseActiveMusicPlaylistControls(
+      page,
+      timeoutMs
+    );
+
+  markProgress(
+    'battle-controls'
+  );
+
+  await assertImportedAudioFilesExist(
+    workspacePath,
+    Object.values(
+      audioFiles
+    ).map(filePath =>
+      path.basename(
+        filePath
+      )
+    )
+  );
+
+  markProgress(
+    'files-on-disk'
+  );
+
+  const mapSwitch =
+    await switchAwayAndBackToMap({
+      page,
+      currentMapId,
+      mapTargets,
+      timeoutMs
+    });
+
+  markProgress(
+    'map-switch-return'
+  );
+
+  await reloadWorkspaceAndOpenMap(
+    page,
+    currentMapId,
+    timeoutMs
+  );
+
+  markProgress(
+    'workspace-reloaded'
+  );
+
+  await openCampaignMapMusicPopupForSmoke(
+    page
+  );
+
+  markProgress(
+    'music-popup-open-after-reload'
+  );
+
+  await waitForMusicTracks(
+    page,
+    [
+      'desktop battle a',
+      'desktop battle b'
+    ],
+    timeoutMs
+  );
+
+  markProgress(
+    'battle-tracks-after-reload'
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-mode-btn[data-music-mode="normal"]'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await waitForMusicTracks(
+    page,
+    [
+      'desktop normal a',
+      'desktop normal b'
+    ],
+    timeoutMs
+  );
+
+  markProgress(
+    'normal-tracks-after-reload'
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-play-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await waitForCampaignMusicPlayback(
+    page,
+    timeoutMs
+  );
+
+  markProgress(
+    'play-after-reload'
+  );
+
+  const reloaded =
+    await collectCampaignMapMusicSmokeMetrics(
+      page
+    );
+
+  await assertNoCampaignMusicError(
+    page
+  );
+
+  return {
+    mapId:
+      currentMapId,
+    importedFiles:
+      Object.values(
+        audioFiles
+      ).map(filePath =>
+        path.basename(
+          filePath
+        )
+      ),
+    normal,
+    battle,
+    mapSwitch,
+    reloaded
+  };
+}
+
+
+async function openCampaignMapMusicPopupForSmoke(
+  page
+) {
+
+  const isOpen =
+    await page.evaluate(
+      () => {
+
+        const popup =
+          document.getElementById(
+            'campaignMapPopup'
+          );
+
+        return Boolean(
+          popup &&
+          popup.dataset.popupKey === 'music' &&
+          !popup.classList.contains(
+            'hidden'
+          ) &&
+          popup.querySelector(
+            '.campaign-music-upload-input'
+          )
+        );
+      }
+    ).catch(() => false);
+
+  if (!isOpen) {
+
+    await page.locator(
+      '.campaign-music-btn'
+    ).click({
+      timeout:
+        15000
+    });
+  }
+
+  await page.waitForFunction(
+    () => {
+
+      const popup =
+        document.getElementById(
+          'campaignMapPopup'
+        );
+
+      return Boolean(
+        popup &&
+        popup.dataset.popupKey === 'music' &&
+        !popup.classList.contains(
+          'hidden'
+        ) &&
+        popup.querySelector(
+          '.campaign-music-upload-input'
+        )
+      );
+    },
+    null,
+    {
+      timeout:
+        30000
+    }
+  );
+}
+
+
+async function importCampaignMapMusicFiles(
+  page,
+  filePaths,
+  expectedTitles,
+  timeoutMs
+) {
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-upload-input'
+  ).setInputFiles(
+    filePaths
+  );
+
+  await page.waitForFunction(
+    count => {
+
+      const popup =
+        document.getElementById(
+          'campaignMapPopup'
+        );
+
+      return (popup?.textContent || '').includes(
+        `Выбрано файлов: ${count}`
+      );
+    },
+    filePaths.length,
+    {
+      timeout:
+        30000
+    }
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-upload-add-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await waitForMusicTracks(
+    page,
+    expectedTitles,
+    timeoutMs
+  );
+
+  await assertNoCampaignMusicError(
+    page
+  );
+}
+
+
+async function exerciseActiveMusicPlaylistControls(
+  page,
+  timeoutMs
+) {
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-play-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await waitForCampaignMusicPlayback(
+    page,
+    timeoutMs
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-next-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await waitForCampaignMusicPlayback(
+    page,
+    timeoutMs
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-prev-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await waitForCampaignMusicPlayback(
+    page,
+    timeoutMs
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-order-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await page.waitForFunction(
+    () => document.querySelector(
+      '#campaignMapPopup .campaign-music-order-btn'
+    )?.classList.contains(
+      'is-active'
+    ),
+    null,
+    {
+      timeout:
+        15000
+    }
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-loop-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await page.waitForFunction(
+    () => document.querySelector(
+      '#campaignMapPopup .campaign-music-loop-btn'
+    )?.classList.contains(
+      'is-active'
+    ),
+    null,
+    {
+      timeout:
+        15000
+    }
+  );
+
+  await page.locator(
+    '#campaignMapPopup .campaign-music-stop-btn'
+  ).click({
+    timeout:
+      15000
+  });
+
+  await page.waitForFunction(
+    () => (document.querySelector(
+      '#campaignMapPopup .campaign-music-playback-status'
+    )?.textContent || '').includes(
+      'Остановлено'
+    ),
+    null,
+    {
+      timeout:
+        15000
+    }
+  );
+
+  await assertNoCampaignMusicError(
+    page
+  );
+
+  return collectCampaignMapMusicSmokeMetrics(
+    page
+  );
+}
+
+
+async function waitForCampaignMusicPlayback(
+  page,
+  timeoutMs
+) {
+
+  await page.waitForFunction(
+    () => {
+
+      const status =
+        document.querySelector(
+          '#campaignMapPopup .campaign-music-playback-status'
+        )?.textContent || '';
+
+      const audio =
+        document.querySelector(
+          '.campaign-map-music-audio'
+        );
+
+      return Boolean(
+        status.includes(
+          'Играет'
+        ) &&
+        audio?.dataset?.trackId &&
+        (audio.currentSrc || audio.src || '').startsWith(
+          'blob:'
+        )
+      );
+    },
+    null,
+    {
+      timeout:
+        Math.min(
+          timeoutMs,
+          30000
+        )
+    }
+  );
+
+  await assertNoCampaignMusicError(
+    page
+  );
+}
+
+
+async function waitForMusicTracks(
+  page,
+  expectedTitles,
+  timeoutMs
+) {
+
+  await page.waitForFunction(
+    titles => {
+
+      const popup =
+        document.getElementById(
+          'campaignMapPopup'
+        );
+
+      const text =
+        (popup?.textContent || '').toLowerCase();
+
+      return titles.every(title =>
+        text.includes(
+          String(title || '').toLowerCase()
+        )
+      );
+    },
+    expectedTitles,
+    {
+      timeout:
+        Math.min(
+          timeoutMs,
+          30000
+        )
+    }
+  );
+}
+
+
+async function assertNoCampaignMusicError(
+  page
+) {
+
+  const errorText =
+    await page.evaluate(
+      () => {
+
+        const popup =
+          document.getElementById(
+            'campaignMapPopup'
+          );
+
+        const text =
+          popup?.textContent || '';
+
+        return /Не удалось|unsupported|not supported|failed/i.test(
+          text
+        )
+          ? text.replace(/\s+/g, ' ').trim().slice(0, 500)
+          : '';
+      }
+    );
+
+  if (errorText) {
+
+    throw new Error(
+      `Campaign map music popup reported an error: ${errorText}`
+    );
+  }
+}
+
+
+async function assertImportedAudioFilesExist(
+  workspacePath,
+  fileNames
+) {
+
+  for (const fileName of fileNames) {
+
+    await fs.stat(
+      path.join(
+        workspacePath,
+        'assets',
+        'music',
+        fileName
+      )
+    );
+  }
+}
+
+
+async function switchAwayAndBackToMap({
+  page,
+  currentMapId,
+  mapTargets,
+  timeoutMs
+}) {
+
+  const target =
+    mapTargets.find(map =>
+      map.id &&
+      map.id !== currentMapId
+    );
+
+  if (!target) {
+
+    throw new Error(
+      'Audio smoke requires a disposable workspace with at least two campaign maps to verify map switch and return.'
+    );
+  }
+
+  await openTreePageById(
+    page,
+    target.id,
+    timeoutMs,
+    target.title || target.id
+  );
+
+  const currentTarget =
+    mapTargets.find(map =>
+      map.id === currentMapId
+    );
+
+  await openTreePageById(
+    page,
+    currentMapId,
+    timeoutMs,
+    currentTarget?.title || currentMapId
+  );
+
+  return {
+    from:
+      currentMapId,
+    to:
+      target.id,
+    back:
+      currentMapId
+  };
+}
+
+
+async function reloadWorkspaceAndOpenMap(
+  page,
+  pageId,
+  timeoutMs
+) {
+
+  await page.reload({
+    waitUntil:
+      'load',
+    timeout:
+      timeoutMs
+  });
+
+  await waitForNativePageStableLoad(
+    page,
+    {
+      timeoutMs:
+        Math.min(
+          timeoutMs,
+          30000
+        )
+    }
+  );
+
+  await page.waitForFunction(
+    () => document.querySelectorAll(
+      '#tree .tree-item[data-page-id]'
+    ).length > 0,
+    null,
+    {
+      timeout:
+        timeoutMs
+    }
+  );
+
+  await openTreePageById(
+    page,
+    pageId,
+    timeoutMs
+  );
+}
+
+
+async function openTreePageById(
+  page,
+  pageId,
+  timeoutMs,
+  searchQuery = ''
+) {
+
+  const queries =
+    Array.from(
+      new Set(
+        [
+          searchQuery,
+          pageId,
+          ''
+        ]
+          .map(value =>
+            String(value || '').trim()
+          )
+      )
+    );
+
+  let found =
+    false;
+
+  for (const query of queries) {
+
+    await page.locator(
+      '#searchInput'
+    ).fill(
+      query
+    );
+
+    found =
+      await page.waitForFunction(
+        id => Boolean(
+          document.querySelector(
+            `.tree-item[data-page-id="${CSS.escape(id)}"]`
+          )
+        ),
+        pageId,
+        {
+          timeout:
+            Math.min(
+              timeoutMs,
+              5000
+            )
+        }
+      ).then(
+        () => true,
+        () => false
+      );
+
+    if (found) break;
+  }
+
+  if (!found) {
+
+    throw new Error(
+      `Could not find tree item for map ${pageId}.`
+    );
+  }
+
+  const clicked =
+    await page.evaluate(
+      id => {
+
+        const item =
+          document.querySelector(
+            `.tree-item[data-page-id="${CSS.escape(id)}"]`
+          );
+
+        item?.click();
+
+        return Boolean(
+          item
+        );
+      },
+      pageId
+    );
+
+  if (!clicked) {
+
+    throw new Error(
+      `Could not find tree item for map ${pageId}.`
+    );
+  }
+
+  await page.waitForFunction(
+    async id => {
+
+      const {
+        state
+      } = await import('/js/state.js');
+
+      return Boolean(
+        state.currentPage?.id === id &&
+        document.querySelector(
+          '.campaign-map-document'
+        )
+      );
+    },
+    pageId,
+    {
+      timeout:
+        Math.min(
+          timeoutMs,
+          30000
+        )
+    }
+  );
+}
+
+
+async function getCurrentPageId(
+  page
+) {
+
+  return page.evaluate(
+    async () => {
+
+      const {
+        state
+      } = await import('/js/state.js');
+
+      return state.currentPage?.id || '';
+    }
+  );
+}
+
+
+async function collectCampaignMapMusicSmokeMetrics(
+  page
+) {
+
+  return page.evaluate(
+    () => {
+
+      const popup =
+        document.getElementById(
+          'campaignMapPopup'
+        );
+
+      const audio =
+        document.querySelector(
+          '.campaign-map-music-audio'
+        );
+
+      const src =
+        audio?.currentSrc || audio?.src || '';
+
+      return {
+        activeMode:
+          popup?.querySelector(
+            '.campaign-music-mode-btn.is-active'
+          )?.dataset.musicMode || '',
+        tracks:
+          Array.from(
+            popup?.querySelectorAll(
+              '.campaign-music-track-title'
+            ) || []
+          ).map(item =>
+            item.textContent.trim()
+          ),
+        playbackStatus:
+          popup?.querySelector(
+            '.campaign-music-playback-status'
+          )?.textContent?.replace(/\s+/g, ' ').trim() || '',
+        audioSourceKind:
+          src.startsWith(
+            'blob:'
+          )
+            ? 'blob'
+            : src
+            ? 'other'
+            : 'none',
+        audioTrackId:
+          audio?.dataset?.trackId || '',
+        audioTrackTitle:
+          audio?.dataset?.trackTitle || '',
+        shuffle:
+          Boolean(
+            popup?.querySelector(
+              '.campaign-music-order-btn'
+            )?.classList.contains(
+              'is-active'
+            )
+          ),
+        loop:
+          Boolean(
+            popup?.querySelector(
+              '.campaign-music-loop-btn'
+            )?.classList.contains(
+              'is-active'
+            )
+          )
+      };
+    }
+  );
+}
+
+
+function createSilentWavBuffer({
+  sampleRate =
+    8000,
+  durationMs =
+    700
+} = {}) {
+
+  const channelCount =
+    1;
+
+  const bitsPerSample =
+    16;
+
+  const bytesPerSample =
+    bitsPerSample / 8;
+
+  const sampleCount =
+    Math.max(
+      1,
+      Math.floor(
+        sampleRate * durationMs / 1000
+      )
+    );
+
+  const dataSize =
+    sampleCount * channelCount * bytesPerSample;
+
+  const buffer =
+    Buffer.alloc(
+      44 + dataSize
+    );
+
+  buffer.write(
+    'RIFF',
+    0
+  );
+  buffer.writeUInt32LE(
+    36 + dataSize,
+    4
+  );
+  buffer.write(
+    'WAVE',
+    8
+  );
+  buffer.write(
+    'fmt ',
+    12
+  );
+  buffer.writeUInt32LE(
+    16,
+    16
+  );
+  buffer.writeUInt16LE(
+    1,
+    20
+  );
+  buffer.writeUInt16LE(
+    channelCount,
+    22
+  );
+  buffer.writeUInt32LE(
+    sampleRate,
+    24
+  );
+  buffer.writeUInt32LE(
+    sampleRate * channelCount * bytesPerSample,
+    28
+  );
+  buffer.writeUInt16LE(
+    channelCount * bytesPerSample,
+    32
+  );
+  buffer.writeUInt16LE(
+    bitsPerSample,
+    34
+  );
+  buffer.write(
+    'data',
+    36
+  );
+  buffer.writeUInt32LE(
+    dataSize,
+    40
+  );
+
+  return buffer;
+}
+
+
 async function inspectWorkspaceTargets(
   workspacePath
 ) {
@@ -1741,20 +2835,30 @@ export function createMarkdownReport(
   const ok =
     status.ok;
 
+  const audioSmoke =
+    Boolean(
+      report.audioSmoke?.enabled
+    );
+
+  const title =
+    audioSmoke
+      ? 'Desktop Native Audio Smoke Current'
+      : 'Desktop Native Click-Through Current';
+
   return [
     '---',
-    'summary: "Current native desktop click-through report."',
+    `summary: "Current native desktop ${audioSmoke ? 'audio smoke' : 'click-through'} report."`,
     'read_when:',
     '  - "Before desktop release handoff"',
     '  - "When validating the native Tauri window"',
     'owner_zone: "delivery"',
     '---',
     '',
-    '# Desktop Native Click-Through Current',
+    `# ${title}`,
     '',
     `Run date: ${report.runStartedAt.toISOString()}`,
     '',
-    'Plan ref: `0.0.1.11.5` (runner introduced in `0.0.1.2.2`)',
+    `Plan ref: \`${report.planRef || '0.0.1.11.5'}\` (runner introduced in \`0.0.1.2.2\`)`,
     '',
     `Workspace: \`${report.workspacePath}\``,
     '',
@@ -1829,6 +2933,11 @@ export function createMarkdownReport(
     '- The runner uses WebView2 remote debugging to click the real Tauri WebView.',
     '- It opens a card with an image when one exists, then Settings diagnostics, tree search, a heavy map and presentation mode.',
     '- Image-card assets must load as visible `img[data-asset]` elements; map assets must produce a visible campaign map background.',
+    ...(audioSmoke
+      ? [
+        '- Audio smoke imports temporary WAV files through the map music UI, saves them into `assets/music`, exercises normal/battle controls, switches maps, reloads the workspace and replays the saved playlist.'
+      ]
+      : []),
     '- It does not create, move or delete workspace pages.',
     '- It sets only `myOwnWorld.desktop.workspaceRoot` in the app WebView localStorage so the desktop adapter can restore the selected workspace.',
     ''

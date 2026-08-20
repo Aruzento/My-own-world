@@ -5586,6 +5586,285 @@ test(
 
 
 test(
+  'campaign-map-music-rapid-next-ignores-stale-playback-abort',
+  async ({ page }) => {
+
+    const musicErrors =
+      [];
+
+    page.on(
+      'console',
+      message => {
+
+        if (
+          message.type() === 'error' &&
+          /campaign map music|play\(\)/i.test(
+            message.text()
+          )
+        ) {
+
+          musicErrors.push(
+            message.text()
+          );
+        }
+      }
+    );
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const {
+          openCampaignMapMusicPopup
+        } = await import('/js/editor/campaignMapMusic.js');
+
+        const {
+          refreshCampaignMapStore
+        } = await import('/js/editor/campaignMapStore.js');
+
+        window.__campaignMapMusicPending =
+          [];
+
+        class TestAudio {
+
+          constructor() {
+
+            this.dataset = {};
+            this.currentTime = 0;
+            this.src = '';
+            this.pendingPlay =
+              null;
+            window.__campaignMapMusicAudio =
+              this;
+          }
+
+          load() {
+
+            if (!this.pendingPlay) return;
+
+            const pending =
+              this.pendingPlay;
+
+            this.pendingPlay =
+              null;
+
+            pending.reject(
+              new DOMException(
+                'The play() request was interrupted by a new load request.',
+                'AbortError'
+              )
+            );
+          }
+
+          play() {
+
+            const pending =
+              {};
+
+            const promise =
+              new Promise((resolve, reject) => {
+
+                pending.resolve =
+                  () => {
+
+                    this.dataset.played =
+                      'true';
+
+                    resolve();
+                  };
+
+                pending.reject =
+                  reject;
+              });
+
+            this.pendingPlay =
+              pending;
+
+            window.__campaignMapMusicPending.push(
+              pending
+            );
+
+            return promise;
+          }
+
+          pause() {
+
+            this.dataset.paused =
+              'true';
+          }
+        }
+
+        window.Audio =
+          TestAudio;
+
+        window.__campaignMapMusicResolveLatest =
+          () => {
+
+            window.__campaignMapMusicPending
+              .at(-1)
+              ?.resolve();
+          };
+
+        setStorageAdapter({
+          kind:
+            'test',
+          async pickWorkspace() {},
+          async restoreWorkspace() {},
+          async ensureDirectory() {},
+          async getDirectoryHandle() {},
+          async readText() {
+            return '';
+          },
+          async writeText() {},
+          async readBinary() {
+            return new ArrayBuffer(8);
+          },
+          async writeBinary() {},
+          async removeFile() {},
+          async removeDirectory() {},
+          async listFiles() {
+            return [];
+          }
+        });
+
+        document.body.innerHTML =
+          `
+            <button class="anchor" type="button">music</button>
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-topbar" contenteditable="false">
+                <h1 class="campaign-map-title singleline-field" contenteditable="true">Лес</h1>
+              </div>
+              <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+        const map =
+          document.querySelector(
+            '.campaign-map-document'
+          );
+
+        refreshCampaignMapStore(
+          map
+        )
+          .setMusic({
+            activeMode:
+              'normal',
+            normal: {
+              tracks: [
+                {
+                  trackId:
+                    'track-a',
+                  title:
+                    'Track A',
+                  path:
+                    'assets/music/track-a.wav'
+                },
+                {
+                  trackId:
+                    'track-b',
+                  title:
+                    'Track B',
+                  path:
+                    'assets/music/track-b.wav'
+                }
+              ]
+            }
+          });
+
+        await openCampaignMapMusicPopup(
+          map,
+          document.querySelector(
+            '.anchor'
+          )
+        );
+      }
+    );
+
+    await page
+      .locator('.campaign-music-play-btn')
+      .click();
+
+    await page.waitForFunction(
+      () => window.__campaignMapMusicPending?.length === 1
+    );
+
+    await page
+      .locator('.campaign-music-next-btn')
+      .click();
+
+    await page.waitForFunction(
+      () => window.__campaignMapMusicPending?.length === 2
+    );
+
+    await page.evaluate(
+      () => window.__campaignMapMusicResolveLatest()
+    );
+
+    await expect(
+      page.locator('.campaign-music-playback-status')
+    ).toContainText(
+      'Играет'
+    );
+
+    await expect(
+      page.locator('.campaign-music-playback-status')
+    ).not.toContainText(
+      'Не удалось'
+    );
+
+    const result =
+      await page.evaluate(
+        () => ({
+          trackId:
+            window.__campaignMapMusicAudio?.dataset?.trackId || '',
+          trackTitle:
+            window.__campaignMapMusicAudio?.dataset?.trackTitle || '',
+          status:
+            document.querySelector(
+              '.campaign-music-playback-status'
+            )?.textContent || ''
+        })
+      );
+
+    expect(
+      result.trackId
+    ).toBe(
+      'track-b'
+    );
+
+    expect(
+      result.trackTitle
+    ).toBe(
+      'Track B'
+    );
+
+    expect(
+      result.status
+    ).toContain(
+      'Track B'
+    );
+
+    expect(
+      musicErrors
+    ).toEqual([]);
+  }
+);
+
+
+test(
   'campaign-map-music-starts-first-active-playlist-track-on-map-switch',
   async ({ page }) => {
 

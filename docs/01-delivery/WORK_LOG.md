@@ -6,6 +6,51 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.8 BUG-006 Campaign Map Music Desktop Stabilization
+
+### Disposition
+
+- `FIXED`.
+
+### Current Evidence
+
+- Disposable native desktop audio smoke reproduced one real user-visible music failure after import/add succeeded: rapid playback controls could surface `AbortError: The play() request was interrupted by a new load request` in the Campaign Map music popup.
+- EXPECTED: imported supported audio files write to `assets/music`, normal and battle playlists save, playback controls remain usable, map switch stops stale map audio, workspace reload restores playlist state, and current playback uses runtime `blob:` URLs without saving them.
+- ACTUAL before fix: desktop WAV import wrote files and playlist rows, but a stale interrupted `audio.play()` promise from an older track/control action could report as the current popup error and log `Failed to start campaign map music`.
+- MINIMUM REPRO: on a disposable desktop workspace with a Campaign Map and two WAV tracks, open `Музыка карты`, add tracks, press Play and immediately use Next/Previous while the previous media request is still settling.
+- ROOT CAUSE: `campaignMapMusic` had no per-map playback request/generation ownership. A newer `load()`/track switch could interrupt an older pending `play()` promise, and the stale rejection still cleared the active audio source/status through the old request path.
+- OWNER: import/playback UI and runtime `<audio>` lifecycle in `js/editor/campaignMapMusic.js`; playlist persistence in `CampaignMapModel` and `data-map-music-state`; native verification in `tools/run_desktop_native_clickthrough.mjs`.
+
+### Historical Symptom Classification
+
+- Upload appears to do nothing: `FIXED / VERIFIED` for desktop UI import into `assets/music` on the disposable WAV smoke workspace.
+- Add fails: `FIXED / VERIFIED` for normal and battle playlists.
+- Play fails: `FIXED` for the reproduced stale `play()`/`load()` race.
+- Unsupported source: `NOT REPRODUCED` for the currently verified WAV smoke format. Arbitrary GM library codecs remain platform-dependent; no transcoding stack or codec dependency was added.
+
+### Verification
+
+- Failed before fix as expected: `npm run desktop:native-smoke -- --workspace "<disposable temp workspace>" --audio-smoke --allow-workspace-write --plan-ref 0.0.1.11.8 --output docs/01-delivery/DESKTOP_AUDIO_SMOKE_CURRENT.md --timeout 90000` with `The play() request was interrupted by a new load request`.
+- Passed after fix: `node --check js/editor/campaignMapMusic.js`.
+- Passed after fix: `node --check tools/run_desktop_native_clickthrough.mjs`.
+- Passed after fix: `node --test tests/campaignMapModel.test.mjs tests/locationMusic.test.mjs tests/storageAdapter.test.mjs`.
+- Passed after fix: `npm run test:browser -- --grep campaign-map-music`.
+- Passed after fix: `npm run desktop:build`.
+- Passed after fix: `npm run desktop:native-smoke -- --workspace "<disposable temp workspace>" --audio-smoke --allow-workspace-write --plan-ref 0.0.1.11.8 --output docs/01-delivery/DESKTOP_AUDIO_SMOKE_CURRENT.md --timeout 90000`.
+
+### Guardrails
+
+- No codec dependencies, transcoding stack, persistent format migration or music-system redesign was added.
+- Audio smoke writes were limited to disposable temporary workspace copies.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not repaired, migrated, normalized or bulk-edited.
+- No product feature phase was started.
+- Phase `0.0.1.12.0` was not touched.
+
+### Next
+
+- Next leaf: `0.0.1.11.9` Properties Real Character Card.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.7 BUG-005 Campaign Map Drawing Tools Stabilization
 
 ### Disposition

@@ -54,6 +54,12 @@ const uploadStatusByMap =
 const playbackStatusByMap =
   new WeakMap();
 
+const playbackRequestByMap =
+  new WeakMap();
+
+const playbackGenerationByMap =
+  new WeakMap();
+
 let activePlaybackMap =
   null;
 
@@ -223,8 +229,20 @@ export async function openCampaignMapMusicPopup(
 
 
 export function stopCampaignMapMusic(
-  map
+  map,
+  options = {}
 ) {
+
+  if (!options.preservePlaybackRequest) {
+
+    cancelPlaybackRequest(
+      map
+    );
+  }
+
+  bumpPlaybackGeneration(
+    map
+  );
 
   const audio =
     audioByMap.get(
@@ -273,7 +291,11 @@ export async function playCampaignMapMusic(
   if (playlist.tracks.length === 0) {
 
     stopCampaignMapMusic(
-      map
+      map,
+      {
+        preservePlaybackRequest:
+          true
+      }
     );
 
     return null;
@@ -990,6 +1012,11 @@ async function playTrack(
   playlist
 ) {
 
+  const generation =
+    bumpPlaybackGeneration(
+      map
+    );
+
   const audio =
     getAudioElement(
       map
@@ -1041,6 +1068,16 @@ async function playTrack(
     await audio.play();
 
   } catch (error) {
+
+    if (
+      !isCurrentPlaybackGeneration(
+        map,
+        generation
+      )
+    ) {
+
+      return;
+    }
 
     releaseAudioObjectURL(
       audio
@@ -1689,6 +1726,11 @@ async function playCampaignMapMusicAndReport(
   render
 ) {
 
+  const request =
+    beginPlaybackRequest(
+      map
+    );
+
   try {
 
     const track =
@@ -1696,6 +1738,16 @@ async function playCampaignMapMusicAndReport(
         map,
         options
       );
+
+    if (
+      !isCurrentPlaybackRequest(
+        map,
+        request
+      )
+    ) {
+
+      return;
+    }
 
     setPlaybackStatus(
       map,
@@ -1709,6 +1761,16 @@ async function playCampaignMapMusicAndReport(
     );
 
   } catch (error) {
+
+    if (
+      !isCurrentPlaybackRequest(
+        map,
+        request
+      )
+    ) {
+
+      return;
+    }
 
     console.error(
       'Failed to start campaign map music.',
@@ -1725,6 +1787,16 @@ async function playCampaignMapMusicAndReport(
   }
 
   if (typeof render === 'function') {
+
+    if (
+      !isCurrentPlaybackRequest(
+        map,
+        request
+      )
+    ) {
+
+      return;
+    }
 
     await render();
   }
@@ -1760,6 +1832,72 @@ function getMusicPlaybackErrorMessage(
   return message
     ? `${t('playbackFailed')}: ${message}`
     : t('playbackFailedAdvice');
+}
+
+function beginPlaybackRequest(
+  map
+) {
+
+  const request =
+    {};
+
+  playbackRequestByMap.set(
+    map,
+    request
+  );
+
+  return request;
+}
+
+
+function cancelPlaybackRequest(
+  map
+) {
+
+  playbackRequestByMap.set(
+    map,
+    {}
+  );
+}
+
+
+function isCurrentPlaybackRequest(
+  map,
+  request
+) {
+
+  return playbackRequestByMap.get(
+    map
+  ) === request;
+}
+
+
+function bumpPlaybackGeneration(
+  map
+) {
+
+  const generation =
+    (playbackGenerationByMap.get(
+      map
+    ) || 0) + 1;
+
+  playbackGenerationByMap.set(
+    map,
+    generation
+  );
+
+  return generation;
+}
+
+
+function isCurrentPlaybackGeneration(
+  map,
+  generation
+) {
+
+  return playbackGenerationByMap.get(
+    map
+  ) === generation;
 }
 
 async function saveMapMusic(

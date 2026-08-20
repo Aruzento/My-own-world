@@ -182,17 +182,17 @@ Regression coverage: `campaign-map-drawing-tools-stay-usable-through-layers-keyb
 
 Area: campaign map music, assets, desktop audio
 
-Status: Needs repro
+Status: FIXED
 
 Source: recent user reports: upload did nothing, add failed, play failed, unsupported source.
 
-Current automated status: browser smoke covers playlist management and autostart first active playlist track.
+Current result: `0.0.1.11.8` on 2026-08-20 reproduced a real desktop playback lifecycle failure on a disposable native workspace. Import/add worked and WAV files were written into `assets/music`, but rapid playback controls could surface `AbortError: The play() request was interrupted by a new load request` as a user-visible failure. Campaign Map music now guards per-map playback requests and media generations so stale interrupted `play()` promises cannot clear the current audio source or overwrite the current popup status.
 
-Risk: browser smoke may not catch real desktop file protocol, codec, or imported asset issues.
+Historical symptom classification: upload appears to do nothing - `FIXED / VERIFIED` for desktop UI import into `assets/music`; add fails - `FIXED / VERIFIED` for normal and battle playlists; play fails - `FIXED` for the reproduced stale `play()`/`load()` race; unsupported source - `NOT REPRODUCED` for the currently verified WAV smoke format and still platform/codec-dependent for arbitrary GM files.
 
-Next check: add several audio files through desktop, create normal and battle playlists, switch map, play, stop, next, previous, shuffle, loop.
+Current owner paths: UI/import/playback lives in `js/editor/campaignMapMusic.js`; persistent playlist state lives in `CampaignMapModel`/`data-map-music-state`; asset writes use `saveAssetFile`/storage adapter binary writes; desktop smoke coverage lives in `tools/run_desktop_native_clickthrough.mjs`.
 
-Regression target: storage-level audio asset tests plus a documented desktop manual audio smoke.
+Regression coverage: browser regression `campaign-map-music-rapid-next-ignores-stale-playback-abort` protects the stale playback abort path. Existing music browser tests cover normal/battle playlist import, controls and map-switch autoplay. Storage/model tests cover playlist persistence, audio asset references, CSP media allowance and audio import with `resolveUrl: false`. Native desktop audio smoke now has an explicit `--audio-smoke --allow-workspace-write` path and passed on a disposable workspace with four imported WAV tracks, normal/battle controls, map switch/return, workspace reload and blob playback after reload. No persistent format migration or codec dependency was added.
 
 ### BUG-007. Properties block layout can still feel wrong on real character cards
 
@@ -335,7 +335,7 @@ Covered by current browser smoke:
 - tree DnD planning, tree delete, and tree virtualization;
 - campaign map toolbar lifecycle matrix across map/card/map, mapA/mapB/mapA, task/rule detours, tree hide/show, presentation return and workspace switch;
 - campaign map creature token skill menu labels and payload path, including visible `Навыки`, representative skill labels and mojibake guard;
-- campaign map data save/reload, token removal, presentation sync, fog patches, hidden player token behavior, layers, drawing, playlist basics, initiative basics;
+- campaign map data save/reload, token removal, presentation sync, fog patches, hidden player token behavior, layers, drawing, playlist basics, desktop audio smoke, initiative basics;
 - editor formatting boundary and history;
 - properties block gear, custom fields, field removal, drag/resize, calculations, character sheet edits, effects, inventory, universal list;
 - task tracker model persistence and legacy JSON preservation;
@@ -349,11 +349,11 @@ Not yet covered enough:
 - real desktop UI behavior on the known large GM workspace;
 - real installed-app smoke;
 - real older user workspace tracker/card/map fixtures;
-- real desktop audio playback and codec/path behavior;
+- full actual-GM audio library codec matrix beyond currently verified desktop WAV smoke;
 - graph daily-use operations and lifecycle hardening;
 - full end-to-end character properties to map token behavior;
 - user-readable docs/manual review.
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.7` `BUG-005` Campaign Map Drawing Tools Stabilization is `ALREADY FIXED / VERIFIED`; next leaf: `0.0.1.11.8` `BUG-006` Map Music.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.8` `BUG-006` Map Music is `FIXED`; next leaf: `0.0.1.11.9` Properties Real Character Card.
