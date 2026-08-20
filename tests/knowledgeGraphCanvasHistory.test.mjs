@@ -11,6 +11,11 @@ import {
   updateGraphCanvasHistoryControls
 } from '../js/wiki/knowledgeGraphCanvasHistory.js';
 
+import {
+  setupKnowledgeGraphEvents,
+  teardownKnowledgeGraphPage
+} from '../js/wiki/knowledgeGraphPage.js';
+
 
 function createHistoryButton(
   action
@@ -205,6 +210,109 @@ function createLifecycleDocument() {
           }
         }
       }
+  };
+}
+
+
+function createGraphPageLifecycleHarness() {
+
+  const listeners =
+    [];
+
+  const ownerDocument =
+    {
+      body:
+        {},
+      documentElement:
+        {},
+      activeElement:
+        null,
+      addEventListener(
+        type,
+        handler,
+        options
+      ) {
+
+        listeners.push({
+          type,
+          handler,
+          options
+        });
+      },
+      removeEventListener(
+        type,
+        handler,
+        options
+      ) {
+
+        const index =
+          listeners.findIndex(listener =>
+            listener.type === type &&
+            listener.handler === handler &&
+            listener.options === options
+          );
+
+        if (index >= 0) {
+
+          listeners.splice(
+            index,
+            1
+          );
+        }
+      }
+    };
+
+  function createGraphDocument() {
+
+    const elementListeners =
+      [];
+
+    return {
+      dataset:
+        {},
+      ownerDocument,
+      isConnected:
+        true,
+      addEventListener(
+        type,
+        handler,
+        options
+      ) {
+
+        elementListeners.push({
+          type,
+          handler,
+          options
+        });
+      },
+      querySelectorAll(
+        selector
+      ) {
+
+        if (selector === '[data-knowledge-graph-history-action]') {
+
+          return [];
+        }
+
+        if (selector === '.knowledge-graph-document') {
+
+          return [
+            this
+          ];
+        }
+
+        return [];
+      },
+      focus() {}
+    };
+  }
+
+  return {
+    createGraphDocument,
+    countDocumentHandlers:
+      type => listeners.filter(listener =>
+        listener.type === type
+      ).length
   };
 }
 
@@ -622,6 +730,111 @@ test(
           'redo'
         ]
       ]
+    );
+  }
+);
+
+
+test(
+  'knowledge graph page teardown removes stale document drag and pan ownership',
+  () => {
+
+    const {
+      createGraphDocument,
+      countDocumentHandlers
+    } =
+      createGraphPageLifecycleHarness();
+
+    const editorA =
+      createGraphDocument();
+
+    setupKnowledgeGraphEvents(
+      editorA
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'pointermove'
+      ),
+      1
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'mousemove'
+      ),
+      1
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'pointerup'
+      ),
+      1
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'mouseup'
+      ),
+      1
+    );
+
+    teardownKnowledgeGraphPage(
+      editorA
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'pointermove'
+      ),
+      0
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'mousemove'
+      ),
+      0
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'pointerup'
+      ),
+      0
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'mouseup'
+      ),
+      0
+    );
+
+    const editorB =
+      createGraphDocument();
+
+    setupKnowledgeGraphEvents(
+      editorB
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'pointermove'
+      ),
+      1
+    );
+
+    teardownKnowledgeGraphPage(
+      editorB
+    );
+
+    assert.equal(
+      countDocumentHandlers(
+        'pointermove'
+      ),
+      0
     );
   }
 );

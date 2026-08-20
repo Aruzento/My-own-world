@@ -118,6 +118,9 @@ const KNOWLEDGE_GRAPH_DOMAIN_TABLIST_LABEL =
 let knowledgeGraphDomainTablistId =
   0;
 
+const knowledgeGraphDocumentEventTeardowns =
+  new WeakMap();
+
 export function isKnowledgeGraphPage(
   parsedOrPage
 ) {
@@ -312,7 +315,30 @@ export function teardownKnowledgeGraphPage(
       teardownGraphCanvasKeyboardHistory(
         documentElement
       );
+
+      teardownKnowledgeGraphDocumentEventOwnership(
+        documentElement
+      );
     });
+}
+
+
+function teardownKnowledgeGraphDocumentEventOwnership(
+  documentElement
+) {
+
+  const teardown =
+    knowledgeGraphDocumentEventTeardowns.get(
+      documentElement
+    );
+
+  if (!teardown) return;
+
+  teardown();
+
+  knowledgeGraphDocumentEventTeardowns.delete(
+    documentElement
+  );
 }
 
 
@@ -1117,7 +1143,7 @@ function setupKnowledgeGraphOverlays(
 }
 
 
-function setupKnowledgeGraphEvents(
+export function setupKnowledgeGraphEvents(
   documentElement
 ) {
 
@@ -1660,6 +1686,10 @@ function setupKnowledgeGraphEvents(
   let nodeDragState =
     null;
 
+  teardownKnowledgeGraphDocumentEventOwnership(
+    documentElement
+  );
+
   const startGraphNodeDrag =
     (
       event,
@@ -1820,6 +1850,34 @@ function setupKnowledgeGraphEvents(
         null;
     };
 
+  const resetGraphCanvasDocumentPointerState =
+    () => {
+
+      if (nodeDragState) {
+
+        nodeDragState.card?.classList?.remove(
+          'is-dragging'
+        );
+
+        nodeDragState.stage?.classList?.remove(
+          'is-node-dragging'
+        );
+
+        nodeDragState =
+          null;
+      }
+
+      if (canvasPanState) {
+
+        canvasPanState.stage?.classList?.remove(
+          'is-panning'
+        );
+
+        canvasPanState =
+          null;
+      }
+    };
+
   documentElement.addEventListener(
     'pointerdown',
     event => {
@@ -1934,9 +1992,17 @@ function setupKnowledgeGraphEvents(
     true
   );
 
-  documentElement.ownerDocument.addEventListener(
-    'pointermove',
+  const handleDocumentPointerMove =
     event => {
+
+      if (!documentElement.isConnected) {
+
+        teardownKnowledgeGraphDocumentEventOwnership(
+          documentElement
+        );
+
+        return;
+      }
 
       if (
         nodeDragState &&
@@ -1975,12 +2041,19 @@ function setupKnowledgeGraphEvents(
       applyGraphCanvasTransform(
         canvasPanState.stage
       );
-    }
-  );
+    };
 
-  documentElement.ownerDocument.addEventListener(
-    'mousemove',
+  const handleDocumentMouseMove =
     event => {
+
+      if (!documentElement.isConnected) {
+
+        teardownKnowledgeGraphDocumentEventOwnership(
+          documentElement
+        );
+
+        return;
+      }
 
       if (
         !nodeDragState ||
@@ -1993,12 +2066,19 @@ function setupKnowledgeGraphEvents(
       updateGraphNodeDrag(
         event
       );
-    }
-  );
+    };
 
-  documentElement.ownerDocument.addEventListener(
-    'pointerup',
+  const handleDocumentPointerUp =
     event => {
+
+      if (!documentElement.isConnected) {
+
+        teardownKnowledgeGraphDocumentEventOwnership(
+          documentElement
+        );
+
+        return;
+      }
 
       if (
         nodeDragState &&
@@ -2030,12 +2110,19 @@ function setupKnowledgeGraphEvents(
 
       canvasPanState =
         null;
-    }
-  );
+    };
 
-  documentElement.ownerDocument.addEventListener(
-    'mouseup',
+  const handleDocumentMouseUp =
     event => {
+
+      if (!documentElement.isConnected) {
+
+        teardownKnowledgeGraphDocumentEventOwnership(
+          documentElement
+        );
+
+        return;
+      }
 
       if (
         !nodeDragState ||
@@ -2047,6 +2134,56 @@ function setupKnowledgeGraphEvents(
 
       finishGraphNodeDrag(
         event
+      );
+    };
+
+  const ownerDocument =
+    documentElement.ownerDocument;
+
+  ownerDocument.addEventListener(
+    'pointermove',
+    handleDocumentPointerMove
+  );
+
+  ownerDocument.addEventListener(
+    'mousemove',
+    handleDocumentMouseMove
+  );
+
+  ownerDocument.addEventListener(
+    'pointerup',
+    handleDocumentPointerUp
+  );
+
+  ownerDocument.addEventListener(
+    'mouseup',
+    handleDocumentMouseUp
+  );
+
+  knowledgeGraphDocumentEventTeardowns.set(
+    documentElement,
+    () => {
+
+      resetGraphCanvasDocumentPointerState();
+
+      ownerDocument.removeEventListener(
+        'pointermove',
+        handleDocumentPointerMove
+      );
+
+      ownerDocument.removeEventListener(
+        'mousemove',
+        handleDocumentMouseMove
+      );
+
+      ownerDocument.removeEventListener(
+        'pointerup',
+        handleDocumentPointerUp
+      );
+
+      ownerDocument.removeEventListener(
+        'mouseup',
+        handleDocumentMouseUp
       );
     }
   );
