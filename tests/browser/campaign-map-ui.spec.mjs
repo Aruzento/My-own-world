@@ -4867,6 +4867,323 @@ test(
 
 
 test(
+  'campaign-map-circle-shape-center-marker-is-selected-only-runtime-ui',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            refreshCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            createMapShapeElement
+          } = await import('/js/editor/campaignMapElementFactory.js');
+
+          const {
+            renderMapShapeElement
+          } = await import('/js/editor/campaignMapRenderer.js');
+
+          const {
+            applyShapeRecordToElement
+          } = await import('/js/editor/campaignMapRenderAdapter.js');
+
+          const {
+            selectMapShape
+          } = await import('/js/editor/campaignMapRuntime.js');
+
+          const {
+            serializeCampaignMapDocumentHTML
+          } = await import('/js/editor/campaignMapDataSerializer.js');
+
+          document.querySelector('#editorArea').innerHTML = `
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="true" data-grid-size="80" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+                <div class="campaign-map-viewport" style="position: relative; width: 100%; height: 100%;">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            document.querySelector('.campaign-map-document');
+
+          const store =
+            refreshCampaignMapStore(
+              map
+            );
+
+          const record =
+            store.addShape({
+              shapeId:
+                'center-circle-shape',
+              type:
+                'circle',
+              x:
+                120,
+              y:
+                160,
+              width:
+                144,
+              height:
+                144,
+              strokeColor:
+                '#fff4d6',
+              fillColor:
+                '#f1d38e',
+              strokeWidth:
+                3
+            });
+
+          const shape =
+            createMapShapeElement(
+              record
+            );
+
+          map
+            .querySelector('.campaign-map-object-layer')
+            .appendChild(
+              shape
+            );
+
+          renderMapShapeElement(
+            shape
+          );
+
+          const marker =
+            shape.querySelector('.campaign-map-shape-center');
+
+          const beforeSelect = {
+            exists:
+              Boolean(marker),
+            display:
+              getComputedStyle(marker).display,
+            runtime:
+              marker?.dataset.runtime || ''
+          };
+
+          selectMapShape(
+            shape
+          );
+
+          const selectedStyle =
+            getComputedStyle(
+              marker
+            );
+
+          const selectedStyleSnapshot = {
+            display:
+              selectedStyle.display,
+            pointerEvents:
+              selectedStyle.pointerEvents,
+            left:
+              selectedStyle.left,
+            top:
+              selectedStyle.top
+          };
+
+          const selectedShapeRect =
+            shape.getBoundingClientRect();
+
+          const selectedMarkerRect =
+            marker.getBoundingClientRect();
+
+          const centerOffsetBefore = {
+            x:
+              Math.round(
+                selectedMarkerRect.left +
+                selectedMarkerRect.width / 2 -
+                (selectedShapeRect.left + selectedShapeRect.width / 2)
+              ),
+            y:
+              Math.round(
+                selectedMarkerRect.top +
+                selectedMarkerRect.height / 2 -
+                (selectedShapeRect.top + selectedShapeRect.height / 2)
+              )
+          };
+
+          const hitTarget =
+            document.elementFromPoint(
+              selectedShapeRect.left + selectedShapeRect.width / 2,
+              selectedShapeRect.top + selectedShapeRect.height / 2
+            );
+
+          const updated =
+            store.updateShape(
+              'center-circle-shape',
+              {
+                x:
+                  240,
+                y:
+                  260,
+                width:
+                  96,
+                height:
+                  96
+              }
+            );
+
+          applyShapeRecordToElement(
+            shape,
+            updated
+          );
+
+          renderMapShapeElement(
+            shape
+          );
+
+          shape.classList.add(
+            'is-selected'
+          );
+
+          const updatedMarker =
+            shape.querySelector('.campaign-map-shape-center');
+
+          const updatedShapeRect =
+            shape.getBoundingClientRect();
+
+          const updatedMarkerRect =
+            updatedMarker.getBoundingClientRect();
+
+          const savedHTML =
+            serializeCampaignMapDocumentHTML(
+              map
+            );
+
+          return {
+            beforeSelect,
+            selected: {
+              display:
+                selectedStyleSnapshot.display,
+              pointerEvents:
+                selectedStyleSnapshot.pointerEvents,
+              left:
+                selectedStyleSnapshot.left,
+              top:
+                selectedStyleSnapshot.top,
+              centerOffset:
+                centerOffsetBefore,
+              hitTargetIsMarker:
+                hitTarget?.classList?.contains(
+                  'campaign-map-shape-center'
+                ) || false
+            },
+            afterMoveResize: {
+              width:
+                shape.dataset.w,
+              height:
+                shape.dataset.h,
+              display:
+                getComputedStyle(updatedMarker).display,
+              centerOffset: {
+                x:
+                  Math.round(
+                    updatedMarkerRect.left +
+                    updatedMarkerRect.width / 2 -
+                    (updatedShapeRect.left + updatedShapeRect.width / 2)
+                  ),
+                y:
+                  Math.round(
+                    updatedMarkerRect.top +
+                    updatedMarkerRect.height / 2 -
+                    (updatedShapeRect.top + updatedShapeRect.height / 2)
+                  )
+              }
+            },
+            savedHTMLContainsCenter:
+              savedHTML.includes(
+                'campaign-map-shape-center'
+              ),
+            savedShape:
+              store.getModel().getShape('center-circle-shape')
+          };
+        }
+      );
+
+    expect(
+      result.beforeSelect
+    ).toEqual({
+      exists:
+        true,
+      display:
+        'none',
+      runtime:
+        'true'
+    });
+
+    expect(
+      result.selected
+    ).toMatchObject({
+      display:
+        'block',
+      pointerEvents:
+        'none',
+      left:
+        '72px',
+      top:
+        '72px',
+      centerOffset: {
+        x:
+          0,
+        y:
+          0
+      },
+      hitTargetIsMarker:
+        false
+    });
+
+    expect(
+      result.afterMoveResize
+    ).toEqual({
+      width:
+        '96',
+      height:
+        '96',
+      display:
+        'block',
+      centerOffset: {
+        x:
+          0,
+        y:
+          0
+      }
+    });
+
+    expect(
+      result.savedHTMLContainsCenter
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.savedShape
+    ).toMatchObject({
+      type:
+        'circle',
+      x:
+        240,
+      y:
+        260,
+      width:
+        96,
+      height:
+        96
+    });
+  }
+);
+
+
+test(
   'campaign-map-selection-inspector-applies-group-visibility-actions',
   async ({ page }) => {
 

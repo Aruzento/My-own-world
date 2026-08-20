@@ -668,6 +668,7 @@ test(
         } = await import('/js/editor/campaignMapSelectionInspector.js');
 
         const {
+          selectMapShape,
           selectMapToken
         } = await import('/js/editor/campaignMapRuntime.js');
 
@@ -746,11 +747,11 @@ test(
         const shape =
           store.addShape({
             shapeId: 'visual-shape',
-            type: 'square',
+            type: 'circle',
             x: 520,
             y: 260,
-            width: 180,
-            height: 130
+            width: 160,
+            height: 160
           });
 
         store.updateFog({
@@ -831,6 +832,14 @@ test(
 
         selectMapToken(
           map.querySelector('[data-token-id="visual-token"]')
+        );
+
+        selectMapShape(
+          map.querySelector('[data-shape-id="visual-shape"]'),
+          {
+            additive:
+              true
+          }
         );
       }
     );

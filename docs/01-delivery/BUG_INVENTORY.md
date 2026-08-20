@@ -359,4 +359,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility is `FIXED`; next leaf: `0.0.1.11.12` Shape Usability Decision.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.12` `BI-008` / `BI-009` Shape Usability Decision is closed; next leaf: `0.0.1.11.FINAL`.

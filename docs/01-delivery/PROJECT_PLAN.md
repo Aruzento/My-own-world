@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.11.0` Existing P1 Stabilization is `ACTIVE`.
 
-Current leaf: `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility is `FIXED`. Next leaf is `0.0.1.11.12` Shape Usability Decision.
+Current leaf: `0.0.1.11.12` `BI-008` / `BI-009` Campaign Map Shape Usability Decision is closed: `BI-008` is `FIXED`; `BI-009` is `DEFERRED TO LATER CAMPAIGN MAP PHASE`. Next leaf is `0.0.1.11.FINAL`.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Work one `0.0.1.11.0` stabilization leaf at a time and stop after each focused commit.
 
@@ -160,7 +160,8 @@ CURRENT LEAF RESULTS:
 - `0.0.1.11.9` `BUG-007` Properties Real Character Card - `ALREADY FIXED / VERIFIED` on 2026-08-20. A representative character Properties card passed the current user-facing layout sequence: default compact character layout, drag `armorItem` into empty grid space, resize `dexSkills` from the supported south-east edge, occupied drop of `cha` with collision pushdown for neighboring skill groups, save through `serializePersistentEditorHTML`, close/reopen through the normal block contract, exact `data-property-layout` equality after reopen, no overlaps, no inaccessible fields and readable skill labels. No product-code defect was reproduced. Evidence guard: `character-properties-real-card-layout-persists-after-drag-resize-and-reopen`.
 - `0.0.1.11.10` `BUG-008` Character -> Map Data Consistency - `FIXED` on 2026-08-20. The focused E2E reproduced stale initiative participant data: after a character Properties/effects update and map reopen, token snapshot used current CharacterModel data but existing initiative order still showed old modifier/total from `data-initiative-state`. Campaign Map initiative participants now sync from current token snapshots after runtime CharacterModel refresh, preserving roll and active turn while updating modifier/name/page/source/alive state. Regression: `campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload`.
 - `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility - `FIXED` on 2026-08-20. The available legacy fixture shape from `docs/03-testing/sample-workspace/pages/0003-task-tracker.md` reproduced empty rendered tracker columns because `tasks` was a keyed object while the current normalizer accepted only arrays. Task Tracker read/normalize now accepts keyed-object tasks, keeps object keys as stable task ids for old `column.taskIds`, and still saves the current canonical array shape on disposable save/reload. Regression: `task-tracker-opens-legacy-keyed-task-object-and-persists-after-reorder-reload`.
-- Next leaf: `0.0.1.11.12` Shape Usability Decision.
+- `0.0.1.11.12` `BI-008` / `BI-009` Campaign Map Shape Usability Decision - closed on 2026-08-20. `BI-008` is `FIXED` as a small existing-architecture usability fix: selected circle shapes now show a runtime-only center marker derived from existing geometry, with no schema change and no pointer hit-test interference. `BI-009` is `DEFERRED TO LATER CAMPAIGN MAP PHASE`: numeric shape rotation already exists through the Inspector/model/renderer/serializer path, but adding object-like pointer rotation handles for shapes would require a new shape rotation interaction owner rather than reusing the token-specific rotation owner. Regression: `campaign-map-circle-shape-center-marker-is-selected-only-runtime-ui`; existing rotation evidence: `campaign-map-selection-inspector-edits-shape-transform-style` and `campaign-map-data-first-save-reload`.
+- Next leaf: `0.0.1.11.FINAL`.
 
 ### Phase 4 - 0.0.1.12.0 Data Safety Completion
 
@@ -495,8 +496,8 @@ These living backlog items are now represented in this master roadmap. Their det
 | `BI-003` Campaign map stabilization | Phase 3 `0.0.1.11.0` |
 | `BI-006` data safety remaining work | Phase 4 `0.0.1.12.0` |
 | `BI-007` UI/design future polish | Phase 21 `0.0.1.29.0` |
-| `BI-008` circle center point | Phase 3 `0.0.1.11.0`, with decision gate for later Campaign Map phase if not small |
-| `BI-009` shape rotation controls | Phase 3 `0.0.1.11.0`, with decision gate for later Campaign Map phase if not small |
+| `BI-008` circle center point | Closed in `0.0.1.11.12` as `FIXED`; selected circle center marker is runtime-only and schema-neutral. |
+| `BI-009` shape rotation controls | Reclassified in `0.0.1.11.12` as `DEFERRED TO LATER CAMPAIGN MAP PHASE`; current Inspector rotation is verified, but object-like shape rotate handles require a larger shape interaction feature. |
 | `BI-010` disappearing map toolbar | Phase 3 `0.0.1.11.0` |
 | `BI-011` creature skills mojibake | Phase 3 `0.0.1.11.0` |
 | `BI-016` richer graph operations | Phase 15 `0.0.1.23.0`, only after `BI-026` concept approval |

@@ -25,7 +25,7 @@ Immediate direction:
 2. Treat `0.0.1.10.0` cleanup as closed after the corrective final gate.
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Work in active `0.0.1.11.0` Existing P1 Stabilization one leaf at a time.
-5. `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility is `FIXED`; next leaf: `0.0.1.11.12` Shape Usability Decision.
+5. `0.0.1.11.12` `BI-008` / `BI-009` Campaign Map Shape Usability Decision is closed; next leaf: `0.0.1.11.FINAL`.
 6. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 7. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -42,6 +42,7 @@ Recently closed:
 - `0.0.1.11.9` `BUG-007` Properties Real Character Card: current evidence verifies the representative character Properties layout through default arrangement, drag into empty grid space, resize, occupied collision pushdown, save/reopen persistence, readable skill groups and accessible fields. No product-code defect was reproduced.
 - `0.0.1.11.10` `BUG-008` Character -> Map Data Consistency: map token snapshots already refreshed from CharacterModel; fixed stale initiative order participants so HP, AC, speed, effects/statuses and initiative modifier stay current after Properties edits, map reopen and reload.
 - `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility: fixed old tracker JSON with keyed-object `tasks` so saved columns/tasks/details open intact; disposable drag/reorder and save/reload now preserve the data through the current canonical array shape.
+- `0.0.1.11.12` `BI-008` / `BI-009` Campaign Map Shape Usability Decision: `BI-008` fixed selected circle center markers without schema changes; `BI-009` deferred object-like shape rotation handles to a later Campaign Map feature phase because current rotation is Inspector/model/serializer-based and token drag rotation is not directly reusable.
 - `0.0.1.0.4` runtime UI text security coverage.
 - `0.0.1.0.5` desktop filesystem boundary hardening.
 - `0.0.1.2.2` native desktop click-through on the real large GM workspace `X:\ДНД\Мастер\По кампаниям\База`.
@@ -153,7 +154,7 @@ Recently closed:
 
 Next owner action:
 
-- Continue `0.0.1.11.0` one leaf at a time. Next leaf: `0.0.1.11.12` Shape Usability Decision.
+- Continue `0.0.1.11.0` one leaf at a time. Next leaf: `0.0.1.11.FINAL`.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

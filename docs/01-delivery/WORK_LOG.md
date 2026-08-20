@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.12 BI-008 / BI-009 Campaign Map Shape Usability Decision
+
+### Disposition
+
+- `BI-008`: `FIXED`.
+- `BI-009`: `DEFERRED TO LATER CAMPAIGN MAP PHASE`.
+
+### BI-008 Current Evidence
+
+- Classification: `SMALL EXISTING-ARCHITECTURE USABILITY FIX`.
+- Circle geometry already has a derived center from existing `x`, `y`, `width` and `height`; no new saved geometry model is needed.
+- Implemented selected-only `.campaign-map-shape-center` in the existing shape renderer/CSS. It is marked runtime-only, hidden while unselected, visible only on selected circle shapes, centered at 50%/50%, moves/resizes with the shape and uses `pointer-events: none`.
+- Persistent schema and serializer are unchanged; `serializeCampaignMapDocumentHTML` does not emit the center marker.
+
+### BI-009 Current Evidence
+
+- Classification: `LARGER INTERACTION FEATURE` for object-like pointer rotation handles.
+- Current code already supports numeric shape rotation through the Inspector/model/renderer/serializer path: `shape-rotation` edits `rotation`, `CampaignMapModel` normalizes it, `renderMapShape` applies `--campaign-shape-rotation`, and the serializer persists `data-rotation`.
+- The existing object rotation drag handle is token-specific (`campaignMapTokenDrag` / `.campaign-map-token-rotate`) and is routed by the pointer controller to `startTokenRotate`. Reusing it for shapes is not a drop-in change because shapes have separate pixel geometry, resize handles, triangle points and shape drag ownership.
+- A circle has no visually meaningful rotation without associated rotated content, so this leaf did not add fake circle-specific rotation semantics.
+- Deferred scope: a later Campaign Map feature phase may design a real shape rotation interaction owner and decide which shape types get drag handles.
+
+### Verification
+
+- Passed: `node --test tests/campaignMapModel.test.mjs tests/campaignMapDataSerializer.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep campaign-map-circle-shape-center-marker-is-selected-only-runtime-ui`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs --grep campaign-map-data-first-save-reload`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep shape`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs`.
+- Passed visual evidence: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces` with the `visual-campaign-map` attachment now including a selected circle marker.
+- Passed final gate: `npm run verify` (encoding, syntax checks, 341 unit tests, synthetic large-workspace smoke and built-in `git diff --check`) and separate `git diff --check`.
+
+### Guardrails
+
+- No saved map schema changed.
+- No new persistent geometry model was added.
+- No second shape transformation system was added.
+- No renderer replacement or broad shape editing redesign was performed.
+- No product feature phase was started.
+- Phase `0.0.1.12.0` was not touched.
+
+### Next
+
+- Next leaf: `0.0.1.11.FINAL`.
+- Stop after focused commit; do not start next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.11 BUG-009 Legacy Task Tracker Compatibility
 
 ### Disposition

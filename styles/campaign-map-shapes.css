@@ -209,6 +209,97 @@
 }
 
 
+.campaign-map-shape-center {
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  width:
+    16px;
+
+  height:
+    16px;
+
+  display:
+    none;
+
+  border:
+    2px solid rgba(38,31,18,0.9);
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255,248,230,0.92);
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.3),
+    0 0 0 4px rgba(218,72,72,0.18);
+
+  transform:
+    translate(-50%, -50%);
+
+  pointer-events:
+    none;
+}
+
+
+.campaign-map-shape-center::before,
+.campaign-map-shape-center::after {
+
+  content:
+    "";
+
+  position:
+    absolute;
+
+  left:
+    50%;
+
+  top:
+    50%;
+
+  background:
+    rgba(218,72,72,0.95);
+
+  transform:
+    translate(-50%, -50%);
+}
+
+
+.campaign-map-shape-center::before {
+
+  width:
+    10px;
+
+  height:
+    2px;
+}
+
+
+.campaign-map-shape-center::after {
+
+  width:
+    2px;
+
+  height:
+    10px;
+}
+
+
+.campaign-map-shape[data-shape-type="circle"].is-selected .campaign-map-shape-center {
+
+  display:
+    block;
+}
+
+
 .campaign-map-shape-label {
 
   position:

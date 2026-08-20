@@ -237,6 +237,7 @@ test(
               y: 160,
               width: 80,
               height: 80,
+              rotation: 18,
               strokeColor: '#aa33cc',
               fillColor: '#74c69d',
               strokeWidth: 6
@@ -335,6 +336,7 @@ test(
       y: 160,
       width: 80,
       height: 80,
+      rotation: 18,
       strokeColor: '#aa33cc',
       fillColor: '#74c69d',
       strokeWidth: 6
@@ -368,6 +370,12 @@ test(
       result.html
     ).not.toMatch(
       /campaign-map-token-resize|campaign-map-token-rotate|data-runtime="true"/
+    );
+
+    expect(
+      result.html
+    ).toContain(
+      'data-rotation="18"'
     );
 
     expect(

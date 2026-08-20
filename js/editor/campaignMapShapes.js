@@ -58,7 +58,7 @@ export function renderMapShape(
   );
 
   shape
-    .querySelectorAll('.campaign-map-shape-handle')
+    .querySelectorAll('.campaign-map-shape-handle, .campaign-map-shape-center')
     .forEach(handle => markRuntime(handle));
 }
 
@@ -163,6 +163,7 @@ function getShapeInnerHTML(
       <svg class="campaign-map-shape-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
         <ellipse cx="50" cy="50" rx="48" ry="48"></ellipse>
       </svg>
+      <span class="campaign-map-shape-center" aria-hidden="true"></span>
       <span class="campaign-map-shape-handle is-se" data-corner="se"></span>
       <span class="campaign-map-shape-label is-top">${getFeetLabel(Number(shape.dataset.w || DEFAULT_SHAPE_SIZE))}</span>
     `;
