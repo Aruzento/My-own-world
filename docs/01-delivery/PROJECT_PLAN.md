@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.11.0` Existing P1 Stabilization is `ACTIVE`.
 
-Current leaf: `0.0.1.11.5` `BUG-003` Desktop Real-App Verification is `VERIFIED / CLOSED`. Next leaf is `0.0.1.11.6` Map Presentation.
+Current leaf: `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization is `FIXED`. Next leaf is `0.0.1.11.7` Drawing Tools.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Work one `0.0.1.11.0` stabilization leaf at a time and stop after each focused commit.
 
@@ -154,7 +154,8 @@ CURRENT LEAF RESULTS:
 - `0.0.1.11.3` `BI-011` Creature Skills Encoding - `FIXED` on 2026-08-20. The Campaign Map creature token skill action/submenu now renders clean UTF-8 Russian `Навыки`, skill labels still come from the existing `DND_SKILL_GROUPS` source (`Скрытность`, `Атлетика`, etc.), and the focused regression verifies visible labels, submenu opening, selected skill payload and absence of mojibake marker sequences. `BI-022` is `DONE` because its current children `BI-010` and `BI-011` are both closed.
 - `0.0.1.11.4` `BUG-001` Large Workspace UX - `VERIFIED ACCEPTABLE` on 2026-08-20. The approved real workspace `X:\ДНД\Мастер\По кампаниям\База` passed current desktop large-workspace smoke and native WebView click-through for workspace restore, tree scroll/search, representative card open, Settings diagnostics, heavy Campaign Map open and presentation. Safe move/delete timing was checked on a temporary copy of the real `pages` folder, while UI move/delete feedback remains covered by focused browser regressions. No product bottleneck was reproduced; only the native smoke target selection was tightened so legacy pages without front-matter `title:` are opened by their first `<h1>` text.
 - `0.0.1.11.5` `BUG-003` Desktop Real-App Verification - `VERIFIED / CLOSED` on 2026-08-20. The current release/native build produced `src-tauri\target\release\my-own-world.exe` and the NSIS installer, then the native WebView click-through passed against `X:\ДНД\Мастер\По кампаниям\База`: workspace restore, tree, image card (`loadedImages: 1`), Settings diagnostics, tree scroll/search, Campaign Map background (`backgroundRenderable: true`) and presentation (`status: ready`). Desktop large-workspace smoke and desktop release gate also passed; workspace schema/size diagnostics were advisory and no application/environment failure was reproduced. The native smoke runner was tightened to prefer image cards when available and to fail if expected card/map assets do not visibly render.
-- Next leaf: `0.0.1.11.6` Map Presentation.
+- `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization - `FIXED` on 2026-08-20. The current representative map matrix reproduced one real presentation defect: browser/full presentation clone inherited the GM editor grid color alpha (`rgba(...,0.34)`) instead of the presentation-safe grid alpha (`rgba(...,0.22)`) used by the model-first renderer. The clone now applies grid enabled state, size and presentation-safe color from the map model, and both presentation paths share the same grid color helper. Regression: `campaign-map-presentation-representative-map-workflow-stays-current` verifies presentation open, token sync, player-hidden behavior, fog/locked fog, layer visibility/order, movement distance arrow, grid style sync, screenshot evidence and close/reopen stale-state cleanup. Delayed sync, fog/layer ordering, hidden-player handling, distance arrows and stale reopen state were not reproduced after the fix.
+- Next leaf: `0.0.1.11.7` Drawing Tools.
 
 ### Phase 4 - 0.0.1.12.0 Data Safety Completion
 
@@ -510,7 +511,7 @@ These living backlog items are now represented in this master roadmap. Their det
 | `BUG-001` large workspace operations feel frozen | Closed in `0.0.1.11.4` as `VERIFIED ACCEPTABLE`; keep large-workspace smoke in release handoff and reopen only with new real UX evidence. |
 | `BUG-002` broad unknown broken functions | Watch list only; split into a concrete bug when the owner reports steps. |
 | `BUG-003` desktop installed-app verification | Closed in `0.0.1.11.5` as `VERIFIED / CLOSED`; keep native click-through, packaging smoke, desktop gate and large-workspace smoke in release handoff. |
-| `BUG-004` campaign map presentation fragility | Phase 3 if still reproduced. |
+| `BUG-004` campaign map presentation fragility | Closed in `0.0.1.11.6` as `FIXED`; grid appearance was reproduced and fixed, while delayed sync, fog/layer ordering, hidden-player handling, distance arrows and stale reopen state were not reproduced under the current matrix. |
 | `BUG-005` map drawing UX verification | Phase 3 if still reproduced. |
 | `BUG-006` map music desktop/audio fragility | Phase 3 if still reproduced. |
 | `BUG-007` Properties real-card layout risk | Phase 3 if still reproduced; Phase 21 if only visual polish remains. |

@@ -12,7 +12,8 @@ import {
 } from './campaignMapDragMeasure.js';
 
 import {
-  getPresentationCSS
+  getPresentationCSS,
+  getPresentationGridColor
 } from './campaignMapPresentationStyle.js';
 
 import {
@@ -857,6 +858,11 @@ function preparePresentationClone(
     model
   );
 
+  applyPresentationGridState(
+    clone,
+    model
+  );
+
   applyCloneViewportTransform(
     clone
   );
@@ -907,6 +913,36 @@ function removePresentationRuntime(
       );
     });
 }
+
+
+function applyPresentationGridState(
+  clone,
+  model
+) {
+
+  const grid =
+    model?.grid;
+
+  if (!clone || !grid) return;
+
+  clone.dataset.grid =
+    grid.enabled
+      ? 'true'
+      : 'false';
+
+  clone.style.setProperty(
+    '--campaign-grid-size',
+    `${Number(grid.size || 48)}px`
+  );
+
+  clone.style.setProperty(
+    '--campaign-grid-color',
+    getPresentationGridColor(
+      grid.color
+    )
+  );
+}
+
 
 function applyCloneViewportTransform(
   clone

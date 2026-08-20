@@ -142,19 +142,23 @@ Regression target: `app-shell-global-workspace-switch-keeps-cancel-and-loads-nex
 
 Area: campaign map, presentation
 
-Status: Needs repro
+Status: FIXED
 
 Source: user reports and plan `0.0.1.3.1`.
 
 Symptoms seen before: slow presentation, delayed sync, wrong fog/layer order, missing distance arrows, bright grid, hidden player token badge problems.
 
-Current automated status: browser smoke covers model render, delta patches, dirty fog patches, hidden player token visibility, fog above tokens, and presentation sync. Since `0.0.1.7.3`, focused browser smoke commands can pass Playwright filters through `npm run test:browser -- --grep ...` instead of silently running the full suite.
+Current result: `0.0.1.11.6` on 2026-08-20 reproduced and fixed the current user-visible presentation issue in the browser/full presentation clone path. Expected: presentation uses the presentation-safe grid appearance after grid style changes while token movement, player-hidden handling, fog/locked fog, layer ordering, distance arrows and reopen state stay current. Actual before fix: the browser presentation clone inherited the GM editor stage `--campaign-grid-color` (`rgba(...,0.34)`) instead of the softer presentation grid color (`rgba(...,0.22)`) used by the model-first presentation renderer, so the presentation grid could be too bright and inconsistent after sync.
 
-Risk: real desktop presentation during a live game can still fail even if model-level browser tests pass.
+Root cause: `preparePresentationClone` cloned the editor stage DOM and did not normalize presentation grid state from the map model. The model-first renderer had its own presentation grid-color helper, so the two presentation paths drifted.
 
-Next check: manual presentation pass with a real map: move token, draw fog, edit locked fog zone, toggle hidden player, move with distance arrow, switch grid.
+Owner: `js/editor/campaignMapPresentation.js` / `js/editor/campaignMapPresentationStyle.js`; `js/presentation/campaignMapPresentationRenderer.js` now reuses the shared helper.
 
-Regression target: add desktop-oriented presentation scenario after manual reproduction.
+Fix: the browser presentation clone now applies grid enabled state, size and presentation-safe color from the model, and both presentation render paths use the same `getPresentationGridColor` helper.
+
+Historical symptom classification: delayed sync - `NOT REPRODUCED`; fog/layer ordering - `NOT REPRODUCED`; hidden-player token handling - `NOT REPRODUCED`; distance arrows - `NOT REPRODUCED`; grid appearance - `FIXED`; stale presentation state after close/reopen - `NOT REPRODUCED`.
+
+Regression coverage: `campaign-map-presentation-representative-map-workflow-stays-current` opens one representative map fixture, verifies presentation open, token movement sync, player-hidden token behavior, fog/locked-fog sync, layer visibility/order, distance arrow rendering, grid style sync, no stale measure after close/reopen, and attaches a Playwright screenshot. Existing presentation browser tests still cover model render, delta patches, dirty fog patches, hidden player token visibility, fog above tokens and presentation sync. Native smoke against `X:\ДНД\Мастер\По кампаниям\База` opened the heavy real map `Горы-Пещеры` and presentation with `status: ready`; workspace schema warnings were advisory only.
 
 ### BUG-005. Campaign map drawing tools need real UX verification
 
@@ -352,4 +356,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.5` `BUG-003` Desktop Real-App Verification is `VERIFIED / CLOSED`; next leaf: `0.0.1.11.6` Map Presentation.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization is `FIXED`; next leaf: `0.0.1.11.7` Drawing Tools.

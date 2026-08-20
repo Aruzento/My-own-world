@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Desktop Native Click-Through Current
 
-Run date: 2026-08-20T10:59:38.429Z
+Run date: 2026-08-20T11:25:26.206Z
 
 Plan ref: `0.0.1.11.5` (runner introduced in `0.0.1.2.2`)
 
@@ -22,13 +22,13 @@ Fatal error: none
 
 ## Steps
 
-- launch native desktop app with WebView2 remote debugging: passed (2853 ms)
-- restore workspace through desktop adapter: passed (2201 ms)
-- open representative card with image when available: passed (219 ms)
-- open settings workspace diagnostics panel: passed (799 ms)
-- scroll and search the large tree: passed (185 ms)
-- open heavy campaign map: passed (230 ms)
-- open presentation window from the heavy map: passed (1233 ms)
+- launch native desktop app with WebView2 remote debugging: passed (2773 ms)
+- restore workspace through desktop adapter: passed (2154 ms)
+- open representative card with image when available: passed (244 ms)
+- open settings workspace diagnostics panel: passed (705 ms)
+- scroll and search the large tree: passed (176 ms)
+- open heavy campaign map: passed (134 ms)
+- open presentation window from the heavy map: passed (1395 ms)
 
 ## Targets
 
@@ -74,7 +74,7 @@ Fatal error: none
 
 ```json
 {
-  "cdpEndpoint": "http://127.0.0.1:59765",
+  "cdpEndpoint": "http://127.0.0.1:60937",
   "workspace": {
     "title": "MyOwnWorld",
     "treeItems": 10,
@@ -102,7 +102,7 @@ Fatal error: none
     "cards": 9,
     "sections": 7,
     "hasWriteProbe": true,
-    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\БазаРасположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 5 шт., последний: delete-page-branchПапка резервных копий: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\База\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 12 мс (completed)697Страниц27Карт144Ассетов528Сломанные ссылки132Лишние ассеты205"
+    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\БазаРасположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 5 шт., последний: delete-page-branchПапка резервных копий: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\База\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 13 мс (completed)697Страниц27Карт144Ассетов528Сломанные ссылки132Лишние ассеты205"
   },
   "treeAfterSearch": {
     "renderedItems": 10,

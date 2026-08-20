@@ -774,6 +774,685 @@ test(
 
 
 test(
+  'campaign-map-presentation-representative-map-workflow-stays-current',
+  async ({ page }, testInfo) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const popupPromise =
+      page.waitForEvent(
+        'popup'
+      );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          openPresentationWindow,
+          syncPresentation,
+          syncPresentationDragMeasure,
+          syncPresentationFog,
+          syncPresentationItemById
+        } = await import('/js/editor/campaignMapPresentation.js');
+
+        const {
+          fillFog
+        } = await import('/js/editor/campaignMapFog.js');
+
+        const {
+          createMapShapeElement,
+          createMapTokenElement
+        } = await import('/js/editor/campaignMapElementFactory.js');
+
+        const {
+          renderMapShape
+        } = await import('/js/editor/campaignMapShapes.js');
+
+        const {
+          applyTokenRotation,
+          applyTokenSize,
+          positionToken
+        } = await import('/js/editor/campaignMapTokens.js');
+
+        const {
+          updateGridSize
+        } = await import('/js/editor/campaignMapViewport.js');
+
+        const {
+          applyCampaignMapLayers,
+          setCampaignMapLayerVisibility
+        } = await import('/js/editor/campaignMapLayers.js');
+
+        const {
+          getCampaignMapStore
+        } = await import('/js/editor/campaignMapStore.js');
+
+        document.querySelector('#editorArea').innerHTML = `
+          <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+            <div class="campaign-map-topbar" contenteditable="false">
+              <h1 class="campaign-map-title singleline-field" contenteditable="true">Representative Presentation Matrix</h1>
+            </div>
+
+            <div class="campaign-map-stage" data-grid="true" data-grid-size="64" data-grid-color="#ffffff" data-fog-mode="draw" data-fog-image="" contenteditable="false" style="position: relative; width: 1000px; height: 740px;">
+              <div class="campaign-map-viewport">
+                <div class="campaign-map-background"></div>
+                <div class="campaign-map-object-layer"></div>
+                <canvas class="campaign-map-fog-canvas"></canvas>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const map =
+          document.querySelector('.campaign-map-document');
+
+        const layer =
+          map.querySelector('.campaign-map-object-layer');
+
+        const store =
+          getCampaignMapStore(
+            map
+          );
+
+        const playerToken =
+          store.addToken({
+            tokenId: 'matrix-player',
+            type: 'creature',
+            name: 'Player Token',
+            x: 12,
+            y: 18,
+            size: 1,
+            rotation: 0,
+            sourceMode: 'original',
+            isPlayerToken: true
+          });
+
+        const npcToken =
+          store.addToken({
+            tokenId: 'matrix-npc',
+            type: 'creature',
+            name: 'Hidden NPC',
+            x: 34,
+            y: 22,
+            size: 1,
+            rotation: 0,
+            presentationHidden: true
+          });
+
+        const shape =
+          store.addShape({
+            shapeId: 'matrix-shape',
+            type: 'square',
+            x: 140,
+            y: 180,
+            width: 90,
+            height: 70,
+            fillColor: '#2b87ff'
+          });
+
+        store.addLockedFogZone({
+          id: 'matrix-locked-fog',
+          x: 220,
+          y: 240,
+          width: 110,
+          height: 90
+        });
+
+        layer.append(
+          createMapTokenElement(
+            playerToken,
+            store.getModel()
+          ),
+          createMapTokenElement(
+            npcToken,
+            store.getModel()
+          ),
+          createMapShapeElement(
+            shape,
+            store.getModel()
+          )
+        );
+
+        applyCampaignMapLayers(
+          map
+        );
+
+        updateGridSize(
+          map
+        );
+
+        fillFog(
+          map
+        );
+
+        openPresentationWindow();
+        syncPresentation();
+
+        window.__presentationMatrix = {
+          applySourceToken(record) {
+
+            const token =
+              map.querySelector(
+                `.campaign-map-token[data-token-id="${CSS.escape(record.tokenId)}"]`
+              );
+
+            token.dataset.x =
+              record.x.toFixed(3);
+
+            token.dataset.y =
+              record.y.toFixed(3);
+
+            token.dataset.size =
+              record.size.toFixed(3);
+
+            token.dataset.rotation =
+              String(record.rotation || 0);
+
+            token.dataset.presentationHidden =
+              record.presentationHidden
+                ? 'true'
+                : 'false';
+
+            token.dataset.layerId =
+              record.layerId;
+
+            token.dataset.zIndex =
+              String(record.zIndex);
+
+            token.style.zIndex =
+              String(record.zIndex);
+
+            positionToken(
+              token
+            );
+
+            applyTokenSize(
+              token
+            );
+
+            applyTokenRotation(
+              token
+            );
+          },
+
+          applySourceShape(record) {
+
+            const shapeElement =
+              map.querySelector(
+                `.campaign-map-shape[data-shape-id="${CSS.escape(record.shapeId)}"]`
+              );
+
+            shapeElement.dataset.x =
+              String(Math.round(record.x));
+
+            shapeElement.dataset.y =
+              String(Math.round(record.y));
+
+            shapeElement.dataset.w =
+              String(Math.round(record.width));
+
+            shapeElement.dataset.h =
+              String(Math.round(record.height));
+
+            shapeElement.dataset.layerId =
+              record.layerId;
+
+            shapeElement.dataset.zIndex =
+              String(record.zIndex);
+
+            shapeElement.style.zIndex =
+              String(record.zIndex);
+
+            renderMapShape(
+              shapeElement
+            );
+          },
+
+          movePlayerToken() {
+
+            const record =
+              store.moveToken(
+                'matrix-player',
+                {
+                  x: 46,
+                  y: 52
+                }
+              );
+
+            this.applySourceToken(
+              record
+            );
+
+            syncPresentationItemById(
+              map,
+              'token',
+              'matrix-player'
+            );
+          },
+
+          hidePlayerToken() {
+
+            const record =
+              store.updateToken(
+                'matrix-player',
+                {
+                  presentationHidden: true
+                }
+              );
+
+            this.applySourceToken(
+              record
+            );
+
+            syncPresentationItemById(
+              map,
+              'token',
+              'matrix-player'
+            );
+          },
+
+          updateFogAndLockedZone() {
+
+            fillFog(
+              map
+            );
+
+            store.updateLockedFogZone(
+              'matrix-locked-fog',
+              {
+                x: 300,
+                y: 320,
+                width: 150,
+                height: 96
+              }
+            );
+
+            syncPresentationFog(
+              map
+            );
+          },
+
+          hideShapeLayer() {
+
+            setCampaignMapLayerVisibility(
+              map,
+              'map-shapes',
+              false
+            );
+
+            const shapeRecord =
+              store.getModel().getShape(
+                'matrix-shape'
+              );
+
+            this.applySourceShape(
+              shapeRecord
+            );
+
+            applyCampaignMapLayers(
+              map
+            );
+
+            syncPresentation();
+          },
+
+          changeGridAndMeasure() {
+
+            store.setGrid({
+              enabled: false,
+              size: 72,
+              color: '#00ff00'
+            });
+
+            updateGridSize(
+              map
+            );
+
+            syncPresentation();
+
+            syncPresentationDragMeasure({
+              active: true,
+              x1: 100,
+              y1: 100,
+              x2: 340,
+              y2: 100,
+              labelX: 220,
+              labelY: 86,
+              label: '30 ft'
+            });
+          },
+
+          reopenPresentation() {
+
+            openPresentationWindow();
+            syncPresentation();
+          }
+        };
+      }
+    );
+
+    const popup =
+      await popupPromise;
+
+    await popup.waitForLoadState(
+      'domcontentloaded'
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const player =
+                document.querySelector('[data-token-id="matrix-player"]');
+
+              const npc =
+                document.querySelector('[data-token-id="matrix-npc"]');
+
+              const fog =
+                document.querySelector('.campaign-map-fog-image');
+
+              const lockedFog =
+                document.querySelector('.campaign-presentation-locked-fog-zone');
+
+              return {
+                stage:
+                  Boolean(document.querySelector('.campaign-map-stage')),
+                player:
+                  Boolean(player),
+                npc:
+                  Boolean(npc),
+                fogAbovePlayer:
+                  Number(getComputedStyle(fog).zIndex) >
+                  Number(getComputedStyle(player).zIndex),
+                lockedFogAbovePlayer:
+                  Number(getComputedStyle(lockedFog).zIndex) >
+                  Number(getComputedStyle(player).zIndex),
+                grid:
+                  document.querySelector('.campaign-map-stage')?.dataset.grid,
+                gridSize:
+                  document.querySelector('.campaign-map-stage')?.style.getPropertyValue('--campaign-grid-size')
+              };
+            }
+          )
+      )
+      .toEqual({
+        stage: true,
+        player: true,
+        npc: false,
+        fogAbovePlayer: true,
+        lockedFogAbovePlayer: true,
+        grid: 'true',
+        gridSize: '64px'
+      });
+
+    await page.evaluate(
+      () => window.__presentationMatrix.movePlayerToken()
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const player =
+                document.querySelector('[data-token-id="matrix-player"]');
+
+              return {
+                x:
+                  player?.dataset.x,
+                y:
+                  player?.dataset.y,
+                left:
+                  player?.style.left,
+                top:
+                  player?.style.top
+              };
+            }
+          )
+      )
+      .toEqual({
+        x: '46.000',
+        y: '52.000',
+        left: '46%',
+        top: '52%'
+      });
+
+    await page.evaluate(
+      () => window.__presentationMatrix.hidePlayerToken()
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const player =
+                document.querySelector('[data-token-id="matrix-player"]');
+
+              return {
+                player:
+                  Boolean(player),
+                hidden:
+                  player?.dataset.presentationHidden,
+                playerFlag:
+                  player?.dataset.playerToken,
+                badge:
+                  getComputedStyle(player, '::before').content
+              };
+            }
+          )
+      )
+      .toEqual({
+        player: true,
+        hidden: 'true',
+        playerFlag: 'true',
+        badge: '"скрыт"'
+      });
+
+    await page.evaluate(
+      () => window.__presentationMatrix.updateFogAndLockedZone()
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const lockedFog =
+                document.querySelector('.campaign-presentation-locked-fog-zone');
+
+              return {
+                left:
+                  lockedFog?.style.left,
+                top:
+                  lockedFog?.style.top,
+                width:
+                  lockedFog?.style.width,
+                height:
+                  lockedFog?.style.height,
+                layerHidden:
+                  lockedFog?.dataset.layerHidden
+              };
+            }
+          )
+      )
+      .toEqual({
+        left: '300px',
+        top: '320px',
+        width: '150px',
+        height: '96px',
+        layerHidden: 'false'
+      });
+
+    await page.evaluate(
+      () => window.__presentationMatrix.hideShapeLayer()
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const player =
+                document.querySelector('[data-token-id="matrix-player"]');
+
+              const shape =
+                document.querySelector('[data-shape-id="matrix-shape"]');
+
+              const fog =
+                document.querySelector('.campaign-map-fog-image');
+
+              return {
+                shapeLayerHidden:
+                  shape?.dataset.layerHidden,
+                shapeDisplay:
+                  getComputedStyle(shape).display,
+                shapeAbovePlayer:
+                  Number(getComputedStyle(shape).zIndex) >
+                  Number(getComputedStyle(player).zIndex),
+                fogAboveShape:
+                  Number(getComputedStyle(fog).zIndex) >
+                  Number(getComputedStyle(shape).zIndex)
+              };
+            }
+          )
+      )
+      .toEqual({
+        shapeLayerHidden: 'true',
+        shapeDisplay: 'none',
+        shapeAbovePlayer: true,
+        fogAboveShape: true
+      });
+
+    await page.evaluate(
+      () => window.__presentationMatrix.changeGridAndMeasure()
+    );
+
+    await expect
+      .poll(
+        async () =>
+          popup.evaluate(
+            () => {
+
+              const stage =
+                document.querySelector('.campaign-map-stage');
+
+              const measure =
+                document.querySelector('.campaign-map-drag-measure');
+
+              return {
+                grid:
+                  stage?.dataset.grid,
+                gridSize:
+                  stage?.style.getPropertyValue('--campaign-grid-size'),
+                gridColor:
+                  stage?.style.getPropertyValue('--campaign-grid-color'),
+                measureText:
+                  measure?.querySelector('text')?.textContent,
+                markerEnd:
+                  measure
+                    ? getComputedStyle(measure.querySelector('line')).markerEnd
+                    : '',
+                measureZ:
+                  measure
+                    ? Number(getComputedStyle(measure).zIndex)
+                    : 0
+              };
+            }
+          )
+      )
+      .toEqual({
+        grid: 'false',
+        gridSize: '72px',
+        gridColor: 'rgba(0,255,0,0.22)',
+        measureText: '30 ft',
+        markerEnd: 'url("#campaign-drag-arrow")',
+        measureZ: 10002
+      });
+
+    await testInfo.attach(
+      'campaign-map-presentation-representative-matrix',
+      {
+        body:
+          await popup.screenshot(),
+        contentType:
+          'image/png'
+      }
+    );
+
+    await popup.close();
+
+    const reopenedPromise =
+      page.waitForEvent(
+        'popup'
+      );
+
+    await page.evaluate(
+      () => window.__presentationMatrix.reopenPresentation()
+    );
+
+    const reopened =
+      await reopenedPromise;
+
+    await reopened.waitForLoadState(
+      'domcontentloaded'
+    );
+
+    await expect
+      .poll(
+        async () =>
+          reopened.evaluate(
+            () => {
+
+              const player =
+                document.querySelector('[data-token-id="matrix-player"]');
+
+              const measure =
+                document.querySelector('.campaign-map-drag-measure');
+
+              const stage =
+                document.querySelector('.campaign-map-stage');
+
+              return {
+                playerX:
+                  player?.dataset.x,
+                playerY:
+                  player?.dataset.y,
+                playerHidden:
+                  player?.dataset.presentationHidden,
+                grid:
+                  stage?.dataset.grid,
+                gridSize:
+                  stage?.style.getPropertyValue('--campaign-grid-size'),
+                staleMeasure:
+                  Boolean(measure)
+              };
+            }
+          )
+      )
+      .toEqual({
+        playerX: '46.000',
+        playerY: '52.000',
+        playerHidden: 'true',
+        grid: 'false',
+        gridSize: '72px',
+        staleMeasure: false
+      });
+
+    await reopened.close();
+  }
+);
+
+
+test(
   'campaign-map-presentation-keeps-hidden-player-token-visible',
   async ({ page }) => {
 

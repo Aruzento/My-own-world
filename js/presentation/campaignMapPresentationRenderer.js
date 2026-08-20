@@ -2,6 +2,10 @@ import {
   canShowPresentationItem
 } from './campaignMapPresentationPrivacy.js';
 
+import {
+  getPresentationGridColor
+} from '../editor/campaignMapPresentationStyle.js';
+
 
 const WORLD_WIDTH =
   4096;
@@ -927,48 +931,6 @@ function syncStageGrid(
       grid.color
     )
   );
-}
-
-
-function getPresentationGridColor(
-  value
-) {
-
-  const color =
-    String(value || '').trim();
-
-  const hexMatch =
-    /^#([0-9a-f]{6})$/i.exec(
-      color
-    );
-
-  if (!hexMatch) {
-
-    return color || 'rgba(255,255,255,0.12)';
-  }
-
-  const raw =
-    hexMatch[1];
-
-  const red =
-    Number.parseInt(
-      raw.slice(0, 2),
-      16
-    );
-
-  const green =
-    Number.parseInt(
-      raw.slice(2, 4),
-      16
-    );
-
-  const blue =
-    Number.parseInt(
-      raw.slice(4, 6),
-      16
-    );
-
-  return `rgba(${red},${green},${blue},0.22)`;
 }
 
 

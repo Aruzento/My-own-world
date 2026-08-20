@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.6 BUG-004 Campaign Map Presentation Stabilization
+
+### Disposition
+
+- `FIXED`.
+
+### Current Evidence
+
+- Representative presentation matrix covered: open presentation, token move, player-hidden token toggle, fog redraw, locked fog update, layer ordering/visibility, movement distance arrow, grid style change and close/reopen.
+- EXPECTED: presentation stays current and uses presentation-safe grid styling while map items, fog, layers, measurement and reopen state remain correct.
+- ACTUAL before fix: the browser/full presentation clone inherited the GM editor stage grid color alpha (`rgba(...,0.34)`) instead of the presentation renderer's safer grid alpha (`rgba(...,0.22)`), making presentation grid appearance too bright and inconsistent after sync.
+- MINIMUM REPRO: open a Campaign Map in browser presentation clone mode, set grid color through the editor/model, sync presentation, and inspect the presentation stage `--campaign-grid-color`; it used the editor-bright color rather than the presentation-safe value.
+- ROOT CAUSE: `preparePresentationClone` cloned editor DOM state but did not reapply presentation grid state from the map model. The model-first presentation renderer had a separate local grid color helper, so the clone path and renderer path drifted.
+- OWNER: `js/editor/campaignMapPresentation.js` and `js/editor/campaignMapPresentationStyle.js`; `js/presentation/campaignMapPresentationRenderer.js` now shares the same presentation grid color helper.
+
+### Historical Symptom Classification
+
+- Delayed sync: `NOT REPRODUCED` under token move/item sync and existing delta/full presentation tests.
+- Fog/layer ordering: `NOT REPRODUCED`; fog and locked fog stayed above tokens and layer visibility/order synced.
+- Hidden-player token handling: `NOT REPRODUCED`; player tokens remain visible with the expected hidden badge, non-player hidden tokens stay omitted.
+- Distance arrows: `NOT REPRODUCED`; movement measure text and SVG arrow marker rendered.
+- Grid appearance: `FIXED`; browser clone and model-first renderer now use the same presentation-safe grid color.
+- Stale presentation state: `NOT REPRODUCED`; close/reopen preserved latest token/grid state and did not keep stale measurement markup.
+
+### Verification
+
+- Passed: `npm run test:browser -- --grep campaign-map-presentation-representative-map-workflow-stays-current`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-presentation.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run desktop:build`.
+- Passed: `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`; presentation opened on the heavy real map `Горы-Пещеры` with `status: ready`, and workspace schema warnings were advisory only.
+- Passed: `npm run verify`.
+- Passed: final `git diff --check`.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was read/smoke verified only; it was not repaired, migrated, normalized or bulk-edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.7` Drawing Tools.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.5 BUG-003 Desktop Real-App Verification
 
 ### Disposition
