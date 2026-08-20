@@ -406,4 +406,22 @@ This should not block the audit closure, but future cleanup should avoid growing
 
 The `0.0.1.9.0` audit was useful but not complete enough to proceed as-is. The new P1 autosave and Tree accessibility findings changed the cleanup order before `0.0.1.10.0` started. RA-021 is now closed by `RCB-021`; the remaining P1 cleanup order continues from the repository/data-consistency slices.
 
-`0.0.1.10.0` has owner approval for one cleanup leaf at a time. No next RCB leaf should start without an explicit task.
+`0.0.1.10.0` is closed after the 2026-08-20 corrective final gate. No next cleanup leaf should start automatically.
+
+## 0.0.1.10.0 Cleanup Closure Addendum
+
+Closure date: 2026-08-20
+
+Head reviewed: `16ea80b` before final closure docs.
+
+Result: `CLEANUP CLOSED - FINAL GATE PASSED`
+
+Summary:
+
+- All owner-approved RCB leaves are closed, including split `RCB-006`, split `RCB-007`, `RCB-014` generated-artifact policy and historical `RCB-015`.
+- Corrective gate evidence verified deterministic Knowledge Graph history/document listener teardown and the narrow root-only Chromium/GPU `debug.log` policy.
+- Two fresh read-only reviewers returned `PASS`: architecture/data-safety and tests/tooling/maintainability.
+- Fresh gate evidence passed: `npm run test`, `npm run test:browser`, `npm run verify`, `npm run ui:polish:audit`, `npm run docs:index`, `npm run check:encoding`, `node tools/audit_project_files.mjs`, `git diff --check`, `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` and `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`.
+- Real large-workspace validation is `LARGE_WORKSPACE_VALIDATED`; advisory diagnostics warnings remain visible and non-blocking.
+
+No product functionality, persistent format migration or broad cleanup was implemented during the closure gate. `0.0.1.11.0` is next, but not started.

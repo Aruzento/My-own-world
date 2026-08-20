@@ -20,9 +20,9 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.10.0` Repository Cleanup & Consolidation.
+Current phase: `0.0.1.11.0` Existing P1 Stabilization is `NEXT` and not started.
 
-Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006` and `RCB-007` are closed. The current owner-approved step is `0.0.1.10.CORRECTIVE + FINAL`; do not start `0.0.1.11.0` automatically.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Do not implement `0.0.1.11.0` until the owner gives the next task.
 
 ## Execution Rules
 
@@ -115,7 +115,7 @@ ID: `0.0.1.10.0`
 
 NAME: Repository Cleanup & Consolidation
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
 
 GOAL: perform only owner-approved cleanup from the audit.
 
@@ -123,9 +123,9 @@ WHY NOW: cleanup must be based on evidence, not taste. It should follow the audi
 
 SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11; closed leaves are tracked in the current-state stop note and [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). `RCB-006`, `RCB-007` and `RCB-014` are closed; the current owner-selected step is the corrective final cleanup gate.
+DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of cleanup slices from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11, and the corrective final gate closed it on 2026-08-20.
 
-EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
+EXIT CRITERIA: closed on 2026-08-20 after each approved cleanup slice received focused regression coverage, no product functionality was added, persistent format stayed unchanged, independent reviewers passed, and fresh full verification passed: unit, browser, visual evidence, `npm run verify`, UI polish, docs, encoding, desktop gate, native click-through and real large-workspace smoke on `X:\ДНД\Мастер\По кампаниям\База`.
 
 ### Phase 3 - 0.0.1.11.0 Existing P1 Stabilization
 
@@ -133,7 +133,7 @@ ID: `0.0.1.11.0`
 
 NAME: Existing P1 Stabilization
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
 
 GOAL: close or deliberately reclassify the known user-visible P1/P2 stabilization items before live-session features.
 
@@ -141,7 +141,7 @@ WHY NOW: new session/combat work should not sit on top of known map and regressi
 
 SCOPE: `BI-003`, `BI-008`, `BI-009`, `BI-010`, `BI-011`, `BI-022`; current P1 bug-inventory items if still reproduced after Phase 1 audit, especially `BUG-001`, `BUG-003`, `BUG-004`, `BUG-005`, `BUG-006`, `BUG-007`, `BUG-008` and `BUG-009`. Reproduce the disappearing map toolbar, fix the creature skills mojibake, close the P1 regression bundle when its real children are closed, and decide whether circle center points / shape rotation controls are small usability fixes here or should move to a later Campaign Map phase.
 
-DEPENDENCIES: Phase 2 cleanup.
+DEPENDENCIES: Phase 2 cleanup is closed. This phase is next, but implementation must wait for an explicit owner task.
 
 EXIT CRITERIA: each included BI has a current repro/result, root cause where applicable, regression target and final disposition; no P1 item stays indefinitely "ready" without a decision.
 

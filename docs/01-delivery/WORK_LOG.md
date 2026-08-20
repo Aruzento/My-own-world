@@ -6,6 +6,50 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.10.CORRECTIVE + FINAL Cleanup Closure Gate
+
+### What Changed
+
+- Closed the remaining `0.0.1.10.0` cleanup blockers after the first final gate returned `BLOCKED`.
+- Kept the fix scope to cleanup closure only: no product NF work, no map/graph concept redesign, no schema migration and no new dependency.
+- Confirmed `RCB-006`, `RCB-007`, `RCB-014`, `RCB-015` and all other approved cleanup leaves are closed.
+- Recorded `0.0.1.10.0` as `DONE` and moved `0.0.1.11.0` Existing P1 Stabilization to `NEXT`, without starting it.
+
+### Corrective Fixes
+
+- `f270e5d` fixed the first cleanup final gate blockers, including the original Knowledge Graph history teardown and generated-artifact audit direction.
+- `b71065c` completed the Knowledge Graph document listener lifecycle fix: graph teardown now removes document-level keyboard history ownership and pointer/mouse drag-pan ownership deterministically instead of waiting for a later keyboard event.
+- `16ea80b` fixed the remaining final gate blockers: the root Chromium/GPU `debug.log` policy is root-only (`/debug.log`), the project-file audit still catches tracked or non-root logs, and native desktop click-through waits for stable page loads before intentional reloads so runner-created `net::ERR_ABORTED` resource noise is not misclassified as app failure.
+
+### Final Gate Evidence
+
+- Passed: `npm run test` with 338 node tests.
+- Passed: `npm run test:browser` with 146 browser tests, including visual evidence specs, Tree accessibility, Task Tracker, Campaign Map, Knowledge Graph, popup lifecycle, World Package, Properties and editor autosave regressions.
+- Passed: `npm run verify`; it includes encoding, syntax checks, 338 node tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run docs:index` with 88 markdown files and 0 active status drift.
+- Passed: `node tools\audit_project_files.mjs` with 605 files, 0 delete candidates and 0 mojibake candidates while the allowed root `debug.log` was present.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+- Passed: `npm run desktop:gate -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` with `Overall: PASSED - ADVISORY WARNINGS`, `Confidence: LARGE_WORKSPACE_VALIDATED`, browser smoke 146/146, desktop package/environment/cargo checks and large workspace smoke.
+- Passed: `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` with native WebView click-through, heavy map open and presentation window open. Unexpected runtime errors: none. Failed resource responses: none.
+
+### Independent Review
+
+- Architecture/data-safety reviewer `Wegener` returned `PASS`: graph listener teardown is deterministic, RCB-006/RCB-007 closure is legitimate, write/read ownership remains coherent, and no persistent schema drift or duplicate owner was found.
+- Tests/tooling/docs reviewer `Halley` returned `PASS`: the `debug.log` exemption is narrow and root-only, unexpected artifacts remain detectable, graph lifecycle tests are behavioral, visual evidence policy is honest and active docs had no stale closure blocker after this sync.
+
+### Residual Risks
+
+- The real large workspace at `X:\ДНД\Мастер\По кампаниям\База` still has advisory diagnostics warnings: large pages, large assets and heavy map payloads. They are visible in the gate reports and are not hard cleanup failures.
+- `0.0.1.11.0` is next but not started. Its P1 stabilization work needs a new owner task before implementation.
+- Strict pixel regression remains future visual maturity work; current policy is structured browser regression plus screenshot evidence and human visual review.
+
+### Next
+
+- Wait for the owner to start `0.0.1.11.0` Existing P1 Stabilization.
+- Do not reopen `0.0.1.10.0` cleanup unless the owner creates a new cleanup task.
+
 ## 2026-08-20: 0.0.1.10.CORRECTIVE Cleanup Final Blockers
 
 ### What Changed

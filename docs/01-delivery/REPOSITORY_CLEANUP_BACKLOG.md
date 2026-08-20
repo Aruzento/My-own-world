@@ -13,9 +13,9 @@ Created: 2026-08-11
 
 Source audit: [REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md](../02-architecture/REPOSITORY_MAINTAINABILITY_AUDIT_0.0.1.9.0.md)
 
-Status: `CLEANUP ACTIVE`
+Status: `CLEANUP DONE`
 
-Owner approved starting `0.0.1.10.0` cleanup on 2026-08-11. Work remains one RCB leaf at a time: confirm the finding on current code, add regression coverage, fix the real owner, update docs, commit, then stop before the next RCB.
+Owner approved starting `0.0.1.10.0` cleanup on 2026-08-11. The cleanup block is closed after the 2026-08-20 corrective final gate. Future repository cleanup requires a new owner-approved task; this backlog is no longer an active work queue.
 
 ## Rules For 0.0.1.10.0
 
@@ -78,14 +78,10 @@ These are not approved by this backlog:
 - persistent format migration;
 - moving `docs/archive/` or tracked history into ignored `legacy/`.
 
-## Owner Review Checklist
+## Closure Status
 
-Before each next cleanup leaf, choose the next owner-approved item before implementation starts:
+`0.0.1.10.0` is closed after the corrective final gate. The final gate passed with unit, browser, visual evidence, verify, UI polish, docs, encoding, desktop gate, native click-through and real large-workspace smoke evidence.
 
-1. Next approved backlog item or slice bundle. `RCB-006`, `RCB-007` and `RCB-014` are closed; the next named step is `0.0.1.10.CORRECTIVE + FINAL` cleanup consolidation gate.
-2. Whether any already-open non-split cleanup item should take priority over the final gate.
-3. Whether any future local artifact cleanup is allowed.
-4. Whether docs root exceptions should stay.
-5. Whether the next commit after this audit may touch production code.
+The next roadmap phase is `0.0.1.11.0` Existing P1 Stabilization. It is `NEXT`, not started.
 
-Until the next leaf is explicitly started, no further cleanup leaf should be implemented automatically.
+Do not use this backlog to start another cleanup leaf automatically.

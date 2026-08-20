@@ -8,36 +8,36 @@ owner_zone: "delivery"
 
 # Desktop Release Gate Current
 
-Run started: 2026-08-11T10:38:09.450Z
+Run started: 2026-08-20T09:14:25.550Z
 
-Run finished: 2026-08-11T10:39:41.617Z
+Run finished: 2026-08-20T09:15:46.631Z
 
 Plan ref: `0.0.1.2.4`
 
-Large workspace: not provided
+Large workspace: `X:\ДНД\Мастер\По кампаниям\База`
 
-Overall: PASSED - NORMAL WORKSPACE ONLY
+Overall: PASSED - ADVISORY WARNINGS
 
-Confidence: NORMAL_WORKSPACE_VALIDATED
+Confidence: LARGE_WORKSPACE_VALIDATED
 
 Normal workspace validation: VALIDATED
 
-Large workspace validation: SKIPPED
+Large workspace validation: VALIDATED
 
-Advisory diagnostics: NONE
+Advisory diagnostics: PRESENT (3, non-blocking)
 
 ## Steps
 
 - desktop release handoff preflight: passed (0 ms) - Required release handoff files exist. Required npm scripts exist.
-- large workspace desktop smoke: skipped - Skipped because no --workspace path or MOW_DESKTOP_RELEASE_WORKSPACE was provided.
-- documentation index: passed (65 ms)
-- agent skills validation: passed (43 ms)
-- verify: passed (15856 ms)
-- browser smoke: passed (73608 ms)
-- desktop frontend prepare: passed (264 ms)
-- desktop packaging smoke: passed (41 ms)
-- desktop environment: passed (825 ms)
-- tauri cargo check: passed (1461 ms)
+- documentation index: passed (57 ms)
+- agent skills validation: passed (40 ms)
+- verify: passed (13854 ms)
+- browser smoke: passed (65183 ms)
+- desktop frontend prepare: passed (229 ms)
+- desktop packaging smoke: passed (35 ms)
+- desktop environment: passed (261 ms)
+- tauri cargo check: passed (362 ms)
+- large workspace desktop smoke: passed (1057 ms)
 
 ## Release Rule
 
@@ -57,8 +57,10 @@ Advisory diagnostics: NONE
 
 ## Skipped Steps
 
-- large workspace desktop smoke: Skipped because no --workspace path or MOW_DESKTOP_RELEASE_WORKSPACE was provided.
+- None
 
 ## Advisory Diagnostics
 
-- None
+- large_pages (2): Some pages are larger than 250 KB. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB.
+- large_assets (4): Some assets are larger than 12 MB. Examples: Castle_01.jpg 36.9 MB; Group 1.png 33.7 MB; КорабльВерх.png 14.7 MB.
+- heavy_maps: At least one map has many render objects or a large page payload. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB; 1779482139467-a52d5cd6 200 KB.

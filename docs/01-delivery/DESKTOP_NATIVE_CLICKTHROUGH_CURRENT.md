@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Desktop Native Click-Through Current
 
-Run date: 2026-08-11T09:30:12.947Z
+Run date: 2026-08-20T09:15:54.217Z
 
 Plan ref: `0.0.1.2.2`
 
@@ -16,18 +16,18 @@ Workspace: `X:\ДНД\Мастер\По кампаниям\База`
 
 Executable: `C:\Users\Aruko\Documents\New project\My own world\src-tauri\target\release\my-own-world.exe`
 
-Status: failed
+Status: passed
 
 Fatal error: none
 
 ## Steps
 
-- launch native desktop app with WebView2 remote debugging: passed (326 ms)
-- restore workspace through desktop adapter: passed (2358 ms)
-- open settings workspace diagnostics panel: passed (761 ms)
-- scroll and search the large tree: passed (188 ms)
-- open heavy campaign map: passed (31 ms)
-- open presentation window from the heavy map: passed (1263 ms)
+- launch native desktop app with WebView2 remote debugging: passed (2609 ms)
+- restore workspace through desktop adapter: passed (2003 ms)
+- open settings workspace diagnostics panel: passed (583 ms)
+- scroll and search the large tree: passed (181 ms)
+- open heavy campaign map: passed (23 ms)
+- open presentation window from the heavy map: passed (1270 ms)
 
 ## Targets
 
@@ -41,10 +41,10 @@ Fatal error: none
 
 ```json
 {
-  "cdpEndpoint": "http://127.0.0.1:61539",
+  "cdpEndpoint": "http://127.0.0.1:58342",
   "workspace": {
     "title": "MyOwnWorld",
-    "treeItems": 9,
+    "treeItems": 10,
     "virtualized": false,
     "statusbar": "Пустая страница"
   },
@@ -52,7 +52,7 @@ Fatal error: none
     "cards": 9,
     "sections": 6,
     "hasWriteProbe": true,
-    "textSample": "Desktop workspace statusРежим: desktopWorkspace: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\БазаLocation: network folderAccess matrix: Workspace in network folder: matchedЗапись: OKWrite probe: Write probe OK.Схема: OKCheckpoint: Еще не запускалсяBackup: 5 шт., последний: delete-page-branchПапка backup: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\База\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 18 ms (completed)696Страниц27Карт144Ассетов528Broken refs132Orphan refs2054Проблем схемы5Backup0Недособр. b"
+    "textSample": "Desktop workspace statusРежим: desktopWorkspace: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\БазаLocation: network folderAccess matrix: Workspace in network folder: matchedЗапись: OKWrite probe: Write probe OK.Схема: OKCheckpoint: Еще не запускалсяBackup: 5 шт., последний: delete-page-branchПапка backup: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\База\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 12 ms (completed)697Страниц27Карт144Ассетов528Broken refs132Orphan refs2055Проблем схемы5Backup0Недособр. b"
   },
   "treeAfterSearch": {
     "renderedItems": 1,
@@ -83,7 +83,8 @@ Fatal error: none
 
 ## Console And Page Errors
 
-- warning: Workspace schema: schema issues found: 2054 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+- warning: Workspace schema: schema issues found: 2055 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+- warning: Workspace schema: schema issues found: 2055 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
 
 ## Unexpected Runtime Errors
 
@@ -95,31 +96,7 @@ Fatal error: none
 
 ## Resource Issues
 
-- failed: http://tauri.localhost/js/taskTracker/taskTrackerColumnHTML.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapPresentationPayload.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/taskTracker/taskTrackerNormalize.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/ruleTree/ruleTreeDefaults.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/ruleTree/ruleTreeNormalize.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapSelectionBox.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/properties/propertyLayoutModel.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/propertiesSettingsPopup.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/propertiesAutoCalculations.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/properties/propertiesCalculationEngine.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapPresentationStyle.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapElementFactory.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/properties/cardVariablesModel.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/blocks/blockRuntimeSelectors.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/character/inventoryModel.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapPerformance.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/worldPackage/worldPackageModel.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/taskTracker/taskTrackerDefaults.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/templates/propertyBlockDefinitions.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapHealth.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapModel.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapDragMeasure.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/templates/blockTypes.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapPresentationItemSync.js - net::ERR_ABORTED
-- failed: http://tauri.localhost/js/editor/campaignMapMusicModel.js - net::ERR_ABORTED
+- No failed resource responses captured.
 
 ## Notes
 

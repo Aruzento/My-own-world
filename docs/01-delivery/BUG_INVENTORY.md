@@ -335,4 +335,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current next step: `0.0.1.10.0` Repository Cleanup & Consolidation. Continue only one owner-approved RCB leaf at a time; do not start product feature work inside cleanup.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current next step: `0.0.1.11.0` Existing P1 Stabilization. Do not start implementation until the owner gives the next task.

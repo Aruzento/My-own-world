@@ -13,7 +13,7 @@ Audit date: 2026-08-11
 
 Head audited: `11c0ce2`
 
-Status: `DONE - CLEANUP ACTIVE`
+Status: `DONE - CLEANUP CLOSED`
 
 This is an audit-only artifact. It records findings, evidence, risk and cleanup candidates. It does not implement any cleanup and does not change product behavior.
 
@@ -23,7 +23,7 @@ The repository is usable and has many strong contracts, but the next work should
 
 Most UI design debt is now documented and contained by contracts, but several feature zones still carry local mini-systems from fast AI-assisted iteration: Knowledge Graph coordination, Properties popup layout ownership, map popup helper duplication and CSS token drift.
 
-Recommended next action: continue [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md) one approved leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022` and `RCB-004` are closed; the next cleanup leaf needs owner selection.
+Recommended next action: follow [PROJECT_PLAN.md](../01-delivery/PROJECT_PLAN.md). `0.0.1.10.0` cleanup is closed after the corrective final gate; `0.0.1.11.0` Existing P1 Stabilization is next but not started.
 
 ## Readiness For Future NF Work
 
@@ -676,11 +676,11 @@ Cleanup status: closed by `RCB-030` in `0.0.1.10.28`. `tools/css_token_layer_gua
 
 ## Owner Decisions Needed
 
-1. Run and close the owner-approved `0.0.1.10.CORRECTIVE + FINAL` gate after the graph listener lifecycle and generated `debug.log` policy corrections.
+1. Start `0.0.1.11.0` Existing P1 Stabilization only when the owner gives the next task.
 2. Keep stricter pixel visual regression as a future visual maturity decision unless the owner explicitly changes the current evidence-smoke policy.
 
 ## Explicit Non-Implementation Notes
 
 - No product functionality was implemented by the audit itself.
 - No real user workspace was mutated by the audit itself.
-- `0.0.1.10.0` cleanup has run under owner approval; current cleanup leaf status lives in [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md).
+- `0.0.1.10.0` cleanup is closed; historical cleanup leaf status lives in [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md).

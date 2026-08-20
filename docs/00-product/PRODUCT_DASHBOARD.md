@@ -13,7 +13,7 @@ Updated: 2026-08-20
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The current phase is not feature expansion. The current phase is version-1 stabilization: make the app fast, safe, understandable and reliable on real large workspaces before adding another layer of features.
+The repository cleanup phase is closed. The next phase is version-1 stabilization: make the app fast, safe, understandable and reliable on real large workspaces before adding another layer of features.
 
 ## Current Focus
 
@@ -22,10 +22,11 @@ Active plan: `docs/01-delivery/PROJECT_PLAN.md`.
 Immediate direction:
 
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
-2. Continue `0.0.1.10.0` cleanup only one RCB leaf at a time.
-3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed; continue only after the owner selects the next leaf.
-4. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
-5. Keep project documentation readable for the product owner, not only for Codex.
+2. Treat `0.0.1.10.0` cleanup as closed after the corrective final gate.
+3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
+4. Keep `0.0.1.11.0` Existing P1 Stabilization as the next phase, not an automatically started phase.
+5. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
+6. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
@@ -136,10 +137,11 @@ Recently closed:
 - `0.0.1.10.15 / RCB-026` Rule Tree save ownership: Rule Tree autosave now uses the same clean serializer contract as explicit special-save, navigation flush is covered, and special-save failures set an error state instead of leaving `saving`.
 - `0.0.1.10.16 / RCB-027` Card Type control accessibility: the custom card type picker now behaves as a select-only combobox/listbox with keyboard selection, Escape cancel, focus return and shared popover layer ownership.
 - `0.0.1.10.17`-`0.0.1.10.31` cleanup leaves closed table toolbar access, graph switcher semantics, World Package modal ownership, keyboard reorder, one graph coordinator seam, Properties layout ownership, graph icon-only CSS cleanup, token consistency, exact Campaign Map helper duplication, visual evidence-smoke policy, the lightweight docs status drift guard, historical root-doc placement, Rules Workspace module-boundary cleanup and CSS token/layer drift protection.
+- `0.0.1.10.CORRECTIVE + FINAL` cleanup closure: Knowledge Graph document-level history/drag listeners now have explicit teardown, the exact root Chromium/GPU `debug.log` policy is narrow and root-only, full final gate passed with large-workspace confidence, and `0.0.1.10.0` is closed without starting product work.
 
 Next owner action:
 
-- Finish the `0.0.1.10.CORRECTIVE + FINAL` gate. Do not start `0.0.1.11.0` automatically.
+- Start `0.0.1.11.0` Existing P1 Stabilization only when the owner gives the next task.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
