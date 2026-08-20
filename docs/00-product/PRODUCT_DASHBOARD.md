@@ -25,7 +25,7 @@ Immediate direction:
 2. Treat `0.0.1.10.0` cleanup as closed after the corrective final gate.
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Work in active `0.0.1.11.0` Existing P1 Stabilization one leaf at a time.
-5. `0.0.1.11.2` `BI-010` Campaign Map Toolbar is `NOT REPRODUCED WITH STRONG EVIDENCE`; next leaf: `0.0.1.11.3` `BI-011` Creature Skills Encoding.
+5. `0.0.1.11.3` `BI-011` Creature Skills Encoding is `FIXED`, and `BI-022` is `DONE`; next leaf: `0.0.1.11.4` Large Workspace UX.
 6. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 7. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -33,6 +33,7 @@ Recently closed:
 
 - `0.0.1.11.1` Workspace Switch Access: the topbar now keeps a permanent compact `Открыть папку` action while a workspace is active; cancel keeps the current workspace/page; successful A -> B switch reloads B, clears the old editor view and keeps pending A edits/assets scoped to A.
 - `0.0.1.11.2` `BI-010` Campaign Map Toolbar: the historical disappearing-toolbar report was not reproduced on current code across the defined lifecycle matrix; the new browser evidence guard verifies visible, hit-testable scene/tool toolbar regions, working grid popup, no duplicate toolbar and no stale previous page after card/task/rule/tree/presentation/workspace transitions.
+- `0.0.1.11.3` `BI-011` Creature Skills Encoding: Campaign Map creature token skill action/submenu now renders clean Russian `Навыки`, representative skill labels such as `Скрытность`, and no mojibake markers; this also closes `BI-022` for the current human-facing P1 regression bundle.
 - `0.0.1.0.4` runtime UI text security coverage.
 - `0.0.1.0.5` desktop filesystem boundary hardening.
 - `0.0.1.2.2` native desktop click-through on the real large GM workspace `X:\ДНД\Мастер\По кампаниям\База`.
@@ -144,7 +145,7 @@ Recently closed:
 
 Next owner action:
 
-- Continue `0.0.1.11.0` one leaf at a time. Next leaf: `0.0.1.11.3` `BI-011` Creature Skills Encoding.
+- Continue `0.0.1.11.0` one leaf at a time. Next leaf: `0.0.1.11.4` Large Workspace UX.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

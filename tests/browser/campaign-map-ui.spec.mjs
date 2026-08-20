@@ -5061,7 +5061,7 @@ test(
 
 
 test(
-  'campaign-map-token-skill-action-uses-character-model-checks',
+  'campaign-map-token-skill-menu-renders-russian-labels-and-uses-character-model-checks',
   async ({ page }) => {
 
     await page.goto(
@@ -5087,6 +5087,16 @@ test(
           const {
             openTokenPopup
           } = await import('/js/editor/campaignMapTokenPopupController.js');
+
+          const waitFrames =
+            () => new Promise(resolve => {
+
+              requestAnimationFrame(
+                () => requestAnimationFrame(
+                  resolve
+                )
+              );
+            });
 
           const pageRecord = {
             id:
@@ -5201,12 +5211,72 @@ aliases: []
             .querySelector('.campaign-token-popup-more')
             .click();
 
+          await waitFrames();
+
+          const skillActionText =
+            document
+              .querySelector('[data-action="skill"]')
+              ?.textContent
+              ?.trim() || '';
+
           document
             .querySelector('[data-action="skill"]')
             .click();
 
+          await waitFrames();
+
+          const skillPopup =
+            document.querySelector('.campaign-token-popup-skill');
+
           const select =
             document.querySelector('.campaign-token-skill-select');
+
+          const skillPopupText =
+            skillPopup?.textContent || '';
+
+          const skillPopupTitle =
+            skillPopup
+              ?.querySelector('.campaign-token-skill-title')
+              ?.textContent
+              ?.trim() || '';
+
+          const skillOptionTexts =
+            [...select.querySelectorAll('option')]
+              .map(option => option.textContent.trim());
+
+          const chars =
+            (...codePoints) => String.fromCodePoint(
+              ...codePoints
+            );
+
+          const mojibakeMarkers =
+            [
+              chars(0x0420, 0x045c),
+              chars(0x0420, 0x00b0),
+              chars(0x0420, 0x0406),
+              chars(0x0421, 0x2039),
+              chars(0x0420, 0x0454),
+              chars(0x0420, 0x0451),
+              chars(0x00d0),
+              chars(0x00d1),
+              chars(0x00c2),
+              chars(0xfffd)
+            ];
+
+          const hasMojibake =
+            mojibakeMarkers.some(marker =>
+              `${skillActionText}\n${skillPopupText}`.includes(
+                marker
+              )
+            );
+
+          const skillPopupVisible =
+            Boolean(
+              skillPopup &&
+              !skillPopup.classList.contains(
+                'hidden'
+              )
+            );
 
           select.value =
             'skillStealth';
@@ -5221,34 +5291,82 @@ aliases: []
             .querySelector('.campaign-token-skill-apply')
             .click();
 
-          return JSON.parse(
-            decodeURIComponent(
-              token.dataset.lastSkillAction
-            )
-          );
+          return {
+            skillActionText,
+            skillPopupTitle,
+            skillPopupVisible,
+            skillOptionTexts,
+            hasMojibake,
+            payload:
+              JSON.parse(
+                decodeURIComponent(
+                  token.dataset.lastSkillAction
+                )
+              )
+          };
         }
       );
 
     expect(
-      result.skillKey
+      result.skillActionText
+    ).toBe(
+      'Навыки'
+    );
+
+    expect(
+      result.skillPopupTitle
+    ).toBe(
+      'Навыки'
+    );
+
+    expect(
+      result.skillPopupVisible
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.skillOptionTexts.some(option =>
+        option.includes(
+          'Скрытность'
+        )
+      )
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.hasMojibake
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.payload.skillKey
     ).toBe(
       'skillStealth'
     );
 
     expect(
-      result.value
+      result.payload.label
+    ).toBe(
+      'Скрытность'
+    );
+
+    expect(
+      result.payload.value
     ).toBeGreaterThanOrEqual(
       6
     );
 
     expect(
-      result.range
+      result.payload.range
     ).toBe(
       '30 ft'
     );
 
     expect(
-      result.area
+      result.payload.area
     ).toBe(
       'cone'
     );

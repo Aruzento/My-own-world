@@ -385,7 +385,7 @@ function openCreatureTokenActionsPopup(
     .querySelector('button[data-action="image"]')
     ?.insertAdjacentHTML(
       'afterend',
-      '<button type="button" data-action="skill">Навык / действие</button>'
+      '<button type="button" data-action="skill">Навыки</button>'
     );
 
   popup
@@ -601,7 +601,7 @@ function getTokenSkillPopupHTML(
   }
 
   return `
-    <div class="campaign-token-skill-title">Навык / действие</div>
+    <div class="campaign-token-skill-title">Навыки</div>
     <label class="campaign-token-skill-field">
       <span>Навык</span>
       <select class="campaign-token-skill-select">

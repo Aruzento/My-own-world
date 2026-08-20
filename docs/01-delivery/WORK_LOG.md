@@ -6,6 +6,54 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.3 BI-011 Creature Skills Menu Encoding
+
+### Disposition
+
+- `FIXED`.
+
+### Expected / Actual
+
+- Expected: Campaign Map creature token action menu and skill submenu render valid Russian `Навыки`, representative skill names such as `Скрытность`, and no mojibake marker sequences.
+- Actual before: the skill label source (`DND_SKILL_GROUPS`) was valid UTF-8, and no persisted legacy/serializer/text transformation issue was found in the current path, but the creature token menu/submenu owned its own visible label as `Навык / действие` without regression coverage for the expected `Навыки` text.
+- Actual after: the creature token action and submenu title render `Навыки`; the select continues to render skill names from `DND_SKILL_GROUPS`; the focused browser test opens the submenu and verifies clean Russian text plus action payload.
+
+### Root Cause / Owner
+
+- Owner: `js/editor/campaignMapTokenPopupController.js`.
+- The skill menu visible text was owned by source literals in the creature token popup controller. Skill names were already sourced from `js/properties/propertySchemas.js` (`DND_SKILL_GROUPS`) and were not damaged.
+- No runtime mojibake repair heuristic, replace table, persistent migration or serializer change was added.
+
+### Regression
+
+- Updated `campaign-map-token-skill-menu-renders-russian-labels-and-uses-character-model-checks`.
+- The regression verifies `Навыки`, `Скрытность`, submenu visibility, selected skill payload and absence of mojibake marker sequences without storing raw mojibake text literals in the test source.
+
+### Verification
+
+- Passed: `npm run test:browser -- --grep campaign-map-token-skill-menu-renders-russian-labels-and-uses-character-model-checks`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep "campaign-map-(contextmenu-opens-custom-object-actions|token-skill-menu-renders-russian-labels-and-uses-character-model-checks)"`.
+- Passed: `npm run check:encoding`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs` with 17 browser tests.
+- Passed: `npm run verify` with encoding/syntax checks, 338 node tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+
+### BI-022
+
+- `BI-022` current human-facing P1 regression bundle is `DONE`: `BI-010` is closed with `NOT REPRODUCED WITH STRONG EVIDENCE`, and `BI-011` is `FIXED`.
+- No unrelated P1s were closed.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not opened, repaired, migrated, normalized or edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.4` Large Workspace UX.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.2 BI-010 Campaign Map Toolbar Lifecycle
 
 ### Disposition
