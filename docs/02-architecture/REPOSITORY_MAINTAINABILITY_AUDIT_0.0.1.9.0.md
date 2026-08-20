@@ -235,7 +235,7 @@ Impact: future graph concept work can become risky because unrelated concerns st
 
 Recommended cleanup leaf: before `0.0.1.23.0`, split only one proven owner seam at a time, starting with event delegation/history or read-model access, not a broad rewrite.
 
-Cleanup status: first approved seam closed by `0.0.1.10.21` / `RCB-008`. Knowledge Graph canvas history state, shortcuts and history control state now live in `js/wiki/knowledgeGraphCanvasHistory.js`; `knowledgeGraphPage.js` still owns graph-specific history entry application and remains the coordinator for events, drag/pan and selection. Page lookup/query cleanup for the coordinator is closed by `RCB-007B`; BI-026 product concept work was not started.
+Cleanup status: first approved seam closed by `0.0.1.10.21` / `RCB-008`, with lifecycle correction in `0.0.1.10.CORRECTIVE`. Knowledge Graph canvas history state, shortcuts and history control state now live in `js/wiki/knowledgeGraphCanvasHistory.js`; `knowledgeGraphPage.js` still owns graph-specific history entry application and remains the coordinator for events, drag/pan and selection. The corrective gate added explicit history keyboard teardown through the editor page lifecycle, so detached graph documents do not retain document-level shortcut handlers until a later keydown. Page lookup/query cleanup for the coordinator is closed by `RCB-007B`; BI-026 product concept work was not started.
 
 ### RA-009 - P2 - Properties popup owns feature-local layout infrastructure
 
@@ -315,11 +315,11 @@ Evidence:
 
 `debug.log` was ignored and not tracked, but it existed locally again. This was not product code and was not moved/deleted during the audit.
 
-Impact: local audits will continue reporting it until the owner allows local cleanup or it is moved to `legacy/`.
+Impact: local audits can confuse a generated browser/desktop diagnostic artifact with cleanup debt unless the classifier is exact and narrow.
 
-Recommended cleanup leaf: owner-approved local file cleanup only; do not commit the file and do not treat it as source truth.
+Recommended cleanup leaf: owner-approved local file cleanup or narrow generated-artifact classification only; do not commit the file and do not treat it as source truth.
 
-Cleanup status: closed by `RCB-014` in `0.0.1.10.38`. The owner explicitly approved deleting only the previously audited root `debug.log`; pre-delete checks confirmed the exact path, ignored/untracked status, no source/test required-input usage and Chromium/GPU diagnostic contents. Post-delete `node tools/audit_project_files.mjs` reports 0 delete candidates. No other local artifact was deleted.
+Cleanup status: closed by `RCB-014` in `0.0.1.10.38`, with generated-artifact policy corrected in `0.0.1.10.CORRECTIVE`. The owner explicitly approved deleting only the previously audited root `debug.log`; Chromium/browser tooling later recreated the same root ignored/untracked GPU diagnostic artifact. The project-file audit now classifies only that exact root Chromium/GPU `debug.log` as allowed generated/local-only, while tracked `debug.log`, non-root logs and non-Chromium log text remain reviewable. `node tools/audit_project_files.mjs` reports 0 delete candidates with the allowed artifact present. No broad `*.log` exemption was added.
 
 ### RA-014 - P3 - Visual regression is mostly structured UI smoke, not strict pixel regression
 
@@ -676,16 +676,11 @@ Cleanup status: closed by `RCB-030` in `0.0.1.10.28`. `tools/css_token_layer_gua
 
 ## Owner Decisions Needed
 
-1. Choose the next `0.0.1.10.0` cleanup slice. `RCB-021` / RA-021, `RCB-001` / RA-001, `RCB-001B` / RA-001B, `RCB-002` / RA-002, `RCB-003` / RA-003, `RCB-022` / RA-022 and `RCB-004` / RA-004 are closed; the next cleanup leaf needs owner selection.
-2. Decide whether RA-005 restore pre-backup gate is immediate cleanup or stays in Phase 4 data safety.
-3. Decide whether local `debug.log` should be moved to ignored `legacy/` or deleted in a separate local cleanup task.
-4. Decide whether tracked root historical docs stay as documented exceptions or move into `docs/` later.
-5. Decide whether stricter pixel visual regression is worth the cost now or should wait for the next visual maturity phase.
-6. Decide whether table accessibility and ambiguous overlay semantics belong in early cleanup or wait for their related feature phases.
+1. Run and close the owner-approved `0.0.1.10.CORRECTIVE + FINAL` gate after the graph listener lifecycle and generated `debug.log` policy corrections.
+2. Keep stricter pixel visual regression as a future visual maturity decision unless the owner explicitly changes the current evidence-smoke policy.
 
 ## Explicit Non-Implementation Notes
 
-- No repository cleanup findings were implemented.
-- No product functionality was implemented.
-- No real user workspace was mutated.
-- `0.0.1.10.0` cleanup has started under owner approval. `RCB-021` is closed; no later RCB leaf is started by this audit document.
+- No product functionality was implemented by the audit itself.
+- No real user workspace was mutated by the audit itself.
+- `0.0.1.10.0` cleanup has run under owner approval; current cleanup leaf status lives in [REPOSITORY_CLEANUP_BACKLOG.md](../01-delivery/REPOSITORY_CLEANUP_BACKLOG.md).

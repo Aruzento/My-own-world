@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-08-13
+Updated: 2026-08-20
 
 ## Current Product
 
@@ -132,14 +132,14 @@ Recently closed:
 - `0.0.1.10.35 / RCB-007B` Knowledge Graph page read boundary: graph page lookup/query paths now use `PageRepository` for graph model input, labels, relationship endpoints, editor choices, open/focus targets and relationship source lookup; World Package reads were left for `RCB-007C`.
 - `0.0.1.10.36 / RCB-007C` World Package page read boundary: World Package export-all, branch traversal and import preview conflict checks now use the `PageRepository` read model; import mutation/snapshot rollback ownership remains in the World Package import service, and tree-adjacent reads remain pending.
 - `0.0.1.10.37 / RCB-007D` Tree-adjacent page read boundary: tree move validation, DnD target resolution, context delete branch/fallback reads, reveal-in-tree ancestors, keyboard move page resolution and editor back navigation now resolve page lookup/query reads through `PageRepository`; `RCB-007` is closed.
-- `0.0.1.10.38 / RCB-014` local debug artifact cleanup: the owner-approved ignored/untracked root `debug.log` Chromium/GPU diagnostic log was deleted, and project file audit now reports zero delete candidates.
+- `0.0.1.10.38 / RCB-014` local debug artifact cleanup: the owner-approved ignored/untracked root `debug.log` Chromium/GPU diagnostic log was deleted once, and the follow-up owner decision now classifies the recreated exact root Chromium/GPU `debug.log` as allowed generated/local-only evidence instead of a project-file-audit blocker.
 - `0.0.1.10.15 / RCB-026` Rule Tree save ownership: Rule Tree autosave now uses the same clean serializer contract as explicit special-save, navigation flush is covered, and special-save failures set an error state instead of leaving `saving`.
 - `0.0.1.10.16 / RCB-027` Card Type control accessibility: the custom card type picker now behaves as a select-only combobox/listbox with keyboard selection, Escape cancel, focus return and shared popover layer ownership.
 - `0.0.1.10.17`-`0.0.1.10.31` cleanup leaves closed table toolbar access, graph switcher semantics, World Package modal ownership, keyboard reorder, one graph coordinator seam, Properties layout ownership, graph icon-only CSS cleanup, token consistency, exact Campaign Map helper duplication, visual evidence-smoke policy, the lightweight docs status drift guard, historical root-doc placement, Rules Workspace module-boundary cleanup and CSS token/layer drift protection.
 
 Next owner action:
 
-- Choose the next `0.0.1.10.0` RCB leaf. Do not start it automatically.
+- Finish the `0.0.1.10.CORRECTIVE + FINAL` gate. Do not start `0.0.1.11.0` automatically.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

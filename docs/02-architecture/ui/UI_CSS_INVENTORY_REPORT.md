@@ -185,7 +185,7 @@ These pieces should be preserved and migrated, not thrown away:
 - `styles/brand-system.css` already normalizes many shared hover/focus/active/popup states.
 - `js/ui/popupManager.js` already gives a common popup lifecycle: register, open/toggle, close, outside click, Escape, z-index and draggable free-space popup behavior.
 - `js/ui/popupPosition.js` is the right place for viewport-safe positioning.
-- `assets/icons/rpg-ui.svg` contains 40 local project icons in a Lucide-like line style.
+- [assets/icons/rpg-ui.svg](../../../assets/icons/rpg-ui.svg) contains 40 local project icons in a Lucide-like line style.
 - `js/core/icons.js` centralizes page/entity icon sprite rendering.
 - `js/ui/operationProgress.js` gives a reusable progress surface for long workspace operations.
 - Properties field drag/resize, graph canvas controls, map toolbar controls and tree virtualization are useful interaction precedents, but their styles should be migrated into shared primitives over time.
@@ -251,7 +251,7 @@ Main overlay gaps after `0.0.1.8.9`:
 
 Current icon approaches:
 
-- preferred: local SVG sprite through `.app-icon`, `<use href="./assets/icons/rpg-ui.svg#icon-*">`;
+- preferred: local SVG sprite through `.app-icon`; runtime `<use>` href values should target `assets/icons/rpg-ui.svg#icon-*` from the app root.
 - supported helper: `iconSvg(name)` and `getPageIcon(tags)` in `js/core/icons.js`;
 - local inline SVG remains in campaign map, presentation and a few older controls;
 - text glyph buttons remain in editor toolbar (`B`, `I`, `U`, `H1`, `Tx`), graph/variable/link helpers and music symbols;

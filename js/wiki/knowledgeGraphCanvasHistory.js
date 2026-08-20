@@ -261,13 +261,7 @@ export function setupGraphCanvasKeyboardHistory(
 
       if (!documentElement.isConnected) {
 
-        ownerDocument.removeEventListener(
-          'keydown',
-          handler,
-          true
-        );
-
-        graphCanvasKeyboardHandlersByDocument.delete(
+        teardownGraphCanvasKeyboardHistory(
           documentElement
         );
 
@@ -307,6 +301,33 @@ export function setupGraphCanvasKeyboardHistory(
     'keydown',
     handler,
     true
+  );
+}
+
+
+export function teardownGraphCanvasKeyboardHistory(
+  documentElement
+) {
+
+  const handler =
+    graphCanvasKeyboardHandlersByDocument.get(
+      documentElement
+    );
+
+  if (!handler) return;
+
+  documentElement.ownerDocument.removeEventListener(
+    'keydown',
+    handler,
+    true
+  );
+
+  graphCanvasKeyboardHandlersByDocument.delete(
+    documentElement
+  );
+
+  graphCanvasHistoryByDocument.delete(
+    documentElement
   );
 }
 

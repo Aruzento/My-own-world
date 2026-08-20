@@ -45,6 +45,7 @@ import {
   isGraphCanvasHistoryKeyboardShortcut,
   pushGraphCanvasHistoryEntry,
   setupGraphCanvasKeyboardHistory,
+  teardownGraphCanvasKeyboardHistory,
   updateGraphCanvasHistoryControls
 } from './knowledgeGraphCanvasHistory.js';
 
@@ -295,6 +296,23 @@ export function serializeKnowledgeGraphHTML(
     .forEach(element => element.remove());
 
   return clone.outerHTML;
+}
+
+
+export function teardownKnowledgeGraphPage(
+  editor
+) {
+
+  editor
+    .querySelectorAll?.(
+      '.knowledge-graph-document'
+    )
+    .forEach(documentElement => {
+
+      teardownGraphCanvasKeyboardHistory(
+        documentElement
+      );
+    });
 }
 
 

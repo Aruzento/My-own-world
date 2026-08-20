@@ -6,6 +6,8 @@ import {
   handleGraphCanvasHistoryAction,
   isGraphCanvasHistoryKeyboardShortcut,
   pushGraphCanvasHistoryEntry,
+  setupGraphCanvasKeyboardHistory,
+  teardownGraphCanvasKeyboardHistory,
   updateGraphCanvasHistoryControls
 } from '../js/wiki/knowledgeGraphCanvasHistory.js';
 
@@ -88,6 +90,121 @@ function createHistoryDocument() {
     documentElement,
     getFocusCount:
       () => focusCount
+  };
+}
+
+
+function createLifecycleDocument() {
+
+  const listeners =
+    [];
+
+  const ownerDocument =
+    {
+      body:
+        {},
+      documentElement:
+        {},
+      activeElement:
+        null,
+      addEventListener(
+        type,
+        handler,
+        capture
+      ) {
+
+        listeners.push({
+          type,
+          handler,
+          capture
+        });
+      },
+      removeEventListener(
+        type,
+        handler,
+        capture
+      ) {
+
+        const index =
+          listeners.findIndex(listener =>
+            listener.type === type &&
+            listener.handler === handler &&
+            listener.capture === capture
+          );
+
+        if (index >= 0) {
+
+          listeners.splice(
+            index,
+            1
+          );
+        }
+      }
+    };
+
+  function createGraphDocument() {
+
+    const buttons =
+      {
+        undo:
+          createHistoryButton(
+            'undo'
+          ),
+        redo:
+          createHistoryButton(
+            'redo'
+          )
+      };
+
+    return {
+      ownerDocument,
+      isConnected:
+        true,
+      contains(
+        target
+      ) {
+
+        return target === this;
+      },
+      querySelectorAll(
+        selector
+      ) {
+
+        if (selector !== '[data-knowledge-graph-history-action]') {
+
+          return [];
+        }
+
+        return [
+          buttons.undo,
+          buttons.redo
+        ];
+      },
+      focus() {}
+    };
+  }
+
+  return {
+    createGraphDocument,
+    countKeydownHandlers:
+      () => listeners.filter(listener =>
+        listener.type === 'keydown'
+      ).length,
+    dispatchKeydown:
+      async event => {
+
+        for (const listener of [
+          ...listeners
+        ]) {
+
+          if (listener.type === 'keydown') {
+
+            await listener.handler(
+              event
+            );
+          }
+        }
+      }
   };
 }
 
@@ -309,6 +426,202 @@ test(
           }
       }),
       false
+    );
+  }
+);
+
+
+test(
+  'knowledge graph canvas history teardown removes stale document keydown ownership',
+  async () => {
+
+    const {
+      createGraphDocument,
+      countKeydownHandlers,
+      dispatchKeydown
+    } =
+      createLifecycleDocument();
+
+    const applied =
+      [];
+
+    const options =
+      {
+        applyEntry:
+          async (
+            documentElement,
+            entry,
+            action
+          ) => {
+
+            applied.push({
+              documentElement,
+              entry,
+              action
+            });
+
+            return true;
+          }
+      };
+
+    const graphA =
+      createGraphDocument();
+
+    setupGraphCanvasKeyboardHistory(
+      graphA,
+      options
+    );
+
+    setupGraphCanvasKeyboardHistory(
+      graphA,
+      options
+    );
+
+    assert.equal(
+      countKeydownHandlers(),
+      1
+    );
+
+    pushGraphCanvasHistoryEntry(
+      graphA,
+      {
+        id:
+          'a-entry'
+      },
+      {
+        focusDocument:
+          () => {}
+      }
+    );
+
+    teardownGraphCanvasKeyboardHistory(
+      graphA
+    );
+
+    graphA.isConnected =
+      false;
+
+    teardownGraphCanvasKeyboardHistory(
+      graphA
+    );
+
+    assert.equal(
+      countKeydownHandlers(),
+      0
+    );
+
+    const graphB =
+      createGraphDocument();
+
+    setupGraphCanvasKeyboardHistory(
+      graphB,
+      options
+    );
+
+    teardownGraphCanvasKeyboardHistory(
+      graphB
+    );
+
+    graphB.isConnected =
+      false;
+
+    const graphC =
+      createGraphDocument();
+
+    setupGraphCanvasKeyboardHistory(
+      graphC,
+      options
+    );
+
+    assert.equal(
+      countKeydownHandlers(),
+      1
+    );
+
+    pushGraphCanvasHistoryEntry(
+      graphC,
+      {
+        id:
+          'c-entry'
+      },
+      {
+        focusDocument:
+          () => {}
+      }
+    );
+
+    await dispatchKeydown({
+      defaultPrevented:
+        false,
+      ctrlKey:
+        true,
+      metaKey:
+        false,
+      altKey:
+        false,
+      code:
+        'KeyZ',
+      key:
+        'z',
+      target:
+        graphC,
+      preventDefault() {
+
+        this.defaultPrevented =
+          true;
+      }
+    });
+
+    assert.deepEqual(
+      applied.map(entry => [
+        entry.entry.id,
+        entry.action
+      ]),
+      [
+        [
+          'c-entry',
+          'undo'
+        ]
+      ]
+    );
+
+    await dispatchKeydown({
+      defaultPrevented:
+        false,
+      ctrlKey:
+        true,
+      metaKey:
+        false,
+      altKey:
+        false,
+      code:
+        'KeyY',
+      key:
+        'y',
+      target:
+        graphC,
+      preventDefault() {
+
+        this.defaultPrevented =
+          true;
+      }
+    });
+
+    assert.deepEqual(
+      applied.map(entry => [
+        entry.entry.id,
+        entry.action
+      ]),
+      [
+        [
+          'c-entry',
+          'undo'
+        ],
+        [
+          'c-entry',
+          'redo'
+        ]
+      ]
     );
   }
 );

@@ -81,7 +81,8 @@ import {
 
 import {
   isKnowledgeGraphPage,
-  renderKnowledgeGraphPage
+  renderKnowledgeGraphPage,
+  teardownKnowledgeGraphPage
 } from '../wiki/knowledgeGraphPage.js';
 
 import {
@@ -133,6 +134,10 @@ export async function openPageInEditor(
 
   applyParsedMetadataToCurrentPage(
     parsed
+  );
+
+  teardownKnowledgeGraphPage(
+    editor
   );
 
   editor.innerHTML =

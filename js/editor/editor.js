@@ -95,6 +95,10 @@ import {
 } from './editorSpecialSave.js';
 
 import {
+  teardownKnowledgeGraphPage
+} from '../wiki/knowledgeGraphPage.js';
+
+import {
   state
 } from '../state.js';
 
@@ -249,6 +253,10 @@ export function openPage(
 
 export function renderEmptyEditor() {
 
+  teardownKnowledgeGraphPage(
+    editor
+  );
+
   renderEmptyEditorContent(
     editor
   );
@@ -257,6 +265,10 @@ export function renderEmptyEditor() {
 export function renderWorkspaceRecoveryEditor(
   report
 ) {
+
+  teardownKnowledgeGraphPage(
+    editor
+  );
 
   renderWorkspaceRecoveryEditorContent(
     editor,

@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.10.CORRECTIVE Cleanup Final Blockers
+
+### What Changed
+
+- Fixed the Knowledge Graph canvas history listener lifecycle. `knowledgeGraphCanvasHistory.js` now exposes explicit teardown for the document-level `keydown` shortcut handler, and the editor page lifecycle calls `teardownKnowledgeGraphPage()` before replacing a graph view. The active graph keeps Ctrl/Cmd+Z/Y behavior; detached graph documents no longer wait for a future keydown before releasing their handler.
+- Added a focused lifecycle regression that opens/tears down graph A, graph B and graph C, proves setup is idempotent, proves repeated teardown is safe, proves only the active graph owns the keydown handler before any keyboard event, and proves undo/redo still apply only to the active graph.
+- Corrected project-file audit handling for the exact root Chromium/GPU `debug.log`: if it is ignored, untracked and matches the known GPU diagnostic signature, it is classified as generated/local-only and not a cleanup candidate. Tracked `debug.log`, non-root logs and non-Chromium text remain reviewable.
+- Fixed the active CSS inventory icon reference so the documented sprite source resolves to `assets/icons/rpg-ui.svg` without making the project-file audit invent `docs/02-architecture/ui/assets/icons/rpg-ui.svg`.
+
+### Verification
+
+- Expected pre-fix failure: `node --test tests\knowledgeGraphCanvasHistory.test.mjs` failed because `teardownGraphCanvasKeyboardHistory` did not exist yet.
+- Expected pre-fix failure: `node --test tests\projectFileAuditDebugLogPolicy.test.mjs` failed because the audit tool did not expose a narrow generated `debug.log` policy yet.
+- Passed: `node --test tests\knowledgeGraphCanvasHistory.test.mjs`.
+- Passed: `node --test tests\projectFileAuditDebugLogPolicy.test.mjs`.
+- Passed: `node --check tools\audit_project_files.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 605 files, 0 delete candidates and 0 mojibake candidates while the allowed root `debug.log` was present.
+- Passed: `npm run docs:index`.
+- Passed: `node tools\run_browser_smoke.mjs knowledge-graph.spec.mjs`.
+- Passed: `node tools\run_browser_smoke.mjs visual-regression.spec.mjs`.
+
+### Next
+
+- Commit the corrective changes, then rerun the full `0.0.1.10.FINAL` gate fresh.
+- Do not start `0.0.1.11.0` unless the final cleanup gate passes and the plan marks it `NEXT`.
+
+## 2026-08-17: Project File Necessity Table Refresh
+
+### What Changed
+
+- Refreshed `docs/01-delivery/PROJECT_FILE_AUDIT.md` for the current project tree.
+- Updated `tools/audit_project_files.mjs` so the full inventory table matches the owner-requested columns: `Файл`, `Зачем нужен`, `Нужна ли оптимизация`, `Оценка необходимости файла`.
+- Kept the existing two-pass audit signals: zone totals, cleanup candidates, large files, mojibake check, potentially unconnected JS/CSS and unresolved relative links.
+
+### Verification
+
+- Passed: `node --check tools\audit_project_files.mjs`.
+- Passed: `node tools\audit_project_files.mjs` with 603 files, 0 delete candidates and 0 mojibake candidates.
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Treat the report as navigation and cleanup evidence only; no files should be deleted or archived without a separate owner-approved list.
+
 ## 2026-08-13: 0.0.1.10.38 RCB-014 Local Debug Artifact
 
 ### Pre-Delete Check

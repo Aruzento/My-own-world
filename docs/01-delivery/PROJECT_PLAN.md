@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-13
+Updated: 2026-08-20
 
 Planning version: 2
 
@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.10.0` Repository Cleanup & Consolidation.
 
-Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006` and `RCB-007` are closed; do not start the final cleanup gate automatically.
+Important stop note: cleanup is approved only one RCB leaf at a time. `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006` and `RCB-007` are closed. The current owner-approved step is `0.0.1.10.CORRECTIVE + FINAL`; do not start `0.0.1.11.0` automatically.
 
 ## Execution Rules
 
@@ -123,7 +123,7 @@ WHY NOW: cleanup must be based on evidence, not taste. It should follow the audi
 
 SCOPE: correctness/data-safety ownership, dead/debug artifacts, duplicate infrastructure, duplicate utilities, CSS/design-system debt, listener lifecycle debt, god-files/over-fragmentation, tests and docs. Include `BI-024`, `BUG-012` or `BUG-014` only if the audit confirms recurring docs/status drift or owner-approved local-file cleanup.
 
-DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11; closed leaves are tracked in the current-state stop note and [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). `RCB-006`, `RCB-007` and `RCB-014` are closed; the final cleanup gate needs owner selection.
+DEPENDENCIES: Phase 1 audit; Phase 1A completeness verification; owner review approval of a specific cleanup slice from [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). Owner approved starting this cleanup phase on 2026-08-11; closed leaves are tracked in the current-state stop note and [REPOSITORY_CLEANUP_BACKLOG.md](./REPOSITORY_CLEANUP_BACKLOG.md). `RCB-006`, `RCB-007` and `RCB-014` are closed; the current owner-selected step is the corrective final cleanup gate.
 
 EXIT CRITERIA: each cleanup slice has one responsibility, one commit and regression coverage; no product features are added; full verify, browser, desktop gate and large-workspace checks pass after cleanup.
 
@@ -509,7 +509,7 @@ These living backlog items are now represented in this master roadmap. Their det
 | `BUG-011` restore and recovery validation | Phase 4 with data safety completion. |
 | `BUG-012` docs readability/encoding watch | Phase 1 audit; Phase 2 only if recurring drift is confirmed. |
 | `BUG-013` manual regeneration watch | Release handoff rule; no separate active implementation unless it becomes stale again. |
-| `BUG-014` local `debug.log` noise | Phase 2 only as owner-approved cleanup; do not delete during unrelated tasks. |
+| `BUG-014` local `debug.log` noise | Phase 2 owner-approved policy: the exact root ignored/untracked Chromium/GPU `debug.log` is generated/local-only and not a project-file-audit blocker; do not delete unrelated logs during unrelated tasks. |
 
 ## NF Items Included
 

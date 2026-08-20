@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const MODULE_PATH = fileURLToPath(import.meta.url);
+const ROOT = path.resolve(path.dirname(MODULE_PATH), '..');
 const OUTPUT = path.join(ROOT, 'docs', '01-delivery', 'PROJECT_FILE_AUDIT.md');
 
 const EXCLUDED_DIRS = new Set([
@@ -100,8 +101,33 @@ function getGitState() {
       .filter(Boolean)
       .map((item) => item.replace(/\\/g, '/'))
   );
+  const ignored = new Set(
+    tryGit(['ls-files', '--others', '--ignored', '--exclude-standard'])
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((item) => item.replace(/\\/g, '/'))
+  );
 
-  return { tracked, untracked };
+  return { tracked, untracked, ignored };
+}
+
+export function isAllowedGeneratedLocalDebugLog(file, gitState, text = '') {
+  if (file !== 'debug.log') {
+    return false;
+  }
+
+  if (gitState.tracked.has(file)) {
+    return false;
+  }
+
+  if (!gitState.ignored.has(file)) {
+    return false;
+  }
+
+  return (
+    /ERROR:gpu[\\/]/.test(text) &&
+    /SharedImageManager::ProduceMemory/.test(text)
+  );
 }
 
 function ownerZone(file) {
@@ -177,7 +203,18 @@ function purpose(file) {
   return 'Файл проекта.';
 }
 
-function optimizeNote(file, size) {
+function optimizeNote(file, size, gitState, text) {
+  if (
+    isAllowedGeneratedLocalDebugLog(
+      file,
+      gitState,
+      text
+    )
+  ) {
+
+    return 'Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить.';
+  }
+
   if (file === 'debug.log') return 'Нет смысла оптимизировать: кандидат на удаление после подтверждения.';
   if (file.endsWith('.docx')) return 'Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown.';
   if (file.startsWith('docs/archive/')) return 'Не оптимизировать: архив не должен быть рабочим источником правды.';
@@ -204,7 +241,18 @@ function isDocumentMarkdownWithMetadata(file) {
   );
 }
 
-function deleteNote(file, gitState) {
+export function deleteNote(file, gitState, text = '') {
+  if (
+    isAllowedGeneratedLocalDebugLog(
+      file,
+      gitState,
+      text
+    )
+  ) {
+
+    return 'Нет: allowed generated/local-only root Chromium/GPU diagnostic log; ignored/untracked and not product data.';
+  }
+
   if (file === 'debug.log') return 'Да, после подтверждения: локальный лог, не должен попадать в коммит.';
   if (file === 'tools/audit_project_files.mjs') return 'Нет: новый повторяемый инструмент аудита, нужен для будущих уборок.';
   if (file === 'tools/check_text_encoding.mjs') return 'Нет: проверка кодировки подключена к npm run verify.';
@@ -217,9 +265,59 @@ function deleteNote(file, gitState) {
   return 'Нет.';
 }
 
+function necessityNote(row) {
+  const { file, zone, delete: deleteDecision } = row;
+
+  if (/^(Да|Кандидат)/.test(deleteDecision)) {
+    return `Низкая/под вопросом: ${deleteDecision}`;
+  }
+
+  if (deleteDecision.startsWith('Нет: regression test')) {
+    return 'Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения.';
+  }
+
+  if (deleteDecision.startsWith('Нет: архив')) {
+    return 'Историческая: нужен для трассировки решений, но не как активный источник правды.';
+  }
+
+  if (deleteDecision.startsWith('Нет: валидный markdown-документ')) {
+    return 'Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте.';
+  }
+
+  if (deleteDecision.startsWith('Нет: allowed generated/local-only')) {
+    return 'Локальная/generated: разрешенный Chromium/GPU diagnostic artifact; не источник правды и не блокер gate.';
+  }
+
+  if (file.endsWith('.gitkeep')) {
+    return 'Техническая: сохраняет пустую, но нужную папку в Git.';
+  }
+
+  if (file.endsWith('.docx')) {
+    return 'Средняя: справочный бинарный артефакт, нужен пока этот формат остается частью handoff.';
+  }
+
+  if (file.startsWith('docs/archive/') || file.startsWith('Тех. зрелость/') || file.startsWith('Лог особенный/')) {
+    return 'Историческая: хранить для контекста; не использовать как текущий план или contract.';
+  }
+
+  if (file.startsWith('docs/03-testing/visual-evidence/')) {
+    return 'Средняя: визуальное доказательство проверки; сжимать или архивировать только отдельной задачей.';
+  }
+
+  if (file.startsWith('release/') || file.startsWith('docs/04-user-release/')) {
+    return 'Высокая для handoff: нужен при релизе, тестировании или установке.';
+  }
+
+  if (zone === 'root' || zone === 'ci' || zone === 'desktop' || zone === 'tools' || zone === 'agent workflow') {
+    return 'Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита.';
+  }
+
+  return 'Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка.';
+}
+
 function readText(file) {
   const ext = path.posix.extname(file).toLowerCase();
-  if (!TEXT_EXTENSIONS.has(ext)) return null;
+  if (file !== 'debug.log' && !TEXT_EXTENSIONS.has(ext)) return null;
 
   try {
     return fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -336,9 +434,9 @@ function main() {
       zone: ownerZone(file),
       size: stat.size,
       purpose: purpose(file),
-      optimize: optimizeNote(file, stat.size),
-      delete: deleteNote(file, gitState),
       text,
+      optimize: optimizeNote(file, stat.size, gitState, text),
+      delete: deleteNote(file, gitState, text),
       hasMojibake: text ? hasMojibake(file, text) : false,
     };
   });
@@ -390,7 +488,7 @@ function main() {
   lines.push('');
   lines.push('## Два Независимых Прохода');
   lines.push('');
-  lines.push('**Проход 1: механическая инвентаризация.** Файлы перечислены по фактическому дереву проекта, каждому назначена зона владения, назначение, риск оптимизации и возможность удаления.');
+  lines.push('**Проход 1: механическая инвентаризация.** Файлы перечислены по фактическому дереву проекта, каждому назначена зона владения, назначение, риск оптимизации и оценка необходимости файла.');
   lines.push('');
   lines.push('**Проход 2: смысловая сверка.** Дополнительно проверены ссылки/import-цепочки, крупные файлы, untracked/debug-файлы, признаки битой кодировки и generated-зоны. Этот проход независим от классификации первого прохода и нужен, чтобы не удалить редкий, но нужный файл.');
   lines.push('');
@@ -468,10 +566,10 @@ function main() {
   lines.push('');
   lines.push('## Полная Инвентаризация');
   lines.push('');
-  lines.push('| Название файла | Зона | За что отвечает | Нужно ли оптимизировать | Можно ли удалить? |');
-  lines.push('|---|---|---|---|---|');
+  lines.push('| Файл | Зачем нужен | Нужна ли оптимизация | Оценка необходимости файла |');
+  lines.push('|---|---|---|---|');
   for (const row of rows) {
-    lines.push(`| \`${escapeCell(row.file)}\` | ${escapeCell(row.zone)} | ${escapeCell(row.purpose)} | ${escapeCell(row.optimize)} | ${escapeCell(row.delete)} |`);
+    lines.push(`| \`${escapeCell(row.file)}\` | ${escapeCell(row.purpose)} | ${escapeCell(row.optimize)} | ${escapeCell(necessityNote(row))} |`);
   }
   lines.push('');
   lines.push('## Результат');
@@ -486,4 +584,6 @@ function main() {
   console.log(`Mojibake candidates: ${mojibakeFiles.length}`);
 }
 
-main();
+if (path.resolve(process.argv[1] || '') === MODULE_PATH) {
+  main();
+}

@@ -120,7 +120,7 @@ The initial Reviewer C failed with `403 Forbidden`, so the C slot was replaced i
 | CSS/design system | Broad | Remaining token/hack debt identified; no broad rewrite recommended. |
 | Tests/browser smoke | Deep | Native smoke/gate/visual-regression semantics risks identified. |
 | Docs/plan/archive | Broad | Active source-of-truth reviewed; old plans archive-only; new cleanup docs created. |
-| Local artifacts | Targeted | `debug.log` was deleted by owner-approved `RCB-014`; project file audit now reports 0 delete candidates. |
+| Local artifacts | Targeted | `debug.log` was deleted by owner-approved `RCB-014`; the exact recreated root Chromium/GPU diagnostic log is now classified as allowed generated/local-only and project file audit reports 0 delete candidates with it present. |
 
 ## Searches And Evidence Inputs
 
@@ -193,7 +193,7 @@ No production cleanup was implemented. No product functionality was implemented.
 Notes:
 
 - `git ls-files` was the source for tracked first-party counts.
-- `node tools/audit_project_files.mjs` reported 0 delete candidates after `RCB-014`; the previously ignored local `debug.log` is gone.
+- `node tools/audit_project_files.mjs` reports 0 delete candidates after `RCB-014` plus the corrective generated-artifact policy; the exact root Chromium/GPU `debug.log` may be present locally, but is ignored/untracked, not product data and not a closure blocker.
 - The original audit head was `11c0ce2`. Current head `679e5a1` only changed docs/evidence after that head before this verification pass, so production code coverage remains current.
 
 ### Previous P1 Recheck
@@ -294,7 +294,7 @@ Review status values follow the task contract: `REVIEWED - FINDING`, `REVIEWED -
 | `js/rulesWorkspace/*.js`, `js/rules/*.js` | Rules workspace | Internal rules and rule provider | REVIEWED - FINDING CLOSED | Main, reviewer 2 | Internal rules assets/data | Mostly read-only | Medium | Rule provider tests | RA-029 | `RCB-029` moved the internal rule statusbar side effect to editor open-page orchestration. |
 | `js/presentation/*.js` | Presentation | Player/presentation rendering | REVIEWED - NO MATERIAL FINDING | Main | Presentation runtime | Reads map payload | Medium | Presentation browser tests | none | No new persistent owner issue. |
 | `js/performance/*.js` | Performance | Metrics/perf helpers | REVIEWED - NO MATERIAL FINDING | Main | Runtime metrics | No durable write | Low | Performance smoke | none | No material issue. |
-| `js/wiki/knowledgeGraphPage.js` | Knowledge Graph coordinator | Graph page orchestration | REVIEWED - PARTIAL FINDING CLOSED | Main, reviewer 2 | Graph reads through PageRepository; graph runtime stays local | Relationship writes | High | Graph browser tests | RA-007, RA-008, RA-018 | `RCB-007B` moved page lookup/query reads to `PageRepository`; `RCB-008` extracted canvas history ownership. Coordinator still owns graph events, drag/pan and selection. |
+| `js/wiki/knowledgeGraphPage.js` | Knowledge Graph coordinator | Graph page orchestration | REVIEWED - PARTIAL FINDING CLOSED | Main, reviewer 2 | Graph reads through PageRepository; graph runtime stays local | Relationship writes | High | Graph browser tests | RA-007, RA-008, RA-018 | `RCB-007B` moved page lookup/query reads to `PageRepository`; `RCB-008` extracted canvas history ownership, and the corrective gate added explicit history keyboard teardown from the editor page lifecycle. Coordinator still owns graph events, drag/pan and selection. |
 | `js/wiki/knowledgeGraph*.js`, graph overlays/menu modules | Knowledge Graph modules | Graph split owners | REVIEWED - PARTIAL FINDING CLOSED | Main, reviewer 3 | Relationship/page model | Graph command bridge | High | Graph/browser visual tests | RA-010, RA-018 | `RCB-010` removed hidden icon-only labels in the touched graph controls; `knowledgeGraphCanvasHistory.js` owns canvas history stack/shortcut/control state. |
 | `js/wiki/backlinks/references/wikiLink*.js` | Wiki links/backlinks | Link lookup and previews | REVIEWED - NO MATERIAL FINDING | Main | PageRepository/pages | Editor save | Medium | Search/wiki tests | none | No new finding. |
 | `styles/design-tokens.css`, `variables.css`, base/layout/ui CSS | Base CSS/tokens | Shared design system | REVIEWED - FINDINGS CLOSED | Main, reviewer 3 | N/A | N/A | Medium | UI polish audit | RA-020, RA-030 | `RCB-020` added Settings and Character Sheet semantic tokens; `RCB-030` added focused guard coverage for the recorded token/layer drift class. |

@@ -296,17 +296,17 @@ Regression target: keep `python -m zipfile -t docs/MY_OWN_WORLD_FULL_MANUAL.docx
 
 Area: repo hygiene
 
-Status: Closed by `RCB-014` / `0.0.1.10.38`
+Status: Closed by `RCB-014` / `0.0.1.10.38`; generated-artifact policy corrected in `0.0.1.10.CORRECTIVE`
 
 Source: `git status --short`.
 
-Symptoms: local `debug.log` was untracked and ignored.
+Symptoms: local `debug.log` was untracked and ignored. Chromium/browser tooling can recreate the exact root GPU diagnostic log after it is deleted.
 
 Risk: accidental commit noise or confusing file audit output.
 
-Resolution: owner approved deleting only the previously audited root `debug.log`; post-delete project file audit reports 0 delete candidates.
+Resolution: owner approved deleting only the previously audited root `debug.log`, then approved a narrow generated/local-only exemption for the exact recreated root Chromium/GPU diagnostic log when it remains ignored, untracked and non-product data. Project file audit reports 0 delete candidates with that known artifact present and still flags unexpected/tracked/non-root logs.
 
-Regression target: keep safe commit rules and file audit checks.
+Regression target: keep safe commit rules, project file audit checks and the narrow `debug.log` classifier tests.
 
 ## Current Automated Coverage Snapshot
 
