@@ -47,6 +47,74 @@ test(
 
 
 test(
+  'normalizeTaskTrackerData читает legacy tasks object without emptying columns',
+  () => {
+
+    const data =
+      normalizeTaskTrackerData({
+        version: 1,
+        columns: [
+          {
+            id: 'sample-backlog',
+            title: 'ИДЕИ',
+            taskIds: [
+              'sample-task-2',
+              'sample-task-1',
+              'missing-task'
+            ]
+          }
+        ],
+        tasks: {
+          'sample-task-1': {
+            title: 'Проверить onboarding',
+            description: 'Откройте Инструменты -> Быстрый старт.',
+            checklist: [
+              {
+                id: 'sample-check-1',
+                text: 'Открыть карточку',
+                done: false
+              }
+            ]
+          },
+          'sample-task-2': {
+            id: 'ignored-stale-value-id',
+            title: 'Подготовить сцену',
+            description: 'Legacy object keeps task order through columns.',
+            checklist: []
+          }
+        }
+      });
+
+    assert.deepEqual(
+      data.columns[0].taskIds,
+      [
+        'sample-task-2',
+        'sample-task-1'
+      ]
+    );
+
+    assert.deepEqual(
+      data.tasks.map(task => task.id),
+      [
+        'sample-task-1',
+        'sample-task-2'
+      ]
+    );
+
+    assert.equal(
+      data.tasks.find(task => task.id === 'sample-task-1')?.title,
+      'Проверить onboarding'
+    );
+
+    assert.equal(
+      data.tasks.find(task => task.id === 'sample-task-2')?.id,
+      'sample-task-2'
+    );
+  }
+);
+
+
+test(
   'TaskTrackerModel переносит задачу между колонками без дублей',
   () => {
 

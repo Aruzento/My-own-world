@@ -254,6 +254,341 @@ aliases: []
   }
 );
 
+
+test(
+  'task-tracker-opens-legacy-keyed-task-object-and-persists-after-reorder-reload',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const initial =
+      await page.evaluate(
+        async () => {
+
+          const {
+            renderTaskTracker
+          } = await import('/js/taskTracker/taskTrackerRender.js');
+
+          const {
+            readTaskTrackerData
+          } = await import('/js/taskTracker/taskTrackerReadData.js');
+
+          const legacyData = {
+            version: 1,
+            columns: [
+              {
+                id: 'legacy-backlog',
+                title: 'ИДЕИ',
+                taskIds: [
+                  'legacy-scene',
+                  'legacy-onboarding'
+                ]
+              },
+              {
+                id: 'legacy-progress',
+                title: 'В РАБОТЕ',
+                taskIds: []
+              },
+              {
+                id: 'legacy-done',
+                title: 'СДЕЛАНО',
+                taskIds: []
+              }
+            ],
+            tasks: {
+              'legacy-onboarding': {
+                id: 'legacy-onboarding',
+                title: 'Проверить onboarding',
+                description: 'Откройте Инструменты -> Быстрый старт.',
+                checklist: [
+                  {
+                    id: 'legacy-check-card',
+                    text: 'Открыть карточку',
+                    done: false
+                  }
+                ]
+              },
+              'legacy-scene': {
+                title: 'Подготовить сцену',
+                description: 'Legacy keyed object keeps this task visible.',
+                checklist: []
+              }
+            }
+          };
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <div class="task-tracker-document" data-task-tracker="v1" contenteditable="false">
+              <div class="task-tracker-topbar" contenteditable="false">
+                <h1 class="task-tracker-title singleline-field" contenteditable="true">Legacy Tracker</h1>
+              </div>
+              <script class="task-tracker-data" type="application/json" data-task-tracker-data>${JSON.stringify(legacyData)}</script>
+            </div>
+          `;
+
+          renderTaskTracker(
+            editor
+          );
+
+          const tracker =
+            editor.querySelector('.task-tracker-document');
+
+          const data =
+            readTaskTrackerData(
+              tracker
+            );
+
+          const persistedData =
+            JSON.parse(
+              tracker.querySelector('.task-tracker-data').textContent
+            );
+
+          return {
+            columnTitles:
+              data.columns.map(column =>
+                column.title
+              ),
+            columnOrder:
+              data.columns.map(column => ({
+                id:
+                  column.id,
+                taskIds:
+                  column.taskIds
+              })),
+            taskTitles:
+              [
+                ...tracker.querySelectorAll(
+                  '.task-column[data-column-id="legacy-backlog"] .task-card-title'
+                )
+              ].map(input =>
+                input.value
+              ),
+            descriptions:
+              data.tasks.map(task => [
+                task.id,
+                task.description
+              ]),
+            checklistText:
+              data.tasks
+                .find(task => task.id === 'legacy-onboarding')
+                ?.checklist[0]
+                ?.text || '',
+            persistedTasksAreArray:
+              Array.isArray(
+                persistedData.tasks
+              )
+          };
+        }
+      );
+
+    expect(
+      initial.columnTitles
+    ).toEqual([
+      'ИДЕИ',
+      'В РАБОТЕ',
+      'СДЕЛАНО'
+    ]);
+
+    expect(
+      initial.columnOrder
+    ).toEqual([
+      {
+        id: 'legacy-backlog',
+        taskIds: [
+          'legacy-scene',
+          'legacy-onboarding'
+        ]
+      },
+      {
+        id: 'legacy-progress',
+        taskIds: []
+      },
+      {
+        id: 'legacy-done',
+        taskIds: []
+      }
+    ]);
+
+    expect(
+      initial.taskTitles
+    ).toEqual([
+      'Подготовить сцену',
+      'Проверить onboarding'
+    ]);
+
+    expect(
+      Object.fromEntries(
+        initial.descriptions
+      )
+    ).toMatchObject({
+      'legacy-scene':
+        'Legacy keyed object keeps this task visible.',
+      'legacy-onboarding':
+        'Откройте Инструменты -> Быстрый старт.'
+    });
+
+    expect(
+      initial.checklistText
+    ).toBe(
+      'Открыть карточку'
+    );
+
+    expect(
+      initial.persistedTasksAreArray
+    ).toBe(
+      true
+    );
+
+    await dragLocatorToLocator(
+      page,
+      page.locator('.task-card[data-task-id="legacy-onboarding"] .task-drag-handle'),
+      page.locator('.task-column[data-column-id="legacy-progress"] .task-list')
+    );
+
+    await expectTaskTrackerColumnOrder(
+      page,
+      [
+        {
+          id: 'legacy-backlog',
+          taskIds: [
+            'legacy-scene'
+          ]
+        },
+        {
+          id: 'legacy-progress',
+          taskIds: [
+            'legacy-onboarding'
+          ]
+        },
+        {
+          id: 'legacy-done',
+          taskIds: []
+        }
+      ]
+    );
+
+    const reloaded =
+      await page.evaluate(
+        async () => {
+
+          const {
+            serializeTaskTrackerHTML
+          } = await import('/js/taskTracker/taskTrackerContract.js');
+
+          const {
+            renderTaskTracker
+          } = await import('/js/taskTracker/taskTrackerRender.js');
+
+          const {
+            readTaskTrackerData
+          } = await import('/js/taskTracker/taskTrackerReadData.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          const savedHTML =
+            serializeTaskTrackerHTML(
+              editor
+            );
+
+          editor.innerHTML =
+            savedHTML;
+
+          renderTaskTracker(
+            editor
+          );
+
+          const tracker =
+            editor.querySelector('.task-tracker-document');
+
+          const data =
+            readTaskTrackerData(
+              tracker
+            );
+
+          const scriptData =
+            JSON.parse(
+              tracker.querySelector('.task-tracker-data').textContent
+            );
+
+          return {
+            columnOrder:
+              data.columns.map(column => ({
+                id:
+                  column.id,
+                taskIds:
+                  column.taskIds
+              })),
+            taskTitles:
+              [
+                ...tracker.querySelectorAll('.task-card-title')
+              ].map(input =>
+                input.value
+              ),
+            descriptions:
+              data.tasks.map(task => [
+                task.id,
+                task.description
+              ]),
+            scriptTasksAreArray:
+              Array.isArray(
+                scriptData.tasks
+              )
+          };
+        }
+      );
+
+    expect(
+      reloaded.columnOrder
+    ).toEqual([
+      {
+        id: 'legacy-backlog',
+        taskIds: [
+          'legacy-scene'
+        ]
+      },
+      {
+        id: 'legacy-progress',
+        taskIds: [
+          'legacy-onboarding'
+        ]
+      },
+      {
+        id: 'legacy-done',
+        taskIds: []
+      }
+    ]);
+
+    expect(
+      reloaded.taskTitles
+    ).toEqual([
+      'Подготовить сцену',
+      'Проверить onboarding'
+    ]);
+
+    expect(
+      Object.fromEntries(
+        reloaded.descriptions
+      )
+    ).toMatchObject({
+      'legacy-scene':
+        'Legacy keyed object keeps this task visible.',
+      'legacy-onboarding':
+        'Откройте Инструменты -> Быстрый старт.'
+    });
+
+    expect(
+      reloaded.scriptTasksAreArray
+    ).toBe(
+      true
+    );
+  }
+);
+
 test(
   'task-tracker-page-action-adds-task-through-page-command-boundary',
   async ({ page }) => {

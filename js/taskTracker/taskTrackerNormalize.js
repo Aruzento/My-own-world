@@ -16,9 +16,9 @@ export function normalizeTaskTrackerData(
       : createDefaultTaskTrackerData();
 
   const tasks =
-    Array.isArray(source.tasks)
-      ? source.tasks.map(normalizeTask)
-      : [];
+    normalizeTasks(
+      source.tasks
+    );
 
   const taskIds =
     new Set(
@@ -41,12 +41,50 @@ export function normalizeTaskTrackerData(
 }
 
 
+function normalizeTasks(
+  tasks
+) {
+
+  if (
+    Array.isArray(tasks)
+  ) {
+
+    return tasks.map(task =>
+      normalizeTask(
+        task
+      )
+    );
+  }
+
+  if (
+    tasks &&
+    typeof tasks === 'object'
+  ) {
+
+    return Object.entries(
+      tasks
+    ).map(([
+      id,
+      task
+    ]) =>
+      normalizeTask(
+        task,
+        id
+      )
+    );
+  }
+
+  return [];
+}
+
+
 function normalizeTask(
-  task
+  task,
+  fallbackId = ''
 ) {
 
   return {
-    id: String(task?.id || crypto.randomUUID()),
+    id: String(fallbackId || task?.id || crypto.randomUUID()),
     title: String(task?.title || 'Новая задача'),
     description: String(task?.description || ''),
     checklist: Array.isArray(task?.checklist)

@@ -6,6 +6,49 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.11 BUG-009 Legacy Task Tracker Compatibility
+
+### Disposition
+
+- `FIXED`.
+
+### Current Evidence
+
+- Oldest available representative tracker shape: `docs/03-testing/sample-workspace/pages/0003-task-tracker.md`, introduced in history at `6381575`, stores persistent Task Tracker JSON with `tasks` as an object keyed by task id instead of the current canonical task array.
+- Serialized legacy shape: `columns: [{ id, title, taskIds: [...] }]` plus `tasks: { "task-id": { id, title, description, checklist } }`.
+- EXPECTED: old columns and tasks open intact; task titles/details/checklist remain visible; task order follows `column.taskIds`; drag/reorder works; disposable save/reload keeps data.
+- ACTUAL before fix: `normalizeTaskTrackerData` accepted only array `source.tasks`, normalized the legacy keyed object to `tasks: []`, then filtered `column.taskIds` as missing. Minimal repro returned `taskCount: 0`, empty `columnTaskIds`, and no title.
+- ROOT CAUSE: Task Tracker read path supported the legacy JSON script tag, but the normalization contract did not support the older keyed-object task collection shape.
+- OWNER: `js/taskTracker/taskTrackerReadData.js` parses the script; `js/taskTracker/taskTrackerNormalize.js` owns backward-compatible shape normalization; render/write/drag owners remain unchanged.
+
+### Fix
+
+- `normalizeTaskTrackerData` now accepts current `tasks: []` and legacy `tasks: { [taskId]: task }`.
+- For legacy keyed-object tasks, the object key is used as the stable task id so old `column.taskIds` remain connected even if the nested task id is missing or stale.
+- Save/reload still writes the current canonical array shape through the existing writer; no real user tracker was rewritten.
+
+### Verification
+
+- Failed before fix as expected: minimal normalizer repro returned `taskCount: 0`, `columnTaskIds: []`, `title: null`.
+- Passed after fix: `node --test tests/taskTrackerModel.test.mjs`.
+- Passed after fix: `npm run test:browser -- tests/browser/task-tracker.spec.mjs --grep task-tracker-opens-legacy-keyed-task-object-and-persists-after-reorder-reload`.
+- Passed after fix: same minimal normalizer repro returned `taskCount: 1`, `columnTaskIds: ["sample-task-1"]`, `title: "Проверить onboarding"`.
+- Passed after fix: `npm run test:browser -- tests/browser/task-tracker.spec.mjs`.
+- Passed final gate: `npm run verify` (encoding, syntax checks, 341 unit tests, synthetic large-workspace smoke, built-in `git diff --check`).
+
+### Guardrails
+
+- No real user tracker was opened for write or rewritten.
+- No eager persistent migration was performed.
+- No Task Tracker UI, drag/drop, page-command boundary or renderer redesign was added.
+- No product feature phase was started.
+- Phase `0.0.1.12.0` was not touched.
+
+### Next
+
+- Next leaf: `0.0.1.11.12` Shape Usability Decision.
+- Stop after focused commit; do not start next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.10 BUG-008 Character -> Map Data Consistency
 
 ### Disposition

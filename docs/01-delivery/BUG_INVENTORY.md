@@ -230,11 +230,11 @@ Current owner paths: Character data stays in `CharacterModel`/Properties; snapsh
 
 Regression coverage: browser regression `campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload`; unit regression `InitiativeModel refreshes existing token participants from current token snapshots`. Coverage includes HP, AC, Dexterity-derived initiative, supported effects/statuses (`Опутан`, `Боевой фокус`), token popup actions, initiative order and map reload boundary.
 
-### BUG-009. Task tracker needs legacy workspace verification
+### BUG-009. Legacy task tracker keyed-task compatibility
 
 Area: task tracker
 
-Status: Needs repro
+Status: FIXED
 
 Source: previous user report that task trackers became empty.
 
@@ -242,9 +242,11 @@ Current automated status: browser smoke covers model persistence and legacy JSON
 
 Risk: synthetic tests may not cover the user's older saved tracker format.
 
-Next check: open a real older workspace with existing trackers and verify tasks, columns, drag, save, reload.
+Current result: `0.0.1.11.11` on 2026-08-20 reproduced and fixed the available legacy tracker shape from `docs/03-testing/sample-workspace/pages/0003-task-tracker.md`: persistent JSON had `tasks` as an object keyed by task id (`{"task-id": {...}}`) while the current normalizer accepted only an array. That made `tasks` normalize to `[]` and filtered old `column.taskIds`, so columns rendered empty.
 
-Regression target: fixture based on an old tracker page if the real broken shape is found.
+Fix: `normalizeTaskTrackerData` now reads both the current `tasks: []` array and the legacy keyed-object shape, using the object key as the stable task id so existing `column.taskIds` stay connected. Save/reload still writes the current canonical array shape; no eager migration or real user tracker rewrite was performed.
+
+Regression coverage: unit `normalizeTaskTrackerData читает legacy tasks object without emptying columns`; browser `task-tracker-opens-legacy-keyed-task-object-and-persists-after-reorder-reload`. Coverage verifies columns, tasks, task titles/details, order, drag/reorder and disposable save/reload.
 
 ### BUG-010. Knowledge Graph needs final daily-use operations and lifecycle hardening
 
@@ -357,4 +359,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.10` `BUG-008` Character -> Map Data Consistency is `FIXED`; next leaf: `BUG-009` Task Tracker Legacy Verification.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility is `FIXED`; next leaf: `0.0.1.11.12` Shape Usability Decision.
