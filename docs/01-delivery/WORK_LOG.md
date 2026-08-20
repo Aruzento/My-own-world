@@ -6,6 +6,53 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.2 BI-010 Campaign Map Toolbar Lifecycle
+
+### Disposition
+
+- `NOT REPRODUCED WITH STRONG EVIDENCE`.
+
+### Current Evidence
+
+- Inspected only the Campaign Map toolbar owner, render/open lifecycle, editor page teardown/open generation guard, map runtime initialization, and presentation path needed for the defined matrix.
+- Current toolbar ownership is split between `campaignMap.js` (`ensureMapControls`, toolbar region creation and runtime refresh), `campaignMapToolbar.js` (toolbar HTML), `campaignMapToolbarController.js` (button routing), and `editorOpenPage.js` / `editor.js` (page open generation, pending autosave flush and special page render).
+- No product root-cause fix was made because the historical disappearing-toolbar behavior did not reproduce on current code.
+
+### Repro Matrix
+
+- A: map -> card -> same map: pass.
+- B: map A -> map B -> map A: pass.
+- C: map -> task tracker -> map and map -> rule tree -> map: pass.
+- D: map -> hide/show tree -> map: pass.
+- E: map -> presentation -> return -> map: pass.
+- F: workspace A map -> workspace B -> map: pass.
+
+### Regression / Evidence Guard
+
+- Added `campaign-map-toolbar-survives-page-workspace-and-presentation-lifecycle`.
+- The guard verifies exactly one map, one `scene-bar`, one `tool-rail`, both toolbar regions visible, 11 expected map tool buttons, hit-testable main controls, a working grid popup, correct current map identity and no stale card/task/rule page hiding the current map.
+
+### Verification
+
+- Passed: `npm run test:browser -- --grep campaign-map-toolbar-survives-page-workspace-and-presentation-lifecycle`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/editor-autosave.spec.mjs --grep editor-open-page-ignores-stale-async-campaign-map-completion`.
+- Passed: `npm run test:browser -- --grep app-shell-global-workspace-switch-keeps-cancel-and-loads-next-workspace`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run verify` with encoding/syntax checks, 338 node tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not opened, repaired, migrated, normalized or edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.3` `BI-011` Creature Skills Encoding.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.1 Workspace Switch Access
 
 ### Disposition

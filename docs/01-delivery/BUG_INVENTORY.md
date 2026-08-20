@@ -329,6 +329,7 @@ Covered by current browser smoke:
 - app shell empty state;
 - persistent AppShell workspace switch cancel/A-to-B/pending-edit/asset-cache path;
 - tree DnD planning, tree delete, and tree virtualization;
+- campaign map toolbar lifecycle matrix across map/card/map, mapA/mapB/mapA, task/rule detours, tree hide/show, presentation return and workspace switch;
 - campaign map data save/reload, token removal, presentation sync, fog patches, hidden player token behavior, layers, drawing, playlist basics, initiative basics;
 - editor formatting boundary and history;
 - properties block gear, custom fields, field removal, drag/resize, calculations, character sheet edits, effects, inventory, universal list;
@@ -350,4 +351,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.1` Workspace Switch Access is `FIXED`; next leaf: `0.0.1.11.2` `BI-010` Campaign Map Toolbar.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.2` `BI-010` Campaign Map Toolbar is `NOT REPRODUCED WITH STRONG EVIDENCE`; next leaf: `0.0.1.11.3` `BI-011` Creature Skills Encoding.

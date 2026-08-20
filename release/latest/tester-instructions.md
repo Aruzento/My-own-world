@@ -77,6 +77,7 @@ npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep campaign-m
 For the campaign map split toolbar/tool rail, editable property Inspector, custom right-click popup and group contextual actions redesign slice, use:
 
 ```powershell
+npm run test:browser -- --grep campaign-map-toolbar-survives-page-workspace-and-presentation-lifecycle
 npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-inspector)|visual-safety-captures-core-surfaces"
 npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs
 ```

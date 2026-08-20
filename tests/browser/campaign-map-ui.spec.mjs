@@ -1160,6 +1160,1000 @@ test(
 
 
 test(
+  'campaign-map-toolbar-survives-page-workspace-and-presentation-lifecycle',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            setPages,
+            setWorkspaceHandle
+          } = await import('/js/stateActions.js');
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            setAssetAdapter
+          } = await import('/js/storage/assetAdapter.js');
+
+          const {
+            openWorkspace,
+            loadWorkspace
+          } = await import('/js/storage/workspaceStorage.js');
+
+          const {
+            openPage
+          } = await import('/js/editor/editor.js');
+
+          const {
+            closeMapPopup
+          } = await import('/js/editor/campaignMapPopupController.js');
+
+          const {
+            createCampaignMapTemplate
+          } = await import('/js/templates/campaignMap.js');
+
+          const {
+            createTaskTrackerTemplate
+          } = await import('/js/templates/taskTracker.js');
+
+          const {
+            createRuleTreeTemplate
+          } = await import('/js/templates/ruleTree.js');
+
+          const {
+            renderTree
+          } = await import('/js/tree/tree.js');
+
+          const mapTemplate =
+            createCampaignMapTemplate();
+
+          const taskTemplate =
+            createTaskTrackerTemplate();
+
+          const ruleTemplate =
+            createRuleTreeTemplate();
+
+          const makeCardBody =
+            title => `
+              <div class="entity-layout card-shell" contenteditable="false">
+                <h1>${title}</h1>
+                <div class="rich-text-field" contenteditable="true" data-persistent-editable="true">Card body</div>
+              </div>
+            `;
+
+          const makePageContent =
+            ({
+              id,
+              title,
+              tags = [],
+              template = 'card',
+              type = 'note',
+              order = 1,
+              body
+            }) => `---
+id: ${id}
+parent: null
+order: ${order}
+tags: [${tags.join(', ')}]
+template: ${template}
+type: ${type}
+aliases: []
+---
+
+${body}`;
+
+          const makePage =
+            options => ({
+              id:
+                options.id,
+              name:
+                `${options.id}.md`,
+              path:
+                `/pages/${options.id}.md`,
+              parent:
+                null,
+              order:
+                options.order || 1,
+              title:
+                options.title,
+              template:
+                options.template || 'card',
+              type:
+                options.type || 'note',
+              tags:
+                options.tags || [],
+              aliases:
+                [],
+              relationships:
+                [],
+              content:
+                makePageContent(
+                  options
+                )
+            });
+
+          const makeMapPage =
+            ({
+              id,
+              title,
+              order
+            }) => makePage({
+              id,
+              title,
+              order,
+              tags:
+                ['campaign-map'],
+              template:
+                'campaignMap',
+              type:
+                'campaignMap',
+              body:
+                mapTemplate.content.replace(
+                  'Новая карта',
+                  title
+                )
+            });
+
+          const mapA =
+            makeMapPage({
+              id:
+                'lifecycle-map-a',
+              title:
+                'Lifecycle Map A',
+              order:
+                1
+            });
+
+          const mapB =
+            makeMapPage({
+              id:
+                'lifecycle-map-b',
+              title:
+                'Lifecycle Map B',
+              order:
+                2
+            });
+
+          const card =
+            makePage({
+              id:
+                'lifecycle-card',
+              title:
+                'Lifecycle Card',
+              order:
+                3,
+              body:
+                makeCardBody(
+                  'Lifecycle Card'
+                )
+            });
+
+          const task =
+            makePage({
+              id:
+                'lifecycle-task',
+              title:
+                'Lifecycle Task Tracker',
+              order:
+                4,
+              tags:
+                ['task-tracker'],
+              template:
+                'taskTracker',
+              type:
+                'taskTracker',
+              body:
+                taskTemplate.content.replace(
+                  'Новый трекер',
+                  'Lifecycle Task Tracker'
+                )
+            });
+
+          const rule =
+            makePage({
+              id:
+                'lifecycle-rule',
+              title:
+                'Lifecycle Rule Tree',
+              order:
+                5,
+              tags:
+                ['rule-tree'],
+              template:
+                'ruleTree',
+              type:
+                'ruleTree',
+              body:
+                ruleTemplate.content.replace(
+                  'Новое дерево правил',
+                  'Lifecycle Rule Tree'
+                )
+            });
+
+          const waitFrames =
+            () => new Promise(resolve => {
+
+              requestAnimationFrame(
+                () => requestAnimationFrame(
+                  resolve
+                )
+              );
+            });
+
+          const open =
+            async pageRecord => {
+
+              await openPage(
+                pageRecord
+              );
+
+              await waitFrames();
+            };
+
+          const isVisible =
+            element => {
+
+              if (!element) return false;
+
+              const style =
+                getComputedStyle(
+                  element
+                );
+
+              const rect =
+                element.getBoundingClientRect();
+
+              return style.display !== 'none' &&
+                style.visibility !== 'hidden' &&
+                !element.hidden &&
+                rect.width > 0 &&
+                rect.height > 0;
+            };
+
+          const hitTestButton =
+            button => {
+
+              if (!isVisible(button) || button.disabled) return false;
+
+              const style =
+                getComputedStyle(
+                  button
+                );
+
+              if (style.pointerEvents === 'none') return false;
+
+              const rect =
+                button.getBoundingClientRect();
+
+              const hit =
+                document.elementFromPoint(
+                  rect.left + rect.width / 2,
+                  rect.top + rect.height / 2
+                );
+
+              return button === hit ||
+                button.contains(
+                  hit
+                );
+            };
+
+          const snapshotToolbar =
+            async label => {
+
+              closeMapPopup();
+
+              const editor =
+                document.querySelector(
+                  '#editorArea'
+                );
+
+              const map =
+                editor.querySelector(
+                  '.campaign-map-document'
+                );
+
+              const sceneBars =
+                editor.querySelectorAll(
+                  '[data-map-toolbar-region="scene-bar"]'
+                );
+
+              const toolRails =
+                editor.querySelectorAll(
+                  '[data-map-toolbar-region="tool-rail"]'
+                );
+
+              const sceneBar =
+                map?.querySelector(
+                  '[data-map-toolbar-region="scene-bar"]'
+                );
+
+              const toolRail =
+                map?.querySelector(
+                  '[data-map-toolbar-region="tool-rail"]'
+                );
+
+              const selectors =
+                [
+                  '.campaign-add-btn',
+                  '.campaign-grid-btn',
+                  '.campaign-change-map-btn',
+                  '.campaign-pan-btn',
+                  '.campaign-open-presentation-btn'
+                ];
+
+              const buttons =
+                selectors.map(selector =>
+                  map?.querySelector(
+                    selector
+                  ) || null
+                );
+
+              const gridButton =
+                map?.querySelector(
+                  '.campaign-grid-btn'
+                );
+
+              if (hitTestButton(gridButton)) {
+
+                gridButton.click();
+
+                await waitFrames();
+              }
+
+              const popup =
+                document.querySelector(
+                  '#campaignMapPopup'
+                );
+
+              const popupOpened =
+                popup?.dataset.popupKey === 'grid' &&
+                !popup.classList.contains(
+                  'hidden'
+                );
+
+              closeMapPopup();
+
+              return {
+                label,
+                currentPageId:
+                  state.currentPage?.id || '',
+                mapTitle:
+                  map?.querySelector('h1')?.textContent?.trim() || '',
+                mapCount:
+                  editor.querySelectorAll('.campaign-map-document').length,
+                sceneBarCount:
+                  sceneBars.length,
+                toolRailCount:
+                  toolRails.length,
+                sceneBarVisible:
+                  isVisible(
+                    sceneBar
+                  ),
+                toolRailVisible:
+                  isVisible(
+                    toolRail
+                  ),
+                buttonCount:
+                  map?.querySelectorAll('.campaign-map-tool-button').length || 0,
+                expectedButtonsInteractable:
+                  buttons.every(
+                    hitTestButton
+                  ),
+                gridPopupOpened:
+                  popupOpened,
+                staleCardPresent:
+                  Boolean(
+                    editor.querySelector(
+                      '#lifecycle-card'
+                    )
+                  ) ||
+                  editor.textContent.includes(
+                    'Lifecycle Card'
+                  ),
+                staleTaskPresent:
+                  Boolean(
+                    editor.querySelector(
+                      '.task-tracker-document'
+                    )
+                  ),
+                staleRulePresent:
+                  Boolean(
+                    editor.querySelector(
+                      '.rule-tree-document'
+                    )
+                  )
+              };
+            };
+
+          const snapshots =
+            [];
+
+          setWorkspaceHandle({
+            name:
+              'Lifecycle matrix workspace'
+          });
+
+          setPages([
+            mapA,
+            mapB,
+            card,
+            task,
+            rule
+          ]);
+
+          renderTree();
+
+          await open(
+            mapA
+          );
+
+          await open(
+            card
+          );
+
+          await open(
+            mapA
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'A map-card-map'
+            )
+          );
+
+          await open(
+            mapB
+          );
+
+          await open(
+            mapA
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'B mapA-mapB-mapA'
+            )
+          );
+
+          await open(
+            task
+          );
+
+          await open(
+            mapA
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'C map-task-map'
+            )
+          );
+
+          await open(
+            rule
+          );
+
+          await open(
+            mapA
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'C map-rule-map'
+            )
+          );
+
+          document
+            .querySelector('#appTreeRailBtn')
+            ?.click();
+
+          await waitFrames();
+
+          document
+            .querySelector('#appTreeRailBtn')
+            ?.click();
+
+          await waitFrames();
+
+          await open(
+            mapA
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'D map-hide-show-tree-map'
+            )
+          );
+
+          const originalOpen =
+            window.open;
+
+          window.open =
+            () => ({
+              closed:
+                false,
+              focus() {},
+              document:
+                document.implementation.createHTMLDocument(
+                  'presentation'
+                )
+            });
+
+          mapA.content =
+            state.currentPage.content;
+
+          document
+            .querySelector('.campaign-open-presentation-btn')
+            ?.click();
+
+          await waitFrames();
+
+          window.open =
+            originalOpen;
+
+          await open(
+            mapA
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'E map-presentation-return-map'
+            )
+          );
+
+          const workspaces =
+            new Map([
+              [
+                'workspace-a',
+                {
+                  handle:
+                    'workspace-a',
+                  root:
+                    'workspace-a',
+                  files:
+                    new Map([
+                      [
+                        'pages/workspace-a-map.md',
+                        makeMapPage({
+                          id:
+                            'workspace-a-map',
+                          title:
+                            'Workspace A Map',
+                          order:
+                            1
+                        }).content
+                      ]
+                    ])
+                }
+              ],
+              [
+                'workspace-b',
+                {
+                  handle:
+                    'workspace-b',
+                  root:
+                    'workspace-b',
+                  files:
+                    new Map([
+                      [
+                        'pages/workspace-b-map.md',
+                        makeMapPage({
+                          id:
+                            'workspace-b-map',
+                          title:
+                            'Workspace B Map',
+                          order:
+                            1
+                        }).content
+                      ]
+                    ])
+                }
+              ]
+            ]);
+
+          const pickQueue =
+            [];
+
+          let activeWorkspaceKey =
+            'workspace-a';
+
+          const normalize =
+            path => String(path || '')
+              .replaceAll(
+                '\\',
+                '/'
+              )
+              .replace(
+                /^\/+/,
+                ''
+              );
+
+          const getActiveWorkspace =
+            () => workspaces.get(
+              activeWorkspaceKey
+            );
+
+          const adapter =
+            {
+              kind:
+                'desktop',
+              getWorkspaceRoot() {
+                return getActiveWorkspace().root;
+              },
+              setWorkspaceRoot(root) {
+                if (workspaces.has(root)) {
+                  activeWorkspaceKey =
+                    root;
+                }
+              },
+              async pickWorkspace() {
+                const next =
+                  pickQueue.shift();
+
+                if (!next) {
+                  throw new Error(
+                    'No workspace queued.'
+                  );
+                }
+
+                activeWorkspaceKey =
+                  next;
+
+                return getActiveWorkspace().handle;
+              },
+              async restoreWorkspace() {
+                return getActiveWorkspace().handle;
+              },
+              async ensureDirectory() {},
+              async getDirectoryHandle() {
+                return {};
+              },
+              async readText(path) {
+                return getActiveWorkspace().files.get(
+                  normalize(
+                    path
+                  )
+                ) || '';
+              },
+              async writeText(path, content) {
+                getActiveWorkspace().files.set(
+                  normalize(
+                    path
+                  ),
+                  String(
+                    content
+                  )
+                );
+              },
+              async readBinary() {
+                return new TextEncoder()
+                  .encode('<svg xmlns="http://www.w3.org/2000/svg"></svg>')
+                  .buffer;
+              },
+              async writeBinary() {},
+              async listFiles(path = '') {
+                const prefix =
+                  normalize(
+                    path
+                  );
+
+                const entries =
+                  new Map();
+
+                for (const filePath of getActiveWorkspace().files.keys()) {
+
+                  if (
+                    prefix &&
+                    !filePath.startsWith(
+                      `${prefix}/`
+                    )
+                  ) {
+                    continue;
+                  }
+
+                  const relative =
+                    prefix
+                      ? filePath.slice(
+                        prefix.length + 1
+                      )
+                      : filePath;
+
+                  const [
+                    name
+                  ] =
+                    relative.split(
+                      '/'
+                    );
+
+                  if (!name) continue;
+
+                  entries.set(
+                    name,
+                    {
+                      name,
+                      kind:
+                        relative.includes('/')
+                          ? 'directory'
+                          : 'file'
+                    }
+                  );
+                }
+
+                return [
+                  ...entries.values()
+                ];
+              },
+              async removeFile(path) {
+                getActiveWorkspace().files.delete(
+                  normalize(
+                    path
+                  )
+                );
+              },
+              async removeDirectory() {}
+            };
+
+          setStorageAdapter(
+            adapter
+          );
+
+          setAssetAdapter({
+            kind:
+              'lifecycle-matrix-assets',
+            async importFile() {},
+            async resolveUrl(path) {
+              return `asset://${adapter.getWorkspaceRoot()}/${normalize(path)}`;
+            },
+            async exists() {
+              return true;
+            },
+            async remove() {},
+            async findOrphans() {
+              return [];
+            }
+          });
+
+          pickQueue.push(
+            'workspace-a'
+          );
+
+          await openWorkspace();
+          await loadWorkspace();
+          renderTree();
+
+          const workspaceAMap =
+            state.pages.find(candidate =>
+              candidate.id === 'workspace-a-map'
+            );
+
+          await open(
+            workspaceAMap
+          );
+
+          pickQueue.push(
+            'workspace-b'
+          );
+
+          await openWorkspace();
+          await loadWorkspace();
+          renderTree();
+
+          const workspaceBMap =
+            state.pages.find(candidate =>
+              candidate.id === 'workspace-b-map'
+            );
+
+          await open(
+            workspaceBMap
+          );
+
+          snapshots.push(
+            await snapshotToolbar(
+              'F workspaceA-map-workspaceB-map'
+            )
+          );
+
+          return {
+            snapshots,
+            activeWorkspaceKey,
+            pageIds:
+              state.pages.map(candidate => candidate.id)
+          };
+        }
+      );
+
+    const expectedSnapshots =
+      [
+        {
+          label:
+            'A map-card-map',
+          currentPageId:
+            'lifecycle-map-a',
+          mapTitle:
+            'Lifecycle Map A'
+        },
+        {
+          label:
+            'B mapA-mapB-mapA',
+          currentPageId:
+            'lifecycle-map-a',
+          mapTitle:
+            'Lifecycle Map A'
+        },
+        {
+          label:
+            'C map-task-map',
+          currentPageId:
+            'lifecycle-map-a',
+          mapTitle:
+            'Lifecycle Map A'
+        },
+        {
+          label:
+            'C map-rule-map',
+          currentPageId:
+            'lifecycle-map-a',
+          mapTitle:
+            'Lifecycle Map A'
+        },
+        {
+          label:
+            'D map-hide-show-tree-map',
+          currentPageId:
+            'lifecycle-map-a',
+          mapTitle:
+            'Lifecycle Map A'
+        },
+        {
+          label:
+            'E map-presentation-return-map',
+          currentPageId:
+            'lifecycle-map-a',
+          mapTitle:
+            'Lifecycle Map A'
+        },
+        {
+          label:
+            'F workspaceA-map-workspaceB-map',
+          currentPageId:
+            'workspace-b-map',
+          mapTitle:
+            'Workspace B Map'
+        }
+      ];
+
+    expect(
+      result.snapshots.map(snapshot => snapshot.label)
+    ).toEqual(
+      expectedSnapshots.map(snapshot => snapshot.label)
+    );
+
+    for (const [index, snapshot] of result.snapshots.entries()) {
+
+      const expected =
+        expectedSnapshots[index];
+
+      expect(
+        snapshot.currentPageId,
+        snapshot.label
+      ).toBe(
+        expected.currentPageId
+      );
+
+      expect(
+        snapshot.mapTitle,
+        snapshot.label
+      ).toBe(
+        expected.mapTitle
+      );
+
+      expect(
+        snapshot.mapCount,
+        snapshot.label
+      ).toBe(
+        1
+      );
+
+      expect(
+        snapshot.sceneBarCount,
+        snapshot.label
+      ).toBe(
+        1
+      );
+
+      expect(
+        snapshot.toolRailCount,
+        snapshot.label
+      ).toBe(
+        1
+      );
+
+      expect(
+        snapshot.sceneBarVisible,
+        snapshot.label
+      ).toBe(
+        true
+      );
+
+      expect(
+        snapshot.toolRailVisible,
+        snapshot.label
+      ).toBe(
+        true
+      );
+
+      expect(
+        snapshot.buttonCount,
+        snapshot.label
+      ).toBe(
+        11
+      );
+
+      expect(
+        snapshot.expectedButtonsInteractable,
+        snapshot.label
+      ).toBe(
+        true
+      );
+
+      expect(
+        snapshot.gridPopupOpened,
+        snapshot.label
+      ).toBe(
+        true
+      );
+
+      expect(
+        snapshot.staleCardPresent,
+        snapshot.label
+      ).toBe(
+        false
+      );
+
+      expect(
+        snapshot.staleTaskPresent,
+        snapshot.label
+      ).toBe(
+        false
+      );
+
+      expect(
+        snapshot.staleRulePresent,
+        snapshot.label
+      ).toBe(
+        false
+      );
+    }
+
+    expect(
+      result.activeWorkspaceKey
+    ).toBe(
+      'workspace-b'
+    );
+
+    expect(
+      result.pageIds
+    ).toEqual([
+      'workspace-b-map'
+    ]);
+  }
+);
+
+
+test(
   'campaign-map-contextmenu-opens-custom-object-actions',
   async ({ page }) => {
 
