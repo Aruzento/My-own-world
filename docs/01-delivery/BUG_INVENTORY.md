@@ -164,19 +164,19 @@ Regression coverage: `campaign-map-presentation-representative-map-workflow-stay
 
 Area: campaign map drawing
 
-Status: Needs repro
+Status: ALREADY FIXED / VERIFIED
 
 Source: user reports and plan `0.0.1.3.2`.
 
 Symptoms seen before: `Del` deletion missing, drawings not visible in layers, fill invisible without image, pencil fill not working, pen not continuing vector paths.
 
-Current automated status: browser smoke covers drawing create/fill/erase and some layer controls.
+Current result: `0.0.1.11.7` on 2026-08-20 did not reproduce the historical drawing-tool defects on a disposable Campaign Map fixture. The current product path verified pencil drawing, pen continuation and far-start separation, fill on a pencil/freehand drawing, full-map fill with no background image, eraser, color picker input, recent-color swatches, drawing layer hide/show, shape selection, real `Delete` key removal through `setupCampaignMaps`, and save/reload through the data-first serializer.
 
-Risk: drawing may be technically saved but still awkward or unreliable in live use.
+Historical symptom classification: `Delete` key removal - `ALREADY FIXED / VERIFIED`; drawings visible in layers - `ALREADY FIXED / VERIFIED`; fill visible without image/background - `ALREADY FIXED / VERIFIED`; pencil fill behavior - `ALREADY FIXED / VERIFIED`; pen path continuation/far-start behavior - `ALREADY FIXED / VERIFIED`.
 
-Next check: manually test pencil, pen, fill, eraser, color picker, recent colors, drawing layer visibility, and `Del` deletion.
+Current owner paths: drawing semantics live in `js/editor/campaignMapDrawing.js`, selection/Delete in `js/editor/campaignMap.js`, layer visibility in `js/editor/campaignMapLayers.js`, shape records in `CampaignMapModel`/`CampaignMapStore`, and save/reload in `js/editor/campaignMapDataSerializer.js`.
 
-Regression target: browser scenario for drawing layer list and keyboard deletion.
+Regression coverage: `campaign-map-drawing-tools-stay-usable-through-layers-keyboard-and-reload` verifies the full disposable drawing matrix and protects selected drawing -> `Delete` -> removed runtime/model -> removed after save/reload. Existing map browser tests continue to cover drawing create/fill/erase and layer controls. No runtime drawing fix was needed in this leaf.
 
 ### BUG-006. Map music playlists may still be fragile in desktop/audio formats
 
@@ -356,4 +356,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization is `FIXED`; next leaf: `0.0.1.11.7` Drawing Tools.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.7` `BUG-005` Campaign Map Drawing Tools Stabilization is `ALREADY FIXED / VERIFIED`; next leaf: `0.0.1.11.8` `BUG-006` Map Music.

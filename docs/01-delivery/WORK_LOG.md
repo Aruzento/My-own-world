@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.7 BUG-005 Campaign Map Drawing Tools Stabilization
+
+### Disposition
+
+- `ALREADY FIXED / VERIFIED`.
+
+### Current Evidence
+
+- Disposable Campaign Map fixture covered: pencil, pen, fill, eraser, color picker, recent colors, drawing layer visibility, selection, `Delete` key and save/reload.
+- EXPECTED: drawing tools remain usable without a background image; drawing records stay on `map-drawing`; layer visibility hides/shows drawings; selected drawings delete through the real keyboard route and stay deleted after save/reload.
+- ACTUAL: current code matched expected behavior. No runtime drawing defect was reproduced.
+- MINIMUM REPRO ATTEMPT: open a disposable map, set drawing color through the drawing popup color input and recent swatch, draw/fill/erase strokes, hide/show `map-drawing`, select a freehand drawing, press `Delete`, then serialize and reload the map model.
+- OWNER: drawing model/tool behavior in `js/editor/campaignMapDrawing.js`, selection/Delete in `js/editor/campaignMap.js`, layer visibility in `js/editor/campaignMapLayers.js`, shape records in `CampaignMapModel`/`CampaignMapStore`, and save/reload in `js/editor/campaignMapDataSerializer.js`.
+
+### Historical Symptom Classification
+
+- `Delete` key did not remove selected drawing: `ALREADY FIXED / VERIFIED`.
+- Drawings not visible correctly in layers: `ALREADY FIXED / VERIFIED`.
+- Fill invisible without image/background: `ALREADY FIXED / VERIFIED`.
+- Pencil fill issues: `ALREADY FIXED / VERIFIED`.
+- Pen path behavior not continuing as expected: `ALREADY FIXED / VERIFIED`.
+
+### Verification
+
+- Passed: `npm run test:browser -- --grep campaign-map-drawing-tools-stay-usable-through-layers-keyboard-and-reload`.
+- Passed: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`.
+- Passed: `node --test tests\campaignMapLayerModel.test.mjs`.
+- Passed: `node --test tests\campaignMapDataSerializer.test.mjs tests\campaignMapModel.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run verify`.
+- Passed: final `git diff --check`.
+
+### Guardrails
+
+- No drawing-system redesign was performed.
+- No new vector editor, shape model or shape rotation work was added.
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not repaired, migrated, normalized or bulk-edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.8` `BUG-006` Map Music.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.6 BUG-004 Campaign Map Presentation Stabilization
 
 ### Disposition

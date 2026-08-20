@@ -80,6 +80,7 @@ For the campaign map split toolbar/tool rail, editable property Inspector, custo
 npm run test:browser -- --grep campaign-map-toolbar-survives-page-workspace-and-presentation-lifecycle
 npm run test:browser -- --grep campaign-map-token-skill-menu-renders-russian-labels-and-uses-character-model-checks
 npm run test:browser -- --grep campaign-map-presentation-representative-map-workflow-stays-current
+npm run test:browser -- --grep campaign-map-drawing-tools-stay-usable-through-layers-keyboard-and-reload
 npm run test:browser -- --grep "campaign-map-(toolbar|contextmenu|selection-inspector)|visual-safety-captures-core-surfaces"
 npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs
 ```

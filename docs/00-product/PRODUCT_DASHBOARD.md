@@ -25,7 +25,7 @@ Immediate direction:
 2. Treat `0.0.1.10.0` cleanup as closed after the corrective final gate.
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Work in active `0.0.1.11.0` Existing P1 Stabilization one leaf at a time.
-5. `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization is `FIXED`; next leaf: `0.0.1.11.7` Drawing Tools.
+5. `0.0.1.11.7` `BUG-005` Campaign Map Drawing Tools Stabilization is `ALREADY FIXED / VERIFIED`; next leaf: `0.0.1.11.8` `BUG-006` Map Music.
 6. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 7. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -37,6 +37,7 @@ Recently closed:
 - `0.0.1.11.4` `BUG-001` Large Workspace UX: real workspace smoke on `X:\ДНД\Мастер\По кампаниям\База` is acceptable for current UX. Native click-through now covers workspace restore, representative card open, Settings diagnostics, tree scroll/search, heavy Campaign Map open and presentation; safe move/delete timing was checked on a temporary copy.
 - `0.0.1.11.5` `BUG-003` Desktop Real-App Verification: the current release/native desktop executable passed the real-app click-through on `X:\ДНД\Мастер\По кампаниям\База`, including workspace restore, tree render, image card render, Settings diagnostics, Campaign Map background render and presentation sync. Desktop gate and large-workspace smoke are green; workspace schema/size warnings are advisory, not crashes.
 - `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization: browser/full presentation clone now applies presentation-safe grid state from the map model and shares grid color calculation with the model-first renderer. Current regression coverage verifies token sync, player-hidden handling, fog/locked fog, layer ordering, distance arrow, grid style sync and close/reopen stale-state cleanup; native smoke opened presentation on the real heavy map.
+- `0.0.1.11.7` `BUG-005` Campaign Map Drawing Tools Stabilization: current disposable-map evidence verifies pencil, pen, fill, eraser, color picker/recent colors, drawing layer visibility, selection, real `Delete` removal and save/reload. No drawing runtime defect was reproduced.
 - `0.0.1.0.4` runtime UI text security coverage.
 - `0.0.1.0.5` desktop filesystem boundary hardening.
 - `0.0.1.2.2` native desktop click-through on the real large GM workspace `X:\ДНД\Мастер\По кампаниям\База`.
@@ -148,7 +149,7 @@ Recently closed:
 
 Next owner action:
 
-- Continue `0.0.1.11.0` one leaf at a time. Next leaf: `0.0.1.11.7` Drawing Tools.
+- Continue `0.0.1.11.0` one leaf at a time. Next leaf: `0.0.1.11.8` `BUG-006` Map Music.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -168,7 +169,7 @@ This prevents "done" from meaning only "a model/helper was created".
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
 - Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, workspace access diagnostics and grouped schema recovery UI; richer restore/link repair remains open.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
-- Campaign map presentation is currently fixed for the verified grid/sync matrix; fog/drawing/layers and music still require continued regression coverage.
+- Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.
 - Knowledge Graph Phase 7 is now usable as a migrated canvas workbench with CSS/JS ownership split and command-lifecycle relationship persistence. The remaining risk is product direction, not hidden migration plumbing: `BI-026` should rethink what the graph helps a GM decide before new visible graph features.
 - README, dashboard, bug inventory and plan must stay synchronized so the project remains understandable to the owner.
