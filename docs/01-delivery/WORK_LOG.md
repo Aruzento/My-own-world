@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.9 BUG-007 Properties Real Character Card Stabilization
+
+### Disposition
+
+- `ALREADY FIXED / VERIFIED`.
+
+### Current Evidence
+
+- Representative character Properties fixture covered the current user-facing sequence: open character card, inspect default compact field arrangement, drag `armorItem` into empty grid space, resize `dexSkills` from the south-east edge, move `cha` into an occupied grid cell, confirm neighboring skill groups are pushed down without overlap, save, close/reopen, and confirm layout persistence.
+- EXPECTED: real character Properties fields remain visible, non-overlapping, usable and persistent; skill groups stay readable after drag/resize/collision changes.
+- ACTUAL: current code matched expected behavior. No product-code defect was reproduced.
+- MINIMUM REPRO ATTEMPT: create a representative character Properties block with realistic values and skill rows, apply the normal block runtime contract, perform the drag/resize/occupied-drop sequence through pointer events, serialize with `serializePersistentEditorHTML`, reopen through `applyBlockSystemContract`, then compare all `data-property-layout` records before and after reopen.
+- OWNER: default layout in `js/templates/blockTypes.js`; drag/resize handles and synchronization in `js/editor/propertiesSettingsPopup.js`; collision/layout normalization in `js/properties/propertyLayoutModel.js`; save/reopen in `js/editor/blocks/blockSerializer.js`; presentation styles in `styles/block-properties.css`.
+
+### Verification
+
+- Passed before status close: `npm run test:browser -- tests/browser/property-blocks.spec.mjs`.
+- Passed focused regression: `npm run test:browser -- tests/browser/property-blocks.spec.mjs --grep character-properties-real-card-layout-persists-after-drag-resize-and-reopen`.
+- Passed: `node --test tests/propertyBlocks.test.mjs tests/propertiesCalculationEngine.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/property-blocks.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces`.
+- Passed: `npm run verify`.
+- Passed: final `git diff --check`.
+
+### Guardrails
+
+- No visual redesign, new sheet concept, field-system rewrite or custom layout engine was added.
+- Persistent `data-property-layout` format was not changed.
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+
+### Next
+
+- Next leaf: `0.0.1.11.10` Character -> Map Consistency.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.8 BUG-006 Campaign Map Music Desktop Stabilization
 
 ### Disposition

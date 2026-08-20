@@ -25,7 +25,7 @@ Immediate direction:
 2. Treat `0.0.1.10.0` cleanup as closed after the corrective final gate.
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Work in active `0.0.1.11.0` Existing P1 Stabilization one leaf at a time.
-5. `0.0.1.11.8` `BUG-006` Map Music is `FIXED`; next leaf: `0.0.1.11.9` Properties Real Character Card.
+5. `0.0.1.11.9` `BUG-007` Properties Real Character Card is `ALREADY FIXED / VERIFIED`; next leaf: `0.0.1.11.10` Character -> Map Consistency.
 6. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 7. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -39,6 +39,7 @@ Recently closed:
 - `0.0.1.11.6` `BUG-004` Campaign Map Presentation Stabilization: browser/full presentation clone now applies presentation-safe grid state from the map model and shares grid color calculation with the model-first renderer. Current regression coverage verifies token sync, player-hidden handling, fog/locked fog, layer ordering, distance arrow, grid style sync and close/reopen stale-state cleanup; native smoke opened presentation on the real heavy map.
 - `0.0.1.11.7` `BUG-005` Campaign Map Drawing Tools Stabilization: current disposable-map evidence verifies pencil, pen, fill, eraser, color picker/recent colors, drawing layer visibility, selection, real `Delete` removal and save/reload. No drawing runtime defect was reproduced.
 - `0.0.1.11.8` `BUG-006` Map Music: desktop audio smoke reproduced and fixed a stale playback lifecycle error where interrupted `audio.play()` requests could surface as current map-music popup failures. Native smoke now verifies imported WAV tracks in normal/battle playlists, play/stop/next/previous/shuffle/loop, map switch/return, workspace reload and blob playback after reload on a disposable workspace.
+- `0.0.1.11.9` `BUG-007` Properties Real Character Card: current evidence verifies the representative character Properties layout through default arrangement, drag into empty grid space, resize, occupied collision pushdown, save/reopen persistence, readable skill groups and accessible fields. No product-code defect was reproduced.
 - `0.0.1.0.4` runtime UI text security coverage.
 - `0.0.1.0.5` desktop filesystem boundary hardening.
 - `0.0.1.2.2` native desktop click-through on the real large GM workspace `X:\ДНД\Мастер\По кампаниям\База`.

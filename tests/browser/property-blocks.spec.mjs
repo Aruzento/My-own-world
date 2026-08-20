@@ -1250,6 +1250,711 @@ test(
 
 
 test(
+  'character-properties-real-card-layout-persists-after-drag-resize-and-reopen',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            createPropertiesBlock
+          } = await import('/js/templates/blockTypes.js');
+
+          const {
+            applyBlockSystemContract,
+            serializePersistentEditorHTML
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.style.width =
+            '980px';
+
+          editor.innerHTML =
+            createPropertiesBlock({
+              title: 'Боевой лист героя',
+              cardType: 'character'
+            });
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          let block =
+            editor.querySelector('.card-properties-block');
+
+          const representativeValues = {
+            level: '7',
+            armorClass: '18',
+            hpCurrent: '44',
+            hpMax: '52',
+            speed: '30',
+            str: '14',
+            dex: '18',
+            con: '16',
+            int: '12',
+            wis: '13',
+            cha: '10',
+            skillAthletics: '5',
+            skillStealth: '9',
+            skillPerception: '4',
+            skillPersuasion: '1'
+          };
+
+          Object.entries(
+            representativeValues
+          ).forEach(([
+            key,
+            value
+          ]) => {
+
+            const control =
+              block.querySelector(
+                `[data-property-name="${key}"]`
+              );
+
+            if (!control) return;
+
+            control.value =
+              value;
+
+            control.setAttribute(
+              'value',
+              value
+            );
+          });
+
+          function field(
+            id
+          ) {
+
+            return block.querySelector(
+              `.card-property-field[data-property-id="${id}"]`
+            );
+          }
+
+          function layout(
+            id
+          ) {
+
+            const node =
+              field(
+                id
+              );
+
+            return JSON.parse(
+              node.dataset.propertyLayout
+            );
+          }
+
+          function gridMetrics() {
+
+            const grid =
+              block.querySelector('.card-properties-grid');
+
+            grid.style.minHeight =
+              '940px';
+
+            const rect =
+              grid.getBoundingClientRect();
+
+            const style =
+              window.getComputedStyle(
+                grid
+              );
+
+            const columnGap =
+              Number.parseFloat(
+                style.columnGap
+              ) || 0;
+
+            const rowGap =
+              Number.parseFloat(
+                style.rowGap
+              ) || 0;
+
+            return {
+              grid,
+              rect,
+              cellWidth:
+                (rect.width - columnGap * 11) / 12 + columnGap,
+              rowHeight:
+                42 + rowGap
+            };
+          }
+
+          function pointForCell(
+            x,
+            y
+          ) {
+
+            const {
+              rect,
+              cellWidth,
+              rowHeight
+            } = gridMetrics();
+
+            return {
+              x:
+                rect.left + cellWidth * x + 4,
+              y:
+                rect.top + rowHeight * y + 4
+            };
+          }
+
+          function pointer(
+            target,
+            type,
+            {
+              x,
+              y,
+              pointerId
+            }
+          ) {
+
+            target.dispatchEvent(
+              new PointerEvent(
+                type,
+                {
+                  bubbles: true,
+                  clientX:
+                    x,
+                  clientY:
+                    y,
+                  pointerId
+                }
+              )
+            );
+          }
+
+          async function nextFrame() {
+
+            await new Promise(resolve =>
+              requestAnimationFrame(resolve)
+            );
+          }
+
+          async function dragFieldToCell(
+            id,
+            x,
+            y,
+            pointerId
+          ) {
+
+            const node =
+              field(
+                id
+              );
+
+            const rect =
+              node.getBoundingClientRect();
+
+            pointer(
+              node,
+              'pointerdown',
+              {
+                x:
+                  rect.left + 2,
+                y:
+                  rect.top + 12,
+                pointerId
+              }
+            );
+
+            const point =
+              pointForCell(
+                x,
+                y
+              );
+
+            pointer(
+              editor,
+              'pointermove',
+              {
+                ...point,
+                pointerId
+              }
+            );
+
+            pointer(
+              editor,
+              'pointerup',
+              {
+                ...point,
+                pointerId
+              }
+            );
+
+            await nextFrame();
+          }
+
+          async function resizeField(
+            id,
+            handleSelector,
+            deltaColumns,
+            deltaRows,
+            pointerId
+          ) {
+
+            const handle =
+              field(
+                id
+              ).querySelector(
+                handleSelector
+              );
+
+            const rect =
+              handle.getBoundingClientRect();
+
+            const {
+              cellWidth,
+              rowHeight
+            } = gridMetrics();
+
+            const start = {
+              x:
+                rect.left + rect.width / 2,
+              y:
+                rect.top + rect.height / 2
+            };
+
+            pointer(
+              handle,
+              'pointerdown',
+              {
+                ...start,
+                pointerId
+              }
+            );
+
+            const end = {
+              x:
+                start.x + cellWidth * deltaColumns,
+              y:
+                start.y + rowHeight * deltaRows
+            };
+
+            pointer(
+              editor,
+              'pointermove',
+              {
+                ...end,
+                pointerId
+              }
+            );
+
+            pointer(
+              editor,
+              'pointerup',
+              {
+                ...end,
+                pointerId
+              }
+            );
+
+            await nextFrame();
+          }
+
+          function collectLayout(
+            rootBlock
+          ) {
+
+            return Object.fromEntries(
+              [
+                ...rootBlock.querySelectorAll('.card-property-field')
+              ].map(node => [
+                node.dataset.propertyId,
+                JSON.parse(
+                  node.dataset.propertyLayout
+                )
+              ])
+            );
+          }
+
+          function hasOverlap(
+            first,
+            second
+          ) {
+
+            return !(
+              first.x + first.w <= second.x ||
+              second.x + second.w <= first.x ||
+              first.y + first.h <= second.y ||
+              second.y + second.h <= first.y
+            );
+          }
+
+          function findOverlaps(
+            layouts
+          ) {
+
+            const entries =
+              Object.entries(
+                layouts
+              );
+
+            const overlaps =
+              [];
+
+            entries.forEach(([
+              firstKey,
+              firstLayout
+            ], firstIndex) => {
+
+              entries
+                .slice(
+                  firstIndex + 1
+                )
+                .forEach(([
+                  secondKey,
+                  secondLayout
+                ]) => {
+
+                  if (
+                    hasOverlap(
+                      firstLayout,
+                      secondLayout
+                    )
+                  ) {
+
+                    overlaps.push(
+                      `${firstKey}:${secondKey}`
+                    );
+                  }
+                });
+            });
+
+            return overlaps;
+          }
+
+          function accessibilitySnapshot(
+            rootBlock
+          ) {
+
+            const gridRect =
+              rootBlock
+                .querySelector('.card-properties-grid')
+                .getBoundingClientRect();
+
+            return [
+              ...rootBlock.querySelectorAll('.card-property-field')
+            ].map(node => {
+
+              const rect =
+                node.getBoundingClientRect();
+
+              const style =
+                window.getComputedStyle(
+                  node
+                );
+
+              return {
+                id:
+                  node.dataset.propertyId,
+                visible:
+                  style.display !== 'none' &&
+                  style.visibility !== 'hidden' &&
+                  rect.width > 0 &&
+                  rect.height > 0,
+                horizontallyInside:
+                  rect.left >= gridRect.left - 1 &&
+                  rect.right <= gridRect.right + 1,
+                hasUsableContent:
+                  Boolean(
+                    node.querySelector(
+                      'input, select, .card-property-textarea, .card-property-skill-row'
+                    )
+                  )
+              };
+            });
+          }
+
+          function skillReadability(
+            rootBlock
+          ) {
+
+            return [
+              ...rootBlock.querySelectorAll('.card-property-skill-group')
+            ].map(group => {
+
+              const labels =
+                [
+                  ...group.querySelectorAll('.card-property-skill-row span')
+                ];
+
+              const listStyle =
+                window.getComputedStyle(
+                  group.querySelector('.card-property-skill-list')
+                );
+
+              return {
+                id:
+                  group.dataset.propertyId,
+                rowCount:
+                  labels.length,
+                labels:
+                  labels.map(label =>
+                    label.textContent.trim()
+                  ),
+                columns:
+                  listStyle.gridTemplateColumns
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .length,
+                clippedLabels:
+                  labels
+                    .filter(label =>
+                      label.scrollWidth > label.clientWidth + 1
+                    )
+                    .map(label =>
+                      label.textContent.trim()
+                    )
+              };
+            });
+          }
+
+          await dragFieldToCell(
+            'armorItem',
+            8,
+            15,
+            71
+          );
+
+          const armorAfterEmptyDrop =
+            layout(
+              'armorItem'
+            );
+
+          await resizeField(
+            'dexSkills',
+            '.card-property-resize-dot-se',
+            2,
+            1,
+            72
+          );
+
+          const dexAfterResize =
+            layout(
+              'dexSkills'
+            );
+
+          const conAfterResize =
+            layout(
+              'conSkills'
+            );
+
+          await dragFieldToCell(
+            'cha',
+            0,
+            4,
+            73
+          );
+
+          const chaAfterOccupiedDrop =
+            layout(
+              'cha'
+            );
+
+          const strSkillsAfterOccupiedDrop =
+            layout(
+              'strSkills'
+            );
+
+          const beforeSaveLayout =
+            collectLayout(
+              block
+            );
+
+          const beforeSaveOverlaps =
+            findOverlaps(
+              beforeSaveLayout
+            );
+
+          const serialized =
+            serializePersistentEditorHTML(
+              editor
+            );
+
+          editor.innerHTML =
+            serialized;
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          block =
+            editor.querySelector('.card-properties-block');
+
+          const reopenedLayout =
+            collectLayout(
+              block
+            );
+
+          return {
+            armorAfterEmptyDrop,
+            dexAfterResize,
+            conAfterResize,
+            chaAfterOccupiedDrop,
+            strSkillsAfterOccupiedDrop,
+            beforeSaveLayout,
+            reopenedLayout,
+            beforeSaveOverlaps,
+            reopenedOverlaps:
+              findOverlaps(
+                reopenedLayout
+              ),
+            accessibility:
+              accessibilitySnapshot(
+                block
+              ),
+            skills:
+              skillReadability(
+                block
+              ),
+            runtimeStripped:
+              !serialized.includes(
+                'card-property-resize-dot'
+              ) &&
+              !serialized.includes(
+                'card-properties-settings-btn'
+              ),
+            layoutAttributeSurvived:
+              serialized.includes(
+                'data-property-layout'
+              ),
+            resizeDotsAfterReopen:
+              field(
+                'dexSkills'
+              ).querySelectorAll('.card-property-resize-dot').length
+          };
+        }
+      );
+
+    expect(
+      result.armorAfterEmptyDrop
+    ).toEqual(
+      expect.objectContaining({
+        x:
+          8,
+        y:
+          15
+      })
+    );
+
+    expect(
+      result.dexAfterResize
+    ).toEqual(
+      expect.objectContaining({
+        x:
+          4,
+        y:
+          4,
+        w:
+          6,
+        h:
+          5
+      })
+    );
+
+    expect(
+      result.conAfterResize.y
+    ).toBeGreaterThanOrEqual(
+      result.dexAfterResize.y + result.dexAfterResize.h
+    );
+
+    expect(
+      result.chaAfterOccupiedDrop
+    ).toEqual(
+      expect.objectContaining({
+        x:
+          0,
+        y:
+          4
+      })
+    );
+
+    expect(
+      result.strSkillsAfterOccupiedDrop.y
+    ).toBeGreaterThanOrEqual(
+      result.chaAfterOccupiedDrop.y + result.chaAfterOccupiedDrop.h
+    );
+
+    expect(
+      result.beforeSaveOverlaps
+    ).toEqual([]);
+
+    expect(
+      result.reopenedOverlaps
+    ).toEqual([]);
+
+    expect(
+      result.reopenedLayout
+    ).toEqual(
+      result.beforeSaveLayout
+    );
+
+    expect(
+      result.accessibility.filter(item =>
+        !item.visible ||
+        !item.horizontallyInside ||
+        !item.hasUsableContent
+      )
+    ).toEqual([]);
+
+    const allSkillLabels =
+      result.skills.flatMap(group =>
+        group.labels
+      );
+
+    expect(
+      allSkillLabels
+    ).toEqual(
+      expect.arrayContaining([
+        'Скрытность',
+        'Внимательность',
+        'Убеждение'
+      ])
+    );
+
+    expect(
+      result.skills.every(group =>
+        group.rowCount > 0 &&
+        group.columns >= 1 &&
+        group.clippedLabels.length === 0
+      )
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.layoutAttributeSurvived
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.runtimeStripped
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.resizeDotsAfterReopen
+    ).toBe(
+      8
+    );
+  }
+);
+
+
+test(
   'properties-sheet-uses-core-content-design-states',
   async ({ page }) => {
 

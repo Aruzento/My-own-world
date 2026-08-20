@@ -198,19 +198,17 @@ Regression coverage: browser regression `campaign-map-music-rapid-next-ignores-s
 
 Area: properties, character UX
 
-Status: Needs repro
+Status: ALREADY FIXED / VERIFIED
 
 Source: user reports and plan `0.0.1.4.0`.
 
 Symptoms seen before: fields overlapped, drag lagged behind cursor, resizing behaved incorrectly, skill groups needed adaptive columns, standard layout needed to match a real sorted character card.
 
-Current automated status: browser smoke covers settings gear, custom fields, field removal, pointer reorder, edge resize, cursor-grid drop, and DnD skill calculations.
+Current result: `0.0.1.11.9` on 2026-08-20 verified the current user-facing Properties layout on a representative character card. Default field arrangement matched the compact character sheet layout; a field could be dragged into empty grid space; a skill group could be resized from a supported edge; an occupied drop moved neighboring fields through the existing collision resolver; save/reopen preserved the same `data-property-layout` JSON; skill groups remained readable; and no field became hidden, horizontally inaccessible or unusable. No product-code defect was reproduced.
 
-Risk: tests cover mechanics, but real cards may still look cramped, confusing, or not match the desired sheet organization.
+Current owner paths: default character layout in `js/templates/blockTypes.js`; drag/resize/runtime handles in `js/editor/propertiesSettingsPopup.js`; collision normalization in `js/properties/propertyLayoutModel.js`; persistent HTML save/reopen in `js/editor/blocks/blockSerializer.js`; visual presentation in `styles/block-properties.css`.
 
-Next check: open a real character card, compare field positions and sizes with the desired standard layout, drag fields into empty grid gaps, resize from each edge, save/reload.
-
-Regression target: visual/layout regression using a representative character properties fixture.
+Regression coverage: browser regression `character-properties-real-card-layout-persists-after-drag-resize-and-reopen` covers the representative sequence, asserts no layout overlaps, visible/usable fields, readable skill labels (`Скрытность`, `Внимательность`, `Убеждение`), runtime stripping during save, `data-property-layout` survival and exact layout equality after reopen. Existing property browser coverage still protects settings gear, custom fields, field removal, pointer reorder, edge resize, cursor-grid drop and DnD skill calculations.
 
 ### BUG-008. Character calculations are not yet fully trusted by map workflows
 
