@@ -6,6 +6,33 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.0 Existing P1 Stabilization Phase Start
+
+### What Changed
+
+- Started `0.0.1.11.0` Existing P1 Stabilization after the cleanup final gate.
+- Updated current status docs so `0.0.1.11.0` is `ACTIVE`.
+- Recorded the next leaf as `0.0.1.11.1` Workspace Switch Access.
+- Stopped before implementation, reproduction, code changes or tests for the leaf.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not opened, repaired, migrated, normalized or edited.
+
+### Verification
+
+- Passed: `node tools\docs_index.mjs`.
+- Passed: `npm run check:encoding`.
+- Passed: `git diff --check`.
+
+### Next
+
+- Next leaf: `0.0.1.11.1` Workspace Switch Access.
+- Work one leaf at a time and stop after its focused commit.
+
 ## 2026-08-20: 0.0.1.10.CORRECTIVE + FINAL Cleanup Closure Gate
 
 ### What Changed

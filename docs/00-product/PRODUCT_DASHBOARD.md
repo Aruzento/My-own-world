@@ -13,7 +13,7 @@ Updated: 2026-08-20
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase is closed. The next phase is version-1 stabilization: make the app fast, safe, understandable and reliable on real large workspaces before adding another layer of features.
+The repository cleanup phase is closed. The active phase is version-1 stabilization: make the current app fast, safe, understandable and reliable on real large workspaces before adding another layer of features.
 
 ## Current Focus
 
@@ -24,9 +24,10 @@ Immediate direction:
 1. Use `docs/01-delivery/PROJECT_PLAN.md` as the only active implementation roadmap.
 2. Treat `0.0.1.10.0` cleanup as closed after the corrective final gate.
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
-4. Keep `0.0.1.11.0` Existing P1 Stabilization as the next phase, not an automatically started phase.
-5. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
-6. Keep project documentation readable for the product owner, not only for Codex.
+4. Work in active `0.0.1.11.0` Existing P1 Stabilization one leaf at a time.
+5. Next leaf: `0.0.1.11.1` Workspace Switch Access.
+6. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
+7. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 

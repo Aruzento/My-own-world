@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Bug Inventory
 
-Updated: 2026-07-21
+Updated: 2026-08-20
 
 Plan ref: `0.0.1.0.1`
 
@@ -335,4 +335,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current next step: `0.0.1.11.0` Existing P1 Stabilization. Do not start implementation until the owner gives the next task.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. Next leaf: `0.0.1.11.1` Workspace Switch Access.

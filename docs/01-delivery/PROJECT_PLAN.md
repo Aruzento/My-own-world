@@ -20,9 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.11.0` Existing P1 Stabilization is `NEXT` and not started.
+Current phase: `0.0.1.11.0` Existing P1 Stabilization is `ACTIVE`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Do not implement `0.0.1.11.0` until the owner gives the next task.
+Current leaf: phase start recorded only. Next leaf is `0.0.1.11.1` Workspace Switch Access.
+
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Work one `0.0.1.11.0` stabilization leaf at a time and stop after each focused commit.
 
 ## Execution Rules
 
@@ -133,15 +135,15 @@ ID: `0.0.1.11.0`
 
 NAME: Existing P1 Stabilization
 
-STATUS: `NEXT`
+STATUS: `ACTIVE`
 
 GOAL: close or deliberately reclassify the known user-visible P1/P2 stabilization items before live-session features.
 
 WHY NOW: new session/combat work should not sit on top of known map and regression fragility.
 
-SCOPE: `BI-003`, `BI-008`, `BI-009`, `BI-010`, `BI-011`, `BI-022`; current P1 bug-inventory items if still reproduced after Phase 1 audit, especially `BUG-001`, `BUG-003`, `BUG-004`, `BUG-005`, `BUG-006`, `BUG-007`, `BUG-008` and `BUG-009`. Reproduce the disappearing map toolbar, fix the creature skills mojibake, close the P1 regression bundle when its real children are closed, and decide whether circle center points / shape rotation controls are small usability fixes here or should move to a later Campaign Map phase.
+SCOPE: `BI-003`, `BI-008`, `BI-009`, `BI-010`, `BI-011`, `BI-022`; current P1 bug-inventory items if still reproduced after Phase 1 audit, especially `BUG-001`, `BUG-003`, `BUG-004`, `BUG-005`, `BUG-006`, `BUG-007`, `BUG-008` and `BUG-009`. Reproduce or verify current user-visible stabilization issues, close the P1 regression bundle when its real children are closed, and decide whether small Campaign Map usability fixes belong here or later. First owner-selected leaf: `0.0.1.11.1` Workspace Switch Access.
 
-DEPENDENCIES: Phase 2 cleanup is closed. This phase is next, but implementation must wait for an explicit owner task.
+DEPENDENCIES: Phase 2 cleanup is closed. Owner started this phase on 2026-08-20. Do not start Phase `0.0.1.12.0`.
 
 EXIT CRITERIA: each included BI has a current repro/result, root cause where applicable, regression target and final disposition; no P1 item stays indefinitely "ready" without a decision.
 
