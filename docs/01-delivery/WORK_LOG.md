@@ -6,6 +6,46 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.10 BUG-008 Character -> Map Data Consistency
+
+### Disposition
+
+- `FIXED`.
+
+### Current Evidence
+
+- Representative browser E2E covered character Properties edit -> repository/page state update -> map reopen -> token popup actions -> initiative order -> map serialization/reload.
+- EXPECTED: HP 7/28 temp 3, AC 19, speed 0 from restrained, Dex 18 + initiative effect 2 => modifier 6, effects/statuses `Опутан`/`Боевой фокус` flow through token/store/initiative and persist after reload.
+- ACTUAL before fix: token dataset/store refreshed to current CharacterModel snapshot, but initiative order row and stored participant kept old modifier/total `3`/`0+3` from existing `data-initiative-state`.
+- MINIMUM REPRO: create token/initiative participant from character with Dex 14 and initiative +1; save map; update character to Dex 18, HP 7/28 temp 3, AC 19, restrained, initiative +2; set page state; reopen serialized map and open initiative order.
+- ROOT CAUSE: Campaign Map runtime refreshed linked token snapshots from CharacterModel, but existing CampaignMapInitiativeModel participants were not reconciled with the refreshed token records.
+- OWNER: `js/editor/campaignMapRuntime.js` calls `syncInitiativeParticipantsWithTokens`; participant reconciliation lives in `js/editor/campaignMapInitiativeModel.js`; CharacterModel/Properties remain character-data owners and `campaignMapCharacterBridge` remains the snapshot bridge.
+
+### Verification
+
+- Failed before fix as expected: `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs --grep campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload` (`Expected "6", Received "3"` for initiative modifier).
+- Passed after fix: `node --test tests/campaignMapInitiativeModel.test.mjs`.
+- Passed after fix: `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs --grep campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload`.
+- Passed after fix: `node --test tests/characterModel.test.mjs tests/propertiesCalculationEngine.test.mjs tests/characterIntegrationApi.test.mjs tests/campaignMapInitiativeModel.test.mjs`.
+- Passed after fix: `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs`.
+- Passed after fix: `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs --grep token`.
+- Passed after fix: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs --grep token`.
+- Passed after fix: `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs --grep campaign-map-helper-page-writes-use-page-command-boundary`.
+- Passed final gate: `npm run verify` (encoding, syntax checks, 340 unit tests, synthetic large-workspace smoke, built-in `git diff --check`).
+
+### Guardrails
+
+- No character calculations were duplicated inside Campaign Map.
+- No second character cache was created.
+- No persistent format migration was performed; existing `data-initiative-state` shape remains.
+- No product feature phase was started.
+- Phase `0.0.1.12.0` was not touched.
+
+### Next
+
+- Next leaf: `BUG-009` Task Tracker Legacy Verification.
+- Stop after focused commit; do not start next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.9 BUG-007 Properties Real Character Card Stabilization
 
 ### Disposition

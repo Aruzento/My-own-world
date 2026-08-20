@@ -309,6 +309,101 @@ export function createParticipantFromToken(
 }
 
 
+export function syncInitiativeParticipantsWithTokens(
+  initiativeData = {},
+  tokens = []
+) {
+
+  const initiative =
+    new CampaignMapInitiativeModel(
+      initiativeData
+    );
+
+  if (!initiative.participants.length) {
+
+    return {
+      initiative:
+        initiative.toJSON(),
+      changed:
+        false
+    };
+  }
+
+  const tokensById =
+    new Map(
+      (tokens || [])
+        .map(token => [
+          normalizeText(
+            token.tokenId || token.dataset?.tokenId
+          ),
+          token
+        ])
+        .filter(([
+          tokenId
+        ]) => tokenId)
+    );
+
+  let changed =
+    false;
+
+  const participants =
+    initiative.participants.map(participant => {
+
+      const token =
+        tokensById.get(
+          participant.tokenId
+        );
+
+      if (!token) return participant;
+
+      const tokenParticipant =
+        createParticipantFromToken(
+          token
+        );
+
+      const nextParticipant =
+        {
+          ...participant,
+          pageId:
+            tokenParticipant.pageId,
+          sourceMode:
+            tokenParticipant.sourceMode,
+          name:
+            tokenParticipant.name,
+          modifier:
+            tokenParticipant.modifier,
+          total:
+            participant.roll + tokenParticipant.modifier,
+          isAlive:
+            tokenParticipant.isAlive
+        };
+
+      if (
+        !areParticipantsEqual(
+          participant,
+          nextParticipant
+        )
+      ) {
+
+        changed =
+          true;
+      }
+
+      return nextParticipant;
+    });
+
+  return {
+    initiative:
+      new CampaignMapInitiativeModel({
+        participants,
+        activeParticipantId:
+          initiative.activeParticipantId
+      }).toJSON(),
+    changed
+  };
+}
+
+
 export function isTokenAlive(
   token = {}
 ) {
@@ -393,6 +488,27 @@ function normalizeParticipant(
     isAlive:
       data.isAlive !== false
   };
+}
+
+
+function areParticipantsEqual(
+  left,
+  right
+) {
+
+  return [
+    'participantId',
+    'tokenId',
+    'pageId',
+    'sourceMode',
+    'name',
+    'modifier',
+    'roll',
+    'total',
+    'isAlive'
+  ].every(key =>
+    left[key] === right[key]
+  );
 }
 
 

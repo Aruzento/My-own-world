@@ -5,7 +5,8 @@ import {
   CampaignMapInitiativeModel,
   createParticipantFromToken,
   isTokenAlive,
-  rollD20
+  rollD20,
+  syncInitiativeParticipantsWithTokens
 } from '../js/editor/campaignMapInitiativeModel.js';
 
 
@@ -150,6 +151,68 @@ test(
         name: 'Игрок'
       }).sourceMode,
       'original'
+    );
+  }
+);
+
+
+test(
+  'InitiativeModel refreshes existing token participants from current token snapshots',
+  () => {
+
+    const result =
+      syncInitiativeParticipantsWithTokens(
+        {
+          participants: [
+            {
+              participantId: 'token:hero',
+              tokenId: 'hero',
+              pageId: 'old-page',
+              sourceMode: 'copy',
+              name: 'Old Hero',
+              modifier: 2,
+              roll: 10,
+              total: 12,
+              isAlive: true
+            }
+          ],
+          activeParticipantId: 'token:hero'
+        },
+        [
+          {
+            tokenId: 'hero',
+            pageId: 'new-page',
+            sourceMode: 'original',
+            name: 'New Hero',
+            hp: 7,
+            initiativeModifier: 6
+          }
+        ]
+      );
+
+    assert.equal(
+      result.changed,
+      true
+    );
+
+    assert.deepEqual(
+      result.initiative.participants[0],
+      {
+        participantId: 'token:hero',
+        tokenId: 'hero',
+        pageId: 'new-page',
+        sourceMode: 'original',
+        name: 'New Hero',
+        modifier: 6,
+        roll: 10,
+        total: 16,
+        isAlive: true
+      }
+    );
+
+    assert.equal(
+      result.initiative.activeParticipantId,
+      'token:hero'
     );
   }
 );

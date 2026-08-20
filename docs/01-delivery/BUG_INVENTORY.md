@@ -214,7 +214,7 @@ Regression coverage: browser regression `character-properties-real-card-layout-p
 
 Area: PropertiesModel, CharacterModel, campaign map bridge
 
-Status: Needs regression
+Status: FIXED
 
 Source: plan `0.0.1.4.3` and `0.0.1.4.5`.
 
@@ -222,9 +222,13 @@ Symptoms: the map should use HP, AC, initiative, effects, and statuses from Prop
 
 Risk: user edits character data but the map uses stale or fallback values.
 
-Next check: edit character HP, AC armor, Dexterity, initiative, and effects, then verify token popup and initiative read the same values after save/reload.
+Current result: `0.0.1.11.10` on 2026-08-20 reproduced and fixed stale Campaign Map initiative participant data after character Properties edits. Token snapshots already refreshed from CharacterModel for HP, AC, speed, effects and statuses, but existing initiative participants kept old modifier/total values from `data-initiative-state` after map reopen/reload.
 
-Regression target: browser end-to-end test from character properties to map token and initiative.
+Root cause: Campaign Map runtime refreshed linked token snapshots from the established character bridge, but did not reconcile existing `CampaignMapInitiativeModel` participants with those refreshed token records.
+
+Current owner paths: Character data stays in `CharacterModel`/Properties; snapshot bridge is `js/editor/campaignMapCharacterBridge.js`; token runtime sync is `js/editor/campaignMapRuntime.js`; initiative participant reconciliation is `js/editor/campaignMapInitiativeModel.js`; initiative rendering is `js/editor/campaignMapInitiativePopup.js`.
+
+Regression coverage: browser regression `campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload`; unit regression `InitiativeModel refreshes existing token participants from current token snapshots`. Coverage includes HP, AC, Dexterity-derived initiative, supported effects/statuses (`Опутан`, `Боевой фокус`), token popup actions, initiative order and map reload boundary.
 
 ### BUG-009. Task tracker needs legacy workspace verification
 
@@ -349,9 +353,8 @@ Not yet covered enough:
 - real older user workspace tracker/card/map fixtures;
 - full actual-GM audio library codec matrix beyond currently verified desktop WAV smoke;
 - graph daily-use operations and lifecycle hardening;
-- full end-to-end character properties to map token behavior;
 - user-readable docs/manual review.
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.8` `BUG-006` Map Music is `FIXED`; next leaf: `0.0.1.11.9` Properties Real Character Card.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.10` `BUG-008` Character -> Map Data Consistency is `FIXED`; next leaf: `BUG-009` Task Tracker Legacy Verification.

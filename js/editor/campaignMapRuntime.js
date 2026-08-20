@@ -48,6 +48,10 @@ import {
 } from '../repository/pageRepository.js';
 
 import {
+  syncInitiativeParticipantsWithTokens
+} from './campaignMapInitiativeModel.js';
+
+import {
   getHealthColor
 } from './campaignMapHealth.js';
 
@@ -345,6 +349,10 @@ export function applyTokenHealthState(
     characterState?.effects
   );
 
+  syncMapInitiativeParticipantsFromTokens(
+    token.closest('.campaign-map-document')
+  );
+
   if (!health) {
 
     clearTokenHealthState(
@@ -590,6 +598,36 @@ function syncTokenRecordPatch(
   store?.updateToken(
     token.dataset.tokenId,
     patch
+  );
+}
+
+
+function syncMapInitiativeParticipantsFromTokens(
+  map
+) {
+
+  const store =
+    getCampaignMapStore(
+      map
+    );
+
+  const model =
+    store?.getModel();
+
+  if (!store || !model) return;
+
+  const {
+    initiative,
+    changed
+  } = syncInitiativeParticipantsWithTokens(
+    model.initiative,
+    model.tokens
+  );
+
+  if (!changed) return;
+
+  store.setInitiative(
+    initiative
   );
 }
 
