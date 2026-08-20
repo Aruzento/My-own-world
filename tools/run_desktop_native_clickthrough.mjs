@@ -270,6 +270,84 @@ try {
 
   await runStep(
     report,
+    'open representative card',
+    async () => {
+
+      const cardTarget =
+        await findVisibleTreeTarget(
+          page,
+          report.targets.cards
+        );
+
+      if (!cardTarget?.target) {
+
+        throw new Error(
+          'No representative card target was found in the workspace.'
+        );
+      }
+
+      const clicked =
+        await page.evaluate(
+          pageId => {
+
+            const item =
+              document.querySelector(
+                `.tree-item[data-page-id="${CSS.escape(pageId)}"]`
+              );
+
+            item?.click();
+
+            return Boolean(item);
+          },
+          cardTarget.target.id
+        );
+
+      if (!clicked) {
+
+        throw new Error(
+          `Could not find tree item for card ${cardTarget.target.id}.`
+        );
+      }
+
+      await page.waitForFunction(
+        async pageId => {
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          return Boolean(
+            state.currentPage?.id === pageId &&
+            editor &&
+            !editor.querySelector('.campaign-map-document') &&
+            editor.textContent.trim().length > 0
+          );
+        },
+        cardTarget.target.id,
+        {
+          timeout:
+            30000
+        }
+      );
+
+      report.metrics.card =
+        {
+          ...await collectCardMetrics(
+            page
+          ),
+          searchQuery:
+            cardTarget.query,
+          attemptedTargets:
+            cardTarget.attemptedTargets
+        };
+    }
+  );
+
+  await runStep(
+    report,
     'open settings workspace diagnostics panel',
     async () => {
 
@@ -732,6 +810,88 @@ function wirePageDiagnostics(
 }
 
 
+async function findVisibleTreeTarget(
+  page,
+  targets
+) {
+
+  const candidates =
+    Array.isArray(targets)
+      ? targets
+      : [];
+
+  let attemptedTargets =
+    0;
+
+  for (const target of candidates) {
+
+    attemptedTargets +=
+      1;
+
+    for (const query of getTargetSearchQueries(target)) {
+
+      await page.locator('#searchInput').fill(
+        query
+      );
+
+      const found =
+        await page.waitForFunction(
+          pageId => Boolean(
+            document.querySelector(
+              `.tree-item[data-page-id="${CSS.escape(pageId)}"]`
+            )
+          ),
+          target.id,
+          {
+            timeout:
+              3000
+          }
+        ).then(
+          () => true,
+          () => false
+        );
+
+      if (found) {
+
+        return {
+          target,
+          query,
+          attemptedTargets
+        };
+      }
+    }
+  }
+
+  return {
+    target:
+      null,
+    query:
+      '',
+    attemptedTargets
+  };
+}
+
+
+function getTargetSearchQueries(
+  target
+) {
+
+  return Array
+    .from(
+      new Set(
+        [
+          target?.title,
+          target?.id
+        ]
+          .map(value =>
+            String(value || '').trim()
+          )
+          .filter(Boolean)
+      )
+    );
+}
+
+
 async function collectAppWorkspaceMetrics(
   page
 ) {
@@ -797,6 +957,41 @@ async function collectTreeMetrics(
           tree?.clientHeight || 0,
         virtualized:
           tree?.classList.contains('is-virtualized') || false
+      };
+    }
+  );
+}
+
+
+async function collectCardMetrics(
+  page
+) {
+
+  return page.evaluate(
+    async () => {
+
+      const {
+        state
+      } = await import('/js/state.js');
+
+      const editor =
+        document.querySelector('#editorArea');
+
+      return {
+        currentPageId:
+          state.currentPage?.id || '',
+        title:
+          state.currentPage?.title ||
+          editor?.querySelector('h1, .page-title-input, [data-page-title]')?.textContent?.trim() ||
+          '',
+        hasCardShell:
+          Boolean(
+            editor?.querySelector('.card-shell, [data-card-shell]')
+          ),
+        textLength:
+          editor?.textContent?.trim().length || 0,
+        statusbar:
+          document.querySelector('#statusbar')?.textContent?.trim() || ''
       };
     }
   );
@@ -929,9 +1124,25 @@ async function inspectWorkspaceTargets(
         5
       );
 
+  const cards =
+    pages
+      .filter(page =>
+        isRepresentativeCardPage(
+          page
+        )
+      )
+      .sort((a, b) =>
+        b.sizeBytes - a.sizeBytes
+      )
+      .slice(
+        0,
+        12
+      );
+
   return {
     pages,
-    heavyMaps
+    heavyMaps,
+    cards
   };
 }
 
@@ -948,6 +1159,13 @@ function inspectPageFile(
 
   const body =
     content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '');
+
+  const title =
+    fields.title ||
+    extractFirstHeadingText(
+      body
+    ) ||
+    fileName.replace(/\.md$/i, '');
 
   const tokens =
     countMatches(
@@ -981,7 +1199,7 @@ function inspectPageFile(
     id:
       fields.id || fileName.replace(/\.md$/i, ''),
     title:
-      fields.title || fileName.replace(/\.md$/i, ''),
+      title,
     template:
       fields.template || '',
     type:
@@ -1028,6 +1246,52 @@ function parseFrontMatterFields(
   }
 
   return fields;
+}
+
+
+function extractFirstHeadingText(
+  body
+) {
+
+  const match =
+    String(body || '').match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i);
+
+  if (!match) {
+
+    return '';
+  }
+
+  return match[1]
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
+function isRepresentativeCardPage(
+  page
+) {
+
+  if (
+    page.template === 'campaignMap' ||
+    page.type === 'campaignMap' ||
+    page.template === 'taskTracker' ||
+    page.type === 'taskTracker' ||
+    page.template === 'ruleTree' ||
+    page.type === 'ruleTree' ||
+    page.template === 'knowledgeGraph' ||
+    page.type === 'knowledgeGraph' ||
+    page.type === 'folder'
+  ) {
+
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -1209,7 +1473,7 @@ export function createMarkdownReport(
     '',
     `Run date: ${report.runStartedAt.toISOString()}`,
     '',
-    'Plan ref: `0.0.1.2.2`',
+    'Plan ref: `0.0.1.11.4` (runner introduced in `0.0.1.2.2`)',
     '',
     `Workspace: \`${report.workspacePath}\``,
     '',
@@ -1226,6 +1490,14 @@ export function createMarkdownReport(
     ),
     '',
     '## Targets',
+    '',
+    '### Representative Cards',
+    '',
+    ...formatTargetList(
+      report.targets.cards || []
+    ),
+    '',
+    '### Heavy Maps',
     '',
     ...formatTargetList(
       report.targets.heavyMaps
@@ -1268,6 +1540,7 @@ export function createMarkdownReport(
     '## Notes',
     '',
     '- The runner uses WebView2 remote debugging to click the real Tauri WebView.',
+    '- It opens one representative card, then Settings diagnostics, tree search, a heavy map and presentation mode.',
     '- It does not create, move or delete workspace pages.',
     '- It sets only `myOwnWorld.desktop.workspaceRoot` in the app WebView localStorage so the desktop adapter can restore the selected workspace.',
     ''

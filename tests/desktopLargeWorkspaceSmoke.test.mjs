@@ -103,7 +103,7 @@ test(
 
       assert.match(
         report,
-        /Plan ref: `0\.0\.1\.2\.2`/
+        /Plan ref: `0\.0\.1\.11\.4` \(runner introduced in `0\.0\.1\.2\.2`\)/
       );
 
       assert.match(

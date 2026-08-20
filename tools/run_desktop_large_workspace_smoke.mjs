@@ -343,7 +343,7 @@ function createMarkdownReport({
     '',
     `Run date: ${runStartedAt.toISOString()}`,
     '',
-    `Plan ref: \`0.0.1.2.2\``,
+    'Plan ref: `0.0.1.11.4` (runner introduced in `0.0.1.2.2`)',
     '',
     `Workspace: \`${workspacePath}\``,
     '',

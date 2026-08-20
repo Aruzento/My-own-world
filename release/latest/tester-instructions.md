@@ -360,9 +360,9 @@ npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кам�
 ```
 
 4. Expected result: both commands pass and update `docs/01-delivery/LARGE_WORKSPACE_DESKTOP_SMOKE_CURRENT.md` and `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md`.
-5. Expected workspace summary: write probe OK, 690 pages, 25 maps, 141 assets, 527 asset references, 0 missing asset references.
-6. Expected native summary: Settings diagnostics opens, tree search works, a heavy campaign map opens, presentation opens, and the native report has no resource issues.
-7. Optional owner feel-check: open the release `.exe`, select `X:\ДНД\Мастер\По кампаниям\База`, open Settings diagnostics, search/open a heavy map and presentation, then check music/audio output manually.
+5. Expected workspace summary on the current approved workspace: write probe OK, about 697 pages, 27 maps, 144 assets, 528 asset references, 0 missing asset references.
+6. Expected native summary: one representative card opens, Settings diagnostics opens, tree search works, a heavy campaign map opens, presentation opens, and the native report has no resource issues.
+7. Optional owner feel-check: open the release `.exe`, select `X:\ДНД\Мастер\По кампаниям\База`, open a representative card, open Settings diagnostics, search/open a heavy map and presentation, then check music/audio output manually.
 
 ## 2026-07-19: Real Large Workspace Desktop Matrix
 

@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.11.0` Existing P1 Stabilization is `ACTIVE`.
 
-Current leaf: `0.0.1.11.3` `BI-011` Creature Skills Encoding is `FIXED`. `BI-022` current human-facing P1 regression bundle is `DONE`. Next leaf is `0.0.1.11.4` Large Workspace UX.
+Current leaf: `0.0.1.11.4` `BUG-001` Large Workspace UX is `VERIFIED ACCEPTABLE`. Next leaf is `0.0.1.11.5` Desktop Real-App Pass.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Work one `0.0.1.11.0` stabilization leaf at a time and stop after each focused commit.
 
@@ -152,7 +152,8 @@ CURRENT LEAF RESULTS:
 - `0.0.1.11.1` Workspace Switch Access - `FIXED` on 2026-08-20. The AppShell topbar now keeps a permanent compact `Открыть папку` action while a workspace is active. It reuses the existing `[data-open-workspace]` click path and workspace picker/load lifecycle, saves the current page through the existing editor save lifecycle before opening the picker, and clears the old editor view through the existing empty-editor teardown after a successful switch. Regression: `app-shell-global-workspace-switch-keeps-cancel-and-loads-next-workspace`.
 - `0.0.1.11.2` `BI-010` Campaign Map Toolbar - `NOT REPRODUCED WITH STRONG EVIDENCE` on 2026-08-20. Current focused matrix verified map -> card -> same map, map A -> map B -> map A, map -> task tracker -> map, map -> rule tree -> map, map -> hide/show tree -> map, map -> presentation -> return, and workspace A map -> workspace B -> map. In every path the split toolbar had exactly one scene bar and one tool rail, both visible, with 11 expected controls, hit-testable main controls, working grid popup, correct current map identity and no stale previous page hiding the current map. Evidence guard: `campaign-map-toolbar-survives-page-workspace-and-presentation-lifecycle`.
 - `0.0.1.11.3` `BI-011` Creature Skills Encoding - `FIXED` on 2026-08-20. The Campaign Map creature token skill action/submenu now renders clean UTF-8 Russian `Навыки`, skill labels still come from the existing `DND_SKILL_GROUPS` source (`Скрытность`, `Атлетика`, etc.), and the focused regression verifies visible labels, submenu opening, selected skill payload and absence of mojibake marker sequences. `BI-022` is `DONE` because its current children `BI-010` and `BI-011` are both closed.
-- Next leaf: `0.0.1.11.4` Large Workspace UX.
+- `0.0.1.11.4` `BUG-001` Large Workspace UX - `VERIFIED ACCEPTABLE` on 2026-08-20. The approved real workspace `X:\ДНД\Мастер\По кампаниям\База` passed current desktop large-workspace smoke and native WebView click-through for workspace restore, tree scroll/search, representative card open, Settings diagnostics, heavy Campaign Map open and presentation. Safe move/delete timing was checked on a temporary copy of the real `pages` folder, while UI move/delete feedback remains covered by focused browser regressions. No product bottleneck was reproduced; only the native smoke target selection was tightened so legacy pages without front-matter `title:` are opened by their first `<h1>` text.
+- Next leaf: `0.0.1.11.5` Desktop Real-App Pass.
 
 ### Phase 4 - 0.0.1.12.0 Data Safety Completion
 
@@ -505,7 +506,7 @@ These living backlog items are now represented in this master roadmap. Their det
 
 | Bug | Roadmap Disposition |
 | --- | --- |
-| `BUG-001` large workspace operations feel frozen | Phase 1 audit currentness check; Phase 3 if native UI delay is still reproduced. |
+| `BUG-001` large workspace operations feel frozen | Closed in `0.0.1.11.4` as `VERIFIED ACCEPTABLE`; keep large-workspace smoke in release handoff and reopen only with new real UX evidence. |
 | `BUG-002` broad unknown broken functions | Watch list only; split into a concrete bug when the owner reports steps. |
 | `BUG-003` desktop installed-app verification | Phase 1 audit currentness check; Phase 2/3 if release desktop coverage is still insufficient. |
 | `BUG-004` campaign map presentation fragility | Phase 3 if still reproduced. |

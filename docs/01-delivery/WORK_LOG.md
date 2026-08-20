@@ -6,6 +6,53 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-20: 0.0.1.11.4 BUG-001 Large Workspace UX Stabilization
+
+### Disposition
+
+- `VERIFIED ACCEPTABLE`.
+
+### Current Evidence
+
+- Real workspace: `X:\ДНД\Мастер\По кампаниям\База`.
+- Current real workspace summary: 697 pages, 27 Campaign Maps, 1 task tracker, 144 assets, 528 asset references, 0 missing asset references, 5 complete backups and 0 incomplete backups.
+- Desktop large-workspace smoke passed: workspace diagnostics 174 ms, read-only tree probe 126 ms, page read/parse 83 ms and parent index build 0 ms.
+- Native WebView click-through passed with no unexpected runtime errors and no failed resources: launch 2465 ms, workspace restore 2336 ms, representative card open 165 ms, Settings diagnostics 718 ms, tree scroll/search 181 ms, heavy Campaign Map open 36 ms and presentation open 1328 ms.
+- Safe move/delete write timing was not run against real user content. A direct mutation attempt on the real workspace was blocked by `EPERM` before creating files; a follow-up check found no `perf-probe-*.md` files. The existing mutation probe then ran on a temporary copy of the real `pages` folder: create temp pages 1 ms, move temp page 0 ms and delete temp pages 0 ms.
+
+### Decision
+
+- No product runtime bottleneck or frozen/broken workflow was reproduced under the current evidence.
+- No product optimization was made.
+- The only code change is in the native smoke evidence runner: it now opens a representative normal card, records card metrics, and derives target names from first `<h1>` text for legacy pages that do not store front-matter `title:`.
+
+### Verification
+
+- Passed: `node --check tools\run_desktop_native_clickthrough.mjs`.
+- Passed: `node --check tools\run_desktop_large_workspace_smoke.mjs`.
+- Passed: `node --test tests\desktopNativeSmokeStatus.test.mjs`.
+- Passed: `node --test tests\desktopLargeWorkspaceSmoke.test.mjs`.
+- Passed: `npm run test:browser -- tests/browser/ui-polish-performance.spec.mjs`.
+- Passed: `npm run test:browser -- tests/browser/tree-dnd-regression.spec.mjs --grep tree-pointer-dnd-real-ui-uses-batch-move-and-progress-panel`.
+- Passed: `npm run test:browser -- tests/browser/tree-delete.spec.mjs --grep tree-context-delete-removes-page-branch-after-trash-snapshot`.
+- Passed: `npm run test:large-workspace`.
+- Passed: `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`.
+- Passed: `node tools\run_desktop_native_clickthrough.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --timeout 120000`.
+- Passed: `npm run verify` with encoding/syntax checks, 338 node tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- Passed: final `git diff --check` after docs/report updates.
+
+### Guardrails
+
+- No product feature phase was started.
+- No persistent format migration was performed.
+- Phase `0.0.1.12.0` was not touched.
+- Real workspace `X:\ДНД\Мастер\По кампаниям\База` was not repaired, migrated, normalized or bulk-edited.
+
+### Next
+
+- Next leaf: `0.0.1.11.5` Desktop Real-App Pass.
+- Stop after the focused commit; do not start the next leaf automatically.
+
 ## 2026-08-20: 0.0.1.11.3 BI-011 Creature Skills Menu Encoding
 
 ### Disposition

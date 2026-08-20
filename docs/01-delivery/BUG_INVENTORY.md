@@ -72,7 +72,7 @@ Regression target: Rust unit tests reject root deletion and path escape, prove a
 
 Area: tree, storage, desktop, performance
 
-Status: Partially reproduced / needs UI probe
+Status: VERIFIED ACCEPTABLE
 
 Source: user report and plan `0.0.1.1.0`.
 
@@ -80,13 +80,13 @@ Symptoms: in the large GM workspace, moving and deleting pages looked broken bec
 
 Risk: the app cannot be trusted as a worldbuild OS if large real workspaces feel stuck.
 
-Latest check: [LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md](./LARGE_WORKSPACE_DESKTOP_SMOKE_2026-07-14.md). Direct page read/create/move/delete is fast; assets are heavy.
+Latest check: `0.0.1.11.4` on 2026-08-20. The approved real workspace `X:\ДНД\Мастер\По кампаниям\База` passed current CLI diagnostics, desktop large-workspace smoke and native WebView click-through. Current real UX measurements: workspace restore 2336 ms, representative card open 165 ms, Settings diagnostics 718 ms, tree scroll/search 181 ms, heavy Campaign Map open 36 ms, presentation open 1328 ms, with no unexpected runtime errors or failed resources. The real workspace has 697 pages, 27 maps, 144 assets, 528 asset references and 0 missing asset references; diagnostics still reports known advisory schema warnings, large pages, large assets and heavy maps.
 
-Latest fix: progress messages for long backup/move/delete/restore operations now include percent and elapsed time, and a visible progress panel now appears for backup, restore, backup cleanup, branch delete, and tree move operations. A permanent synthetic large-workspace smoke now runs in `npm run verify`, `npm run diagnostics:workspace -- --workspace "X:\path\to\workspace"` reports real workspace size, and Settings now includes an in-app workspace diagnostics panel. Real pointer tree drag/drop is covered by browser smoke through the batch move path. Same-level tree reorders now write only the moved page and skip the risky-operation backup when the parent does not change. One-page parent-changing moves now use a lightweight operation journal instead of full workspace backup; destructive branch delete and bulk parent-changing moves still keep the full backup gate.
+Current result: no product bottleneck was reproduced, so no runtime optimization was made. The native click-through runner was tightened as evidence tooling: it now opens one representative normal card and extracts card/map target names from the first `<h1>` when legacy pages do not have front-matter `title:`. Move/delete safety was checked without altering real user content: direct probe writes to the real workspace were blocked by `EPERM` and left no `perf-probe-*` files, then the existing mutation probe ran on a temporary copy of the real `pages` folder with create 1 ms, move 0 ms and delete 0 ms.
 
-Next check: run visible native desktop click-through on the known large GM workspace: open, scroll tree, search, create test page, UI drag move, UI delete, open map, start presentation, open Settings diagnostics, and record visible delays.
+Regression coverage: `npm run test:large-workspace`, `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`, `node tools\run_desktop_native_clickthrough.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --timeout 120000`, `ui-polish-runtime-surfaces-render-large-workloads-inside-budgets`, `tree-pointer-dnd-real-ui-uses-batch-move-and-progress-panel`, `tree-context-delete-removes-page-branch-after-trash-snapshot`, and the smoke runner unit tests.
 
-Regression target: permanent desktop or scripted large-workspace smoke for load, tree render, move, delete, search, wiki lookup, and map open. Synthetic CI coverage now exists; native desktop UI coverage is still pending.
+Follow-up rule: keep large-workspace UX in release handoff, but do not treat `BUG-001` as an active P1 unless new real evidence shows unresponsive UI, missing feedback during a noticeable operation, stale state after completion or operation durations outside the existing budgets.
 
 Planned architecture fix: `0.0.1.1.2`-`0.0.1.1.8` will replace heavy in-action full backup for ordinary tree operations with startup indexes, lightweight operation journal, small rollback snapshots, background validation/checkpointing, and regression budgets. Full backup remains for destructive and multi-file operations.
 
@@ -352,4 +352,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.3` `BI-011` Creature Skills Encoding is `FIXED`, and `BI-022` is `DONE`; next leaf: `0.0.1.11.4` Large Workspace UX.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.4` `BUG-001` Large Workspace UX is `VERIFIED ACCEPTABLE`; next leaf: `0.0.1.11.5` Desktop Real-App Pass.
