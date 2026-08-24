@@ -10,7 +10,7 @@
     50%;
 
   width:
-    min(460px, calc(100vw - 32px));
+    min(560px, calc(100vw - 32px));
 
   max-height:
     min(620px, calc(100vh - 32px));
@@ -29,6 +29,9 @@
 
   overflow:
     auto;
+
+  overscroll-behavior:
+    contain;
 
   border:
     1px solid var(--mow-status-warning-border);
@@ -61,7 +64,7 @@
 }
 
 .edit-conflict-dialog__eyebrow,
-.edit-conflict-dialog__current-kicker {
+.edit-conflict-dialog__version-kicker {
 
   color:
     var(--mow-status-warning-text);
@@ -133,7 +136,23 @@
     5px;
 }
 
-.edit-conflict-dialog__current {
+.edit-conflict-dialog__versions {
+
+  display:
+    grid;
+
+  gap:
+    10px;
+}
+
+.edit-conflict-dialog__versions.hidden {
+
+  display:
+    none;
+}
+
+.edit-conflict-dialog__version,
+.edit-conflict-dialog__confirm {
 
   display:
     grid;
@@ -154,13 +173,23 @@
     var(--mow-status-info-bg);
 }
 
-.edit-conflict-dialog__current.hidden {
+.edit-conflict-dialog__confirm {
+
+  border-color:
+    var(--mow-status-warning-border);
+
+  background:
+    var(--mow-status-warning-bg);
+}
+
+.edit-conflict-dialog__confirm.hidden {
 
   display:
     none;
 }
 
-.edit-conflict-dialog__current-title {
+.edit-conflict-dialog__version-title,
+.edit-conflict-dialog__confirm-title {
 
   color:
     var(--mow-text-primary);
@@ -172,7 +201,10 @@
     700;
 }
 
-.edit-conflict-dialog__current-excerpt {
+.edit-conflict-dialog__version-excerpt,
+.edit-conflict-dialog__confirm p,
+.edit-conflict-dialog__copy-status,
+.edit-conflict-dialog__reload-status {
 
   margin:
     0;
@@ -185,6 +217,66 @@
 
   line-height:
     1.5;
+}
+
+.edit-conflict-dialog__mine-text {
+
+  width:
+    100%;
+
+  min-height:
+    104px;
+
+  resize:
+    vertical;
+
+  padding:
+    10px;
+
+  border:
+    1px solid var(--mow-control-border);
+
+  border-radius:
+    var(--mow-radius-control);
+
+  background:
+    var(--mow-control-bg);
+
+  color:
+    var(--mow-text-primary);
+
+  font:
+    inherit;
+
+  font-size:
+    var(--mow-font-size-sm);
+
+  line-height:
+    1.5;
+}
+
+.edit-conflict-dialog__mine-text:focus-visible {
+
+  outline:
+    2px solid var(--mow-focus-ring);
+
+  outline-offset:
+    2px;
+}
+
+.edit-conflict-dialog__confirm-actions {
+
+  display:
+    flex;
+
+  justify-content:
+    flex-end;
+
+  gap:
+    8px;
+
+  flex-wrap:
+    wrap;
 }
 
 .edit-conflict-dialog__actions {
@@ -202,7 +294,8 @@
     wrap;
 }
 
-.edit-conflict-dialog__actions button {
+.edit-conflict-dialog__actions button,
+.edit-conflict-dialog__confirm-actions button {
 
   min-height:
     34px;
@@ -232,7 +325,8 @@
     pointer;
 }
 
-.edit-conflict-dialog__actions button:hover {
+.edit-conflict-dialog__actions button:hover,
+.edit-conflict-dialog__confirm-actions button:hover {
 
   border-color:
     var(--mow-border-focus);
@@ -250,7 +344,20 @@
     var(--mow-status-warning-bg) !important;
 }
 
-.edit-conflict-dialog__actions button:focus-visible {
+.edit-conflict-dialog__danger {
+
+  border-color:
+    var(--mow-button-danger-border) !important;
+
+  background:
+    var(--mow-button-danger-bg) !important;
+
+  color:
+    var(--mow-text-danger) !important;
+}
+
+.edit-conflict-dialog__actions button:focus-visible,
+.edit-conflict-dialog__confirm-actions button:focus-visible {
 
   outline:
     2px solid var(--mow-focus-ring);

@@ -6,6 +6,51 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.6 Conflict Recovery
+
+### Disposition
+
+- Closed `0.0.1.13.6` as a conservative runtime-only conflict recovery leaf.
+- Did not implement force overwrite, universal automatic merge, persistent draft files, schema changes or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.7` Autosave and Navigation Conflicts.
+
+### Recovery Model
+
+- The conflict dialog now preserves three concepts for the user-facing conflict: BASE from the edit session/conflict evidence, CURRENT from durable storage and MINE from the exact content the stale save attempted to persist.
+- MINE stays in the editor until the user explicitly chooses a recovery action.
+- `Посмотреть версии` shows CURRENT and MINE together in a readable summary instead of requiring the user to reason from technical revision details.
+- `Скопировать мой черновик` lets the user preserve their draft outside the app; the read-only draft textarea remains selectable if clipboard access is unavailable.
+- `Загрузить актуальную версию` first opens an inline confirmation. The editor is not replaced by CURRENT until the user confirms.
+
+### Runtime Reload
+
+- Confirmed reload reads CURRENT through the existing durable page precondition/storage owner.
+- The runtime page metadata/content and PageRepository/PageIndex projection are refreshed from that durable content.
+- The editor reload uses the existing `openPage()` lifecycle so render, special-page handling and `captureEditorPageBase()` remain the normal owners.
+- The recovery hook discards only the pending autosave debounce for the current editor before the confirmed reload, preventing the stale draft from being flushed while the user is deliberately abandoning it.
+- After reload, later normal saves use the updated base identity and can succeed without overwriting the older CURRENT with stale MINE.
+
+### Tests
+
+- `node --check js\editor\editConflictUi.js`
+- `node --check js\editor\autosave.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check js\editor\editor.js`
+- `node --check tests\browser\editor-autosave.spec.mjs`
+- `node --test tests\pageWriteConflictBlocking.test.mjs`
+- `node --test tests\pageStructuredChangePreservation.test.mjs`
+- `node --test tests\pageWritePreconditions.test.mjs`
+- `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`
+- `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`
+- `npm run ui:polish:audit`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run verify`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.7` Autosave and Navigation Conflicts.
+
 ## 2026-08-24: 0.0.1.13.5 Conflict UI
 
 ### Disposition

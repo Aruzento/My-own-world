@@ -978,8 +978,13 @@ aliases: []
 
           const currentPreviewText =
             dialog
-              .querySelector('[data-edit-conflict-current]')
+              .querySelector('[data-edit-conflict-versions]')
               ?.textContent || '';
+
+          const minePreviewText =
+            dialog
+              .querySelector('[data-edit-conflict-mine-text]')
+              ?.value || '';
 
           const returnButton =
             dialog.querySelector(
@@ -1085,6 +1090,7 @@ aliases: []
                   dialog?.textContent || '',
                 activeAfterOpen,
                 currentPreviewText,
+                minePreviewText,
                 dialogHiddenAfterReturn,
                 activeAfterReturn,
                 dialogCountAfterRepeatedConflict,
@@ -1205,6 +1211,18 @@ aliases: []
     );
 
     expect(
+      result.dialog.text
+    ).toContain(
+      'Скопировать мой черновик'
+    );
+
+    expect(
+      result.dialog.text
+    ).toContain(
+      'Загрузить актуальную версию'
+    );
+
+    expect(
       result.dialog.activeAfterOpen
     ).toBe(
       'Вернуться к своим изменениям'
@@ -1219,6 +1237,12 @@ aliases: []
     expect(
       result.dialog.currentPreviewText
     ).not.toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.dialog.minePreviewText
+    ).toContain(
       'stale-c-draft-token'
     );
 
@@ -1250,6 +1274,490 @@ aliases: []
       result.dialog.openDialogCountAfterRepeatedConflict
     ).toBe(
       0
+    );
+  }
+);
+
+
+test(
+  'editor-conflict-recovery-reloads-current-after-explicit-confirmation',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            setPages
+          } = await import('/js/stateActions.js');
+
+          const {
+            openPage,
+            saveCurrentPage
+          } = await import('/js/editor/editor.js');
+
+          const {
+            persistPageContentCommand,
+            snapshotPageForCommand
+          } = await import('/js/storage/storage.js');
+
+          const {
+            getCurrentEditorPageBase
+          } = await import('/js/editor/editorSessionBase.js');
+
+          const {
+            updatePageRecordContent
+          } = await import('/js/core/pageRecord.js');
+
+          const files =
+            new Map();
+
+          let writeCount =
+            0;
+
+          setStorageAdapter({
+            kind:
+              'memory',
+            getWorkspaceHandle() {
+              return {
+                name:
+                  'Editor conflict recovery workspace'
+              };
+            },
+            setWorkspaceHandle() {},
+            async pickWorkspace() {
+              return {};
+            },
+            async restoreWorkspace() {
+              return {};
+            },
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+              return {};
+            },
+            async readText(path) {
+              return files.get(path) || '';
+            },
+            async writeText(path, content) {
+              writeCount += 1;
+              files.set(
+                path,
+                String(content)
+              );
+            },
+            async readBinary() {
+              return new ArrayBuffer(0);
+            },
+            async writeBinary() {},
+            async listFiles() {
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          });
+
+          const createBody =
+            body => `<div class="entity-layout card-shell" contenteditable="false">
+  <h1>Editor Conflict Recovery</h1>
+  <div
+    class="rich-text-field"
+    contenteditable="true"
+    data-persistent-editable="true"
+  >${body}</div>
+</div>`;
+
+          const createContent =
+            body => `---
+id: editor-conflict-recovery-page
+parent: null
+order: 1
+tags: []
+template: card
+type: note
+aliases: []
+---
+
+${createBody(body)}`;
+
+          const pageRecord =
+            {
+              id:
+                'editor-conflict-recovery-page',
+              name:
+                'editor-conflict-recovery-page.md',
+              path:
+                '/pages/editor-conflict-recovery-page.md',
+              order:
+                1,
+              title:
+                'Editor Conflict Recovery',
+              parent:
+                null,
+              template:
+                'card',
+              type:
+                'note',
+              tags:
+                [],
+              aliases:
+                [],
+              relationships:
+                [],
+              content:
+                createContent(
+                  'base-a-token'
+                )
+            };
+
+          files.set(
+            pageRecord.path,
+            pageRecord.content
+          );
+
+          setPages(
+            [
+              pageRecord
+            ]
+          );
+
+          await openPage(
+            pageRecord
+          );
+
+          const openedBase =
+            getCurrentEditorPageBase(
+              pageRecord.id
+            );
+
+          const currentContent =
+            updatePageRecordContent(
+              pageRecord.content,
+              {
+                body:
+                  createBody(
+                    'current-b-token'
+                  )
+              },
+              {
+                now:
+                  '2026-08-24T10:00:00.000Z'
+              }
+            );
+
+          await persistPageContentCommand({
+            page:
+              pageRecord,
+            content:
+              currentContent,
+            previousPage:
+              snapshotPageForCommand(
+                pageRecord
+              ),
+            reason:
+              'browser-current-write',
+            expectedBase:
+              openedBase
+          });
+
+          const writesBeforeConflict =
+            writeCount;
+
+          const editor =
+            document.querySelector(
+              '#editorArea'
+            );
+
+          const body =
+            editor.querySelector(
+              '.rich-text-field'
+            );
+
+          body.focus();
+
+          body.textContent =
+            'stale-c-draft-token';
+
+          const conflictResult =
+            await saveCurrentPage();
+
+          const writesAfterConflict =
+            writeCount;
+
+          const dialog =
+            document.querySelector(
+              '.edit-conflict-dialog'
+            );
+
+          dialog
+            .querySelector('[data-edit-conflict-reload-current]')
+            .click();
+
+          await new Promise(resolve => {
+
+            setTimeout(
+              resolve,
+              50
+            );
+          });
+
+          const draftBeforeConfirm =
+            editor.querySelector('.rich-text-field')?.textContent || '';
+
+          const durableBeforeConfirm =
+            files.get(
+              pageRecord.path
+            ) || '';
+
+          const versionsText =
+            dialog
+              .querySelector('[data-edit-conflict-versions]')
+              ?.textContent || '';
+
+          const mineTextBeforeConfirm =
+            dialog
+              .querySelector('[data-edit-conflict-mine-text]')
+              ?.value || '';
+
+          const confirmVisible =
+            !dialog
+              .querySelector('[data-edit-conflict-confirm]')
+              .classList.contains(
+                'hidden'
+              );
+
+          dialog
+            .querySelector('[data-edit-conflict-confirm-reload]')
+            .click();
+
+          await waitForEditorText(
+            editor,
+            'current-b-token'
+          );
+
+          const bodyAfterReload =
+            editor.querySelector(
+              '.rich-text-field'
+            );
+
+          const reloadedDraft =
+            bodyAfterReload?.textContent || '';
+
+          const baseAfterReload =
+            getCurrentEditorPageBase(
+              pageRecord.id
+            );
+
+          bodyAfterReload.textContent =
+            'post-recovery-d-token';
+
+          const saveAfterRecovery =
+            await saveCurrentPage();
+
+          return {
+            conflictResult:
+              {
+                writeStatus:
+                  conflictResult?.writeStatus || '',
+                conflict:
+                  Boolean(
+                    conflictResult?.conflict
+                  ),
+                written:
+                  Boolean(
+                    conflictResult?.written
+                  )
+              },
+            staleWriteCount:
+              writesAfterConflict - writesBeforeConflict,
+            draftBeforeConfirm,
+            durableBeforeConfirm,
+            versionsText,
+            mineTextBeforeConfirm,
+            confirmVisible,
+            reloadedDraft,
+            baseAfterReload:
+              {
+                pageId:
+                  baseAfterReload?.pageId || '',
+                stateHash:
+                  baseAfterReload?.stateHash || ''
+              },
+            saveAfterRecovery:
+              {
+                conflict:
+                  Boolean(
+                    saveAfterRecovery?.conflict
+                  ),
+                written:
+                  Boolean(
+                    saveAfterRecovery?.written
+                  ),
+                writeStatus:
+                  saveAfterRecovery?.writeStatus || ''
+              },
+            durableAfterRecovery:
+              files.get(
+                pageRecord.path
+              ) || '',
+            finalEditorText:
+              editor.querySelector('.rich-text-field')?.textContent || '',
+            dialogOpenAfterReload:
+              Boolean(
+                document.querySelector('.edit-conflict-dialog:not(.hidden)')
+              )
+          };
+
+          async function waitForEditorText(
+            root,
+            expected
+          ) {
+
+            const startedAt =
+              Date.now();
+
+            while (Date.now() - startedAt < 1000) {
+
+              if (
+                root.querySelector('.rich-text-field')?.textContent === expected
+              ) {
+
+                return;
+              }
+
+              await new Promise(resolve => {
+
+                setTimeout(
+                  resolve,
+                  10
+                );
+              });
+            }
+
+            throw new Error(
+              `Editor did not show ${expected}`
+            );
+          }
+        }
+      );
+
+    expect(
+      result.conflictResult.writeStatus
+    ).toBe(
+      'conflict'
+    );
+
+    expect(
+      result.conflictResult.conflict
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.conflictResult.written
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.staleWriteCount
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.confirmVisible
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.draftBeforeConfirm
+    ).toBe(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.durableBeforeConfirm
+    ).toContain(
+      'current-b-token'
+    );
+
+    expect(
+      result.durableBeforeConfirm
+    ).not.toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.versionsText
+    ).toContain(
+      'current-b-token'
+    );
+
+    expect(
+      result.mineTextBeforeConfirm
+    ).toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.reloadedDraft
+    ).toBe(
+      'current-b-token'
+    );
+
+    expect(
+      result.baseAfterReload.pageId
+    ).toBe(
+      'editor-conflict-recovery-page'
+    );
+
+    expect(
+      result.saveAfterRecovery.conflict
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.saveAfterRecovery.written
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.durableAfterRecovery
+    ).toContain(
+      'post-recovery-d-token'
+    );
+
+    expect(
+      result.durableAfterRecovery
+    ).not.toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.finalEditorText
+    ).toBe(
+      'post-recovery-d-token'
+    );
+
+    expect(
+      result.dialogOpenAfterReload
+    ).toBe(
+      false
     );
   }
 );

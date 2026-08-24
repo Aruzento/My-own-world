@@ -119,13 +119,46 @@ export function flushPendingAutosave(
   }
 
   return saveCurrentPage(
-    pending.editor
+    pending.editor,
+    {
+      source:
+        'navigation-flush'
+    }
   );
 }
 
 
+export function discardPendingAutosave(
+  editor = null
+) {
+
+  const pending =
+    pendingAutosave;
+
+  if (!pending) return false;
+
+  if (
+    editor &&
+    pending.editor !== editor
+  ) {
+
+    return false;
+  }
+
+  clearTimeout(
+    pending.timeout
+  );
+
+  pendingAutosave =
+    null;
+
+  return true;
+}
+
+
 export async function saveCurrentPage(
-  editor
+  editor,
+  options = {}
 ) {
 
   const page =
@@ -310,7 +343,9 @@ export async function saveCurrentPage(
         page,
         editor,
         source:
-          'autosave'
+          options.source || 'manual',
+        mineContent:
+          content
       }
     );
 
@@ -431,7 +466,11 @@ async function runPendingAutosave(
   }
 
   await saveCurrentPage(
-    pending.editor
+    pending.editor,
+    {
+      source:
+        'autosave'
+    }
   );
 
   return true;

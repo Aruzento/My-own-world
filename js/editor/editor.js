@@ -10,6 +10,7 @@ import {
 
 import {
   setupAutosave,
+  discardPendingAutosave,
   flushPendingAutosave,
   saveCurrentPage as saveCurrentPageWithEditor
 } from './autosave.js';
@@ -89,6 +90,10 @@ import {
 import {
   openPageInEditor
 } from './editorOpenPage.js';
+
+import {
+  setupEditorConflictRecovery
+} from './editConflictUi.js';
 
 import {
   saveCurrentSpecialPage
@@ -190,6 +195,25 @@ export function setupEditor() {
   setupEditorExternalLinkOpening(
     editor
   );
+
+  setupEditorConflictRecovery({
+    async reloadCurrentPage({
+      page
+    }) {
+
+      discardPendingAutosave(
+        editor
+      );
+
+      return openPage(
+        page,
+        {
+          source:
+            'conflict-reload'
+        }
+      );
+    }
+  });
 }
 
 export function openPage(
@@ -276,17 +300,21 @@ export function renderWorkspaceRecoveryEditor(
   );
 }
 
-export async function saveCurrentPage() {
+export async function saveCurrentPage(
+  options = {}
+) {
 
   const savedSpecialPage =
     await saveCurrentSpecialPage(
-      editor
+      editor,
+      options
     );
 
   if (savedSpecialPage) return savedSpecialPage;
 
   return saveCurrentPageWithEditor(
-    editor
+    editor,
+    options
   );
 }
 

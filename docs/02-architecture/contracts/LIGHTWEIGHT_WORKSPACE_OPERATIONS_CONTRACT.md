@@ -357,6 +357,39 @@ Accessibility contract:
 - the conflict dialog supplies `aria-labelledby`, `aria-describedby`, visible focus styles and a polite live region for the current-version preview;
 - `0.0.1.13.6` owns recovery choices beyond the read-only current-version preview.
 
+## Safe Conflict Recovery
+
+Captured in `0.0.1.13.6`.
+
+Runtime recovery model:
+
+- BASE is the editor session/conflict evidence identity from the content the user originally opened;
+- CURRENT is read from durable page storage when the user asks to inspect or reload the saved version;
+- MINE is the exact runtime-only content the blocked save attempted to write;
+- no conflict copies, draft files or conflict metadata are persisted to the workspace.
+
+Safe user paths:
+
+- `Посмотреть версии` shows CURRENT and MINE together in the existing conflict dialog;
+- MINE is shown in a read-only selectable textarea and can be copied through the browser clipboard path when available;
+- `Вернуться к своим изменениям` closes the dialog and leaves MINE in the editor with the conflict still unresolved;
+- `Загрузить актуальную версию` only reveals a confirmation state;
+- only `Да, загрузить актуальную версию` replaces the editor with CURRENT.
+
+Reload-current contract:
+
+- confirmed reload performs no page write and no backup;
+- the stale pending autosave debounce for that editor is discarded because the user explicitly chose to abandon MINE;
+- runtime page metadata/content and PageRepository/PageIndex are refreshed from CURRENT;
+- the editor is reopened through `openPage()` so special rendering and `captureEditorPageBase()` remain normal owners;
+- after reload, the editor base identity equals CURRENT and later normal saves can proceed from that base.
+
+Still out of scope:
+
+- force overwrite of CURRENT with MINE;
+- full-page automatic merge;
+- recovery prompts during arbitrary navigation away from an unresolved conflict. `0.0.1.13.7` owns autosave/navigation conflict behavior.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.

@@ -64,7 +64,8 @@ import {
 } from '../rulesWorkspace/internalRulePage.js';
 
 export async function saveCurrentSpecialPage(
-  editor
+  editor,
+  options = {}
 ) {
 
   if (
@@ -86,7 +87,8 @@ export async function saveCurrentSpecialPage(
   ) {
 
     await saveCurrentCampaignMap(
-      editor
+      editor,
+      options
     );
 
     return true;
@@ -98,7 +100,8 @@ export async function saveCurrentSpecialPage(
   ) {
 
     await saveCurrentTaskTracker(
-      editor
+      editor,
+      options
     );
 
     return true;
@@ -110,7 +113,8 @@ export async function saveCurrentSpecialPage(
   ) {
 
     await saveCurrentRuleTree(
-      editor
+      editor,
+      options
     );
 
     return true;
@@ -122,7 +126,8 @@ export async function saveCurrentSpecialPage(
   ) {
 
     await saveCurrentKnowledgeGraph(
-      editor
+      editor,
+      options
     );
 
     return true;
@@ -158,7 +163,8 @@ function hasInvalidCurrentTitle(
 }
 
 async function saveCurrentTaskTracker(
-  editor
+  editor,
+  options = {}
 ) {
 
   if (!state.currentPage) return;
@@ -218,12 +224,14 @@ async function saveCurrentTaskTracker(
 
   await persistCurrentPage(
     content,
-    previousPage
+    previousPage,
+    options
   );
 }
 
 async function saveCurrentCampaignMap(
-  editor
+  editor,
+  options = {}
 ) {
 
   if (!state.currentPage) return;
@@ -283,14 +291,16 @@ async function saveCurrentCampaignMap(
 
   await persistCurrentPage(
     content,
-    previousPage
+    previousPage,
+    options
   );
 
   syncCampaignMapPresentation();
 }
 
 async function saveCurrentRuleTree(
-  editor
+  editor,
+  options = {}
 ) {
 
   if (!state.currentPage) return;
@@ -350,13 +360,15 @@ async function saveCurrentRuleTree(
 
   await persistCurrentPage(
     content,
-    previousPage
+    previousPage,
+    options
   );
 }
 
 
 async function saveCurrentKnowledgeGraph(
-  editor
+  editor,
+  options = {}
 ) {
 
   if (!state.currentPage) return;
@@ -416,13 +428,15 @@ async function saveCurrentKnowledgeGraph(
 
   await persistCurrentPage(
     content,
-    previousPage
+    previousPage,
+    options
   );
 }
 
 async function persistCurrentPage(
   content,
-  previousPage = null
+  previousPage = null,
+  options = {}
 ) {
 
   setSaveStatus(
@@ -473,7 +487,9 @@ async function persistCurrentPage(
           state.currentPage,
         editor,
         source:
-          'special-save'
+          options.source || 'manual',
+        mineContent:
+          content
       }
     );
 
