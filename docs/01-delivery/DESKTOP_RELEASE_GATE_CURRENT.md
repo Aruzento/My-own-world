@@ -8,9 +8,9 @@ owner_zone: "delivery"
 
 # Desktop Release Gate Current
 
-Run started: 2026-08-24T13:59:49.632Z
+Run started: 2026-08-24T18:10:59.602Z
 
-Run finished: 2026-08-24T14:01:29.135Z
+Run finished: 2026-08-24T18:13:01.128Z
 
 Plan ref: `0.0.1.2.4`
 
@@ -30,14 +30,14 @@ Advisory diagnostics: NONE
 
 - desktop release handoff preflight: passed (0 ms) - Required release handoff files exist. Required npm scripts exist.
 - large workspace desktop smoke: skipped - Skipped because no --workspace path or MOW_DESKTOP_RELEASE_WORKSPACE was provided.
-- documentation index: passed (64 ms)
-- agent skills validation: passed (42 ms)
-- verify: passed (16057 ms)
-- browser smoke: passed (82304 ms)
-- desktop frontend prepare: passed (237 ms)
-- desktop packaging smoke: passed (40 ms)
-- desktop environment: passed (318 ms)
-- tauri cargo check: passed (438 ms)
+- documentation index: passed (78 ms)
+- agent skills validation: passed (48 ms)
+- verify: passed (17897 ms)
+- browser smoke: passed (102343 ms)
+- desktop frontend prepare: passed (257 ms)
+- desktop packaging smoke: passed (41 ms)
+- desktop environment: passed (314 ms)
+- tauri cargo check: passed (545 ms)
 
 ## Release Rule
 

@@ -52,7 +52,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.11.12` closes `BI-008` / `BI-009`: selected circle center markers are fixed as runtime-only UI, while object-like shape rotation handles are deferred to a later Campaign Map feature phase.
 - `0.0.1.11.FINAL` closes Existing P1 Stabilization after full final gate verification. A corrective Campaign Map presentation sync fix keeps the active drag-measure overlay through late full presentation resyncs.
 - Owner-directed Settings Center migration: the topbar Settings popup is now a larger two-pane system settings surface with grouped sidebar navigation, search, dedicated future placeholders and migrated Appearance / Backup / Storage / Diagnostics sections. It reuses the existing PopupManager, themeManager, backupService, Asset Health and Workspace Diagnostics owners; no workspace schema, backup format or external dependency changed.
-- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is now the active phase. `0.0.1.13.1` established the conflict baseline and deterministic fixtures; the next leaf is `0.0.1.13.2` Write Preconditions.
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is closed after the final gate. Stale editor/session writes now carry a runtime page-state base, are checked against current durable target-page content at the PageCommandService boundary, surface a safe conflict UI/recovery path and cannot silently overwrite Phase 12 restore/repair results within the current PageRecord-backed scope. No persistent format migration, collaboration/sync layer, generic merge engine or dice work was added. `0.0.1.14.0` NF-002 Safe Dice Engine is next but has not been started.
 
 ### Known Risks
 
@@ -60,16 +60,17 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Large real workspaces should stay in release handoff because subjective feel can vary, but the current `BUG-001` pass did not reproduce a frozen or broken large-workspace workflow.
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
-- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization and `0.0.1.12.0` Data Safety Completion are closed; `0.0.1.13.0` NF-001 Edit Session Conflict Protection is active.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair are implemented for the current Data Safety scope. The active data-risk focus is NF-001 edit-session conflict protection before higher-frequency live-session writes.
+- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization, `0.0.1.12.0` Data Safety Completion and `0.0.1.13.0` NF-001 Edit Session Conflict Protection are closed.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair and edit-session conflict protection are implemented for the current safety scope. The next roadmap risk is NF-002 Safe Dice Engine before rolls/feeders become durable session data.
 
 ### Verification Snapshot
 
-- Latest standalone `npm run verify` passed locally with 341 node/static tests, encoding/syntax checks, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
-- Full browser smoke passed locally with 155 browser tests, including the final Campaign Map presentation measure-resync regression.
-- `npm run desktop:gate` passed on 2026-08-24 with `LARGE_WORKSPACE_VALIDATED` confidence for `X:\ДНД\Мастер\По кампаниям\База`; advisory diagnostics were present but non-blocking.
-- `npm run desktop:build` passed and produced the release executable plus NSIS installer.
-- `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` passed on the release executable.
+- Latest standalone `npm run test` passed locally with 426 node/static tests.
+- Latest `npm run verify` passed locally with encoding/syntax checks, 426 tests, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
+- Full browser smoke passed locally with 181 browser tests, including the Phase 13 editor conflict, navigation conflict and special-editor conflict coverage.
+- `npm run ui:polish:audit`, `npm run docs:index`, `npm run check:encoding`, `node tools\audit_project_files.mjs` and `git diff --check` passed for the Phase 13 final gate.
+- `npm run desktop:gate`, `npm run desktop:build` and `npm run desktop:native-smoke -- --workspace "<disposable sample workspace>" --allow-workspace-write --plan-ref 0.0.1.13.FINAL` passed on the release executable. The build produced the release executable plus NSIS installer.
+- `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` passed as read-only large-workspace confidence for the Phase 13 final gate; no restore, repair, cleanup, write probe or migration was run against the real GM workspace.
 - `npm run test:browser -- --grep "editor-block-pointer-dnd|add-block-picker|visual-safety"` passed locally with 3 focused browser tests for block reorder cleanup, Add block icon/focus contract and visual smoke capture.
 - `npm run test:browser -- --grep "card-editor-core-content-controls|app-shell-empty-state"` passed locally with 2 focused browser tests for the card editor toolbar/header visual contract and AppShell empty-state guard.
 - `npm run test:browser -- component-catalogue` passed locally with the expanded shared primitive and overlay marker coverage.

@@ -6,6 +6,59 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.FINAL NF-001 Closure Gate
+
+### Disposition
+
+- Closed `0.0.1.13.0` NF-001 Edit Session Conflict Protection after the final closure gate passed.
+- Set `0.0.1.14.0` NF-002 Safe Dice Engine to `NEXT`, not `ACTIVE`.
+- Did not start dice work, collaboration/sync, networking, a generic merge engine, persistent data format migration or real-workspace mutation.
+
+### Scope Review
+
+- Reviewed the cumulative Phase 13 range from pre-phase HEAD `71a9625` through final implementation HEAD `b4ea8a5`.
+- Confirmed all leaves `0.0.1.13.1` through `0.0.1.13.10` are closed before closure.
+- Confirmed the owner-directed Settings Center commit in the range is pre-phase/baseline context, not NF-002 or conflict-scope product work.
+- Confirmed the Phase 13 page state identity is runtime-only and derived from existing PageRecord durable content; no page, backup or workspace schema changed.
+
+### Final Safety Result
+
+- Stale full-page/editor writes are blocked at `PageCommandService.persistPageContentCommand()` before storage writes.
+- Conflict checks compare the edit-session base against the current durable target page content at command execution time, not against stale runtime/editor state.
+- Narrow automatic preservation exists only for proven disjoint structured PageRecord metadata fields; full content/html/special editor saves remain conflict-only when stale.
+- Autosave, navigation, workspace switching, pending debounce and representative special editors route through the same precondition-aware boundary.
+- The conflict UI explains the stale save in Russian, keeps MINE in memory and lets the user inspect/copy or explicitly reload CURRENT without a force-overwrite action.
+- Phase 12 restore/repair operations remain backup-gated recovery actions; later stale editor saves cannot overwrite restored/repaired durable results.
+
+### Independent Review
+
+- One narrow read-only reviewer passed the closure review.
+- Reviewer conclusion: no Phase 13 save-path bypass found, no duplicate version/conflict system found, persistent format unchanged, and no blocker to closing NF-001.
+
+### Verification
+
+- `npm run test` passed with 426 node/static tests.
+- `npm run test:browser` passed with 181 browser tests.
+- `npm run verify` passed, including encoding, JS checks, unit tests, synthetic large-workspace performance smoke, `git diff --check` and manual docx zip validation.
+- `npm run ui:polish:audit` passed.
+- `npm run docs:index` passed with active status drift count `0`.
+- `npm run check:encoding` passed.
+- `node tools\audit_project_files.mjs` passed and refreshed `docs/01-delivery/PROJECT_FILE_AUDIT.md`.
+- `npm run desktop:gate` passed.
+- `npm run desktop:build` passed and produced the release executable plus NSIS installer.
+- `npm run desktop:native-smoke` passed against a disposable temporary workspace copied from `docs/03-testing/sample-workspace`.
+- `npm run desktop:large-workspace-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` passed as read-only large-workspace confidence; no restore, repair, cleanup, write probe or migration was run there.
+
+### Closure Corrective
+
+- The native desktop click-through runner was updated to match the current Settings Center: it opens the Diagnostics section before waiting for the diagnostics panel.
+- The same runner now closes Settings before opening Campaign Map presentation, preventing the Settings overlay from intercepting the presentation click.
+- This was a verification-runner correction only; no production UI behavior or conflict-product feature changed.
+
+### Next
+
+- Work on one phase only: `0.0.1.14.0` NF-002 Safe Dice Engine, after the owner explicitly starts it.
+
 ## 2026-08-24: 0.0.1.13.10 Data Safety Integration
 
 ### Disposition

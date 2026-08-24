@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
+Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `DONE`.
 
-Current leaf: `0.0.1.13.FINAL` NF-001 Closure Gate is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.14.0` NF-002 Safe Dice Engine is `NEXT`, not `ACTIVE`, and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9` and `0.0.1.13.10` are closed. Do not start `0.0.1.13.FINAL` until the owner explicitly starts that closure gate. Do not start `0.0.1.14.0` until Phase 5 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL` and `0.0.1.13.0` are closed. Do not start `0.0.1.14.0` implementation until the owner explicitly starts that next phase.
 
 ## Execution Rules
 
@@ -207,7 +207,7 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.12.FINAL` Data Safety Completion Gate - `PASS` on 2026-08-24. The final gate reviewed the cumulative Phase 12 diff from pre-phase HEAD `3b9d8db`, confirmed no unapproved product features or persistent format migration, and received an independent reviewer PASS. Fresh verification passed: unit tests, recovery-focused filesystem/runtime regressions, full browser suite, `npm run verify`, UI polish audit, docs index, encoding check, project file audit, desktop release gate, desktop build and native desktop click-through on a disposable workspace. Read-only confidence on `X:\ДНД\Мастер\По кампаниям\База` passed with `--no-write-probe`: 697 pages, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates and no restore/repair/cleanup/migration.
 
-- `0.0.1.13.0` NF-001 Edit Session Conflict Protection - `ACTIVE` on 2026-08-24. Phase start updated planning/status docs only. No conflict product implementation, persistent format migration or real workspace mutation was performed.
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection - `DONE` on 2026-08-24. The final gate passed after the cumulative Phase 13 review, independent reviewer PASS and full verification. Stale editor/session writes now carry a runtime page-state base, are checked against the current durable target page at the PageCommandService boundary, surface a safe conflict UI/recovery path, and cannot silently overwrite restore/repair results within the Phase 13 scope. No persistent format migration, generic merge engine, collaboration/sync layer, NF-002 dice work or real workspace mutation was performed.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 
@@ -215,7 +215,7 @@ ID: `0.0.1.13.0`
 
 NAME: NF-001 Edit Session Conflict Protection
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
 
 GOAL: prevent stale editor writes from silently overwriting newer durable state.
 
@@ -223,9 +223,9 @@ WHY NOW: conflict-safe writes should exist before persistent session logs, comba
 
 SCOPE: protect field/page edits; preserve unrelated changes; surface conflict state; provide safe recovery; keep PageCommandService/write lifecycle as owner.
 
-DEPENDENCIES: Phase 4 data safety is closed. Owner started this phase on 2026-08-24. Existing owners to preserve: `PageCommandService`, `PageRecord`, `writeQueue`, `StorageAdapter`, `PageRepository` notifications.
+DEPENDENCIES: Phase 4 data safety is closed. Owner started this phase on 2026-08-24. The final closure gate passed on 2026-08-24. Existing owners preserved: `PageCommandService`, `PageRecord`, `writeQueue`, `StorageAdapter`, `PageRepository` notifications.
 
-EXIT CRITERIA: stale writes cannot silently overwrite current state; conflict UI is understandable; recovery path is safe; regression coverage proves field/page edit protection and unrelated-change preservation.
+EXIT CRITERIA: met on 2026-08-24. Stale full-page/editor saves, same-field stale writes, queued delayed writes, autosave/navigation/workspace-switch saves and representative special page editors are blocked or safely surfaced at the shared page command boundary. Narrow proven disjoint metadata changes may preserve unrelated durable changes; unsupported/full content saves remain conflict-only. Conflict UI/recovery keeps newer durable state and the user's unsaved draft understandable. Phase 12 restore/repair writes remain explicit recovery operations, and later stale editor saves cannot overwrite them.
 
 CURRENT LEAF RESULTS:
 
@@ -251,7 +251,7 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.13.10` Data Safety Integration - `DONE` on 2026-08-24. Aligned Phase 12 repair-preview stale evidence with the Phase 13 canonical page state identity so repair preview and editor conflict protection now share one runtime concept: this mutation was based on page state X. The old readable evidence fields remain for UI/backward compatibility, while `sourcePageStateIdentity` is used for apply validation and passed to existing page/relationship command owners as `expectedBase`. Restore and partial restore remain explicit recovery operations owned by `backupService` with their mandatory pre-restore backup gate; they are not blocked merely because an editor session is stale. Later stale editor saves after restore/repair conflict at the page command boundary and do not create additional backups. Regressions cover partial restore -> stale editor blocked, persistent repair -> stale editor blocked, editor save -> stale repair preview blocked before backup, graph relationship command precondition blocking, and existing Phase 12 restore/repair behavior.
 
-- `0.0.1.13.FINAL` NF-001 Closure Gate - `NEXT`.
+- `0.0.1.13.FINAL` NF-001 Closure Gate - `PASS` on 2026-08-24. Reviewed the cumulative Phase 13 diff from pre-phase HEAD `71a9625`, confirmed the baseline phase start and all leaves `0.0.1.13.1` through `0.0.1.13.10` are closed, and received an independent read-only reviewer PASS. Fresh verification passed: `npm run test`, `npm run test:browser`, `npm run verify`, `npm run ui:polish:audit`, `npm run docs:index`, `npm run check:encoding`, project file audit, `git diff --check`, desktop release gate, desktop build, native desktop click-through on a disposable workspace and read-only large-workspace smoke on `X:\ДНД\Мастер\По кампаниям\База`. The only closure corrective code changed the native smoke runner so it opens the Settings Center diagnostics section and closes Settings before presentation smoke. No product behavior, persistent data format, generic auto-merge, collaboration/networking or NF-002 dice work was added.
 
 ### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
 
@@ -259,7 +259,7 @@ ID: `0.0.1.14.0`
 
 NAME: NF-002 Safe Dice Engine
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
 
 GOAL: create a safe, deterministic dice/rules engine.
 

@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Desktop Large Workspace Smoke Current
 
-Run date: 2026-08-24T09:17:54.181Z
+Run date: 2026-08-24T18:14:04.453Z
 
 Plan ref: `0.0.1.11.4` (runner introduced in `0.0.1.2.2`)
 
@@ -16,14 +16,14 @@ Workspace: `X:\ДНД\Мастер\По кампаниям\База`
 
 ## Automated Read-Only Checks
 
-- workspace diagnostics: passed (5646 ms)
+- workspace diagnostics: passed (424 ms)
 
-- read-only tree probe: passed (139 ms)
+- read-only tree probe: passed (141 ms)
 
 ## Desktop Environment Checks
 
-- desktop environment: passed (510 ms)
-- desktop packaging smoke: passed (270 ms)
+- desktop environment: passed (535 ms)
+- desktop packaging smoke: passed (277 ms)
 
 ## Workspace Summary
 
@@ -38,7 +38,7 @@ Workspace: `X:\ДНД\Мастер\По кампаниям\База`
 - Missing asset references: 0
 - Complete backups: 5
 - Incomplete backups: 0
-- Diagnostics duration: 5600 ms
+- Diagnostics duration: 348 ms
 
 ## Manual Native Targets
 
@@ -64,6 +64,7 @@ Open these first during the native Tauri click-through.
 
 - large_pages (2): Some pages are larger than 250 KB. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB.
 - large_assets (4): Some assets are larger than 12 MB. Examples: Castle_01.jpg 36.9 MB; Group 1.png 33.7 MB; КорабльВерх.png 14.7 MB.
+- broken_internal_links (71): Some pages contain internal page/wiki/relationship references that cannot be resolved. Examples: {"category":"broken-internal-link","id":"09fdb47b-e87c-47dc-9698-e8b86414fdc2:wiki:0:TARGET_PAGE_MISSING","linkType":"wiki","reason":"TARGET_PAGE_MISSING","sourcePageId":"09fdb47b-e87c-47dc-9698-e8b86414fdc2","sourcePageTitle":"1778779456009","owner":{"pageId":"09fdb47b-e87c-47dc-9698-e8b86414fdc2","pageTitle":"1778779456009","scope":"wiki","entityId":"0"},"originalTarget":"очарованный","targetId":"","targetTitle":"очарованный","displayText":"очарованный","relationshipType":"","locator":{"kind":"html-anchor","index":0,"sourcePageId":"09fdb47b-e87c-47dc-9698-e8b86414fdc2","linkType":"wiki"},"index":0,"candidateCount":0}; {"category":"broken-internal-link","id":"66d2de88-7334-4170-99f5-a83be2359e2d:wiki:1:TARGET_PAGE_MISSING","linkType":"wiki","reason":"TARGET_PAGE_MISSING","sourcePageId":"66d2de88-7334-4170-99f5-a83be2359e2d","sourcePageTitle":"1778779858337","owner":{"pageId":"66d2de88-7334-4170-99f5-a83be2359e2d","pageTitle":"1778779858337","scope":"wiki","entityId":"1"},"originalTarget":"вампиризма","targetId":"","targetTitle":"вампиризма","displayText":"вампиризма","relationshipType":"","locator":{"kind":"html-anchor","index":1,"sourcePageId":"66d2de88-7334-4170-99f5-a83be2359e2d","linkType":"wiki"},"index":1,"candidateCount":0}; {"category":"broken-internal-link","id":"f26b2459-4c2b-4b55-a864-8aa27cc0f092:wiki:0:TARGET_PAGE_MISSING","linkType":"wiki","reason":"TARGET_PAGE_MISSING","sourcePageId":"f26b2459-4c2b-4b55-a864-8aa27cc0f092","sourcePageTitle":"1778781578514","owner":{"pageId":"f26b2459-4c2b-4b55-a864-8aa27cc0f092","pageTitle":"1778781578514","scope":"wiki","entityId":"0"},"originalTarget":"Рацион","targetId":"","targetTitle":"Рацион","displayText":"Рацион","relationshipType":"","locator":{"kind":"html-anchor","index":0,"sourcePageId":"f26b2459-4c2b-4b55-a864-8aa27cc0f092","linkType":"wiki"},"index":0,"candidateCount":0}.
 - heavy_maps: At least one map has many render objects or a large page payload. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB; 1779482139467-a52d5cd6 200 KB.
 
 ## Tree Probe Summary
@@ -71,7 +72,7 @@ Open these first during the native Tauri click-through.
 - Pages: 697
 - Root pages: 10
 - pages.readDirectory: 1 ms
-- pages.readAndParse: 96 ms
+- pages.readAndParse: 95 ms
 - tree.buildParentIndex: 0 ms
 
 ## Desktop Artifacts

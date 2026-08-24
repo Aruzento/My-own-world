@@ -407,6 +407,19 @@ try {
           15000
       });
 
+      const diagnosticsCategory =
+        page.locator('[data-settings-category="diagnostics"]');
+
+      if (
+        await diagnosticsCategory.count()
+      ) {
+
+        await diagnosticsCategory.click({
+          timeout:
+            15000
+        });
+      }
+
       await page.locator('.app-workspace-diagnostics-panel').waitFor({
         state:
           'visible',
@@ -441,6 +454,30 @@ try {
         await collectDiagnosticsMetrics(
           page
         );
+
+      await page.keyboard.press(
+        'Escape'
+      );
+
+      await page.locator('#appSettingsPopup').waitFor({
+        state:
+          'hidden',
+        timeout:
+          15000
+      }).catch(async () => {
+
+        await page.locator('#appSettingsCloseBtn').click({
+          timeout:
+            15000
+        });
+
+        await page.locator('#appSettingsPopup').waitFor({
+          state:
+            'hidden',
+          timeout:
+            15000
+        });
+      });
     }
   );
 

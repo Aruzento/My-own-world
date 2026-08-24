@@ -160,6 +160,17 @@ npm run test:browser -- tests/browser/popup-drag.spec.mjs
 
 Manual spot check: open `Поиск и команды` with `Ctrl+K`, drag it by a free non-input area, and confirm the grabbed point stays under the pointer. Repeat with Settings, Tools, a card popup such as `Свойства`, and a Campaign Map popup; buttons, inputs and selects inside the popup should keep their normal behavior.
 
+For NF-001 edit-session conflict protection, use:
+
+```powershell
+node --test tests/pageWritePreconditions.test.mjs tests/pageWriteConflictBlocking.test.mjs tests/conflictDataSafetyIntegration.test.mjs
+npm run test:browser -- tests/browser/editor-autosave.spec.mjs
+npm run test:browser -- tests/browser/editor-navigation-conflicts.spec.mjs
+npm run test:browser -- tests/browser/editor-special-conflicts.spec.mjs
+```
+
+Expected conflict result: a stale editor/session save must not overwrite newer durable content. The conflict UI should explain in Russian that the page changed after opening, keep the user's unsaved draft available, and avoid repeated autosave dialog spam. Restore/repair results should survive later stale editor saves.
+
 Before sending a desktop build, run:
 
 ```powershell
@@ -216,7 +227,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
 - Knowledge Graph is currently a useful migrated canvas workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. New visible graph features should wait for the `BI-026` concept rethink.
-- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. The active data-risk phase is NF-001 edit-session conflict protection before higher-frequency live-session writes; `0.0.1.13.1` established the baseline and the next implementation leaf is `0.0.1.13.2` Write Preconditions.
+- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. NF-001 edit-session conflict protection is closed for the current PageRecord-backed scope. The next roadmap risk is NF-002 Safe Dice Engine, but dice work has not started.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 

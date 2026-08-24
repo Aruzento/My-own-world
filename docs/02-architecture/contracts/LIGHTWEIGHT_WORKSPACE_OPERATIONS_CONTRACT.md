@@ -503,6 +503,40 @@ Repair boundary:
 - relationship command conflicts do not call `writePageContent()`, do not mutate runtime relationship/content fields and do not notify PageRepository/PageIndex with stale data;
 - stale repair preview validation still happens before repair backup creation when the application's current page model is already aware of newer page state.
 
+## NF-001 Closure Contract
+
+Captured in `0.0.1.13.FINAL`.
+
+Closed scope:
+
+- stale edit-session writes based on an older durable page state must not silently overwrite newer durable page state inside the current PageRecord-backed write scope;
+- the durable write boundary owner is still `PageCommandService.persistPageContentCommand()`, with `pageWritePreconditions` reading the current target page content through the active `StorageAdapter`;
+- UI handlers, editor save helpers and special page serializers must pass session base/precondition evidence to the common owner rather than performing local stale checks;
+- conflict and precondition-blocked results happen before file write, repository/index notification, undo registration or stale runtime publication;
+- conflict detection itself does not create a backup because no durable mutation happened.
+
+Allowed automatic preservation:
+
+- only narrow structured PageRecord metadata operations that declare supported owned fields and prove the current durable value of each owned field still matches the operation base may rebase onto current durable state;
+- same-field edits, full page/html saves, board/map/rule JSON saves and unsupported command shapes remain conflict-only.
+
+User-facing recovery:
+
+- BASE, CURRENT and MINE are runtime concepts, not persisted conflict copies;
+- the conflict UI must keep newer durable state safe and keep the user's unsaved MINE available until an explicit recovery action;
+- force overwrite and universal automatic merge are not part of the NF-001 closure contract.
+
+Integration boundary:
+
+- restore and partial restore remain explicit backup-gated recovery operations and are not blocked merely because an editor session is stale;
+- persistent repair continues to validate preview freshness and use the existing repair/write owners;
+- after restore or repair writes newer durable state, a stale editor save must conflict and must not overwrite that recovery result.
+
+Explicit non-goals:
+
+- no filesystem watcher, background polling, network sync, collaboration protocol, version-control system, generic merge engine or dice/event-log work was added;
+- no persistent page, backup or workspace format changed.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.

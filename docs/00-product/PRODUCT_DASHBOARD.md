@@ -13,7 +13,7 @@ Updated: 2026-08-24
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase and Data Safety Completion phase are closed. NF-001 Edit Session Conflict Protection is now the active phase. This is not collaboration, version control or a merge engine; it starts optimistic protection against stale editor/session writes before higher-frequency live-session writes.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase and NF-001 Edit Session Conflict Protection phase are closed. NF-001 is not collaboration, version control or a merge engine; it adds optimistic protection so stale editor/session writes cannot silently overwrite newer durable page state inside the current page-write scope. NF-002 Safe Dice Engine is next, but not active until the owner starts it.
 
 ## Current Focus
 
@@ -26,14 +26,24 @@ Immediate direction:
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
-6. Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
-7. Next leaf: `0.0.1.13.2` Write Preconditions.
-8. `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
+6. Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `DONE`.
+7. Next phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `NEXT`, not `ACTIVE`.
+8. `0.0.1.14.0` has not been started; do not begin dice implementation until the owner explicitly starts that phase.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-24 `0.0.1.13.FINAL` NF-001 Closure Gate: passed after cumulative Phase 13 review from pre-phase HEAD `71a9625`, independent reviewer PASS and fresh verification. Stale editor/session writes now carry a runtime page-state base, are checked against current durable target-page content at the `PageCommandService` boundary, show a safe Russian conflict UI/recovery path, preserve only proven disjoint structured metadata changes and cannot overwrite Phase 12 restore/repair results. `npm run test`, `npm run test:browser`, `npm run verify`, UI polish, docs, encoding, project file audit, desktop gate, desktop build, native desktop smoke on a disposable workspace and read-only large-workspace smoke on `X:\ДНД\Мастер\По кампаниям\База` passed. No persistent format migration, collaboration/sync layer, generic merge engine, NF-002 dice work or real-workspace mutation was introduced.
+- 2026-08-24 `0.0.1.13.10` Data Safety Integration: Phase 12 repair preview stale evidence now aligns with the Phase 13 canonical page state identity. Restore/partial restore remain backup-gated recovery operations and are not blocked by stale editors, but later stale editor saves conflict before writing over restored/repaired data.
+- 2026-08-24 `0.0.1.13.9` Detect Newer Durable Page State: conflict checks compare against the current durable target page file at write-command execution time, not against stale editor DOM, stale runtime page objects or stale repository snapshots. No filesystem watcher or background polling was added.
+- 2026-08-24 `0.0.1.13.8` Structured Editor Coverage: normal card/editor, Properties-backed pages, Task Tracker, Campaign Map saves, Rule Tree and Knowledge Graph PageRecord-backed saves were verified through the shared conflict boundary where in scope. A special-save conflict UI bug was fixed without adding product behavior.
+- 2026-08-24 `0.0.1.13.7` Autosave and Navigation Conflicts: autosave, page transitions, Campaign Map transitions, workspace switching and late debounced saves now use the same precondition-aware save result and stop instead of silently navigating over unresolved stale work.
+- 2026-08-24 `0.0.1.13.6` Conflict Recovery: conflict state now preserves BASE, CURRENT and MINE at runtime, lets the user inspect/copy their draft, return to editing or explicitly reload current saved content. No force overwrite or draft-file format was added.
+- 2026-08-24 `0.0.1.13.5` Conflict UI: stale saves now surface a shared Russian conflict dialog/status that explains newer saved data was not overwritten and the user's draft remains available. Repeated autosave conflicts are deduplicated.
+- 2026-08-24 `0.0.1.13.4` Preserve Unrelated Changes: narrow structured preservation is available only for explicit supported PageRecord metadata fields when the owned field still matches the stale base. Full page/html saves and unsafe/unknown shapes remain conflict-only.
+- 2026-08-24 `0.0.1.13.3` Stale Write Blocking: page write preconditions are enforced before durable storage writes, repository/index notifications and undo registration. Stale unsafe writes return structured conflict/precondition-blocked results and leave durable content intact.
+- 2026-08-24 `0.0.1.13.2` Write Preconditions: editor sessions and page commands can carry a runtime-only PageRecord-derived page state identity. It uses existing durable content and does not change the persistent page format.
 - 2026-08-24 `0.0.1.13.1` Conflict Baseline: mapped the current editor/page write lifecycle and added deterministic tests that show the difference between stale async completion and stale edit sessions. Existing runtime write revisions protect queued write races, but current editor/session saves do not carry an enforced durable base precondition, so stale full-page saves and stale structured full-record writes can still overwrite or lose newer durable state. This was a test/documentation baseline only: no conflict blocking, persistent format migration or real workspace mutation was introduced.
 - 2026-08-24 phase start: `0.0.1.13.0` NF-001 Edit Session Conflict Protection became `ACTIVE`; the first leaf at phase start was `0.0.1.13.1` Conflict Baseline. The expected Data Safety baseline `71a9625` is present in history; the actual phase-start base was `323f6dc` after the owner-directed Settings Center commit. No conflict product implementation, persistent format migration or real-user-workspace mutation was started.
 - 2026-08-24 owner-directed Settings Center migration: the old linear topbar Settings maintenance popup was rebuilt into a two-pane Settings Center with grouped sidebar navigation, header search, runtime-only future placeholders and a dedicated Settings CSS owner. Existing Appearance, Backup, Asset Health and Workspace Diagnostics functionality stayed on the current owners; no schema, backup format, service owner, external dependency or `0.0.1.13.0` implementation was introduced.
@@ -175,7 +185,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.13.2` Write Preconditions when ready. Do not start `0.0.1.14.0` Safe Dice Engine until Phase 5 closes.
+- Start `0.0.1.14.0` NF-002 Safe Dice Engine only when the owner explicitly starts the next phase.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -193,7 +203,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. The next risk to address is NF-001 edit-session conflict protection before higher-frequency live/session writes.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. The next risk to address is safe dice evaluation before rolls/feeders become durable session data.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.

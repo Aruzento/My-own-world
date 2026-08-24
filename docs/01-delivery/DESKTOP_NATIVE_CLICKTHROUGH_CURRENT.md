@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Desktop Native Click-Through Current
 
-Run date: 2026-08-24T14:03:11.397Z
+Run date: 2026-08-24T18:17:00.662Z
 
-Plan ref: `0.0.1.11.5` (runner introduced in `0.0.1.2.2`)
+Plan ref: `0.0.1.13.FINAL` (runner introduced in `0.0.1.2.2`)
 
-Workspace: `C:\Users\Aruko\AppData\Local\Temp\mow-native-smoke-3b724ead5fef403ea21c1c6efee286cf`
+Workspace: `C:\Users\Aruko\AppData\Local\Temp\mow-final-conflict-desktop-smoke-b383a3bd3fe54a28b6e34e5c1f02544f`
 
 Executable: `C:\Users\Aruko\Documents\New project\My own world\src-tauri\target\release\my-own-world.exe`
 
@@ -22,19 +22,19 @@ Fatal error: none
 
 ## Steps
 
-- launch native desktop app with WebView2 remote debugging: passed (1228 ms)
-- restore workspace through desktop adapter: passed (793 ms)
-- open representative card with image when available: passed (90 ms)
-- open settings workspace diagnostics panel: passed (428 ms)
-- scroll and search the large tree: passed (183 ms)
-- open heavy campaign map: passed (71 ms)
-- open presentation window from the heavy map: passed (685 ms)
+- launch native desktop app with WebView2 remote debugging: passed (1199 ms)
+- restore workspace through desktop adapter: passed (818 ms)
+- open representative card with image when available: passed (82 ms)
+- open settings workspace diagnostics panel: passed (495 ms)
+- scroll and search the large tree: passed (199 ms)
+- open heavy campaign map: passed (29 ms)
+- open presentation window from the heavy map: passed (682 ms)
 
 ## Targets
 
 ### Representative Cards
 
-- Добро пожаловать - 2 KB, tokens: 0, shapes: 0, fog markers: 0, images: 0, image assets: 0, file: `0001-welcome.md`
+- Добро пожаловать - 3 KB, tokens: 0, shapes: 0, fog markers: 0, images: 0, image assets: 0, file: `0001-welcome.md`
 
 ### Image Cards
 
@@ -48,7 +48,7 @@ Fatal error: none
 
 ```json
 {
-  "cdpEndpoint": "http://127.0.0.1:50606",
+  "cdpEndpoint": "http://127.0.0.1:62768",
   "workspace": {
     "title": "MyOwnWorld",
     "treeItems": 3,
@@ -64,7 +64,7 @@ Fatal error: none
     "imageAssets": [],
     "imageSources": [],
     "textLength": 1883,
-    "statusbar": "Saved",
+    "statusbar": "Открыта 0001-welcome.md",
     "searchQuery": "Добро пожаловать",
     "attemptedTargets": 1
   },
@@ -72,7 +72,7 @@ Fatal error: none
     "cards": 12,
     "sections": 10,
     "hasWriteProbe": true,
-    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-native-smoke-3b724ead5fef403ea21c1c6efee286cfРасположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 0 шт.Папка резервных копий: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-native-smoke-3b724ead5fef403ea21c1c6efee286cf\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 2 мс (co"
+    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-final-conflict-desktop-smoke-b383a3bd3fe54a28b6e34e5c1f02544fРасположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 0 шт.Папка резервных копий: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-final-conflict-desktop-smoke-b383a3bd3fe54a28b6e34e5c1f02544f\\.my-own-world-backupsПоследняя операция:"
   },
   "treeAfterSearch": {
     "renderedItems": 1,
@@ -107,17 +107,18 @@ Fatal error: none
 
 ## Console And Page Errors
 
+- warning: Workspace schema: schema issues found: 6 [Object, Object, Object, Object, Object, Object]
 - warning: Не удалось восстановить состояние дерева из workspace: Error: Не удается найти указанный файл. (os error 2)
     at normalizeTauriCommandError (http://tauri.localhost/js/storage/tauriBridge.js:72:7)
     at invokeTauriCommand (http://tauri.localhost/js/storage/tauriBridge.js:34:13)
     at async restoreWorkspaceTreeExpansionState (http://tauri.localhost/js/tree/tree.js:1700:9)
-    at async http://tauri.localhost/js/app.js:255:3
-- warning: Workspace schema: schema issues found: 9 [Object, Object, Object, Object, Object, Object, Object, Object, Object]
+    at async http://tauri.localhost/js/app.js:261:3
+- warning: Workspace schema: schema issues found: 6 [Object, Object, Object, Object, Object, Object]
 - warning: Не удалось восстановить состояние дерева из workspace: Error: Не удается найти указанный файл. (os error 2)
     at normalizeTauriCommandError (http://tauri.localhost/js/storage/tauriBridge.js:72:7)
     at invokeTauriCommand (http://tauri.localhost/js/storage/tauriBridge.js:34:13)
     at async restoreWorkspaceTreeExpansionState (http://tauri.localhost/js/tree/tree.js:1700:9)
-    at async http://tauri.localhost/js/app.js:255:3
+    at async http://tauri.localhost/js/app.js:261:3
 
 ## Unexpected Runtime Errors
 
