@@ -93,6 +93,22 @@ Restore первого слоя работает осторожно:
 
 Такой restore безопаснее для первого внедрения: он не уничтожает данные, созданные после backup. Полный rollback с удалением лишних файлов нужно добавлять отдельно и только с подтверждением.
 
+## Phase 12 Baseline Flow Map
+
+`0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.
+
+| Flow | Current owner | Current contract |
+| --- | --- | --- |
+| Backup create | `js/storage/backupService.js#createWorkspaceBackup` | Reads runtime pages or explicit pages, scans persistent asset references, writes snapshot files through the active `StorageAdapter`, then applies retention cleanup unless disabled. |
+| Backup manifest | `backupService#createBackupManifest` plus internal manifest reader | Manifest version `1` records page metadata and asset references. A missing or corrupt manifest makes the backup unreadable for list/restore. |
+| Backup list | `backupService#listWorkspaceBackups` and `listIncompleteWorkspaceBackups` | Complete backups are directories with readable `manifest.json`; incomplete backups are directories under `.my-own-world-backups/` without a readable manifest. Scanning is non-destructive. |
+| Pre-restore backup | `backupService#createAndVerifyPreRestoreBackup` through `requireWorkspaceBackupBeforeRiskyOperation` | Restore must create and reread a fresh `pre-restore` backup before any restore page/asset write. Failure blocks restore before destructive writes. |
+| Restore | `backupService#restoreWorkspaceBackup` | Full restore writes saved pages/assets through `StorageAdapter`, creates/overwrites files present in the snapshot and does not delete files created after backup. A missing backup page file currently rejects restore; a missing backup asset currently logs a warning, restores the other files and leaves the current asset untouched. |
+| Post-restore reload/refresh | Settings backup UI in `js/ui/appTopbar.js#reloadWorkspaceAfterRestore` | UI restore calls `loadWorkspace()`, reloads page templates, restores tree expansion, renders the tree and shows empty editor if the restored workspace has no pages. Repository/index refresh is owned by the normal workspace load path. |
+| Schema diagnostics | `js/schema/workspaceSchema.js` and `js/schema/schemaRecovery.js` | Validation is diagnostics-first. `WorkspaceRecoveryReport` groups issues and identifies model-level repair actions, but persistent repair requires an explicit user action and backup. |
+| Asset diagnostics | `assetReferenceScanner`, `assetBrokenChecker`, `assetOrphanDetector`, `assetWorkspaceService`, Settings asset/diagnostics UI | Scanners classify persistent asset references, missing asset paths and orphan candidates. They do not repair links or delete files. Orphan deletion remains a separate user-confirmed, backup-gated UI flow. |
+| Known link diagnostics | Current wiki/graph owners: `wikiLinkLookup`, backlinks and Knowledge Graph relationship model | Wiki lookup and graph relationship rendering exist, but there is no dedicated broken wiki/ordinary/relation link repair scanner yet. Phase 12 fixtures include broken wiki-link and broken relationship-target inputs so future link-safety leaves can add diagnostics without guessing targets. |
+
 ## Что нельзя делать
 
 - Нельзя чинить данные без backup.

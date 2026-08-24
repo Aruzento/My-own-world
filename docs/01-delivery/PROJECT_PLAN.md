@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
 
-Current leaf: `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.12.2` Restore Preview is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
 
@@ -181,9 +181,13 @@ DEPENDENCIES: Phase 3 stabilization is closed. Owner started this phase on 2026-
 
 EXIT CRITERIA: recovery previews are readable and non-destructive; persistent repair flows are backup-gated where needed; asset/link verification has tests or documented smoke paths; no durable write path bypasses existing safety owners.
 
+CURRENT LEAF RESULTS:
+
+- `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures - `DONE` on 2026-08-24. The current recovery flow map is recorded in [BACKUP_AND_RECOVERY_CONTRACT.md](../02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md), and the reusable disposable input matrix lives in `tests/fixtures/dataSafetyFixtures.mjs` with baseline coverage in `tests/dataSafetyRecoveryFixtures.test.mjs`. It covers clean workspace, changed-after-backup page, multi-page/multi-asset backup, missing backup page file, missing backup asset, broken wiki-link input, broken relationship target input, broken asset reference, orphan asset and malformed/incomplete backup directory. No restore preview, partial restore, link repair, persistent data format migration or real workspace mutation was implemented.
+
 CURRENT LEAF:
 
-- `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures - `NEXT`. Establish the current data-safety baseline and reusable recovery fixtures before implementing repair/restore product slices. No recovery/repair product implementation has started in the phase-start commit.
+- `0.0.1.12.2` Restore Preview - `NEXT`. Add non-destructive restore preview on top of the current `backupService`/`StorageAdapter` owners and the 12.1 fixtures.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 

@@ -6,6 +6,57 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.1 Data Safety Baseline & Recovery Fixtures
+
+### Disposition
+
+- Closed `0.0.1.12.1` as targeted inventory plus test foundation.
+- Recorded the current Phase 12 recovery flow map in `docs/02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md`.
+- Added reusable disposable fixtures in `tests/fixtures/dataSafetyFixtures.mjs` for:
+  - clean workspace;
+  - page changed after backup;
+  - backup with several pages/assets;
+  - missing backup page file;
+  - missing backup asset;
+  - broken internal wiki-link input;
+  - broken relationship target input;
+  - broken asset reference;
+  - legitimate orphan asset;
+  - malformed/incomplete backup directory.
+- Added `tests/dataSafetyRecoveryFixtures.test.mjs` to prove the current baseline behavior.
+
+### Current Contract Captured
+
+- `backupService` owns backup create, manifest creation/read, backup listing, incomplete-backup scanning, pre-restore backup verification and full restore writes.
+- `StorageAdapter` owns durable workspace IO.
+- Settings backup UI owns post-restore reload/refresh after `restoreWorkspaceBackup()`.
+- `workspaceSchema` / `schemaRecovery` own diagnostics-first schema reports and model-level repair action descriptions.
+- Asset scanners own broken/orphan classification only; they do not repair links or delete files.
+- Dedicated broken wiki/ordinary/relation link diagnostics are not implemented yet. The new fixtures capture those input states for future Phase 12 leaves without pretending repair already exists.
+
+### Baseline Tests
+
+- Backup can be created from fixtures and listed through manifest read.
+- Full restore restores saved page and asset content.
+- Missing/corrupt manifest is rejected before restore writes.
+- Pre-restore backup failure blocks destructive restore writes.
+- Missing backup page file currently rejects restore.
+- Missing backup asset currently warns, restores the rest and leaves the current asset untouched.
+- Asset scanners classify supported broken reference and orphan asset cases.
+- Current schema recovery does not yet diagnose broken wiki-link or relationship-target inputs.
+
+### Scope
+
+- No restore preview was implemented.
+- No partial restore was implemented.
+- No broken-link repair was implemented.
+- No persistent data format migration was performed.
+- No real user workspace was touched or mutated.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.2` Restore Preview.
+
 ## 2026-08-24: 0.0.1.12.0 Data Safety Completion Phase Start
 
 ### Disposition
