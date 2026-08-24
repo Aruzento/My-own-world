@@ -100,6 +100,7 @@ npm run test:browser -- tests/browser/task-tracker.spec.mjs
 For the Settings maintenance `0.0.1.8.14.2` slice, use:
 
 ```powershell
+npm run test:browser -- tests/browser/settings-center.spec.mjs
 npm run test:browser -- tests/browser/app-shell.spec.mjs
 npm run test:browser -- tests/browser/asset-health.spec.mjs
 npm run test:browser -- tests/browser/visual-regression.spec.mjs --grep visual-safety-captures-core-surfaces
@@ -185,7 +186,7 @@ Expected current native result: workspace restore passes, the tree renders, a no
 
 1. Open a copied workspace.
 2. With a workspace already open, use the compact topbar `Открыть папку` action. Cancel once and confirm the current workspace and open page remain unchanged. Then choose another copied workspace and confirm the tree shows the second workspace, the previous workspace page is not still open, and the workspace path/identity updates.
-3. Open Settings from the topbar. The popup should look like one maintenance panel, not four unrelated blocks: appearance, backup, asset health and diagnostics should share the same section rhythm, local icons and clear health/backup/restore/asset/danger states. Then open Settings diagnostics and check that workspace path, write access, schema status and backup status are readable.
+3. Open Settings from the topbar. It should open as a larger Settings Center, not a small linear maintenance popup. Check the sidebar groups (`ОСНОВНЫЕ`, `ДАННЫЕ И ФАЙЛЫ`, `МИР И ИГРОВЫЕ ИНСТРУМЕНТЫ`, `СИСТЕМА`), search for `резерв`, and confirm `Оформление`, `Резервные копии`, `Хранилище` and `Диагностика` open without closing the popup. Appearance changes should apply immediately, backup controls should keep their existing restore/retention behavior, Storage should show Asset Health, Diagnostics should show workspace path/write access/schema/backup status, and future sections such as `Интеграции` should show a clear `Скоро` placeholder rather than fake controls.
 4. On the empty start screen, check that there is one clear action card with `Карточка`, `Карта`, `Задачи`, `Правила` and `Граф связей`. It should not show internal `Workspace`, `Context` or `Diagnostics` demo panels, and the actions should not overlap on desktop or mobile. In the sidebar tree area, when no workspace is open, there should be one clear `Открыть папку` button.
 5. Check the left AppShell rail: it should show `Дерево`, `Поиск и команды`, and the profile/user button. `Карточки`, `Карты`, `Задачи`, `Правила` and `Граф связей` should remain reachable through the world tree/create flows, not as duplicated rail tabs. The tree sidebar should not repeat `MyWorld` / `Дерево мира` and should not contain workspace/open or create buttons in a header; after opening a workspace, the `Корень` row should show the root `+` create action and the folder-create action.
 6. Click `Дерево` in the rail to hide and reopen the tree sidebar, then resize the visible sidebar with the separator by dragging or using Left/Right arrow keys while it is focused. The editor should expand while the tree is hidden, the workspace should stay readable, and the resize handle should be hidden on mobile.
@@ -215,7 +216,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
 - Knowledge Graph is currently a useful migrated canvas workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. New visible graph features should wait for the `BI-026` concept rethink.
-- Restore preview, partial restore, link cleanup and asset repair remain unfinished.
+- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. The next data-risk phase is NF-001 edit-session conflict protection before higher-frequency live-session writes.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 

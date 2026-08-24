@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: Owner-Directed Settings Center UI Migration
+
+### Disposition
+
+- Reworked the topbar Settings popup into a full Settings Center while keeping it inside the existing PopupManager lifecycle.
+- Did not start `0.0.1.13.0`, add a new settings framework, change workspace schema, change backup format or add external dependencies.
+- Kept current settings navigation as runtime UI state only.
+
+### What Changed
+
+- `appTopbar.js` now owns only topbar integration: open Settings, close Tools when Settings opens, and keep Tools behavior intact.
+- Added a central settings registry for group order, stable section ids, titles, icons, descriptions, keywords and renderer ownership.
+- Added a two-pane Settings shell with header, search field, sidebar groups and a scroll-owned content pane.
+- Moved existing functionality into human-readable sections:
+  - `Оформление` keeps the existing `themeManager` values and `myOwnWorld.appearance` storage key.
+  - `Резервные копии` keeps the existing `backupService` UI/lifecycle, restore preview, partial restore, retention, incomplete-backup cleanup and existing safety confirmations.
+  - `Хранилище` reuses the existing Asset Health panel and its backup-before-delete orphan asset safety.
+  - `Диагностика` reuses the existing Workspace Diagnostics panel and its recovery/repair actions.
+- Added clickable future placeholders for the approved future sections without fake toggles or decorative controls.
+- Added registry-backed settings search; e.g. `резерв` opens backup results and `цвет` can find appearance.
+- Added Settings-specific tooltip use through the existing `[data-tooltip]` contract, without introducing a second tooltip system.
+- Moved new Settings Center styling into `styles/settings-center.css` instead of growing `styles/app-topbar.css`.
+
+### Tests
+
+- `node --check js\ui\settings\settingsCenter.js`
+- `node --check js\ui\settings\backupSettings.js`
+- `node --check js\ui\settings\settingsRegistry.js`
+- `node --check js\ui\settings\settingsSections.js`
+- `node --check js\ui\appTopbar.js`
+- `node --check tests\browser\settings-center.spec.mjs`
+- `node --check tests\browser\app-shell.spec.mjs`
+- `node --check tests\browser\visual-regression.spec.mjs`
+- `node --check tests\browser\design-token-consistency.spec.mjs`
+- `npm run test:browser -- tests/browser/settings-center.spec.mjs`
+- `npm run test:browser -- tests/browser/app-shell.spec.mjs tests/browser/design-token-consistency.spec.mjs tests/browser/visual-regression.spec.mjs`
+- Visual sanity screenshot: `#appSettingsPopup` at 1280x820 with `Диагностика` selected; fixed one sidebar label truncation found during review.
+- `npm run test`
+- `npm run test:browser`
+- `npm run ui:polish:audit`
+- `npm run verify`
+
+### Next
+
+- Resume the active roadmap only when the owner starts `0.0.1.13.0` NF-001 Edit Session Conflict Protection.
+
 ## 2026-08-24: 0.0.1.12.FINAL Data Safety Completion Closure Gate
 
 ### Disposition

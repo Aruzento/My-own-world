@@ -44,6 +44,14 @@ for (const theme of [
         page.locator('#appSettingsPopup')
       ).toBeVisible();
 
+      await page
+        .locator('[data-settings-category="backup"]')
+        .click();
+
+      await expect(
+        page.locator('[data-settings-page="backup"]')
+      ).toBeVisible();
+
       await page.evaluate(
         async () => {
 
@@ -110,7 +118,7 @@ for (const theme of [
 
             const settingsParagraph =
               document.querySelector(
-                '.app-settings-body p, .app-settings-section-copy p'
+                '.app-settings-content p, .app-settings-page-copy p'
               );
 
             const settingsInput =

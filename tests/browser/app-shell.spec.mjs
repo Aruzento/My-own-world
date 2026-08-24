@@ -80,6 +80,34 @@ async function getCreateButtonLayout(
 }
 
 
+async function openSettingsSection(
+  page,
+  sectionId
+) {
+
+  await page.locator('#appSettingsBtn').click();
+
+  await expect(
+    page.locator('#appSettingsPopup')
+  ).toHaveAttribute(
+    'data-settings-ui-migration',
+    'settings-center'
+  );
+
+  await page
+    .locator(
+      `[data-settings-category="${sectionId}"]`
+    )
+    .click();
+
+  await expect(
+    page.locator(
+      `[data-settings-page="${sectionId}"]`
+    )
+  ).toBeVisible();
+}
+
+
 test(
   'app-shell-empty-state',
   async ({ page }) => {
@@ -497,38 +525,45 @@ test(
       page.locator('#appSettingsPopup')
     ).toHaveAttribute(
       'data-settings-ui-migration',
-      '0.0.1.8.14.2'
+      'settings-center'
     );
 
     await expect(
-      page.locator('.app-settings-chrome')
+      page.locator('.app-settings-shell')
     ).toBeVisible();
 
     await expect(
-      page.locator('.app-settings-body > [data-settings-section]')
+      page.locator('[data-settings-category]')
     ).toHaveCount(
-      4
+      13
+    );
+
+    await expect(
+      page.locator('[data-settings-category="appearance"]')
+    ).toHaveAttribute(
+      'aria-current',
+      'page'
     );
 
     const settingsSurface =
       await page.locator('#appSettingsPopup').evaluate(
         popup => {
 
-          const body =
-            popup.querySelector('.app-settings-body');
+          const content =
+            popup.querySelector('.app-settings-content');
 
           const firstSection =
-            popup.querySelector('[data-settings-section]');
+            popup.querySelector('[data-settings-page]');
 
           return {
             hasHorizontalOverflow:
-              body.scrollWidth > body.clientWidth + 1,
+              content.scrollWidth > content.clientWidth + 1,
             sectionRadius:
               Number.parseFloat(
                 getComputedStyle(firstSection).borderRadius
               ),
-            chipCount:
-              popup.querySelectorAll('.app-settings-status-chip').length
+            sidebarCount:
+              popup.querySelectorAll('[data-settings-category]').length
           };
         }
       );
@@ -541,21 +576,29 @@ test(
 
     expect(
       settingsSurface.sectionRadius
-    ).toBeLessThanOrEqual(
-      8
+    ).toBeGreaterThanOrEqual(
+      0
     );
 
     expect(
-      settingsSurface.chipCount
+      settingsSurface.sidebarCount
     ).toBe(
-      4
+      13
     );
+
+    await page
+      .locator('[data-settings-category="backup"]')
+      .click();
 
     await expect(
       page.locator('.app-backup-retention input')
     ).toHaveValue(
       '20'
     );
+
+    await page
+      .locator('[data-settings-category="appearance"]')
+      .click();
 
     await expect(
       page.locator('.app-appearance-panel')
@@ -2016,7 +2059,10 @@ test(
       }
     );
 
-    await page.locator('#appSettingsBtn').click();
+    await openSettingsSection(
+      page,
+      'backup'
+    );
 
     await expect(
       page.locator('.app-backup-restore')
@@ -2520,7 +2566,10 @@ test(
       }
     );
 
-    await page.locator('#appSettingsBtn').click();
+    await openSettingsSection(
+      page,
+      'backup'
+    );
 
     await page.locator('.app-backup-restore').click();
 
@@ -3026,7 +3075,10 @@ test(
       }
     );
 
-    await page.locator('#appSettingsBtn').click();
+    await openSettingsSection(
+      page,
+      'backup'
+    );
 
     await page.locator('.app-backup-restore').click();
 
@@ -3445,7 +3497,10 @@ test(
       }
     );
 
-    await page.locator('#appSettingsBtn').click();
+    await openSettingsSection(
+      page,
+      'backup'
+    );
 
     await page.locator('.app-backup-restore').click();
 

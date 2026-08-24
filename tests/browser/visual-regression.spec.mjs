@@ -376,7 +376,7 @@ test(
       page.locator('#appSettingsPopup')
     ).toHaveAttribute(
       'data-settings-ui-migration',
-      '0.0.1.8.14.2'
+      'settings-center'
     );
 
     await attachLocatorScreenshot(
@@ -3379,12 +3379,15 @@ async function prepareDesignSystemFixedViewportSurface(
       page.locator('#appSettingsPopup')
     ).toHaveAttribute(
       'data-settings-ui-migration',
-      '0.0.1.8.14.2'
+      'settings-center'
     );
 
+    await page
+      .locator('[data-settings-category="diagnostics"]')
+      .click();
+
     await expect(
-      page.locator('.app-settings-body > [data-settings-section]')
-        .first()
+      page.locator('[data-settings-page="diagnostics"]')
     ).toBeVisible();
 
     await expect(
@@ -3481,7 +3484,7 @@ async function getDesignSystemFixedViewportMetrics(
           ],
           'settings-diagnostics': [
             '#appSettingsPopup',
-            '.app-settings-body > [data-settings-section]',
+            '[data-settings-page="diagnostics"]',
             '.app-workspace-diagnostics-panel'
           ]
         };
@@ -3596,7 +3599,7 @@ async function getDesignSystemFixedViewportMetrics(
         hasSettings:
           isVisible(
             document.querySelector(
-              '#appSettingsPopup[data-settings-ui-migration="0.0.1.8.14.2"]'
+              '#appSettingsPopup[data-settings-ui-migration="settings-center"]'
             )
           ),
         hasTask:
@@ -3626,7 +3629,7 @@ async function getDesignSystemFixedViewportMetrics(
           Array
             .from(
               document.querySelectorAll(
-                '.app-settings-body > [data-settings-section]'
+                '[data-settings-page]'
               )
             )
             .filter(isVisible)
@@ -3800,7 +3803,7 @@ function expectDesignSystemFixedViewportMetrics(
     expect(
       metrics.settingsSectionCount
     ).toBeGreaterThanOrEqual(
-      3
+      1
     );
 
     return;
