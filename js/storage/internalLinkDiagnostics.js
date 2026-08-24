@@ -209,6 +209,8 @@ function createBrokenInternalLinkIssue(
       reference.displayText,
     relationshipType:
       reference.relationshipType,
+    locator:
+      reference.locator,
     index:
       reference.index,
     candidateCount:
@@ -487,6 +489,8 @@ function collectAnchorInternalLinks(
             targetTitle ||
             targetId ||
             displayText,
+          locatorKind:
+            'html-anchor',
           malformed:
             !targetId &&
             !targetTitle
@@ -539,6 +543,8 @@ function collectAnchorInternalLinks(
           targetTitle ||
           targetId ||
           displayText,
+        locatorKind:
+          'html-anchor',
         malformed:
           !targetId &&
           !targetTitle
@@ -593,6 +599,8 @@ function collectRawWikiLinks(
         originalTarget:
           targetTitle ||
           expression,
+        locatorKind:
+          'raw-wiki',
         malformed:
           !targetTitle
       })
@@ -653,6 +661,8 @@ function collectRelationshipLinks(
       originalTarget:
         targetId ||
         targetTitle,
+      locatorKind:
+        'relationship',
       malformed:
         !targetId &&
         !targetTitle
@@ -670,6 +680,7 @@ function createInternalReference({
   relationshipType = '',
   displayText = '',
   originalTarget = '',
+  locatorKind = '',
   malformed = false
 }) {
 
@@ -697,6 +708,14 @@ function createInternalReference({
     relationshipType,
     displayText,
     originalTarget,
+    locator: {
+      kind:
+        locatorKind || linkType,
+      index,
+      sourcePageId:
+        source.pageId,
+      linkType
+    },
     malformed
   };
 }

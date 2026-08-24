@@ -1187,3 +1187,231 @@ test(
     );
   }
 );
+
+
+test(
+  'workspace-diagnostics-panel-confirms-and-applies-preview-through-apply-owner',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const popup =
+            document.createElement('div');
+
+          document.body.appendChild(
+            popup
+          );
+
+          const {
+            renderWorkspaceDiagnosticsPanel
+          } = await import(
+            '/js/ui/workspaceDiagnosticsPanel.js'
+          );
+
+          const pages =
+            [
+              {
+                id: 'target',
+                title: 'Target',
+                type: 'card',
+                body: '<h1>Target</h1>',
+                content: '<h1>Target</h1>'
+              },
+              {
+                id: 'source',
+                title: 'Source',
+                type: 'card',
+                updatedAt: '2026-08-24T08:00:00.000Z',
+                body: '<h1>Source</h1><p>[[Missing Page]]</p>',
+                content: '<h1>Source</h1><p>[[Missing Page]]</p>'
+              }
+            ];
+
+          let applyCalls =
+            0;
+
+          let assetListCalls =
+            0;
+
+          let appliedPlanKind =
+            '';
+
+          let appliedTargetId =
+            '';
+
+          await renderWorkspaceDiagnosticsPanel(
+            popup,
+            {
+              hasWorkspace: true,
+              autoRun: true,
+              workspacePath: 'X:\\ДНД\\Мастер\\База',
+              canWriteWorkspace: true,
+              backupStatus: {
+                backups: [],
+                incomplete: []
+              },
+              pendingOperations: [],
+              pages,
+              listAssetPaths: async () => {
+
+                assetListCalls +=
+                  1;
+
+                return [];
+              },
+              performanceEvents: [],
+              applyRepairPreviewPlan: async ({ plan }) => {
+
+                applyCalls +=
+                  1;
+
+                appliedPlanKind =
+                  plan.action.kind;
+
+                appliedTargetId =
+                  plan.target.id;
+
+                return {
+                  status:
+                    'applied',
+                  backupManifest: {
+                    id:
+                      'backup-ui'
+                  },
+                  diagnostics: {
+                    summary: {
+                      issueCount:
+                        0
+                    }
+                  }
+                };
+              }
+            }
+          );
+
+          const diagnosticSelect =
+            popup.querySelector(
+              '[data-repair-preview-diagnostic]'
+            );
+
+          const targetSelect =
+            popup.querySelector(
+              '[data-repair-preview-target]'
+            );
+
+          const previewButton =
+            popup.querySelector(
+              '[data-repair-preview-show]'
+            );
+
+          const applyButton =
+            popup.querySelector(
+              '[data-repair-preview-apply]'
+            );
+
+          const applyInitiallyDisabled =
+            applyButton.disabled;
+
+          diagnosticSelect.value =
+            diagnosticSelect.options[1].value;
+
+          diagnosticSelect.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          targetSelect.value =
+            'target';
+
+          targetSelect.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          previewButton.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const applyAfterPreviewDisabled =
+            applyButton.disabled;
+
+          applyButton.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(() =>
+              requestAnimationFrame(resolve)
+            )
+          );
+
+          return {
+            applyInitiallyDisabled,
+            applyAfterPreviewDisabled,
+            applyCalls,
+            appliedPlanKind,
+            appliedTargetId,
+            assetListCalls,
+            text:
+              popup.textContent
+          };
+        }
+      );
+
+    expect(
+      result.applyInitiallyDisabled
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.applyAfterPreviewDisabled
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.applyCalls
+    ).toBe(
+      1
+    );
+
+    expect(
+      result.appliedPlanKind
+    ).toBe(
+      'replace-internal-link-target'
+    );
+
+    expect(
+      result.appliedTargetId
+    ).toBe(
+      'target'
+    );
+
+    expect(
+      result.assetListCalls
+    ).toBeGreaterThanOrEqual(
+      2
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Предпросмотр плана правки'
+    );
+  }
+);

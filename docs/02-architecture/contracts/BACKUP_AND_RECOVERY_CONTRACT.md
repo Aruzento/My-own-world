@@ -216,6 +216,19 @@ The model deliberately does not infer replacement targets from fuzzy title simil
 
 Each ready plan records the source page, diagnostic reason, affected field path, before/after target, local text or relationship context, backup requirement for future apply and stale-plan evidence from the current source page (`contentHash`, `updatedAt`, content length and revision when available). Preview creation, target changes, cancellation and reopening are side-effect free: no page writes, asset writes/deletes, repository/index mutation or backup creation may occur.
 
+## Persistent Repair Apply
+
+Since `0.0.1.12.10`, `applyRepairPreviewPlan()` may apply only ready plans produced by the repair-preview contract. There is no global repair-all path in v1, and diagnostics UI must not apply hidden auto-fixes.
+
+The current persistent repair scope is intentionally narrow:
+
+- selected raw wiki links and converted wiki/internal page anchors are rewritten through PageRecord body updates and the existing `PageCommandService` / write queue lifecycle;
+- selected relationship endpoints are rewritten through the existing Knowledge Graph relationship command bridge.
+
+Apply validates stale evidence before creating a backup. If the source page content hash, updated timestamp, content length or revision evidence no longer matches, apply is blocked and the user must regenerate the preview. This is operation-scoped stale protection only; general editor conflict handling remains a future `0.0.1.13.0` responsibility.
+
+Every persistent repair requires the existing backup safety owner before writes start. If backup creation or verification fails, no repair write may occur. If the later page write fails or the command owner reports a stale/superseded non-durable result, the UI reports failure instead of success, and the safety backup id is preserved for recovery guidance.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.

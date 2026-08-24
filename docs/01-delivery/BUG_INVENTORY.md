@@ -272,13 +272,13 @@ Status: Partially covered / needs repair validation
 
 Source: plan `0.0.1.6.0` and backup/recovery contract.
 
-Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions now cover malformed pages, partial data, missing assets, invalid workspace shape, backup-before-repair failure, non-destructive restore preview, page-level partial restore, restore failure reporting after the safety backup, user-facing asset verification categories, grouped broken wiki/internal-link/relationship diagnostics and cautious orphan/connectivity review. Non-page repair preview and persistence still need validation.
+Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions now cover malformed pages, partial data, missing assets, invalid workspace shape, backup-before-repair failure, non-destructive restore preview, page-level partial restore, restore failure reporting after the safety backup, user-facing asset verification categories, grouped broken wiki/internal-link/relationship diagnostics, cautious orphan/connectivity review, preview-only repair plans and backup-gated application for selected link/relationship repairs. Real recovery validation still needs to close the phase.
 
 Risk: recovery tools can still be scary or incomplete if link cleanup or map/task repairs do not explain what will change before writing.
 
 Next check: continue Phase `0.0.1.12.0` with deliberate persistent repair flow after the preview-only repair plan surface.
 
-Regression target: storage/browser tests for restore preview, partial restore, restore failure safety, asset verification, broken internal link diagnostics, orphan review, repair preview and future persistent repair actions.
+Regression target: storage/browser tests for restore preview, partial restore, restore failure safety, asset verification, broken internal link diagnostics, orphan review, repair preview, persistent repair apply and real recovery validation.
 
 ### BUG-012. Documentation readability and encoding guard need another pass
 
@@ -357,4 +357,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, `0.0.1.12.5` hardened restore failure safety after the pre-restore backup, `0.0.1.12.6` added asset verification diagnostics, `0.0.1.12.7` added broken internal link diagnostics, `0.0.1.12.8` added orphan/connectivity review, `0.0.1.12.9` added preview-only repair plans, and `0.0.1.12.10` Persistent Repair Flow is next.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, `0.0.1.12.5` hardened restore failure safety after the pre-restore backup, `0.0.1.12.6` added asset verification diagnostics, `0.0.1.12.7` added broken internal link diagnostics, `0.0.1.12.8` added orphan/connectivity review, `0.0.1.12.9` added preview-only repair plans, `0.0.1.12.10` added backup-gated persistent repair apply, and `0.0.1.12.11` Real Recovery Validation is next.

@@ -142,9 +142,11 @@ export {
 
 
 export {
+  REPAIR_APPLY_STATUS,
   REPAIR_PREVIEW_CONFLICTS,
   REPAIR_PREVIEW_STATUS,
   REPAIR_PREVIEW_TYPES,
+  applyRepairPreviewPlan,
   buildRepairPreviewModel,
   createRepairPreviewPlan
 } from './repairPreview.js';

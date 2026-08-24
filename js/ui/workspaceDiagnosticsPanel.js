@@ -17,6 +17,7 @@ import {
   buildAssetVerificationReport,
   buildBrokenInternalLinkReport,
   buildOrphanReviewReport,
+  applyRepairPreviewPlan,
   buildRepairPreviewModel,
   createRepairPreviewPlan,
   updatePageParent
@@ -857,7 +858,8 @@ function renderDiagnosticsResult(
 
   container.appendChild(
     createRepairPreviewSection(
-      diagnostics.repairPreview
+      diagnostics.repairPreview,
+      options
     )
   );
 
@@ -986,7 +988,8 @@ function createSchemaRecoverySection(
 
 
 function createRepairPreviewSection(
-  model = null
+  model = null,
+  options = {}
 ) {
 
   const section =
@@ -1111,9 +1114,22 @@ function createRepairPreviewSection(
   cancelButton.textContent =
     'Сбросить';
 
+  const applyButton =
+    document.createElement('button');
+
+  applyButton.type =
+    'button';
+
+  applyButton.dataset.repairPreviewApply =
+    'true';
+
+  applyButton.textContent =
+    'Подтвердить и применить';
+
   actionRow.append(
     previewButton,
-    cancelButton
+    cancelButton,
+    applyButton
   );
 
   const status =
@@ -1142,10 +1158,13 @@ function createRepairPreviewSection(
   output.dataset.repairPreviewOutput =
     'empty';
 
+  let currentPlan =
+    null;
+
   const renderCurrentPlan =
     () => {
 
-      const plan =
+      currentPlan =
         createRepairPreviewPlan({
           model,
           diagnosticId:
@@ -1157,8 +1176,10 @@ function createRepairPreviewSection(
       renderRepairPreviewPlan(
         output,
         status,
-        plan
+        currentPlan
       );
+
+      updateButtonState();
     };
 
   const updateButtonState =
@@ -1167,6 +1188,9 @@ function createRepairPreviewSection(
       previewButton.disabled =
         !diagnosticSelect.select.value ||
         !targetSelect.select.value;
+
+      applyButton.disabled =
+        currentPlan?.status !== 'ready';
     };
 
   diagnosticSelect.select.addEventListener(
@@ -1177,6 +1201,9 @@ function createRepairPreviewSection(
 
       output.dataset.repairPreviewOutput =
         'empty';
+
+      currentPlan =
+        null;
 
       status.dataset.repairPreviewStatus =
         'waiting';
@@ -1226,6 +1253,9 @@ function createRepairPreviewSection(
       output.dataset.repairPreviewOutput =
         'empty';
 
+      currentPlan =
+        null;
+
       status.dataset.repairPreviewStatus =
         'cancelled';
 
@@ -1234,6 +1264,19 @@ function createRepairPreviewSection(
 
       updateButtonState();
     }
+  );
+
+  applyButton.addEventListener(
+    'click',
+    () => applyRepairPreviewFromUI({
+      plan:
+        currentPlan,
+      options,
+      status,
+      previewButton,
+      cancelButton,
+      applyButton
+    })
   );
 
   updateButtonState();
@@ -1432,6 +1475,186 @@ function renderRepairPreviewPlan(
     title,
     list
   );
+}
+
+
+async function applyRepairPreviewFromUI({
+  plan,
+  options,
+  status,
+  previewButton,
+  cancelButton,
+  applyButton
+}) {
+
+  if (plan?.status !== 'ready') {
+
+    status.dataset.repairPreviewStatus =
+      'blocked';
+
+    status.textContent =
+      'Сначала создайте готовый предпросмотр правки.';
+
+    return;
+  }
+
+  previewButton.disabled =
+    true;
+
+  cancelButton.disabled =
+    true;
+
+  applyButton.disabled =
+    true;
+
+  try {
+
+    status.dataset.repairPreviewStatus =
+      'applying';
+
+    status.textContent =
+      'Создаю резервную копию перед правкой...';
+
+    const applyInput =
+      {
+        plan,
+        pages:
+          getRecoveryPages(
+            options
+          ),
+        onProgress:
+          progress => {
+
+            status.textContent =
+              formatRepairApplyProgress(
+                progress
+              );
+          }
+      };
+
+    const safetyBackup =
+      createRepairSafetyBackupFactory(
+        options
+      );
+
+    if (safetyBackup) {
+
+      applyInput.createSafetyBackup =
+        safetyBackup;
+    }
+
+    const applyFn =
+      options.applyRepairPreviewPlan ||
+      applyRepairPreviewPlan;
+
+    const result =
+      await applyFn(
+        applyInput
+      );
+
+    status.dataset.repairPreviewStatus =
+      'applied';
+
+    status.textContent =
+      `Правка применена. Safety backup: ${result.backupManifest?.id || 'создан'}. Обновляю диагностику...`;
+
+    if (typeof options.refreshDiagnostics === 'function') {
+
+      await options.refreshDiagnostics();
+    }
+
+  } catch (error) {
+
+    console.error(
+      'Не удалось применить repair preview plan.',
+      error
+    );
+
+    status.dataset.repairPreviewStatus =
+      error?.repairApplyStatus === 'blocked'
+        ? 'blocked'
+        : 'failed';
+
+    status.textContent =
+      formatRepairApplyError(
+        error
+      );
+
+    previewButton.disabled =
+      false;
+
+    cancelButton.disabled =
+      false;
+
+    applyButton.disabled =
+      false;
+  }
+}
+
+
+function createRepairSafetyBackupFactory(
+  options
+) {
+
+  if (typeof options.createRepairSafetyBackup === 'function') {
+
+    return options.createRepairSafetyBackup;
+  }
+
+  if (typeof options.createRecoveryBackup === 'function') {
+
+    return ({
+      reason,
+      onProgress
+    } = {}) =>
+      options.createRecoveryBackup({
+        reason:
+          reason || 'repair-preview-apply',
+        onProgress
+      });
+  }
+
+  return null;
+}
+
+
+function formatRepairApplyProgress(
+  progress = {}
+) {
+
+  return [
+    'Создаю резервную копию перед правкой',
+    progress.label || '',
+    progress.stage || '',
+    Number(progress.total || 0)
+      ? `${progress.current || 0}/${progress.total}`
+      : ''
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+
+function formatRepairApplyError(
+  error
+) {
+
+  const backupId =
+    error?.backupManifest?.id
+      ? ` Safety backup: ${error.backupManifest.id}.`
+      : '';
+
+  if (error?.code === 'STALE_SOURCE') {
+
+    return `Предпросмотр устарел. Обновите диагностику и создайте план заново.${backupId}`;
+  }
+
+  if (error?.code === 'BACKUP_FAILED') {
+
+    return `Резервная копия не создана, правка не запускалась: ${error.message}`;
+  }
+
+  return `Repair остановлен: ${error?.message || error}.${backupId}`;
 }
 
 

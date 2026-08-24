@@ -2,10 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  createRuntimePageFromContent,
+  updatePageRecordContent
+} from '../js/core/pageRecord.js';
+
+import {
+  getPageById
+} from '../js/repository/pageRepository.js';
+
+import {
+  setPages
+} from '../js/stateActions.js';
+
+import {
+  setStorageAdapter
+} from '../js/storage/storageAdapter.js';
+
+import {
   INTERNAL_LINK_REASONS
 } from '../js/storage/internalLinkDiagnostics.js';
 
 import {
+  applyRepairPreviewPlan,
   REPAIR_PREVIEW_CONFLICTS,
   REPAIR_PREVIEW_STATUS,
   buildRepairPreviewModel,
@@ -13,7 +31,9 @@ import {
 } from '../js/storage/repairPreview.js';
 
 import {
-  createDataSafetyPage
+  createDataSafetyPage,
+  createMemoryWorkspaceAdapter,
+  seedWorkspace
 } from './fixtures/dataSafetyFixtures.mjs';
 
 
@@ -427,6 +447,758 @@ test(
     assert.equal(
       JSON.stringify(pages),
       before
+    );
+  }
+);
+
+
+test(
+  'persistent repair applies a previewed wiki link after the safety backup and reload resolves it',
+  async () => {
+
+    const adapter =
+      createMemoryWorkspaceAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'source',
+        title:
+          'Source',
+        body:
+          '<h1>Source</h1><p>Keep this paragraph.</p><p>[[Missing Page|lost gate]]</p>'
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'target',
+        title:
+          'Existing Target'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    await seedWorkspace(
+      adapter,
+      {
+        pages
+      }
+    );
+
+    setPages(
+      pages
+    );
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'target'
+      });
+
+    const result =
+      await applyRepairPreviewPlan({
+        plan,
+        pages
+      });
+
+    const durableContent =
+      await adapter.readText(
+        source.path
+      );
+
+    assert.equal(
+      result.status,
+      'applied'
+    );
+
+    assert.equal(
+      result.backupManifest.reason,
+      'repair-preview-apply'
+    );
+
+    assert.match(
+      durableContent,
+      /\[\[Existing Target\|lost gate\]\]/
+    );
+
+    assert.match(
+      durableContent,
+      /Keep this paragraph/
+    );
+
+    const reloadedPages =
+      [
+        createRuntimePageFromContent({
+          content:
+            durableContent,
+          name:
+            source.name,
+          path:
+            source.path
+        }),
+        target
+      ];
+
+    assert.equal(
+      buildRepairPreviewModel({
+        pages:
+          reloadedPages
+      }).summary.supportedDiagnosticCount,
+      0
+    );
+  }
+);
+
+
+test(
+  'persistent repair applies a previewed converted anchor link without losing visible label',
+  async () => {
+
+    const adapter =
+      createMemoryWorkspaceAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'source',
+        title:
+          'Source',
+        body:
+          '<h1>Source</h1><a class="wiki-link internal-link is-missing" href="#" data-page-id="missing-page" data-page-title="Missing Page">Lost gate</a>'
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'target',
+        title:
+          'Existing Target'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    await seedWorkspace(
+      adapter,
+      {
+        pages
+      }
+    );
+
+    setPages(
+      pages
+    );
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'target'
+      });
+
+    await applyRepairPreviewPlan({
+      plan,
+      pages
+    });
+
+    const durableContent =
+      await adapter.readText(
+        source.path
+      );
+
+    assert.match(
+      durableContent,
+      /data-page-id="target"/
+    );
+
+    assert.match(
+      durableContent,
+      /data-page-title="Existing Target"/
+    );
+
+    assert.match(
+      durableContent,
+      />Lost gate<\/a>/
+    );
+
+    assert.doesNotMatch(
+      durableContent,
+      /is-missing/
+    );
+
+    assert.equal(
+      buildRepairPreviewModel({
+        pages:
+          [
+            createRuntimePageFromContent({
+              content:
+                durableContent,
+              name:
+                source.name,
+              path:
+                source.path
+            }),
+            target
+          ]
+      }).summary.supportedDiagnosticCount,
+      0
+    );
+  }
+);
+
+
+test(
+  'persistent repair applies a previewed relationship endpoint through relationship command ownership',
+  async () => {
+
+    const adapter =
+      createMemoryWorkspaceAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'hero',
+        title:
+          'Hero',
+        relationships:
+          [
+            {
+              type:
+                'ally',
+              targetId:
+                'missing-ally',
+              label:
+                'Lost ally'
+            }
+          ]
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'ally',
+        title:
+          'New Ally'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    await seedWorkspace(
+      adapter,
+      {
+        pages
+      }
+    );
+
+    setPages(
+      pages
+    );
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'ally'
+      });
+
+    await applyRepairPreviewPlan({
+      plan,
+      pages
+    });
+
+    const durableContent =
+      await adapter.readText(
+        source.path
+      );
+
+    const reloadedSource =
+      createRuntimePageFromContent({
+        content:
+          durableContent,
+        name:
+          source.name,
+        path:
+          source.path
+      });
+
+    assert.deepEqual(
+      reloadedSource.relationships,
+      [
+        {
+          type:
+            'ally',
+          targetId:
+            'ally',
+          targetTitle:
+            'New Ally',
+          label:
+            'Lost ally'
+        }
+      ]
+    );
+
+    assert.equal(
+      buildRepairPreviewModel({
+        pages:
+          [
+            reloadedSource,
+            target
+          ]
+      }).summary.supportedDiagnosticCount,
+      0
+    );
+  }
+);
+
+
+test(
+  'persistent repair blocks before writes when safety backup fails',
+  async () => {
+
+    const adapter =
+      createMemoryWorkspaceAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'source',
+        title:
+          'Source',
+        body:
+          '<h1>Source</h1><p>[[Missing Page]]</p>'
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'target',
+        title:
+          'Target'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    await seedWorkspace(
+      adapter,
+      {
+        pages
+      }
+    );
+
+    const originalContent =
+      await adapter.readText(
+        source.path
+      );
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'target'
+      });
+
+    let writeCalls =
+      0;
+
+    await assert.rejects(
+      () => applyRepairPreviewPlan({
+        plan,
+        pages,
+        createSafetyBackup: async () => {
+
+          throw new Error(
+            'backup denied'
+          );
+        },
+        persistContentCommand: async () => {
+
+          writeCalls +=
+            1;
+        }
+      }),
+      error =>
+        error.code === 'BACKUP_FAILED' &&
+        /backup denied/.test(error.message)
+    );
+
+    assert.equal(
+      writeCalls,
+      0
+    );
+
+    assert.equal(
+      await adapter.readText(
+        source.path
+      ),
+      originalContent
+    );
+  }
+);
+
+
+test(
+  'persistent repair blocks stale preview before backup creation',
+  async () => {
+
+    const adapter =
+      createMemoryWorkspaceAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'source',
+        title:
+          'Source',
+        body:
+          '<h1>Source</h1><p>[[Missing Page]]</p>'
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'target',
+        title:
+          'Target'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    await seedWorkspace(
+      adapter,
+      {
+        pages
+      }
+    );
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'target'
+      });
+
+    source.content =
+      updatePageRecordContent(
+        source.content,
+        {
+          body:
+            '<h1>Source</h1><p>Changed before apply. [[Missing Page]]</p>'
+        }
+      );
+
+    let backupCalls =
+      0;
+
+    await assert.rejects(
+      () => applyRepairPreviewPlan({
+        plan,
+        pages,
+        createSafetyBackup: async () => {
+
+          backupCalls +=
+            1;
+
+          return {
+            id:
+              'unexpected'
+          };
+        }
+      }),
+      error =>
+        error.code === REPAIR_PREVIEW_CONFLICTS.staleSource &&
+        /устарел/.test(error.message)
+    );
+
+    assert.equal(
+      backupCalls,
+      0
+    );
+  }
+);
+
+
+test(
+  'persistent repair write failure keeps runtime repository and durable content coherent',
+  async () => {
+
+    const adapter =
+      createMemoryWorkspaceAdapter();
+
+    setStorageAdapter(
+      adapter
+    );
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'source',
+        title:
+          'Source',
+        body:
+          '<h1>Source</h1><p>[[Missing Page]]</p>'
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'target',
+        title:
+          'Target'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    await seedWorkspace(
+      adapter,
+      {
+        pages
+      }
+    );
+
+    setPages(
+      pages
+    );
+
+    const originalContent =
+      source.content;
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    adapter.writeText =
+      async (path, content) => {
+
+        if (path === source.path) {
+
+          throw new Error(
+            'write denied'
+          );
+        }
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'target'
+      });
+
+    await assert.rejects(
+      () => applyRepairPreviewPlan({
+        plan,
+        pages,
+        createSafetyBackup: async () => ({
+          id:
+            'backup-before-failure',
+          reason:
+            'repair-preview-apply'
+        })
+      }),
+      error =>
+        error.code === 'REPAIR_WRITE_FAILED' &&
+        error.backupManifest?.id === 'backup-before-failure'
+    );
+
+    assert.equal(
+      source.content,
+      originalContent
+    );
+
+    assert.equal(
+      getPageById(
+        'source'
+      )?.content,
+      originalContent
+    );
+
+    assert.equal(
+      await adapter.readText(
+        source.path
+      ),
+      originalContent
+    );
+
+    assert.equal(
+      buildRepairPreviewModel({
+        pages
+      }).summary.supportedDiagnosticCount,
+      1
+    );
+  }
+);
+
+
+test(
+  'persistent repair does not claim success when command reports non-durable write',
+  async () => {
+
+    const source =
+      createDataSafetyPage({
+        id:
+          'source',
+        title:
+          'Source',
+        body:
+          '<h1>Source</h1><p>[[Missing Page]]</p>'
+      });
+
+    const target =
+      createDataSafetyPage({
+        id:
+          'target',
+        title:
+          'Target'
+      });
+
+    const pages =
+      [
+        source,
+        target
+      ];
+
+    const originalContent =
+      source.content;
+
+    const model =
+      buildRepairPreviewModel({
+        pages
+      });
+
+    const plan =
+      createRepairPreviewPlan({
+        model,
+        diagnosticId:
+          model.diagnostics[0].id,
+        targetPageId:
+          'target'
+      });
+
+    await assert.rejects(
+      () => applyRepairPreviewPlan({
+        plan,
+        pages,
+        createSafetyBackup: async () => ({
+          id:
+            'backup-before-stale-write',
+          reason:
+            'repair-preview-apply'
+        }),
+        persistContentCommand: async () => ({
+          stale:
+            true,
+          written:
+            false,
+          writeStatus:
+            'stale'
+        })
+      }),
+      error =>
+        error.code === 'REPAIR_WRITE_FAILED' &&
+        error.backupManifest?.id === 'backup-before-stale-write'
+    );
+
+    assert.equal(
+      source.content,
+      originalContent
+    );
+
+    assert.equal(
+      source.body,
+      '<h1>Source</h1><p>[[Missing Page]]</p>'
     );
   }
 );

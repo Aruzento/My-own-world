@@ -612,6 +612,20 @@ export function createMemoryWorkspaceAdapter({
       );
     },
 
+    async getDirectoryHandle(
+      path
+    ) {
+
+      return {
+        kind:
+          'directory',
+        path:
+          normalizeWorkspacePath(
+            path
+          )
+      };
+    },
+
     async readText(
       path
     ) {
