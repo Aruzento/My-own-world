@@ -6,6 +6,59 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-25: 0.0.1.14.4 Dice Formula Limits & Invalid Input Safety
+
+### Disposition
+
+- Closed `0.0.1.14.4` as the Dice Engine limits and invalid-input safety leaf.
+- Started from current HEAD `24633c7`.
+- Did not start `0.0.1.14.5` Deterministic RNG.
+- Set the next leaf to `0.0.1.14.5` Deterministic RNG.
+
+### Limits Contract
+
+- Added central `DICE_ENGINE_LIMITS` in `js/dice/diceEngine.js`.
+- V1 limits are now explicit for formula length, AST nodes, parentheses depth, dice term count, total dice, per-term dice count, die sides and safe numeric range.
+- Added `DiceFormulaLimitError` with `code: "DICE_FORMULA_LIMIT_EXCEEDED"` and `classification: "LIMIT_EXCEEDED"`.
+- Limit errors include `limitKind`, configured `maximum`, observed value where useful and optional position.
+- Limit handling rejects invalid input; it does not clamp.
+
+### Fail-Fast Behavior
+
+- `1001d6` fails before RNG because the per-term dice count exceeds `MAX_DICE_PER_TERM`.
+- `d1000001` fails before RNG because die sides exceed `MAX_DIE_SIDES`.
+- `1000d6+d6` fails before RNG because total dice exceed `MAX_TOTAL_DICE`.
+- More than 32 dice terms fail before RNG.
+- Overlong formulas, over-deep parentheses and excessive AST node count fail during parse/validation before evaluation.
+
+### Invalid Input Safety
+
+- Malicious/code-shaped inputs such as `constructor.constructor(...)`, `globalThis`, `window`, `document`, `process`, `require(...)`, `import(...)`, arrow functions and template-string payloads remain invalid formula data.
+- Unsafe numeric arithmetic and non-finite/unsafe intermediate/final results now use the limit error path.
+
+### Explicit Non-Work
+
+- Did not implement deterministic RNG ownership, advantage/disadvantage, critical rules, initiative migration, dice UI, persistence, event/roll log, combat behavior or real-workspace mutation.
+- Did not change workspace/page/backup persistent formats.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with limits, `LIMIT_EXCEEDED` error shape and security input examples.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --check tests\diceFormulaLimits.test.mjs`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs`
+- `npm run test`
+- `npm run verify`
+- `npm run docs:index`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.5` Deterministic RNG.
+
 ## 2026-08-24: 0.0.1.14.3 Core Dice Evaluator
 
 ### Disposition

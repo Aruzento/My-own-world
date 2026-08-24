@@ -10,6 +10,27 @@ const BINARY_OPERATORS =
   ]);
 
 
+export const DICE_ENGINE_LIMITS =
+  Object.freeze({
+    MAX_FORMULA_LENGTH:
+      256,
+    MAX_AST_NODES:
+      128,
+    MAX_PARENTHESES_DEPTH:
+      16,
+    MAX_DICE_TERMS:
+      32,
+    MAX_TOTAL_DICE:
+      1000,
+    MAX_DICE_PER_TERM:
+      1000,
+    MAX_DIE_SIDES:
+      1000000,
+    MAX_SAFE_NUMBER:
+      Number.MAX_SAFE_INTEGER
+  });
+
+
 export class DiceFormulaSyntaxError extends SyntaxError {
 
   constructor(
@@ -38,6 +59,49 @@ export class DiceFormulaSyntaxError extends SyntaxError {
 
     this.tokenType =
       tokenType;
+  }
+}
+
+
+export class DiceFormulaLimitError extends Error {
+
+  constructor(
+    reason,
+    {
+      limitKind,
+      maximum,
+      observed,
+      position = null
+    }
+  ) {
+
+    super(
+      reason
+    );
+
+    this.name =
+      'DiceFormulaLimitError';
+
+    this.code =
+      'DICE_FORMULA_LIMIT_EXCEEDED';
+
+    this.classification =
+      'LIMIT_EXCEEDED';
+
+    this.reason =
+      reason;
+
+    this.limitKind =
+      limitKind;
+
+    this.maximum =
+      maximum;
+
+    this.observed =
+      observed;
+
+    this.position =
+      position;
   }
 }
 
@@ -88,6 +152,10 @@ export function parseDiceFormula(
     );
   }
 
+  assertFormulaLength(
+    formula
+  );
+
   const parser =
     new DiceFormulaParser(
       tokenizeFormula(
@@ -99,6 +167,10 @@ export function parseDiceFormula(
     parser.parseExpression();
 
   parser.expectEnd();
+
+  assertAstNodeLimit(
+    ast
+  );
 
   return ast;
 }
@@ -776,16 +848,20 @@ function assertSupportedNumber(
     ) ||
     Math.abs(
       value
-    ) > Number.MAX_SAFE_INTEGER
+    ) > DICE_ENGINE_LIMITS.MAX_SAFE_NUMBER
   ) {
 
-    throw createEvaluationError(
+    throw createLimitError(
       reason,
       {
-        nodeType:
-          node?.type ?? null,
-        operator:
-          node?.operator ?? null
+        limitKind:
+          'MAX_SAFE_NUMBER',
+        maximum:
+          DICE_ENGINE_LIMITS.MAX_SAFE_NUMBER,
+        observed:
+          value,
+        position:
+          node?.start ?? null
       }
     );
   }
@@ -844,6 +920,12 @@ function tokenizeFormula(
   const tokens =
     [];
 
+  const diceLimitTracker =
+    createDiceLimitTracker();
+
+  let parenthesesDepth =
+    0;
+
   let index =
     0;
 
@@ -885,7 +967,12 @@ function tokenizeFormula(
             formula,
             index,
             unsigned
-          );
+        );
+
+        trackDiceToken(
+          diceLimitTracker,
+          diceToken.token
+        );
 
         tokens.push(
           diceToken.token
@@ -920,7 +1007,12 @@ function tokenizeFormula(
         readDiceWithoutCount(
           formula,
           index
-        );
+      );
+
+      trackDiceToken(
+        diceLimitTracker,
+        diceToken.token
+      );
 
       tokens.push(
         diceToken.token
@@ -956,6 +1048,28 @@ function tokenizeFormula(
       char === '(' ||
       char === ')'
     ) {
+
+      if (
+        char === '('
+      ) {
+
+        parenthesesDepth += 1;
+
+        assertLimitWithinMaximum(
+          'MAX_PARENTHESES_DEPTH',
+          DICE_ENGINE_LIMITS.MAX_PARENTHESES_DEPTH,
+          parenthesesDepth,
+          'Parentheses nesting exceeds the configured limit',
+          index
+        );
+      } else {
+
+        parenthesesDepth =
+          Math.max(
+            0,
+            parenthesesDepth - 1
+          );
+      }
 
       tokens.push({
         type:
@@ -1007,6 +1121,14 @@ function readDiceAfterCount(
       'dice'
     );
   }
+
+  assertLimitWithinMaximum(
+    'MAX_DICE_PER_TERM',
+    DICE_ENGINE_LIMITS.MAX_DICE_PER_TERM,
+    countInteger.value,
+    'Dice count exceeds the configured per-term limit',
+    countInteger.start
+  );
 
   const sidesStart =
     countInteger.end + 1;
@@ -1102,6 +1224,14 @@ function readDiceSides(
     );
   }
 
+  assertLimitWithinMaximum(
+    'MAX_DIE_SIDES',
+    DICE_ENGINE_LIMITS.MAX_DIE_SIDES,
+    sides.value,
+    'Dice sides exceed the configured limit',
+    sides.start
+  );
+
   return sides;
 }
 
@@ -1175,6 +1305,145 @@ function createBinaryNode(
 }
 
 
+function assertFormulaLength(
+  formula
+) {
+
+  assertLimitWithinMaximum(
+    'MAX_FORMULA_LENGTH',
+    DICE_ENGINE_LIMITS.MAX_FORMULA_LENGTH,
+    formula.length,
+    'Formula length exceeds the configured limit',
+    0
+  );
+}
+
+
+function assertAstNodeLimit(
+  ast
+) {
+
+  const nodeCount =
+    countAstNodes(
+      ast
+    );
+
+  assertLimitWithinMaximum(
+    'MAX_AST_NODES',
+    DICE_ENGINE_LIMITS.MAX_AST_NODES,
+    nodeCount,
+    'Formula AST node count exceeds the configured limit'
+  );
+}
+
+
+function countAstNodes(
+  node
+) {
+
+  if (
+    node.type === 'number' ||
+    node.type === 'dice'
+  ) {
+
+    return 1;
+  }
+
+  if (
+    node.type === 'unary'
+  ) {
+
+    return (
+      1 +
+      countAstNodes(
+        node.argument
+      )
+    );
+  }
+
+  if (
+    node.type === 'binary'
+  ) {
+
+    return (
+      1 +
+      countAstNodes(
+        node.left
+      ) +
+      countAstNodes(
+        node.right
+      )
+    );
+  }
+
+  return 1;
+}
+
+
+function createDiceLimitTracker() {
+
+  return {
+    diceTerms:
+      0,
+    totalDice:
+      0
+  };
+}
+
+
+function trackDiceToken(
+  tracker,
+  token
+) {
+
+  tracker.diceTerms += 1;
+
+  assertLimitWithinMaximum(
+    'MAX_DICE_TERMS',
+    DICE_ENGINE_LIMITS.MAX_DICE_TERMS,
+    tracker.diceTerms,
+    'Dice term count exceeds the configured limit',
+    token.start
+  );
+
+  tracker.totalDice +=
+    token.count;
+
+  assertLimitWithinMaximum(
+    'MAX_TOTAL_DICE',
+    DICE_ENGINE_LIMITS.MAX_TOTAL_DICE,
+    tracker.totalDice,
+    'Total dice count exceeds the configured limit',
+    token.start
+  );
+}
+
+
+function assertLimitWithinMaximum(
+  limitKind,
+  maximum,
+  observed,
+  reason,
+  position = null
+) {
+
+  if (
+    observed > maximum
+  ) {
+
+    throw createLimitError(
+      reason,
+      {
+        limitKind,
+        maximum,
+        observed,
+        position
+      }
+    );
+  }
+}
+
+
 function createSyntaxError(
   reason,
   position,
@@ -1187,6 +1456,18 @@ function createSyntaxError(
       position,
       tokenType
     }
+  );
+}
+
+
+function createLimitError(
+  reason,
+  options
+) {
+
+  return new DiceFormulaLimitError(
+    reason,
+    options
   );
 }
 

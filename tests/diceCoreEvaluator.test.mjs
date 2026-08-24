@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   DiceFormulaEvaluationError,
+  DiceFormulaLimitError,
   rollDice
 } from '../js/dice/diceEngine.js';
 
@@ -63,6 +64,24 @@ function assertEvaluationError(
     error =>
       error instanceof DiceFormulaEvaluationError &&
       error.code === 'DICE_FORMULA_EVALUATION_ERROR' &&
+      reasonPattern.test(
+        error.reason
+      )
+  );
+}
+
+
+function assertLimitError(
+  callback,
+  reasonPattern
+) {
+
+  assert.throws(
+    callback,
+    error =>
+      error instanceof DiceFormulaLimitError &&
+      error.code === 'DICE_FORMULA_LIMIT_EXCEEDED' &&
+      error.classification === 'LIMIT_EXCEEDED' &&
       reasonPattern.test(
         error.reason
       )
@@ -426,7 +445,7 @@ test(
   'dice evaluator rejects non-finite and unsafe numeric results',
   () => {
 
-    assertEvaluationError(
+    assertLimitError(
       () => rollDice(
         {
           formula:
@@ -440,7 +459,7 @@ test(
       /numeric range/
     );
 
-    assertEvaluationError(
+    assertLimitError(
       () => rollDice(
         {
           formula:

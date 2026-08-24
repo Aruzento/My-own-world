@@ -56,6 +56,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.14.0` NF-002 Safe Dice Engine is now the active phase. The start commit updates status only; no dice parser/evaluator/RNG/result contract, dice UI, event log, combat functionality or persistent format change has been implemented yet.
 - `0.0.1.14.2` adds the parser-only Dice Engine facade: `parseDiceFormula(formula)` parses safe V1 formulas into deterministic AST data for numbers, dice terms, arithmetic, unary operators and parentheses. It rejects malformed dice and code-shaped payloads without executing formula text. No rolling, totals, RNG, initiative migration, UI, persistence, event log or combat behavior was added.
 - `0.0.1.14.3` adds the core Dice Engine evaluator: `rollDice(request, { randomInt })` evaluates safe formulas into runtime `rollResult` data with totals and ordered roll details. It uses only injected `randomInt(1, sides)` for dice, rejects division by zero, invalid RNG output and unsafe numeric results, and still has no UI, initiative migration, persistence, event log, combat behavior, advantage/disadvantage or critical rules.
+- `0.0.1.14.4` hardens Dice Engine formula limits: formula length, AST nodes, parentheses depth, dice terms, total dice, per-term dice count, die sides and safe-number overflow now use central limits and `LIMIT_EXCEEDED` errors. Over-limit dice formulas fail before RNG where possible, and malicious/code-shaped inputs remain invalid formula data.
 
 ### Known Risks
 
@@ -64,7 +65,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
 - The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization, `0.0.1.12.0` Data Safety Completion and `0.0.1.13.0` NF-001 Edit Session Conflict Protection are closed.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair and edit-session conflict protection are implemented for the current safety scope. The active roadmap risk is finishing NF-002 Dice Safety Limits and later dice policies before rolls/feeders become durable session data.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair and edit-session conflict protection are implemented for the current safety scope. The active roadmap risk is finishing NF-002 deterministic RNG ownership and later dice policies before rolls/feeders become durable session data.
 
 ### Verification Snapshot
 

@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 # Dice Engine Contract
 
-Updated: 2026-08-24
+Updated: 2026-08-25
 
 ## Scope
 
@@ -141,6 +141,52 @@ Malformed evaluation state throws `DiceFormulaEvaluationError` with:
 
 The evaluator remains pure domain/runtime code. It must not touch DOM, UI status, storage, backups, workspace state, event logs, Campaign Map, Character/Properties, Rule Tree or combat.
 
+## 0.0.1.14.4 Limits Contract
+
+Central public limits live in `DICE_ENGINE_LIMITS`.
+
+V1 configured limits:
+
+- `MAX_FORMULA_LENGTH`: 256 characters;
+- `MAX_AST_NODES`: 128;
+- `MAX_PARENTHESES_DEPTH`: 16;
+- `MAX_DICE_TERMS`: 32;
+- `MAX_TOTAL_DICE`: 1000;
+- `MAX_DICE_PER_TERM`: 1000;
+- `MAX_DIE_SIDES`: 1000000;
+- `MAX_SAFE_NUMBER`: JavaScript `Number.MAX_SAFE_INTEGER`.
+
+Limits are rejection rules, not clamps.
+
+Where possible, limits fail before rolling any dice. Examples:
+
+- `1001d6` fails before RNG;
+- `d1000001` fails before RNG;
+- `1000d6+d6` fails before RNG;
+- more than 32 dice terms fail before RNG.
+
+Limit failures throw `DiceFormulaLimitError` with:
+
+- `code: "DICE_FORMULA_LIMIT_EXCEEDED"`;
+- `classification: "LIMIT_EXCEEDED"`;
+- `reason`;
+- `limitKind`;
+- `maximum`;
+- `observed`;
+- optional `position`.
+
+Malformed code-shaped strings remain invalid formula data. They must be rejected by syntax/limit handling, not interpreted:
+
+- `constructor.constructor(...)`;
+- `globalThis`;
+- `window`;
+- `document`;
+- `process`;
+- `require(...)`;
+- `import(...)`;
+- `()=>...`;
+- template strings such as `` `${...}` ``.
+
 ## Next Owner
 
-`0.0.1.14.4` Dice Safety Limits owns explicit formula/dice/evaluation caps. The current evaluator has finite-number protection, but broad anti-abuse limits are intentionally not finalized in `0.0.1.14.3`.
+`0.0.1.14.5` Deterministic RNG owns the default/randomness contract beyond the current injectable `randomInt` boundary. The Dice Engine still does not own UI, persistence, event logs, combat, advantage/disadvantage or critical policy behavior.
