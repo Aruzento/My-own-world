@@ -13,6 +13,11 @@ import {
 } from './editorSessionBase.js';
 
 import {
+  clearEditorSaveConflictState,
+  handleEditorSaveConflictResult
+} from './editConflictUi.js';
+
+import {
   renderTree
 } from '../tree/tree.js';
 
@@ -461,9 +466,15 @@ async function persistCurrentPage(
 
   if (result?.conflict) {
 
-    setSaveStatus(
-      'conflict',
-      'Конфликт сохранения: страница изменилась в другом месте.'
+    handleEditorSaveConflictResult(
+      result,
+      {
+        page:
+          state.currentPage,
+        editor,
+        source:
+          'special-save'
+      }
     );
 
     return result;
@@ -491,6 +502,10 @@ async function persistCurrentPage(
 
   setSaveStatus(
     'Сохранено'
+  );
+
+  clearEditorSaveConflictState(
+    state.currentPage?.id || null
   );
 
   advanceEditorPageBase(

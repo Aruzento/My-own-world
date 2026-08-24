@@ -325,6 +325,38 @@ Result contract:
 - page content is not embedded in conflict or preservation evidence;
 - unsupported or unsafe preservation falls back to the `0.0.1.13.3` structured conflict result.
 
+## Edit Conflict UI
+
+Captured in `0.0.1.13.5`.
+
+Presentation owner:
+
+- `js/editor/editConflictUi.js` owns user-facing presentation for editor save conflicts;
+- ordinary editor autosave and explicit editor save call this owner when `PageCommandService` returns `result.conflict`;
+- feature save paths must not duplicate conflict dialog logic or expose low-level revision/hash terminology as the primary user message.
+
+User-facing contract:
+
+- the dialog states that the page changed after the user opened it;
+- it states that the current draft was not written over the newer saved version;
+- it states that the draft remains available in the editor;
+- `Посмотреть актуальную версию` reads the current durable page and shows a read-only summary inside the dialog;
+- `Вернуться к своим изменениям` closes the dialog and returns focus to the editor/draft context;
+- no overwrite or destructive last-write-wins action exists in this leaf.
+
+Autosave behavior:
+
+- equivalent unresolved conflicts are deduplicated per page/conflict identity;
+- repeated autosave conflicts keep the save status blocked but do not spawn duplicate dialogs;
+- successful later saves clear the dedupe state for that page.
+
+Accessibility contract:
+
+- the dialog uses the existing `popupManager` modal lifecycle;
+- `popupManager` supplies `role="dialog"`, `aria-modal`, focus trap, Escape/outside-close handling and focus restoration;
+- the conflict dialog supplies `aria-labelledby`, `aria-describedby`, visible focus styles and a polite live region for the current-version preview;
+- `0.0.1.13.6` owns recovery choices beyond the read-only current-version preview.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.

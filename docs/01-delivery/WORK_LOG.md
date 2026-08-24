@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.5 Conflict UI
+
+### Disposition
+
+- Closed `0.0.1.13.5` as the first user-facing conflict state leaf.
+- Did not implement overwrite, automatic conflict resolution, conflict recovery, persistent format changes or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.6` Conflict Recovery.
+
+### User-Facing Conflict State
+
+- Added `js/editor/editConflictUi.js` as the common owner for editor save conflict presentation.
+- Ordinary autosave and explicit editor save now route structured `result.conflict` responses into the same dialog instead of each save path rendering its own technical message.
+- The dialog explains the conflict in Russian: the page changed after it was opened, the user's draft was not written over the newer saved version and the draft remains in the editor.
+- V1 actions remain conservative: `Посмотреть актуальную версию` shows a read-only durable preview, while `Вернуться к своим изменениям` closes the dialog and returns the user to the draft.
+- No `Overwrite anyway` action or destructive last-write-wins escape hatch was added.
+
+### Autosave And Accessibility
+
+- Equivalent autosave conflicts are deduplicated per page/conflict identity, so unresolved autosave does not repeatedly open duplicate dialogs.
+- The editor save status remains blocked after repeated conflict attempts, and the draft DOM remains unchanged for later recovery.
+- The dialog uses the existing `popupManager` modal contract for `role="dialog"`, `aria-modal`, Escape/outside close behavior, focus trap and focus restoration.
+- The dialog provides `aria-labelledby`, `aria-describedby`, visible focus styling and a polite live region for the read-only current-version preview.
+
+### Tests
+
+- `node --check js\editor\editConflictUi.js`
+- `node --check js\editor\autosave.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check tests\browser\editor-autosave.spec.mjs`
+- `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`
+- `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`
+- `npm run ui:polish:audit`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.6` Conflict Recovery.
+
 ## 2026-08-24: 0.0.1.13.4 Preserve Unrelated Changes
 
 ### Disposition

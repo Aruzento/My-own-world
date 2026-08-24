@@ -934,6 +934,8 @@ aliases: []
               '.rich-text-field'
             );
 
+          body.focus();
+
           body.textContent =
             'stale-c-draft-token';
 
@@ -942,6 +944,92 @@ aliases: []
 
           const writesAfterStaleSave =
             writeCount;
+
+          const visibleDraftAfterFirstConflict =
+            body.textContent || '';
+
+          const dialog =
+            document.querySelector(
+              '.edit-conflict-dialog'
+            );
+
+          const openDialog =
+            document.querySelector(
+              '.edit-conflict-dialog:not(.hidden)'
+            );
+
+          const activeAfterOpen =
+            document.activeElement?.textContent?.trim() || '';
+
+          const viewButton =
+            dialog.querySelector(
+              '[data-edit-conflict-view-current]'
+            );
+
+          viewButton.click();
+
+          await new Promise(resolve => {
+
+            setTimeout(
+              resolve,
+              0
+            );
+          });
+
+          const currentPreviewText =
+            dialog
+              .querySelector('[data-edit-conflict-current]')
+              ?.textContent || '';
+
+          const returnButton =
+            dialog.querySelector(
+              '[data-edit-conflict-return]'
+            );
+
+          returnButton.click();
+
+          const dialogHiddenAfterReturn =
+            dialog.classList.contains(
+              'hidden'
+            );
+
+          const activeAfterReturn =
+            document.activeElement?.textContent || '';
+
+          body.textContent =
+            'stale-c-draft-token-again';
+
+          body.dispatchEvent(
+            new InputEvent(
+              'input',
+              {
+                bubbles:
+                  true,
+                inputType:
+                  'insertText',
+                data:
+                  'again'
+              }
+            )
+          );
+
+          await new Promise(resolve => {
+
+            setTimeout(
+              resolve,
+              650
+            );
+          });
+
+          const dialogCountAfterRepeatedConflict =
+            document.querySelectorAll(
+              '.edit-conflict-dialog'
+            ).length;
+
+          const openDialogCountAfterRepeatedConflict =
+            document.querySelectorAll(
+              '.edit-conflict-dialog:not(.hidden)'
+            ).length;
 
           return {
             saveResult:
@@ -970,7 +1058,38 @@ aliases: []
             runtimeContent:
               pageRecord.content || '',
             visibleDraft:
-              body.textContent || ''
+              visibleDraftAfterFirstConflict,
+            visibleDraftAfterRepeatedAutosave:
+              body.textContent || '',
+            statusAfterRepeatedAutosave:
+              document.querySelector('#statusbar')?.textContent || '',
+            dialog:
+              {
+                exists:
+                  Boolean(
+                    dialog
+                  ),
+                open:
+                  Boolean(
+                    openDialog
+                  ),
+                role:
+                  dialog?.getAttribute('role') || '',
+                ariaModal:
+                  dialog?.getAttribute('aria-modal') || '',
+                labelledby:
+                  dialog?.getAttribute('aria-labelledby') || '',
+                describedby:
+                  dialog?.getAttribute('aria-describedby') || '',
+                text:
+                  dialog?.textContent || '',
+                activeAfterOpen,
+                currentPreviewText,
+                dialogHiddenAfterReturn,
+                activeAfterReturn,
+                dialogCountAfterRepeatedConflict,
+                openDialogCountAfterRepeatedConflict
+              }
           };
         }
       );
@@ -1027,6 +1146,110 @@ aliases: []
       result.visibleDraft
     ).toBe(
       'stale-c-draft-token'
+    );
+
+    expect(
+      result.visibleDraftAfterRepeatedAutosave
+    ).toBe(
+      'stale-c-draft-token-again'
+    );
+
+    expect(
+      result.dialog.exists
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.dialog.open
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.dialog.role
+    ).toBe(
+      'dialog'
+    );
+
+    expect(
+      result.dialog.ariaModal
+    ).toBe(
+      'true'
+    );
+
+    expect(
+      result.dialog.labelledby
+    ).toBeTruthy();
+
+    expect(
+      result.dialog.describedby
+    ).toBeTruthy();
+
+    expect(
+      result.dialog.text
+    ).toContain(
+      'Страница изменилась после того, как вы её открыли'
+    );
+
+    expect(
+      result.dialog.text
+    ).toContain(
+      'Ваши текущие изменения не были записаны поверх новой версии.'
+    );
+
+    expect(
+      result.dialog.text
+    ).toContain(
+      'Вернуться к своим изменениям'
+    );
+
+    expect(
+      result.dialog.activeAfterOpen
+    ).toBe(
+      'Вернуться к своим изменениям'
+    );
+
+    expect(
+      result.dialog.currentPreviewText
+    ).toContain(
+      'current-b-token'
+    );
+
+    expect(
+      result.dialog.currentPreviewText
+    ).not.toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.dialog.dialogHiddenAfterReturn
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.dialog.activeAfterReturn
+    ).toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.statusAfterRepeatedAutosave
+    ).toContain(
+      'Сохранение остановлено'
+    );
+
+    expect(
+      result.dialog.dialogCountAfterRepeatedConflict
+    ).toBe(
+      1
+    );
+
+    expect(
+      result.dialog.openDialogCountAfterRepeatedConflict
+    ).toBe(
+      0
     );
   }
 );

@@ -15,6 +15,11 @@ import {
 } from './editorSessionBase.js';
 
 import {
+  clearEditorSaveConflictState,
+  handleEditorSaveConflictResult
+} from './editConflictUi.js';
+
+import {
   setSaveStatus,
   setStatus
 } from '../ui/ui.js';
@@ -299,9 +304,14 @@ export async function saveCurrentPage(
 
   if (result?.conflict) {
 
-    setSaveStatus(
-      'conflict',
-      'Конфликт сохранения: страница изменилась в другом месте.'
+    handleEditorSaveConflictResult(
+      result,
+      {
+        page,
+        editor,
+        source:
+          'autosave'
+      }
     );
 
     return result;
@@ -329,14 +339,18 @@ export async function saveCurrentPage(
 
   if (state.currentPage?.id === page.id) {
 
-  setSaveStatus(
-    'Сохранено'
-  );
+    clearEditorSaveConflictState(
+      page.id
+    );
 
-  advanceEditorPageBase(
-    page,
-    content
-  );
+    setSaveStatus(
+      'Сохранено'
+    );
+
+    advanceEditorPageBase(
+      page,
+      content
+    );
 
   }
 
