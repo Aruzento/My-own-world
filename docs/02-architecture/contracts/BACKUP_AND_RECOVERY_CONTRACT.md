@@ -229,6 +229,21 @@ Apply validates stale evidence before creating a backup. If the source page cont
 
 Every persistent repair requires the existing backup safety owner before writes start. If backup creation or verification fails, no repair write may occur. If the later page write fails or the command owner reports a stale/superseded non-durable result, the UI reports failure instead of success, and the safety backup id is preserved for recovery guidance.
 
+## End-To-End Recovery Validation
+
+`0.0.1.12.11` validates the Phase 12 safety pieces together on one deliberately damaged disposable workspace. The integration coverage lives in `tests/recoveryEndToEnd.test.mjs` and uses the Phase 12 recovery fixture builders rather than a real user workspace.
+
+The validated scenario includes a page changed after backup, a backup suitable for partial restore, a broken wiki link, a broken relationship endpoint, a missing referenced asset and an unused asset candidate. The scenario proves:
+
+- restore preview classifies exact page/asset changes and cancel/viewing preview performs no persistent writes;
+- partial restore restores only the selected changed page and its clearly required selected-page asset, then reloads the workspace read model;
+- restore write failure reports incomplete restore with the pre-restore backup id instead of false success;
+- asset verification, broken internal links and orphan review group independent problems without repairing them;
+- a selected supported broken wiki reference can be previewed, backup-gated, applied, reloaded and removed from diagnostics while unrelated data stays unchanged;
+- a preview becomes stale after a normal page write and apply is blocked before backup creation.
+
+Read-only confidence on the approved real workspace `X:\ДНД\Мастер\По кампаниям\База` was gathered with `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --no-write-probe --json true`: 697 pages, 27 maps, 144 assets, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates, 5 complete backups, 0 incomplete backups, 337 ms. No restore, repair, write probe or cleanup was run against the real workspace.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.

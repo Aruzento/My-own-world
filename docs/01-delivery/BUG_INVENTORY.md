@@ -268,17 +268,17 @@ Regression target: graph canvas tests for filters/edges/orphans, popup lifecycle
 
 Area: backup, restore, schema recovery
 
-Status: Partially covered / needs repair validation
+Status: Closed for current Phase 12 validation scope
 
 Source: plan `0.0.1.6.0` and backup/recovery contract.
 
-Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions now cover malformed pages, partial data, missing assets, invalid workspace shape, backup-before-repair failure, non-destructive restore preview, page-level partial restore, restore failure reporting after the safety backup, user-facing asset verification categories, grouped broken wiki/internal-link/relationship diagnostics, cautious orphan/connectivity review, preview-only repair plans and backup-gated application for selected link/relationship repairs. Real recovery validation still needs to close the phase.
+Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions cover malformed pages, partial data, missing assets, invalid workspace shape, backup-before-repair failure, non-destructive restore preview, page-level partial restore, restore failure reporting after the safety backup, user-facing asset verification categories, grouped broken wiki/internal-link/relationship diagnostics, cautious orphan/connectivity review, preview-only repair plans and backup-gated application for selected link/relationship repairs. `0.0.1.12.11` added end-to-end validation on one deliberately damaged disposable workspace covering restore preview cancel/no writes, selected-page partial restore and reload, restore write failure with safety backup id, grouped diagnostics, backup-gated selected repair apply and stale repair preview blocking after a normal write.
 
-Risk: recovery tools can still be scary or incomplete if link cleanup or map/task repairs do not explain what will change before writing.
+Risk: bulk cleanup remains intentionally out of scope. The current validated flow supports explicit selected repairs, cautious diagnostics and backup-gated persistence; it does not promise repair-all, orphan deletion, asset replacement guessing or atomic multi-file restore.
 
-Next check: continue Phase `0.0.1.12.0` with deliberate persistent repair flow after the preview-only repair plan surface.
+Next check: run `0.0.1.12.FINAL` before closing the Data Safety Completion phase. Any future larger cleanup or bulk repair belongs to a later owner-approved data-maintenance phase.
 
-Regression target: storage/browser tests for restore preview, partial restore, restore failure safety, asset verification, broken internal link diagnostics, orphan review, repair preview, persistent repair apply and real recovery validation.
+Regression target: storage/browser tests for restore preview, partial restore, restore failure safety, asset verification, broken internal link diagnostics, orphan review, repair preview, persistent repair apply and `recoveryEndToEnd` validation.
 
 ### BUG-012. Documentation readability and encoding guard need another pass
 
@@ -357,4 +357,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, `0.0.1.12.5` hardened restore failure safety after the pre-restore backup, `0.0.1.12.6` added asset verification diagnostics, `0.0.1.12.7` added broken internal link diagnostics, `0.0.1.12.8` added orphan/connectivity review, `0.0.1.12.9` added preview-only repair plans, `0.0.1.12.10` added backup-gated persistent repair apply, and `0.0.1.12.11` Real Recovery Validation is next.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, `0.0.1.12.5` hardened restore failure safety after the pre-restore backup, `0.0.1.12.6` added asset verification diagnostics, `0.0.1.12.7` added broken internal link diagnostics, `0.0.1.12.8` added orphan/connectivity review, `0.0.1.12.9` added preview-only repair plans, `0.0.1.12.10` added backup-gated persistent repair apply, `0.0.1.12.11` added end-to-end recovery validation and closed `BUG-011` for the current scope, and `0.0.1.12.FINAL` is next.

@@ -13,4 +13,4 @@ owner_zone: "user-release"
 - Large maps and large real workspaces can still expose subjective UI delay even when automated performance checks are green.
 - Real desktop audio playback can depend on codec support and should be checked with the actual files used by the GM.
 - Knowledge Graph is usable as a migrated visual canvas workbench with selected-node edge states, a laconic inspector/overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. The remaining graph issue is product direction: `BI-026` should rethink the graph concept before new visible graph features.
-- Restore preview, partial restore, link cleanup and asset repair are still unfinished data-safety work.
+- Data Safety Completion has validated restore preview, partial restore, grouped asset/link/orphan diagnostics and selected backup-gated link/relationship repair on disposable damaged data. It still does not include repair-all, automatic orphan deletion, asset replacement guessing or bulk cleanup.

@@ -6,6 +6,62 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.11 BUG-011 End-to-End Recovery Validation
+
+### Disposition
+
+- Closed `0.0.1.12.11` as an integration/validation leaf.
+- Closed `BUG-011` for the current Phase 12 recovery validation scope.
+- Added `tests/recoveryEndToEnd.test.mjs` using the existing Phase 12 disposable recovery fixture builders.
+- Did not add new restore/repair product behavior, repair-all, orphan deletion, asset replacement guessing, persistent format migration or real-workspace mutation.
+
+### Disposable Recovery Scenario
+
+- Built one realistic damaged workspace containing:
+  - a page changed after backup;
+  - a backup suitable for explicit page-level partial restore;
+  - a broken wiki link;
+  - a broken relationship endpoint;
+  - a missing referenced asset;
+  - an unused asset review candidate.
+- Kept destructive validation inside the in-memory `StorageAdapter` fixture.
+
+### End-To-End Scenarios
+
+- Scenario A: selected backup restore preview reports exact page/asset changes and preview/cancel leaves the adapter file snapshot unchanged.
+- Scenario B: selected-page partial restore restores only `hero.md` and its required portrait asset, keeps unrelated pages untouched, creates a pre-restore backup and reloads the PageRepository read model from disk.
+- Scenario C: forced restore page-write failure reports an incomplete restore with `stage = pages`, preserves the pre-restore backup id and does not claim success.
+- Scenario D: diagnostics group the broken wiki link, broken relationship endpoint, missing referenced asset and unused asset candidate without repairing anything.
+- Scenario E: selected wiki repair goes through preview, backup gate, persistent apply, reload and diagnostic resolution while unrelated pages remain unchanged.
+- Scenario F: a repair preview becomes stale after a normal `PageCommandService` write and apply is blocked before backup creation.
+
+### Real Workspace Read-Only Confidence
+
+- Ran read-only diagnostics only:
+  - `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --no-write-probe --json true`
+- Result: completed in 337 ms.
+- Counts: 697 pages, 27 maps, 144 assets, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates, 5 complete backups and 0 incomplete backups.
+- The real workspace was not restored, repaired, cleaned, write-probed, normalized, migrated or otherwise mutated.
+
+### Tests
+
+- Focused checks run before docs sync:
+  - `node --test tests\recoveryEndToEnd.test.mjs`
+  - `node --test tests\dataSafetyRecoveryFixtures.test.mjs tests\backupRestorePreview.test.mjs tests\partialRestore.test.mjs tests\restoreFailureSafety.test.mjs tests\repairPreview.test.mjs tests\recoveryEndToEnd.test.mjs`
+  - `node --test tests\assetVerificationReport.test.mjs tests\internalLinkDiagnostics.test.mjs tests\orphanReview.test.mjs`
+  - `npm run test:browser -- tests/browser/asset-health.spec.mjs tests/browser/schema-recovery.spec.mjs`
+- Final post-docs checks:
+  - `npm run test`
+  - `npm run test:browser`
+  - `npm run verify`
+  - `npm run docs:index`
+  - `npm run check:encoding`
+  - `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.FINAL` Data Safety Completion Gate.
+
 ## 2026-08-24: 0.0.1.12.10 Backup-Gated Persistent Repair Flow
 
 ### Disposition
