@@ -1,5 +1,5 @@
 ---
-summary: "Runtime-only Dice Engine contract for safe formula parsing and future evaluation."
+summary: "Runtime-only Dice Engine contract for safe formula parsing and evaluation."
 read_when:
   - "Before changing dice parser or evaluator code"
   - "Before integrating dice into initiative, character actions, combat, or logs"
@@ -93,6 +93,54 @@ Unsupported syntax must be rejected rather than interpreted:
 - persist RollResult;
 - create event/roll/combat log records.
 
+## 0.0.1.14.3 Evaluator Contract
+
+Public roll entry:
+
+- `rollDice(request, { randomInt })` in `js/dice/diceEngine.js`.
+
+Request shape:
+
+- `formula`: string parsed by `parseDiceFormula`;
+- `mode`: optional, currently only `normal`;
+- `criticalPolicy`: optional, currently only `none`.
+
+Randomness contract:
+
+- injected RNG is first-class;
+- the evaluator calls only `randomInt(minInclusive, maxInclusive)`;
+- each die calls `randomInt(1, sides)`;
+- default production RNG uses `Math.random` and does not claim cryptographic fairness.
+
+Runtime result:
+
+- `type: "rollResult"`;
+- original `formula`;
+- effective `mode`;
+- effective `criticalPolicy`;
+- numeric `total`;
+- ordered `rolls` with die range and value details.
+
+Evaluator semantics:
+
+- evaluates only parser AST node types: `number`, `dice`, `unary`, `binary`;
+- rolls each die exactly once;
+- dice terms are independent;
+- no hidden rerolls;
+- no advantage/disadvantage;
+- no critical rules;
+- division by zero is rejected;
+- non-finite or unsafe numeric totals are rejected.
+
+Malformed evaluation state throws `DiceFormulaEvaluationError` with:
+
+- `code: "DICE_FORMULA_EVALUATION_ERROR"`;
+- `reason`;
+- optional `nodeType`;
+- optional `operator`.
+
+The evaluator remains pure domain/runtime code. It must not touch DOM, UI status, storage, backups, workspace state, event logs, Campaign Map, Character/Properties, Rule Tree or combat.
+
 ## Next Owner
 
-`0.0.1.14.3` Core Dice Evaluator owns turning this AST into deterministic runtime results with injected RNG and limits.
+`0.0.1.14.4` Dice Safety Limits owns explicit formula/dice/evaluation caps. The current evaluator has finite-number protection, but broad anti-abuse limits are intentionally not finalized in `0.0.1.14.3`.

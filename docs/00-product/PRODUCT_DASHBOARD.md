@@ -27,13 +27,14 @@ Immediate direction:
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
-7. Next leaf: `0.0.1.14.3` Core Dice Evaluator.
+7. Next leaf: `0.0.1.14.4` Dice Safety Limits.
 8. `0.0.1.15.0` Event / Roll / Combat Log + Transactions remains `BLOCKED` and has not been started.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-24 `0.0.1.14.3` Core Dice Evaluator: added the public runtime `rollDice(request, { randomInt })` facade. It evaluates the safe parser AST, calls only injected `randomInt(1, sides)` per die, returns structured runtime roll results with totals and ordered roll details, and rejects division by zero, invalid RNG output, unsupported v1 options and unsafe/non-finite numeric results. No UI, initiative migration, persistence, event/roll log, combat behavior, advantage/disadvantage, critical rules or broad safety-limit policy was added.
 - 2026-08-24 `0.0.1.14.2` Safe Dice Formula Parser: added a subsystem-independent Dice Engine parser facade, `parseDiceFormula(formula)`, with a deterministic runtime AST for integers, V1 dice terms, arithmetic, unary operators and parentheses. It rejects malformed syntax and code-shaped payloads without `eval`, `Function`, string timers, dynamic import, DOM interpretation or formula execution. This parser leaf does not roll dice, evaluate totals, migrate initiative, create UI, persist results, or start event/combat functionality.
 - 2026-08-24 phase start: `0.0.1.14.0` NF-002 Safe Dice Engine became `ACTIVE`; the next leaf is `0.0.1.14.1` Dice Baseline & Public Contract. The phase mission is one safe reusable dice engine boundary, not a consumer-specific Campaign Map/Character/Combat implementation. No dice engine implementation, persistent format migration, event log, combat functionality or real-user-workspace mutation was started.
 - 2026-08-24 `0.0.1.13.FINAL` NF-001 Closure Gate: passed after cumulative Phase 13 review from pre-phase HEAD `71a9625`, independent reviewer PASS and fresh verification. Stale editor/session writes now carry a runtime page-state base, are checked against current durable target-page content at the `PageCommandService` boundary, show a safe Russian conflict UI/recovery path, preserve only proven disjoint structured metadata changes and cannot overwrite Phase 12 restore/repair results. `npm run test`, `npm run test:browser`, `npm run verify`, UI polish, docs, encoding, project file audit, desktop gate, desktop build, native desktop smoke on a disposable workspace and read-only large-workspace smoke on `X:\ДНД\Мастер\По кампаниям\База` passed. No persistent format migration, collaboration/sync layer, generic merge engine, NF-002 dice work or real-workspace mutation was introduced.
@@ -187,7 +188,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.14.3` Core Dice Evaluator when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
+- Start `0.0.1.14.4` Dice Safety Limits when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -205,7 +206,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. The next risk to address is safe dice evaluation before rolls/feeders become durable session data.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. The next risk to address is explicit Dice Engine safety limits before rolls/feeders become durable session data.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.

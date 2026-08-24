@@ -171,13 +171,13 @@ npm run test:browser -- tests/browser/editor-special-conflicts.spec.mjs
 
 Expected conflict result: a stale editor/session save must not overwrite newer durable content. The conflict UI should explain in Russian that the page changed after opening, keep the user's unsaved draft available, and avoid repeated autosave dialog spam. Restore/repair results should survive later stale editor saves.
 
-For the current NF-002 parser-only Dice Engine slice, use:
+For the current NF-002 Dice Engine parser/evaluator slice, use:
 
 ```powershell
-node --test tests/diceFormulaParser.test.mjs
+node --test tests/diceFormulaParser.test.mjs tests/diceCoreEvaluator.test.mjs
 ```
 
-Expected parser result: formulas such as `d20`, `2d6 + 3`, `2 * (d6 + 3)` and `(d20 + 5) / 2` parse into deterministic AST data. Code-shaped strings such as `process.exit()`, `alert(1)`, string timers, dynamic import, arrays, strings and comments must be rejected. There is no roll UI, no RNG/evaluator and no persistent roll log yet.
+Expected Dice Engine result: formulas such as `d20`, `2d6 + 3`, `2 * (d6 + 3)` and `(d20 + 5) / 2` parse into deterministic AST data and evaluate through the public runtime `rollDice(request, { randomInt })` facade. Deterministic injected RNG sequences should produce exact totals and exact `randomInt(1, sides)` calls. Code-shaped strings such as `process.exit()`, `alert(1)`, string timers, dynamic import, arrays, strings and comments must be rejected. Division by zero, invalid RNG output and unsafe numeric totals must fail with structured evaluation errors. There is still no roll UI, no initiative migration and no persistent roll log yet.
 
 Before sending a desktop build, run:
 
@@ -235,7 +235,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
 - Knowledge Graph is currently a useful migrated canvas workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. New visible graph features should wait for the `BI-026` concept rethink.
-- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. NF-001 edit-session conflict protection is closed for the current PageRecord-backed scope. NF-002 Safe Dice Engine is the active phase; only the parser-only facade exists so far, with no evaluator, RNG, UI or persistent roll log yet.
+- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. NF-001 edit-session conflict protection is closed for the current PageRecord-backed scope. NF-002 Safe Dice Engine is the active phase; parser and core runtime evaluator now exist, while explicit safety limits, advantage/disadvantage, critical policies, UI and persistent roll log remain future work.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 

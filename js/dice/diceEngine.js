@@ -42,6 +42,38 @@ export class DiceFormulaSyntaxError extends SyntaxError {
 }
 
 
+export class DiceFormulaEvaluationError extends Error {
+
+  constructor(
+    reason,
+    {
+      nodeType = null,
+      operator = null
+    } = {}
+  ) {
+
+    super(
+      reason
+    );
+
+    this.name =
+      'DiceFormulaEvaluationError';
+
+    this.code =
+      'DICE_FORMULA_EVALUATION_ERROR';
+
+    this.reason =
+      reason;
+
+    this.nodeType =
+      nodeType;
+
+    this.operator =
+      operator;
+  }
+}
+
+
 export function parseDiceFormula(
   formula
 ) {
@@ -69,6 +101,62 @@ export function parseDiceFormula(
   parser.expectEnd();
 
   return ast;
+}
+
+
+export function rollDice(
+  request,
+  {
+    randomInt = defaultRandomInt
+  } = {}
+) {
+
+  const normalizedRequest =
+    normalizeRollRequest(
+      request
+    );
+
+  validateRollOptions(
+    normalizedRequest
+  );
+
+  validateRandomInt(
+    randomInt
+  );
+
+  const ast =
+    parseDiceFormula(
+      normalizedRequest.formula
+    );
+
+  const context =
+    {
+      randomInt,
+      rolls: []
+    };
+
+  const total =
+    assertSupportedNumber(
+      evaluateDiceNode(
+        ast,
+        context
+      ),
+      'Roll total is outside the supported numeric range'
+    );
+
+  return {
+    type:
+      'rollResult',
+    formula:
+      normalizedRequest.formula,
+    mode:
+      normalizedRequest.mode,
+    criticalPolicy:
+      normalizedRequest.criticalPolicy,
+    total,
+    rolls:
+      context.rolls
+  };
 }
 
 
@@ -322,6 +410,429 @@ class DiceFormulaParser {
     this.index += 1;
 
     return token;
+  }
+}
+
+
+function normalizeRollRequest(
+  request
+) {
+
+  if (
+    request === null ||
+    typeof request !== 'object' ||
+    Array.isArray(
+      request
+    )
+  ) {
+
+    throw createEvaluationError(
+      'Roll request must be an object'
+    );
+  }
+
+  const {
+    formula,
+    mode = 'normal',
+    criticalPolicy = 'none'
+  } =
+    request;
+
+  if (
+    typeof formula !== 'string'
+  ) {
+
+    throw createEvaluationError(
+      'Roll request formula must be a string'
+    );
+  }
+
+  return {
+    formula,
+    mode,
+    criticalPolicy
+  };
+}
+
+
+function validateRollOptions(
+  request
+) {
+
+  if (
+    request.mode !== 'normal'
+  ) {
+
+    throw createEvaluationError(
+      'Only normal roll mode is supported in this dice engine leaf'
+    );
+  }
+
+  if (
+    request.criticalPolicy !== 'none'
+  ) {
+
+    throw createEvaluationError(
+      'Only none critical policy is supported in this dice engine leaf'
+    );
+  }
+}
+
+
+function validateRandomInt(
+  randomInt
+) {
+
+  if (
+    typeof randomInt !== 'function'
+  ) {
+
+    throw createEvaluationError(
+      'randomInt must be a function'
+    );
+  }
+}
+
+
+function evaluateDiceNode(
+  node,
+  context
+) {
+
+  if (
+    node.type === 'number'
+  ) {
+
+    return assertSupportedNumber(
+      node.value,
+      'Number literal is outside the supported numeric range',
+      node
+    );
+  }
+
+  if (
+    node.type === 'dice'
+  ) {
+
+    return evaluateDiceTerm(
+      node,
+      context
+    );
+  }
+
+  if (
+    node.type === 'unary'
+  ) {
+
+    return evaluateUnaryNode(
+      node,
+      context
+    );
+  }
+
+  if (
+    node.type === 'binary'
+  ) {
+
+    return evaluateBinaryNode(
+      node,
+      context
+    );
+  }
+
+  throw createEvaluationError(
+    'Unsupported dice AST node',
+    {
+      nodeType:
+        node?.type ?? null
+    }
+  );
+}
+
+
+function evaluateDiceTerm(
+  node,
+  context
+) {
+
+  let total =
+    0;
+
+  for (
+    let dieIndex = 0;
+    dieIndex < node.count;
+    dieIndex += 1
+  ) {
+
+    const value =
+      rollSingleDie(
+        node.sides,
+        context.randomInt,
+        node
+      );
+
+    context.rolls.push({
+      index:
+        context.rolls.length,
+      dieIndex,
+      count:
+        node.count,
+      sides:
+        node.sides,
+      value,
+      start:
+        node.start,
+      end:
+        node.end
+    });
+
+    total =
+      assertSupportedNumber(
+        total + value,
+        'Dice term total is outside the supported numeric range',
+        node
+      );
+  }
+
+  return total;
+}
+
+
+function rollSingleDie(
+  sides,
+  randomInt,
+  node
+) {
+
+  const value =
+    randomInt(
+      1,
+      sides
+    );
+
+  if (
+    !Number.isInteger(
+      value
+    ) ||
+    value < 1 ||
+    value > sides
+  ) {
+
+    throw createEvaluationError(
+      'randomInt returned a value outside the requested die range',
+      {
+        nodeType:
+          node.type
+      }
+    );
+  }
+
+  return value;
+}
+
+
+function evaluateUnaryNode(
+  node,
+  context
+) {
+
+  const value =
+    evaluateDiceNode(
+      node.argument,
+      context
+    );
+
+  if (
+    node.operator === '+'
+  ) {
+
+    return assertSupportedNumber(
+      value,
+      'Unary result is outside the supported numeric range',
+      node
+    );
+  }
+
+  if (
+    node.operator === '-'
+  ) {
+
+    return assertSupportedNumber(
+      -value,
+      'Unary result is outside the supported numeric range',
+      node
+    );
+  }
+
+  throw createEvaluationError(
+    'Unsupported unary operator',
+    {
+      nodeType:
+        node.type,
+      operator:
+        node.operator
+    }
+  );
+}
+
+
+function evaluateBinaryNode(
+  node,
+  context
+) {
+
+  const left =
+    evaluateDiceNode(
+      node.left,
+      context
+    );
+
+  const right =
+    evaluateDiceNode(
+      node.right,
+      context
+    );
+
+  if (
+    node.operator === '+'
+  ) {
+
+    return assertSupportedNumber(
+      left + right,
+      'Addition result is outside the supported numeric range',
+      node
+    );
+  }
+
+  if (
+    node.operator === '-'
+  ) {
+
+    return assertSupportedNumber(
+      left - right,
+      'Subtraction result is outside the supported numeric range',
+      node
+    );
+  }
+
+  if (
+    node.operator === '*'
+  ) {
+
+    return assertSupportedNumber(
+      left * right,
+      'Multiplication result is outside the supported numeric range',
+      node
+    );
+  }
+
+  if (
+    node.operator === '/'
+  ) {
+
+    if (
+      right === 0
+    ) {
+
+      throw createEvaluationError(
+        'Division by zero is not allowed',
+        {
+          nodeType:
+            node.type,
+          operator:
+            node.operator
+        }
+      );
+    }
+
+    return assertSupportedNumber(
+      left / right,
+      'Division result is outside the supported numeric range',
+      node
+    );
+  }
+
+  throw createEvaluationError(
+    'Unsupported binary operator',
+    {
+      nodeType:
+        node.type,
+      operator:
+        node.operator
+    }
+  );
+}
+
+
+function assertSupportedNumber(
+  value,
+  reason,
+  node = null
+) {
+
+  if (
+    !Number.isFinite(
+      value
+    ) ||
+    Math.abs(
+      value
+    ) > Number.MAX_SAFE_INTEGER
+  ) {
+
+    throw createEvaluationError(
+      reason,
+      {
+        nodeType:
+          node?.type ?? null,
+        operator:
+          node?.operator ?? null
+      }
+    );
+  }
+
+  return value;
+}
+
+
+function defaultRandomInt(
+  minInclusive,
+  maxInclusive
+) {
+
+  validateRandomRange(
+    minInclusive,
+    maxInclusive
+  );
+
+  const span =
+    maxInclusive - minInclusive + 1;
+
+  return (
+    Math.floor(
+      Math.random() * span
+    ) + minInclusive
+  );
+}
+
+
+function validateRandomRange(
+  minInclusive,
+  maxInclusive
+) {
+
+  if (
+    !Number.isSafeInteger(
+      minInclusive
+    ) ||
+    !Number.isSafeInteger(
+      maxInclusive
+    ) ||
+    minInclusive > maxInclusive
+  ) {
+
+    throw createEvaluationError(
+      'randomInt range must use safe integer bounds'
+    );
   }
 }
 
@@ -676,6 +1187,18 @@ function createSyntaxError(
       position,
       tokenType
     }
+  );
+}
+
+
+function createEvaluationError(
+  reason,
+  options = {}
+) {
+
+  return new DiceFormulaEvaluationError(
+    reason,
+    options
   );
 }
 

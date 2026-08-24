@@ -6,6 +6,62 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.14.3 Core Dice Evaluator
+
+### Disposition
+
+- Closed `0.0.1.14.3` as the core evaluator leaf.
+- Started from current HEAD `821a339`.
+- Did not start `0.0.1.14.4` Dice Safety Limits.
+- Set the next leaf to `0.0.1.14.4` Dice Safety Limits.
+
+### Evaluator Boundary
+
+- Extended the existing Dice Engine facade in `js/dice/diceEngine.js`.
+- Added `rollDice(request, { randomInt })` as the public runtime roll entry.
+- The evaluator consumes the safe parser AST internally; consumers do not import tokenizer/parser/evaluator internals.
+- Supported v1 request fields are `formula`, optional `mode: "normal"` and optional `criticalPolicy: "none"`.
+- The runtime result is structured `rollResult` data with formula, effective mode, effective critical policy, total and ordered roll details.
+
+### RNG Contract
+
+- Injected RNG remains first-class through `randomInt(minInclusive, maxInclusive)`.
+- Each die requests exactly `randomInt(1, sides)`.
+- Multi-dice terms roll each die independently.
+- The default production RNG uses `Math.random` and does not claim cryptographic fairness.
+
+### Evaluation Semantics
+
+- Supports number, dice, unary and binary AST nodes produced by the parser.
+- Evaluates arithmetic according to parser structure and precedence.
+- Rejects division by zero with `DiceFormulaEvaluationError`.
+- Rejects invalid RNG outputs outside the requested die range.
+- Rejects non-finite or unsafe numeric results rather than returning `Infinity`, `NaN` or unsupported magnitudes.
+
+### Explicit Non-Work
+
+- Did not implement dice UI, initiative migration, persistence, event/roll log, combat behavior, advantage/disadvantage, critical rules, broad formula/dice safety limits or real-workspace mutation.
+- Did not change workspace/page/backup persistent formats.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with the evaluator public API, RNG contract, runtime result shape, error contract and non-owner boundaries.
+- Explicitly left formula/dice/evaluation caps to `0.0.1.14.4`.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --check tests\diceCoreEvaluator.test.mjs`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs`
+- `npm run test`
+- `npm run verify`
+- `npm run docs:index`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.4` Dice Safety Limits.
+
 ## 2026-08-24: 0.0.1.14.2 Safe Dice Formula Parser
 
 ### Disposition
