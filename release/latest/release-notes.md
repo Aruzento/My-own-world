@@ -1,6 +1,6 @@
 # Release Notes
 
-## 2026-07-27: Current Stabilization Handoff
+## 2026-08-24: Current Stabilization Handoff
 
 This `latest` handoff is for the current version-1 stabilization build. It is not a new feature sprint; it is the safer baseline after the page lifecycle, desktop, map, Properties, Knowledge Graph, data safety and documentation passes.
 
@@ -44,6 +44,12 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.11.5` verifies `BUG-003` for the current release/native desktop app: the native click-through now opens a real image card, verifies the card image loaded, opens a Campaign Map with visible background render, opens presentation with `status: ready`, opens Settings diagnostics and reports no failed WebView resources or unexpected runtime errors.
 - `0.0.1.11.6` fixes `BUG-004`: browser/full Campaign Map presentation now applies presentation-safe grid state from the map model and shares grid color calculation with the model-first renderer. The current matrix verifies token sync, player-hidden handling, fog/locked fog, layer ordering, distance arrow, grid style sync and close/reopen stale-state cleanup.
 - `0.0.1.11.7` verifies `BUG-005` as already fixed: disposable-map drawing coverage now checks pencil, pen, fill, eraser, color picker/recent colors, drawing layer visibility, selection, real `Delete` removal and save/reload.
+- `0.0.1.11.8` fixes `BUG-006`: Campaign Map music now ignores stale interrupted `audio.play()` requests after rapid track/load changes, preserving current map music status and source.
+- `0.0.1.11.9` verifies `BUG-007` as already fixed: representative character Properties layout persists through drag, resize, collision pushdown, save and reopen.
+- `0.0.1.11.10` fixes `BUG-008`: Campaign Map initiative participants refresh from current CharacterModel token snapshots while preserving roll/manual initiative and active turn.
+- `0.0.1.11.11` fixes `BUG-009`: legacy Task Tracker `tasks` keyed objects open intact through backward-compatible read normalization and save back through the current canonical array shape.
+- `0.0.1.11.12` closes `BI-008` / `BI-009`: selected circle center markers are fixed as runtime-only UI, while object-like shape rotation handles are deferred to a later Campaign Map feature phase.
+- `0.0.1.11.FINAL` closes Existing P1 Stabilization after full final gate verification. A corrective Campaign Map presentation sync fix keeps the active drag-measure overlay through late full presentation resyncs.
 
 ### Known Risks
 
@@ -51,13 +57,16 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Large real workspaces should stay in release handoff because subjective feel can vary, but the current `BUG-001` pass did not reproduce a frozen or broken large-workspace workflow.
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
-- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt; the active project phase is `0.0.1.11.0` Existing P1 Stabilization in `docs/01-delivery/PROJECT_PLAN.md`. `0.0.1.11.7` `BUG-005` Campaign Map Drawing Tools Stabilization is `ALREADY FIXED / VERIFIED`; next leaf is `0.0.1.11.8` `BUG-006` Map Music.
+- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization is closed; next phase is `0.0.1.12.0` Data Safety Completion, but it has not been started.
 - Restore preview, partial restore, link cleanup and asset repair are still future data-safety work.
 
 ### Verification Snapshot
 
-- Latest standalone `npm run verify` passed locally with 339 node tests, encoding/syntax checks, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
-- Full browser smoke passed inside `npm run desktop:gate` with 148 browser tests after the AppShell rail/profile, Explorer action, block DnD, Add block popup, card editor toolbar, card-block select, template picker, command-palette/deep-search, campaign-map toolbar/popup/selection/group-action, Knowledge Graph `0.0.1.8.13.1`-`0.0.1.8.13.11` corrections, Phase 8 task tracker / Settings maintenance / Help-Support / World Package manager guards, the `0.0.1.8.16` fixed viewport visual matrix and the `0.0.1.8.17` owner evidence matrix.
+- Latest standalone `npm run verify` passed locally with 341 node/static tests, encoding/syntax checks, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
+- Full browser smoke passed locally with 155 browser tests, including the final Campaign Map presentation measure-resync regression.
+- `npm run desktop:gate` passed on 2026-08-24 with `LARGE_WORKSPACE_VALIDATED` confidence for `X:\ДНД\Мастер\По кампаниям\База`; advisory diagnostics were present but non-blocking.
+- `npm run desktop:build` passed and produced the release executable plus NSIS installer.
+- `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"` passed on the release executable.
 - `npm run test:browser -- --grep "editor-block-pointer-dnd|add-block-picker|visual-safety"` passed locally with 3 focused browser tests for block reorder cleanup, Add block icon/focus contract and visual smoke capture.
 - `npm run test:browser -- --grep "card-editor-core-content-controls|app-shell-empty-state"` passed locally with 2 focused browser tests for the card editor toolbar/header visual contract and AppShell empty-state guard.
 - `npm run test:browser -- component-catalogue` passed locally with the expanded shared primitive and overlay marker coverage.

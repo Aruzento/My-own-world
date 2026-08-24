@@ -6,6 +6,51 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.11.FINAL Existing P1 Stabilization Closure Gate
+
+### Disposition
+
+- `STATUS`: `PASS`.
+- `0.0.1.11.0` Existing P1 Stabilization is closed.
+- `0.0.1.12.0` Data Safety Completion is `NEXT`, but not active.
+
+### Scope Check
+
+- Independent review passed: no included Phase 3 P1 was dropped; fixes match evidence-backed failures or explicit dispositions.
+- Workspace switch uses the existing workspace picker/load lifecycle, not a second workspace owner.
+- Character -> Map initiative refresh preserves rolled/manual initiative state while updating character-derived values.
+- Legacy Task Tracker support is backward-compatible read normalization; no eager workspace migration was added.
+- Campaign Map fixes stayed inside existing map/presentation/music/initiative owners.
+- No NF/live-session features, product features, persistent data format migration or real-user-workspace mutation outside approved smoke/diagnostic flows were introduced.
+
+### Corrective Gate Fix
+
+- The first full browser gate exposed a real presentation race: an active Campaign Map drag-measure overlay could disappear if a late full `syncPresentation()` replaced the browser presentation clone.
+- `campaignMapPresentation` now remembers only the active transient measure payload and re-renders it after a full presentation sync. Opening a new browser presentation window clears that transient state.
+- Regression updated: `campaign-map-presentation-representative-map-workflow-stays-current` now proves the active measure survives a full presentation resync and is still cleared on close/reopen.
+
+### Verification
+
+- Passed: focused presentation regression, full `tests/browser/campaign-map-presentation.spec.mjs`, then full `npm run test:browser` with 155 browser tests.
+- Passed: `npm run test` with 341 node/static tests.
+- Passed: `npm run verify`.
+- Passed: `npm run ui:polish:audit`.
+- Passed: `npm run docs:index`, `npm run check:encoding`, `node tools\audit_project_files.mjs` and `git diff --check`.
+- Passed: `npm run desktop:gate` with `MOW_DESKTOP_RELEASE_WORKSPACE=X:\ДНД\Мастер\По кампаниям\База`, producing `LARGE_WORKSPACE_VALIDATED` confidence and advisory-only diagnostics.
+- Passed: `npm run desktop:build`, producing the release executable and NSIS installer.
+- Passed: `npm run desktop:native-smoke -- --workspace "X:\ДНД\Мастер\По кампаниям\База"`.
+
+### Retry Notes
+
+- Full browser failed before the corrective presentation fix, then passed after the fix.
+- One desktop gate attempt failed because Windows/npm command quoting parsed the workspace path incorrectly; the retry used the same approved workspace path through `MOW_DESKTOP_RELEASE_WORKSPACE` and passed.
+- One native-smoke attempt failed because the script requires `--workspace`; the retry with explicit `--workspace` passed.
+
+### Next
+
+- Stop between phases.
+- Do not start `0.0.1.12.0` until the owner explicitly starts the Data Safety Completion phase.
+
 ## 2026-08-20: 0.0.1.11.12 BI-008 / BI-009 Campaign Map Shape Usability Decision
 
 ### Disposition

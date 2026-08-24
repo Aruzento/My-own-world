@@ -43,6 +43,7 @@ let presentationMode = 'browser';
 let presentationChannel = null;
 let pendingTauriPresentationRender = false;
 let pendingTauriImagePreview = null;
+let activePresentationMeasure = null;
 const fogImageCache = new WeakMap();
 
 const PRESENTATION_CHANNEL_NAME =
@@ -85,6 +86,9 @@ export function openPresentationWindow() {
 
     return;
   }
+
+  activePresentationMeasure =
+    null;
 
   presentationWindow =
     window.open(
@@ -178,6 +182,7 @@ export function syncPresentation() {
 
   applyPresentationViewportTransform();
   ensurePresentationStyle();
+  renderActivePresentationMeasure();
 }
 
 export function syncPresentationItemById(
@@ -392,6 +397,13 @@ export function syncPresentationDragMeasure(
   payload
 ) {
 
+  activePresentationMeasure =
+    payload?.active
+      ? {
+        ...payload
+      }
+      : null;
+
   if (presentationMode === 'tauri') {
 
     sendTauriPresentationMeasurePatch(
@@ -415,6 +427,27 @@ export function syncPresentationDragMeasure(
   return renderPresentationDragMeasure(
     targetViewport,
     payload
+  );
+}
+
+
+function renderActivePresentationMeasure() {
+
+  if (!activePresentationMeasure) return false;
+
+  if (
+    presentationMode === 'tauri' ||
+    !presentationWindow ||
+    presentationWindow.closed
+  ) return false;
+
+  const targetViewport =
+    presentationWindow.document
+      .querySelector('.campaign-map-stage .campaign-map-viewport');
+
+  return renderPresentationDragMeasure(
+    targetViewport,
+    activePresentationMeasure
   );
 }
 

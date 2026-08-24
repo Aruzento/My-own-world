@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-08-20
+Дата: 2026-08-24
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 605.
+Всего файлов в аудите: 606.
 
 ## Два Независимых Прохода
 
@@ -33,7 +33,7 @@ owner_zone: "delivery"
 | desktop | 11 |
 | docs/architecture | 37 |
 | docs/archive | 10 |
-| docs/delivery | 18 |
+| docs/delivery | 19 |
 | docs/product | 6 |
 | docs/root | 3 |
 | docs/testing | 20 |
@@ -74,9 +74,11 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 762239 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 243696 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 802571 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 244368 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 195822 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
+| `tests/browser/campaign-map-ui.spec.mjs` | 173827 | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -193,6 +195,7 @@ owner_zone: "delivery"
 | `docs/01-delivery/BUGS_AND_IMPROVEMENTS_BACKLOG.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/01-delivery/CHANGELOG.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/01-delivery/DEFINITION_OF_DONE.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/01-delivery/DESKTOP_AUDIO_SMOKE_CURRENT.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/01-delivery/DESKTOP_LARGE_WORKSPACE_SMOKE.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/01-delivery/DESKTOP_NATIVE_CLICKTHROUGH_CURRENT.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/01-delivery/DESKTOP_RELEASE_GATE_CURRENT.md` | Документация зоны docs/delivery. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |

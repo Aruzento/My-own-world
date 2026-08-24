@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Desktop Native Click-Through Current
 
-Run date: 2026-08-20T11:25:26.206Z
+Run date: 2026-08-24T09:24:24.864Z
 
 Plan ref: `0.0.1.11.5` (runner introduced in `0.0.1.2.2`)
 
@@ -22,13 +22,13 @@ Fatal error: none
 
 ## Steps
 
-- launch native desktop app with WebView2 remote debugging: passed (2773 ms)
-- restore workspace through desktop adapter: passed (2154 ms)
-- open representative card with image when available: passed (244 ms)
-- open settings workspace diagnostics panel: passed (705 ms)
-- scroll and search the large tree: passed (176 ms)
-- open heavy campaign map: passed (134 ms)
-- open presentation window from the heavy map: passed (1395 ms)
+- launch native desktop app with WebView2 remote debugging: passed (1754 ms)
+- restore workspace through desktop adapter: passed (2256 ms)
+- open representative card with image when available: passed (256 ms)
+- open settings workspace diagnostics panel: passed (617 ms)
+- scroll and search the large tree: passed (195 ms)
+- open heavy campaign map: passed (259 ms)
+- open presentation window from the heavy map: passed (1094 ms)
 
 ## Targets
 
@@ -74,7 +74,7 @@ Fatal error: none
 
 ```json
 {
-  "cdpEndpoint": "http://127.0.0.1:60937",
+  "cdpEndpoint": "http://127.0.0.1:55780",
   "workspace": {
     "title": "MyOwnWorld",
     "treeItems": 10,
@@ -102,7 +102,7 @@ Fatal error: none
     "cards": 9,
     "sections": 7,
     "hasWriteProbe": true,
-    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\БазаРасположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 5 шт., последний: delete-page-branchПапка резервных копий: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\База\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 13 мс (completed)697Страниц27Карт144Ассетов528Сломанные ссылки132Лишние ассеты205"
+    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\БазаРасположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 5 шт., последний: delete-page-branchПапка резервных копий: \\\\?\\X:\\ДНД\\Мастер\\По кампаниям\\База\\.my-own-world-backupsПоследняя операция: backup.listIncomplete: 16 мс (completed)697Страниц27Карт144Ассетов528Сломанные ссылки132Лишние ассеты205"
   },
   "treeAfterSearch": {
     "renderedItems": 10,
@@ -137,7 +137,11 @@ Fatal error: none
 
 ## Console And Page Errors
 
-- warning: Workspace schema: schema issues found: 2055 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+- warning: Не удалось восстановить состояние дерева из workspace: Error: Не удается найти указанный файл. (os error 2)
+    at normalizeTauriCommandError (http://tauri.localhost/js/storage/tauriBridge.js:72:7)
+    at invokeTauriCommand (http://tauri.localhost/js/storage/tauriBridge.js:34:13)
+    at async restoreWorkspaceTreeExpansionState (http://tauri.localhost/js/tree/tree.js:1700:9)
+    at async http://tauri.localhost/js/app.js:255:3
 - warning: Workspace schema: schema issues found: 2055 [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
 
 ## Unexpected Runtime Errors

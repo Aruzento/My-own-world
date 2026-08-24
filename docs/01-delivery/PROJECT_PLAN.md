@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-20
+Updated: 2026-08-24
 
 Planning version: 2
 
@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.11.0` Existing P1 Stabilization is `ACTIVE`.
+Current phase: `0.0.1.11.0` Existing P1 Stabilization is `DONE`.
 
-Current leaf: `0.0.1.11.12` `BI-008` / `BI-009` Campaign Map Shape Usability Decision is closed: `BI-008` is `FIXED`; `BI-009` is `DEFERRED TO LATER CAMPAIGN MAP PHASE`. Next leaf is `0.0.1.11.FINAL`.
+Current leaf: `0.0.1.11.FINAL` Existing P1 Stabilization Closure Gate passed on 2026-08-24. Next phase is `0.0.1.12.0` Data Safety Completion, but it is only `NEXT` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007` and `0.0.1.10.0` are closed after the corrective final gate. Work one `0.0.1.11.0` stabilization leaf at a time and stop after each focused commit.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.12.0` until the owner explicitly starts the next phase.
 
 ## Execution Rules
 
@@ -135,7 +135,7 @@ ID: `0.0.1.11.0`
 
 NAME: Existing P1 Stabilization
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
 
 GOAL: close or deliberately reclassify the known user-visible P1/P2 stabilization items before live-session features.
 
@@ -143,9 +143,9 @@ WHY NOW: new session/combat work should not sit on top of known map and regressi
 
 SCOPE: `BI-003`, `BI-008`, `BI-009`, `BI-010`, `BI-011`, `BI-022`; current P1 bug-inventory items if still reproduced after Phase 1 audit, especially `BUG-001`, `BUG-003`, `BUG-004`, `BUG-005`, `BUG-006`, `BUG-007`, `BUG-008` and `BUG-009`. Reproduce or verify current user-visible stabilization issues, close the P1 regression bundle when its real children are closed, and decide whether small Campaign Map usability fixes belong here or later. First owner-selected leaf: `0.0.1.11.1` Workspace Switch Access.
 
-DEPENDENCIES: Phase 2 cleanup is closed. Owner started this phase on 2026-08-20. Do not start Phase `0.0.1.12.0`.
+DEPENDENCIES: Phase 2 cleanup is closed. Owner started this phase on 2026-08-20. The final closure gate passed on 2026-08-24. Phase `0.0.1.12.0` is unlocked as `NEXT`, but not active.
 
-EXIT CRITERIA: each included BI has a current repro/result, root cause where applicable, regression target and final disposition; no P1 item stays indefinitely "ready" without a decision.
+EXIT CRITERIA: met on 2026-08-24. Each included BI/bug has a current repro/result, root cause where applicable, regression target and final disposition. Independent review passed; unit, browser, verification, UI polish, docs, encoding, desktop gate, desktop build, native click-through and real large-workspace smoke passed. No NF/live-session functionality, new product functionality or persistent data format migration was implemented.
 
 CURRENT LEAF RESULTS:
 
@@ -161,7 +161,7 @@ CURRENT LEAF RESULTS:
 - `0.0.1.11.10` `BUG-008` Character -> Map Data Consistency - `FIXED` on 2026-08-20. The focused E2E reproduced stale initiative participant data: after a character Properties/effects update and map reopen, token snapshot used current CharacterModel data but existing initiative order still showed old modifier/total from `data-initiative-state`. Campaign Map initiative participants now sync from current token snapshots after runtime CharacterModel refresh, preserving roll and active turn while updating modifier/name/page/source/alive state. Regression: `campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload`.
 - `0.0.1.11.11` `BUG-009` Legacy Task Tracker Compatibility - `FIXED` on 2026-08-20. The available legacy fixture shape from `docs/03-testing/sample-workspace/pages/0003-task-tracker.md` reproduced empty rendered tracker columns because `tasks` was a keyed object while the current normalizer accepted only arrays. Task Tracker read/normalize now accepts keyed-object tasks, keeps object keys as stable task ids for old `column.taskIds`, and still saves the current canonical array shape on disposable save/reload. Regression: `task-tracker-opens-legacy-keyed-task-object-and-persists-after-reorder-reload`.
 - `0.0.1.11.12` `BI-008` / `BI-009` Campaign Map Shape Usability Decision - closed on 2026-08-20. `BI-008` is `FIXED` as a small existing-architecture usability fix: selected circle shapes now show a runtime-only center marker derived from existing geometry, with no schema change and no pointer hit-test interference. `BI-009` is `DEFERRED TO LATER CAMPAIGN MAP PHASE`: numeric shape rotation already exists through the Inspector/model/renderer/serializer path, but adding object-like pointer rotation handles for shapes would require a new shape rotation interaction owner rather than reusing the token-specific rotation owner. Regression: `campaign-map-circle-shape-center-marker-is-selected-only-runtime-ui`; existing rotation evidence: `campaign-map-selection-inspector-edits-shape-transform-style` and `campaign-map-data-first-save-reload`.
-- Next leaf: `0.0.1.11.FINAL`.
+- `0.0.1.11.FINAL` Existing P1 Stabilization Closure Gate - `PASS` on 2026-08-24. The gate confirmed all Phase 3 stabilization leaves are closed or explicitly reclassified, no included P1 was dropped, legacy Task Tracker support is backward-compatible reading rather than eager migration, and Campaign Map fixes stayed inside existing owners. A corrective presentation sync fix keeps the active drag-measure overlay through late full presentation resyncs. Final verification passed: unit, full browser, `npm run verify`, UI polish audit, docs index, encoding, project file audit, desktop release gate with large-workspace confidence, desktop build and native click-through on `X:\ДНД\Мастер\По кампаниям\База`.
 
 ### Phase 4 - 0.0.1.12.0 Data Safety Completion
 
@@ -169,7 +169,7 @@ ID: `0.0.1.12.0`
 
 NAME: Data Safety Completion
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
 
 GOAL: complete the remaining recovery and link-safety work before durable live-session automation.
 
@@ -177,7 +177,7 @@ WHY NOW: future combat/session/event systems will write more frequently; unsafe 
 
 SCOPE: `BI-006` restore preview, partial restore, backup manifests, asset verification. `BI-020` broken wiki links, relation links, ordinary links, orphan review, grouped diagnostics, non-destructive repair preview and deliberate persistent repair flow. Include `BUG-011` restore/recovery validation if still current after Phase 1 audit.
 
-DEPENDENCIES: Phase 3 stabilization.
+DEPENDENCIES: Phase 3 stabilization is closed. Owner has not started this phase yet.
 
 EXIT CRITERIA: recovery previews are readable and non-destructive; persistent repair flows are backup-gated where needed; asset/link verification has tests or documented smoke paths; no durable write path bypasses existing safety owners.
 
@@ -493,16 +493,16 @@ These living backlog items are now represented in this master roadmap. Their det
 
 | BI | Promoted To |
 | --- | --- |
-| `BI-003` Campaign map stabilization | Phase 3 `0.0.1.11.0` |
+| `BI-003` Campaign map stabilization | Closed in Phase 3 `0.0.1.11.0`; final gate passed on 2026-08-24. |
 | `BI-006` data safety remaining work | Phase 4 `0.0.1.12.0` |
 | `BI-007` UI/design future polish | Phase 21 `0.0.1.29.0` |
 | `BI-008` circle center point | Closed in `0.0.1.11.12` as `FIXED`; selected circle center marker is runtime-only and schema-neutral. |
 | `BI-009` shape rotation controls | Reclassified in `0.0.1.11.12` as `DEFERRED TO LATER CAMPAIGN MAP PHASE`; current Inspector rotation is verified, but object-like shape rotate handles require a larger shape interaction feature. |
-| `BI-010` disappearing map toolbar | Phase 3 `0.0.1.11.0` |
-| `BI-011` creature skills mojibake | Phase 3 `0.0.1.11.0` |
+| `BI-010` disappearing map toolbar | Closed in `0.0.1.11.2` as `NOT REPRODUCED WITH STRONG EVIDENCE`. |
+| `BI-011` creature skills mojibake | Closed in `0.0.1.11.3` as `DONE`. |
 | `BI-016` richer graph operations | Phase 15 `0.0.1.23.0`, only after `BI-026` concept approval |
 | `BI-020` link cleanup and repair | Phase 4 `0.0.1.12.0` |
-| `BI-022` P1 regression bundle | Phase 3 `0.0.1.11.0` |
+| `BI-022` P1 regression bundle | Closed in Phase 3 `0.0.1.11.0`; no included P1 was left undecided. |
 | `BI-023` Properties field lock toggle | Phase 16 `0.0.1.24.0` |
 | `BI-024` documentation/status automation | Phase 2 `0.0.1.10.0`, only if confirmed by audit as recurring drift |
 | `BI-025` up to three workspace panes | Phase 16 `0.0.1.24.0` |

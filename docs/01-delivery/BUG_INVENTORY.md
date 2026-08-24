@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Bug Inventory
 
-Updated: 2026-08-20
+Updated: 2026-08-24
 
 Plan ref: `0.0.1.0.1`
 
@@ -16,7 +16,7 @@ Latest smoke pass: [SMOKE_PASS_2026-07-14.md](./SMOKE_PASS_2026-07-14.md)
 
 ## Baseline
 
-Automated checks are currently green: `npm run verify` passed on 2026-07-17 with 217 unit/static checks plus the large-workspace performance smoke. `node --test tests\storageAdapter.test.mjs` passed 26 storage-adapter tests, and `cargo test` / `cargo check` passed for the desktop filesystem boundary work. Browser smoke last passed during the runtime text security regression pass. Desktop gate was previously green, but real installed-app and large-workspace verification remain separate risks.
+Automated checks are currently green after the `0.0.1.11.FINAL` closure gate on 2026-08-24: unit suite, full browser suite, `npm run verify`, UI polish audit, docs index, encoding check, project file audit, desktop release gate with large-workspace confidence, desktop build and native click-through passed. The real large workspace `X:\ДНД\Мастер\По кампаниям\База` remains part of release handoff, but it is no longer an unverified blocker for the existing P1 stabilization phase.
 
 This means the inventory below is not a list of confirmed automated failures. It is a stabilization map: confirmed user complaints, recently fragile areas, untested real-world scenarios, and product mismatches that should be checked before new feature work.
 
@@ -350,8 +350,6 @@ Covered by current browser smoke:
 
 Not yet covered enough:
 
-- real desktop UI behavior on the known large GM workspace;
-- real installed-app smoke;
 - real older user workspace tracker/card/map fixtures;
 - full actual-GM audio library codec matrix beyond currently verified desktop WAV smoke;
 - graph daily-use operations and lifecycle hardening;
@@ -359,4 +357,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Current phase: `0.0.1.11.0` Existing P1 Stabilization. `0.0.1.11.12` `BI-008` / `BI-009` Shape Usability Decision is closed; next leaf: `0.0.1.11.FINAL`.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Next phase is `0.0.1.12.0` Data Safety Completion, but it has not been started.

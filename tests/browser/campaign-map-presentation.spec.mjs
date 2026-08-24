@@ -1122,6 +1122,8 @@ test(
               labelY: 86,
               label: '30 ft'
             });
+
+            syncPresentation();
           },
 
           reopenPresentation() {
