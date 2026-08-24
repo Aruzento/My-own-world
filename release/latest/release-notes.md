@@ -52,7 +52,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.11.12` closes `BI-008` / `BI-009`: selected circle center markers are fixed as runtime-only UI, while object-like shape rotation handles are deferred to a later Campaign Map feature phase.
 - `0.0.1.11.FINAL` closes Existing P1 Stabilization after full final gate verification. A corrective Campaign Map presentation sync fix keeps the active drag-measure overlay through late full presentation resyncs.
 - Owner-directed Settings Center migration: the topbar Settings popup is now a larger two-pane system settings surface with grouped sidebar navigation, search, dedicated future placeholders and migrated Appearance / Backup / Storage / Diagnostics sections. It reuses the existing PopupManager, themeManager, backupService, Asset Health and Workspace Diagnostics owners; no workspace schema, backup format or external dependency changed.
-- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is now the active phase. The next leaf is `0.0.1.13.1` Conflict Baseline; no conflict product implementation has been started yet.
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is now the active phase. `0.0.1.13.1` established the conflict baseline and deterministic fixtures; the next leaf is `0.0.1.13.2` Write Preconditions.
 
 ### Known Risks
 

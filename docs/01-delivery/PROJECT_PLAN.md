@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
 
-Current leaf: `0.0.1.13.1` Conflict Baseline is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.13.2` Write Preconditions is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.1` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.2` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
 
 ## Execution Rules
 
@@ -231,7 +231,9 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.13.0` Phase Start - `DONE` on 2026-08-24. Current status docs mark this phase `ACTIVE`, keep `0.0.1.14.0` Safe Dice Engine `BLOCKED`, and set the next leaf to `0.0.1.13.1` Conflict Baseline. No conflict product implementation, persistent format migration or real workspace mutation was performed.
 
-- `0.0.1.13.1` Conflict Baseline - `NEXT`.
+- `0.0.1.13.1` Conflict Baseline - `DONE` on 2026-08-24. Current page edit write lifecycle is documented in [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](../02-architecture/contracts/LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md). Added deterministic in-memory edit-conflict fixtures and characterization tests for same-base save, stale full-page overwrite, different-field structured loss, same-field overwrite and metadata-vs-content behavior. The leaf confirmed that runtime write revisions protect stale async completion, while stale edit sessions still lack an enforced durable base precondition. No conflict blocking, persistent format migration or real workspace mutation was implemented.
+
+- `0.0.1.13.2` Write Preconditions - `NEXT`.
 
 ### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
 

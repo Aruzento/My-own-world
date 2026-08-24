@@ -167,6 +167,46 @@ Regression target:
 - queued stale writes skip file mutation;
 - racing page content commands keep the newest write as runtime and file truth.
 
+## Edit Session Conflict Baseline
+
+Captured in `0.0.1.13.1`.
+
+Current write owner:
+
+- ordinary editor saves, autosave and special page saves enter durable page writes through `PageCommandService` / `persistPageContentCommand()` and the write queue;
+- `PageRecord` owns markdown front matter/body serialization and recomputes `updatedAt` plus `contentHash`;
+- `PageRepository` / `PageIndex` update from command lifecycle notifications after successful non-superseded writes;
+- `StorageAdapter` is the durable filesystem owner.
+
+Current version/revision signals:
+
+- `writeQueue` runtime write revisions protect same-page queued writes from stale async completion;
+- `PageRecord.updatedAt` and `PageRecord.contentHash` exist in durable content and can identify page record state, but ordinary editor saves do not currently carry an explicit "this edit was based on durable state X" precondition;
+- `editor.openPage()` has an open-generation guard that prevents older async render completions from publishing after a newer navigation intent;
+- pending autosave records `pageId` and is flushed before navigation, but this protects page switching, not stale edit sessions against newer durable state.
+
+Current safe cases:
+
+- same-base edit -> save succeeds and updates runtime, durable file and repository/index;
+- queued older write completion cannot become runtime truth after a newer queued write for the same page;
+- if an autosave-shaped content write uses current runtime metadata, unrelated metadata may survive while the stale body is written.
+
+Current unsafe cases:
+
+- stale full-page editor content based on old durable state can overwrite a newer durable page state without conflict;
+- stale structured command content built from an old full PageRecord can lose a newer unrelated field durably;
+- two stale writes to the same structured field are last-write-wins with no conflict state;
+- runtime metadata can temporarily remain ahead of durable content when a stale structured full record is written, until reload reparses the file.
+
+Session base signal:
+
+- available indirectly in durable `updatedAt` / `contentHash` and in runtime snapshots, but missing as an enforced command precondition at the write boundary.
+
+Regression fixture:
+
+- `tests/fixtures/editConflictFixtures.mjs` creates a disposable in-memory page workspace;
+- `tests/editConflictBaseline.test.mjs` characterizes same-base save, stale full-page overwrite, different-field structured loss, same-field overwrite and metadata-vs-content behavior.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.

@@ -6,6 +6,52 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.1 Conflict Baseline
+
+### Disposition
+
+- Closed `0.0.1.13.1` as a targeted write-lifecycle baseline and deterministic fixture leaf.
+- Did not implement conflict blocking, merge behavior, persistent format changes, collaboration, version control or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.2` Write Preconditions.
+
+### Current Write Lifecycle Map
+
+- Opening a page sets `state.currentPage`, parses PageRecord metadata into runtime page fields and uses an `openPageGeneration` guard to stop stale async render completions.
+- Ordinary save/autosave serializes the editor DOM through `PageRecord` and sends full page content to `persistPageContentCommand()`.
+- `PageCommandService` snapshots runtime metadata for rollback, creates a runtime write revision, writes through `writeQueue` / `StorageAdapter`, then notifies `PageRepository` / `PageIndex` on successful non-superseded writes.
+- Durable truth is the workspace page file read through `StorageAdapter`; runtime `PageRecord.updatedAt` and `contentHash` exist, but the current save command does not enforce "this edit was based on durable state X".
+- `writeQueue` protects stale async write completion: older queued revisions can be skipped or prevented from becoming runtime truth after a newer queued write.
+- Stale edit sessions are not protected yet: if an editor/session was based on A, another valid command writes B, and the stale session later writes C, current behavior can save C without conflict.
+
+### Fixtures And Baseline Tests
+
+- Added `tests/fixtures/editConflictFixtures.mjs` for a small in-memory page workspace with PageRecord content and a disposable StorageAdapter.
+- Added `tests/editConflictBaseline.test.mjs` covering:
+  - same-base save success;
+  - stale full-page save currently overwrites newer durable content;
+  - stale structured different-field command can lose the newer field durably;
+  - stale same-field command currently overwrites the newer field;
+  - autosave-shaped stale content can preserve current metadata while replacing body.
+- Recorded the baseline in `docs/02-architecture/contracts/LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md`.
+
+### Tests
+
+- `node --check tests\fixtures\editConflictFixtures.mjs`
+- `node --check tests\editConflictBaseline.test.mjs`
+- `node --test tests\editConflictBaseline.test.mjs`
+- `node --test tests\pageCommandService.test.mjs`
+- `node --test tests\pageRecord.test.mjs`
+- `node --test tests\pageRepository.test.mjs`
+- `node --test tests\storageAdapter.test.mjs --test-name-pattern "writePageContent"`
+- `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run verify`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.2` Write Preconditions.
+
 ## 2026-08-24: 0.0.1.13.0 NF-001 Edit Session Conflict Protection Phase Start
 
 ### Disposition

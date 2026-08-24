@@ -216,7 +216,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
 - Knowledge Graph is currently a useful migrated canvas workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. New visible graph features should wait for the `BI-026` concept rethink.
-- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. The active data-risk phase is NF-001 edit-session conflict protection before higher-frequency live-session writes; the next implementation leaf is `0.0.1.13.1` Conflict Baseline.
+- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. The active data-risk phase is NF-001 edit-session conflict protection before higher-frequency live-session writes; `0.0.1.13.1` established the baseline and the next implementation leaf is `0.0.1.13.2` Write Preconditions.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 
