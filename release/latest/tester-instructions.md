@@ -151,6 +151,14 @@ npm run test:browser -- component-catalogue
 npm run test:browser -- popup-lifecycle
 ```
 
+For shared popup drag geometry, use:
+
+```powershell
+npm run test:browser -- tests/browser/popup-drag.spec.mjs
+```
+
+Manual spot check: open `Поиск и команды` with `Ctrl+K`, drag it by a free non-input area, and confirm the grabbed point stays under the pointer. Repeat with Settings, Tools, a card popup such as `Свойства`, and a Campaign Map popup; buttons, inputs and selects inside the popup should keep their normal behavior.
+
 Before sending a desktop build, run:
 
 ```powershell

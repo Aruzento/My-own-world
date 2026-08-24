@@ -17,3 +17,13 @@
   user-select:
     none;
 }
+
+
+[data-popup-drag-ready="true"].is-popup-manual-positioned {
+
+  transform:
+    none;
+
+  animation:
+    none;
+}

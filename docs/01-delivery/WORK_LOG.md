@@ -6,6 +6,37 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: Popup Drag Geometry Bugfix
+
+### Что сделано
+
+- Исправлен общий drag contract для popup-окон в `popupManager`: при начале перетаскивания окно переходит в ручной `position: fixed` режим от фактического `getBoundingClientRect()`, сохраняет реальный размер и нейтрализует конфликтующие `right` / `bottom` / `inset`, positioning `transform` и opening animation.
+- Расчет движения теперь держится на точке захвата (`pointer - rect.left/top`), поэтому до viewport clamp пользователь тянет именно ту точку popup, за которую схватился.
+- Pointer capture добавлен как lifecycle-усиление, но общий close/open/toggle contract остался прежним.
+- Перед закрытием popup ручные inline-координаты восстанавливаются, чтобы повторное открытие снова использовало исходное позиционирование popup.
+- Добавлен browser regression `tests/browser/popup-drag.spec.mjs` для fixed popup, centered transform Command Palette, opening transform animation, viewport clamp и right/inset positioning.
+
+### Проверки
+
+- `node --check js\ui\popupManager.js`
+- `node --check tests\browser\popup-drag.spec.mjs`
+- `npm run test:browser -- tests/browser/popup-drag.spec.mjs`
+- `node --test tests\popupPosition.test.mjs`
+- `npm run test:browser -- tests/browser/popup-lifecycle.spec.mjs`
+- `npm run test:browser -- tests/browser/app-shell.spec.mjs`
+- `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`
+- `npm run test:browser -- tests/browser/world-package.spec.mjs`
+- `npm run test:browser` — 160 browser tests passed.
+- `npm run test` — 341 node/static tests passed.
+- `npm run ui:polish:audit`
+- `npm run verify`
+- `git diff --check`
+
+### Scope
+
+- No new dependency, product feature, persistent format or popup redesign was introduced.
+- `0.0.1.12.0` remains `NEXT` and was not started.
+
 ## 2026-08-24: 0.0.1.11.FINAL Existing P1 Stabilization Closure Gate
 
 ### Disposition

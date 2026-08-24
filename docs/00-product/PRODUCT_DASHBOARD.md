@@ -31,6 +31,7 @@ Immediate direction:
 
 Recently closed:
 
+- 2026-08-24 popup drag geometry bugfix: registered popup windows now keep the grabbed point under the pointer across fixed, centered-transform, animated and right/inset positioning. This was a maintenance fix in the shared `popupManager`; no new product feature or `0.0.1.12.0` work was started.
 - `0.0.1.11.1` Workspace Switch Access: the topbar now keeps a permanent compact `Открыть папку` action while a workspace is active; cancel keeps the current workspace/page; successful A -> B switch reloads B, clears the old editor view and keeps pending A edits/assets scoped to A.
 - `0.0.1.11.2` `BI-010` Campaign Map Toolbar: the historical disappearing-toolbar report was not reproduced on current code across the defined lifecycle matrix; the new browser evidence guard verifies visible, hit-testable scene/tool toolbar regions, working grid popup, no duplicate toolbar and no stale previous page after card/task/rule/tree/presentation/workspace transitions.
 - `0.0.1.11.3` `BI-011` Creature Skills Encoding: Campaign Map creature token skill action/submenu now renders clean Russian `Навыки`, representative skill labels such as `Скрытность`, and no mojibake markers; this also closes `BI-022` for the current human-facing P1 regression bundle.

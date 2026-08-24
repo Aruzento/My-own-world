@@ -53,6 +53,9 @@ let isListening =
 let activeDrag =
   null;
 
+const manualPopupStyles =
+  new WeakMap();
+
 
 // PopupManager задает общий lifecycle для popup-ов приложения:
 // register -> open/toggle -> close -> destroy. Старые helper-функции оставлены
@@ -97,6 +100,10 @@ export function registerPopup({
       () => {
 
         closeHandler();
+
+        restorePopupManualPosition(
+          popup
+        );
 
         syncPopupOverlayState(
           popup
@@ -188,6 +195,17 @@ export function closePopup(
 
   if (!popup) return;
 
+  if (
+    activeDrag?.popup === popup
+  ) {
+
+    stopPopupDrag();
+  }
+
+  restorePopupManualPosition(
+    popup
+  );
+
   popup.classList.add(
     'hidden'
   );
@@ -197,13 +215,6 @@ export function closePopup(
 
   popup.dataset.overlayState =
     'closed';
-
-  if (
-    activeDrag?.popup === popup
-  ) {
-
-    stopPopupDrag();
-  }
 
   restorePopupFocus(
     getPopupEntry(
@@ -1265,37 +1276,39 @@ function startPopupDrag(
   const rect =
     popup.getBoundingClientRect();
 
+  const grabOffsetX =
+    event.clientX - rect.left;
+
+  const grabOffsetY =
+    event.clientY - rect.top;
+
   activeDrag = {
     popup:
       popup,
     pointerId:
       event.pointerId,
-    startX:
-      event.clientX,
-    startY:
-      event.clientY,
-    left:
-      rect.left,
-    top:
-      rect.top,
+    grabOffsetX,
+    grabOffsetY,
     width:
       rect.width,
     height:
-      rect.height
+      rect.height,
+    hasPointerCapture:
+      false
   };
+
+  enterPopupManualPosition(
+    popup,
+    rect
+  );
+
+  capturePopupPointer(
+    activeDrag
+  );
 
   popup.classList.add(
     'is-popup-dragging'
   );
-
-  popup.style.position =
-    'fixed';
-
-  popup.style.left =
-    `${rect.left}px`;
-
-  popup.style.top =
-    `${rect.top}px`;
 
   popup.style.zIndex =
     String(
@@ -1317,14 +1330,12 @@ function movePopupDrag(
   ) return;
 
   const nextLeft =
-    activeDrag.left +
     event.clientX -
-    activeDrag.startX;
+    activeDrag.grabOffsetX;
 
   const nextTop =
-    activeDrag.top +
     event.clientY -
-    activeDrag.startY;
+    activeDrag.grabOffsetY;
 
   activeDrag.popup.style.left =
     `${clampToViewport(
@@ -1344,9 +1355,20 @@ function movePopupDrag(
 }
 
 
-function stopPopupDrag() {
+function stopPopupDrag(
+  event = null
+) {
 
   if (!activeDrag) return;
+
+  if (
+    event?.pointerId !== undefined &&
+    event.pointerId !== activeDrag.pointerId
+  ) return;
+
+  releasePopupPointer(
+    activeDrag
+  );
 
   activeDrag.popup.classList.remove(
     'is-popup-dragging'
@@ -1354,6 +1376,194 @@ function stopPopupDrag() {
 
   activeDrag =
     null;
+}
+
+
+function enterPopupManualPosition(
+  popup,
+  rect
+) {
+
+  if (!popup || !rect) return;
+
+  capturePopupManualPositionStyle(
+    popup
+  );
+
+  popup.classList.add(
+    'is-popup-manual-positioned'
+  );
+
+  popup.dataset.popupManualPosition =
+    'true';
+
+  popup.style.position =
+    'fixed';
+
+  popup.style.boxSizing =
+    'border-box';
+
+  popup.style.width =
+    `${rect.width}px`;
+
+  popup.style.height =
+    `${rect.height}px`;
+
+  popup.style.inset =
+    'auto';
+
+  popup.style.right =
+    'auto';
+
+  popup.style.bottom =
+    'auto';
+
+  popup.style.left =
+    `${rect.left}px`;
+
+  popup.style.top =
+    `${rect.top}px`;
+
+  popup.style.transform =
+    'none';
+
+  popup.style.animation =
+    'none';
+}
+
+
+function capturePopupManualPositionStyle(
+  popup
+) {
+
+  if (
+    manualPopupStyles.has(
+      popup
+    )
+  ) return;
+
+  manualPopupStyles.set(
+    popup,
+    {
+      position:
+        popup.style.position,
+      boxSizing:
+        popup.style.boxSizing,
+      left:
+        popup.style.left,
+      top:
+        popup.style.top,
+      right:
+        popup.style.right,
+      bottom:
+        popup.style.bottom,
+      inset:
+        popup.style.inset,
+      transform:
+        popup.style.transform,
+      animation:
+        popup.style.animation,
+      width:
+        popup.style.width,
+      height:
+        popup.style.height
+    }
+  );
+}
+
+
+function restorePopupManualPosition(
+  popup
+) {
+
+  if (!popup) return;
+
+  popup.classList.remove(
+    'is-popup-manual-positioned'
+  );
+
+  delete popup.dataset.popupManualPosition;
+
+  const originalStyle =
+    manualPopupStyles.get(
+      popup
+    );
+
+  if (!originalStyle) return;
+
+  Object.entries(
+    originalStyle
+  ).forEach(([
+    property,
+    value
+  ]) => {
+
+    popup.style[property] =
+      value;
+  });
+
+  manualPopupStyles.delete(
+    popup
+  );
+}
+
+
+function capturePopupPointer(
+  drag
+) {
+
+  if (
+    !drag?.popup ||
+    typeof drag.popup.setPointerCapture !== 'function' ||
+    drag.pointerId === undefined
+  ) return;
+
+  try {
+
+    drag.popup.setPointerCapture(
+      drag.pointerId
+    );
+
+    drag.hasPointerCapture =
+      true;
+
+  } catch {
+
+    drag.hasPointerCapture =
+      false;
+  }
+}
+
+
+function releasePopupPointer(
+  drag
+) {
+
+  if (
+    !drag?.hasPointerCapture ||
+    !drag.popup ||
+    typeof drag.popup.releasePointerCapture !== 'function' ||
+    drag.pointerId === undefined
+  ) return;
+
+  try {
+
+    if (
+      typeof drag.popup.hasPointerCapture !== 'function' ||
+      drag.popup.hasPointerCapture(
+        drag.pointerId
+      )
+    ) {
+
+      drag.popup.releasePointerCapture(
+        drag.pointerId
+      );
+    }
+
+  } catch {
+
+    // Pointer capture can already be gone after pointercancel or DOM removal.
+  }
 }
 
 
