@@ -22,7 +22,12 @@ import {
 } from '../js/storage/pageWritePreconditions.js';
 
 import {
+  setPages
+} from '../js/stateActions.js';
+
+import {
   createEditConflictFixture,
+  parseFixtureContent,
   updateFixtureContent
 } from './fixtures/editConflictFixtures.mjs';
 
@@ -86,6 +91,141 @@ test(
         )
       ),
       true
+    );
+  }
+);
+
+
+test(
+  'page write precondition conflicts after repository reload observes newer durable state',
+  async () => {
+
+    const {
+      adapter,
+      page,
+      originalContent
+    } =
+      await createEditConflictFixture({
+        id:
+          'precondition-reload-observed',
+        body:
+          '<h1>Precondition Reload</h1><p>A</p>'
+      });
+
+    const expectedBase =
+      await readCurrentDurablePageStateIdentity(
+        page,
+        {
+          storageAdapter:
+            adapter
+        }
+      );
+
+    const reloadedDurable =
+      updateFixtureContent(
+        page.content,
+        {
+          body:
+            '<h1>Precondition Reload</h1><p>B from supported reload</p>'
+        }
+      );
+
+    await adapter.writeText(
+      page.path,
+      reloadedDurable
+    );
+
+    const reloadedPage =
+      createReloadedPageFromContent(
+        page,
+        reloadedDurable
+      );
+
+    setPages([
+      reloadedPage
+    ]);
+
+    let staleStorageWrites =
+      0;
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    adapter.writeText =
+      async (path, content) => {
+
+        staleStorageWrites += 1;
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    const staleContent =
+      updateFixtureContent(
+        originalContent,
+        {
+          body:
+            '<h1>Precondition Reload</h1><p>C from stale editor</p>'
+        }
+      );
+
+    const result =
+      await persistPageContentCommand({
+        page,
+        content:
+          staleContent,
+        previousPage:
+          snapshotPageForCommand(
+            page
+          ),
+        reason:
+          'precondition-reload-stale-write',
+        expectedBase
+      });
+
+    assert.equal(
+      result.writeStatus,
+      'conflict'
+    );
+
+    assert.equal(
+      result.conflict,
+      true
+    );
+
+    assert.equal(
+      result.written,
+      false
+    );
+
+    assert.equal(
+      staleStorageWrites,
+      0
+    );
+
+    assert.equal(
+      await adapter.readText(
+        page.path
+      ),
+      reloadedDurable
+    );
+
+    assert.equal(
+      getPageById(
+        page.id
+      ),
+      reloadedPage
+    );
+
+    assert.equal(
+      getPageById(
+        page.id
+      )?.content,
+      reloadedDurable
     );
   }
 );
@@ -165,6 +305,167 @@ test(
         page.id
       ),
       page
+    );
+  }
+);
+
+
+test(
+  'page write precondition checks the target durable file at command time without scanning workspace',
+  async () => {
+
+    const {
+      adapter,
+      page,
+      originalContent
+    } =
+      await createEditConflictFixture({
+        id:
+          'precondition-external-durable',
+        body:
+          '<h1>External Durable</h1><p>A</p>'
+      });
+
+    const expectedBase =
+      await readCurrentDurablePageStateIdentity(
+        page,
+        {
+          storageAdapter:
+            adapter
+        }
+      );
+
+    const externallyReplacedDurable =
+      updateFixtureContent(
+        page.content,
+        {
+          body:
+            '<h1>External Durable</h1><p>B from direct durable mutation</p>'
+        }
+      );
+
+    await adapter.writeText(
+      page.path,
+      externallyReplacedDurable
+    );
+
+    const readPaths =
+      [];
+
+    let listFilesCount =
+      0;
+
+    let staleStorageWrites =
+      0;
+
+    const originalReadText =
+      adapter.readText.bind(
+        adapter
+      );
+
+    const originalListFiles =
+      adapter.listFiles.bind(
+        adapter
+      );
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    adapter.readText =
+      async path => {
+
+        readPaths.push(
+          path
+        );
+
+        return originalReadText(
+          path
+        );
+      };
+
+    adapter.listFiles =
+      async path => {
+
+        listFilesCount += 1;
+
+        return originalListFiles(
+          path
+        );
+      };
+
+    adapter.writeText =
+      async (path, content) => {
+
+        staleStorageWrites += 1;
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
+
+    const staleContent =
+      updateFixtureContent(
+        originalContent,
+        {
+          body:
+            '<h1>External Durable</h1><p>C from stale editor</p>'
+        }
+      );
+
+    const result =
+      await persistPageContentCommand({
+        page,
+        content:
+          staleContent,
+        previousPage:
+          snapshotPageForCommand(
+            page
+          ),
+        reason:
+          'precondition-external-durable-stale-write',
+        expectedBase
+      });
+
+    assert.equal(
+      result.writeStatus,
+      'conflict'
+    );
+
+    assert.equal(
+      result.blockReason,
+      'page-state-conflict'
+    );
+
+    assert.equal(
+      result.written,
+      false
+    );
+
+    assert.deepEqual(
+      readPaths,
+      [
+        page.path
+      ]
+    );
+
+    assert.equal(
+      listFilesCount,
+      0
+    );
+
+    assert.equal(
+      staleStorageWrites,
+      0
+    );
+
+    assert.equal(
+      await originalReadText(
+        page.path
+      ),
+      externallyReplacedDurable
     );
   }
 );
@@ -315,6 +616,39 @@ test(
     );
   }
 );
+
+
+function createReloadedPageFromContent(
+  page,
+  content
+) {
+
+  const parsed =
+    parseFixtureContent(
+      content
+    );
+
+  return {
+    ...page,
+    parent:
+      parsed.parent,
+    order:
+      parsed.order,
+    title:
+      parsed.title,
+    type:
+      parsed.type,
+    template:
+      parsed.template,
+    tags:
+      parsed.tags,
+    aliases:
+      parsed.aliases,
+    relationships:
+      parsed.relationships,
+    content
+  };
+}
 
 
 test(

@@ -6,13 +6,50 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.9 Detect Newer Durable Page State
+
+### Disposition
+
+- Closed `0.0.1.13.9` as the authoritative durable-state validation leaf for NF-001.
+- Did not add filesystem watchers, background polling, sync/collaboration, a second conflict system, persistent format changes or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.10` Data Safety Integration.
+
+### Durable-State Authority
+
+- Confirmed the conflict check owner remains `PageCommandService.persistPageContentCommand()` through `pageWritePreconditions`.
+- `evaluatePageWritePrecondition()` reads the current target page file through the active `StorageAdapter` at command execution time.
+- The conflict decision does not trust stale editor DOM, an old runtime page object or a stale PageRepository snapshot as the current durable truth.
+- If the target durable file is missing or unreadable, the command returns `precondition-blocked` instead of silently recreating or overwriting unexpected state.
+- The check is targeted to the page being written; it does not scan or parse the whole workspace.
+
+### Behavioral Result
+
+- Scenario A was already covered: editor loads A, another valid `PageCommandService` write saves B, stale editor save C conflicts and durable B survives.
+- Scenario B is now explicitly covered: after a supported repository reload observes newer durable B, an old editor session based on A cannot save stale C over B.
+- Scenario C is now explicitly covered: a controlled direct durable file replacement to B is detected at the later page command boundary even while the runtime page object still contains A.
+- Deleted-current-page behavior remains covered by the existing regression: stale save blocks with `current-page-missing` and does not recreate the missing file.
+- Performance sanity is covered by asserting the stale-write check reads only the target page path and does not call `listFiles()`.
+
+### Tests
+
+- `node --check tests\pageWritePreconditions.test.mjs`
+- `node --test tests\pageWritePreconditions.test.mjs`
+- `node --test tests\pageWriteConflictBlocking.test.mjs`
+- `npm run test`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.10` Data Safety Integration.
+
 ## 2026-08-24: 0.0.1.13.8 Structured Editor Coverage
 
 ### Disposition
 
 - Closed `0.0.1.13.8` as the representative special/page-editor stale-write coverage leaf.
 - Did not add a second conflict system, board/map/rule merge logic, force overwrite, product editor features, persistent format changes or real-workspace mutation.
-- Set the next leaf to `0.0.1.13.9` External Durable State Changes.
+- Set the next leaf to `0.0.1.13.9` Detect Newer Durable Page State.
 
 ### Save Ownership Classification
 
@@ -54,7 +91,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Work on one leaf only: `0.0.1.13.9` External Durable State Changes.
+- Work on one leaf only: `0.0.1.13.9` Detect Newer Durable Page State.
 
 ## 2026-08-24: 0.0.1.13.7 Autosave And Navigation Conflicts
 

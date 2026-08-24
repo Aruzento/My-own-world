@@ -448,6 +448,37 @@ Special-save conflict handling contract:
 - stale special-page full saves must not call storage write, must not update PageRepository/PageIndex with stale content and must keep MINE visible in the editor for recovery;
 - automatic preservation is limited to proven structured PageRecord metadata commands from `0.0.1.13.4`. Task Tracker board JSON, Rule Tree JSON, Campaign Map body and full card HTML are conflict-only unless a later leaf adds a deterministic field-level command owner.
 
+## External Durable State Conflict Authority
+
+Captured in `0.0.1.13.9`.
+
+Authority rule:
+
+- stale-write protection compares the edit session's expected base against the current durable target page file at `PageCommandService.persistPageContentCommand()` execution time;
+- the current durable identity is read through the active `StorageAdapter` by `pageWritePreconditions`;
+- a cached runtime page object or PageRepository/PageIndex snapshot is not sufficient as the authoritative current durable truth for a conflict check;
+- no filesystem watcher, background polling, live sync or collaboration protocol is required by this contract.
+
+Performance rule:
+
+- the conflict check rereads only the target page path being written;
+- it must not scan the workspace, enumerate all pages or rebuild PageRepository/PageIndex merely to decide whether one save is stale;
+- repository/index reconciliation may make UI state current, but the write boundary still verifies the target durable file before writing.
+
+Failure rule:
+
+- if the current target file differs from the expected base, the write returns the existing structured `conflict` result and does not call `StorageAdapter.writeText()`;
+- if the target file is missing or cannot be read, the write returns `precondition-blocked` with a missing/unavailable classification and does not recreate the page implicitly;
+- deleted/replaced page states must therefore be explicit recovery/navigation problems, not silent last-write-wins saves.
+
+Regression target:
+
+- newer state written by another page command conflicts with stale editor content;
+- newer state observed by a repository reload conflicts with stale editor content;
+- controlled direct durable file replacement conflicts even if runtime page content is stale;
+- missing current file blocks without recreation;
+- the check performs target-page reads only and no workspace scan.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.
