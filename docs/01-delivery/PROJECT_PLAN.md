@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.12.0` Data Safety Completion is `DONE`.
+Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
 
-Current leaf: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `NEXT`. Phase `0.0.1.13.0` is not active and has not been started.
+Current leaf: `0.0.1.13.1` Conflict Baseline is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.0` implementation until the owner explicitly starts that next phase.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.1` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
 
 ## Execution Rules
 
@@ -207,7 +207,7 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.12.FINAL` Data Safety Completion Gate - `PASS` on 2026-08-24. The final gate reviewed the cumulative Phase 12 diff from pre-phase HEAD `3b9d8db`, confirmed no unapproved product features or persistent format migration, and received an independent reviewer PASS. Fresh verification passed: unit tests, recovery-focused filesystem/runtime regressions, full browser suite, `npm run verify`, UI polish audit, docs index, encoding check, project file audit, desktop release gate, desktop build and native desktop click-through on a disposable workspace. Read-only confidence on `X:\ДНД\Мастер\По кампаниям\База` passed with `--no-write-probe`: 697 pages, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates and no restore/repair/cleanup/migration.
 
-- `0.0.1.13.0` NF-001 Edit Session Conflict Protection - `NEXT`. This phase has not been started.
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection - `ACTIVE` on 2026-08-24. Phase start updated planning/status docs only. No conflict product implementation, persistent format migration or real workspace mutation was performed.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 
@@ -215,7 +215,7 @@ ID: `0.0.1.13.0`
 
 NAME: NF-001 Edit Session Conflict Protection
 
-STATUS: `NEXT`
+STATUS: `ACTIVE`
 
 GOAL: prevent stale editor writes from silently overwriting newer durable state.
 
@@ -223,9 +223,15 @@ WHY NOW: conflict-safe writes should exist before persistent session logs, comba
 
 SCOPE: protect field/page edits; preserve unrelated changes; surface conflict state; provide safe recovery; keep PageCommandService/write lifecycle as owner.
 
-DEPENDENCIES: Phase 4 data safety; existing `PageCommandService`, `PageRecord`, `writeQueue`, `StorageAdapter`, `PageRepository` notifications.
+DEPENDENCIES: Phase 4 data safety is closed. Owner started this phase on 2026-08-24. Existing owners to preserve: `PageCommandService`, `PageRecord`, `writeQueue`, `StorageAdapter`, `PageRepository` notifications.
 
 EXIT CRITERIA: stale writes cannot silently overwrite current state; conflict UI is understandable; recovery path is safe; regression coverage proves field/page edit protection and unrelated-change preservation.
+
+CURRENT LEAF RESULTS:
+
+- `0.0.1.13.0` Phase Start - `DONE` on 2026-08-24. Current status docs mark this phase `ACTIVE`, keep `0.0.1.14.0` Safe Dice Engine `BLOCKED`, and set the next leaf to `0.0.1.13.1` Conflict Baseline. No conflict product implementation, persistent format migration or real workspace mutation was performed.
+
+- `0.0.1.13.1` Conflict Baseline - `NEXT`.
 
 ### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
 

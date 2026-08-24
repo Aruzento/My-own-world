@@ -6,6 +6,27 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.0 NF-001 Edit Session Conflict Protection Phase Start
+
+### Disposition
+
+- Started `0.0.1.13.0` NF-001 Edit Session Conflict Protection after `0.0.1.12.0` Data Safety Completion closed.
+- Current HEAD before the change was `323f6dc` (`Add settings center`). The owner-provided expected baseline `71a9625` is present in history as `Close Data Safety Completion phase 0.0.1.12.0`; the newer commit is the owner-directed Settings Center migration.
+- Updated current status docs so `0.0.1.13.0` is `ACTIVE`.
+- Set the next leaf to `0.0.1.13.1` Conflict Baseline.
+- Confirmed `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and was not started.
+
+### Scope Guard
+
+- No conflict product implementation was started.
+- No persistent data format migration was performed.
+- No real user workspace was mutated.
+- This phase remains optimistic edit/session conflict protection, not collaboration, a generic version-control system or a full merge engine.
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.1` Conflict Baseline.
+
 ## 2026-08-24: Owner-Directed Settings Center UI Migration
 
 ### Disposition

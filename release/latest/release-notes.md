@@ -52,6 +52,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.11.12` closes `BI-008` / `BI-009`: selected circle center markers are fixed as runtime-only UI, while object-like shape rotation handles are deferred to a later Campaign Map feature phase.
 - `0.0.1.11.FINAL` closes Existing P1 Stabilization after full final gate verification. A corrective Campaign Map presentation sync fix keeps the active drag-measure overlay through late full presentation resyncs.
 - Owner-directed Settings Center migration: the topbar Settings popup is now a larger two-pane system settings surface with grouped sidebar navigation, search, dedicated future placeholders and migrated Appearance / Backup / Storage / Diagnostics sections. It reuses the existing PopupManager, themeManager, backupService, Asset Health and Workspace Diagnostics owners; no workspace schema, backup format or external dependency changed.
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is now the active phase. The next leaf is `0.0.1.13.1` Conflict Baseline; no conflict product implementation has been started yet.
 
 ### Known Risks
 
@@ -59,8 +60,8 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Large real workspaces should stay in release handoff because subjective feel can vary, but the current `BUG-001` pass did not reproduce a frozen or broken large-workspace workflow.
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
-- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization and `0.0.1.12.0` Data Safety Completion are closed; `0.0.1.13.0` has not been started.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair are implemented for the current Data Safety scope. The next data-risk focus is NF-001 edit-session conflict protection before higher-frequency live-session writes.
+- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization and `0.0.1.12.0` Data Safety Completion are closed; `0.0.1.13.0` NF-001 Edit Session Conflict Protection is active.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair are implemented for the current Data Safety scope. The active data-risk focus is NF-001 edit-session conflict protection before higher-frequency live-session writes.
 
 ### Verification Snapshot
 
