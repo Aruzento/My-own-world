@@ -263,9 +263,19 @@ export function openPage(
   }
 
   return pendingFlush
-    .then(
-      open
-    )
+    .then(result => {
+
+      if (
+        isEditorSaveResultBlockingTransition(
+          result
+        )
+      ) {
+
+        return false;
+      }
+
+      return open();
+    })
     .catch(error => {
 
       console.error(
@@ -316,6 +326,52 @@ export async function saveCurrentPage(
     editor,
     options
   );
+}
+
+
+export async function saveCurrentPageBeforeTransition(
+  options = {}
+) {
+
+  const result =
+    await saveCurrentPage(
+      options
+    );
+
+  return {
+    canContinue:
+      !isEditorSaveResultBlockingTransition(
+        result
+      ),
+    result
+  };
+}
+
+
+export function isEditorSaveResultBlockingTransition(
+  result
+) {
+
+  if (!result) return false;
+
+  if (
+    result.conflict ||
+    result.blocked ||
+    result.stale
+  ) {
+
+    return true;
+  }
+
+  const writeStatus =
+    String(
+      result.writeStatus || ''
+    );
+
+  return writeStatus === 'conflict' ||
+    writeStatus === 'precondition-blocked' ||
+    writeStatus === 'stale' ||
+    writeStatus === 'superseded-after-write';
 }
 
 export async function insertImage() {

@@ -27,7 +27,7 @@ import {
   setupEditor,
   renderEmptyEditor,
   renderWorkspaceRecoveryEditor,
-  saveCurrentPage,
+  saveCurrentPageBeforeTransition,
 } from './editor/editor.js';
 
 import {
@@ -143,7 +143,13 @@ async function openSelectedWorkspace() {
 
   try {
 
-    await saveCurrentPage();
+    const saveGate =
+      await saveCurrentPageBeforeTransition({
+        source:
+          'workspace-switch'
+      });
+
+    if (!saveGate.canContinue) return;
 
   } catch (error) {
 

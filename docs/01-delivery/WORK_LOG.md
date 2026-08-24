@@ -6,6 +6,48 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.7 Autosave And Navigation Conflicts
+
+### Disposition
+
+- Closed `0.0.1.13.7` as a common transition-safety leaf for implicit editor saves.
+- Did not add force overwrite, automatic merge, a second autosave system, persistent conflict data, schema changes or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.8` Structured Editor Coverage.
+
+### Save And Transition Owner
+
+- Confirmed the durable stale-write protection still belongs to `PageCommandService.persistPageContentCommand()` and the editor/session base contract from `0.0.1.13.2` / `0.0.1.13.3`.
+- Added a small editor transition gate that interprets the existing save result instead of duplicating conflict checks in every navigation handler.
+- `openPage()` now flushes pending autosave through the normal save path and stops the page transition when that flush returns `conflict`, `precondition-blocked`, `stale` or equivalent write status.
+- Workspace switching now calls the same editor save-before-transition gate before opening the workspace picker, so a dirty stale page in workspace A cannot switch to workspace B after a blocked save.
+- Special page save wrappers now return their real `persistPageContentCommand()` result instead of collapsing it to `true`, so Campaign Map, Task Tracker, Rule Tree and Knowledge Graph implicit saves can participate in the same transition decision.
+
+### Behavioral Result
+
+- Stale page A -> page B now surfaces the existing conflict dialog, keeps MINE visible in the editor and leaves durable CURRENT untouched.
+- Stale page A -> Campaign Map is blocked the same way; the map is not opened until the user deliberately resolves the conflict.
+- Stale Campaign Map -> ordinary page is also blocked because special-save conflict results are no longer hidden.
+- Autosave while staying on the page, including with Settings open as another workspace surface, conflicts at execution time and performs no stale write.
+- Workspace A -> workspace B no longer opens the picker or switches workspace after a stale save conflict; the A draft remains visible.
+- No app/page teardown save hook exists in current code (`beforeunload`, `pagehide`, `visibilitychange`, `unload` search found no save lifecycle), so there was no teardown bypass to fix in this leaf.
+
+### Tests
+
+- `node --check js\app.js`
+- `node --check js\editor\editor.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check tests\browser\editor-navigation-conflicts.spec.mjs`
+- `npm run test:browser -- tests/browser/editor-navigation-conflicts.spec.mjs`
+- `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`
+- `npm run test:browser -- tests/browser/app-shell.spec.mjs`
+- `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`
+- `npm run test`
+- `npm run test:browser`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.8` Structured Editor Coverage.
+
 ## 2026-08-24: 0.0.1.13.6 Conflict Recovery
 
 ### Disposition

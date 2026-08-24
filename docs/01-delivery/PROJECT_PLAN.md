@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
 
-Current leaf: `0.0.1.13.7` Autosave and Navigation Conflicts is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.13.8` Structured Editor Coverage is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5` and `0.0.1.13.6` are closed. Do not start `0.0.1.13.7` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6` and `0.0.1.13.7` are closed. Do not start `0.0.1.13.8` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
 
 ## Execution Rules
 
@@ -243,7 +243,9 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.13.6` Conflict Recovery - `DONE` on 2026-08-24. Extended the editor conflict dialog into a safe runtime recovery surface with three concepts: BASE from the editor session/conflict evidence, CURRENT from durable storage and MINE from the exact content the save attempted to write. Users can inspect CURRENT and MINE side by side, copy/select their draft text, return to editing without clearing the dirty conflict state, or explicitly confirm loading CURRENT. Confirmed reload discards only the pending autosave debounce for that editor, refreshes the runtime page from durable content, reopens it through the existing editor open lifecycle and advances the editor base to CURRENT. Later normal saves work from the new base. No force overwrite, automatic merge, draft-file format, persistent schema migration or real workspace mutation was implemented.
 
-- `0.0.1.13.7` Autosave and Navigation Conflicts - `NEXT`.
+- `0.0.1.13.7` Autosave and Navigation Conflicts - `DONE` on 2026-08-24. Added one transition gate on top of the existing editor save result instead of duplicating conflict checks in individual UI handlers. `openPage()` now flushes pending autosave through the normal precondition-aware save boundary and stops the page transition if that save returns conflict, precondition-blocked or stale. Workspace switching uses the same editor save-before-transition gate before opening the workspace picker, so a stale dirty page in workspace A cannot silently switch to workspace B. Special page saves now return their real `persistPageContentCommand()` result, so Campaign Map, Task Tracker, Rule Tree and Knowledge Graph implicit saves can be blocked by the same transition rule. Browser regressions cover stale page A -> page B, page A -> Campaign Map, stale Campaign Map -> page, autosave while staying on the page with Settings open, workspace A -> workspace B, and late debounced autosave execution. No separate conflict system, automatic merge, force overwrite, persistent format migration or real workspace mutation was implemented.
+
+- `0.0.1.13.8` Structured Editor Coverage - `NEXT`.
 
 ### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
 

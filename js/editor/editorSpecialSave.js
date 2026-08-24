@@ -86,12 +86,10 @@ export async function saveCurrentSpecialPage(
     state.currentPage?.type === 'campaignMap'
   ) {
 
-    await saveCurrentCampaignMap(
+    return await saveCurrentCampaignMap(
       editor,
       options
-    );
-
-    return true;
+    ) || true;
   }
 
   if (
@@ -99,12 +97,10 @@ export async function saveCurrentSpecialPage(
     state.currentPage?.type === 'taskTracker'
   ) {
 
-    await saveCurrentTaskTracker(
+    return await saveCurrentTaskTracker(
       editor,
       options
-    );
-
-    return true;
+    ) || true;
   }
 
   if (
@@ -112,12 +108,10 @@ export async function saveCurrentSpecialPage(
     state.currentPage?.type === 'ruleTree'
   ) {
 
-    await saveCurrentRuleTree(
+    return await saveCurrentRuleTree(
       editor,
       options
-    );
-
-    return true;
+    ) || true;
   }
 
   if (
@@ -125,12 +119,10 @@ export async function saveCurrentSpecialPage(
     state.currentPage?.type === 'knowledgeGraph'
   ) {
 
-    await saveCurrentKnowledgeGraph(
+    return await saveCurrentKnowledgeGraph(
       editor,
       options
-    );
-
-    return true;
+    ) || true;
   }
 
   return false;
@@ -222,7 +214,7 @@ async function saveCurrentTaskTracker(
       }
     );
 
-  await persistCurrentPage(
+  return persistCurrentPage(
     content,
     previousPage,
     options
@@ -289,13 +281,16 @@ async function saveCurrentCampaignMap(
       }
     );
 
-  await persistCurrentPage(
+  const result =
+    await persistCurrentPage(
     content,
     previousPage,
     options
   );
 
   syncCampaignMapPresentation();
+
+  return result;
 }
 
 async function saveCurrentRuleTree(
@@ -358,7 +353,7 @@ async function saveCurrentRuleTree(
       }
     );
 
-  await persistCurrentPage(
+  return persistCurrentPage(
     content,
     previousPage,
     options
@@ -426,7 +421,7 @@ async function saveCurrentKnowledgeGraph(
       }
     );
 
-  await persistCurrentPage(
+  return persistCurrentPage(
     content,
     previousPage,
     options

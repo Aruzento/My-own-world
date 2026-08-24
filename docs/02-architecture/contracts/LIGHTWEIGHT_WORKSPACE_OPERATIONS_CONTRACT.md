@@ -390,6 +390,44 @@ Still out of scope:
 - full-page automatic merge;
 - recovery prompts during arbitrary navigation away from an unresolved conflict. `0.0.1.13.7` owns autosave/navigation conflict behavior.
 
+## Autosave And Navigation Conflict Safety
+
+Captured in `0.0.1.13.7`.
+
+Transition owner:
+
+- conflict detection stays at `PageCommandService.persistPageContentCommand()` through the existing editor base/precondition contract;
+- UI navigation handlers must not add their own stale-write comparisons;
+- `editor.openPage()` owns page-to-page transition gating after it flushes pending autosave;
+- workspace switching owns its save-before-picker gate by calling the shared editor transition save helper.
+
+Transition rule:
+
+- a transition may continue after an implicit save only when the save result is not conflict, precondition-blocked, stale or superseded;
+- if the pending save returns conflict/blocked/stale, the target page/workspace must not be opened silently;
+- the existing conflict dialog remains the user-facing recovery surface and MINE stays in the editor/runtime state.
+
+Covered paths:
+
+- autosave while staying on the current page;
+- pending autosave flushed before page A -> page B;
+- page A -> Campaign Map;
+- Campaign Map special-save -> ordinary page;
+- page A with Settings open while the pending debounce completes;
+- workspace A -> workspace B save-before-picker;
+- rapid clean A -> B -> A remains covered by the existing autosave navigation regression;
+- late debounced autosave evaluates the precondition at execution/mutation time.
+
+Current teardown finding:
+
+- current code has no save-on-`beforeunload`, `pagehide`, `visibilitychange` or `unload` lifecycle hook, so there is no app/page teardown save bypass in this leaf.
+
+Still out of scope:
+
+- automatic conflict merge beyond the proven structured preservation from `0.0.1.13.4`;
+- force overwrite;
+- broader structured editor coverage, which belongs to `0.0.1.13.8`.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.
