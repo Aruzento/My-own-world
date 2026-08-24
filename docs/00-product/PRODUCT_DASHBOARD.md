@@ -13,7 +13,7 @@ Updated: 2026-08-24
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase and NF-001 Edit Session Conflict Protection phase are closed. NF-001 is not collaboration, version control or a merge engine; it adds optimistic protection so stale editor/session writes cannot silently overwrite newer durable page state inside the current page-write scope. NF-002 Safe Dice Engine is next, but not active until the owner starts it.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase and NF-001 Edit Session Conflict Protection phase are closed. NF-001 is not collaboration, version control or a merge engine; it adds optimistic protection so stale editor/session writes cannot silently overwrite newer durable page state inside the current page-write scope. NF-002 Safe Dice Engine is now the active phase.
 
 ## Current Focus
 
@@ -26,14 +26,15 @@ Immediate direction:
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
-6. Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `DONE`.
-7. Next phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `NEXT`, not `ACTIVE`.
-8. `0.0.1.14.0` has not been started; do not begin dice implementation until the owner explicitly starts that phase.
+6. Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
+7. Next leaf: `0.0.1.14.1` Dice Baseline & Public Contract.
+8. `0.0.1.15.0` Event / Roll / Combat Log + Transactions remains `BLOCKED` and has not been started.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-24 phase start: `0.0.1.14.0` NF-002 Safe Dice Engine became `ACTIVE`; the next leaf is `0.0.1.14.1` Dice Baseline & Public Contract. The phase mission is one safe reusable dice engine boundary, not a consumer-specific Campaign Map/Character/Combat implementation. No dice engine implementation, persistent format migration, event log, combat functionality or real-user-workspace mutation was started.
 - 2026-08-24 `0.0.1.13.FINAL` NF-001 Closure Gate: passed after cumulative Phase 13 review from pre-phase HEAD `71a9625`, independent reviewer PASS and fresh verification. Stale editor/session writes now carry a runtime page-state base, are checked against current durable target-page content at the `PageCommandService` boundary, show a safe Russian conflict UI/recovery path, preserve only proven disjoint structured metadata changes and cannot overwrite Phase 12 restore/repair results. `npm run test`, `npm run test:browser`, `npm run verify`, UI polish, docs, encoding, project file audit, desktop gate, desktop build, native desktop smoke on a disposable workspace and read-only large-workspace smoke on `X:\ДНД\Мастер\По кампаниям\База` passed. No persistent format migration, collaboration/sync layer, generic merge engine, NF-002 dice work or real-workspace mutation was introduced.
 - 2026-08-24 `0.0.1.13.10` Data Safety Integration: Phase 12 repair preview stale evidence now aligns with the Phase 13 canonical page state identity. Restore/partial restore remain backup-gated recovery operations and are not blocked by stale editors, but later stale editor saves conflict before writing over restored/repaired data.
 - 2026-08-24 `0.0.1.13.9` Detect Newer Durable Page State: conflict checks compare against the current durable target page file at write-command execution time, not against stale editor DOM, stale runtime page objects or stale repository snapshots. No filesystem watcher or background polling was added.
@@ -185,7 +186,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.14.0` NF-002 Safe Dice Engine only when the owner explicitly starts the next phase.
+- Start `0.0.1.14.1` Dice Baseline & Public Contract when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

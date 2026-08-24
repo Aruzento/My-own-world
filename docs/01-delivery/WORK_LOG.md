@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.14.0 NF-002 Safe Dice Engine Phase Start
+
+### Disposition
+
+- Started `0.0.1.14.0` NF-002 Safe Dice Engine after `0.0.1.13.0` NF-001 Edit Session Conflict Protection closed.
+- Verified the expected baseline HEAD `36ded38` before changing status docs.
+- Updated current status docs so `0.0.1.14.0` is `ACTIVE`.
+- Set the next leaf to `0.0.1.14.1` Dice Baseline & Public Contract.
+- Confirmed `0.0.1.15.0` Event / Roll / Combat Log + Transactions remains `BLOCKED` and was not started.
+
+### Scope Boundary
+
+- Phase 14 mission is one safe reusable subsystem-independent dice engine boundary.
+- Future consumers may include Campaign Map initiative, Character/Properties actions, checks/saves, combat actions, damage/healing, Rule Tree-driven actions, quick roll UI, future Event/Roll/Combat Log and later extensions.
+- The dice engine must not belong to any consumer and must not import DOM/UI, Campaign Map, CharacterModel, Properties, PageRepository, PageCommandService, StorageAdapter, event log, combat or workspace state.
+- Phase 14 RollResult remains a runtime/domain contract; durable event/roll logging belongs to Phase 15.
+
+### Explicit Non-Work
+
+- Did not implement tokenizer, parser, evaluator, RNG, roll result structure or initiative migration.
+- Did not add dice UI, tray, 3D dice, roll history, persistent event log, combat actions, damage/healing, effects, networking, scripts, macros or arbitrary expression programming.
+- Did not change workspace/page/backup persistent formats.
+- Did not mutate a real user workspace.
+
+### Verification
+
+- `git status --short`
+- `git log --oneline -5`
+- `rg` status sweep across plan/dashboard/bug inventory/work log/release docs
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.1` Dice Baseline & Public Contract.
+
 ## 2026-08-24: 0.0.1.13.FINAL NF-001 Closure Gate
 
 ### Disposition

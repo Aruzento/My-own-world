@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `DONE`.
+Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
 
-Current leaf: `0.0.1.14.0` NF-002 Safe Dice Engine is `NEXT`, not `ACTIVE`, and has not been started.
+Current leaf: `0.0.1.14.1` Dice Baseline & Public Contract is `NEXT`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL` and `0.0.1.13.0` are closed. Do not start `0.0.1.14.0` implementation until the owner explicitly starts that next phase.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL` and `0.0.1.13.0` are closed. `0.0.1.14.0` is active for NF-002 Safe Dice Engine planning/implementation leaves. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 ## Execution Rules
 
@@ -259,7 +259,7 @@ ID: `0.0.1.14.0`
 
 NAME: NF-002 Safe Dice Engine
 
-STATUS: `NEXT`
+STATUS: `ACTIVE`
 
 GOAL: create a safe, deterministic dice/rules engine.
 
@@ -267,9 +267,13 @@ WHY NOW: rolls should be structured and testable before event logs and combat ac
 
 SCOPE: safe grammar, no `eval`, no `Function`, deterministic RNG tests, limits, arithmetic, modifiers, advantage/disadvantage, critical behavior and reusable structured results. Existing initiative random rolls may move to the engine only after parity verification.
 
-DEPENDENCIES: roadmap order follows Phase 5. Pure dice parsing has no hard technical dependency on NF-001, but durable roll logging waits for Phase 7.
+DEPENDENCIES: roadmap order follows Phase 5. Pure dice parsing has no hard technical dependency on NF-001, but durable roll logging waits for Phase 7. Owner started this phase on 2026-08-24.
 
 EXIT CRITERIA: parser/evaluator is safe; roll results are structured; no arbitrary code execution path exists; initiative parity is either migrated with tests or explicitly deferred.
+
+CURRENT LEAF RESULTS:
+
+- `0.0.1.14.0` Phase Start - `DONE` on 2026-08-24. Current status docs mark this phase `ACTIVE`, keep `0.0.1.15.0` Event / Roll / Combat Log + Transactions `BLOCKED`, and set the next leaf to `0.0.1.14.1` Dice Baseline & Public Contract. No dice engine implementation, persistent format migration, event log, combat functionality or real workspace mutation was performed.
 
 ### Phase 7 - 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions
 

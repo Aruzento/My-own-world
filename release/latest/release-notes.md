@@ -52,7 +52,8 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.11.12` closes `BI-008` / `BI-009`: selected circle center markers are fixed as runtime-only UI, while object-like shape rotation handles are deferred to a later Campaign Map feature phase.
 - `0.0.1.11.FINAL` closes Existing P1 Stabilization after full final gate verification. A corrective Campaign Map presentation sync fix keeps the active drag-measure overlay through late full presentation resyncs.
 - Owner-directed Settings Center migration: the topbar Settings popup is now a larger two-pane system settings surface with grouped sidebar navigation, search, dedicated future placeholders and migrated Appearance / Backup / Storage / Diagnostics sections. It reuses the existing PopupManager, themeManager, backupService, Asset Health and Workspace Diagnostics owners; no workspace schema, backup format or external dependency changed.
-- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is closed after the final gate. Stale editor/session writes now carry a runtime page-state base, are checked against current durable target-page content at the PageCommandService boundary, surface a safe conflict UI/recovery path and cannot silently overwrite Phase 12 restore/repair results within the current PageRecord-backed scope. No persistent format migration, collaboration/sync layer, generic merge engine or dice work was added. `0.0.1.14.0` NF-002 Safe Dice Engine is next but has not been started.
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection is closed after the final gate. Stale editor/session writes now carry a runtime page-state base, are checked against current durable target-page content at the PageCommandService boundary, surface a safe conflict UI/recovery path and cannot silently overwrite Phase 12 restore/repair results within the current PageRecord-backed scope. No persistent format migration, collaboration/sync layer, generic merge engine or dice work was added during closure.
+- `0.0.1.14.0` NF-002 Safe Dice Engine is now the active phase. The start commit updates status only; no dice parser/evaluator/RNG/result contract, dice UI, event log, combat functionality or persistent format change has been implemented yet.
 
 ### Known Risks
 
@@ -61,7 +62,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
 - The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization, `0.0.1.12.0` Data Safety Completion and `0.0.1.13.0` NF-001 Edit Session Conflict Protection are closed.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair and edit-session conflict protection are implemented for the current safety scope. The next roadmap risk is NF-002 Safe Dice Engine before rolls/feeders become durable session data.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair and edit-session conflict protection are implemented for the current safety scope. The active roadmap risk is NF-002 Safe Dice Engine before rolls/feeders become durable session data.
 
 ### Verification Snapshot
 
