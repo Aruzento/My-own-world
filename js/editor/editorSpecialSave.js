@@ -459,6 +459,26 @@ async function persistCurrentPage(
     throw error;
   }
 
+  if (result?.conflict) {
+
+    setSaveStatus(
+      'conflict',
+      'Конфликт сохранения: страница изменилась в другом месте.'
+    );
+
+    return result;
+  }
+
+  if (result?.blocked) {
+
+    setSaveStatus(
+      'error',
+      'Сохранение заблокировано: текущую версию страницы не удалось проверить.'
+    );
+
+    return result;
+  }
+
   if (result?.stale) {
 
     setSaveStatus(
@@ -466,7 +486,7 @@ async function persistCurrentPage(
       'Save conflict: newer change kept'
     );
 
-    return;
+    return result;
   }
 
   setSaveStatus(
@@ -479,4 +499,6 @@ async function persistCurrentPage(
   );
 
   renderTree();
+
+  return result;
 }

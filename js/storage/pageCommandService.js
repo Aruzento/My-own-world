@@ -10,7 +10,9 @@ import {
 } from './writeQueue.js';
 
 import {
-  evaluatePageWritePrecondition
+  createPageWriteExpectedBase,
+  evaluatePageWritePrecondition,
+  shouldBlockPageWriteForPrecondition
 } from './pageWritePreconditions.js';
 
 
@@ -136,7 +138,7 @@ export async function persistPageContentCommand({
   previousPage = null,
   type = 'update-page-content',
   reason = type,
-  expectedBase = null
+  expectedBase = undefined
 } = {}) {
 
   const beforePage =
@@ -196,8 +198,40 @@ export async function persistPageContentCommand({
       context.phaseResults.precondition =
         await evaluatePageWritePrecondition({
           page,
-          expectedBase
+          expectedBase:
+            expectedBase === undefined
+              ? beforePage?.pageStateIdentity || null
+              : expectedBase
         });
+
+      if (
+        shouldBlockPageWriteForPrecondition(
+          context.phaseResults.precondition
+        )
+      ) {
+
+        markWriteRevisionState(
+          writeRevision,
+          getPreconditionBlockedRevisionState(
+            context.phaseResults.precondition
+          ),
+          {
+            error:
+              getPreconditionBlockedMessage(
+                context.phaseResults.precondition
+              )
+          }
+        );
+
+        return createPreconditionBlockedWriteResult({
+          page,
+          type,
+          reason,
+          writeRevision,
+          precondition:
+            context.phaseResults.precondition
+        });
+      }
 
       const writeResult =
         await writePageContent(
@@ -220,6 +254,9 @@ export async function persistPageContentCommand({
         context.phaseResults.precondition || null;
 
       if (
+        isPreconditionBlockedWriteResult(
+          writeResult
+        ) ||
         isSupersededWriteResult(
           writeResult
         )
@@ -231,10 +268,26 @@ export async function persistPageContentCommand({
           writeStatus:
             writeResult.state,
           stale:
-            true,
+            Boolean(
+              isSupersededWriteResult(
+                writeResult
+              )
+            ),
+          conflict:
+            Boolean(
+              writeResult.conflict
+            ),
+          blocked:
+            Boolean(
+              writeResult.blocked
+            ),
           written:
             Boolean(writeResult.written),
-          precondition
+          precondition,
+          blockReason:
+            writeResult.blockReason || null,
+          conflictEvidence:
+            writeResult.conflictEvidence || null
         };
 
         return;
@@ -257,6 +310,9 @@ export async function persistPageContentCommand({
         context.phaseResults.precondition || null;
 
       if (
+        !isPreconditionBlockedWriteResult(
+          writeResult
+        ) &&
         !isSupersededWriteResult(
           writeResult
         )
@@ -282,11 +338,23 @@ export async function persistPageContentCommand({
               writeResult
             )
           ),
+        conflict:
+          Boolean(
+            writeResult?.conflict
+          ),
+        blocked:
+          Boolean(
+            writeResult?.blocked
+          ),
         written:
           Boolean(
             writeResult?.written
           ),
-        precondition
+        precondition,
+        blockReason:
+          writeResult?.blockReason || null,
+        conflictEvidence:
+          writeResult?.conflictEvidence || null
       };
     },
     rollback(
@@ -336,9 +404,145 @@ function isSupersededWriteResult(
   writeResult
 ) {
 
+  if (
+    isPreconditionBlockedWriteResult(
+      writeResult
+    )
+  ) return false;
+
   return writeResult?.state === 'stale' ||
     writeResult?.state === 'superseded-after-write' ||
     writeResult?.skipped === true;
+}
+
+
+function isPreconditionBlockedWriteResult(
+  writeResult
+) {
+
+  return Boolean(
+    writeResult?.blocked === true &&
+    writeResult?.preconditionBlocked === true
+  );
+}
+
+
+function createPreconditionBlockedWriteResult({
+  page,
+  type,
+  reason,
+  writeRevision,
+  precondition
+}) {
+
+  const conflict =
+    precondition?.status === 'mismatch';
+
+  const blockReason =
+    conflict
+      ? 'page-state-conflict'
+      : (
+        precondition?.failureKind ||
+        'page-state-precondition-unavailable'
+      );
+
+  return {
+    key:
+      getPageWriteKey(
+        page
+      ),
+    revision:
+      writeRevision?.revision ?? null,
+    state:
+      conflict
+        ? 'conflict'
+        : 'precondition-blocked',
+    written:
+      false,
+    skipped:
+      true,
+    current:
+      true,
+    blocked:
+      true,
+    preconditionBlocked:
+      true,
+    conflict,
+    blockReason,
+    operationKind:
+      type || null,
+    reason:
+      reason || null,
+    precondition,
+    conflictEvidence:
+      createPageWriteConflictEvidence({
+        page,
+        type,
+        reason,
+        precondition,
+        blockReason,
+        conflict
+      })
+  };
+}
+
+
+function createPageWriteConflictEvidence({
+  page,
+  type,
+  reason,
+  precondition,
+  blockReason,
+  conflict
+}) {
+
+  return {
+    kind:
+      conflict
+        ? 'page-write-conflict'
+        : 'page-write-precondition-block',
+    pageId:
+      page?.id ||
+      precondition?.currentBase?.pageId ||
+      precondition?.expectedBase?.pageId ||
+      null,
+    operationKind:
+      type || null,
+    reason:
+      reason || null,
+    blockReason:
+      blockReason || null,
+    expectedBase:
+      precondition?.expectedBase || null,
+    currentBase:
+      precondition?.currentBase || null,
+    preconditionStatus:
+      precondition?.status || null
+  };
+}
+
+
+function getPreconditionBlockedRevisionState(
+  precondition
+) {
+
+  return precondition?.status === 'mismatch'
+    ? 'conflict'
+    : 'precondition-blocked';
+}
+
+
+function getPreconditionBlockedMessage(
+  precondition
+) {
+
+  if (precondition?.status === 'mismatch') {
+
+    return 'Page write precondition conflict.';
+  }
+
+  return precondition?.error ||
+    'Page write precondition could not be verified.';
 }
 
 
@@ -378,6 +582,10 @@ export function snapshotPageForCommand(
     relationships:
       clonePageRelationships(
         page.relationships
+      ),
+    pageStateIdentity:
+      createPageWriteExpectedBase(
+        page
       )
   };
 }

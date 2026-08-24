@@ -102,6 +102,10 @@ export async function evaluatePageWritePrecondition({
         'read-failed',
       ok:
         false,
+      failureKind:
+        classifyPreconditionReadFailure(
+          error
+        ),
       expectedBase:
         expected,
       currentBase:
@@ -115,6 +119,18 @@ export async function evaluatePageWritePrecondition({
 }
 
 
+export function shouldBlockPageWriteForPrecondition(
+  precondition
+) {
+
+  if (!precondition) return false;
+
+  if (precondition.status === 'not-provided') return false;
+
+  return precondition.ok !== true;
+}
+
+
 export function createPageWriteExpectedBase(
   page
 ) {
@@ -124,4 +140,35 @@ export function createPageWriteExpectedBase(
       page
     )
   );
+}
+
+
+function classifyPreconditionReadFailure(
+  error
+) {
+
+  const message =
+    String(
+      error?.message || error || ''
+    ).toLowerCase();
+
+  if (
+    /\bmissing\b|\bnot found\b|\benoent\b|\bnotfound\b|не найден|не существует/.test(
+      message
+    )
+  ) {
+
+    return 'current-page-missing';
+  }
+
+  if (
+    /\bpermission\b|\bdenied\b|\beacces\b|\baccess\b|доступ/.test(
+      message
+    )
+  ) {
+
+    return 'current-page-unreadable';
+  }
+
+  return 'current-page-unavailable';
 }

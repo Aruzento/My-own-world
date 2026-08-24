@@ -250,6 +250,39 @@ Regression target:
 - command precondition reads durable content rather than stale runtime page content;
 - editor open captures base, save advances base and reopen captures latest base.
 
+## Stale Write Blocking
+
+Captured in `0.0.1.13.3`.
+
+Enforcement owner:
+
+- `PageCommandService.persistPageContentCommand()` enforces write preconditions before `writePageContent()`;
+- UI handlers must not implement their own separate stale-write gate;
+- `snapshotPageForCommand()` captures a runtime-only `pageStateIdentity`, allowing snapshot-based callers to use default preconditions without adding persistent fields;
+- callers can still pass `expectedBase` explicitly; `expectedBase: null` is reserved for tests or low-level flows that deliberately exercise writeQueue behavior outside edit-session protection.
+
+Structured blocked results:
+
+- durable identity mismatch returns `writeStatus: "conflict"`, `conflict: true`, `blocked: true`, `written: false`;
+- missing or unreadable current durable state returns `writeStatus: "precondition-blocked"` with `conflict: false`, `blocked: true`, `written: false`;
+- conflict evidence includes only page id, operation kind, reason, block reason, expected identity and current identity;
+- full page content is not embedded in generic errors or conflict evidence.
+
+No-write guarantee:
+
+- conflict/blocked results happen before `StorageAdapter.writeText()`;
+- conflict/blocked results do not call `notifyPageUpdated()`;
+- conflict/blocked results do not update `PageRepository` / `PageIndex`;
+- conflict/blocked results do not register undo entries;
+- durable newer page state remains the source of truth.
+
+Editor behavior:
+
+- editor save checks `result.conflict` before writeQueue stale results;
+- conflict status is shown without rerendering the editor;
+- visible stale draft remains in the editor DOM for a later resolution flow;
+- `0.0.1.13.4` owns preserving unrelated field changes, and `0.0.1.13.3` does not merge.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.

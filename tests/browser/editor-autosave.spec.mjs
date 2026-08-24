@@ -158,6 +158,18 @@ aliases: []
               3
             );
 
+          for (const pageRecord of [
+            alphaPage,
+            betaPage,
+            gammaPage
+          ]) {
+
+            files.set(
+              pageRecord.path,
+              pageRecord.content
+            );
+          }
+
           state.pages = [
             alphaPage,
             betaPage,
@@ -718,6 +730,303 @@ aliases: []
       result.savedContent
     ).toContain(
       'Saved base'
+    );
+  }
+);
+
+
+test(
+  'editor-save-blocks-stale-write-and-keeps-draft-visible',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            openPage,
+            saveCurrentPage
+          } = await import('/js/editor/editor.js');
+
+          const {
+            persistPageContentCommand,
+            snapshotPageForCommand
+          } = await import('/js/storage/storage.js');
+
+          const {
+            getCurrentEditorPageBase
+          } = await import('/js/editor/editorSessionBase.js');
+
+          const {
+            updatePageRecordContent
+          } = await import('/js/core/pageRecord.js');
+
+          const files =
+            new Map();
+
+          let writeCount =
+            0;
+
+          setStorageAdapter({
+            kind:
+              'memory',
+            getWorkspaceHandle() {
+              return {
+                name:
+                  'Editor conflict workspace'
+              };
+            },
+            setWorkspaceHandle() {},
+            async pickWorkspace() {
+              return {};
+            },
+            async restoreWorkspace() {
+              return {};
+            },
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+              return {};
+            },
+            async readText(path) {
+              return files.get(path) || '';
+            },
+            async writeText(path, content) {
+              writeCount += 1;
+              files.set(
+                path,
+                String(content)
+              );
+            },
+            async readBinary() {
+              return new ArrayBuffer(0);
+            },
+            async writeBinary() {},
+            async listFiles() {
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          });
+
+          const content =
+`---
+id: editor-conflict-page
+parent: null
+order: 1
+tags: []
+template: card
+type: note
+aliases: []
+---
+
+<div class="entity-layout card-shell" contenteditable="false">
+  <h1>Editor Conflict</h1>
+  <div
+    class="rich-text-field"
+    contenteditable="true"
+    data-persistent-editable="true"
+  >base-a-token</div>
+</div>`;
+
+          const pageRecord =
+            {
+              id:
+                'editor-conflict-page',
+              name:
+                'editor-conflict-page.md',
+              path:
+                '/pages/editor-conflict-page.md',
+              order:
+                1,
+              title:
+                'Editor Conflict',
+              parent:
+                null,
+              template:
+                'card',
+              type:
+                'note',
+              tags:
+                [],
+              aliases:
+                [],
+              relationships:
+                [],
+              content
+            };
+
+          files.set(
+            pageRecord.path,
+            pageRecord.content
+          );
+
+          state.pages =
+            [
+              pageRecord
+            ];
+
+          await openPage(
+            pageRecord
+          );
+
+          const openedBase =
+            getCurrentEditorPageBase(
+              pageRecord.id
+            );
+
+          const currentContent =
+            updatePageRecordContent(
+              pageRecord.content,
+              {
+                body:
+`<div class="entity-layout card-shell" contenteditable="false">
+  <h1>Editor Conflict</h1>
+  <div
+    class="rich-text-field"
+    contenteditable="true"
+    data-persistent-editable="true"
+  >current-b-token</div>
+</div>`
+              },
+              {
+                now:
+                  '2026-08-24T10:00:00.000Z'
+              }
+            );
+
+          await persistPageContentCommand({
+            page:
+              pageRecord,
+            content:
+              currentContent,
+            previousPage:
+              snapshotPageForCommand(
+                pageRecord
+              ),
+            reason:
+              'browser-current-write',
+            expectedBase:
+              openedBase
+          });
+
+          const writesBeforeStaleSave =
+            writeCount;
+
+          const editor =
+            document.querySelector(
+              '#editorArea'
+            );
+
+          const body =
+            editor.querySelector(
+              '.rich-text-field'
+            );
+
+          body.textContent =
+            'stale-c-draft-token';
+
+          const saveResult =
+            await saveCurrentPage();
+
+          const writesAfterStaleSave =
+            writeCount;
+
+          return {
+            saveResult:
+              {
+                writeStatus:
+                  saveResult?.writeStatus || '',
+                conflict:
+                  Boolean(
+                    saveResult?.conflict
+                  ),
+                blocked:
+                  Boolean(
+                    saveResult?.blocked
+                  ),
+                written:
+                  Boolean(
+                    saveResult?.written
+                  )
+              },
+            staleSaveStorageWrites:
+              writesAfterStaleSave - writesBeforeStaleSave,
+            durableContent:
+              files.get(
+                pageRecord.path
+              ) || '',
+            runtimeContent:
+              pageRecord.content || '',
+            visibleDraft:
+              body.textContent || ''
+          };
+        }
+      );
+
+    expect(
+      result.saveResult.writeStatus
+    ).toBe(
+      'conflict'
+    );
+
+    expect(
+      result.saveResult.conflict
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.saveResult.blocked
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.saveResult.written
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.staleSaveStorageWrites
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.durableContent
+    ).toContain(
+      'current-b-token'
+    );
+
+    expect(
+      result.durableContent
+    ).not.toContain(
+      'stale-c-draft-token'
+    );
+
+    expect(
+      result.runtimeContent
+    ).toContain(
+      'current-b-token'
+    );
+
+    expect(
+      result.visibleDraft
+    ).toBe(
+      'stale-c-draft-token'
     );
   }
 );

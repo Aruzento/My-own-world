@@ -735,7 +735,9 @@ test(
             page
           ),
         reason:
-          'old-autosave'
+          'old-autosave',
+        expectedBase:
+          null
       });
 
     await firstWriteStart;
@@ -750,7 +752,9 @@ test(
             page
           ),
         reason:
-          'new-autosave'
+          'new-autosave',
+        expectedBase:
+          null
       });
 
     releaseFirstWrite();

@@ -90,7 +90,7 @@ test(
 
 
 test(
-  'edit conflict baseline case 2: stale full-page save currently overwrites newer durable content',
+  'edit conflict case 2: stale full-page save is blocked before overwriting newer durable content',
   async () => {
 
     const {
@@ -158,46 +158,50 @@ test(
 
     assert.equal(
       result.writeStatus,
-      'saved'
+      'conflict'
     );
 
     assert.equal(
-      result.stale,
-      false,
-      'current baseline has no edit-session base precondition'
+      result.conflict,
+      true
+    );
+
+    assert.equal(
+      result.written,
+      false
     );
 
     assert.equal(
       await adapter.readText(
         page.path
       ),
-      staleEditorContent
+      newerDurableContent
     );
 
     assert.equal(
       page.content,
-      staleEditorContent
+      newerDurableContent
     );
 
     assert.equal(
       searchPageResults(
         'newer durable B'
-      ).length,
-      0
+      )[0]?.page,
+      page
     );
 
     assert.equal(
       searchPageResults(
         'stale editor C'
-      )[0]?.page,
-      page
+      ).length,
+      0
     );
   }
 );
 
 
 test(
-  'edit conflict baseline case 3: stale structured different-field command can lose the newer field durably',
+  'edit conflict case 3: stale structured different-field command is blocked before losing the newer field',
   async () => {
 
     const {
@@ -290,28 +294,25 @@ test(
 
     assert.equal(
       result.writeStatus,
-      'saved'
+      'conflict'
     );
 
     assert.equal(
-      result.stale,
-      false
+      result.conflict,
+      true
     );
 
     assert.deepEqual(
       durableParsed.aliases,
-      [
-        'field-y-alias'
-      ]
+      []
     );
 
     assert.deepEqual(
       durableParsed.tags,
       [
         'card',
-        'base-tag'
-      ],
-      'current baseline writes the stale full PageRecord, so field X is not preserved durably'
+        'field-x-tag'
+      ]
     );
 
     assert.deepEqual(
@@ -328,7 +329,7 @@ test(
 
 
 test(
-  'edit conflict baseline case 4: stale same-field command currently overwrites the newer field',
+  'edit conflict case 4: stale same-field command is blocked before overwriting the newer field',
   async () => {
 
     const {
@@ -417,13 +418,13 @@ test(
 
     assert.equal(
       result.writeStatus,
-      'saved'
+      'conflict'
     );
 
     assert.deepEqual(
       durableParsed.aliases,
       [
-        'stale-alias-y'
+        'newer-alias-x'
       ]
     );
 
@@ -431,21 +432,21 @@ test(
       findPageByTitleOrAlias(
         'newer-alias-x'
       ),
-      null
+      page
     );
 
     assert.equal(
       findPageByTitleOrAlias(
         'stale-alias-y'
       ),
-      page
+      null
     );
   }
 );
 
 
 test(
-  'edit conflict baseline case 5: autosave-shaped stale content can preserve current metadata while replacing body',
+  'edit conflict case 5: autosave-shaped stale content is blocked before replacing body',
   async () => {
 
     const {
@@ -533,7 +534,7 @@ test(
 
     assert.equal(
       result.writeStatus,
-      'saved'
+      'conflict'
     );
 
     assert.deepEqual(
@@ -546,12 +547,12 @@ test(
 
     assert.match(
       durableParsed.body,
-      /stale body C/
+      /base body A/
     );
 
     assert.doesNotMatch(
       durableParsed.body,
-      /base body A/
+      /stale body C/
     );
   }
 );

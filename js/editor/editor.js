@@ -283,9 +283,9 @@ export async function saveCurrentPage() {
       editor
     );
 
-  if (savedSpecialPage) return;
+  if (savedSpecialPage) return savedSpecialPage;
 
-  await saveCurrentPageWithEditor(
+  return saveCurrentPageWithEditor(
     editor
   );
 }

@@ -297,6 +297,26 @@ export async function saveCurrentPage(
     throw error;
   }
 
+  if (result?.conflict) {
+
+    setSaveStatus(
+      'conflict',
+      'Конфликт сохранения: страница изменилась в другом месте.'
+    );
+
+    return result;
+  }
+
+  if (result?.blocked) {
+
+    setSaveStatus(
+      'error',
+      'Сохранение заблокировано: текущую версию страницы не удалось проверить.'
+    );
+
+    return result;
+  }
+
   if (result?.stale) {
 
     setSaveStatus(
@@ -304,7 +324,7 @@ export async function saveCurrentPage(
       'Save conflict: newer change kept'
     );
 
-    return;
+    return result;
   }
 
   if (state.currentPage?.id === page.id) {
@@ -323,6 +343,8 @@ export async function saveCurrentPage(
   renderTree();
 
   syncCampaignMapPresentation();
+
+  return result;
 }
 
 

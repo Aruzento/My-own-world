@@ -171,12 +171,13 @@ test(
 
 
 test(
-  'page write precondition reports mismatch but does not block writes in 13.2',
+  'page write precondition conflict blocks stale durable writes before storage mutation',
   async () => {
 
     const {
       adapter,
-      page
+      page,
+      originalContent
     } =
       await createEditConflictFixture({
         id:
@@ -194,6 +195,16 @@ test(
         }
       );
 
+    const sessionBase =
+      {
+        previousPage:
+          snapshotPageForCommand(
+            page
+          ),
+        content:
+          originalContent
+      };
+
     const newerDurable =
       updateFixtureContent(
         page.content,
@@ -203,14 +214,41 @@ test(
         }
       );
 
-    await adapter.writeText(
-      page.path,
-      newerDurable
-    );
+    await persistPageContentCommand({
+      page,
+      content:
+        newerDurable,
+      previousPage:
+        snapshotPageForCommand(
+          page
+        ),
+      reason:
+        'precondition-conflict-current-write',
+      expectedBase
+    });
+
+    let staleWriteCount =
+      0;
+
+    const originalWriteText =
+      adapter.writeText.bind(
+        adapter
+      );
+
+    adapter.writeText =
+      async (path, content) => {
+
+        staleWriteCount += 1;
+
+        return originalWriteText(
+          path,
+          content
+        );
+      };
 
     const staleSessionContent =
       updateFixtureContent(
-        page.content,
+        sessionBase.content,
         {
           body:
             '<h1>Precondition Mismatch</h1><p>C</p>'
@@ -223,11 +261,9 @@ test(
         content:
           staleSessionContent,
         previousPage:
-          snapshotPageForCommand(
-            page
-          ),
+          sessionBase.previousPage,
         reason:
-          'precondition-mismatch-characterization',
+          'precondition-conflict-stale-write',
         expectedBase
       });
 
@@ -243,14 +279,39 @@ test(
 
     assert.equal(
       result.writeStatus,
-      'saved'
+      'conflict'
+    );
+
+    assert.equal(
+      result.conflict,
+      true
+    );
+
+    assert.equal(
+      result.blocked,
+      true
+    );
+
+    assert.equal(
+      result.written,
+      false
+    );
+
+    assert.equal(
+      staleWriteCount,
+      0
     );
 
     assert.equal(
       await adapter.readText(
         page.path
       ),
-      staleSessionContent
+      newerDurable
+    );
+
+    assert.equal(
+      page.content,
+      newerDurable
     );
   }
 );
