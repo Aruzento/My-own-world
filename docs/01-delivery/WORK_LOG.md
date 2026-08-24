@@ -6,6 +6,55 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.10 Data Safety Integration
+
+### Disposition
+
+- Closed `0.0.1.13.10` as the integration leaf between NF-001 conflict protection and Phase 12 recovery/repair safety.
+- Did not add a second version system, repair repository, restore conflict system, filesystem watcher, sync/collaboration layer, persistent format change or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.FINAL` NF-001 Closure Gate.
+
+### State Identity Alignment
+
+- Phase 12 repair preview still exposes readable stale evidence (`contentHash`, `updatedAt`, content length and revision where available) for the diagnostics UI and backward compatibility.
+- Repair preview now also carries `sourcePageStateIdentity`, the canonical Phase 13 runtime identity derived from PageRecord content.
+- `applyRepairPreviewPlan()` now treats `sourcePageStateIdentity` as the primary machine check for "this repair was based on page state X"; older plans without that identity still fall back to the previous evidence fields.
+- Internal-link repair apply passes that identity to `persistPageContentCommand()` as `expectedBase`, so the durable page command boundary rechecks current target-page state before writing.
+- Relationship repair apply passes the same identity to `persistKnowledgeGraphRelationshipsCommand()`.
+
+### Command Ownership
+
+- Restore and partial restore remain explicit data-safety recovery operations owned by `backupService`; they keep manifest validation, preflight and mandatory pre-restore backup.
+- A stale editor session must not block a legitimate owner-confirmed restore. Instead, after restore writes B, the stale editor's later attempt to save C conflicts against B.
+- `persistKnowledgeGraphRelationshipsCommand()` now accepts `expectedBase` and evaluates the same page write precondition before `writePageContent()`. On conflict or unreadable current state it returns a structured blocked result, does not write the file, does not mutate runtime relationships/content and does not notify PageRepository/PageIndex with stale data.
+- Conflict detection itself creates no backup. Backups remain attached to destructive restore/repair operations, not to blocked editor saves.
+
+### Behavioral Result
+
+- Partial restore can restore the selected page to B and refresh PageRepository; a stale editor draft C based on A is blocked afterward and B survives.
+- Persistent internal-link repair can write B through the existing backup-gated repair flow; a stale editor draft C based on A is blocked afterward and the repair result survives.
+- A repair preview based on A is rejected before backup creation after a normal editor save writes B.
+- Relationship repair/page relationship writes now share the same page precondition identity rather than using a separate relationship-only freshness concept.
+
+### Tests
+
+- `node --check js\storage\repairPreview.js`
+- `node --check js\wiki\knowledgeGraphCommandBridge.js`
+- `node --check tests\conflictDataSafetyIntegration.test.mjs`
+- `node --test tests\conflictDataSafetyIntegration.test.mjs`
+- `node --test tests\repairPreview.test.mjs`
+- `node --test tests\recoveryEndToEnd.test.mjs`
+- `node --test tests\partialRestore.test.mjs`
+- `node --test tests\knowledgeGraph.test.mjs tests\pageWriteConflictBlocking.test.mjs tests\pageWritePreconditions.test.mjs`
+- `npm run test`
+- `npm run test:browser`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.FINAL` NF-001 Closure Gate.
+
 ## 2026-08-24: 0.0.1.13.9 Detect Newer Durable Page State
 
 ### Disposition

@@ -214,7 +214,7 @@ The current previewable cases are:
 
 The model deliberately does not infer replacement targets from fuzzy title similarity. Ambiguous diagnostics stay blocked until the user chooses one target. Asset replacement is not previewed in this leaf because MyOwnWorld cannot safely invent a replacement file path.
 
-Each ready plan records the source page, diagnostic reason, affected field path, before/after target, local text or relationship context, backup requirement for future apply and stale-plan evidence from the current source page (`contentHash`, `updatedAt`, content length and revision when available). Preview creation, target changes, cancellation and reopening are side-effect free: no page writes, asset writes/deletes, repository/index mutation or backup creation may occur.
+Each ready plan records the source page, diagnostic reason, affected field path, before/after target, local text or relationship context, backup requirement for future apply and stale-plan evidence from the current source page. Since `0.0.1.13.10`, the machine-readable stale evidence uses the Phase 13 canonical `sourcePageStateIdentity`; legacy readable details (`contentHash`, `updatedAt`, content length and revision when available) remain present for UI/backward compatibility. Preview creation, target changes, cancellation and reopening are side-effect free: no page writes, asset writes/deletes, repository/index mutation or backup creation may occur.
 
 ## Persistent Repair Apply
 
@@ -225,9 +225,11 @@ The current persistent repair scope is intentionally narrow:
 - selected raw wiki links and converted wiki/internal page anchors are rewritten through PageRecord body updates and the existing `PageCommandService` / write queue lifecycle;
 - selected relationship endpoints are rewritten through the existing Knowledge Graph relationship command bridge.
 
-Apply validates stale evidence before creating a backup. If the source page content hash, updated timestamp, content length or revision evidence no longer matches, apply is blocked and the user must regenerate the preview. This is operation-scoped stale protection only; general editor conflict handling remains a future `0.0.1.13.0` responsibility.
+Apply validates stale evidence before creating a backup. Current plans compare the source page against `sourcePageStateIdentity`; older plans without that identity fall back to content hash, updated timestamp, content length or revision evidence. If evidence no longer matches, apply is blocked and the user must regenerate the preview. This remains operation-scoped stale protection and now uses the same semantic concept as NF-001 editor write preconditions: "this mutation was based on page state X".
 
-Every persistent repair requires the existing backup safety owner before writes start. If backup creation or verification fails, no repair write may occur. If the later page write fails or the command owner reports a stale/superseded non-durable result, the UI reports failure instead of success, and the safety backup id is preserved for recovery guidance.
+Every persistent repair requires the existing backup safety owner before writes start. If backup creation or verification fails, no repair write may occur. Internal-link repair passes the preview identity to `PageCommandService` as `expectedBase`; relationship repair passes the same identity to the existing Knowledge Graph relationship command bridge. If the later page write fails or the command owner reports a conflict, blocked, stale or superseded non-durable result, the UI reports failure instead of success, and the safety backup id is preserved for recovery guidance.
+
+Restore and partial restore are explicit recovery operations. They are not blocked merely because a user has an old editor session open. Their safety owner remains `backupService`: validated manifest, preflight where possible and mandatory pre-restore backup. After restore writes newer durable page state, any stale editor save based on the older page state must conflict at the Phase 13 page write boundary rather than overwriting the restored content.
 
 ## End-To-End Recovery Validation
 

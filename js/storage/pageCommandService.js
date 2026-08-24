@@ -15,8 +15,11 @@ import {
 } from '../core/pageRecord.js';
 
 import {
+  createPageWritePreconditionBlockedResult,
   createPageWriteExpectedBase,
   evaluatePageWritePrecondition,
+  getPageWritePreconditionMessage,
+  getPageWritePreconditionRevisionState,
   readCurrentDurablePageContent,
   shouldBlockPageWriteForPrecondition
 } from './pageWritePreconditions.js';
@@ -289,12 +292,12 @@ export async function persistPageContentCommand({
 
           markWriteRevisionState(
             writeRevision,
-            getPreconditionBlockedRevisionState(
+            getPageWritePreconditionRevisionState(
               context.phaseResults.precondition
             ),
             {
               error:
-                getPreconditionBlockedMessage(
+                getPageWritePreconditionMessage(
                   context.phaseResults.precondition
                 )
             }
@@ -539,114 +542,19 @@ function createPreconditionBlockedWriteResult({
   precondition
 }) {
 
-  const conflict =
-    precondition?.status === 'mismatch';
-
-  const blockReason =
-    conflict
-      ? 'page-state-conflict'
-      : (
-        precondition?.failureKind ||
-        'page-state-precondition-unavailable'
-      );
-
-  return {
-    key:
+  return createPageWritePreconditionBlockedResult({
+    writeKey:
       getPageWriteKey(
         page
       ),
-    revision:
-      writeRevision?.revision ?? null,
-    state:
-      conflict
-        ? 'conflict'
-        : 'precondition-blocked',
-    written:
-      false,
-    skipped:
-      true,
-    current:
-      true,
-    blocked:
-      true,
-    preconditionBlocked:
-      true,
-    conflict,
-    blockReason,
-    operationKind:
-      type || null,
-    reason:
-      reason || null,
-    precondition,
-    conflictEvidence:
-      createPageWriteConflictEvidence({
-        page,
-        type,
-        reason,
-        precondition,
-        blockReason,
-        conflict
-      })
-  };
-}
-
-
-function createPageWriteConflictEvidence({
-  page,
-  type,
-  reason,
-  precondition,
-  blockReason,
-  conflict
-}) {
-
-  return {
-    kind:
-      conflict
-        ? 'page-write-conflict'
-        : 'page-write-precondition-block',
+    writeRevision,
     pageId:
-      page?.id ||
-      precondition?.currentBase?.pageId ||
-      precondition?.expectedBase?.pageId ||
-      null,
+      page?.id || null,
     operationKind:
       type || null,
-    reason:
-      reason || null,
-    blockReason:
-      blockReason || null,
-    expectedBase:
-      precondition?.expectedBase || null,
-    currentBase:
-      precondition?.currentBase || null,
-    preconditionStatus:
-      precondition?.status || null
-  };
-}
-
-
-function getPreconditionBlockedRevisionState(
-  precondition
-) {
-
-  return precondition?.status === 'mismatch'
-    ? 'conflict'
-    : 'precondition-blocked';
-}
-
-
-function getPreconditionBlockedMessage(
-  precondition
-) {
-
-  if (precondition?.status === 'mismatch') {
-
-    return 'Page write precondition conflict.';
-  }
-
-  return precondition?.error ||
-    'Page write precondition could not be verified.';
+    reason,
+    precondition
+  });
 }
 
 

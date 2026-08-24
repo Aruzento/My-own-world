@@ -1,5 +1,8 @@
 import {
+  arePageStateIdentitiesEqual,
   createPageContentHash,
+  createPageStateIdentityFromContent,
+  normalizePageStateIdentity,
   parsePageRecordContent,
   updatePageRecordContent
 } from '../core/pageRecord.js';
@@ -413,45 +416,38 @@ function assertRepairPlanCurrent({
     [];
 
   if (
-    evidence.sourceContentHash &&
-    current.contentHash !== evidence.sourceContentHash
+    evidence.sourcePageStateIdentity
   ) {
 
-    mismatches.push(
-      'contentHash'
-    );
-  }
+    const currentPageStateIdentity =
+      createRepairPageStateIdentity(
+        current,
+        {
+          source:
+            'repair-apply'
+        }
+      );
 
-  if (
-    evidence.sourceUpdatedAt &&
-    current.updatedAt !== evidence.sourceUpdatedAt
-  ) {
+    if (
+      !arePageStateIdentitiesEqual(
+        evidence.sourcePageStateIdentity,
+        currentPageStateIdentity
+      )
+    ) {
 
-    mismatches.push(
-      'updatedAt'
-    );
-  }
+      mismatches.push(
+        'pageStateIdentity'
+      );
+    }
 
-  if (
-    Number.isFinite(
-      Number(evidence.sourceContentLength)
-    ) &&
-    Number(current.contentLength) !== Number(evidence.sourceContentLength)
-  ) {
+  } else {
 
-    mismatches.push(
-      'contentLength'
-    );
-  }
-
-  if (
-    evidence.sourceRevision &&
-    current.revision &&
-    evidence.sourceRevision !== current.revision
-  ) {
-
-    mismatches.push(
-      'revision'
+    collectLegacyRepairEvidenceMismatches(
+      {
+        evidence,
+        current,
+        mismatches
+      }
     );
   }
 
@@ -463,7 +459,19 @@ function assertRepairPlanCurrent({
       message:
         `Preview устарел (${mismatches.join(', ')}). Обновите диагностику и создайте план заново.`,
       details: {
-        mismatches
+        mismatches,
+        expectedBase:
+          normalizePageStateIdentity(
+            evidence.sourcePageStateIdentity
+          ),
+        currentBase:
+          createRepairPageStateIdentity(
+            current,
+            {
+              source:
+                'repair-apply'
+            }
+          )
       }
     });
   }
@@ -525,7 +533,9 @@ async function applyInternalLinkTargetRepair({
       type:
         'repair-internal-link-target',
       reason:
-        'repair-preview-apply'
+        'repair-preview-apply',
+      expectedBase:
+        plan.staleEvidence?.sourcePageStateIdentity || undefined
     });
 
   assertRepairCommandResultDurable(
@@ -600,7 +610,9 @@ async function applyRelationshipTargetRepair({
         sourcePage,
       relationships,
       reason:
-        'repair-preview-apply'
+        'repair-preview-apply',
+      expectedBase:
+        plan.staleEvidence?.sourcePageStateIdentity || undefined
     });
 
   try {
@@ -1473,6 +1485,78 @@ function normalizePageSnapshot(
 }
 
 
+function collectLegacyRepairEvidenceMismatches({
+  evidence,
+  current,
+  mismatches
+}) {
+
+  if (
+    evidence.sourceContentHash &&
+    current.contentHash !== evidence.sourceContentHash
+  ) {
+
+    mismatches.push(
+      'contentHash'
+    );
+  }
+
+  if (
+    evidence.sourceUpdatedAt &&
+    current.updatedAt !== evidence.sourceUpdatedAt
+  ) {
+
+    mismatches.push(
+      'updatedAt'
+    );
+  }
+
+  if (
+    Number.isFinite(
+      Number(evidence.sourceContentLength)
+    ) &&
+    Number(current.contentLength) !== Number(evidence.sourceContentLength)
+  ) {
+
+    mismatches.push(
+      'contentLength'
+    );
+  }
+
+  if (
+    evidence.sourceRevision &&
+    current.revision &&
+    evidence.sourceRevision !== current.revision
+  ) {
+
+    mismatches.push(
+      'revision'
+    );
+  }
+}
+
+
+function createRepairPageStateIdentity(
+  page,
+  options = {}
+) {
+
+  if (!page) return null;
+
+  return normalizePageStateIdentity(
+    createPageStateIdentityFromContent(
+      page.content || page.body || '',
+      {
+        pageId:
+          page.id || null,
+        source:
+          options.source || null
+      }
+    )
+  );
+}
+
+
 function createSourcePageSnapshot(
   page
 ) {
@@ -1531,6 +1615,14 @@ function createStaleEvidence(
   return {
     sourcePageId:
       sourcePage.id,
+    sourcePageStateIdentity:
+      createRepairPageStateIdentity(
+        sourcePage,
+        {
+          source:
+            'repair-preview'
+        }
+      ),
     sourceRevision:
       sourcePage.revision || null,
     sourceUpdatedAt:

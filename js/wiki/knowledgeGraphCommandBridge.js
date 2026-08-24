@@ -12,6 +12,14 @@ import {
 } from '../storage/pageCommandService.js';
 
 import {
+  createPageWritePreconditionBlockedResult,
+  evaluatePageWritePrecondition,
+  getPageWritePreconditionMessage,
+  getPageWritePreconditionRevisionState,
+  shouldBlockPageWriteForPrecondition
+} from '../storage/pageWritePreconditions.js';
+
+import {
   createWriteRevision,
   getPageWriteKey,
   markWriteRevisionState,
@@ -22,7 +30,8 @@ import {
 export async function persistKnowledgeGraphRelationshipsCommand({
   page,
   relationships,
-  reason = 'knowledge-graph-relationships'
+  reason = 'knowledge-graph-relationships',
+  expectedBase = undefined
 } = {}) {
 
   const beforePage =
@@ -96,17 +105,42 @@ export async function persistKnowledgeGraphRelationshipsCommand({
         beforeContent
       };
     },
-    apply() {
+    async persist(context) {
 
-      page.relationships =
-        cloneRelationships(
-          nextRelationships
+      context.phaseResults.precondition =
+        await evaluatePageWritePrecondition({
+          page,
+          expectedBase:
+            expectedBase
+        });
+
+      if (
+        shouldBlockPageWriteForPrecondition(
+          context.phaseResults.precondition
+        )
+      ) {
+
+        markWriteRevisionState(
+          writeRevision,
+          getPageWritePreconditionRevisionState(
+            context.phaseResults.precondition
+          ),
+          {
+            error:
+              getPageWritePreconditionMessage(
+                context.phaseResults.precondition
+              )
+          }
         );
 
-      page.content =
-        content;
-    },
-    async persist() {
+        return createPreconditionBlockedRelationshipResult({
+          page,
+          reason,
+          writeRevision,
+          precondition:
+            context.phaseResults.precondition
+        });
+      }
 
       return writePageContent(
         page,
@@ -123,24 +157,48 @@ export async function persistKnowledgeGraphRelationshipsCommand({
         context.phaseResults.persist;
 
       if (
+        isPreconditionBlockedWriteResult(
+          writeResult
+        )
+      ) {
+
+        context.result =
+          createRelationshipCommandResult({
+            page,
+            reason,
+            writeResult,
+            precondition:
+              context.phaseResults.precondition
+          });
+
+        return;
+      }
+
+      if (
         isSupersededWriteResult(
           writeResult
         )
       ) {
 
-        context.result = {
-          page,
-          reason,
-          writeStatus:
-            writeResult.state,
-          stale:
-            true,
-          written:
-            Boolean(writeResult.written)
-        };
+        context.result =
+          createRelationshipCommandResult({
+            page,
+            reason,
+            writeResult,
+            precondition:
+              context.phaseResults.precondition
+          });
 
         return;
       }
+
+      page.relationships =
+        cloneRelationships(
+          nextRelationships
+        );
+
+      page.content =
+        content;
 
       notifyPageUpdated(
         beforePage,
@@ -152,22 +210,15 @@ export async function persistKnowledgeGraphRelationshipsCommand({
       const writeResult =
         context.phaseResults.persist;
 
-      context.result = {
-        page,
-        reason,
-        writeStatus:
-          writeResult?.state || 'saved',
-        stale:
-          Boolean(
-            isSupersededWriteResult(
-              writeResult
-            )
-          ),
-        written:
-          Boolean(
-            writeResult?.written
-          )
-      };
+      context.result =
+        context.result ||
+        createRelationshipCommandResult({
+          page,
+          reason,
+          writeResult,
+          precondition:
+            context.phaseResults.precondition
+        });
     },
     rollback(
       error,
@@ -215,9 +266,88 @@ function isSupersededWriteResult(
   writeResult
 ) {
 
+  if (
+    isPreconditionBlockedWriteResult(
+      writeResult
+    )
+  ) return false;
+
   return writeResult?.state === 'stale' ||
     writeResult?.state === 'superseded-after-write' ||
     writeResult?.skipped === true;
+}
+
+
+function isPreconditionBlockedWriteResult(
+  writeResult
+) {
+
+  return Boolean(
+    writeResult?.blocked === true &&
+    writeResult?.preconditionBlocked === true
+  );
+}
+
+
+function createPreconditionBlockedRelationshipResult({
+  page,
+  reason,
+  writeRevision,
+  precondition
+}) {
+
+  return createPageWritePreconditionBlockedResult({
+    writeKey:
+      getPageWriteKey(
+        page
+      ),
+    writeRevision,
+    pageId:
+      page?.id || null,
+    operationKind:
+      'update-knowledge-graph-relationships',
+    reason,
+    precondition
+  });
+}
+
+
+function createRelationshipCommandResult({
+  page,
+  reason,
+  writeResult,
+  precondition = null
+}) {
+
+  return {
+    page,
+    reason,
+    writeStatus:
+      writeResult?.state || 'saved',
+    stale:
+      Boolean(
+        isSupersededWriteResult(
+          writeResult
+        )
+      ),
+    conflict:
+      Boolean(
+        writeResult?.conflict
+      ),
+    blocked:
+      Boolean(
+        writeResult?.blocked
+      ),
+    written:
+      Boolean(
+        writeResult?.written
+      ),
+    precondition,
+    blockReason:
+      writeResult?.blockReason || null,
+    conflictEvidence:
+      writeResult?.conflictEvidence || null
+  };
 }
 
 

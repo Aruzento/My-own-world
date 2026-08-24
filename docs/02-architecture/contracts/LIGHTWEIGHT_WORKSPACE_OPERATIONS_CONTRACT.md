@@ -479,6 +479,30 @@ Regression target:
 - missing current file blocks without recreation;
 - the check performs target-page reads only and no workspace scan.
 
+## Data Safety Integration
+
+Captured in `0.0.1.13.10`.
+
+Shared base concept:
+
+- Phase 12 repair preview and Phase 13 editor conflict protection both use the same semantic concept: a mutation was based on page state X;
+- the canonical machine-readable form is the PageRecord-derived `pageStateIdentity`;
+- repair preview may keep readable `contentHash`, `updatedAt`, length and revision details for UI/backward compatibility, but new apply validation should prefer `sourcePageStateIdentity`.
+
+Recovery boundary:
+
+- restore and partial restore are explicit recovery operations owned by `backupService`, not ordinary editor saves;
+- restore must keep its manifest validation, preflight and mandatory pre-restore backup gate;
+- a stale editor session must not block a legitimate restore;
+- after restore or repair writes a newer durable page state, a stale editor save must conflict through the page write precondition boundary and must not create an extra backup merely because it was blocked.
+
+Repair boundary:
+
+- internal-link repair writes through `PageCommandService.persistPageContentCommand()` with `expectedBase` from the repair preview identity;
+- relationship repair writes through the existing Knowledge Graph relationship command owner with the same optional `expectedBase`;
+- relationship command conflicts do not call `writePageContent()`, do not mutate runtime relationship/content fields and do not notify PageRepository/PageIndex with stale data;
+- stale repair preview validation still happens before repair backup creation when the application's current page model is already aware of newer page state.
+
 ### Tier 0: Read And Index Only
 
 No persistent writes.

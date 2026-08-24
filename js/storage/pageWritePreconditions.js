@@ -143,6 +143,86 @@ export function shouldBlockPageWriteForPrecondition(
 }
 
 
+export function createPageWritePreconditionBlockedResult({
+  writeKey,
+  writeRevision,
+  pageId = null,
+  operationKind = null,
+  reason = null,
+  precondition = null
+} = {}) {
+
+  const conflict =
+    precondition?.status === 'mismatch';
+
+  const blockReason =
+    getPageWritePreconditionBlockReason(
+      precondition
+    );
+
+  return {
+    key:
+      writeKey || null,
+    revision:
+      writeRevision?.revision ?? null,
+    state:
+      getPageWritePreconditionRevisionState(
+        precondition
+      ),
+    written:
+      false,
+    skipped:
+      true,
+    current:
+      true,
+    blocked:
+      true,
+    preconditionBlocked:
+      true,
+    conflict,
+    blockReason,
+    operationKind:
+      operationKind || null,
+    reason:
+      reason || null,
+    precondition,
+    conflictEvidence:
+      createPageWritePreconditionEvidence({
+        pageId,
+        operationKind,
+        reason,
+        precondition,
+        blockReason,
+        conflict
+      })
+  };
+}
+
+
+export function getPageWritePreconditionRevisionState(
+  precondition
+) {
+
+  return precondition?.status === 'mismatch'
+    ? 'conflict'
+    : 'precondition-blocked';
+}
+
+
+export function getPageWritePreconditionMessage(
+  precondition
+) {
+
+  if (precondition?.status === 'mismatch') {
+
+    return 'Page write precondition conflict.';
+  }
+
+  return precondition?.error ||
+    'Page write precondition could not be verified.';
+}
+
+
 export function createPageWriteExpectedBase(
   page
 ) {
@@ -152,6 +232,54 @@ export function createPageWriteExpectedBase(
       page
     )
   );
+}
+
+
+function getPageWritePreconditionBlockReason(
+  precondition
+) {
+
+  return precondition?.status === 'mismatch'
+    ? 'page-state-conflict'
+    : (
+      precondition?.failureKind ||
+      'page-state-precondition-unavailable'
+    );
+}
+
+
+function createPageWritePreconditionEvidence({
+  pageId,
+  operationKind,
+  reason,
+  precondition,
+  blockReason,
+  conflict
+}) {
+
+  return {
+    kind:
+      conflict
+        ? 'page-write-conflict'
+        : 'page-write-precondition-block',
+    pageId:
+      pageId ||
+      precondition?.currentBase?.pageId ||
+      precondition?.expectedBase?.pageId ||
+      null,
+    operationKind:
+      operationKind || null,
+    reason:
+      reason || null,
+    blockReason:
+      blockReason || null,
+    expectedBase:
+      precondition?.expectedBase || null,
+    currentBase:
+      precondition?.currentBase || null,
+    preconditionStatus:
+      precondition?.status || null
+  };
 }
 
 

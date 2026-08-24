@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
 
-Current leaf: `0.0.1.13.10` Data Safety Integration is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.13.FINAL` NF-001 Closure Gate is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8` and `0.0.1.13.9` are closed. Do not start `0.0.1.13.10` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9` and `0.0.1.13.10` are closed. Do not start `0.0.1.13.FINAL` until the owner explicitly starts that closure gate. Do not start `0.0.1.14.0` until Phase 5 closes.
 
 ## Execution Rules
 
@@ -249,7 +249,9 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.13.9` Detect Newer Durable Page State - `DONE` on 2026-08-24. Validated that stale-write protection compares edit-session bases against the authoritative target page file at the durable mutation boundary, not merely against a cached runtime page object or PageRepository snapshot. Existing `PageCommandService.persistPageContentCommand()` / `pageWritePreconditions` ownership already rereads current durable content through the active `StorageAdapter`; no filesystem watcher, background polling, collaboration/sync layer or persistent format change was added. Regressions now cover a supported repository reload observing newer durable content, a controlled direct durable file replacement with stale runtime content still present, no workspace scan during the conflict check, the existing PageCommandService newer-write conflict path and the existing deleted-current-page `precondition-blocked` path.
 
-- `0.0.1.13.10` Data Safety Integration - `NEXT`.
+- `0.0.1.13.10` Data Safety Integration - `DONE` on 2026-08-24. Aligned Phase 12 repair-preview stale evidence with the Phase 13 canonical page state identity so repair preview and editor conflict protection now share one runtime concept: this mutation was based on page state X. The old readable evidence fields remain for UI/backward compatibility, while `sourcePageStateIdentity` is used for apply validation and passed to existing page/relationship command owners as `expectedBase`. Restore and partial restore remain explicit recovery operations owned by `backupService` with their mandatory pre-restore backup gate; they are not blocked merely because an editor session is stale. Later stale editor saves after restore/repair conflict at the page command boundary and do not create additional backups. Regressions cover partial restore -> stale editor blocked, persistent repair -> stale editor blocked, editor save -> stale repair preview blocked before backup, graph relationship command precondition blocking, and existing Phase 12 restore/repair behavior.
+
+- `0.0.1.13.FINAL` NF-001 Closure Gate - `NEXT`.
 
 ### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
 
