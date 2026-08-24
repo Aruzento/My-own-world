@@ -8,36 +8,36 @@ owner_zone: "delivery"
 
 # Desktop Release Gate Current
 
-Run started: 2026-08-24T09:16:22.643Z
+Run started: 2026-08-24T13:59:49.632Z
 
-Run finished: 2026-08-24T09:18:00.756Z
+Run finished: 2026-08-24T14:01:29.135Z
 
 Plan ref: `0.0.1.2.4`
 
-Large workspace: `X:\ДНД\Мастер\По кампаниям\База`
+Large workspace: not provided
 
-Overall: PASSED - ADVISORY WARNINGS
+Overall: PASSED - NORMAL WORKSPACE ONLY
 
-Confidence: LARGE_WORKSPACE_VALIDATED
+Confidence: NORMAL_WORKSPACE_VALIDATED
 
 Normal workspace validation: VALIDATED
 
-Large workspace validation: VALIDATED
+Large workspace validation: SKIPPED
 
-Advisory diagnostics: PRESENT (3, non-blocking)
+Advisory diagnostics: NONE
 
 ## Steps
 
 - desktop release handoff preflight: passed (0 ms) - Required release handoff files exist. Required npm scripts exist.
+- large workspace desktop smoke: skipped - Skipped because no --workspace path or MOW_DESKTOP_RELEASE_WORKSPACE was provided.
 - documentation index: passed (64 ms)
 - agent skills validation: passed (42 ms)
-- verify: passed (14752 ms)
-- browser smoke: passed (75645 ms)
-- desktop frontend prepare: passed (234 ms)
-- desktop packaging smoke: passed (41 ms)
-- desktop environment: passed (307 ms)
-- tauri cargo check: passed (417 ms)
-- large workspace desktop smoke: passed (6608 ms)
+- verify: passed (16057 ms)
+- browser smoke: passed (82304 ms)
+- desktop frontend prepare: passed (237 ms)
+- desktop packaging smoke: passed (40 ms)
+- desktop environment: passed (318 ms)
+- tauri cargo check: passed (438 ms)
 
 ## Release Rule
 
@@ -57,10 +57,8 @@ Advisory diagnostics: PRESENT (3, non-blocking)
 
 ## Skipped Steps
 
-- None
+- large workspace desktop smoke: Skipped because no --workspace path or MOW_DESKTOP_RELEASE_WORKSPACE was provided.
 
 ## Advisory Diagnostics
 
-- large_pages (2): Some pages are larger than 250 KB. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB.
-- large_assets (4): Some assets are larger than 12 MB. Examples: Castle_01.jpg 36.9 MB; Group 1.png 33.7 MB; КорабльВерх.png 14.7 MB.
-- heavy_maps: At least one map has many render objects or a large page payload. Examples: 1779484665129-7a321d25 321 KB; 1779530830476-a9517dfe 398 KB; 1779482139467-a52d5cd6 200 KB.
+- None

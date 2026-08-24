@@ -244,6 +244,22 @@ The validated scenario includes a page changed after backup, a backup suitable f
 
 Read-only confidence on the approved real workspace `X:\ДНД\Мастер\По кампаниям\База` was gathered with `node tools\run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --no-write-probe --json true`: 697 pages, 27 maps, 144 assets, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates, 5 complete backups, 0 incomplete backups, 337 ms. No restore, repair, write probe or cleanup was run against the real workspace.
 
+## Phase 12 Closure Gate
+
+`0.0.1.12.FINAL` closed Data Safety Completion on 2026-08-24 after a cumulative safety review and independent reviewer PASS. The gate confirmed:
+
+- restore preview remains non-destructive;
+- manifest validation blocks restore-unsafe sources while keeping supported v1 backups readable;
+- partial restore affects only explicit selected pages and deterministic selected-page assets;
+- restore write failures report incomplete recovery with the safety backup id instead of false success or false atomicity;
+- asset verification, broken-link diagnostics and orphan review are diagnostic only;
+- repair preview requires explicit targets and performs no writes;
+- persistent repair apply is stale-checked, backup-gated and routed through existing page/relationship command owners;
+- the backup manifest format remains version `1`;
+- no workspace page, asset-reference or relationship schema migration was introduced.
+
+The approved real workspace `X:\ДНД\Мастер\По кампаниям\База` was used only for read-only confidence: diagnostics ran with `--no-write-probe` and the tree performance probe reported no mutation. No restore, repair, orphan deletion, asset cleanup, write probe, normalization or migration was run against real user content.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.

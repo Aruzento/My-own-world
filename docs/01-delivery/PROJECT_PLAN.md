@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
+Current phase: `0.0.1.12.0` Data Safety Completion is `DONE`.
 
-Current leaf: `0.0.1.12.FINAL` Data Safety Completion Gate is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `NEXT`. Phase `0.0.1.13.0` is not active and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.0` implementation until the owner explicitly starts that next phase.
 
 ## Execution Rules
 
@@ -169,7 +169,7 @@ ID: `0.0.1.12.0`
 
 NAME: Data Safety Completion
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
 
 GOAL: complete the remaining recovery and link-safety work before durable live-session automation.
 
@@ -177,9 +177,9 @@ WHY NOW: future combat/session/event systems will write more frequently; unsafe 
 
 SCOPE: `BI-006` restore preview, partial restore, backup manifests, asset verification. `BI-020` broken wiki links, relation links, ordinary links, orphan review, grouped diagnostics, non-destructive repair preview and deliberate persistent repair flow. Include `BUG-011` restore/recovery validation if still current after Phase 1 audit.
 
-DEPENDENCIES: Phase 3 stabilization is closed. Owner started this phase on 2026-08-24.
+DEPENDENCIES: Phase 3 stabilization is closed. Owner started this phase on 2026-08-24. The final closure gate passed on 2026-08-24.
 
-EXIT CRITERIA: recovery previews are readable and non-destructive; persistent repair flows are backup-gated where needed; asset/link verification has tests or documented smoke paths; no durable write path bypasses existing safety owners.
+EXIT CRITERIA: met on 2026-08-24. Recovery previews are readable and non-destructive; partial restore is explicit and safety-backup-gated; restore failure reporting is honest and does not claim atomicity; asset/link/orphan diagnostics are grouped and non-destructive; selected repair apply is explicit, stale-checked and backup-gated; new durable writes remain behind existing safety owners; persistent format stayed unchanged; the real GM workspace was used only for read-only diagnostics/probes.
 
 CURRENT LEAF RESULTS:
 
@@ -205,7 +205,9 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.12.11` Real Recovery Validation - `DONE` on 2026-08-24. Added end-to-end recovery validation on one deliberately damaged disposable workspace assembled from the Phase 12 fixtures. Coverage proves restore preview is non-destructive, partial restore restores only the selected changed page plus required asset and leaves unrelated pages untouched, restore write failure reports incomplete recovery with the pre-restore backup id, asset/link/orphan diagnostics group independent problems, backup-gated repair apply resolves a selected wiki target after reload, and stale repair preview is blocked after a normal page write. Read-only real workspace diagnostics on `X:\ДНД\Мастер\По кампаниям\База` completed in 337 ms with no write probe: 697 pages, 27 maps, 144 assets, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates, 5 complete backups and 0 incomplete backups. No restore/repair was applied to the real workspace. `BUG-011` is closed for the current Phase 12 validation scope.
 
-- `0.0.1.12.FINAL` Data Safety Completion Gate - `NEXT`. Close the phase only after final verification confirms docs, tests and residual risks are consistent.
+- `0.0.1.12.FINAL` Data Safety Completion Gate - `PASS` on 2026-08-24. The final gate reviewed the cumulative Phase 12 diff from pre-phase HEAD `3b9d8db`, confirmed no unapproved product features or persistent format migration, and received an independent reviewer PASS. Fresh verification passed: unit tests, recovery-focused filesystem/runtime regressions, full browser suite, `npm run verify`, UI polish audit, docs index, encoding check, project file audit, desktop release gate, desktop build and native desktop click-through on a disposable workspace. Read-only confidence on `X:\ДНД\Мастер\По кампаниям\База` passed with `--no-write-probe`: 697 pages, 528 asset references, 0 missing asset references, 71 broken wiki links, 203 review candidates and no restore/repair/cleanup/migration.
+
+- `0.0.1.13.0` NF-001 Edit Session Conflict Protection - `NEXT`. This phase has not been started.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 
@@ -213,7 +215,7 @@ ID: `0.0.1.13.0`
 
 NAME: NF-001 Edit Session Conflict Protection
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
 
 GOAL: prevent stale editor writes from silently overwriting newer durable state.
 
