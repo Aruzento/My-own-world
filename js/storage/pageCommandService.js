@@ -10,8 +10,14 @@ import {
 } from './writeQueue.js';
 
 import {
+  parsePageRecordContent,
+  updatePageRecordContent
+} from '../core/pageRecord.js';
+
+import {
   createPageWriteExpectedBase,
   evaluatePageWritePrecondition,
+  readCurrentDurablePageContent,
   shouldBlockPageWriteForPrecondition
 } from './pageWritePreconditions.js';
 
@@ -24,6 +30,46 @@ const pageUndoEntries =
 
 const MAX_PAGE_UNDO_ENTRIES =
   30;
+
+const SUPPORTED_STRUCTURED_PAGE_RECORD_FIELDS =
+  new Map([
+    [
+      'aliases',
+      'aliases'
+    ],
+    [
+      'metadata.aliases',
+      'aliases'
+    ],
+    [
+      'page-record.aliases',
+      'aliases'
+    ],
+    [
+      'tags',
+      'tags'
+    ],
+    [
+      'metadata.tags',
+      'tags'
+    ],
+    [
+      'page-record.tags',
+      'tags'
+    ],
+    [
+      'type',
+      'type'
+    ],
+    [
+      'metadata.type',
+      'type'
+    ],
+    [
+      'page-record.type',
+      'type'
+    ]
+  ]);
 
 const PAGE_COMMAND_PHASES =
   Object.freeze([
@@ -138,7 +184,8 @@ export async function persistPageContentCommand({
   previousPage = null,
   type = 'update-page-content',
   reason = type,
-  expectedBase = undefined
+  expectedBase = undefined,
+  structuredMutation = null
 } = {}) {
 
   const beforePage =
@@ -204,39 +251,70 @@ export async function persistPageContentCommand({
               : expectedBase
         });
 
+      let contentToPersist =
+        content;
+
       if (
         shouldBlockPageWriteForPrecondition(
           context.phaseResults.precondition
         )
       ) {
 
-        markWriteRevisionState(
-          writeRevision,
-          getPreconditionBlockedRevisionState(
-            context.phaseResults.precondition
-          ),
-          {
-            error:
-              getPreconditionBlockedMessage(
-                context.phaseResults.precondition
-              )
-          }
-        );
+        const preservation =
+          await createStructuredPageChangePreservation({
+            page,
+            content,
+            beforePage,
+            precondition:
+              context.phaseResults.precondition,
+            structuredMutation
+          });
 
-        return createPreconditionBlockedWriteResult({
-          page,
-          type,
-          reason,
-          writeRevision,
-          precondition:
-            context.phaseResults.precondition
-        });
+        context.phaseResults.structuredPreservation =
+          preservation;
+
+        if (preservation.ok) {
+
+          contentToPersist =
+            preservation.content;
+
+          context.phaseResults.precondition =
+            createPreservedPreconditionResult({
+              precondition:
+                context.phaseResults.precondition,
+              preservation
+            });
+
+        } else {
+
+          markWriteRevisionState(
+            writeRevision,
+            getPreconditionBlockedRevisionState(
+              context.phaseResults.precondition
+            ),
+            {
+              error:
+                getPreconditionBlockedMessage(
+                  context.phaseResults.precondition
+                )
+            }
+          );
+
+          return createPreconditionBlockedWriteResult({
+            page,
+            type,
+            reason,
+            writeRevision,
+            precondition:
+              context.phaseResults.precondition
+          });
+        }
       }
 
       const writeResult =
         await writePageContent(
         page,
-        content,
+        contentToPersist,
         {
           revision:
             writeRevision
@@ -287,14 +365,32 @@ export async function persistPageContentCommand({
           blockReason:
             writeResult.blockReason || null,
           conflictEvidence:
-            writeResult.conflictEvidence || null
+            writeResult.conflictEvidence || null,
+          preservedUnrelatedChanges:
+            false,
+          structuredPreservation:
+            omitStructuredPreservationContent(
+              context.phaseResults.structuredPreservation
+            )
         };
 
         return;
       }
 
-      page.content =
-        content;
+      if (
+        context.phaseResults.structuredPreservation?.preserved
+      ) {
+
+        applyPageRecordContentToRuntimePage(
+          page,
+          context.phaseResults.structuredPreservation.content
+        );
+
+      } else {
+
+        page.content =
+          content;
+      }
 
       notifyPageUpdated(
         beforePage,
@@ -354,7 +450,15 @@ export async function persistPageContentCommand({
         blockReason:
           writeResult?.blockReason || null,
         conflictEvidence:
-          writeResult?.conflictEvidence || null
+          writeResult?.conflictEvidence || null,
+        preservedUnrelatedChanges:
+          Boolean(
+            context.phaseResults.structuredPreservation?.preserved
+          ),
+        structuredPreservation:
+          omitStructuredPreservationContent(
+            context.phaseResults.structuredPreservation
+          )
       };
     },
     rollback(
@@ -543,6 +647,565 @@ function getPreconditionBlockedMessage(
 
   return precondition?.error ||
     'Page write precondition could not be verified.';
+}
+
+
+async function createStructuredPageChangePreservation({
+  page,
+  content,
+  beforePage,
+  precondition,
+  structuredMutation
+} = {}) {
+
+  if (precondition?.status !== 'mismatch') {
+
+    return createStructuredPreservationResult({
+      ok:
+        false,
+      reason:
+        'precondition-not-mismatch'
+    });
+  }
+
+  const mutation =
+    normalizeStructuredMutation(
+      structuredMutation
+    );
+
+  if (!mutation.ok) {
+
+    return createStructuredPreservationResult({
+      ok:
+        false,
+      reason:
+        mutation.reason,
+      fields:
+        mutation.fields
+    });
+  }
+
+  if (!beforePage) {
+
+    return createStructuredPreservationResult({
+      ok:
+        false,
+      reason:
+        'missing-base-page-snapshot',
+      fields:
+        mutation.fields
+    });
+  }
+
+  const currentContent =
+    await readCurrentDurablePageContent(
+      page
+    );
+
+  const currentParsed =
+    parsePageRecordContent(
+      currentContent || '',
+      {
+        generateId:
+          false
+      }
+    );
+
+  const requestedParsed =
+    parsePageRecordContent(
+      content || '',
+      {
+        generateId:
+          false
+      }
+    );
+
+  if (
+    !isSameStructuredPageRecordIdentity(
+      currentParsed,
+      beforePage,
+      page
+    ) ||
+    !isSameStructuredPageRecordIdentity(
+      requestedParsed,
+      beforePage,
+      page
+    )
+  ) {
+
+    return createStructuredPreservationResult({
+      ok:
+        false,
+      reason:
+        'page-identity-changed',
+      fields:
+        mutation.fields
+    });
+  }
+
+  for (const field of mutation.fields) {
+
+    const currentValue =
+      getStructuredPageRecordFieldValue(
+        currentParsed,
+        field
+      );
+
+    const expectedValue =
+      getStructuredPageRecordFieldValue(
+        beforePage,
+        field
+      );
+
+    if (
+      !areStructuredPageRecordFieldValuesEqual(
+        field,
+        currentValue,
+        expectedValue
+      )
+    ) {
+
+      return createStructuredPreservationResult({
+        ok:
+          false,
+        reason:
+          'owned-field-changed',
+        fields:
+          mutation.fields,
+        conflictingField:
+          field
+      });
+    }
+  }
+
+  const patch =
+    {};
+
+  mutation.fields.forEach(field => {
+
+    patch[field] =
+      cloneStructuredPageRecordFieldValue(
+        getStructuredPageRecordFieldValue(
+          requestedParsed,
+          field
+        )
+      );
+  });
+
+  return createStructuredPreservationResult({
+    ok:
+      true,
+    reason:
+      'disjoint-structured-page-record-fields',
+    fields:
+      mutation.fields,
+    content:
+      updatePageRecordContent(
+        currentContent || '',
+        patch
+      )
+  });
+}
+
+
+function normalizeStructuredMutation(
+  structuredMutation
+) {
+
+  if (!structuredMutation || typeof structuredMutation !== 'object') {
+
+    return {
+      ok:
+        false,
+      reason:
+        'not-structured',
+      fields:
+        []
+    };
+  }
+
+  const kind =
+    structuredMutation.kind || 'page-record-fields';
+
+  if (
+    kind !== 'page-record-fields' &&
+    kind !== 'page-record-metadata'
+  ) {
+
+    return {
+      ok:
+        false,
+      reason:
+        'unsupported-structured-kind',
+      fields:
+        []
+    };
+  }
+
+  const fields =
+    normalizeStructuredFields(
+      structuredMutation.fields
+    );
+
+  if (fields.unsupported.length > 0) {
+
+    return {
+      ok:
+        false,
+      reason:
+        'unsupported-structured-field',
+      fields:
+        fields.supported
+    };
+  }
+
+  if (fields.supported.length === 0) {
+
+    return {
+      ok:
+        false,
+      reason:
+        'missing-structured-fields',
+      fields:
+        []
+    };
+  }
+
+  return {
+    ok:
+      true,
+    reason:
+      'supported',
+    kind,
+    fields:
+      fields.supported
+  };
+}
+
+
+function normalizeStructuredFields(
+  fields
+) {
+
+  const supported =
+    [];
+
+  const unsupported =
+    [];
+
+  (Array.isArray(fields) ? fields : [])
+    .map(field =>
+      String(field || '')
+        .trim()
+        .toLowerCase()
+    )
+    .filter(Boolean)
+    .forEach(field => {
+
+      const normalized =
+        SUPPORTED_STRUCTURED_PAGE_RECORD_FIELDS.get(
+          field
+        );
+
+      if (!normalized) {
+
+        unsupported.push(
+          field
+        );
+
+        return;
+      }
+
+      if (!supported.includes(normalized)) {
+
+        supported.push(
+          normalized
+        );
+      }
+    });
+
+  return {
+    supported,
+    unsupported
+  };
+}
+
+
+function createPreservedPreconditionResult({
+  precondition,
+  preservation
+} = {}) {
+
+  return {
+    ...precondition,
+    status:
+      'mismatch-preserved',
+    ok:
+      true,
+    preserved:
+      true,
+    preservation:
+      omitStructuredPreservationContent(
+        preservation
+      )
+  };
+}
+
+
+function createStructuredPreservationResult({
+  ok,
+  reason,
+  fields = [],
+  conflictingField = null,
+  content = null
+} = {}) {
+
+  return {
+    ok:
+      Boolean(ok),
+    preserved:
+      Boolean(ok),
+    reason:
+      reason || null,
+    fields:
+      [
+        ...fields
+      ],
+    conflictingField,
+    content
+  };
+}
+
+
+function omitStructuredPreservationContent(
+  preservation
+) {
+
+  if (!preservation) return null;
+
+  return {
+    ok:
+      Boolean(
+        preservation.ok
+      ),
+    preserved:
+      Boolean(
+        preservation.preserved
+      ),
+    reason:
+      preservation.reason || null,
+    fields:
+      Array.isArray(preservation.fields)
+        ? [
+          ...preservation.fields
+        ]
+        : [],
+    conflictingField:
+      preservation.conflictingField || null
+  };
+}
+
+
+function getStructuredPageRecordFieldValue(
+  record,
+  field
+) {
+
+  if (!record) return null;
+
+  if (field === 'aliases') {
+
+    return Array.isArray(record.aliases)
+      ? [
+        ...record.aliases
+      ]
+      : [];
+  }
+
+  if (field === 'tags') {
+
+    return Array.isArray(record.tags)
+      ? [
+        ...record.tags
+      ]
+      : [];
+  }
+
+  if (field === 'type') {
+
+    return record.type || '';
+  }
+
+  return null;
+}
+
+
+function isSameStructuredPageRecordIdentity(
+  record,
+  beforePage,
+  page
+) {
+
+  const recordId =
+    String(record?.id || '').trim();
+
+  const expectedId =
+    String(beforePage?.id || page?.id || '').trim();
+
+  return Boolean(
+    recordId &&
+    expectedId &&
+    recordId === expectedId
+  );
+}
+
+
+function cloneStructuredPageRecordFieldValue(
+  value
+) {
+
+  return Array.isArray(value)
+    ? [
+      ...value
+    ]
+    : value;
+}
+
+
+function areStructuredPageRecordFieldValuesEqual(
+  field,
+  left,
+  right
+) {
+
+  return stableStringify(
+    normalizeStructuredPageRecordFieldValue(
+      field,
+      left
+    )
+  ) === stableStringify(
+    normalizeStructuredPageRecordFieldValue(
+      field,
+      right
+    )
+  );
+}
+
+
+function normalizeStructuredPageRecordFieldValue(
+  field,
+  value
+) {
+
+  if (
+    field === 'aliases' ||
+    field === 'tags'
+  ) {
+
+    return normalizeStringList(
+      Array.isArray(value)
+        ? value
+        : []
+    );
+  }
+
+  if (field === 'type') {
+
+    return String(value || '').trim();
+  }
+
+  return value ?? null;
+}
+
+
+function applyPageRecordContentToRuntimePage(
+  page,
+  content
+) {
+
+  const parsed =
+    parsePageRecordContent(
+      content || '',
+      {
+        generateId:
+          false
+      }
+    );
+
+  page.schemaVersion =
+    parsed.schemaVersion;
+
+  page.updatedAt =
+    parsed.updatedAt;
+
+  page.contentHash =
+    parsed.contentHash;
+
+  page.pageRecordStatus =
+    parsed.pageRecordStatus;
+
+  page.parent =
+    parsed.parent;
+
+  page.order =
+    parsed.order;
+
+  page.title =
+    parsed.title;
+
+  page.template =
+    parsed.template;
+
+  page.type =
+    parsed.type;
+
+  page.tags =
+    Array.isArray(parsed.tags)
+      ? [
+        ...parsed.tags
+      ]
+      : [];
+
+  page.aliases =
+    Array.isArray(parsed.aliases)
+      ? [
+        ...parsed.aliases
+      ]
+      : [];
+
+  page.relationships =
+    clonePageRelationships(
+      parsed.relationships
+    );
+
+  page.content =
+    content;
+}
+
+
+function stableStringify(
+  value
+) {
+
+  if (Array.isArray(value)) {
+
+    return `[${value.map(item =>
+      stableStringify(
+        item
+      )
+    ).join(',')}]`;
+  }
+
+  if (value && typeof value === 'object') {
+
+    return `{${Object.keys(value).sort().map(key =>
+      `${JSON.stringify(key)}:${stableStringify(value[key])}`
+    ).join(',')}}`;
+  }
+
+  return JSON.stringify(
+    value ?? null
+  );
 }
 
 

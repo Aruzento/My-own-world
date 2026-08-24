@@ -6,6 +6,42 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.4 Preserve Unrelated Changes
+
+### Disposition
+
+- Closed `0.0.1.13.4` as a narrow structured preservation leaf.
+- Did not implement Conflict UI, general merge, HTML/body merge, collaboration, persistent format changes or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.5` Conflict UI.
+
+### Structured Preservation Contract
+
+- Extended `PageCommandService.persistPageContentCommand()` with an optional runtime-only `structuredMutation` declaration.
+- Supported only explicit PageRecord metadata fields where the field owner is clear: `aliases`, `tags` and `type`.
+- On a durable base mismatch, the command may preserve newer durable changes only when every owned field still equals the command's expected base snapshot.
+- Safe preservation reads current durable content, applies only the owned field values from the requested command through `updatePageRecordContent()`, and then writes that rebased PageRecord.
+- Runtime page metadata and `PageRepository` / `PageIndex` are refreshed from the rebased PageRecord content after a successful preservation.
+- Same-field edits, unsupported fields, missing declarations, title/body/full-content saves and unknown command shapes remain conflict-only.
+- Public command results expose `preservedUnrelatedChanges` and a small `structuredPreservation` summary, but do not expose page content in conflict/preservation evidence.
+
+### Tests
+
+- `node --check js\storage\pageCommandService.js`
+- `node --check js\storage\pageWritePreconditions.js`
+- `node --check tests\pageStructuredChangePreservation.test.mjs`
+- `node --test tests\pageStructuredChangePreservation.test.mjs`
+- `node --test tests\pageWriteConflictBlocking.test.mjs`
+- `node --test tests\editConflictBaseline.test.mjs`
+- `node --test tests\pageWritePreconditions.test.mjs`
+- `node --test tests\pageCommandService.test.mjs`
+- `node --test tests\pageRecord.test.mjs`
+- `node --test tests\pageRepository.test.mjs`
+- `node --test tests\pageIndex.test.mjs`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.5` Conflict UI.
+
 ## 2026-08-24: 0.0.1.13.3 Stale Write Blocking
 
 ### Disposition

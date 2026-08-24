@@ -15,15 +15,11 @@ export async function readCurrentDurablePageStateIdentity(
   options = {}
 ) {
 
-  const storageAdapter =
-    options.storageAdapter || getStorageAdapter();
-
   const content =
-    page?.path && typeof storageAdapter?.readText === 'function'
-      ? await storageAdapter.readText(
-        page.path
-      )
-      : page?.content;
+    await readCurrentDurablePageContent(
+      page,
+      options
+    );
 
   return createPageStateIdentityFromContent(
     content || '',
@@ -36,6 +32,22 @@ export async function readCurrentDurablePageStateIdentity(
           : 'runtime'
     }
   );
+}
+
+
+export async function readCurrentDurablePageContent(
+  page,
+  options = {}
+) {
+
+  const storageAdapter =
+    options.storageAdapter || getStorageAdapter();
+
+  return page?.path && typeof storageAdapter?.readText === 'function'
+    ? storageAdapter.readText(
+      page.path
+    )
+    : page?.content;
 }
 
 

@@ -281,7 +281,49 @@ Editor behavior:
 - editor save checks `result.conflict` before writeQueue stale results;
 - conflict status is shown without rerendering the editor;
 - visible stale draft remains in the editor DOM for a later resolution flow;
-- `0.0.1.13.4` owns preserving unrelated field changes, and `0.0.1.13.3` does not merge.
+- `0.0.1.13.4` owns the first narrow structured preservation slice, and `0.0.1.13.3` does not merge.
+
+## Proven Unrelated Structured Changes
+
+Captured in `0.0.1.13.4`.
+
+Preservation owner:
+
+- `PageCommandService.persistPageContentCommand()` owns the auto-preservation gate for page content writes that enter this command boundary;
+- preservation is runtime-only and does not add page front matter, workspace schema or sidecar conflict metadata;
+- callers must explicitly declare `structuredMutation` for a safe field operation;
+- missing declarations, unknown command shapes and full page/html saves remain conflict-only.
+
+Supported first slice:
+
+- `aliases`;
+- `tags`;
+- `type`.
+
+Strict preservation rules:
+
+- the operation must declare `kind: "page-record-fields"` or `kind: "page-record-metadata"`;
+- every declared field must be a supported PageRecord field;
+- current durable content is read through the active `StorageAdapter`;
+- the current durable value of each owned field must still match the command's base snapshot;
+- the command is applied by rebasing only those owned field values onto current durable content through `updatePageRecordContent()`;
+- sibling metadata and body/content from the current durable page are preserved;
+- repository/index notification uses the rebased PageRecord metadata after the write.
+
+Conflict-only cases:
+
+- same-field stale edits, such as two alias changes based on the same old page state;
+- title changes, because the current title is derived from the body heading rather than a standalone metadata field;
+- body/html/content changes, because the project does not attempt DOM/tree/text three-way merge;
+- unsupported fields and missing structured declarations;
+- unreadable or missing current durable state.
+
+Result contract:
+
+- preserved writes return `writeStatus: "saved"` with `preservedUnrelatedChanges: true`;
+- the result may include a small `structuredPreservation` summary with field names and reason;
+- page content is not embedded in conflict or preservation evidence;
+- unsupported or unsafe preservation falls back to the `0.0.1.13.3` structured conflict result.
 
 ### Tier 0: Read And Index Only
 

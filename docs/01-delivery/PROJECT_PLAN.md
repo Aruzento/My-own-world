@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.13.0` NF-001 Edit Session Conflict Protection is `ACTIVE`.
 
-Current leaf: `0.0.1.13.4` Preserve Unrelated Changes is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.13.5` Conflict UI is `NEXT`. Phase `0.0.1.14.0` Safe Dice Engine remains `BLOCKED` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.4` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0` and `0.0.1.12.0` are closed after their final gates. Do not start `0.0.1.13.5` implementation until the owner explicitly starts that next leaf. Do not start `0.0.1.14.0` until Phase 5 closes.
 
 ## Execution Rules
 
@@ -237,7 +237,9 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.13.3` Stale Write Blocking - `DONE` on 2026-08-24. Enforced page write preconditions at `PageCommandService.persistPageContentCommand()` before `writePageContent()`. Stale snapshot/editor writes now return a structured `conflict` result with page id, operation kind and expected/current identity evidence; unreadable or missing current durable page returns a separate `precondition-blocked` result. Conflict/blocked writes do not call `StorageAdapter.writeText()`, do not mutate `PageRepository` / `PageIndex`, do not register undo and do not overwrite durable content. `snapshotPageForCommand()` now carries runtime-only page state identity so ordinary snapshot-based command callers get boundary protection without adding persistent fields. Editor save surfaces conflict status and keeps the visible draft in memory for future resolution. No conflict resolution UI, merge behavior, persistent format migration or real workspace mutation was implemented.
 
-- `0.0.1.13.4` Preserve Unrelated Changes - `NEXT`.
+- `0.0.1.13.4` Preserve Unrelated Changes - `DONE` on 2026-08-24. Added a narrow structured preservation contract to `PageCommandService.persistPageContentCommand()` for explicit PageRecord metadata field operations. A stale command may now preserve newer durable changes only when it declares supported owned fields (`aliases`, `tags`, `type`), the current durable value of each owned field still matches the command's base snapshot and the command can be deterministically applied to current durable content through PageRecord serialization. Same-field changes, unsupported fields such as title/body, unknown command shapes and full HTML/page saves still return structured conflicts. Repository/index metadata is updated from the rebased PageRecord content after a safe preservation. No general merge engine, UI conflict resolution, persistent format migration or real workspace mutation was implemented.
+
+- `0.0.1.13.5` Conflict UI - `NEXT`.
 
 ### Phase 6 - 0.0.1.14.0 NF-002 Safe Dice Engine
 
