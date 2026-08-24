@@ -1722,8 +1722,548 @@ test(
             }));
           };
 
-        const pageWrites =
-          [];
+        const writesAfterReady =
+          {
+            ensureDirectory:
+              [],
+            writeText:
+              [],
+            writeBinary:
+              [],
+            removeFile:
+              [],
+            removeDirectory:
+              []
+          };
+
+        const adapter =
+          {
+            kind:
+              'desktop',
+            getWorkspaceRoot() {
+              return 'memory-workspace';
+            },
+            async pickWorkspace() {
+              return 'memory-workspace';
+            },
+            async restoreWorkspace() {
+              return 'memory-workspace';
+            },
+            async ensureDirectory(path) {
+
+              if (window.__mowRestoreCancelReady) {
+
+                writesAfterReady.ensureDirectory.push(
+                  normalize(path)
+                );
+              }
+
+              ensureDirectoryPath(
+                path
+              );
+            },
+            async getDirectoryHandle(path) {
+              return {
+                kind:
+                  'directory',
+                path:
+                  normalize(path)
+              };
+            },
+            async readText(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (!files.has(normalized)) {
+
+                throw new Error(
+                  `File not found: ${path}`
+                );
+              }
+
+              const value =
+                files.get(normalized);
+
+              return typeof value === 'string'
+                ? value
+                : new TextDecoder().decode(value);
+            },
+            async writeText(path, content) {
+
+              const normalized =
+                normalize(path);
+
+              if (window.__mowRestoreCancelReady) {
+
+                writesAfterReady.writeText.push(
+                  normalized
+                );
+              }
+
+              ensureDirectoryPath(
+                getParentPath(normalized)
+              );
+
+              files.set(
+                normalized,
+                String(content)
+              );
+            },
+            async readBinary(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (!files.has(normalized)) {
+
+                throw new Error(
+                  `File not found: ${path}`
+                );
+              }
+
+              const value =
+                files.get(normalized);
+
+              return typeof value === 'string'
+                ? new TextEncoder().encode(value).buffer
+                : value;
+            },
+            async writeBinary(path, content) {
+
+              const normalized =
+                normalize(path);
+
+              if (window.__mowRestoreCancelReady) {
+
+                writesAfterReady.writeBinary.push(
+                  normalized
+                );
+              }
+
+              ensureDirectoryPath(
+                getParentPath(normalized)
+              );
+
+              files.set(
+                normalized,
+                content
+              );
+            },
+            async listFiles(path = '') {
+              return listFiles(path);
+            },
+            async removeFile(path) {
+
+              if (window.__mowRestoreCancelReady) {
+
+                writesAfterReady.removeFile.push(
+                  normalize(path)
+                );
+              }
+
+              files.delete(
+                normalize(path)
+              );
+            },
+            async removeDirectory(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (window.__mowRestoreCancelReady) {
+
+                writesAfterReady.removeDirectory.push(
+                  normalized
+                );
+              }
+
+              for (const filePath of [...files.keys()]) {
+
+                if (
+                  filePath === normalized ||
+                  filePath.startsWith(`${normalized}/`)
+                ) {
+
+                  files.delete(
+                    filePath
+                  );
+                }
+              }
+            }
+          };
+
+        setStorageAdapter(
+          adapter
+        );
+
+        const snapshotPage =
+          {
+            id:
+              'card-1',
+            title:
+              'Card',
+            type:
+              'note',
+            template:
+              'card',
+            name:
+              'card.md',
+            path:
+              '/pages/card.md',
+            content:
+              'snapshot-content'
+          };
+
+        const unchangedPage =
+          {
+            id:
+              'card-unchanged',
+            title:
+              'Unchanged Card',
+            type:
+              'note',
+            template:
+              'card',
+            name:
+              'unchanged.md',
+            path:
+              '/pages/unchanged.md',
+            content:
+              'unchanged-content'
+          };
+
+        const missingCurrentPage =
+          {
+            id:
+              'card-added',
+            title:
+              'Backup Only Card',
+            type:
+              'note',
+            template:
+              'card',
+            name:
+              'added.md',
+            path:
+              '/pages/added.md',
+            content:
+              'backup-only-content'
+          };
+
+        await adapter.writeText(
+          '/pages/card.md',
+          snapshotPage.content
+        );
+
+        await adapter.writeText(
+          '/pages/unchanged.md',
+          unchangedPage.content
+        );
+
+        await adapter.writeText(
+          '/pages/added.md',
+          missingCurrentPage.content
+        );
+
+        await createWorkspaceBackup({
+          storageAdapter:
+            adapter,
+          pages:
+            [
+              snapshotPage,
+              unchangedPage,
+              missingCurrentPage
+            ],
+          id:
+            'restore-cancel-source',
+          cleanup:
+            false
+        });
+
+        state.pages =
+          [
+            {
+              ...snapshotPage,
+              content:
+                'current-before-cancel'
+            },
+            unchangedPage
+          ];
+
+        await adapter.removeFile(
+          '/pages/added.md'
+        );
+
+        await adapter.writeText(
+          '/pages/unchanged.md',
+          unchangedPage.content
+        );
+
+        await adapter.writeText(
+          '/pages/card.md',
+          'current-before-cancel'
+        );
+
+        window.__mowRestoreCancel =
+          {
+            files,
+            writesAfterReady
+          };
+
+        window.__mowRestoreCancelReady =
+          true;
+      }
+    );
+
+    await page.locator('#appSettingsBtn').click();
+
+    await expect(
+      page.locator('.app-backup-restore')
+    ).toHaveCount(
+      1
+    );
+
+    await page.locator('.app-backup-restore').click();
+
+    const confirm =
+      page.locator('.app-backup-confirm:not(.hidden)');
+
+    await expect(
+      confirm
+    ).toBeVisible();
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'data-restore-preview',
+      'ready'
+    );
+
+    await expect(
+      confirm
+    ).toContainText(
+      'Изменения еще не применялись'
+    );
+
+    await expect(
+      confirm.locator('.app-backup-preview-summary')
+    ).toContainText(
+      'добавит 1'
+    );
+
+    await expect(
+      confirm.locator('.app-backup-preview-summary')
+    ).toContainText(
+      'заменит 1'
+    );
+
+    await expect(
+      confirm.locator('.app-backup-preview-summary')
+    ).toContainText(
+      'без изменений 1'
+    );
+
+    const writesBeforeCancel =
+      await page.evaluate(
+        () => window.__mowRestoreCancel.writesAfterReady
+      );
+
+    expect(
+      writesBeforeCancel
+    ).toEqual({
+      ensureDirectory:
+        [],
+      writeText:
+        [],
+      writeBinary:
+        [],
+      removeFile:
+        [],
+      removeDirectory:
+        []
+    });
+
+    await confirm
+      .locator('.app-backup-confirm-actions button')
+      .first()
+      .click();
+
+    await expect(
+      page.locator('.app-backup-confirm')
+    ).toHaveClass(
+      /hidden/
+    );
+
+    const result =
+      await page.evaluate(
+        () => ({
+          pageContent:
+            window.__mowRestoreCancel.files.get('pages/card.md'),
+          addedPageExists:
+            window.__mowRestoreCancel.files.has('pages/added.md'),
+          writesAfterReady:
+            window.__mowRestoreCancel.writesAfterReady
+        })
+      );
+
+    expect(
+      result
+    ).toEqual({
+      pageContent:
+        'current-before-cancel',
+      addedPageExists:
+        false,
+      writesAfterReady: {
+        ensureDirectory:
+          [],
+        writeText:
+          [],
+        writeBinary:
+          [],
+        removeFile:
+          [],
+        removeDirectory:
+          []
+      }
+    });
+  }
+);
+
+
+test(
+  'backup restore confirmation blocks damaged preview without restore writes',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const {
+          createWorkspaceBackup
+        } = await import('/js/storage/backupService.js');
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const files =
+          new Map();
+
+        const directories =
+          new Set([
+            ''
+          ]);
+
+        const normalize =
+          path => String(path || '')
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '')
+            .replace(/\/+/g, '/');
+
+        const ensureDirectoryPath =
+          path => {
+
+            const parts =
+              normalize(path)
+                .split('/')
+                .filter(Boolean);
+
+            let current =
+              '';
+
+            for (const part of parts) {
+
+              current =
+                current
+                  ? `${current}/${part}`
+                  : part;
+
+              directories.add(
+                current
+              );
+            }
+          };
+
+        const getParentPath =
+          path => {
+
+            const parts =
+              normalize(path).split('/');
+
+            parts.pop();
+
+            return parts.join('/');
+          };
+
+        const listFiles =
+          path => {
+
+            const normalized =
+              normalize(path);
+
+            const prefix =
+              normalized
+                ? `${normalized}/`
+                : '';
+
+            const entries =
+              new Map();
+
+            for (const directory of directories) {
+
+              if (!directory.startsWith(prefix)) continue;
+
+              const rest =
+                directory.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'directory'
+              );
+            }
+
+            for (const filePath of files.keys()) {
+
+              if (!filePath.startsWith(prefix)) continue;
+
+              const rest =
+                filePath.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'file'
+              );
+            }
+
+            return [...entries].map(([name, kind]) => ({
+              name,
+              kind
+            }));
+          };
+
+        const writesAfterReady =
+          {
+            writeText:
+              [],
+            writeBinary:
+              [],
+            removeFile:
+              [],
+            removeDirectory:
+              []
+          };
 
         const adapter =
           {
@@ -1775,14 +2315,11 @@ test(
               const normalized =
                 normalize(path);
 
-              if (window.__mowRestoreCancelReady) {
+              if (window.__mowRestoreBlockedReady) {
 
-                if (normalized.startsWith('pages/')) {
-
-                  pageWrites.push(
-                    normalized
-                  );
-                }
+                writesAfterReady.writeText.push(
+                  normalized
+                );
               }
 
               ensureDirectoryPath(
@@ -1818,6 +2355,13 @@ test(
               const normalized =
                 normalize(path);
 
+              if (window.__mowRestoreBlockedReady) {
+
+                writesAfterReady.writeBinary.push(
+                  normalized
+                );
+              }
+
               ensureDirectoryPath(
                 getParentPath(normalized)
               );
@@ -1831,6 +2375,14 @@ test(
               return listFiles(path);
             },
             async removeFile(path) {
+
+              if (window.__mowRestoreBlockedReady) {
+
+                writesAfterReady.removeFile.push(
+                  normalize(path)
+                );
+              }
+
               files.delete(
                 normalize(path)
               );
@@ -1839,6 +2391,13 @@ test(
 
               const normalized =
                 normalize(path);
+
+              if (window.__mowRestoreBlockedReady) {
+
+                writesAfterReady.removeDirectory.push(
+                  normalized
+                );
+              }
 
               for (const filePath of [...files.keys()]) {
 
@@ -1862,23 +2421,23 @@ test(
         const snapshotPage =
           {
             id:
-              'card-1',
+              'broken-card',
             title:
-              'Card',
+              'Broken Card',
             type:
               'note',
             template:
               'card',
             name:
-              'card.md',
+              'broken-card.md',
             path:
-              '/pages/card.md',
+              '/pages/broken-card.md',
             content:
               'snapshot-content'
           };
 
         await adapter.writeText(
-          '/pages/card.md',
+          '/pages/broken-card.md',
           snapshotPage.content
         );
 
@@ -1886,45 +2445,45 @@ test(
           storageAdapter:
             adapter,
           pages:
-            [snapshotPage],
+            [
+              snapshotPage
+            ],
           id:
-            'restore-cancel-source',
+            'restore-blocked-source',
           cleanup:
             false
         });
+
+        await adapter.removeFile(
+          '.my-own-world-backups/restore-blocked-source/pages/broken-card.md'
+        );
 
         state.pages =
           [
             {
               ...snapshotPage,
               content:
-                'current-before-cancel'
+                'current-before-blocked-preview'
             }
           ];
 
         await adapter.writeText(
-          '/pages/card.md',
-          'current-before-cancel'
+          '/pages/broken-card.md',
+          'current-before-blocked-preview'
         );
 
-        window.__mowRestoreCancel =
+        window.__mowRestoreBlocked =
           {
             files,
-            pageWrites
+            writesAfterReady
           };
 
-        window.__mowRestoreCancelReady =
+        window.__mowRestoreBlockedReady =
           true;
       }
     );
 
     await page.locator('#appSettingsBtn').click();
-
-    await expect(
-      page.locator('.app-backup-restore')
-    ).toHaveCount(
-      1
-    );
 
     await page.locator('.app-backup-restore').click();
 
@@ -1933,26 +2492,30 @@ test(
 
     await expect(
       confirm
-    ).toBeVisible();
-
-    await confirm
-      .locator('.app-backup-confirm-actions button')
-      .first()
-      .click();
+    ).toHaveAttribute(
+      'data-restore-preview',
+      'blocked'
+    );
 
     await expect(
-      page.locator('.app-backup-confirm')
-    ).toHaveClass(
-      /hidden/
+      confirm
+    ).toContainText(
+      'Backup поврежден или неполный'
     );
+
+    await expect(
+      confirm.locator('.app-backup-danger')
+    ).toBeDisabled();
 
     const result =
       await page.evaluate(
         () => ({
           pageContent:
-            window.__mowRestoreCancel.files.get('pages/card.md'),
-          pageWrites:
-            window.__mowRestoreCancel.pageWrites
+            window.__mowRestoreBlocked.files.get('pages/broken-card.md'),
+          backupPageExists:
+            window.__mowRestoreBlocked.files.has('.my-own-world-backups/restore-blocked-source/pages/broken-card.md'),
+          writesAfterReady:
+            window.__mowRestoreBlocked.writesAfterReady
         })
       );
 
@@ -1960,9 +2523,19 @@ test(
       result
     ).toEqual({
       pageContent:
-        'current-before-cancel',
-      pageWrites:
-        []
+        'current-before-blocked-preview',
+      backupPageExists:
+        false,
+      writesAfterReady: {
+        writeText:
+          [],
+        writeBinary:
+          [],
+        removeFile:
+          [],
+        removeDirectory:
+          []
+      }
     });
   }
 );

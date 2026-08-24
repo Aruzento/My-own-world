@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
 
-Current leaf: `0.0.1.12.2` Restore Preview is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.12.3` Backup Manifest Integrity is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
 
@@ -185,9 +185,11 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures - `DONE` on 2026-08-24. The current recovery flow map is recorded in [BACKUP_AND_RECOVERY_CONTRACT.md](../02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md), and the reusable disposable input matrix lives in `tests/fixtures/dataSafetyFixtures.mjs` with baseline coverage in `tests/dataSafetyRecoveryFixtures.test.mjs`. It covers clean workspace, changed-after-backup page, multi-page/multi-asset backup, missing backup page file, missing backup asset, broken wiki-link input, broken relationship target input, broken asset reference, orphan asset and malformed/incomplete backup directory. No restore preview, partial restore, link repair, persistent data format migration or real workspace mutation was implemented.
 
+- `0.0.1.12.2` Restore Preview - `DONE` on 2026-08-24. Added a non-destructive runtime restore plan builder in `backupRestorePreview` and surfaced it in the Settings backup restore confirmation. The preview compares persisted backup/current page contents and asset bytes, classifies add/replace/unchanged/problem states, blocks damaged backup preview states, and clearly states that no changes have been applied. It performs no page writes, asset writes, directory removal, backup creation, PageRepository mutation or PageIndex mutation. No deletion semantics, partial restore, persistent format migration or real workspace mutation was added.
+
 CURRENT LEAF:
 
-- `0.0.1.12.2` Restore Preview - `NEXT`. Add non-destructive restore preview on top of the current `backupService`/`StorageAdapter` owners and the 12.1 fixtures.
+- `0.0.1.12.3` Backup Manifest Integrity - `NEXT`. Harden backup manifest integrity using the existing backup manifest and storage owners.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 

@@ -93,6 +93,30 @@ Restore первого слоя работает осторожно:
 
 Такой restore безопаснее для первого внедрения: он не уничтожает данные, созданные после backup. Полный rollback с удалением лишних файлов нужно добавлять отдельно и только с подтверждением.
 
+## Non-Destructive Restore Preview
+
+Since `0.0.1.12.2`, `buildWorkspaceRestorePreview()` in `js/storage/backupRestorePreview.js` owns the runtime restore preview plan. It reuses the existing backup manifest shape, backup folder layout and active `StorageAdapter`; it does not introduce a second backup format or restore engine.
+
+The preview is side-effect free. Building or viewing it must not:
+
+- write page files;
+- write asset files;
+- remove files or directories;
+- create a backup;
+- mutate `PageRepository`;
+- mutate `PageIndex`;
+- imply persistent schema changes.
+
+The preview compares real persisted content where the current contract can prove a result:
+
+- pages are classified as would add, would replace, unchanged, invalid manifest entry or missing backup file;
+- assets are classified as would add, would replace, unchanged, invalid manifest entry or missing backup file;
+- damaged manifest/page/asset states produce a blocked preview instead of a misleading safe summary.
+
+Restore preview deliberately does not claim deletion semantics. A page or asset absent from the selected backup is not described as "will be deleted" because the current full restore does not delete files created after the backup.
+
+The Settings backup UI consumes the runtime plan only to show a human-readable summary and meaningful changed/problem items before the existing `restoreWorkspaceBackup()` path runs. The actual restore path and mandatory pre-restore safety backup remain owned by `backupService`.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.

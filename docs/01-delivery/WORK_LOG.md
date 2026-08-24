@@ -6,6 +6,57 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.2 Non-Destructive Restore Preview
+
+### Disposition
+
+- Closed `0.0.1.12.2` as a focused Data Safety leaf.
+- Added `js/storage/backupRestorePreview.js` as a pure runtime restore-plan builder on top of the existing backup manifest layout and `StorageAdapter`.
+- Integrated the preview into the existing Settings backup restore confirmation in `js/ui/appTopbar.js`.
+- Kept actual restore execution owned by `restoreWorkspaceBackup()` and its mandatory pre-restore backup gate.
+
+### Restore Preview Contract
+
+- Pages are classified from persisted content as:
+  - would add;
+  - would replace;
+  - unchanged;
+  - invalid manifest entry;
+  - missing backup page file.
+- Assets are classified from persisted bytes as:
+  - would add;
+  - would replace;
+  - unchanged;
+  - invalid manifest entry;
+  - missing backup asset file.
+- Damaged manifest/page/asset states produce a blocked preview instead of a misleading safe summary.
+- Preview does not claim deletion semantics because current restore does not delete files created after the backup.
+
+### UI
+
+- Settings restore confirmation now shows a compact human-readable preview before the destructive restore button.
+- The panel explicitly says that changes have not been applied.
+- Meaningful changed/problem items are shown without dumping raw JSON.
+- If the preview is blocked, the restore button in that confirmation is disabled.
+- Cancel closes the preview without any workspace write.
+
+### Tests
+
+- Added `tests/backupRestorePreview.test.mjs` for add/replace/unchanged page comparison, asset comparison, missing backup page file, missing backup asset file, corrupt/missing manifest, zero writes and no PageRepository/PageIndex mutation.
+- Extended `tests/browser/app-shell.spec.mjs` to verify Settings preview summary, Cancel, zero page/asset writes, zero directory removal and blocked damaged preview UI.
+
+### Scope
+
+- No partial restore was implemented.
+- No restore engine or backup format was duplicated.
+- No persistent data format migration was performed.
+- No deletion semantics were added.
+- No real user workspace was touched or mutated.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.3` Backup Manifest Integrity.
+
 ## 2026-08-24: 0.0.1.12.1 Data Safety Baseline & Recovery Fixtures
 
 ### Disposition

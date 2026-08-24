@@ -26,13 +26,14 @@ Immediate direction:
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Active phase: `0.0.1.12.0` Data Safety Completion.
-6. Next leaf: `0.0.1.12.2` Restore Preview.
+6. Next leaf: `0.0.1.12.3` Backup Manifest Integrity.
 7. `0.0.1.13.0` remains `BLOCKED` and has not been started.
 8. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 9. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-24 `0.0.1.12.2` Restore Preview: added a non-destructive restore preview in Settings backed by a pure runtime restore-plan builder. It compares real persisted page contents and asset bytes, reports add/replace/unchanged/problem states, blocks damaged backup preview states, and keeps preview side-effect free: no page/asset writes, no directory removal, no backup creation and no repository/index mutation. BI-006 remains open for manifest integrity, partial restore and remaining asset/link safety work.
 - 2026-08-24 `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures: recorded the current recovery flow map, added reusable disposable data-safety fixtures for clean/changed/backup-missing/link/asset/orphan/incomplete-backup inputs, and added baseline tests for backup create/list/restore, corrupt manifest rejection, pre-restore backup blocking, current missing page/asset restore behavior and asset scanner classification. No restore preview, partial restore, link repair, persistent format migration or real workspace mutation was implemented.
 - 2026-08-24 phase start: `0.0.1.12.0` Data Safety Completion is `ACTIVE`; next leaf is `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures. No recovery/repair product implementation, persistent data format migration or real-user-workspace mutation was started.
 - 2026-08-24 popup drag geometry bugfix: registered popup windows now keep the grabbed point under the pointer across fixed, centered-transform, animated and right/inset positioning. This was a maintenance fix in the shared `popupManager`; no new product feature or `0.0.1.12.0` work was started.
@@ -160,7 +161,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.12.2` Restore Preview when ready. Do not start `0.0.1.13.0` until Data Safety Completion is closed.
+- Start `0.0.1.12.3` Backup Manifest Integrity when ready. Do not start `0.0.1.13.0` until Data Safety Completion is closed.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

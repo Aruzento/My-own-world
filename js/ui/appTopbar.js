@@ -39,6 +39,10 @@ import {
 } from '../storage/backupService.js';
 
 import {
+  buildWorkspaceRestorePreview
+} from '../storage/backupRestorePreview.js';
+
+import {
   getStorageAdapter,
   hasWorkspaceAccess
 } from '../storage/storageAdapter.js';
@@ -1373,11 +1377,23 @@ async function renderBackupList(
 }
 
 
-function renderRestoreConfirm(
+let restorePreviewRequestCounter =
+  0;
+
+
+async function renderRestoreConfirm(
   confirm,
   backup,
   onDone
 ) {
+
+  const requestId =
+    String(
+      restorePreviewRequestCounter += 1
+    );
+
+  confirm.dataset.restorePreviewRequest =
+    requestId;
 
   confirm.replaceChildren();
 
@@ -1386,13 +1402,147 @@ function renderRestoreConfirm(
   );
 
   confirm.dataset.restorePreview =
-    'true';
+    'loading';
+
+  confirm.setAttribute(
+    'aria-live',
+    'polite'
+  );
+
+  const loading =
+    document.createElement('p');
+
+  loading.className =
+    'app-backup-preview-note';
+
+  loading.textContent =
+    'Собираю предпросмотр восстановления. Изменения еще не применялись.';
+
+  confirm.appendChild(
+    loading
+  );
+
+  let preview;
+
+  try {
+
+    preview =
+      await buildWorkspaceRestorePreview(
+        backup.id
+      );
+
+  } catch (error) {
+
+    console.error(
+      'Не удалось собрать предпросмотр восстановления.',
+      error
+    );
+
+    preview =
+      createRestorePreviewError(
+        backup.id,
+        error
+      );
+  }
+
+  if (
+    confirm.dataset.restorePreviewRequest !== requestId
+  ) return;
+
+  renderRestorePreviewConfirm(
+    confirm,
+    backup,
+    preview,
+    onDone
+  );
+}
+
+
+function renderRestorePreviewConfirm(
+  confirm,
+  backup,
+  preview,
+  onDone
+) {
+
+  confirm.replaceChildren();
+
+  confirm.dataset.restorePreview =
+    preview.status;
+
+  const header =
+    document.createElement('div');
+
+  header.className =
+    'app-backup-preview-header';
+
+  const title =
+    document.createElement('strong');
+
+  title.textContent =
+    'Предпросмотр восстановления';
+
+  const state =
+    document.createElement('span');
+
+  state.dataset.previewStatus =
+    preview.blocked
+      ? 'blocked'
+      : 'ready';
+
+  state.textContent =
+    preview.blocked
+      ? 'Заблокировано'
+      : 'Готово';
+
+  header.append(
+    title,
+    state
+  );
 
   const text =
     document.createElement('p');
 
+  text.className =
+    'app-backup-preview-note';
+
   text.textContent =
-    'Восстановить страницы из этой резервной копии? Новые файлы, созданные после неё, не удаляются.';
+    preview.blocked
+      ? 'Backup поврежден или неполный. Восстановление из этого окна не запускается, пока проблема не проверена.'
+      : 'Изменения еще не применялись. Restore не удаляет файлы, которых нет в backup.';
+
+  const summary =
+    createRestorePreviewSummary(
+      preview
+    );
+
+  const pages =
+    createRestorePreviewSection({
+      title:
+        'Страницы',
+      items:
+        preview.pages,
+      getTitle:
+        item => item.title || item.name || 'Без названия',
+      getMeta:
+        item => item.path || item.name || '',
+      emptyText:
+        'Значимых изменений страниц нет.'
+    });
+
+  const assets =
+    createRestorePreviewSection({
+      title:
+        'Ассеты',
+      items:
+        preview.assets,
+      getTitle:
+        item => item.path || 'Asset без пути',
+      getMeta:
+        item => item.message || '',
+      emptyText:
+        'Значимых изменений ассетов нет.'
+    });
 
   const actions =
     document.createElement('div');
@@ -1420,6 +1570,15 @@ function renderRestoreConfirm(
 
   confirmButton.className =
     'app-backup-danger';
+
+  confirmButton.disabled =
+    preview.blocked;
+
+  if (preview.blocked) {
+
+    confirmButton.title =
+      'Восстановление заблокировано: backup поврежден или неполный.';
+  }
 
   setButtonContent(
     confirmButton,
@@ -1517,9 +1676,332 @@ function renderRestoreConfirm(
   );
 
   confirm.append(
+    header,
     text,
+    summary,
+    pages,
+    assets,
     actions
   );
+}
+
+
+function createRestorePreviewSummary(
+  preview
+) {
+
+  const summary =
+    document.createElement('div');
+
+  summary.className =
+    'app-backup-preview-summary';
+
+  summary.append(
+    createRestorePreviewStat(
+      'Страницы',
+      [
+        `добавит ${preview.summary.pages.wouldAdd}`,
+        `заменит ${preview.summary.pages.wouldReplace}`,
+        `без изменений ${preview.summary.pages.unchanged}`,
+        `проблем ${preview.summary.pages.backupProblems}`
+      ]
+    ),
+    createRestorePreviewStat(
+      'Ассеты',
+      [
+        `добавит ${preview.summary.assets.wouldAdd}`,
+        `заменит ${preview.summary.assets.wouldReplace}`,
+        `без изменений ${preview.summary.assets.unchanged}`,
+        `доступно ${preview.summary.assets.backupAvailable}`,
+        `нет сейчас ${preview.summary.assets.currentMissing}`,
+        `проблем ${preview.summary.assets.backupProblems}`
+      ]
+    )
+  );
+
+  return summary;
+}
+
+
+function createRestorePreviewStat(
+  title,
+  lines
+) {
+
+  const item =
+    document.createElement('div');
+
+  item.className =
+    'app-backup-preview-stat';
+
+  const label =
+    document.createElement('strong');
+
+  label.textContent =
+    title;
+
+  const value =
+    document.createElement('span');
+
+  value.textContent =
+    lines.join(' · ');
+
+  item.append(
+    label,
+    value
+  );
+
+  return item;
+}
+
+
+function createRestorePreviewSection({
+  title,
+  items,
+  getTitle,
+  getMeta,
+  emptyText
+}) {
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'app-backup-preview-section';
+
+  const header =
+    document.createElement('div');
+
+  header.className =
+    'app-backup-preview-section-title';
+
+  const heading =
+    document.createElement('strong');
+
+  heading.textContent =
+    title;
+
+  const count =
+    document.createElement('span');
+
+  count.textContent =
+    `${items.length} записей`;
+
+  header.append(
+    heading,
+    count
+  );
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-backup-preview-list';
+
+  const meaningfulItems =
+    items.filter(item =>
+      item.status !== 'unchanged'
+    );
+
+  if (meaningfulItems.length === 0) {
+
+    const empty =
+      document.createElement('p');
+
+    empty.className =
+      'app-backup-preview-empty';
+
+    empty.textContent =
+      emptyText;
+
+    list.appendChild(
+      empty
+    );
+
+  } else {
+
+    meaningfulItems
+      .slice(
+        0,
+        8
+      )
+      .forEach(item => {
+
+        list.appendChild(
+          createRestorePreviewItem({
+            item,
+            title:
+              getTitle(
+                item
+              ),
+            meta:
+              getMeta(
+                item
+              )
+          })
+        );
+      });
+
+    if (meaningfulItems.length > 8) {
+
+      const more =
+        document.createElement('p');
+
+      more.className =
+        'app-backup-preview-empty';
+
+      more.textContent =
+        `Еще ${meaningfulItems.length - 8} изменений скрыто в кратком списке.`;
+
+      list.appendChild(
+        more
+      );
+    }
+  }
+
+  section.append(
+    header,
+    list
+  );
+
+  return section;
+}
+
+
+function createRestorePreviewItem({
+  item,
+  title,
+  meta
+}) {
+
+  const row =
+    document.createElement('div');
+
+  row.className =
+    'app-backup-preview-item';
+
+  row.dataset.previewStatus =
+    item.status;
+
+  const status =
+    document.createElement('span');
+
+  status.className =
+    'app-backup-preview-state';
+
+  status.textContent =
+    getRestorePreviewStatusLabel(
+      item.status
+    );
+
+  const name =
+    document.createElement('strong');
+
+  name.textContent =
+    title;
+
+  const detail =
+    document.createElement('span');
+
+  detail.textContent =
+    meta;
+
+  row.append(
+    status,
+    name,
+    detail
+  );
+
+  return row;
+}
+
+
+function getRestorePreviewStatusLabel(
+  status
+) {
+
+  switch (status) {
+
+    case 'would-add':
+      return 'Будет добавлено';
+
+    case 'would-replace':
+      return 'Будет заменено';
+
+    case 'backup-file-missing':
+      return 'Проблема backup';
+
+    case 'backup-entry-invalid':
+      return 'Проблема manifest';
+
+    default:
+      return 'Без изменений';
+  }
+}
+
+
+function createRestorePreviewError(
+  backupId,
+  error
+) {
+
+  return {
+    backupId,
+    status:
+      'blocked',
+    blocked:
+      true,
+    message:
+      'Предпросмотр заблокирован: backup поврежден или неполный.',
+    manifest:
+      null,
+    pages:
+      [],
+    assets:
+      [],
+    summary: {
+      pages: {
+        total:
+          0,
+        wouldAdd:
+          0,
+        wouldReplace:
+          0,
+        unchanged:
+          0,
+        backupProblems:
+          1
+      },
+      assets: {
+        total:
+          0,
+        wouldAdd:
+          0,
+        wouldReplace:
+          0,
+        unchanged:
+          0,
+        currentPresent:
+          0,
+        currentMissing:
+          0,
+        backupAvailable:
+          0,
+        backupProblems:
+          0
+      },
+      issueCount:
+        1
+    },
+    issues: [
+      {
+        code:
+          'preview-unavailable',
+        message:
+          error?.message || 'Не удалось собрать предпросмотр восстановления.'
+      }
+    ]
+  };
 }
 
 
