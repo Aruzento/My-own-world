@@ -6,6 +6,54 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.2 Write Preconditions
+
+### Disposition
+
+- Closed `0.0.1.13.2` as a minimal optimistic write-precondition contract leaf.
+- Did not implement stale write blocking UI, merge behavior, persistent format changes, collaboration or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.3` Stale Write Blocking.
+
+### Owner And Contract
+
+- Added PageRecord state identity helpers that derive a runtime-only edit base from existing durable page content.
+- The identity includes the whole persisted page content hash, normalized semantic metadata hash, body content hash, schema version and `updatedAt`.
+- Added `pageWritePreconditions` as the narrow storage helper for reading the authoritative current page file through `StorageAdapter` and comparing it with an expected base.
+- Extended `persistPageContentCommand()` with optional `expectedBase` evidence and result reporting: `matched`, `mismatch`, `read-failed` or `not-provided`.
+- Kept mismatch diagnostic-only in this leaf: writes are still allowed so 13.2 does not change conflict UX.
+
+### Editor Session Base
+
+- Opening a page captures the durable base identity into runtime editor session state.
+- Ordinary editor save/autosave and special page save pass the current session base into `PageCommandService`.
+- After a successful non-stale save, the editor session base advances to the committed content.
+- Reopening a page captures the latest available durable base again.
+
+### Tests
+
+- `node --check js\core\pageRecord.js`
+- `node --check js\storage\pageWritePreconditions.js`
+- `node --check js\storage\pageCommandService.js`
+- `node --check js\editor\editorSessionBase.js`
+- `node --check js\editor\autosave.js`
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check tests\pageRecord.test.mjs`
+- `node --check tests\pageWritePreconditions.test.mjs`
+- `node --check tests\browser\editor-autosave.spec.mjs`
+- `node --test tests\pageRecord.test.mjs`
+- `node --test tests\pageWritePreconditions.test.mjs`
+- `node --test tests\pageCommandService.test.mjs`
+- `node --test tests\editConflictBaseline.test.mjs`
+- `npm run test:browser -- tests/browser/editor-autosave.spec.mjs`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.3` Stale Write Blocking.
+
 ## 2026-08-24: 0.0.1.13.1 Conflict Baseline
 
 ### Disposition

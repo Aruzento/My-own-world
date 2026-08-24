@@ -185,3 +185,10 @@ export {
   snapshotPageForCommand,
   undoLastPageCommand
 } from './pageCommandService.js';
+
+
+export {
+  createPageWriteExpectedBase,
+  evaluatePageWritePrecondition,
+  readCurrentDurablePageStateIdentity
+} from './pageWritePreconditions.js';

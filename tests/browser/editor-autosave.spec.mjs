@@ -451,6 +451,279 @@ aliases: []
 
 
 test(
+  'editor-open-save-captures-and-advances-page-base-identity',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            setStorageAdapter
+          } = await import('/js/storage/storageAdapter.js');
+
+          const {
+            state
+          } = await import('/js/state.js');
+
+          const {
+            openPage,
+            saveCurrentPage
+          } = await import('/js/editor/editor.js');
+
+          const {
+            getCurrentEditorPageBase
+          } = await import('/js/editor/editorSessionBase.js');
+
+          const {
+            createPageStateIdentityFromContent,
+            arePageStateIdentitiesEqual
+          } = await import('/js/core/pageRecord.js');
+
+          const files =
+            new Map();
+
+          setStorageAdapter({
+            kind:
+              'memory',
+            getWorkspaceHandle() {
+              return {
+                name:
+                  'Editor base identity workspace'
+              };
+            },
+            setWorkspaceHandle() {},
+            async pickWorkspace() {
+              return {};
+            },
+            async restoreWorkspace() {
+              return {};
+            },
+            async ensureDirectory() {},
+            async getDirectoryHandle() {
+              return {};
+            },
+            async readText(path) {
+              return files.get(path) || '';
+            },
+            async writeText(path, content) {
+              files.set(
+                path,
+                String(content)
+              );
+            },
+            async readBinary() {
+              return new ArrayBuffer(0);
+            },
+            async writeBinary() {},
+            async listFiles() {
+              return [];
+            },
+            async removeFile() {},
+            async removeDirectory() {}
+          });
+
+          const content =
+`---
+id: editor-base-page
+parent: null
+order: 1
+tags: []
+template: card
+type: note
+aliases: []
+---
+
+<div class="entity-layout card-shell" contenteditable="false">
+  <h1>Editor Base</h1>
+  <div
+    class="rich-text-field"
+    contenteditable="true"
+    data-persistent-editable="true"
+  >Original base</div>
+</div>`;
+
+          const pageRecord =
+            {
+              id:
+                'editor-base-page',
+              name:
+                'editor-base-page.md',
+              path:
+                '/pages/editor-base-page.md',
+              order:
+                1,
+              title:
+                'Editor Base',
+              parent:
+                null,
+              template:
+                'card',
+              type:
+                'note',
+              tags:
+                [],
+              aliases:
+                [],
+              relationships:
+                [],
+              content
+            };
+
+          files.set(
+            pageRecord.path,
+            pageRecord.content
+          );
+
+          state.pages =
+            [
+              pageRecord
+            ];
+
+          await openPage(
+            pageRecord
+          );
+
+          const openedBase =
+            getCurrentEditorPageBase(
+              pageRecord.id
+            );
+
+          const editor =
+            document.querySelector(
+              '#editorArea'
+            );
+
+          const body =
+            editor.querySelector(
+              '.rich-text-field'
+            );
+
+          body.textContent =
+            'Saved base';
+
+          body.dispatchEvent(
+            new InputEvent(
+              'input',
+              {
+                bubbles:
+                  true,
+                data:
+                  'x',
+                inputType:
+                  'insertText'
+              }
+            )
+          );
+
+          await saveCurrentPage();
+
+          const savedContent =
+            files.get(
+              pageRecord.path
+            );
+
+          const advancedBase =
+            getCurrentEditorPageBase(
+              pageRecord.id
+            );
+
+          await openPage(
+            pageRecord
+          );
+
+          const reopenedContent =
+            files.get(
+              pageRecord.path
+            );
+
+          const reopenedBase =
+            getCurrentEditorPageBase(
+              pageRecord.id
+            );
+
+          return {
+            openedMatchesOriginal:
+              arePageStateIdentitiesEqual(
+                openedBase,
+                createPageStateIdentityFromContent(
+                  content,
+                  {
+                    pageId:
+                      pageRecord.id
+                  }
+                )
+              ),
+            advancedMatchesDurable:
+              arePageStateIdentitiesEqual(
+                advancedBase,
+                createPageStateIdentityFromContent(
+                  savedContent,
+                  {
+                    pageId:
+                      pageRecord.id
+                  }
+                )
+              ),
+            reopenedMatchesDurable:
+              arePageStateIdentitiesEqual(
+                reopenedBase,
+                createPageStateIdentityFromContent(
+                  reopenedContent,
+                  {
+                    pageId:
+                      pageRecord.id
+                  }
+                )
+              ),
+            baseChangedAfterSave:
+              !arePageStateIdentitiesEqual(
+                openedBase,
+                advancedBase
+              ),
+            savedContent
+          };
+        }
+      );
+
+    expect(
+      result.openedMatchesOriginal
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.advancedMatchesDurable
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.reopenedMatchesDurable
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.baseChangedAfterSave
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.savedContent
+    ).toContain(
+      'Saved base'
+    );
+  }
+);
+
+
+test(
   'editor-open-page-ignores-stale-async-campaign-map-completion',
   async ({ page }) => {
 

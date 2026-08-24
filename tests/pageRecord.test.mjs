@@ -2,12 +2,215 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  arePageStateIdentitiesEqual,
   buildPageRecordContent,
   createPageContentHash,
+  createPageStateIdentityFromContent,
+  createPageStateIdentityFromPage,
   createRuntimePageFromContent,
   parsePageRecordContent,
   updatePageRecordContent
 } from '../js/core/pageRecord.js';
+
+
+test(
+  'PageRecord state identity is stable for the same durable content',
+  () => {
+
+    const content =
+      buildPageRecordContent({
+        id:
+          'identity-page',
+        parent:
+          null,
+        order:
+          5,
+        tags:
+          [
+            'card'
+          ],
+        template:
+          'card',
+        type:
+          'note',
+        aliases:
+          [
+            'Identity'
+          ],
+        body:
+          '<h1>Identity</h1>',
+        now:
+          '2026-08-24T08:00:00.000Z'
+      });
+
+    const first =
+      createPageStateIdentityFromContent(
+        content
+      );
+
+    const second =
+      createPageStateIdentityFromContent(
+        content
+      );
+
+    assert.equal(
+      arePageStateIdentitiesEqual(
+        first,
+        second
+      ),
+      true
+    );
+
+    assert.equal(
+      first.pageId,
+      'identity-page'
+    );
+  }
+);
+
+
+test(
+  'PageRecord state identity changes for durable body and metadata changes',
+  () => {
+
+    const content =
+      buildPageRecordContent({
+        id:
+          'identity-change-page',
+        parent:
+          null,
+        order:
+          5,
+        tags:
+          [
+            'card'
+          ],
+        template:
+          'card',
+        type:
+          'note',
+        aliases:
+          [],
+        body:
+          '<h1>Identity Change</h1><p>A</p>',
+        now:
+          '2026-08-24T08:00:00.000Z'
+      });
+
+    const base =
+      createPageStateIdentityFromContent(
+        content
+      );
+
+    const bodyChanged =
+      createPageStateIdentityFromContent(
+        updatePageRecordContent(
+          content,
+          {
+            body:
+              '<h1>Identity Change</h1><p>B</p>'
+          },
+          {
+            now:
+              '2026-08-24T08:01:00.000Z'
+          }
+        )
+      );
+
+    const metadataChanged =
+      createPageStateIdentityFromContent(
+        updatePageRecordContent(
+          content,
+          {
+            type:
+              'location'
+          },
+          {
+            now:
+              '2026-08-24T08:02:00.000Z'
+          }
+        )
+      );
+
+    assert.equal(
+      arePageStateIdentitiesEqual(
+        base,
+        bodyChanged
+      ),
+      false
+    );
+
+    assert.equal(
+      arePageStateIdentitiesEqual(
+        base,
+        metadataChanged
+      ),
+      false
+    );
+
+    assert.notEqual(
+      base.metadataHash,
+      metadataChanged.metadataHash
+    );
+  }
+);
+
+
+test(
+  'PageRecord state identity ignores runtime-only page object fields',
+  () => {
+
+    const content =
+      buildPageRecordContent({
+        id:
+          'identity-runtime-page',
+        parent:
+          null,
+        order:
+          5,
+        tags:
+          [
+            'card'
+          ],
+        template:
+          'card',
+        type:
+          'note',
+        aliases:
+          [],
+        body:
+          '<h1>Identity Runtime</h1>',
+        now:
+          '2026-08-24T08:00:00.000Z'
+      });
+
+    const first =
+      createPageStateIdentityFromPage({
+        id:
+          'identity-runtime-page',
+        content,
+        runtimeSelection:
+          'not durable'
+      });
+
+    const second =
+      createPageStateIdentityFromPage({
+        id:
+          'identity-runtime-page',
+        content,
+        runtimeSelection:
+          'changed only in UI'
+      });
+
+    assert.equal(
+      arePageStateIdentitiesEqual(
+        first,
+        second
+      ),
+      true
+    );
+  }
+);
 
 
 test(

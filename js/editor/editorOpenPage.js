@@ -106,6 +106,10 @@ import {
   markPageOpened
 } from '../repository/pageRepository.js';
 
+import {
+  captureEditorPageBase
+} from './editorSessionBase.js';
+
 export async function openPageInEditor(
   editor,
   page,
@@ -123,6 +127,11 @@ export async function openPageInEditor(
 
   setCurrentPage(
     page
+  );
+
+  captureEditorPageBase(
+    page,
+    page.content
   );
 
   markPageOpened(

@@ -198,7 +198,7 @@ Current unsafe cases:
 - two stale writes to the same structured field are last-write-wins with no conflict state;
 - runtime metadata can temporarily remain ahead of durable content when a stale structured full record is written, until reload reparses the file.
 
-Session base signal:
+Session base signal before `0.0.1.13.2`:
 
 - available indirectly in durable `updatedAt` / `contentHash` and in runtime snapshots, but missing as an enforced command precondition at the write boundary.
 
@@ -206,6 +206,49 @@ Regression fixture:
 
 - `tests/fixtures/editConflictFixtures.mjs` creates a disposable in-memory page workspace;
 - `tests/editConflictBaseline.test.mjs` characterizes same-base save, stale full-page overwrite, different-field structured loss, same-field overwrite and metadata-vs-content behavior.
+
+## Write Preconditions / Edit Base Identity
+
+Captured in `0.0.1.13.2`.
+
+Runtime-only page state identity:
+
+- `PageRecord` owns `createPageStateIdentityFromContent()` and `createPageStateIdentityFromPage()`;
+- the identity is derived from existing persisted page content and does not add workspace schema or front matter fields;
+- identity evidence includes the whole persisted content hash, normalized semantic metadata hash, body content hash, schema version and `updatedAt`;
+- semantic metadata covers id, schemaVersion, stored contentHash, parent/order, tags, template, type, aliases, relationships and front matter entries;
+- runtime-only page object fields are ignored.
+
+Current durable comparison:
+
+- `pageWritePreconditions` reads the current page file through the active `StorageAdapter` when a path is available;
+- direct comparison does not use stale `state.pages` as the authoritative current state;
+- missing expected base returns `not-provided`;
+- matching expected base returns `matched`;
+- durable mismatch returns `mismatch`;
+- failed durable read returns `read-failed`.
+
+Command contract:
+
+- `persistPageContentCommand()` accepts optional `expectedBase`;
+- command results expose `precondition` evidence;
+- `0.0.1.13.2` does not block or merge on mismatch yet, so existing save behavior remains last-write-wins unless the write queue supersedes the write;
+- `0.0.1.13.3` owns stale write blocking based on this evidence.
+
+Editor session base:
+
+- `openPage()` captures the loaded page base into runtime-only editor session state;
+- ordinary editor save/autosave and special page save pass the current editor base to `persistPageContentCommand()`;
+- successful non-stale save advances the editor base to the committed content;
+- reopen captures the latest loaded base again.
+
+Regression target:
+
+- identical durable reads produce the same identity;
+- durable body and metadata changes produce different identities;
+- runtime-only UI changes do not change identity;
+- command precondition reads durable content rather than stale runtime page content;
+- editor open captures base, save advances base and reopen captures latest base.
 
 ### Tier 0: Read And Index Only
 

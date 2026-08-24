@@ -8,6 +8,11 @@ import {
 } from '../storage/storage.js';
 
 import {
+  advanceEditorPageBase,
+  getCurrentEditorPageBase
+} from './editorSessionBase.js';
+
+import {
   renderTree
 } from '../tree/tree.js';
 
@@ -423,18 +428,25 @@ async function persistCurrentPage(
 
   try {
 
+    const page =
+      state.currentPage;
+
     result =
       await persistPageContentCommand({
         page:
-          state.currentPage,
+          page,
         content,
         previousPage,
         type:
-          previousPage?.title !== state.currentPage.title
+          previousPage?.title !== page.title
             ? 'rename-page'
             : 'update-page-content',
         reason:
-          'special-save'
+          'special-save',
+        expectedBase:
+          getCurrentEditorPageBase(
+            page?.id || null
+          )
       });
 
   } catch (error) {
@@ -459,6 +471,11 @@ async function persistCurrentPage(
 
   setSaveStatus(
     'Сохранено'
+  );
+
+  advanceEditorPageBase(
+    state.currentPage,
+    content
   );
 
   renderTree();

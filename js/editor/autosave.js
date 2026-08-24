@@ -10,6 +10,11 @@ import {
 } from '../storage/storage.js';
 
 import {
+  advanceEditorPageBase,
+  getCurrentEditorPageBase
+} from './editorSessionBase.js';
+
+import {
   setSaveStatus,
   setStatus
 } from '../ui/ui.js';
@@ -199,6 +204,11 @@ export async function saveCurrentPage(
       page
     );
 
+  const expectedBase =
+    getCurrentEditorPageBase(
+      page.id
+    );
+
   page.title =
     titleElement
       ? titleElement.textContent.trim()
@@ -273,7 +283,8 @@ export async function saveCurrentPage(
             ? 'rename-page'
             : 'update-page-content',
         reason:
-          'autosave'
+          'autosave',
+        expectedBase
       });
 
   } catch (error) {
@@ -300,6 +311,11 @@ export async function saveCurrentPage(
 
   setSaveStatus(
     'Сохранено'
+  );
+
+  advanceEditorPageBase(
+    page,
+    content
   );
 
   }

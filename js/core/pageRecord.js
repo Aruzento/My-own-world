@@ -411,6 +411,230 @@ export function createPageContentHash(
 }
 
 
+export function createPageStateIdentityFromContent(
+  content,
+  options = {}
+) {
+
+  const source =
+    String(content || '');
+
+  const parsed =
+    parsePageRecordContent(
+      source,
+      {
+        generateId:
+          false
+      }
+    );
+
+  const contentHash =
+    parsed.pageRecordStatus?.expectedContentHash ||
+    createPageContentHash(
+      normalizeOutputBody(
+        parsed.rawBody || parsed.body || ''
+      )
+    );
+
+  const metadata =
+    createPageStateIdentityMetadata(
+      parsed,
+      options
+    );
+
+  const metadataHash =
+    createPageContentHash(
+      stableStringify(
+        metadata
+      )
+    );
+
+  return {
+    kind:
+      'page-state-identity',
+    version:
+      1,
+    pageId:
+      normalizeString(
+        options.pageId || parsed.id
+      ) || null,
+    schemaVersion:
+      parsed.schemaVersion,
+    updatedAt:
+      parsed.updatedAt || null,
+    contentHash,
+    metadataHash,
+    stateHash:
+      createPageContentHash(
+        source
+      ),
+    source:
+      options.source || null
+  };
+}
+
+
+export function createPageStateIdentityFromPage(
+  page,
+  options = {}
+) {
+
+  if (!page) return null;
+
+  return createPageStateIdentityFromContent(
+    page.content || '',
+    {
+      ...options,
+      pageId:
+        options.pageId || page.id || null
+    }
+  );
+}
+
+
+export function normalizePageStateIdentity(
+  identity
+) {
+
+  if (!identity || typeof identity !== 'object') return null;
+
+  return {
+    kind:
+      identity.kind || 'page-state-identity',
+    version:
+      Number(identity.version) || 1,
+    pageId:
+      normalizeString(
+        identity.pageId
+      ) || null,
+    schemaVersion:
+      Number(identity.schemaVersion) || null,
+    updatedAt:
+      normalizeUpdatedAt(
+        identity.updatedAt
+      ),
+    contentHash:
+      normalizeContentHash(
+        identity.contentHash
+      ),
+    metadataHash:
+      normalizeContentHash(
+        identity.metadataHash
+      ),
+    stateHash:
+      normalizeContentHash(
+        identity.stateHash
+      )
+  };
+}
+
+
+export function arePageStateIdentitiesEqual(
+  left,
+  right
+) {
+
+  const normalizedLeft =
+    normalizePageStateIdentity(
+      left
+    );
+
+  const normalizedRight =
+    normalizePageStateIdentity(
+      right
+    );
+
+  if (!normalizedLeft || !normalizedRight) return false;
+
+  return stableStringify(
+    normalizedLeft
+  ) === stableStringify(
+    normalizedRight
+  );
+}
+
+
+function createPageStateIdentityMetadata(
+  parsed,
+  options = {}
+) {
+
+  return {
+    id:
+      normalizeString(
+        options.pageId || parsed.id
+      ) || null,
+    schemaVersion:
+      parsed.schemaVersion,
+    storedContentHash:
+      parsed.contentHash || null,
+    parent:
+      parsed.parent ?? null,
+    order:
+      parsed.order ?? null,
+    tags:
+      Array.isArray(parsed.tags)
+        ? [
+          ...parsed.tags
+        ]
+        : [],
+    template:
+      parsed.template || null,
+    type:
+      parsed.type || null,
+    aliases:
+      Array.isArray(parsed.aliases)
+        ? [
+          ...parsed.aliases
+        ]
+        : [],
+    relationships:
+      normalizeRelationships(
+        parsed.relationships
+      ),
+    frontMatter:
+      Array.isArray(parsed.frontMatter?.entries)
+        ? parsed.frontMatter.entries.map(entry => ({
+          key:
+            entry.key || null,
+          normalizedKey:
+            entry.normalizedKey || null,
+          value:
+            entry.value || null,
+          raw:
+            entry.raw || ''
+        }))
+        : []
+  };
+}
+
+
+function stableStringify(
+  value
+) {
+
+  if (Array.isArray(value)) {
+
+    return `[${value.map(item =>
+      stableStringify(
+        item
+      )
+    ).join(',')}]`;
+  }
+
+  if (value && typeof value === 'object') {
+
+    return `{${Object.keys(value).sort().map(key =>
+      `${JSON.stringify(key)}:${stableStringify(value[key])}`
+    ).join(',')}}`;
+  }
+
+  return JSON.stringify(
+    value ?? null
+  );
+}
+
+
 export function formatRelationshipsFrontMatter(
   relationships
 ) {

@@ -9,6 +9,10 @@ import {
   writePageContent
 } from './writeQueue.js';
 
+import {
+  evaluatePageWritePrecondition
+} from './pageWritePreconditions.js';
+
 
 const pageCommandEvents =
   [];
@@ -131,7 +135,8 @@ export async function persistPageContentCommand({
   content,
   previousPage = null,
   type = 'update-page-content',
-  reason = type
+  reason = type,
+  expectedBase = null
 } = {}) {
 
   const beforePage =
@@ -186,7 +191,13 @@ export async function persistPageContentCommand({
           page.content
       };
     },
-    async persist() {
+    async persist(context) {
+
+      context.phaseResults.precondition =
+        await evaluatePageWritePrecondition({
+          page,
+          expectedBase
+        });
 
       const writeResult =
         await writePageContent(
@@ -205,6 +216,9 @@ export async function persistPageContentCommand({
       const writeResult =
         context.phaseResults.persist;
 
+      const precondition =
+        context.phaseResults.precondition || null;
+
       if (
         isSupersededWriteResult(
           writeResult
@@ -219,7 +233,8 @@ export async function persistPageContentCommand({
           stale:
             true,
           written:
-            Boolean(writeResult.written)
+            Boolean(writeResult.written),
+          precondition
         };
 
         return;
@@ -237,6 +252,9 @@ export async function persistPageContentCommand({
 
       const writeResult =
         context.phaseResults.persist;
+
+      const precondition =
+        context.phaseResults.precondition || null;
 
       if (
         !isSupersededWriteResult(
@@ -267,7 +285,8 @@ export async function persistPageContentCommand({
         written:
           Boolean(
             writeResult?.written
-          )
+          ),
+        precondition
       };
     },
     rollback(
