@@ -17,6 +17,8 @@ import {
   buildAssetVerificationReport,
   buildBrokenInternalLinkReport,
   buildOrphanReviewReport,
+  buildRepairPreviewModel,
+  createRepairPreviewPlan,
   updatePageParent
 } from '../storage/storage.js';
 
@@ -283,6 +285,12 @@ export async function collectWorkspaceDiagnostics(
       schema
     });
 
+  const repairPreview =
+    buildRepairPreviewModel({
+      pages,
+      internalLinkDiagnostics
+    });
+
   const pageStats =
     createPageStats(
       pages
@@ -395,6 +403,7 @@ export async function collectWorkspaceDiagnostics(
       ),
     internalLinkDiagnostics,
     orphanReview,
+    repairPreview,
     heavyMaps,
     performanceEvents,
     warnings
@@ -847,6 +856,12 @@ function renderDiagnosticsResult(
   );
 
   container.appendChild(
+    createRepairPreviewSection(
+      diagnostics.repairPreview
+    )
+  );
+
+  container.appendChild(
     createListSection(
       'Тяжелые карты',
       diagnostics.heavyMaps,
@@ -967,6 +982,521 @@ function createSchemaRecoverySection(
   }
 
   return section;
+}
+
+
+function createRepairPreviewSection(
+  model = null
+) {
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'app-workspace-diagnostics-section app-workspace-repair-preview-section';
+
+  section.dataset.repairPreviewSection =
+    'true';
+
+  const heading =
+    document.createElement('h4');
+
+  heading.textContent =
+    'Предпросмотр плана правки';
+
+  const intro =
+    document.createElement('p');
+
+  intro.className =
+    'app-workspace-repair-preview-intro';
+
+  intro.textContent =
+    'Только предпросмотр: выберите проблему и конкретную страницу-цель. Записи, резервные копии и изменения репозитория здесь не выполняются.';
+
+  section.append(
+    heading,
+    intro
+  );
+
+  if (!model?.diagnostics?.length) {
+
+    const empty =
+      document.createElement('div');
+
+    empty.className =
+      'app-workspace-diagnostics-summary is-ok';
+
+    empty.dataset.repairPreviewState =
+      'empty';
+
+    empty.textContent =
+      'Поддерживаемых предпросмотров правки для текущих диагностик нет.';
+
+    section.appendChild(
+      empty
+    );
+
+    return section;
+  }
+
+  const controls =
+    document.createElement('div');
+
+  controls.className =
+    'app-workspace-repair-preview-controls';
+
+  const diagnosticSelect =
+    createRepairPreviewSelect({
+      label:
+        'Проблема',
+      dataName:
+        'diagnostic',
+      placeholder:
+        'Выберите ссылку или отношение',
+      options:
+        model.diagnostics.map(diagnostic => ({
+          value:
+            diagnostic.id,
+          label:
+            diagnostic.label
+        }))
+    });
+
+  const targetSelect =
+    createRepairPreviewSelect({
+      label:
+        'Новая цель',
+      dataName:
+        'target',
+      placeholder:
+        'Выберите страницу-цель',
+      options:
+        model.targets.map(target => ({
+          value:
+            target.id,
+          label:
+            formatRepairPreviewTargetOption(
+              target
+            )
+        }))
+    });
+
+  const actionRow =
+    document.createElement('div');
+
+  actionRow.className =
+    'app-workspace-repair-preview-actions';
+
+  const previewButton =
+    document.createElement('button');
+
+  previewButton.type =
+    'button';
+
+  previewButton.dataset.repairPreviewShow =
+    'true';
+
+  previewButton.textContent =
+    'Показать план';
+
+  const cancelButton =
+    document.createElement('button');
+
+  cancelButton.type =
+    'button';
+
+  cancelButton.dataset.repairPreviewCancel =
+    'true';
+
+  cancelButton.textContent =
+    'Сбросить';
+
+  actionRow.append(
+    previewButton,
+    cancelButton
+  );
+
+  const status =
+    document.createElement('div');
+
+  status.className =
+    'app-workspace-repair-preview-status';
+
+  status.dataset.repairPreviewStatus =
+    'waiting';
+
+  status.setAttribute(
+    'role',
+    'status'
+  );
+
+  status.textContent =
+    'План не создан. Сначала выберите проблему и цель.';
+
+  const output =
+    document.createElement('div');
+
+  output.className =
+    'app-workspace-repair-preview-output';
+
+  output.dataset.repairPreviewOutput =
+    'empty';
+
+  const renderCurrentPlan =
+    () => {
+
+      const plan =
+        createRepairPreviewPlan({
+          model,
+          diagnosticId:
+            diagnosticSelect.select.value,
+          targetPageId:
+            targetSelect.select.value
+        });
+
+      renderRepairPreviewPlan(
+        output,
+        status,
+        plan
+      );
+    };
+
+  const updateButtonState =
+    () => {
+
+      previewButton.disabled =
+        !diagnosticSelect.select.value ||
+        !targetSelect.select.value;
+    };
+
+  diagnosticSelect.select.addEventListener(
+    'change',
+    () => {
+
+      output.replaceChildren();
+
+      output.dataset.repairPreviewOutput =
+        'empty';
+
+      status.dataset.repairPreviewStatus =
+        'waiting';
+
+      status.textContent =
+        diagnosticSelect.select.value
+          ? 'Выберите страницу-цель. Неоднозначные совпадения не выбираются автоматически.'
+          : 'План не создан. Сначала выберите проблему и цель.';
+
+      updateButtonState();
+    }
+  );
+
+  targetSelect.select.addEventListener(
+    'change',
+    () => {
+
+      updateButtonState();
+
+      if (
+        output.dataset.repairPreviewOutput === 'ready' &&
+        diagnosticSelect.select.value
+      ) {
+
+        renderCurrentPlan();
+      }
+    }
+  );
+
+  previewButton.addEventListener(
+    'click',
+    renderCurrentPlan
+  );
+
+  cancelButton.addEventListener(
+    'click',
+    () => {
+
+      diagnosticSelect.select.value =
+        '';
+
+      targetSelect.select.value =
+        '';
+
+      output.replaceChildren();
+
+      output.dataset.repairPreviewOutput =
+        'empty';
+
+      status.dataset.repairPreviewStatus =
+        'cancelled';
+
+      status.textContent =
+        'Предпросмотр закрыт. Изменения не применялись.';
+
+      updateButtonState();
+    }
+  );
+
+  updateButtonState();
+
+  controls.append(
+    diagnosticSelect.wrap,
+    targetSelect.wrap,
+    actionRow
+  );
+
+  section.append(
+    controls,
+    status,
+    output
+  );
+
+  return section;
+}
+
+
+function createRepairPreviewSelect({
+  label,
+  dataName,
+  placeholder,
+  options
+}) {
+
+  const wrap =
+    document.createElement('label');
+
+  wrap.className =
+    'app-workspace-repair-preview-field';
+
+  const caption =
+    document.createElement('span');
+
+  caption.textContent =
+    label;
+
+  const select =
+    document.createElement('select');
+
+  select.dataset[`repairPreview${capitalizeDataName(dataName)}`] =
+    'true';
+
+  const empty =
+    document.createElement('option');
+
+  empty.value =
+    '';
+
+  empty.textContent =
+    placeholder;
+
+  select.appendChild(
+    empty
+  );
+
+  options.forEach(option => {
+
+    const item =
+      document.createElement('option');
+
+    item.value =
+      option.value;
+
+    item.textContent =
+      option.label;
+
+    select.appendChild(
+      item
+    );
+  });
+
+  wrap.append(
+    caption,
+    select
+  );
+
+  return {
+    wrap,
+    select
+  };
+}
+
+
+function renderRepairPreviewPlan(
+  output,
+  status,
+  plan
+) {
+
+  output.replaceChildren();
+
+  if (plan.status !== 'ready') {
+
+    output.dataset.repairPreviewOutput =
+      'blocked';
+
+    status.dataset.repairPreviewStatus =
+      'blocked';
+
+    status.textContent =
+      plan.conflicts?.[0]?.message ||
+      'План заблокирован.';
+
+    return;
+  }
+
+  output.dataset.repairPreviewOutput =
+    'ready';
+
+  output.dataset.repairPreviewSideEffects =
+    'none';
+
+  status.dataset.repairPreviewStatus =
+    'ready';
+
+  status.textContent =
+    'План готов. Это только предпросмотр: запись и резервная копия не запускались.';
+
+  const title =
+    document.createElement('strong');
+
+  title.textContent =
+    `${plan.source.title}: ${formatRepairPreviewAction(plan.action.kind)}`;
+
+  const rows =
+    [
+      [
+        'Поле',
+        plan.action.fieldPath
+      ],
+      [
+        'До',
+        formatRepairPreviewBefore(
+          plan.before
+        )
+      ],
+      [
+        'После',
+        `${plan.after.targetTitle} (${plan.after.targetId})`
+      ],
+      [
+        'Контекст',
+        plan.after.context || plan.before.context || 'контекст не найден'
+      ],
+      [
+        'Резервная копия',
+        plan.action.backupRequired
+          ? 'потребуется перед применением'
+          : 'не требуется'
+      ],
+      [
+        'Свежесть',
+        formatRepairPreviewEvidence(
+          plan.staleEvidence
+        )
+      ]
+    ];
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-workspace-repair-preview-plan';
+
+  rows.forEach(([label, value]) => {
+
+    const row =
+      document.createElement('div');
+
+    const name =
+      document.createElement('span');
+
+    name.textContent =
+      label;
+
+    const detail =
+      document.createElement('b');
+
+    detail.textContent =
+      value;
+
+    row.append(
+      name,
+      detail
+    );
+
+    list.appendChild(
+      row
+    );
+  });
+
+  output.append(
+    title,
+    list
+  );
+}
+
+
+function formatRepairPreviewTargetOption(
+  target
+) {
+
+  return [
+    target.title,
+    target.id,
+    target.type
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+
+function formatRepairPreviewAction(
+  kind
+) {
+
+  if (kind === 'replace-relationship-target') return 'замена цели отношения';
+  if (kind === 'replace-internal-link-target') return 'замена цели ссылки';
+
+  return 'план правки';
+}
+
+
+function formatRepairPreviewBefore(
+  before
+) {
+
+  return before.targetTitle ||
+    before.targetId ||
+    before.displayText ||
+    'цель не указана';
+}
+
+
+function formatRepairPreviewEvidence(
+  evidence = {}
+) {
+
+  return [
+    evidence.sourceContentHash || 'contentHash: нет',
+    evidence.sourceUpdatedAt
+      ? `updatedAt ${evidence.sourceUpdatedAt}`
+      : '',
+    Number.isFinite(Number(evidence.sourceContentLength))
+      ? `${evidence.sourceContentLength} байт`
+      : ''
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+
+function capitalizeDataName(
+  value
+) {
+
+  const text =
+    String(value || '');
+
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
 }
 
 

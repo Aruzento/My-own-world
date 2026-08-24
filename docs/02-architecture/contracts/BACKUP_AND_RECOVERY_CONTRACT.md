@@ -203,6 +203,19 @@ The review model is cautious by design. A root page is not an orphan just becaus
 
 The report records whether each candidate is purely diagnostic or already a schema error. It does not add repair buttons, delete files/pages, rewrite links, change persistent format or weaken backup requirements for future repair.
 
+## Repair Preview
+
+Since `0.0.1.12.9`, `js/storage/repairPreview.js` owns the runtime-only repair preview plan for the first supported link-safety cases. It consumes the existing broken internal link diagnostics and current page snapshots; it does not create a second page database, backup format, repair engine or persisted plan schema.
+
+The current previewable cases are:
+
+- broken or ambiguous raw/converted wiki links and ordinary internal page anchors where the user explicitly selects an existing page target;
+- broken or ambiguous relationship endpoints where the user explicitly selects an existing page target.
+
+The model deliberately does not infer replacement targets from fuzzy title similarity. Ambiguous diagnostics stay blocked until the user chooses one target. Asset replacement is not previewed in this leaf because MyOwnWorld cannot safely invent a replacement file path.
+
+Each ready plan records the source page, diagnostic reason, affected field path, before/after target, local text or relationship context, backup requirement for future apply and stale-plan evidence from the current source page (`contentHash`, `updatedAt`, content length and revision when available). Preview creation, target changes, cancellation and reopening are side-effect free: no page writes, asset writes/deletes, repository/index mutation or backup creation may occur.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.

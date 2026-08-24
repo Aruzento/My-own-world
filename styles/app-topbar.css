@@ -1374,6 +1374,255 @@
 }
 
 
+.app-workspace-repair-preview-section {
+
+  padding:
+    8px;
+
+  border:
+    1px solid
+    rgba(126,188,255,0.14);
+
+  border-radius:
+    8px;
+
+  background:
+    rgba(126,188,255,0.035);
+}
+
+
+.app-workspace-repair-preview-intro,
+.app-workspace-repair-preview-status {
+
+  margin:
+    0;
+
+  color:
+    rgba(255,248,230,0.64);
+
+  font-size:
+    11px;
+
+  line-height:
+    1.4;
+}
+
+
+.app-workspace-repair-preview-controls {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    minmax(0, 1.25fr)
+    minmax(0, 1fr)
+    auto;
+
+  gap:
+    6px;
+
+  align-items:
+    end;
+}
+
+
+.app-workspace-repair-preview-field {
+
+  display:
+    grid;
+
+  gap:
+    4px;
+
+  min-width:
+    0;
+
+  color:
+    rgba(255,248,230,0.58);
+
+  font-size:
+    10px;
+}
+
+
+.app-workspace-repair-preview-field select {
+
+  width:
+    100%;
+
+  min-height:
+    32px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.16);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(0,0,0,0.24);
+
+  color:
+    rgba(255,248,230,0.88);
+
+  font-size:
+    11px;
+}
+
+
+.app-workspace-repair-preview-actions {
+
+  display:
+    flex;
+
+  gap:
+    5px;
+}
+
+
+.app-workspace-repair-preview-actions button {
+
+  min-height:
+    32px;
+
+  padding:
+    6px 8px;
+
+  border:
+    1px solid
+    rgba(126,188,255,0.24);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(126,188,255,0.10);
+
+  color:
+    rgba(232,241,255,0.92);
+
+  font-size:
+    11px;
+
+  font-weight:
+    700;
+
+  cursor:
+    pointer;
+}
+
+
+.app-workspace-repair-preview-actions button:hover {
+
+  background:
+    rgba(126,188,255,0.16);
+}
+
+
+.app-workspace-repair-preview-actions button:disabled {
+
+  cursor:
+    default;
+
+  opacity:
+    0.58;
+}
+
+
+.app-workspace-repair-preview-output {
+
+  display:
+    grid;
+
+  gap:
+    6px;
+}
+
+
+.app-workspace-repair-preview-output strong {
+
+  color:
+    rgba(255,248,230,0.88);
+
+  font-size:
+    12px;
+}
+
+
+.app-workspace-repair-preview-plan {
+
+  display:
+    grid;
+
+  gap:
+    4px;
+}
+
+
+.app-workspace-repair-preview-plan div {
+
+  display:
+    grid;
+
+  grid-template-columns:
+    92px minmax(0, 1fr);
+
+  gap:
+    7px;
+
+  padding:
+    6px 7px;
+
+  border:
+    1px solid
+    rgba(241,211,142,0.10);
+
+  border-radius:
+    6px;
+
+  background:
+    rgba(0,0,0,0.13);
+}
+
+
+.app-workspace-repair-preview-plan span,
+.app-workspace-repair-preview-plan b {
+
+  min-width:
+    0;
+
+  overflow:
+    hidden;
+
+  text-overflow:
+    ellipsis;
+
+  white-space:
+    nowrap;
+
+  font-size:
+    11px;
+}
+
+
+.app-workspace-repair-preview-plan span {
+
+  color:
+    rgba(255,248,230,0.52);
+}
+
+
+.app-workspace-repair-preview-plan b {
+
+  color:
+    rgba(255,248,230,0.76);
+
+  font-weight:
+    600;
+}
+
+
 .app-asset-health-section {
 
   display:
@@ -2563,7 +2812,8 @@
 .app-settings-body .app-backup-retention button,
 .app-settings-body .app-asset-health-delete,
 .app-settings-body .app-asset-health-confirm-actions button,
-.app-settings-body .app-workspace-recovery-repair-button {
+.app-settings-body .app-workspace-recovery-repair-button,
+.app-settings-body .app-workspace-repair-preview-actions button {
 
   min-height:
     30px;
@@ -2692,7 +2942,8 @@
 .app-settings-body .app-backup-list,
 .app-settings-body .app-asset-health-list,
 .app-settings-body .app-workspace-diagnostics-list,
-.app-settings-body .app-workspace-recovery-groups {
+.app-settings-body .app-workspace-recovery-groups,
+.app-settings-body .app-workspace-repair-preview-output {
 
   max-height:
     180px;
@@ -2709,6 +2960,7 @@
 .app-settings-body .app-workspace-diagnostics-card,
 .app-settings-body .app-workspace-recovery-group,
 .app-settings-body .app-workspace-recovery-stats div,
+.app-settings-body .app-workspace-repair-preview-plan div,
 .app-settings-body .app-asset-health-summary,
 .app-settings-body .app-backup-confirm,
 .app-settings-body .app-asset-health-confirm {
@@ -2774,5 +3026,23 @@
 
     grid-template-columns:
       minmax(0, 1fr);
+  }
+
+  .app-workspace-repair-preview-controls {
+
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .app-workspace-repair-preview-actions {
+
+    justify-content:
+      stretch;
+  }
+
+  .app-workspace-repair-preview-actions button {
+
+    flex:
+      1 1 0;
   }
 }

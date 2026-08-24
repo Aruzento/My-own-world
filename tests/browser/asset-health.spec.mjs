@@ -875,3 +875,315 @@ test(
     );
   }
 );
+
+
+test(
+  'workspace-diagnostics-panel-builds-repair-preview-without-persistent-writes',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const popup =
+            document.createElement('div');
+
+          document.body.appendChild(
+            popup
+          );
+
+          const {
+            renderWorkspaceDiagnosticsPanel
+          } = await import(
+            '/js/ui/workspaceDiagnosticsPanel.js'
+          );
+
+          const pages =
+            [
+              {
+                id: 'castle-a',
+                title: 'Castle',
+                type: 'location',
+                body: '<h1>Castle A</h1>',
+                content: '<h1>Castle A</h1>'
+              },
+              {
+                id: 'castle-b',
+                title: 'Castle',
+                type: 'location',
+                body: '<h1>Castle B</h1>',
+                content: '<h1>Castle B</h1>'
+              },
+              {
+                id: 'source',
+                title: 'Source',
+                type: 'card',
+                updatedAt: '2026-08-24T08:00:00.000Z',
+                body: '<h1>Source</h1><p>[[Castle]]</p>',
+                content: '<h1>Source</h1><p>[[Castle]]</p>'
+              }
+            ];
+
+          const originalPages =
+            JSON.stringify(
+              pages
+            );
+
+          let backupCalls =
+            0;
+
+          let repairCalls =
+            0;
+
+          await renderWorkspaceDiagnosticsPanel(
+            popup,
+            {
+              hasWorkspace: true,
+              autoRun: true,
+              workspacePath: 'X:\\ДНД\\Мастер\\База',
+              canWriteWorkspace: true,
+              backupStatus: {
+                backups: [],
+                incomplete: []
+              },
+              pendingOperations: [],
+              pages,
+              listAssetPaths: async () => [],
+              performanceEvents: [],
+              createRecoveryBackup: async () => {
+
+                backupCalls +=
+                  1;
+
+                return {
+                  id: 'unexpected-backup'
+                };
+              },
+              applyRecoveryPageParent: async () => {
+
+                repairCalls +=
+                  1;
+              }
+            }
+          );
+
+          const diagnosticSelect =
+            popup.querySelector(
+              '[data-repair-preview-diagnostic]'
+            );
+
+          const targetSelect =
+            popup.querySelector(
+              '[data-repair-preview-target]'
+            );
+
+          const previewButton =
+            popup.querySelector(
+              '[data-repair-preview-show]'
+            );
+
+          const cancelButton =
+            popup.querySelector(
+              '[data-repair-preview-cancel]'
+            );
+
+          const output =
+            popup.querySelector(
+              '[data-repair-preview-output]'
+            );
+
+          const status =
+            popup.querySelector(
+              '[data-repair-preview-status]'
+            );
+
+          const buttonInitiallyDisabled =
+            previewButton.disabled;
+
+          diagnosticSelect.value =
+            diagnosticSelect.options[1].value;
+
+          diagnosticSelect.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          const statusAfterDiagnostic =
+            status.textContent;
+
+          targetSelect.value =
+            'castle-a';
+
+          targetSelect.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          previewButton.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const firstPreview =
+            output.textContent;
+
+          const sideEffects =
+            output.dataset.repairPreviewSideEffects || '';
+
+          targetSelect.value =
+            'castle-b';
+
+          targetSelect.dispatchEvent(
+            new Event(
+              'change',
+              {
+                bubbles: true
+              }
+            )
+          );
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const secondPreview =
+            output.textContent;
+
+          cancelButton.click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(resolve)
+          );
+
+          const cancelledOutputState =
+            output.dataset.repairPreviewOutput || '';
+
+          const cancelledStatus =
+            status.textContent;
+
+          await renderWorkspaceDiagnosticsPanel(
+            popup,
+            {
+              hasWorkspace: true,
+              autoRun: true,
+              workspacePath: 'X:\\ДНД\\Мастер\\База',
+              canWriteWorkspace: true,
+              backupStatus: {
+                backups: [],
+                incomplete: []
+              },
+              pendingOperations: [],
+              pages,
+              listAssetPaths: async () => [],
+              performanceEvents: []
+            }
+          );
+
+          return {
+            text:
+              popup.textContent,
+            buttonInitiallyDisabled,
+            statusAfterDiagnostic,
+            firstPreview,
+            secondPreview,
+            sideEffects,
+            cancelledOutputState,
+            cancelledStatus,
+            backupCalls,
+            repairCalls,
+            pagesUnchanged:
+              JSON.stringify(pages) === originalPages,
+            reopenedOutput:
+              popup
+                .querySelector('[data-repair-preview-output]')
+                ?.dataset.repairPreviewOutput || ''
+          };
+        }
+      );
+
+    expect(
+      result.text
+    ).toContain(
+      'Предпросмотр плана правки'
+    );
+
+    expect(
+      result.buttonInitiallyDisabled
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.statusAfterDiagnostic
+    ).toContain(
+      'не выбираются автоматически'
+    );
+
+    expect(
+      result.firstPreview
+    ).toContain(
+      'Castle (castle-a)'
+    );
+
+    expect(
+      result.secondPreview
+    ).toContain(
+      'Castle (castle-b)'
+    );
+
+    expect(
+      result.sideEffects
+    ).toBe(
+      'none'
+    );
+
+    expect(
+      result.cancelledOutputState
+    ).toBe(
+      'empty'
+    );
+
+    expect(
+      result.cancelledStatus
+    ).toContain(
+      'Изменения не применялись'
+    );
+
+    expect(
+      result.backupCalls
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.repairCalls
+    ).toBe(
+      0
+    );
+
+    expect(
+      result.pagesUnchanged
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.reopenedOutput
+    ).toBe(
+      'empty'
+    );
+  }
+);

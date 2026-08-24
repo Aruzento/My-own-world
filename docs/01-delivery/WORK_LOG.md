@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.9 Repair Preview
+
+### Disposition
+
+- Closed `0.0.1.12.9` as a focused Data Safety leaf.
+- Added one runtime-only repair preview model in `js/storage/repairPreview.js`.
+- Reused `internalLinkDiagnostics` as the evidence owner for broken/ambiguous wiki links, ordinary internal page anchors and relationship endpoints.
+- Did not add persistent repair, backup creation, asset replacement, target guessing, PageCommandService writes, persistent format migration or real-workspace mutation.
+
+### Preview Contract
+
+- Supported preview cases are selected internal page/wiki link target replacement and selected relationship endpoint target replacement.
+- Every ready plan requires an explicit existing page target chosen by the user. Ambiguous title/alias diagnostics remain blocked until the user chooses a target; the app does not auto-select one.
+- Each plan records source page, diagnostic category/reason, exact affected field path (`body.<linkType>[index]` or `relationships[index]`), current target, selected target, local text/relationship context and whether backup will be required before a future apply step.
+- Each plan captures stale-plan evidence from the source page: `contentHash`, `updatedAt`, content length and revision when available. The next leaf can use that evidence to reject apply against changed source content.
+- Asset references are intentionally not repair-previewed yet because the app cannot safely invent replacement asset files.
+
+### UI
+
+- Settings workspace diagnostics now includes `Предпросмотр плана правки` after the connectivity review.
+- The UI uses native labeled selects for problem and target selection, a preview button, a cancel button and a polite status region.
+- The preview shows before/after target, affected field path, local context, backup requirement and stale guard evidence.
+- Cancelling clears the runtime preview and states that no changes were applied.
+
+### Tests
+
+- Added `tests/repairPreview.test.mjs` for internal-link plans, target-change updates, ambiguous-target blocking, relationship endpoint preview, side-effect counters and source-page immutability.
+- Updated `tests/browser/asset-health.spec.mjs` with a real Settings diagnostics regression covering create preview, change target, cancel, reopen and zero backup/repair callback calls.
+- Focused checks run:
+  - `node --test tests\repairPreview.test.mjs`
+  - `node --test tests\internalLinkDiagnostics.test.mjs tests\orphanReview.test.mjs`
+  - `npm run test:browser -- tests/browser/asset-health.spec.mjs`
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.10` Persistent Repair Flow.
+
 ## 2026-08-24: 0.0.1.12.8 Orphan Review
 
 ### Disposition
