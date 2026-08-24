@@ -58,7 +58,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Large real workspaces should stay in release handoff because subjective feel can vary, but the current `BUG-001` pass did not reproduce a frozen or broken large-workspace workflow.
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
-- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization is closed; next phase is `0.0.1.12.0` Data Safety Completion, but it has not been started.
+- The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization is closed; `0.0.1.12.0` Data Safety Completion is now active. `0.0.1.13.0` has not been started.
 - Restore preview, partial restore, link cleanup and asset repair are still future data-safety work.
 
 ### Verification Snapshot

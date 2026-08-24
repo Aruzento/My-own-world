@@ -6,6 +6,27 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.0 Data Safety Completion Phase Start
+
+### Disposition
+
+- Started `0.0.1.12.0` Data Safety Completion after `0.0.1.11.0` Existing P1 Stabilization closed.
+- Current HEAD before the change was `3b9d8db` (`Fix popup drag geometry`). The owner-provided expected baseline `defdea4` is present in history as `Close Existing P1 Stabilization phase 0.0.1.11.0`; the two newer commits are the repo-local skills install and the approved popup drag maintenance fix.
+- Updated current status docs so `0.0.1.12.0` is `ACTIVE`.
+- Set the next leaf to `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures.
+- Confirmed `0.0.1.13.0` remains `BLOCKED` and was not started.
+
+### Scope
+
+- This commit is status/planning only.
+- No recovery/repair product implementation was started.
+- No persistent data format migration was performed.
+- No real user workspace was touched or mutated.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures.
+
 ## 2026-08-24: Popup Drag Geometry Bugfix
 
 ### Что сделано

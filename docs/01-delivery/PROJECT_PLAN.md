@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.11.0` Existing P1 Stabilization is `DONE`.
+Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
 
-Current leaf: `0.0.1.11.FINAL` Existing P1 Stabilization Closure Gate passed on 2026-08-24. Next phase is `0.0.1.12.0` Data Safety Completion, but it is only `NEXT` and has not been started.
+Current leaf: `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.12.0` until the owner explicitly starts the next phase.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
 
 ## Execution Rules
 
@@ -143,7 +143,7 @@ WHY NOW: new session/combat work should not sit on top of known map and regressi
 
 SCOPE: `BI-003`, `BI-008`, `BI-009`, `BI-010`, `BI-011`, `BI-022`; current P1 bug-inventory items if still reproduced after Phase 1 audit, especially `BUG-001`, `BUG-003`, `BUG-004`, `BUG-005`, `BUG-006`, `BUG-007`, `BUG-008` and `BUG-009`. Reproduce or verify current user-visible stabilization issues, close the P1 regression bundle when its real children are closed, and decide whether small Campaign Map usability fixes belong here or later. First owner-selected leaf: `0.0.1.11.1` Workspace Switch Access.
 
-DEPENDENCIES: Phase 2 cleanup is closed. Owner started this phase on 2026-08-20. The final closure gate passed on 2026-08-24. Phase `0.0.1.12.0` is unlocked as `NEXT`, but not active.
+DEPENDENCIES: Phase 2 cleanup is closed. Owner started this phase on 2026-08-20. The final closure gate passed on 2026-08-24. Phase `0.0.1.12.0` was unlocked after this phase and owner-started on 2026-08-24.
 
 EXIT CRITERIA: met on 2026-08-24. Each included BI/bug has a current repro/result, root cause where applicable, regression target and final disposition. Independent review passed; unit, browser, verification, UI polish, docs, encoding, desktop gate, desktop build, native click-through and real large-workspace smoke passed. No NF/live-session functionality, new product functionality or persistent data format migration was implemented.
 
@@ -169,7 +169,7 @@ ID: `0.0.1.12.0`
 
 NAME: Data Safety Completion
 
-STATUS: `NEXT`
+STATUS: `ACTIVE`
 
 GOAL: complete the remaining recovery and link-safety work before durable live-session automation.
 
@@ -177,9 +177,13 @@ WHY NOW: future combat/session/event systems will write more frequently; unsafe 
 
 SCOPE: `BI-006` restore preview, partial restore, backup manifests, asset verification. `BI-020` broken wiki links, relation links, ordinary links, orphan review, grouped diagnostics, non-destructive repair preview and deliberate persistent repair flow. Include `BUG-011` restore/recovery validation if still current after Phase 1 audit.
 
-DEPENDENCIES: Phase 3 stabilization is closed. Owner has not started this phase yet.
+DEPENDENCIES: Phase 3 stabilization is closed. Owner started this phase on 2026-08-24.
 
 EXIT CRITERIA: recovery previews are readable and non-destructive; persistent repair flows are backup-gated where needed; asset/link verification has tests or documented smoke paths; no durable write path bypasses existing safety owners.
+
+CURRENT LEAF:
+
+- `0.0.1.12.1` Data Safety Baseline & Recovery Fixtures - `NEXT`. Establish the current data-safety baseline and reusable recovery fixtures before implementing repair/restore product slices. No recovery/repair product implementation has started in the phase-start commit.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 
