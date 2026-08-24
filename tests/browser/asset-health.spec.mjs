@@ -42,6 +42,7 @@ test(
               pages: [
                 {
                   id: 'page-1',
+                  title: 'Карта замка',
                   type: 'campaignMap',
                   body: `
                     <div data-map-asset="assets/maps/ok.png"></div>
@@ -82,6 +83,24 @@ test(
             popup
               .querySelector('.app-asset-health-delete');
 
+          const rowKindsBeforeDelete =
+            [
+              ...popup.querySelectorAll('[data-asset-verification-row]')
+            ].map(item =>
+              item.dataset.assetVerificationRow
+            );
+
+          const itemCountBeforeDelete =
+            popup
+              .querySelectorAll('.app-asset-health-item')
+              .length;
+
+          const textBeforeDelete =
+            popup.textContent;
+
+          const orphanButtonText =
+            orphanButton?.textContent || '';
+
           orphanButton.click();
 
           await new Promise(resolve =>
@@ -92,6 +111,11 @@ test(
             popup
               .querySelector('.app-asset-health-confirm')
               ?.dataset.dangerZone || '';
+
+          const confirmText =
+            popup
+              .querySelector('.app-asset-health-confirm')
+              ?.textContent || '';
 
           popup
             .querySelector('.app-asset-health-danger')
@@ -113,24 +137,26 @@ test(
                 .querySelector('.app-asset-health-summary')
                 ?.dataset.healthBadge || '',
             rowKinds:
-              [
-                ...popup.querySelectorAll('[data-asset-verification-row]')
-              ].map(item =>
-                item.dataset.assetVerificationRow
-              ),
+              rowKindsBeforeDelete,
             dangerZone,
             summary:
               popup
                 .querySelector('.app-asset-health-summary')
                 ?.textContent || '',
             itemCount:
-              popup
-                .querySelectorAll('.app-asset-health-item')
-                .length,
+              itemCountBeforeDelete,
             missingPath:
               popup
-                .querySelector('.app-asset-health-item strong')
+                .querySelector('[data-asset-verification-row="referenced-missing"] strong')
                 ?.textContent || '',
+            existingDetails:
+              popup
+                .querySelector('[data-asset-verification-row="referenced-exists"] span')
+                ?.textContent || '',
+            orphanButtonText,
+            confirmText,
+            text:
+              textBeforeDelete,
             deletedPaths,
             backupReasons
           };
@@ -159,7 +185,9 @@ test(
       result.rowKinds
     ).toEqual(
       [
-        'broken-reference'
+        'referenced-exists',
+        'referenced-missing',
+        'orphan-candidate'
       ]
     );
 
@@ -172,13 +200,49 @@ test(
     expect(
       result.itemCount
     ).toBe(
-      1
+      3
     );
 
     expect(
       result.missingPath
     ).toBe(
       'assets/portraits/missing.png'
+    );
+
+    expect(
+      result.existingDetails
+    ).toContain(
+      'Карта замка'
+    );
+
+    expect(
+      result.orphanButtonText
+    ).toBe(
+      'Рассмотреть'
+    );
+
+    expect(
+      result.confirmText
+    ).toContain(
+      'не доказательство'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Кандидат на проверку'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'лишние'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'мусор'
     );
 
     expect(
@@ -195,6 +259,114 @@ test(
       [
         'orphan-assets-delete'
       ]
+    );
+  }
+);
+
+
+test(
+  'asset-health-panel-reports-asset-scan-failure-without-orphan-candidates',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const popup =
+            document.createElement('div');
+
+          document.body.appendChild(
+            popup
+          );
+
+          const {
+            renderAssetHealthPanel
+          } = await import(
+            '/js/ui/assetHealthPanel.js'
+          );
+
+          await renderAssetHealthPanel(
+            popup,
+            {
+              hasWorkspace: true,
+              pages: [
+                {
+                  id: 'page-1',
+                  title: 'Герой',
+                  type: 'card',
+                  body: '<img data-asset="assets/portraits/hero.png">'
+                }
+              ],
+              listAssetPaths: async () => {
+
+                throw new Error(
+                  'assets unavailable'
+                );
+              }
+            }
+          );
+
+          popup
+            .querySelector('.app-asset-health-primary')
+            .click();
+
+          await new Promise(resolve =>
+            requestAnimationFrame(() =>
+              requestAnimationFrame(resolve)
+            )
+          );
+
+          return {
+            summary:
+              popup
+                .querySelector('.app-asset-health-summary')
+                ?.textContent || '',
+            rowKinds:
+              [
+                ...popup.querySelectorAll('[data-asset-verification-row]')
+              ].map(item =>
+                item.dataset.assetVerificationRow
+              ),
+            text:
+              popup.textContent
+          };
+        }
+      );
+
+    expect(
+      result.summary
+    ).toContain(
+      'ошибок проверки 1'
+    );
+
+    expect(
+      result.rowKinds
+    ).toEqual(
+      [
+        'check-failed'
+      ]
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Проверка не завершена'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Не удалось прочитать папку assets.'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'Кандидат на проверку'
     );
   }
 );
@@ -335,7 +507,7 @@ test(
     expect(
       result.cardCount
     ).toBe(
-      9
+      10
     );
 
     expect(
@@ -381,6 +553,18 @@ test(
     expect(
       result.text
     ).toContain(
+      'Кандидаты ассетов'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'не используемые сейчас'
+    );
+
+    expect(
+      result.text
+    ).toContain(
       'campaign-map-presentation-open'
     );
 
@@ -388,6 +572,108 @@ test(
       result.warningCount
     ).toBeGreaterThan(
       0
+    );
+  }
+);
+
+
+test(
+  'workspace-diagnostics-panel-reports-asset-check-failure-without-orphan-warning',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const popup =
+            document.createElement('div');
+
+          document.body.appendChild(
+            popup
+          );
+
+          const {
+            renderWorkspaceDiagnosticsPanel
+          } = await import(
+            '/js/ui/workspaceDiagnosticsPanel.js'
+          );
+
+          await renderWorkspaceDiagnosticsPanel(
+            popup,
+            {
+              hasWorkspace: true,
+              autoRun: true,
+              workspacePath: 'X:\\ДНД\\Мастер\\База',
+              canWriteWorkspace: true,
+              backupStatus: {
+                backups: [],
+                incomplete: []
+              },
+              pendingOperations: [],
+              pages: [
+                {
+                  id: 'page-1',
+                  title: 'Герой',
+                  type: 'card',
+                  body: '<img data-asset="assets/portraits/hero.png">'
+                }
+              ],
+              listAssetPaths: async () => {
+
+                throw new Error(
+                  'assets unavailable'
+                );
+              },
+              performanceEvents: []
+            }
+          );
+
+          return {
+            text:
+              popup.textContent,
+            cardValues:
+              [
+                ...popup.querySelectorAll('.app-workspace-diagnostics-card')
+              ].map(card => [
+                card.querySelector('span')?.textContent || '',
+                card.querySelector('strong')?.textContent || ''
+              ])
+          };
+        }
+      );
+
+    expect(
+      result.cardValues
+    ).toContainEqual(
+      [
+        'Ошибки проверки ассетов',
+        '1'
+      ]
+    );
+
+    expect(
+      result.cardValues
+    ).toContainEqual(
+      [
+        'Кандидаты ассетов',
+        '0'
+      ]
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Проверка ассетов не завершена: 1'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'Есть ассеты, не используемые сейчас'
     );
   }
 );

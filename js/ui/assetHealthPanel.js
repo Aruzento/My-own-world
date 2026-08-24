@@ -3,8 +3,7 @@ import {
 } from '../state.js';
 
 import {
-  findBrokenAssetReferences,
-  findOrphanAssetPaths
+  buildAssetVerificationReport
 } from '../storage/storage.js';
 
 import {
@@ -25,6 +24,9 @@ import {
   createSettingsSectionHeader,
   setButtonContent
 } from './settingsPanelUI.js';
+
+const ASSET_HEALTH_VISIBLE_ROWS =
+  8;
 
 
 export async function renderAssetHealthPanel(
@@ -52,7 +54,7 @@ export async function renderAssetHealthPanel(
       title:
         'Проверка ассетов',
       description:
-        'Сломанные ссылки и лишние файлы в ассетах рабочей папки.'
+        'Ссылки, отсутствующие файлы и ассеты, не используемые сейчас.'
     });
 
   const checkButton =
@@ -120,28 +122,15 @@ export async function renderAssetHealthPanel(
 
       try {
 
-        const assetPaths =
-          await getAssetPaths(
+        const report =
+          await createAssetVerificationReport(
+            pages,
             options
-          );
-
-        const broken =
-          findBrokenAssetReferences(
-            pages,
-            assetPaths
-          );
-
-        const orphan =
-          findOrphanAssetPaths(
-            pages,
-            assetPaths
           );
 
         renderAssetHealthResult(
           result,
-          broken,
-          orphan,
-          assetPaths,
+          report,
           options
         );
 
@@ -180,55 +169,111 @@ async function getAssetPaths(
 }
 
 
+async function createAssetVerificationReport(
+  pages,
+  options
+) {
+
+  try {
+
+    const assetPaths =
+      await getAssetPaths(
+        options
+      );
+
+    return buildAssetVerificationReport({
+      pages,
+      assetPaths
+    });
+
+  } catch (error) {
+
+    return buildAssetVerificationReport({
+      pages,
+      assetScanError:
+        error
+    });
+  }
+}
+
+
 function renderAssetHealthResult(
   container,
-  broken,
-  orphan,
-  assetPaths,
+  report,
   options
 ) {
 
   container.replaceChildren();
 
+  const {
+    summary: counts
+  } =
+    report;
+
   const summary =
     document.createElement('div');
 
   summary.className =
-    broken.length > 0 ||
-    orphan.length > 0
-      ? 'app-asset-health-summary is-warning'
-      : 'app-asset-health-summary is-ok';
+    report.status === 'ok'
+      ? 'app-asset-health-summary is-ok'
+      : 'app-asset-health-summary is-warning';
 
   summary.dataset.healthBadge =
-    broken.length > 0 ||
-    orphan.length > 0
-      ? 'warning'
-      : 'ok';
+    report.status === 'ok'
+      ? 'ok'
+      : 'warning';
 
   summary.textContent =
-    broken.length > 0 ||
-    orphan.length > 0
-      ? `Проблемы: сломанные ссылки ${broken.length}, лишние файлы ${orphan.length}`
-      : `Ассеты в порядке. Файлов: ${assetPaths.length}`;
+    report.status === 'ok'
+      ? `Ассеты в порядке. Подтверждено ссылок: ${counts.referencedExisting}. Файлов: ${counts.assetFiles}.`
+      : `Проверка: подтверждено ${counts.referencedExisting}, отсутствует ${counts.referencedMissing}, кандидаты на проверку ${counts.orphanCandidates}, ошибок проверки ${counts.checkFailures}.`;
 
   container.appendChild(
     summary
   );
 
-  if (broken.length > 0) {
+  if (report.checkFailures.length > 0) {
 
     container.appendChild(
-      createBrokenAssetList(
-        broken
+      createAssetCheckFailureList(
+        report.checkFailures
       )
     );
   }
 
-  if (orphan.length > 0) {
+  if (report.referencedExisting.length > 0) {
+
+    container.appendChild(
+      createAssetReferenceList({
+        title:
+          'Подтвержденные ссылки',
+        references:
+          report.referencedExisting,
+        rowKind:
+          'referenced-exists'
+      })
+    );
+  }
+
+  if (report.referencedMissing.length > 0) {
+
+    container.appendChild(
+      createAssetReferenceList({
+        title:
+          'Отсутствующие ассеты',
+        references:
+          report.referencedMissing,
+        rowKind:
+          'referenced-missing'
+      })
+    );
+  }
+
+  if (report.orphanCandidates.length > 0) {
 
     container.appendChild(
       createOrphanAssetList(
-        orphan,
+        report.orphanCandidates,
         options,
         () => options.onRefresh?.()
       )
@@ -237,8 +282,87 @@ function renderAssetHealthResult(
 }
 
 
-function createBrokenAssetList(
-  broken
+function createAssetReferenceList({
+  title,
+  references,
+  rowKind
+}) {
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'app-asset-health-section';
+
+  const heading =
+    document.createElement('h4');
+
+  heading.textContent =
+    title;
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-asset-health-list';
+
+  references
+    .slice(
+      0,
+      ASSET_HEALTH_VISIBLE_ROWS
+    )
+    .forEach(reference => {
+
+      const item =
+        document.createElement('div');
+
+      item.className =
+        'app-asset-health-item';
+
+      item.dataset.assetVerificationRow =
+        rowKind;
+
+      const path =
+        document.createElement('strong');
+
+      path.textContent =
+        reference.path;
+
+      const details =
+        document.createElement('span');
+
+      details.textContent =
+        formatAssetReferenceDetails(
+          reference
+        );
+
+      item.append(
+        path,
+        details
+      );
+
+      list.appendChild(
+        item
+      );
+    });
+
+  appendHiddenCount(
+    list,
+    references.length,
+    ASSET_HEALTH_VISIBLE_ROWS
+  );
+
+  section.append(
+    heading,
+    list
+  );
+
+  return section;
+}
+
+
+function createAssetCheckFailureList(
+  failures
 ) {
 
   const section =
@@ -251,7 +375,7 @@ function createBrokenAssetList(
     document.createElement('h4');
 
   heading.textContent =
-    'Сломанные ссылки';
+    'Проверка не завершена';
 
   const list =
     document.createElement('div');
@@ -259,7 +383,7 @@ function createBrokenAssetList(
   list.className =
     'app-asset-health-list';
 
-  broken.forEach(reference => {
+  failures.forEach(failure => {
 
     const item =
       document.createElement('div');
@@ -268,21 +392,20 @@ function createBrokenAssetList(
       'app-asset-health-item';
 
     item.dataset.assetVerificationRow =
-      'broken-reference';
+      'check-failed';
 
     const path =
       document.createElement('strong');
 
     path.textContent =
-      reference.path;
+      failure.path || 'assets';
 
     const details =
       document.createElement('span');
 
     details.textContent =
-      formatAssetReferenceDetails(
-        reference
-      );
+      failure.message ||
+      'Не удалось завершить проверку ассетов.';
 
     item.append(
       path,
@@ -303,6 +426,32 @@ function createBrokenAssetList(
 }
 
 
+function appendHiddenCount(
+  list,
+  total,
+  visible
+) {
+
+  if (total <= visible) return;
+
+  const item =
+    document.createElement('div');
+
+  item.className =
+    'app-asset-health-item';
+
+  item.dataset.assetVerificationRow =
+    'more';
+
+  item.textContent =
+    `Еще ${total - visible} записей скрыто, чтобы список оставался читаемым.`;
+
+  list.appendChild(
+    item
+  );
+}
+
+
 function createOrphanAssetList(
   orphan,
   options,
@@ -319,7 +468,7 @@ function createOrphanAssetList(
     document.createElement('h4');
 
   heading.textContent =
-    'Orphan-файлы';
+    'Не используется сейчас';
 
   const list =
     document.createElement('div');
@@ -327,71 +476,85 @@ function createOrphanAssetList(
   list.className =
     'app-asset-health-list';
 
-  orphan.forEach(path => {
+  orphan
+    .slice(
+      0,
+      ASSET_HEALTH_VISIBLE_ROWS
+    )
+    .forEach(candidate => {
 
-    const item =
-      document.createElement('div');
+      const path =
+        candidate.path || '';
 
-    item.className =
-      'app-asset-health-item app-asset-health-item-with-action';
+      const item =
+        document.createElement('div');
 
-    item.dataset.assetVerificationRow =
-      'orphan-file';
+      item.className =
+        'app-asset-health-item app-asset-health-item-with-action';
 
-    const meta =
-      document.createElement('div');
+      item.dataset.assetVerificationRow =
+        'orphan-candidate';
 
-    meta.className =
-      'app-asset-health-meta';
+      const meta =
+        document.createElement('div');
 
-    const title =
-      document.createElement('strong');
+      meta.className =
+        'app-asset-health-meta';
 
-    title.textContent =
-      path;
+      const title =
+        document.createElement('strong');
 
-    const details =
-      document.createElement('span');
+      title.textContent =
+        path;
 
-    details.textContent =
-      'Файл есть в ассетах, но постоянных ссылок на него не найдено';
+      const details =
+        document.createElement('span');
 
-    meta.append(
-      title,
-      details
-    );
+      details.textContent =
+        'Кандидат на проверку: файл есть в assets, но persistent-ссылок сейчас не найдено';
 
-    const deleteButton =
-      document.createElement('button');
+      meta.append(
+        title,
+        details
+      );
 
-    deleteButton.type =
-      'button';
+      const deleteButton =
+        document.createElement('button');
 
-    deleteButton.className =
-      'app-asset-health-delete';
+      deleteButton.type =
+        'button';
 
-    deleteButton.textContent =
-      'Удалить';
+      deleteButton.className =
+        'app-asset-health-delete';
 
-    deleteButton.addEventListener(
-      'click',
-      () => renderOrphanDeleteConfirm(
-        item,
-        path,
-        options,
-        onRefresh
-      )
-    );
+      deleteButton.textContent =
+        'Рассмотреть';
 
-    item.append(
-      meta,
-      deleteButton
-    );
+      deleteButton.addEventListener(
+        'click',
+        () => renderOrphanDeleteConfirm(
+          item,
+          path,
+          options,
+          onRefresh
+        )
+      );
 
-    list.appendChild(
-      item
-    );
-  });
+      item.append(
+        meta,
+        deleteButton
+      );
+
+      list.appendChild(
+        item
+      );
+    });
+
+  appendHiddenCount(
+    list,
+    orphan.length,
+    ASSET_HEALTH_VISIBLE_ROWS
+  );
 
   section.append(
     heading,
@@ -426,7 +589,7 @@ function renderOrphanDeleteConfirm(
     document.createElement('p');
 
   text.textContent =
-    `Удалить лишний файл "${path}"? Перед удалением будет создана резервная копия.`;
+    `Файл "${path}" сейчас не найден в persistent-ссылках. Это не доказательство, что удаление не затронет работу. Удалить после создания резервной копии?`;
 
   const actions =
     document.createElement('div');
@@ -453,7 +616,7 @@ function renderOrphanDeleteConfirm(
     'app-asset-health-danger';
 
   confirmButton.textContent =
-    'Удалить файл';
+    'Удалить после backup';
 
   cancelButton.addEventListener(
     'click',
@@ -489,7 +652,7 @@ function renderOrphanDeleteConfirm(
       } catch (error) {
 
         console.error(
-          'Не удалось удалить лишний ассет.',
+          'Не удалось удалить файл-кандидат.',
           error
         );
 
@@ -555,22 +718,34 @@ function formatAssetReferenceDetails(
     );
   }
 
-  if (reference.owner?.pageTitle) {
+  const owner =
+    reference.ownerDisplay ||
+    reference.owner ||
+    {};
+
+  if (owner.pageTitle) {
 
     parts.push(
-      reference.owner.pageTitle
+      owner.pageTitle
     );
-  } else if (reference.owner?.pageId) {
+  } else if (owner.pageId) {
 
     parts.push(
-      reference.owner.pageId
+      owner.pageId
     );
   }
 
-  if (reference.owner?.source) {
+  if (owner.scope) {
 
     parts.push(
-      reference.owner.source
+      owner.scope
+    );
+  }
+
+  if (owner.entityId) {
+
+    parts.push(
+      owner.entityId
     );
   }
 

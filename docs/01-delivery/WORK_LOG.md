@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.6 Asset Verification
+
+### Disposition
+
+- Closed `0.0.1.12.6` as a focused Data Safety leaf.
+- Reused the existing `assetReferenceScanner`, `assetBrokenChecker`, `assetOrphanDetector` and asset storage adapter boundaries.
+- Added one runtime-only asset verification report instead of a second asset index or repair system.
+- Did not add automatic deletion, automatic repair, replacement guessing, persistent format migration or real-workspace mutation.
+
+### Verification Contract
+
+- Asset verification now classifies current provable states as:
+  - `referenced-exists` for persistent references whose asset file exists;
+  - `referenced-missing` for persistent references whose asset file is absent;
+  - `orphan-candidate` for asset files not used right now by persistent references;
+  - `check-failed` for unreadable asset-folder checks.
+- Settings asset health shows grouped counts and rows with asset path plus owner context such as page title, scope and entity id where the scanner can prove it.
+- Workspace diagnostics now reports asset-folder check failures separately instead of converting an unreadable assets scan into false orphan candidates.
+- Orphan language is intentionally cautious: "не используется сейчас" and "кандидат на проверку" rather than blame wording or a promise that deletion is safe.
+
+### Tests
+
+- Added `tests/assetVerificationReport.test.mjs` for existing referenced assets, missing referenced assets, orphan candidates, Campaign Map background/object/music references and scan failure classification.
+- Updated `tests/browser/asset-health.spec.mjs` so Settings asset health proves referenced-existing, referenced-missing, orphan-candidate and check-failed rows, cautious orphan wording, manual backup-gated candidate deletion and workspace diagnostics check-failure reporting.
+- Focused asset unit tests and focused diagnostics browser tests passed before full verification.
+- Read-only real workspace diagnostics on `X:\ДНД\Мастер\По кампаниям\База`: 697 pages, 27 maps, 144 asset files, 528 asset references, 0 missing asset references; advisory warnings remained large pages, large assets and heavy maps.
+
+### Scope
+
+- No real user workspace was modified.
+- No asset deletion policy was broadened.
+- No link diagnostics or repair flow was started.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.7` Broken Link Diagnostics.
+
 ## 2026-08-24: 0.0.1.12.5 Restore Failure Safety
 
 ### Disposition

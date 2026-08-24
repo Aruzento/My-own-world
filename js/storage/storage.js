@@ -121,6 +121,12 @@ export {
 
 
 export {
+  ASSET_VERIFICATION_CATEGORIES,
+  buildAssetVerificationReport
+} from './assetVerificationReport.js';
+
+
+export {
   createLocationMusicHTML,
   createLocationMusicReferences,
   normalizeLocationMusic,

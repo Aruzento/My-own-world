@@ -14,8 +14,7 @@ import {
 } from '../storage/backupService.js';
 
 import {
-  findBrokenAssetReferences,
-  findOrphanAssetPaths,
+  buildAssetVerificationReport,
   updatePageParent
 } from '../storage/storage.js';
 
@@ -202,10 +201,24 @@ export async function collectWorkspaceDiagnostics(
     state.pages ||
     [];
 
-  const assetPaths =
-    await getAssetPaths(
-      options
-    );
+  let assetPaths =
+    [];
+
+  let assetScanError =
+    null;
+
+  try {
+
+    assetPaths =
+      await getAssetPaths(
+        options
+      );
+
+  } catch (error) {
+
+    assetScanError =
+      error;
+  }
 
   const schema =
     validateWorkspaceSnapshot({
@@ -240,17 +253,18 @@ export async function collectWorkspaceDiagnostics(
       state.workspaceCheckpoint
     );
 
-  const brokenAssets =
-    findBrokenAssetReferences(
+  const assetVerification =
+    buildAssetVerificationReport({
       pages,
-      assetPaths
-    );
+      assetPaths,
+      assetScanError
+    });
+
+  const brokenAssets =
+    assetVerification.referencedMissing;
 
   const orphanAssets =
-    findOrphanAssetPaths(
-      pages,
-      assetPaths
-    );
+    assetVerification.orphanCandidates;
 
   const pageStats =
     createPageStats(
@@ -293,6 +307,8 @@ export async function collectWorkspaceDiagnostics(
       pendingOperations,
       brokenAssets,
       orphanAssets,
+      assetCheckFailures:
+        assetVerification.checkFailures,
       pageStats,
       heavyMaps,
       slowOperations
@@ -314,6 +330,8 @@ export async function collectWorkspaceDiagnostics(
         brokenAssets.length,
       orphanAssets:
         orphanAssets.length,
+      assetCheckFailures:
+        assetVerification.summary.checkFailures,
       schemaIssues:
         schema.issues.length,
       schemaErrors:
@@ -345,6 +363,11 @@ export async function collectWorkspaceDiagnostics(
       ),
     orphanAssets:
       orphanAssets.slice(
+        0,
+        8
+      ),
+    assetCheckFailures:
+      assetVerification.checkFailures.slice(
         0,
         8
       ),
@@ -594,16 +617,9 @@ async function getAssetPaths(
     return options.listAssetPaths();
   }
 
-  try {
-
-    return await listWorkspaceAssetPaths(
-      options
-    );
-
-  } catch (error) {
-
-    return [];
-  }
+  return listWorkspaceAssetPaths(
+    options
+  );
 }
 
 
@@ -1460,7 +1476,8 @@ function createSummaryGrid(
     ['Карт', summary.campaignMaps],
     ['Ассетов', summary.assets],
     ['Сломанные ссылки', summary.brokenAssets],
-    ['Лишние ассеты', summary.orphanAssets],
+    ['Кандидаты ассетов', summary.orphanAssets],
+    ['Ошибки проверки ассетов', summary.assetCheckFailures],
     ['Проблем схемы', summary.schemaIssues],
     ['Резервные копии', summary.backups],
     ['Незавершённые копии', summary.incompleteBackups],
@@ -1655,6 +1672,7 @@ function createWarnings({
   pendingOperations,
   brokenAssets,
   orphanAssets,
+  assetCheckFailures = [],
   pageStats,
   heavyMaps,
   slowOperations
@@ -1725,7 +1743,14 @@ function createWarnings({
   if (orphanAssets.length) {
 
     warnings.push(
-      `Есть лишние ассеты: ${orphanAssets.length}`
+      `Есть ассеты, не используемые сейчас: ${orphanAssets.length}`
+    );
+  }
+
+  if (assetCheckFailures.length) {
+
+    warnings.push(
+      `Проверка ассетов не завершена: ${assetCheckFailures.length}`
     );
   }
 
