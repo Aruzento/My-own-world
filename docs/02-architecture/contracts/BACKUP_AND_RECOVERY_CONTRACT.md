@@ -144,6 +144,24 @@ Restore preview deliberately does not claim deletion semantics. A page or asset 
 
 The Settings backup UI consumes the runtime plan only to show a human-readable summary and meaningful changed/problem items before the existing `restoreWorkspaceBackup()` path runs. The actual restore path and mandatory pre-restore safety backup remain owned by `backupService`.
 
+## Partial Restore
+
+Since `0.0.1.12.4`, `restoreWorkspaceBackupSelection()` in `js/storage/backupService.js` owns explicit page-level partial restore. It is not a second restore engine: it reuses the same selected-backup manifest validation, snapshot layout, active `StorageAdapter`, mandatory pre-restore safety backup and Settings post-restore reload path as full restore.
+
+The first usable partial restore scope is intentionally narrow:
+
+- the user selects explicit backup pages from the Settings restore preview;
+- selected page files are preflight-read before the pre-restore safety backup and before workspace restore writes;
+- clearly referenced selected-page assets are discovered from the selected backup page content through the existing asset-reference scanner and restored only when matching manifest asset entries exist;
+- selected asset bytes are preflight-read before workspace writes;
+- unselected current pages are not overwritten;
+- unselected assets are not overwritten;
+- nothing is deleted because it is absent from the backup.
+
+If the selected backup manifest is restore-blocking, or a selected page/source asset cannot be read during preflight, partial restore is blocked before the safety backup and before workspace restore writes. If a selected backup page references an asset that is not present in the v1 manifest, the restore path does not guess a replacement target; it reports that unresolved reference in the runtime result and restores only the deterministic selected-page subset.
+
+Partial restore does not claim full multi-file atomicity after writes begin. The current safety guarantee is: selected inputs are validated before writes, a pre-restore backup is mandatory, and successful Settings restore refreshes runtime state through the normal workspace load path. Stronger write-failure rollback semantics are left to `0.0.1.12.5` Restore Failure Safety.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.
@@ -154,7 +172,7 @@ The Settings backup UI consumes the runtime plan only to show a human-readable s
 | Backup manifest | `backupService#createBackupManifest`, internal manifest reader and `validateWorkspaceBackupManifest` | Manifest version `1` records page metadata and asset references. A missing/corrupt manifest, unsupported version, mismatched id, unsafe page/asset path, wrong page count, missing backup page file or missing expected asset file produces structured validation issues. `INVALID` validation blocks restore; `WARNING` remains non-blocking for recoverable v1 partial asset metadata. |
 | Backup list | `backupService#listWorkspaceBackups` and `listIncompleteWorkspaceBackups` | Complete backups are directories with readable `manifest.json`; incomplete backups are directories under `.my-own-world-backups/` without a readable manifest. Scanning is non-destructive. |
 | Pre-restore backup | `backupService#createAndVerifyPreRestoreBackup` through `requireWorkspaceBackupBeforeRiskyOperation` | Restore must create and reread a fresh `pre-restore` backup before any restore page/asset write. Failure blocks restore before destructive writes. |
-| Restore | `backupService#restoreWorkspaceBackup` | Full restore writes saved pages/assets through `StorageAdapter`, creates/overwrites files present in the snapshot and does not delete files created after backup. Restore now blocks before pre-restore backup/workspace writes when selected-source manifest validation is `INVALID`. Legacy partial v1 asset backups can still validate as `WARNING` and keep the existing non-blocking asset behavior. |
+| Restore | `backupService#restoreWorkspaceBackup`, `backupService#restoreWorkspaceBackupSelection` | Full restore writes saved pages/assets through `StorageAdapter`; partial restore writes only explicitly selected pages and clearly referenced selected-page manifest assets. Both paths create/overwrite files present in the snapshot subset and do not delete files created after backup. Restore blocks before pre-restore backup/workspace writes when selected-source manifest validation is `INVALID`; partial restore also preflights selected page/asset source bytes before destructive writes. Legacy partial v1 asset backups can still validate as `WARNING`; partial restore does not guess unresolved asset targets. |
 | Post-restore reload/refresh | Settings backup UI in `js/ui/appTopbar.js#reloadWorkspaceAfterRestore` | UI restore calls `loadWorkspace()`, reloads page templates, restores tree expansion, renders the tree and shows empty editor if the restored workspace has no pages. Repository/index refresh is owned by the normal workspace load path. |
 | Schema diagnostics | `js/schema/workspaceSchema.js` and `js/schema/schemaRecovery.js` | Validation is diagnostics-first. `WorkspaceRecoveryReport` groups issues and identifies model-level repair actions, but persistent repair requires an explicit user action and backup. |
 | Asset diagnostics | `assetReferenceScanner`, `assetBrokenChecker`, `assetOrphanDetector`, `assetWorkspaceService`, Settings asset/diagnostics UI | Scanners classify persistent asset references, missing asset paths and orphan candidates. They do not repair links or delete files. Orphan deletion remains a separate user-confirmed, backup-gated UI flow. |

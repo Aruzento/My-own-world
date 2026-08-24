@@ -499,6 +499,40 @@ export async function restoreWorkspaceBackup(
 }
 
 
+export async function restoreWorkspaceBackupSelection(
+  backupId,
+  selection,
+  storageAdapterOrHandle = null,
+  options = {}
+) {
+
+  const restoreSelection =
+    normalizeRestoreSelection(
+      selection
+    );
+
+  return measureWorkspaceOperation(
+    'backup.restore.partial',
+    () => restoreWorkspaceBackupMeasured(
+      backupId,
+      storageAdapterOrHandle,
+      {
+        ...options,
+        restoreSelection
+      }
+    ),
+    {
+      counts: result => ({
+        pages:
+          result?.restoredPages || 0,
+        assets:
+          result?.restoredAssets || 0
+      })
+    }
+  );
+}
+
+
 export async function listIncompleteWorkspaceBackups({
   storageAdapter = null,
   workspaceHandle = null,
@@ -789,6 +823,15 @@ async function restoreWorkspaceBackupMeasured(
   const manifest =
     manifestValidation.manifest;
 
+  const restorePlan =
+    await createRestoreWritePlan({
+      storageAdapter,
+      snapshotPath,
+      manifest,
+      restoreSelection:
+        options.restoreSelection
+    });
+
   const preRestoreManifest =
     await createAndVerifyPreRestoreBackup({
       storageAdapter,
@@ -803,7 +846,7 @@ async function restoreWorkspaceBackupMeasured(
     0;
 
   const pages =
-    manifest.pages || [];
+    restorePlan.pages;
 
   for (
     let index = 0;
@@ -820,6 +863,9 @@ async function restoreWorkspaceBackupMeasured(
     if (!fileName) continue;
 
     const content =
+      restorePlan.pageContentByName?.get(
+        fileName
+      ) ??
       await storageAdapter.readText(
         `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`
       );
@@ -847,6 +893,10 @@ async function restoreWorkspaceBackupMeasured(
       storageAdapter,
       snapshotPath,
       manifest,
+      assets:
+        restorePlan.assets,
+      assetContentByPath:
+        restorePlan.assetContentByPath,
       onProgress:
         progress => reportProgress(
           options,
@@ -859,7 +909,415 @@ async function restoreWorkspaceBackupMeasured(
     preRestoreBackupId:
       preRestoreManifest.id,
     restoredPages,
-    restoredAssets
+    restoredAssets,
+    partial:
+      restorePlan.partial,
+    selectedPageNames:
+      restorePlan.selectedPageNames,
+    selectedAssetPaths:
+      restorePlan.selectedAssetPaths,
+    unresolvedAssetReferences:
+      restorePlan.unresolvedAssetReferences
+  };
+}
+
+
+async function createRestoreWritePlan({
+  storageAdapter,
+  snapshotPath,
+  manifest,
+  restoreSelection = null
+}) {
+
+  const pages =
+    Array.isArray(
+      manifest.pages
+    )
+      ? manifest.pages
+      : [];
+
+  const assets =
+    Array.isArray(
+      manifest.assets
+    )
+      ? manifest.assets
+      : [];
+
+  if (!restoreSelection) {
+
+    return {
+      partial:
+        false,
+      pages,
+      assets,
+      pageContentByName:
+        null,
+      assetContentByPath:
+        null,
+      selectedPageNames:
+        pages
+          .map(page => page.name)
+          .filter(Boolean),
+      selectedAssetPaths:
+        assets
+          .map(asset => normalizeAssetPath(asset.path || ''))
+          .filter(Boolean),
+      unresolvedAssetReferences:
+        []
+    };
+  }
+
+  const selectedPages =
+    selectBackupPages(
+      pages,
+      restoreSelection
+    );
+
+  const pageContentByName =
+    await preflightSelectedBackupPages({
+      storageAdapter,
+      snapshotPath,
+      pages:
+        selectedPages
+    });
+
+  const selectedAssetPlan =
+    await preflightSelectedBackupAssets({
+      storageAdapter,
+      snapshotPath,
+      manifestAssets:
+        assets,
+      selectedPages,
+      pageContentByName
+    });
+
+  return {
+    partial:
+      true,
+    pages:
+      selectedPages,
+    assets:
+      selectedAssetPlan.assets,
+    pageContentByName,
+    assetContentByPath:
+      selectedAssetPlan.assetContentByPath,
+    selectedPageNames:
+      selectedPages.map(page =>
+        page.name
+      ),
+    selectedAssetPaths:
+      selectedAssetPlan.assets.map(asset =>
+        normalizeAssetPath(
+          asset.path || ''
+        )
+      ),
+    unresolvedAssetReferences:
+      selectedAssetPlan.unresolvedAssetReferences
+  };
+}
+
+
+function normalizeRestoreSelection(
+  selection = {}
+) {
+
+  const pageNamesInput =
+    Array.isArray(
+      selection
+    )
+      ? selection
+      : selection?.pageNames || selection?.pages || [];
+
+  const pageIdsInput =
+    Array.isArray(
+      selection
+    )
+      ? []
+      : selection?.pageIds || [];
+
+  const pageNames =
+    new Set(
+      pageNamesInput
+        .map(normalizeSelectedPageName)
+        .filter(Boolean)
+    );
+
+  const pageIds =
+    new Set(
+      pageIdsInput
+        .map(value => String(value || '').trim())
+        .filter(Boolean)
+    );
+
+  if (
+    pageNames.size === 0 &&
+    pageIds.size === 0
+  ) {
+
+    throw new Error(
+      'Partial restore blocked: no backup pages were selected.'
+    );
+  }
+
+  return {
+    pageNames,
+    pageIds
+  };
+}
+
+
+function normalizeSelectedPageName(
+  value
+) {
+
+  return normalizeWorkspacePath(
+    String(value || '')
+  )
+    .replace(/^pages\//, '');
+}
+
+
+function selectBackupPages(
+  pages,
+  restoreSelection
+) {
+
+  const pageByName =
+    new Map();
+
+  const pageById =
+    new Map();
+
+  pages.forEach(page => {
+
+    if (page?.name) {
+
+      pageByName.set(
+        page.name,
+        page
+      );
+    }
+
+    if (page?.id) {
+
+      pageById.set(
+        String(page.id),
+        page
+      );
+    }
+  });
+
+  const selected =
+    new Map();
+
+  const missing =
+    [];
+
+  restoreSelection.pageNames.forEach(name => {
+
+    const page =
+      pageByName.get(
+        name
+      );
+
+    if (!page) {
+
+      missing.push(
+        name
+      );
+
+      return;
+    }
+
+    selected.set(
+      page.name,
+      page
+    );
+  });
+
+  restoreSelection.pageIds.forEach(id => {
+
+    const page =
+      pageById.get(
+        id
+      );
+
+    if (!page) {
+
+      missing.push(
+        id
+      );
+
+      return;
+    }
+
+    selected.set(
+      page.name,
+      page
+    );
+  });
+
+  if (missing.length > 0) {
+
+    throw new Error(
+      `Partial restore blocked: selected backup pages were not found: ${missing.join(', ')}`
+    );
+  }
+
+  if (selected.size === 0) {
+
+    throw new Error(
+      'Partial restore blocked: no matching backup pages were selected.'
+    );
+  }
+
+  return [
+    ...selected.values()
+  ];
+}
+
+
+async function preflightSelectedBackupPages({
+  storageAdapter,
+  snapshotPath,
+  pages
+}) {
+
+  const pageContentByName =
+    new Map();
+
+  for (const page of pages) {
+
+    const fileName =
+      page.name;
+
+    try {
+
+      pageContentByName.set(
+        fileName,
+        await storageAdapter.readText(
+          `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`
+        )
+      );
+
+    } catch (error) {
+
+      throw new Error(
+        `Partial restore blocked: selected backup page file is unavailable: ${fileName}`,
+        {
+          cause:
+            error
+        }
+      );
+    }
+  }
+
+  return pageContentByName;
+}
+
+
+async function preflightSelectedBackupAssets({
+  storageAdapter,
+  snapshotPath,
+  manifestAssets,
+  selectedPages,
+  pageContentByName
+}) {
+
+  const referencedAssetPaths =
+    new Set(
+      collectAssetReferencesFromPages(
+        selectedPages.map(page => ({
+          ...page,
+          content:
+            pageContentByName.get(
+              page.name
+            ) || ''
+        }))
+      )
+        .map(reference =>
+          normalizeAssetPath(
+            reference.path || ''
+          )
+        )
+        .filter(Boolean)
+    );
+
+  const assets =
+    [];
+
+  const manifestAssetPaths =
+    new Set();
+
+  manifestAssets.forEach(asset => {
+
+    const normalizedPath =
+      normalizeAssetPath(
+        asset?.path || ''
+      );
+
+    if (!normalizedPath) return;
+
+    manifestAssetPaths.add(
+      normalizedPath
+    );
+
+    if (
+      referencedAssetPaths.has(
+        normalizedPath
+      )
+    ) {
+
+      assets.push(
+        asset
+      );
+    }
+  });
+
+  const unresolvedAssetReferences =
+    [
+      ...referencedAssetPaths
+    ].filter(path =>
+      !manifestAssetPaths.has(
+        path
+      )
+    );
+
+  const assetContentByPath =
+    new Map();
+
+  for (const asset of assets) {
+
+    const normalizedPath =
+      normalizeAssetPath(
+        asset.path || ''
+      );
+
+    try {
+
+      assetContentByPath.set(
+        normalizedPath,
+        await storageAdapter.readBinary(
+          `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
+        )
+      );
+
+    } catch (error) {
+
+      throw new Error(
+        `Partial restore blocked: selected backup asset is unavailable: assets/${normalizedPath}`,
+        {
+          cause:
+            error
+        }
+      );
+    }
+  }
+
+  return {
+    assets,
+    assetContentByPath,
+    unresolvedAssetReferences
   };
 }
 
@@ -2062,23 +2520,26 @@ async function restoreBackupAssets({
   storageAdapter,
   snapshotPath,
   manifest,
+  assets = null,
+  assetContentByPath = null,
   onProgress = null
 }) {
 
   let restored =
     0;
 
-  const assets =
+  const restoreAssets =
+    assets ||
     manifest.assets || [];
 
   for (
     let index = 0;
-    index < assets.length;
+    index < restoreAssets.length;
     index += 1
   ) {
 
     const reference =
-      assets[index];
+      restoreAssets[index];
 
     if (!reference?.path) continue;
 
@@ -2090,6 +2551,9 @@ async function restoreBackupAssets({
         );
 
       const buffer =
+        assetContentByPath?.get(
+          normalizedPath
+        ) ??
         await storageAdapter.readBinary(
           `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
         );
@@ -2105,7 +2569,7 @@ async function restoreBackupAssets({
         label: 'Restore',
         stage: 'assets',
         current: index + 1,
-        total: assets.length
+        total: restoreAssets.length
       });
 
     } catch (error) {

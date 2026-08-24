@@ -2132,6 +2132,534 @@ test(
 
 
 test(
+  'backup restore preview restores only selected pages from Settings',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const {
+          createWorkspaceBackup
+        } = await import('/js/storage/backupService.js');
+
+        const {
+          buildPageRecordContent
+        } = await import('/js/core/pageRecord.js');
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const files =
+          new Map();
+
+        const directories =
+          new Set([
+            ''
+          ]);
+
+        const normalize =
+          path => String(path || '')
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '')
+            .replace(/\/+/g, '/');
+
+        const ensureDirectoryPath =
+          path => {
+
+            const parts =
+              normalize(path)
+                .split('/')
+                .filter(Boolean);
+
+            let current =
+              '';
+
+            for (const part of parts) {
+
+              current =
+                current
+                  ? `${current}/${part}`
+                  : part;
+
+              directories.add(
+                current
+              );
+            }
+          };
+
+        const getParentPath =
+          path => {
+
+            const parts =
+              normalize(path).split('/');
+
+            parts.pop();
+
+            return parts.join('/');
+          };
+
+        const listFiles =
+          path => {
+
+            const normalized =
+              normalize(path);
+
+            const prefix =
+              normalized
+                ? `${normalized}/`
+                : '';
+
+            const entries =
+              new Map();
+
+            for (const directory of directories) {
+
+              if (!directory.startsWith(prefix)) continue;
+
+              const rest =
+                directory.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'directory'
+              );
+            }
+
+            for (const filePath of files.keys()) {
+
+              if (!filePath.startsWith(prefix)) continue;
+
+              const rest =
+                filePath.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'file'
+              );
+            }
+
+            return [...entries].map(([name, kind]) => ({
+              name,
+              kind
+            }));
+          };
+
+        const adapter =
+          {
+            kind:
+              'desktop',
+            getWorkspaceRoot() {
+              return 'memory-workspace';
+            },
+            async pickWorkspace() {
+              return 'memory-workspace';
+            },
+            async restoreWorkspace() {
+              return 'memory-workspace';
+            },
+            async ensureDirectory(path) {
+              ensureDirectoryPath(
+                path
+              );
+            },
+            async getDirectoryHandle(path) {
+              return {
+                kind:
+                  'directory',
+                path:
+                  normalize(path)
+              };
+            },
+            async readText(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (!files.has(normalized)) {
+
+                throw new Error(
+                  `File not found: ${path}`
+                );
+              }
+
+              const value =
+                files.get(normalized);
+
+              return typeof value === 'string'
+                ? value
+                : new TextDecoder().decode(value);
+            },
+            async writeText(path, content) {
+
+              const normalized =
+                normalize(path);
+
+              ensureDirectoryPath(
+                getParentPath(normalized)
+              );
+
+              files.set(
+                normalized,
+                String(content)
+              );
+            },
+            async readBinary(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (!files.has(normalized)) {
+
+                throw new Error(
+                  `File not found: ${path}`
+                );
+              }
+
+              const value =
+                files.get(normalized);
+
+              return typeof value === 'string'
+                ? new TextEncoder().encode(value).buffer
+                : value;
+            },
+            async writeBinary(path, content) {
+
+              const normalized =
+                normalize(path);
+
+              ensureDirectoryPath(
+                getParentPath(normalized)
+              );
+
+              files.set(
+                normalized,
+                content
+              );
+            },
+            async listFiles(path = '') {
+              return listFiles(path);
+            },
+            async removeFile(path) {
+              files.delete(
+                normalize(path)
+              );
+            },
+            async removeDirectory(path) {
+
+              const normalized =
+                normalize(path);
+
+              for (const filePath of [...files.keys()]) {
+
+                if (
+                  filePath === normalized ||
+                  filePath.startsWith(`${normalized}/`)
+                ) {
+
+                  files.delete(
+                    filePath
+                  );
+                }
+              }
+            }
+          };
+
+        const createPage =
+          ({
+            id,
+            title,
+            body
+          }) => ({
+            id,
+            title,
+            type:
+              id === 'hero'
+                ? 'character'
+                : 'note',
+            template:
+              'card',
+            name:
+              `${id}.md`,
+            path:
+              `/pages/${id}.md`,
+            content:
+              buildPageRecordContent({
+                id,
+                title,
+                type:
+                  id === 'hero'
+                    ? 'character'
+                    : 'note',
+                template:
+                  'card',
+                tags:
+                  [
+                    'card'
+                  ],
+                body,
+                now:
+                  '2026-08-24T08:00:00.000Z'
+              })
+          });
+
+        setStorageAdapter(
+          adapter
+        );
+
+        const backupHero =
+          createPage({
+            id:
+              'hero',
+            title:
+              'Hero',
+            body:
+              '<h1>Hero</h1><img data-asset="assets/portraits/hero.png"><p>Backup hero.</p>'
+          });
+
+        const backupWorld =
+          createPage({
+            id:
+              'world',
+            title:
+              'World',
+            body:
+              '<h1>World</h1><p>Backup world.</p>'
+          });
+
+        await adapter.writeText(
+          '/pages/hero.md',
+          backupHero.content
+        );
+
+        await adapter.writeText(
+          '/pages/world.md',
+          backupWorld.content
+        );
+
+        await adapter.writeBinary(
+          '/assets/portraits/hero.png',
+          new TextEncoder().encode('backup-hero-image').buffer
+        );
+
+        await createWorkspaceBackup({
+          storageAdapter:
+            adapter,
+          pages:
+            [
+              backupHero,
+              backupWorld
+            ],
+          id:
+            'partial-ui-source',
+          cleanup:
+            false
+        });
+
+        const currentHero =
+          createPage({
+            id:
+              'hero',
+            title:
+              'Hero',
+            body:
+              '<h1>Hero</h1><img data-asset="assets/portraits/hero.png"><p>Current hero.</p>'
+          });
+
+        const currentWorld =
+          createPage({
+            id:
+              'world',
+            title:
+              'World',
+            body:
+              '<h1>World</h1><p>Current world must stay.</p>'
+          });
+
+        state.pages =
+          [
+            currentHero,
+            currentWorld
+          ];
+
+        await adapter.writeText(
+          '/pages/hero.md',
+          currentHero.content
+        );
+
+        await adapter.writeText(
+          '/pages/world.md',
+          currentWorld.content
+        );
+
+        await adapter.writeBinary(
+          '/assets/portraits/hero.png',
+          new TextEncoder().encode('current-hero-image').buffer
+        );
+
+        window.__mowPartialRestore =
+          {
+            files,
+            backupHeroContent:
+              backupHero.content,
+            currentWorldContent:
+              currentWorld.content
+          };
+      }
+    );
+
+    await page.locator('#appSettingsBtn').click();
+
+    await page.locator('.app-backup-restore').click();
+
+    const confirm =
+      page.locator('.app-backup-confirm:not(.hidden)');
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'data-restore-preview',
+      'ready'
+    );
+
+    await confirm
+      .getByLabel(
+        'Выбрать страницу для восстановления: Hero'
+      )
+      .check();
+
+    await expect(
+      confirm.getByRole(
+        'button',
+        {
+          name:
+            'Восстановить выбранное'
+        }
+      )
+    ).toBeEnabled();
+
+    await confirm
+      .getByRole(
+        'button',
+        {
+          name:
+            'Восстановить выбранное'
+        }
+      )
+      .click();
+
+    await expect(
+      page.locator('.app-backup-confirm')
+    ).toHaveClass(
+      /hidden/
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            getPageById,
+            getPageByTitle
+          } = await import('/js/repository/pageRepository.js');
+
+          const heroPage =
+            getPageById(
+              'hero'
+            );
+
+          const worldPage =
+            getPageByTitle(
+              'World'
+            );
+
+          return {
+            hero:
+              window.__mowPartialRestore.files.get('pages/hero.md'),
+            world:
+              window.__mowPartialRestore.files.get('pages/world.md'),
+            asset:
+              new TextDecoder().decode(
+                window.__mowPartialRestore.files.get('assets/portraits/hero.png')
+              ),
+            preRestoreExists:
+              [
+                ...window.__mowPartialRestore.files.keys()
+              ].some(path =>
+                path.includes('pre-restore')
+              ),
+            repositoryHeroRestored:
+              Boolean(
+                heroPage?.content?.includes(
+                  'Backup hero.'
+                )
+              ),
+            repositoryWorldUnchanged:
+              Boolean(
+                worldPage?.content?.includes(
+                  'Current world must stay.'
+                )
+              ),
+            backupHeroContent:
+              window.__mowPartialRestore.backupHeroContent,
+            currentWorldContent:
+              window.__mowPartialRestore.currentWorldContent
+          };
+        }
+      );
+
+    expect(
+      result.hero
+    ).toBe(
+      result.backupHeroContent
+    );
+
+    expect(
+      result.world
+    ).toBe(
+      result.currentWorldContent
+    );
+
+    expect(
+      result.asset
+    ).toBe(
+      'backup-hero-image'
+    );
+
+    expect(
+      result.preRestoreExists
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.repositoryHeroRestored
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.repositoryWorldUnchanged
+    ).toBe(
+      true
+    );
+  }
+);
+
+
+test(
   'backup restore confirmation blocks damaged preview without restore writes',
   async ({ page }) => {
 

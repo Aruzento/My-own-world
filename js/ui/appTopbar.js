@@ -35,6 +35,7 @@ import {
   listIncompleteWorkspaceBackups,
   listWorkspaceBackups,
   restoreWorkspaceBackup,
+  restoreWorkspaceBackupSelection,
   setBackupRetentionLimit
 } from '../storage/backupService.js';
 
@@ -1521,33 +1522,19 @@ function renderRestorePreviewConfirm(
       preview
     );
 
-  const pages =
-    createRestorePreviewSection({
-      title:
-        'Страницы',
-      items:
-        preview.pages,
-      getTitle:
-        item => item.title || item.name || 'Без названия',
-      getMeta:
-        item => item.path || item.name || '',
-      emptyText:
-        'Значимых изменений страниц нет.'
-    });
+  const selectedPageNames =
+    new Set();
 
-  const assets =
-    createRestorePreviewSection({
-      title:
-        'Ассеты',
-      items:
-        preview.assets,
-      getTitle:
-        item => item.path || 'Asset без пути',
-      getMeta:
-        item => item.message || '',
-      emptyText:
-        'Значимых изменений ассетов нет.'
-    });
+  const partialRestoreNote =
+    document.createElement('p');
+
+  partialRestoreNote.className =
+    'app-backup-preview-note';
+
+  partialRestoreNote.textContent =
+    preview.blocked
+      ? 'Частичное восстановление недоступно, пока backup не пройдет проверку.'
+      : 'Частичное восстановление затрагивает только выбранные страницы и явно найденные ассеты этих страниц.';
 
   const actions =
     document.createElement('div');
@@ -1567,6 +1554,21 @@ function renderRestorePreviewConfirm(
     'Отмена'
   );
 
+  const partialButton =
+    document.createElement('button');
+
+  partialButton.type =
+    'button';
+
+  partialButton.className =
+    'app-backup-partial';
+
+  setButtonContent(
+    partialButton,
+    'check',
+    'Восстановить выбранное'
+  );
+
   const confirmButton =
     document.createElement('button');
 
@@ -1576,32 +1578,159 @@ function renderRestorePreviewConfirm(
   confirmButton.className =
     'app-backup-danger';
 
-  confirmButton.disabled =
-    preview.blocked;
-
-  if (preview.blocked) {
-
-    confirmButton.title =
-      'Восстановление заблокировано: backup поврежден или неполный.';
-  }
-
   setButtonContent(
     confirmButton,
     'arrow-left',
-    'Восстановить'
+    'Восстановить все'
   );
+
+  const updateRestoreActionState =
+    (busy = false) => {
+
+      cancelButton.disabled =
+        busy;
+
+      partialButton.disabled =
+        busy ||
+        preview.blocked ||
+        selectedPageNames.size === 0;
+
+      confirmButton.disabled =
+        busy ||
+        preview.blocked;
+
+      partialButton.title =
+        preview.blocked
+          ? 'Частичное восстановление заблокировано: backup поврежден или неполный.'
+          : selectedPageNames.size === 0
+            ? 'Выберите хотя бы одну страницу из backup.'
+            : `${selectedPageNames.size} страниц будет восстановлено.`;
+
+      confirmButton.title =
+        preview.blocked
+          ? 'Восстановление заблокировано: backup поврежден или неполный.'
+          : 'Восстановить все страницы и ассеты из backup.';
+    };
+
+  const pages =
+    createRestorePreviewPageSelectionSection({
+      preview,
+      selectedPageNames,
+      onSelectionChange:
+        () => updateRestoreActionState()
+    });
+
+  const assets =
+    createRestorePreviewSection({
+      title:
+        'Ассеты',
+      items:
+        preview.assets,
+      getTitle:
+        item => item.path || 'Asset без пути',
+      getMeta:
+        item => item.message || '',
+      emptyText:
+        'Значимых изменений ассетов нет.'
+    });
 
   cancelButton.addEventListener(
     'click',
     () => confirm.classList.add('hidden')
   );
 
+  partialButton.addEventListener(
+    'click',
+    async () => {
+
+      updateRestoreActionState(
+        true
+      );
+
+      setStatus(
+        'Восстанавливаю выбранные страницы...'
+      );
+
+      try {
+
+        const result =
+          await restoreWorkspaceBackupSelection(
+            backup.id,
+            {
+              pageNames:
+                [
+                  ...selectedPageNames
+                ]
+            },
+            null,
+            {
+              onProgress:
+                setProgressStatus
+            }
+          );
+
+        await reloadWorkspaceAfterRestore();
+
+        finishProgressStatus(
+          `Выбранные страницы восстановлены: ${result.restoredPages}`
+        );
+
+        confirm.classList.add(
+          'hidden'
+        );
+
+        await onDone();
+
+      } catch (error) {
+
+        console.error(
+          'Не удалось восстановить выбранные страницы.',
+          error
+        );
+
+        if (
+          isPreRestoreBackupFailure(
+            error
+          )
+        ) {
+
+          finishProgressStatus(
+            'Восстановление не начато: не удалось создать страховочную резервную копию.',
+            {
+              status:
+                'failed',
+              delayMs:
+                4200
+            }
+          );
+
+          return;
+        }
+
+        finishProgressStatus(
+          'Не удалось восстановить выбранные страницы',
+          {
+            status:
+              'failed',
+            delayMs:
+              3200
+          }
+        );
+
+      } finally {
+
+        updateRestoreActionState();
+      }
+    }
+  );
+
   confirmButton.addEventListener(
     'click',
     async () => {
 
-      confirmButton.disabled =
-        true;
+      updateRestoreActionState(
+        true
+      );
 
       setStatus(
         'Восстанавливаю резервную копию...'
@@ -1669,16 +1798,18 @@ function renderRestorePreviewConfirm(
 
       } finally {
 
-        confirmButton.disabled =
-          false;
+        updateRestoreActionState();
       }
     }
   );
 
   actions.append(
     cancelButton,
+    partialButton,
     confirmButton
   );
+
+  updateRestoreActionState();
 
   confirm.append(
     header,
@@ -1686,6 +1817,7 @@ function renderRestorePreviewConfirm(
     summary,
     issues,
     pages,
+    partialRestoreNote,
     assets,
     actions
   );
@@ -1887,6 +2019,182 @@ function createRestorePreviewStat(
   );
 
   return item;
+}
+
+
+function createRestorePreviewPageSelectionSection({
+  preview,
+  selectedPageNames,
+  onSelectionChange
+}) {
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'app-backup-preview-section';
+
+  const header =
+    document.createElement('div');
+
+  header.className =
+    'app-backup-preview-section-title';
+
+  const heading =
+    document.createElement('strong');
+
+  heading.textContent =
+    'Страницы';
+
+  const count =
+    document.createElement('span');
+
+  const updateCount =
+    () => {
+
+      count.textContent =
+        preview.blocked
+          ? `${preview.pages.length} записей`
+          : `${selectedPageNames.size} выбрано из ${preview.pages.length}`;
+    };
+
+  updateCount();
+
+  header.append(
+    heading,
+    count
+  );
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-backup-preview-list';
+
+  if (preview.pages.length === 0) {
+
+    const empty =
+      document.createElement('p');
+
+    empty.className =
+      'app-backup-preview-empty';
+
+    empty.textContent =
+      'Страниц для выбора нет.';
+
+    list.appendChild(
+      empty
+    );
+
+  } else {
+
+    preview.pages.forEach(item => {
+
+      list.appendChild(
+        createRestorePreviewSelectablePageItem({
+          item,
+          preview,
+          selectedPageNames,
+          onSelectionChange:
+            () => {
+
+              updateCount();
+              onSelectionChange?.();
+            }
+        })
+      );
+    });
+  }
+
+  section.append(
+    header,
+    list
+  );
+
+  return section;
+}
+
+
+function createRestorePreviewSelectablePageItem({
+  item,
+  preview,
+  selectedPageNames,
+  onSelectionChange
+}) {
+
+  const title =
+    item.title || item.name || 'Без названия';
+
+  const row =
+    createRestorePreviewItem({
+      item,
+      title,
+      meta:
+        item.path || item.name || ''
+    });
+
+  row.classList.add(
+    'app-backup-preview-selectable'
+  );
+
+  const checkbox =
+    document.createElement('input');
+
+  checkbox.className =
+    'app-backup-preview-check';
+
+  checkbox.type =
+    'checkbox';
+
+  checkbox.disabled =
+    preview.blocked ||
+    item.status === 'backup-file-missing' ||
+    item.status === 'backup-entry-invalid';
+
+  checkbox.setAttribute(
+    'aria-label',
+    `Выбрать страницу для восстановления: ${title}`
+  );
+
+  checkbox.addEventListener(
+    'change',
+    () => {
+
+      if (checkbox.checked) {
+
+        selectedPageNames.add(
+          item.name
+        );
+
+      } else {
+
+        selectedPageNames.delete(
+          item.name
+        );
+      }
+
+      onSelectionChange?.();
+    }
+  );
+
+  row.addEventListener(
+    'click',
+    event => {
+
+      if (
+        checkbox.disabled ||
+        event.target === checkbox
+      ) return;
+
+      checkbox.click();
+    }
+  );
+
+  row.prepend(
+    checkbox
+  );
+
+  return row;
 }
 
 

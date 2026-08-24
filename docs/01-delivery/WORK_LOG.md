@@ -6,6 +6,42 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.4 Partial Restore
+
+### Disposition
+
+- Closed `0.0.1.12.4` as a focused Data Safety leaf.
+- Added explicit page selection to the existing Settings restore preview.
+- Added `restoreWorkspaceBackupSelection()` inside `backupService`, reusing the same manifest validation, snapshot layout, `StorageAdapter` writes and mandatory pre-restore backup as full restore.
+- Did not create a second restore engine, a new backup format or a new recovery manager.
+
+### Restore Contract
+
+- Partial restore currently supports explicit backup page selection.
+- The selected source manifest is still validated before restore.
+- Selected page files are preflight-read before the pre-restore safety backup and before any workspace restore write.
+- Assets are restored only when they are clearly referenced by selected backup page content and are present as manifest asset entries.
+- Selected asset bytes are also preflight-read before workspace writes.
+- Unselected pages and unrelated assets are not overwritten or deleted.
+- Successful Settings partial restore refreshes runtime state through the same post-restore reload path as full restore.
+
+### Tests
+
+- Added `tests/partialRestore.test.mjs` for selected-page-only restore, selected-page asset restore, pre-restore backup failure blocking workspace writes and missing selected source blocking before safety backup.
+- Added a browser Settings regression in `tests/browser/app-shell.spec.mjs` that selects one page in restore preview, restores it, verifies the unselected page stays current, verifies the referenced asset is restored and confirms a pre-restore backup was created.
+
+### Scope
+
+- No persistent data format migration was performed.
+- No real user workspace was touched or mutated.
+- No partial delete/reset/repair behavior was added.
+- Full restore behavior remains available as a separate Settings action.
+- Stronger after-write rollback semantics remain for `0.0.1.12.5` Restore Failure Safety.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.5` Restore Failure Safety.
+
 ## 2026-08-24: 0.0.1.12.3 Backup Manifest Integrity Validation
 
 ### Disposition

@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
 
-Current leaf: `0.0.1.12.4` Partial Restore is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.12.5` Restore Failure Safety is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
 
@@ -189,9 +189,11 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.12.3` Backup Manifest Integrity - `DONE` on 2026-08-24. Added structured manifest validation for existing v1 backups without changing the backup format. Validation checks JSON readability, supported version, selected-directory id match, page list/count coherence, safe page filenames, required backup page files, asset list/count coherence, safe asset paths and expected copied asset files. Restore preview now consumes the validation result, and actual restore blocks unsafe manifests before pre-restore backup creation or workspace writes. Legacy partial v1 asset backups remain warning-compatible when v1 cannot prove which asset entries were copied.
 
+- `0.0.1.12.4` Partial Restore - `DONE` on 2026-08-24. Added explicit page selection to the Settings restore preview and routed partial restore through the existing `backupService` restore owner. Partial restore validates the selected backup manifest, preflights selected page files and clearly referenced selected-page assets before writes, keeps the mandatory pre-restore safety backup, writes only selected pages plus clearly required manifest assets, does not delete/unselected-overwrite workspace content and refreshes runtime through the existing Settings post-restore reload path. No persistent format migration or real workspace mutation was performed.
+
 CURRENT LEAF:
 
-- `0.0.1.12.4` Partial Restore - `NEXT`. Build partial restore on the existing backup preview/validation owners without changing persistent format unless separately approved.
+- `0.0.1.12.5` Restore Failure Safety - `NEXT`. Tighten restore failure semantics after the safety backup without claiming full multi-file atomicity unless the current owners can prove it.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 

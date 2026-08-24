@@ -357,4 +357,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, and `0.0.1.12.4` Partial Restore is next.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, and `0.0.1.12.5` Restore Failure Safety is next.
