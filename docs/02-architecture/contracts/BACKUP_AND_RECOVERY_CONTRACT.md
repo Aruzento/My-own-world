@@ -191,6 +191,18 @@ The report groups issues by type and reason. Current reasons include missing tar
 
 Settings workspace diagnostics and `tools/run_workspace_diagnostics.mjs` consume the same report. The CLI can be run read-only with `--no-write-probe` when diagnostics must not create the temporary workspace access probe.
 
+## Orphan / Connectivity Review
+
+Since `0.0.1.12.8`, `js/storage/orphanReview.js` owns the runtime-only review model for potentially disconnected content. It composes existing diagnostics instead of rescanning the workspace through a parallel database:
+
+- asset candidates come from `buildAssetVerificationReport()` orphan candidates;
+- internal/wiki/relationship candidates come from `buildBrokenInternalLinkReport()`;
+- schema-defined disconnected records come from `validateWorkspaceSnapshot()` issues such as `page.broken_parent`.
+
+The review model is cautious by design. A root page is not an orphan just because `parent` is empty, and a page with no inbound wiki links is not an orphan by itself. An unused asset is described as "not used right now" / "requires review", not as garbage or safe to delete. Ambiguous internal references are review candidates only; MyOwnWorld must not guess the intended target.
+
+The report records whether each candidate is purely diagnostic or already a schema error. It does not add repair buttons, delete files/pages, rewrite links, change persistent format or weaken backup requirements for future repair.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.
@@ -206,6 +218,7 @@ Settings workspace diagnostics and `tools/run_workspace_diagnostics.mjs` consume
 | Schema diagnostics | `js/schema/workspaceSchema.js` and `js/schema/schemaRecovery.js` | Validation is diagnostics-first. `WorkspaceRecoveryReport` groups issues and identifies model-level repair actions, but persistent repair requires an explicit user action and backup. |
 | Asset diagnostics | `assetReferenceScanner`, `assetBrokenChecker`, `assetOrphanDetector`, `assetWorkspaceService`, Settings asset/diagnostics UI | Scanners classify persistent asset references, missing asset paths and orphan candidates. They do not repair links or delete files. Orphan deletion remains a separate user-confirmed, backup-gated UI flow. |
 | Known link diagnostics | `js/storage/internalLinkDiagnostics.js`, PageIndex/PageRepository lookup behavior, current wiki/relationship metadata owners, Settings diagnostics and CLI diagnostics | Diagnostics classify broken raw/converted wiki links, ordinary internal page anchors and relationship endpoints without repair, target guessing or persistent writes. Future repair flows must consume this as evidence and still require explicit user intent plus backup-gated persistence where destructive. |
+| Orphan/connectivity review | `js/storage/orphanReview.js`, composed from asset verification, internal link diagnostics and schema diagnostics | Review-only model for disconnected candidates. It distinguishes diagnostic candidates from schema errors, uses cautious language and never decides deletion or repair automatically. |
 
 ## Что нельзя делать
 

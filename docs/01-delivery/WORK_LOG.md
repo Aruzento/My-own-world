@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.8 Orphan Review
+
+### Disposition
+
+- Closed `0.0.1.12.8` as a focused Data Safety leaf.
+- Added one runtime-only orphan/connectivity review model in `js/storage/orphanReview.js`.
+- Composed existing `assetVerificationReport`, `internalLinkDiagnostics` and workspace schema validation results instead of adding another workspace scanner or page database.
+- Did not add repair buttons, automatic deletion, target guessing, persistent format migration or real-workspace mutation.
+
+### Review Contract
+
+- Current review candidates are assets not used right now, broken or ambiguous internal page/wiki references, missing relationship endpoints and schema-defined disconnected records such as a page whose parent points to a missing page.
+- Root pages are valid and are not flagged merely because they have no parent.
+- Isolated pages are valid and are not flagged merely because they have no inbound wiki links.
+- Each candidate records the item, why it was classified, source/reference count where meaningful and whether it is purely diagnostic or already a schema error.
+- Settings workspace diagnostics now shows a `Связность` summary card and a grouped `Проверка связности` section. The CLI reports `Connectivity review candidates` and includes the same grouped model in JSON output.
+- Language stays cautious: "не используется сейчас", "требует проверки", "цель отсутствует"; the review does not say that anything is garbage or safe to delete.
+
+### Tests
+
+- Added `tests/orphanReview.test.mjs` for false-positive protection on valid root/isolated pages, orphan asset candidates, broken relationship endpoints, broken page parents and ambiguous internal references without target selection.
+- Updated `tests/workspaceDiagnosticsCli.test.mjs` so human diagnostics output includes the connectivity review count.
+- Updated `tests/browser/asset-health.spec.mjs` so Settings workspace diagnostics shows the review section and avoids unsafe delete/garbage wording.
+
+### Real Workspace Diagnostics
+
+- Read-only diagnostic pass used `--no-write-probe` on `X:\ДНД\Мастер\По кампаниям\База`.
+- Result: 697 pages, 27 maps, 144 asset files, 528 asset references, 0 missing asset references, 71 internal link issues and 203 connectivity review candidates.
+- Candidate breakdown: 132 assets not used right now and 71 internal-reference targets; no schema-error candidates were reported in that pass.
+- No repair, deletion or content mutation was performed on the real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.9` Repair Preview.
+
 ## 2026-08-24: 0.0.1.12.7 Broken Link Diagnostics
 
 ### Disposition

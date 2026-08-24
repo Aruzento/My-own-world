@@ -507,7 +507,7 @@ test(
     expect(
       result.cardCount
     ).toBe(
-      11
+      12
     );
 
     expect(
@@ -686,6 +686,15 @@ test(
     );
 
     expect(
+      result.cardValues
+    ).toContainEqual(
+      [
+        'Связность',
+        '4'
+      ]
+    );
+
+    expect(
       result.text
     ).toContain(
       'Есть проблемные внутренние ссылки: 4'
@@ -723,6 +732,18 @@ test(
 
     expect(
       result.text
+    ).toContain(
+      'Проверка связности'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'диагностика, требует проверки'
+    );
+
+    expect(
+      result.text
     ).not.toContain(
       'Safe Alias ->'
     );
@@ -737,6 +758,18 @@ test(
       result.text
     ).not.toContain(
       'Исправить'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'Удалить мусор'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'Безопасно удалить'
     );
   }
 );

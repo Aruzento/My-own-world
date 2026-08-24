@@ -14,6 +14,18 @@ import {
   buildBrokenInternalLinkReport
 } from '../js/storage/internalLinkDiagnostics.js';
 
+import {
+  buildAssetVerificationReport
+} from '../js/storage/assetVerificationReport.js';
+
+import {
+  buildOrphanReviewReport
+} from '../js/storage/orphanReview.js';
+
+import {
+  validateWorkspaceSnapshot
+} from '../js/schema/workspaceSchema.js';
+
 
 const args =
   parseArgs(
@@ -170,6 +182,27 @@ async function runDiagnostics(
       pages
     });
 
+  const assetVerification =
+    buildAssetVerificationReport({
+      pages,
+      assetPaths:
+        assetFiles.map(file =>
+          `assets/${file.relativePath}`
+        )
+    });
+
+  const schema =
+    validateWorkspaceSnapshot({
+      pages
+    });
+
+  const orphanReview =
+    buildOrphanReviewReport({
+      assetVerification,
+      internalLinkDiagnostics,
+      schema
+    });
+
   const largestPages =
     pages
       .slice()
@@ -279,6 +312,8 @@ async function runDiagnostics(
         missingAssetReferences.length,
       brokenInternalLinkCount:
         internalLinkDiagnostics.summary.issueCount,
+      orphanReviewCandidateCount:
+        orphanReview.summary.candidateCount,
       completeBackupCount:
         backupHealth.completeCount,
       incompleteBackupCount:
@@ -313,6 +348,17 @@ async function runDiagnostics(
         internalLinkDiagnostics.groups,
       issues:
         internalLinkDiagnostics.issues.slice(
+          0,
+          30
+        )
+    },
+    orphanReview: {
+      summary:
+        orphanReview.summary,
+      groups:
+        orphanReview.groups,
+      candidates:
+        orphanReview.candidates.slice(
           0,
           30
         )
@@ -1259,6 +1305,10 @@ function printHumanReport(
 
   console.log(
     `Internal link issues: ${diagnostics.summary.brokenInternalLinkCount}`
+  );
+
+  console.log(
+    `Connectivity review candidates: ${diagnostics.summary.orphanReviewCandidateCount}`
   );
 
   console.log(

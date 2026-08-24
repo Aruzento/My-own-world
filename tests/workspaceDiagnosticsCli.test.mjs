@@ -129,6 +129,11 @@ test(
 
       assert.match(
         result.stdout,
+        /Connectivity review candidates: 1/
+      );
+
+      assert.match(
+        result.stdout,
         /broken_internal_links/
       );
 

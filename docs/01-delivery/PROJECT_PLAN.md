@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
 
-Current leaf: `0.0.1.12.8` Orphan Review is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.12.9` Repair Preview is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
 
@@ -197,7 +197,9 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.12.7` Broken Link Diagnostics - `DONE` on 2026-08-24. Added grouped non-destructive diagnostics for raw and converted wiki links, ordinary internal page anchors and relationship endpoints. The scanner reuses PageIndex/PageRepository lookup behavior, treats ambiguous title/alias matches as review issues instead of guessing, ignores external URLs and plain unfinished text, and surfaces counts/groups in Settings diagnostics plus the workspace diagnostics CLI. No repair action, target guessing, persistent data format migration or real workspace mutation was introduced.
 
-- `0.0.1.12.8` Orphan Review - `NEXT`. Review orphan page/link/asset cases without automatic deletion or persistent repair.
+- `0.0.1.12.8` Orphan Review - `DONE` on 2026-08-24. Added a non-destructive connectivity/orphan review model that composes existing asset verification, broken internal link diagnostics and schema diagnostics instead of rescanning the workspace through a second database. It shows assets not currently referenced, missing/ambiguous internal link targets, missing relationship endpoints and schema-defined disconnected records such as broken page parents as review candidates with cautious language. Root pages and isolated pages are not treated as orphan merely because they have no parent or inbound wiki links. No repair action, deletion, target guessing, persistent format migration or real workspace mutation was introduced.
+
+- `0.0.1.12.9` Repair Preview - `NEXT`. Add non-destructive repair preview for selected safe cases before any persistent repair.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 

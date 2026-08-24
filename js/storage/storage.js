@@ -135,6 +135,13 @@ export {
 
 
 export {
+  ORPHAN_REVIEW_CLASSIFICATIONS,
+  ORPHAN_REVIEW_TYPES,
+  buildOrphanReviewReport
+} from './orphanReview.js';
+
+
+export {
   createLocationMusicHTML,
   createLocationMusicReferences,
   normalizeLocationMusic,

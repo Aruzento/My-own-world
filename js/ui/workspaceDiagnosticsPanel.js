@@ -16,6 +16,7 @@ import {
 import {
   buildAssetVerificationReport,
   buildBrokenInternalLinkReport,
+  buildOrphanReviewReport,
   updatePageParent
 } from '../storage/storage.js';
 
@@ -275,6 +276,13 @@ export async function collectWorkspaceDiagnostics(
   const brokenInternalLinks =
     internalLinkDiagnostics.issues;
 
+  const orphanReview =
+    buildOrphanReviewReport({
+      assetVerification,
+      internalLinkDiagnostics,
+      schema
+    });
+
   const pageStats =
     createPageStats(
       pages
@@ -344,6 +352,8 @@ export async function collectWorkspaceDiagnostics(
         assetVerification.summary.checkFailures,
       brokenInternalLinks:
         brokenInternalLinks.length,
+      orphanReviewCandidates:
+        orphanReview.summary.candidateCount,
       schemaIssues:
         schema.issues.length,
       schemaErrors:
@@ -384,6 +394,7 @@ export async function collectWorkspaceDiagnostics(
         8
       ),
     internalLinkDiagnostics,
+    orphanReview,
     heavyMaps,
     performanceEvents,
     warnings
@@ -824,6 +835,14 @@ function renderDiagnosticsResult(
       'Внутренние ссылки',
       diagnostics.internalLinkDiagnostics?.groups || [],
       formatInternalLinkGroup
+    )
+  );
+
+  container.appendChild(
+    createListSection(
+      'Проверка связности',
+      diagnostics.orphanReview?.groups || [],
+      formatOrphanReviewGroup
     )
   );
 
@@ -1565,6 +1584,70 @@ function formatInternalLinkReason(
 }
 
 
+function formatOrphanReviewGroup(
+  group
+) {
+
+  const examples =
+    (group.examples || [])
+      .slice(
+        0,
+        3
+      )
+      .map(formatOrphanReviewCandidate)
+      .join(' / ');
+
+  return [
+    group.label || 'Проверка связности',
+    formatOrphanReviewClassification(
+      group.classification
+    ),
+    `${group.count} шт.`,
+    examples
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+
+function formatOrphanReviewCandidate(
+  candidate
+) {
+
+  const source =
+    candidate.source?.pageTitle ||
+    candidate.source?.pageId ||
+    '';
+
+  const referenceCount =
+    Number.isFinite(
+      Number(candidate.sourceReferenceCount)
+    )
+      ? `, ссылок: ${candidate.sourceReferenceCount}`
+      : '';
+
+  const prefix =
+    source
+      ? `${source} -> `
+      : '';
+
+  return `${prefix}${candidate.item}: ${candidate.why}${referenceCount}`;
+}
+
+
+function formatOrphanReviewClassification(
+  classification
+) {
+
+  if (classification === 'schema-error') {
+
+    return 'уже ошибка схемы';
+  }
+
+  return 'диагностика, требует проверки';
+}
+
+
 function createSummaryGrid(
   summary
 ) {
@@ -1583,6 +1666,7 @@ function createSummaryGrid(
     ['Кандидаты ассетов', summary.orphanAssets],
     ['Ошибки проверки ассетов', summary.assetCheckFailures],
     ['Внутренние ссылки', summary.brokenInternalLinks],
+    ['Связность', summary.orphanReviewCandidates],
     ['Проблем схемы', summary.schemaIssues],
     ['Резервные копии', summary.backups],
     ['Незавершённые копии', summary.incompleteBackups],
