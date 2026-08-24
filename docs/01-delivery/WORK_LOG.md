@@ -6,6 +6,56 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.13.8 Structured Editor Coverage
+
+### Disposition
+
+- Closed `0.0.1.13.8` as the representative special/page-editor stale-write coverage leaf.
+- Did not add a second conflict system, board/map/rule merge logic, force overwrite, product editor features, persistent format changes or real-workspace mutation.
+- Set the next leaf to `0.0.1.13.9` External Durable State Changes.
+
+### Save Ownership Classification
+
+- Normal card/editor: `PROTECTED BY COMMON OWNER`. Ordinary serialized editor HTML uses `autosave.saveCurrentPage()` and `PageCommandService.persistPageContentCommand()` with the captured editor session base.
+- Properties-backed character/creature page: `PROTECTED BY COMMON OWNER`. Properties remain part of the card HTML save path; synchronized form values are still blocked by the same stale-write precondition when the editor base is old.
+- Task Tracker: `PROTECTED BY COMMON OWNER`. Task Tracker owns model/JSON/body serialization, but durable page writes go through the shared special-save helper and `PageCommandService`. No generic board JSON merge was introduced.
+- Campaign Map: `PROTECTED BY COMMON OWNER` for PageRecord-backed saves. Existing map serializer/model ownership is preserved, and the page write still flows through the common special-save/page command boundary. No second map conflict framework was created.
+- Rule Tree: `PROTECTED BY COMMON OWNER` for the writable PageRecord-backed rule tree page. Rule Tree owns JSON/body serialization only; durable writes use the shared conflict-aware page command path.
+- Internal Rules Workspace pages: `OUTSIDE PAGE CONFLICT SCOPE` when they are read-only internal rule pages rather than writable editor PageRecords.
+
+### Root Cause Fixed
+
+- Focused special-page stale-save tests exposed a real conflict-path bug in `editorSpecialSave`: when Task Tracker or Rule Tree encountered a stale-save conflict, the shared `persistCurrentPage()` helper tried to pass `editor` into `handleEditorSaveConflictResult()` even though `editor` was not in that helper's scope.
+- The underlying `PageCommandService` precondition still blocked the stale durable write, but the user-facing conflict UI crashed with `ReferenceError` before it could explain the safe state.
+- `persistCurrentPage()` now receives the active editor explicitly from each special-save wrapper, so Task Tracker, Campaign Map, Rule Tree and Knowledge Graph all surface the same safe conflict dialog.
+
+### Behavioral Result
+
+- A stale Properties-backed character card save cannot persist old serialized properties HTML over a newer durable version; the newer page remains on disk/repository and the user's current property edit remains visible in the editor.
+- A stale Task Tracker full-board JSON save cannot overwrite a newer tracker page. This leaf intentionally does not attempt an item-level merge because no deterministic task command owner was introduced.
+- A stale Rule Tree JSON save cannot overwrite a newer rule tree page; the user sees the shared editor conflict state instead of a special-save crash.
+- Existing Campaign Map coverage from `0.0.1.13.7` continues to prove stale Campaign Map special-save results flow through the same transition conflict gate.
+
+### Tests
+
+- `node --check js\editor\editorSpecialSave.js`
+- `node --check tests\browser\editor-special-conflicts.spec.mjs`
+- `npm run test:browser -- tests/browser/editor-special-conflicts.spec.mjs`
+- `npm run test:browser -- tests/browser/property-blocks.spec.mjs`
+- `npm run test:browser -- tests/browser/task-tracker.spec.mjs`
+- `npm run test:browser -- tests/browser/rule-tree.spec.mjs`
+- `npm run test:browser -- tests/browser/campaign-map-data.spec.mjs`
+- `npm run test:browser -- tests/browser/campaign-map-ui.spec.mjs`
+- `npm run test:browser -- tests/browser/editor-navigation-conflicts.spec.mjs`
+- `npm run test`
+- `npm run verify`
+- `npm run test:browser`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.13.9` External Durable State Changes.
+
 ## 2026-08-24: 0.0.1.13.7 Autosave And Navigation Conflicts
 
 ### Disposition

@@ -215,6 +215,7 @@ async function saveCurrentTaskTracker(
     );
 
   return persistCurrentPage(
+    editor,
     content,
     previousPage,
     options
@@ -283,10 +284,11 @@ async function saveCurrentCampaignMap(
 
   const result =
     await persistCurrentPage(
-    content,
-    previousPage,
-    options
-  );
+      editor,
+      content,
+      previousPage,
+      options
+    );
 
   syncCampaignMapPresentation();
 
@@ -354,6 +356,7 @@ async function saveCurrentRuleTree(
     );
 
   return persistCurrentPage(
+    editor,
     content,
     previousPage,
     options
@@ -422,6 +425,7 @@ async function saveCurrentKnowledgeGraph(
     );
 
   return persistCurrentPage(
+    editor,
     content,
     previousPage,
     options
@@ -429,6 +433,7 @@ async function saveCurrentKnowledgeGraph(
 }
 
 async function persistCurrentPage(
+  editor,
   content,
   previousPage = null,
   options = {}

@@ -426,7 +426,27 @@ Still out of scope:
 
 - automatic conflict merge beyond the proven structured preservation from `0.0.1.13.4`;
 - force overwrite;
-- broader structured editor coverage, which belongs to `0.0.1.13.8`.
+- external durable changes outside the current editor session, which belong to `0.0.1.13.9`.
+
+## Structured / Special Page Editor Conflict Coverage
+
+Captured in `0.0.1.13.8`.
+
+Save ownership classification:
+
+- normal card/editor: `PROTECTED BY COMMON OWNER`. The ordinary editor serializer writes through `autosave.saveCurrentPage()` and `PageCommandService.persistPageContentCommand()` with the captured editor session base;
+- Properties-backed character/creature page: `PROTECTED BY COMMON OWNER`. Properties are part of the ordinary serialized card HTML, including synchronized form values, so stale full-card writes conflict instead of overwriting newer durable content;
+- Task Tracker: `PROTECTED BY COMMON OWNER`. The Task Tracker serializer owns JSON/body serialization only; durable save still goes through the shared special-save helper and `PageCommandService` preconditions. No board JSON merge is attempted;
+- Campaign Map: `PROTECTED BY COMMON OWNER` for PageRecord-backed map saves. The map serializer/model prepares body content, while durable writes use the existing special-save helper and page command boundary. This phase did not create a second Campaign Map conflict system;
+- Rule Tree: `PROTECTED BY COMMON OWNER` when saving the PageRecord-backed rule tree page. The Rule Tree serializer owns JSON/body serialization only, and stale writes surface the shared editor conflict UI;
+- internal Rules Workspace pages: `OUTSIDE PAGE CONFLICT SCOPE` when represented by read-only internal rule pages rather than writable PageRecord-backed editor content.
+
+Special-save conflict handling contract:
+
+- special save wrappers must return the real `persistPageContentCommand()` result to transition/navigation owners;
+- special save conflict UI must receive the active editor explicitly, because `persistCurrentPage()` is shared by Task Tracker, Campaign Map, Rule Tree and Knowledge Graph;
+- stale special-page full saves must not call storage write, must not update PageRepository/PageIndex with stale content and must keep MINE visible in the editor for recovery;
+- automatic preservation is limited to proven structured PageRecord metadata commands from `0.0.1.13.4`. Task Tracker board JSON, Rule Tree JSON, Campaign Map body and full card HTML are conflict-only unless a later leaf adds a deterministic field-level command owner.
 
 ### Tier 0: Read And Index Only
 
