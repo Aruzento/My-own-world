@@ -22,7 +22,7 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.12.0` Data Safety Completion is `ACTIVE`.
 
-Current leaf: `0.0.1.12.5` Restore Failure Safety is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
+Current leaf: `0.0.1.12.6` Asset Verification is `NEXT`. Phase `0.0.1.13.0` remains `BLOCKED` and has not been started.
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0` and `0.0.1.11.0` are closed after their final gates. Do not start `0.0.1.13.0` until Phase `0.0.1.12.0` is closed.
 
@@ -193,7 +193,9 @@ CURRENT LEAF RESULTS:
 
 CURRENT LEAF:
 
-- `0.0.1.12.5` Restore Failure Safety - `NEXT`. Tighten restore failure semantics after the safety backup without claiming full multi-file atomicity unless the current owners can prove it.
+- `0.0.1.12.5` Restore Failure Safety - `DONE` on 2026-08-24. Hardened restore after the mandatory safety backup without claiming full atomicity. Full restore now preflights backup page bytes and deterministic asset bytes before destructive writes; legacy partial v1 asset backups remain warning-compatible by skipping missing asset sources before mutation. Page/asset write failures after restore starts now stop further restore writes and surface a structured incomplete-restore error with the pre-restore backup id. Settings restore no longer reports success when the durable restore applies but the runtime workspace refresh fails.
+
+- `0.0.1.12.6` Asset Verification - `NEXT`. Verify and harden asset diagnostics/recovery safety without deleting or guessing replacements.
 
 ### Phase 5 - 0.0.1.13.0 NF-001 Edit Session Conflict Protection
 

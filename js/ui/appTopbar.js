@@ -32,6 +32,7 @@ import {
   cleanupWorkspaceBackups,
   createWorkspaceBackup,
   getBackupRetentionLimit,
+  isRestoreIncompleteError,
   listIncompleteWorkspaceBackups,
   listWorkspaceBackups,
   restoreWorkspaceBackup,
@@ -1669,7 +1670,31 @@ function renderRestorePreviewConfirm(
             }
           );
 
-        await reloadWorkspaceAfterRestore();
+        try {
+
+          await reloadWorkspaceAfterRestore();
+
+        } catch (refreshError) {
+
+          console.error(
+            'Восстановление применено, но workspace не удалось обновить.',
+            refreshError
+          );
+
+          finishProgressStatus(
+            formatRestoreRefreshFailureMessage(
+              result
+            ),
+            {
+              status:
+                'failed',
+              delayMs:
+                7000
+            }
+          );
+
+          return;
+        }
 
         finishProgressStatus(
           `Выбранные страницы восстановлены: ${result.restoredPages}`
@@ -1701,6 +1726,28 @@ function renderRestorePreviewConfirm(
                 'failed',
               delayMs:
                 4200
+            }
+          );
+
+          return;
+        }
+
+        if (
+          isRestoreIncompleteError(
+            error
+          )
+        ) {
+
+          finishProgressStatus(
+            formatRestoreIncompleteMessage(
+              'Восстановление выбранных страниц остановлено',
+              error
+            ),
+            {
+              status:
+                'failed',
+              delayMs:
+                7000
             }
           );
 
@@ -1748,7 +1795,31 @@ function renderRestorePreviewConfirm(
             }
           );
 
-        await reloadWorkspaceAfterRestore();
+        try {
+
+          await reloadWorkspaceAfterRestore();
+
+        } catch (refreshError) {
+
+          console.error(
+            'Восстановление применено, но workspace не удалось обновить.',
+            refreshError
+          );
+
+          finishProgressStatus(
+            formatRestoreRefreshFailureMessage(
+              result
+            ),
+            {
+              status:
+                'failed',
+              delayMs:
+                7000
+            }
+          );
+
+          return;
+        }
 
         finishProgressStatus(
           `Резервная копия восстановлена: ${result.restoredPages} страниц`
@@ -1780,6 +1851,28 @@ function renderRestorePreviewConfirm(
                 'failed',
               delayMs:
                 4200
+            }
+          );
+
+          return;
+        }
+
+        if (
+          isRestoreIncompleteError(
+            error
+          )
+        ) {
+
+          finishProgressStatus(
+            formatRestoreIncompleteMessage(
+              'Восстановление резервной копии остановлено',
+              error
+            ),
+            {
+              status:
+                'failed',
+              delayMs:
+                7000
             }
           );
 
@@ -2536,6 +2629,33 @@ function setStatus(
     statusbar.textContent =
       text;
   }
+}
+
+
+function formatRestoreIncompleteMessage(
+  prefix,
+  error
+) {
+
+  const recovery =
+    error?.preRestoreBackupId
+      ? ` Страховочная копия: ${error.preRestoreBackupId}.`
+      : '';
+
+  return `${prefix}: часть файлов могла быть изменена.${recovery}`;
+}
+
+
+function formatRestoreRefreshFailureMessage(
+  result
+) {
+
+  const recovery =
+    result?.preRestoreBackupId
+      ? ` Страховочная копия: ${result.preRestoreBackupId}.`
+      : '';
+
+  return `Восстановление применено, но workspace не обновился.${recovery}`;
 }
 
 

@@ -9,6 +9,7 @@ import {
   createBackupId,
   createBackupManifest,
   getBackupRetentionLimit,
+  isRestoreIncompleteError,
   listIncompleteWorkspaceBackups,
   normalizeBackupRetentionLimit,
   requireWorkspaceBackupBeforeRiskyOperation,
@@ -573,7 +574,12 @@ test(
               'pre-restore-before-failed-restore'
           }
         ),
-        /restore write failed/
+        error =>
+          isRestoreIncompleteError(
+            error
+          ) &&
+          error.cause?.message === 'restore write failed' &&
+          error.preRestoreBackupId === 'pre-restore-before-failed-restore'
       );
 
       assert.equal(

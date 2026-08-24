@@ -2660,6 +2660,440 @@ test(
 
 
 test(
+  'backup restore reports refresh failure after durable restore without success status',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const {
+          createWorkspaceBackup
+        } = await import('/js/storage/backupService.js');
+
+        const {
+          buildPageRecordContent
+        } = await import('/js/core/pageRecord.js');
+
+        const {
+          state
+        } = await import('/js/state.js');
+
+        const files =
+          new Map();
+
+        const directories =
+          new Set([
+            ''
+          ]);
+
+        const normalize =
+          path => String(path || '')
+            .replace(/\\/g, '/')
+            .replace(/^\/+/, '')
+            .replace(/\/+/g, '/');
+
+        const ensureDirectoryPath =
+          path => {
+
+            const parts =
+              normalize(path)
+                .split('/')
+                .filter(Boolean);
+
+            let current =
+              '';
+
+            for (const part of parts) {
+
+              current =
+                current
+                  ? `${current}/${part}`
+                  : part;
+
+              directories.add(
+                current
+              );
+            }
+          };
+
+        const getParentPath =
+          path => {
+
+            const parts =
+              normalize(path).split('/');
+
+            parts.pop();
+
+            return parts.join('/');
+          };
+
+        const listFiles =
+          path => {
+
+            const normalized =
+              normalize(path);
+
+            const prefix =
+              normalized
+                ? `${normalized}/`
+                : '';
+
+            const entries =
+              new Map();
+
+            for (const directory of directories) {
+
+              if (!directory.startsWith(prefix)) continue;
+
+              const rest =
+                directory.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'directory'
+              );
+            }
+
+            for (const filePath of files.keys()) {
+
+              if (!filePath.startsWith(prefix)) continue;
+
+              const rest =
+                filePath.slice(prefix.length);
+
+              if (!rest || rest.includes('/')) continue;
+
+              entries.set(
+                rest,
+                'file'
+              );
+            }
+
+            return [...entries].map(([name, kind]) => ({
+              name,
+              kind
+            }));
+          };
+
+        const adapter =
+          {
+            kind:
+              'desktop',
+            getWorkspaceRoot() {
+              return 'memory-workspace';
+            },
+            async pickWorkspace() {
+              return 'memory-workspace';
+            },
+            async restoreWorkspace() {
+              return 'memory-workspace';
+            },
+            async ensureDirectory(path) {
+              ensureDirectoryPath(
+                path
+              );
+            },
+            async getDirectoryHandle(path) {
+              return {
+                kind:
+                  'directory',
+                path:
+                  normalize(path)
+              };
+            },
+            async readText(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (!files.has(normalized)) {
+
+                throw new Error(
+                  `File not found: ${path}`
+                );
+              }
+
+              const value =
+                files.get(normalized);
+
+              return typeof value === 'string'
+                ? value
+                : new TextDecoder().decode(value);
+            },
+            async writeText(path, content) {
+
+              const normalized =
+                normalize(path);
+
+              ensureDirectoryPath(
+                getParentPath(normalized)
+              );
+
+              files.set(
+                normalized,
+                String(content)
+              );
+
+              if (
+                window.__mowRestoreRefreshFailureReady &&
+                normalized === 'pages/hero.md' &&
+                String(content).includes('Backup hero.')
+              ) {
+
+                window.__mowRestoreRefreshFailure.failRefresh =
+                  true;
+              }
+            },
+            async readBinary(path) {
+
+              const normalized =
+                normalize(path);
+
+              if (!files.has(normalized)) {
+
+                throw new Error(
+                  `File not found: ${path}`
+                );
+              }
+
+              const value =
+                files.get(normalized);
+
+              return typeof value === 'string'
+                ? new TextEncoder().encode(value).buffer
+                : value;
+            },
+            async writeBinary(path, content) {
+
+              const normalized =
+                normalize(path);
+
+              ensureDirectoryPath(
+                getParentPath(normalized)
+              );
+
+              files.set(
+                normalized,
+                content
+              );
+            },
+            async listFiles(path = '') {
+
+              if (
+                window.__mowRestoreRefreshFailure?.failRefresh &&
+                normalize(path) === 'pages'
+              ) {
+
+                throw new Error(
+                  'workspace refresh list failed'
+                );
+              }
+
+              return listFiles(path);
+            },
+            async removeFile(path) {
+              files.delete(
+                normalize(path)
+              );
+            },
+            async removeDirectory(path) {
+
+              const normalized =
+                normalize(path);
+
+              for (const filePath of [...files.keys()]) {
+
+                if (
+                  filePath === normalized ||
+                  filePath.startsWith(`${normalized}/`)
+                ) {
+
+                  files.delete(
+                    filePath
+                  );
+                }
+              }
+            }
+          };
+
+        const createPage =
+          ({
+            id,
+            title,
+            body
+          }) => ({
+            id,
+            title,
+            type:
+              'note',
+            template:
+              'card',
+            name:
+              `${id}.md`,
+            path:
+              `/pages/${id}.md`,
+            content:
+              buildPageRecordContent({
+                id,
+                title,
+                type:
+                  'note',
+                template:
+                  'card',
+                tags:
+                  [
+                    'card'
+                  ],
+                body,
+                now:
+                  '2026-08-24T08:00:00.000Z'
+              })
+          });
+
+        setStorageAdapter(
+          adapter
+        );
+
+        const backupHero =
+          createPage({
+            id:
+              'hero',
+            title:
+              'Hero',
+            body:
+              '<h1>Hero</h1><p>Backup hero.</p>'
+          });
+
+        await adapter.writeText(
+          '/pages/hero.md',
+          backupHero.content
+        );
+
+        await createWorkspaceBackup({
+          storageAdapter:
+            adapter,
+          pages:
+            [
+              backupHero
+            ],
+          id:
+            'refresh-failure-source',
+          cleanup:
+            false
+        });
+
+        const currentHero =
+          createPage({
+            id:
+              'hero',
+            title:
+              'Hero',
+            body:
+              '<h1>Hero</h1><p>Current hero.</p>'
+          });
+
+        state.pages =
+          [
+            currentHero
+          ];
+
+        await adapter.writeText(
+          '/pages/hero.md',
+          currentHero.content
+        );
+
+        window.__mowRestoreRefreshFailure =
+          {
+            files,
+            backupHeroContent:
+              backupHero.content,
+            failRefresh:
+              false
+          };
+
+        window.__mowRestoreRefreshFailureReady =
+          true;
+      }
+    );
+
+    await page.locator('#appSettingsBtn').click();
+
+    await page.locator('.app-backup-restore').click();
+
+    const confirm =
+      page.locator('.app-backup-confirm:not(.hidden)');
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'data-restore-preview',
+      'ready'
+    );
+
+    await confirm
+      .getByRole(
+        'button',
+        {
+          name:
+            'Восстановить все'
+        }
+      )
+      .click();
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'workspace не обновился'
+    );
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'Страховочная копия'
+    );
+
+    const result =
+      await page.evaluate(
+        () => ({
+          hero:
+            window.__mowRestoreRefreshFailure.files.get('pages/hero.md'),
+          backupHeroContent:
+            window.__mowRestoreRefreshFailure.backupHeroContent,
+          preRestoreExists:
+            [
+              ...window.__mowRestoreRefreshFailure.files.keys()
+            ].some(path =>
+              path.includes('pre-restore')
+            )
+        })
+      );
+
+    expect(
+      result.hero
+    ).toBe(
+      result.backupHeroContent
+    );
+
+    expect(
+      result.preRestoreExists
+    ).toBe(
+      true
+    );
+  }
+);
+
+
+test(
   'backup restore confirmation blocks damaged preview without restore writes',
   async ({ page }) => {
 

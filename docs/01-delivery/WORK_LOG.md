@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.5 Restore Failure Safety
+
+### Disposition
+
+- Closed `0.0.1.12.5` as a focused Data Safety leaf.
+- Kept the existing `backupService` restore owner and mandatory pre-restore backup gate.
+- Did not add a second restore engine, automatic rollback recursion, backup format migration or real-workspace mutation.
+
+### Restore Contract
+
+- Full restore now preflights backup page bytes and deterministic asset bytes before the safety backup and before workspace writes.
+- Partial restore keeps the selected page/asset preflight introduced in `0.0.1.12.4`.
+- Legacy v1 partial asset backups remain warning-compatible: missing legacy asset sources are skipped before mutation instead of being discovered after page writes begin.
+- If a page or asset write fails after the pre-restore backup has been created and verified, restore stops and reports a structured incomplete-restore error with the selected backup id, pre-restore backup id, failed stage and restored counts.
+- The current contract does not claim atomic restore. It reports incomplete restore and points to the recovery backup rather than silently reloading partial state as success.
+- Settings restore now separately handles runtime refresh failure after durable restore and reports that the workspace did not refresh.
+
+### Tests
+
+- Added `tests/restoreFailureSafety.test.mjs` for manifest read failure, pre-restore backup create/verify failure, selected source read failure, asset preflight failure, page write failure, asset write failure and legacy partial v1 asset skip behavior.
+- Updated `tests/backupService.test.mjs` to assert the new incomplete-restore contract while still proving the safety backup remains readable.
+- Added a browser Settings regression in `tests/browser/app-shell.spec.mjs` for durable restore followed by runtime refresh failure without a false success status.
+
+### Scope
+
+- No persistent data format migration was performed.
+- No automatic destructive rollback was implemented.
+- No real user workspace was touched or mutated.
+- No asset/link repair behavior was added.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.6` Asset Verification.
+
 ## 2026-08-24: 0.0.1.12.4 Partial Restore
 
 ### Disposition

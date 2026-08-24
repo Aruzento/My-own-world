@@ -268,17 +268,17 @@ Regression target: graph canvas tests for filters/edges/orphans, popup lifecycle
 
 Area: backup, restore, schema recovery
 
-Status: Partially covered / needs restore validation
+Status: Partially covered / needs asset and link recovery validation
 
 Source: plan `0.0.1.6.0` and backup/recovery contract.
 
-Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions now cover malformed pages, partial data, missing assets, invalid workspace shape and backup-before-repair failure, but restore preview and non-page repair persistence still need validation.
+Symptoms: the schema recovery UI now groups issues and can apply the persisted broken-parent repair after backup. Browser and unit regressions now cover malformed pages, partial data, missing assets, invalid workspace shape, backup-before-repair failure, non-destructive restore preview, page-level partial restore and restore failure reporting after the safety backup. Asset/link verification and non-page repair persistence still need validation.
 
 Risk: recovery tools can still be scary or incomplete if restore, link cleanup, assets or map/task repairs do not explain what will change before writing.
 
-Next check: create a disposable broken workspace fixture and run restore preview, partial restore, incomplete-backup cleanup, link cleanup, asset repair and persistent map/task repair flows.
+Next check: continue Phase `0.0.1.12.0` with disposable broken workspace fixtures for asset verification, link cleanup, asset repair and persistent map/task repair flows.
 
-Regression target: storage/browser tests for restore preview, partial restore, link cleanup, asset repair and future persistent repair actions.
+Regression target: storage/browser tests for restore preview, partial restore, restore failure safety, link cleanup, asset repair and future persistent repair actions.
 
 ### BUG-012. Documentation readability and encoding guard need another pass
 
@@ -357,4 +357,4 @@ Not yet covered enough:
 
 ## Recommended Next Step
 
-Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, and `0.0.1.12.5` Restore Failure Safety is next.
+Proceed with the active plan in [PROJECT_PLAN.md](./PROJECT_PLAN.md). Phase `0.0.1.11.0` Existing P1 Stabilization is closed after the final gate on 2026-08-24. Phase `0.0.1.12.0` Data Safety Completion is active; `0.0.1.12.1` established the recovery fixture baseline, `0.0.1.12.2` added non-destructive restore preview, `0.0.1.12.3` added backup manifest integrity validation, `0.0.1.12.4` added safe explicit page-level partial restore, `0.0.1.12.5` hardened restore failure safety after the pre-restore backup, and `0.0.1.12.6` Asset Verification is next.

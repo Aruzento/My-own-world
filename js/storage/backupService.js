@@ -49,6 +49,9 @@ const PRE_RESTORE_BACKUP_BLOCKED_MESSAGE =
 const PRE_RESTORE_BACKUP_VERIFY_MESSAGE =
   'Restore blocked: pre-restore safety backup could not be verified.';
 
+const RESTORE_INCOMPLETE_MESSAGE =
+  'Restore incomplete: workspace restore stopped after the pre-restore safety backup.';
+
 export const BACKUP_MANIFEST_VALIDATION_STATUS =
   Object.freeze({
     VALID:
@@ -61,6 +64,17 @@ export const BACKUP_MANIFEST_VALIDATION_STATUS =
 
 const BACKUP_MANIFEST_SUPPORTED_VERSION =
   1;
+
+
+export function isRestoreIncompleteError(
+  error
+) {
+
+  return Boolean(
+    error &&
+    error.restoreIncomplete === true
+  );
+}
 
 
 export function createBackupId(
@@ -838,71 +852,103 @@ async function restoreWorkspaceBackupMeasured(
       options
     });
 
-  await storageAdapter.ensureDirectory(
-    'pages'
-  );
-
   let restoredPages =
     0;
+
+  let restoredAssets =
+    0;
+
+  let restoreStage =
+    'prepare';
 
   const pages =
     restorePlan.pages;
 
-  for (
-    let index = 0;
-    index < pages.length;
-    index += 1
-  ) {
+  try {
 
-    const page =
-      pages[index];
+    await storageAdapter.ensureDirectory(
+      'pages'
+    );
 
-    const fileName =
-      page.name;
+    restoreStage =
+      'pages';
 
-    if (!fileName) continue;
+    for (
+      let index = 0;
+      index < pages.length;
+      index += 1
+    ) {
 
-    const content =
-      restorePlan.pageContentByName?.get(
-        fileName
-      ) ??
-      await storageAdapter.readText(
-        `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`
+      const page =
+        pages[index];
+
+      const fileName =
+        page.name;
+
+      if (!fileName) continue;
+
+      const content =
+        restorePlan.pageContentByName.get(
+          fileName
+        );
+
+      await storageAdapter.writeText(
+        `pages/${fileName}`,
+        content
       );
 
-    await storageAdapter.writeText(
-      `pages/${fileName}`,
-      content
-    );
+      restoredPages += 1;
 
-    restoredPages += 1;
+      reportProgress(
+        options,
+        {
+          label: 'Restore',
+          stage: 'страницы',
+          current: index + 1,
+          total: pages.length
+        }
+      );
+    }
 
-    reportProgress(
-      options,
-      {
-        label: 'Restore',
-        stage: 'страницы',
-        current: index + 1,
-        total: pages.length
-      }
-    );
-  }
+    restoreStage =
+      'assets';
 
-  const restoredAssets =
-    await restoreBackupAssets({
-      storageAdapter,
-      snapshotPath,
-      manifest,
-      assets:
-        restorePlan.assets,
-      assetContentByPath:
-        restorePlan.assetContentByPath,
-      onProgress:
-        progress => reportProgress(
-          options,
-          progress
-        )
+    restoredAssets =
+      await restoreBackupAssets({
+        storageAdapter,
+        assets:
+          restorePlan.assets,
+        assetContentByPath:
+          restorePlan.assetContentByPath,
+        onProgress:
+          progress => reportProgress(
+            options,
+            progress
+          )
+      });
+
+  } catch (error) {
+
+    throw createRestoreIncompleteError({
+      cause:
+        error,
+      backupId,
+      stage:
+        restoreStage,
+      preRestoreBackupId:
+        preRestoreManifest.id,
+      partial:
+        restorePlan.partial,
+      restoredPages,
+      restoredAssets,
+      selectedPageNames:
+        restorePlan.selectedPageNames,
+      selectedAssetPaths:
+        restorePlan.selectedAssetPaths,
+      skippedAssetPaths:
+        restorePlan.skippedAssetPaths
     });
+  }
 
   return {
     backupId,
@@ -916,6 +962,8 @@ async function restoreWorkspaceBackupMeasured(
       restorePlan.selectedPageNames,
     selectedAssetPaths:
       restorePlan.selectedAssetPaths,
+    skippedAssetPaths:
+      restorePlan.skippedAssetPaths,
     unresolvedAssetReferences:
       restorePlan.unresolvedAssetReferences
   };
@@ -945,23 +993,49 @@ async function createRestoreWritePlan({
 
   if (!restoreSelection) {
 
+    const pageContentByName =
+      await preflightBackupPages({
+        storageAdapter,
+        snapshotPath,
+        pages,
+        blockedPrefix:
+          'Restore blocked'
+      });
+
+    const assetPlan =
+      await preflightBackupAssets({
+        storageAdapter,
+        snapshotPath,
+        assets,
+        allowLegacyMissing:
+          isLegacyPartialAssetManifest(
+            manifest,
+            assets
+          ),
+        blockedPrefix:
+          'Restore blocked'
+      });
+
     return {
       partial:
         false,
       pages,
-      assets,
+      assets:
+        assetPlan.assets,
       pageContentByName:
-        null,
+        pageContentByName,
       assetContentByPath:
-        null,
+        assetPlan.assetContentByPath,
       selectedPageNames:
         pages
           .map(page => page.name)
           .filter(Boolean),
       selectedAssetPaths:
-        assets
+        assetPlan.assets
           .map(asset => normalizeAssetPath(asset.path || ''))
           .filter(Boolean),
+      skippedAssetPaths:
+        assetPlan.skippedAssetPaths,
       unresolvedAssetReferences:
         []
     };
@@ -974,11 +1048,13 @@ async function createRestoreWritePlan({
     );
 
   const pageContentByName =
-    await preflightSelectedBackupPages({
+    await preflightBackupPages({
       storageAdapter,
       snapshotPath,
       pages:
-        selectedPages
+        selectedPages,
+      blockedPrefix:
+        'Partial restore blocked'
     });
 
   const selectedAssetPlan =
@@ -1011,6 +1087,8 @@ async function createRestoreWritePlan({
           asset.path || ''
         )
       ),
+    skippedAssetPaths:
+      [],
     unresolvedAssetReferences:
       selectedAssetPlan.unresolvedAssetReferences
   };
@@ -1177,10 +1255,11 @@ function selectBackupPages(
 }
 
 
-async function preflightSelectedBackupPages({
+async function preflightBackupPages({
   storageAdapter,
   snapshotPath,
-  pages
+  pages,
+  blockedPrefix = 'Restore blocked'
 }) {
 
   const pageContentByName =
@@ -1203,7 +1282,7 @@ async function preflightSelectedBackupPages({
     } catch (error) {
 
       throw new Error(
-        `Partial restore blocked: selected backup page file is unavailable: ${fileName}`,
+        `${blockedPrefix}: backup page file is unavailable: ${fileName}`,
         {
           cause:
             error
@@ -1213,6 +1292,75 @@ async function preflightSelectedBackupPages({
   }
 
   return pageContentByName;
+}
+
+
+async function preflightBackupAssets({
+  storageAdapter,
+  snapshotPath,
+  assets,
+  allowLegacyMissing = false,
+  blockedPrefix = 'Restore blocked'
+}) {
+
+  const availableAssets =
+    [];
+
+  const skippedAssetPaths =
+    [];
+
+  const assetContentByPath =
+    new Map();
+
+  for (const asset of assets) {
+
+    const normalizedPath =
+      normalizeAssetPath(
+        asset?.path || ''
+      );
+
+    if (!normalizedPath) continue;
+
+    try {
+
+      assetContentByPath.set(
+        normalizedPath,
+        await storageAdapter.readBinary(
+          `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
+        )
+      );
+
+      availableAssets.push(
+        asset
+      );
+
+    } catch (error) {
+
+      if (allowLegacyMissing) {
+
+        skippedAssetPaths.push(
+          normalizedPath
+        );
+
+        continue;
+      }
+
+      throw new Error(
+        `${blockedPrefix}: backup asset is unavailable: assets/${normalizedPath}`,
+        {
+          cause:
+            error
+        }
+      );
+    }
+  }
+
+  return {
+    assets:
+      availableAssets,
+    assetContentByPath,
+    skippedAssetPaths
+  };
 }
 
 
@@ -1283,42 +1431,38 @@ async function preflightSelectedBackupAssets({
       )
     );
 
-  const assetContentByPath =
-    new Map();
-
-  for (const asset of assets) {
-
-    const normalizedPath =
-      normalizeAssetPath(
-        asset.path || ''
-      );
-
-    try {
-
-      assetContentByPath.set(
-        normalizedPath,
-        await storageAdapter.readBinary(
-          `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
-        )
-      );
-
-    } catch (error) {
-
-      throw new Error(
-        `Partial restore blocked: selected backup asset is unavailable: assets/${normalizedPath}`,
-        {
-          cause:
-            error
-        }
-      );
-    }
-  }
+  const assetPlan =
+    await preflightBackupAssets({
+      storageAdapter,
+      snapshotPath,
+      assets,
+      blockedPrefix:
+        'Partial restore blocked'
+    });
 
   return {
-    assets,
-    assetContentByPath,
+    assets:
+      assetPlan.assets,
+    assetContentByPath:
+      assetPlan.assetContentByPath,
     unresolvedAssetReferences
   };
+}
+
+
+function isLegacyPartialAssetManifest(
+  manifest,
+  assets
+) {
+
+  if (
+    manifest?.assetCount === undefined
+  ) return true;
+
+  return Number.isInteger(
+    manifest.assetCount
+  ) &&
+  manifest.assetCount < assets.length;
 }
 
 
@@ -2200,6 +2344,72 @@ function createBackupManifestValidationError(
 }
 
 
+function createRestoreIncompleteError({
+  cause,
+  backupId,
+  stage,
+  preRestoreBackupId,
+  partial,
+  restoredPages,
+  restoredAssets,
+  selectedPageNames = [],
+  selectedAssetPaths = [],
+  skippedAssetPaths = []
+}) {
+
+  const error =
+    new Error(
+      `${RESTORE_INCOMPLETE_MESSAGE} Recovery backup: ${preRestoreBackupId || 'unknown'}.`,
+      {
+        cause
+      }
+    );
+
+  error.name =
+    'RestoreIncompleteError';
+
+  error.restoreIncomplete =
+    true;
+
+  error.backupId =
+    backupId;
+
+  error.preRestoreBackupId =
+    preRestoreBackupId || null;
+
+  error.stage =
+    stage || 'unknown';
+
+  error.partial =
+    Boolean(
+      partial
+    );
+
+  error.restoredPages =
+    restoredPages;
+
+  error.restoredAssets =
+    restoredAssets;
+
+  error.selectedPageNames =
+    [
+      ...selectedPageNames
+    ];
+
+  error.selectedAssetPaths =
+    [
+      ...selectedAssetPaths
+    ];
+
+  error.skippedAssetPaths =
+    [
+      ...skippedAssetPaths
+    ];
+
+  return error;
+}
+
+
 async function canReadText(
   storageAdapter,
   path
@@ -2518,8 +2728,6 @@ async function copyAssetsToBackup({
 
 async function restoreBackupAssets({
   storageAdapter,
-  snapshotPath,
-  manifest,
   assets = null,
   assetContentByPath = null,
   onProgress = null
@@ -2529,8 +2737,7 @@ async function restoreBackupAssets({
     0;
 
   const restoreAssets =
-    assets ||
-    manifest.assets || [];
+    assets || [];
 
   for (
     let index = 0;
@@ -2543,43 +2750,40 @@ async function restoreBackupAssets({
 
     if (!reference?.path) continue;
 
-    try {
-
-      const normalizedPath =
-        normalizeAssetPath(
-          reference.path
-        );
-
-      const buffer =
-        assetContentByPath?.get(
-          normalizedPath
-        ) ??
-        await storageAdapter.readBinary(
-          `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
-        );
-
-      await storageAdapter.writeBinary(
-        `assets/${normalizedPath}`,
-        buffer
+    const normalizedPath =
+      normalizeAssetPath(
+        reference.path
       );
 
-      restored += 1;
+    if (
+      !assetContentByPath?.has(
+        normalizedPath
+      )
+    ) {
 
-      onProgress?.({
-        label: 'Restore',
-        stage: 'assets',
-        current: index + 1,
-        total: restoreAssets.length
-      });
-
-    } catch (error) {
-
-      console.warn(
-        'Не удалось восстановить asset из backup.',
-        reference.path,
-        error
+      throw new Error(
+        `Restore blocked: preflighted asset bytes are missing: assets/${normalizedPath}`
       );
     }
+
+    const buffer =
+      assetContentByPath.get(
+        normalizedPath
+      );
+
+    await storageAdapter.writeBinary(
+      `assets/${normalizedPath}`,
+      buffer
+    );
+
+    restored += 1;
+
+    onProgress?.({
+      label: 'Restore',
+      stage: 'assets',
+      current: index + 1,
+      total: restoreAssets.length
+    });
   }
 
   return restored;

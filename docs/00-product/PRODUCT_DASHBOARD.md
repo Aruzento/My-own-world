@@ -26,13 +26,14 @@ Immediate direction:
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Active phase: `0.0.1.12.0` Data Safety Completion.
-6. Next leaf: `0.0.1.12.5` Restore Failure Safety.
+6. Next leaf: `0.0.1.12.6` Asset Verification.
 7. `0.0.1.13.0` remains `BLOCKED` and has not been started.
 8. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 9. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-24 `0.0.1.12.5` Restore Failure Safety: restore now preflights page bytes and deterministic asset bytes before destructive writes, preserves legacy v1 partial asset backups as warning-compatible, and reports after-start page/asset write failures as incomplete restore with the pre-restore backup id instead of false success. Settings also reports a separate failure state if durable restore applied but runtime workspace refresh failed. No automatic rollback recursion, persistent format migration or real workspace mutation was introduced.
 - 2026-08-24 `0.0.1.12.4` Partial Restore: Settings restore preview now lets the user select explicit pages for partial restore. The operation stays inside the existing backup/restore owner, keeps manifest validation and mandatory pre-restore backup, preflights selected page files and clearly referenced selected-page assets before workspace writes, and restores only the selected pages plus required manifest assets. Unselected pages/assets are not overwritten or deleted; BI-006 remains open for restore failure safety and remaining asset/link verification.
 - 2026-08-24 `0.0.1.12.3` Backup Manifest Integrity: added structured validation for existing v1 backup manifests without changing the persisted format. Restore preview now uses the same validation result as actual restore, and actual restore blocks unsafe manifests before pre-restore backup creation or workspace writes. Covered valid v1 backups, malformed JSON, wrong counts, missing page files, unsafe page names, missing expected assets and partial v1 asset warnings.
 - 2026-08-24 `0.0.1.12.2` Restore Preview: added a non-destructive restore preview in Settings backed by a pure runtime restore-plan builder. It compares real persisted page contents and asset bytes, reports add/replace/unchanged/problem states, blocks damaged backup preview states, and keeps preview side-effect free: no page/asset writes, no directory removal, no backup creation and no repository/index mutation. BI-006 remains open for manifest integrity, partial restore and remaining asset/link safety work.
