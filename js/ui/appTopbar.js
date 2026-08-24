@@ -1516,6 +1516,11 @@ function renderRestorePreviewConfirm(
       preview
     );
 
+  const issues =
+    createRestorePreviewIssueSection(
+      preview
+    );
+
   const pages =
     createRestorePreviewSection({
       title:
@@ -1679,10 +1684,140 @@ function renderRestorePreviewConfirm(
     header,
     text,
     summary,
+    issues,
     pages,
     assets,
     actions
   );
+}
+
+
+function createRestorePreviewIssueSection(
+  preview
+) {
+
+  const section =
+    document.createElement('div');
+
+  section.className =
+    'app-backup-preview-section';
+
+  section.hidden =
+    preview.issues.length === 0;
+
+  const header =
+    document.createElement('div');
+
+  header.className =
+    'app-backup-preview-section-title';
+
+  const heading =
+    document.createElement('strong');
+
+  heading.textContent =
+    'Проверка backup';
+
+  const count =
+    document.createElement('span');
+
+  count.textContent =
+    `${preview.issues.length} замечаний`;
+
+  header.append(
+    heading,
+    count
+  );
+
+  const list =
+    document.createElement('div');
+
+  list.className =
+    'app-backup-preview-list';
+
+  preview.issues
+    .slice(
+      0,
+      6
+    )
+    .forEach(issue => {
+
+      list.appendChild(
+        createRestorePreviewIssueItem(
+          issue
+        )
+      );
+    });
+
+  if (preview.issues.length > 6) {
+
+    const more =
+      document.createElement('p');
+
+    more.className =
+      'app-backup-preview-empty';
+
+    more.textContent =
+      `Еще ${preview.issues.length - 6} замечаний скрыто в кратком списке.`;
+
+    list.appendChild(
+      more
+    );
+  }
+
+  section.append(
+    header,
+    list
+  );
+
+  return section;
+}
+
+
+function createRestorePreviewIssueItem(
+  issue
+) {
+
+  const item =
+    document.createElement('div');
+
+  item.className =
+    'app-backup-preview-item';
+
+  item.dataset.previewStatus =
+    issue.restoreBlocking
+      ? 'backup-file-missing'
+      : 'would-replace';
+
+  const status =
+    document.createElement('span');
+
+  status.className =
+    'app-backup-preview-state';
+
+  status.textContent =
+    issue.restoreBlocking
+      ? 'Блокирует'
+      : 'Предупреждение';
+
+  const message =
+    document.createElement('strong');
+
+  message.textContent =
+    issue.message || 'Проблема backup';
+
+  const detail =
+    document.createElement('span');
+
+  detail.textContent =
+    issue.path || issue.code || '';
+
+  item.append(
+    status,
+    message,
+    detail
+  );
+
+  return item;
 }
 
 

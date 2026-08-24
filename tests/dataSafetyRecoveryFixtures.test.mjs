@@ -431,7 +431,7 @@ test(
 
 
 test(
-  'backup fixtures expose current missing page and missing asset restore behavior',
+  'backup fixtures expose restore-blocking missing page and asset integrity behavior',
   async () => {
 
     const missingPageAdapter =
@@ -471,12 +471,12 @@ test(
         () => restoreWorkspaceBackup(
           missingPage.backupId,
           missingPageAdapter,
-          {
-            preRestoreBackupId:
-              'pre-before-missing-page'
-          }
-        ),
-        /File not found/
+        {
+          preRestoreBackupId:
+            'pre-before-missing-page'
+        }
+      ),
+        /Restore blocked/
       );
 
       assert.equal(
@@ -520,8 +520,8 @@ test(
 
     try {
 
-      const result =
-        await withMutedConsoleWarn(() =>
+      await assert.rejects(
+        () => withMutedConsoleWarn(() =>
           restoreWorkspaceBackup(
             missingAsset.backupId,
             missingAssetAdapter,
@@ -530,16 +530,8 @@ test(
                 'pre-before-missing-asset'
             }
           )
-        );
-
-      assert.equal(
-        result.restoredPages,
-        3
-      );
-
-      assert.equal(
-        result.restoredAssets,
-        2
+        ),
+        /Restore blocked/
       );
 
       assert.equal(

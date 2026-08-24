@@ -6,6 +6,56 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.3 Backup Manifest Integrity Validation
+
+### Disposition
+
+- Closed `0.0.1.12.3` as a focused Data Safety leaf.
+- Added structured v1 manifest validation inside `backupService` ownership.
+- Did not change the persisted backup manifest format and did not add hashes/checksums.
+- Connected restore preview and actual restore to the same validation result.
+
+### Validation Contract
+
+- Validation returns `VALID`, `WARNING` or `INVALID`.
+- `INVALID` is restore-blocking.
+- `WARNING` is recoverable and currently covers legacy/partial v1 asset metadata where `assetCount < assets.length` and v1 cannot prove which asset entries were copied.
+- The validator checks:
+  - readable/parseable manifest JSON;
+  - object shape;
+  - supported v1 version;
+  - selected backup directory id match;
+  - coherent page list and page count;
+  - safe page filenames;
+  - required backup page files;
+  - coherent asset list/count;
+  - safe asset paths;
+  - expected copied asset files.
+
+### Restore/Preview Behavior
+
+- Restore preview now consumes manifest validation before building the page/asset diff.
+- Settings blocked-preview UI now lists human-readable validation issues instead of only showing a generic damaged-backup state.
+- Actual restore rejects `INVALID` manifests before creating the pre-restore safety backup and before any workspace restore write.
+- Legacy partial v1 asset backups remain warning-compatible instead of being treated as format corruption.
+
+### Tests
+
+- Added `tests/backupManifestValidation.test.mjs` for valid v1, malformed JSON, wrong page count, missing backup page file, unsafe page filename, missing expected asset, partial v1 asset warning and restore blocked before pre-restore writes.
+- Updated restore preview tests to expect `manifest-json-malformed` for corrupt JSON.
+- Updated the data safety fixture baseline so missing declared backup page/asset files are restore-blocking integrity failures.
+
+### Scope
+
+- No new backup format was introduced.
+- No persistent data format migration was performed.
+- No partial restore was implemented.
+- No real user workspace was touched or mutated.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.4` Partial Restore.
+
 ## 2026-08-24: 0.0.1.12.2 Non-Destructive Restore Preview
 
 ### Disposition

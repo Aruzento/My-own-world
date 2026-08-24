@@ -378,7 +378,7 @@ test(
     assert.deepEqual(
       corrupt.issues.map(issue => issue.code),
       [
-        'manifest-unreadable'
+        'manifest-json-malformed'
       ]
     );
   }

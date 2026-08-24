@@ -1,7 +1,8 @@
 import {
   BACKUP_ASSETS_DIR,
   BACKUP_PAGES_DIR,
-  BACKUP_ROOT_DIR
+  BACKUP_ROOT_DIR,
+  validateWorkspaceBackupManifest
 } from './backupService.js';
 
 import {
@@ -25,29 +26,27 @@ export async function buildWorkspaceRestorePreview(
   const snapshotPath =
     `${BACKUP_ROOT_DIR}/${backupId}`;
 
-  const manifestResult =
-    await readPreviewManifest(
-      storageAdapter,
-      snapshotPath
+  const manifestValidation =
+    await validateWorkspaceBackupManifest(
+      backupId,
+      {
+        storageAdapter
+      }
     );
 
-  if (!manifestResult.ok) {
+  if (manifestValidation.restoreBlocking) {
 
     return createBlockedPreview({
       backupId,
-      issue: {
-        code:
-          'manifest-unreadable',
-        message:
-          'Manifest backup не найден или поврежден.',
-        details:
-          manifestResult.error?.message || ''
-      }
+      manifest:
+        manifestValidation.manifest,
+      issues:
+        manifestValidation.issues
     });
   }
 
   const manifest =
-    manifestResult.manifest;
+    manifestValidation.manifest;
 
   const pages =
     await collectPreviewPages({
@@ -65,6 +64,7 @@ export async function buildWorkspaceRestorePreview(
 
   const issues =
     [
+      ...manifestValidation.issues,
       ...pages.issues,
       ...assets.issues
     ];
@@ -406,8 +406,19 @@ async function collectPreviewAssets({
 
 function createBlockedPreview({
   backupId,
-  issue
+  manifest = null,
+  issues = []
 }) {
+
+  const pageProblems =
+    issues.filter(issue =>
+      String(issue.code || '').includes('page')
+    ).length;
+
+  const assetProblems =
+    issues.filter(issue =>
+      String(issue.code || '').includes('asset')
+    ).length;
 
   return {
     backupId,
@@ -418,7 +429,11 @@ function createBlockedPreview({
     message:
       'Предпросмотр заблокирован: backup поврежден или неполный.',
     manifest:
-      null,
+      manifest
+        ? createPreviewManifestSummary(
+          manifest
+        )
+        : null,
     pages:
       [],
     assets:
@@ -435,7 +450,7 @@ function createBlockedPreview({
           unchanged:
             0,
           backupProblems:
-            1
+            pageProblems
         },
         assets: {
           total:
@@ -453,15 +468,13 @@ function createBlockedPreview({
           backupAvailable:
             0,
           backupProblems:
-            0
+            assetProblems
         },
         issueCount:
-          1
+          issues.length
       },
     issues:
-      [
-        issue
-      ]
+      issues
   };
 }
 
@@ -564,35 +577,6 @@ function createPreviewSummary(
     issueCount:
       issues.length
   };
-}
-
-
-async function readPreviewManifest(
-  storageAdapter,
-  snapshotPath
-) {
-
-  try {
-
-    return {
-      ok:
-        true,
-      manifest:
-        JSON.parse(
-          await storageAdapter.readText(
-            `${snapshotPath}/manifest.json`
-          )
-        )
-    };
-
-  } catch (error) {
-
-    return {
-      ok:
-        false,
-      error
-    };
-  }
 }
 
 

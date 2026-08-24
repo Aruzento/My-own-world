@@ -49,6 +49,19 @@ const PRE_RESTORE_BACKUP_BLOCKED_MESSAGE =
 const PRE_RESTORE_BACKUP_VERIFY_MESSAGE =
   'Restore blocked: pre-restore safety backup could not be verified.';
 
+export const BACKUP_MANIFEST_VALIDATION_STATUS =
+  Object.freeze({
+    VALID:
+      'VALID',
+    WARNING:
+      'WARNING',
+    INVALID:
+      'INVALID'
+  });
+
+const BACKUP_MANIFEST_SUPPORTED_VERSION =
+  1;
+
 
 export function createBackupId(
   reason = 'manual',
@@ -438,6 +451,29 @@ export async function listWorkspaceBackups(
 }
 
 
+export async function validateWorkspaceBackupManifest(
+  backupId,
+  options = {}
+) {
+
+  const storageAdapter =
+    getBackupStorageAdapter({
+      storageAdapter:
+        options.storageAdapter || null,
+      workspaceHandle:
+        options.workspaceHandle || null
+    });
+
+  return readAndValidateBackupManifest(
+    storageAdapter,
+    `${BACKUP_ROOT_DIR}/${backupId}`,
+    {
+      backupId
+    }
+  );
+}
+
+
 export async function restoreWorkspaceBackup(
   backupId,
   storageAdapterOrHandle = null,
@@ -734,18 +770,24 @@ async function restoreWorkspaceBackupMeasured(
   const snapshotPath =
     `${BACKUP_ROOT_DIR}/${backupId}`;
 
-  const manifest =
-    await readBackupManifest(
+  const manifestValidation =
+    await readAndValidateBackupManifest(
       storageAdapter,
-      snapshotPath
+      snapshotPath,
+      {
+        backupId
+      }
     );
 
-  if (!manifest) {
+  if (manifestValidation.restoreBlocking) {
 
-    throw new Error(
-      'Manifest backup не найден или поврежден.'
+    throw createBackupManifestValidationError(
+      manifestValidation
     );
   }
+
+  const manifest =
+    manifestValidation.manifest;
 
   const preRestoreManifest =
     await createAndVerifyPreRestoreBackup({
@@ -867,14 +909,19 @@ async function createAndVerifyPreRestoreBackup({
   }
 
   const verified =
-    await readBackupManifest(
+    await readAndValidateBackupManifest(
       storageAdapter,
-      `${BACKUP_ROOT_DIR}/${manifest.id}`
+      `${BACKUP_ROOT_DIR}/${manifest.id}`,
+      {
+        backupId:
+          manifest.id
+      }
     );
 
   if (
+    verified.restoreBlocking ||
     !backupManifestMatches(
-      verified,
+      verified.manifest,
       manifest
     )
   ) {
@@ -884,7 +931,7 @@ async function createAndVerifyPreRestoreBackup({
     );
   }
 
-  return verified;
+  return verified.manifest;
 }
 
 
@@ -1011,28 +1058,74 @@ async function cleanupWorkspaceBackupsMeasured({
 }
 
 
+async function readAndValidateBackupManifest(
+  storageAdapter,
+  snapshotPath,
+  options = {}
+) {
+
+  const manifestResult =
+    await readBackupManifestParseResult(
+      storageAdapter,
+      snapshotPath
+    );
+
+  if (!manifestResult.ok) {
+
+    return createBackupManifestValidationResult({
+      manifest:
+        null,
+      issues:
+        [
+          manifestResult.issue
+        ]
+    });
+  }
+
+  const issues =
+    validateBackupManifestStructure(
+      manifestResult.manifest,
+      {
+        backupId:
+          options.backupId || ''
+      }
+    );
+
+  await validateBackupManifestFiles({
+    storageAdapter,
+    snapshotPath,
+    manifest:
+      manifestResult.manifest,
+    issues
+  });
+
+  return createBackupManifestValidationResult({
+    manifest:
+      manifestResult.manifest,
+    issues
+  });
+}
+
+
 async function readBackupManifest(
   storageAdapter,
   snapshotPath
 ) {
 
-  try {
-
-    return JSON.parse(
-      await storageAdapter.readText(
-        `${snapshotPath}/manifest.json`
-      )
+  const result =
+    await readBackupManifestParseResult(
+      storageAdapter,
+      snapshotPath
     );
 
-  } catch (error) {
+  if (result.ok) return result.manifest;
 
-    console.warn(
-      'Не удалось прочитать manifest backup.',
-      error
-    );
+  console.warn(
+    'Не удалось прочитать manifest backup.',
+    result.issue.message
+  );
 
-    return null;
-  }
+  return null;
 }
 
 
@@ -1041,18 +1134,716 @@ async function readBackupManifestSilent(
   snapshotPath
 ) {
 
+  const result =
+    await readBackupManifestParseResult(
+      storageAdapter,
+      snapshotPath
+    );
+
+  return result.ok
+    ? result.manifest
+    : null;
+}
+
+
+async function readBackupManifestParseResult(
+  storageAdapter,
+  snapshotPath
+) {
+
+  let rawManifest;
+
   try {
 
-    return JSON.parse(
+    rawManifest =
       await storageAdapter.readText(
         `${snapshotPath}/manifest.json`
-      )
-    );
+      );
 
   } catch {
 
-    return null;
+    return {
+      ok:
+        false,
+      issue:
+        createManifestIssue({
+          code:
+            'manifest-unreadable',
+          severity:
+            'error',
+          message:
+            'Manifest backup не найден или недоступен.'
+        })
+    };
   }
+
+  try {
+
+    return {
+      ok:
+        true,
+      manifest:
+        JSON.parse(
+          rawManifest
+        )
+    };
+
+  } catch {
+
+    return {
+      ok:
+        false,
+      issue:
+        createManifestIssue({
+          code:
+            'manifest-json-malformed',
+          severity:
+            'error',
+          message:
+            'Manifest backup поврежден: JSON не читается.'
+        })
+    };
+  }
+}
+
+
+function validateBackupManifestStructure(
+  manifest,
+  {
+    backupId = ''
+  } = {}
+) {
+
+  const issues =
+    [];
+
+  if (
+    !manifest ||
+    typeof manifest !== 'object' ||
+    Array.isArray(
+      manifest
+    )
+  ) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-not-object',
+        severity:
+          'error',
+        message:
+          'Manifest backup должен быть объектом.'
+      })
+    );
+
+    return issues;
+  }
+
+  if (manifest.version !== BACKUP_MANIFEST_SUPPORTED_VERSION) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-version-unsupported',
+        severity:
+          'error',
+        message:
+          'Версия manifest backup не поддерживается.'
+      })
+    );
+  }
+
+  if (
+    typeof manifest.id !== 'string' ||
+    manifest.id.trim() === ''
+  ) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-id-missing',
+        severity:
+          'error',
+        message:
+          'Manifest backup не содержит id.'
+      })
+    );
+
+  } else if (
+    backupId &&
+    manifest.id !== backupId
+  ) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-id-mismatch',
+        severity:
+          'error',
+        message:
+          'Manifest backup не совпадает с выбранной папкой backup.',
+        path:
+          backupId
+      })
+    );
+  }
+
+  const pages =
+    Array.isArray(
+      manifest.pages
+    )
+      ? manifest.pages
+      : null;
+
+  if (!pages) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-pages-missing',
+        severity:
+          'error',
+        message:
+          'Manifest backup не содержит список страниц.'
+      })
+    );
+
+  } else {
+
+    validateManifestCount({
+      issues,
+      value:
+        manifest.pageCount,
+      expected:
+        pages.length,
+      invalidCode:
+        'manifest-page-count-invalid',
+      mismatchCode:
+        'manifest-page-count-mismatch',
+      invalidMessage:
+        'Manifest backup содержит некорректный счетчик страниц.',
+      mismatchMessage:
+        'Manifest backup содержит счетчик страниц, который не совпадает со списком страниц.'
+    });
+
+    pages.forEach((page, index) => {
+
+      if (
+        !page ||
+        typeof page !== 'object' ||
+        Array.isArray(
+          page
+        )
+      ) {
+
+        issues.push(
+          createManifestIssue({
+            code:
+              'manifest-page-entry-invalid',
+            severity:
+              'error',
+            message:
+              'Manifest backup содержит некорректную запись страницы.',
+            path:
+              `pages[${index}]`
+          })
+        );
+
+        return;
+      }
+
+      if (
+        !isSafeBackupPageFileName(
+          page.name
+        )
+      ) {
+
+        issues.push(
+          createManifestIssue({
+            code:
+              'page-name-unsafe',
+            severity:
+              'error',
+            message:
+              'Manifest backup содержит небезопасное имя файла страницы.',
+            path:
+              String(page.name || `pages[${index}]`)
+          })
+        );
+      }
+    });
+  }
+
+  validateManifestAssetsStructure(
+    manifest,
+    issues
+  );
+
+  return issues;
+}
+
+
+function validateManifestAssetsStructure(
+  manifest,
+  issues
+) {
+
+  const assetsExists =
+    Array.isArray(
+      manifest.assets
+    );
+
+  const assets =
+    assetsExists
+      ? manifest.assets
+      : [];
+
+  const hasAssetCount =
+    manifest.assetCount !== undefined;
+
+  if (!assetsExists) {
+
+    const severity =
+      Number(manifest.assetCount || 0) > 0
+        ? 'error'
+        : 'warning';
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-assets-missing',
+        severity,
+        message:
+          severity === 'error'
+            ? 'Manifest backup заявляет assets, но не содержит список asset entries.'
+            : 'Manifest backup не содержит список asset entries; это допускается только как legacy v1 warning.'
+      })
+    );
+
+    return;
+  }
+
+  if (!hasAssetCount) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-asset-count-missing',
+        severity:
+          'warning',
+        message:
+          'Manifest backup не содержит счетчик assets; это допускается только как legacy v1 warning.'
+      })
+    );
+
+  } else if (
+    !Number.isInteger(
+      manifest.assetCount
+    ) ||
+    manifest.assetCount < 0 ||
+    manifest.assetCount > assets.length
+  ) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-asset-count-invalid',
+        severity:
+          'error',
+        message:
+          'Manifest backup содержит некорректный счетчик assets.'
+      })
+    );
+
+  } else if (manifest.assetCount < assets.length) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          'manifest-asset-count-partial',
+        severity:
+          'warning',
+        message:
+          'Manifest backup содержит не все asset files из списка ссылок; v1 не указывает, какие именно assets были скопированы.'
+      })
+    );
+  }
+
+  assets.forEach((asset, index) => {
+
+    if (
+      !asset ||
+      typeof asset !== 'object' ||
+      Array.isArray(
+        asset
+      )
+    ) {
+
+      issues.push(
+        createManifestIssue({
+          code:
+            'manifest-asset-entry-invalid',
+          severity:
+            'error',
+          message:
+            'Manifest backup содержит некорректную запись asset.',
+          path:
+            `assets[${index}]`
+        })
+      );
+
+      return;
+    }
+
+    if (
+      !isSafeBackupAssetPath(
+        asset.path
+      )
+    ) {
+
+      issues.push(
+        createManifestIssue({
+          code:
+            'asset-path-unsafe',
+          severity:
+            'error',
+          message:
+            'Manifest backup содержит небезопасный путь asset.',
+          path:
+            String(asset.path || `assets[${index}]`)
+        })
+      );
+    }
+  });
+}
+
+
+function validateManifestCount({
+  issues,
+  value,
+  expected,
+  invalidCode,
+  mismatchCode,
+  invalidMessage,
+  mismatchMessage
+}) {
+
+  if (
+    !Number.isInteger(
+      value
+    ) ||
+    value < 0
+  ) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          invalidCode,
+        severity:
+          'error',
+        message:
+          invalidMessage
+      })
+    );
+
+    return;
+  }
+
+  if (value !== expected) {
+
+    issues.push(
+      createManifestIssue({
+        code:
+          mismatchCode,
+        severity:
+          'error',
+        message:
+          mismatchMessage
+      })
+    );
+  }
+}
+
+
+async function validateBackupManifestFiles({
+  storageAdapter,
+  snapshotPath,
+  manifest,
+  issues
+}) {
+
+  if (!manifest || typeof manifest !== 'object') return;
+
+  const pages =
+    Array.isArray(
+      manifest.pages
+    )
+      ? manifest.pages
+      : [];
+
+  for (const page of pages) {
+
+    if (
+      !page ||
+      !isSafeBackupPageFileName(
+        page.name
+      )
+    ) continue;
+
+    const exists =
+      await canReadText(
+        storageAdapter,
+        `${snapshotPath}/${BACKUP_PAGES_DIR}/${page.name}`
+      );
+
+    if (!exists) {
+
+      issues.push(
+        createManifestIssue({
+          code:
+            'page-backup-file-missing',
+          severity:
+            'error',
+          message:
+            'Manifest backup ссылается на файл страницы, которого нет в backup.',
+          path:
+            `${BACKUP_PAGES_DIR}/${page.name}`
+        })
+      );
+    }
+  }
+
+  const assets =
+    Array.isArray(
+      manifest.assets
+    )
+      ? manifest.assets
+      : [];
+
+  const expectsEveryAssetFile =
+    Number.isInteger(
+      manifest.assetCount
+    ) &&
+    manifest.assetCount === assets.length;
+
+  for (const asset of assets) {
+
+    if (
+      !asset ||
+      !isSafeBackupAssetPath(
+        asset.path
+      )
+    ) continue;
+
+    const normalizedPath =
+      normalizeAssetPath(
+        asset.path
+      );
+
+    const exists =
+      await canReadBinary(
+        storageAdapter,
+        `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
+      );
+
+    if (!exists) {
+
+      issues.push(
+        createManifestIssue({
+          code:
+            'asset-backup-file-missing',
+          severity:
+            expectsEveryAssetFile
+              ? 'error'
+              : 'warning',
+          message:
+            expectsEveryAssetFile
+              ? 'Manifest backup ссылается на asset file, которого нет в backup.'
+              : 'Manifest backup не содержит один из asset files; v1 допускает это только как partial asset warning.',
+          path:
+            `${BACKUP_ASSETS_DIR}/${normalizedPath}`
+        })
+      );
+    }
+  }
+}
+
+
+function createBackupManifestValidationResult({
+  manifest,
+  issues
+}) {
+
+  const hasError =
+    issues.some(issue =>
+      issue.severity === 'error'
+    );
+
+  const hasWarning =
+    issues.some(issue =>
+      issue.severity === 'warning'
+    );
+
+  const status =
+    hasError
+      ? BACKUP_MANIFEST_VALIDATION_STATUS.INVALID
+      : hasWarning
+        ? BACKUP_MANIFEST_VALIDATION_STATUS.WARNING
+        : BACKUP_MANIFEST_VALIDATION_STATUS.VALID;
+
+  return {
+    status,
+    valid:
+      status !== BACKUP_MANIFEST_VALIDATION_STATUS.INVALID,
+    restoreBlocking:
+      status === BACKUP_MANIFEST_VALIDATION_STATUS.INVALID,
+    manifest,
+    issues
+  };
+}
+
+
+function createManifestIssue({
+  code,
+  severity,
+  message,
+  path = ''
+}) {
+
+  return {
+    code,
+    severity,
+    restoreBlocking:
+      severity === 'error',
+    message,
+    path
+  };
+}
+
+
+function createBackupManifestValidationError(
+  validation
+) {
+
+  const firstIssue =
+    validation.issues[0];
+
+  const error =
+    new Error(
+      firstIssue
+        ? `Restore blocked: ${firstIssue.message}`
+        : 'Restore blocked: backup manifest failed validation.'
+    );
+
+  error.validation =
+    validation;
+
+  return error;
+}
+
+
+async function canReadText(
+  storageAdapter,
+  path
+) {
+
+  try {
+
+    await storageAdapter.readText(
+      path
+    );
+
+    return true;
+
+  } catch {
+
+    return false;
+  }
+}
+
+
+async function canReadBinary(
+  storageAdapter,
+  path
+) {
+
+  try {
+
+    await storageAdapter.readBinary(
+      path
+    );
+
+    return true;
+
+  } catch {
+
+    return false;
+  }
+}
+
+
+function isSafeBackupPageFileName(
+  name
+) {
+
+  if (typeof name !== 'string') return false;
+
+  const normalized =
+    normalizeWorkspacePath(
+      name
+    );
+
+  if (
+    !normalized ||
+    normalized !== name ||
+    normalized.includes('/') ||
+    normalized.includes('\0') ||
+    /^[a-zA-Z]:/.test(
+      normalized
+    )
+  ) return false;
+
+  const segments =
+    normalized.split('/');
+
+  return segments.every(segment =>
+    segment &&
+    segment !== '.' &&
+    segment !== '..'
+  );
+}
+
+
+function isSafeBackupAssetPath(
+  path
+) {
+
+  if (typeof path !== 'string') return false;
+
+  if (
+    path.startsWith('/') ||
+    path.startsWith('\\') ||
+    path.includes('\0') ||
+    /^[a-zA-Z]:/.test(
+      path
+    )
+  ) return false;
+
+  const normalized =
+    normalizeAssetPath(
+      path
+    );
+
+  if (!normalized) return false;
+
+  const segments =
+    normalized.split('/');
+
+  return segments.every(segment =>
+    segment &&
+    segment !== '.' &&
+    segment !== '..'
+  );
 }
 
 

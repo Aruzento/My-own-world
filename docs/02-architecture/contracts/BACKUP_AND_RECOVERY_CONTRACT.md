@@ -57,6 +57,33 @@ assets/
 - `assets` - список asset references, найденных в persistent HTML страниц;
 - `assetCount` - количество файлов assets, которые удалось скопировать в snapshot.
 
+## Manifest Integrity Validation
+
+Since `0.0.1.12.3`, `backupService` owns structured validation for existing version-1 manifests through `validateWorkspaceBackupManifest()`. This validates the current v1 format; it does not introduce hashes, checksums, a new manifest version, a second backup format or another restore engine.
+
+Validation returns:
+
+- `VALID` - no known integrity issue;
+- `WARNING` - recoverable legacy/partial condition; restore is not blocked by validation alone;
+- `INVALID` - restore-blocking corruption.
+
+The v1 invariants currently checked are:
+
+- manifest text is readable and parses as JSON;
+- manifest is an object;
+- `version` is the supported v1 value;
+- manifest `id` matches the selected backup directory when validating a selected backup;
+- `pages` is an array and `pageCount` matches it;
+- page backup filenames are safe single filenames, not paths;
+- every valid page entry has a readable file under the snapshot `pages/` folder;
+- `assets` and `assetCount` are coherent for v1;
+- asset paths are workspace-relative safe paths;
+- expected copied asset files are readable under the snapshot `assets/` folder.
+
+Asset compatibility rule: v1 stores `assetCount` as the number of files actually copied, while `assets` can contain all references that were attempted. If `assetCount < assets.length`, validation reports a `WARNING` because v1 cannot prove which entries were copied. If the manifest claims every listed asset was copied and one is missing, validation reports `INVALID`.
+
+Actual restore must reject `INVALID` manifests before the mandatory pre-restore backup is created and before any workspace page/asset restore write starts.
+
 ## Что входит в первый слой backup
 
 Первый слой сохраняет:
@@ -81,7 +108,7 @@ Snapshot должен создаваться перед:
 
 ## Restore
 
-Since `0.0.1.10.8`, `restoreWorkspaceBackup()` must create a fresh `pre-restore` safety backup before any page or asset restore write starts. The safety backup uses the existing `BackupService` format, includes assets by default, disables automatic retention cleanup for that one snapshot so the chosen restore source cannot be removed mid-restore, and must be manifest-readable before restore proceeds. If safety backup creation or verification fails, restore is blocked and no workspace page/asset restore writes may start.
+Since `0.0.1.10.8`, `restoreWorkspaceBackup()` must create a fresh `pre-restore` safety backup before any page or asset restore write starts. Since `0.0.1.12.3`, the selected source backup manifest must pass restore-blocking integrity validation before that safety backup is created. The safety backup uses the existing `BackupService` format, includes assets by default, disables automatic retention cleanup for that one snapshot so the chosen restore source cannot be removed mid-restore, and must itself pass manifest validation/readback before restore proceeds. If source validation, safety backup creation or safety backup verification fails, restore is blocked and no workspace page/asset restore writes may start.
 
 Restore первого слоя работает осторожно:
 
@@ -124,10 +151,10 @@ The Settings backup UI consumes the runtime plan only to show a human-readable s
 | Flow | Current owner | Current contract |
 | --- | --- | --- |
 | Backup create | `js/storage/backupService.js#createWorkspaceBackup` | Reads runtime pages or explicit pages, scans persistent asset references, writes snapshot files through the active `StorageAdapter`, then applies retention cleanup unless disabled. |
-| Backup manifest | `backupService#createBackupManifest` plus internal manifest reader | Manifest version `1` records page metadata and asset references. A missing or corrupt manifest makes the backup unreadable for list/restore. |
+| Backup manifest | `backupService#createBackupManifest`, internal manifest reader and `validateWorkspaceBackupManifest` | Manifest version `1` records page metadata and asset references. A missing/corrupt manifest, unsupported version, mismatched id, unsafe page/asset path, wrong page count, missing backup page file or missing expected asset file produces structured validation issues. `INVALID` validation blocks restore; `WARNING` remains non-blocking for recoverable v1 partial asset metadata. |
 | Backup list | `backupService#listWorkspaceBackups` and `listIncompleteWorkspaceBackups` | Complete backups are directories with readable `manifest.json`; incomplete backups are directories under `.my-own-world-backups/` without a readable manifest. Scanning is non-destructive. |
 | Pre-restore backup | `backupService#createAndVerifyPreRestoreBackup` through `requireWorkspaceBackupBeforeRiskyOperation` | Restore must create and reread a fresh `pre-restore` backup before any restore page/asset write. Failure blocks restore before destructive writes. |
-| Restore | `backupService#restoreWorkspaceBackup` | Full restore writes saved pages/assets through `StorageAdapter`, creates/overwrites files present in the snapshot and does not delete files created after backup. A missing backup page file currently rejects restore; a missing backup asset currently logs a warning, restores the other files and leaves the current asset untouched. |
+| Restore | `backupService#restoreWorkspaceBackup` | Full restore writes saved pages/assets through `StorageAdapter`, creates/overwrites files present in the snapshot and does not delete files created after backup. Restore now blocks before pre-restore backup/workspace writes when selected-source manifest validation is `INVALID`. Legacy partial v1 asset backups can still validate as `WARNING` and keep the existing non-blocking asset behavior. |
 | Post-restore reload/refresh | Settings backup UI in `js/ui/appTopbar.js#reloadWorkspaceAfterRestore` | UI restore calls `loadWorkspace()`, reloads page templates, restores tree expansion, renders the tree and shows empty editor if the restored workspace has no pages. Repository/index refresh is owned by the normal workspace load path. |
 | Schema diagnostics | `js/schema/workspaceSchema.js` and `js/schema/schemaRecovery.js` | Validation is diagnostics-first. `WorkspaceRecoveryReport` groups issues and identifies model-level repair actions, but persistent repair requires an explicit user action and backup. |
 | Asset diagnostics | `assetReferenceScanner`, `assetBrokenChecker`, `assetOrphanDetector`, `assetWorkspaceService`, Settings asset/diagnostics UI | Scanners classify persistent asset references, missing asset paths and orphan candidates. They do not repair links or delete files. Orphan deletion remains a separate user-confirmed, backup-gated UI flow. |
