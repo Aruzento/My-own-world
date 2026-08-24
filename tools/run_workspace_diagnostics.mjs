@@ -10,6 +10,10 @@ import {
   normalizeWorkspaceAccessError
 } from '../js/storage/workspaceAccessDiagnostics.js';
 
+import {
+  buildBrokenInternalLinkReport
+} from '../js/storage/internalLinkDiagnostics.js';
+
 
 const args =
   parseArgs(
@@ -161,6 +165,11 @@ async function runDiagnostics(
       )
     );
 
+  const internalLinkDiagnostics =
+    buildBrokenInternalLinkReport({
+      pages
+    });
+
   const largestPages =
     pages
       .slice()
@@ -235,6 +244,8 @@ async function runDiagnostics(
       assetFiles,
       backupHealth,
       missingAssetReferences,
+      brokenInternalLinks:
+        internalLinkDiagnostics.issues,
       heavyMaps
     });
 
@@ -266,6 +277,8 @@ async function runDiagnostics(
         assetReferences.length,
       missingAssetReferenceCount:
         missingAssetReferences.length,
+      brokenInternalLinkCount:
+        internalLinkDiagnostics.summary.issueCount,
       completeBackupCount:
         backupHealth.completeCount,
       incompleteBackupCount:
@@ -293,6 +306,17 @@ async function runDiagnostics(
         0,
         30
       ),
+    internalLinkDiagnostics: {
+      summary:
+        internalLinkDiagnostics.summary,
+      groups:
+        internalLinkDiagnostics.groups,
+      issues:
+        internalLinkDiagnostics.issues.slice(
+          0,
+          30
+        )
+    },
     heavyMaps,
     backupHealth,
     warnings,
@@ -1077,6 +1101,7 @@ function buildWarnings({
   assetFiles,
   backupHealth,
   missingAssetReferences,
+  brokenInternalLinks = [],
   heavyMaps
 }) {
 
@@ -1149,6 +1174,23 @@ function buildWarnings({
     });
   }
 
+  if (brokenInternalLinks.length) {
+
+    warnings.push({
+      code:
+        'broken_internal_links',
+      message:
+        'Some pages contain internal page/wiki/relationship references that cannot be resolved.',
+      count:
+        brokenInternalLinks.length,
+      examples:
+        brokenInternalLinks.slice(
+          0,
+          5
+        )
+    });
+  }
+
   if (backupHealth.incompleteCount) {
 
     warnings.push({
@@ -1213,6 +1255,10 @@ function printHumanReport(
 
   console.log(
     `Asset refs: ${diagnostics.summary.assetReferenceCount}, missing refs: ${diagnostics.summary.missingAssetReferenceCount}`
+  );
+
+  console.log(
+    `Internal link issues: ${diagnostics.summary.brokenInternalLinkCount}`
   );
 
   console.log(

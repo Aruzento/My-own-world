@@ -127,6 +127,14 @@ export {
 
 
 export {
+  INTERNAL_LINK_REASONS,
+  INTERNAL_LINK_TYPES,
+  buildBrokenInternalLinkReport,
+  collectInternalLinkReferencesFromPages
+} from './internalLinkDiagnostics.js';
+
+
+export {
   createLocationMusicHTML,
   createLocationMusicReferences,
   normalizeLocationMusic,

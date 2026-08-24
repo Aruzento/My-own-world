@@ -176,6 +176,21 @@ This is not an atomic restore guarantee. If a mid-restore workspace write fails 
 
 The Settings restore flow also distinguishes durable restore failure from runtime refresh failure. If restore writes complete but `reloadWorkspaceAfterRestore()` fails, the UI reports that restore was applied but the workspace did not refresh, includes the safety backup id and avoids the normal success message.
 
+## Broken Internal Link Diagnostics
+
+Since `0.0.1.12.7`, `js/storage/internalLinkDiagnostics.js` owns non-destructive diagnostics for currently supported internal references. It builds a runtime report from existing page data and PageIndex/PageRepository lookup behavior; it does not create a second global page database, repair links, delete anything, rewrite page content or change persistent format.
+
+The current supported reference types are:
+
+- raw wiki links such as `[[Title]]` and `[[Title|label]]`;
+- converted wiki anchors with `wiki-link` / `internal-link` page metadata;
+- ordinary internal page anchors with persisted page target metadata;
+- relationship endpoints stored on page relationship metadata.
+
+The report groups issues by type and reason. Current reasons include missing target page, missing/unknown target id, missing relationship endpoint, malformed internal reference and ambiguous title/alias target. Ambiguous targets are informational diagnostics only: MyOwnWorld must not guess which page the user intended. External URLs and plain unfinished text are ignored.
+
+Settings workspace diagnostics and `tools/run_workspace_diagnostics.mjs` consume the same report. The CLI can be run read-only with `--no-write-probe` when diagnostics must not create the temporary workspace access probe.
+
 ## Phase 12 Baseline Flow Map
 
 `0.0.1.12.1` recorded the current recovery contract before restore preview, partial restore and link repair work. The disposable fixture source is `tests/fixtures/dataSafetyFixtures.mjs`; the baseline assertions are in `tests/dataSafetyRecoveryFixtures.test.mjs`. The fixtures are input states only and do not encode future repair behavior.
@@ -190,7 +205,7 @@ The Settings restore flow also distinguishes durable restore failure from runtim
 | Post-restore reload/refresh | Settings backup UI in `js/ui/appTopbar.js#reloadWorkspaceAfterRestore` | UI restore calls `loadWorkspace()`, reloads page templates, restores tree expansion, renders the tree and shows empty editor if the restored workspace has no pages. Repository/index refresh is owned by the normal workspace load path. If durable restore applied but this refresh fails, Settings reports that the workspace did not refresh and does not show the normal success state. |
 | Schema diagnostics | `js/schema/workspaceSchema.js` and `js/schema/schemaRecovery.js` | Validation is diagnostics-first. `WorkspaceRecoveryReport` groups issues and identifies model-level repair actions, but persistent repair requires an explicit user action and backup. |
 | Asset diagnostics | `assetReferenceScanner`, `assetBrokenChecker`, `assetOrphanDetector`, `assetWorkspaceService`, Settings asset/diagnostics UI | Scanners classify persistent asset references, missing asset paths and orphan candidates. They do not repair links or delete files. Orphan deletion remains a separate user-confirmed, backup-gated UI flow. |
-| Known link diagnostics | Current wiki/graph owners: `wikiLinkLookup`, backlinks and Knowledge Graph relationship model | Wiki lookup and graph relationship rendering exist, but there is no dedicated broken wiki/ordinary/relation link repair scanner yet. Phase 12 fixtures include broken wiki-link and broken relationship-target inputs so future link-safety leaves can add diagnostics without guessing targets. |
+| Known link diagnostics | `js/storage/internalLinkDiagnostics.js`, PageIndex/PageRepository lookup behavior, current wiki/relationship metadata owners, Settings diagnostics and CLI diagnostics | Diagnostics classify broken raw/converted wiki links, ordinary internal page anchors and relationship endpoints without repair, target guessing or persistent writes. Future repair flows must consume this as evidence and still require explicit user intent plus backup-gated persistence where destructive. |
 
 ## Что нельзя делать
 

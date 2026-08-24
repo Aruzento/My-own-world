@@ -507,7 +507,7 @@ test(
     expect(
       result.cardCount
     ).toBe(
-      10
+      11
     );
 
     expect(
@@ -572,6 +572,171 @@ test(
       result.warningCount
     ).toBeGreaterThan(
       0
+    );
+  }
+);
+
+
+test(
+  'workspace-diagnostics-panel-groups-broken-internal-links-without-repair-actions',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const popup =
+            document.createElement('div');
+
+          document.body.appendChild(
+            popup
+          );
+
+          const {
+            renderWorkspaceDiagnosticsPanel
+          } = await import(
+            '/js/ui/workspaceDiagnosticsPanel.js'
+          );
+
+          await renderWorkspaceDiagnosticsPanel(
+            popup,
+            {
+              hasWorkspace: true,
+              autoRun: true,
+              workspacePath: 'X:\\ДНД\\Мастер\\База',
+              canWriteWorkspace: true,
+              backupStatus: {
+                backups: [],
+                incomplete: []
+              },
+              pendingOperations: [],
+              pages: [
+                {
+                  id: 'alias-target',
+                  title: 'Alias Target',
+                  aliases: [
+                    'Safe Alias'
+                  ],
+                  type: 'card',
+                  body: '<h1>Alias Target</h1>'
+                },
+                {
+                  id: 'castle-a',
+                  title: 'Castle',
+                  type: 'card',
+                  body: '<h1>Castle A</h1>'
+                },
+                {
+                  id: 'castle-b',
+                  title: 'Castle',
+                  type: 'card',
+                  body: '<h1>Castle B</h1>'
+                },
+                {
+                  id: 'source',
+                  title: 'Source',
+                  type: 'card',
+                  relationships: [
+                    {
+                      type: 'ally',
+                      targetId: 'missing-ally',
+                      label: 'Lost ally'
+                    }
+                  ],
+                  body: `
+                    <h1>Source</h1>
+                    <a class="wiki-link internal-link is-missing" href="#" data-page-id="missing-page" data-page-title="Missing Page">Missing Page</a>
+                    <a class="internal-link" href="#" data-page-id="missing-anchor">Missing anchor</a>
+                    <p>[[Castle]]</p>
+                    <p>[[Safe Alias]]</p>
+                    <a href="https://example.com">External</a>
+                  `
+                }
+              ],
+              listAssetPaths: async () => [],
+              performanceEvents: []
+            }
+          );
+
+          return {
+            text:
+              popup.textContent,
+            cardValues:
+              [
+                ...popup.querySelectorAll('.app-workspace-diagnostics-card')
+              ].map(card => [
+                card.querySelector('span')?.textContent || '',
+                card.querySelector('strong')?.textContent || ''
+              ])
+          };
+        }
+      );
+
+    expect(
+      result.cardValues
+    ).toContainEqual(
+      [
+        'Внутренние ссылки',
+        '4'
+      ]
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Есть проблемные внутренние ссылки: 4'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Wiki-ссылки'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Связи графа'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Внутренние page-ссылки'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'несколько совпадений'
+    );
+
+    expect(
+      result.text
+    ).toContain(
+      'Missing Page'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'Safe Alias ->'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'External'
+    );
+
+    expect(
+      result.text
+    ).not.toContain(
+      'Исправить'
     );
   }
 );

@@ -15,6 +15,7 @@ import {
 
 import {
   buildAssetVerificationReport,
+  buildBrokenInternalLinkReport,
   updatePageParent
 } from '../storage/storage.js';
 
@@ -266,6 +267,14 @@ export async function collectWorkspaceDiagnostics(
   const orphanAssets =
     assetVerification.orphanCandidates;
 
+  const internalLinkDiagnostics =
+    buildBrokenInternalLinkReport({
+      pages
+    });
+
+  const brokenInternalLinks =
+    internalLinkDiagnostics.issues;
+
   const pageStats =
     createPageStats(
       pages
@@ -309,6 +318,7 @@ export async function collectWorkspaceDiagnostics(
       orphanAssets,
       assetCheckFailures:
         assetVerification.checkFailures,
+      brokenInternalLinks,
       pageStats,
       heavyMaps,
       slowOperations
@@ -332,6 +342,8 @@ export async function collectWorkspaceDiagnostics(
         orphanAssets.length,
       assetCheckFailures:
         assetVerification.summary.checkFailures,
+      brokenInternalLinks:
+        brokenInternalLinks.length,
       schemaIssues:
         schema.issues.length,
       schemaErrors:
@@ -371,6 +383,7 @@ export async function collectWorkspaceDiagnostics(
         0,
         8
       ),
+    internalLinkDiagnostics,
     heavyMaps,
     performanceEvents,
     warnings
@@ -803,6 +816,14 @@ function renderDiagnosticsResult(
         ...options,
         container
       }
+    )
+  );
+
+  container.appendChild(
+    createListSection(
+      'Внутренние ссылки',
+      diagnostics.internalLinkDiagnostics?.groups || [],
+      formatInternalLinkGroup
     )
   );
 
@@ -1461,6 +1482,89 @@ function formatRecoveryExampleDetails(
 }
 
 
+function formatInternalLinkGroup(
+  group
+) {
+
+  const examples =
+    (group.examples || [])
+      .slice(
+        0,
+        3
+      )
+      .map(formatInternalLinkIssue)
+      .join(' / ');
+
+  return [
+    formatInternalLinkType(
+      group.linkType
+    ),
+    formatInternalLinkReason(
+      group.reason
+    ),
+    `${group.count} шт.`,
+    examples
+  ]
+    .filter(Boolean)
+    .join(' · ');
+}
+
+
+function formatInternalLinkIssue(
+  issue
+) {
+
+  const target =
+    issue.originalTarget ||
+    issue.targetTitle ||
+    issue.targetId ||
+    'цель не указана';
+
+  const ambiguity =
+    issue.candidateCount
+      ? ` (${issue.candidateCount} совпадения)`
+      : '';
+
+  return `${issue.sourcePageTitle || issue.sourcePageId || 'Без названия'} -> ${target}${ambiguity}`;
+}
+
+
+function formatInternalLinkType(
+  type
+) {
+
+  if (type === 'wiki') return 'Wiki-ссылки';
+  if (type === 'relationship') return 'Связи графа';
+  if (type === 'internal-page') return 'Внутренние page-ссылки';
+
+  return 'Внутренние ссылки';
+}
+
+
+function formatInternalLinkReason(
+  reason
+) {
+
+  const labels =
+    {
+      TARGET_PAGE_MISSING:
+        'страница не найдена',
+      TARGET_ID_UNKNOWN:
+        'цель не указана',
+      RELATION_ENDPOINT_MISSING:
+        'цель связи не найдена',
+      MALFORMED_INTERNAL_REFERENCE:
+        'ссылка повреждена',
+      TARGET_AMBIGUOUS:
+        'несколько совпадений'
+    };
+
+  return labels[reason] ||
+    reason ||
+    'причина неизвестна';
+}
+
+
 function createSummaryGrid(
   summary
 ) {
@@ -1478,6 +1582,7 @@ function createSummaryGrid(
     ['Сломанные ссылки', summary.brokenAssets],
     ['Кандидаты ассетов', summary.orphanAssets],
     ['Ошибки проверки ассетов', summary.assetCheckFailures],
+    ['Внутренние ссылки', summary.brokenInternalLinks],
     ['Проблем схемы', summary.schemaIssues],
     ['Резервные копии', summary.backups],
     ['Незавершённые копии', summary.incompleteBackups],
@@ -1673,6 +1778,7 @@ function createWarnings({
   brokenAssets,
   orphanAssets,
   assetCheckFailures = [],
+  brokenInternalLinks = [],
   pageStats,
   heavyMaps,
   slowOperations
@@ -1751,6 +1857,13 @@ function createWarnings({
 
     warnings.push(
       `Проверка ассетов не завершена: ${assetCheckFailures.length}`
+    );
+  }
+
+  if (brokenInternalLinks.length) {
+
+    warnings.push(
+      `Есть проблемные внутренние ссылки: ${brokenInternalLinks.length}`
     );
   }
 

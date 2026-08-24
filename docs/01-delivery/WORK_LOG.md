@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.12.7 Broken Link Diagnostics
+
+### Disposition
+
+- Closed `0.0.1.12.7` as a focused Data Safety leaf.
+- Added one grouped broken-internal-link diagnostic report on top of existing page lookup/index behavior.
+- Reused current wiki-link, relationship metadata and PageIndex/PageRepository contracts.
+- Did not add repair buttons, automatic link rewriting, target guessing, deletion, persistent format migration or a second global page database.
+
+### Diagnostic Contract
+
+- The report covers raw wiki links like `[[Title]]` / `[[Title|label]]`, converted wiki anchors, ordinary internal page anchors and relationship endpoints.
+- Issues are grouped by source/type/reason and expose the source page, original target, link type, relationship type where relevant and deterministic candidate count when a title/alias is ambiguous.
+- Supported reasons are `TARGET_PAGE_MISSING`, `TARGET_ID_UNKNOWN`, `RELATION_ENDPOINT_MISSING`, `MALFORMED_INTERNAL_REFERENCE` and `TARGET_AMBIGUOUS`.
+- Valid page ids, valid titles, aliases, internal rule links, root pages and external URLs are not reported as broken. Ambiguous matches are reported for review, not auto-selected.
+- Settings workspace diagnostics now shows a `Внутренние ссылки` summary card and grouped rows; the workspace diagnostics CLI reports the same count and emits a `broken_internal_links` warning.
+
+### Tests
+
+- Added `tests/internalLinkDiagnostics.test.mjs` for valid references, aliases, internal rules, external URL ignoring, broken wiki links, ordinary internal anchors, relationship endpoints, malformed references and ambiguous titles.
+- Updated `tests/workspaceDiagnosticsCli.test.mjs` so human CLI output reports broken internal link counts without write probing.
+- Updated `tests/browser/asset-health.spec.mjs` so Settings workspace diagnostics groups broken internal links and does not expose repair actions.
+
+### Real Workspace Diagnostics
+
+- Final read-only diagnostic pass used `--no-write-probe` on `X:\ДНД\Мастер\По кампаниям\База`.
+- Result: 697 pages, 27 maps, 144 asset files, 528 asset references, 0 missing asset references, 71 internal link issues.
+- Advisory warnings remained large pages, large assets, broken internal links and heavy maps.
+- Procedural note: an earlier CLI run used the default access write probe before I noticed this leaf asked for safe read-only diagnostics. That probe only creates and removes a temporary `.my-own-world-write-probe-*` file; a follow-up check found no such file left in the workspace. No repair, deletion or content mutation was performed on the real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.12.8` Orphan Review.
+
 ## 2026-08-24: 0.0.1.12.6 Asset Verification
 
 ### Disposition
