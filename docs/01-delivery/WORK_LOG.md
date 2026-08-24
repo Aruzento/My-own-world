@@ -6,6 +6,53 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-24: 0.0.1.14.2 Safe Dice Formula Parser
+
+### Disposition
+
+- Closed `0.0.1.14.2` as the parser-only Dice Engine leaf.
+- Followed the owner-directed `0.0.1.14.2` task from current HEAD `28f3a9a`.
+- Did not start `0.0.1.14.3` Core Dice Evaluator.
+- Set the next leaf to `0.0.1.14.3` Core Dice Evaluator.
+
+### Parser Boundary
+
+- Added `js/dice/diceEngine.js` as the first public Dice Engine facade.
+- Added `parseDiceFormula(formula)` for parser-only formula handling.
+- AST output is deterministic runtime data only, with node types `number`, `dice`, `unary` and `binary`.
+- V1 parser supports integers, `d20` / `1d20` / `2d6` / `10d8`, `+`, `-`, `*`, `/`, unary `+` / `-`, and parentheses.
+- Whitespace between grammar tokens is ignored.
+- The parser produces no rolls, no totals, no timestamps, no ids and no caller-specific context.
+
+### Security Boundary
+
+- Formula text is treated as data only.
+- Malformed dice and code-shaped payloads are rejected with `DiceFormulaSyntaxError`.
+- The implementation does not use `eval`, `window.eval`, `globalThis.eval`, `Function`, `new Function`, string timers, dynamic import, DOM interpretation or JSON-to-code behavior.
+- Unsupported identifiers, property access, function calls, arrays, strings, ternaries, exponentiation, comments, macros and variables are rejected rather than interpreted.
+
+### Explicit Non-Work
+
+- Did not implement dice rolling, evaluator, RNG injection, limits beyond safe integer parsing, advantage/disadvantage, critical policy, initiative migration, UI, persistence, event log, combat actions or real-workspace mutation.
+- Did not change workspace/page/backup persistent formats.
+
+### Contract
+
+- Added [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with parser scope, public boundary, supported V1 grammar, error contract, security forbidden list and non-goals.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --check tests\diceFormulaParser.test.mjs`
+- `node --test tests\diceFormulaParser.test.mjs`
+- `npm run verify`
+- `npm run docs:index`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.3` Core Dice Evaluator.
+
 ## 2026-08-24: 0.0.1.14.0 NF-002 Safe Dice Engine Phase Start
 
 ### Disposition

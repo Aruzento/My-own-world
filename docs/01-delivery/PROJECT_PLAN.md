@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
 
-Current leaf: `0.0.1.14.1` Dice Baseline & Public Contract is `NEXT`.
+Current leaf: `0.0.1.14.3` Core Dice Evaluator is `NEXT`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL` and `0.0.1.13.0` are closed. `0.0.1.14.0` is active for NF-002 Safe Dice Engine planning/implementation leaves. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0` and `0.0.1.14.2` are closed. `0.0.1.14.0` is active for NF-002 Safe Dice Engine planning/implementation leaves. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 ## Execution Rules
 
@@ -274,6 +274,8 @@ EXIT CRITERIA: parser/evaluator is safe; roll results are structured; no arbitra
 CURRENT LEAF RESULTS:
 
 - `0.0.1.14.0` Phase Start - `DONE` on 2026-08-24. Current status docs mark this phase `ACTIVE`, keep `0.0.1.15.0` Event / Roll / Combat Log + Transactions `BLOCKED`, and set the next leaf to `0.0.1.14.1` Dice Baseline & Public Contract. No dice engine implementation, persistent format migration, event log, combat functionality or real workspace mutation was performed.
+
+- `0.0.1.14.2` Safe Dice Formula Parser - `DONE` on 2026-08-24. Added the first Dice Engine public parser facade `parseDiceFormula(formula)` in `js/dice/diceEngine.js`, producing deterministic runtime AST nodes (`number`, `dice`, `unary`, `binary`) for integers, V1 dice terms, arithmetic, unary operators and parentheses. The parser rejects malformed dice and code-shaped payloads as syntax/data, uses no code-execution primitives, and is documented in [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md). No dice rolling, evaluator, RNG, initiative migration, UI, persistence, event log, combat functionality or real workspace mutation was implemented.
 
 ### Phase 7 - 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions
 
