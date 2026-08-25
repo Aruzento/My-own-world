@@ -103,7 +103,7 @@ Request shape:
 
 - `formula`: string parsed by `parseDiceFormula`;
 - `mode`: optional, currently `normal`, `advantage` or `disadvantage`;
-- `criticalPolicy`: optional, currently only `none`.
+- `criticalPolicy`: optional, currently `none` or `d20-natural`.
 
 Randomness contract:
 
@@ -128,7 +128,7 @@ Evaluator semantics:
 - dice terms are independent;
 - no hidden rerolls in `normal` mode;
 - advantage/disadvantage behavior is mode-owned and documented in `0.0.1.14.7`;
-- no critical rules;
+- explicit natural d20 critical metadata is policy-owned and documented in `0.0.1.14.8`;
 - division by zero is rejected;
 - non-finite or unsafe numeric totals are rejected.
 
@@ -252,7 +252,7 @@ Request data:
 - `formulaOriginal`: the exact formula string supplied by the caller;
 - `formulaNormalized`: the whitespace-normalized V1 formula string;
 - `mode`: effective roll mode, currently `normal`, `advantage` or `disadvantage`;
-- `criticalPolicy`: effective critical policy, currently `none`.
+- `criticalPolicy`: effective critical policy, currently `none` or `d20-natural`.
 
 Dice term data:
 
@@ -272,8 +272,9 @@ Breakdown data:
 Critical data:
 
 - `critical.policy` records the effective critical policy;
-- `critical.classification` is currently `none`;
-- no critical behavior is implemented until its dedicated leaf.
+- `critical.kind` records the semantic classification;
+- `criticalPolicy: "none"` always returns `kind: "none"`;
+- `criticalPolicy: "d20-natural"` is documented in `0.0.1.14.8`.
 
 Immutability and separation:
 
@@ -294,7 +295,7 @@ Phase 14.6 does not:
 - persist roll results;
 - create event/roll/combat log records;
 - implement advantage/disadvantage;
-- implement critical rules.
+- implement combat effects.
 
 ## 0.0.1.14.7 Advantage And Disadvantage Contract
 
@@ -363,6 +364,66 @@ Phase 14.7 does not:
 - persist roll results;
 - create event/roll/combat log records.
 
+## 0.0.1.14.8 Critical Semantics Contract
+
+Critical semantics are explicit request policy, not automatic D&D attack behavior.
+
+Supported policies:
+
+- `none`;
+- `d20-natural`.
+
+`criticalPolicy: "none"`:
+
+- performs no critical success/failure classification;
+- still exposes rolled faces through `dice`;
+- returns `critical: { policy: "none", kind: "none" }`.
+
+`criticalPolicy: "d20-natural"`:
+
+- requires exactly one eligible primary `d20`/`1d20` dice term;
+- allows deterministic arithmetic around that d20;
+- rejects additional dice terms, non-d20 terms and arithmetic-only formulas before RNG;
+- classifies the selected natural d20 face, not the final modified total.
+
+Classification:
+
+- selected natural `20` -> `critical.kind: "success"`;
+- selected natural `1` -> `critical.kind: "failure"`;
+- every other selected natural face -> `critical.kind: "none"`.
+
+Result shape for `d20-natural`:
+
+- `critical.policy: "d20-natural"`;
+- `critical.kind: "success"`, `"failure"` or `"none"`;
+- `critical.selectedNatural`: the selected natural d20 face;
+- `critical.diceTermIndex`: the dice term used for classification.
+
+Advantage/disadvantage:
+
+- critical classification uses the selected natural d20 face;
+- discarded advantage/disadvantage candidate faces never classify the critical result;
+- modifier arithmetic is applied once and does not alter the natural-face classification.
+
+Unsupported `d20-natural` formula shapes throw `DiceFormulaEvaluationError` with:
+
+- `code: "DICE_FORMULA_EVALUATION_ERROR"`;
+- `classification: "UNSUPPORTED_CRITICAL_POLICY_FORMULA"`;
+- `criticalPolicy: "d20-natural"`;
+- no RNG calls performed before rejection.
+
+Phase 14.8 does not:
+
+- double damage dice;
+- apply damage or healing;
+- automatically hit or miss;
+- modify HP;
+- invoke combat rules;
+- create UI;
+- migrate initiative;
+- persist roll results;
+- create event/roll/combat log records.
+
 ## Next Owner
 
-`0.0.1.14.8` Critical Semantics owns explicit critical classification. The Dice Engine still does not own UI, persistence, event logs or combat behavior.
+`0.0.1.14.9` Initiative Parity owns deciding whether the existing initiative roller can safely consume the public Dice Engine facade. The Dice Engine still does not own UI, persistence, event logs or combat behavior.

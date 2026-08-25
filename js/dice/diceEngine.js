@@ -16,6 +16,12 @@ const ROLL_MODES =
     'disadvantage'
   ]);
 
+const CRITICAL_POLICIES =
+  new Set([
+    'none',
+    'd20-natural'
+  ]);
+
 
 export const DICE_ENGINE_LIMITS =
   Object.freeze({
@@ -125,6 +131,7 @@ export class DiceFormulaEvaluationError extends Error {
       observed = undefined,
       classification = null,
       mode = null,
+      criticalPolicy = null,
       diceTermCount = null,
       cause = null
     } = {}
@@ -172,6 +179,14 @@ export class DiceFormulaEvaluationError extends Error {
 
       this.mode =
         mode;
+    }
+
+    if (
+      criticalPolicy !== null
+    ) {
+
+      this.criticalPolicy =
+        criticalPolicy;
     }
 
     if (
@@ -339,6 +354,7 @@ export function rollDice(
   const rollMode =
     createRollModeContext(
       normalizedRequest.mode,
+      normalizedRequest.criticalPolicy,
       ast
     );
 
@@ -349,7 +365,9 @@ export function rollDice(
       formulaOriginal:
         normalizedRequest.formula,
       dice:
-        []
+        [],
+      primaryD20Result:
+        null
     };
 
   const evaluation =
@@ -388,7 +406,8 @@ export function rollDice(
       evaluation.breakdown,
     critical:
       createCriticalResult(
-        normalizedRequest.criticalPolicy
+        normalizedRequest.criticalPolicy,
+        context
       )
   });
 }
@@ -709,11 +728,17 @@ function validateRollOptions(
   }
 
   if (
-    request.criticalPolicy !== 'none'
+    !CRITICAL_POLICIES.has(
+      request.criticalPolicy
+    )
   ) {
 
     throw createEvaluationError(
-      'Only none critical policy is supported in this dice engine leaf'
+      'Unsupported dice critical policy',
+      {
+        criticalPolicy:
+          request.criticalPolicy
+      }
     );
   }
 }
@@ -736,11 +761,13 @@ function validateRandomInt(
 
 function createRollModeContext(
   mode,
+  criticalPolicy,
   ast
 ) {
 
   if (
-    mode === 'normal'
+    mode === 'normal' &&
+    criticalPolicy === 'none'
   ) {
 
     return {
@@ -765,6 +792,23 @@ function createRollModeContext(
     primaryD20Node.count !== 1 ||
     primaryD20Node.sides !== 20
   ) {
+
+    if (
+      criticalPolicy === 'd20-natural' &&
+      mode === 'normal'
+    ) {
+
+      throw createEvaluationError(
+        'd20-natural critical policy requires exactly one d20 dice term and no other dice terms',
+        {
+          classification:
+            'UNSUPPORTED_CRITICAL_POLICY_FORMULA',
+          criticalPolicy,
+          diceTermCount:
+            diceTerms.length
+        }
+      );
+    }
 
     throw createEvaluationError(
       'Advantage and disadvantage require exactly one d20 dice term and no other dice terms',
@@ -842,15 +886,92 @@ function normalizeFormulaForResult(
 
 
 function createCriticalResult(
-  criticalPolicy
+  criticalPolicy,
+  context
 ) {
+
+  if (
+    criticalPolicy === 'd20-natural'
+  ) {
+
+    const primaryD20Result =
+      context.primaryD20Result;
+
+    if (
+      primaryD20Result === null
+    ) {
+
+      throw createEvaluationError(
+        'd20-natural critical policy could not resolve the primary d20 result',
+        {
+          classification:
+            'UNSUPPORTED_CRITICAL_POLICY_FORMULA',
+          criticalPolicy
+        }
+      );
+    }
+
+    const selectedNatural =
+      getSelectedNaturalD20Face(
+        primaryD20Result
+      );
+
+    return {
+      policy:
+        criticalPolicy,
+      kind:
+        classifyNaturalD20Critical(
+          selectedNatural
+        ),
+      selectedNatural,
+      diceTermIndex:
+        primaryD20Result.diceTermIndex
+    };
+  }
 
   return {
     policy:
       criticalPolicy,
-    classification:
+    kind:
       'none'
   };
+}
+
+
+function getSelectedNaturalD20Face(
+  diceTerm
+) {
+
+  if (
+    diceTerm.selection !== undefined
+  ) {
+
+    return diceTerm.selection.selectedNatural;
+  }
+
+  return diceTerm.faces[0];
+}
+
+
+function classifyNaturalD20Critical(
+  selectedNatural
+) {
+
+  if (
+    selectedNatural === 20
+  ) {
+
+    return 'success';
+  }
+
+  if (
+    selectedNatural === 1
+  ) {
+
+    return 'failure';
+  }
+
+  return 'none';
 }
 
 
@@ -1097,6 +1218,14 @@ function createDiceTermEvaluation(
   context.dice.push(
     diceTerm
   );
+
+  if (
+    context.rollMode.primaryD20Node === node
+  ) {
+
+    context.primaryD20Result =
+      diceTerm;
+  }
 
   return createEvaluation(
     total,

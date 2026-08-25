@@ -497,7 +497,7 @@ test(
             () => 1
         }
       ),
-      /none critical policy/
+      /Unsupported dice critical policy/
     );
 
     assertEvaluationError(

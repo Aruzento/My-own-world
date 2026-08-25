@@ -208,7 +208,7 @@ test(
         critical: {
           policy:
             'none',
-          classification:
+          kind:
             'none'
         }
       }

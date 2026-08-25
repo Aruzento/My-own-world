@@ -6,6 +6,78 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-25: 0.0.1.14.8 Explicit Natural d20 Critical Semantics
+
+### Disposition
+
+- Closed `0.0.1.14.8` as the explicit natural d20 critical-classification leaf.
+- Started from current HEAD `25f8a37`.
+- Did not start `0.0.1.14.9` Initiative Parity.
+- Set the next leaf to `0.0.1.14.9` Initiative Parity.
+
+### Request Contract
+
+- `rollDice()` now accepts `criticalPolicy: "none"` and `criticalPolicy: "d20-natural"`.
+- `criticalPolicy: "none"` remains the default and performs no semantic critical success/failure classification.
+- `criticalPolicy: "d20-natural"` is explicit opt-in metadata only; it does not make every d20 roll an attack roll.
+
+### Natural d20 Semantics
+
+- The engine classifies the selected natural d20 face, not the final modified total.
+- Natural `20` returns `critical.kind: "success"`.
+- Natural `1` returns `critical.kind: "failure"`.
+- Any other selected natural face returns `critical.kind: "none"`.
+- `d20 + 7` with natural `13` and final total `20` is not a critical success.
+- `d20 - 3` with natural `20` and final total `17` is a critical success.
+
+### Advantage And Disadvantage
+
+- With `mode: "advantage"` or `mode: "disadvantage"`, critical classification uses `selection.selectedNatural`.
+- Discarded candidate faces remain visible in the roll result, but they do not drive critical classification.
+- Modifier arithmetic still applies once after selecting the natural face.
+
+### Unsupported Formula Handling
+
+- `d20-natural` requires exactly one eligible primary `d20`/`1d20` dice term.
+- Unsupported non-d20, multi-dice and arithmetic-only formulas fail as `UNSUPPORTED_CRITICAL_POLICY_FORMULA`.
+- Unsupported critical-policy formula shapes are rejected before any RNG call.
+
+### Result Shape
+
+- `critical.kind` is now the public critical classification field.
+- `criticalPolicy: "none"` returns `critical: { policy: "none", kind: "none" }`.
+- `criticalPolicy: "d20-natural"` returns policy, kind, selected natural face and source dice term index.
+
+### Explicit Non-Work
+
+- Did not double damage dice.
+- Did not apply damage or healing.
+- Did not add auto hit or auto miss behavior.
+- Did not modify HP or invoke combat rules.
+- Did not create dice UI.
+- Did not migrate Campaign Map initiative.
+- Did not persist roll results.
+- Did not create event/roll/combat log records.
+- Did not mutate a real workspace or change persistent formats.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with `d20-natural` policy, critical result shape, unsupported-policy error classification and the no-combat-effects boundary.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --check tests\diceCriticalSemantics.test.mjs`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs tests\diceStructuredRollResult.test.mjs tests\diceRollModes.test.mjs tests\diceCriticalSemantics.test.mjs`
+- `npm run docs:index`
+- `npm run test`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.9` Initiative Parity.
+
 ## 2026-08-25: 0.0.1.14.7 Advantage And Disadvantage
 
 ### Disposition
