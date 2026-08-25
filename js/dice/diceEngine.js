@@ -305,31 +305,51 @@ export function rollDice(
   const context =
     {
       randomInt,
-      rolls: []
+      formulaOriginal:
+        normalizedRequest.formula,
+      dice:
+        []
     };
+
+  const evaluation =
+    evaluateDiceNode(
+      ast,
+      context
+    );
 
   const total =
     assertSupportedNumber(
-      evaluateDiceNode(
-        ast,
-        context
-      ),
+      evaluation.total,
       'Roll total is outside the supported numeric range'
     );
 
-  return {
-    type:
-      'rollResult',
-    formula:
-      normalizedRequest.formula,
-    mode:
-      normalizedRequest.mode,
-    criticalPolicy:
-      normalizedRequest.criticalPolicy,
+  return deepFreeze({
+    kind:
+      'dice-roll-result',
+    version:
+      1,
+    request: {
+      formulaOriginal:
+        normalizedRequest.formula,
+      formulaNormalized:
+        normalizeFormulaForResult(
+          normalizedRequest.formula
+        ),
+      mode:
+        normalizedRequest.mode,
+      criticalPolicy:
+        normalizedRequest.criticalPolicy
+    },
     total,
-    rolls:
-      context.rolls
-  };
+    dice:
+      context.dice,
+    breakdown:
+      evaluation.breakdown,
+    critical:
+      createCriticalResult(
+        normalizedRequest.criticalPolicy
+      )
+  });
 }
 
 
@@ -667,6 +687,42 @@ function validateRandomInt(
 }
 
 
+function normalizeFormulaForResult(
+  formula
+) {
+
+  return formula.replace(
+    /\s+/g,
+    ''
+  );
+}
+
+
+function createCriticalResult(
+  criticalPolicy
+) {
+
+  return {
+    policy:
+      criticalPolicy,
+    classification:
+      'none'
+  };
+}
+
+
+function createEvaluation(
+  total,
+  breakdown
+) {
+
+  return {
+    total,
+    breakdown
+  };
+}
+
+
 function evaluateDiceNode(
   node,
   context
@@ -676,10 +732,22 @@ function evaluateDiceNode(
     node.type === 'number'
   ) {
 
-    return assertSupportedNumber(
-      node.value,
-      'Number literal is outside the supported numeric range',
-      node
+    const total =
+      assertSupportedNumber(
+        node.value,
+        'Number literal is outside the supported numeric range',
+        node
+      );
+
+    return createEvaluation(
+      total,
+      {
+        kind:
+          'number',
+        value:
+          total,
+        total
+      }
     );
   }
 
@@ -731,6 +799,9 @@ function evaluateDiceTerm(
   let total =
     0;
 
+  const faces =
+    [];
+
   for (
     let dieIndex = 0;
     dieIndex < node.count;
@@ -744,20 +815,9 @@ function evaluateDiceTerm(
         node
       );
 
-    context.rolls.push({
-      index:
-        context.rolls.length,
-      dieIndex,
-      count:
-        node.count,
-      sides:
-        node.sides,
-      value,
-      start:
-        node.start,
-      end:
-        node.end
-    });
+    faces.push(
+      value
+    );
 
     total =
       assertSupportedNumber(
@@ -767,7 +827,75 @@ function evaluateDiceTerm(
       );
   }
 
-  return total;
+  const diceTermIndex =
+    context.dice.length;
+
+  const notation =
+    getDiceNotation(
+      node,
+      context
+    );
+
+  const diceTerm =
+    {
+      kind:
+        'dice-term-result',
+      diceTermIndex,
+      notation,
+      count:
+        node.count,
+      sides:
+        node.sides,
+      faces,
+      total
+    };
+
+  context.dice.push(
+    diceTerm
+  );
+
+  return createEvaluation(
+    total,
+    {
+      kind:
+        'dice-term',
+      diceTermIndex,
+      notation,
+      count:
+        node.count,
+      sides:
+        node.sides,
+      faces,
+      total
+    }
+  );
+}
+
+
+function getDiceNotation(
+  node,
+  context
+) {
+
+  const fragment =
+    context.formulaOriginal.slice(
+      node.start,
+      node.end
+    );
+
+  const normalized =
+    normalizeFormulaForResult(
+      fragment
+    );
+
+  if (
+    normalized.length > 0
+  ) {
+
+    return normalized;
+  }
+
+  return `${node.count}d${node.sides}`;
 }
 
 
@@ -835,41 +963,57 @@ function evaluateUnaryNode(
   context
 ) {
 
-  const value =
+  const operand =
     evaluateDiceNode(
       node.argument,
       context
     );
 
+  let total;
+
   if (
     node.operator === '+'
   ) {
 
-    return assertSupportedNumber(
-      value,
-      'Unary result is outside the supported numeric range',
-      node
-    );
-  }
-
-  if (
+    total =
+      assertSupportedNumber(
+        operand.total,
+        'Unary result is outside the supported numeric range',
+        node
+      );
+  } else if (
     node.operator === '-'
   ) {
 
-    return assertSupportedNumber(
-      -value,
-      'Unary result is outside the supported numeric range',
-      node
+    total =
+      assertSupportedNumber(
+        -operand.total,
+        'Unary result is outside the supported numeric range',
+        node
+      );
+  } else {
+
+    throw createEvaluationError(
+      'Unsupported unary operator',
+      {
+        nodeType:
+          node.type,
+        operator:
+          node.operator
+      }
     );
   }
 
-  throw createEvaluationError(
-    'Unsupported unary operator',
+  return createEvaluation(
+    total,
     {
-      nodeType:
-        node.type,
+      kind:
+        'unary-operation',
       operator:
-        node.operator
+        node.operator,
+      operand:
+        operand.breakdown,
+      total
     }
   );
 }
@@ -892,45 +1036,44 @@ function evaluateBinaryNode(
       context
     );
 
+  let total;
+
   if (
     node.operator === '+'
   ) {
 
-    return assertSupportedNumber(
-      left + right,
-      'Addition result is outside the supported numeric range',
-      node
-    );
-  }
-
-  if (
+    total =
+      assertSupportedNumber(
+        left.total + right.total,
+        'Addition result is outside the supported numeric range',
+        node
+      );
+  } else if (
     node.operator === '-'
   ) {
 
-    return assertSupportedNumber(
-      left - right,
-      'Subtraction result is outside the supported numeric range',
-      node
-    );
-  }
-
-  if (
+    total =
+      assertSupportedNumber(
+        left.total - right.total,
+        'Subtraction result is outside the supported numeric range',
+        node
+      );
+  } else if (
     node.operator === '*'
   ) {
 
-    return assertSupportedNumber(
-      left * right,
-      'Multiplication result is outside the supported numeric range',
-      node
-    );
-  }
-
-  if (
+    total =
+      assertSupportedNumber(
+        left.total * right.total,
+        'Multiplication result is outside the supported numeric range',
+        node
+      );
+  } else if (
     node.operator === '/'
   ) {
 
     if (
-      right === 0
+      right.total === 0
     ) {
 
       throw createEvaluationError(
@@ -944,20 +1087,37 @@ function evaluateBinaryNode(
       );
     }
 
-    return assertSupportedNumber(
-      left / right,
-      'Division result is outside the supported numeric range',
-      node
+    total =
+      assertSupportedNumber(
+        left.total / right.total,
+        'Division result is outside the supported numeric range',
+        node
+      );
+  } else {
+
+    throw createEvaluationError(
+      'Unsupported binary operator',
+      {
+        nodeType:
+          node.type,
+        operator:
+          node.operator
+      }
     );
   }
 
-  throw createEvaluationError(
-    'Unsupported binary operator',
+  return createEvaluation(
+    total,
     {
-      nodeType:
-        node.type,
+      kind:
+        'binary-operation',
       operator:
-        node.operator
+        node.operator,
+      left:
+        left.breakdown,
+      right:
+        right.breakdown,
+      total
     }
   );
 }
@@ -994,6 +1154,44 @@ function assertSupportedNumber(
   }
 
   return value;
+}
+
+
+function deepFreeze(
+  value,
+  seen = new WeakSet()
+) {
+
+  if (
+    value === null ||
+    typeof value !== 'object' ||
+    seen.has(
+      value
+    )
+  ) {
+
+    return value;
+  }
+
+  seen.add(
+    value
+  );
+
+  for (
+    const child of Object.values(
+      value
+    )
+  ) {
+
+    deepFreeze(
+      child,
+      seen
+    );
+  }
+
+  return Object.freeze(
+    value
+  );
 }
 
 

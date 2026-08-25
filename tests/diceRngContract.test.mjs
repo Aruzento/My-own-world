@@ -115,6 +115,16 @@ function collectObjectKeys(
 }
 
 
+function collectRollFaces(
+  result
+) {
+
+  return result.dice.flatMap(
+    diceTerm => diceTerm.faces
+  );
+}
+
+
 test(
   'same dice formula and RNG sequence produces structurally equivalent roll output',
   () => {
@@ -177,17 +187,17 @@ test(
       );
 
     assert.notDeepEqual(
-      low.result.rolls.map(
-        roll => roll.value
+      collectRollFaces(
+        low.result
       ),
-      high.result.rolls.map(
-        roll => roll.value
+      collectRollFaces(
+        high.result
       )
     );
 
     assert.deepEqual(
-      high.result.rolls.map(
-        roll => roll.value
+      collectRollFaces(
+        high.result
       ),
       [
         20,
@@ -249,38 +259,39 @@ test(
     );
 
     assert.deepEqual(
-      result.rolls.map(
-        roll => ({
+      result.dice.map(
+        diceTerm => ({
           sides:
-            roll.sides,
-          value:
-            roll.value
+            diceTerm.sides,
+          faces:
+            diceTerm.faces
         })
       ),
       [
         {
           sides:
             20,
-          value:
-            20
+          faces:
+            [
+              20
+            ]
         },
         {
           sides:
             6,
-          value:
-            1
-        },
-        {
-          sides:
-            6,
-          value:
-            6
+          faces:
+            [
+              1,
+              6
+            ]
         },
         {
           sides:
             4,
-          value:
-            4
+          faces:
+            [
+              4
+            ]
         }
       ]
     );

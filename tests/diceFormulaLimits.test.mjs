@@ -300,7 +300,13 @@ test(
     );
 
     assert.equal(
-      result.rolls.length,
+      result.dice.reduce(
+        (
+          totalDice,
+          diceTerm
+        ) => totalDice + diceTerm.faces.length,
+        0
+      ),
       DICE_ENGINE_LIMITS.MAX_TOTAL_DICE
     );
   }

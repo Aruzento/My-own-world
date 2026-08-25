@@ -69,8 +69,8 @@ test(
       );
 
     assert.equal(
-      result.type,
-      'rollResult'
+      result.kind,
+      'dice-roll-result'
     );
 
     assert.equal(
@@ -89,27 +89,24 @@ test(
     );
 
     assert.deepEqual(
-      result.rolls.map(
-        roll => ({
-          dieIndex:
-            roll.dieIndex,
-          count:
-            roll.count,
-          sides:
-            roll.sides,
-          value:
-            roll.value
-        })
-      ),
+      result.dice,
       [
         {
-          dieIndex:
+          kind:
+            'dice-term-result',
+          diceTermIndex:
             0,
+          notation:
+            'd20',
           count:
             1,
           sides:
             20,
-          value:
+          faces:
+            [
+              17
+            ],
+          total:
             17
         }
       ]
@@ -165,9 +162,7 @@ test(
     );
 
     assert.deepEqual(
-      result.rolls.map(
-        roll => roll.value
-      ),
+      result.dice[0].faces,
       [
         2,
         5

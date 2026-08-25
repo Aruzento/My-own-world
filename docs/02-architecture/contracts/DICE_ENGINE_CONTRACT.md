@@ -114,12 +114,12 @@ Randomness contract:
 
 Runtime result:
 
-- `type: "rollResult"`;
-- original `formula`;
+- canonical `dice-roll-result` payload documented in `0.0.1.14.6`;
+- original and normalized formula request data;
 - effective `mode`;
 - effective `criticalPolicy`;
 - numeric `total`;
-- ordered `rolls` with die range and value details.
+- grouped dice term details and arithmetic breakdown.
 
 Evaluator semantics:
 
@@ -214,7 +214,7 @@ Provider validation:
 
 Determinism contract:
 
-- the same formula, request options and RNG sequence produce structurally equivalent `rollResult` data;
+- the same formula, request options and RNG sequence produce structurally equivalent `dice-roll-result` data;
 - different sequences produce the expected different faces;
 - the result does not embed timestamps, generated ids, persisted seeds or workspace state.
 
@@ -225,6 +225,69 @@ Forbidden RNG behavior in Phase 14:
 - no workspace RNG state;
 - no persisted seeds.
 
+## 0.0.1.14.6 Structured RollResult Contract
+
+`rollDice(request, { randomInt })` now returns the canonical runtime payload for future MyOwnWorld roll consumers.
+
+Top-level shape:
+
+- `kind: "dice-roll-result"`;
+- `version: 1`;
+- `request`;
+- `total`;
+- `dice`;
+- `breakdown`;
+- `critical`.
+
+Request data:
+
+- `formulaOriginal`: the exact formula string supplied by the caller;
+- `formulaNormalized`: the whitespace-normalized V1 formula string;
+- `mode`: effective roll mode, currently `normal`;
+- `criticalPolicy`: effective critical policy, currently `none`.
+
+Dice term data:
+
+- `dice` contains one entry per dice term, not one flattened entry per die;
+- each entry has `kind: "dice-term-result"`;
+- each entry has deterministic `diceTermIndex`, `notation`, `count`, `sides`, `faces` and `total`;
+- `faces` keeps the individual die results in roll order;
+- future advantage/disadvantage may extend this shape with kept/discarded details, but Phase 14.6 does not implement that behavior.
+
+Breakdown data:
+
+- `breakdown` is a runtime arithmetic explanation, not the parser AST;
+- supported breakdown node kinds are `number`, `dice-term`, `unary-operation` and `binary-operation`;
+- dice breakdown nodes reference the matching dice term data and include faces/total information;
+- arithmetic breakdown nodes include operator, operands and total so future UI/logging can explain a roll without reparsing formula text.
+
+Critical data:
+
+- `critical.policy` records the effective critical policy;
+- `critical.classification` is currently `none`;
+- no critical behavior is implemented until its dedicated leaf.
+
+Immutability and separation:
+
+- returned roll results are deeply frozen;
+- RollResult must not contain actor, target, character, token, workspace, campaign, HP, combat round, page object or DOM node data;
+- RollResult must not contain generated ids, timestamps, persisted seeds or event identity;
+- RollResult must not expose raw parser implementation details such as parser tokens, AST objects or source `start`/`end` offsets.
+
+Error behavior:
+
+- syntax, limit and evaluation failures throw the documented Dice Engine errors;
+- failed rolls must not masquerade as successful `total: 0` results.
+
+Phase 14.6 does not:
+
+- implement UI;
+- migrate Campaign Map initiative;
+- persist roll results;
+- create event/roll/combat log records;
+- implement advantage/disadvantage;
+- implement critical rules.
+
 ## Next Owner
 
-`0.0.1.14.6` Structured Roll Result owns any next result-shape refinements required before future consumers and Phase 15 logging. The Dice Engine still does not own UI, persistence, event logs, combat, advantage/disadvantage or critical policy behavior.
+`0.0.1.14.7` Advantage and Disadvantage owns the next result-shape extension. The Dice Engine still does not own UI, persistence, event logs, combat or critical policy behavior.

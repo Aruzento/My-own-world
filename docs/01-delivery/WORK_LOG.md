@@ -6,6 +6,68 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-25: 0.0.1.14.6 Structured Roll Result
+
+### Disposition
+
+- Closed `0.0.1.14.6` as the reusable structured RollResult leaf.
+- Started from current HEAD `f474ca4`.
+- Did not start `0.0.1.14.7` Advantage and Disadvantage.
+- Set the next leaf to `0.0.1.14.7` Advantage and Disadvantage.
+
+### RollResult Contract
+
+- Replaced the temporary flattened `type: "rollResult"` shape with canonical `kind: "dice-roll-result"` and `version: 1`.
+- `rollDice(request, { randomInt })` now returns original and whitespace-normalized formula request data, effective `mode`, effective `criticalPolicy`, numeric `total`, grouped dice terms, arithmetic breakdown and current critical classification.
+- The result remains runtime/domain data only and is not persisted.
+
+### Dice Details
+
+- `dice` now contains one entry per dice term / roll group.
+- Each dice term carries deterministic `diceTermIndex`, compact `notation`, `count`, `sides`, ordered `faces` and term `total`.
+- The old flattened per-die `rolls` list is no longer the consumer contract.
+- Existing evaluator/RNG/limits tests now assert faces through grouped dice terms while preserving exact RNG call order.
+
+### Breakdown
+
+- Added an evaluator-owned runtime arithmetic breakdown.
+- Breakdown node kinds are `number`, `dice-term`, `unary-operation` and `binary-operation`.
+- Consumers can understand `2d6 + 3` as faces `[2, 5]`, modifier `+3` and total `10` without reparsing formula text.
+- Breakdown intentionally does not expose parser token data, AST objects or source `start`/`end` offsets.
+
+### Immutability And Separation
+
+- Returned roll results are deeply frozen so consumers can treat them as immutable.
+- Added tests proving deterministic repeatability for the same formula/options/RNG sequence.
+- Added guards against volatile/generated fields such as timestamps and ids.
+- Added guards that RollResult does not contain subsystem-owned actor, target, character, token, workspace, campaign, HP, combat round, page object or DOM node data.
+
+### Explicit Non-Work
+
+- Did not implement UI.
+- Did not migrate Campaign Map initiative.
+- Did not persist RollResult.
+- Did not create event/roll/combat log records.
+- Did not implement advantage/disadvantage.
+- Did not implement critical rules.
+- Did not mutate a real workspace or change persistent formats.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with the canonical `dice-roll-result` payload, grouped dice terms, breakdown semantics, immutability rules and future-owner separation.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs tests\diceStructuredRollResult.test.mjs`
+- `npm run docs:index`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.7` Advantage and Disadvantage.
+
 ## 2026-08-25: 0.0.1.14.5 Deterministic Dice RNG Contract
 
 ### Disposition
@@ -37,7 +99,7 @@ owner_zone: "delivery"
 
 ### Deterministic Result Contract
 
-- Added regressions proving the same formula, request options and RNG sequence produce structurally equivalent `rollResult` data.
+- Added regressions proving the same formula, request options and RNG sequence produce structurally equivalent runtime roll data.
 - Added regressions proving different deterministic sequences produce expected different faces.
 - Added regressions proving exact `randomInt(1, sides)` call order across several dice terms.
 - Added guards that pure roll results do not contain timestamps, generated ids or persisted seeds, and Dice Engine source does not use `Date.now`, `new Date()` or `crypto.randomUUID()`.
@@ -136,7 +198,7 @@ owner_zone: "delivery"
 - Added `rollDice(request, { randomInt })` as the public runtime roll entry.
 - The evaluator consumes the safe parser AST internally; consumers do not import tokenizer/parser/evaluator internals.
 - Supported v1 request fields are `formula`, optional `mode: "normal"` and optional `criticalPolicy: "none"`.
-- The runtime result is structured `rollResult` data with formula, effective mode, effective critical policy, total and ordered roll details.
+- The runtime result is structured roll data with formula, effective mode, effective critical policy, total and ordered roll details.
 
 ### RNG Contract
 
