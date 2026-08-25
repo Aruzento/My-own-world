@@ -112,7 +112,11 @@ export class DiceFormulaEvaluationError extends Error {
     reason,
     {
       nodeType = null,
-      operator = null
+      operator = null,
+      minimum = null,
+      maximum = null,
+      observed = undefined,
+      cause = null
     } = {}
   ) {
 
@@ -134,8 +138,105 @@ export class DiceFormulaEvaluationError extends Error {
 
     this.operator =
       operator;
+
+    this.minimum =
+      minimum;
+
+    this.maximum =
+      maximum;
+
+    this.observed =
+      observed;
+
+    if (
+      cause !== null
+    ) {
+
+      this.cause =
+        cause;
+    }
   }
 }
+
+
+export function createDefaultDiceRandomInt(
+  {
+    random = Math.random
+  } = {}
+) {
+
+  if (
+    typeof random !== 'function'
+  ) {
+
+    throw createEvaluationError(
+      'Default dice random source must be a function'
+    );
+  }
+
+  return function defaultDiceRandomIntProvider(
+    minInclusive,
+    maxInclusive
+  ) {
+
+    validateRandomRange(
+      minInclusive,
+      maxInclusive
+    );
+
+    let fraction;
+
+    try {
+
+      fraction =
+        random();
+    } catch (error) {
+
+      throw createEvaluationError(
+        'Default dice random source failed',
+        {
+          cause:
+            error
+        }
+      );
+    }
+
+    if (
+      typeof fraction !== 'number' ||
+      !Number.isFinite(
+        fraction
+      ) ||
+      fraction < 0 ||
+      fraction >= 1
+    ) {
+
+      throw createEvaluationError(
+        'Default dice random source returned an invalid fraction',
+        {
+          minimum:
+            0,
+          maximum:
+            1,
+          observed:
+            fraction
+        }
+      );
+    }
+
+    const span =
+      maxInclusive - minInclusive + 1;
+
+    return (
+      Math.floor(
+        fraction * span
+      ) + minInclusive
+    );
+  };
+}
+
+
+export const defaultDiceRandomInt =
+  createDefaultDiceRandomInt();
 
 
 export function parseDiceFormula(
@@ -179,7 +280,7 @@ export function parseDiceFormula(
 export function rollDice(
   request,
   {
-    randomInt = defaultRandomInt
+    randomInt = defaultDiceRandomInt
   } = {}
 ) {
 
@@ -676,11 +777,31 @@ function rollSingleDie(
   node
 ) {
 
-  const value =
-    randomInt(
-      1,
-      sides
+  let value;
+
+  try {
+
+    value =
+      randomInt(
+        1,
+        sides
+      );
+  } catch (error) {
+
+    throw createEvaluationError(
+      'randomInt provider failed',
+      {
+        nodeType:
+          node.type,
+        minimum:
+          1,
+        maximum:
+          sides,
+        cause:
+          error
+      }
     );
+  }
 
   if (
     !Number.isInteger(
@@ -694,7 +815,13 @@ function rollSingleDie(
       'randomInt returned a value outside the requested die range',
       {
         nodeType:
-          node.type
+          node.type,
+        minimum:
+          1,
+        maximum:
+          sides,
+        observed:
+          value
       }
     );
   }
@@ -867,27 +994,6 @@ function assertSupportedNumber(
   }
 
   return value;
-}
-
-
-function defaultRandomInt(
-  minInclusive,
-  maxInclusive
-) {
-
-  validateRandomRange(
-    minInclusive,
-    maxInclusive
-  );
-
-  const span =
-    maxInclusive - minInclusive + 1;
-
-  return (
-    Math.floor(
-      Math.random() * span
-    ) + minInclusive
-  );
 }
 
 

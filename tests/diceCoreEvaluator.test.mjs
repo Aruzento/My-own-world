@@ -7,51 +7,9 @@ import {
   rollDice
 } from '../js/dice/diceEngine.js';
 
-
-function createSequenceRandomInt(
-  values
-) {
-
-  const calls =
-    [];
-
-  let index =
-    0;
-
-  return {
-    calls,
-    randomInt(
-      minInclusive,
-      maxInclusive
-    ) {
-
-      calls.push([
-        minInclusive,
-        maxInclusive
-      ]);
-
-      assert.ok(
-        index < values.length,
-        'RNG was called more times than the test sequence allows'
-      );
-
-      const value =
-        values[index];
-
-      index += 1;
-
-      return value;
-    },
-    assertConsumed() {
-
-      assert.equal(
-        index,
-        values.length,
-        'RNG sequence was not fully consumed'
-      );
-    }
-  };
-}
+import {
+  createDiceSequenceRandomInt
+} from './fixtures/diceSequenceRandomInt.mjs';
 
 
 function assertEvaluationError(
@@ -94,7 +52,7 @@ test(
   () => {
 
     const rng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         17
       ]);
 
@@ -157,7 +115,10 @@ test(
       ]
     );
 
-    rng.assertConsumed();
+    assert.equal(
+      rng.remaining,
+      0
+    );
   }
 );
 
@@ -167,7 +128,7 @@ test(
   () => {
 
     const rng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         2,
         5
       ]);
@@ -213,7 +174,10 @@ test(
       ]
     );
 
-    rng.assertConsumed();
+    assert.equal(
+      rng.remaining,
+      0
+    );
   }
 );
 
@@ -223,7 +187,7 @@ test(
   () => {
 
     const rng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         3,
         6,
         4
@@ -264,7 +228,10 @@ test(
       ]
     );
 
-    rng.assertConsumed();
+    assert.equal(
+      rng.remaining,
+      0
+    );
   }
 );
 
@@ -274,7 +241,7 @@ test(
   () => {
 
     const precedenceRng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         2
       ]);
 
@@ -292,10 +259,13 @@ test(
       8
     );
 
-    precedenceRng.assertConsumed();
+    assert.equal(
+      precedenceRng.remaining,
+      0
+    );
 
     const parenthesizedRng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         4
       ]);
 
@@ -313,7 +283,10 @@ test(
       14
     );
 
-    parenthesizedRng.assertConsumed();
+    assert.equal(
+      parenthesizedRng.remaining,
+      0
+    );
   }
 );
 
@@ -323,7 +296,7 @@ test(
   () => {
 
     const rng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         12,
         15
       ]);
@@ -370,7 +343,10 @@ test(
       ]
     );
 
-    rng.assertConsumed();
+    assert.equal(
+      rng.remaining,
+      0
+    );
   }
 );
 
@@ -380,7 +356,7 @@ test(
   () => {
 
     const rng =
-      createSequenceRandomInt([
+      createDiceSequenceRandomInt([
         1
       ]);
 
@@ -398,7 +374,10 @@ test(
       /Division by zero/
     );
 
-    rng.assertConsumed();
+    assert.equal(
+      rng.remaining,
+      0
+    );
   }
 );
 
@@ -417,7 +396,7 @@ test(
     ) {
 
       const rng =
-        createSequenceRandomInt([
+        createDiceSequenceRandomInt([
           invalidValue
         ]);
 
@@ -435,7 +414,10 @@ test(
         /outside the requested die range/
       );
 
-      rng.assertConsumed();
+      assert.equal(
+        rng.remaining,
+        0
+      );
     }
   }
 );

@@ -6,6 +6,68 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-25: 0.0.1.14.5 Deterministic Dice RNG Contract
+
+### Disposition
+
+- Closed `0.0.1.14.5` as the deterministic RNG contract leaf.
+- Started from current HEAD `1c1a224`.
+- Did not start `0.0.1.14.6` Structured Roll Result.
+- Set the next leaf to `0.0.1.14.6` Structured Roll Result.
+
+### RNG Ownership
+
+- Made the Dice Engine production RNG provider explicit through `defaultDiceRandomInt`.
+- Added `createDefaultDiceRandomInt()` so the default provider can be tested through an injected entropy source without monkey-patching `Math.random`.
+- `rollDice(request)` now uses the engine-owned default provider when no `randomInt` is supplied.
+- Tests and future deterministic consumers still inject the narrow `randomInt(minInclusive, maxInclusive)` contract.
+
+### Deterministic Test Helper
+
+- Added `tests/fixtures/diceSequenceRandomInt.mjs` as a test-only sequence RNG helper.
+- The helper records exact call order and returns the next configured face value for each die.
+- Existing evaluator tests now reuse that helper instead of carrying a local duplicate.
+
+### Provider Validation
+
+- `rollSingleDie()` now wraps provider exceptions in `DiceFormulaEvaluationError` with reason `randomInt provider failed`.
+- Invalid provider outputs such as `0`, above-range values, fractions, `NaN` and `undefined` fail clearly.
+- Invalid provider output is never normalized into a legal die face.
+- The structured error includes requested min/max and observed value where applicable.
+
+### Deterministic Result Contract
+
+- Added regressions proving the same formula, request options and RNG sequence produce structurally equivalent `rollResult` data.
+- Added regressions proving different deterministic sequences produce expected different faces.
+- Added regressions proving exact `randomInt(1, sides)` call order across several dice terms.
+- Added guards that pure roll results do not contain timestamps, generated ids or persisted seeds, and Dice Engine source does not use `Date.now`, `new Date()` or `crypto.randomUUID()`.
+
+### Explicit Non-Work
+
+- Did not add a global seeded RNG.
+- Did not monkey-patch `Math.random`.
+- Did not store RNG state in workspace.
+- Did not persist seeds.
+- Did not implement UI, initiative migration, persistence, event/roll log, combat behavior, advantage/disadvantage, critical rules or real-workspace mutation.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with production/test RNG ownership, provider validation, deterministic result expectations and forbidden Phase 14 RNG behavior.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --check tests\diceRngContract.test.mjs`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs`
+- `npm run test`
+- `npm run verify`
+- `npm run docs:index`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.6` Structured Roll Result.
+
 ## 2026-08-25: 0.0.1.14.4 Dice Formula Limits & Invalid Input Safety
 
 ### Disposition

@@ -187,6 +187,44 @@ Malformed code-shaped strings remain invalid formula data. They must be rejected
 - `()=>...`;
 - template strings such as `` `${...}` ``.
 
+## 0.0.1.14.5 RNG Contract
+
+Dice Engine owns exactly one narrow randomness interface:
+
+- `randomInt(minInclusive, maxInclusive)`.
+
+Production behavior:
+
+- `rollDice(request)` uses the engine-owned `defaultDiceRandomInt`;
+- `defaultDiceRandomInt` is created by `createDefaultDiceRandomInt()`;
+- the default provider uses `Math.random`;
+- no cryptographic fairness is promised.
+
+Test behavior:
+
+- tests inject deterministic `randomInt` providers;
+- the test-only helper `tests/fixtures/diceSequenceRandomInt.mjs` provides sequence-backed `randomInt` calls for exact assertions.
+
+Provider validation:
+
+- every die roll validates that provider output is an integer inside the exact requested range;
+- invalid values such as `0`, above-range values, fractions, `NaN` and `undefined` fail;
+- invalid provider output is never normalized into a legal die face;
+- provider exceptions are wrapped as `DiceFormulaEvaluationError` with `reason: "randomInt provider failed"` and the original error as `cause`.
+
+Determinism contract:
+
+- the same formula, request options and RNG sequence produce structurally equivalent `rollResult` data;
+- different sequences produce the expected different faces;
+- the result does not embed timestamps, generated ids, persisted seeds or workspace state.
+
+Forbidden RNG behavior in Phase 14:
+
+- no global seeded RNG that changes random behavior across MyOwnWorld;
+- no monkey-patching `Math.random`;
+- no workspace RNG state;
+- no persisted seeds.
+
 ## Next Owner
 
-`0.0.1.14.5` Deterministic RNG owns the default/randomness contract beyond the current injectable `randomInt` boundary. The Dice Engine still does not own UI, persistence, event logs, combat, advantage/disadvantage or critical policy behavior.
+`0.0.1.14.6` Structured Roll Result owns any next result-shape refinements required before future consumers and Phase 15 logging. The Dice Engine still does not own UI, persistence, event logs, combat, advantage/disadvantage or critical policy behavior.

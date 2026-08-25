@@ -174,10 +174,10 @@ Expected conflict result: a stale editor/session save must not overwrite newer d
 For the current NF-002 Dice Engine parser/evaluator slice, use:
 
 ```powershell
-node --test tests/diceFormulaParser.test.mjs tests/diceCoreEvaluator.test.mjs tests/diceFormulaLimits.test.mjs
+node --test tests/diceFormulaParser.test.mjs tests/diceCoreEvaluator.test.mjs tests/diceFormulaLimits.test.mjs tests/diceRngContract.test.mjs
 ```
 
-Expected Dice Engine result: formulas such as `d20`, `2d6 + 3`, `2 * (d6 + 3)` and `(d20 + 5) / 2` parse into deterministic AST data and evaluate through the public runtime `rollDice(request, { randomInt })` facade. Deterministic injected RNG sequences should produce exact totals and exact `randomInt(1, sides)` calls. Code-shaped strings such as `process.exit()`, `alert(1)`, string timers, dynamic import, arrays, strings and comments must be rejected. Division by zero and invalid RNG output must fail with structured evaluation errors. Formula length, AST nodes, parentheses depth, dice term count, total dice, per-term dice count, die sides and safe-number overflow must fail with `LIMIT_EXCEEDED` classification and should not roll any dice when the limit can be known before evaluation. There is still no roll UI, no initiative migration and no persistent roll log yet.
+Expected Dice Engine result: formulas such as `d20`, `2d6 + 3`, `2 * (d6 + 3)` and `(d20 + 5) / 2` parse into deterministic AST data and evaluate through the public runtime `rollDice(request, { randomInt })` facade. Deterministic injected RNG sequences should produce exact totals and exact `randomInt(1, sides)` calls. The same formula/options/RNG sequence should produce structurally equivalent roll results, while different sequences should produce expected different faces. Code-shaped strings such as `process.exit()`, `alert(1)`, string timers, dynamic import, arrays, strings and comments must be rejected. Division by zero, invalid RNG output and provider failures must fail with structured evaluation errors. Formula length, AST nodes, parentheses depth, dice term count, total dice, per-term dice count, die sides and safe-number overflow must fail with `LIMIT_EXCEEDED` classification and should not roll any dice when the limit can be known before evaluation. There is still no roll UI, no initiative migration and no persistent roll log yet.
 
 Before sending a desktop build, run:
 
@@ -235,7 +235,7 @@ Card editor design check: select text in the card title and in a normal text blo
 - Real audio codecs may fail even when playlist UI passes browser tests.
 - Large workspace UI smoothness is partly subjective; report any action that feels frozen.
 - Knowledge Graph is currently a useful migrated canvas workbench with visible-slice clarity, selected-node relationship clarity, a laconic node/connect overlay layer, split CSS/JS ownership and command-lifecycle relationship persistence. New visible graph features should wait for the `BI-026` concept rethink.
-- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. NF-001 edit-session conflict protection is closed for the current PageRecord-backed scope. NF-002 Safe Dice Engine is the active phase; parser, core runtime evaluator and explicit formula/dice limits now exist, while deterministic RNG ownership, advantage/disadvantage, critical policies, UI and persistent roll log remain future work.
+- Current Data Safety scope is closed for restore preview, partial restore, grouped asset/link/orphan diagnostics and backup-gated selected repair. NF-001 edit-session conflict protection is closed for the current PageRecord-backed scope. NF-002 Safe Dice Engine is the active phase; parser, core runtime evaluator, explicit formula/dice limits and deterministic RNG contract now exist, while structured result refinements, advantage/disadvantage, critical policies, UI and persistent roll log remain future work.
 
 ## 2026-07-20: Knowledge Graph Canvas Undo/Redo
 
