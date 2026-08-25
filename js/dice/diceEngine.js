@@ -9,6 +9,13 @@ const BINARY_OPERATORS =
     '/'
   ]);
 
+const ROLL_MODES =
+  new Set([
+    'normal',
+    'advantage',
+    'disadvantage'
+  ]);
+
 
 export const DICE_ENGINE_LIMITS =
   Object.freeze({
@@ -116,6 +123,9 @@ export class DiceFormulaEvaluationError extends Error {
       minimum = null,
       maximum = null,
       observed = undefined,
+      classification = null,
+      mode = null,
+      diceTermCount = null,
       cause = null
     } = {}
   ) {
@@ -147,6 +157,30 @@ export class DiceFormulaEvaluationError extends Error {
 
     this.observed =
       observed;
+
+    if (
+      classification !== null
+    ) {
+
+      this.classification =
+        classification;
+    }
+
+    if (
+      mode !== null
+    ) {
+
+      this.mode =
+        mode;
+    }
+
+    if (
+      diceTermCount !== null
+    ) {
+
+      this.diceTermCount =
+        diceTermCount;
+    }
 
     if (
       cause !== null
@@ -302,9 +336,16 @@ export function rollDice(
       normalizedRequest.formula
     );
 
+  const rollMode =
+    createRollModeContext(
+      normalizedRequest.mode,
+      ast
+    );
+
   const context =
     {
       randomInt,
+      rollMode,
       formulaOriginal:
         normalizedRequest.formula,
       dice:
@@ -653,11 +694,17 @@ function validateRollOptions(
 ) {
 
   if (
-    request.mode !== 'normal'
+    !ROLL_MODES.has(
+      request.mode
+    )
   ) {
 
     throw createEvaluationError(
-      'Only normal roll mode is supported in this dice engine leaf'
+      'Unsupported dice roll mode',
+      {
+        mode:
+          request.mode
+      }
     );
   }
 
@@ -684,6 +731,102 @@ function validateRandomInt(
       'randomInt must be a function'
     );
   }
+}
+
+
+function createRollModeContext(
+  mode,
+  ast
+) {
+
+  if (
+    mode === 'normal'
+  ) {
+
+    return {
+      mode,
+      primaryD20Node:
+        null
+    };
+  }
+
+  const diceTerms =
+    collectDiceTerms(
+      ast
+    );
+
+  const [
+    primaryD20Node
+  ] =
+    diceTerms;
+
+  if (
+    diceTerms.length !== 1 ||
+    primaryD20Node.count !== 1 ||
+    primaryD20Node.sides !== 20
+  ) {
+
+    throw createEvaluationError(
+      'Advantage and disadvantage require exactly one d20 dice term and no other dice terms',
+      {
+        classification:
+          'UNSUPPORTED_MODE_FORMULA',
+        mode,
+        diceTermCount:
+          diceTerms.length
+      }
+    );
+  }
+
+  return {
+    mode,
+    primaryD20Node
+  };
+}
+
+
+function collectDiceTerms(
+  node,
+  diceTerms = []
+) {
+
+  if (
+    node.type === 'dice'
+  ) {
+
+    diceTerms.push(
+      node
+    );
+    return diceTerms;
+  }
+
+  if (
+    node.type === 'unary'
+  ) {
+
+    collectDiceTerms(
+      node.argument,
+      diceTerms
+    );
+    return diceTerms;
+  }
+
+  if (
+    node.type === 'binary'
+  ) {
+
+    collectDiceTerms(
+      node.left,
+      diceTerms
+    );
+
+    collectDiceTerms(
+      node.right,
+      diceTerms
+    );
+  }
+
+  return diceTerms;
 }
 
 
@@ -796,6 +939,17 @@ function evaluateDiceTerm(
   context
 ) {
 
+  if (
+    context.rollMode.mode !== 'normal' &&
+    context.rollMode.primaryD20Node === node
+  ) {
+
+    return evaluatePrimaryD20RollModeTerm(
+      node,
+      context
+    );
+  }
+
   let total =
     0;
 
@@ -827,6 +981,71 @@ function evaluateDiceTerm(
       );
   }
 
+  return createDiceTermEvaluation(
+    node,
+    context,
+    {
+      faces,
+      total
+    }
+  );
+}
+
+
+function evaluatePrimaryD20RollModeTerm(
+  node,
+  context
+) {
+
+  const firstFace =
+    rollSingleDie(
+      node.sides,
+      context.randomInt,
+      node
+    );
+
+  const secondFace =
+    rollSingleDie(
+      node.sides,
+      context.randomInt,
+      node
+    );
+
+  const faces =
+    [
+      firstFace,
+      secondFace
+    ];
+
+  const selection =
+    selectD20RollModeFace(
+      context.rollMode.mode,
+      faces
+    );
+
+  return createDiceTermEvaluation(
+    node,
+    context,
+    {
+      faces,
+      total:
+        selection.selectedNatural,
+      selection
+    }
+  );
+}
+
+
+function createDiceTermEvaluation(
+  node,
+  context,
+  {
+    faces,
+    total,
+    selection = null
+  }
+) {
+
   const diceTermIndex =
     context.dice.length;
 
@@ -850,12 +1069,7 @@ function evaluateDiceTerm(
       total
     };
 
-  context.dice.push(
-    diceTerm
-  );
-
-  return createEvaluation(
-    total,
+  const breakdown =
     {
       kind:
         'dice-term',
@@ -867,8 +1081,85 @@ function evaluateDiceTerm(
         node.sides,
       faces,
       total
-    }
+    };
+
+  if (
+    selection !== null
+  ) {
+
+    diceTerm.selection =
+      selection;
+
+    breakdown.selection =
+      selection;
+  }
+
+  context.dice.push(
+    diceTerm
   );
+
+  return createEvaluation(
+    total,
+    breakdown
+  );
+}
+
+
+function selectD20RollModeFace(
+  mode,
+  faces
+) {
+
+  const [
+    firstFace,
+    secondFace
+  ] =
+    faces;
+
+  const keepFirst =
+    mode === 'advantage'
+      ? firstFace >= secondFace
+      : firstFace <= secondFace;
+
+  const keptCandidateIndex =
+    keepFirst
+      ? 0
+      : 1;
+
+  const discardedCandidateIndex =
+    keepFirst
+      ? 1
+      : 0;
+
+  const selectedNatural =
+    faces[keptCandidateIndex];
+
+  return {
+    mode,
+    candidateFaces:
+      faces,
+    keptCandidateIndexes: [
+      keptCandidateIndex
+    ],
+    discardedCandidateIndexes: [
+      discardedCandidateIndex
+    ],
+    keptFaces: [
+      selectedNatural
+    ],
+    discardedFaces: [
+      faces[discardedCandidateIndex]
+    ],
+    selectedNatural,
+    reason:
+      firstFace === secondFace
+        ? 'tie-first-candidate'
+        : (
+            mode === 'advantage'
+              ? 'higher-face'
+              : 'lower-face'
+          )
+  };
 }
 
 

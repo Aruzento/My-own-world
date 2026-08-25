@@ -27,13 +27,14 @@ Immediate direction:
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
-7. Next leaf: `0.0.1.14.7` Advantage and Disadvantage.
+7. Next leaf: `0.0.1.14.8` Critical Semantics.
 8. `0.0.1.15.0` Event / Roll / Combat Log + Transactions remains `BLOCKED` and has not been started.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-25 `0.0.1.14.7` Advantage and Disadvantage: added explicit d20 `mode: "advantage"` / `mode: "disadvantage"` request support without changing formula grammar. Non-normal modes accept exactly one `d20`/`1d20` term plus deterministic arithmetic, reject unsupported multi-dice/non-d20/arithmetic-only formulas as `UNSUPPORTED_MODE_FORMULA` before RNG, and expose candidate faces, kept/discarded faces/indexes, selected natural face and selection reason in the structured roll result. No UI, initiative migration, persistence, event/roll log, combat behavior or critical behavior was added.
 - 2026-08-25 `0.0.1.14.6` Structured Roll Result: replaced the temporary flattened dice output with the canonical immutable runtime `dice-roll-result`. The result now carries original/normalized request data, grouped dice terms with faces/totals, arithmetic breakdown for future UI/logging, current `none` critical classification, and explicit guards against parser-internal keys, generated time/id fields and subsystem-owned actor/token/workspace/page data. No UI, initiative migration, persistence, event/roll log, combat behavior, advantage/disadvantage or critical behavior was added.
 - 2026-08-25 `0.0.1.14.5` Deterministic Dice RNG Contract: made the Dice Engine RNG owner explicit. `rollDice(request)` uses engine-owned `defaultDiceRandomInt`, tests inject deterministic `randomInt(minInclusive, maxInclusive)`, and `createDefaultDiceRandomInt()` lets default-provider behavior be tested through injected entropy without monkey-patching `Math.random`. Added sequence RNG fixtures and regressions for equivalent same-sequence results, expected different faces, exact call order, invalid provider values, provider failure wrapping and no volatile time/id/seed fields in pure roll results.
 - 2026-08-25 `0.0.1.14.4` Dice Formula Limits & Invalid Input Safety: added central `DICE_ENGINE_LIMITS` and `DiceFormulaLimitError` with `LIMIT_EXCEEDED` classification. Formula length, AST nodes, parentheses depth, dice terms, total dice, per-term dice count, die sides and safe-number overflow are now rejected instead of clamped. Over-limit dice formulas fail before any RNG call where possible, and malicious/code-shaped strings remain invalid formula data.
@@ -191,7 +192,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.14.7` Advantage and Disadvantage when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
+- Start `0.0.1.14.8` Critical Semantics when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -209,7 +210,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a reusable structured runtime result; the next risk is advantage/disadvantage semantics before rolls/feeders become durable session data.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a reusable structured runtime result plus explicit d20 advantage/disadvantage modes; the next risk is critical semantics before rolls/feeders become durable session data.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.

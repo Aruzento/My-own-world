@@ -474,14 +474,14 @@ test(
           formula:
             'd20',
           mode:
-            'advantage'
+            'reckless'
         },
         {
           randomInt:
             () => 1
         }
       ),
-      /normal roll mode/
+      /Unsupported dice roll mode/
     );
 
     assertEvaluationError(

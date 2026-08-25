@@ -102,7 +102,7 @@ Public roll entry:
 Request shape:
 
 - `formula`: string parsed by `parseDiceFormula`;
-- `mode`: optional, currently only `normal`;
+- `mode`: optional, currently `normal`, `advantage` or `disadvantage`;
 - `criticalPolicy`: optional, currently only `none`.
 
 Randomness contract:
@@ -124,10 +124,10 @@ Runtime result:
 Evaluator semantics:
 
 - evaluates only parser AST node types: `number`, `dice`, `unary`, `binary`;
-- rolls each die exactly once;
+- normal mode rolls each formula die exactly once;
 - dice terms are independent;
-- no hidden rerolls;
-- no advantage/disadvantage;
+- no hidden rerolls in `normal` mode;
+- advantage/disadvantage behavior is mode-owned and documented in `0.0.1.14.7`;
 - no critical rules;
 - division by zero is rejected;
 - non-finite or unsafe numeric totals are rejected.
@@ -138,6 +138,14 @@ Malformed evaluation state throws `DiceFormulaEvaluationError` with:
 - `reason`;
 - optional `nodeType`;
 - optional `operator`.
+
+Unsupported advantage/disadvantage formula shape throws `DiceFormulaEvaluationError` with:
+
+- `code: "DICE_FORMULA_EVALUATION_ERROR"`;
+- `classification: "UNSUPPORTED_MODE_FORMULA"`;
+- `mode`;
+- `diceTermCount`;
+- no RNG calls performed before rejection.
 
 The evaluator remains pure domain/runtime code. It must not touch DOM, UI status, storage, backups, workspace state, event logs, Campaign Map, Character/Properties, Rule Tree or combat.
 
@@ -243,7 +251,7 @@ Request data:
 
 - `formulaOriginal`: the exact formula string supplied by the caller;
 - `formulaNormalized`: the whitespace-normalized V1 formula string;
-- `mode`: effective roll mode, currently `normal`;
+- `mode`: effective roll mode, currently `normal`, `advantage` or `disadvantage`;
 - `criticalPolicy`: effective critical policy, currently `none`.
 
 Dice term data:
@@ -252,7 +260,7 @@ Dice term data:
 - each entry has `kind: "dice-term-result"`;
 - each entry has deterministic `diceTermIndex`, `notation`, `count`, `sides`, `faces` and `total`;
 - `faces` keeps the individual die results in roll order;
-- future advantage/disadvantage may extend this shape with kept/discarded details, but Phase 14.6 does not implement that behavior.
+- advantage/disadvantage extends the primary d20 term with selection details, documented in `0.0.1.14.7`.
 
 Breakdown data:
 
@@ -288,6 +296,73 @@ Phase 14.6 does not:
 - implement advantage/disadvantage;
 - implement critical rules.
 
+## 0.0.1.14.7 Advantage And Disadvantage Contract
+
+Advantage and disadvantage are explicit `rollDice()` request modes. They are not formula grammar features.
+
+Supported modes:
+
+- `normal`;
+- `advantage`;
+- `disadvantage`.
+
+Formula scope:
+
+- `normal` mode supports every valid V1 formula;
+- `advantage` and `disadvantage` require exactly one dice term;
+- that dice term must be one `d20` or `1d20`;
+- deterministic arithmetic around that d20 is allowed;
+- additional dice terms are rejected;
+- non-d20 dice terms are rejected;
+- `2d20` is rejected because it is one dice term but not one primary d20.
+
+Examples supported for advantage/disadvantage:
+
+- `d20`;
+- `1d20`;
+- `d20 + 5`;
+- `d20 - 2`;
+- `(d20 + 3)`;
+- deterministic arithmetic such as `(d20 + 5) / 2`.
+
+Examples rejected for advantage/disadvantage:
+
+- `2d20`;
+- `d20 + d4`;
+- `2d6 + 3`;
+- `d12 + 4`;
+- arithmetic-only formulas such as `20 + 4`.
+
+Semantics:
+
+- advantage rolls the primary d20 twice and keeps the higher natural face;
+- disadvantage rolls the primary d20 twice and keeps the lower natural face;
+- ties keep the first candidate deterministically;
+- both candidate faces remain visible;
+- deterministic arithmetic/modifiers are applied once to the selected natural face.
+
+Result selection shape:
+
+- the primary d20 dice term keeps `faces` as the candidate faces rolled;
+- `total` on that dice term is the selected natural face;
+- `selection.mode` is `advantage` or `disadvantage`;
+- `selection.candidateFaces` records the two d20 candidates in RNG order;
+- `selection.keptCandidateIndexes` and `selection.discardedCandidateIndexes` identify which candidate was kept/discarded;
+- `selection.keptFaces` and `selection.discardedFaces` expose readable face values;
+- `selection.selectedNatural` records the chosen natural d20 face;
+- `selection.reason` is `higher-face`, `lower-face` or `tie-first-candidate`.
+
+Phase 14.7 does not:
+
+- rewrite formulas into `2d20kh1` or similar syntax;
+- add keep/drop grammar;
+- add rerolls;
+- add critical behavior;
+- create UI;
+- migrate initiative;
+- persist roll results;
+- create event/roll/combat log records.
+
 ## Next Owner
 
-`0.0.1.14.7` Advantage and Disadvantage owns the next result-shape extension. The Dice Engine still does not own UI, persistence, event logs, combat or critical policy behavior.
+`0.0.1.14.8` Critical Semantics owns explicit critical classification. The Dice Engine still does not own UI, persistence, event logs or combat behavior.

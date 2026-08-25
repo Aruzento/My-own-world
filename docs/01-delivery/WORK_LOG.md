@@ -6,6 +6,73 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-25: 0.0.1.14.7 Advantage And Disadvantage
+
+### Disposition
+
+- Closed `0.0.1.14.7` as the explicit d20 roll-mode leaf.
+- Started from current HEAD `e9eb03d`.
+- Did not start `0.0.1.14.8` Critical Semantics.
+- Set the next leaf to `0.0.1.14.8` Critical Semantics.
+
+### Request Mode Contract
+
+- `rollDice()` now accepts `mode: "normal"`, `mode: "advantage"` and `mode: "disadvantage"`.
+- Generic formulas still default to `normal`.
+- Advantage/disadvantage remain request options, not parser grammar.
+- No formula is rewritten into `2d20kh1` or any keep/drop syntax.
+
+### V1 Formula Scope
+
+- Non-normal modes are allowed only when the parsed formula contains exactly one dice term.
+- That dice term must be one primary `d20`/`1d20`.
+- Deterministic arithmetic around that d20 is allowed, so formulas like `d20 + 5`, `d20 - 2`, `(d20 + 3)` and `(d20 + 5) / 2` are supported.
+- Unsupported formulas such as `2d20`, `d20 + d4`, `2d6 + 3`, `d12 + 4` and arithmetic-only formulas fail as `UNSUPPORTED_MODE_FORMULA`.
+- Unsupported mode/formula combinations fail before any RNG call.
+
+### Roll Semantics
+
+- Advantage rolls the primary d20 twice and keeps the higher natural face.
+- Disadvantage rolls the primary d20 twice and keeps the lower natural face.
+- Ties keep the first candidate deterministically while preserving both candidate faces.
+- Arithmetic/modifiers are applied once to the selected natural d20 face.
+
+### Result Shape
+
+- The selected primary d20 term now exposes `selection`.
+- `selection.candidateFaces` records the two d20 candidates in RNG order.
+- `selection.keptCandidateIndexes` and `selection.discardedCandidateIndexes` identify which candidate was kept/discarded.
+- `selection.keptFaces` and `selection.discardedFaces` expose readable values.
+- `selection.selectedNatural` records the natural d20 value used by the formula.
+- `selection.reason` records `higher-face`, `lower-face` or `tie-first-candidate`.
+
+### Explicit Non-Work
+
+- Did not extend the parser grammar with keep/drop/reroll syntax.
+- Did not implement critical behavior.
+- Did not add dice UI.
+- Did not migrate Campaign Map initiative.
+- Did not persist roll results.
+- Did not create event/roll/combat log records.
+- Did not mutate a real workspace or change persistent formats.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with the explicit mode contract, V1 formula limitations, unsupported formula classification and selection result shape.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --check tests\diceRollModes.test.mjs`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs tests\diceStructuredRollResult.test.mjs tests\diceRollModes.test.mjs`
+- `npm run test`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.8` Critical Semantics.
+
 ## 2026-08-25: 0.0.1.14.6 Structured Roll Result
 
 ### Disposition
