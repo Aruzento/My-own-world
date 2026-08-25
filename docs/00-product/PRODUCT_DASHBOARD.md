@@ -27,13 +27,14 @@ Immediate direction:
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
-7. Next leaf: `0.0.1.14.10` Universal Consumer API.
+7. Next leaf: `0.0.1.14.FINAL` Safe Dice Engine Closure Gate.
 8. `0.0.1.15.0` Event / Roll / Combat Log + Transactions remains `BLOCKED` and has not been started.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-26 `0.0.1.14.10` Universal Consumer API: finalized `js/dice/diceEngine.js` as the canonical public Dice Engine module for future MyOwnWorld consumers. Future subsystems can call `rollDice(request, { randomInt })` and `validateDiceRoll(request)` with one request shape for initiative, checks, damage and random tables, and can distinguish invalid formulas, limits, unsupported modes/policies and RNG failures through structured codes/classifications instead of parsing text. No subsystem context, UI, persistence, event/roll log, combat behavior or new schema was added.
 - 2026-08-26 `0.0.1.14.9` Existing Initiative Dice Engine Parity: migrated Campaign Map initiative natural d20 rolls to the public Dice Engine facade with parity. Initiative still stores the same `roll`, `modifier`, `total`, participants and active turn state; total remains natural d20 + modifier; manual GM total edits, reroll/save/reopen, ordering and Character-to-initiative refresh behavior are preserved. No critical policy, RollResult persistence, initiative schema change, UI redesign, event/roll log or combat behavior was added.
 - 2026-08-25 `0.0.1.14.8` Explicit Natural d20 Critical Semantics: added explicit `criticalPolicy: "d20-natural"` support to the Dice Engine. Natural d20 classification now uses the selected natural face, not the final total, supports normal/advantage/disadvantage d20 rolls, rejects unsupported non-d20/multi-dice/arithmetic-only formulas as `UNSUPPORTED_CRITICAL_POLICY_FORMULA` before RNG, and exposes `critical.kind` as `success`, `failure` or `none`. No combat effects, damage, auto hit/miss behavior, UI, initiative migration, persistence or event/roll log work was added.
 - 2026-08-25 `0.0.1.14.7` Advantage and Disadvantage: added explicit d20 `mode: "advantage"` / `mode: "disadvantage"` request support without changing formula grammar. Non-normal modes accept exactly one `d20`/`1d20` term plus deterministic arithmetic, reject unsupported multi-dice/non-d20/arithmetic-only formulas as `UNSUPPORTED_MODE_FORMULA` before RNG, and expose candidate faces, kept/discarded faces/indexes, selected natural face and selection reason in the structured roll result. No UI, initiative migration, persistence, event/roll log, combat behavior or critical behavior was added.
@@ -194,7 +195,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.14.10` Universal Consumer API when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
+- Run `0.0.1.14.FINAL` Safe Dice Engine Closure Gate when ready. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -212,7 +213,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a reusable structured runtime result plus explicit d20 advantage/disadvantage modes; the next risk is critical semantics before rolls/feeders become durable session data.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a canonical public facade, structured runtime results, explicit d20 advantage/disadvantage modes and natural-d20 critical metadata; the next step is the Phase 14 closure gate before durable roll/event work starts.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.

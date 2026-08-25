@@ -6,6 +6,67 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.14.10 Universal Consumer API
+
+### Disposition
+
+- Closed `0.0.1.14.10` as the public Dice Engine consumer API leaf.
+- Started from current HEAD `ee1853b`.
+- Did not start `0.0.1.14.FINAL`.
+- Set the next leaf to `0.0.1.14.FINAL` Safe Dice Engine Closure Gate.
+
+### Public Facade
+
+- Confirmed `js/dice/diceEngine.js` as the canonical public Dice Engine module.
+- Added `DICE_ENGINE_PUBLIC_API_VERSION`.
+- Added frozen public option lists: `DICE_ROLL_MODES` and `DICE_CRITICAL_POLICIES`.
+- Kept `rollDice(request, { randomInt })` as the primary runtime roll API.
+- Added `validateDiceRoll(request)` as a side-effect-free validation API for future UI/subsystem preflight.
+
+### Consumer Contract
+
+- Future consumers can use the same request shape for initiative-style d20 modifiers, ability checks, generic damage formulas and system-neutral random tables.
+- Consumers do not need tokenizer, parser class, AST, evaluator helpers or RNG implementation details.
+- Subsystem context such as actor, target, token, character, campaign, combat or workspace identity remains outside Dice Engine request data.
+- `parseDiceFormula(formula)` remains documented for the existing parser/diagnostic contract, but normal subsystem integration should use `rollDice()` or `validateDiceRoll()`.
+
+### Error Contract
+
+- Validation failures now return structured `dice-roll-validation` data instead of requiring callers to catch exceptions for preflight.
+- Invalid syntax, limit failures, unsupported roll modes, unsupported critical policies, unsupported mode/policy formula shapes and RNG failures are distinguishable through `code` and/or `classification`.
+- RNG provider errors and invalid RNG values now carry `classification: "RNG_FAILURE"`.
+- Unsupported public option values now carry `UNSUPPORTED_ROLL_MODE` or `UNSUPPORTED_CRITICAL_POLICY`.
+
+### Explicit Non-Work
+
+- Did not add UI.
+- Did not persist RollResult.
+- Did not create event/roll/combat logs.
+- Did not add combat behavior.
+- Did not add subsystem context fields to Dice Engine.
+- Did not change Campaign Map initiative behavior.
+- Did not change workspace/page persistent format.
+- Did not mutate a real workspace.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with public exports, integration examples, error taxonomy, dependency direction and side-effect boundaries.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs tests\diceStructuredRollResult.test.mjs tests\diceRollModes.test.mjs tests\diceCriticalSemantics.test.mjs tests\dicePublicConsumerApi.test.mjs tests\campaignMapInitiativeModel.test.mjs tests\campaignMapHelperOwnership.test.mjs`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run test`
+- `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.FINAL` Safe Dice Engine Closure Gate.
+
 ## 2026-08-26: 0.0.1.14.9 Existing Initiative Dice Engine Parity
 
 ### Disposition

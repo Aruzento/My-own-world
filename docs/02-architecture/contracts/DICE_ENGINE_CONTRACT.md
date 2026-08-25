@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 # Dice Engine Contract
 
-Updated: 2026-08-25
+Updated: 2026-08-26
 
 ## Scope
 
@@ -466,6 +466,103 @@ Phase 14.9 does not:
 - create combat behavior;
 - create event/roll/combat logs.
 
+## 0.0.1.14.10 Universal Consumer API Contract
+
+Canonical public module:
+
+- `js/dice/diceEngine.js`.
+
+Public consumer entry points:
+
+- `rollDice(request, options)` performs a roll and returns immutable `dice-roll-result` runtime data;
+- `validateDiceRoll(request)` validates formula/options/mode-policy compatibility without rolling dice;
+- `DICE_ENGINE_PUBLIC_API_VERSION` identifies the current runtime API version;
+- `DICE_ROLL_MODES` exposes supported public mode strings;
+- `DICE_CRITICAL_POLICIES` exposes supported public critical policy strings;
+- `DICE_ENGINE_LIMITS` exposes central configured safety limits;
+- Dice Engine error classes remain public for callers that catch `rollDice()` failures.
+
+Normal future subsystem integration should import only this public module.
+
+Primary request shape:
+
+```js
+rollDice(
+  {
+    formula: 'd20 + 5',
+    mode: 'advantage',
+    criticalPolicy: 'd20-natural'
+  },
+  {
+    randomInt
+  }
+);
+```
+
+Supported conceptual consumers share the same API:
+
+```js
+rollDice({ formula: 'd20 + 3', mode: 'normal', criticalPolicy: 'none' });
+rollDice({ formula: 'd20 + 5', mode: 'advantage', criticalPolicy: 'd20-natural' });
+rollDice({ formula: '2d6 + 1d4 + 3', mode: 'normal', criticalPolicy: 'none' });
+rollDice({ formula: 'd100', mode: 'normal', criticalPolicy: 'none' });
+```
+
+Validation result:
+
+- success returns `kind: "dice-roll-validation"`, `version`, `ok: true` and normalized public request data;
+- failure returns `kind: "dice-roll-validation"`, `version`, `ok: false` and a structured public error summary;
+- validation does not call RNG and does not write or mutate application state.
+
+Public error distinction:
+
+- invalid formula syntax uses `code: "DICE_FORMULA_SYNTAX_ERROR"`;
+- limit failures use `code: "DICE_FORMULA_LIMIT_EXCEEDED"` and `classification: "LIMIT_EXCEEDED"`;
+- unsupported public mode uses `classification: "UNSUPPORTED_ROLL_MODE"`;
+- unsupported public critical policy uses `classification: "UNSUPPORTED_CRITICAL_POLICY"`;
+- unsupported formula shape for advantage/disadvantage uses `classification: "UNSUPPORTED_MODE_FORMULA"`;
+- unsupported formula shape for `d20-natural` uses `classification: "UNSUPPORTED_CRITICAL_POLICY_FORMULA"`;
+- RNG provider failures or invalid RNG values use `classification: "RNG_FAILURE"`.
+
+Dependency direction:
+
+- Campaign Map, Character/Properties, Combat, Rule Tree and Event Log may depend on the Dice Engine public facade;
+- Dice Engine must not import Campaign Map, Character/Properties, Combat, Rule Tree, Event Log, UI, storage, workspace state, `PageRepository` or `PageCommandService`.
+
+Subsystem context stays outside the engine. Do not add `characterId`, `tokenId`, `actorId`, `targetId`, `campaignMapId`, `combatId` or workspace ids to Dice Engine request data. Future callers should wrap the result instead:
+
+```js
+{
+  actorId,
+  targetId,
+  roll: rollDice({ formula: 'd20 + 5' })
+}
+```
+
+Internal boundary:
+
+- production consumers should not depend on tokenizer, parser class, AST shape, evaluator helpers or RNG implementation details;
+- `parseDiceFormula(formula)` remains available for the existing parser contract and low-level diagnostics/tests, but normal subsystem integration should use `rollDice()` or `validateDiceRoll()`;
+- no dependency injection framework or plugin system is part of Phase 14.
+
+Side-effect rule:
+
+- `rollDice()` and `validateDiceRoll()` do not write workspace files;
+- do not create event history;
+- do not create backups;
+- do not show popups;
+- do not change character/map/task/rule state;
+- do not mutate initiative.
+
+Phase 14.10 does not:
+
+- add dice UI;
+- persist roll results;
+- add event/roll logs;
+- add combat behavior;
+- add subsystem-owned context parameters;
+- change Campaign Map initiative behavior.
+
 ## Next Owner
 
-`0.0.1.14.10` Universal Consumer API owns the next public Dice Engine integration boundary. The Dice Engine still does not own UI, persistence, event logs or combat behavior.
+`0.0.1.14.FINAL` owns Safe Dice Engine closure verification. The Dice Engine still does not own UI, persistence, event logs or combat behavior.

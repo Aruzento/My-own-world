@@ -9,18 +9,31 @@ const BINARY_OPERATORS =
     '/'
   ]);
 
-const ROLL_MODES =
-  new Set([
+export const DICE_ENGINE_PUBLIC_API_VERSION =
+  1;
+
+export const DICE_ROLL_MODES =
+  Object.freeze([
     'normal',
     'advantage',
     'disadvantage'
   ]);
 
-const CRITICAL_POLICIES =
-  new Set([
+export const DICE_CRITICAL_POLICIES =
+  Object.freeze([
     'none',
     'd20-natural'
   ]);
+
+const ROLL_MODES =
+  new Set(
+    DICE_ROLL_MODES
+  );
+
+const CRITICAL_POLICIES =
+  new Set(
+    DICE_CRITICAL_POLICIES
+  );
 
 
 export const DICE_ENGINE_LIMITS =
@@ -219,7 +232,11 @@ export function createDefaultDiceRandomInt(
   ) {
 
     throw createEvaluationError(
-      'Default dice random source must be a function'
+      'Default dice random source must be a function',
+      {
+        classification:
+          'RNG_FAILURE'
+      }
     );
   }
 
@@ -244,6 +261,8 @@ export function createDefaultDiceRandomInt(
       throw createEvaluationError(
         'Default dice random source failed',
         {
+          classification:
+            'RNG_FAILURE',
           cause:
             error
         }
@@ -262,6 +281,8 @@ export function createDefaultDiceRandomInt(
       throw createEvaluationError(
         'Default dice random source returned an invalid fraction',
         {
+          classification:
+            'RNG_FAILURE',
           minimum:
             0,
           maximum:
@@ -386,19 +407,11 @@ export function rollDice(
     kind:
       'dice-roll-result',
     version:
-      1,
-    request: {
-      formulaOriginal:
-        normalizedRequest.formula,
-      formulaNormalized:
-        normalizeFormulaForResult(
-          normalizedRequest.formula
-        ),
-      mode:
-        normalizedRequest.mode,
-      criticalPolicy:
-        normalizedRequest.criticalPolicy
-    },
+      DICE_ENGINE_PUBLIC_API_VERSION,
+    request:
+      createPublicRequestSummary(
+        normalizedRequest
+      ),
     total,
     dice:
       context.dice,
@@ -410,6 +423,71 @@ export function rollDice(
         context
       )
   });
+}
+
+
+export function validateDiceRoll(
+  request
+) {
+
+  try {
+
+    const normalizedRequest =
+      normalizeRollRequest(
+        request
+      );
+
+    validateRollOptions(
+      normalizedRequest
+    );
+
+    const ast =
+      parseDiceFormula(
+        normalizedRequest.formula
+      );
+
+    createRollModeContext(
+      normalizedRequest.mode,
+      normalizedRequest.criticalPolicy,
+      ast
+    );
+
+    return deepFreeze({
+      kind:
+        'dice-roll-validation',
+      version:
+        DICE_ENGINE_PUBLIC_API_VERSION,
+      ok:
+        true,
+      request:
+        createPublicRequestSummary(
+          normalizedRequest
+        )
+    });
+  } catch (error) {
+
+    if (
+      isDiceEngineError(
+        error
+      )
+    ) {
+
+      return deepFreeze({
+        kind:
+          'dice-roll-validation',
+        version:
+          DICE_ENGINE_PUBLIC_API_VERSION,
+        ok:
+          false,
+        error:
+          createPublicErrorSummary(
+            error
+          )
+      });
+    }
+
+    throw error;
+  }
 }
 
 
@@ -721,6 +799,8 @@ function validateRollOptions(
     throw createEvaluationError(
       'Unsupported dice roll mode',
       {
+        classification:
+          'UNSUPPORTED_ROLL_MODE',
         mode:
           request.mode
       }
@@ -736,6 +816,8 @@ function validateRollOptions(
     throw createEvaluationError(
       'Unsupported dice critical policy',
       {
+        classification:
+          'UNSUPPORTED_CRITICAL_POLICY',
         criticalPolicy:
           request.criticalPolicy
       }
@@ -753,7 +835,11 @@ function validateRandomInt(
   ) {
 
     throw createEvaluationError(
-      'randomInt must be a function'
+      'randomInt must be a function',
+      {
+        classification:
+          'RNG_FAILURE'
+      }
     );
   }
 }
@@ -882,6 +968,25 @@ function normalizeFormulaForResult(
     /\s+/g,
     ''
   );
+}
+
+
+function createPublicRequestSummary(
+  request
+) {
+
+  return {
+    formulaOriginal:
+      request.formula,
+    formulaNormalized:
+      normalizeFormulaForResult(
+        request.formula
+      ),
+    mode:
+      request.mode,
+    criticalPolicy:
+      request.criticalPolicy
+  };
 }
 
 
@@ -1339,6 +1444,8 @@ function rollSingleDie(
     throw createEvaluationError(
       'randomInt provider failed',
       {
+        classification:
+          'RNG_FAILURE',
         nodeType:
           node.type,
         minimum:
@@ -1362,6 +1469,8 @@ function rollSingleDie(
     throw createEvaluationError(
       'randomInt returned a value outside the requested die range',
       {
+        classification:
+          'RNG_FAILURE',
         nodeType:
           node.type,
         minimum:
@@ -1631,7 +1740,11 @@ function validateRandomRange(
   ) {
 
     throw createEvaluationError(
-      'randomInt range must use safe integer bounds'
+      'randomInt range must use safe integer bounds',
+      {
+        classification:
+          'RNG_FAILURE'
+      }
     );
   }
 }
@@ -2205,6 +2318,62 @@ function createEvaluationError(
     reason,
     options
   );
+}
+
+
+function isDiceEngineError(
+  error
+) {
+
+  return (
+    error instanceof DiceFormulaSyntaxError ||
+    error instanceof DiceFormulaLimitError ||
+    error instanceof DiceFormulaEvaluationError
+  );
+}
+
+
+function createPublicErrorSummary(
+  error
+) {
+
+  const summary =
+    {
+      name:
+        error.name,
+      code:
+        error.code,
+      reason:
+        error.reason
+    };
+
+  for (
+    const key of [
+      'classification',
+      'limitKind',
+      'maximum',
+      'minimum',
+      'observed',
+      'position',
+      'tokenType',
+      'operator',
+      'mode',
+      'criticalPolicy',
+      'diceTermCount'
+    ]
+  ) {
+
+    if (
+      error[key] !== undefined &&
+      error[key] !== null
+    ) {
+
+      summary[key] =
+        error[key];
+    }
+  }
+
+  return summary;
 }
 
 
