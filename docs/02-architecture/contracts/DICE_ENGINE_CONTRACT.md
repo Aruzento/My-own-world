@@ -424,6 +424,48 @@ Phase 14.8 does not:
 - persist roll results;
 - create event/roll/combat log records.
 
+## 0.0.1.14.9 Initiative Parity Contract
+
+Decision: `MIGRATED WITH PARITY`.
+
+Campaign Map initiative is the first real consumer of the public Dice Engine facade.
+
+Initiative roll path:
+
+- `campaignMapInitiativePopup.js` remains a UI/orchestration consumer of the initiative model;
+- `campaignMapInitiativeModel.js` owns initiative roll semantics;
+- `rollD20(random = Math.random)` now calls public `rollDice()`;
+- the Dice Engine request is `formula: "d20"`, `mode: "normal"`, `criticalPolicy: "none"`;
+- the initiative model consumes the selected natural d20 face from the returned `dice-roll-result`;
+- initiative then applies its existing modifier/domain rules.
+
+Current initiative semantics preserved:
+
+- d20 generation keeps the existing `Math.random`-style fraction source contract for Campaign Map initiative;
+- total remains natural d20 + participant initiative modifier;
+- participant state remains `roll`, `modifier`, `total`, identity/source fields and alive state;
+- manual GM total corrections remain authoritative in the initiative popup and recalculate displayed `roll` as total minus modifier;
+- rerolling does not automatically reset the active turn;
+- active turn remains stored by `activeParticipantId`;
+- ordering remains total descending, then modifier descending, then Russian locale name ordering;
+- Character-to-token initiative modifier refresh remains unchanged;
+- save/reopen still uses the existing Campaign Map `data-initiative-state` payload.
+
+Intentional non-persistence:
+
+- no RollResult is written into map/page state;
+- no critical classification is written into initiative participants;
+- no event/roll log entry is created in Phase 14.
+
+Phase 14.9 does not:
+
+- apply `criticalPolicy: "d20-natural"` to initiative;
+- change initiative schema or persisted map format;
+- change manual initiative edits;
+- redesign the initiative popup;
+- create combat behavior;
+- create event/roll/combat logs.
+
 ## Next Owner
 
-`0.0.1.14.9` Initiative Parity owns deciding whether the existing initiative roller can safely consume the public Dice Engine facade. The Dice Engine still does not own UI, persistence, event logs or combat behavior.
+`0.0.1.14.10` Universal Consumer API owns the next public Dice Engine integration boundary. The Dice Engine still does not own UI, persistence, event logs or combat behavior.

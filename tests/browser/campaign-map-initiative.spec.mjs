@@ -298,6 +298,250 @@ test(
 
 
 test(
+  'campaign-map-initiative-popup-rolls-deterministic-d20-through-dice-engine-parity',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            getCampaignMapStore
+          } = await import('/js/editor/campaignMapStore.js');
+
+          const {
+            openInitiativePopup
+          } = await import('/js/editor/campaignMapInitiativePopup.js');
+
+          const {
+            closeMapPopup
+          } = await import('/js/editor/campaignMapPopupController.js');
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <button id="initiativeAnchor" type="button">initiative</button>
+            <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
+              <div class="campaign-map-stage" data-grid="false" data-fog-mode="draw" data-fog-image="" contenteditable="false">
+                <div class="campaign-map-viewport">
+                  <div class="campaign-map-background"></div>
+                  <div class="campaign-map-object-layer"></div>
+                  <canvas class="campaign-map-fog-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          `;
+
+          const map =
+            editor.querySelector('.campaign-map-document');
+
+          const anchor =
+            editor.querySelector('#initiativeAnchor');
+
+          const store =
+            getCampaignMapStore(
+              map
+            );
+
+          store.addToken({
+            tokenId:
+              'initiative-hero',
+            type:
+              'creature',
+            name:
+              'Hero',
+            modifier:
+              2
+          });
+
+          store.addToken({
+            tokenId:
+              'initiative-enemy',
+            type:
+              'creature',
+            name:
+              'Enemy',
+            modifier:
+              -1
+          });
+
+          let saveCount =
+            0;
+
+          openInitiativePopup(
+            map,
+            anchor,
+            {
+              saveAndSync:
+                async () => {
+
+                  saveCount += 1;
+                }
+            }
+          );
+
+          const popup =
+            document.querySelector('.campaign-map-popup');
+
+          const originalRandom =
+            Math.random;
+
+          const fractions =
+            [
+              0.95,
+              0.1
+            ];
+
+          Math.random =
+            () => fractions.shift();
+
+          try {
+
+            popup
+              .querySelector('.campaign-initiative-roll-btn')
+              .click();
+
+          } finally {
+
+            Math.random =
+              originalRandom;
+          }
+
+          const pickerValues =
+            [...popup.querySelectorAll('.campaign-initiative-value')]
+              .map(input => input.value);
+
+          popup
+            .querySelector('.campaign-initiative-save-btn')
+            .click();
+
+          await Promise.resolve();
+          await new Promise(resolve => setTimeout(resolve));
+
+          const orderRows =
+            [...popup.querySelectorAll('.campaign-initiative-order-row')]
+              .map(row => ({
+                name:
+                  row.querySelector('.campaign-initiative-name')?.textContent || '',
+                value:
+                  row.querySelector('.campaign-initiative-value')?.value || '',
+                result:
+                  row.querySelector('.campaign-initiative-result')?.textContent || ''
+              }));
+
+          const savedInitiative =
+            store.getModel().initiative;
+
+          closeMapPopup();
+
+          openInitiativePopup(
+            map,
+            anchor,
+            {
+              saveAndSync:
+                async () => {
+
+                  saveCount += 1;
+                }
+            }
+          );
+
+          const reopenedValues =
+            [...popup.querySelectorAll('.campaign-initiative-order-row .campaign-initiative-value')]
+              .map(input => input.value);
+
+          return {
+            saveCount,
+            pickerValues,
+            orderRows,
+            savedInitiative,
+            reopenedValues
+          };
+        }
+      );
+
+    expect(
+      result.pickerValues
+    ).toEqual([
+      '22',
+      '2'
+    ]);
+
+    expect(
+      result.orderRows.map(row => row.value)
+    ).toEqual([
+      '22',
+      '2'
+    ]);
+
+    expect(
+      result.savedInitiative.participants.map(participant => ({
+        participantId:
+          participant.participantId,
+        roll:
+          participant.roll,
+        modifier:
+          participant.modifier,
+        total:
+          participant.total,
+        critical:
+          participant.critical,
+        rollResult:
+          participant.rollResult
+      }))
+    ).toEqual([
+      {
+        participantId:
+          'token:initiative-hero',
+        roll:
+          20,
+        modifier:
+          2,
+        total:
+          22,
+        critical:
+          undefined,
+        rollResult:
+          undefined
+      },
+      {
+        participantId:
+          'token:initiative-enemy',
+        roll:
+          3,
+        modifier:
+          -1,
+        total:
+          2,
+        critical:
+          undefined,
+        rollResult:
+          undefined
+      }
+    ]);
+
+    expect(
+      result.saveCount
+    ).toBe(
+      1
+    );
+
+    expect(
+      result.reopenedValues
+    ).toEqual([
+      '22',
+      '2'
+    ]);
+  }
+);
+
+
+test(
   'campaign-map-token-initiative-uses-character-model-dex-modifier',
   async ({ page }) => {
 

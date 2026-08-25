@@ -121,7 +121,7 @@ test(
 
 
 test(
-  'Campaign Map initiative popup rolls through the initiative model owner',
+  'Campaign Map initiative rolls through the model owner and public Dice Engine facade',
   async () => {
 
     const [
@@ -144,6 +144,12 @@ test(
       /export function rollD20\s*\(/
     );
 
+    assert.match(
+      modelSource,
+      /import\s*{[\s\S]*\brollDice\b[\s\S]*}\s*from '\.\.\/dice\/diceEngine\.js';/,
+      'Initiative model should consume the public Dice Engine facade'
+    );
+
     const initiativeModelImport =
       popupSource.match(
         /import\s*{([\s\S]*?)}\s*from '\.\/campaignMapInitiativeModel\.js';/
@@ -164,6 +170,12 @@ test(
       popupSource,
       /function\s+rollD20\s*\(/,
       'Initiative popup should not define a local rollD20 duplicate'
+    );
+
+    assert.doesNotMatch(
+      popupSource,
+      /diceEngine\.js/,
+      'Initiative popup should not import Dice Engine internals directly'
     );
   }
 );

@@ -157,6 +157,189 @@ test(
 
 
 test(
+  'InitiativeModel preserves d20 modifier and ordering parity through Dice Engine',
+  () => {
+
+    const fractions =
+      [
+        0.95,
+        0.65,
+        0.45,
+        0.45
+      ];
+
+    const model =
+      new CampaignMapInitiativeModel({
+        participants: [
+          {
+            participantId:
+              'low-total',
+            name:
+              'Низкий',
+            modifier:
+              -2
+          },
+          {
+            participantId:
+              'high-total',
+            name:
+              'Высокий',
+            modifier:
+              5
+          },
+          {
+            participantId:
+              'beta',
+            name:
+              'Бета',
+            modifier:
+              1
+          },
+          {
+            participantId:
+              'alpha',
+            name:
+              'Альфа',
+            modifier:
+              1
+          }
+        ]
+      });
+
+    model.rollAll(
+      () => fractions.shift()
+    );
+
+    assert.deepEqual(
+      model.toJSON().participants.map(participant => ({
+        participantId:
+          participant.participantId,
+        roll:
+          participant.roll,
+        modifier:
+          participant.modifier,
+        total:
+          participant.total
+      })),
+      [
+        {
+          participantId:
+            'high-total',
+          roll:
+            14,
+          modifier:
+            5,
+          total:
+            19
+        },
+        {
+          participantId:
+            'low-total',
+          roll:
+            20,
+          modifier:
+            -2,
+          total:
+            18
+        },
+        {
+          participantId:
+            'alpha',
+          roll:
+            10,
+          modifier:
+            1,
+          total:
+            11
+        },
+        {
+          participantId:
+            'beta',
+          roll:
+            10,
+          modifier:
+            1,
+          total:
+            11
+        }
+      ]
+    );
+
+    assert.equal(
+      model.activeParticipantId,
+      'low-total'
+    );
+
+    for (
+      const participant of model.toJSON().participants
+    ) {
+
+      assert.equal(
+        'critical' in participant,
+        false
+      );
+
+      assert.equal(
+        'rollResult' in participant,
+        false
+      );
+    }
+  }
+);
+
+
+test(
+  'InitiativeModel keeps manual initiative totals as the authoritative saved state',
+  () => {
+
+    const model =
+      new CampaignMapInitiativeModel({
+        participants: [
+          {
+            participantId:
+              'manual',
+            name:
+              'Правка мастера',
+            modifier:
+              3,
+            roll:
+              11,
+            total:
+              30
+          }
+        ],
+        activeParticipantId:
+          'manual'
+      });
+
+    assert.deepEqual(
+      model.toJSON().participants[0],
+      {
+        participantId:
+          'manual',
+        tokenId:
+          '',
+        pageId:
+          '',
+        sourceMode:
+          'duplicate',
+        name:
+          'Правка мастера',
+        modifier:
+          3,
+        roll:
+          11,
+        total:
+          30,
+        isAlive:
+          true
+      }
+    );
+  }
+);
+
+
+test(
   'InitiativeModel refreshes existing token participants from current token snapshots',
   () => {
 

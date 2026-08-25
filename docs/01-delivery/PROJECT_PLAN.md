@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-25
+Updated: 2026-08-26
 
 Planning version: 2
 
@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
 
-Current leaf: `0.0.1.14.9` Initiative Parity is `NEXT`.
+Current leaf: `0.0.1.14.10` Universal Consumer API is `NEXT`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7` and `0.0.1.14.8` are closed. `0.0.1.14.0` is active for NF-002 Safe Dice Engine planning/implementation leaves. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8` and `0.0.1.14.9` are closed. `0.0.1.14.0` is active for NF-002 Safe Dice Engine planning/implementation leaves. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
 
 ## Execution Rules
 
@@ -288,6 +288,8 @@ CURRENT LEAF RESULTS:
 - `0.0.1.14.7` Advantage and Disadvantage - `DONE` on 2026-08-25. Added explicit `mode: "advantage"` and `mode: "disadvantage"` support to `rollDice()` without extending formula grammar. Non-normal modes are limited to formulas with exactly one `d20`/`1d20` dice term plus deterministic arithmetic; unsupported multi-dice, non-d20 and arithmetic-only formulas fail as `UNSUPPORTED_MODE_FORMULA` before RNG. The selected d20 term records candidate faces, kept/discarded candidate indexes/faces, selected natural face and selection reason, while modifiers/arithmetic apply once. No keep/drop syntax, UI, initiative migration, persistence, event/roll log, combat behavior, critical rules or real workspace mutation was implemented.
 
 - `0.0.1.14.8` Explicit Natural d20 Critical Semantics - `DONE` on 2026-08-25. Added explicit `criticalPolicy: "d20-natural"` support to the public Dice Engine facade. Critical classification now uses the selected natural d20 face, not the final modified total, works with normal/advantage/disadvantage d20 rolls, rejects unsupported non-d20/multi-dice/arithmetic-only formulas as `UNSUPPORTED_CRITICAL_POLICY_FORMULA` before RNG, and returns `critical.kind` as `success`, `failure` or `none`. `criticalPolicy: "none"` remains the default and performs no semantic classification. No combat effects, damage, auto hit/miss behavior, UI, initiative migration, persistence, event/roll log or real workspace mutation was implemented.
+
+- `0.0.1.14.9` Existing Initiative Dice Engine Parity - `DONE` on 2026-08-26. Result: `MIGRATED WITH PARITY`. Campaign Map initiative now rolls its natural d20 through the public `rollDice()` facade while preserving the existing initiative-owned state shape: `roll`, `modifier`, `total`, participants, active participant id and sort order remain unchanged. Existing semantics stay intact: total is natural d20 + initiative modifier, manual GM total edits remain authoritative, rerolling does not reset active turn unexpectedly, ordering stays total desc -> modifier desc -> Russian name, Character-to-initiative refresh stays unchanged, and save/reopen still persists the same `data-initiative-state` map payload. No critical policy, RollResult persistence, initiative schema change, event/roll log, combat behavior, UI redesign or real workspace mutation was implemented.
 
 ### Phase 7 - 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions
 

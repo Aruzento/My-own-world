@@ -1,3 +1,8 @@
+import {
+  rollDice
+} from '../dice/diceEngine.js';
+
+
 export class CampaignMapInitiativeModel {
 
   constructor(
@@ -421,9 +426,43 @@ export function rollD20(
   random = Math.random
 ) {
 
-  return Math.floor(
-    random() * 20
-  ) + 1;
+  const result =
+    rollDice(
+      {
+        formula:
+          'd20',
+        mode:
+          'normal',
+        criticalPolicy:
+          'none'
+      },
+      {
+        randomInt:
+          createInitiativeRandomInt(
+            random
+          )
+      }
+    );
+
+  return result.dice[0]?.faces[0] ?? result.total;
+}
+
+
+function createInitiativeRandomInt(
+  random
+) {
+
+  return function initiativeRandomInt(
+    minInclusive,
+    maxInclusive
+  ) {
+
+    return (
+      Math.floor(
+        random() * (maxInclusive - minInclusive + 1)
+      ) + minInclusive
+    );
+  };
 }
 
 

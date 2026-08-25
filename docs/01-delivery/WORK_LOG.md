@@ -6,6 +6,72 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.14.9 Existing Initiative Dice Engine Parity
+
+### Disposition
+
+- Closed `0.0.1.14.9` as `MIGRATED WITH PARITY`.
+- Started from current HEAD `ca7613f`.
+- Did not start `0.0.1.14.10` Universal Consumer API.
+- Set the next leaf to `0.0.1.14.10` Universal Consumer API.
+
+### Initiative Semantics Reviewed
+
+- Existing d20 generation used a `Math.random`-style fraction source and mapped it to `Math.floor(random() * 20) + 1`.
+- Existing total behavior was natural d20 roll + participant initiative modifier.
+- Stored participant state was `participantId`, token/page/source identity, name, modifier, roll, total and alive state.
+- Manual GM edits in the order popup treated total as authoritative and recalculated roll as total minus modifier.
+- Rerolling/filling picker values did not reset active turn directly.
+- Active turn was stored by `activeParticipantId` and moved with previous/next actions.
+- Ordering was total descending, then modifier descending, then Russian locale name ordering.
+- Campaign Map save/reload persisted initiative through the existing `data-initiative-state` map payload.
+
+### Migration
+
+- `CampaignMapInitiativeModel.rollD20()` now calls the public Dice Engine `rollDice()` facade.
+- The initiative request is `formula: "d20"`, `mode: "normal"` and `criticalPolicy: "none"`.
+- The initiative model consumes only the natural d20 face from the returned `dice-roll-result`.
+- Initiative modifier arithmetic, sorting, active-turn lifecycle, popup orchestration and map persistence remain owned by Campaign Map initiative.
+
+### Parity Result
+
+- Natural d20 values still map from the same valid `Math.random` fraction contract.
+- Total remains natural d20 + modifier.
+- Sorting and tie behavior remain unchanged.
+- Manual total corrections remain authoritative.
+- Character-to-initiative refresh remains unchanged.
+- Save/reopen keeps the same persisted initiative shape.
+- RollResult and critical metadata are not persisted into initiative participants.
+
+### Explicit Non-Work
+
+- Did not apply `criticalPolicy: "d20-natural"` to initiative.
+- Did not change initiative schema or Campaign Map persistent format.
+- Did not add initiative UI.
+- Did not redesign the initiative popup.
+- Did not create event/roll/combat log records.
+- Did not add combat behavior.
+- Did not mutate a real workspace.
+
+### Contract
+
+- Updated [DICE_ENGINE_CONTRACT.md](../02-architecture/contracts/DICE_ENGINE_CONTRACT.md) with the initiative parity decision, owner boundary and preserved semantics.
+
+### Tests
+
+- `node --check js\editor\campaignMapInitiativeModel.js`
+- `node --test tests\campaignMapInitiativeModel.test.mjs tests\campaignMapHelperOwnership.test.mjs tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs tests\diceStructuredRollResult.test.mjs tests\diceRollModes.test.mjs tests\diceCriticalSemantics.test.mjs`
+- `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs`
+- `npm run docs:index`
+- `npm run test`
+- `npm run test:browser`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.14.10` Universal Consumer API.
+
 ## 2026-08-25: 0.0.1.14.8 Explicit Natural d20 Critical Semantics
 
 ### Disposition
