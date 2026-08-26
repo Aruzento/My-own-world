@@ -66,7 +66,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
 - The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization, `0.0.1.12.0` Data Safety Completion and `0.0.1.13.0` NF-001 Edit Session Conflict Protection are closed.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair, edit-session conflict protection and NF-002 Dice Engine are implemented for the current safety scope. The active roadmap risk is the NF-003 event/transaction foundation: durable event storage still needs explicit owner approval for its proposed sidecar before rolls or future actions become auditable session data.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair, edit-session conflict protection and NF-002 Dice Engine are implemented for the current safety scope. The active roadmap risk is the NF-003 event/transaction foundation: `0.0.1.15.2` has a pure runtime transaction model, but durable event storage still needs explicit owner approval for its proposed sidecar before rolls or future actions become auditable session data.
 
 ### Verification Snapshot
 

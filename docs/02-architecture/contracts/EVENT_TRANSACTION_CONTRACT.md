@@ -173,6 +173,34 @@ Editor-local `Ctrl+Z` may still use `editorHistory` for local unsaved editing. D
 - Backup/recovery still goes through `backupService` and existing recovery owners.
 - Event logging must record facts from those owners. It must not become a second storage adapter, second map store, second character model or second dice engine.
 
+## 0.0.1.15.2 Transaction Model
+
+`js/events/transactionModel.js` is the pure runtime domain model for Phase 15 transaction records.
+
+Public model operations:
+
+- `createTransaction(input)` creates a started transaction from caller-supplied identity, time/order and source/reason metadata.
+- `appendTransactionEvent(transaction, eventInput)` returns a new transaction with one ordered event appended.
+- `createTransactionEvent(input)` creates a subsystem-neutral event record.
+- `completeTransaction(transaction, { completedAt })` closes a started transaction with at least one event.
+- `failTransaction(transaction, { failedAt, error, code })` records a failed transaction without adding durable side effects.
+- `createReversalTransaction(input)` creates a started transaction linked to the transaction it reverses.
+- `markTransactionReversed(transaction, { reversedByTransactionId })` links a completed original transaction to a reversal transaction.
+- `serializeTransaction(transaction)` / `serializeTransactionEvent(event)` return deterministic JSON-compatible shapes for later store work.
+
+Pure model rules:
+
+- the model does not import DOM, UI, storage, PageCommandService, Dice Engine, Campaign Map or CharacterModel;
+- the model does not generate ids, timestamps or random values;
+- the model does not persist anything;
+- completed and failed transactions are immutable and cannot receive later events;
+- a completed transaction must contain at least one event;
+- event order is monotonic inside the parent transaction;
+- payloads must be JSON-serializable data only;
+- subsystem context such as actor id, token id or page id belongs inside event payloads, never as generic transaction-model fields.
+
+The model can be consumed by the future durable event store, but it is not the store.
+
 ## Proposed Durable Storage Decision
 
 OWNER APPROVAL REQUIRED before implementation.
@@ -240,10 +268,8 @@ This proposal is documented for owner review. `0.0.1.15.1` does not implement du
 
 ## Current Gaps For Later Leaves
 
-- No public transaction model module exists yet.
 - No approved durable event-log storage exists yet.
 - No append/read/reversal tests exist yet.
 - No roll event consumer exists yet.
 - No event UI exists yet.
 - No combat/event vocabulary beyond the contract examples should be considered implemented.
-

@@ -6,6 +6,59 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.15.2 Transaction Model
+
+### Disposition
+
+- Closed `0.0.1.15.2` as a pure domain-model leaf.
+- Started from current HEAD `2d660a8`.
+- Added `js/events/transactionModel.js`.
+- Set the next leaf to `0.0.1.15.3` Durable Event Store.
+- Did not start durable event persistence because the `0.0.1.15.1` sidecar proposal still requires owner approval.
+
+### Model Contract
+
+- `createTransaction()` creates a started transaction from caller-supplied transaction id, timestamp/order, intent type, label, source and reason.
+- `appendTransactionEvent()` appends one or more ordered events to a started transaction.
+- `completeTransaction()` completes a started transaction only after at least one event exists.
+- `failTransaction()` records failed state and structured failure code/message without stack dumping.
+- `createReversalTransaction()` and `markTransactionReversed()` provide undo/reversal linkage without deleting original history.
+- `serializeTransaction()` / `serializeTransactionEvent()` return deterministic JSON-compatible shapes for later storage work.
+
+### Boundaries Preserved
+
+- The model is runtime-only and side-effect-free.
+- It does not import or call DOM, UI, storage, PageCommandService, Dice Engine, Campaign Map or CharacterModel.
+- It does not generate ids, timestamps, random values or backups.
+- It does not put Character/Map/page objects in top-level generic transaction fields; subsystem context belongs in event payload data.
+- Payloads must be JSON-serializable data.
+- Completed and failed transactions are deeply frozen and reject later event appends.
+
+### Explicit Non-Work
+
+- Did not implement a durable event store.
+- Did not create `.my-own-world-events/`.
+- Did not implement event append/read storage APIs.
+- Did not implement roll history UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting or turns/rounds behavior.
+- Did not change persistent format.
+- Did not mutate a real workspace.
+
+### Verification
+
+- `node --test tests\eventTransactionModel.test.mjs`
+- `node --test tests\eventTransactionContract.test.mjs tests\eventTransactionModel.test.mjs`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run test`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.3` Durable Event Store.
+- Before adding persistent event writes, confirm owner approval for the proposed `.my-own-world-events/transactions.v1.jsonl` sidecar.
+
 ## 2026-08-26: 0.0.1.15.1 Event Baseline & Contract
 
 ### Disposition
