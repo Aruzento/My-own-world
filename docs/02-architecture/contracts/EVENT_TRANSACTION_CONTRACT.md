@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.1` baseline and contract.
+Status: `0.0.1.15.3` durable event store foundation.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -201,20 +201,20 @@ Pure model rules:
 
 The model can be consumed by the future durable event store, but it is not the store.
 
-## Proposed Durable Storage Decision
+## Durable Storage Decision
 
-OWNER APPROVAL REQUIRED before implementation.
+Owner approved the `0.0.1.15.1` sidecar decision in the `0.0.1.15.3` task prompt. `0.0.1.15.3` implements the first durable store in `js/events/eventStore.js`.
 
-Durable event history requires a new workspace artifact because no current page, backup, operation-journal or package format is the product event log.
+Durable event history uses a workspace sidecar because no current page, backup, operation-journal or package format is the product event log.
 
-Proposed location:
+Location:
 
 ```text
 .my-own-world-events/
   transactions.v1.jsonl
 ```
 
-Proposed record shape per line:
+Record shape per line:
 
 ```json
 {
@@ -249,15 +249,24 @@ Proposed record shape per line:
 }
 ```
 
-Version impact if approved:
+Store contract:
+
+- `appendTransactionRecord(transaction, { storageAdapter })` appends one completed/failed transaction as one JSONL line.
+- `readTransactionRecords({ storageAdapter, strict })` reads valid records and reports corrupt/invalid lines as structured `invalidRecords`.
+- `readEventTransactions({ storageAdapter })` returns reconstructed transaction shapes for consumers that only need the transaction data.
+- record order is file append order; event order inside a transaction is validated by the transaction model and store.
+- started transactions remain runtime-only and are not durable history records.
+- corrupt/invalid old lines are not silently edited or deleted by read.
+- write failure throws `EventStoreError` and must not be reported as durable success.
+- the store writes only `.my-own-world-events/transactions.v1.jsonl`; it does not store hidden state inside card HTML and does not own UI.
+
+Version impact:
 
 - new event-log record version: `1`;
 - new app-owned workspace sidecar directory: `.my-own-world-events/`;
 - no page markdown/front-matter schema change;
 - no Dice Engine result schema change;
-- backup/restore inclusion policy must be explicitly decided before durable event writes are used for real sessions. If backups must preserve event history, `backupService` will need an additive manifest/update policy for this sidecar or a versioned backup-manifest decision.
-
-This proposal is documented for owner review. `0.0.1.15.1` does not implement durable event storage and does not write `.my-own-world-events/`.
+- backup/restore inclusion policy is still not decided. If backups must preserve event history, `backupService` needs a later additive policy for this sidecar or a versioned backup-manifest decision.
 
 ## Current Safe Baseline
 
@@ -268,8 +277,7 @@ This proposal is documented for owner review. `0.0.1.15.1` does not implement du
 
 ## Current Gaps For Later Leaves
 
-- No approved durable event-log storage exists yet.
-- No append/read/reversal tests exist yet.
 - No roll event consumer exists yet.
 - No event UI exists yet.
+- Backup/restore inclusion for `.my-own-world-events/` is not decided yet.
 - No combat/event vocabulary beyond the contract examples should be considered implemented.

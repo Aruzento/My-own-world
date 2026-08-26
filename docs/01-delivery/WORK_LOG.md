@@ -6,6 +6,59 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.15.3 Durable Event Store
+
+### Disposition
+
+- Closed `0.0.1.15.3` as the first durable event-store foundation leaf.
+- Started from current HEAD `9fd3e94`.
+- Implemented `js/events/eventStore.js`.
+- Used the owner-approved `0.0.1.15.1` storage decision: `.my-own-world-events/transactions.v1.jsonl`.
+- Set the next leaf to `0.0.1.15.4` Event Types v1.
+
+### Store Contract
+
+- One durable transaction record is one JSONL line with `kind: "mow-transaction-record"` and `version: 1`.
+- The store serializes completed and failed `TransactionModel` transactions into a record with transaction metadata plus ordered events.
+- Started transactions remain runtime-only and are rejected before any write.
+- `appendTransactionRecord()` appends through the active `StorageAdapter` and returns `status: "durable"` only after the write succeeds.
+- `readTransactionRecords()` reconstructs valid transactions after restart and reports corrupt/invalid lines as `invalidRecords`.
+- `readEventTransactions()` gives future consumers the transaction data without exposing parser/storage internals.
+- Concurrent in-process appends to the same log path are serialized so fallback read/write append cannot lose a transaction.
+
+### Boundaries Preserved
+
+- The store writes only `.my-own-world-events/transactions.v1.jsonl`.
+- It does not store hidden state inside card HTML.
+- It does not import DOM/UI, PageCommandService, Dice Engine, Campaign Map or CharacterModel.
+- It does not create event UI, roll history UI, dice UI or combat behavior.
+- It does not edit, compact or delete old event records during read.
+- Backup/restore inclusion for `.my-own-world-events/` remains a later explicit policy decision.
+
+### Failure And Corruption Handling
+
+- Write failure throws `EventStoreError` with `EVENT_STORE_WRITE_FAILED`; callers must not treat the transaction as durable.
+- Missing event log reads as an empty store.
+- Malformed JSON, wrong record kind/version, invalid transaction shapes and bad event ordering are reported as structured invalid records.
+- Strict read mode fails on the first invalid line for future validation gates.
+
+### Verification
+
+- `node --test tests\eventStore.test.mjs tests\eventTransactionModel.test.mjs tests\eventTransactionContract.test.mjs`
+
+### Explicit Non-Work
+
+- Did not implement roll event types.
+- Did not integrate Dice Engine rolls into durable history.
+- Did not add event UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting or turns/rounds behavior.
+- Did not change page markdown/front-matter schema.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.4` Event Types v1.
+
 ## 2026-08-26: 0.0.1.15.2 Transaction Model
 
 ### Disposition

@@ -42,10 +42,15 @@ test(
       'completeTransaction(transaction, { completedAt })',
       'failTransaction(transaction, { failedAt, error, code })',
       'serializeTransaction(transaction)',
-      'OWNER APPROVAL REQUIRED',
+      'Owner approved the `0.0.1.15.1` sidecar decision',
+      'js/events/eventStore.js',
+      'appendTransactionRecord(transaction, { storageAdapter })',
+      'readTransactionRecords({ storageAdapter, strict })',
+      'readEventTransactions({ storageAdapter })',
       '.my-own-world-events/',
       'transactions.v1.jsonl',
-      'does not implement durable event storage'
+      'does not store hidden state inside card HTML',
+      'write failure throws `EventStoreError`'
     ]) {
 
       assert.match(

@@ -66,12 +66,12 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
 - The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization, `0.0.1.12.0` Data Safety Completion and `0.0.1.13.0` NF-001 Edit Session Conflict Protection are closed.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair, edit-session conflict protection and NF-002 Dice Engine are implemented for the current safety scope. The active roadmap risk is the NF-003 event/transaction foundation: `0.0.1.15.2` has a pure runtime transaction model, but durable event storage still needs explicit owner approval for its proposed sidecar before rolls or future actions become auditable session data.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair, edit-session conflict protection and NF-002 Dice Engine are implemented for the current safety scope. The active roadmap risk is the NF-003 event/transaction foundation: `0.0.1.15.3` now has the owner-approved durable `.my-own-world-events/transactions.v1.jsonl` store for append/read/reload of transaction records, but roll event types, event UI, backup/restore inclusion policy and combat behavior are still not implemented.
 
 ### Verification Snapshot
 
-- Latest standalone `npm run test` passed locally with 426 node/static tests.
-- Latest `npm run verify` passed locally with encoding/syntax checks, 426 tests, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
+- Latest standalone `npm run test` passed locally with 504 node/static tests.
+- Latest `npm run verify` passed locally with encoding/syntax checks, 504 tests, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
 - Full browser smoke passed locally with 181 browser tests, including the Phase 13 editor conflict, navigation conflict and special-editor conflict coverage.
 - `npm run ui:polish:audit`, `npm run docs:index`, `npm run check:encoding`, `node tools\audit_project_files.mjs` and `git diff --check` passed for the Phase 13 final gate.
 - `npm run desktop:gate`, `npm run desktop:build` and `npm run desktop:native-smoke -- --workspace "<disposable sample workspace>" --allow-workspace-write --plan-ref 0.0.1.13.FINAL` passed on the release executable. The build produced the release executable plus NSIS installer.
