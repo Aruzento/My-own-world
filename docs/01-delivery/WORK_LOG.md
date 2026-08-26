@@ -6,6 +6,53 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.5 Roll Event Integration
+
+### Disposition
+
+- Closed `0.0.1.15.5` as the first real durable roll-event integration leaf.
+- Started from current HEAD `71fdd92`.
+- Added `js/events/diceRollEventLog.js`.
+- Set the next leaf to `0.0.1.15.6` First Stateful Action.
+
+### Roll Event Consumer
+
+- Added `logDiceRoll()` as a small event-layer orchestrator.
+- The flow is now: caller roll intent -> public `rollDice()` -> immutable `dice-roll-result` -> one transaction -> one `roll.performed` event -> `appendTransactionRecord()`.
+- Dice Engine remains pure: it still does not import events, storage, UI, pages, Campaign Map, CharacterModel or combat.
+- The caller/orchestration boundary supplies transaction id, event id, timestamps/order, intent/source/reason and optional stable context. Dice Engine does not generate event identity or decide why a roll happened.
+
+### Durable Payload
+
+- The persisted `roll.performed` payload stores the canonical Dice Engine `RollResult`.
+- It preserves original/normalized formula, dice faces, total, roll mode and critical metadata.
+- It does not store parser AST, parser token offsets, DOM nodes, page records, character objects, token objects or workspace handles.
+- The existing `eventTypes` vocabulary still validates the roll payload before durable append/read normalization.
+
+### Failure Behavior
+
+- A failed event append propagates `EventStoreError`.
+- Failed append is not reported as durable success.
+- No hidden backup, retry, UI popup or combat behavior was added.
+- Dice Engine owns no durable state, so failed event storage cannot mutate Dice Engine ownership.
+
+### Verification
+
+- `node --test tests\diceRollEventLog.test.mjs`
+- `node --test tests\diceRollEventLog.test.mjs tests\eventTypes.test.mjs tests\eventStore.test.mjs tests\eventTransactionModel.test.mjs tests\dicePublicConsumerApi.test.mjs`
+
+### Explicit Non-Work
+
+- Did not make `rollDice()` write events automatically.
+- Did not add roll UI, dice UI or event log UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting, turns or rounds.
+- Did not change page schema, Dice Engine RollResult schema or the event JSONL record format.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.6` First Stateful Action.
+
 ## 2026-08-26: 0.0.1.15.4 Event Types v1
 
 ### Disposition

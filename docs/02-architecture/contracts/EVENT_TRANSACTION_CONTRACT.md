@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.4` event type vocabulary foundation.
+Status: `0.0.1.15.5` dice roll event integration foundation.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -150,6 +150,51 @@ Conceptually:
 ```
 
 The `context` belongs to the event consumer/transaction owner, not the Dice Engine.
+
+## 0.0.1.15.5 Dice Roll Event Integration
+
+`js/events/diceRollEventLog.js` is the first real Event Log consumer of Dice Engine `RollResult`.
+
+Public roll-event operations:
+
+- `createDiceRollTransaction(input, options)` calls the public Dice Engine facade, wraps the resulting `dice-roll-result` in one `roll.performed` event, and completes one transaction in memory.
+- `logDiceRoll(input, options)` performs the same roll/transaction assembly and appends the completed transaction through `appendTransactionRecord()`.
+
+Flow:
+
+```text
+caller intent
+  -> logDiceRoll()
+  -> rollDice()
+  -> RollResult
+  -> transaction
+  -> roll.performed event
+  -> appendTransactionRecord()
+  -> .my-own-world-events/transactions.v1.jsonl
+```
+
+Ownership rules:
+
+- Dice Engine remains side-effect free. `rollDice()` still does not import the event layer, create transactions, append history, show UI or write files.
+- The roll-event integration layer owns the orchestration from a caller-owned roll intent to durable event append.
+- The caller still owns why the roll happened: `intentType`, `label`, `source`, `reason` and stable context such as actor/action/map/token ids.
+- Transaction/event identity and timestamps are supplied by the caller/orchestration boundary. Dice Engine does not generate them.
+- The durable store remains the only owner of event sidecar writes.
+
+Persisted roll event payload:
+
+- stores the canonical `dice-roll-result`;
+- preserves formula original/normalized data, faces, total, mode and critical metadata;
+- does not store parser AST, parser token offsets, DOM objects, page records, character objects, token objects or workspace handles.
+
+Failure behavior:
+
+- if the event append fails, `logDiceRoll()` propagates `EventStoreError`;
+- no durable success is reported;
+- no hidden retry/backup/UI behavior is started;
+- Dice Engine state is not mutated because Dice Engine owns no durable state.
+
+Phase `0.0.1.15.5` does not add roll UI, dice UI, event log UI, combat/session mechanics, action/damage handling, HP automation, turns/rounds or backup/restore inclusion policy for the event sidecar.
 
 ## Undo And Reversal
 
@@ -323,7 +368,8 @@ Version impact:
 
 ## Current Gaps For Later Leaves
 
-- No roll event consumer exists yet.
+- Roll events can now be appended through `logDiceRoll()`, but no user-facing roll/event log UI exists yet.
+- No stateful character/map/resource action integration exists yet.
 - No event UI exists yet.
 - Backup/restore inclusion for `.my-own-world-events/` is not decided yet.
 - Reserved future event namespaces do not implement action, damage, healing, effect, turn, round, rest, movement or scene-transition behavior yet.

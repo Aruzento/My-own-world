@@ -7,7 +7,7 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-08-26
+Updated: 2026-08-27
 
 ## Current Product
 
@@ -27,13 +27,14 @@ Immediate direction:
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Current phase: `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions is `ACTIVE`.
-7. Next leaf: `0.0.1.15.5` Roll Event Integration.
+7. Next leaf: `0.0.1.15.6` First Stateful Action.
 8. `0.0.1.16.0` Persistent Combat Session remains `BLOCKED`.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-27 `0.0.1.15.5` Roll Event Integration: added `js/events/diceRollEventLog.js` as the first real durable Event Log consumer of Dice Engine `RollResult`. `logDiceRoll()` calls the public `rollDice()` facade, creates one completed transaction with one `roll.performed` event, and appends it through the existing `.my-own-world-events/transactions.v1.jsonl` store. The stored payload preserves formula, faces, total, mode and critical metadata without parser AST. Failed append reports `EventStoreError` and does not become durable success. Dice Engine remains side-effect free and unaware of event storage. No roll UI, dice UI, event log UI, combat/session mechanics, action/damage behavior, schema migration or real workspace mutation was added.
 - 2026-08-26 `0.0.1.15.4` Event Types v1: added `js/events/eventTypes.js` as the strict v1 vocabulary owner for durable event payloads. Implemented validated `payloadVersion: 1` contracts for `roll.performed`, `manual.correction.recorded`, `resource.changed` and `transaction.reversal.recorded`, and reserved future namespaces such as `action.*`, `damage.*`, `healing.*`, `effect.*`, `turn.*`, `round.*`, `rest.*`, `movement.*` and `scene.transition.*` as names only. The durable event store now validates events through this vocabulary before append/read normalization, so the event sidecar cannot accept arbitrary `type + anything JSON` payloads. No roll event integration, event UI, combat/session mechanics, dice UI, future action/damage behavior, schema migration or real workspace mutation was added.
 - 2026-08-26 `0.0.1.15.3` Durable Event Store: implemented the owner-approved `.my-own-world-events/transactions.v1.jsonl` sidecar in `js/events/eventStore.js`. The store appends one completed/failed transaction per JSONL line, reloads transactions through `StorageAdapter`, preserves append/file order and event order, reports corrupt/invalid lines as structured `invalidRecords`, serializes concurrent in-process appends and fails loudly with `EventStoreError` if the write does not become durable. It writes only the event sidecar and does not hide storage in card HTML. No UI, roll event consumer, combat/session mechanics, Dice Engine changes, Campaign Map ownership, CharacterModel ownership, backup/restore event inclusion policy or real workspace mutation was added.
 - 2026-08-26 `0.0.1.15.2` Transaction Model: added a pure runtime transaction model in `js/events/transactionModel.js`. It creates started transactions from caller-supplied ids/timestamps, appends ordered events, completes/fails transactions, records source/reason metadata, links reversal/undo transactions and serializes deterministic JSON-compatible shapes. It has no persistence, UI, combat, Dice Engine dependency, Campaign Map dependency or CharacterModel dependency. At that leaf the durable event sidecar still awaited owner approval; the following `0.0.1.15.3` leaf implemented it after approval.
@@ -201,7 +202,7 @@ Recently closed:
 
 Next owner action:
 
-- Start one leaf only: `0.0.1.15.5` Roll Event Integration. Use `js/events/eventTypes.js` and the durable event sidecar only through `js/events/eventStore.js`; do not implement combat/session mechanics, attacks, damage application, HP automation, effects, targeting or dice UI inside the event foundation phase.
+- Start one leaf only: `0.0.1.15.6` First Stateful Action. Use the existing transaction/event/log owners from Phase 15; do not implement combat/session mechanics, attacks, damage application, HP automation, effects, targeting or dice UI inside the event foundation phase.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -219,7 +220,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a canonical public facade, structured runtime results, explicit d20 advantage/disadvantage modes and natural-d20 critical metadata. Phase 15 now has a pure transaction model plus the first durable JSONL event sidecar; event vocabulary, UI and combat integration remain the current blockers.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a canonical public facade, structured runtime results, explicit d20 advantage/disadvantage modes and natural-d20 critical metadata. Phase 15 now has a pure transaction model, durable JSONL event sidecar, strict event vocabulary and first roll-event consumer; event UI and combat integration remain the current blockers.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.
