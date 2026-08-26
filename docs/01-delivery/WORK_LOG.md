@@ -6,6 +6,50 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.15.4 Event Types v1
+
+### Disposition
+
+- Closed `0.0.1.15.4` as the first stable event vocabulary leaf.
+- Started from current HEAD `a61bf79`.
+- Added `js/events/eventTypes.js`.
+- Set the next leaf to `0.0.1.15.5` Roll Event Integration.
+
+### Event Vocabulary
+
+- Implemented strict `payloadVersion: 1` contracts for `roll.performed`, `manual.correction.recorded`, `resource.changed` and `transaction.reversal.recorded`.
+- `roll.performed` accepts the canonical Dice Engine `dice-roll-result` plus a small explicit string-only context record owned by the event consumer.
+- `manual.correction.recorded` records a subject, field, scalar before/after values and optional reason.
+- `resource.changed` records a resource, finite numeric before/after/delta values, optional unit and optional reason.
+- `transaction.reversal.recorded` records original/reversal transaction ids, optional reversed event ids and optional reason without deleting original history.
+
+### Reserved Future Names
+
+- Reserved `action.*`, `damage.*`, `healing.*`, `effect.*`, `turn.*`, `round.*`, `rest.*`, `movement.*` and `scene.transition.*` as vocabulary direction only.
+- These future names are not implemented in this leaf and are rejected by `createTypedEvent()` with structured `EVENT_TYPE_UNKNOWN` evidence marked as `reservedFuture`.
+
+### Durable Store Boundary
+
+- `eventStore` still owns `.my-own-world-events/transactions.v1.jsonl` append/read mechanics.
+- Before append/read normalization, durable event records now pass through `createTypedEvent()`.
+- The event sidecar can no longer accept arbitrary `type + anything JSON` events.
+
+### Verification
+
+- `node --test tests\eventTypes.test.mjs tests\eventStore.test.mjs tests\eventTransactionModel.test.mjs tests\eventTransactionContract.test.mjs`
+
+### Explicit Non-Work
+
+- Did not integrate real Dice Engine rolls into durable history.
+- Did not add event UI, roll history UI or dice UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting, turns or rounds.
+- Did not change page schema, Dice Engine RollResult schema or the event JSONL record format.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.5` Roll Event Integration.
+
 ## 2026-08-26: 0.0.1.15.3 Durable Event Store
 
 ### Disposition

@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.3` durable event store foundation.
+Status: `0.0.1.15.4` event type vocabulary foundation.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -201,6 +201,51 @@ Pure model rules:
 
 The model can be consumed by the future durable event store, but it is not the store.
 
+## 0.0.1.15.4 Event Type Vocabulary
+
+`js/events/eventTypes.js` is the Phase 15 vocabulary owner for durable event payload contracts.
+
+Public vocabulary operations:
+
+- `createTypedEvent(input)` creates a `mow-event` only when `type` is known, `payloadVersion` is supported and the payload matches that event type contract.
+- `validateTypedEvent(input)` returns a structured validation result for future consumers without requiring them to parse error text.
+- `isKnownEventType(type)` reports whether a type is implemented in the current vocabulary.
+- `isReservedFutureEventType(type)` reports whether a type belongs to a documented future namespace that is not implemented yet.
+
+Implemented V1 event types:
+
+- `roll.performed` with `payloadVersion: 1`. Payload contains a canonical Dice Engine `dice-roll-result` plus a small explicit `context` record owned by the event consumer. Context is limited to stable string fields such as `source`, `actorId`, `actorPageId`, `targetId`, `targetPageId`, `mapPageId`, `tokenId`, `actionId`, `ruleId` and `label`.
+- `manual.correction.recorded` with `payloadVersion: 1`. Payload records a stable subject reference, field, before value, after value and optional reason. Before/after values are limited to scalar audit data: string, finite number, boolean or null.
+- `resource.changed` with `payloadVersion: 1`. Payload records a stable resource reference, finite numeric before/after/delta values, optional unit and optional reason.
+- `transaction.reversal.recorded` with `payloadVersion: 1`. Payload records the original transaction id, reversal transaction id, optional reversed event ids and optional reason. Reversal is additive history; it does not delete the original transaction/event.
+
+Reserved future namespaces:
+
+- `action.*`;
+- `damage.*`;
+- `healing.*`;
+- `effect.*`;
+- `turn.*`;
+- `round.*`;
+- `rest.*`;
+- `movement.*`;
+- `scene.transition.*`.
+
+Reserved future namespaces are documentation and naming direction only. They are not implemented event types in `0.0.1.15.4`; `createTypedEvent()` rejects them with structured `EVENT_TYPE_UNKNOWN` evidence marked as `reservedFuture`.
+
+Vocabulary safety rules:
+
+- each implemented event type has a stable `type`, event model `version: 1` and `payloadVersion: 1`;
+- payload schemas reject unknown fields instead of accepting arbitrary JSON bags;
+- executable/live values such as functions, DOM nodes, storage handles, mutable page objects and widget state are not valid payload data;
+- future combat/action/damage/turn behavior must add explicit event payload contracts before it can be appended as durable history.
+
+Durable-store relationship:
+
+- `js/events/eventStore.js` still owns the `.my-own-world-events/transactions.v1.jsonl` append/read mechanics;
+- before append/read normalization, the store validates every event through `createTypedEvent()`;
+- this prevents the durable store from becoming a generic `type + anything JSON` escape hatch.
+
 ## Durable Storage Decision
 
 Owner approved the `0.0.1.15.1` sidecar decision in the `0.0.1.15.3` task prompt. `0.0.1.15.3` implements the first durable store in `js/events/eventStore.js`.
@@ -254,6 +299,7 @@ Store contract:
 - `appendTransactionRecord(transaction, { storageAdapter })` appends one completed/failed transaction as one JSONL line.
 - `readTransactionRecords({ storageAdapter, strict })` reads valid records and reports corrupt/invalid lines as structured `invalidRecords`.
 - `readEventTransactions({ storageAdapter })` returns reconstructed transaction shapes for consumers that only need the transaction data.
+- every durable event record must pass `js/events/eventTypes.js` vocabulary validation.
 - record order is file append order; event order inside a transaction is validated by the transaction model and store.
 - started transactions remain runtime-only and are not durable history records.
 - corrupt/invalid old lines are not silently edited or deleted by read.
@@ -280,4 +326,4 @@ Version impact:
 - No roll event consumer exists yet.
 - No event UI exists yet.
 - Backup/restore inclusion for `.my-own-world-events/` is not decided yet.
-- No combat/event vocabulary beyond the contract examples should be considered implemented.
+- Reserved future event namespaces do not implement action, damage, healing, effect, turn, round, rest, movement or scene-transition behavior yet.

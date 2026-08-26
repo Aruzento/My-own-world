@@ -11,6 +11,10 @@ import {
   TRANSACTION_STATUSES
 } from './transactionModel.js';
 
+import {
+  createTypedEvent
+} from './eventTypes.js';
+
 
 export const EVENT_STORE_ROOT =
   '.my-own-world-events';
@@ -95,18 +99,27 @@ export function createTransactionRecord(
       transaction
     );
 
+  const typedTransaction =
+    serializeTransaction({
+      ...serialized,
+      events:
+        serialized.events.map(
+          createTypedEvent
+        )
+    });
+
   assertDurableTransactionState(
-    serialized
+    typedTransaction
   );
 
   assertEventBelongsToTransaction(
-    serialized
+    typedTransaction
   );
 
   const {
     events,
     ...transactionMetadata
-  } = serialized;
+  } = typedTransaction;
 
   return {
     kind:
@@ -393,11 +406,16 @@ function normalizeTransactionRecord(
     );
   }
 
+  const typedEvents =
+    record.events.map(
+      createTypedEvent
+    );
+
   const transaction =
     serializeTransaction({
       ...record.transaction,
       events:
-        record.events
+        typedEvents
     });
 
   assertDurableTransactionState(

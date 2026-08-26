@@ -12,6 +12,10 @@ import {
 } from '../js/events/transactionModel.js';
 
 import {
+  rollDice
+} from '../js/dice/diceEngine.js';
+
+import {
   appendTransactionRecord,
   createTransactionRecord,
   EVENT_STORE_ERROR_CODES,
@@ -23,8 +27,18 @@ import {
 } from '../js/events/eventStore.js';
 
 import {
+  EVENT_TYPE_ERROR_CODES,
+  EVENT_TYPES_V1,
+  EventTypeValidationError
+} from '../js/events/eventTypes.js';
+
+import {
   normalizeWorkspacePath
 } from '../js/storage/storageAdapterContract.js';
+
+import {
+  createDiceSequenceRandomInt
+} from './fixtures/diceSequenceRandomInt.mjs';
 
 
 const CREATED_AT =
@@ -223,11 +237,11 @@ test(
               transactionId:
                 'txn-order-2',
               intentType:
-                'map-token-update',
+                'manual-resource-adjustment',
               label:
-                'Move token',
+                'Correct resource',
               source:
-                'campaign-map',
+                'event-store-test',
               reason:
                 'test',
               createdAt:
@@ -239,17 +253,28 @@ test(
               eventId:
                 'evt-order-2a',
               type:
-                'map.token.move-requested',
+                EVENT_TYPES_V1.MANUAL_CORRECTION_RECORDED,
               createdAt:
                 CREATED_AT,
               payload:
                 {
-                  tokenId:
-                    'token-a',
-                  x:
+                  subject:
+                    {
+                      kind:
+                        'character',
+                      id:
+                        'character-a',
+                      label:
+                        'Aria'
+                    },
+                  field:
+                    'initiative.total',
+                  before:
                     10,
-                  y:
-                    12
+                  after:
+                    18,
+                  reason:
+                    'test'
                 }
             }
           ),
@@ -257,17 +282,30 @@ test(
             eventId:
               'evt-order-2b',
             type:
-              'map.token.moved',
+              EVENT_TYPES_V1.RESOURCE_CHANGED,
             createdAt:
               COMPLETED_AT,
             payload:
               {
-                tokenId:
-                  'token-a',
-                x:
-                  18,
-                y:
-                  20
+                resource:
+                  {
+                    kind:
+                      'hit-points',
+                    id:
+                      'character-a',
+                    label:
+                      'HP'
+                  },
+                before:
+                  20,
+                after:
+                  17,
+                delta:
+                  -3,
+                unit:
+                  'hp',
+                reason:
+                  'test'
               }
           }
         ),
@@ -646,6 +684,73 @@ test(
 
 
 test(
+  'EventStore rejects transactions outside the v1 event vocabulary before append',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    const transaction =
+      completeTransaction(
+        appendTransactionEvent(
+          createTransaction({
+            transactionId:
+              'txn-unknown-event-type',
+            intentType:
+              'map-token-update',
+            label:
+              'Old arbitrary map event',
+            source:
+              'test',
+            reason:
+              'test',
+            createdAt:
+              CREATED_AT,
+            order:
+              1
+          }),
+          {
+            eventId:
+              'evt-unknown-event-type',
+            type:
+              'map.token.moved',
+            createdAt:
+              CREATED_AT,
+            payload:
+              {
+                tokenId:
+                  'token-a'
+              }
+          }
+        ),
+        {
+          completedAt:
+            COMPLETED_AT
+        }
+      );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        transaction,
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error =>
+        error instanceof EventTypeValidationError &&
+        error.code === EVENT_TYPE_ERROR_CODES.UNKNOWN_TYPE
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      []
+    );
+  }
+);
+
+
+test(
   'EventStore supports failed transaction records as auditable outcomes',
   async () => {
 
@@ -765,20 +870,13 @@ function createCompletedTransaction({
       {
         eventId,
         type:
-          'roll.performed',
+          EVENT_TYPES_V1.ROLL_PERFORMED,
         createdAt:
           CREATED_AT,
         payload:
-          {
-            roll:
-              {
-                kind:
-                  'dice-roll-result',
-                version:
-                  1,
-                total
-              }
-          }
+          createRollEventPayload(
+            total
+          )
       }
     ),
     {
@@ -786,6 +884,40 @@ function createCompletedTransaction({
         COMPLETED_AT
     }
   );
+}
+
+
+function createRollEventPayload(
+  total
+) {
+
+  const rng =
+    createDiceSequenceRandomInt([
+      total
+    ]);
+
+  return {
+    roll:
+      rollDice(
+        {
+          formula:
+            'd20',
+          mode:
+            'normal',
+          criticalPolicy:
+            'none'
+        },
+        {
+          randomInt:
+            rng.randomInt
+        }
+      ),
+    context:
+      {
+        source:
+          'event-store-test'
+      }
+  };
 }
 
 

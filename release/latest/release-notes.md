@@ -58,6 +58,7 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - `0.0.1.14.3` adds the core Dice Engine evaluator: `rollDice(request, { randomInt })` evaluates safe formulas into runtime `rollResult` data with totals and ordered roll details. It uses only injected `randomInt(1, sides)` for dice, rejects division by zero, invalid RNG output and unsafe numeric results, and still has no UI, initiative migration, persistence, event log, combat behavior, advantage/disadvantage or critical rules.
 - `0.0.1.14.4` hardens Dice Engine formula limits: formula length, AST nodes, parentheses depth, dice terms, total dice, per-term dice count, die sides and safe-number overflow now use central limits and `LIMIT_EXCEEDED` errors. Over-limit dice formulas fail before RNG where possible, and malicious/code-shaped inputs remain invalid formula data.
 - `0.0.1.14.5` makes Dice Engine RNG ownership deterministic and testable: `rollDice(request)` uses engine-owned `defaultDiceRandomInt`, tests inject `randomInt(minInclusive, maxInclusive)`, and a test-only sequence helper proves same-sequence equivalence, expected different faces, exact call order, invalid provider values, provider failure wrapping and no volatile time/id/seed fields in runtime results.
+- `0.0.1.15.4` defines the first stable Event Types v1 vocabulary: `roll.performed`, `manual.correction.recorded`, `resource.changed` and `transaction.reversal.recorded` now have strict payload contracts, and the durable event store validates events before append/read normalization instead of accepting arbitrary `type + anything JSON` records. Future action/damage/healing/effect/turn/round/rest/movement/scene-transition names are reserved only.
 
 ### Known Risks
 
@@ -66,12 +67,12 @@ This `latest` handoff is for the current version-1 stabilization build. It is no
 - Desktop audio/codec behavior still needs real-file verification.
 - Knowledge Graph is usable as a migrated canvas workbench with command-lifecycle relationship persistence. The remaining graph risk is `BI-026`: rethink the graph concept before adding more visible graph features.
 - The `0.0.1.8` redesign pass is accepted by the owner for the current stage. Final visual polish remains future debt. `0.0.1.11.0` Existing P1 Stabilization, `0.0.1.12.0` Data Safety Completion and `0.0.1.13.0` NF-001 Edit Session Conflict Protection are closed.
-- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair, edit-session conflict protection and NF-002 Dice Engine are implemented for the current safety scope. The active roadmap risk is the NF-003 event/transaction foundation: `0.0.1.15.3` now has the owner-approved durable `.my-own-world-events/transactions.v1.jsonl` store for append/read/reload of transaction records, but roll event types, event UI, backup/restore inclusion policy and combat behavior are still not implemented.
+- Restore preview, partial restore, grouped asset/link/orphan diagnostics, backup-gated selected repair, edit-session conflict protection and NF-002 Dice Engine are implemented for the current safety scope. The active roadmap risk is the NF-003 event/transaction foundation: `0.0.1.15.3` added the owner-approved durable `.my-own-world-events/transactions.v1.jsonl` store, and `0.0.1.15.4` added strict v1 event payload contracts for roll, manual correction, resource change and transaction reversal metadata. Roll event integration, event UI, backup/restore inclusion policy and combat behavior are still not implemented.
 
 ### Verification Snapshot
 
-- Latest standalone `npm run test` passed locally with 504 node/static tests.
-- Latest `npm run verify` passed locally with encoding/syntax checks, 504 tests, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
+- Latest standalone `npm run test` passed locally with 513 node/static tests.
+- Latest `npm run verify` passed locally with encoding/syntax checks, 513 tests, synthetic large-workspace smoke, `git diff --check` and docx zip validation.
 - Full browser smoke passed locally with 181 browser tests, including the Phase 13 editor conflict, navigation conflict and special-editor conflict coverage.
 - `npm run ui:polish:audit`, `npm run docs:index`, `npm run check:encoding`, `node tools\audit_project_files.mjs` and `git diff --check` passed for the Phase 13 final gate.
 - `npm run desktop:gate`, `npm run desktop:build` and `npm run desktop:native-smoke -- --workspace "<disposable sample workspace>" --allow-workspace-write --plan-ref 0.0.1.13.FINAL` passed on the release executable. The build produced the release executable plus NSIS installer.
