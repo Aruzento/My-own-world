@@ -6,6 +6,48 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions Phase Start
+
+### Disposition
+
+- Started `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions after `0.0.1.14.0` NF-002 Safe Dice Engine closed.
+- Current HEAD before work was `ac8b31f`, and `ac8b31f` is the expected Safe Dice Engine closure baseline.
+- Updated current status docs so `0.0.1.15.0` is `ACTIVE`.
+- Set the next leaf to `0.0.1.15.1` Event Baseline & Contract.
+- Confirmed `0.0.1.16.0` Persistent Combat Session remains `BLOCKED`.
+
+### Phase Boundaries
+
+- Phase 15 is the durable event/transaction foundation for future live-session systems.
+- One user operation should become one coherent transaction.
+- History must remain auditable.
+- Undo must not silently delete history.
+- Existing owners remain the starting point: Dice Engine, PageCommandService, CharacterModel, CampaignMapStore and the current storage/repository lifecycle.
+
+### Explicit Non-Work
+
+- Did not implement event storage.
+- Did not implement roll history.
+- Did not implement combat sessions.
+- Did not implement attacks, damage application, HP automation, effects, targeting or turns/rounds logic.
+- Did not implement dice UI.
+- Did not change persistent format.
+- Did not mutate a real workspace.
+
+### Verification
+
+- `git rev-parse --short HEAD`
+- `git merge-base --is-ancestor ac8b31f HEAD`
+- `git status --short`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.1` Event Baseline & Contract.
+
 ## 2026-08-26: 0.0.1.14.FINAL Safe Dice Engine Closure Gate
 
 ### Disposition

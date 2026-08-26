@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `DONE`.
+Current phase: `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions is `ACTIVE`.
 
-Current leaf: `0.0.1.15.0` Event / Roll / Combat Log + Transactions is `NEXT`.
+Current leaf: `0.0.1.15.1` Event Baseline & Contract is `NEXT`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL` and `0.0.1.14.0` are closed. `0.0.1.15.0` is next but not active. Do not start event/roll/combat logging until the owner explicitly starts Phase 7.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL` and `0.0.1.14.0` are closed. `0.0.1.15.0` is active for NF-003 event/roll/combat-log transaction foundation only; `0.0.1.16.0` remains blocked. Do not implement combat sessions, attacks, damage application, HP automation, effects, targeting, dice UI or turns/rounds logic beyond event vocabulary in Phase 7.
 
 ## Execution Rules
 
@@ -301,17 +301,21 @@ ID: `0.0.1.15.0`
 
 NAME: NF-003 Event / Roll / Combat Log + Transactions
 
-STATUS: `NEXT`
+STATUS: `ACTIVE`
 
 GOAL: create the durable live-session event foundation.
 
 WHY NOW: combat and session actions need a coherent log and undo model before complex state changes.
 
-SCOPE: roll, action, damage, healing, effect, resource change, turn, round, rest, movement where applicable, scene transition, manual correction and undo. One user operation equals one coherent transaction. Undo must not silently erase history.
+SCOPE: durable event/transaction foundation, roll-result events, action vocabulary, resource-change vocabulary, scene-transition vocabulary, manual correction vocabulary and undo/audit semantics. One user operation equals one coherent transaction. Undo must not silently erase history. This phase is not combat: no combat session, attacks, damage application, HP automation, effects engine, targeting, dice UI or turns/rounds logic beyond event vocabulary.
 
-DEPENDENCIES: Phase 5 conflict-safe durable writes; Phase 6 dice result structures; page command lifecycle; editor history; CharacterModel; CampaignMapStore.
+DEPENDENCIES: Phase 5 conflict-safe durable writes; Phase 6 dice result structures; page command lifecycle; editor history; CharacterModel; CampaignMapStore. Owner started this phase on 2026-08-26 from HEAD `ac8b31f`.
 
 EXIT CRITERIA: event owner and source of truth are explicit; append/read tests exist; at least one safe action type logs and undoes correctly; no log is hidden inside arbitrary card HTML without a contract.
+
+CURRENT LEAF RESULTS:
+
+- `0.0.1.15.0` Phase Start - `DONE` on 2026-08-26. Current status docs mark this phase `ACTIVE`, keep `0.0.1.16.0` Persistent Combat Session `BLOCKED`, and set the next leaf to `0.0.1.15.1` Event Baseline & Contract. The phase mission is a durable event/transaction foundation where one user operation becomes one coherent auditable transaction and undo does not silently delete history. This start commit does not implement event storage, roll history, combat session, attacks/damage, HP automation, effects, targeting, turns/rounds logic, dice UI, schema migration or real workspace mutation.
 
 ### Phase 8 - 0.0.1.16.0 NF-004 Persistent Combat Session
 

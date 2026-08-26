@@ -13,7 +13,7 @@ Updated: 2026-08-26
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase and NF-002 Safe Dice Engine phase are closed. NF-002 now provides one safe, reusable, subsystem-independent dice runtime with a public facade, deterministic RNG injection, structured RollResult output, explicit d20 roll modes, natural-d20 critical classification and Campaign Map initiative parity. NF-003 Event / Roll / Combat Log + Transactions is next, but has not been started.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase and NF-002 Safe Dice Engine phase are closed. NF-002 now provides one safe, reusable, subsystem-independent dice runtime with a public facade, deterministic RNG injection, structured RollResult output, explicit d20 roll modes, natural-d20 critical classification and Campaign Map initiative parity. NF-003 Event / Roll / Combat Log + Transactions is the active phase.
 
 ## Current Focus
 
@@ -26,14 +26,15 @@ Immediate direction:
 3. Closed cleanup leaves so far: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030`. `RCB-006` and `RCB-007` are closed.
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
-6. Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `DONE`.
-7. Next phase: `0.0.1.15.0` Event / Roll / Combat Log + Transactions is `NEXT`.
-8. `0.0.1.15.0` has not been started and should begin only after explicit owner instruction.
+6. Current phase: `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions is `ACTIVE`.
+7. Next leaf: `0.0.1.15.1` Event Baseline & Contract.
+8. `0.0.1.16.0` Persistent Combat Session remains `BLOCKED`.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-08-26 phase start: `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions became `ACTIVE`; the next leaf is `0.0.1.15.1` Event Baseline & Contract. The phase is scoped to a durable auditable event/transaction foundation: one user operation should become one coherent transaction, and undo must not silently delete history. No event storage, roll history, combat session, attacks/damage, HP automation, effects engine, targeting, turns/rounds logic, dice UI, schema migration or real workspace mutation was started.
 - 2026-08-26 `0.0.1.14.FINAL` Safe Dice Engine Closure Gate: passed after cumulative Phase 14 review from pre-phase HEAD `36ded38`, independent read-only reviewer evidence, release-doc correction and fresh verification. The Dice Engine has one public facade, no arbitrary code execution path, bounded formula/dice limits, deterministic injectable RNG, immutable structured runtime results, explicit advantage/disadvantage and natural-d20 critical semantics, and Campaign Map initiative parity through the public facade. No dice UI, persistent roll/event log, combat behavior, collaboration, macro scripting, schema change, dependency change or real-workspace mutation was added.
 - 2026-08-26 `0.0.1.14.10` Universal Consumer API: finalized `js/dice/diceEngine.js` as the canonical public Dice Engine module for future MyOwnWorld consumers. Future subsystems can call `rollDice(request, { randomInt })` and `validateDiceRoll(request)` with one request shape for initiative, checks, damage and random tables, and can distinguish invalid formulas, limits, unsupported modes/policies and RNG failures through structured codes/classifications instead of parsing text. No subsystem context, UI, persistence, event/roll log, combat behavior or new schema was added.
 - 2026-08-26 `0.0.1.14.9` Existing Initiative Dice Engine Parity: migrated Campaign Map initiative natural d20 rolls to the public Dice Engine facade with parity. Initiative still stores the same `roll`, `modifier`, `total`, participants and active turn state; total remains natural d20 + modifier; manual GM total edits, reroll/save/reopen, ordering and Character-to-initiative refresh behavior are preserved. No critical policy, RollResult persistence, initiative schema change, UI redesign, event/roll log or combat behavior was added.
@@ -196,7 +197,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.15.0` Event / Roll / Combat Log + Transactions only after explicit owner instruction. Do not treat the closed Dice Engine runtime as permission to add roll history, event persistence or combat actions automatically.
+- Start one leaf only: `0.0.1.15.1` Event Baseline & Contract. Do not implement combat/session mechanics, attacks, damage application, HP automation, effects, targeting or dice UI inside the event foundation phase.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
