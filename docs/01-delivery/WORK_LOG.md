@@ -6,6 +6,64 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.15.1 Event Baseline & Contract
+
+### Disposition
+
+- Closed `0.0.1.15.1` as a contract/test foundation leaf.
+- Started from current HEAD `58c721f`.
+- Confirmed `ac8b31f` Safe Dice Engine final closure is an ancestor of current HEAD.
+- Set the next leaf to `0.0.1.15.2` Transaction Model.
+- Did not start `0.0.1.16.0` Persistent Combat Session.
+
+### Owner Map
+
+- `PageCommandService` owns durable page command lifecycle, write preconditions, failed-write rollback, repository/index notification, runtime command diagnostics and page-command undo entries.
+- `editorHistory` owns local editor undo/redo snapshots and grouped editor transactions, not durable product history.
+- Dice Engine owns only side-effect-free roll computation and `dice-roll-result` payloads; it does not own event identity, time, storage, actor/target context or UI.
+- `CampaignMapStore` owns the open map runtime model, dirty state and model-to-DOM commit path for tokens, shapes, fog, layers, music, grid, view and initiative.
+- `CharacterModel` owns normalized character/creature domain data and calculations; event logging must not mutate character/card data behind existing owners.
+- `.my-own-world-ops` remains the internal recovery journal for incomplete filesystem operations, not player/session event history.
+
+### Contract
+
+- Added [EVENT_TRANSACTION_CONTRACT.md](../02-architecture/contracts/EVENT_TRANSACTION_CONTRACT.md).
+- Defined `Transaction` as one user intent and `Event` as one fact produced inside that transaction.
+- Recorded conceptual runtime fields for transaction identity, event identity, type, timestamp/order, payload and undo/reversal relationships.
+- Stated that undo/reversal should append auditable reversal facts instead of silently deleting original history.
+- Documented that future roll events may wrap Dice Engine `RollResult`, while Dice Engine remains pure and unaware of logging.
+
+### Durable Storage Decision
+
+- Did not implement durable event storage.
+- Documented a proposed owner-review sidecar: `.my-own-world-events/transactions.v1.jsonl`.
+- Recorded version impact: new event-log record version `1`, new app-owned workspace sidecar, no page markdown/front-matter schema change, no Dice Engine schema change, and a required backup/restore inclusion decision before real durable event writes.
+- Owner approval is required before implementing persistent event-log storage.
+
+### Explicit Non-Work
+
+- Did not implement event append/read APIs.
+- Did not implement roll history.
+- Did not implement combat sessions, attack resolution, damage application, HP automation, effects, targeting or turns/rounds behavior.
+- Did not implement dice UI.
+- Did not change persistent format.
+- Did not mutate a real workspace.
+
+### Verification
+
+- `git rev-parse --short HEAD`
+- `git merge-base --is-ancestor ac8b31f HEAD`
+- `git status --short`
+- `node --test tests\eventTransactionContract.test.mjs`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `npm run verify`
+- `git diff --check`
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.2` Transaction Model.
+
 ## 2026-08-26: 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions Phase Start
 
 ### Disposition
