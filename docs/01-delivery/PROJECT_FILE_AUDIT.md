@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-08-24
+Дата: 2026-08-26
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 675.
+Всего файлов в аудите: 686.
 
 ## Два Независимых Прохода
 
@@ -31,7 +31,7 @@ owner_zone: "delivery"
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
-| docs/architecture | 37 |
+| docs/architecture | 38 |
 | docs/archive | 10 |
 | docs/delivery | 19 |
 | docs/product | 6 |
@@ -45,7 +45,7 @@ owner_zone: "delivery"
 | presentation | 3 |
 | properties | 9 |
 | release handoff | 7 |
-| root | 21 |
+| root | 22 |
 | rules | 19 |
 | schema | 12 |
 | storage | 32 |
@@ -57,7 +57,7 @@ owner_zone: "delivery"
 | tools | 22 |
 | tree | 11 |
 | ui | 33 |
-| unit tests | 90 |
+| unit tests | 99 |
 | world packages | 3 |
 
 ## Кандидаты На Уборку
@@ -74,8 +74,8 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 871516 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `debug.log` | 427635 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
+| `docs/01-delivery/WORK_LOG.md` | 901823 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 467433 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
 | `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 273557 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/campaign-map-ui.spec.mjs` | 173827 | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. |
@@ -255,6 +255,7 @@ owner_zone: "delivery"
 | `docs/02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/02-architecture/contracts/DICE_ENGINE_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/DND_CALCULATION_RULES.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/EDITOR_HISTORY_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/FORMATTING_SERVICE_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
@@ -332,6 +333,7 @@ owner_zone: "delivery"
 | `js/core/icons.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
 | `js/core/markdown.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
 | `js/core/pageRecord.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
+| `js/dice/diceEngine.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
 | `js/editor/autosave.js` | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `js/editor/blocks/blockContract.js` | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `js/editor/blocks/blockControls.js` | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
@@ -756,10 +758,19 @@ owner_zone: "delivery"
 | `tests/desktopLargeWorkspaceSmoke.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/desktopNativeSmokeStatus.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/desktopReleaseGateStatus.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceCoreEvaluator.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceCriticalSemantics.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceFormulaLimits.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceFormulaParser.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/dicePublicConsumerApi.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceRngContract.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceRollModes.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/diceStructuredRollResult.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/docsStatusGuard.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/editConflictBaseline.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/effectsModel.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/fixtures/dataSafetyFixtures.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
+| `tests/fixtures/diceSequenceRandomInt.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `tests/fixtures/editConflictFixtures.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `tests/githubActionsWorkflow.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/icons.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |

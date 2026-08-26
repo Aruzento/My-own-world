@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `ACTIVE`.
+Current phase: `0.0.1.14.0` NF-002 Safe Dice Engine is `DONE`.
 
-Current leaf: `0.0.1.14.FINAL` Safe Dice Engine Closure Gate is `NEXT`.
+Current leaf: `0.0.1.15.0` Event / Roll / Combat Log + Transactions is `NEXT`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9` and `0.0.1.14.10` are closed. `0.0.1.14.0` is active for NF-002 Safe Dice Engine planning/implementation leaves. Do not start `0.0.1.15.0` event/roll/combat logging until Phase 6 closes.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL` and `0.0.1.14.0` are closed. `0.0.1.15.0` is next but not active. Do not start event/roll/combat logging until the owner explicitly starts Phase 7.
 
 ## Execution Rules
 
@@ -259,7 +259,7 @@ ID: `0.0.1.14.0`
 
 NAME: NF-002 Safe Dice Engine
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
 
 GOAL: create a safe, deterministic dice/rules engine.
 
@@ -267,9 +267,9 @@ WHY NOW: rolls should be structured and testable before event logs and combat ac
 
 SCOPE: safe grammar, no `eval`, no `Function`, deterministic RNG tests, limits, arithmetic, modifiers, advantage/disadvantage, critical behavior and reusable structured results. Existing initiative random rolls may move to the engine only after parity verification.
 
-DEPENDENCIES: roadmap order follows Phase 5. Pure dice parsing has no hard technical dependency on NF-001, but durable roll logging waits for Phase 7. Owner started this phase on 2026-08-24.
+DEPENDENCIES: roadmap order follows Phase 5. Pure dice parsing has no hard technical dependency on NF-001, but durable roll logging waits for Phase 7. Owner started this phase on 2026-08-24, and the final closure gate passed on 2026-08-26.
 
-EXIT CRITERIA: parser/evaluator is safe; roll results are structured; no arbitrary code execution path exists; initiative parity is either migrated with tests or explicitly deferred.
+EXIT CRITERIA: met on 2026-08-26. Parser/evaluator is safe, no arbitrary code execution path exists, formulas and dice work are bounded, RNG is injectable and validated, RollResult is structured runtime data, explicit advantage/disadvantage and natural-d20 critical metadata are covered, initiative is migrated with parity through the public facade, and no UI/persistence/event/combat functionality was started.
 
 CURRENT LEAF RESULTS:
 
@@ -293,13 +293,15 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.14.10` Universal Consumer API - `DONE` on 2026-08-26. Finalized `js/dice/diceEngine.js` as the canonical public Dice Engine module for future consumers. Public callers can use `rollDice(request, { randomInt })`, `validateDiceRoll(request)`, supported mode/policy constants, limits and structured Dice Engine error classes without importing parser internals, evaluator internals, Campaign Map, Character, combat, UI, storage or event-log code. Validation returns a side-effect-free `dice-roll-validation` result and exposes structured error metadata for invalid formulas, limit failures, unsupported modes/policies and RNG failures. Added consumer-boundary coverage for initiative-style d20 modifiers, ability checks with advantage and natural-d20 policy, generic damage formulas and d100 random tables. No UI, persistence, event/roll log, combat behavior, subsystem context parameters or real workspace mutation was implemented.
 
+- `0.0.1.14.FINAL` Safe Dice Engine Closure Gate - `PASS` on 2026-08-26. Reviewed cumulative Phase 14 from pre-phase HEAD `36ded38`, confirmed the Dice Engine public boundary and security contract, and received independent read-only reviewer evidence. The reviewer initially found stale release tester instructions that still described initiative migration, structured results, advantage/disadvantage and critical semantics as future work; those release notes were corrected before closure. Fresh verification passed for focused dice/initiative tests, full unit suite, full browser suite, focused Campaign Map initiative browser coverage, `npm run verify`, UI polish audit, docs index, encoding, project file audit, desktop release gate, native desktop smoke on a disposable workspace, and read-only large-workspace diagnostics/performance checks on `X:\ДНД\Мастер\По кампаниям\База`. No product UI, persistent roll/event log, combat behavior, collaboration, macro/scripting runtime, persistent format migration, dependency change or real workspace mutation was implemented during the gate.
+
 ### Phase 7 - 0.0.1.15.0 NF-003 Event / Roll / Combat Log + Transactions
 
 ID: `0.0.1.15.0`
 
 NAME: NF-003 Event / Roll / Combat Log + Transactions
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
 
 GOAL: create the durable live-session event foundation.
 

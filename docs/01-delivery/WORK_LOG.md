@@ -6,6 +6,61 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-26: 0.0.1.14.FINAL Safe Dice Engine Closure Gate
+
+### Disposition
+
+- Closed `0.0.1.14.0` NF-002 Safe Dice Engine after the final gate.
+- Started from current HEAD `0626445`.
+- Pre-phase baseline was `36ded38`, the final Phase 13 closure commit.
+- Set `0.0.1.15.0` Event / Roll / Combat Log + Transactions to `NEXT`, not `ACTIVE`.
+- Did not start event logging, roll history, combat actions or Phase 15 implementation.
+
+### Gate Review
+
+- Reviewed the cumulative Phase 14 diff from `36ded38` through `0626445`.
+- Confirmed production Phase 14 work is limited to `js/dice/diceEngine.js`, the Campaign Map initiative roll consumer, tests and docs.
+- Confirmed Dice Engine has no imports from DOM/UI, storage, workspace state, PageRepository, PageCommandService, Campaign Map internals, Character/Properties, combat or event-log code.
+- Confirmed formula handling remains data-only: no `eval`, `Function`, string timers, formula-driven import/require, DOM interpretation or macro/scripting runtime.
+- Confirmed public consumers can use `rollDice(request, { randomInt })` and `validateDiceRoll(request)` without importing tokenizer/parser/evaluator internals.
+
+### Reviewer Finding
+
+- One independent read-only reviewer checked the Phase 14 security/contract gate.
+- Code review result was `PASS`.
+- The reviewer found stale `release/latest/tester-instructions.md` text that still described initiative migration, structured results, advantage/disadvantage and critical policies as future work.
+- Corrected those release tester instructions before closing the phase.
+
+### Phase 14 Result
+
+- Parser and evaluator are safe and bounded.
+- Dice RNG is injectable, deterministic in tests and validated at the engine boundary.
+- `dice-roll-result` is immutable runtime data with normalized/original formula, grouped dice faces, arithmetic breakdown and critical metadata.
+- Advantage/disadvantage and natural-d20 critical semantics are explicit request options, not hidden D&D behavior.
+- Campaign Map initiative rolls now use the public Dice Engine facade with parity and no initiative persisted-format change.
+- No dice UI, persistent roll/event log, combat behavior, collaboration/sync, macro language, dependency change, persistent format migration or real workspace mutation was implemented.
+
+### Tests
+
+- `node --check js\dice\diceEngine.js`
+- `node --test tests\diceFormulaParser.test.mjs tests\diceCoreEvaluator.test.mjs tests\diceFormulaLimits.test.mjs tests\diceRngContract.test.mjs tests\diceStructuredRollResult.test.mjs tests\diceRollModes.test.mjs tests\diceCriticalSemantics.test.mjs tests\dicePublicConsumerApi.test.mjs tests\campaignMapInitiativeModel.test.mjs tests\campaignMapHelperOwnership.test.mjs`
+- `npm run test`
+- `npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs`
+- `npm run test:browser`
+- `npm run verify`
+- `npm run ui:polish:audit`
+- `npm run docs:index`
+- `npm run check:encoding`
+- `node tools\audit_project_files.mjs`
+- `npm run desktop:gate`
+- native desktop smoke on a disposable copied workspace
+- read-only large-workspace diagnostics/performance checks on `X:\ДНД\Мастер\По кампаниям\База`
+- `git diff --check`
+
+### Next
+
+- Work on one phase only after owner instruction: `0.0.1.15.0` Event / Roll / Combat Log + Transactions.
+
 ## 2026-08-26: 0.0.1.14.10 Universal Consumer API
 
 ### Disposition

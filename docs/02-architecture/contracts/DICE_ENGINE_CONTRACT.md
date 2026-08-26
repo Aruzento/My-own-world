@@ -563,6 +563,10 @@ Phase 14.10 does not:
 - add subsystem-owned context parameters;
 - change Campaign Map initiative behavior.
 
-## Next Owner
+## Closure Status
 
-`0.0.1.14.FINAL` owns Safe Dice Engine closure verification. The Dice Engine still does not own UI, persistence, event logs or combat behavior.
+`0.0.1.14.FINAL` passed closure verification on 2026-08-26.
+
+The Dice Engine remains a runtime/domain owner only. It still does not own UI, persistence, event logs or combat behavior.
+
+Next integration owner: `0.0.1.15.0` Event / Roll / Combat Log + Transactions may consume `RollResult` through the public facade after the owner explicitly starts that phase.
