@@ -367,6 +367,38 @@ Undo boundary:
 
 Phase `0.0.1.15.9` does not add combat/session mechanics, dice UI, dashboard cards, raw storage parsing in UI, backup/restore event-sidecar policy or persistent format migration.
 
+## 0.0.1.15.10 Event Safety Integration
+
+Stateful event adapters must keep durable state and durable event history from silently diverging.
+
+Stateful adapter rule:
+
+- do not append a successful state-change event before the state mutation is accepted by the existing state owner;
+- state mutation failure or PageCommandService stale-write conflict means no successful `resource.changed` event is appended;
+- event append failure after state mutation must produce an explicit runtime outcome;
+- rollback, when attempted, must use the current page-command/precondition owner and must not overwrite newer durable state;
+- a blocked rollback is reported as incomplete runtime evidence, not as success.
+
+Current `page-property` resource adapter outcomes:
+
+- `state-unchanged-event-not-written`: state was not written and no event became durable;
+- `state-rolled-back-event-not-written`: state write succeeded, event append failed, rollback restored the previous content and no event became durable;
+- `state-may-be-changed-event-not-written`: state write succeeded, event append failed and rollback could not prove it was safe to restore the previous content because durable state changed again.
+
+Recovery and conflict boundary:
+
+- restore and partial restore remain `backupService` recovery operations, not event replay;
+- after restore or another recovery write changes durable state, a later undo/reversal attempt must check current durable state before appending compensation;
+- conflict detection does not create backups because no durable mutation happened;
+- Event Query reads through the active `StorageAdapter` and is workspace-scoped by that adapter, not by UI-level cache.
+
+Atomicity statement:
+
+- MyOwnWorld does not currently claim filesystem-wide atomicity between a page file write and the event sidecar append;
+- Phase `0.0.1.15.10` records honest failure/recovery evidence instead of pretending those two files are one atomic storage unit.
+
+Phase `0.0.1.15.10` does not add combat/session mechanics, dice UI, event replay, restore replay, backup format migration, event JSONL format migration or persistent workspace schema migration.
+
 ## Boundary Rules
 
 - Page writes still go through `PageCommandService` / approved page write owners.

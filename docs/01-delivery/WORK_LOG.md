@@ -6,6 +6,49 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.10 Event Safety Integration
+
+### Disposition
+
+- Closed `0.0.1.15.10` as the Event Log safety-integration leaf.
+- Started from current HEAD `1990397`.
+- Updated `js/events/pagePropertyResourceTransaction.js`.
+- Added `tests/eventSafetyIntegration.test.mjs`.
+- Extended `tests/pagePropertyResourceTransaction.test.mjs`.
+- Set the next leaf to `0.0.1.15.11` Future Event Adapter Contract.
+
+### Safety Contract
+
+- The first stateful Event Log adapter still uses the existing `PageCommandService` owner for page mutation.
+- A state write failure or stale PageCommandService conflict appends no successful `resource.changed` event.
+- If the page write succeeds but event append fails, rollback now carries the post-mutation page-state identity as its expected base.
+- A rollback that matches that post-mutation state restores the previous content and reports `state-rolled-back-event-not-written`.
+- A rollback blocked by newer durable page state does not overwrite that newer state and reports `state-may-be-changed-event-not-written`.
+- The leaf does not claim filesystem-wide atomicity for page file plus event sidecar writes.
+
+### Recovery / Conflict Integration
+
+- Restore and partial restore remain explicit recovery operations owned by `backupService`; they are not event replay.
+- After restore changes a page, undo of an older resource event checks current durable resource state before writing compensation.
+- If current durable state no longer matches the original event's `after` value, undo is blocked and no reversal event is appended.
+- Event Query was verified to read the active workspace event sidecar after workspace switch instead of caching a previous workspace history.
+
+### Verification
+
+- `node --test tests\eventSafetyIntegration.test.mjs tests\pagePropertyResourceTransaction.test.mjs tests\transactionReversal.test.mjs tests\eventStore.test.mjs tests\eventQuery.test.mjs`
+
+### Explicit Non-Work
+
+- Did not add combat sessions, attacks, damage, HP automation, targeting, turns or rounds.
+- Did not add event replay, restore replay or a second recovery owner.
+- Did not add filesystem-wide atomic transaction claims.
+- Did not change the event JSONL format, backup format, page schema or workspace schema.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.11` Future Event Adapter Contract.
+
 ## 2026-08-27: 0.0.1.15.9 Minimal Event Log UI
 
 ### Disposition
@@ -15,7 +58,7 @@ owner_zone: "delivery"
 - Added `js/ui/eventHistoryPanel.js`.
 - Added `styles/event-history.css`.
 - Added `tests/browser/event-history.spec.mjs`.
-- Set the next leaf to `0.0.1.15.10` Recovery & Conflict Integration.
+- Set the next leaf to `0.0.1.15.10` Event Safety Integration.
 
 ### UI Contract
 
@@ -56,7 +99,7 @@ owner_zone: "delivery"
 
 ### Next
 
-- Work on one leaf only: `0.0.1.15.10` Recovery & Conflict Integration.
+- Work on one leaf only: `0.0.1.15.10` Event Safety Integration.
 
 ## 2026-08-27: 0.0.1.15.8 Event Read & Query API
 

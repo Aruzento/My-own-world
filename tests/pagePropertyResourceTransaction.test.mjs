@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  updatePageRecordContent
+} from '../js/core/pageRecord.js';
+
+import {
   getPageById
 } from '../js/repository/pageRepository.js';
 
@@ -11,7 +15,9 @@ import {
 
 import {
   clearPageCommandEvents,
-  clearPageUndoEntries
+  clearPageUndoEntries,
+  persistPageContentCommand,
+  snapshotPageForCommand
 } from '../js/storage/pageCommandService.js';
 
 import {
@@ -37,6 +43,7 @@ import {
 } from '../js/events/eventTypes.js';
 
 import {
+  PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES,
   PagePropertyResourceTransactionError,
   logPagePropertyResourceChange,
   readPageNumericPropertyResource
@@ -404,7 +411,8 @@ test(
       }),
       error =>
         error instanceof PagePropertyResourceTransactionError &&
-        error.code === 'RESOURCE_STATE_WRITE_FAILED'
+        error.code === 'RESOURCE_STATE_WRITE_FAILED' &&
+        error.outcome === PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_UNCHANGED_EVENT_NOT_WRITTEN
     );
 
     assert.equal(
@@ -469,6 +477,7 @@ test(
         error instanceof PagePropertyResourceTransactionError &&
         error.code === 'RESOURCE_EVENT_APPEND_FAILED' &&
         error.cause instanceof EventStoreError &&
+        error.outcome === PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_ROLLED_BACK_EVENT_NOT_WRITTEN &&
         error.rollback?.writeStatus === 'saved'
     );
 
@@ -488,6 +497,209 @@ test(
           'gold'
       }).value,
       8
+    );
+
+    assert.equal(
+      adapter.files.has(EVENT_TRANSACTION_LOG_PATH),
+      false
+    );
+  }
+);
+
+
+test(
+  'PagePropertyResourceTransaction event failure does not rollback over newer durable page state',
+  async () => {
+
+    const {
+      adapter,
+      page
+    } =
+      await createStatefulResourceFixture({
+        value:
+          8
+      });
+
+    adapter.failAppendPaths.add(
+      EVENT_TRANSACTION_LOG_PATH
+    );
+
+    let injectedNewerWrite =
+      false;
+
+    adapter.beforeAppendFailure =
+      async () => {
+
+        if (injectedNewerWrite) return;
+
+        injectedNewerWrite =
+          true;
+
+        const newerContent =
+          createNumericPropertyContent({
+            page,
+            field:
+              'gold',
+            value:
+              3
+          });
+
+        await persistPageContentCommand({
+          page,
+          content:
+            newerContent,
+          previousPage:
+            snapshotPageForCommand(
+              page
+            ),
+          type:
+            'unit-newer-resource-state',
+          reason:
+            'unit-newer-resource-state'
+        });
+      };
+
+    await assert.rejects(
+      () => logPagePropertyResourceChange({
+        page,
+        field:
+          'gold',
+        after:
+          15,
+        transactionId:
+          'txn-resource-event-failure-newer-state',
+        eventId:
+          'evt-resource-event-failure-newer-state',
+        createdAt:
+          CREATED_AT,
+        source:
+          'unit-test'
+      },
+      {
+        storageAdapter:
+          adapter
+      }),
+      error =>
+        error instanceof PagePropertyResourceTransactionError &&
+        error.code === 'RESOURCE_EVENT_APPEND_ROLLBACK_FAILED' &&
+        error.outcome === PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_MAY_BE_CHANGED_EVENT_NOT_WRITTEN &&
+        error.rollback?.writeStatus === 'conflict'
+    );
+
+    assert.equal(
+      injectedNewerWrite,
+      true
+    );
+
+    assert.equal(
+      readPageNumericPropertyResource(page, {
+        field:
+          'gold'
+      }).value,
+      3
+    );
+
+    assert.equal(
+      readPageNumericPropertyResource({
+        ...page,
+        content:
+          await adapter.readText(
+            page.path
+          )
+      },
+      {
+        field:
+          'gold'
+      }).value,
+      3
+    );
+
+    assert.equal(
+      adapter.files.has(EVENT_TRANSACTION_LOG_PATH),
+      false
+    );
+  }
+);
+
+
+test(
+  'PagePropertyResourceTransaction stale write conflict leaves no successful event',
+  async () => {
+
+    const {
+      adapter,
+      page
+    } =
+      await createStatefulResourceFixture({
+        value:
+          8
+      });
+
+    const stalePage =
+      {
+        ...page
+      };
+
+    const expectedBase =
+      snapshotPageForCommand(
+        stalePage
+      ).pageStateIdentity;
+
+    const newerContent =
+      createNumericPropertyContent({
+        page,
+        field:
+          'gold',
+        value:
+          6
+      });
+
+    await persistPageContentCommand({
+      page,
+      content:
+        newerContent,
+      previousPage:
+        snapshotPageForCommand(
+          page
+        ),
+      type:
+        'unit-current-resource-state',
+      reason:
+        'unit-current-resource-state',
+      expectedBase
+    });
+
+    await assert.rejects(
+      () => logPagePropertyResourceChange({
+        page:
+          stalePage,
+        field:
+          'gold',
+        after:
+          12,
+        transactionId:
+          'txn-resource-stale-conflict',
+        eventId:
+          'evt-resource-stale-conflict',
+        createdAt:
+          CREATED_AT,
+        expectedBase
+      },
+      {
+        storageAdapter:
+          adapter
+      }),
+      error =>
+        error instanceof PagePropertyResourceTransactionError &&
+        error.code === 'RESOURCE_STATE_WRITE_BLOCKED' &&
+        error.outcome === PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_UNCHANGED_EVENT_NOT_WRITTEN
+    );
+
+    assert.equal(
+      await adapter.readText(
+        page.path
+      ),
+      newerContent
     );
 
     assert.equal(
@@ -604,6 +816,8 @@ function createMemoryStorageAdapter() {
       new Set(),
     failAppendPaths:
       new Set(),
+    beforeAppendFailure:
+      null,
 
     get writePathsAfterSetup() {
       return [
@@ -699,6 +913,16 @@ function createMemoryStorageAdapter() {
         );
 
       if (this.failAppendPaths.has(normalized)) {
+
+        if (typeof this.beforeAppendFailure === 'function') {
+
+          await this.beforeAppendFailure({
+            path:
+              normalized,
+            content
+          });
+        }
+
         throw new Error(
           `forced append failure: ${normalized}`
         );
@@ -785,6 +1009,61 @@ function createMemoryStorageAdapter() {
   };
 
   return adapter;
+}
+
+
+function createNumericPropertyContent({
+  page,
+  field,
+  value
+}) {
+
+  const parsed =
+    parseFixtureContent(
+      page.content
+    );
+
+  const body =
+    parsed.rawBody ||
+    parsed.body ||
+    '';
+
+  const pattern =
+    new RegExp(
+      `(<input\\b(?=[\\s\\S]*?data-property-name=["']${escapeRegExp(field)}["'])[\\s\\S]*?\\svalue\\s*=\\s*)(?:"[^"]*"|'[^']*'|[^\\s"'=<>` + '`' + `]+)`,
+      'i'
+    );
+
+  const nextBody =
+    body.replace(
+      pattern,
+      `$1"${String(value)}"`
+    );
+
+  assert.notEqual(
+    nextBody,
+    body
+  );
+
+  return updatePageRecordContent(
+    page.content,
+    {
+      body:
+        nextBody
+    }
+  );
+}
+
+
+function escapeRegExp(
+  value
+) {
+
+  return String(value || '')
+    .replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&'
+    );
 }
 
 

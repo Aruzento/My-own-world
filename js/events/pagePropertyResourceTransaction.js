@@ -51,6 +51,16 @@ export const PAGE_PROPERTY_RESOURCE_ERROR_CODES =
       'RESOURCE_EVENT_APPEND_ROLLBACK_FAILED'
   });
 
+export const PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES =
+  Object.freeze({
+    STATE_UNCHANGED_EVENT_NOT_WRITTEN:
+      'state-unchanged-event-not-written',
+    STATE_ROLLED_BACK_EVENT_NOT_WRITTEN:
+      'state-rolled-back-event-not-written',
+    STATE_MAY_BE_CHANGED_EVENT_NOT_WRITTEN:
+      'state-may-be-changed-event-not-written'
+  });
+
 
 export class PagePropertyResourceTransactionError extends Error {
 
@@ -65,6 +75,8 @@ export class PagePropertyResourceTransactionError extends Error {
         '',
       cause =
         null,
+      outcome =
+        '',
       rollback =
         null,
       rollbackError =
@@ -92,6 +104,9 @@ export class PagePropertyResourceTransactionError extends Error {
 
     this.pageId =
       pageId;
+
+    this.outcome =
+      outcome || '';
 
     this.rollback =
       rollback;
@@ -389,6 +404,8 @@ export async function logPagePropertyResourceChange(
           normalized.field,
         pageId:
           normalized.page.id,
+        outcome:
+          PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_UNCHANGED_EVENT_NOT_WRITTEN,
         cause:
           error
       }
@@ -405,10 +422,17 @@ export async function logPagePropertyResourceChange(
         field:
           normalized.field,
         pageId:
-          normalized.page.id
+          normalized.page.id,
+        outcome:
+          PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_UNCHANGED_EVENT_NOT_WRITTEN
       }
     );
   }
+
+  const rollbackExpectedBase =
+    snapshotPageForCommand(
+      normalized.page
+    )?.pageStateIdentity || null;
 
   let appendResult;
 
@@ -437,7 +461,9 @@ export async function logPagePropertyResourceChange(
           content:
             previousContent,
           reason:
-            normalized.reason || 'page-property-resource-change'
+            normalized.reason || 'page-property-resource-change',
+          expectedBase:
+            rollbackExpectedBase
         });
 
     } catch (rollbackError) {
@@ -453,7 +479,29 @@ export async function logPagePropertyResourceChange(
             normalized.page.id,
           cause:
             error,
+          outcome:
+            PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_MAY_BE_CHANGED_EVENT_NOT_WRITTEN,
           rollbackError
+        }
+      );
+    }
+
+    if (!isSavedPageWrite(rollback)) {
+
+      throw new PagePropertyResourceTransactionError(
+        'Page resource event append failed, and rollback was blocked by newer durable state.',
+        {
+          code:
+            PAGE_PROPERTY_RESOURCE_ERROR_CODES.EVENT_APPEND_ROLLBACK_FAILED,
+          field:
+            normalized.field,
+          pageId:
+            normalized.page.id,
+          cause:
+            error,
+          outcome:
+            PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_MAY_BE_CHANGED_EVENT_NOT_WRITTEN,
+          rollback
         }
       );
     }
@@ -469,6 +517,8 @@ export async function logPagePropertyResourceChange(
           normalized.page.id,
         cause:
           error,
+        outcome:
+          PAGE_PROPERTY_RESOURCE_FAILURE_OUTCOMES.STATE_ROLLED_BACK_EVENT_NOT_WRITTEN,
         rollback
       }
     );
@@ -589,7 +639,8 @@ function createPageNumericPropertyResourceContent({
 async function rollbackPageContentAfterEventFailure({
   page,
   content,
-  reason
+  reason,
+  expectedBase
 }) {
 
   return persistPageContentCommand({
@@ -602,7 +653,8 @@ async function rollbackPageContentAfterEventFailure({
     type:
       'page-property-resource-event-rollback',
     reason:
-      `${reason}:event-append-rollback`
+      `${reason}:event-append-rollback`,
+    expectedBase
   });
 }
 
