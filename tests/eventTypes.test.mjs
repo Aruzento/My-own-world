@@ -269,11 +269,11 @@ test(
             resource:
               {
                 kind:
-                  'hit-points',
+                  'page-property',
                 id:
-                  'character-a',
+                  'page-a:gold',
                 label:
-                  'HP'
+                  'Gold'
               },
             before:
               21,
@@ -282,15 +282,15 @@ test(
             delta:
               -5,
             unit:
-              'hp',
+              'gp',
             reason:
-              'manual damage note'
+              'manual resource note'
           }
       });
 
     assert.equal(
       resourceChange.payload.resource.kind,
-      'hit-points'
+      'page-property'
     );
 
     assert.equal(
@@ -492,9 +492,9 @@ test(
             resource:
               {
                 kind:
-                  'hit-points',
+                  'page-property',
                 id:
-                  'character-a'
+                  'page-a:gold'
               },
             before:
               3,
@@ -643,9 +643,9 @@ test(
             resource:
               {
                 kind:
-                  'hit-points',
+                  'page-property',
                 id:
-                  'character-a'
+                  'page-a:gold'
               },
             before:
               10,

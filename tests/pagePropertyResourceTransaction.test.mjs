@@ -227,6 +227,77 @@ test(
 
 
 test(
+  'PagePropertyResourceTransaction rejects resource identity outside the changed page property',
+  async () => {
+
+    const {
+      adapter,
+      page
+    } =
+      await createStatefulResourceFixture({
+        value:
+          10
+      });
+
+    const beforeContent =
+      page.content;
+
+    await assert.rejects(
+      () => logPagePropertyResourceChange({
+        page,
+        field:
+          'gold',
+        after:
+          12,
+        transactionId:
+          'txn-resource-wrong-identity',
+        eventId:
+          'evt-resource-wrong-identity',
+        createdAt:
+          CREATED_AT,
+        resource:
+          {
+            kind:
+              'hit-points',
+            id:
+              'character-a',
+            label:
+              'HP'
+          }
+      },
+      {
+        storageAdapter:
+          adapter
+      }),
+      error =>
+        error instanceof PagePropertyResourceTransactionError &&
+        error.code === 'RESOURCE_TRANSACTION_INVALID_INPUT'
+    );
+
+    assert.equal(
+      page.content,
+      beforeContent
+    );
+
+    assert.equal(
+      await adapter.readText(page.path),
+      beforeContent
+    );
+
+    assert.equal(
+      adapter.files.has(EVENT_TRANSACTION_LOG_PATH),
+      false
+    );
+
+    assert.deepEqual(
+      adapter.writePathsAfterSetup,
+      []
+    );
+  }
+);
+
+
+test(
   'PagePropertyResourceTransaction reloads the same changed state and event',
   async () => {
 

@@ -8,7 +8,10 @@ import {
   appendTransactionEvent,
   completeTransaction,
   createTransaction,
-  failTransaction
+  EVENT_TRANSACTION_MODEL_VERSION,
+  failTransaction,
+  TRANSACTION_KIND,
+  TRANSACTION_STATUSES
 } from '../js/events/transactionModel.js';
 
 import {
@@ -290,11 +293,11 @@ test(
                 resource:
                   {
                     kind:
-                      'hit-points',
+                      'page-property',
                     id:
-                      'character-a',
+                      'page-a:gold',
                     label:
-                      'HP'
+                      'Gold'
                   },
                 before:
                   20,
@@ -303,7 +306,7 @@ test(
                 delta:
                   -3,
                 unit:
-                  'hp',
+                  'gp',
                 reason:
                   'test'
               }
@@ -665,6 +668,59 @@ test(
     await assert.rejects(
       () => appendTransactionRecord(
         started,
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error =>
+        error instanceof EventStoreError &&
+        error.code === EVENT_STORE_ERROR_CODES.INVALID_TRANSACTION
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      []
+    );
+
+    const completedWithoutEvents = {
+      kind:
+        TRANSACTION_KIND,
+      version:
+        EVENT_TRANSACTION_MODEL_VERSION,
+      transactionId:
+        'txn-completed-without-events',
+      intentType:
+        'empty-success',
+      label:
+        'Empty success',
+      source:
+        'test',
+      reason:
+        'test',
+      createdAt:
+        CREATED_AT,
+      order:
+        2,
+      status:
+        TRANSACTION_STATUSES.COMPLETED,
+      events:
+        [],
+      reversesTransactionId:
+        null,
+      reversedByTransactionId:
+        null,
+      completedAt:
+        COMPLETED_AT,
+      failedAt:
+        null,
+      failure:
+        null
+    };
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        completedWithoutEvents,
         {
           storageAdapter:
             adapter

@@ -1014,23 +1014,46 @@ function createPagePropertyResourceReference({
   resource = null
 }) {
 
-  if (resource) {
-
-    return resource;
-  }
-
   const pageId =
     normalizePageId(
       page
     );
 
-  return {
+  const reference = {
     kind:
       'page-property',
     id:
       `${pageId}:${field}`,
     label:
       `${page?.title || pageId} · ${field}`
+  };
+
+  if (!resource) {
+
+    return reference;
+  }
+
+  if (
+    resource.kind !== reference.kind ||
+    resource.id !== reference.id
+  ) {
+
+    throw new PagePropertyResourceTransactionError(
+      'Page property resource transaction can only log the page property it actually changed.',
+      {
+        code:
+          PAGE_PROPERTY_RESOURCE_ERROR_CODES.INVALID_INPUT,
+        field,
+        pageId
+      }
+    );
+  }
+
+  return {
+    ...reference,
+    label:
+      resource.label ||
+      reference.label
   };
 }
 

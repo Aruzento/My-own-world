@@ -627,6 +627,24 @@ function assertDurableTransactionState(
       }
     );
   }
+
+  if (
+    transaction.status === TRANSACTION_STATUSES.COMPLETED &&
+    transaction.events.length < 1
+  ) {
+
+    throw new EventStoreError(
+      'Completed transactions must contain at least one event before they can be appended as durable history.',
+      {
+        code:
+          EVENT_STORE_ERROR_CODES.INVALID_TRANSACTION,
+        path:
+          context.path,
+        lineNumber:
+          context.lineNumber
+      }
+    );
+  }
 }
 
 
