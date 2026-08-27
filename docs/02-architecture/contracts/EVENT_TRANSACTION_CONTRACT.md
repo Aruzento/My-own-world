@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.8` public event read/query facade foundation.
+Status: `0.0.1.15.11` future event adapter boundary documented.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -399,6 +399,52 @@ Atomicity statement:
 
 Phase `0.0.1.15.10` does not add combat/session mechanics, dice UI, event replay, restore replay, backup format migration, event JSONL format migration or persistent workspace schema migration.
 
+## 0.0.1.15.11 Future Event Adapter Boundary
+
+Future domain integrations must be adapters around existing domain owners, not new duplicate state owners.
+
+Required pattern:
+
+```text
+domain owner performs operation
+  -> transaction orchestrator assembles one user intent
+  -> one or more typed events
+  -> appendTransactionRecord()
+  -> durable Event Store
+```
+
+Adapter boundary rules:
+
+- a future adapter must call the current domain owner first for real state changes;
+- page-backed state still writes through `PageCommandService`;
+- map-backed state still goes through `CampaignMapStore` and the map save owner;
+- character/resource state still goes through `CharacterModel`, Properties and approved page command owners;
+- Dice Engine remains side-effect free and contributes only `RollResult` data;
+- the adapter owns transaction/event identity, timestamp/order, source/reason and domain context;
+- event payloads must be plain typed data, not DOM nodes, mutable page objects, storage handles or executable hooks;
+- the durable store must not import future adapters or branch on combat/map/character concepts;
+- a future event type must be implemented in `eventTypes` with an explicit `payloadVersion` contract before the store accepts it.
+
+Future event namespaces and expected owners:
+
+- `action.*`: owned by the future action/combat pipeline. An action transaction may later produce an action event plus roll/resource/damage/effect events, but Phase 15 does not implement action resolution.
+- `damage.*`: owned by the future damage application owner after target/resource mutation succeeds through existing character/page owners. It must not bypass `resource.changed` or page conflict rules when HP/resources change.
+- `healing.*`: owned by the future healing application owner after the actual resource mutation succeeds. It must preserve the same state/event safety contract as damage.
+- `effect.*`: owned by the future Effects/Conditions model. Add/remove/update events must follow the effect model's own persistence owner, not write card HTML directly.
+- `turn.*`: owned by the future persistent combat/session owner. It records turn facts only after the session state owner accepts the transition.
+- `round.*`: owned by the future persistent combat/session owner. It records round facts only after the session state owner accepts the transition.
+- `rest.*`: owned by the future rest workflow. A rest transaction may produce rest, resource and effect events, but actual resource/effect mutations must still use their domain owners.
+- `movement.*`: owned by Campaign Map movement/save owners for map token movement. It must not create a second DnD or map persistence path.
+- `scene.transition.*`: owned by the future scene/presentation/map transition owner. It records transition facts after the relevant map/presentation state owner accepts the operation.
+
+Current contract tests:
+
+- `tests/eventFutureAdapterContract.test.mjs` proves an adapter-style transaction can be assembled with public transaction APIs and appended through `appendTransactionRecord()` without Event Store knowing the adapter.
+- The same test proves `eventStore` delegates vocabulary validation to `createTypedEvent()` instead of importing concrete adapters or event-type constants.
+- Reserved future namespaces still fail as `EVENT_TYPE_UNKNOWN` with `reservedFuture` evidence until a future leaf adds their typed payload contracts.
+
+Phase `0.0.1.15.11` does not implement action, damage, healing, effect, turn, round, rest, movement, scene-transition behavior, combat sessions, dice UI, empty combat services, Character/Map schema changes or persistent format migration.
+
 ## Boundary Rules
 
 - Page writes still go through `PageCommandService` / approved page write owners.
@@ -558,8 +604,8 @@ Version impact:
 
 ## Current Gaps For Later Leaves
 
-- Roll events can now be appended through `logDiceRoll()`, but no user-facing roll/event log UI exists yet.
-- No stateful character/map/resource action integration exists yet.
-- No event UI exists yet.
+- Roll events can now be appended through `logDiceRoll()` and read in the minimal Event Log UI, but there is no dedicated dice tray or roll action UI yet.
+- The first stateful page-property resource integration exists, but no broader character/map/action/damage/healing/effect integration exists yet.
+- The minimal Event Log UI exists, but no combat/session panel exists yet.
 - Backup/restore inclusion for `.my-own-world-events/` is not decided yet.
 - Reserved future event namespaces do not implement action, damage, healing, effect, turn, round, rest, movement or scene-transition behavior yet.

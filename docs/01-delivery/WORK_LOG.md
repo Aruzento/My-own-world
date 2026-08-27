@@ -6,6 +6,45 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.11 Future Event Adapter Contract
+
+### Disposition
+
+- Closed `0.0.1.15.11` as the future event adapter boundary leaf.
+- Started from current HEAD `9407f78`.
+- Added `tests/eventFutureAdapterContract.test.mjs`.
+- Updated [EVENT_TRANSACTION_CONTRACT.md](../02-architecture/contracts/EVENT_TRANSACTION_CONTRACT.md).
+- Set the next leaf to `0.0.1.15.FINAL` NF-003 Closure Gate.
+
+### Adapter Boundary
+
+- Future event integrations must keep existing domain owners: page writes through `PageCommandService`, map state through Campaign Map owners, character/resource state through Character/Properties owners and dice computation through the Dice Engine facade.
+- The adapter/orchestrator owns transaction id, event id, timestamp/order, source/reason and domain context.
+- Event Store remains the durable append/read owner and must not import future adapters or branch on combat/map/character concepts.
+- Future namespaces are still vocabulary-only until a later leaf adds explicit typed `payloadVersion` contracts in `eventTypes`.
+
+### Future Namespaces Documented
+
+- Documented adapter expectations for `action.*`, `damage.*`, `healing.*`, `effect.*`, `turn.*`, `round.*`, `rest.*`, `movement.*` and `scene.transition.*`.
+- Each future category follows: domain owner performs the operation, transaction orchestrator assembles one user intent, typed events are validated, then `appendTransactionRecord()` persists the transaction.
+- No future category was implemented in this leaf.
+
+### Verification
+
+- `node --test tests\eventFutureAdapterContract.test.mjs`
+
+### Explicit Non-Work
+
+- Did not implement action, damage, healing, effect, turn, round, rest, movement or scene-transition behavior.
+- Did not create fake combat/action services.
+- Did not change Character, Map, page, event JSONL or workspace schemas.
+- Did not rewrite Event Store internals.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one gate only: `0.0.1.15.FINAL` NF-003 Closure Gate.
+
 ## 2026-08-27: 0.0.1.15.10 Event Safety Integration
 
 ### Disposition
