@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 696.
+Всего файлов в аудите: 700.
 
 ## Два Независимых Прохода
 
@@ -45,7 +45,7 @@ owner_zone: "delivery"
 | presentation | 3 |
 | properties | 9 |
 | release handoff | 7 |
-| root | 26 |
+| root | 28 |
 | rules | 19 |
 | schema | 12 |
 | storage | 32 |
@@ -57,7 +57,7 @@ owner_zone: "delivery"
 | tools | 22 |
 | tree | 11 |
 | ui | 33 |
-| unit tests | 104 |
+| unit tests | 106 |
 | world packages | 3 |
 
 ## Кандидаты На Уборку
@@ -74,9 +74,9 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 916189 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 923397 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `debug.log` | 467433 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 280782 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 283055 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/campaign-map-ui.spec.mjs` | 173827 | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
@@ -431,11 +431,12 @@ owner_zone: "delivery"
 | `js/editor/wikiLinkNormalizer.js` | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `js/editor/wikiLinkPreview.js` | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `js/editor/wikiLinks.js` | JavaScript модуль подсистемы: editor. | Проверять при росте файла и дублировании поведения. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
-| `js/events/diceRollEventLog.js` | JavaScript модуль подсистемы: events. | Нет срочно: поддерживать через dice roll event log tests и event transaction contract. | Высокая: интеграционная граница между Dice Engine RollResult и durable event log. |
-| `js/events/eventStore.js` | JavaScript модуль подсистемы: events. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: durable event history owner, удалять только после отдельного аудита. |
-| `js/events/eventTypes.js` | JavaScript модуль подсистемы: events. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: event payload vocabulary owner, удалять только после отдельного аудита. |
-| `js/events/pagePropertyResourceTransaction.js` | JavaScript модуль подсистемы: events. | Нет срочно: поддерживать через page property resource transaction tests и event transaction contract. | Высокая: первый state-changing event consumer; orchestration layer между PageCommandService и durable event log. |
-| `js/events/transactionModel.js` | JavaScript модуль подсистемы: events. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: pure transaction domain model, удалять только после отдельного аудита. |
+| `js/events/diceRollEventLog.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
+| `js/events/eventStore.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
+| `js/events/eventTypes.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
+| `js/events/pagePropertyResourceTransaction.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
+| `js/events/transactionModel.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
+| `js/events/transactionReversal.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
 | `js/performance/backgroundCheckpointQueue.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
 | `js/performance/workspacePerformance.js` | JavaScript модуль подсистемы: root. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: инфраструктурный файл проекта, удалять только после отдельного аудита. |
 | `js/presentation/campaignMapPresentationPrivacy.js` | JavaScript модуль подсистемы: presentation. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
@@ -796,8 +797,8 @@ owner_zone: "delivery"
 | `tests/operationJournal.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/orphanReview.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/pageCommandService.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
-| `tests/pagePropertyResourceTransaction.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие первого state-changing event transaction, удалять только после замены тестом или отдельного решения. |
 | `tests/pageIndex.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/pagePropertyResourceTransaction.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/pageRecord.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/pageRepository.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/pageStructuredChangePreservation.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
@@ -825,6 +826,7 @@ owner_zone: "delivery"
 | `tests/taskTrackerModel.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/taskTrackerStructuralIconOnly.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/themeManager.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/transactionReversal.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/treeDropIntent.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/treeIndex.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/treeMovePlanner.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |

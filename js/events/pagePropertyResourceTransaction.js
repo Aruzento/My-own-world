@@ -200,6 +200,8 @@ export function createPagePropertyResourceChangeTransaction(
         normalized.eventCreatedAt,
       order:
         1,
+      reversesEventId:
+        normalized.reversesEventId || undefined,
       payload:
         createResourceChangePayload({
           resource:
@@ -217,28 +219,72 @@ export function createPagePropertyResourceChangeTransaction(
         })
     });
 
-  const transaction =
-    completeTransaction(
+  let transaction =
+    appendTransactionEvent(
+      createTransaction({
+        transactionId:
+          normalized.transactionId,
+        intentType:
+          normalized.intentType,
+        label:
+          normalized.label ||
+          `Change ${normalized.resource.label || normalized.resource.id}`,
+        source:
+          normalized.source,
+        reason:
+          normalized.reason,
+        createdAt:
+          normalized.createdAt,
+        order:
+          normalized.order,
+        reversesTransactionId:
+          normalized.reversesTransactionId || undefined
+      }),
+      event
+    );
+
+  let reversalEvent =
+    null;
+
+  if (normalized.reversalMetadataEventId) {
+
+    reversalEvent =
+      createTypedEvent({
+        eventId:
+          normalized.reversalMetadataEventId,
+        transactionId:
+          normalized.transactionId,
+        type:
+          EVENT_TYPES_V1.TRANSACTION_REVERSAL_RECORDED,
+        createdAt:
+          normalized.eventCreatedAt,
+        order:
+          2,
+        payload:
+          createTransactionReversalPayload({
+            originalTransactionId:
+              normalized.reversesTransactionId,
+            reversalTransactionId:
+              normalized.transactionId,
+            reversedEventIds:
+              [
+                normalized.reversesEventId
+              ],
+            reason:
+              normalized.reversalMetadataReason || normalized.reason
+          })
+      });
+
+    transaction =
       appendTransactionEvent(
-        createTransaction({
-          transactionId:
-            normalized.transactionId,
-          intentType:
-            normalized.intentType,
-          label:
-            normalized.label ||
-            `Change ${normalized.resource.label || normalized.resource.id}`,
-          source:
-            normalized.source,
-          reason:
-            normalized.reason,
-          createdAt:
-            normalized.createdAt,
-          order:
-            normalized.order
-        }),
-        event
-      ),
+        transaction,
+        reversalEvent
+      );
+  }
+
+  transaction =
+    completeTransaction(
+      transaction,
       {
         completedAt:
           normalized.completedAt
@@ -252,6 +298,7 @@ export function createPagePropertyResourceChangeTransaction(
       PAGE_PROPERTY_RESOURCE_TRANSACTION_VERSION,
     transaction,
     event,
+    reversalEvent,
     before:
       normalized.before,
     after:
@@ -456,6 +503,8 @@ export async function logPagePropertyResourceChange(
       resourceTransaction.transaction,
     event:
       resourceTransaction.event,
+    reversalEvent:
+      resourceTransaction.reversalEvent,
     record:
       appendResult.record
   });
@@ -585,6 +634,10 @@ function normalizeStatefulResourceInput(
       'reason',
       'unit',
       'resource',
+      'reversesTransactionId',
+      'reversesEventId',
+      'reversalMetadataEventId',
+      'reversalMetadataReason',
       'expectedBase'
     ],
     'page property resource transaction input'
@@ -690,6 +743,26 @@ function normalizeStatefulResourceInput(
       normalizeOptionalResourceReference(
         input.resource
       ),
+    reversesTransactionId:
+      optionalString(
+        input.reversesTransactionId,
+        'reversesTransactionId'
+      ),
+    reversesEventId:
+      optionalString(
+        input.reversesEventId,
+        'reversesEventId'
+      ),
+    reversalMetadataEventId:
+      optionalString(
+        input.reversalMetadataEventId,
+        'reversalMetadataEventId'
+      ),
+    reversalMetadataReason:
+      optionalString(
+        input.reversalMetadataReason,
+        'reversalMetadataReason'
+      ),
     expectedBase:
       input.expectedBase
   };
@@ -724,6 +797,10 @@ function normalizeResourceChangeInput(
       'reason',
       'unit',
       'resource',
+      'reversesTransactionId',
+      'reversesEventId',
+      'reversalMetadataEventId',
+      'reversalMetadataReason',
       'page',
       'expectedBase'
     ],
@@ -777,6 +854,30 @@ function normalizeResourceChangeInput(
       input.eventCreatedAt,
       'eventCreatedAt'
     ) || createdAt;
+
+  const reversesTransactionId =
+    optionalString(
+      input.reversesTransactionId,
+      'reversesTransactionId'
+    );
+
+  const reversesEventId =
+    optionalString(
+      input.reversesEventId,
+      'reversesEventId'
+    );
+
+  const reversalMetadataEventId =
+    optionalString(
+      input.reversalMetadataEventId,
+      'reversalMetadataEventId'
+    );
+
+  assertReversalInput({
+    reversesTransactionId,
+    reversesEventId,
+    reversalMetadataEventId
+  });
 
   return {
     ...input,
@@ -842,7 +943,15 @@ function normalizeResourceChangeInput(
         'unit'
       ),
     resource:
-      input.resource
+      input.resource,
+    reversesTransactionId,
+    reversesEventId,
+    reversalMetadataEventId,
+    reversalMetadataReason:
+      optionalString(
+        input.reversalMetadataReason,
+        'reversalMetadataReason'
+      )
   };
 }
 
@@ -903,6 +1012,61 @@ function createResourceChangePayload({
   }
 
   return payload;
+}
+
+
+function createTransactionReversalPayload({
+  originalTransactionId,
+  reversalTransactionId,
+  reversedEventIds,
+  reason
+}) {
+
+  const payload = {
+    originalTransactionId,
+    reversalTransactionId,
+    reversedEventIds
+  };
+
+  if (reason) {
+
+    payload.reason =
+      reason;
+  }
+
+  return payload;
+}
+
+
+function assertReversalInput({
+  reversesTransactionId,
+  reversesEventId,
+  reversalMetadataEventId
+}) {
+
+  const hasAny =
+    Boolean(
+      reversesTransactionId ||
+      reversesEventId ||
+      reversalMetadataEventId
+    );
+
+  if (!hasAny) return;
+
+  if (
+    !reversesTransactionId ||
+    !reversesEventId ||
+    !reversalMetadataEventId
+  ) {
+
+    throw new PagePropertyResourceTransactionError(
+      'A page property resource reversal requires transaction, event and metadata event links.',
+      {
+        code:
+          PAGE_PROPERTY_RESOURCE_ERROR_CODES.INVALID_INPUT
+      }
+    );
+  }
 }
 
 

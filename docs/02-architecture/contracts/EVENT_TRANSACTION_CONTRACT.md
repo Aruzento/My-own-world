@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.6` first stateful transaction foundation.
+Status: `0.0.1.15.7` first transaction undo/reversal foundation.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -252,6 +252,47 @@ The event contract should treat reversal as a new auditable fact:
 - UI may hide collapsed/reversed details, but the durable history owner must not erase the original record as the normal undo behavior.
 
 Editor-local `Ctrl+Z` may still use `editorHistory` for local unsaved editing. Durable cross-subsystem action undo belongs to the future transaction/event owner and must coordinate through existing write/model owners.
+
+## 0.0.1.15.7 Transaction Undo / Reversal
+
+`js/events/transactionReversal.js` is the first durable undo orchestration layer.
+
+V1 supported reversal:
+
+- original transaction must be completed;
+- original transaction must not already be a reversal;
+- original transaction must contain exactly one `resource.changed` event;
+- the resource must be `kind: "page-property"` with `id: "<pageId>:<fieldKey>"`;
+- current page property value must still equal the original event `after` value;
+- compensation applies `after -> before` through `logPagePropertyResourceChange()` and therefore through `PageCommandService`.
+
+The compensating transaction appends new history instead of editing old history:
+
+- transaction metadata sets `reversesTransactionId` to the original transaction id;
+- first event is a compensating `resource.changed` event with `reversesEventId` pointing to the original resource event;
+- second event is `transaction.reversal.recorded`, recording the original transaction id, reversal transaction id and reversed event ids.
+
+Double undo is blocked by reading durable event history:
+
+- if any completed transaction already has `reversesTransactionId` for the original transaction, the undo is rejected;
+- if reversal metadata already records the original transaction id, the undo is rejected;
+- the original transaction record remains unchanged and readable.
+
+Non-reversible v1 cases:
+
+- roll-only transactions are not state-reversible;
+- transactions with multiple resource changes are not auto-reversed in v1;
+- unsupported resource kinds are rejected;
+- stale current resource state is rejected instead of guessing a merge.
+
+Failure behavior:
+
+- invalid/missing target page or field is rejected before compensation writes;
+- page write failure leaves no reversal event;
+- event append failure rolls the compensation page write back through `PageCommandService`;
+- no backup is created merely because undo was blocked or rejected.
+
+Phase `0.0.1.15.7` does not add undo UI, redo, combat/session mechanics, HP automation, forced overwrite, generic object mutation, backup/restore inclusion policy for the event sidecar or persistent format migration.
 
 ## Boundary Rules
 

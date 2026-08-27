@@ -6,6 +6,67 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.7 Transaction Undo / Reversal
+
+### Disposition
+
+- Closed `0.0.1.15.7` as the first durable transaction undo/reversal leaf.
+- Started from current HEAD `38c5380`.
+- Added `js/events/transactionReversal.js`.
+- Set the next leaf to `0.0.1.15.8` Event Query API.
+
+### Supported Reversal
+
+- V1 supports only the proven stateful transaction from `0.0.1.15.6`: one `resource.changed` event for a numeric Properties-backed page field.
+- Roll-only transactions are rejected as non-reversible because rolling does not by itself mutate application state.
+- Transactions that are themselves reversals are not reversible in this leaf.
+- Transactions with no resource event, multiple resource events, unsupported resource kinds or invalid page-property resource ids are rejected instead of guessed.
+
+### Ownership
+
+- `transactionReversal.js` reads the durable event log and decides whether a transaction is reversible.
+- Page state compensation still goes through `logPagePropertyResourceChange()` and therefore through `PageCommandService`.
+- `PageCommandService` remains the write/precondition/rollback/repository-notification owner.
+- `eventStore` remains the durable append/read owner.
+- `eventTypes` remains the strict event payload owner for both `resource.changed` and `transaction.reversal.recorded`.
+- No old event payload or old transaction record is edited or deleted during undo.
+
+### Undo Flow
+
+- Read original transaction from `.my-own-world-events/transactions.v1.jsonl`.
+- Check that no completed transaction already reverses it and no reversal metadata already points at it.
+- Resolve the page-property resource id as `<pageId>:<fieldKey>`.
+- Verify the current numeric field still equals the original event `after` value.
+- Apply the compensating value `after -> before` through the existing page command boundary.
+- Append a new completed reversal transaction with `reversesTransactionId`.
+- The first event in the reversal transaction is a compensating `resource.changed` event with `reversesEventId`.
+- The second event is `transaction.reversal.recorded`, which records the original transaction id, reversal transaction id and reversed event id.
+
+### Failure Behavior
+
+- Double undo is blocked by durable history inspection; the original transaction remains unchanged and readable.
+- Missing target page/field is rejected before compensation writes.
+- Current resource value mismatch is treated as a state conflict and no write occurs.
+- Page write failure leaves no reversal event.
+- Event append failure rolls the compensation page write back through `PageCommandService`.
+
+### Verification
+
+- `node --test tests\transactionReversal.test.mjs`
+- `node --test tests\transactionReversal.test.mjs tests\pagePropertyResourceTransaction.test.mjs tests\eventTypes.test.mjs tests\eventStore.test.mjs tests\eventTransactionModel.test.mjs tests\diceRollEventLog.test.mjs tests\eventTransactionContract.test.mjs`
+
+### Explicit Non-Work
+
+- Did not add undo UI, redo UI or event log UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting, turns or rounds.
+- Did not add a generic object mutation engine, replay engine or broad undo framework.
+- Did not change page schema, workspace schema or the event JSONL record format.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.8` Event Query API.
+
 ## 2026-08-27: 0.0.1.15.6 First Stateful Transaction
 
 ### Disposition
