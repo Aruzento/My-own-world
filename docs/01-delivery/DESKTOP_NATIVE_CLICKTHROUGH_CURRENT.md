@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Desktop Native Click-Through Current
 
-Run date: 2026-08-26T06:12:56.565Z
+Run date: 2026-08-27T22:36:19.818Z
 
-Plan ref: `0.0.1.14.FINAL` (runner introduced in `0.0.1.2.2`)
+Plan ref: `0.0.1.15.FINAL` (runner introduced in `0.0.1.2.2`)
 
-Workspace: `C:\Users\Aruko\AppData\Local\Temp\mow-dice-final-native-smoke-5b2cd1dd2af14705b4c5102c8eee6942`
+Workspace: `C:\Users\Aruko\AppData\Local\Temp\mow-phase15-native-smoke-6e22030c14414b419181736e719d1df9`
 
 Executable: `C:\Users\Aruko\Documents\New project\My own world\src-tauri\target\release\my-own-world.exe`
 
@@ -22,13 +22,13 @@ Fatal error: none
 
 ## Steps
 
-- launch native desktop app with WebView2 remote debugging: passed (1988 ms)
-- restore workspace through desktop adapter: passed (820 ms)
-- open representative card with image when available: passed (98 ms)
-- open settings workspace diagnostics panel: passed (449 ms)
-- scroll and search the large tree: passed (183 ms)
-- open heavy campaign map: passed (71 ms)
-- open presentation window from the heavy map: passed (701 ms)
+- launch native desktop app with WebView2 remote debugging: passed (2229 ms)
+- restore workspace through desktop adapter: passed (802 ms)
+- open representative card with image when available: passed (89 ms)
+- open settings workspace diagnostics panel: passed (415 ms)
+- scroll and search the large tree: passed (201 ms)
+- open heavy campaign map: passed (24 ms)
+- open presentation window from the heavy map: passed (704 ms)
 
 ## Targets
 
@@ -48,7 +48,7 @@ Fatal error: none
 
 ```json
 {
-  "cdpEndpoint": "http://127.0.0.1:57170",
+  "cdpEndpoint": "http://127.0.0.1:54679",
   "workspace": {
     "title": "MyOwnWorld",
     "treeItems": 3,
@@ -72,7 +72,7 @@ Fatal error: none
     "cards": 12,
     "sections": 10,
     "hasWriteProbe": true,
-    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-dice-final-native-smoke-5b2cd1dd2af14705b4c5102c8eee6942Расположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 0 шт.Папка резервных копий: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-dice-final-native-smoke-5b2cd1dd2af14705b4c5102c8eee6942\\.my-own-world-backupsПоследняя операция: backup.li"
+    "textSample": "Состояние рабочей папкиРежим: desktopРабочая папка: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-phase15-native-smoke-6e22030c14414b419181736e719d1df9Расположение: network folderМатрица доступа: Workspace in network folder: matchedЗапись: OKПроба записи: Write probe OK.Схема: OKПроверка: Еще не запускалсяРезервные копии: 0 шт.Папка резервных копий: \\\\?\\C:\\Users\\Aruko\\AppData\\Local\\Temp\\mow-phase15-native-smoke-6e22030c14414b419181736e719d1df9\\.my-own-world-backupsПоследняя операция: backup.listInco"
   },
   "treeAfterSearch": {
     "renderedItems": 1,

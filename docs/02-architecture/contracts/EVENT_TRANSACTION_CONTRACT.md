@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.11` future event adapter boundary documented.
+Status: `0.0.1.15.FINAL` passed on 2026-08-28; NF-003 event/transaction foundation is closed.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -598,6 +598,9 @@ Version impact:
 ## Current Safe Baseline
 
 - Safe dice rolls produce structured runtime `RollResult` with no side effects.
+- Durable event history has one sidecar owner: `.my-own-world-events/transactions.v1.jsonl` through `js/events/eventStore.js`.
+- Completed durable transactions must contain at least one validated event; failed transactions remain auditable failure outcomes.
+- The first stateful page-property resource adapter can only log the `page-property` resource it actually changed.
 - Page commands already expose runtime command events and undo entries, but those are diagnostics/runtime undo, not auditable durable event history.
 - Editor history can preserve local editing steps, but it does not cover cross-subsystem product facts.
 - Operation journal can recover incomplete workspace operations, but it is internal recovery evidence, not player/session history.

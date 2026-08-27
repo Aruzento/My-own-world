@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-27
+Updated: 2026-08-28
 
 Planning version: 2
 
@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions is `ACTIVE`.
+Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `NEXT`, not active.
 
-Current leaf: `0.0.1.15.FINAL` NF-003 Closure Gate is `NEXT`.
+Current leaf: no implementation leaf is active until the owner explicitly starts `0.0.1.16.0`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10` and `0.0.1.15.11` are closed. `0.0.1.15.0` is active for NF-003 event/roll/combat-log transaction foundation only; `0.0.1.16.0` remains blocked. Do not implement combat sessions, attacks, damage application, HP automation, effects, targeting, dice UI or turns/rounds logic beyond event vocabulary in Phase 15.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `NEXT` only. Do not implement combat sessions, attacks, damage application, HP automation, effects, targeting, dice UI or turns/rounds logic until the owner explicitly starts Phase 16.
 
 ## Execution Rules
 
@@ -301,7 +301,7 @@ ID: `0.0.1.15.0`
 
 NAME: NF-003 Event / Roll / Combat Log + Transactions
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
 
 GOAL: create the durable live-session event foundation.
 
@@ -309,9 +309,9 @@ WHY NOW: combat and session actions need a coherent log and undo model before co
 
 SCOPE: durable event/transaction foundation, roll-result events, action vocabulary, resource-change vocabulary, scene-transition vocabulary, manual correction vocabulary and undo/audit semantics. One user operation equals one coherent transaction. Undo must not silently erase history. This phase is not combat: no combat session, attacks, damage application, HP automation, effects engine, targeting, dice UI or turns/rounds logic beyond event vocabulary.
 
-DEPENDENCIES: Phase 5 conflict-safe durable writes; Phase 6 dice result structures; page command lifecycle; editor history; CharacterModel; CampaignMapStore. Owner started this phase on 2026-08-26 from HEAD `ac8b31f`.
+DEPENDENCIES: Phase 5 conflict-safe durable writes; Phase 6 dice result structures; page command lifecycle; editor history; CharacterModel; CampaignMapStore. Owner started this phase on 2026-08-26 from HEAD `ac8b31f`; the final closure gate passed on 2026-08-28.
 
-EXIT CRITERIA: event owner and source of truth are explicit; append/read tests exist; at least one safe action type logs and undoes correctly; no log is hidden inside arbitrary card HTML without a contract.
+EXIT CRITERIA: met on 2026-08-28. The event owner and durable source of truth are explicit; append/read/reload tests exist; RollResult can be logged; one page-property resource action logs and undoes through compensating history; the query API and minimal history UI work; failed state mutations do not become successful history; no log is hidden inside arbitrary card HTML; no combat/session, damage/HP automation, effects or turn engine was implemented.
 
 CURRENT LEAF RESULTS:
 
@@ -329,6 +329,7 @@ CURRENT LEAF RESULTS:
 - `0.0.1.15.9` Minimal Event Log UI - `DONE` on 2026-08-27. Added `js/ui/eventHistoryPanel.js` and `styles/event-history.css` as a small AppShell/Tools dialog for reading current event history through `queryEventLog()` and `getEventTransactionById()`. The UI shows durable order/time, human Russian event labels, roll formula/result/faces, resource `before -> after` summaries and reversal relationships. Undo is offered only for transactions classified as reversible by the existing `transactionReversal` contract, and applying it calls `undoTransaction()` instead of creating a UI-owned undo path. No combat panel, dashboard cards, raw JSONL parsing in UI, new event store, persistent format migration, dice UI or real workspace mutation was implemented.
 - `0.0.1.15.10` Event Safety Integration - `DONE` on 2026-08-27. Hardened the first stateful Event Log adapter so failed event append rollback is checked against the post-mutation page state identity before it can rewrite the page. A successful resource mutation still appends one durable `resource.changed` transaction; state write failure and stale PageCommandService conflict append no successful event; event append failure either rolls back through PageCommandService or reports a structured incomplete runtime outcome when rollback is blocked by newer durable state. Recovery remains owned by `backupService`: restore/partial restore do not become event replay, and later undo of an older resource event checks current durable state before writing a compensating event. Event Query remains workspace-scoped through the active `StorageAdapter`. No filesystem-wide atomicity claim, combat/session mechanics, event format migration, backup format migration, new recovery owner or real workspace mutation was implemented.
 - `0.0.1.15.11` Future Event Adapter Contract - `DONE` on 2026-08-27. Documented the future adapter boundary for `action.*`, `damage.*`, `healing.*`, `effect.*`, `turn.*`, `round.*`, `rest.*`, `movement.*` and `scene.transition.*`: the existing domain owner performs the operation, a transaction orchestrator assembles one user intent, typed events are validated by `eventTypes`, and `eventStore` only appends/reads completed records. Added contract coverage proving an adapter-style transaction can use public transaction/store APIs without Event Store importing concrete adapters, while reserved future namespaces remain blocked until a future leaf adds explicit payload contracts. No fake action/damage/effect/turn implementation, empty combat service, Character/Map schema change, Event Store rewrite or persistent format migration was implemented.
+- `0.0.1.15.FINAL` Event / Roll / Transaction Closure Gate - `PASS` on 2026-08-28. Reviewed the cumulative Phase 15 diff from pre-phase HEAD `ac8b31f` and received one narrow read-only reviewer result. The reviewer initially blocked closure on two gate invariants; corrective commit `6aff1f8` made Event Store reject completed transactions with no events before append and constrained the first stateful page-property transaction so it cannot log a changed page field under an unrelated resource identity. The gate confirms one canonical event/transaction owner, durable append/read/reload, RollResult logging, one transaction-backed stateful page-property action, compensating undo, bounded query API, minimal history UI, explicit conflict/recovery safety and no hidden card-HTML event data. No combat session, damage/HP automation, effects engine, turn/round engine, new event store, event format migration or real workspace mutation was implemented.
 
 ### Phase 8 - 0.0.1.16.0 NF-004 Persistent Combat Session
 
@@ -336,7 +337,7 @@ ID: `0.0.1.16.0`
 
 NAME: NF-004 Persistent Combat Session
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
 
 GOAL: make active combat reload-safe without creating a second initiative engine.
 

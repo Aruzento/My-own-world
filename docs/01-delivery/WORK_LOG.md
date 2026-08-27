@@ -6,6 +6,43 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-28: 0.0.1.15.FINAL Event / Roll / Transaction Closure Gate
+
+### Disposition
+
+- Closed `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as `DONE`.
+- Started the gate from current HEAD `6993acd`; corrective gate invariant commit `6aff1f8` was added before final closure.
+- Set `0.0.1.16.0` Persistent Combat Session to `NEXT`, not `ACTIVE`.
+- Did not start Phase 16.
+
+### Gate Review
+
+- Reviewed only the cumulative Phase 15 diff from pre-phase HEAD `ac8b31f`.
+- Used one narrow read-only reviewer. The reviewer initially returned `FAIL` because Event Store accepted a manually constructed completed transaction with no events and because the first stateful page-property transaction could accept an unrelated resource identity.
+- Fixed both gate blockers inside Phase 15: durable completed transactions now require at least one event before append, and `logPagePropertyResourceChange()` can only log the page-property resource it actually changed.
+- Positive Phase 15 tests no longer use HP/damage vocabulary as generic examples; HP-like identity appears only in a negative test proving it is rejected by the page-property transaction owner.
+
+### Closure Evidence
+
+- Canonical owner: `js/events/eventStore.js` owns durable append/read/reload; `js/events/transactionModel.js` owns pure runtime transaction shape and ordering.
+- Roll events: `js/events/diceRollEventLog.js` logs Dice Engine `RollResult` without making Dice Engine write events.
+- Stateful transaction: `js/events/pagePropertyResourceTransaction.js` changes one numeric page-property through `PageCommandService`, then appends one `resource.changed` event.
+- Undo/reversal: `js/events/transactionReversal.js` appends a compensating transaction and never deletes original history.
+- Query/UI: `js/events/eventQuery.js` and `js/ui/eventHistoryPanel.js` provide bounded reads and the minimal “Журнал событий” UI.
+- Conflict/recovery: state write failures, stale page-command conflicts and rollback-blocked event append failures have explicit outcomes and do not become false success.
+
+### Explicit Non-Work
+
+- No combat session was implemented.
+- No damage/HP automation was implemented.
+- No effects, targeting, turn or round engine was implemented.
+- No second event/history storage owner was introduced.
+- No persistent format migration or real workspace mutation was performed.
+
+### Next
+
+- `0.0.1.16.0` Persistent Combat Session is next, but must not start without explicit owner instruction.
+
 ## 2026-08-27: 0.0.1.15.11 Future Event Adapter Contract
 
 ### Disposition
