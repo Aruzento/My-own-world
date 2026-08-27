@@ -1,0 +1,68 @@
+{
+  "schema": "myownworld.agent-task.v1",
+  "id": "0.0.1.15.5",
+  "title": "Dice Roll Event Integration",
+  "ownerMode": "ROADMAP LEAF",
+  "goal": "Make Dice Engine RollResult the first real durable Event Log consumer without making Dice Engine write events automatically.",
+  "scope": {
+    "include": [
+      "Call the public Dice Engine facade from an event-log orchestrator",
+      "Create one transaction containing one roll.performed event",
+      "Append the completed transaction through the durable Event Store",
+      "Preserve formula, faces, total, mode and critical metadata in event payload"
+    ],
+    "exclude": [
+      "Dice UI or roll tray",
+      "Combat session mechanics",
+      "Damage or HP automation",
+      "Parser AST persistence",
+      "Workspace/page schema changes"
+    ]
+  },
+  "acceptance": [
+    "A normal roll can be logged as one durable transaction",
+    "Advantage and critical RollResult metadata survive event reload",
+    "A d100 roll uses the same public Dice Engine API",
+    "Failed event append does not report durable success",
+    "Dice Engine remains side-effect free and imports no Event Store code"
+  ],
+  "verification": {
+    "commands": [
+      {
+        "command": "node --test tests/diceRollEventLog.test.mjs tests/eventStore.test.mjs tests/eventTypes.test.mjs",
+        "required": true,
+        "reason": "Focused coverage must prove roll payload validation, durable append and reload behavior."
+      },
+      {
+        "command": "npm run verify",
+        "required": true,
+        "reason": "The repository baseline must remain green after event-log integration."
+      },
+      {
+        "command": "git diff --check",
+        "required": true,
+        "reason": "The final patch must not contain whitespace errors."
+      }
+    ],
+    "manual": [
+      "Confirm no roll UI, combat behavior or persistent schema migration was introduced."
+    ]
+  },
+  "risk": {
+    "level": "medium",
+    "notes": "The task touches durable event append semantics, but it should not mutate page storage or Dice Engine behavior directly."
+  },
+  "requiresApproval": [
+    {
+      "when": "persistentFormatChange",
+      "reason": "Any event storage schema change beyond the approved sidecar format requires owner approval."
+    },
+    {
+      "when": "newProductFeature",
+      "reason": "Dice UI and combat behavior are outside this leaf and require separate owner direction."
+    }
+  ],
+  "notes": [
+    "This example is based on a completed Phase 15 leaf and is intended as validator evidence, not as an active roadmap item."
+  ]
+}

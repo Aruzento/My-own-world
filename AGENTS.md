@@ -47,6 +47,7 @@
 - Если меняется структура файлов или docs, проверить `node tools/audit_project_files.mjs`.
 - Если меняется текстовая документация или пользовательские строки, проверить `npm run check:encoding`.
 - Если меняются skills, проверить `node tools/validate_agent_skills.mjs`.
+- Если добавляются machine-readable agent tasks, проверить `npm run tasks:validate`.
 
 Базовые проверки:
 
@@ -56,6 +57,7 @@ npm run test:browser
 node tools/docs_index.mjs
 node tools/audit_project_files.mjs
 node tools/validate_agent_skills.mjs
+npm run tasks:validate
 ```
 
 `npm run test:browser` можно не запускать только если задача затрагивает исключительно документы/скрипты без влияния на UI/runtime. В таком случае агент должен явно написать причину.
@@ -70,6 +72,16 @@ node tools/validate_agent_skills.mjs
 - `docs/01-delivery/WORK_LOG.md`.
 
 Пока release-зона не полностью создана, использовать существующие delivery-документы и планировать перенос в `0.0.0.2`.
+
+## Machine-Readable Agent Tasks
+
+Для будущих автономных задач использовать JSON contract из `docs/02-architecture/contracts/AGENT_TASK_CONTRACT.md`.
+
+- Исполняемые task-файлы имеют suffix `.agent-task.json`.
+- Валидировать их через `npm run tasks:validate`.
+- YAML-примеры в документации считаются только человекочитаемой иллюстрацией, не исполняемым форматом.
+
+Этот contract не заменяет `docs/01-delivery/PROJECT_PLAN.md`, Definition of Done или явное owner approval для рискованных действий.
 
 ## Summary После Задачи
 

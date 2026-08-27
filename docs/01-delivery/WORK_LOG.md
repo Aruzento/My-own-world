@@ -6,6 +6,34 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-28: Owner-Directed Off-Plan Maintenance - Machine-Readable Agent Task Contract
+
+### Disposition
+
+- Readiness: `Foundation`.
+- Added a strict JSON-first task contract for future autonomous agents without changing the active roadmap phase/status.
+- Kept `0.0.1.16.0` Persistent Combat Session as `NEXT`, not active.
+- Did not build an autonomous runner.
+
+### What Changed
+
+- Added [AGENT_TASK_CONTRACT.md](../02-architecture/contracts/AGENT_TASK_CONTRACT.md) as the canonical human-readable contract for `.agent-task.json` files.
+- Added one realistic machine-readable example task under `docs/03-testing/agent-tasks/examples/`.
+- Added `tools/validate_agent_tasks.mjs` and `npm run tasks:validate` as a dependency-free JSON validator.
+- Updated `AGENTS.md` and [AI_ONBOARDING.md](../02-architecture/AI_ONBOARDING.md) so future agents know where the executable task format lives.
+
+### Validation Contract
+
+- Validator rejects missing `goal`, empty `acceptance`, missing `scope`, malformed `verification`, invalid `risk` and malformed `requiresApproval` rules.
+- No YAML parser, new dependency, roadmap automation, runner, persistent data migration or product feature was added.
+
+### Verification
+
+- `npm run tasks:validate` passed against the example `.agent-task.json`.
+- `node --test tests\agentTaskContract.test.mjs` passed with 7 validator regressions.
+- `npm run verify` passed with 556 unit tests plus the existing synthetic large-workspace smoke and document checks.
+- Browser tests were not run because this maintenance task changed only docs, one Node validator, one JSON example and one unit test; no UI/runtime workflow was touched.
+
 ## 2026-08-28: 0.0.1.15.FINAL Event / Roll / Transaction Closure Gate
 
 ### Disposition
