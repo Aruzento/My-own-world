@@ -302,6 +302,68 @@ test(
 
 
 test(
+  'EventTypes keeps optional resource fields absent across repeated validation',
+  () => {
+
+    const event =
+      createTypedEvent({
+        eventId:
+          'evt-resource-minimal',
+        transactionId:
+          'txn-resource-minimal',
+        type:
+          EVENT_TYPES_V1.RESOURCE_CHANGED,
+        createdAt:
+          CREATED_AT,
+        order:
+          1,
+        payload:
+          {
+            resource:
+              {
+                kind:
+                  'page-property',
+                id:
+                  'page-a:gold'
+              },
+            before:
+              1,
+            after:
+              3,
+            delta:
+              2
+          }
+      });
+
+    assert.deepEqual(
+      event.payload,
+      {
+        after:
+          3,
+        before:
+          1,
+        delta:
+          2,
+        resource:
+          {
+            id:
+              'page-a:gold',
+            kind:
+              'page-property'
+          }
+      }
+    );
+
+    assert.doesNotThrow(
+      () => createTypedEvent(
+        event
+      )
+    );
+  }
+);
+
+
+test(
   'EventTypes validates transaction reversal metadata without deleting original history',
   () => {
 

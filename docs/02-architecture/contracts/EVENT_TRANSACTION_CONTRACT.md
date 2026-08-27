@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.5` dice roll event integration foundation.
+Status: `0.0.1.15.6` first stateful transaction foundation.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -196,6 +196,50 @@ Failure behavior:
 
 Phase `0.0.1.15.5` does not add roll UI, dice UI, event log UI, combat/session mechanics, action/damage handling, HP automation, turns/rounds or backup/restore inclusion policy for the event sidecar.
 
+## 0.0.1.15.6 First Stateful Transaction
+
+`js/events/pagePropertyResourceTransaction.js` is the first state-changing Event Log consumer.
+
+The v1 slice is deliberately narrow: it changes one existing numeric Properties-backed field on one page, then logs one `resource.changed` event. It does not create a generic object mutation engine.
+
+Flow:
+
+```text
+caller intent
+  -> logPagePropertyResourceChange()
+  -> read current numeric page property
+  -> create transaction
+  -> persist page content through PageCommandService
+  -> append resource.changed event through EventStore
+  -> completed durable transaction
+```
+
+Ownership rules:
+
+- `PageCommandService` remains the owner of durable page writes, write preconditions, rollback and PageRepository/PageIndex notification.
+- `eventStore` remains the owner of `.my-own-world-events/transactions.v1.jsonl` append/read behavior.
+- `eventTypes` remains the owner of strict `resource.changed` payload validation.
+- The stateful resource transaction layer only orchestrates one caller-owned user intent across those existing owners.
+
+Persisted `resource.changed` payload:
+
+- records finite numeric `before`, `after` and `delta`;
+- records target/field identity through the existing strict resource reference, using `kind: "page-property"` and `id: "<pageId>:<fieldKey>"`;
+- may include a human-readable resource label, unit and reason;
+- does not store DOM nodes, mutable page objects, storage handles, editor widgets or arbitrary executable data.
+
+Failure behavior:
+
+- invalid page/field/value input is rejected before any page write or event append;
+- page write failure leaves no event record;
+- blocked/stale page writes are not reported as durable event success;
+- event append failure triggers a compensating rollback through `PageCommandService` so the page is not left changed without a durable event;
+- rollback failure is reported distinctly with the original event append failure preserved as cause.
+
+The `eventTypes` vocabulary keeps absent optional fields absent during normalization. This makes typed events idempotent when the event store revalidates a previously normalized event.
+
+Phase `0.0.1.15.6` does not add resource UI, event log UI, dice UI, combat/session mechanics, attacks, damage application, HP automation, effects, targeting, turns/rounds or backup/restore inclusion policy for the event sidecar.
+
 ## Undo And Reversal
 
 Undo must not silently delete history.
@@ -261,7 +305,7 @@ Implemented V1 event types:
 
 - `roll.performed` with `payloadVersion: 1`. Payload contains a canonical Dice Engine `dice-roll-result` plus a small explicit `context` record owned by the event consumer. Context is limited to stable string fields such as `source`, `actorId`, `actorPageId`, `targetId`, `targetPageId`, `mapPageId`, `tokenId`, `actionId`, `ruleId` and `label`.
 - `manual.correction.recorded` with `payloadVersion: 1`. Payload records a stable subject reference, field, before value, after value and optional reason. Before/after values are limited to scalar audit data: string, finite number, boolean or null.
-- `resource.changed` with `payloadVersion: 1`. Payload records a stable resource reference, finite numeric before/after/delta values, optional unit and optional reason.
+- `resource.changed` with `payloadVersion: 1`. Payload records a stable resource reference, finite numeric before/after/delta values, optional unit and optional reason. For the first stateful page-property consumer, the resource reference records the target and field as `kind: "page-property"` and `id: "<pageId>:<fieldKey>"`.
 - `transaction.reversal.recorded` with `payloadVersion: 1`. Payload records the original transaction id, reversal transaction id, optional reversed event ids and optional reason. Reversal is additive history; it does not delete the original transaction/event.
 
 Reserved future namespaces:

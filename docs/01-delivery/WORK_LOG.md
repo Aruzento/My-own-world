@@ -6,6 +6,67 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.6 First Stateful Transaction
+
+### Disposition
+
+- Closed `0.0.1.15.6` as the first state-changing event transaction leaf.
+- Started from current HEAD `d8706c3`.
+- Added `js/events/pagePropertyResourceTransaction.js`.
+- Set the next leaf to `0.0.1.15.7` Undo Model.
+
+### Chosen Stateful Slice
+
+- Chose one existing simple page-backed numeric resource mutation: a numeric field inside a Properties block.
+- The concrete regression fixture uses an item page field `gold`, not HP/damage/combat state.
+- This keeps the first stateful transaction generic enough to prove the architecture without inventing combat rules, HP automation, attack logic or a new product UI.
+
+### Ownership
+
+- The new event-layer orchestration reads the current numeric field value from page content, builds a `resource.changed` transaction, and applies the page change through the existing `PageCommandService` durable write boundary.
+- `PageCommandService` remains the owner of durable page writes, write preconditions, rollback and PageRepository/PageIndex notification.
+- `eventStore` remains the owner of `.my-own-world-events/transactions.v1.jsonl` append/read behavior.
+- `eventTypes` remains the owner of strict `resource.changed` payload validation.
+- The new module does not create a generic object mutation engine, second page persistence path, second event store, UI owner or combat/action pipeline.
+
+### Stateful Flow
+
+- Current flow: read numeric page property -> create transaction -> apply existing page-write owner mutation -> append one `resource.changed` event -> complete durable transaction.
+- The event records finite numeric `before`, `after` and `delta`.
+- The resource identity uses a stable `page-property` reference, with id shaped as `pageId:fieldKey`; this records both target identity and field/resource identity inside the existing strict v1 payload.
+- The page field update is persisted as normal page content through `persistPageContentCommand()`, not by a low-level feature write.
+
+### Failure Behavior
+
+- Invalid target or non-numeric field is rejected before page writes and before event append.
+- Page write failure leaves the event log untouched.
+- Event append failure triggers a compensating rollback through `PageCommandService` so the page does not remain changed without a durable event.
+- If rollback itself fails, the caller receives a distinct rollback-failed error with the original append failure preserved as cause.
+
+### Event Type Correction
+
+- Fixed a strict event-schema idempotency bug found by the new regression: optional event fields were normalized into empty strings, then rejected when the event store revalidated the same typed event.
+- Optional `resource.changed`, `manual.correction.recorded`, `transaction.reversal.recorded` reason/unit fields and optional subject labels now stay absent when omitted.
+- This keeps existing v1 event records backward-compatible while making normalized typed events safe to append/read repeatedly.
+
+### Verification
+
+- `node --test tests\pagePropertyResourceTransaction.test.mjs`
+- `node --test tests\pagePropertyResourceTransaction.test.mjs tests\eventTypes.test.mjs`
+- `node --test tests\pagePropertyResourceTransaction.test.mjs tests\eventTypes.test.mjs tests\eventStore.test.mjs tests\eventTransactionModel.test.mjs tests\diceRollEventLog.test.mjs tests\eventTransactionContract.test.mjs`
+
+### Explicit Non-Work
+
+- Did not add resource UI, event log UI, dice UI or combat UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting, turns or rounds.
+- Did not add a generic mutation/replay engine.
+- Did not change page schema, workspace schema or the event JSONL record format.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.7` Undo Model.
+
 ## 2026-08-27: 0.0.1.15.5 Roll Event Integration
 
 ### Disposition

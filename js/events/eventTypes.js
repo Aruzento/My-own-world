@@ -192,13 +192,19 @@ function normalizeManualCorrectionPayload(payload, eventType) {
   assertHasOwn(record, 'before', eventType);
   assertHasOwn(record, 'after', eventType);
 
-  return deepFreeze({
+  const normalized = {
     subject: normalizeSubjectReference(record.subject, 'payload.subject', eventType),
     field: requiredString(record.field, 'payload.field', eventType),
     before: normalizeAuditScalar(record.before, 'payload.before', eventType),
-    after: normalizeAuditScalar(record.after, 'payload.after', eventType),
-    reason: optionalString(record.reason, 'payload.reason', eventType)
-  });
+    after: normalizeAuditScalar(record.after, 'payload.after', eventType)
+  };
+
+  const reason = optionalString(record.reason, 'payload.reason', eventType);
+  if (reason) {
+    normalized.reason = reason;
+  }
+
+  return deepFreeze(normalized);
 }
 
 
@@ -211,14 +217,24 @@ function normalizeResourceChangePayload(payload, eventType) {
     eventType
   );
 
-  return deepFreeze({
+  const normalized = {
     resource: normalizeSubjectReference(record.resource, 'payload.resource', eventType),
     before: finiteNumber(record.before, 'payload.before', eventType),
     after: finiteNumber(record.after, 'payload.after', eventType),
-    delta: finiteNumber(record.delta, 'payload.delta', eventType),
-    unit: optionalString(record.unit, 'payload.unit', eventType),
-    reason: optionalString(record.reason, 'payload.reason', eventType)
-  });
+    delta: finiteNumber(record.delta, 'payload.delta', eventType)
+  };
+
+  const unit = optionalString(record.unit, 'payload.unit', eventType);
+  if (unit) {
+    normalized.unit = unit;
+  }
+
+  const reason = optionalString(record.reason, 'payload.reason', eventType);
+  if (reason) {
+    normalized.reason = reason;
+  }
+
+  return deepFreeze(normalized);
 }
 
 
@@ -231,7 +247,7 @@ function normalizeTransactionReversalPayload(payload, eventType) {
     eventType
   );
 
-  return deepFreeze({
+  const normalized = {
     originalTransactionId: requiredString(
       record.originalTransactionId,
       'payload.originalTransactionId',
@@ -246,9 +262,15 @@ function normalizeTransactionReversalPayload(payload, eventType) {
       record.reversedEventIds ?? [],
       'payload.reversedEventIds',
       eventType
-    ),
-    reason: optionalString(record.reason, 'payload.reason', eventType)
-  });
+    )
+  };
+
+  const reason = optionalString(record.reason, 'payload.reason', eventType);
+  if (reason) {
+    normalized.reason = reason;
+  }
+
+  return deepFreeze(normalized);
 }
 
 
@@ -501,11 +523,17 @@ function normalizeCriticalResult(critical, field, eventType) {
 function normalizeSubjectReference(value, field, eventType) {
   const record = plainRecord(value, field, eventType);
   assertAllowedKeys(record, ['kind', 'id', 'label'], 'subject reference', eventType);
-  return deepFreeze({
+  const normalized = {
     kind: requiredString(record.kind, `${field}.kind`, eventType),
-    id: requiredString(record.id, `${field}.id`, eventType),
-    label: optionalString(record.label, `${field}.label`, eventType)
-  });
+    id: requiredString(record.id, `${field}.id`, eventType)
+  };
+
+  const label = optionalString(record.label, `${field}.label`, eventType);
+  if (label) {
+    normalized.label = label;
+  }
+
+  return deepFreeze(normalized);
 }
 
 
