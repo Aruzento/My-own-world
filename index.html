@@ -212,7 +212,11 @@
       <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="handoff">Релиз</button>
       <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="support">Поддержка</button>
       <button class="mow-button mow-tools-action" data-variant="ghost" type="button" data-onboarding-open="checklist">Checklist</button>
+      <button id="eventHistoryBtn" class="mow-button mow-tools-action" data-variant="ghost" type="button" data-event-history-open="true" aria-haspopup="dialog" aria-expanded="false" aria-controls="eventHistoryPopup">Журнал событий</button>
       <button id="worldPackageManagerBtn" class="mow-button mow-tools-action" data-variant="ghost" type="button" data-world-package-open="true" aria-haspopup="dialog" aria-expanded="false" aria-controls="worldPackagePopup">Пакеты мира</button>
+    </div>
+
+    <div id="eventHistoryPopup" class="event-history-popup hidden ui-panel" data-runtime="true" data-overlay-kind="dialog" data-overlay-owner="event-history" data-overlay-lifecycle="popup-manager" data-overlay-state="closed" role="dialog" aria-modal="true" aria-labelledby="eventHistoryTitle">
     </div>
 
     <div id="worldPackagePopup" class="world-package-popup hidden ui-panel" data-runtime="true" data-overlay-kind="dialog" data-overlay-owner="world-package" data-overlay-lifecycle="popup-manager" data-overlay-state="closed" role="dialog" aria-modal="true" aria-labelledby="worldPackageTitle">

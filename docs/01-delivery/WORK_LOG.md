@@ -6,6 +6,58 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.9 Minimal Event Log UI
+
+### Disposition
+
+- Closed `0.0.1.15.9` as the first user-visible event history surface.
+- Started from current HEAD `7e857f7`.
+- Added `js/ui/eventHistoryPanel.js`.
+- Added `styles/event-history.css`.
+- Added `tests/browser/event-history.spec.mjs`.
+- Set the next leaf to `0.0.1.15.10` Recovery & Conflict Integration.
+
+### UI Contract
+
+- Added a compact `Журнал событий` action inside the existing AppShell `Инструменты` popup.
+- The journal opens as a popup-manager modal dialog using the existing overlay/focus lifecycle.
+- The UI reads through `queryEventLog()` and `getEventTransactionById()`.
+- The UI does not parse `.my-own-world-events/transactions.v1.jsonl` directly.
+- Empty history, unavailable workspace, invalid-record count and refresh/reload are presented as readable Russian states.
+
+### Displayed Event Data
+
+- Durable order is shown as `#N`.
+- Time is shown from event/transaction timestamps.
+- Event type labels are Russian and human-oriented: `Бросок`, `Изменение ресурса`, `Ручная коррекция`, `Отмена`.
+- Roll rows show formula, total and dice faces from the stored Dice Engine `RollResult`.
+- Resource rows show the stable resource label and `before -> after` values.
+- Reversal rows show which transaction/event is being reversed.
+
+### Undo Boundary
+
+- Undo is offered only when `classifyTransactionReversibility()` says the transaction is reversible.
+- The UI delegates the persistent operation to `undoTransaction()`.
+- Roll-only and reversal transactions do not receive an undo button.
+- The original event remains in history; undo creates a compensating transaction through the existing Phase 15.7 owner.
+
+### Verification
+
+- `node --check js\ui\eventHistoryPanel.js`
+- `npm run test:browser -- tests/browser/event-history.spec.mjs`
+
+### Explicit Non-Work
+
+- Did not add a combat panel, combat session, attacks, damage, HP automation, targeting, turns or rounds.
+- Did not add dashboard cards or a new Event Store UI architecture.
+- Did not add dice UI or make Dice Engine write events automatically.
+- Did not change the event JSONL format, page schema or workspace schema.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.10` Recovery & Conflict Integration.
+
 ## 2026-08-27: 0.0.1.15.8 Event Read & Query API
 
 ### Disposition

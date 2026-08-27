@@ -84,7 +84,7 @@ test(
     await expect(
       toolsPopup.locator('.mow-button')
     ).toHaveCount(
-      7
+      8
     );
 
     await expect(
@@ -95,6 +95,12 @@ test(
 
     await expect(
       toolsPopup.locator('[data-world-package-tool-action]')
+    ).toHaveCount(
+      1
+    );
+
+    await expect(
+      toolsPopup.locator('[data-event-history-open="true"]')
     ).toHaveCount(
       1
     );

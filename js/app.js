@@ -106,6 +106,10 @@ import {
 } from './ui/worldPackageManager.js';
 
 import {
+  setupEventHistoryPanel
+} from './ui/eventHistoryPanel.js';
+
+import {
   loadPageTemplates
 } from './templates/pageTemplateStorage.js';
 
@@ -201,6 +205,9 @@ setupAppTopbar();
 
 /* Инициализация пользовательского менеджера World Packages. */
 setupWorldPackageManager();
+
+/* Инициализация минимального журнала событий. */
+setupEventHistoryPanel();
 
 /* Запускает встроенную справку и стартовый onboarding. */
 setupOnboardingGuide();

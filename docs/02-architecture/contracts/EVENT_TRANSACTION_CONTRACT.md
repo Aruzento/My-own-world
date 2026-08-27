@@ -331,6 +331,42 @@ Consumer boundary:
 
 Phase `0.0.1.15.8` does not add Event Log UI, dice UI, combat/session mechanics, attacks, damage application, HP automation, turns/rounds, query language, SQL-like filtering, replay, backup/restore event-sidecar policy or persistent format migration.
 
+## 0.0.1.15.9 Minimal Event Log UI
+
+`js/ui/eventHistoryPanel.js` is the first user-visible read surface for the durable event log.
+
+UI ownership:
+
+- the action appears in the existing AppShell `Инструменты` popup as `Журнал событий`;
+- the history surface uses the existing popup-manager modal dialog lifecycle;
+- focus, Escape/outside lifecycle and close behavior remain owned by `popupManager`;
+- visual styling is in `styles/event-history.css` and uses shared MyOwnWorld button/panel tokens.
+
+Read boundary:
+
+- the UI reads event rows through `queryEventLog()`;
+- the UI reads a full transaction only through `getEventTransactionById()` when it needs reversibility evidence;
+- the UI must not parse `.my-own-world-events/transactions.v1.jsonl` directly;
+- the UI must not import event-store normalization internals for presentation.
+
+Displayed v1 event facts:
+
+- durable event order as `#N`;
+- event/transaction time;
+- Russian event labels for roll, manual correction, resource change and reversal metadata;
+- roll formula, total and dice faces from the stored Dice Engine `RollResult`;
+- resource `before -> after` values;
+- undo/reversal relationship text when `reversesTransactionId`, `reversedByTransactionId` or `reversesEventId` is present.
+
+Undo boundary:
+
+- undo is visible only for transactions classified as reversible by `classifyTransactionReversibility()`;
+- persistent undo calls `undoTransaction()` from `js/events/transactionReversal.js`;
+- roll-only and reversal transactions remain non-reversible in the UI;
+- the UI does not delete or edit old event records and does not create a second undo owner.
+
+Phase `0.0.1.15.9` does not add combat/session mechanics, dice UI, dashboard cards, raw storage parsing in UI, backup/restore event-sidecar policy or persistent format migration.
+
 ## Boundary Rules
 
 - Page writes still go through `PageCommandService` / approved page write owners.
