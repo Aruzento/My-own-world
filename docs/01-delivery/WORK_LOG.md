@@ -6,6 +6,61 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-27: 0.0.1.15.8 Event Read & Query API
+
+### Disposition
+
+- Closed `0.0.1.15.8` as the public event read/query foundation.
+- Started from current HEAD `423b058`.
+- Added `js/events/eventQuery.js`.
+- Added `tests/eventQuery.test.mjs`.
+- Set the next leaf to `0.0.1.15.9` Minimal Event Log UI.
+
+### Read Boundary
+
+- `eventStore` remains the durable JSONL append/read owner.
+- `eventQuery` is the consumer-facing read facade for future UI/combat surfaces.
+- Consumers can read event history without parsing raw `.my-own-world-events/transactions.v1.jsonl` records or depending on event-store normalization internals.
+- Query results expose typed event data, transaction summary metadata, durable `logOrder` and collected entity ids.
+- Query results deliberately do not expose raw storage `record` objects.
+
+### Supported Queries
+
+- Recent events by default, newest durable log item first.
+- Chronological order through `direction: "asc"`.
+- Bounded `limit` with a maximum of `200`.
+- Cursor pagination through `nextCursor`.
+- Filter by `transactionId`.
+- Filter by `eventType`.
+- Filter by `entityId` where the v1 payload exposes a stable target/reference id.
+- Filter by event `createdAt` range.
+- Filter by durable `logOrder` range.
+- Read one transaction by id with `getEventTransactionById()`.
+
+### Entity Id Extraction
+
+- `resource.changed` contributes `payload.resource.id`.
+- `manual.correction.recorded` contributes `payload.subject.id`.
+- `roll.performed` contributes known context ids such as `actorId`, `actorPageId`, `targetId`, `targetPageId`, `mapPageId`, `tokenId`, `actionId` and `ruleId`.
+- Reversal metadata transaction ids remain transaction metadata, not generic entity targets.
+
+### Verification
+
+- `node --test tests\eventQuery.test.mjs`
+- `node --test tests\eventQuery.test.mjs tests\transactionReversal.test.mjs tests\pagePropertyResourceTransaction.test.mjs tests\eventTypes.test.mjs tests\eventStore.test.mjs tests\eventTransactionModel.test.mjs tests\diceRollEventLog.test.mjs tests\eventTransactionContract.test.mjs`
+
+### Explicit Non-Work
+
+- Did not add Event Log UI.
+- Did not implement combat sessions, attacks, damage application, HP automation, effects, targeting, turns or rounds.
+- Did not add SQL/query language, replay, indexes or a second event store.
+- Did not change page schema, workspace schema or the event JSONL record format.
+- Did not mutate a real workspace.
+
+### Next
+
+- Work on one leaf only: `0.0.1.15.9` Minimal Event Log UI.
+
 ## 2026-08-27: 0.0.1.15.7 Transaction Undo / Reversal
 
 ### Disposition

@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # Event Transaction Contract
 
-Status: `0.0.1.15.7` first transaction undo/reversal foundation.
+Status: `0.0.1.15.8` public event read/query facade foundation.
 
 This document defines the current owner map and the intended Event + Transaction boundary for Phase `0.0.1.15.0`. It is deliberately a contract note, not an implementation of event storage, roll history, combat, dice UI or persistent combat sessions.
 
@@ -293,6 +293,43 @@ Failure behavior:
 - no backup is created merely because undo was blocked or rejected.
 
 Phase `0.0.1.15.7` does not add undo UI, redo, combat/session mechanics, HP automation, forced overwrite, generic object mutation, backup/restore inclusion policy for the event sidecar or persistent format migration.
+
+## 0.0.1.15.8 Event Read & Query API
+
+`js/events/eventQuery.js` is the public read/query facade for future Event Log UI and later combat/session consumers.
+
+Public read operations:
+
+- `queryEventLog(query, { storageAdapter, strict })` reads through `readTransactionRecords()` and returns bounded event-query items.
+- `getEventTransactionById(transactionId, { storageAdapter, strict })` returns one typed transaction or `null` when the id is unknown.
+
+The query facade owns presentation-neutral read shaping:
+
+- recent events by default, with newest durable log items first;
+- `direction: "asc"` for chronological durable log order;
+- `limit` with a fixed maximum of `200`;
+- cursor pagination through `nextCursor`;
+- filter by `transactionId`;
+- filter by `eventType`;
+- filter by `entityId` for supported payload references;
+- filter by event `createdAt` range;
+- filter by durable `logOrder` range.
+
+Event-query items contain:
+
+- `logOrder`, a one-based durable event position derived from transaction append order and event order within each transaction;
+- transaction summary metadata without the transaction's embedded `events` array;
+- the typed event payload;
+- collected `entityIds` from known v1 payload locations such as `payload.resource.id`, `payload.subject.id` and roll-event context ids.
+
+Consumer boundary:
+
+- consumers must not parse `.my-own-world-events/transactions.v1.jsonl` directly for normal reads;
+- consumers must not import event-store normalization helpers for UI queries;
+- query API does not write pages, append events, create backups or mutate repositories;
+- invalid/corrupt durable records remain owned by `eventStore`; the query result only exposes `invalidRecordCount` as read evidence.
+
+Phase `0.0.1.15.8` does not add Event Log UI, dice UI, combat/session mechanics, attacks, damage application, HP automation, turns/rounds, query language, SQL-like filtering, replay, backup/restore event-sidecar policy or persistent format migration.
 
 ## Boundary Rules
 
