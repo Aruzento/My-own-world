@@ -11,9 +11,13 @@ owner_zone: "architecture"
 
 Date: 2026-08-28.
 
-Audited HEAD: `93d3aec` (`Add approved popup visual regression baselines`).
+Initial audited HEAD: `93d3aec` (`Add approved popup visual regression baselines`).
+
+Final re-audit baseline: `2f5e529` (`Migrate backup delete confirmation`).
 
 This is an owner-directed off-plan maintenance audit. It does not change roadmap state, does not start `0.0.1.16.0`, and does not change production JS/CSS/HTML behavior.
+
+Final result: PopupManager adoption is closed for the current active product scope. No active **B** migration items remain. The only non-**A** entries are the explicit owner decisions recorded below.
 
 ## Scope
 
@@ -45,6 +49,7 @@ Not counted as popups:
 - Variables picker: do not migrate while the Variables block remains archived/inactive. Revisit only if the feature is explicitly restored.
 - Presentation image preview: accepted exception; keep the separate presentation-window lifecycle.
 - Lifecycle pilots: item set picker was selected as the simple pilot, and Knowledge Graph node menu was selected as the complex pilot. World Package package-file delete and Backup incomplete-cleanup delete confirmations were later migrated through the shared `confirmPopup` owner.
+- Final adoption closure: at final re-audit baseline `2f5e529`, active application popups and destructive app confirmations use `PopupManager` / `popupPosition` through the shared owner. No production `window.confirm` / `window.alert` remains in `js`.
 
 ## Adoption Matrix
 
@@ -54,6 +59,7 @@ Not counted as popups:
 | Settings center (`#appSettingsPopup`) | `js/ui/settings/settingsCenter.js` | Static in `index.html` | Yes | `togglePopupNearAnchor` / `popupPosition` | Shared | Shared | Local initial focus to settings search after open | `dialog`, non-modal | Static CSS uses token layer | No | Settings owns content/navigation; PopupManager owns popup state and close lifecycle. | A |
 | Command palette (`#commandPalette`) | `js/ui/commandPalette.js` | Static in `index.html` | Yes | Static/fixed CSS; opened through controller `open()` | Shared | Shared | Modal focus trap; local input focus | `dialog`, modal | Global `Ctrl+K` listener is product trigger, not lifecycle bypass | No | Centered modal intentionally uses fixed layout while PopupManager owns modal lifecycle. | A |
 | Event history (`#eventHistoryPopup`) | `js/ui/eventHistoryPanel.js` | Static in `index.html` | Yes | Static/fixed CSS; opened through controller `open()` | Shared | Shared | Modal focus trap; header actions rendered locally | `dialog`, modal | None material | No | Event query/rendering is feature-owned; dialog lifecycle is shared. | A |
+| Edit conflict dialog | `js/editor/editConflictUi.js` | Dynamic body node | Yes | Static/fixed CSS; opened through controller `open()` | Shared | Shared | Modal focus trap and focus return to editor/trigger anchors | `dialog`, modal | None material | No | Conflict presentation is editor-owned, but modal lifecycle, focus trap and Escape close are PopupManager-owned. | A |
 | World Package manager (`#worldPackagePopup`) | `js/ui/worldPackageManager.js` | Static in `index.html` | Yes | Static/fixed CSS; opened through controller `open()` | Shared | Shared | Modal focus trap and focus return to Tools trigger; package delete confirm uses the shared modal confirm path | `dialog`, modal | None material | No | Main manager dialog is canonical; package-file delete confirmation now uses the existing PopupManager-backed `confirmPopup` owner without changing the delete operation. | A |
 | Onboarding/help popup (`#onboardingPopup`) | `js/ui/onboardingGuide.js` | Static in `index.html` | Yes | Static/fixed CSS; opened through controller `open()` | Shared | Shared | Non-modal dialog; local route focus | `dialog`, non-modal | Local document click routes help links | No | Help routing is product content; close/open lifecycle is shared. | A |
 | Profile popup | `js/ui/profile.js` | Dynamic body node | Yes | `togglePopupNearAnchor` / `popupPosition` | Shared | Shared | Non-modal; returns through anchor behavior where possible | `popover` | None material | No | Simple dynamic popover already uses shared owner. | A |
@@ -97,7 +103,14 @@ The main shared owner remains:
 - geometry: `js/ui/popupPosition.js`;
 - feature-specific product behavior: the owning feature module.
 
-Remaining adoption gaps are narrow:
+Final re-audit evidence:
+
+- `rg -n "window\\.confirm|window\\.alert" js` returns no production matches.
+- Active app popup modules either call `registerPopup()` directly or route destructive confirmation through `openConfirmPopup()`.
+- Document-level outside/Escape listeners outside `popupManager.js` were reviewed as feature triggers, editor/table/drag keyboard behavior, or owner-approved non-main-app exceptions. They are not active popup lifecycle owners.
+- `PopupService` / `OverlayService` / duplicate popup managers are absent.
+
+Remaining non-canonical entries are explicitly accepted or deferred:
 
 1. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
 2. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
@@ -113,5 +126,7 @@ Completed complex pilot: Knowledge Graph node menu now delegates point positioni
 Completed toolbar pilot: toolbar color popup now delegates anchor positioning, viewport clamp, Escape/outside close and overlay z-order to `PopupManager` / `popupPosition`; toolbar code still owns only selected-color behavior and recent-color rendering.
 
 Completed native-confirm pilots: World Package package-file delete and Backup incomplete-cleanup delete now use the existing `confirmPopup` owner as modal PopupManager-backed confirmations. Cancel, Escape and close do not delete; explicit confirm still delegates deletion to the owning feature storage operation.
+
+Current active product scope has no remaining **B** popup adoption items.
 
 Do not use the archived Variables picker as a pilot unless the owner explicitly revives the Variables block. Any future confirmation workflow should reuse `confirmPopup` rather than adding a second confirmation owner.

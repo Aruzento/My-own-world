@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 719.
+Всего файлов в аудите: 722.
 
 ## Два Независимых Прохода
 
@@ -26,12 +26,12 @@ owner_zone: "delivery"
 |---|---:|
 | agent workflow | 42 |
 | assets | 4 |
-| browser tests | 44 |
+| browser tests | 45 |
 | campaign map | 49 |
 | character | 5 |
 | ci | 1 |
 | desktop | 11 |
-| docs/architecture | 40 |
+| docs/architecture | 41 |
 | docs/archive | 10 |
 | docs/delivery | 19 |
 | docs/product | 6 |
@@ -57,7 +57,7 @@ owner_zone: "delivery"
 | tools | 23 |
 | tree | 11 |
 | ui | 34 |
-| unit tests | 111 |
+| unit tests | 112 |
 | world packages | 3 |
 
 ## Кандидаты На Уборку
@@ -74,9 +74,9 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 940386 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `debug.log` | 539703 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 293134 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 942925 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 609201 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 293183 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/popup-visual-baselines.spec.mjs-snapshots/campaign-map-grid-desktop-chromium-win32.png` | 259078 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/popup-visual-baselines.spec.mjs-snapshots/properties-desktop-chromium-win32.png` | 225270 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
@@ -269,6 +269,7 @@ owner_zone: "delivery"
 | `docs/02-architecture/contracts/LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/PAGE_REPOSITORY_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/POPUP_LIFECYCLE_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/02-architecture/contracts/POPUP_MANAGER_ADOPTION_AUDIT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/RULE_TREE_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/contracts/SAFE_HTML_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
@@ -723,6 +724,7 @@ owner_zone: "delivery"
 | `tests/backupService.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/app-shell.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/asset-health.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/browser/backup-settings.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/campaign-map-data.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/campaign-map-initiative.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/campaign-map-performance.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
@@ -828,6 +830,7 @@ owner_zone: "delivery"
 | `tests/pageWriteConflictBlocking.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/pageWritePreconditions.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/partialRestore.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/popupLifecycleOwnership.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/popupPosition.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/projectFileAuditDebugLogPolicy.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/propertiesCalculationEngine.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |

@@ -102,6 +102,7 @@ For the first editor feature overlay adoption:
 - `blockPopup`, `linkPopup`, `property-settings-popup` and `image-crop-popup` register as dialog overlays through `popupManager`;
 - `toolbarColorPopup` registers as a non-modal popover overlay; `PopupManager` owns its Escape/outside close and z-order, while `popupPosition` owns its anchor-relative viewport-safe placement;
 - `confirmPopup` is the shared confirmation owner: anchored confirmations may stay non-modal, while destructive confirmations inside modal workflows such as World Package package-file delete and Backup incomplete-cleanup delete may use the same PopupManager-backed modal dialog path;
+- `editConflictDialog` registers as a modal dialog overlay; editor conflict presentation remains editor-owned, while PopupManager owns Escape, focus trap and focus return;
 - direct close buttons must route through the popup controller or an equivalent manager close path so `data-overlay-state` and `data-popup-open` remain synchronized;
 - feature-specific CSS may remain temporarily, but it must not create a parallel overlay lifecycle.
 
@@ -153,6 +154,7 @@ Popup относится к runtime UI.
 - wiki preview popup;
 - image crop popup;
 - confirm popup, including the modal app-confirmation path used by World Package file delete and Backup incomplete-cleanup delete;
+- edit conflict dialog;
 - campaign map popup.
 
 Current `0.0.1.8.9` foundation status:
@@ -167,9 +169,11 @@ Current `0.0.1.8.9` foundation status:
 - campaign map token hover/actions popups, item-set picker and onboarding help popup are covered in `tests/browser/popup-lifecycle.spec.mjs`;
 - Knowledge Graph node/connect overlays are covered in `tests/browser/knowledge-graph.spec.mjs`;
 - existing feature popup CSS remains compatibility styling until its owning migration phase updates it.
+- final PopupManager adoption for active product scope is recorded in `docs/02-architecture/contracts/POPUP_MANAGER_ADOPTION_AUDIT.md`; the only non-canonical entries are the owner-approved separate presentation-window image preview and archived/inactive Variables picker.
 
 Остается как будущий hardening:
 
 - постепенно переносить оставшиеся static popup containers из `index.html`, если это безопасно;
-- расширить tests на каждый конкретный popup-тип;
-- привести item picker и старые specialized popup к controller API вместо прямого позиционирования.
+- расширить tests на каждый конкретный popup-тип по мере изменения владельцев;
+- возвращаться к Variables picker только если владелец явно возобновит archived/inactive Variables block;
+- держать CSS fallback z-index cleanup как token debt, не как отдельный popup lifecycle owner.
