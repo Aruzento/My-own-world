@@ -37,6 +37,10 @@ import {
   applySettingsTooltip
 } from './settingsTooltip.js';
 
+import {
+  closeConfirmPopup
+} from '../confirmPopup.js';
+
 
 const SETTINGS_CENTER_VERSION =
   'settings-center';
@@ -66,6 +70,11 @@ export function setupSettingsCenter({
         'aria-expanded',
         'false'
       );
+
+      closeConfirmPopup({
+        modal:
+          true
+      });
 
       closePopup(
         settingsPopup

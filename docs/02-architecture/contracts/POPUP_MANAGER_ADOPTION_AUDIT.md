@@ -44,7 +44,7 @@ Not counted as popups:
 
 - Variables picker: do not migrate while the Variables block remains archived/inactive. Revisit only if the feature is explicitly restored.
 - Presentation image preview: accepted exception; keep the separate presentation-window lifecycle.
-- Lifecycle pilots: item set picker was selected as the simple pilot, and Knowledge Graph node menu was selected as the complex pilot. World Package delete confirmation was later migrated as the first native-confirm replacement; Backup confirmation remains out of that task's scope.
+- Lifecycle pilots: item set picker was selected as the simple pilot, and Knowledge Graph node menu was selected as the complex pilot. World Package package-file delete and Backup incomplete-cleanup delete confirmations were later migrated through the shared `confirmPopup` owner.
 
 ## Adoption Matrix
 
@@ -60,7 +60,7 @@ Not counted as popups:
 | Component catalogue popover | `js/ui/componentCatalogue.js` | Dynamic body node, dev/test gated | Yes | `openPopupNearAnchor` / `popupPosition` | Shared | Shared | Local autofocus to catalogue sample | `popover` | Dev-only trigger gate | No | Dev/test surface is gated and uses shared lifecycle. | A |
 | Create menu / template picker (`#createMenu`) | `js/ui/createModal.js` | Dynamic body node | Yes | `openPopupNearAnchor` or `openPopupAtPoint` / `popupPosition` | Shared | Shared | Menu keyboard via PopupManager for enabled command items | `dropdown-menu` | Local document click only detects create triggers | No | Feature owns menu contents; PopupManager owns dropdown behavior. | A |
 | Tree context menu (`#treeContextMenu`) | `js/tree/treeContextMenu.js` | Dynamic body node | Yes | `openPopupAtPoint` / `popupPosition` | Shared | Shared | Context-menu keyboard via PopupManager | `context-menu` | CSS still has old hard-coded fallback `z-index: 10000` | No functional migration; token cleanup later | Registered lifecycle is canonical; CSS fallback is visual/token debt, not an ownership bypass. | A |
-| Confirm popup | `js/ui/confirmPopup.js` | Dynamic body node or nested in current modal owner | Yes | `openNearAnchor` / `popupPosition` | Shared | Shared | Anchored popover for ordinary confirms; modal focus trap for destructive app confirmations inside modal workflows | `popover` or `dialog`, modal when requested | None material | No | Existing shared confirm primitive is PopupManager-backed; World Package delete now uses its modal variant. | A |
+| Confirm popup | `js/ui/confirmPopup.js` | Dynamic body node or nested in current modal owner | Yes | `openNearAnchor` / `popupPosition` | Shared | Shared | Anchored popover for ordinary confirms; modal focus trap for destructive app confirmations inside modal workflows | `popover` or `dialog`, modal when requested | None material | No | Existing shared confirm primitive is PopupManager-backed; World Package package-file delete and Backup incomplete-cleanup delete use its modal variant. | A |
 | Block/Add popup (`#blockPopup`) | `js/editor/blocks/blockPopup.js` | Dynamic body node | Yes | `openPopupNearAnchor` / `popupPosition` | Shared | Shared | Modal focus trap; feature focuses specific form input where needed | `dialog`, modal | None material | No | Add/delete/table form modes share one registered dialog container. | A |
 | External link popup (`#linkPopup`) | `js/editor/links.js` | Static in `index.html` | Yes | `openPopupAtPoint` / `popupPosition` | Shared plus local input-level Escape | Shared | Modal focus trap; URL input autofocus | `dialog`, modal | Local keydown handles Enter and a redundant Escape close | No urgent migration | Local Enter is feature action; local Escape duplication is harmless cleanup material, not a contract bypass. | A |
 | Wiki create menu | `js/editor/wikiLinkCreateMenu.js` | Dynamic body node | Yes | `openPopupAtPoint` / `popupPosition` | Shared | Shared | Dropdown-menu keyboard through manager | `dropdown-menu` | None material | No | Canonical dropdown-menu lifecycle. | A |
@@ -76,7 +76,7 @@ Not counted as popups:
 | Knowledge Graph node menu | `js/wiki/knowledgeGraphCanvasOverlays.js` | Dynamic inside graph document | Yes | `openPopupAtPoint` / `popupPosition` | Shared | Shared | Context-menu keyboard via manager | `context-menu` | None material | No | The complex pilot moved viewport/offset correction into shared `popupPosition`; graph code now owns only node menu content/action context. | A |
 | Variable picker popup | `js/ui/variables.js` | Dynamic body node | No | Local `positionVariablePopup` | No shared Escape | Local `mousedown` outside listener | Search input focused locally | Local popover | Local clamp, local outside close, no overlay markers | Owner decision before migration | The Variables block is an archived/inactive experiment; do not migrate until the feature is explicitly revived. | D |
 | Presentation image preview | `js/editor/campaignMapPresentation.js`, `js/presentation/presentationEntry.js` | Dynamic in separate presentation window | No | Presentation window local DOM/CSS | No shared Escape | Close button only | Presentation window focus | Separate preview overlay | Separate-window DOM, not AppShell PopupManager | No main-app migration | This runs in `presentation.html`, outside the main AppShell popup lifecycle. A future presentation overlay contract may be appropriate, but not PopupManager adoption by default. | C |
-| Native backup delete confirm | `js/ui/settings/backupSettings.js` | Browser-native dialog | No | Browser | Browser-native | Browser-native | Browser-native blocking focus | Native confirm | `window.confirm` | Yes, simple | Backup confirmation was explicitly outside the World Package delete task and remains a narrow future migration target. | B |
+| Backup incomplete-cleanup delete confirm | `js/ui/settings/backupSettings.js` | Nested dynamic confirm inside Settings backup panel | Yes, through `confirmPopup` | `openNearAnchor` / `popupPosition` | Shared | Shared | Modal focus trap and focus return to delete trigger; Settings close also closes the nested confirm | `dialog`, modal | None material | No | Backup Settings still owns incomplete-backup cleanup and error reporting; confirmation lifecycle is delegated to the existing PopupManager-backed `confirmPopup` owner. | A |
 
 ## Current Browser Coverage
 
@@ -85,7 +85,7 @@ Existing browser coverage already exercises the shared contract rather than only
 - `tests/browser/popup-lifecycle.spec.mjs` covers viewport fit, Escape, outside click, z-index, modal focus trap/return, menu keyboard lifecycle, editor feature popups, Campaign Map popups, token popup, item picker and onboarding.
 - `tests/browser/popup-drag.spec.mjs` covers the shared draggable popup behavior.
 - `tests/browser/popup-visual-baselines.spec.mjs` now gives approved screenshot baselines for Add block, Properties and Campaign Map grid popups at `1440x900` and `960x640`.
-- `tests/browser/knowledge-graph.spec.mjs`, `tests/browser/world-package.spec.mjs`, `tests/browser/event-history.spec.mjs`, `tests/browser/card-type-accessibility.spec.mjs`, `tests/browser/settings-center.spec.mjs` and `tests/browser/tree-accessibility.spec.mjs` cover feature-specific overlay behavior.
+- `tests/browser/knowledge-graph.spec.mjs`, `tests/browser/world-package.spec.mjs`, `tests/browser/backup-settings.spec.mjs`, `tests/browser/event-history.spec.mjs`, `tests/browser/card-type-accessibility.spec.mjs`, `tests/browser/settings-center.spec.mjs` and `tests/browser/tree-accessibility.spec.mjs` cover feature-specific overlay behavior.
 
 ## Findings
 
@@ -99,9 +99,8 @@ The main shared owner remains:
 
 Remaining adoption gaps are narrow:
 
-1. Backup delete still uses `window.confirm`. This bypasses app styling, PopupManager focus return and visual consistency, but was explicitly outside the World Package delete-confirm migration.
-2. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
-3. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
+1. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
+2. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
 
 CSS note: several historical popup CSS files still contain hard-coded fallback z-index values (`popup-create.css`, `popup-link.css`, `tree.css`). Runtime z-order for registered popups is still owned by PopupManager inline style. Treat the hard-coded values as token-cleanup debt, not as proof of a second lifecycle owner.
 
@@ -113,6 +112,6 @@ Completed complex pilot: Knowledge Graph node menu now delegates point positioni
 
 Completed toolbar pilot: toolbar color popup now delegates anchor positioning, viewport clamp, Escape/outside close and overlay z-order to `PopupManager` / `popupPosition`; toolbar code still owns only selected-color behavior and recent-color rendering.
 
-Completed native-confirm pilot: World Package package-file delete now uses the existing `confirmPopup` owner as a modal PopupManager-backed confirmation. Cancel, Escape and close do not delete; explicit confirm still delegates deletion to World Package storage.
+Completed native-confirm pilots: World Package package-file delete and Backup incomplete-cleanup delete now use the existing `confirmPopup` owner as modal PopupManager-backed confirmations. Cancel, Escape and close do not delete; explicit confirm still delegates deletion to the owning feature storage operation.
 
-Do not use the archived Variables picker as a pilot unless the owner explicitly revives the Variables block. Do not migrate the remaining Backup native confirmation without a separate owner-directed task.
+Do not use the archived Variables picker as a pilot unless the owner explicitly revives the Variables block. Any future confirmation workflow should reuse `confirmPopup` rather than adding a second confirmation owner.

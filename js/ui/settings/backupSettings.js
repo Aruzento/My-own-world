@@ -51,6 +51,11 @@ import {
 } from '../operationProgress.js';
 
 import {
+  closeConfirmPopup,
+  openConfirmPopup
+} from '../confirmPopup.js';
+
+import {
   createSettingsSectionHeader,
   setButtonContent
 } from '../settingsPanelUI.js';
@@ -64,6 +69,11 @@ export async function renderBackupSettings(
   popup
     .querySelector('.app-backup-panel')
     ?.remove();
+
+  closeConfirmPopup({
+    modal:
+      true
+  });
 
   const panel =
     document.createElement('section');
@@ -130,6 +140,8 @@ export async function renderBackupSettings(
     createIncompleteBackupControls({
       container:
         incomplete,
+      confirmContainer:
+        panel,
       onCleanup:
         async () => {
 
@@ -392,6 +404,7 @@ function createBackupRetentionControls({
 
 function createIncompleteBackupControls({
   container,
+  confirmContainer,
   onCleanup
 }) {
 
@@ -486,7 +499,7 @@ function createIncompleteBackupControls({
 
   cleanupButton.addEventListener(
     'click',
-    async () => {
+    () => {
 
       const ids =
         getRenderedIncompleteBackupIds(
@@ -495,58 +508,71 @@ function createIncompleteBackupControls({
 
       if (ids.length === 0) return;
 
-      const confirmed =
-        window.confirm(
-          `Удалить незавершённые резервные копии (${ids.length})? Валидные копии не будут затронуты.`
-        );
+      openConfirmPopup({
+        anchor:
+          cleanupButton,
+        title:
+          'Удалить незавершённые резервные копии',
+        message:
+          `Удалить незавершённые резервные копии (${ids.length})? Валидные копии не будут затронуты.`,
+        confirmText:
+          'Удалить',
+        cancelText:
+          'Отмена',
+        modal:
+          true,
+        container:
+          confirmContainer,
+        onConfirm:
+          async () => {
 
-      if (!confirmed) return;
+            cleanupButton.disabled =
+              true;
 
-      cleanupButton.disabled =
-        true;
+            setStatus(
+              'Удаляю незавершённые резервные копии...'
+            );
 
-      setStatus(
-        'Удаляю незавершённые резервные копии...'
-      );
+            try {
 
-      try {
+              const result =
+                await cleanupIncompleteWorkspaceBackups({
+                  backupIds:
+                    ids,
+                  onProgress:
+                    setProgressStatus
+                });
 
-        const result =
-          await cleanupIncompleteWorkspaceBackups({
-            backupIds:
-              ids,
-            onProgress:
-              setProgressStatus
-          });
+              finishProgressStatus(
+                `Незавершённые резервные копии удалены: ${result.removed}`
+              );
 
-        finishProgressStatus(
-          `Незавершённые резервные копии удалены: ${result.removed}`
-        );
+              await onCleanup?.();
 
-        await onCleanup?.();
+            } catch (error) {
 
-      } catch (error) {
+              console.error(
+                'Не удалось удалить незавершённые резервные копии.',
+                error
+              );
 
-        console.error(
-          'Не удалось удалить незавершённые резервные копии.',
-          error
-        );
+              finishProgressStatus(
+                'Не удалось удалить незавершённые резервные копии',
+                {
+                  status:
+                    'failed',
+                  delayMs:
+                    3200
+                }
+              );
 
-        finishProgressStatus(
-          'Не удалось удалить незавершённые резервные копии',
-          {
-            status:
-              'failed',
-            delayMs:
-              3200
+            } finally {
+
+              cleanupButton.disabled =
+                false;
+            }
           }
-        );
-
-      } finally {
-
-        cleanupButton.disabled =
-          false;
-      }
+      });
     }
   );
 
