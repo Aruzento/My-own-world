@@ -1530,11 +1530,53 @@ test(
               picker.dataset.popupOpen
           };
 
+          itemButton.dispatchEvent(
+            new MouseEvent(
+              'click',
+              {
+                bubbles:
+                  true,
+                cancelable:
+                  true
+              }
+            )
+          );
+
+          await waitFrame();
+
+          document.body.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles:
+                  true,
+                cancelable:
+                  true,
+                clientX:
+                  8,
+                clientY:
+                  8
+              }
+            )
+          );
+
+          await waitFrame();
+
+          const pickerClosedByOutside = {
+            hidden:
+              picker.classList.contains('hidden'),
+            state:
+              picker.dataset.overlayState,
+            popupOpen:
+              picker.dataset.popupOpen
+          };
+
           return {
             tokenOpen,
             tokenClosed,
             pickerOpen,
-            pickerClosed
+            pickerClosed,
+            pickerClosedByOutside
           };
         }
       );
@@ -1574,6 +1616,11 @@ test(
         label: 'Выбор элемента набора'
       },
       pickerClosed: {
+        hidden: true,
+        state: 'closed',
+        popupOpen: 'false'
+      },
+      pickerClosedByOutside: {
         hidden: true,
         state: 'closed',
         popupOpen: 'false'

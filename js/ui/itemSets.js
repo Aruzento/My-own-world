@@ -280,31 +280,6 @@ function setupItemSetPicker() {
       }
     );
 
-
-  document.addEventListener(
-    'click',
-    event => {
-
-      if (
-        picker.classList.contains(
-          'hidden'
-        )
-      ) return;
-
-      if (
-        picker.contains(event.target)
-      ) return;
-
-      if (
-        event.target.closest(
-          '.item-set-add-btn, .spell-set-add-btn, .skill-set-add-btn'
-          + ', .universal-list-add-btn'
-        )
-      ) return;
-
-      closeItemSetPicker();
-    }
-  );
 }
 
 
