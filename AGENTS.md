@@ -91,6 +91,8 @@ npm run verify:full
 
 Dry-run runner только валидирует задачу, проверяет clean worktree, рассчитывает branch/worktree, scope, verification и approval gates. Он не создает branch/worktree, не коммитит, не пушит, не запускает Codex и не выполняет саму задачу.
 
+Для autonomous execution readiness `path:` include scope обязателен: prose-only scope требует human review. `requiresApproval` в dry-run считается armed safeguard и блокирует только когда защищенное действие реально triggered.
+
 ## Summary После Задачи
 
 В конце задачи написать:

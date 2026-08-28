@@ -99,6 +99,11 @@ The runner treats `path:` entries as future changed-file guards:
 - files matching `exclude` path rules are explicitly blocked;
 - if no `path:` include exists, future execution must require human scope review instead of pretending file scope is enforceable.
 
+Dry-run reports this as `executionScopeStatus`:
+
+- `machine-enforceable`: at least one `scope.include` entry is a `path:` rule, so future execution can compare changed files against the declared path boundary;
+- `human-review-required`: the task may still be a valid human task, but autonomous execution readiness is blocked because prose-only scope cannot be enforced mechanically.
+
 This convention reuses the existing `scope.include` / `scope.exclude` arrays and does not add a second task schema.
 
 ## Approval Rules
@@ -126,6 +131,17 @@ Allowed `when` values:
 - `ownerDecision`
 
 The validator rejects malformed approval rules instead of treating them as advisory prose.
+
+Approval rules are conditional safeguards, not automatic execution blockers. The dry-run runner reports declared rules as `armed`. A future executor must block only when a protected operation is actually requested or detected.
+
+Approval gate states:
+
+- `armed`: declared and watching for a protected operation;
+- `triggered`: protected operation was detected or requested;
+- `approved`: triggered operation has explicit owner approval;
+- `blocked`: triggered operation has not been approved.
+
+Dry-run never approves an operation and never bypasses approval.
 
 ## Verification Contract
 
@@ -192,6 +208,12 @@ Use:
 npm run agent:task -- --dry-run docs/03-testing/agent-tasks/examples/dice-roll-event-integration.agent-task.json
 ```
 
+The completed Dice Roll example intentionally has prose-only scope, so it validates but reports `executionScopeStatus: human-review-required` and is blocked for autonomous execution readiness. Use the path-scoped runner readiness fixture to see a clean `ready` dry-run:
+
+```powershell
+npm run agent:task -- --dry-run docs/03-testing/agent-tasks/examples/runner-readiness.agent-task.json
+```
+
 The v1 runner is a planning foundation only. It:
 
 - validates the task through the existing contract validator;
@@ -199,8 +221,9 @@ The v1 runner is a planning foundation only. It:
 - blocks future execution planning when the source worktree is dirty;
 - calculates a dedicated branch name and sibling worktree path;
 - reports scope include/exclude policy and any `path:` rules;
+- reports whether changed-file scope is `machine-enforceable` or `human-review-required`;
 - reports verification commands and standard quick/normal/full gates;
-- reports `requiresApproval` entries as blocked approval gates;
+- reports `requiresApproval` entries as armed approval gates until a protected operation is triggered;
 - emits both a human-readable report and a machine-readable JSON report.
 
 The dry-run runner must not modify product files, create commits, create branches, create worktrees, merge, push, reset, invoke Codex or bypass owner approval.

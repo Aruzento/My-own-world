@@ -26,6 +26,12 @@ export const AGENT_TASK_RUNNER_REPORT_VERSION =
 const PATH_SCOPE_PREFIX =
   'path:';
 
+const EXECUTION_SCOPE_MACHINE_ENFORCEABLE =
+  'machine-enforceable';
+
+const EXECUTION_SCOPE_HUMAN_REVIEW_REQUIRED =
+  'human-review-required';
+
 const DRY_RUN_GUARANTEES =
   Object.freeze({
     modifiesProductFiles:
@@ -267,9 +273,22 @@ export async function createAgentTaskDryRunReport(
 
     blockingReasons.push({
       code:
-        'APPROVAL_REQUIRED',
+        'APPROVAL_GATE_TRIGGERED',
       message:
-        'Task declares approval gates that must be resolved before execution.'
+        'A protected operation is triggered and must be approved before execution.'
+    });
+  }
+
+  if (
+    scopePolicy.executionScopeStatus ===
+    EXECUTION_SCOPE_HUMAN_REVIEW_REQUIRED
+  ) {
+
+    blockingReasons.push({
+      code:
+        'SCOPE_HUMAN_REVIEW_REQUIRED',
+      message:
+        'Task scope has no path: include rules, so future changed-file enforcement requires human review.'
     });
   }
 
@@ -334,6 +353,10 @@ export function createScopePolicy(
     exclude,
     includePathRules,
     excludePathRules,
+    executionScopeStatus:
+      includePathRules.length > 0
+        ? EXECUTION_SCOPE_MACHINE_ENFORCEABLE
+        : EXECUTION_SCOPE_HUMAN_REVIEW_REQUIRED,
     automaticChangedFileDetection:
       includePathRules.length > 0,
     changedFilePolicy:
@@ -448,28 +471,88 @@ export function createVerificationPlan(
 
 export function createApprovalGates(
   rules =
-    []
+    [],
+  {
+    triggeredApprovalKeys =
+      [],
+    approvedApprovalKeys =
+      []
+  } = {}
 ) {
+
+  const triggeredKeys =
+    new Set(
+      triggeredApprovalKeys.map(String)
+    );
+
+  const approvedKeys =
+    new Set(
+      approvedApprovalKeys.map(String)
+    );
 
   const gates =
     rules.map(
       (
         rule,
         index
-      ) => ({
-        index,
-        when:
-          rule.when,
-        reason:
-          rule.reason,
-        status:
-          'blocked-until-owner-approval'
-      })
+      ) => {
+
+        const triggered =
+          approvalGateKeyMatches(
+            triggeredKeys,
+            rule,
+            index
+          );
+
+        const approved =
+          triggered &&
+          approvalGateKeyMatches(
+            approvedKeys,
+            rule,
+            index
+          );
+
+        return {
+          index,
+          when:
+            rule.when,
+          reason:
+            rule.reason,
+          triggered,
+          approved,
+          status:
+            triggered
+              ? approved
+                ? 'approved'
+                : 'blocked'
+              : 'armed'
+        };
+      }
+    );
+
+  const blocked =
+    gates.some(gate =>
+      gate.status === 'blocked'
+    );
+
+  const triggered =
+    gates.some(gate =>
+      gate.triggered
     );
 
   return {
-    blocked:
+    declared:
       gates.length > 0,
+    triggered,
+    blocked,
+    overallStatus:
+      blocked
+        ? 'blocked'
+        : triggered
+          ? 'approved'
+          : gates.length
+            ? 'armed'
+            : 'none',
     gates
   };
 }
@@ -678,6 +761,10 @@ export function formatDryRunReport(
   }
 
   lines.push(
+    `Execution scope status: ${report.scopePolicy?.executionScopeStatus || '<unknown>'}`
+  );
+
+  lines.push(
     `Automatic changed-file detection: ${report.scopePolicy?.automaticChangedFileDetection ? 'available' : 'requires path: rules'}`
   );
 
@@ -701,7 +788,7 @@ export function formatDryRunReport(
     for (const gate of report.approvalGates.gates) {
 
       lines.push(
-        `- ${gate.when}: ${gate.reason}`
+        `- ${gate.when}: ${gate.status} - ${gate.reason}`
       );
     }
   }
@@ -966,6 +1053,32 @@ function matchesPathRule(
       )
         ? rule.pattern
         : `${rule.pattern}/`
+    );
+}
+
+
+function approvalGateKeyMatches(
+  keys,
+  rule,
+  index
+) {
+
+  const numericIndex =
+    String(
+      index
+    );
+
+  const typedIndex =
+    `${rule.when}:${index}`;
+
+  return keys.has(
+    rule.when
+  ) ||
+    keys.has(
+      numericIndex
+    ) ||
+    keys.has(
+      typedIndex
     );
 }
 

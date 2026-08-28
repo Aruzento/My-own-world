@@ -6,6 +6,35 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-29: Owner-Directed Off-Plan Maintenance - Autonomous Runner Readiness Semantics
+
+### Disposition
+
+- Readiness: `Hardened Dry-Run Semantics`.
+- Kept the current roadmap phase/status unchanged and kept `0.0.1.16.0` as `NEXT`, not active.
+- Did not connect Codex execution, create worktrees, add a repair loop or make the runner execute tasks.
+
+### What Changed
+
+- Updated `tools/agent_task_runner.mjs` so declared `requiresApproval` rules are reported as `armed` safeguards instead of blocking dry-run readiness by their mere presence.
+- Added explicit approval gate states for future execution planning: `armed`, `blocked` and `approved`; triggered unapproved gates still block.
+- Added `executionScopeStatus` to the dry-run scope policy: `machine-enforceable` when `scope.include` has `path:` rules, and `human-review-required` when scope is prose-only.
+- Added `docs/03-testing/agent-tasks/examples/runner-readiness.agent-task.json` as a harmless path-scoped fixture that can become `ready` on a clean worktree.
+- Kept the completed Dice Roll example prose-scoped on purpose; it remains valid task evidence but is blocked for autonomous execution readiness until a human reviews scope or the task receives path rules.
+- Updated [AGENT_TASK_CONTRACT.md](../02-architecture/contracts/AGENT_TASK_CONTRACT.md) and `AGENTS.md` so future agents understand the difference between declared approval gates, triggered approval gates and machine-enforceable file scope.
+
+### Explicit Non-Work
+
+- No Codex CLI integration, autonomous runner execution, branch/worktree creation, commit/push by the runner, product runtime change, roadmap/status change, dependency change or `0.0.1.16.0` work was added.
+
+### Verification
+
+- `node --test tests\agentTaskRunner.test.mjs tests\agentTaskContract.test.mjs` passed with 19 focused tests.
+- `npm run tasks:validate` passed against 2 executable task contracts.
+- `node tools\audit_project_files.mjs` refreshed [PROJECT_FILE_AUDIT.md](PROJECT_FILE_AUDIT.md) with 725 files and 0 mojibake candidates.
+- `npm run docs:index` passed with 93 markdown files, 0 invalid metadata and 0 active status drift.
+- `npm run verify` passed with 577 unit tests, synthetic large-workspace performance smoke, manual DOCX zip validation and `git diff --check`.
+
 ## 2026-08-28: Owner-Directed Off-Plan Maintenance - Autonomous Agent Task Runner Foundation
 
 ### Disposition

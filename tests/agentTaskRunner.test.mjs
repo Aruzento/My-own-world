@@ -9,6 +9,7 @@ import {
   mkdtemp,
   readFile,
   rm,
+  stat,
   writeFile
 } from 'node:fs/promises';
 
@@ -22,6 +23,7 @@ import {
 import {
   AGENT_TASK_RUNNER_REPORT_KIND,
   createAgentTaskDryRunReport,
+  createApprovalGates,
   createScopePolicy,
   evaluateChangedFilesAgainstScope
 } from '../tools/agent_task_runner.mjs';
@@ -65,6 +67,11 @@ test(
     );
 
     assert.equal(
+      report.scopePolicy.executionScopeStatus,
+      'machine-enforceable'
+    );
+
+    assert.equal(
       report.repository.clean,
       true
     );
@@ -87,6 +94,28 @@ test(
     assert.equal(
       report.verificationPlan.taskCommands[0].command,
       'npm run verify'
+    );
+
+    assert.equal(
+      await pathExists(
+        report.plannedWorktree.worktreePath
+      ),
+      false
+    );
+
+    const branchList =
+      runGit(
+        root,
+        [
+          'branch',
+          '--list',
+          'agent-task/*'
+        ]
+      );
+
+    assert.equal(
+      branchList.stdout.trim(),
+      ''
     );
   }
 );
@@ -227,6 +256,11 @@ test(
       true
     );
 
+    assert.equal(
+      policy.executionScopeStatus,
+      'machine-enforceable'
+    );
+
     const result =
       evaluateChangedFilesAgainstScope(
         [
@@ -262,7 +296,7 @@ test(
 
 
 test(
-  'agent task runner surfaces requiresApproval as an execution block',
+  'agent task runner treats declared approval rules as armed safeguards',
   async t => {
 
     const {
@@ -297,24 +331,262 @@ test(
 
     assert.equal(
       report.status,
-      'blocked'
+      'ready'
     );
 
     assert.equal(
-      report.approvalGates.blocked,
+      report.approvalGates.declared,
       true
     );
 
     assert.equal(
       report.approvalGates.gates[0].status,
-      'blocked-until-owner-approval'
+      'armed'
     );
 
     assert.equal(
       report.blockingReasons.some(reason =>
-        reason.code === 'APPROVAL_REQUIRED'
+        reason.code === 'APPROVAL_GATE_TRIGGERED'
+      ),
+      false
+    );
+  }
+);
+
+
+test(
+  'agent task runner blocks prose-only scope for autonomous execution readiness',
+  async t => {
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createValidTask({
+              scope:
+                {
+                  include:
+                    [
+                      'Agent task runner documentation'
+                    ],
+                  exclude:
+                    [
+                      'Product runtime changes'
+                    ]
+                }
+            })
+        }
+      );
+
+    const report =
+      await createAgentTaskDryRunReport(
+        taskFile,
+        {
+          root
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.scopePolicy.executionScopeStatus,
+      'human-review-required'
+    );
+
+    assert.equal(
+      report.blockingReasons.some(reason =>
+        reason.code === 'SCOPE_HUMAN_REVIEW_REQUIRED'
       ),
       true
+    );
+  }
+);
+
+
+test(
+  'agent task runner can model a triggered unapproved approval gate',
+  () => {
+
+    const gates =
+      createApprovalGates(
+        [
+          {
+            when:
+              'newDependency',
+            reason:
+              'Dependency changes require owner approval.'
+          },
+          {
+            when:
+              'largeBinaryAsset',
+            reason:
+              'Large binary assets require owner approval.'
+          }
+        ],
+        {
+          triggeredApprovalKeys:
+            [
+              'newDependency'
+            ]
+        }
+      );
+
+    assert.equal(
+      gates.overallStatus,
+      'blocked'
+    );
+
+    assert.equal(
+      gates.gates[0].status,
+      'blocked'
+    );
+
+    assert.equal(
+      gates.gates[1].status,
+      'armed'
+    );
+  }
+);
+
+
+test(
+  'agent task runner can model an approved triggered gate without bypassing dry-run',
+  () => {
+
+    const gates =
+      createApprovalGates(
+        [
+          {
+            when:
+              'newDependency',
+            reason:
+              'Dependency changes require owner approval.'
+          }
+        ],
+        {
+          triggeredApprovalKeys:
+            [
+              'newDependency'
+            ],
+          approvedApprovalKeys:
+            [
+              'newDependency'
+            ]
+        }
+      );
+
+    assert.equal(
+      gates.overallStatus,
+      'approved'
+    );
+
+    assert.equal(
+      gates.blocked,
+      false
+    );
+
+    assert.equal(
+      gates.gates[0].status,
+      'approved'
+    );
+  }
+);
+
+
+test(
+  'path-scoped execution-readiness fixture becomes ready',
+  async t => {
+
+    const task =
+      await readJsonTask(
+        'docs/03-testing/agent-tasks/examples/runner-readiness.agent-task.json'
+      );
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task
+        }
+      );
+
+    const report =
+      await createAgentTaskDryRunReport(
+        taskFile,
+        {
+          root
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'ready'
+    );
+
+    assert.equal(
+      report.scopePolicy.executionScopeStatus,
+      'machine-enforceable'
+    );
+
+    assert.equal(
+      report.approvalGates.overallStatus,
+      'armed'
+    );
+  }
+);
+
+
+test(
+  'completed prose-scope example remains blocked for autonomous execution readiness',
+  async t => {
+
+    const task =
+      await readJsonTask(
+        'docs/03-testing/agent-tasks/examples/dice-roll-event-integration.agent-task.json'
+      );
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task
+        }
+      );
+
+    const report =
+      await createAgentTaskDryRunReport(
+        taskFile,
+        {
+          root
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.scopePolicy.executionScopeStatus,
+      'human-review-required'
+    );
+
+    assert.equal(
+      report.approvalGates.overallStatus,
+      'armed'
     );
   }
 );
@@ -495,6 +767,19 @@ async function createTempRoot(
 }
 
 
+async function readJsonTask(
+  filePath
+) {
+
+  return JSON.parse(
+    await readFile(
+      filePath,
+      'utf8'
+    )
+  );
+}
+
+
 function createValidTask(
   overrides =
     {}
@@ -587,4 +872,20 @@ function runGit(
     0,
     result.stderr || result.stdout
   );
+
+  return result;
+}
+
+
+async function pathExists(
+  filePath
+) {
+
+  return stat(
+    filePath
+  )
+    .then(
+      () => true,
+      () => false
+    );
 }

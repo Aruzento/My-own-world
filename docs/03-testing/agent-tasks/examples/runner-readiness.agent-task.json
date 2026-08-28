@@ -1,0 +1,74 @@
+{
+  "schema": "myownworld.agent-task.v1",
+  "id": "OFFPLAN-RUNNER-READINESS",
+  "title": "Runner Readiness Fixture",
+  "ownerMode": "OWNER-DIRECTED OFF-PLAN MAINTENANCE",
+  "goal": "Prove that a harmless path-scoped maintenance task can be planned as ready without executing it.",
+  "scope": {
+    "include": [
+      "path:tools/agent_task_runner.mjs",
+      "path:tests/agentTaskRunner.test.mjs",
+      "path:docs/02-architecture/contracts/AGENT_TASK_CONTRACT.md",
+      "path:docs/03-testing/agent-tasks/examples/runner-readiness.agent-task.json",
+      "Agent task runner readiness semantics"
+    ],
+    "exclude": [
+      "path:js/**",
+      "path:styles/**",
+      "path:src-tauri/**",
+      "Product runtime changes",
+      "Roadmap phase/status changes",
+      "Codex execution"
+    ]
+  },
+  "acceptance": [
+    "The dry-run report is ready when the source worktree is clean.",
+    "Path include rules make future changed-file scope enforceable.",
+    "Declared approval gates remain armed but do not block until triggered.",
+    "The runner performs no branch, worktree, commit, push or Codex execution."
+  ],
+  "verification": {
+    "commands": [
+      {
+        "command": "node --test tests/agentTaskRunner.test.mjs",
+        "required": true,
+        "reason": "Focused runner tests must prove execution-readiness semantics."
+      },
+      {
+        "command": "npm run tasks:validate",
+        "required": true,
+        "reason": "Machine-readable agent task fixtures must remain valid."
+      },
+      {
+        "command": "npm run verify",
+        "required": true,
+        "reason": "The repository baseline must stay green."
+      },
+      {
+        "command": "git diff --check",
+        "required": true,
+        "reason": "The final patch must not contain whitespace errors."
+      }
+    ],
+    "manual": [
+      "Confirm no Codex CLI execution, worktree creation, branch creation, commit or push was performed by dry-run."
+    ]
+  },
+  "risk": {
+    "level": "low",
+    "notes": "This fixture is restricted to runner tooling, tests and documentation."
+  },
+  "requiresApproval": [
+    {
+      "when": "newDependency",
+      "reason": "Adding dependencies would change the supply-chain contract and requires owner approval."
+    },
+    {
+      "when": "destructiveFilesystemAction",
+      "reason": "Any destructive filesystem operation remains outside dry-run and requires owner approval."
+    }
+  ],
+  "notes": [
+    "This is an execution-readiness fixture, not an active roadmap task."
+  ]
+}
