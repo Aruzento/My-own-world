@@ -6,6 +6,35 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-28: Owner-Directed Off-Plan Maintenance - Tiered Verification Gates
+
+### Disposition
+
+- Readiness: `Foundation`.
+- Added explicit quick/normal/full verification gates without changing the active roadmap phase/status.
+- Kept `0.0.1.16.0` Persistent Combat Session as `NEXT`, not active.
+- Preserved `npm run verify` as the existing normal compatibility gate.
+
+### What Changed
+
+- `tools/run_checks.mjs` now owns one verification runner with modes: `quick`, `normal`, `full` and legacy `--js-only`.
+- Added `npm run verify:quick` for fast implementation checks: text/encoding, JS syntax, import path case, unit tests and `git diff --check`.
+- Added `npm run verify:full` for closure/release-like generic verification: normal verify plus browser smoke, project file audit, docs index, agent skill validation, task validation and a final `git diff --check`.
+- Updated `AGENTS.md` and [SMOKE_TESTS.md](../03-testing/SMOKE_TESTS.md) so future agents know which gate to use.
+
+### Explicit Non-Work
+
+- No desktop build, native desktop smoke, destructive workspace tests or real-user-workspace checks were added to generic `verify:full`.
+- No roadmap phase/status, product behavior, persistent data format, dependency or autonomous runner changed.
+
+### Verification
+
+- `node --test tests\verificationGates.test.mjs` passed with 6 focused runner-contract tests.
+- `npm run verify:quick` passed with encoding, JS syntax, import path case, 562 unit tests and `git diff --check`.
+- `npm run verify` passed and preserved the normal compatibility gate, including UI polish audit, synthetic large-workspace performance smoke and manual docx zip validation.
+- `npm run verify:full` passed with the normal gate, 185 browser smoke tests, project file audit, docs index, 19 agent skills, agent task validation and final `git diff --check`.
+- Browser coverage was run through `npm run verify:full`; no desktop/native/release gates were run because they are intentionally contextual and outside this maintenance task.
+
 ## 2026-08-28: Owner-Directed Off-Plan Maintenance - Machine-Readable Agent Task Contract
 
 ### Disposition

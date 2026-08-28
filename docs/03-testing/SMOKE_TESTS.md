@@ -11,11 +11,13 @@ owner_zone: "testing"
 
 ## Автотесты
 
-1. Выполнить `npm run verify`.
-2. Если нужно проверить только синтаксис JS, выполнить `npm run check:js`.
-3. Если нужно запустить только unit-тесты, выполнить `npm test`.
-4. Если нужно запустить браузерный smoke, выполнить `npm run test:browser`.
-5. Убедиться, что тесты не требуют выбранного workspace и не меняют пользовательские `.md` файлы.
+1. Во время реализации использовать `npm run verify:quick`: text/encoding, JS syntax, import path case, unit tests и `git diff --check`.
+2. Перед обычным коммитом выполнить `npm run verify`; эта команда сохраняет прежнее поведение основного gate.
+3. Перед closure/release-like задачами выполнить `npm run verify:full`: normal verify, browser smoke, docs index, project file audit, agent skill validation и task validation.
+4. Если нужно проверить только синтаксис JS и статические JS-adjacent guards, выполнить `npm run check:js`.
+5. Если нужно запустить только unit-тесты, выполнить `npm test`.
+6. Если нужно запустить браузерный smoke отдельно или с фильтрами, выполнить `npm run test:browser`.
+7. Убедиться, что тесты не требуют выбранного workspace и не меняют пользовательские `.md` файлы.
 
 Для точечного browser smoke можно передать аргументы Playwright после `--`:
 
@@ -30,12 +32,35 @@ npm run test:browser -- tests/browser/campaign-map-initiative.spec.mjs
 - нормализацию Campaign Map model;
 - правила уникальных названий страниц.
 
-`npm run verify` выполняет:
+`npm run verify:quick` выполняет:
 
+- проверку кодировки текста;
 - проверку синтаксиса всех `.js` и `.mjs` файлов;
 - unit-тесты;
+- проверку точного регистра import path;
+- `git diff --check`;
+
+`npm run verify` выполняет:
+
+- проверку кодировки текста;
+- проверку синтаксиса всех `.js` и `.mjs` файлов;
+- проверку точного регистра import path;
+- UI polish audit;
+- unit-тесты;
+- synthetic large-workspace performance smoke;
 - `git diff --check`;
 - проверку `docs/MY_OWN_WORLD_FULL_MANUAL.docx` как zip-архива.
+
+`npm run verify:full` выполняет обычный `npm run verify`, затем:
+
+- browser smoke;
+- project file audit;
+- docs index;
+- agent skill validation;
+- machine-readable agent task validation;
+- финальный `git diff --check` после generated audit updates.
+
+Desktop build, native desktop smoke и destructive/real-workspace restore/repair checks не входят в generic `verify:full` и запускаются только как контекстные release gates.
 
 Браузерные сценарии постепенно переводятся из ручного smoke-чеклиста в Playwright.
 

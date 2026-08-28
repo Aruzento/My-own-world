@@ -49,18 +49,23 @@
 - Если меняются skills, проверить `node tools/validate_agent_skills.mjs`.
 - Если добавляются machine-readable agent tasks, проверить `npm run tasks:validate`.
 
-Базовые проверки:
+Verification tiers:
+
+- `npm run verify:quick` - рабочий цикл во время реализации: text/encoding, JS syntax, import path case, unit tests и `git diff --check`.
+- `npm run verify` - обычный совместимый gate перед коммитом; поведение этой команды сохраняется как раньше.
+- `npm run verify:full` - широкий generic gate перед closure/release-like задачами: обычный verify, browser smoke, docs index, project file audit, agent skill validation и task validation.
+
+Desktop build/native smoke/destructive workspace checks остаются контекстными release gates и не входят в `verify:full` автоматически.
+
+Базовые команды:
 
 ```bash
+npm run verify:quick
 npm run verify
-npm run test:browser
-node tools/docs_index.mjs
-node tools/audit_project_files.mjs
-node tools/validate_agent_skills.mjs
-npm run tasks:validate
+npm run verify:full
 ```
 
-`npm run test:browser` можно не запускать только если задача затрагивает исключительно документы/скрипты без влияния на UI/runtime. В таком случае агент должен явно написать причину.
+`npm run verify:full` можно не запускать только если задача затрагивает исключительно документы/скрипты без влияния на UI/runtime и владелец не просил полный gate. В таком случае агент должен явно написать причину и минимум запустить релевантный focused check плюс `npm run verify`.
 
 ## Release Handoff
 

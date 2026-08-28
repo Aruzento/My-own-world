@@ -24,7 +24,9 @@
     "test:large-workspace": "node tools/run_large_workspace_performance_smoke.mjs",
     "test:browser": "node tools/run_browser_smoke.mjs",
     "check:js": "node tools/run_checks.mjs --js-only",
-    "verify": "node tools/run_checks.mjs"
+    "verify:quick": "node tools/run_checks.mjs --mode quick",
+    "verify": "node tools/run_checks.mjs",
+    "verify:full": "node tools/run_checks.mjs --mode full"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

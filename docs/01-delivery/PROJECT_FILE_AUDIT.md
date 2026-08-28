@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-08-27
+Дата: 2026-08-28
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 711.
+Всего файлов в аудите: 712.
 
 ## Два Независимых Прохода
 
@@ -57,7 +57,7 @@ owner_zone: "delivery"
 | tools | 23 |
 | tree | 11 |
 | ui | 34 |
-| unit tests | 110 |
+| unit tests | 111 |
 | world packages | 3 |
 
 ## Кандидаты На Уборку
@@ -74,9 +74,9 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 936703 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `debug.log` | 512973 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 287527 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 938711 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 539703 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 287612 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/campaign-map-ui.spec.mjs` | 173827 | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
@@ -845,6 +845,7 @@ owner_zone: "delivery"
 | `tests/treePageReadBoundary.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/treeVirtualization.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/uiMigrationBaselines.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/verificationGates.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/visualRegressionPolicy.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/wikiLinkLookup.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/workspaceAccessDiagnostics.test.mjs` | Unit/contract regression test. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
