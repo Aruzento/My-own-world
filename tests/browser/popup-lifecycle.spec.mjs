@@ -2077,3 +2077,353 @@ test(
     });
   }
 );
+
+
+test(
+  'toolbar-color-popup-uses-canonical-lifecycle-positioning-and-applies-color',
+  async ({ page }) => {
+
+    await page.setViewportSize({
+      width:
+        360,
+      height:
+        240
+    });
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const waitFrame =
+            () => new Promise(resolve =>
+              requestAnimationFrame(resolve)
+            );
+
+          localStorage.removeItem(
+            'myOwnWorld.recentTextColors'
+          );
+
+          const editor =
+            document.querySelector('#editorArea');
+
+          editor.innerHTML = `
+            <div
+              class="rich-text-field"
+              contenteditable="true"
+              data-persistent-editable="true"
+            >alpha beta gamma</div>
+          `;
+
+          const textField =
+            editor.querySelector('.rich-text-field');
+
+          const textNode =
+            textField.firstChild;
+
+          const selection =
+            window.getSelection();
+
+          const range =
+            document.createRange();
+
+          range.setStart(
+            textNode,
+            0
+          );
+
+          range.setEnd(
+            textNode,
+            5
+          );
+
+          selection.removeAllRanges();
+          selection.addRange(
+            range
+          );
+
+          document.dispatchEvent(
+            new Event(
+              'selectionchange'
+            )
+          );
+
+          await waitFrame();
+          await waitFrame();
+
+          const toolbar =
+            document.querySelector('#floatingToolbar');
+
+          toolbar.classList.remove(
+            'hidden'
+          );
+
+          toolbar.style.left =
+            `${window.innerWidth / 2}px`;
+
+          toolbar.style.top =
+            `${window.innerHeight - 48}px`;
+
+          const colorButton =
+            document.querySelector('#toolbarColorButton');
+
+          const colorPopup =
+            document.querySelector('#toolbarColorPopup');
+
+          const colorPicker =
+            document.querySelector('#textColorPicker');
+
+          const dispatchColorButtonPointerDown =
+            () => colorButton.dispatchEvent(
+              new PointerEvent(
+                'pointerdown',
+                {
+                  bubbles:
+                    true,
+                  cancelable:
+                    true,
+                  button:
+                    0
+                }
+              )
+            );
+
+          dispatchColorButtonPointerDown();
+
+          await waitFrame();
+          await waitFrame();
+
+          const openRect =
+            colorPopup.getBoundingClientRect();
+
+          const buttonRect =
+            colorButton.getBoundingClientRect();
+
+          const expectedLeft =
+            Math.min(
+              Math.max(
+                buttonRect.left,
+                12
+              ),
+              window.innerWidth - openRect.width - 12
+            );
+
+          const opened = {
+            lifecycle:
+              colorPopup.dataset.overlayLifecycle,
+            kind:
+              colorPopup.dataset.overlayKind,
+            state:
+              colorPopup.dataset.overlayState,
+            popupOpen:
+              colorPopup.dataset.popupOpen,
+            visible:
+              !colorPopup.classList.contains('hidden'),
+            zIndex:
+              Number(colorPopup.style.zIndex),
+            insideViewport:
+              openRect.left >= 0 &&
+              openRect.top >= 0 &&
+              openRect.right <= window.innerWidth + 1 &&
+              openRect.bottom <= window.innerHeight + 1,
+            anchoredBySharedLeft:
+              Math.abs(openRect.left - expectedLeft) <= 2,
+            opensAboveConstrainedAnchor:
+              openRect.bottom <= buttonRect.top + 1
+          };
+
+          document.body.dispatchEvent(
+            new PointerEvent(
+              'pointerdown',
+              {
+                bubbles:
+                  true,
+                cancelable:
+                  true,
+                clientX:
+                  4,
+                clientY:
+                  4
+              }
+            )
+          );
+
+          await waitFrame();
+
+          const outsideClosed = {
+            state:
+              colorPopup.dataset.overlayState,
+            popupOpen:
+              colorPopup.dataset.popupOpen,
+            visible:
+              !colorPopup.classList.contains('hidden')
+          };
+
+          dispatchColorButtonPointerDown();
+
+          await waitFrame();
+
+          document.dispatchEvent(
+            new KeyboardEvent(
+              'keydown',
+              {
+                key:
+                  'Escape',
+                bubbles:
+                  true
+              }
+            )
+          );
+
+          await waitFrame();
+
+          const escapeClosed = {
+            state:
+              colorPopup.dataset.overlayState,
+            popupOpen:
+              colorPopup.dataset.popupOpen,
+            visible:
+              !colorPopup.classList.contains('hidden')
+          };
+
+          dispatchColorButtonPointerDown();
+
+          await waitFrame();
+
+          colorPicker.value =
+            '#123456';
+
+          colorPopup
+            .querySelector('[data-action="apply-color"]')
+            .click();
+
+          await waitFrame();
+          await waitFrame();
+
+          const formattedElement =
+            textField.querySelector(
+              '[style], font, span'
+            );
+
+          const formattedColor =
+            formattedElement
+              ? getComputedStyle(
+                formattedElement
+              ).color
+              : '';
+
+          const contentHtml =
+            textField.innerHTML.toLowerCase();
+
+          return {
+            opened,
+            outsideClosed,
+            escapeClosed,
+            afterApply: {
+              popupClosed:
+                colorPopup.classList.contains('hidden'),
+              popupState:
+                colorPopup.dataset.overlayState,
+              html:
+                contentHtml,
+              formattedColor,
+              recentColor:
+                document
+                  .querySelector('#toolbarRecentColors [data-color]')
+                  ?.dataset.color || '',
+              swatchColor:
+                colorButton
+                  .querySelector('.toolbar-color-button-swatch')
+                  ?.style
+                  .getPropertyValue('--current-text-color')
+                  .trim() || ''
+            }
+          };
+        }
+      );
+
+    expect(
+      result.opened
+    ).toMatchObject({
+      lifecycle:
+        'popup-manager',
+      kind:
+        'popover',
+      state:
+        'open',
+      popupOpen:
+        'true',
+      visible:
+        true,
+      insideViewport:
+        true,
+      anchoredBySharedLeft:
+        true,
+      opensAboveConstrainedAnchor:
+        true
+    });
+
+    expect(
+      result.opened.zIndex
+    ).toBeGreaterThan(
+      10_000
+    );
+
+    expect(
+      result.outsideClosed
+    ).toMatchObject({
+      state:
+        'closed',
+      popupOpen:
+        'false',
+      visible:
+        false
+    });
+
+    expect(
+      result.escapeClosed
+    ).toMatchObject({
+      state:
+        'closed',
+      popupOpen:
+        'false',
+      visible:
+        false
+    });
+
+    expect(
+      result.afterApply.popupClosed
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.afterApply.popupState
+    ).toBe(
+      'closed'
+    );
+
+    expect(
+      result.afterApply.html.includes('#123456') ||
+      result.afterApply.html.includes('rgb(18, 52, 86)') ||
+      result.afterApply.formattedColor === 'rgb(18, 52, 86)'
+    ).toBe(
+      true
+    );
+
+    expect(
+      result.afterApply.recentColor
+    ).toBe(
+      '#123456'
+    );
+
+    expect(
+      result.afterApply.swatchColor
+    ).toBe(
+      '#123456'
+    );
+  }
+);

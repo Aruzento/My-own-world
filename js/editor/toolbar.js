@@ -17,8 +17,7 @@ import {
 } from './contenteditablePolicy.js';
 
 import {
-  positionToolbar,
-  positionColorPopup
+  positionToolbar
 } from './toolbarPosition.js';
 
 import {
@@ -210,7 +209,6 @@ function setupToolbarColorPopup(
     popup: colorPopup,
     close: () => hideToolbarColorPopup(colorPopup),
     anchors: [
-      toolbar,
       colorButton
     ].filter(Boolean),
     key: 'toolbar-color-popup',
@@ -434,8 +432,7 @@ function setupColorPopupClicks(
   const {
     colorPicker,
     recentColors,
-    colorPopup,
-    colorButton
+    colorPopup
   } = colorControls;
 
   colorPopup
@@ -503,21 +500,6 @@ function setupColorPopupClicks(
       }
     );
 
-  document.addEventListener(
-    'mousedown',
-    event => {
-
-      if (
-        colorPopup?.classList.contains('hidden') ||
-        colorPopup?.contains(event.target) ||
-        colorButton?.contains(event.target)
-      ) return;
-
-      closeToolbarColorPopup(
-        colorControls
-      );
-    }
-  );
 }
 
 async function applySelectedColor(
@@ -637,11 +619,11 @@ function toggleColorPopup(
 
     if (controller) {
 
-      controller.openNearAnchor(
+      controller.toggleNearAnchor(
         button,
         {
-          fallbackWidth: 220,
-          fallbackHeight: 180
+          fallbackWidth: 172,
+          fallbackHeight: 86
         }
       );
 
@@ -651,11 +633,6 @@ function toggleColorPopup(
         'hidden'
       );
     }
-
-    positionColorPopup(
-      popup,
-      button
-    );
 
     return;
   }

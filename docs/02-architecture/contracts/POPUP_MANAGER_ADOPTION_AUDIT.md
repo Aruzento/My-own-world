@@ -67,7 +67,7 @@ Not counted as popups:
 | Wiki preview popup | `js/editor/wikiLinkPreview.js` | Dynamic body node | Yes | `openPopupNearAnchor` / `popupPosition` | Shared | Shared | Hover preview; no command focus required | `popover` | Hover timers local | No | Hover delay is product behavior; lifecycle is shared. | A |
 | Image crop popup | `js/editor/images.js` | Dynamic body node | Yes | `openPopupNearAnchor` / `popupPosition` | Shared | Shared | Modal focus trap; range input autofocus | `dialog`, modal | Autosave timer local to crop model | No | Crop state/save behavior is feature-owned; popup lifecycle is shared. | A |
 | Properties settings popup | `js/editor/propertiesSettingsPopup.js` | Dynamic body node | Yes | Controller/PopupManager position | Shared | Shared | Modal focus trap | `dialog`, modal | Feature-local drag/resize for fields, not popup lifecycle | No | Popup shell is canonical; Properties grid behavior remains feature-owned. | A |
-| Toolbar color popup (`#toolbarColorPopup`) | `js/editor/toolbar.js`, `js/editor/toolbarPosition.js` | Static in `index.html`, moved to body | Yes | Both `controller.openNearAnchor` and local `positionColorPopup` | Shared plus local mousedown outside fallback | Shared plus local mousedown outside fallback | Non-modal; color picker behavior local | `popover` | Old CSS fallback `z-index: 9999`; local positioning and outside listener | Yes | It is registered, but still performs duplicate geometry and outside-close work after the shared open path. | B |
+| Toolbar color popup (`#toolbarColorPopup`) | `js/editor/toolbar.js` | Static in `index.html`, moved to body | Yes | `controller.toggleNearAnchor` / `popupPosition` | Shared | Shared | Non-modal; color picker behavior local | `popover` | None material | No | The toolbar color pilot removed local popup geometry, document-level outside close and hard-coded popup z-index; color selection remains toolbar-owned. | A |
 | Card Type listbox | `js/ui/cardType.js` | Dynamic from card shell, moved to body | Yes | Controller `openNearAnchor` / `popupPosition` | Shared plus combobox-specific Escape handling | Shared; global click closes all card-type menus | Focus remains on combobox trigger with `aria-activedescendant` | `popover` | Custom keyboard belongs to combobox semantics | No | The popup is a select/listbox control, not a generic menu; current split matches the accessibility contract. | A |
 | Item set picker | `js/ui/itemSets.js` | Dynamic body node | Yes | `openPopupNearAnchor` / `popupPosition` | Shared | Shared | Search field focused locally | `popover` | None material | No | The simple pilot removed the legacy document-click outside-close fallback; PopupManager now owns the picker close lifecycle. | A |
 | Campaign Map shared popup (`#campaignMapPopup`) | `js/editor/campaignMapPopupController.js` and map toolbar modules | Dynamic body node when absent | Yes | `openPopupNearAnchor` / `popupPosition` with Inspector `avoid` target | Shared | Shared | Modal focus trap | `dialog`, modal | CSS uses overlay tokens; product key/anchor data local | No | Campaign Map passes only the Inspector avoid target; generic geometry stays shared. | A |
@@ -100,16 +100,17 @@ The main shared owner remains:
 Remaining adoption gaps are narrow:
 
 1. `window.confirm` remains in two destructive workflows. This bypasses app styling, PopupManager focus return and visual consistency.
-2. `toolbarColorPopup` is registered but still performs duplicate local positioning and outside-click fallback in `toolbar.js` / `toolbarPosition.js`.
-3. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
-4. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
+2. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
+3. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
 
-CSS note: several historical popup CSS files still contain hard-coded fallback z-index values (`toolbar.css`, `popup-create.css`, `popup-link.css`, `tree.css`). Runtime z-order for registered popups is still owned by PopupManager inline style. Treat the hard-coded values as token-cleanup debt, not as proof of a second lifecycle owner.
+CSS note: several historical popup CSS files still contain hard-coded fallback z-index values (`popup-create.css`, `popup-link.css`, `tree.css`). Runtime z-order for registered popups is still owned by PopupManager inline style. Treat the hard-coded values as token-cleanup debt, not as proof of a second lifecycle owner.
 
 ## Pilot Recommendation
 
 Completed simple pilot: item set picker now delegates outside-close lifecycle to `PopupManager` without the local document-click fallback.
 
 Completed complex pilot: Knowledge Graph node menu now delegates point positioning, viewport clamp and offset/transform compensation to `popupPosition`; graph overlay code no longer keeps local viewport clamp helpers.
+
+Completed toolbar pilot: toolbar color popup now delegates anchor positioning, viewport clamp, Escape/outside close and overlay z-order to `PopupManager` / `popupPosition`; toolbar code still owns only selected-color behavior and recent-color rendering.
 
 Do not use the archived Variables picker as a pilot unless the owner explicitly revives the Variables block. Do not use native confirm replacement as the lifecycle pilot; handle confirm unification later as a separate small migration.

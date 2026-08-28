@@ -48,46 +48,6 @@ export function positionToolbar(
     `${top}px`;
 }
 
-export function positionColorPopup(
-  popup,
-  button
-) {
-
-  const rect =
-    button.getBoundingClientRect();
-
-  const margin =
-    8;
-
-  const width =
-    popup.offsetWidth || 172;
-
-  const height =
-    popup.offsetHeight || 86;
-
-  const left =
-    clamp(
-      rect.left + rect.width / 2 - width / 2,
-      margin,
-      window.innerWidth - margin - width
-    );
-
-  let top =
-    rect.bottom + 8;
-
-  if (top + height > window.innerHeight - margin) {
-
-    top =
-      rect.top - height - 8;
-  }
-
-  popup.style.left =
-    `${left}px`;
-
-  popup.style.top =
-    `${clamp(top, margin, window.innerHeight - margin - height)}px`;
-}
-
 function clamp(
   value,
   min,
