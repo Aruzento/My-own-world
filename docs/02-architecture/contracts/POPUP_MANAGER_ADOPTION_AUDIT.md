@@ -44,7 +44,7 @@ Not counted as popups:
 
 - Variables picker: do not migrate while the Variables block remains archived/inactive. Revisit only if the feature is explicitly restored.
 - Presentation image preview: accepted exception; keep the separate presentation-window lifecycle.
-- Lifecycle pilots: item set picker was selected as the simple pilot, and Knowledge Graph node menu remains the complex pilot. Native confirm unification is deferred to a separate small migration.
+- Lifecycle pilots: item set picker was selected as the simple pilot, and Knowledge Graph node menu was selected as the complex pilot. Native confirm unification is deferred to a separate small migration.
 
 ## Adoption Matrix
 
@@ -73,7 +73,7 @@ Not counted as popups:
 | Campaign Map shared popup (`#campaignMapPopup`) | `js/editor/campaignMapPopupController.js` and map toolbar modules | Dynamic body node when absent | Yes | `openPopupNearAnchor` / `popupPosition` with Inspector `avoid` target | Shared | Shared | Modal focus trap | `dialog`, modal | CSS uses overlay tokens; product key/anchor data local | No | Campaign Map passes only the Inspector avoid target; generic geometry stays shared. | A |
 | Campaign Map token popup (`#campaignTokenPopup`) | `js/editor/campaignMapTokenPopupController.js` | Dynamic body node | Yes | `openPopupNearAnchor` / `popupPosition` | Shared | Shared | Hover/action popover; button labels applied locally | `popover` | Hover timers and pointerenter/leave are product behavior | No | Delayed hover is local by design; open/close/z-order are shared. | A |
 | Knowledge Graph connect popup | `js/wiki/knowledgeGraphPage.js`, `js/wiki/knowledgeGraphCanvasOverlays.js` | Dynamic inside graph document | Yes | PopupManager for lifecycle; placement follows graph render state | Shared | Shared | Non-modal dialog; graph focus rerender local | `dialog`, non-modal | None material | No | Connect state is graph-owned; popup lifecycle is registered. | A |
-| Knowledge Graph node menu | `js/wiki/knowledgeGraphCanvasOverlays.js` | Dynamic inside graph document | Yes | `openPopupAtPoint` plus local `adjustGraphNodeMenuToViewport` | Shared | Shared | Context-menu keyboard via manager | `context-menu` | Local viewport clamp after shared positioning | Yes, complex | It uses PopupManager, but transformed graph/canvas coordinates still require feature-local geometry correction. | B |
+| Knowledge Graph node menu | `js/wiki/knowledgeGraphCanvasOverlays.js` | Dynamic inside graph document | Yes | `openPopupAtPoint` / `popupPosition` | Shared | Shared | Context-menu keyboard via manager | `context-menu` | None material | No | The complex pilot moved viewport/offset correction into shared `popupPosition`; graph code now owns only node menu content/action context. | A |
 | Variable picker popup | `js/ui/variables.js` | Dynamic body node | No | Local `positionVariablePopup` | No shared Escape | Local `mousedown` outside listener | Search input focused locally | Local popover | Local clamp, local outside close, no overlay markers | Owner decision before migration | The Variables block is an archived/inactive experiment; do not migrate until the feature is explicitly revived. | D |
 | Presentation image preview | `js/editor/campaignMapPresentation.js`, `js/presentation/presentationEntry.js` | Dynamic in separate presentation window | No | Presentation window local DOM/CSS | No shared Escape | Close button only | Presentation window focus | Separate preview overlay | Separate-window DOM, not AppShell PopupManager | No main-app migration | This runs in `presentation.html`, outside the main AppShell popup lifecycle. A future presentation overlay contract may be appropriate, but not PopupManager adoption by default. | C |
 | Native package/backup delete confirms | `js/ui/worldPackageManager.js`, `js/ui/settings/backupSettings.js` | Browser-native dialog | No | Browser | Browser-native | Browser-native | Browser-native blocking focus | Native confirm | `window.confirm` | Yes, simple | Existing shared confirm popup can likely replace these narrow destructive confirmations without new overlay ownership. | B |
@@ -101,9 +101,8 @@ Remaining adoption gaps are narrow:
 
 1. `window.confirm` remains in two destructive workflows. This bypasses app styling, PopupManager focus return and visual consistency.
 2. `toolbarColorPopup` is registered but still performs duplicate local positioning and outside-click fallback in `toolbar.js` / `toolbarPosition.js`.
-3. `Knowledge Graph node menu` is registered but still uses local post-position viewport correction because graph/canvas coordinate context is special.
-4. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
-5. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
+3. `variables.js` has a full local picker popup, but the whole Variables block is currently archived/inactive and explicitly not selected for migration.
+4. Presentation image preview is a separate-window overlay and is now an accepted lifecycle exception.
 
 CSS note: several historical popup CSS files still contain hard-coded fallback z-index values (`toolbar.css`, `popup-create.css`, `popup-link.css`, `tree.css`). Runtime z-order for registered popups is still owned by PopupManager inline style. Treat the hard-coded values as token-cleanup debt, not as proof of a second lifecycle owner.
 
@@ -111,6 +110,6 @@ CSS note: several historical popup CSS files still contain hard-coded fallback z
 
 Completed simple pilot: item set picker now delegates outside-close lifecycle to `PopupManager` without the local document-click fallback.
 
-Best complex pilot: migrate the Knowledge Graph node menu's local `adjustGraphNodeMenuToViewport` responsibility into the existing PopupManager/PopupPosition boundary without losing the graph's transformed-coordinate correction. This is complex because it touches graph canvas coordinate assumptions and requires graph browser/visual coverage.
+Completed complex pilot: Knowledge Graph node menu now delegates point positioning, viewport clamp and offset/transform compensation to `popupPosition`; graph overlay code no longer keeps local viewport clamp helpers.
 
 Do not use the archived Variables picker as a pilot unless the owner explicitly revives the Variables block. Do not use native confirm replacement as the lifecycle pilot; handle confirm unification later as a separate small migration.

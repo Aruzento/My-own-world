@@ -638,12 +638,6 @@ export function showGraphNodeContextMenu(
       fallbackHeight: 460
     }
   );
-
-  adjustGraphNodeMenuToViewport(
-    menu,
-    clientX,
-    clientY
-  );
 }
 
 
@@ -754,80 +748,5 @@ function renderGraphFocus(
   renderGraph(
     documentElement,
     options
-  );
-}
-
-
-function adjustGraphNodeMenuToViewport(
-  menu,
-  anchorX = null,
-  anchorY = null
-) {
-
-  const rect =
-    menu.getBoundingClientRect();
-
-  const preferredLeft =
-    Number.isFinite(anchorX)
-      ? anchorX
-      : rect.left;
-
-  const preferredTop =
-    Number.isFinite(anchorY)
-      ? anchorY
-      : rect.top;
-
-  const targetLeft =
-    clampGraphCanvasPosition(
-      preferredLeft,
-      12,
-      Math.max(
-        12,
-        window.innerWidth - rect.width - 12
-      )
-    );
-
-  const targetTop =
-    clampGraphCanvasPosition(
-      preferredTop,
-      12,
-      Math.max(
-        12,
-        window.innerHeight - rect.height - 12
-      )
-    );
-
-  const styleLeft =
-    Number.parseFloat(
-      menu.style.left
-    ) || 0;
-
-  const styleTop =
-    Number.parseFloat(
-      menu.style.top
-    ) || 0;
-
-  menu.style.left =
-    `${Math.round(styleLeft + targetLeft - rect.left)}px`;
-
-  menu.style.top =
-    `${Math.round(styleTop + targetTop - rect.top)}px`;
-}
-
-
-function clampGraphCanvasPosition(
-  value,
-  min,
-  max
-) {
-
-  return Math.min(
-    max,
-    Math.max(
-      min,
-      Number.isFinite(value)
-        ? value
-        : min
-    )
   );
 }

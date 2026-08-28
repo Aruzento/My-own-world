@@ -8,6 +8,9 @@ import test from 'node:test';
 const ITEM_SETS_PATH =
   'js/ui/itemSets.js';
 
+const KNOWLEDGE_GRAPH_OVERLAYS_PATH =
+  'js/wiki/knowledgeGraphCanvasOverlays.js';
+
 
 test(
   'item set picker delegates outside-close lifecycle to PopupManager',
@@ -35,6 +38,37 @@ test(
       source,
       /picker\.contains\(\s*event\.target\s*\)[\s\S]{0,800}closeItemSetPicker\(\s*\)/,
       'item set picker should not keep a local document-click outside-close fallback'
+    );
+  }
+);
+
+
+test(
+  'knowledge graph node menu delegates viewport positioning to popupPosition',
+  async () => {
+
+    const source =
+      await readFile(
+        KNOWLEDGE_GRAPH_OVERLAYS_PATH,
+        'utf8'
+      );
+
+    assert.match(
+      source,
+      /registerPopup\(\{[\s\S]*key:\s*'knowledge-graph-node-menu'[\s\S]*kind:\s*'context-menu'/,
+      'Knowledge Graph node menu should remain registered with PopupManager'
+    );
+
+    assert.match(
+      source,
+      /openPopupAtPoint\(\s*menu,\s*clientX,\s*clientY,/,
+      'Knowledge Graph node menu should open through the shared point-positioned popup path'
+    );
+
+    assert.doesNotMatch(
+      source,
+      /adjustGraphNodeMenuToViewport|clampGraphCanvasPosition/,
+      'Knowledge Graph node menu should not keep feature-local viewport clamp helpers'
     );
   }
 );

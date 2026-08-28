@@ -1905,6 +1905,289 @@ aliases: []
 
 
 test(
+  'knowledge-graph-node-menu-uses-shared-popup-positioning-lifecycle',
+  async ({ page }) => {
+
+    await page.setViewportSize({
+      width:
+        640,
+      height:
+        480
+    });
+
+    await page.goto(
+      '/'
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          setPages
+        } = await import('/js/stateActions.js');
+
+        const {
+          createKnowledgeGraphTemplate
+        } = await import('/js/templates/knowledgeGraph.js');
+
+        const {
+          renderKnowledgeGraphPage
+        } = await import('/js/wiki/knowledgeGraphPage.js');
+
+        setPages([
+          {
+            id:
+              'world',
+            name:
+              'world.md',
+            path:
+              '/pages/world.md',
+            order:
+              1,
+            title:
+              'World',
+            parent:
+              null,
+            template:
+              'card',
+            type:
+              'note',
+            tags:
+              [],
+            aliases:
+              [],
+            content:
+              '<h1>World</h1>[[Hero]]'
+          },
+          {
+            id:
+              'hero',
+            name:
+              'hero.md',
+            path:
+              '/pages/hero.md',
+            order:
+              2,
+            title:
+              'Hero',
+            parent:
+              'world',
+            template:
+              'card',
+            type:
+              'character',
+            tags:
+              [],
+            aliases:
+              [],
+            relationships:
+              [],
+            content:
+              '<h1>Hero</h1>'
+          }
+        ]);
+
+        const editor =
+          document.querySelector(
+            '#editorArea'
+          );
+
+        editor.innerHTML =
+          createKnowledgeGraphTemplate().content;
+
+        renderKnowledgeGraphPage(
+          editor
+        );
+      }
+    );
+
+    const heroCard =
+      page.locator(
+        '[data-knowledge-graph-canvas-card][data-node-id="hero"]'
+      );
+
+    const heroNode =
+      page.locator(
+        '[data-knowledge-graph-canvas-node="hero"]'
+      );
+
+    await expect(
+      heroCard
+    ).toBeVisible();
+
+    const heroNodeBox =
+      await heroNode.boundingBox();
+
+    await heroNode.evaluate(
+      (
+        node,
+        point
+      ) => {
+
+        node.dispatchEvent(
+          new MouseEvent(
+            'contextmenu',
+            {
+              bubbles:
+                true,
+              cancelable:
+                true,
+              button:
+                2,
+              clientX:
+                point.x,
+              clientY:
+                point.y
+            }
+          )
+        );
+      },
+      {
+        x:
+          Math.round(
+            heroNodeBox.x + heroNodeBox.width / 2
+          ),
+        y:
+          Math.round(
+            heroNodeBox.y + heroNodeBox.height / 2
+          )
+      }
+    );
+
+    const nodeMenu =
+      page.locator(
+        '[data-knowledge-graph-node-menu]'
+      );
+
+    await expect(
+      nodeMenu
+    ).toBeVisible();
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-overlay-lifecycle',
+      'popup-manager'
+    );
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-overlay-kind',
+      'context-menu'
+    );
+
+    await expect(
+      heroCard
+    ).toHaveClass(
+      /is-selected/
+    );
+
+    await page.mouse.click(
+      12,
+      12
+    );
+
+    await expect(
+      nodeMenu
+    ).toBeHidden();
+
+    await expect(
+      nodeMenu
+    ).toHaveAttribute(
+      'data-overlay-state',
+      'closed'
+    );
+
+    await heroCard.evaluate(
+      card => {
+
+        card.dispatchEvent(
+          new MouseEvent(
+            'contextmenu',
+            {
+              bubbles:
+                true,
+              cancelable:
+                true,
+              button:
+                2,
+              clientX:
+                window.innerWidth - 4,
+              clientY:
+                window.innerHeight - 4
+            }
+          )
+        );
+      }
+    );
+
+    await expect(
+      nodeMenu
+    ).toBeVisible();
+
+    const edgeMenuBox =
+      await nodeMenu.boundingBox();
+
+    const viewportSize =
+      page.viewportSize();
+
+    expect(
+      edgeMenuBox.x
+    ).toBeGreaterThanOrEqual(
+      0
+    );
+
+    expect(
+      edgeMenuBox.y
+    ).toBeGreaterThanOrEqual(
+      0
+    );
+
+    expect(
+      edgeMenuBox.x + edgeMenuBox.width
+    ).toBeLessThanOrEqual(
+      viewportSize.width + 1
+    );
+
+    expect(
+      edgeMenuBox.y + edgeMenuBox.height
+    ).toBeLessThanOrEqual(
+      viewportSize.height + 1
+    );
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      nodeMenu
+    ).toBeHidden();
+
+    const scaleBefore =
+      await page
+        .locator('[data-knowledge-graph-canvas-stage]')
+        .getAttribute('data-scale');
+
+    await page
+      .locator('[data-knowledge-graph-canvas-action="zoom-in"]')
+      .click();
+
+    const scaleAfter =
+      await page
+        .locator('[data-knowledge-graph-canvas-stage]')
+        .getAttribute('data-scale');
+
+    expect(
+      Number(scaleAfter)
+    ).toBeGreaterThan(
+      Number(scaleBefore)
+    );
+  }
+);
+
+
+test(
   'knowledge-graph-slice-status-explains-hidden-canvas-nodes',
   async ({ page }) => {
 

@@ -269,6 +269,51 @@ function applyPopupPosition(
 
   popup.style.top =
     `${position.top}px`;
+
+  alignPopupToResolvedViewportPosition(
+    popup,
+    position
+  );
+}
+
+
+function alignPopupToResolvedViewportPosition(
+  popup,
+  position
+) {
+
+  const rect =
+    popup.getBoundingClientRect();
+
+  const deltaLeft =
+    position.left - rect.left;
+
+  const deltaTop =
+    position.top - rect.top;
+
+  if (
+    Math.abs(deltaLeft) < 0.5 &&
+    Math.abs(deltaTop) < 0.5
+  ) {
+
+    return;
+  }
+
+  const styleLeft =
+    Number.parseFloat(
+      popup.style.left
+    ) || 0;
+
+  const styleTop =
+    Number.parseFloat(
+      popup.style.top
+    ) || 0;
+
+  popup.style.left =
+    `${Math.round(styleLeft + deltaLeft)}px`;
+
+  popup.style.top =
+    `${Math.round(styleTop + deltaTop)}px`;
 }
 
 
