@@ -84,9 +84,12 @@ npm run verify:full
 
 - Исполняемые task-файлы имеют suffix `.agent-task.json`.
 - Валидировать их через `npm run tasks:validate`.
+- Строить безопасный dry-run план через `npm run agent:task -- --dry-run <task-file>`.
 - YAML-примеры в документации считаются только человекочитаемой иллюстрацией, не исполняемым форматом.
 
 Этот contract не заменяет `docs/01-delivery/PROJECT_PLAN.md`, Definition of Done или явное owner approval для рискованных действий.
+
+Dry-run runner только валидирует задачу, проверяет clean worktree, рассчитывает branch/worktree, scope, verification и approval gates. Он не создает branch/worktree, не коммитит, не пушит, не запускает Codex и не выполняет саму задачу.
 
 ## Summary После Задачи
 

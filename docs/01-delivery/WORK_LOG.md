@@ -6,6 +6,37 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-28: Owner-Directed Off-Plan Maintenance - Autonomous Agent Task Runner Foundation
+
+### Disposition
+
+- Readiness: `Foundation`.
+- Added a safe local dry-run runner for validated `.agent-task.json` files without changing the active roadmap phase/status.
+- Kept `0.0.1.16.0` Persistent Combat Session as `NEXT`, not active.
+- Did not connect Codex execution or build an autonomous repair loop.
+
+### What Changed
+
+- Added `tools/agent_task_runner.mjs` as a dependency-free dry-run orchestrator.
+- Added `npm run agent:task -- --dry-run <task-file>` as the public command.
+- The runner validates the existing agent task contract, inspects Git HEAD/branch/status, requires a clean source worktree for future execution, calculates a dedicated branch/worktree path, reports scope include/exclude, reports `path:` scope rules for future changed-file checks, reports verification commands and shows `requiresApproval` rules as blocked gates.
+- Added `tests/agentTaskRunner.test.mjs` with disposable Git fixtures for clean/dirty worktree behavior and scope/approval/report-shape regressions.
+- Updated [AGENT_TASK_CONTRACT.md](../02-architecture/contracts/AGENT_TASK_CONTRACT.md), [AI_ONBOARDING.md](../02-architecture/AI_ONBOARDING.md) and `AGENTS.md` so future agents know this is a planning runner, not an executor.
+
+### Explicit Non-Work
+
+- No product UI, runtime behavior, roadmap status, persistent data format, dependency, Codex invocation, branch/worktree creation, commit, merge, push or repair loop was implemented by the runner.
+- `scope.include` / `scope.exclude` remain the task boundary; `path:` entries are only a small convention inside the existing arrays for future machine file-scope checks.
+
+### Verification
+
+- `node --test tests\agentTaskRunner.test.mjs tests\agentTaskContract.test.mjs tests\verificationGates.test.mjs` passed with 20 focused tests.
+- `npm run tasks:validate` passed against the existing example task.
+- `npm run verify:quick` passed with encoding, JS syntax, import path case, 572 unit tests and `git diff --check`.
+- `npm run verify` passed with 572 unit tests, synthetic large-workspace performance smoke, manual DOCX zip validation and `git diff --check`.
+- `npm run verify:full` passed with normal verify, 197 browser tests, project file audit, docs index, agent skill validation, task validation and final `git diff --check`.
+- A clean-head dry-run report for the existing example task will be captured after commit because the runner correctly reports uncommitted implementation files as a dirty worktree before commit.
+
 ## 2026-08-28: Owner-Directed Off-Plan Maintenance - Approved Popup Visual Regression Baselines
 
 ### Disposition

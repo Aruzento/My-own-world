@@ -78,6 +78,29 @@ Optional fields:
 
 Unknown top-level fields are rejected in v1. New fields require a contract and validator update.
 
+## Scope Policy For Runners
+
+`scope.include` and `scope.exclude` remain the required human-readable task boundary.
+
+When a task needs machine-checkable changed-file scope, an entry may use a `path:` prefix with a repo-relative path or simple glob:
+
+```json
+{
+  "scope": {
+    "include": ["path:tools/**", "Agent task runner documentation"],
+    "exclude": ["path:js/**", "Product runtime changes"]
+  }
+}
+```
+
+The runner treats `path:` entries as future changed-file guards:
+
+- files outside `include` path rules are outside scope;
+- files matching `exclude` path rules are explicitly blocked;
+- if no `path:` include exists, future execution must require human scope review instead of pretending file scope is enforceable.
+
+This convention reuses the existing `scope.include` / `scope.exclude` arrays and does not add a second task schema.
+
 ## Approval Rules
 
 Each `requiresApproval` entry must be:
@@ -161,12 +184,33 @@ node tools/validate_agent_tasks.mjs docs/03-testing/agent-tasks/examples
 
 The validator is intentionally lightweight and dependency-free. It validates the v1 task shape; it does not run the task, mutate the roadmap, create commits or approve risky actions.
 
+## Dry-Run Runner
+
+Use:
+
+```powershell
+npm run agent:task -- --dry-run docs/03-testing/agent-tasks/examples/dice-roll-event-integration.agent-task.json
+```
+
+The v1 runner is a planning foundation only. It:
+
+- validates the task through the existing contract validator;
+- inspects the current Git repository state;
+- blocks future execution planning when the source worktree is dirty;
+- calculates a dedicated branch name and sibling worktree path;
+- reports scope include/exclude policy and any `path:` rules;
+- reports verification commands and standard quick/normal/full gates;
+- reports `requiresApproval` entries as blocked approval gates;
+- emits both a human-readable report and a machine-readable JSON report.
+
+The dry-run runner must not modify product files, create commits, create branches, create worktrees, merge, push, reset, invoke Codex or bypass owner approval.
+
 ## Non-Goals
 
 This contract does not:
 
 - start `0.0.1.16.0` or any roadmap phase;
-- create an autonomous runner;
+- create a Codex/autonomous task executor;
 - allow hidden approval by schema;
 - add YAML parsing;
 - replace `AGENTS.md`, `PROJECT_PLAN.md`, `WORK_LOG.md` or Definition of Done;

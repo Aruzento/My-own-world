@@ -72,7 +72,7 @@ npm run test:browser
 
 ## Формат Задач Для Codex
 
-Machine-readable задачи будущих автономных агентов описаны в [AGENT_TASK_CONTRACT.md](./contracts/AGENT_TASK_CONTRACT.md). Исполняемый формат - JSON `*.agent-task.json`, проверка - `npm run tasks:validate`. YAML-примеры допустимы только как человекочитаемые иллюстрации.
+Machine-readable задачи будущих автономных агентов описаны в [AGENT_TASK_CONTRACT.md](./contracts/AGENT_TASK_CONTRACT.md). Исполняемый формат - JSON `*.agent-task.json`, проверка - `npm run tasks:validate`, безопасное планирование - `npm run agent:task -- --dry-run <task-file>`. YAML-примеры допустимы только как человекочитаемые иллюстрации.
 
 Хорошая задача:
 
