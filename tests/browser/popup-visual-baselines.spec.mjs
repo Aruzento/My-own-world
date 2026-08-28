@@ -75,7 +75,7 @@ const SCREENSHOT_OPTIONS = {
 
 
 test.describe(
-  'popup visual baseline candidates',
+  'approved popup visual baselines',
   () => {
 
     for (const surface of POPUP_SURFACES) {
@@ -83,7 +83,7 @@ test.describe(
       for (const viewport of POPUP_VIEWPORTS) {
 
         test(
-          `${surface.name} candidate baseline at ${viewport.name}`,
+          `${surface.name} approved baseline at ${viewport.name}`,
           async ({ page }) => {
 
             await page.setViewportSize({

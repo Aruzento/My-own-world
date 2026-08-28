@@ -13,7 +13,7 @@ owner_zone: "testing"
 
 ## Current Policy
 
-Current policy: `EVIDENCE SMOKE` for the broad UI suite, with a narrow `CANDIDATE POPUP BASELINE` layer. This is not a repository-wide `STRICT PIXEL BASELINE`.
+Current policy: `EVIDENCE SMOKE` for the broad UI suite, with a narrow `APPROVED POPUP BASELINE` layer. This is not a repository-wide `STRICT PIXEL BASELINE`.
 
 `tests/browser/visual-regression.spec.mjs` has a historical filename. Today it provides a visual evidence smoke layer:
 
@@ -24,7 +24,7 @@ Current policy: `EVIDENCE SMOKE` for the broad UI suite, with a narrow `CANDIDAT
 
 Strict pixel baselines may be added broadly only after an explicit owner-approved testing policy change. That future work must avoid large baseline churn, clarify CI expectations and keep screenshot storage maintainable.
 
-## Candidate Popup Baselines
+## Approved Popup Baselines
 
 `tests/browser/popup-visual-baselines.spec.mjs` is the first narrow Playwright screenshot assertion suite. It intentionally covers only three representative popup states:
 
@@ -32,7 +32,7 @@ Strict pixel baselines may be added broadly only after an explicit owner-approve
 - Properties settings popup as a heavier editor dialog;
 - Campaign Map grid popup near the map Inspector, including constrained positioning.
 
-The committed PNG files under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` are candidate baselines generated from deterministic local fixtures at `1440x900` and `960x640`. They are not approved final visual baselines. Treat failures as a prompt to inspect the UI change and either regenerate candidates after owner review or fix an unintended popup regression.
+The committed PNG files under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` were generated from deterministic local fixtures at `1440x900` and `960x640`, then visually approved by the owner on 2026-08-28. They are approved only for this small popup set. Treat failures as a prompt to inspect the UI change and either update the baseline through an explicit owner-reviewed visual change or fix an unintended popup regression.
 
 ## Автоматические Проверки
 

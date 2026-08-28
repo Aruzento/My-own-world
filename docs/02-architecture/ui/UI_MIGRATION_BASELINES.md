@@ -95,12 +95,12 @@ Owner note: this is the "before we repaint the house, photograph every room and 
 
 `0.0.1.10.29` / `RCB-012` update: current screenshot coverage is explicitly an evidence smoke policy, not strict pixel regression. `tests/browser/visual-regression.spec.mjs` combines structured browser assertions with screenshot attachments for human review. It does not use Playwright snapshot matchers, `pixelmatch` or committed golden PNG comparisons.
 
-Owner-directed off-plan update, 2026-08-28: the first narrow true screenshot comparison layer now exists as candidate popup baselines in `tests/browser/popup-visual-baselines.spec.mjs`. This does not approve a broad pixel-baseline policy; it records six candidate PNGs for three popup surfaces at normal and constrained desktop viewports.
+Owner-directed off-plan update, 2026-08-28: the first narrow true screenshot comparison layer now exists as approved popup baselines in `tests/browser/popup-visual-baselines.spec.mjs`. This does not approve a broad pixel-baseline policy; it records six owner-approved PNGs for three popup surfaces at normal and constrained desktop viewports.
 
 ## Baseline Rules
 
 - Do not commit generated attachment PNG screenshots from `tests/browser/visual-regression.spec.mjs`; it attaches them to the Playwright run as current baseline evidence.
-- Candidate snapshot PNGs under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` are a separate owner-requested candidate layer. They are committed for comparison but not considered final approved visual baselines.
+- Approved popup snapshot PNGs under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` are a separate owner-requested narrow layer. They are committed for comparison and approved only for the listed popup surfaces/viewports.
 - A future UI migration must update the matching row here when it intentionally changes a surface.
 - If a surface gets a new baseline screenshot name, add it both here and to `UI_MIGRATION_BASELINE_ATTACHMENTS` in `tests/browser/visual-regression.spec.mjs`.
 - Baselines are reference-backed: check [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) before changing the direction for a system.
@@ -149,11 +149,11 @@ These names are the current visual baseline contract. They are produced by `npm 
 | `visual-owner-1440-settings-diagnostics.png` | Owner evidence: Settings/diagnostics | 1440x900 `#appSettingsPopup` screenshot scrolled to the diagnostics maintenance section | Captures the primary desktop owner gate for secondary maintenance surfaces and diagnostics density. |
 | `visual-owner-1280-settings-diagnostics.png` | Owner evidence: Settings/diagnostics | 1280x720 `#appSettingsPopup` screenshot scrolled to the same diagnostics maintenance section | Captures the secondary desktop owner gate for the same popup state without losing key maintenance controls. |
 
-## Candidate Popup Snapshot Contract
+## Approved Popup Snapshot Contract
 
-These candidate files are produced and compared by `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs`. They use Playwright screenshot assertions, deterministic synthetic content, fixed dark/gold/stone/normal appearance, disabled animations and two viewport sizes. They are candidate baselines only; final owner approval is still a separate decision.
+These approved files are produced and compared by `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs`. They use Playwright screenshot assertions, deterministic synthetic content, fixed dark/gold/stone/normal appearance, disabled animations and two viewport sizes. Owner approval on 2026-08-28 applies only to this small popup set, not to broad strict pixel comparison for the whole UI.
 
-| Candidate snapshot | Surface | Viewport | Why it matters |
+| Approved snapshot | Surface | Viewport | Why it matters |
 | --- | --- | --- | --- |
 | `add-block-desktop-chromium-win32.png` | Add block popup | 1440x900 | Captures the simple editor popup/menu surface with shared editor background context. |
 | `add-block-constrained-chromium-win32.png` | Add block popup | 960x640 | Captures the same simple popup when horizontal and vertical space are tighter. |

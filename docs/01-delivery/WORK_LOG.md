@@ -6,6 +6,36 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-28: Owner-Directed Off-Plan Maintenance - Approved Popup Visual Regression Baselines
+
+### Disposition
+
+- Readiness: `Approved Narrow Baseline`.
+- Owner visually approved the six popup screenshots that were generated as candidates in the previous task.
+- Promoted the existing Add block, Properties and Campaign Map grid popup screenshots to approved narrow Playwright screenshot baselines.
+- Kept `0.0.1.16.0` Persistent Combat Session as `NEXT`, not active.
+
+### What Changed
+
+- Updated `tests/browser/popup-visual-baselines.spec.mjs` labels from candidate wording to approved popup baseline wording; screenshot names and fixture states are unchanged.
+- Updated [VISUAL_REGRESSION.md](../03-testing/VISUAL_REGRESSION.md), [UI_MIGRATION_BASELINES.md](../02-architecture/ui/UI_MIGRATION_BASELINES.md) and `tests/visualRegressionPolicy.test.mjs` so the project records the owner approval without declaring broad repository-wide strict pixel baselines.
+- Kept the approved baseline scope limited to three popup surfaces at `1440x900` and `960x640`.
+
+### Explicit Non-Work
+
+- No production UI, popup styling, roadmap status, persistent format, dependency or product behavior changed.
+- No new popup surfaces were added to the approved baseline set.
+- `tests/browser/visual-regression.spec.mjs` remains broad screenshot-attachment evidence smoke.
+
+### Verification
+
+- `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs` passed before approval wording changes, confirming the previous candidate snapshots were repeatable.
+- `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs` passed again after approval wording changes with 6 screenshot comparisons.
+- `node --test tests\visualRegressionPolicy.test.mjs` passed.
+- `npm run docs:index` passed with 92 markdown files and no metadata/status drift.
+- `npm run test:browser` passed with 191 browser tests, including the approved popup baseline suite and the existing visual evidence smoke.
+- `npm run verify` passed with 562 unit tests and synthetic large-workspace performance smoke.
+
 ## 2026-08-28: Owner-Directed Off-Plan Maintenance - Popup Visual Baseline Candidates
 
 ### Disposition

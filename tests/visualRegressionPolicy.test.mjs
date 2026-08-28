@@ -14,7 +14,7 @@ const UI_BASELINE_DOC_PATH =
 const VISUAL_SPEC_PATH =
   'tests/browser/visual-regression.spec.mjs';
 
-const POPUP_CANDIDATE_SPEC_PATH =
+const POPUP_BASELINE_SPEC_PATH =
   'tests/browser/popup-visual-baselines.spec.mjs';
 
 const STRICT_PIXEL_MATCHER_PATTERN =
@@ -29,7 +29,7 @@ test(
       policyDoc,
       baselineDoc,
       visualSpec,
-      popupCandidateSpec
+      popupBaselineSpec
     ] = await Promise.all([
       readFile(
         VISUAL_POLICY_DOC_PATH,
@@ -44,14 +44,14 @@ test(
         'utf8'
       ),
       readFile(
-        POPUP_CANDIDATE_SPEC_PATH,
+        POPUP_BASELINE_SPEC_PATH,
         'utf8'
       )
     ]);
 
     assert.match(
       policyDoc,
-      /Current policy:\s*`EVIDENCE SMOKE` for the broad UI suite, with a narrow `CANDIDATE POPUP BASELINE` layer/,
+      /Current policy:\s*`EVIDENCE SMOKE` for the broad UI suite, with a narrow `APPROVED POPUP BASELINE` layer/,
       'visual testing policy must name the current guarantee exactly'
     );
 
@@ -76,21 +76,27 @@ test(
     );
 
     assert.match(
-      popupCandidateSpec,
+      popupBaselineSpec,
       STRICT_PIXEL_MATCHER_PATTERN,
-      `${POPUP_CANDIDATE_SPEC_PATH} must use Playwright screenshot assertions for candidate popup baselines`
+      `${POPUP_BASELINE_SPEC_PATH} must use Playwright screenshot assertions for approved popup baselines`
     );
 
     assert.match(
       policyDoc,
-      /Candidate Popup Baselines/i,
-      `${VISUAL_POLICY_DOC_PATH} must document the narrow popup candidate baseline layer`
+      /Approved Popup Baselines/i,
+      `${VISUAL_POLICY_DOC_PATH} must document the narrow approved popup baseline layer`
     );
 
     assert.match(
       policyDoc,
-      /not approved/i,
-      `${VISUAL_POLICY_DOC_PATH} must not present candidate popup baselines as approved strict visual policy`
+      /not a repository-wide `STRICT PIXEL BASELINE`/i,
+      `${VISUAL_POLICY_DOC_PATH} must not present approved popup baselines as repository-wide strict visual policy`
+    );
+
+    assert.match(
+      policyDoc,
+      /visually approved by the owner on 2026-08-28/i,
+      `${VISUAL_POLICY_DOC_PATH} must record the owner approval date for popup baselines`
     );
 
     for (const snapshotName of [
@@ -105,7 +111,7 @@ test(
       assert.match(
         baselineDoc,
         new RegExp(snapshotName),
-        `${UI_BASELINE_DOC_PATH} must list candidate popup snapshot ${snapshotName}`
+        `${UI_BASELINE_DOC_PATH} must list approved popup snapshot ${snapshotName}`
       );
     }
 
