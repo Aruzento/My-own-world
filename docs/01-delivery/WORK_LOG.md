@@ -6,6 +6,38 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-28: Owner-Directed Off-Plan Maintenance - Popup Visual Baseline Candidates
+
+### Disposition
+
+- Readiness: `Candidate Evidence`.
+- Added a narrow true Playwright screenshot comparison suite for three popup surfaces without changing the active roadmap phase/status.
+- Kept `0.0.1.16.0` Persistent Combat Session as `NEXT`, not active.
+- Did not declare the generated screenshots final-approved visual baselines.
+
+### What Changed
+
+- Added `tests/browser/popup-visual-baselines.spec.mjs` with deterministic popup states for Add block, Properties settings and Campaign Map grid popup.
+- Generated six candidate snapshot PNGs under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` for `1440x900` and `960x640`.
+- The Campaign Map candidate also guards popup/Inspector non-overlap at the screenshot boundary.
+- Updated [VISUAL_REGRESSION.md](../03-testing/VISUAL_REGRESSION.md), [UI_MIGRATION_BASELINES.md](../02-architecture/ui/UI_MIGRATION_BASELINES.md) and `tests/visualRegressionPolicy.test.mjs` so the project distinguishes broad evidence smoke from this narrow candidate pixel comparison layer.
+
+### Explicit Non-Work
+
+- No production UI, popup styling, roadmap status, persistent format, dependency or product behavior changed.
+- The historical `tests/browser/visual-regression.spec.mjs` remains screenshot-attachment evidence smoke and still does not use strict snapshot matchers.
+
+### Verification
+
+- `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs --update-snapshots` generated the candidate baselines and passed.
+- `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs` passed with 6 screenshot comparisons.
+- `node --test tests\visualRegressionPolicy.test.mjs` passed.
+- `npm run docs:index` passed with 92 markdown files and no metadata/status drift.
+- `node tools\audit_project_files.mjs` updated the file audit with 719 files, 0 delete candidates and 0 mojibake candidates.
+- `npm run ui:polish:audit` passed.
+- `npm run verify` passed with 562 unit tests and synthetic large-workspace performance smoke.
+- `git diff --check` and `git diff --cached --check` passed.
+
 ## 2026-08-28: Owner-Directed Off-Plan Maintenance - Tiered Verification Gates
 
 ### Disposition

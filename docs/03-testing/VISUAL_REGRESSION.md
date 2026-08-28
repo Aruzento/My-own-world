@@ -13,7 +13,7 @@ owner_zone: "testing"
 
 ## Current Policy
 
-Current policy: `EVIDENCE SMOKE`, not `STRICT PIXEL BASELINE`.
+Current policy: `EVIDENCE SMOKE` for the broad UI suite, with a narrow `CANDIDATE POPUP BASELINE` layer. This is not a repository-wide `STRICT PIXEL BASELINE`.
 
 `tests/browser/visual-regression.spec.mjs` has a historical filename. Today it provides a visual evidence smoke layer:
 
@@ -22,7 +22,17 @@ Current policy: `EVIDENCE SMOKE`, not `STRICT PIXEL BASELINE`.
 - Human Visual Review: the owner/tester still reviews attached screenshots and the checklist below for taste, composition, density and "does this feel like the product?" quality.
 - Strict Pixel Regression: not active today. The suite does not use Playwright snapshot matchers, `pixelmatch` or committed golden PNG comparisons, and project docs must not describe the current guarantee as pixel-perfect.
 
-Strict pixel baselines may be added later only after an explicit owner-approved testing policy change. That future work must avoid large baseline churn, clarify CI expectations and keep screenshot storage maintainable.
+Strict pixel baselines may be added broadly only after an explicit owner-approved testing policy change. That future work must avoid large baseline churn, clarify CI expectations and keep screenshot storage maintainable.
+
+## Candidate Popup Baselines
+
+`tests/browser/popup-visual-baselines.spec.mjs` is the first narrow Playwright screenshot assertion suite. It intentionally covers only three representative popup states:
+
+- Add block popup as a simple editor popover;
+- Properties settings popup as a heavier editor dialog;
+- Campaign Map grid popup near the map Inspector, including constrained positioning.
+
+The committed PNG files under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` are candidate baselines generated from deterministic local fixtures at `1440x900` and `960x640`. They are not approved final visual baselines. Treat failures as a prompt to inspect the UI change and either regenerate candidates after owner review or fix an unintended popup regression.
 
 ## Автоматические Проверки
 
@@ -33,6 +43,12 @@ npm run test:browser
 ```
 
 В состав visual evidence smoke входит `tests/browser/visual-regression.spec.mjs`.
+
+Candidate popup screenshot comparison:
+
+```powershell
+npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs
+```
 
 Он проверяет:
 

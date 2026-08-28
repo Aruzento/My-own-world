@@ -14,6 +14,9 @@ const UI_BASELINE_DOC_PATH =
 const VISUAL_SPEC_PATH =
   'tests/browser/visual-regression.spec.mjs';
 
+const POPUP_CANDIDATE_SPEC_PATH =
+  'tests/browser/popup-visual-baselines.spec.mjs';
+
 const STRICT_PIXEL_MATCHER_PATTERN =
   /\b(?:toHaveScreenshot|toMatchSnapshot)\s*\(|\bpixelmatch\b/;
 
@@ -25,7 +28,8 @@ test(
     const [
       policyDoc,
       baselineDoc,
-      visualSpec
+      visualSpec,
+      popupCandidateSpec
     ] = await Promise.all([
       readFile(
         VISUAL_POLICY_DOC_PATH,
@@ -38,12 +42,16 @@ test(
       readFile(
         VISUAL_SPEC_PATH,
         'utf8'
+      ),
+      readFile(
+        POPUP_CANDIDATE_SPEC_PATH,
+        'utf8'
       )
     ]);
 
     assert.match(
       policyDoc,
-      /Current policy:\s*`EVIDENCE SMOKE`, not `STRICT PIXEL BASELINE`/,
+      /Current policy:\s*`EVIDENCE SMOKE` for the broad UI suite, with a narrow `CANDIDATE POPUP BASELINE` layer/,
       'visual testing policy must name the current guarantee exactly'
     );
 
@@ -66,6 +74,40 @@ test(
       STRICT_PIXEL_MATCHER_PATTERN,
       `${VISUAL_SPEC_PATH} must not use strict pixel snapshot tooling while the policy says evidence smoke`
     );
+
+    assert.match(
+      popupCandidateSpec,
+      STRICT_PIXEL_MATCHER_PATTERN,
+      `${POPUP_CANDIDATE_SPEC_PATH} must use Playwright screenshot assertions for candidate popup baselines`
+    );
+
+    assert.match(
+      policyDoc,
+      /Candidate Popup Baselines/i,
+      `${VISUAL_POLICY_DOC_PATH} must document the narrow popup candidate baseline layer`
+    );
+
+    assert.match(
+      policyDoc,
+      /not approved/i,
+      `${VISUAL_POLICY_DOC_PATH} must not present candidate popup baselines as approved strict visual policy`
+    );
+
+    for (const snapshotName of [
+      'add-block-desktop',
+      'add-block-constrained',
+      'properties-desktop',
+      'properties-constrained',
+      'campaign-map-grid-desktop',
+      'campaign-map-grid-constrained'
+    ]) {
+
+      assert.match(
+        baselineDoc,
+        new RegExp(snapshotName),
+        `${UI_BASELINE_DOC_PATH} must list candidate popup snapshot ${snapshotName}`
+      );
+    }
 
     assert.match(
       baselineDoc,

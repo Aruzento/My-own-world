@@ -12,7 +12,7 @@ owner_zone: "delivery"
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 712.
+Всего файлов в аудите: 719.
 
 ## Два Независимых Прохода
 
@@ -26,7 +26,7 @@ owner_zone: "delivery"
 |---|---:|
 | agent workflow | 42 |
 | assets | 4 |
-| browser tests | 37 |
+| browser tests | 44 |
 | campaign map | 49 |
 | character | 5 |
 | ci | 1 |
@@ -74,11 +74,15 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 938711 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 940386 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `debug.log` | 539703 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 287612 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 293134 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/campaign-map-grid-desktop-chromium-win32.png` | 259078 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/properties-desktop-chromium-win32.png` | 225270 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/add-block-desktop-chromium-win32.png` | 207313 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
 | `tests/browser/campaign-map-ui.spec.mjs` | 173827 | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/campaign-map-grid-constrained-chromium-win32.png` | 167855 | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/graph-overlay.png` | 162799 | Да: держать metadata, актуальность и кодировку под контролем. |
 
 ### Возможная Битая Кодировка
@@ -737,6 +741,13 @@ owner_zone: "delivery"
 | `tests/browser/page-templates.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/popup-drag.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/popup-lifecycle.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/browser/popup-visual-baselines.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/add-block-constrained-chromium-win32.png` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/add-block-desktop-chromium-win32.png` | Browser regression/smoke сценарий пользовательского поведения. | Да: большой файл, нужен отдельный взгляд на назначение и размер. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/campaign-map-grid-constrained-chromium-win32.png` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/campaign-map-grid-desktop-chromium-win32.png` | Browser regression/smoke сценарий пользовательского поведения. | Да: большой файл, нужен отдельный взгляд на назначение и размер. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/properties-constrained-chromium-win32.png` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
+| `tests/browser/popup-visual-baselines.spec.mjs-snapshots/properties-desktop-chromium-win32.png` | Browser regression/smoke сценарий пользовательского поведения. | Да: большой файл, нужен отдельный взгляд на назначение и размер. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `tests/browser/property-blocks.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
 | `tests/browser/README.md` | Главная инструкция и обзор проекта. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `tests/browser/rule-tree.spec.mjs` | Browser regression/smoke сценарий пользовательского поведения. | Нет срочно: поддерживать через обычные проверки и контракт подсистемы. | Высокая: регрессионное покрытие, удалять только после замены тестом или отдельного решения. |
