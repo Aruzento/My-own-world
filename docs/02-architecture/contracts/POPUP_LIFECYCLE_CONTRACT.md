@@ -101,6 +101,7 @@ For the first editor feature overlay adoption:
 
 - `blockPopup`, `linkPopup`, `property-settings-popup` and `image-crop-popup` register as dialog overlays through `popupManager`;
 - `toolbarColorPopup` registers as a non-modal popover overlay; `PopupManager` owns its Escape/outside close and z-order, while `popupPosition` owns its anchor-relative viewport-safe placement;
+- `confirmPopup` is the shared confirmation owner: anchored confirmations may stay non-modal, while destructive confirmations inside modal workflows may use the same PopupManager-backed modal dialog path;
 - direct close buttons must route through the popup controller or an equivalent manager close path so `data-overlay-state` and `data-popup-open` remain synchronized;
 - feature-specific CSS may remain temporarily, but it must not create a parallel overlay lifecycle.
 
@@ -151,7 +152,7 @@ Popup относится к runtime UI.
 - block popup;
 - wiki preview popup;
 - image crop popup;
-- confirm popup;
+- confirm popup, including the modal app-confirmation path used by World Package file delete;
 - campaign map popup.
 
 Current `0.0.1.8.9` foundation status:

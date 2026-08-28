@@ -897,6 +897,267 @@ test(
 
 
 test(
+  'world-package-delete-confirmation-uses-app-popup-and-preserves-cancel-escape-confirm',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    await seedWorldPackageWorkspace(
+      page
+    );
+
+    await page.evaluate(
+      async () => {
+
+        const {
+          getStorageAdapter
+        } = await import('/js/storage/storageAdapter.js');
+
+        const {
+          saveWorldPackageFile
+        } = await import('/js/worldPackage/worldPackageStorage.js');
+
+        await saveWorldPackageFile(
+          getStorageAdapter(),
+          'delete-target',
+          {
+            packageId:
+              'delete-target',
+            title:
+              'Delete Target',
+            contents: {
+              pages:
+                [],
+              assets:
+                [],
+              rulePackages:
+                []
+            }
+          }
+        );
+
+        window.__nativeConfirmUsed =
+          false;
+
+        window.confirm =
+          () => {
+
+            window.__nativeConfirmUsed =
+              true;
+
+            throw new Error(
+              'Native confirm must not be used for World Package delete.'
+            );
+          };
+      }
+    );
+
+    await page.locator('#appToolsBtn').click();
+    await page.locator('#worldPackageManagerBtn').click();
+
+    const popup =
+      page.locator('#worldPackagePopup');
+
+    await expect(
+      popup
+    ).toBeVisible();
+
+    const removeButton =
+      popup.locator(
+        '[data-world-package-remove-file="delete-target"]'
+      );
+
+    await expect(
+      removeButton
+    ).toBeVisible();
+
+    const confirm =
+      popup.locator(
+        '.confirm-popup-modal'
+      );
+
+    const packageExists =
+      async () => page.evaluate(
+        () => window.__worldPackageTestFiles.has(
+          'world-packages/delete-target.world-package.json'
+        )
+      );
+
+    await removeButton.click();
+
+    await expect(
+      confirm
+    ).toBeVisible();
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'data-overlay-lifecycle',
+      'popup-manager'
+    );
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'data-overlay-kind',
+      'dialog'
+    );
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'data-overlay-modal',
+      'true'
+    );
+
+    await expect(
+      confirm
+    ).toHaveAttribute(
+      'aria-modal',
+      'true'
+    );
+
+    await expect(
+      confirm.locator('.confirm-popup-cancel')
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Tab'
+    );
+
+    await expect(
+      confirm.locator('.confirm-popup-confirm')
+    ).toBeFocused();
+
+    await page.keyboard.press(
+      'Tab'
+    );
+
+    await expect(
+      confirm.locator('.confirm-popup-cancel')
+    ).toBeFocused();
+
+    await confirm.locator('.confirm-popup-cancel').click();
+
+    await expect(
+      confirm
+    ).toBeHidden();
+
+    expect(
+      await packageExists()
+    ).toBe(
+      true
+    );
+
+    await expect(
+      popup
+    ).toBeVisible();
+
+    await removeButton.click();
+
+    await expect(
+      confirm
+    ).toBeVisible();
+
+    await page.keyboard.press(
+      'Escape'
+    );
+
+    await expect(
+      confirm
+    ).toBeHidden();
+
+    await expect(
+      popup
+    ).toBeVisible();
+
+    await expect(
+      removeButton
+    ).toBeFocused();
+
+    expect(
+      await packageExists()
+    ).toBe(
+      true
+    );
+
+    await removeButton.click();
+
+    await expect(
+      confirm
+    ).toBeVisible();
+
+    await popup.locator('.app-popup-close').click();
+
+    await expect(
+      confirm
+    ).toBeHidden();
+
+    await expect(
+      popup
+    ).toBeHidden();
+
+    expect(
+      await packageExists()
+    ).toBe(
+      true
+    );
+
+    await page.locator('#appToolsBtn').click();
+    await page.locator('#worldPackageManagerBtn').click();
+
+    await expect(
+      popup
+    ).toBeVisible();
+
+    await expect(
+      removeButton
+    ).toBeVisible();
+
+    await removeButton.click();
+
+    await expect(
+      confirm
+    ).toBeVisible();
+
+    await confirm.locator('.confirm-popup-confirm').click();
+
+    await expect(
+      confirm
+    ).toBeHidden();
+
+    await expect(
+      popup.locator('[data-world-package-file="delete-target"]')
+    ).toHaveCount(
+      0
+    );
+
+    await expect(
+      page.locator('#statusbar')
+    ).toContainText(
+      'World Package удален: delete-target'
+    );
+
+    expect(
+      await packageExists()
+    ).toBe(
+      false
+    );
+
+    expect(
+      await page.evaluate(
+        () => window.__nativeConfirmUsed
+      )
+    ).toBe(
+      false
+    );
+  }
+);
+
+
+test(
   'world-package-manager-uses-modal-dialog-focus-contract',
   async ({ page }) => {
 

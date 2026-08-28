@@ -1000,6 +1000,42 @@ function getTopmostOpenModalEntry() {
 }
 
 
+function getTopmostOpenEntry() {
+
+  let topEntry =
+    null;
+
+  let topZIndex =
+    -Infinity;
+
+  managedPopups.forEach(entry => {
+
+    if (
+      entry.popup.classList.contains('hidden')
+    ) return;
+
+    const zIndex =
+      Number(
+        entry.popup.style.zIndex
+      ) || 0;
+
+    if (
+      !topEntry ||
+      zIndex >= topZIndex
+    ) {
+
+      topEntry =
+        entry;
+
+      topZIndex =
+        zIndex;
+    }
+  });
+
+  return topEntry;
+}
+
+
 function getTopmostOpenMenuEntry() {
 
   let topEntry =
@@ -1206,15 +1242,12 @@ function ensurePopupManagerListeners() {
 
       if (event.key !== 'Escape') return;
 
-      managedPopups.forEach(entry => {
+      const entry =
+        getTopmostOpenEntry();
 
-        if (
-          !entry.popup.classList.contains('hidden')
-        ) {
+      if (!entry) return;
 
-          entry.close();
-        }
-      });
+      entry.close();
     }
   );
 

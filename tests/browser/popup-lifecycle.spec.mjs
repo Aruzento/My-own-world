@@ -637,6 +637,223 @@ test(
 
 
 test(
+  'popup-manager-closes-only-the-topmost-popup-on-escape',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            registerPopup
+          } = await import('/js/ui/popupManager.js');
+
+          const trigger =
+            document.createElement('button');
+
+          trigger.id =
+            'stacked-modal-trigger';
+
+          trigger.textContent =
+            'Open parent';
+
+          document.body.appendChild(
+            trigger
+          );
+
+          const createModal =
+            (
+              id,
+              label
+            ) => {
+
+              const popup =
+                document.createElement('div');
+
+              popup.id =
+                id;
+
+              popup.className =
+                'ui-panel hidden';
+
+              Object.assign(
+                popup.style,
+                {
+                  position:
+                    'fixed',
+                  width:
+                    '260px',
+                  height:
+                    '130px'
+                }
+              );
+
+              popup.innerHTML = `
+                <button id="${id}-first" type="button">${label}</button>
+              `;
+
+              document.body.appendChild(
+                popup
+              );
+
+              return popup;
+            };
+
+          const parent =
+            createModal(
+              'stacked-parent-popup',
+              'Parent first'
+            );
+
+          const child =
+            createModal(
+              'stacked-child-popup',
+              'Child first'
+            );
+
+          trigger.focus();
+
+          const parentController =
+            registerPopup({
+              popup:
+                parent,
+              anchors:
+                [trigger],
+              key:
+                'stacked-parent-popup',
+              modal:
+                true
+            });
+
+          const childController =
+            registerPopup({
+              popup:
+                child,
+              anchors:
+                [parent.querySelector('button')],
+              key:
+                'stacked-child-popup',
+              modal:
+                true
+            });
+
+          parentController.openAtPoint(
+            80,
+            80,
+            {
+              fallbackWidth:
+                260,
+              fallbackHeight:
+                130
+            }
+          );
+
+          childController.openAtPoint(
+            120,
+            120,
+            {
+              fallbackWidth:
+                260,
+              fallbackHeight:
+                130
+            }
+          );
+
+          document.dispatchEvent(
+            new KeyboardEvent(
+              'keydown',
+              {
+                key:
+                  'Escape',
+                bubbles:
+                  true
+              }
+            )
+          );
+
+          const afterFirstEscape = {
+            parentOpen:
+              !parent.classList.contains('hidden'),
+            childOpen:
+              !child.classList.contains('hidden'),
+            parentState:
+              parent.dataset.overlayState,
+            childState:
+              child.dataset.overlayState,
+            focusInsideParent:
+              parent.contains(
+                document.activeElement
+              )
+          };
+
+          document.dispatchEvent(
+            new KeyboardEvent(
+              'keydown',
+              {
+                key:
+                  'Escape',
+                bubbles:
+                  true
+              }
+            )
+          );
+
+          return {
+            afterFirstEscape,
+            afterSecondEscape: {
+              parentOpen:
+                !parent.classList.contains('hidden'),
+              childOpen:
+                !child.classList.contains('hidden'),
+              parentState:
+                parent.dataset.overlayState,
+              childState:
+                child.dataset.overlayState,
+              focusReturned:
+                document.activeElement === trigger
+            }
+          };
+        }
+      );
+
+    expect(
+      result.afterFirstEscape
+    ).toEqual({
+      parentOpen:
+        true,
+      childOpen:
+        false,
+      parentState:
+        'open',
+      childState:
+        'closed',
+      focusInsideParent:
+        true
+    });
+
+    expect(
+      result.afterSecondEscape
+    ).toEqual({
+      parentOpen:
+        false,
+      childOpen:
+        false,
+      parentState:
+        'closed',
+      childState:
+        'closed',
+      focusReturned:
+        true
+    });
+  }
+);
+
+
+test(
   'popup-manager-handles-menu-keyboard-lifecycle',
   async ({ page }) => {
 

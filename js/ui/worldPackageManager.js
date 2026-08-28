@@ -4,6 +4,11 @@ import {
 } from './popupManager.js';
 
 import {
+  closeConfirmPopup,
+  openConfirmPopup
+} from './confirmPopup.js';
+
+import {
   iconSvg
 } from '../core/icons.js';
 
@@ -83,6 +88,11 @@ export function setupWorldPackageManager() {
 
   const closeManager =
     () => {
+
+      closeConfirmPopup({
+        modal:
+          true
+      });
 
       trigger.setAttribute(
         'aria-expanded',
@@ -226,7 +236,8 @@ function renderWorldPackagePopup({
   const libraryPanel =
     createLibraryPanel({
       model,
-      previewPanel
+      previewPanel,
+      popup
     });
 
   const leftColumn =
@@ -640,7 +651,8 @@ function createExportPanel({
 
 function createLibraryPanel({
   model,
-  previewPanel
+  previewPanel,
+  popup
 }) {
 
   const panel =
@@ -794,25 +806,38 @@ function createLibraryPanel({
 
         removeButton.addEventListener(
           'click',
-          async () => {
+          () => {
 
-            const confirmed =
-              window.confirm(
-                `Удалить package-файл ${file.id}? Workspace pages не будут затронуты.`
-              );
+            openConfirmPopup({
+              anchor:
+                removeButton,
+              title:
+                'Удалить package-файл',
+              message:
+                `Удалить package-файл ${file.id}? Workspace pages не будут затронуты.`,
+              confirmText:
+                'Удалить',
+              cancelText:
+                'Отмена',
+              modal:
+                true,
+              container:
+                popup,
+              onConfirm:
+                async () => {
 
-            if (!confirmed) return;
+                  await removeWorldPackageFile(
+                    getStorageAdapter(),
+                    file.id
+                  );
 
-            await removeWorldPackageFile(
-              getStorageAdapter(),
-              file.id
-            );
+                  setStatus(
+                    `World Package удален: ${file.id}`
+                  );
 
-            setStatus(
-              `World Package удален: ${file.id}`
-            );
-
-            await refresh();
+                  await refresh();
+                }
+            });
           }
         );
 

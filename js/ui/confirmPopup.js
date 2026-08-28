@@ -1,12 +1,9 @@
 import {
-  openPopupNearAnchor,
   registerPopup
 } from './popupManager.js';
 
-let popup = null;
-let confirmHandler = null;
-let activeAnchor = null;
-const popupAnchors = [];
+const confirmInstances =
+  new Map();
 
 
 export function openConfirmPopup({
@@ -15,119 +12,187 @@ export function openConfirmPopup({
   message,
   confirmText = 'Удалить',
   cancelText = 'Отмена',
-  onConfirm
+  onConfirm,
+  modal = false,
+  container = null
 }) {
 
-  const element =
-    getConfirmPopup();
+  const instance =
+    getConfirmInstance({
+      modal
+    });
+
+  mountConfirmInstance(
+    instance,
+    container
+  );
 
   if (
-    activeAnchor === anchor &&
-    !element.classList.contains('hidden')
+    instance.activeAnchor === anchor &&
+    !instance.element.classList.contains('hidden')
   ) {
 
-    closeConfirmPopup();
+    instance.controller?.close();
 
     return;
   }
 
-  activeAnchor =
+  instance.activeAnchor =
     anchor;
 
-  popupAnchors.splice(
+  instance.popupAnchors.splice(
     0,
-    popupAnchors.length,
-    anchor
+    instance.popupAnchors.length,
+    ...(
+      anchor
+        ? [anchor]
+        : []
+    )
   );
 
-  confirmHandler =
+  instance.confirmHandler =
     onConfirm;
 
-  element.querySelector('.confirm-popup-title').textContent =
+  instance.element.querySelector('.confirm-popup-title').textContent =
     title;
 
-  element.querySelector('.confirm-popup-message').textContent =
+  instance.element.querySelector('.confirm-popup-message').textContent =
     message;
 
-  element.querySelector('.confirm-popup-confirm').textContent =
+  instance.element.querySelector('.confirm-popup-confirm').textContent =
     confirmText;
 
-  element.querySelector('.confirm-popup-cancel').textContent =
+  instance.element.querySelector('.confirm-popup-cancel').textContent =
     cancelText;
 
-  openPopupNearAnchor(
-    element,
-    anchor,
+  instance.controller?.openNearAnchor(
+    anchor || instance.element,
     {
-      fallbackWidth: 260,
-      fallbackHeight: 140
+      fallbackWidth:
+        modal ? 320 : 260,
+      fallbackHeight:
+        modal ? 170 : 140
     }
   );
 }
 
 
-export function closeConfirmPopup() {
+export function closeConfirmPopup(
+  {
+    modal = null
+  } = {}
+) {
 
-  if (!popup) return;
+  if (typeof modal === 'boolean') {
 
-  popup.classList.add(
-    'hidden'
-  );
+    const instance =
+      confirmInstances.get(
+        getConfirmInstanceKey(
+          modal
+        )
+      );
 
-  confirmHandler =
-    null;
+    instance?.controller?.close();
 
-  activeAnchor =
-    null;
+    return;
+  }
 
-  popupAnchors.splice(
-    0,
-    popupAnchors.length
+  confirmInstances.forEach(instance =>
+    instance.controller?.close()
   );
 }
 
 
-function getConfirmPopup() {
+function getConfirmInstance({
+  modal
+}) {
 
-  if (popup) return popup;
+  const key =
+    getConfirmInstanceKey(
+      modal
+    );
 
-  popup =
+  const existing =
+    confirmInstances.get(
+      key
+    );
+
+  if (existing) return existing;
+
+  const element =
     document.createElement('div');
 
-  popup.className =
-    'confirm-popup hidden';
+  element.className =
+    modal
+      ? 'confirm-popup confirm-popup-modal hidden'
+      : 'confirm-popup hidden';
 
-  popup.innerHTML = `
-    <div class="confirm-popup-title"></div>
-    <div class="confirm-popup-message"></div>
+  element.dataset.confirmPopupMode =
+    modal ? 'modal' : 'popover';
+
+  const titleId =
+    `${key}-title`;
+
+  const messageId =
+    `${key}-message`;
+
+  element.setAttribute(
+    'aria-labelledby',
+    titleId
+  );
+
+  element.setAttribute(
+    'aria-describedby',
+    messageId
+  );
+
+  element.innerHTML = `
+    <div class="confirm-popup-title" id="${titleId}"></div>
+    <div class="confirm-popup-message" id="${messageId}"></div>
 
     <div class="confirm-popup-actions">
-      <button class="confirm-popup-cancel" type="button">Отмена</button>
+      <button class="confirm-popup-cancel" type="button" data-overlay-autofocus="true">Отмена</button>
       <button class="confirm-popup-confirm" type="button">Удалить</button>
     </div>
   `;
 
+  const instance = {
+    element,
+    popupAnchors:
+      [],
+    confirmHandler:
+      null,
+    activeAnchor:
+      null,
+    controller:
+      null,
+    modal
+  };
+
   document.body.appendChild(
-    popup
+    element
   );
 
-  popup
+  element
     .querySelector('.confirm-popup-cancel')
     .addEventListener(
       'click',
-      closeConfirmPopup
+      () => {
+
+        instance.controller?.close();
+      }
     );
 
-  popup
+  element
     .querySelector('.confirm-popup-confirm')
     .addEventListener(
       'click',
       async () => {
 
         const handler =
-          confirmHandler;
+          instance.confirmHandler;
 
-        closeConfirmPopup();
+        instance.controller?.close();
 
         if (handler) {
 
@@ -136,11 +201,75 @@ function getConfirmPopup() {
       }
     );
 
-  registerPopup({
-    popup,
-    close: closeConfirmPopup,
-    anchors: popupAnchors
-  });
+  instance.controller =
+    registerPopup({
+      popup:
+        element,
+      close:
+        () => closeConfirmInstance(
+          instance
+        ),
+      anchors:
+        instance.popupAnchors,
+      key,
+      kind:
+        modal ? 'dialog' : 'popover',
+      modal
+    });
 
-  return popup;
+  confirmInstances.set(
+    key,
+    instance
+  );
+
+  return instance;
+}
+
+
+function closeConfirmInstance(
+  instance
+) {
+
+  instance.element.classList.add(
+    'hidden'
+  );
+
+  instance.confirmHandler =
+    null;
+
+  instance.activeAnchor =
+    null;
+
+  instance.popupAnchors.splice(
+    0,
+    instance.popupAnchors.length
+  );
+}
+
+
+function mountConfirmInstance(
+  instance,
+  container
+) {
+
+  const parent =
+    container || document.body;
+
+  if (
+    instance.element.parentElement === parent
+  ) return;
+
+  parent.appendChild(
+    instance.element
+  );
+}
+
+
+function getConfirmInstanceKey(
+  modal
+) {
+
+  return modal
+    ? 'confirm-popup-modal'
+    : 'confirm-popup';
 }
