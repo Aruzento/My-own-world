@@ -82,6 +82,12 @@ test(
     );
 
     assert.match(
+      popupBaselineSpec,
+      /hasApprovedPopupSnapshot/,
+      `${POPUP_BASELINE_SPEC_PATH} must guard screenshot assertions by an existing owner-approved platform snapshot`
+    );
+
+    assert.match(
       policyDoc,
       /Approved Popup Baselines/i,
       `${VISUAL_POLICY_DOC_PATH} must document the narrow approved popup baseline layer`
@@ -97,6 +103,18 @@ test(
       policyDoc,
       /visually approved by the owner on 2026-08-28/i,
       `${VISUAL_POLICY_DOC_PATH} must record the owner approval date for popup baselines`
+    );
+
+    assert.match(
+      policyDoc,
+      /chromium-win32/i,
+      `${VISUAL_POLICY_DOC_PATH} must document the current approved popup snapshot platform`
+    );
+
+    assert.match(
+      baselineDoc,
+      /Linux CI therefore acts as popup lifecycle\/layout smoke/i,
+      `${UI_BASELINE_DOC_PATH} must document non-approved-platform behavior`
     );
 
     for (const snapshotName of [

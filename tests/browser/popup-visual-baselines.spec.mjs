@@ -3,6 +3,27 @@ import {
   test
 } from '@playwright/test';
 
+import {
+  access
+} from 'node:fs/promises';
+
+import path from 'node:path';
+import process from 'node:process';
+import {
+  fileURLToPath
+} from 'node:url';
+
+
+const POPUP_SNAPSHOT_DIR =
+  path.join(
+    path.dirname(
+      fileURLToPath(
+        import.meta.url
+      )
+    ),
+    'popup-visual-baselines.spec.mjs-snapshots'
+  );
+
 
 const POPUP_VIEWPORTS = [
   {
@@ -84,7 +105,12 @@ test.describe(
 
         test(
           `${surface.name} approved baseline at ${viewport.name}`,
-          async ({ page }) => {
+          async (
+            {
+              page
+            },
+            testInfo
+          ) => {
 
             await page.setViewportSize({
               width:
@@ -125,6 +151,24 @@ test.describe(
               );
             }
 
+            if (
+              !await hasApprovedPopupSnapshot(
+                surface,
+                viewport,
+                testInfo
+              )
+            ) {
+
+              testInfo.annotations.push({
+                type:
+                  'visual-baseline',
+                description:
+                  `No owner-approved popup baseline for ${testInfo.project.name}/${process.platform}; completed fixture smoke without pixel assertion.`
+              });
+
+              return;
+            }
+
             await expect(
               page
             ).toHaveScreenshot(
@@ -137,6 +181,28 @@ test.describe(
     }
   }
 );
+
+
+async function hasApprovedPopupSnapshot(
+  surface,
+  viewport,
+  testInfo
+) {
+
+  const snapshotPath =
+    path.join(
+      POPUP_SNAPSHOT_DIR,
+      `${surface.name}-${viewport.name}-${testInfo.project.name}-${process.platform}.png`
+    );
+
+  return access(
+    snapshotPath
+  )
+    .then(
+      () => true,
+      () => false
+    );
+}
 
 
 async function prepareDeterministicWorkbench(

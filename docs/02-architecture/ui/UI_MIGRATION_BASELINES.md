@@ -151,7 +151,9 @@ These names are the current visual baseline contract. They are produced by `npm 
 
 ## Approved Popup Snapshot Contract
 
-These approved files are produced and compared by `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs`. They use Playwright screenshot assertions, deterministic synthetic content, fixed dark/gold/stone/normal appearance, disabled animations and two viewport sizes. Owner approval on 2026-08-28 applies only to this small popup set, not to broad strict pixel comparison for the whole UI.
+These approved files are produced and compared by `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs` on platforms that have an owner-approved snapshot file in `tests/browser/popup-visual-baselines.spec.mjs-snapshots/`. They use Playwright screenshot assertions, deterministic synthetic content, fixed dark/gold/stone/normal appearance, disabled animations and two viewport sizes. Owner approval on 2026-08-28 applies only to this small popup set and currently only to the committed `chromium-win32` snapshots, not to broad strict pixel comparison for the whole UI.
+
+On platforms without committed owner-approved popup snapshots, the same spec still runs the deterministic popup setup and viewport/positioning assertions, but it does not generate or compare platform baselines implicitly. Linux CI therefore acts as popup lifecycle/layout smoke until separate Linux screenshots are reviewed and committed.
 
 | Approved snapshot | Surface | Viewport | Why it matters |
 | --- | --- | --- | --- |

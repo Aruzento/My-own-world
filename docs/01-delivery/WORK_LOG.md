@@ -6,6 +6,33 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-29: Owner-Directed Off-Plan Maintenance - Popup Baseline CI Platform Guard
+
+### Disposition
+
+- Readiness: `CI Browser Smoke Fix`.
+- Fixed the GitHub Actions browser smoke failure where Playwright on Linux looked for unapproved `*-chromium-linux.png` popup snapshots while the approved committed popup baselines currently exist only as `*-chromium-win32.png`.
+- Kept the current roadmap phase/status unchanged and did not start `0.0.1.16.0`.
+
+### What Changed
+
+- Updated `tests/browser/popup-visual-baselines.spec.mjs` so screenshot assertions run only when an owner-approved snapshot file exists for the current browser/platform suffix.
+- Preserved the deterministic popup setup and viewport/positioning assertions on platforms without approved snapshot files, so Linux CI still exercises popup lifecycle/layout smoke instead of silently generating unapproved baselines.
+- Updated [VISUAL_REGRESSION.md](../03-testing/VISUAL_REGRESSION.md) and [UI_MIGRATION_BASELINES.md](../02-architecture/ui/UI_MIGRATION_BASELINES.md) to document that the current approved popup pixel baseline is `chromium-win32`; Linux CI remains smoke-only until Linux screenshots are explicitly reviewed and committed.
+- Added a policy regression in `tests/visualRegressionPolicy.test.mjs` so the platform guard stays documented.
+
+### Explicit Non-Work
+
+- No product UI, popup styling, roadmap/status, Linux baseline approval, screenshot update, dependency, Codex execution or `0.0.1.16.0` work was added.
+
+### Verification
+
+- `node --test tests\visualRegressionPolicy.test.mjs` passed.
+- `npm run test:browser -- tests/browser/popup-visual-baselines.spec.mjs` passed locally with 6 approved Windows screenshot comparisons.
+- `npm run docs:index` passed with 93 markdown files, 0 invalid metadata and 0 active status drift.
+- `npm run verify` passed with 577 unit tests, synthetic large-workspace performance smoke, manual DOCX zip validation and `git diff --check`.
+- `npm run test:browser` passed with 197 browser tests, including all six approved popup baseline comparisons on Windows.
+
 ## 2026-08-29: Owner-Directed Off-Plan Maintenance - Autonomous Runner Readiness Semantics
 
 ### Disposition

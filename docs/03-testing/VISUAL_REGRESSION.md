@@ -32,7 +32,9 @@ Strict pixel baselines may be added broadly only after an explicit owner-approve
 - Properties settings popup as a heavier editor dialog;
 - Campaign Map grid popup near the map Inspector, including constrained positioning.
 
-The committed PNG files under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` were generated from deterministic local fixtures at `1440x900` and `960x640`, then visually approved by the owner on 2026-08-28. They are approved only for this small popup set. Treat failures as a prompt to inspect the UI change and either update the baseline through an explicit owner-reviewed visual change or fix an unintended popup regression.
+The committed PNG files under `tests/browser/popup-visual-baselines.spec.mjs-snapshots/` were generated from deterministic local fixtures at `1440x900` and `960x640`, then visually approved by the owner on 2026-08-28. They are approved only for this small popup set on the platform/browser suffix that exists in the snapshot folder today (`chromium-win32`). Treat failures as a prompt to inspect the UI change and either update the baseline through an explicit owner-reviewed visual change or fix an unintended popup regression.
+
+On platforms without an owner-approved snapshot file, including the Linux GitHub Actions runner until Linux baselines are deliberately reviewed, the popup baseline spec still opens the same deterministic fixture states and runs the structural viewport/positioning assertions, but it does not create or compare unapproved screenshot baselines. This prevents CI from treating a missing platform baseline as an approved visual change.
 
 ## Автоматические Проверки
 
