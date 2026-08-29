@@ -228,12 +228,42 @@ The v1 runner is a planning foundation only. It:
 
 The dry-run runner must not modify product files, create commits, create branches, create worktrees, merge, push, reset, invoke Codex or bypass owner approval.
 
+## Single-Pass Codex Execution Runner
+
+Use:
+
+```powershell
+npm run agent:task -- --execute docs/03-testing/agent-tasks/examples/autonomous-runner-smoke.agent-task.json
+```
+
+Execution mode is intentionally narrower than a general autonomous workflow. It:
+
+- reuses the same task validator and dry-run readiness checks;
+- requires a clean source worktree;
+- requires machine-checkable `path:` include scope;
+- resolves a supported standalone Codex CLI executable and records the exact path/version;
+- creates one dedicated sibling git worktree and task branch;
+- invokes `codex exec` exactly once in that worktree;
+- runs `npm run verify:quick` and the task-declared verification commands;
+- compares all changed/untracked files against `scope.include` / `scope.exclude` path rules;
+- emits a machine-readable execution report.
+
+Execution mode must not commit, merge, push, reset, retry with a repair pass, approve owner-gated actions or expand scope. Any changed file outside the declared path rules is reported as `scope_violation`.
+
+The first live smoke task is deliberately docs/testing-only and writes only:
+
+```text
+docs/03-testing/agent-tasks/smoke-output/first-autonomous-smoke.txt
+```
+
+The smoke task branch/worktree remains unmerged and unpushed for owner inspection.
+
 ## Non-Goals
 
 This contract does not:
 
 - start `0.0.1.16.0` or any roadmap phase;
-- create a Codex/autonomous task executor;
+- create a multi-pass autonomous repair runner;
 - allow hidden approval by schema;
 - add YAML parsing;
 - replace `AGENTS.md`, `PROJECT_PLAN.md`, `WORK_LOG.md` or Definition of Done;

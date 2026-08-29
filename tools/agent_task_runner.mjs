@@ -3,6 +3,7 @@ import {
 } from 'node:child_process';
 
 import {
+  mkdir,
   readFile
 } from 'node:fs/promises';
 
@@ -23,8 +24,29 @@ export const AGENT_TASK_RUNNER_REPORT_KIND =
 export const AGENT_TASK_RUNNER_REPORT_VERSION =
   1;
 
+export const AGENT_TASK_EXECUTION_REPORT_KIND =
+  'myownworld.agent-task.execution-report';
+
+export const AGENT_TASK_EXECUTION_REPORT_VERSION =
+  1;
+
 const PATH_SCOPE_PREFIX =
   'path:';
+
+const CODEX_CLI_PATH_ENV =
+  'MOW_CODEX_CLI';
+
+const CODEX_EXEC_TIMEOUT_MS =
+  10 * 60 * 1000;
+
+const COMMAND_TIMEOUT_MS =
+  5 * 60 * 1000;
+
+const PROBE_TIMEOUT_MS =
+  15 * 1000;
+
+const COMMAND_MAX_BUFFER =
+  20 * 1024 * 1024;
 
 const EXECUTION_SCOPE_MACHINE_ENFORCEABLE =
   'machine-enforceable';
@@ -49,6 +71,24 @@ const DRY_RUN_GUARANTEES =
     invokesCodex:
       false,
     bypassesApproval:
+      false
+  });
+
+const EXECUTION_GUARANTEES =
+  Object.freeze({
+    createsCommits:
+      false,
+    merges:
+      false,
+    pushes:
+      false,
+    resets:
+      false,
+    repairAttempts:
+      0,
+    taskBranchMerged:
+      false,
+    taskBranchPushed:
       false
   });
 
@@ -133,12 +173,21 @@ export async function runCli(
   }
 
   const report =
-    await createAgentTaskDryRunReport(
-      parsed.taskFile,
-      {
-        root
-      }
-    );
+    parsed.execute
+      ? await executeAgentTask(
+          parsed.taskFile,
+          {
+            root,
+            codexCliPath:
+              parsed.codexCliPath
+          }
+        )
+      : await createAgentTaskDryRunReport(
+          parsed.taskFile,
+          {
+            root
+          }
+        );
 
   if (parsed.json) {
 
@@ -153,9 +202,13 @@ export async function runCli(
   } else {
 
     stdout(
-      formatDryRunReport(
-        report
-      )
+      parsed.execute
+        ? formatExecutionReport(
+            report
+          )
+        : formatDryRunReport(
+            report
+          )
     );
 
     stdout(
@@ -173,9 +226,15 @@ export async function runCli(
 
   return {
     ok:
-      report.status !== 'invalid',
+      report.status !== 'invalid' &&
+      report.status !== 'blocked' &&
+      report.status !== 'failed' &&
+      report.status !== 'scope_violation',
     exitCode:
-      report.status === 'invalid'
+      report.status === 'invalid' ||
+      report.status === 'blocked' ||
+      report.status === 'failed' ||
+      report.status === 'scope_violation'
         ? 1
         : 0,
     report
@@ -187,7 +246,13 @@ export async function createAgentTaskDryRunReport(
   taskFile,
   {
     root =
-      process.cwd()
+      process.cwd(),
+    commandRunner =
+      runCommand,
+    triggeredApprovalKeys =
+      [],
+    approvedApprovalKeys =
+      []
   } = {}
 ) {
 
@@ -217,7 +282,10 @@ export async function createAgentTaskDryRunReport(
 
   const repository =
     inspectRepositoryState(
-      root
+      root,
+      {
+        commandRunner
+      }
     );
 
   const scopePolicy =
@@ -227,7 +295,11 @@ export async function createAgentTaskDryRunReport(
 
   const approvalGates =
     createApprovalGates(
-      taskLoad.task.requiresApproval
+      taskLoad.task.requiresApproval,
+      {
+        triggeredApprovalKeys,
+        approvedApprovalKeys
+      }
     );
 
   const verificationPlan =
@@ -321,6 +393,240 @@ export async function createAgentTaskDryRunReport(
     validation:
       taskLoad.validation
   };
+}
+
+
+export async function executeAgentTask(
+  taskFile,
+  {
+    root =
+      process.cwd(),
+    codexCliPath =
+      process.env[CODEX_CLI_PATH_ENV] || '',
+    commandRunner =
+      runCommand,
+    env =
+      process.env,
+    platform =
+      process.platform,
+    triggeredApprovalKeys =
+      [],
+    approvedApprovalKeys =
+      [],
+    disableDefaultCliCandidates =
+      false,
+    pathCandidates =
+      null
+  } = {}
+) {
+
+  const createdAt =
+    new Date().toISOString();
+
+  const taskPath =
+    path.resolve(
+      root,
+      taskFile
+    );
+
+  const dryRunReport =
+    await createAgentTaskDryRunReport(
+      taskFile,
+      {
+        root,
+        commandRunner,
+        triggeredApprovalKeys,
+        approvedApprovalKeys
+      }
+    );
+
+  if (dryRunReport.status !== 'ready') {
+
+    return createPreExecutionReport({
+      createdAt,
+      dryRunReport,
+      status:
+        dryRunReport.status === 'invalid'
+          ? 'invalid'
+          : 'blocked',
+      blockingReasons:
+        dryRunReport.blockingReasons
+    });
+  }
+
+  const taskLoad =
+    await loadTask(
+      taskPath
+    );
+
+  const cliResolution =
+    resolveCodexCli({
+      explicitPath:
+        codexCliPath,
+      env,
+      platform,
+      root,
+      commandRunner,
+      pathCandidates,
+      disableDefaultCandidates:
+        disableDefaultCliCandidates
+    });
+
+  if (!cliResolution.ok) {
+
+    return createPreExecutionReport({
+      createdAt,
+      dryRunReport,
+      status:
+        'blocked',
+      cliResolution,
+      blockingReasons:
+        [
+          {
+            code:
+              'CODEX_CLI_UNAVAILABLE',
+            message:
+              cliResolution.error
+          }
+        ]
+    });
+  }
+
+  const worktreeResult =
+    await createDedicatedWorktree(
+      dryRunReport.plannedWorktree,
+      {
+        commandRunner,
+        root:
+          dryRunReport.repository.root
+      }
+    );
+
+  if (!worktreeResult.ok) {
+
+    return createPreExecutionReport({
+      createdAt,
+      dryRunReport,
+      status:
+        'blocked',
+      cliResolution,
+      worktree:
+        worktreeResult,
+      blockingReasons:
+        [
+          {
+            code:
+              'WORKTREE_CREATE_FAILED',
+            message:
+              worktreeResult.error
+          }
+        ]
+    });
+  }
+
+  const prompt =
+    createCodexExecutionPrompt({
+      task:
+        taskLoad.task,
+      taskPath:
+        dryRunReport.task.path,
+      scopePolicy:
+        dryRunReport.scopePolicy,
+      verificationPlan:
+        dryRunReport.verificationPlan,
+      approvalGates:
+        dryRunReport.approvalGates
+    });
+
+  const codexCommand =
+    createCodexExecCommand({
+      cliPath:
+        cliResolution.path,
+      worktreePath:
+        worktreeResult.path
+    });
+
+  const codexResult =
+    runCodexOnce({
+      command:
+        codexCommand,
+      prompt,
+      commandRunner
+    });
+
+  let verifyQuick =
+    null;
+
+  let taskVerification =
+    [];
+
+  if (codexResult.ok) {
+
+    verifyQuick =
+      runShellVerificationCommand(
+        'npm run verify:quick',
+        worktreeResult.path,
+        commandRunner
+      );
+
+    if (verifyQuick.ok) {
+
+      taskVerification =
+        runTaskVerificationCommands(
+          dryRunReport.verificationPlan.taskCommands,
+          worktreeResult.path,
+          commandRunner
+        );
+    }
+  }
+
+  const changedFiles =
+    collectChangedFiles(
+      worktreeResult.path,
+      commandRunner
+    );
+
+  const scopeResult =
+    changedFiles.ok
+      ? evaluateChangedFilesAgainstScope(
+          changedFiles.files,
+          dryRunReport.scopePolicy
+        )
+      : {
+          ok:
+            false,
+          allowed:
+            [],
+          outside:
+            [],
+          excluded:
+            [],
+          error:
+            changedFiles.error
+        };
+
+  const sourceAfter =
+    inspectRepositoryState(
+      dryRunReport.repository.root,
+      {
+        commandRunner
+      }
+    );
+
+  return createExecutionReport({
+    createdAt,
+    dryRunReport,
+    cliResolution,
+    worktree:
+      worktreeResult,
+    codexCommand,
+    codexResult,
+    verifyQuick,
+    taskVerification,
+    changedFiles,
+    scopeResult,
+    sourceAfter
+  });
 }
 
 
@@ -558,6 +864,766 @@ export function createApprovalGates(
 }
 
 
+export function resolveCodexCli({
+  explicitPath =
+    '',
+  env =
+    process.env,
+  platform =
+    process.platform,
+  root =
+    process.cwd(),
+  commandRunner =
+    runCommand,
+  pathCandidates =
+    null,
+  disableDefaultCandidates =
+    false
+} = {}) {
+
+  const candidates =
+    buildCodexCliCandidates({
+      explicitPath,
+      env,
+      platform,
+      root,
+      commandRunner,
+      pathCandidates,
+      disableDefaultCandidates
+    });
+
+  const rejected =
+    [];
+
+  for (const candidate of candidates) {
+
+    if (isPackagedWindowsAppsCodex(candidate.path)) {
+
+      rejected.push({
+        ...candidate,
+        status:
+          'rejected',
+        reason:
+          'Packaged WindowsApps OpenAI.Codex binary is not an approved standalone CLI target.'
+      });
+
+      continue;
+    }
+
+    if (
+      candidate.source === 'explicit' &&
+      !path.isAbsolute(
+        candidate.path
+      )
+    ) {
+
+      rejected.push({
+        ...candidate,
+        status:
+          'rejected',
+        reason:
+          'Explicit Codex CLI path must be absolute.'
+      });
+
+      continue;
+    }
+
+    const probe =
+      commandRunner(
+        candidate.path,
+        [
+          '--version'
+        ],
+        {
+          cwd:
+            root,
+          timeout:
+            PROBE_TIMEOUT_MS
+        }
+      );
+
+    if (probe.ok) {
+
+      return {
+        ok:
+          true,
+        path:
+          candidate.path,
+        source:
+          candidate.source,
+        version:
+          firstOutputLine(
+            probe.stdout || probe.stderr
+          ),
+        candidates,
+        rejected
+      };
+    }
+
+    rejected.push({
+      ...candidate,
+      status:
+        'rejected',
+      reason:
+        createCommandFailureMessage(
+          probe
+        )
+    });
+  }
+
+  return {
+    ok:
+      false,
+    path:
+      '',
+    version:
+      '',
+    candidates,
+    rejected,
+    error:
+      rejected.length
+        ? 'No executable standalone Codex CLI candidate passed --version.'
+        : 'No Codex CLI candidates were discovered.'
+  };
+}
+
+
+export function buildCodexCliCandidates({
+  explicitPath =
+    '',
+  env =
+    process.env,
+  platform =
+    process.platform,
+  root =
+    process.cwd(),
+  commandRunner =
+    runCommand,
+  pathCandidates =
+    null,
+  disableDefaultCandidates =
+    false
+} = {}) {
+
+  const candidates =
+    [];
+
+  const addCandidate =
+    (
+      candidatePath,
+      source
+    ) => {
+
+      const normalized =
+        String(
+          candidatePath || ''
+        ).trim();
+
+      if (!normalized) return;
+
+      if (
+        candidates.some(candidate =>
+          normalizeCaseInsensitivePath(
+            candidate.path
+          ) === normalizeCaseInsensitivePath(
+            normalized
+          )
+        )
+      ) {
+
+        return;
+      }
+
+      candidates.push({
+        path:
+          normalized,
+        source
+      });
+    };
+
+  addCandidate(
+    explicitPath,
+    'explicit'
+  );
+
+  if (!disableDefaultCandidates) {
+
+    for (const candidatePath of getStandaloneUserCodexCandidates(
+      env,
+      platform
+    )) {
+
+      addCandidate(
+        candidatePath,
+        'standalone-user-install'
+      );
+    }
+  }
+
+  const discoveredPathCandidates =
+    Array.isArray(
+      pathCandidates
+    )
+      ? pathCandidates
+      : disableDefaultCandidates
+        ? []
+        : discoverPathCodexCandidates({
+            platform,
+            root,
+            commandRunner
+          });
+
+  for (const candidatePath of discoveredPathCandidates) {
+
+    addCandidate(
+      candidatePath,
+      'path'
+    );
+  }
+
+  return candidates;
+}
+
+
+export async function createDedicatedWorktree(
+  plannedWorktree,
+  {
+    root,
+    commandRunner =
+      runCommand
+  }
+) {
+
+  const worktreePath =
+    path.resolve(
+      plannedWorktree.worktreePath
+    );
+
+  const parent =
+    path.dirname(
+      worktreePath
+    );
+
+  try {
+
+    await mkdir(
+      parent,
+      {
+        recursive:
+          true
+      }
+    );
+
+  } catch (error) {
+
+    return {
+      ok:
+        false,
+      path:
+        normalizeRepoPath(
+          worktreePath
+        ),
+      branch:
+        plannedWorktree.branchName,
+      error:
+        error?.message || 'Could not create task worktree parent directory.'
+    };
+  }
+
+  const result =
+    runGit(
+      [
+        'worktree',
+        'add',
+        '-b',
+        plannedWorktree.branchName,
+        worktreePath,
+        plannedWorktree.baseHead
+      ],
+      root,
+      commandRunner
+    );
+
+  if (!result.ok) {
+
+    return {
+      ok:
+        false,
+      path:
+        normalizeRepoPath(
+          worktreePath
+        ),
+      branch:
+        plannedWorktree.branchName,
+      error:
+        result.error
+    };
+  }
+
+  return {
+    ok:
+      true,
+    path:
+      normalizeRepoPath(
+        worktreePath
+      ),
+    branch:
+      plannedWorktree.branchName,
+    baseHead:
+      plannedWorktree.baseHead
+  };
+}
+
+
+export function createCodexExecutionPrompt({
+  task,
+  taskPath,
+  scopePolicy,
+  verificationPlan,
+  approvalGates
+}) {
+
+  return [
+    'You are executing exactly one validated MyOwnWorld autonomous agent task.',
+    '',
+    'First read AGENTS.md and follow its routing. Do not preload the generated DOCX manual unless the task explicitly requires manual-specific work.',
+    '',
+    'Hard constraints:',
+    '- Execute only this one task.',
+    '- Modify only files allowed by the machine-checkable path scope below.',
+    '- Do not expand scope.',
+    '- Do not create commits, branches, worktrees, merges, pushes or repair retries.',
+    '- Do not start roadmap phase 0.0.1.16.0.',
+    '- Do not perform destructive filesystem actions, dependency installation, external API calls, persistent format changes, real workspace mutations or new product functionality.',
+    '- If an approval-gated action becomes necessary, stop and report it instead of proceeding.',
+    '',
+    `Task file: ${taskPath}`,
+    '',
+    'Machine-readable task JSON:',
+    '```json',
+    JSON.stringify(
+      task,
+      null,
+      2
+    ),
+    '```',
+    '',
+    'Allowed machine-checkable scope.include path rules:',
+    ...scopePolicy.includePathRules.map(rule =>
+      `- ${rule.pattern}`
+    ),
+    '',
+    'Blocked machine-checkable scope.exclude path rules:',
+    ...scopePolicy.excludePathRules.map(rule =>
+      `- ${rule.pattern}`
+    ),
+    '',
+    'Acceptance criteria:',
+    ...task.acceptance.map(item =>
+      `- ${item}`
+    ),
+    '',
+    'Verification requirements the runner will execute after your single pass:',
+    ...verificationPlan.taskCommands.map(command =>
+      `- ${command.command} (${command.reason})`
+    ),
+    '',
+    'Approval gates are declared as conditional safeguards, not pre-approved actions:',
+    ...approvalGates.gates.map(gate =>
+      `- ${gate.when}: ${gate.status} - ${gate.reason}`
+    ),
+    '',
+    'When done, report only what you changed and stop.'
+  ].join(
+    '\n'
+  );
+}
+
+
+export function createCodexExecCommand({
+  cliPath,
+  worktreePath
+}) {
+
+  return {
+    executable:
+      cliPath,
+    args:
+      [
+        'exec',
+        '-C',
+        worktreePath,
+        '-s',
+        'workspace-write',
+        '-a',
+        'never',
+        '--color',
+        'never',
+        '--ephemeral',
+        '-'
+      ]
+  };
+}
+
+
+function runCodexOnce({
+  command,
+  prompt,
+  commandRunner
+}) {
+
+  const result =
+    commandRunner(
+      command.executable,
+      command.args,
+      {
+        cwd:
+          command.args[2],
+        input:
+          prompt,
+        timeout:
+          CODEX_EXEC_TIMEOUT_MS,
+        maxBuffer:
+          COMMAND_MAX_BUFFER,
+        shell:
+          false
+      }
+    );
+
+  return summarizeCommandResult(
+    result
+  );
+}
+
+
+function runShellVerificationCommand(
+  command,
+  cwd,
+  commandRunner
+) {
+
+  const result =
+    commandRunner(
+      command,
+      [],
+      {
+        cwd,
+        shell:
+          true,
+        timeout:
+          COMMAND_TIMEOUT_MS,
+        maxBuffer:
+          COMMAND_MAX_BUFFER
+      }
+    );
+
+  return {
+    command,
+    ...summarizeCommandResult(
+      result
+    )
+  };
+}
+
+
+function runTaskVerificationCommands(
+  commands,
+  cwd,
+  commandRunner
+) {
+
+  return commands.map(command => ({
+    ...command,
+    ...runShellVerificationCommand(
+      command.command,
+      cwd,
+      commandRunner
+    )
+  }));
+}
+
+
+function collectChangedFiles(
+  root,
+  commandRunner
+) {
+
+  const status =
+    runGit(
+      [
+        'status',
+        '--porcelain=v1',
+        '--untracked-files=all'
+      ],
+      root,
+      commandRunner
+    );
+
+  if (!status.ok) {
+
+    return {
+      ok:
+        false,
+      files:
+        [],
+      error:
+        status.error
+    };
+  }
+
+  const files =
+    parseGitStatus(
+      status.stdout
+    )
+      .flatMap(entry =>
+        extractChangedPaths(
+          entry.path
+        )
+      )
+      .map(normalizeRepoPath)
+      .filter(Boolean)
+      .filter((file, index, list) =>
+        list.indexOf(file) === index
+      )
+      .sort();
+
+  return {
+    ok:
+      true,
+    files
+  };
+}
+
+
+function extractChangedPaths(
+  statusPath
+) {
+
+  if (
+    statusPath.includes(
+      ' -> '
+    )
+  ) {
+
+    const parts =
+      statusPath.split(
+        ' -> '
+      );
+
+    return [
+      parts[parts.length - 1]
+    ];
+  }
+
+  return [
+    statusPath
+  ];
+}
+
+
+function getStandaloneUserCodexCandidates(
+  env,
+  platform
+) {
+
+  if (platform !== 'win32') {
+
+    return [];
+  }
+
+  const candidates =
+    [];
+
+  if (env.LOCALAPPDATA) {
+
+    candidates.push(
+      path.win32.join(
+        env.LOCALAPPDATA,
+        'Programs',
+        'OpenAI',
+        'Codex',
+        'bin',
+        'codex.exe'
+      )
+    );
+  }
+
+  if (env.USERPROFILE) {
+
+    candidates.push(
+      path.win32.join(
+        env.USERPROFILE,
+        'AppData',
+        'Local',
+        'Programs',
+        'OpenAI',
+        'Codex',
+        'bin',
+        'codex.exe'
+      )
+    );
+  }
+
+  return candidates;
+}
+
+
+function discoverPathCodexCandidates({
+  platform,
+  root,
+  commandRunner
+}) {
+
+  const probe =
+    platform === 'win32'
+      ? commandRunner(
+          'where.exe',
+          [
+            'codex'
+          ],
+          {
+            cwd:
+              root,
+            timeout:
+              PROBE_TIMEOUT_MS
+          }
+        )
+      : commandRunner(
+          'which',
+          [
+            '-a',
+            'codex'
+          ],
+          {
+            cwd:
+              root,
+            timeout:
+              PROBE_TIMEOUT_MS
+          }
+        );
+
+  if (!probe.ok) {
+
+    return [];
+  }
+
+  return String(
+    probe.stdout || ''
+  )
+    .split(/\r?\n/)
+    .map(line =>
+      line.trim()
+    )
+    .filter(Boolean);
+}
+
+
+function isPackagedWindowsAppsCodex(
+  candidatePath
+) {
+
+  const normalized =
+    normalizeCaseInsensitivePath(
+      candidatePath
+    );
+
+  return normalized.includes(
+    '/program files/windowsapps/openai.codex_'
+  );
+}
+
+
+function normalizeCaseInsensitivePath(
+  value
+) {
+
+  return normalizeRepoPath(
+    value
+  ).toLowerCase();
+}
+
+
+function firstOutputLine(
+  value
+) {
+
+  return String(
+    value || ''
+  )
+    .split(/\r?\n/)
+    .map(line =>
+      line.trim()
+    )
+    .find(Boolean) || '';
+}
+
+
+function createCommandFailureMessage(
+  result
+) {
+
+  return result.error ||
+    firstOutputLine(
+      result.stderr
+    ) ||
+    firstOutputLine(
+      result.stdout
+    ) ||
+    `Command exited with status ${result.status ?? 'unknown'}.`;
+}
+
+
+function summarizeCommandResult(
+  result
+) {
+
+  return {
+    ok:
+      result.ok,
+    status:
+      result.status ?? (
+        result.ok
+          ? 0
+          : 1
+      ),
+    stdout:
+      truncateOutput(
+        result.stdout
+      ),
+    stderr:
+      truncateOutput(
+        result.stderr
+      ),
+    error:
+      result.ok
+        ? ''
+        : createCommandFailureMessage(
+            result
+          )
+  };
+}
+
+
+function truncateOutput(
+  value,
+  maxLength =
+    8000
+) {
+
+  const text =
+    String(
+      value || ''
+    );
+
+  if (text.length <= maxLength) {
+
+    return text;
+  }
+
+  return `${text.slice(0, maxLength)}\n[output truncated]`;
+}
+
+
 export function calculateDedicatedWorktree(
   task,
   repository
@@ -596,7 +1662,11 @@ export function calculateDedicatedWorktree(
 
 export function inspectRepositoryState(
   root =
-    process.cwd()
+    process.cwd(),
+  {
+    commandRunner =
+      runCommand
+  } = {}
 ) {
 
   const topLevel =
@@ -605,7 +1675,8 @@ export function inspectRepositoryState(
         'rev-parse',
         '--show-toplevel'
       ],
-      root
+      root,
+      commandRunner
     );
 
   if (!topLevel.ok) {
@@ -632,7 +1703,8 @@ export function inspectRepositoryState(
         '--short',
         'HEAD'
       ],
-      repositoryRoot
+      repositoryRoot,
+      commandRunner
     );
 
   const branch =
@@ -641,7 +1713,8 @@ export function inspectRepositoryState(
         'branch',
         '--show-current'
       ],
-      repositoryRoot
+      repositoryRoot,
+      commandRunner
     );
 
   const status =
@@ -651,7 +1724,8 @@ export function inspectRepositoryState(
         '--porcelain=v1',
         '--untracked-files=normal'
       ],
-      repositoryRoot
+      repositoryRoot,
+      commandRunner
     );
 
   if (
@@ -817,6 +1891,98 @@ export function formatDryRunReport(
 }
 
 
+export function formatExecutionReport(
+  report
+) {
+
+  const lines =
+    [
+      'Agent Task Execution',
+      `Status: ${report.status}`,
+      `Task: ${report.task?.id || '<invalid>'}${report.task?.title ? ` - ${report.task.title}` : ''}`
+    ];
+
+  if (report.cli?.ok) {
+
+    lines.push(
+      `Codex CLI: ${report.cli.path} (${report.cli.version || 'version unknown'})`
+    );
+  }
+
+  if (report.worktree?.ok) {
+
+    lines.push(
+      `Task branch: ${report.worktree.branch}`
+    );
+
+    lines.push(
+      `Task worktree: ${report.worktree.path}`
+    );
+  }
+
+  lines.push(
+    `Codex executions: ${report.codexExecutions}`
+  );
+
+  if (report.codexResult) {
+
+    lines.push(
+      `Codex exit status: ${report.codexResult.status}`
+    );
+  }
+
+  if (report.verifyQuick) {
+
+    lines.push(
+      `verify:quick: ${report.verifyQuick.ok ? 'PASS' : 'FAIL'}`
+    );
+  }
+
+  if (report.scopeResult) {
+
+    lines.push(
+      `Scope result: ${report.scopeResult.ok ? 'PASS' : 'FAIL'}`
+    );
+  }
+
+  if (report.changedFiles?.files?.length) {
+
+    lines.push(
+      'Changed files:'
+    );
+
+    for (const file of report.changedFiles.files) {
+
+      lines.push(
+        `- ${file}`
+      );
+    }
+  }
+
+  if (report.blockingReasons?.length) {
+
+    lines.push(
+      'Blocking reasons:'
+    );
+
+    for (const reason of report.blockingReasons) {
+
+      lines.push(
+        `- ${reason.code}: ${reason.message}`
+      );
+    }
+  }
+
+  lines.push(
+    'Execution guarantees: no commits, merges, pushes, resets or repair attempts.'
+  );
+
+  return lines.join(
+    '\n'
+  );
+}
+
+
 async function loadTask(
   taskPath
 ) {
@@ -917,6 +2083,226 @@ function createInvalidReport({
         }
       ],
     validation
+  };
+}
+
+
+function createPreExecutionReport({
+  createdAt,
+  dryRunReport,
+  status,
+  cliResolution =
+    null,
+  worktree =
+    null,
+  blockingReasons =
+    []
+}) {
+
+  return {
+    kind:
+      AGENT_TASK_EXECUTION_REPORT_KIND,
+    version:
+      AGENT_TASK_EXECUTION_REPORT_VERSION,
+    mode:
+      'execute',
+    status,
+    createdAt,
+    task:
+      dryRunReport.task,
+    sourceBefore:
+      dryRunReport.repository,
+    sourceAfter:
+      null,
+    plannedWorktree:
+      dryRunReport.plannedWorktree,
+    worktree,
+    cli:
+      cliResolution,
+    cliCommand:
+      null,
+    codexExecutions:
+      0,
+    codexResult:
+      null,
+    verifyQuick:
+      null,
+    taskVerification:
+      [],
+    changedFiles:
+      null,
+    scopeResult:
+      null,
+    approvalGates:
+      dryRunReport.approvalGates,
+    executionGuarantees:
+      EXECUTION_GUARANTEES,
+    blockingReasons,
+    dryRunReport
+  };
+}
+
+
+function createExecutionReport({
+  createdAt,
+  dryRunReport,
+  cliResolution,
+  worktree,
+  codexCommand,
+  codexResult,
+  verifyQuick,
+  taskVerification,
+  changedFiles,
+  scopeResult,
+  sourceAfter
+}) {
+
+  const blockingReasons =
+    [];
+
+  if (!codexResult.ok) {
+
+    blockingReasons.push({
+      code:
+        'CODEX_EXEC_FAILED',
+      message:
+        codexResult.error
+    });
+  }
+
+  if (
+    codexResult.ok &&
+    changedFiles.ok &&
+    !scopeResult.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'SCOPE_VIOLATION',
+      message:
+        'Codex changed files outside the declared path scope.'
+    });
+  }
+
+  if (
+    codexResult.ok &&
+    !changedFiles.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'CHANGED_FILE_COLLECTION_FAILED',
+      message:
+        changedFiles.error
+    });
+  }
+
+  if (
+    codexResult.ok &&
+    scopeResult.ok &&
+    verifyQuick &&
+    !verifyQuick.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'VERIFY_QUICK_FAILED',
+      message:
+        verifyQuick.error
+    });
+  }
+
+  const failedTaskVerification =
+    taskVerification.find(result =>
+      result.required &&
+      !result.ok
+    );
+
+  if (
+    codexResult.ok &&
+    scopeResult.ok &&
+    verifyQuick?.ok &&
+    failedTaskVerification
+  ) {
+
+    blockingReasons.push({
+      code:
+        'TASK_VERIFICATION_FAILED',
+      message:
+        failedTaskVerification.error
+    });
+  }
+
+  let status =
+    'passed';
+
+  if (!codexResult.ok) {
+
+    status =
+      'failed';
+
+  } else if (
+    !changedFiles.ok
+  ) {
+
+    status =
+      'failed';
+
+  } else if (
+    !scopeResult.ok
+  ) {
+
+    status =
+      'scope_violation';
+
+  } else if (
+    !verifyQuick?.ok ||
+    failedTaskVerification
+  ) {
+
+    status =
+      'failed';
+  }
+
+  return {
+    kind:
+      AGENT_TASK_EXECUTION_REPORT_KIND,
+    version:
+      AGENT_TASK_EXECUTION_REPORT_VERSION,
+    mode:
+      'execute',
+    status,
+    createdAt,
+    task:
+      dryRunReport.task,
+    sourceBefore:
+      dryRunReport.repository,
+    sourceAfter,
+    plannedWorktree:
+      dryRunReport.plannedWorktree,
+    worktree,
+    cli:
+      cliResolution,
+    cliCommand:
+      {
+        executable:
+          codexCommand.executable,
+        args:
+          codexCommand.args
+      },
+    codexExecutions:
+      1,
+    codexResult,
+    verifyQuick,
+    taskVerification,
+    changedFiles,
+    scopeResult,
+    approvalGates:
+      dryRunReport.approvalGates,
+    executionGuarantees:
+      EXECUTION_GUARANTEES,
+    blockingReasons,
+    dryRunReport
   };
 }
 
@@ -1189,24 +2575,28 @@ function parseGitStatus(
 
 function runGit(
   args,
-  root
+  root,
+  commandRunner =
+    runCommand
 ) {
 
   const result =
-    spawnSync(
+    commandRunner(
       'git',
       args,
       {
         cwd:
           root,
-        encoding:
-          'utf8',
         shell:
-          false
+          false,
+        timeout:
+          COMMAND_TIMEOUT_MS,
+        maxBuffer:
+          COMMAND_MAX_BUFFER
       }
     );
 
-  if (result.status !== 0) {
+  if (!result.ok) {
 
     return {
       ok:
@@ -1231,6 +2621,87 @@ function runGit(
 }
 
 
+function runCommand(
+  command,
+  args =
+    [],
+  options =
+    {}
+) {
+
+  try {
+
+    const result =
+      spawnSync(
+        command,
+        args,
+        {
+          cwd:
+            options.cwd,
+          encoding:
+            'utf8',
+          input:
+            options.input,
+          shell:
+            Boolean(
+              options.shell
+            ),
+          timeout:
+            options.timeout,
+          maxBuffer:
+            options.maxBuffer || COMMAND_MAX_BUFFER
+        }
+      );
+
+    if (result.error) {
+
+      return {
+        ok:
+          false,
+        status:
+          result.status,
+        stdout:
+          result.stdout || '',
+        stderr:
+          result.stderr || '',
+        error:
+          result.error.message
+      };
+    }
+
+    return {
+      ok:
+        result.status === 0,
+      status:
+        result.status,
+      stdout:
+        result.stdout || '',
+      stderr:
+        result.stderr || '',
+      error:
+        result.status === 0
+          ? ''
+          : (result.stderr || result.stdout || '').trim() || `${command} failed`
+    };
+
+  } catch (error) {
+
+    return {
+      ok:
+        false,
+      status:
+        null,
+      stdout:
+        '',
+      stderr:
+        '',
+      error:
+        error?.message || `${command} failed`
+    };
+  }
+}
+
+
 function parseRunnerArgs(
   args
 ) {
@@ -1239,8 +2710,12 @@ function parseRunnerArgs(
     {
       dryRun:
         false,
+      execute:
+        false,
       json:
         false,
+      codexCliPath:
+        '',
       taskFile:
         ''
     };
@@ -1258,6 +2733,34 @@ function parseRunnerArgs(
 
       result.dryRun =
         true;
+      continue;
+    }
+
+    if (value === '--execute') {
+
+      result.execute =
+        true;
+      continue;
+    }
+
+    if (value === '--codex-cli') {
+
+      const cliPath =
+        args[index + 1];
+
+      if (!cliPath) {
+
+        return {
+          ok:
+            false,
+          error:
+            '--codex-cli requires a path.'
+        };
+      }
+
+      result.codexCliPath =
+        cliPath;
+      index += 1;
       continue;
     }
 
@@ -1292,13 +2795,15 @@ function parseRunnerArgs(
       value;
   }
 
-  if (!result.dryRun) {
+  if (
+    result.dryRun === result.execute
+  ) {
 
     return {
       ok:
         false,
       error:
-        'Only --dry-run mode is supported.'
+        'Choose exactly one mode: --dry-run or --execute.'
     };
   }
 
@@ -1322,7 +2827,7 @@ function parseRunnerArgs(
 
 function usage() {
 
-  return 'Usage: npm run agent:task -- --dry-run <task-file> [--json]';
+  return 'Usage: npm run agent:task -- (--dry-run | --execute) <task-file> [--json] [--codex-cli <absolute-path>]';
 }
 
 

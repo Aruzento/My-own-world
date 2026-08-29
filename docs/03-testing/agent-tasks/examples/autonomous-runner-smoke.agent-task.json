@@ -1,0 +1,53 @@
+{
+  "schema": "myownworld.agent-task.v1",
+  "id": "OFFPLAN-AUTONOMOUS-SMOKE",
+  "title": "Autonomous Runner Smoke",
+  "ownerMode": "OWNER-DIRECTED OFF-PLAN MAINTENANCE",
+  "goal": "Create one small docs/testing-only smoke evidence file without touching product runtime or roadmap status.",
+  "scope": {
+    "include": [
+      "path:docs/03-testing/agent-tasks/smoke-output/first-autonomous-smoke.txt",
+      "Autonomous runner smoke evidence"
+    ],
+    "exclude": [
+      "path:js/**",
+      "path:styles/**",
+      "path:src-tauri/**",
+      "path:docs/01-delivery/PROJECT_PLAN.md",
+      "path:docs/00-product/PRODUCT_DASHBOARD.md",
+      "Product runtime changes",
+      "Roadmap phase/status changes",
+      "Persistent format changes",
+      "Real user workspace access"
+    ]
+  },
+  "acceptance": [
+    "The smoke evidence file exists.",
+    "The smoke evidence file contains the exact phrase MyOwnWorld autonomous runner smoke PASS.",
+    "No product runtime, roadmap or persistent-format file is modified."
+  ],
+  "verification": {
+    "commands": [
+      {
+        "command": "node -e \"const fs=require('node:fs');const p='docs/03-testing/agent-tasks/smoke-output/first-autonomous-smoke.txt';if(!fs.existsSync(p))process.exit(1);const text=fs.readFileSync(p,'utf8');if(!text.includes('MyOwnWorld autonomous runner smoke PASS'))process.exit(1);\"",
+        "required": true,
+        "reason": "The smoke task is complete only when the dedicated evidence file exists with the approved marker."
+      },
+      {
+        "command": "git diff --check",
+        "required": true,
+        "reason": "The smoke output must not introduce whitespace errors."
+      }
+    ],
+    "manual": []
+  },
+  "risk": {
+    "level": "low",
+    "notes": "The task is constrained to a single testing evidence file and must not modify product runtime or roadmap status."
+  },
+  "requiresApproval": [],
+  "notes": [
+    "This task is intended only for the first live autonomous runner smoke.",
+    "The runner must not commit, merge or push the task branch."
+  ]
+}

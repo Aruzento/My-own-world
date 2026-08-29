@@ -6,6 +6,37 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-29: Owner-Directed Off-Plan Maintenance - Local Codex CLI Runner Execution
+
+### Disposition
+
+- Readiness: `Foundation`.
+- Extended the existing machine-readable agent task runner from planning-only dry-run to one bounded local `codex exec` execution in a dedicated worktree.
+- Kept the current roadmap phase/status unchanged and kept `0.0.1.16.0` as `NEXT`, not active.
+
+### What Changed
+
+- Added Codex CLI resolution in `tools/agent_task_runner.mjs`: explicit absolute path, supported Windows user install under `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`, then PATH-discovered candidates.
+- Rejected packaged WindowsApps OpenAI.Codex aliases and any CLI candidate that cannot pass `--version`.
+- Added `--execute` mode to the existing `npm run agent:task` command. Execution requires the same validated `.agent-task.json`, clean source worktree, machine-enforceable `path:` scope and no triggered unapproved approval gate.
+- Execution creates a dedicated sibling git worktree and branch, invokes Codex exactly once via `codex exec -C <worktree> -s workspace-write -a never --color never --ephemeral -`, then runs `npm run verify:quick`, task verification and changed-file scope enforcement.
+- Added execution reports with CLI path/version, source/worktree state, Codex exit status, changed files, scope result and explicit guarantees: no commit, merge, push, reset or repair retry.
+- Added `docs/03-testing/agent-tasks/examples/autonomous-runner-smoke.agent-task.json` as the first harmless live-smoke task, constrained to one docs/testing evidence file.
+- Updated `AGENTS.md` and [AGENT_TASK_CONTRACT.md](../02-architecture/contracts/AGENT_TASK_CONTRACT.md) with the single-pass execution contract.
+
+### Explicit Non-Work
+
+- No autonomous repair loop, merge, push of task branches, hidden approval, dependency, product runtime change, roadmap/status change, persistent format change, real workspace mutation or `0.0.1.16.0` work was added.
+
+### Verification
+
+- `node --test tests\agentTaskRunner.test.mjs tests\agentTaskContract.test.mjs` passed with 27 focused tests.
+- `npm run tasks:validate` passed against 3 executable task contracts.
+- `npm run verify:quick` passed with 585 unit tests and `git diff --check`.
+- `npm run verify` passed with 585 unit tests, synthetic large-workspace performance smoke, manual DOCX zip validation and `git diff --check`.
+- `npm run verify:full` passed with normal verify, 197 browser tests, project file audit, docs index, agent skill validation, task validation and final `git diff --check`.
+- First live autonomous smoke is intentionally run only after the implementation commit is clean and pushed.
+
 ## 2026-08-29: Owner-Directed Off-Plan Maintenance - Popup Baseline CI Platform Guard
 
 ### Disposition

@@ -8,11 +8,11 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
-Дата: 2026-08-28
+Дата: 2026-08-29
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
 
-Всего файлов в аудите: 725.
+Всего файлов в аудите: 726.
 
 ## Два Независимых Прохода
 
@@ -36,7 +36,7 @@ owner_zone: "delivery"
 | docs/delivery | 19 |
 | docs/product | 6 |
 | docs/root | 3 |
-| docs/testing | 22 |
+| docs/testing | 23 |
 | docs/user-release | 4 |
 | editor | 47 |
 | knowledge graph | 14 |
@@ -74,9 +74,9 @@ owner_zone: "delivery"
 |---|---:|---|
 | `docs/MY_OWN_WORLD_FULL_MANUAL.docx` | 5886165 | Проверить актуальность и место хранения; бинарные документы тяжелее навигации по markdown. |
 | `assets/background.jpg` | 2910769 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
-| `docs/01-delivery/WORK_LOG.md` | 947777 | Да: держать metadata, актуальность и кодировку под контролем. |
-| `debug.log` | 621675 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
-| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 294467 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `docs/01-delivery/WORK_LOG.md` | 952423 | Да: держать metadata, актуальность и кодировку под контролем. |
+| `debug.log` | 678897 | Не оптимизировать: allowed local-only Chromium/GPU diagnostic artifact; не коммитить. |
+| `docs/01-delivery/PROJECT_FILE_AUDIT.md` | 294333 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/popup-visual-baselines.spec.mjs-snapshots/campaign-map-grid-desktop-chromium-win32.png` | 259078 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
 | `docs/03-testing/visual-evidence/0.0.1.8.18/map-popup-inspector.png` | 236335 | Да: держать metadata, актуальность и кодировку под контролем. |
 | `tests/browser/popup-visual-baselines.spec.mjs-snapshots/properties-desktop-chromium-win32.png` | 225270 | Да: большой файл, нужен отдельный взгляд на назначение и размер. |
@@ -294,6 +294,7 @@ owner_zone: "delivery"
 | `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/03-testing/agent-tasks/examples/autonomous-runner-smoke.agent-task.json` | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `docs/03-testing/agent-tasks/examples/dice-roll-event-integration.agent-task.json` | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `docs/03-testing/agent-tasks/examples/runner-readiness.agent-task.json` | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: активная часть проекта, удалять только после отдельного подтвержденного списка. |
 | `docs/03-testing/CODE_REVIEW_TEMPLATE.md` | Документация зоны docs/testing. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |

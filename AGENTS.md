@@ -85,6 +85,7 @@ npm run verify:full
 - Исполняемые task-файлы имеют suffix `.agent-task.json`.
 - Валидировать их через `npm run tasks:validate`.
 - Строить безопасный dry-run план через `npm run agent:task -- --dry-run <task-file>`.
+- Один локальный Codex-проход для path-scoped задач запускать только через `npm run agent:task -- --execute <task-file>`; runner создает отдельный worktree/branch, но не коммитит, не мержит и не пушит task-branch.
 - YAML-примеры в документации считаются только человекочитаемой иллюстрацией, не исполняемым форматом.
 
 Этот contract не заменяет `docs/01-delivery/PROJECT_PLAN.md`, Definition of Done или явное owner approval для рискованных действий.
@@ -92,6 +93,8 @@ npm run verify:full
 Dry-run runner только валидирует задачу, проверяет clean worktree, рассчитывает branch/worktree, scope, verification и approval gates. Он не создает branch/worktree, не коммитит, не пушит, не запускает Codex и не выполняет саму задачу.
 
 Для autonomous execution readiness `path:` include scope обязателен: prose-only scope требует human review. `requiresApproval` в dry-run считается armed safeguard и блокирует только когда защищенное действие реально triggered.
+
+Execution runner использует существующий `codex exec` CLI, вызывает Codex ровно один раз в dedicated worktree, затем запускает `verify:quick`, task verification и changed-file scope check. Scope violation, Codex failure или triggered unapproved approval gate останавливают task без merge/push/repair retry.
 
 ## Summary После Задачи
 

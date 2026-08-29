@@ -6,6 +6,11 @@ import {
 } from 'node:child_process';
 
 import {
+  mkdirSync,
+  writeFileSync
+} from 'node:fs';
+
+import {
   mkdtemp,
   readFile,
   rm,
@@ -21,11 +26,14 @@ import {
 } from '../tools/validate_agent_tasks.mjs';
 
 import {
+  AGENT_TASK_EXECUTION_REPORT_KIND,
   AGENT_TASK_RUNNER_REPORT_KIND,
   createAgentTaskDryRunReport,
   createApprovalGates,
   createScopePolicy,
-  evaluateChangedFilesAgainstScope
+  evaluateChangedFilesAgainstScope,
+  executeAgentTask,
+  resolveCodexCli
 } from '../tools/agent_task_runner.mjs';
 
 
@@ -645,6 +653,684 @@ test(
 
 
 test(
+  'agent task runner selects a working standalone Codex CLI candidate',
+  async t => {
+
+    const root =
+      await createTempRoot(
+        t
+      );
+
+    const codexPath =
+      path.join(
+        root,
+        'codex.exe'
+      );
+
+    const runner =
+      (
+        command,
+        args
+      ) => {
+
+        if (
+          command === codexPath &&
+          args[0] === '--version'
+        ) {
+
+          return createCommandResult({
+            stdout:
+              'codex-cli 0.test\n'
+          });
+        }
+
+        return createCommandResult({
+          status:
+            1,
+          stderr:
+            'unexpected command\n'
+        });
+      };
+
+    const result =
+      resolveCodexCli({
+        explicitPath:
+          codexPath,
+        root,
+        commandRunner:
+          runner,
+        disableDefaultCandidates:
+          true
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.path,
+      codexPath
+    );
+
+    assert.equal(
+      result.version,
+      'codex-cli 0.test'
+    );
+  }
+);
+
+
+test(
+  'agent task runner skips failing and packaged Codex candidates',
+  async t => {
+
+    const root =
+      await createTempRoot(
+        t
+      );
+
+    const failingPath =
+      path.join(
+        root,
+        'inaccessible-codex.exe'
+      );
+
+    const packagedPath =
+      'C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe';
+
+    const goodPath =
+      path.join(
+        root,
+        'standalone-codex.exe'
+      );
+
+    const result =
+      resolveCodexCli({
+        root,
+        platform:
+          'win32',
+        commandRunner:
+          (
+            command,
+            args
+          ) => {
+
+            if (
+              command === failingPath &&
+              args[0] === '--version'
+            ) {
+
+              return createCommandResult({
+                status:
+                  1,
+                stderr:
+                  'Access is denied.\n'
+              });
+            }
+
+            if (
+              command === goodPath &&
+              args[0] === '--version'
+            ) {
+
+              return createCommandResult({
+                stdout:
+                  'codex-cli 0.good\n'
+              });
+            }
+
+            return createCommandResult({
+              status:
+                1,
+              stderr:
+                'unexpected command\n'
+            });
+          },
+        pathCandidates:
+          [
+            failingPath,
+            packagedPath,
+            goodPath
+          ],
+        disableDefaultCandidates:
+          true
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.path,
+      goodPath
+    );
+
+    assert.equal(
+      result.rejected.some(candidate =>
+        candidate.path === packagedPath
+      ),
+      true
+    );
+  }
+);
+
+
+test(
+  'agent task runner checks the supported Windows user install before PATH aliases',
+  async t => {
+
+    const root =
+      await createTempRoot(
+        t
+      );
+
+    const localAppData =
+      path.win32.join(
+        'C:\\Users',
+        'TestUser',
+        'AppData',
+        'Local'
+      );
+
+    const standalonePath =
+      path.win32.join(
+        localAppData,
+        'Programs',
+        'OpenAI',
+        'Codex',
+        'bin',
+        'codex.exe'
+      );
+
+    const windowsAppsPath =
+      'C:\\Program Files\\WindowsApps\\OpenAI.Codex_26.810.7004.0_x64__2p2nqsd0c76g0\\app\\resources\\codex.exe';
+
+    const result =
+      resolveCodexCli({
+        root,
+        platform:
+          'win32',
+        env:
+          {
+            LOCALAPPDATA:
+              localAppData
+          },
+        pathCandidates:
+          [
+            windowsAppsPath
+          ],
+        commandRunner:
+          (
+            command,
+            args
+          ) => {
+
+            if (
+              command === standalonePath &&
+              args[0] === '--version'
+            ) {
+
+              return createCommandResult({
+                stdout:
+                  'codex-cli 0.user\n'
+              });
+            }
+
+            return createCommandResult({
+              status:
+                1,
+              stderr:
+                'unexpected command\n'
+            });
+          }
+      });
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.path,
+      standalonePath
+    );
+
+    assert.equal(
+      result.source,
+      'standalone-user-install'
+    );
+  }
+);
+
+
+test(
+  'agent task execution blocks when no Codex CLI candidate is executable',
+  async t => {
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createValidTask({
+              id:
+                'OFFPLAN-NO-CODEX',
+              title:
+                'No Codex Fixture',
+              requiresApproval:
+                []
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          commandRunner:
+            createExecutionCommandRunner({
+              codexPath:
+                path.join(
+                  root,
+                  'missing-codex.exe'
+                )
+            }).runner,
+          disableDefaultCliCandidates:
+            true,
+          pathCandidates:
+            []
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      0
+    );
+
+    assert.equal(
+      report.blockingReasons.some(reason =>
+        reason.code === 'CODEX_CLI_UNAVAILABLE'
+      ),
+      true
+    );
+  }
+);
+
+
+test(
+  'agent task execution runs Codex once and passes in-scope changes',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-pass.exe'
+      );
+
+    const task =
+      createSmokeExecutionTask({
+        id:
+          'OFFPLAN-EXEC-PASS',
+        includePath:
+          'docs/smoke.txt'
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task
+        }
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        writeFiles:
+          [
+            {
+              file:
+                'docs/smoke.txt',
+              content:
+                'smoke pass\n'
+            }
+          ]
+      });
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.kind,
+      AGENT_TASK_EXECUTION_REPORT_KIND
+    );
+
+    assert.equal(
+      report.status,
+      'passed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      1
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      1
+    );
+
+    assert.deepEqual(
+      report.changedFiles.files,
+      [
+        'docs/smoke.txt'
+      ]
+    );
+
+    assert.equal(
+      report.scopeResult.ok,
+      true
+    );
+
+    assert.equal(
+      report.verifyQuick.ok,
+      true
+    );
+
+    assert.equal(
+      report.taskVerification.every(result =>
+        result.ok
+      ),
+      true
+    );
+
+    assert.equal(
+      report.sourceAfter.clean,
+      true
+    );
+
+    assert.equal(
+      report.executionGuarantees.merges,
+      false
+    );
+
+    assert.equal(
+      report.executionGuarantees.pushes,
+      false
+    );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.command === 'git' &&
+        (
+          call.args[0] === 'merge' ||
+          call.args[0] === 'push'
+        )
+      ),
+      false
+    );
+
+    assert.equal(
+      mock.calls.filter(call =>
+        call.command === codexPath &&
+        call.args[0] === 'exec'
+      ).length,
+      1
+    );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.command === codexPath &&
+        call.args.includes(
+          'danger-full-access'
+        )
+      ),
+      false
+    );
+  }
+);
+
+
+test(
+  'agent task execution reports scope violation for out-of-scope files',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-scope.exe'
+      );
+
+    const task =
+      createSmokeExecutionTask({
+        id:
+          'OFFPLAN-SCOPE-VIOLATION',
+        includePath:
+          'docs/allowed.txt'
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            createExecutionCommandRunner({
+              codexPath,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/out-of-scope.txt',
+                    content:
+                      'outside\n'
+                  }
+                ]
+            }).runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'scope_violation'
+    );
+
+    assert.deepEqual(
+      report.scopeResult.outside,
+      [
+        'docs/out-of-scope.txt'
+      ]
+    );
+  }
+);
+
+
+test(
+  'agent task execution reports failed when Codex exits non-zero',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-fail.exe'
+      );
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-CODEX-FAIL',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            createExecutionCommandRunner({
+              codexPath,
+              codexExitStatus:
+                2
+            }).runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'failed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      1
+    );
+
+    assert.equal(
+      report.verifyQuick,
+      null
+    );
+  }
+);
+
+
+test(
+  'agent task execution blocks triggered approval before Codex invocation',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-approval.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-APPROVAL-BLOCK',
+              includePath:
+                'docs/smoke.txt',
+              requiresApproval:
+                [
+                  {
+                    when:
+                      'newDependency',
+                    reason:
+                      'Dependency changes require owner approval.'
+                  }
+                ]
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          triggeredApprovalKeys:
+            [
+              'newDependency'
+            ],
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      0
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      0
+    );
+
+    assert.equal(
+      report.approvalGates.gates[0].status,
+      'blocked'
+    );
+  }
+);
+
+
+test(
   'package scripts expose the agent task dry-run runner',
   async () => {
 
@@ -760,6 +1446,21 @@ async function createTempRoot(
             true
         }
       );
+
+      await rm(
+        path.resolve(
+          path.dirname(
+            root
+          ),
+          `${path.basename(root)}-agent-worktrees`
+        ),
+        {
+          recursive:
+            true,
+          force:
+            true
+        }
+      );
     }
   );
 
@@ -844,6 +1545,255 @@ function createValidTask(
         'Unit-test fixture only.'
       ],
     ...overrides
+  };
+}
+
+
+function createSmokeExecutionTask({
+  id,
+  includePath,
+  requiresApproval =
+    []
+}) {
+
+  return createValidTask({
+    id,
+    title:
+      'Execution Fixture',
+    goal:
+      'Create one isolated test evidence file.',
+    scope:
+      {
+        include:
+          [
+            `path:${includePath}`,
+            'Execution fixture evidence'
+          ],
+        exclude:
+          [
+            'path:js/**',
+            'path:styles/**',
+            'Product runtime changes'
+          ]
+      },
+    acceptance:
+      [
+        'The scoped evidence file is changed.'
+      ],
+    verification:
+      {
+        commands:
+          [
+            {
+              command:
+                'git diff --check',
+              required:
+                true,
+              reason:
+                'Execution fixture must not add whitespace errors.'
+            }
+          ],
+        manual:
+          []
+      },
+    risk:
+      {
+        level:
+          'low',
+        notes:
+          'The fixture is constrained to one test evidence path.'
+      },
+    requiresApproval
+  });
+}
+
+
+function createExecutionCommandRunner({
+  codexPath,
+  codexExitStatus =
+    0,
+  verifyQuickStatus =
+    0,
+  taskVerificationStatus =
+    0,
+  writeFiles =
+    []
+}) {
+
+  const calls =
+    [];
+
+  let codexExecutions =
+    0;
+
+  const runner =
+    (
+      command,
+      args =
+        [],
+      options =
+        {}
+    ) => {
+
+      calls.push({
+        command,
+        args:
+          [...args],
+        cwd:
+          options.cwd || '',
+        input:
+          options.input || '',
+        shell:
+          Boolean(
+            options.shell
+          )
+      });
+
+      if (
+        command === codexPath &&
+        args[0] === '--version'
+      ) {
+
+        return createCommandResult({
+          stdout:
+            'codex-cli 0.test\n'
+        });
+      }
+
+      if (
+        command === codexPath &&
+        args[0] === 'exec'
+      ) {
+
+        codexExecutions += 1;
+
+        for (const file of writeFiles) {
+
+          const target =
+            path.join(
+              options.cwd,
+              file.file
+            );
+
+          mkdirSync(
+            path.dirname(
+              target
+            ),
+            {
+              recursive:
+                true
+            }
+          );
+
+          writeFileSync(
+            target,
+            file.content,
+            'utf8'
+          );
+        }
+
+        return createCommandResult({
+          status:
+            codexExitStatus,
+          stdout:
+            codexExitStatus === 0
+              ? 'codex complete\n'
+              : '',
+          stderr:
+            codexExitStatus === 0
+              ? ''
+              : 'codex failed\n'
+        });
+      }
+
+      if (command === 'npm run verify:quick') {
+
+        return createCommandResult({
+          status:
+            verifyQuickStatus,
+          stdout:
+            verifyQuickStatus === 0
+              ? 'quick ok\n'
+              : '',
+          stderr:
+            verifyQuickStatus === 0
+              ? ''
+              : 'quick failed\n'
+        });
+      }
+
+      if (options.shell) {
+
+        return createCommandResult({
+          status:
+            taskVerificationStatus,
+          stdout:
+            taskVerificationStatus === 0
+              ? 'task verification ok\n'
+              : '',
+          stderr:
+            taskVerificationStatus === 0
+              ? ''
+              : 'task verification failed\n'
+        });
+      }
+
+      const result =
+        spawnSync(
+          command,
+          args,
+          {
+            cwd:
+              options.cwd,
+            encoding:
+              'utf8',
+            shell:
+              false
+          }
+        );
+
+      return createCommandResult({
+        status:
+          result.status ?? 1,
+        stdout:
+          result.stdout || '',
+        stderr:
+          result.stderr || '',
+        error:
+          result.error?.message || ''
+      });
+    };
+
+  return {
+    runner,
+    calls,
+    get codexExecutions() {
+
+      return codexExecutions;
+    }
+  };
+}
+
+
+function createCommandResult({
+  status =
+    0,
+  stdout =
+    '',
+  stderr =
+    '',
+  error =
+    ''
+} = {}) {
+
+  return {
+    ok:
+      status === 0 &&
+      !error,
+    status,
+    stdout,
+    stderr,
+    error
   };
 }
 
