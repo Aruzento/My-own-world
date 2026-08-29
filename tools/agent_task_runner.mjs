@@ -1255,8 +1255,6 @@ export function createCodexExecCommand({
         worktreePath,
         '-s',
         'workspace-write',
-        '-a',
-        'never',
         '--color',
         'never',
         '--ephemeral',

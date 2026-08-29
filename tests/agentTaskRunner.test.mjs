@@ -1112,6 +1112,27 @@ test(
       ),
       false
     );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.command === codexPath &&
+        (
+          call.args.includes(
+            '-a'
+          ) ||
+          call.args.includes(
+            '--ask-for-approval'
+          ) ||
+          call.args.includes(
+            '--approve-for-me'
+          ) ||
+          call.args.includes(
+            '--dangerously-bypass-approvals-and-sandbox'
+          )
+        )
+      ),
+      false
+    );
   }
 );
 

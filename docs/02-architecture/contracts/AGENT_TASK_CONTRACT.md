@@ -243,7 +243,7 @@ Execution mode is intentionally narrower than a general autonomous workflow. It:
 - requires machine-checkable `path:` include scope;
 - resolves a supported standalone Codex CLI executable and records the exact path/version;
 - creates one dedicated sibling git worktree and task branch;
-- invokes `codex exec` exactly once in that worktree;
+- invokes `codex exec -C <worktree> -s workspace-write --color never --ephemeral -` exactly once in that worktree;
 - runs `npm run verify:quick` and the task-declared verification commands;
 - compares all changed/untracked files against `scope.include` / `scope.exclude` path rules;
 - emits a machine-readable execution report.
