@@ -301,8 +301,8 @@ Phase `0.0.1.15.7` does not add undo UI, redo, combat/session mechanics, HP auto
 Public read operations:
 
 - `queryEventLog(query, { storageAdapter, strict })` reads through `readTransactionRecords()` and returns bounded event-query items.
-- `getEventTransactionById(transactionId, { storageAdapter, strict })` returns one typed transaction or `null` when the id is unknown.
-- `queryEventLogFromSnapshot(snapshot, query)` and `getEventTransactionByIdFromSnapshot(snapshot, transactionId)` perform the same query/lookup shaping from an already-normalized EventStore snapshot and perform no storage reads or JSONL parsing.
+- `getEventTransactionById(transactionId, { storageAdapter, strict })` returns one typed transaction, returns `null` when the id is unknown, and throws `EVENT_QUERY_AMBIGUOUS_TRANSACTION_ID` if existing valid durable history contains more than one matching transaction id.
+- `queryEventLogFromSnapshot(snapshot, query)` and `getEventTransactionByIdFromSnapshot(snapshot, transactionId)` perform the same query/lookup shaping from an already-normalized EventStore snapshot and perform no storage reads or JSONL parsing; ambiguity checks operate only on that supplied snapshot.
 
 The query facade owns presentation-neutral read shaping:
 
@@ -330,6 +330,7 @@ Consumer boundary:
 - consumers that need several query operations for one refresh should read one `readTransactionRecords()` snapshot and reuse the snapshot query operations instead of issuing one durable read per helper call;
 - query API does not write pages, append events, create backups or mutate repositories;
 - invalid/corrupt durable records remain owned by `eventStore`; the query result only exposes `invalidRecordCount` as read evidence.
+- Event History and future undo consumers must not choose an arbitrary transaction when `getEventTransactionByIdFromSnapshot()` reports an ambiguous durable id.
 
 Phase `0.0.1.15.8` does not add Event Log UI, dice UI, combat/session mechanics, attacks, damage application, HP automation, turns/rounds, query language, SQL-like filtering, replay, backup/restore event-sidecar policy or persistent format migration.
 
@@ -587,6 +588,13 @@ Store contract:
 - `readEventTransactions({ storageAdapter })` returns reconstructed transaction shapes for consumers that only need the transaction data.
 - every durable event record must pass `js/events/eventTypes.js` vocabulary validation.
 - record order is file append order; event order inside a transaction is validated by the transaction model and store.
+- valid durable transaction ids are unique within one workspace event log; valid durable event ids are unique within one workspace event log.
+- duplicate incoming `transactionId` or `eventId` is rejected inside the existing append queue before a JSONL line is appended.
+- the uniqueness index is runtime-only and workspace-scoped. It is built from one durable snapshot on the first append attempt for the current workspace/runtime, then maintained with Set lookups after successful appends.
+- workspace identity comes from `StorageAdapter.getWorkspaceRoot()` for desktop adapters, `StorageAdapter.getWorkspaceHandle()` object identity for browser adapters, and an adapter-local fallback identity for minimal injected test adapters.
+- if a filesystem append reports failure, EventStore invalidates the runtime identity state before returning `EVENT_STORE_WRITE_FAILED`; the next append attempt rebuilds from durable storage because bytes may have been written before close/sync failure.
+- existing duplicate ids in valid durable history are treated as integrity errors for future append attempts. EventStore does not rewrite, delete, migrate or repair those historical records automatically.
+- malformed/invalid JSONL lines are excluded from identity indexing and keep the existing invalid-record reporting semantics.
 - started transactions remain runtime-only and are not durable history records.
 - corrupt/invalid old lines are not silently edited or deleted by read.
 - write failure throws `EventStoreError` and must not be reported as durable success.
@@ -607,12 +615,14 @@ Version impact:
 - new app-owned workspace sidecar directory: `.my-own-world-events/`;
 - no page markdown/front-matter schema change;
 - no Dice Engine result schema change;
+- no persistent identity index, sidecar index, record version bump or event schema migration;
 - backup/restore inclusion policy is still not decided. If backups must preserve event history, `backupService` needs a later additive policy for this sidecar or a versioned backup-manifest decision.
 
 ## Current Safe Baseline
 
 - Safe dice rolls produce structured runtime `RollResult` with no side effects.
 - Durable event history has one sidecar owner: `.my-own-world-events/transactions.v1.jsonl` through `js/events/eventStore.js`.
+- EventStore enforces workspace-scoped uniqueness for valid durable `transactionId` and `eventId` values before append, including queued concurrent appends.
 - Completed durable transactions must contain at least one validated event; failed transactions remain auditable failure outcomes.
 - The first stateful page-property resource adapter can only log the `page-property` resource it actually changed.
 - Page commands already expose runtime command events and undo entries, but those are diagnostics/runtime undo, not auditable durable event history.

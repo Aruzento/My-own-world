@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   appendTransactionRecord,
+  createTransactionRecord,
   EVENT_TRANSACTION_LOG_PATH,
   readTransactionRecords
 } from '../js/events/eventStore.js';
@@ -302,6 +303,123 @@ test(
         'evt-undo-resource',
         'evt-reversal-metadata'
       ]
+    );
+  }
+);
+
+
+test(
+  'EventQuery rejects ambiguous existing transaction ids instead of returning the first match',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    const records =
+      [
+        createTransactionRecord(
+          createSingleEventTransaction({
+            transactionId:
+              'txn-ambiguous-existing',
+            eventId:
+              'evt-ambiguous-existing-a',
+            eventType:
+              EVENT_TYPES_V1.ROLL_PERFORMED,
+            createdAt:
+              timestamp(1),
+            order:
+              1,
+            payload:
+              createRollPayload(11)
+          })
+        ),
+        createTransactionRecord(
+          createSingleEventTransaction({
+            transactionId:
+              'txn-ambiguous-existing',
+            eventId:
+              'evt-ambiguous-existing-b',
+            eventType:
+              EVENT_TYPES_V1.ROLL_PERFORMED,
+            createdAt:
+              timestamp(2),
+            order:
+              2,
+            payload:
+              createRollPayload(13)
+          })
+        ),
+        createTransactionRecord(
+          createSingleEventTransaction({
+            transactionId:
+              'txn-unambiguous-existing',
+            eventId:
+              'evt-unambiguous-existing',
+            eventType:
+              EVENT_TYPES_V1.ROLL_PERFORMED,
+            createdAt:
+              timestamp(3),
+            order:
+              3,
+            payload:
+              createRollPayload(15)
+          })
+        )
+      ];
+
+    await adapter.writeText(
+      EVENT_TRANSACTION_LOG_PATH,
+      `${records.map(record => JSON.stringify(record)).join('\n')}\n`
+    );
+
+    const snapshot =
+      await readTransactionRecords({
+        storageAdapter:
+          adapter
+      });
+
+    assert.throws(
+      () => getEventTransactionByIdFromSnapshot(
+        snapshot,
+        'txn-ambiguous-existing'
+      ),
+      error => isAmbiguousTransactionIdError(
+        error,
+        'txn-ambiguous-existing'
+      )
+    );
+
+    await assert.rejects(
+      () => getEventTransactionById(
+        'txn-ambiguous-existing',
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isAmbiguousTransactionIdError(
+        error,
+        'txn-ambiguous-existing'
+      )
+    );
+
+    assert.equal(
+      getEventTransactionByIdFromSnapshot(
+        snapshot,
+        'txn-missing-existing'
+      ),
+      null
+    );
+
+    const unique =
+      getEventTransactionByIdFromSnapshot(
+        snapshot,
+        'txn-unambiguous-existing'
+      );
+
+    assert.equal(
+      unique.transactionId,
+      'txn-unambiguous-existing'
     );
   }
 );
@@ -994,6 +1112,70 @@ function createSingleEventTransaction({
         createdAt
     }
   );
+}
+
+
+function createRollPayload(
+  total
+) {
+
+  return {
+    roll:
+      rollDice(
+        {
+          formula:
+            'd20',
+          mode:
+            'normal',
+          criticalPolicy:
+            'none'
+        },
+        {
+          randomInt:
+            createDiceSequenceRandomInt([
+              total
+            ]).randomInt
+        }
+      ),
+    context:
+      {
+        source:
+          'event-query-test'
+      }
+  };
+}
+
+
+function isAmbiguousTransactionIdError(
+  error,
+  transactionId
+) {
+
+  assert.equal(
+    error instanceof EventQueryError,
+    true
+  );
+
+  assert.equal(
+    error.code,
+    EVENT_QUERY_ERROR_CODES.AMBIGUOUS_TRANSACTION_ID
+  );
+
+  assert.equal(
+    error.field,
+    'transactionId'
+  );
+
+  assert.deepEqual(
+    error.details,
+    {
+      transactionId,
+      matchCount:
+        2
+    }
+  );
+
+  return true;
 }
 
 

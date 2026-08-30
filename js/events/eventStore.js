@@ -40,7 +40,9 @@ export const EVENT_STORE_ERROR_CODES =
     READ_FAILED:
       'EVENT_STORE_READ_FAILED',
     WRITE_FAILED:
-      'EVENT_STORE_WRITE_FAILED'
+      'EVENT_STORE_WRITE_FAILED',
+    DUPLICATE_IDENTITY:
+      'EVENT_STORE_DUPLICATE_IDENTITY'
   });
 
 
@@ -55,6 +57,10 @@ export class EventStoreError extends Error {
         EVENT_TRANSACTION_LOG_PATH,
       lineNumber =
         null,
+      identityType =
+        '',
+      identity =
+        '',
       cause =
         null
     } = {}
@@ -82,11 +88,23 @@ export class EventStoreError extends Error {
 
     this.lineNumber =
       lineNumber;
+
+    this.identityType =
+      identityType;
+
+    this.identity =
+      identity;
   }
 }
 
 
 const appendQueues =
+  new WeakMap();
+
+const identityStates =
+  new WeakMap();
+
+const fallbackWorkspaceIdentities =
   new WeakMap();
 
 
@@ -160,10 +178,11 @@ export async function appendTransactionRecord(
   await queueAppend(
     storageAdapter,
     path,
-    () => appendLineToLogFile({
+    () => appendTransactionRecordInsideQueue({
       storageAdapter,
       path,
-      line
+      line,
+      record
     })
   );
 
@@ -173,6 +192,50 @@ export async function appendTransactionRecord(
     path,
     record
   };
+}
+
+
+async function appendTransactionRecordInsideQueue({
+  storageAdapter,
+  path,
+  line,
+  record
+}) {
+
+  const identityState =
+    await ensureIdentityStateInitialized({
+      storageAdapter,
+      path
+    });
+
+  assertIncomingIdentityIsAvailable({
+    identityState,
+    record,
+    path
+  });
+
+  try {
+
+    await appendLineToLogFile({
+      storageAdapter,
+      path,
+      line
+    });
+
+  } catch (error) {
+
+    invalidateIdentityState(
+      storageAdapter,
+      path
+    );
+
+    throw error;
+  }
+
+  addRecordIdentityToState(
+    identityState,
+    record
+  );
 }
 
 
@@ -305,6 +368,322 @@ export async function readEventTransactions(
     );
 
   return snapshot.transactions;
+}
+
+
+async function ensureIdentityStateInitialized({
+  storageAdapter,
+  path
+}) {
+
+  const identityState =
+    getIdentityStateForCurrentWorkspace(
+      storageAdapter,
+      path
+    );
+
+  if (identityState.initialized) {
+
+    return identityState;
+  }
+
+  const snapshot =
+    await readTransactionRecords({
+      storageAdapter
+    });
+
+  const built =
+    buildIdentitySetsFromSnapshot(
+      snapshot,
+      path
+    );
+
+  identityState.transactionIds =
+    built.transactionIds;
+
+  identityState.eventIds =
+    built.eventIds;
+
+  identityState.initialized =
+    true;
+
+  return identityState;
+}
+
+
+function getIdentityStateForCurrentWorkspace(
+  storageAdapter,
+  path
+) {
+
+  const normalizedPath =
+    normalizeWorkspacePath(
+      path
+    );
+
+  const workspaceIdentity =
+    getCurrentWorkspaceIdentity(
+      storageAdapter
+    );
+
+  let adapterStates =
+    identityStates.get(
+      storageAdapter
+    );
+
+  if (!adapterStates) {
+
+    adapterStates =
+      new Map();
+
+    identityStates.set(
+      storageAdapter,
+      adapterStates
+    );
+  }
+
+  const existing =
+    adapterStates.get(
+      normalizedPath
+    );
+
+  if (
+    existing &&
+    existing.workspaceIdentity === workspaceIdentity
+  ) {
+
+    return existing;
+  }
+
+  const identityState = {
+    workspaceIdentity,
+    initialized:
+      false,
+    transactionIds:
+      new Set(),
+    eventIds:
+      new Set()
+  };
+
+  adapterStates.set(
+    normalizedPath,
+    identityState
+  );
+
+  return identityState;
+}
+
+
+function getCurrentWorkspaceIdentity(
+  storageAdapter
+) {
+
+  const workspaceRoot =
+    typeof storageAdapter.getWorkspaceRoot === 'function'
+      ? storageAdapter.getWorkspaceRoot()
+      : '';
+
+  if (workspaceRoot) {
+
+    return `root:${String(workspaceRoot)}`;
+  }
+
+  const workspaceHandle =
+    typeof storageAdapter.getWorkspaceHandle === 'function'
+      ? storageAdapter.getWorkspaceHandle()
+      : null;
+
+  if (workspaceHandle) {
+
+    return workspaceHandle;
+  }
+
+  let fallbackIdentity =
+    fallbackWorkspaceIdentities.get(
+      storageAdapter
+    );
+
+  if (!fallbackIdentity) {
+
+    fallbackIdentity = {
+      kind:
+        'event-store-fallback-workspace'
+    };
+
+    fallbackWorkspaceIdentities.set(
+      storageAdapter,
+      fallbackIdentity
+    );
+  }
+
+  return fallbackIdentity;
+}
+
+
+function buildIdentitySetsFromSnapshot(
+  snapshot,
+  path
+) {
+
+  const transactionIds =
+    new Set();
+
+  const eventIds =
+    new Set();
+
+  for (const transaction of snapshot.transactions) {
+
+    addUniqueIdentity({
+      ids:
+        transactionIds,
+      identityType:
+        'transactionId',
+      identity:
+        transaction.transactionId,
+      path
+    });
+
+    for (const event of transaction.events) {
+
+      addUniqueIdentity({
+        ids:
+          eventIds,
+        identityType:
+          'eventId',
+        identity:
+          event.eventId,
+        path
+      });
+    }
+  }
+
+  return {
+    transactionIds,
+    eventIds
+  };
+}
+
+
+function addUniqueIdentity({
+  ids,
+  identityType,
+  identity,
+  path
+}) {
+
+  if (ids.has(identity)) {
+
+    throwDuplicateIdentity({
+      identityType,
+      identity,
+      path
+    });
+  }
+
+  ids.add(
+    identity
+  );
+}
+
+
+function assertIncomingIdentityIsAvailable({
+  identityState,
+  record,
+  path
+}) {
+
+  const transactionId =
+    record.transaction.transactionId;
+
+  if (
+    identityState.transactionIds.has(
+      transactionId
+    )
+  ) {
+
+    throwDuplicateIdentity({
+      identityType:
+        'transactionId',
+      identity:
+        transactionId,
+      path
+    });
+  }
+
+  for (const event of record.events) {
+
+    if (
+      identityState.eventIds.has(
+        event.eventId
+      )
+    ) {
+
+      throwDuplicateIdentity({
+        identityType:
+          'eventId',
+        identity:
+          event.eventId,
+        path
+      });
+    }
+  }
+}
+
+
+function addRecordIdentityToState(
+  identityState,
+  record
+) {
+
+  identityState.transactionIds.add(
+    record.transaction.transactionId
+  );
+
+  for (const event of record.events) {
+
+    identityState.eventIds.add(
+      event.eventId
+    );
+  }
+}
+
+
+function invalidateIdentityState(
+  storageAdapter,
+  path
+) {
+
+  const adapterStates =
+    identityStates.get(
+      storageAdapter
+    );
+
+  if (!adapterStates) return;
+
+  adapterStates.delete(
+    normalizeWorkspacePath(
+      path
+    )
+  );
+}
+
+
+function throwDuplicateIdentity({
+  identityType,
+  identity,
+  path
+}) {
+
+  throw new EventStoreError(
+    `Event Store duplicate ${identityType}: ${identity}.`,
+    {
+      code:
+        EVENT_STORE_ERROR_CODES.DUPLICATE_IDENTITY,
+      path,
+      identityType,
+      identity
+    }
+  );
 }
 
 

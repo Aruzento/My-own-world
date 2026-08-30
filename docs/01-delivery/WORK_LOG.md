@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-30: Owner-Directed Off-Plan Corrective Maintenance - Durable Event Identity Uniqueness
+
+### Disposition
+
+- Corrective scope: `Enforce Durable Event Identity Uniqueness`.
+- EventStore now rejects duplicate `transactionId` and `eventId` values across valid durable history for the active workspace before append.
+- Kept `0.0.1.16.0` as `NEXT`, not active.
+
+### What Changed
+
+- Added a runtime-only, workspace-scoped identity index inside `js/events/eventStore.js`; no persistent index, sidecar file, schema version or JSONL format change was introduced.
+- The index initializes inside the existing append queue from one durable `readTransactionRecords()` snapshot for the current workspace, then checks incoming ids with Set lookups before appending.
+- Workspace identity follows the existing adapter surface: desktop uses `getWorkspaceRoot()`, browser uses `getWorkspaceHandle()` object identity, and injected adapters use an adapter-local fallback identity.
+- Append failures invalidate the runtime identity state so the next append rebuilds from durable storage instead of trusting possibly stale Sets after an uncertain filesystem error.
+- `js/events/eventQuery.js` now reports `EVENT_QUERY_AMBIGUOUS_TRANSACTION_ID` when an existing valid log contains multiple matching `transactionId` records instead of returning the first one.
+
+### Verification
+
+- Focused identity/query regressions: `node --test tests\eventStore.test.mjs tests\eventQuery.test.mjs` passed, 37 tests.
+- Focused neighboring event regressions: `node --test tests\eventHistoryPanel.test.mjs tests\transactionReversal.test.mjs tests\eventSafetyIntegration.test.mjs tests\pagePropertyResourceTransaction.test.mjs tests\diceRollEventLog.test.mjs` passed, 28 tests.
+
+### Explicit Non-Work
+
+- No roadmap/status change, persistent event format change, persistent identity index, event history redesign, backup/restore policy change, combat/session, damage/HP automation, effects, targeting or `0.0.1.16.0` start was performed.
+
 ## 2026-08-30: Owner-Directed Off-Plan Corrective Maintenance - Event History Snapshot Reads
 
 ### Disposition

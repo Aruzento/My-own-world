@@ -26,7 +26,9 @@ export const EVENT_QUERY_ERROR_CODES =
     INVALID_INPUT:
       'EVENT_QUERY_INVALID_INPUT',
     INVALID_CURSOR:
-      'EVENT_QUERY_INVALID_CURSOR'
+      'EVENT_QUERY_INVALID_CURSOR',
+    AMBIGUOUS_TRANSACTION_ID:
+      'EVENT_QUERY_AMBIGUOUS_TRANSACTION_ID'
   });
 
 
@@ -228,10 +230,33 @@ export function getEventTransactionByIdFromSnapshot(
       snapshot
     );
 
-  const transaction =
-    normalizedSnapshot.transactions.find(item =>
+  const matches =
+    normalizedSnapshot.transactions.filter(item =>
       item.transactionId === id
     );
+
+  if (matches.length > 1) {
+
+    throw new EventQueryError(
+      `Event transaction id ${id} is ambiguous in durable history.`,
+      {
+        code:
+          EVENT_QUERY_ERROR_CODES.AMBIGUOUS_TRANSACTION_ID,
+        field:
+          'transactionId',
+        details:
+          {
+            transactionId:
+              id,
+            matchCount:
+              matches.length
+          }
+      }
+    );
+  }
+
+  const transaction =
+    matches[0];
 
   return transaction
     ? deepFreeze(

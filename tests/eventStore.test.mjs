@@ -150,7 +150,7 @@ test(
 
 
 test(
-  'EventStore uses appendText without reading or rewriting the existing log',
+  'EventStore uses appendText after one identity initialization read',
   async () => {
 
     const adapter =
@@ -196,7 +196,9 @@ test(
 
     assert.deepEqual(
       adapter.readPaths,
-      []
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
     );
 
     assert.deepEqual(
@@ -308,6 +310,101 @@ test(
 
 
 test(
+  'EventStore append-capable identity initialization reads once per workspace runtime',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    adapter.readPaths.length =
+      0;
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-read-count-1',
+        eventId:
+          'evt-read-count-1',
+        order:
+          1,
+        total:
+          6
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-read-count-2',
+        eventId:
+          'evt-read-count-2',
+        order:
+          2,
+        total:
+          14
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-read-count-3',
+        eventId:
+          'evt-read-count-3',
+        order:
+          3,
+        total:
+          19
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    assert.deepEqual(
+      adapter.appendPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH,
+        EVENT_TRANSACTION_LOG_PATH,
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      []
+    );
+  }
+);
+
+
+test(
   'EventStore reports appendText failure without hidden read-write fallback',
   async () => {
 
@@ -348,12 +445,959 @@ test(
 
     assert.deepEqual(
       adapter.readPaths,
-      []
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
     );
 
     assert.deepEqual(
       adapter.writePaths,
       []
+    );
+  }
+);
+
+
+test(
+  'EventStore rejects duplicate transaction ids before durable append',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-duplicate-transaction',
+        eventId:
+          'evt-duplicate-transaction-a',
+        order:
+          1,
+        total:
+          8
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    const appendCount =
+      adapter.appendPaths.length;
+
+    const rawBefore =
+      adapter.files.get(
+        EVENT_TRANSACTION_LOG_PATH
+      );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-duplicate-transaction',
+          eventId:
+            'evt-duplicate-transaction-b',
+          order:
+            2,
+          total:
+            12
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'transactionId',
+        'txn-duplicate-transaction'
+      )
+    );
+
+    assert.equal(
+      adapter.appendPaths.length,
+      appendCount
+    );
+
+    assert.equal(
+      adapter.files.get(EVENT_TRANSACTION_LOG_PATH),
+      rawBefore
+    );
+  }
+);
+
+
+test(
+  'EventStore rejects duplicate event ids before durable append',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-duplicate-event-a',
+        eventId:
+          'evt-duplicate-event',
+        order:
+          1,
+        total:
+          8
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    const appendCount =
+      adapter.appendPaths.length;
+
+    const rawBefore =
+      adapter.files.get(
+        EVENT_TRANSACTION_LOG_PATH
+      );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-duplicate-event-b',
+          eventId:
+            'evt-duplicate-event',
+          order:
+            2,
+          total:
+            12
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'eventId',
+        'evt-duplicate-event'
+      )
+    );
+
+    assert.equal(
+      adapter.appendPaths.length,
+      appendCount
+    );
+
+    assert.equal(
+      adapter.files.get(EVENT_TRANSACTION_LOG_PATH),
+      rawBefore
+    );
+  }
+);
+
+
+test(
+  'EventStore rebuilds identity state from durable history after reload',
+  async () => {
+
+    const originalAdapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-reload-duplicate',
+        eventId:
+          'evt-reload-duplicate',
+        order:
+          1,
+        total:
+          8
+      }),
+      {
+        storageAdapter:
+          originalAdapter
+      }
+    );
+
+    const reloadedAdapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    reloadedAdapter.files.set(
+      EVENT_TRANSACTION_LOG_PATH,
+      originalAdapter.files.get(EVENT_TRANSACTION_LOG_PATH)
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-reload-duplicate',
+          eventId:
+            'evt-reload-new-event',
+          order:
+            2,
+          total:
+            12
+        }),
+        {
+          storageAdapter:
+            reloadedAdapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'transactionId',
+        'txn-reload-duplicate'
+      )
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-reload-new-transaction',
+          eventId:
+            'evt-reload-duplicate',
+          order:
+            3,
+          total:
+            16
+        }),
+        {
+          storageAdapter:
+            reloadedAdapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'eventId',
+        'evt-reload-duplicate'
+      )
+    );
+
+    assert.deepEqual(
+      reloadedAdapter.appendPaths,
+      []
+    );
+  }
+);
+
+
+test(
+  'EventStore fails closed when existing valid durable history contains duplicate identities',
+  async () => {
+
+    const duplicateTransactionAdapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await seedTransactionRecords(
+      duplicateTransactionAdapter,
+      [
+        createCompletedTransaction({
+          transactionId:
+            'txn-existing-duplicate',
+          eventId:
+            'evt-existing-duplicate-a',
+          order:
+            1,
+          total:
+            4
+        }),
+        createCompletedTransaction({
+          transactionId:
+            'txn-existing-duplicate',
+          eventId:
+            'evt-existing-duplicate-b',
+          order:
+            2,
+          total:
+            6
+        })
+      ]
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-existing-duplicate-new',
+          eventId:
+            'evt-existing-duplicate-new',
+          order:
+            3,
+          total:
+            8
+        }),
+        {
+          storageAdapter:
+            duplicateTransactionAdapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'transactionId',
+        'txn-existing-duplicate'
+      )
+    );
+
+    assert.deepEqual(
+      duplicateTransactionAdapter.appendPaths,
+      []
+    );
+
+    const duplicateEventAdapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await seedTransactionRecords(
+      duplicateEventAdapter,
+      [
+        createCompletedTransaction({
+          transactionId:
+            'txn-existing-event-a',
+          eventId:
+            'evt-existing-event-duplicate',
+          order:
+            1,
+          total:
+            4
+        }),
+        createCompletedTransaction({
+          transactionId:
+            'txn-existing-event-b',
+          eventId:
+            'evt-existing-event-duplicate',
+          order:
+            2,
+          total:
+            6
+        })
+      ]
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-existing-event-new',
+          eventId:
+            'evt-existing-event-new',
+          order:
+            3,
+          total:
+            8
+        }),
+        {
+          storageAdapter:
+            duplicateEventAdapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'eventId',
+        'evt-existing-event-duplicate'
+      )
+    );
+
+    assert.deepEqual(
+      duplicateEventAdapter.appendPaths,
+      []
+    );
+  }
+);
+
+
+test(
+  'EventStore isolates identity state when one desktop adapter switches workspaces',
+  async () => {
+
+    const adapter =
+      createSwitchableEventStorageAdapter({
+        identityKind:
+          'root'
+      });
+
+    adapter.switchToWorkspace(
+      'workspace-a'
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-workspace-reuse',
+        eventId:
+          'evt-workspace-reuse',
+        order:
+          1,
+        total:
+          7
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    adapter.switchToWorkspace(
+      'workspace-b'
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-workspace-reuse',
+        eventId:
+          'evt-workspace-reuse',
+        order:
+          1,
+        total:
+          7
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    assert.equal(
+      countLogLines(
+        adapter.getWorkspaceLog('workspace-a')
+      ),
+      1
+    );
+
+    assert.equal(
+      countLogLines(
+        adapter.getWorkspaceLog('workspace-b')
+      ),
+      1
+    );
+
+    adapter.switchToWorkspace(
+      'workspace-a'
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-workspace-reuse',
+          eventId:
+            'evt-workspace-new',
+          order:
+            2,
+          total:
+            12
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'transactionId',
+        'txn-workspace-reuse'
+      )
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-workspace-new',
+          eventId:
+            'evt-workspace-reuse',
+          order:
+            3,
+          total:
+            14
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'eventId',
+        'evt-workspace-reuse'
+      )
+    );
+  }
+);
+
+
+test(
+  'EventStore isolates identity state when one browser adapter switches handles',
+  async () => {
+
+    const adapter =
+      createSwitchableEventStorageAdapter({
+        identityKind:
+          'handle'
+      });
+
+    adapter.switchToHandle(
+      adapter.handles.a
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-browser-handle-reuse',
+        eventId:
+          'evt-browser-handle-reuse',
+        order:
+          1,
+        total:
+          7
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    adapter.switchToHandle(
+      adapter.handles.b
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-browser-handle-reuse',
+        eventId:
+          'evt-browser-handle-reuse',
+        order:
+          1,
+        total:
+          7
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    adapter.switchToHandle(
+      adapter.handles.a
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-browser-handle-reuse',
+          eventId:
+            'evt-browser-handle-new',
+          order:
+            2,
+          total:
+            12
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'transactionId',
+        'txn-browser-handle-reuse'
+      )
+    );
+
+    assert.equal(
+      countLogLines(
+        adapter.getWorkspaceLog(adapter.handles.a)
+      ),
+      1
+    );
+
+    assert.equal(
+      countLogLines(
+        adapter.getWorkspaceLog(adapter.handles.b)
+      ),
+      1
+    );
+  }
+);
+
+
+test(
+  'EventStore serializes concurrent duplicate transaction id claims',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true,
+        appendDelayMs:
+          2
+      });
+
+    const settled =
+      await Promise.allSettled([
+        appendTransactionRecord(
+          createCompletedTransaction({
+            transactionId:
+              'txn-concurrent-duplicate',
+            eventId:
+              'evt-concurrent-duplicate-a',
+            order:
+              1,
+            total:
+              4
+          }),
+          {
+            storageAdapter:
+              adapter
+          }
+        ),
+        appendTransactionRecord(
+          createCompletedTransaction({
+            transactionId:
+              'txn-concurrent-duplicate',
+            eventId:
+              'evt-concurrent-duplicate-b',
+            order:
+              2,
+            total:
+              12
+          }),
+          {
+            storageAdapter:
+              adapter
+          }
+        )
+      ]);
+
+    assert.equal(
+      settled.filter(result => result.status === 'fulfilled').length,
+      1
+    );
+
+    assert.equal(
+      settled.filter(result => result.status === 'rejected').length,
+      1
+    );
+
+    const rejected =
+      settled.find(result =>
+        result.status === 'rejected'
+      );
+
+    assert.equal(
+      isDuplicateIdentityError(
+        rejected.reason,
+        'transactionId',
+        'txn-concurrent-duplicate'
+      ),
+      true
+    );
+
+    const snapshot =
+      await readTransactionRecords({
+        storageAdapter:
+          adapter
+      });
+
+    assert.deepEqual(
+      snapshot.transactions.map(transaction =>
+        transaction.transactionId
+      ),
+      [
+        'txn-concurrent-duplicate'
+      ]
+    );
+  }
+);
+
+
+test(
+  'EventStore serializes concurrent duplicate event id claims',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true,
+        appendDelayMs:
+          2
+      });
+
+    const settled =
+      await Promise.allSettled([
+        appendTransactionRecord(
+          createCompletedTransaction({
+            transactionId:
+              'txn-concurrent-event-a',
+            eventId:
+              'evt-concurrent-event-duplicate',
+            order:
+              1,
+            total:
+              4
+          }),
+          {
+            storageAdapter:
+              adapter
+          }
+        ),
+        appendTransactionRecord(
+          createCompletedTransaction({
+            transactionId:
+              'txn-concurrent-event-b',
+            eventId:
+              'evt-concurrent-event-duplicate',
+            order:
+              2,
+            total:
+              12
+          }),
+          {
+            storageAdapter:
+              adapter
+          }
+        )
+      ]);
+
+    assert.equal(
+      settled.filter(result => result.status === 'fulfilled').length,
+      1
+    );
+
+    assert.equal(
+      settled.filter(result => result.status === 'rejected').length,
+      1
+    );
+
+    const rejected =
+      settled.find(result =>
+        result.status === 'rejected'
+      );
+
+    assert.equal(
+      isDuplicateIdentityError(
+        rejected.reason,
+        'eventId',
+        'evt-concurrent-event-duplicate'
+      ),
+      true
+    );
+
+    const snapshot =
+      await readTransactionRecords({
+        storageAdapter:
+          adapter
+      });
+
+    assert.deepEqual(
+      snapshot.transactions.flatMap(transaction =>
+        transaction.events.map(event => event.eventId)
+      ),
+      [
+        'evt-concurrent-event-duplicate'
+      ]
+    );
+  }
+);
+
+
+test(
+  'EventStore failed append does not reserve incoming identities',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    adapter.controls.failAppendPath =
+      EVENT_TRANSACTION_LOG_PATH;
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-failed-not-reserved',
+          eventId:
+            'evt-failed-not-reserved',
+          order:
+            1,
+          total:
+            6
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error =>
+        error instanceof EventStoreError &&
+        error.code === EVENT_STORE_ERROR_CODES.WRITE_FAILED
+    );
+
+    adapter.controls.failAppendPath =
+      '';
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-failed-not-reserved',
+        eventId:
+          'evt-failed-not-reserved',
+        order:
+          1,
+        total:
+          6
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    const snapshot =
+      await readTransactionRecords({
+        storageAdapter:
+          adapter
+      });
+
+    assert.deepEqual(
+      snapshot.transactions.map(transaction =>
+        transaction.transactionId
+      ),
+      [
+        'txn-failed-not-reserved'
+      ]
+    );
+
+    assert.equal(
+      adapter.appendPaths.length,
+      1
+    );
+  }
+);
+
+
+test(
+  'EventStore uncertain append failure invalidates runtime identity state',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-before-uncertain-failure',
+        eventId:
+          'evt-before-uncertain-failure',
+        order:
+          1,
+        total:
+          5
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    adapter.readPaths.length =
+      0;
+
+    adapter.controls.failAppendAfterWritePath =
+      EVENT_TRANSACTION_LOG_PATH;
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-uncertain-failure',
+          eventId:
+            'evt-uncertain-failure',
+          order:
+            2,
+          total:
+            11
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error =>
+        error instanceof EventStoreError &&
+        error.code === EVENT_STORE_ERROR_CODES.WRITE_FAILED
+    );
+
+    adapter.controls.failAppendAfterWritePath =
+      '';
+
+    assert.deepEqual(
+      adapter.readPaths,
+      []
+    );
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-uncertain-failure',
+          eventId:
+            'evt-uncertain-failure-retry',
+          order:
+            3,
+          total:
+            13
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error => isDuplicateIdentityError(
+        error,
+        'transactionId',
+        'txn-uncertain-failure'
+      )
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    assert.equal(
+      adapter.appendPaths.length,
+      2
     );
   }
 );
@@ -391,6 +1435,7 @@ test(
     assert.deepEqual(
       adapter.readPaths,
       [
+        EVENT_TRANSACTION_LOG_PATH,
         EVENT_TRANSACTION_LOG_PATH
       ]
     );
@@ -1244,9 +2289,337 @@ function createRollEventPayload(
 }
 
 
+function isDuplicateIdentityError(
+  error,
+  identityType,
+  identity
+) {
+
+  assert.equal(
+    error instanceof EventStoreError,
+    true
+  );
+
+  assert.equal(
+    error.code,
+    EVENT_STORE_ERROR_CODES.DUPLICATE_IDENTITY
+  );
+
+  assert.equal(
+    error.identityType,
+    identityType
+  );
+
+  assert.equal(
+    error.identity,
+    identity
+  );
+
+  return true;
+}
+
+
+async function seedTransactionRecords(
+  adapter,
+  transactions
+) {
+
+  await adapter.ensureDirectory(
+    EVENT_STORE_ROOT
+  );
+
+  await adapter.writeText(
+    EVENT_TRANSACTION_LOG_PATH,
+    `${transactions
+      .map(transaction =>
+        JSON.stringify(
+          createTransactionRecord(
+            transaction
+          )
+        )
+      )
+      .join('\n')}\n`
+  );
+}
+
+
+function countLogLines(
+  content
+) {
+
+  const trimmed =
+    String(content || '').trim();
+
+  return trimmed
+    ? trimmed.split('\n').length
+    : 0;
+}
+
+
+function createSwitchableEventStorageAdapter({
+  identityKind =
+    'root'
+} = {}) {
+
+  const handles = {
+    a:
+      {
+        name:
+          'workspace-a'
+      },
+    b:
+      {
+        name:
+          'workspace-b'
+      }
+  };
+
+  const buckets =
+    new Map();
+
+  let currentRoot =
+    'workspace-a';
+
+  let currentHandle =
+    handles.a;
+
+  const readPaths =
+    [];
+
+  const appendPaths =
+    [];
+
+  const writePaths =
+    [];
+
+  const ensureDirectoryPaths =
+    [];
+
+  function getCurrentKey() {
+
+    return identityKind === 'handle'
+      ? currentHandle
+      : currentRoot;
+  }
+
+  function getCurrentLabel() {
+
+    return identityKind === 'handle'
+      ? currentHandle.name
+      : currentRoot;
+  }
+
+  function getBucket(
+    key
+  ) {
+
+    if (!buckets.has(key)) {
+
+      buckets.set(
+        key,
+        {
+          files:
+            new Map(),
+          directories:
+            new Set([
+              ''
+            ])
+        }
+      );
+    }
+
+    return buckets.get(
+      key
+    );
+  }
+
+  function getCurrentBucket() {
+
+    return getBucket(
+      getCurrentKey()
+    );
+  }
+
+  return {
+    kind:
+      identityKind === 'handle'
+        ? 'browser'
+        : 'desktop',
+
+    handles,
+
+    readPaths,
+    appendPaths,
+    writePaths,
+    ensureDirectoryPaths,
+
+    switchToWorkspace(root) {
+
+      currentRoot =
+        String(root || '');
+    },
+
+    switchToHandle(handle) {
+
+      currentHandle =
+        handle;
+    },
+
+    getWorkspaceRoot() {
+
+      return identityKind === 'root'
+        ? currentRoot
+        : '';
+    },
+
+    getWorkspaceHandle() {
+
+      return identityKind === 'handle'
+        ? currentHandle
+        : null;
+    },
+
+    getWorkspaceLog(workspaceIdentity) {
+
+      return getBucket(
+        workspaceIdentity
+      ).files.get(
+        EVENT_TRANSACTION_LOG_PATH
+      ) || '';
+    },
+
+    async ensureDirectory(path) {
+
+      const normalized =
+        normalizeWorkspacePath(
+          path
+        );
+
+      ensureDirectoryPaths.push({
+        workspace:
+          getCurrentLabel(),
+        path:
+          normalized
+      });
+
+      ensureDirectoryPath(
+        getCurrentBucket().directories,
+        normalized
+      );
+    },
+
+    async readText(path) {
+
+      const normalized =
+        normalizeWorkspacePath(
+          path
+        );
+
+      readPaths.push({
+        workspace:
+          getCurrentLabel(),
+        path:
+          normalized
+      });
+
+      const {
+        files
+      } =
+        getCurrentBucket();
+
+      if (!files.has(normalized)) {
+
+        throw new Error(
+          `File not found: ${path}`
+        );
+      }
+
+      return files.get(
+        normalized
+      );
+    },
+
+    async writeText(path, content) {
+
+      const normalized =
+        normalizeWorkspacePath(
+          path
+        );
+
+      writePaths.push({
+        workspace:
+          getCurrentLabel(),
+        path:
+          normalized
+      });
+
+      const bucket =
+        getCurrentBucket();
+
+      ensureDirectoryPath(
+        bucket.directories,
+        getParentPath(
+          normalized
+        )
+      );
+
+      bucket.files.set(
+        normalized,
+        String(content)
+      );
+    },
+
+    async appendText(path, content) {
+
+      const normalized =
+        normalizeWorkspacePath(
+          path
+        );
+
+      appendPaths.push({
+        workspace:
+          getCurrentLabel(),
+        path:
+          normalized
+      });
+
+      const bucket =
+        getCurrentBucket();
+
+      ensureDirectoryPath(
+        bucket.directories,
+        getParentPath(
+          normalized
+        )
+      );
+
+      bucket.files.set(
+        normalized,
+        `${bucket.files.get(normalized) || ''}${String(content)}`
+      );
+    }
+  };
+}
+
+
 function createMemoryStorageAdapter(
   options = {}
 ) {
+
+  const controls = {
+    failWritePath:
+      options.failWritePath || '',
+    failAppendPath:
+      options.failAppendPath || '',
+    failAppendAfterWritePath:
+      options.failAppendAfterWritePath || '',
+    writeDelayMs:
+      options.writeDelayMs || 0,
+    appendDelayMs:
+      options.appendDelayMs || 0,
+    workspaceRoot:
+      options.workspaceRoot || 'memory-event-store'
+  };
 
   const files =
     new Map();
@@ -1275,6 +2648,8 @@ function createMemoryStorageAdapter(
     kind:
       'desktop',
 
+    controls,
+
     files,
 
     writePaths,
@@ -1289,17 +2664,23 @@ function createMemoryStorageAdapter(
 
     getWorkspaceRoot() {
 
-      return 'memory-event-store';
+      return controls.workspaceRoot;
+    },
+
+    setWorkspaceRoot(root) {
+
+      controls.workspaceRoot =
+        String(root || '');
     },
 
     async pickWorkspace() {
 
-      return 'memory-event-store';
+      return controls.workspaceRoot;
     },
 
     async restoreWorkspace() {
 
-      return 'memory-event-store';
+      return controls.workspaceRoot;
     },
 
     async ensureDirectory(path) {
@@ -1361,7 +2742,7 @@ function createMemoryStorageAdapter(
           path
         );
 
-      if (normalized === options.failWritePath) {
+      if (normalized === controls.failWritePath) {
 
         throw new Error(
           'forced event log write failure'
@@ -1372,12 +2753,12 @@ function createMemoryStorageAdapter(
         normalized
       );
 
-      if (options.writeDelayMs) {
+      if (controls.writeDelayMs) {
 
         await new Promise(resolve =>
           setTimeout(
             resolve,
-            options.writeDelayMs
+            controls.writeDelayMs
           )
         );
       }
@@ -1546,10 +2927,20 @@ function createMemoryStorageAdapter(
             path
           );
 
-        if (normalized === options.failAppendPath) {
+        if (normalized === controls.failAppendPath) {
 
           throw new Error(
             'forced event log append failure'
+          );
+        }
+
+        if (controls.appendDelayMs) {
+
+          await new Promise(resolve =>
+            setTimeout(
+              resolve,
+              controls.appendDelayMs
+            )
           );
         }
 
@@ -1568,6 +2959,13 @@ function createMemoryStorageAdapter(
           normalized,
           `${files.get(normalized) || ''}${String(content)}`
         );
+
+        if (normalized === controls.failAppendAfterWritePath) {
+
+          throw new Error(
+            'forced event log append close failure'
+          );
+        }
       };
   }
 
