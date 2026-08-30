@@ -13,9 +13,13 @@ import {
 
 import {
   EVENT_QUERY_MAX_LIMIT,
-  getEventTransactionById,
-  queryEventLog
+  getEventTransactionByIdFromSnapshot,
+  queryEventLogFromSnapshot
 } from '../events/eventQuery.js';
+
+import {
+  readTransactionRecords
+} from '../events/eventStore.js';
 
 import {
   classifyTransactionReversibility,
@@ -222,24 +226,34 @@ export async function createEventHistoryViewModel(
   options = {}
 ) {
 
+  const snapshot =
+    await readTransactionRecords({
+      storageAdapter:
+        options.storageAdapter,
+      strict:
+        Boolean(
+          options.strict
+        )
+    });
+
   const result =
-    await queryEventLog(
+    queryEventLogFromSnapshot(
+      snapshot,
       {
         limit:
           EVENT_HISTORY_VISIBLE_LIMIT,
         ...query
-      },
-      options
+      }
     );
 
   const reversibilitySource =
     result.returnedCount > 0
-      ? await queryEventLog(
+      ? queryEventLogFromSnapshot(
+        snapshot,
         {
           limit:
             EVENT_QUERY_MAX_LIMIT
-        },
-        options
+        }
       )
       : result;
 
@@ -267,9 +281,9 @@ export async function createEventHistoryViewModel(
     if (transaction === undefined) {
 
       transaction =
-        await getEventTransactionById(
-          transactionId,
-          options
+        getEventTransactionByIdFromSnapshot(
+          snapshot,
+          transactionId
         );
 
       transactionCache.set(

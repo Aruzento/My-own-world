@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-30: Owner-Directed Off-Plan Corrective Maintenance - Event History Snapshot Reads
+
+### Disposition
+
+- Corrective scope: `Reuse One Event Store Snapshot Per Event History Refresh`.
+- Event History now uses one fresh EventStore snapshot per load/refresh, then performs event rows, filters, pagination, transaction lookup and undo-availability shaping against that same normalized snapshot.
+- Kept `0.0.1.16.0` as `NEXT`, not active.
+
+### What Changed
+
+- Added snapshot-based query operations in `js/events/eventQuery.js`: `queryEventLogFromSnapshot()` and `getEventTransactionByIdFromSnapshot()`.
+- Kept existing convenience APIs `queryEventLog()` and `getEventTransactionById()` as compatibility wrappers that still perform a single durable read for standalone consumers.
+- Updated `js/ui/eventHistoryPanel.js` so one refresh calls `readTransactionRecords()` once and avoids per-row or per-helper durable reads.
+- Added read-count regressions for populated loads, transaction/reversibility lookups, filter/pagination, explicit second refresh, workspace switch, invalid durable records and convenience API compatibility.
+
+### Verification
+
+- Focused event regressions: `node --test tests\eventQuery.test.mjs tests\eventHistoryPanel.test.mjs tests\transactionReversal.test.mjs tests\eventStore.test.mjs tests\eventTransactionContract.test.mjs` passed, 39 tests.
+- Focused browser coverage: `npm run test:browser -- tests/browser/event-history.spec.mjs` passed, 3 tests.
+- Repository gates: `npm run docs:index`, `npm run verify:quick` and `npm run verify` passed (`verify` includes 609 node tests, large-workspace performance smoke, `git diff --check` and DOCX zip validation).
+
+### Explicit Non-Work
+
+- No EventStore append behavior, JSONL format, transaction/event schema, global cache, persistent index, backup/restore policy, Event History redesign, combat/session, damage/HP/effects/targeting, roadmap/status or persistent format was changed.
+
 ## 2026-08-30: Owner-Directed Off-Plan Corrective Maintenance - Event Log Production Append
 
 ### Disposition

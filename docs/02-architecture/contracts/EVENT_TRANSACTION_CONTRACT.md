@@ -302,6 +302,7 @@ Public read operations:
 
 - `queryEventLog(query, { storageAdapter, strict })` reads through `readTransactionRecords()` and returns bounded event-query items.
 - `getEventTransactionById(transactionId, { storageAdapter, strict })` returns one typed transaction or `null` when the id is unknown.
+- `queryEventLogFromSnapshot(snapshot, query)` and `getEventTransactionByIdFromSnapshot(snapshot, transactionId)` perform the same query/lookup shaping from an already-normalized EventStore snapshot and perform no storage reads or JSONL parsing.
 
 The query facade owns presentation-neutral read shaping:
 
@@ -326,6 +327,7 @@ Consumer boundary:
 
 - consumers must not parse `.my-own-world-events/transactions.v1.jsonl` directly for normal reads;
 - consumers must not import event-store normalization helpers for UI queries;
+- consumers that need several query operations for one refresh should read one `readTransactionRecords()` snapshot and reuse the snapshot query operations instead of issuing one durable read per helper call;
 - query API does not write pages, append events, create backups or mutate repositories;
 - invalid/corrupt durable records remain owned by `eventStore`; the query result only exposes `invalidRecordCount` as read evidence.
 
@@ -344,8 +346,11 @@ UI ownership:
 
 Read boundary:
 
-- the UI reads event rows through `queryEventLog()`;
-- the UI reads a full transaction only through `getEventTransactionById()` when it needs reversibility evidence;
+- each explicit Event History load/refresh reads one fresh EventStore snapshot through `readTransactionRecords()`;
+- the UI derives visible event rows through `queryEventLogFromSnapshot()`;
+- the UI reads a full transaction only through `getEventTransactionByIdFromSnapshot()` when it needs reversibility evidence;
+- filtering, pagination, transaction lookup and undo-availability shaping for the same refresh reuse that snapshot and perform no additional durable event-log reads;
+- a later explicit refresh, successful undo followed by refresh or workspace/storage change reads a new active-workspace snapshot rather than reusing a previous one;
 - the UI must not parse `.my-own-world-events/transactions.v1.jsonl` directly;
 - the UI must not import event-store normalization internals for presentation.
 

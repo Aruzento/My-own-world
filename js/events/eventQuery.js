@@ -87,11 +87,6 @@ export async function queryEventLog(
   options = {}
 ) {
 
-  const query =
-    normalizeEventQueryInput(
-      input
-    );
-
   const snapshot =
     await readTransactionRecords({
       storageAdapter:
@@ -99,12 +94,34 @@ export async function queryEventLog(
       strict:
         Boolean(
           options.strict
-        )
+      )
     });
+
+  return queryEventLogFromSnapshot(
+    snapshot,
+    input
+  );
+}
+
+
+export function queryEventLogFromSnapshot(
+  snapshot,
+  input = {}
+) {
+
+  const query =
+    normalizeEventQueryInput(
+      input
+    );
+
+  const normalizedSnapshot =
+    normalizeEventStoreSnapshot(
+      snapshot
+    );
 
   const allItems =
     createEventQueryItems(
-      snapshot.transactions
+      normalizedSnapshot.transactions
     );
 
   const matched =
@@ -162,7 +179,7 @@ export async function queryEventLog(
         )
         : null,
     invalidRecordCount:
-      snapshot.invalidRecordCount
+      normalizedSnapshot.invalidRecordCount
   });
 }
 
@@ -185,11 +202,34 @@ export async function getEventTransactionById(
       strict:
         Boolean(
           options.strict
-        )
+      )
     });
 
+  return getEventTransactionByIdFromSnapshot(
+    snapshot,
+    id
+  );
+}
+
+
+export function getEventTransactionByIdFromSnapshot(
+  snapshot,
+  transactionId
+) {
+
+  const id =
+    requiredString(
+      transactionId,
+      'transactionId'
+    );
+
+  const normalizedSnapshot =
+    normalizeEventStoreSnapshot(
+      snapshot
+    );
+
   const transaction =
-    snapshot.transactions.find(item =>
+    normalizedSnapshot.transactions.find(item =>
       item.transactionId === id
     );
 
@@ -200,6 +240,53 @@ export async function getEventTransactionById(
       )
     )
     : null;
+}
+
+
+function normalizeEventStoreSnapshot(
+  snapshot
+) {
+
+  if (
+    !snapshot ||
+    typeof snapshot !== 'object' ||
+    Array.isArray(
+      snapshot
+    )
+  ) {
+
+    throwInvalidInput(
+      'snapshot',
+      'Event query snapshot must be a normalized EventStore snapshot.'
+    );
+  }
+
+  if (
+    !Array.isArray(
+      snapshot.transactions
+    )
+  ) {
+
+    throwInvalidInput(
+      'snapshot.transactions',
+      'Event query snapshot must include transactions.'
+    );
+  }
+
+  return {
+    transactions:
+      snapshot.transactions,
+    invalidRecordCount:
+      Number.isSafeInteger(
+        snapshot.invalidRecordCount
+      ) && snapshot.invalidRecordCount >= 0
+        ? snapshot.invalidRecordCount
+        : Array.isArray(
+          snapshot.invalidRecords
+        )
+          ? snapshot.invalidRecords.length
+          : 0
+  };
 }
 
 

@@ -3,7 +3,8 @@ import test from 'node:test';
 
 import {
   appendTransactionRecord,
-  EVENT_TRANSACTION_LOG_PATH
+  EVENT_TRANSACTION_LOG_PATH,
+  readTransactionRecords
 } from '../js/events/eventStore.js';
 
 import {
@@ -21,7 +22,9 @@ import {
   EVENT_QUERY_MAX_LIMIT,
   EventQueryError,
   getEventTransactionById,
-  queryEventLog
+  getEventTransactionByIdFromSnapshot,
+  queryEventLog,
+  queryEventLogFromSnapshot
 } from '../js/events/eventQuery.js';
 
 import {
@@ -589,6 +592,156 @@ test(
 );
 
 
+test(
+  'EventQuery snapshot operations reuse one normalized EventStore read',
+  async () => {
+
+    const adapter =
+      await createPopulatedEventLog();
+
+    adapter.readPaths.length =
+      0;
+
+    const snapshot =
+      await readTransactionRecords({
+        storageAdapter:
+          adapter
+      });
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    const serializedBefore =
+      JSON.stringify(
+        snapshot
+      );
+
+    const originalReadText =
+      adapter.readText;
+
+    adapter.readText =
+      async () => {
+
+        throw new Error(
+          'snapshot query must not read storage'
+        );
+      };
+
+    const queried =
+      queryEventLogFromSnapshot(
+        snapshot,
+        {
+          eventType:
+            EVENT_TYPES_V1.RESOURCE_CHANGED,
+          direction:
+            'asc',
+          limit:
+            10
+        }
+      );
+
+    const transaction =
+      getEventTransactionByIdFromSnapshot(
+        snapshot,
+        'txn-resource-gold'
+      );
+
+    assert.deepEqual(
+      queried.items.map(item => item.event.eventId),
+      [
+        'evt-resource-gold',
+        'evt-undo-resource'
+      ]
+    );
+
+    assert.equal(
+      transaction.transactionId,
+      'txn-resource-gold'
+    );
+
+    assert.equal(
+      adapter.readPaths.length,
+      1
+    );
+
+    assert.equal(
+      JSON.stringify(
+        snapshot
+      ),
+      serializedBefore
+    );
+
+    adapter.readText =
+      originalReadText;
+  }
+);
+
+
+test(
+  'EventQuery convenience APIs keep their standalone single-read behavior',
+  async () => {
+
+    const adapter =
+      await createPopulatedEventLog();
+
+    adapter.readPaths.length =
+      0;
+
+    const result =
+      await queryEventLog(
+        {
+          limit:
+            2
+        },
+        {
+          storageAdapter:
+            adapter
+        }
+      );
+
+    assert.equal(
+      result.items.length,
+      2
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    adapter.readPaths.length =
+      0;
+
+    const transaction =
+      await getEventTransactionById(
+        'txn-resource-gold',
+        {
+          storageAdapter:
+            adapter
+        }
+      );
+
+    assert.equal(
+      transaction.transactionId,
+      'txn-resource-gold'
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+  }
+);
+
+
 async function createPopulatedEventLog() {
 
   const adapter =
@@ -866,11 +1019,15 @@ function createMemoryStorageAdapter() {
   const files =
     new Map();
 
+  const readPaths =
+    [];
+
   return {
     kind:
       'desktop',
 
     files,
+    readPaths,
 
     getWorkspaceRoot() {
 
@@ -885,6 +1042,10 @@ function createMemoryStorageAdapter() {
         normalizeWorkspacePath(
           path
         );
+
+      readPaths.push(
+        normalized
+      );
 
       if (!files.has(normalized)) {
 
