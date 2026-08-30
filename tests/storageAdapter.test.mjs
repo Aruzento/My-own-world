@@ -7,8 +7,13 @@ import {
 import {
   assertStorageAdapterContract,
   normalizeWorkspacePath,
+  OPTIONAL_STORAGE_ADAPTER_METHODS,
   REQUIRED_STORAGE_ADAPTER_METHODS
 } from '../js/storage/storageAdapterContract.js';
+
+import {
+  createBrowserStorageAdapter
+} from '../js/storage/browserStorageAdapter.js';
 
 import {
   assertAssetAdapterContract,
@@ -116,6 +121,25 @@ test(
 
 
 test(
+  'StorageAdapter appendText is optional and not part of the required adapter surface',
+  () => {
+
+    assert.deepEqual(
+      OPTIONAL_STORAGE_ADAPTER_METHODS,
+      [
+        'appendText'
+      ]
+    );
+
+    assert.equal(
+      REQUIRED_STORAGE_ADAPTER_METHODS.includes('appendText'),
+      false
+    );
+  }
+);
+
+
+test(
   'Tauri structured command errors keep code and path on JS Error',
   () => {
 
@@ -165,6 +189,163 @@ test(
 
 
 test(
+  'BrowserStorageAdapter appendText appends without reading the full file text',
+  async () => {
+
+    const fakeFs =
+      createFakeFileSystemAccessRoot({
+        'events/log.txt':
+          'ABC'
+      });
+
+    const adapter =
+      createBrowserStorageAdapter();
+
+    adapter.setWorkspaceHandle(
+      fakeFs.root
+    );
+
+    await adapter.appendText(
+      'events/log.txt',
+      'DEF'
+    );
+
+    assert.equal(
+      fakeFs.files.get('events/log.txt'),
+      'ABCDEF'
+    );
+
+    assert.equal(
+      fakeFs.stats.textReads,
+      0
+    );
+
+    assert.deepEqual(
+      fakeFs.stats.createWritableOptions,
+      [
+        {
+          keepExistingData:
+            true
+        }
+      ]
+    );
+
+    assert.deepEqual(
+      fakeFs.stats.writes,
+      [
+        {
+          path:
+            'events/log.txt',
+          payload:
+            {
+              type:
+                'write',
+              position:
+                3,
+              data:
+                'DEF'
+            }
+        }
+      ]
+    );
+
+    assert.equal(
+      fakeFs.stats.closes,
+      1
+    );
+  }
+);
+
+
+test(
+  'BrowserStorageAdapter appendText creates absent files and preserves append order',
+  async () => {
+
+    const fakeFs =
+      createFakeFileSystemAccessRoot();
+
+    const adapter =
+      createBrowserStorageAdapter();
+
+    adapter.setWorkspaceHandle(
+      fakeFs.root
+    );
+
+    await adapter.appendText(
+      'events/new-log.txt',
+      'one\n'
+    );
+
+    await adapter.appendText(
+      'events/new-log.txt',
+      'two\n'
+    );
+
+    assert.equal(
+      fakeFs.files.get('events/new-log.txt'),
+      'one\ntwo\n'
+    );
+
+    assert.equal(
+      fakeFs.stats.textReads,
+      0
+    );
+
+    assert.equal(
+      fakeFs.stats.closes,
+      2
+    );
+  }
+);
+
+
+test(
+  'BrowserStorageAdapter appendText propagates writable failures',
+  async () => {
+
+    const fakeFs =
+      createFakeFileSystemAccessRoot({
+        'events/log.txt':
+          'ABC'
+      }, {
+        failWrite:
+          true
+      });
+
+    const adapter =
+      createBrowserStorageAdapter();
+
+    adapter.setWorkspaceHandle(
+      fakeFs.root
+    );
+
+    await assert.rejects(
+      () => adapter.appendText(
+        'events/log.txt',
+        'DEF'
+      ),
+      /forced writable failure/
+    );
+
+    assert.equal(
+      fakeFs.files.get('events/log.txt'),
+      'ABC'
+    );
+
+    assert.equal(
+      fakeFs.stats.aborts,
+      1
+    );
+
+    assert.equal(
+      fakeFs.stats.closes,
+      0
+    );
+  }
+);
+
+
+test(
   'DesktopStorageAdapter exposes root state without invoking Tauri during construction',
   () => {
 
@@ -191,6 +372,110 @@ test(
       adapter.getWorkspaceRoot(),
       'D:/Campaign'
     );
+  }
+);
+
+
+test(
+  'DesktopStorageAdapter appendText invokes the workspace-scoped Tauri append command',
+  async () => {
+
+    const previousTauri =
+      globalThis.__TAURI__;
+
+    const previousLocalStorage =
+      globalThis.localStorage;
+
+    const calls =
+      [];
+
+    globalThis.localStorage = {
+      getItem() {
+
+        return null;
+      },
+
+      setItem() {}
+    };
+
+    globalThis.__TAURI__ = {
+      core: {
+        async invoke(command, payload) {
+
+          calls.push({
+            command,
+            payload
+          });
+
+          if (command === 'set_workspace_root') {
+
+            assert.equal(
+              payload.workspaceRoot,
+              'C:/World'
+            );
+
+            return 'C:/World';
+          }
+
+          assert.equal(
+            command,
+            'append_text_file'
+          );
+
+          assert.equal(
+            payload.path,
+            '.my-own-world-events/transactions.v1.jsonl'
+          );
+
+          assert.equal(
+            payload.content,
+            '{"kind":"record"}\n'
+          );
+
+          assert.equal(
+            Object.hasOwn(
+              payload,
+              'workspaceRoot'
+            ),
+            false
+          );
+
+          return null;
+        }
+      }
+    };
+
+    try {
+
+      const adapter =
+        createDesktopStorageAdapter({
+          workspaceRoot:
+            'C:/World'
+        });
+
+      await adapter.appendText(
+        '.my-own-world-events/transactions.v1.jsonl',
+        '{"kind":"record"}\n'
+      );
+
+      assert.deepEqual(
+        calls.map(call =>
+          call.command
+        ),
+        [
+          'set_workspace_root',
+          'append_text_file'
+        ]
+      );
+
+    } finally {
+
+      globalThis.__TAURI__ =
+        previousTauri;
+
+      globalThis.localStorage =
+        previousLocalStorage;
+    }
   }
 );
 
@@ -3195,4 +3480,258 @@ function getParentPath(
   parts.pop();
 
   return parts.join('/');
+}
+
+
+function createFakeFileSystemAccessRoot(
+  initialFiles = {},
+  options = {}
+) {
+
+  const files =
+    new Map();
+
+  for (const [
+    filePath,
+    content
+  ] of Object.entries(initialFiles)) {
+
+    files.set(
+      normalizeWorkspacePath(filePath),
+      String(content)
+    );
+  }
+
+  const stats =
+    {
+      textReads:
+        0,
+      getFileCalls:
+        0,
+      createWritableOptions:
+        [],
+      writes:
+        [],
+      closes:
+        0,
+      aborts:
+        0
+    };
+
+  function createDirectoryHandle(
+    directoryPath = ''
+  ) {
+
+    return {
+      kind:
+        'directory',
+
+      async getDirectoryHandle(
+        name
+      ) {
+
+        return createDirectoryHandle(
+          joinWorkspacePath(
+            directoryPath,
+            name
+          )
+        );
+      },
+
+      async getFileHandle(
+        name,
+        handleOptions = {}
+      ) {
+
+        const filePath =
+          joinWorkspacePath(
+            directoryPath,
+            name
+          );
+
+        if (
+          !files.has(filePath) &&
+          !handleOptions.create
+        ) {
+
+          const error =
+            new Error(
+              `File not found: ${filePath}`
+            );
+
+          error.name =
+            'NotFoundError';
+
+          throw error;
+        }
+
+        if (!files.has(filePath)) {
+
+          files.set(
+            filePath,
+            ''
+          );
+        }
+
+        return createFileHandle(
+          filePath
+        );
+      }
+    };
+  }
+
+  function createFileHandle(
+    filePath
+  ) {
+
+    return {
+      kind:
+        'file',
+
+      async getFile() {
+
+        stats.getFileCalls +=
+          1;
+
+        const content =
+          files.get(filePath) || '';
+
+        return {
+          size:
+            new TextEncoder().encode(
+              content
+            ).byteLength,
+
+          async text() {
+
+            stats.textReads +=
+              1;
+
+            return content;
+          },
+
+          async arrayBuffer() {
+
+            return new TextEncoder()
+              .encode(
+                content
+              )
+              .buffer;
+          }
+        };
+      },
+
+      async createWritable(
+        createOptions = {}
+      ) {
+
+        stats.createWritableOptions.push({
+          ...createOptions
+        });
+
+        if (!createOptions.keepExistingData) {
+
+          files.set(
+            filePath,
+            ''
+          );
+        }
+
+        return {
+          async write(
+            payload
+          ) {
+
+            if (options.failWrite) {
+
+              throw new Error(
+                'forced writable failure'
+              );
+            }
+
+            stats.writes.push({
+              path:
+                filePath,
+              payload
+            });
+
+            if (
+              payload &&
+              typeof payload === 'object' &&
+              payload.type === 'write'
+            ) {
+
+              writeAtPosition(
+                files,
+                filePath,
+                payload.position,
+                String(payload.data)
+              );
+
+              return;
+            }
+
+            files.set(
+              filePath,
+              String(payload)
+            );
+          },
+
+          async close() {
+
+            stats.closes +=
+              1;
+          },
+
+          async abort() {
+
+            stats.aborts +=
+              1;
+          }
+        };
+      }
+    };
+  }
+
+  return {
+    root:
+      createDirectoryHandle(),
+    files,
+    stats
+  };
+}
+
+
+function joinWorkspacePath(
+  basePath,
+  name
+) {
+
+  return normalizeWorkspacePath(
+    [
+      basePath,
+      name
+    ]
+      .filter(Boolean)
+      .join('/')
+  );
+}
+
+
+function writeAtPosition(
+  files,
+  filePath,
+  position,
+  content
+) {
+
+  const previous =
+    files.get(filePath) || '';
+
+  files.set(
+    filePath,
+    `${previous.slice(0, position)}${content}${previous.slice(
+      position + content.length
+    )}`
+  );
 }

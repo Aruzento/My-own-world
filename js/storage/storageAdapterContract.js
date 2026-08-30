@@ -20,6 +20,11 @@ export const REQUIRED_STORAGE_ADAPTER_METHODS = Object.freeze([
 ]);
 
 
+export const OPTIONAL_STORAGE_ADAPTER_METHODS = Object.freeze([
+  'appendText'
+]);
+
+
 export function assertStorageAdapterContract(
   adapter
 ) {

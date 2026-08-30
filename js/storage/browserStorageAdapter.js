@@ -116,6 +116,55 @@ export function createBrowserStorageAdapter() {
       await writable.close();
     },
 
+    async appendText(
+      path,
+      content
+    ) {
+
+      const fileHandle =
+        await getFileHandleByPath(
+          workspaceHandle,
+          path,
+          true
+        );
+
+      const file =
+        await fileHandle.getFile();
+
+      const writable =
+        await fileHandle.createWritable({
+          keepExistingData:
+            true
+        });
+
+      try {
+
+        await writable.write({
+          type:
+            'write',
+          position:
+            file.size,
+          data:
+            String(content)
+        });
+
+        await writable.close();
+
+      } catch (error) {
+
+        if (typeof writable.abort === 'function') {
+
+          try {
+
+            await writable.abort();
+
+          } catch {}
+        }
+
+        throw error;
+      }
+    },
+
     async readBinary(
       path
     ) {

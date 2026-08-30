@@ -180,6 +180,20 @@ export function createDesktopStorageAdapter(
       );
     },
 
+    async appendText(
+      path,
+      content
+    ) {
+
+      await invokeFsCommand(
+        'append_text_file',
+        {
+          path: normalizeWorkspacePath(path),
+          content: String(content)
+        }
+      );
+    },
+
     async readBinary(
       path
     ) {

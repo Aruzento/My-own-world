@@ -150,6 +150,273 @@ test(
 
 
 test(
+  'EventStore uses appendText without reading or rewriting the existing log',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await adapter.writeText(
+      EVENT_TRANSACTION_LOG_PATH,
+      'existing-record\n'
+    );
+
+    adapter.readPaths.length =
+      0;
+
+    adapter.writePaths.length =
+      0;
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-append-capable',
+        eventId:
+          'evt-append-capable',
+        order:
+          2,
+        total:
+          13
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    assert.deepEqual(
+      adapter.appendPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      []
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      []
+    );
+
+    assert.match(
+      adapter.files.get(EVENT_TRANSACTION_LOG_PATH),
+      /^existing-record\n\{/
+    );
+  }
+);
+
+
+test(
+  'EventStore appendText path preserves ordering across multiple appends',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true
+      });
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-append-text-1',
+        eventId:
+          'evt-append-text-1',
+        order:
+          1,
+        total:
+          6
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-append-text-2',
+        eventId:
+          'evt-append-text-2',
+        order:
+          2,
+        total:
+          14
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-append-text-3',
+        eventId:
+          'evt-append-text-3',
+        order:
+          3,
+        total:
+          19
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    assert.deepEqual(
+      adapter.appendPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH,
+        EVENT_TRANSACTION_LOG_PATH,
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      []
+    );
+
+    const snapshot =
+      await readTransactionRecords({
+        storageAdapter:
+          adapter
+      });
+
+    assert.deepEqual(
+      snapshot.transactions.map(transaction =>
+        transaction.transactionId
+      ),
+      [
+        'txn-append-text-1',
+        'txn-append-text-2',
+        'txn-append-text-3'
+      ]
+    );
+  }
+);
+
+
+test(
+  'EventStore reports appendText failure without hidden read-write fallback',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter({
+        withAppendText:
+          true,
+        failAppendPath:
+          EVENT_TRANSACTION_LOG_PATH
+      });
+
+    await assert.rejects(
+      () => appendTransactionRecord(
+        createCompletedTransaction({
+          transactionId:
+            'txn-append-text-failure',
+          eventId:
+            'evt-append-text-failure',
+          order:
+            1,
+          total:
+            2
+        }),
+        {
+          storageAdapter:
+            adapter
+        }
+      ),
+      error =>
+        error instanceof EventStoreError &&
+        error.code === EVENT_STORE_ERROR_CODES.WRITE_FAILED
+    );
+
+    assert.deepEqual(
+      adapter.appendPaths,
+      []
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      []
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      []
+    );
+  }
+);
+
+
+test(
+  'EventStore compatibility fallback still works without appendText',
+  async () => {
+
+    const adapter =
+      createMemoryStorageAdapter();
+
+    await appendTransactionRecord(
+      createCompletedTransaction({
+        transactionId:
+          'txn-fallback-append',
+        eventId:
+          'evt-fallback-append',
+        order:
+          1,
+        total:
+          10
+      }),
+      {
+        storageAdapter:
+          adapter
+      }
+    );
+
+    assert.equal(
+      typeof adapter.appendText,
+      'undefined'
+    );
+
+    assert.deepEqual(
+      adapter.readPaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    assert.deepEqual(
+      adapter.writePaths,
+      [
+        EVENT_TRANSACTION_LOG_PATH
+      ]
+    );
+
+    const transactions =
+      await readEventTransactions({
+        storageAdapter:
+          adapter
+      });
+
+    assert.equal(
+      transactions[0].transactionId,
+      'txn-fallback-append'
+    );
+  }
+);
+
+
+test(
   'EventStore reloads transactions after a fresh read owner is created',
   async () => {
 
@@ -992,19 +1259,29 @@ function createMemoryStorageAdapter(
   const writePaths =
     [];
 
+  const readPaths =
+    [];
+
+  const appendPaths =
+    [];
+
   const ensureDirectoryPaths =
     [];
 
   const removePaths =
     [];
 
-  return {
+  const adapter = {
     kind:
       'desktop',
 
     files,
 
     writePaths,
+
+    readPaths,
+
+    appendPaths,
 
     ensureDirectoryPaths,
 
@@ -1060,6 +1337,10 @@ function createMemoryStorageAdapter(
         normalizeWorkspacePath(
           path
         );
+
+      readPaths.push(
+        normalized
+      );
 
       if (!files.has(normalized)) {
 
@@ -1251,6 +1532,46 @@ function createMemoryStorageAdapter(
       }
     }
   };
+
+  if (options.withAppendText) {
+
+    adapter.appendText =
+      async (
+        path,
+        content
+      ) => {
+
+        const normalized =
+          normalizeWorkspacePath(
+            path
+          );
+
+        if (normalized === options.failAppendPath) {
+
+          throw new Error(
+            'forced event log append failure'
+          );
+        }
+
+        appendPaths.push(
+          normalized
+        );
+
+        ensureDirectoryPath(
+          directories,
+          getParentPath(
+            normalized
+          )
+        );
+
+        files.set(
+          normalized,
+          `${files.get(normalized) || ''}${String(content)}`
+        );
+      };
+  }
+
+  return adapter;
 }
 
 

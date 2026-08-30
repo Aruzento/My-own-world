@@ -587,6 +587,15 @@ Store contract:
 - write failure throws `EventStoreError` and must not be reported as durable success.
 - the store writes only `.my-own-world-events/transactions.v1.jsonl`; it does not store hidden state inside card HTML and does not own UI.
 
+Storage append capability:
+
+- `appendText(path, content)` is an optional `StorageAdapter` capability, not part of `REQUIRED_STORAGE_ADAPTER_METHODS`.
+- production browser and desktop adapters implement `appendText` so EventStore can append one JSONL line without loading and rewriting the existing log through JavaScript.
+- browser append uses the File System Access writable stream at the current file size with existing data preserved.
+- desktop append uses the workspace-scoped Tauri `append_text_file` command, backed by append/create file open semantics.
+- when `appendText` is absent, EventStore keeps the compatibility read/write fallback for minimal injected adapters.
+- when `appendText` exists but fails, EventStore reports `EVENT_STORE_WRITE_FAILED` and must not silently retry with the compatibility fallback.
+
 Version impact:
 
 - new event-log record version: `1`;

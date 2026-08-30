@@ -32,6 +32,7 @@ fn main() {
         .manage(WorkspaceRootState::default())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            append_text_file,
             ensure_directory,
             list_directory,
             path_exists,
@@ -120,6 +121,18 @@ fn write_text_file(
     }
 
     atomic_write(&file_path, content.as_bytes(), "desktop.write_text_failed")
+}
+
+#[tauri::command]
+fn append_text_file(
+    state: tauri::State<'_, WorkspaceRootState>,
+    path: String,
+    content: String,
+) -> DesktopResult<()> {
+    let root = get_workspace_root(&state)?;
+    let file_path = resolve_workspace_path(&root, &path)?;
+
+    append_to_file(&file_path, content.as_bytes(), "desktop.append_text_failed")
 }
 
 #[tauri::command]
@@ -408,6 +421,25 @@ fn atomic_write(path: &Path, content: &[u8], error_code: &str) -> DesktopResult<
     })
 }
 
+fn append_to_file(path: &Path, content: &[u8], error_code: &str) -> DesktopResult<()> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|error| io_error("desktop.create_parent_failed", parent, error))?;
+    }
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map_err(|error| io_error(error_code, path, error))?;
+
+    file.write_all(content)
+        .map_err(|error| io_error(error_code, path, error))?;
+
+    file.sync_all()
+        .map_err(|error| io_error(error_code, path, error))
+}
+
 fn create_temp_write_path(parent: &Path, target: &Path) -> PathBuf {
     let file_name = target
         .file_name()
@@ -514,6 +546,44 @@ mod tests {
             .count();
 
         assert_eq!(temp_leftovers, 0);
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn append_to_file_preserves_existing_bytes_and_order() {
+        let root = temp_workspace("append-text");
+        let file_path = root.join("events").join("transactions.v1.jsonl");
+
+        append_to_file(&file_path, b"first\n", "desktop.append_text_failed").unwrap();
+        append_to_file(&file_path, b"second\n", "desktop.append_text_failed").unwrap();
+        append_to_file(&file_path, b"third\n", "desktop.append_text_failed").unwrap();
+
+        assert_eq!(
+            fs::read_to_string(&file_path).unwrap(),
+            "first\nsecond\nthird\n"
+        );
+
+        let _ = fs::remove_dir_all(root);
+    }
+
+    #[test]
+    fn append_workspace_path_stays_under_root() {
+        let root = temp_workspace("append-path");
+
+        let target =
+            resolve_workspace_path(&root, ".my-own-world-events/transactions.v1.jsonl").unwrap();
+
+        append_to_file(&target, b"event\n", "desktop.append_text_failed").unwrap();
+
+        assert!(target.starts_with(&root));
+        assert_eq!(fs::read_to_string(&target).unwrap(), "event\n");
+        assert_eq!(
+            resolve_workspace_path(&root, "../outside-events.jsonl")
+                .unwrap_err()
+                .code,
+            "desktop.invalid_relative_path"
+        );
 
         let _ = fs::remove_dir_all(root);
     }

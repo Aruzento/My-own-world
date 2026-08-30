@@ -6,6 +6,32 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-30: Owner-Directed Off-Plan Corrective Maintenance - Event Log Production Append
+
+### Disposition
+
+- Corrective scope: `Add Production Event Log Append Capability`.
+- Added real production append support for the canonical EventStore storage path without redesigning EventStore or reopening the roadmap.
+- Kept `0.0.1.16.0` as `NEXT`, not active.
+
+### What Changed
+
+- Added optional `appendText(path, content)` capability documentation in `js/storage/storageAdapterContract.js`; it is not part of the required adapter surface.
+- `BrowserStorageAdapter.appendText()` now uses File System Access positional writes with `keepExistingData: true`, current file size from `getFile()` and no `file.text()` full-log read.
+- `DesktopStorageAdapter.appendText()` now calls the workspace-scoped Tauri `append_text_file` command.
+- Tauri added `append_text_file` using existing workspace-root/path safety and `OpenOptions` with `create(true)` and `append(true)`, followed by `sync_all()`.
+- EventStore public API and JSONL record format stayed unchanged. Its compatibility fallback still exists for adapters without `appendText`, while append-capable adapter failures still report `EVENT_STORE_WRITE_FAILED`.
+
+### Verification
+
+- Focused event/storage regression: `node --test tests\eventStore.test.mjs tests\diceRollEventLog.test.mjs tests\eventQuery.test.mjs tests\eventSafetyIntegration.test.mjs tests\pagePropertyResourceTransaction.test.mjs tests\transactionReversal.test.mjs tests\storageAdapter.test.mjs` passed, 84 tests.
+- Rust desktop adapter coverage: `cargo check`, `cargo fmt --check` and `cargo test` passed under `src-tauri` (`cargo test`: 5 tests).
+- Repository gates: `npm run docs:index`, `npm run verify:quick` and `npm run verify` passed (`verify` includes 602 node tests, large-workspace performance smoke, `git diff --check` and DOCX zip validation).
+
+### Explicit Non-Work
+
+- No Event Query behavior, Event History UI, transaction id uniqueness, persistent indexes, backup policy, combat session, damage/HP/effects/targeting, roadmap/status, persistent format or broad storage refactor was changed.
+
 ## 2026-08-30: Owner-Directed Off-Plan Maintenance - Bounded Autonomous Repair Pass
 
 ### Disposition
