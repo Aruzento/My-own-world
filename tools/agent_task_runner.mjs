@@ -43,6 +43,9 @@ const CODEX_CLI_PATH_ENV =
 const CODEX_EXEC_TIMEOUT_MS =
   10 * 60 * 1000;
 
+const MAX_CODEX_EXECUTIONS =
+  2;
+
 const COMMAND_TIMEOUT_MS =
   5 * 60 * 1000;
 
@@ -94,8 +97,10 @@ const EXECUTION_GUARANTEES =
       false,
     resets:
       false,
-    repairAttempts:
-      0,
+    maxCodexExecutions:
+      MAX_CODEX_EXECUTIONS,
+    maxRepairAttempts:
+      1,
     taskBranchMerged:
       false,
     taskBranchPushed:
@@ -556,10 +561,121 @@ export async function executeAgentTask(
         worktreeResult.path
     });
 
-  const codexResult =
-    runCodexOnce({
+  const initial =
+    await runCodexExecutionPass({
+      name:
+        'initial',
       command:
         codexCommand,
+      prompt,
+      dryRunReport,
+      worktreeResult,
+      commandRunner,
+      platform
+    });
+
+  const sourceAfterInitial =
+    inspectRepositoryState(
+      dryRunReport.repository.root,
+      {
+        commandRunner
+      }
+    );
+
+  const repairDecision =
+    createRepairDecision({
+      initial,
+      approvalGates:
+        dryRunReport.approvalGates,
+      sourceAfterInitial
+    });
+
+  let repair =
+    null;
+
+  let dependencyBridgeRemovedBeforeRepair =
+    false;
+
+  if (repairDecision.allowed) {
+
+    dependencyBridgeRemovedBeforeRepair =
+      !(await pathExists(
+        path.join(
+          worktreeResult.path,
+          'node_modules'
+        )
+      ));
+
+    const repairPrompt =
+      createCodexRepairPrompt({
+        task:
+          taskLoad.task,
+        taskPath:
+          dryRunReport.task.path,
+        scopePolicy:
+          dryRunReport.scopePolicy,
+        verificationPlan:
+          dryRunReport.verificationPlan,
+        approvalGates:
+          dryRunReport.approvalGates,
+        initial,
+        worktreePath:
+          worktreeResult.path,
+        commandRunner
+      });
+
+    repair =
+      await runCodexExecutionPass({
+        name:
+          'repair',
+        command:
+          codexCommand,
+        prompt:
+          repairPrompt,
+        dryRunReport,
+        worktreeResult,
+        commandRunner,
+        platform
+      });
+  }
+
+  const sourceAfter =
+    inspectRepositoryState(
+      dryRunReport.repository.root,
+      {
+        commandRunner
+      }
+    );
+
+  return createExecutionReport({
+    createdAt,
+    dryRunReport,
+    cliResolution,
+    worktree:
+      worktreeResult,
+    codexCommand,
+    initial,
+    repair,
+    repairDecision,
+    dependencyBridgeRemovedBeforeRepair,
+    sourceAfter
+  });
+}
+
+
+async function runCodexExecutionPass({
+  name,
+  command,
+  prompt,
+  dryRunReport,
+  worktreeResult,
+  commandRunner,
+  platform
+}) {
+
+  const codexResult =
+    runCodexOnce({
+      command,
       prompt,
       commandRunner
     });
@@ -663,30 +779,340 @@ export async function executeAgentTask(
       );
   }
 
-  const sourceAfter =
-    inspectRepositoryState(
-      dryRunReport.repository.root,
-      {
-        commandRunner
-      }
-    );
-
-  return createExecutionReport({
-    createdAt,
-    dryRunReport,
-    cliResolution,
-    worktree:
-      worktreeResult,
-    codexCommand,
+  return {
+    name,
     codexResult,
-    verifyQuick,
-    taskVerification,
     changedFiles,
     scopeResult,
     postAgentScopeCheck,
     verificationDependencyEnvironment,
-    sourceAfter
-  });
+    verifyQuick,
+    taskVerification,
+    requiredVerificationFailures:
+      getRequiredVerificationFailures({
+        verifyQuick,
+        taskVerification
+      })
+  };
+}
+
+
+function createRepairDecision({
+  initial,
+  approvalGates,
+  sourceAfterInitial
+}) {
+
+  if (!initial.codexResult.ok) {
+
+    return createRepairBlockedDecision(
+      'INITIAL_CODEX_FAILED',
+      'Initial Codex execution failed.'
+    );
+  }
+
+  if (initial.postAgentScopeCheck.status !== 'pass') {
+
+    return createRepairBlockedDecision(
+      'INITIAL_SCOPE_NOT_PASSED',
+      'Initial post-agent scope check did not pass.'
+    );
+  }
+
+  if (approvalGates?.triggered) {
+
+    return createRepairBlockedDecision(
+      'APPROVAL_GATE_TRIGGERED',
+      'An approval gate triggered during execution readiness.'
+    );
+  }
+
+  if (
+    initial.verificationDependencyEnvironment?.status === 'unavailable'
+  ) {
+
+    return createRepairBlockedDecision(
+      'DEPENDENCY_ENVIRONMENT_UNAVAILABLE',
+      'Verification dependency environment is unavailable.'
+    );
+  }
+
+  if (
+    initial.verificationDependencyEnvironment?.cleanup?.required &&
+    !initial.verificationDependencyEnvironment.cleanup.ok
+  ) {
+
+    return createRepairBlockedDecision(
+      'DEPENDENCY_BRIDGE_CLEANUP_FAILED',
+      'Verification dependency bridge cleanup failed.'
+    );
+  }
+
+  if (
+    !sourceAfterInitial.ok ||
+    !sourceAfterInitial.clean
+  ) {
+
+    return createRepairBlockedDecision(
+      'SOURCE_WORKTREE_NOT_CLEAN',
+      'Source repository is not clean after the initial execution.'
+    );
+  }
+
+  if (!initial.requiredVerificationFailures.length) {
+
+    return createRepairBlockedDecision(
+      'NO_REQUIRED_VERIFICATION_FAILURE',
+      'No required verification command failed.'
+    );
+  }
+
+  return {
+    allowed:
+      true,
+    reason:
+      'required-verification-failed',
+    failures:
+      initial.requiredVerificationFailures
+  };
+}
+
+
+function createRepairBlockedDecision(
+  code,
+  message
+) {
+
+  return {
+    allowed:
+      false,
+    reason:
+      code,
+    message,
+    failures:
+      []
+  };
+}
+
+
+function getRequiredVerificationFailures({
+  verifyQuick,
+  taskVerification
+}) {
+
+  const failures =
+    [];
+
+  if (
+    verifyQuick &&
+    !verifyQuick.ok
+  ) {
+
+    failures.push({
+      source:
+        'verify:quick',
+      command:
+        verifyQuick.command,
+      status:
+        verifyQuick.status,
+      stdout:
+        truncateOutput(
+          verifyQuick.stdout,
+          3000
+        ),
+      stderr:
+        truncateOutput(
+          verifyQuick.stderr,
+          3000
+        ),
+      error:
+        verifyQuick.error
+    });
+  }
+
+  for (const result of taskVerification) {
+
+    if (
+      result.required &&
+      !result.ok
+    ) {
+
+      failures.push({
+        source:
+          'task',
+        command:
+          result.command,
+        status:
+          result.status,
+        stdout:
+          truncateOutput(
+            result.stdout,
+            3000
+          ),
+        stderr:
+          truncateOutput(
+            result.stderr,
+            3000
+          ),
+        error:
+          result.error
+      });
+    }
+  }
+
+  return failures;
+}
+
+
+function createCodexRepairPrompt({
+  task,
+  taskPath,
+  scopePolicy,
+  verificationPlan,
+  approvalGates,
+  initial,
+  worktreePath,
+  commandRunner
+}) {
+
+  const initialPrompt =
+    createCodexExecutionPrompt({
+      task,
+      taskPath,
+      scopePolicy,
+      verificationPlan,
+      approvalGates
+    });
+
+  const inScopeDiff =
+    collectInScopeGitDiff({
+      worktreePath,
+      scopeResult:
+        initial.scopeResult,
+      commandRunner
+    });
+
+  return [
+    initialPrompt,
+    '',
+    'REPAIR PASS:',
+    'THIS IS THE ONLY REPAIR ATTEMPT.',
+    '',
+    'The initial Codex execution exited successfully, stayed within the declared path scope and then failed required verification.',
+    'Repair only the original task. Do not weaken scope, acceptance, verification or approval policy.',
+    'Do not create commits, branches, worktrees, merges, pushes, resets or another repair attempt.',
+    '',
+    'Current changed files:',
+    ...initial.changedFiles.files.map(file =>
+      `- ${file}`
+    ),
+    '',
+    'Current in-scope git diff:',
+    inScopeDiff.ok
+      ? fencedBlock(
+          inScopeDiff.diff || '<no tracked diff; inspect listed untracked files if needed>'
+        )
+      : fencedBlock(
+          `Could not collect diff: ${inScopeDiff.error}`
+        ),
+    '',
+    'Failed required verification:',
+    ...initial.requiredVerificationFailures.flatMap((failure, index) => [
+      `${index + 1}. ${failure.source}: ${failure.command}`,
+      `   status: ${failure.status}`,
+      `   error: ${failure.error || '<none>'}`,
+      `   stdout: ${singleLineForPrompt(failure.stdout) || '<empty>'}`,
+      `   stderr: ${singleLineForPrompt(failure.stderr) || '<empty>'}`
+    ]),
+    '',
+    'When done, report only what you changed and stop.'
+  ].join(
+    '\n'
+  );
+}
+
+
+function collectInScopeGitDiff({
+  worktreePath,
+  scopeResult,
+  commandRunner
+}) {
+
+  const files =
+    scopeResult?.allowed || [];
+
+  if (!files.length) {
+
+    return {
+      ok:
+        true,
+      diff:
+        ''
+    };
+  }
+
+  const result =
+    runGit(
+      [
+        'diff',
+        '--',
+        ...files
+      ],
+      worktreePath,
+      commandRunner
+    );
+
+  if (!result.ok) {
+
+    return {
+      ok:
+        false,
+      diff:
+        '',
+      error:
+        result.error
+    };
+  }
+
+  return {
+    ok:
+      true,
+    diff:
+      truncateOutput(
+        result.stdout,
+        6000
+      )
+  };
+}
+
+
+function fencedBlock(
+  value
+) {
+
+  return [
+    '```text',
+    value,
+    '```'
+  ].join(
+    '\n'
+  );
+}
+
+
+function singleLineForPrompt(
+  value
+) {
+
+  return String(
+    value || ''
+  )
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(
+      0,
+      1000
+    );
 }
 
 
@@ -2332,6 +2758,10 @@ export function formatExecutionReport(
     `Codex executions: ${report.codexExecutions}`
   );
 
+  lines.push(
+    `Repair attempts: ${report.repairAttempts ?? 0}`
+  );
+
   if (report.codexResult) {
 
     lines.push(
@@ -2401,8 +2831,15 @@ export function formatExecutionReport(
     }
   }
 
+  if (report.repair?.attempted) {
+
+    lines.push(
+      `Repair reason: ${report.repair.reason}`
+    );
+  }
+
   lines.push(
-    'Execution guarantees: no commits, merges, pushes, resets or repair attempts.'
+    'Execution guarantees: no commits, merges, pushes or resets; at most one bounded repair attempt.'
   );
 
   return lines.join(
@@ -2551,6 +2988,17 @@ function createPreExecutionReport({
       null,
     codexExecutions:
       0,
+    codexExecutionCounts:
+      {
+        initial:
+          0,
+        repair:
+          0,
+        total:
+          0
+      },
+    repairAttempts:
+      0,
     codexResult:
       null,
     verifyQuick:
@@ -2565,6 +3013,17 @@ function createPreExecutionReport({
       null,
     verificationDependencyEnvironment:
       null,
+    initial:
+      null,
+    repair:
+      {
+        attempted:
+          false,
+        reason:
+          ''
+      },
+    finalStatus:
+      status,
     approvalGates:
       dryRunReport.approvalGates,
     executionGuarantees:
@@ -2581,168 +3040,66 @@ function createExecutionReport({
   cliResolution,
   worktree,
   codexCommand,
-  codexResult,
-  verifyQuick,
-  taskVerification,
-  changedFiles,
-  scopeResult,
-  postAgentScopeCheck,
-  verificationDependencyEnvironment,
+  initial,
+  repair,
+  repairDecision,
+  dependencyBridgeRemovedBeforeRepair,
   sourceAfter
 }) {
 
+  const finalPass =
+    repair || initial;
+
+  const repairAttempts =
+    repair
+      ? 1
+      : 0;
+
+  const codexExecutionCounts =
+    {
+      initial:
+        initial ? 1 : 0,
+      repair:
+        repair ? 1 : 0,
+      total:
+        (initial ? 1 : 0) + (repair ? 1 : 0)
+    };
+
   const blockingReasons =
-    [];
-
-  if (!codexResult.ok) {
-
-    blockingReasons.push({
-      code:
-        'CODEX_EXEC_FAILED',
-      message:
-        codexResult.error
-    });
-  }
-
-  if (
-    codexResult.ok &&
-    changedFiles.ok &&
-    !scopeResult.ok
-  ) {
-
-    blockingReasons.push({
-      code:
-        'SCOPE_VIOLATION',
-      message:
-        'Codex changed files outside the declared path scope.'
-    });
-  }
-
-  if (
-    codexResult.ok &&
-    !changedFiles.ok
-  ) {
-
-    blockingReasons.push({
-      code:
-        'CHANGED_FILE_COLLECTION_FAILED',
-      message:
-        changedFiles.error
-    });
-  }
-
-  if (
-    codexResult.ok &&
-    scopeResult.ok &&
-    verificationDependencyEnvironment &&
-    verificationDependencyEnvironment.status === 'unavailable'
-  ) {
-
-    blockingReasons.push({
-      code:
-        'DEPENDENCY_ENVIRONMENT_UNAVAILABLE',
-      message:
-        verificationDependencyEnvironment.message
-    });
-  }
-
-  if (
-    codexResult.ok &&
-    scopeResult.ok &&
-    verificationDependencyEnvironment?.cleanup?.required &&
-    !verificationDependencyEnvironment.cleanup.ok
-  ) {
-
-    blockingReasons.push({
-      code:
-        'DEPENDENCY_BRIDGE_CLEANUP_FAILED',
-      message:
-        verificationDependencyEnvironment.cleanup.error
-    });
-  }
-
-  if (
-    codexResult.ok &&
-    scopeResult.ok &&
-    verificationDependencyEnvironment?.status !== 'unavailable' &&
-    verifyQuick &&
-    !verifyQuick.ok
-  ) {
-
-    blockingReasons.push({
-      code:
-        'VERIFY_QUICK_FAILED',
-      message:
-        verifyQuick.error
-    });
-  }
-
-  const failedTaskVerification =
-    taskVerification.find(result =>
-      result.required &&
-      !result.ok
+    createPassBlockingReasons(
+      finalPass
     );
 
   if (
-    codexResult.ok &&
-    scopeResult.ok &&
-    verificationDependencyEnvironment?.status !== 'unavailable' &&
-    verifyQuick?.ok &&
-    failedTaskVerification
+    repairAttempts === 0 &&
+    repairDecision &&
+    !repairDecision.allowed &&
+    initial.requiredVerificationFailures.length
   ) {
 
     blockingReasons.push({
       code:
-        'TASK_VERIFICATION_FAILED',
+        `REPAIR_NOT_ATTEMPTED_${repairDecision.reason}`,
       message:
-        failedTaskVerification.error
+        repairDecision.message
     });
   }
 
   let status =
-    'passed';
+    getPassStatus(
+      finalPass
+    );
 
-  if (!codexResult.ok) {
-
-    status =
-      'failed';
-
-  } else if (
-    !changedFiles.ok
-  ) {
-
-    status =
-      'failed';
-
-  } else if (
-    !scopeResult.ok
-  ) {
-
-    status =
-      'scope_violation';
-
-  } else if (
-    verificationDependencyEnvironment?.status === 'unavailable'
+  if (
+    status === 'failed' &&
+    repairAttempts === 0 &&
+    initial.requiredVerificationFailures.length &&
+    repairDecision?.allowed === false &&
+    repairDecision.reason === 'DEPENDENCY_ENVIRONMENT_UNAVAILABLE'
   ) {
 
     status =
       'blocked';
-
-  } else if (
-    verificationDependencyEnvironment?.cleanup?.required &&
-    !verificationDependencyEnvironment.cleanup.ok
-  ) {
-
-    status =
-      'failed';
-
-  } else if (
-    !verifyQuick?.ok ||
-    failedTaskVerification
-  ) {
-
-    status =
-      'failed';
   }
 
   return {
@@ -2753,6 +3110,8 @@ function createExecutionReport({
     mode:
       'execute',
     status,
+    finalStatus:
+      status,
     createdAt,
     task:
       dryRunReport.task,
@@ -2772,14 +3131,45 @@ function createExecutionReport({
           codexCommand.args
       },
     codexExecutions:
-      1,
-    codexResult,
-    verifyQuick,
-    taskVerification,
-    changedFiles,
-    scopeResult,
-    postAgentScopeCheck,
-    verificationDependencyEnvironment,
+      codexExecutionCounts.total,
+    codexExecutionCounts,
+    repairAttempts,
+    initial:
+      summarizeExecutionPassForReport(
+        initial
+      ),
+    repair:
+      repair
+        ? {
+            attempted:
+              true,
+            reason:
+              repairDecision.reason,
+            ...summarizeExecutionPassForReport(
+              repair
+            )
+          }
+        : {
+            attempted:
+              false,
+            reason:
+              repairDecision?.reason || ''
+          },
+    dependencyBridgeRemovedBeforeRepair,
+    codexResult:
+      finalPass.codexResult,
+    verifyQuick:
+      finalPass.verifyQuick,
+    taskVerification:
+      finalPass.taskVerification,
+    changedFiles:
+      finalPass.changedFiles,
+    scopeResult:
+      finalPass.scopeResult,
+    postAgentScopeCheck:
+      finalPass.postAgentScopeCheck,
+    verificationDependencyEnvironment:
+      finalPass.verificationDependencyEnvironment,
     approvalGates:
       dryRunReport.approvalGates,
     executionGuarantees:
@@ -2787,6 +3177,186 @@ function createExecutionReport({
     blockingReasons,
     dryRunReport
   };
+}
+
+
+function summarizeExecutionPassForReport(
+  pass
+) {
+
+  return {
+    name:
+      pass.name,
+    codexExit:
+      pass.codexResult.status,
+    codexResult:
+      pass.codexResult,
+    changedFiles:
+      pass.changedFiles,
+    scopeResult:
+      pass.scopeResult,
+    postAgentScopeCheck:
+      pass.postAgentScopeCheck,
+    verificationDependencyEnvironment:
+      pass.verificationDependencyEnvironment,
+    verifyQuick:
+      pass.verifyQuick,
+    taskVerification:
+      pass.taskVerification,
+    requiredVerificationFailures:
+      pass.requiredVerificationFailures
+  };
+}
+
+
+function createPassBlockingReasons(
+  pass
+) {
+
+  const blockingReasons =
+    [];
+
+  if (!pass.codexResult.ok) {
+
+    blockingReasons.push({
+      code:
+        'CODEX_EXEC_FAILED',
+      message:
+        pass.codexResult.error
+    });
+  }
+
+  if (
+    pass.codexResult.ok &&
+    pass.changedFiles.ok &&
+    !pass.scopeResult.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'SCOPE_VIOLATION',
+      message:
+        'Codex changed files outside the declared path scope.'
+    });
+  }
+
+  if (
+    pass.codexResult.ok &&
+    !pass.changedFiles.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'CHANGED_FILE_COLLECTION_FAILED',
+      message:
+        pass.changedFiles.error
+    });
+  }
+
+  if (
+    pass.codexResult.ok &&
+    pass.scopeResult.ok &&
+    pass.verificationDependencyEnvironment &&
+    pass.verificationDependencyEnvironment.status === 'unavailable'
+  ) {
+
+    blockingReasons.push({
+      code:
+        'DEPENDENCY_ENVIRONMENT_UNAVAILABLE',
+      message:
+        pass.verificationDependencyEnvironment.message
+    });
+  }
+
+  if (
+    pass.codexResult.ok &&
+    pass.scopeResult.ok &&
+    pass.verificationDependencyEnvironment?.cleanup?.required &&
+    !pass.verificationDependencyEnvironment.cleanup.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'DEPENDENCY_BRIDGE_CLEANUP_FAILED',
+      message:
+        pass.verificationDependencyEnvironment.cleanup.error
+    });
+  }
+
+  if (
+    pass.codexResult.ok &&
+    pass.scopeResult.ok &&
+    pass.verificationDependencyEnvironment?.status !== 'unavailable' &&
+    pass.verifyQuick &&
+    !pass.verifyQuick.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'VERIFY_QUICK_FAILED',
+      message:
+        pass.verifyQuick.error
+    });
+  }
+
+  for (const failure of pass.requiredVerificationFailures) {
+
+    if (failure.source !== 'task') continue;
+
+    blockingReasons.push({
+      code:
+        'TASK_VERIFICATION_FAILED',
+      message:
+        failure.error
+    });
+  }
+
+  return blockingReasons;
+}
+
+
+function getPassStatus(
+  pass
+) {
+
+  if (!pass.codexResult.ok) {
+
+    return 'failed';
+  }
+
+  if (!pass.changedFiles.ok) {
+
+    return 'failed';
+  }
+
+  if (!pass.scopeResult.ok) {
+
+    return 'scope_violation';
+  }
+
+  if (
+    pass.verificationDependencyEnvironment?.status === 'unavailable'
+  ) {
+
+    return 'blocked';
+  }
+
+  if (
+    pass.verificationDependencyEnvironment?.cleanup?.required &&
+    !pass.verificationDependencyEnvironment.cleanup.ok
+  ) {
+
+    return 'failed';
+  }
+
+  if (
+    pass.requiredVerificationFailures.length
+  ) {
+
+    return 'failed';
+  }
+
+  return 'passed';
 }
 
 

@@ -6,6 +6,36 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-30: Owner-Directed Off-Plan Maintenance - Bounded Autonomous Repair Pass
+
+### Disposition
+
+- Readiness: `Bounded Repair Foundation`.
+- Extended the existing local autonomous runner with one permitted repair pass after an in-scope Codex execution fails required verification.
+- Kept the current roadmap phase/status unchanged and kept `0.0.1.16.0` as `NEXT`, not active.
+
+### What Changed
+
+- Updated `tools/agent_task_runner.mjs` so execution reports distinguish the initial pass from the optional repair pass, including `codexExecutionCounts`, `repairAttempts`, per-pass scope/verification details and final status from the last permitted pass.
+- A repair pass is allowed only when the initial Codex process exits successfully, changed files stay inside path scope, no approval gate is triggered, verification dependencies are available/cleaned up and the source worktree remains clean.
+- Scope violation, Codex failure, missing dependency environment, cleanup failure or triggered approval gate blocks repair.
+- The repair prompt includes the original validated task, allowed path scope, current changed files, current in-scope diff and failed required verification output.
+- Updated `AGENTS.md` and [AGENT_TASK_CONTRACT.md](../02-architecture/contracts/AGENT_TASK_CONTRACT.md) to describe bounded execution as initial pass plus at most one repair pass.
+- Added `docs/03-testing/agent-tasks/examples/autonomous-repair-smoke.agent-task.json` as a harmless post-commit live-smoke task constrained to one docs/testing evidence file.
+
+### Explicit Non-Work
+
+- No product runtime, roadmap/status, persistent format, dependency, broad runner rewrite, unbounded repair loop, merge, task-branch push, automatic approval, real workspace mutation or `0.0.1.16.0` work was added.
+
+### Verification
+
+- `node --test tests\agentTaskRunner.test.mjs` passed with 27 focused tests.
+- `npm run tasks:validate` passed against 4 executable task contracts.
+- `npm run docs:index` passed with 93 markdown files, 0 invalid metadata and 0 active status drift.
+- `npm run verify:quick` passed with 593 unit tests and `git diff --check`.
+- `npm run verify` passed with 593 unit tests, synthetic large-workspace performance smoke, manual DOCX zip validation and `git diff --check`.
+- The live bounded repair smoke is intentionally run only after the implementation commit is clean and pushed.
+
 ## 2026-08-29: Owner-Directed Off-Plan Maintenance - Local Codex CLI Runner Execution
 
 ### Disposition

@@ -1,0 +1,54 @@
+{
+  "schema": "myownworld.agent-task.v1",
+  "id": "OFFPLAN-AUTONOMOUS-REPAIR-SMOKE",
+  "title": "Autonomous Runner Bounded Repair Smoke",
+  "ownerMode": "OWNER-DIRECTED OFF-PLAN MAINTENANCE",
+  "goal": "Exercise the runner's single bounded repair pass using one isolated docs/testing evidence file.",
+  "scope": {
+    "include": [
+      "path:docs/03-testing/agent-tasks/smoke-output/bounded-repair-smoke.txt",
+      "Autonomous runner bounded repair smoke evidence"
+    ],
+    "exclude": [
+      "path:js/**",
+      "path:styles/**",
+      "path:src-tauri/**",
+      "path:docs/01-delivery/PROJECT_PLAN.md",
+      "path:docs/00-product/PRODUCT_DASHBOARD.md",
+      "Product runtime changes",
+      "Roadmap phase/status changes",
+      "Persistent format changes",
+      "Real user workspace access"
+    ]
+  },
+  "acceptance": [
+    "On the initial execution pass, create the smoke evidence file with exactly MyOwnWorld bounded repair smoke INITIAL FAIL.",
+    "On the repair pass only, replace the evidence file content with exactly MyOwnWorld bounded repair smoke PASS.",
+    "No product runtime, roadmap or persistent-format file is modified."
+  ],
+  "verification": {
+    "commands": [
+      {
+        "command": "node -e \"const fs=require('node:fs');const p='docs/03-testing/agent-tasks/smoke-output/bounded-repair-smoke.txt';if(!fs.existsSync(p))process.exit(1);const text=fs.readFileSync(p,'utf8').trim();if(text!=='MyOwnWorld bounded repair smoke PASS')process.exit(1);\"",
+        "required": true,
+        "reason": "The bounded repair smoke passes only after the allowed repair replaces the initial failure marker."
+      },
+      {
+        "command": "git diff --check",
+        "required": true,
+        "reason": "The smoke output must not introduce whitespace errors."
+      }
+    ],
+    "manual": []
+  },
+  "risk": {
+    "level": "low",
+    "notes": "The task is constrained to a single testing evidence file and intentionally fails until the runner's one repair pass."
+  },
+  "requiresApproval": [],
+  "notes": [
+    "This task is intended only for the bounded repair live smoke.",
+    "The runner must not commit, merge or push the task branch.",
+    "The repair pass is recognized by the prompt line THIS IS THE ONLY REPAIR ATTEMPT."
+  ]
+}

@@ -228,7 +228,7 @@ The v1 runner is a planning foundation only. It:
 
 The dry-run runner must not modify product files, create commits, create branches, create worktrees, merge, push, reset, invoke Codex or bypass owner approval.
 
-## Single-Pass Codex Execution Runner
+## Bounded Codex Execution Runner
 
 Use:
 
@@ -249,9 +249,13 @@ Execution mode is intentionally narrower than a general autonomous workflow. It:
 - prepares post-agent verification dependencies only after scope passes: worktree-local `node_modules` if present, otherwise a temporary source `node_modules` link when package manifests were not changed;
 - removes any temporary dependency link after verification;
 - runs `npm run verify:quick` and the task-declared verification commands only after scope passes;
+- when the first Codex pass exits successfully, stays in scope and then fails required verification, may invoke exactly one bounded repair pass with the current in-scope diff and failed verification output;
+- re-runs scope and verification after that repair pass;
 - emits a machine-readable execution report.
 
-Execution mode must not commit, merge, push, reset, retry with a repair pass, approve owner-gated actions, expand scope, install dependencies or run verification after a scope violation. The global approval policy is fixed to `never`, so unavailable approval stops execution instead of waiting for interaction. Any changed file outside the declared path rules is reported as `scope_violation`.
+Execution mode must not commit, merge, push, reset, approve owner-gated actions, expand scope, install dependencies, run verification after a scope violation or perform more than one repair attempt. The global approval policy is fixed to `never`, so unavailable approval stops execution instead of waiting for interaction. Any changed file outside the declared path rules is reported as `scope_violation`.
+
+The repair pass is not a general autonomous loop. It is allowed only after a required verification failure, with the source worktree still clean, no triggered approval gate and no scope violation. If the repair also fails, the runner reports the failure and stops permanently.
 
 The first live smoke task is deliberately docs/testing-only and writes only:
 
@@ -266,7 +270,7 @@ The smoke task branch/worktree remains unmerged and unpushed for owner inspectio
 This contract does not:
 
 - start `0.0.1.16.0` or any roadmap phase;
-- create a multi-pass autonomous repair runner;
+- create an unbounded or multi-retry autonomous repair runner;
 - allow hidden approval by schema;
 - add YAML parsing;
 - replace `AGENTS.md`, `PROJECT_PLAN.md`, `WORK_LOG.md` or Definition of Done;

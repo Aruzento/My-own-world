@@ -6,6 +6,7 @@ import {
 } from 'node:child_process';
 
 import {
+  existsSync,
   mkdirSync,
   writeFileSync
 } from 'node:fs';
@@ -1041,6 +1042,28 @@ test(
       1
     );
 
+    assert.deepEqual(
+      report.codexExecutionCounts,
+      {
+        initial:
+          1,
+        repair:
+          0,
+        total:
+          1
+      }
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      0
+    );
+
+    assert.equal(
+      report.repair.attempted,
+      false
+    );
+
     assert.equal(
       mock.codexExecutions,
       1
@@ -1103,6 +1126,13 @@ test(
     assert.equal(
       report.sourceAfter.head,
       report.sourceBefore.head
+    );
+
+    assert.deepEqual(
+      mock.nodeModulesPresentDuringCodex(),
+      [
+        false
+      ]
     );
 
     assert.equal(
@@ -1245,6 +1275,409 @@ test(
 
 
 test(
+  'agent task execution performs one bounded repair after required verification fails',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-repair-pass.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        codexRuns:
+          [
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'initial fail\n'
+                  }
+                ]
+            },
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'repair pass\n'
+                  }
+                ]
+            }
+          ],
+        verifyQuickStatuses:
+          [
+            1,
+            0
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-REPAIR-PASS',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'passed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      2
+    );
+
+    assert.deepEqual(
+      report.codexExecutionCounts,
+      {
+        initial:
+          1,
+        repair:
+          1,
+        total:
+          2
+      }
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      1
+    );
+
+    assert.equal(
+      report.initial.verifyQuick.ok,
+      false
+    );
+
+    assert.equal(
+      report.repair.attempted,
+      true
+    );
+
+    assert.equal(
+      report.repair.verifyQuick.ok,
+      true
+    );
+
+    assert.equal(
+      report.dependencyBridgeRemovedBeforeRepair,
+      true
+    );
+
+    assert.deepEqual(
+      mock.nodeModulesPresentDuringCodex(),
+      [
+        false,
+        false
+      ]
+    );
+
+    assert.equal(
+      await pathExists(
+        path.join(
+          report.worktree.path,
+          'node_modules'
+        )
+      ),
+      false
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      2
+    );
+  }
+);
+
+
+test(
+  'agent task execution repairs after a required task verification command fails',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-task-repair-pass.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        codexRuns:
+          [
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'task verification fail\n'
+                  }
+                ]
+            },
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'task verification pass\n'
+                  }
+                ]
+            }
+          ],
+        verifyQuickStatuses:
+          [
+            0,
+            0
+          ],
+        taskVerificationStatuses:
+          [
+            1,
+            0
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-TASK-VERIFY-REPAIR',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'passed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      2
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      1
+    );
+
+    assert.equal(
+      report.initial.taskVerification[0].ok,
+      false
+    );
+
+    assert.equal(
+      report.repair.taskVerification[0].ok,
+      true
+    );
+
+    assert.equal(
+      mock.verifyQuickExecutions,
+      2
+    );
+
+    assert.equal(
+      mock.taskVerificationExecutions,
+      2
+    );
+  }
+);
+
+
+test(
+  'agent task execution stops permanently after one failed repair',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-repair-fail.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        codexRuns:
+          [
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'initial fail\n'
+                  }
+                ]
+            },
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'repair still fails\n'
+                  }
+                ]
+            },
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'third run must never happen\n'
+                  }
+                ]
+            }
+          ],
+        verifyQuickStatuses:
+          [
+            1,
+            1,
+            0
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-REPAIR-FAIL',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'failed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      2
+    );
+
+    assert.equal(
+      report.codexExecutionCounts.total,
+      2
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      1
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      2
+    );
+
+    assert.equal(
+      mock.verifyQuickExecutions,
+      2
+    );
+  }
+);
+
+
+test(
   'agent task execution reports scope violation for out-of-scope files',
   async t => {
 
@@ -1306,6 +1739,16 @@ test(
       'scope_violation'
     );
 
+    assert.equal(
+      report.repairAttempts,
+      0
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      1
+    );
+
     assert.deepEqual(
       report.scopeResult.outside,
       [
@@ -1362,6 +1805,121 @@ test(
 
 
 test(
+  'agent task execution stops when repair introduces an out-of-scope file',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-repair-scope.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        codexRuns:
+          [
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/allowed.txt',
+                    content:
+                      'initial fail\n'
+                  }
+                ]
+            },
+            {
+              status:
+                0,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/out-of-scope.txt',
+                    content:
+                      'outside\n'
+                  }
+                ]
+            }
+          ],
+        verifyQuickStatuses:
+          [
+            1,
+            0
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-REPAIR-SCOPE',
+              includePath:
+                'docs/allowed.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'scope_violation'
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      1
+    );
+
+    assert.deepEqual(
+      report.repair.scopeResult.outside,
+      [
+        'docs/out-of-scope.txt'
+      ]
+    );
+
+    assert.equal(
+      report.repair.verifyQuick,
+      null
+    );
+
+    assert.equal(
+      mock.verifyQuickExecutions,
+      1
+    );
+
+    assert.equal(
+      mock.taskVerificationExecutions,
+      0
+    );
+  }
+);
+
+
+test(
   'agent task execution removes the temporary dependency bridge after failed verification',
   async t => {
 
@@ -1388,6 +1946,22 @@ test(
         }
       );
 
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        verifyQuickStatus:
+          1,
+        writeFiles:
+          [
+            {
+              file:
+                'docs/smoke.txt',
+              content:
+                'smoke pass\n'
+            }
+          ]
+      });
+
     const report =
       await executeAgentTask(
         taskFile,
@@ -1396,20 +1970,7 @@ test(
           codexCliPath:
             codexPath,
           commandRunner:
-            createExecutionCommandRunner({
-              codexPath,
-              verifyQuickStatus:
-                1,
-              writeFiles:
-                [
-                  {
-                    file:
-                      'docs/smoke.txt',
-                    content:
-                      'smoke pass\n'
-                  }
-                ]
-            }).runner,
+            mock.runner,
           disableDefaultCliCandidates:
             true
         }
@@ -1418,6 +1979,16 @@ test(
     assert.equal(
       report.status,
       'failed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      2
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      1
     );
 
     assert.equal(
@@ -1438,6 +2009,16 @@ test(
     assert.equal(
       report.taskVerification.length,
       0
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      2
+    );
+
+    assert.equal(
+      mock.verifyQuickExecutions,
+      2
     );
 
     assert.equal(
@@ -1514,6 +2095,16 @@ test(
     );
 
     assert.equal(
+      report.codexExecutions,
+      1
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      0
+    );
+
+    assert.equal(
       report.postAgentScopeCheck.status,
       'pass'
     );
@@ -1538,6 +2129,11 @@ test(
         call.command === 'npm run verify:quick'
       ),
       false
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      1
     );
   }
 );
@@ -1617,6 +2213,16 @@ test(
     );
 
     assert.equal(
+      report.codexExecutions,
+      1
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      0
+    );
+
+    assert.equal(
       report.verificationDependencyEnvironment.status,
       'unavailable'
     );
@@ -1639,6 +2245,11 @@ test(
         call.command === 'yarn'
       ),
       false
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      1
     );
   }
 );
@@ -1671,6 +2282,13 @@ test(
         }
       );
 
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        codexExitStatus:
+          2
+      });
+
     const report =
       await executeAgentTask(
         taskFile,
@@ -1679,11 +2297,7 @@ test(
           codexCliPath:
             codexPath,
           commandRunner:
-            createExecutionCommandRunner({
-              codexPath,
-              codexExitStatus:
-                2
-            }).runner,
+            mock.runner,
           disableDefaultCliCandidates:
             true
         }
@@ -1700,8 +2314,18 @@ test(
     );
 
     assert.equal(
+      report.repairAttempts,
+      0
+    );
+
+    assert.equal(
       report.verifyQuick,
       null
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      1
     );
   }
 );
@@ -1773,6 +2397,11 @@ test(
 
     assert.equal(
       report.codexExecutions,
+      0
+    );
+
+    assert.equal(
+      report.repairAttempts,
       0
     );
 
@@ -2102,10 +2731,16 @@ function createExecutionCommandRunner({
   codexPath,
   codexExitStatus =
     0,
+  codexRuns =
+    null,
   verifyQuickStatus =
     0,
+  verifyQuickStatuses =
+    null,
   taskVerificationStatus =
     0,
+  taskVerificationStatuses =
+    null,
   writeFiles =
     []
 }) {
@@ -2115,6 +2750,15 @@ function createExecutionCommandRunner({
 
   let codexExecutions =
     0;
+
+  let verifyQuickExecutions =
+    0;
+
+  let taskVerificationExecutions =
+    0;
+
+  const nodeModulesPresentDuringCodex =
+    [];
 
   const runner =
     (
@@ -2157,9 +2801,25 @@ function createExecutionCommandRunner({
         )
       ) {
 
+        const run =
+          codexRuns?.[codexExecutions] || {
+            status:
+              codexExitStatus,
+            writeFiles
+          };
+
         codexExecutions += 1;
 
-        for (const file of writeFiles) {
+        nodeModulesPresentDuringCodex.push(
+          existsSync(
+            path.join(
+              options.cwd,
+              'node_modules'
+            )
+          )
+        );
+
+        for (const file of run.writeFiles || []) {
 
           const target =
             path.join(
@@ -2186,29 +2846,39 @@ function createExecutionCommandRunner({
 
         return createCommandResult({
           status:
-            codexExitStatus,
+            run.status ?? codexExitStatus,
           stdout:
-            codexExitStatus === 0
-              ? 'codex complete\n'
-              : '',
+            run.stdout ?? (
+              (run.status ?? codexExitStatus) === 0
+                ? 'codex complete\n'
+                : ''
+            ),
           stderr:
-            codexExitStatus === 0
-              ? ''
-              : 'codex failed\n'
+            run.stderr ?? (
+              (run.status ?? codexExitStatus) === 0
+                ? ''
+                : 'codex failed\n'
+            )
         });
       }
 
       if (command === 'npm run verify:quick') {
 
+        const status =
+          verifyQuickStatuses?.[verifyQuickExecutions] ??
+          verifyQuickStatus;
+
+        verifyQuickExecutions += 1;
+
         return createCommandResult({
           status:
-            verifyQuickStatus,
+            status,
           stdout:
-            verifyQuickStatus === 0
+            status === 0
               ? 'quick ok\n'
               : '',
           stderr:
-            verifyQuickStatus === 0
+            status === 0
               ? ''
               : 'quick failed\n'
         });
@@ -2216,15 +2886,21 @@ function createExecutionCommandRunner({
 
       if (options.shell) {
 
+        const status =
+          taskVerificationStatuses?.[taskVerificationExecutions] ??
+          taskVerificationStatus;
+
+        taskVerificationExecutions += 1;
+
         return createCommandResult({
           status:
-            taskVerificationStatus,
+            status,
           stdout:
-            taskVerificationStatus === 0
+            status === 0
               ? 'task verification ok\n'
               : '',
           stderr:
-            taskVerificationStatus === 0
+            status === 0
               ? ''
               : 'task verification failed\n'
         });
@@ -2262,6 +2938,20 @@ function createExecutionCommandRunner({
     get codexExecutions() {
 
       return codexExecutions;
+    },
+    get verifyQuickExecutions() {
+
+      return verifyQuickExecutions;
+    },
+    get taskVerificationExecutions() {
+
+      return taskVerificationExecutions;
+    },
+    nodeModulesPresentDuringCodex() {
+
+      return [
+        ...nodeModulesPresentDuringCodex
+      ];
     }
   };
 }
