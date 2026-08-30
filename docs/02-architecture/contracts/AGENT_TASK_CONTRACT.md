@@ -243,12 +243,12 @@ Execution mode is intentionally narrower than a general autonomous workflow. It:
 - requires machine-checkable `path:` include scope;
 - resolves a supported standalone Codex CLI executable and records the exact path/version;
 - creates one dedicated sibling git worktree and task branch;
-- invokes `codex exec -C <worktree> -s workspace-write --color never --ephemeral -` exactly once in that worktree;
+- invokes `codex --ask-for-approval never exec -C <worktree> -s workspace-write --color never --ephemeral -` exactly once in that worktree;
 - runs `npm run verify:quick` and the task-declared verification commands;
 - compares all changed/untracked files against `scope.include` / `scope.exclude` path rules;
 - emits a machine-readable execution report.
 
-Execution mode must not commit, merge, push, reset, retry with a repair pass, approve owner-gated actions or expand scope. Any changed file outside the declared path rules is reported as `scope_violation`.
+Execution mode must not commit, merge, push, reset, retry with a repair pass, approve owner-gated actions or expand scope. The global approval policy is fixed to `never`, so unavailable approval stops execution instead of waiting for interaction. Any changed file outside the declared path rules is reported as `scope_violation`.
 
 The first live smoke task is deliberately docs/testing-only and writes only:
 

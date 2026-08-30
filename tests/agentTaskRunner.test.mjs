@@ -1098,9 +1098,55 @@ test(
     assert.equal(
       mock.calls.filter(call =>
         call.command === codexPath &&
-        call.args[0] === 'exec'
+        call.args.includes(
+          'exec'
+        )
       ).length,
       1
+    );
+
+    const codexExecCall =
+      mock.calls.find(call =>
+        call.command === codexPath &&
+        call.args.includes(
+          'exec'
+        )
+      );
+
+    assert.ok(
+      codexExecCall
+    );
+
+    assert.equal(
+      codexExecCall.args[0],
+      '--ask-for-approval'
+    );
+
+    assert.equal(
+      codexExecCall.args[1],
+      'never'
+    );
+
+    assert.equal(
+      codexExecCall.args[2],
+      'exec'
+    );
+
+    assert.ok(
+      codexExecCall.args.indexOf(
+        '--ask-for-approval'
+      ) < codexExecCall.args.indexOf(
+        'exec'
+      )
+    );
+
+    assert.equal(
+      codexExecCall.args[
+        codexExecCall.args.indexOf(
+          '-s'
+        ) + 1
+      ],
+      'workspace-write'
     );
 
     assert.equal(
@@ -1117,12 +1163,6 @@ test(
       mock.calls.some(call =>
         call.command === codexPath &&
         (
-          call.args.includes(
-            '-a'
-          ) ||
-          call.args.includes(
-            '--ask-for-approval'
-          ) ||
           call.args.includes(
             '--approve-for-me'
           ) ||
@@ -1683,7 +1723,9 @@ function createExecutionCommandRunner({
 
       if (
         command === codexPath &&
-        args[0] === 'exec'
+        args.includes(
+          'exec'
+        )
       ) {
 
         codexExecutions += 1;

@@ -1248,8 +1248,11 @@ export function createCodexExecCommand({
   return {
     executable:
       cliPath,
+    worktreePath,
     args:
       [
+        '--ask-for-approval',
+        'never',
         'exec',
         '-C',
         worktreePath,
@@ -1276,7 +1279,7 @@ function runCodexOnce({
       command.args,
       {
         cwd:
-          command.args[2],
+          command.worktreePath,
         input:
           prompt,
         timeout:
@@ -1632,6 +1635,9 @@ export function calculateDedicatedWorktree(
       task
     );
 
+  const executionSlug =
+    `${slug}-${repository.head}`;
+
   const worktreeRoot =
     path.resolve(
       path.dirname(
@@ -1642,12 +1648,12 @@ export function calculateDedicatedWorktree(
 
   return {
     branchName:
-      `agent-task/${slug}`,
+      `agent-task/${executionSlug}`,
     worktreePath:
       normalizeRepoPath(
         path.join(
           worktreeRoot,
-          slug
+          executionSlug
         )
       ),
     baseHead:

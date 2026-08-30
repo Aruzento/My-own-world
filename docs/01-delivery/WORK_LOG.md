@@ -19,7 +19,7 @@ owner_zone: "delivery"
 - Added Codex CLI resolution in `tools/agent_task_runner.mjs`: explicit absolute path, supported Windows user install under `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`, then PATH-discovered candidates.
 - Rejected packaged WindowsApps OpenAI.Codex aliases and any CLI candidate that cannot pass `--version`.
 - Added `--execute` mode to the existing `npm run agent:task` command. Execution requires the same validated `.agent-task.json`, clean source worktree, machine-enforceable `path:` scope and no triggered unapproved approval gate.
-- Execution creates a dedicated sibling git worktree and branch, invokes Codex exactly once via `codex exec -C <worktree> -s workspace-write --color never --ephemeral -`, then runs `npm run verify:quick`, task verification and changed-file scope enforcement.
+- Execution creates a dedicated sibling git worktree and branch, invokes Codex exactly once via `codex --ask-for-approval never exec -C <worktree> -s workspace-write --color never --ephemeral -`, then runs `npm run verify:quick`, task verification and changed-file scope enforcement.
 - Added execution reports with CLI path/version, source/worktree state, Codex exit status, changed files, scope result and explicit guarantees: no commit, merge, push, reset or repair retry.
 - Added `docs/03-testing/agent-tasks/examples/autonomous-runner-smoke.agent-task.json` as the first harmless live-smoke task, constrained to one docs/testing evidence file.
 - Updated `AGENTS.md` and [AGENT_TASK_CONTRACT.md](../02-architecture/contracts/AGENT_TASK_CONTRACT.md) with the single-pass execution contract.
