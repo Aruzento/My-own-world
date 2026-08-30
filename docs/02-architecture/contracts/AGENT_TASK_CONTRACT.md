@@ -244,11 +244,14 @@ Execution mode is intentionally narrower than a general autonomous workflow. It:
 - resolves a supported standalone Codex CLI executable and records the exact path/version;
 - creates one dedicated sibling git worktree and task branch;
 - invokes `codex --ask-for-approval never exec -C <worktree> -s workspace-write --color never --ephemeral -` exactly once in that worktree;
-- runs `npm run verify:quick` and the task-declared verification commands;
-- compares all changed/untracked files against `scope.include` / `scope.exclude` path rules;
+- collects changed/untracked files immediately after Codex exits;
+- compares those files against `scope.include` / `scope.exclude` path rules before running repository commands from the modified worktree;
+- prepares post-agent verification dependencies only after scope passes: worktree-local `node_modules` if present, otherwise a temporary source `node_modules` link when package manifests were not changed;
+- removes any temporary dependency link after verification;
+- runs `npm run verify:quick` and the task-declared verification commands only after scope passes;
 - emits a machine-readable execution report.
 
-Execution mode must not commit, merge, push, reset, retry with a repair pass, approve owner-gated actions or expand scope. The global approval policy is fixed to `never`, so unavailable approval stops execution instead of waiting for interaction. Any changed file outside the declared path rules is reported as `scope_violation`.
+Execution mode must not commit, merge, push, reset, retry with a repair pass, approve owner-gated actions, expand scope, install dependencies or run verification after a scope violation. The global approval policy is fixed to `never`, so unavailable approval stops execution instead of waiting for interaction. Any changed file outside the declared path rules is reported as `scope_violation`.
 
 The first live smoke task is deliberately docs/testing-only and writes only:
 

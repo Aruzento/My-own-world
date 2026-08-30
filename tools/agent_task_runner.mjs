@@ -4,7 +4,11 @@ import {
 
 import {
   mkdir,
-  readFile
+  readFile,
+  lstat,
+  stat,
+  symlink,
+  unlink
 } from 'node:fs/promises';
 
 import path from 'node:path';
@@ -47,6 +51,12 @@ const PROBE_TIMEOUT_MS =
 
 const COMMAND_MAX_BUFFER =
   20 * 1024 * 1024;
+
+const PACKAGE_MANIFEST_PATHS =
+  Object.freeze([
+    'package.json',
+    'package-lock.json'
+  ]);
 
 const EXECUTION_SCOPE_MACHINE_ENFORCEABLE =
   'machine-enforceable';
@@ -554,32 +564,6 @@ export async function executeAgentTask(
       commandRunner
     });
 
-  let verifyQuick =
-    null;
-
-  let taskVerification =
-    [];
-
-  if (codexResult.ok) {
-
-    verifyQuick =
-      runShellVerificationCommand(
-        'npm run verify:quick',
-        worktreeResult.path,
-        commandRunner
-      );
-
-    if (verifyQuick.ok) {
-
-      taskVerification =
-        runTaskVerificationCommands(
-          dryRunReport.verificationPlan.taskCommands,
-          worktreeResult.path,
-          commandRunner
-        );
-    }
-  }
-
   const changedFiles =
     collectChangedFiles(
       worktreeResult.path,
@@ -605,6 +589,80 @@ export async function executeAgentTask(
             changedFiles.error
         };
 
+  const postAgentScopeCheck =
+    createPostAgentScopeCheck({
+      codexResult,
+      changedFiles,
+      scopeResult
+    });
+
+  let verifyQuick =
+    null;
+
+  let taskVerification =
+    [];
+
+  let verificationDependencyEnvironment =
+    null;
+
+  if (
+    codexResult.ok &&
+    changedFiles.ok &&
+    scopeResult.ok
+  ) {
+
+    const dependencyEnvironment =
+      await prepareVerificationDependencyEnvironment({
+        sourceRoot:
+          dryRunReport.repository.root,
+        worktreePath:
+          worktreeResult.path,
+        changedFiles:
+          changedFiles.files,
+        platform
+      });
+
+    verificationDependencyEnvironment =
+      dependencyEnvironment.report;
+
+    if (dependencyEnvironment.ok) {
+
+      try {
+
+        verifyQuick =
+          runShellVerificationCommand(
+            'npm run verify:quick',
+            worktreeResult.path,
+            commandRunner
+          );
+
+        if (verifyQuick.ok) {
+
+          taskVerification =
+            runTaskVerificationCommands(
+              dryRunReport.verificationPlan.taskCommands,
+              worktreeResult.path,
+              commandRunner
+            );
+        }
+
+      } finally {
+
+        verificationDependencyEnvironment.cleanup =
+          await cleanupVerificationDependencyEnvironment(
+            dependencyEnvironment
+          );
+      }
+    }
+
+  } else if (codexResult.ok) {
+
+    verificationDependencyEnvironment =
+      createVerificationDependencyNotRunReport(
+        postAgentScopeCheck.status
+      );
+  }
+
   const sourceAfter =
     inspectRepositoryState(
       dryRunReport.repository.root,
@@ -625,8 +683,354 @@ export async function executeAgentTask(
     taskVerification,
     changedFiles,
     scopeResult,
+    postAgentScopeCheck,
+    verificationDependencyEnvironment,
     sourceAfter
   });
+}
+
+
+async function prepareVerificationDependencyEnvironment({
+  sourceRoot,
+  worktreePath,
+  changedFiles,
+  platform =
+    process.platform
+}) {
+
+  const worktreeNodeModules =
+    path.join(
+      worktreePath,
+      'node_modules'
+    );
+
+  if (
+    await pathExists(
+      worktreeNodeModules
+    )
+  ) {
+
+    return {
+      ok:
+        true,
+      cleanupPath:
+        '',
+      report:
+        {
+          status:
+            'worktree-local',
+          path:
+            normalizeRepoPath(
+              worktreeNodeModules
+            ),
+          cleanup:
+            {
+              required:
+                false,
+              attempted:
+                false,
+              ok:
+                true
+            }
+        }
+    };
+  }
+
+  const changedManifest =
+    getChangedPackageManifest(
+      changedFiles
+    );
+
+  if (changedManifest) {
+
+    return {
+      ok:
+        false,
+      cleanupPath:
+        '',
+      report:
+        {
+          status:
+            'unavailable',
+          code:
+            'PACKAGE_MANIFEST_CHANGED',
+          message:
+            `Worktree changed ${changedManifest}; source node_modules cannot be reused safely.`,
+          cleanup:
+            {
+              required:
+                false,
+              attempted:
+                false,
+              ok:
+                true
+            }
+        }
+    };
+  }
+
+  const sourceNodeModules =
+    path.join(
+      sourceRoot,
+      'node_modules'
+    );
+
+  if (
+    !(await pathExists(
+      sourceNodeModules
+    ))
+  ) {
+
+    return {
+      ok:
+        false,
+      cleanupPath:
+        '',
+      report:
+        {
+          status:
+            'unavailable',
+          code:
+            'SOURCE_NODE_MODULES_MISSING',
+          message:
+            'Source repository node_modules is unavailable; dependencies were not installed automatically.',
+          cleanup:
+            {
+              required:
+                false,
+              attempted:
+                false,
+              ok:
+                true
+            }
+        }
+    };
+  }
+
+  try {
+
+    await symlink(
+      sourceNodeModules,
+      worktreeNodeModules,
+      platform === 'win32'
+        ? 'junction'
+        : 'dir'
+    );
+
+  } catch (error) {
+
+    return {
+      ok:
+        false,
+      cleanupPath:
+        '',
+      report:
+        {
+          status:
+            'unavailable',
+          code:
+            'SOURCE_NODE_MODULES_LINK_FAILED',
+          message:
+            error?.message || 'Could not create temporary verification dependency bridge.',
+          sourcePath:
+            normalizeRepoPath(
+              sourceNodeModules
+            ),
+          cleanup:
+            {
+              required:
+                false,
+              attempted:
+                false,
+              ok:
+                true
+            }
+        }
+    };
+  }
+
+  return {
+    ok:
+      true,
+    cleanupPath:
+      worktreeNodeModules,
+    report:
+      {
+        status:
+          'temporary-source-link',
+        path:
+          normalizeRepoPath(
+            worktreeNodeModules
+          ),
+        sourcePath:
+          normalizeRepoPath(
+            sourceNodeModules
+          ),
+        cleanup:
+          {
+            required:
+              true,
+            attempted:
+              false,
+            ok:
+              false
+          }
+      }
+  };
+}
+
+
+async function cleanupVerificationDependencyEnvironment(
+  dependencyEnvironment
+) {
+
+  if (!dependencyEnvironment.cleanupPath) {
+
+    return dependencyEnvironment.report.cleanup;
+  }
+
+  try {
+
+    const stats =
+      await lstat(
+        dependencyEnvironment.cleanupPath
+      );
+
+    if (!stats.isSymbolicLink()) {
+
+      return {
+        required:
+          true,
+        attempted:
+          false,
+        ok:
+          false,
+        error:
+          'Verification dependency bridge cleanup refused to remove a non-link node_modules path.'
+      };
+    }
+
+    await unlink(
+      dependencyEnvironment.cleanupPath
+    );
+
+    return {
+      required:
+        true,
+      attempted:
+        true,
+      ok:
+        true
+    };
+
+  } catch (error) {
+
+    return {
+      required:
+        true,
+      attempted:
+        true,
+      ok:
+        false,
+      error:
+        error?.message || 'Could not remove temporary verification dependency bridge.'
+    };
+  }
+}
+
+
+async function pathExists(
+  targetPath
+) {
+
+  return stat(
+    targetPath
+  )
+    .then(
+      () => true,
+      () => false
+    );
+}
+
+
+function getChangedPackageManifest(
+  changedFiles
+) {
+
+  return changedFiles.find(file =>
+    PACKAGE_MANIFEST_PATHS.includes(
+      normalizeRepoPath(
+        file
+      )
+    )
+  ) || '';
+}
+
+
+function createPostAgentScopeCheck({
+  codexResult,
+  changedFiles,
+  scopeResult
+}) {
+
+  if (!codexResult.ok) {
+
+    return {
+      status:
+        'not-run',
+      reason:
+        'codex-failed'
+    };
+  }
+
+  if (!changedFiles.ok) {
+
+    return {
+      status:
+        'failed',
+      reason:
+        'changed-file-collection-failed'
+    };
+  }
+
+  if (!scopeResult.ok) {
+
+    return {
+      status:
+        'violation',
+      reason:
+        'scope-violation'
+    };
+  }
+
+  return {
+    status:
+      'pass'
+  };
+}
+
+
+function createVerificationDependencyNotRunReport(
+  scopeStatus
+) {
+
+  return {
+    status:
+      'not-run',
+    reason:
+      scopeStatus === 'violation'
+        ? 'scope-violation'
+        : 'post-agent-scope-check-not-passed',
+    cleanup:
+      {
+        required:
+          false,
+        attempted:
+          false,
+        ok:
+          true
+      }
+  };
 }
 
 
@@ -1935,10 +2339,30 @@ export function formatExecutionReport(
     );
   }
 
+  if (report.postAgentScopeCheck) {
+
+    lines.push(
+      `Post-agent scope check: ${report.postAgentScopeCheck.status}`
+    );
+  }
+
+  if (report.verificationDependencyEnvironment) {
+
+    lines.push(
+      `Verification dependency environment: ${report.verificationDependencyEnvironment.status}`
+    );
+  }
+
   if (report.verifyQuick) {
 
     lines.push(
       `verify:quick: ${report.verifyQuick.ok ? 'PASS' : 'FAIL'}`
+    );
+
+  } else if (report.codexResult?.ok) {
+
+    lines.push(
+      'verify:quick: NOT RUN'
     );
   }
 
@@ -2137,6 +2561,10 @@ function createPreExecutionReport({
       null,
     scopeResult:
       null,
+    postAgentScopeCheck:
+      null,
+    verificationDependencyEnvironment:
+      null,
     approvalGates:
       dryRunReport.approvalGates,
     executionGuarantees:
@@ -2158,6 +2586,8 @@ function createExecutionReport({
   taskVerification,
   changedFiles,
   scopeResult,
+  postAgentScopeCheck,
+  verificationDependencyEnvironment,
   sourceAfter
 }) {
 
@@ -2204,6 +2634,37 @@ function createExecutionReport({
   if (
     codexResult.ok &&
     scopeResult.ok &&
+    verificationDependencyEnvironment &&
+    verificationDependencyEnvironment.status === 'unavailable'
+  ) {
+
+    blockingReasons.push({
+      code:
+        'DEPENDENCY_ENVIRONMENT_UNAVAILABLE',
+      message:
+        verificationDependencyEnvironment.message
+    });
+  }
+
+  if (
+    codexResult.ok &&
+    scopeResult.ok &&
+    verificationDependencyEnvironment?.cleanup?.required &&
+    !verificationDependencyEnvironment.cleanup.ok
+  ) {
+
+    blockingReasons.push({
+      code:
+        'DEPENDENCY_BRIDGE_CLEANUP_FAILED',
+      message:
+        verificationDependencyEnvironment.cleanup.error
+    });
+  }
+
+  if (
+    codexResult.ok &&
+    scopeResult.ok &&
+    verificationDependencyEnvironment?.status !== 'unavailable' &&
     verifyQuick &&
     !verifyQuick.ok
   ) {
@@ -2225,6 +2686,7 @@ function createExecutionReport({
   if (
     codexResult.ok &&
     scopeResult.ok &&
+    verificationDependencyEnvironment?.status !== 'unavailable' &&
     verifyQuick?.ok &&
     failedTaskVerification
   ) {
@@ -2258,6 +2720,21 @@ function createExecutionReport({
 
     status =
       'scope_violation';
+
+  } else if (
+    verificationDependencyEnvironment?.status === 'unavailable'
+  ) {
+
+    status =
+      'blocked';
+
+  } else if (
+    verificationDependencyEnvironment?.cleanup?.required &&
+    !verificationDependencyEnvironment.cleanup.ok
+  ) {
+
+    status =
+      'failed';
 
   } else if (
     !verifyQuick?.ok ||
@@ -2301,6 +2778,8 @@ function createExecutionReport({
     taskVerification,
     changedFiles,
     scopeResult,
+    postAgentScopeCheck,
+    verificationDependencyEnvironment,
     approvalGates:
       dryRunReport.approvalGates,
     executionGuarantees:

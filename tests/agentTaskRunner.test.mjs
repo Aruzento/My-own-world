@@ -11,6 +11,7 @@ import {
 } from 'node:fs';
 
 import {
+  mkdir,
   mkdtemp,
   readFile,
   rm,
@@ -1058,6 +1059,31 @@ test(
     );
 
     assert.equal(
+      report.postAgentScopeCheck.status,
+      'pass'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.status,
+      'temporary-source-link'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.cleanup.ok,
+      true
+    );
+
+    assert.equal(
+      await pathExists(
+        path.join(
+          report.worktree.path,
+          'node_modules'
+        )
+      ),
+      false
+    );
+
+    assert.equal(
       report.verifyQuick.ok,
       true
     );
@@ -1072,6 +1098,11 @@ test(
     assert.equal(
       report.sourceAfter.clean,
       true
+    );
+
+    assert.equal(
+      report.sourceAfter.head,
+      report.sourceBefore.head
     );
 
     assert.equal(
@@ -1093,6 +1124,42 @@ test(
         )
       ),
       false
+    );
+
+    const codexCallIndex =
+      mock.calls.findIndex(call =>
+        call.command === codexPath &&
+        call.args.includes(
+          'exec'
+        )
+      );
+
+    const scopeCollectionIndex =
+      mock.calls.findIndex((call, index) =>
+        index > codexCallIndex &&
+        call.command === 'git' &&
+        call.cwd === report.worktree.path &&
+        call.args[0] === 'status' &&
+        call.args.includes(
+          '--untracked-files=all'
+        )
+      );
+
+    const verifyQuickIndex =
+      mock.calls.findIndex(call =>
+        call.command === 'npm run verify:quick'
+      );
+
+    assert.ok(
+      codexCallIndex >= 0
+    );
+
+    assert.ok(
+      scopeCollectionIndex > codexCallIndex
+    );
+
+    assert.ok(
+      verifyQuickIndex > scopeCollectionIndex
     );
 
     assert.equal(
@@ -1206,6 +1273,20 @@ test(
         }
       );
 
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        writeFiles:
+          [
+            {
+              file:
+                'docs/out-of-scope.txt',
+              content:
+                'outside\n'
+            }
+          ]
+      });
+
     const report =
       await executeAgentTask(
         taskFile,
@@ -1214,18 +1295,7 @@ test(
           codexCliPath:
             codexPath,
           commandRunner:
-            createExecutionCommandRunner({
-              codexPath,
-              writeFiles:
-                [
-                  {
-                    file:
-                      'docs/out-of-scope.txt',
-                    content:
-                      'outside\n'
-                  }
-                ]
-            }).runner,
+            mock.runner,
           disableDefaultCliCandidates:
             true
         }
@@ -1241,6 +1311,334 @@ test(
       [
         'docs/out-of-scope.txt'
       ]
+    );
+
+    assert.equal(
+      report.postAgentScopeCheck.status,
+      'violation'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.status,
+      'not-run'
+    );
+
+    assert.equal(
+      report.verifyQuick,
+      null
+    );
+
+    assert.equal(
+      report.taskVerification.length,
+      0
+    );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.command === 'npm run verify:quick'
+      ),
+      false
+    );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.shell &&
+        call.command === 'git diff --check'
+      ),
+      false
+    );
+
+    assert.equal(
+      await pathExists(
+        path.join(
+          report.worktree.path,
+          'node_modules'
+        )
+      ),
+      false
+    );
+  }
+);
+
+
+test(
+  'agent task execution removes the temporary dependency bridge after failed verification',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-verify-fail.exe'
+      );
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-VERIFY-FAIL',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            createExecutionCommandRunner({
+              codexPath,
+              verifyQuickStatus:
+                1,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'smoke pass\n'
+                  }
+                ]
+            }).runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'failed'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.status,
+      'temporary-source-link'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.cleanup.ok,
+      true
+    );
+
+    assert.equal(
+      report.verifyQuick.ok,
+      false
+    );
+
+    assert.equal(
+      report.taskVerification.length,
+      0
+    );
+
+    assert.equal(
+      await pathExists(
+        path.join(
+          report.worktree.path,
+          'node_modules'
+        )
+      ),
+      false
+    );
+  }
+);
+
+
+test(
+  'agent task execution does not reuse source dependencies after package manifest changes',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-package-change.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        writeFiles:
+          [
+            {
+              file:
+                'package.json',
+              content:
+                '{"name":"changed"}\n'
+            }
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-PACKAGE-CHANGE',
+              includePath:
+                'package.json'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.postAgentScopeCheck.status,
+      'pass'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.status,
+      'unavailable'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.code,
+      'PACKAGE_MANIFEST_CHANGED'
+    );
+
+    assert.equal(
+      report.verifyQuick,
+      null
+    );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.command === 'npm run verify:quick'
+      ),
+      false
+    );
+  }
+);
+
+
+test(
+  'agent task execution reports missing dependency environment without installing packages',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-no-node-modules.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        writeFiles:
+          [
+            {
+              file:
+                'docs/smoke.txt',
+              content:
+                'smoke pass\n'
+            }
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-NO-NODE-MODULES',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    await rm(
+      path.join(
+        root,
+        'node_modules'
+      ),
+      {
+        recursive:
+          true,
+        force:
+          true
+      }
+    );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.status,
+      'unavailable'
+    );
+
+    assert.equal(
+      report.verificationDependencyEnvironment.code,
+      'SOURCE_NODE_MODULES_MISSING'
+    );
+
+    assert.equal(
+      report.verifyQuick,
+      null
+    );
+
+    assert.equal(
+      mock.calls.some(call =>
+        call.command === 'npm install' ||
+        call.command === 'npm ci' ||
+        call.command === 'pnpm install' ||
+        call.command === 'yarn'
+      ),
+      false
     );
   }
 );
@@ -1447,6 +1845,14 @@ async function createGitFixture(
     'fixture\n'
   );
 
+  await writeFile(
+    path.join(
+      root,
+      '.gitignore'
+    ),
+    'node_modules/\n'
+  );
+
   runGit(
     root,
     [
@@ -1458,6 +1864,7 @@ async function createGitFixture(
     root,
     [
       'add',
+      '.gitignore',
       'README.md',
       'task.agent-task.json'
     ]
@@ -1474,6 +1881,28 @@ async function createGitFixture(
       '-m',
       'Initial fixture'
     ]
+  );
+
+  await mkdir(
+    path.join(
+      root,
+      'node_modules',
+      '.fixture'
+    ),
+    {
+      recursive:
+        true
+    }
+  );
+
+  await writeFile(
+    path.join(
+      root,
+      'node_modules',
+      '.fixture',
+      'installed.txt'
+    ),
+    'installed\n'
   );
 
   return {

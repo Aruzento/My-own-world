@@ -4,24 +4,85 @@ import { readFileSync } from 'node:fs';
 
 
 const workflow =
-  readFileSync(
-    '.github/workflows/verify.yml',
-    'utf8'
+  normalizeLineEndings(
+    readFileSync(
+      '.github/workflows/verify.yml',
+      'utf8'
+    )
   );
+
+
+function normalizeLineEndings(
+  value
+) {
+
+  return value.replace(
+    /\r\n/g,
+    '\n'
+  );
+}
+
+
+function assertVerifyWorkflowPolicy(
+  workflowText
+) {
+
+  const normalized =
+    normalizeLineEndings(
+      workflowText
+    );
+
+  assert.match(
+    normalized,
+    /permissions:\n  contents: read/
+  );
+
+  assert.match(
+    normalized,
+    /concurrency:\n  group: verify-\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\n  cancel-in-progress: true/
+  );
+}
 
 
 test(
   'verify workflow keeps least-privilege permissions and concurrency',
   () => {
 
-    assert.match(
+    assertVerifyWorkflowPolicy(
       workflow,
-      /permissions:\n  contents: read/
+    );
+  }
+);
+
+
+test(
+  'verify workflow policy assertions are line-ending independent',
+  () => {
+
+    const fixture =
+      [
+        'name: Verify',
+        '',
+        'permissions:',
+        '  contents: read',
+        '',
+        'concurrency:',
+        '  group: verify-${{ github.workflow }}-${{ github.ref }}',
+        '  cancel-in-progress: true',
+        ''
+      ].join(
+        '\n'
+      );
+
+    assertVerifyWorkflowPolicy(
+      fixture
     );
 
-    assert.match(
-      workflow,
-      /concurrency:\n  group: verify-\$\{\{ github\.workflow \}\}-\$\{\{ github\.ref \}\}\n  cancel-in-progress: true/
+    assertVerifyWorkflowPolicy(
+      fixture.replace(
+        /\n/g,
+        '\r\n'
+      )
     );
   }
 );
