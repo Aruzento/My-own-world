@@ -40,8 +40,20 @@ const PATH_SCOPE_PREFIX =
 const CODEX_CLI_PATH_ENV =
   'MOW_CODEX_CLI';
 
-const CODEX_EXEC_TIMEOUT_MS =
-  10 * 60 * 1000;
+export const CODEX_EXEC_TIMEOUT_ENV =
+  'MOW_CODEX_EXEC_TIMEOUT_MS';
+
+export const CODEX_EXEC_TIMEOUT_DEFAULT_MS =
+  30 * 60 * 1000;
+
+export const CODEX_EXEC_TIMEOUT_MIN_MS =
+  60 * 1000;
+
+export const CODEX_EXEC_TIMEOUT_MAX_MS =
+  60 * 60 * 1000;
+
+export const CODEX_EXEC_TIMEOUT_INVALID_CODE =
+  'CODEX_EXEC_TIMEOUT_INVALID';
 
 const MAX_CODEX_EXECUTIONS =
   2;
@@ -469,6 +481,31 @@ export async function executeAgentTask(
     });
   }
 
+  const codexExecutionTimeout =
+    resolveCodexExecTimeoutMs(
+      env
+    );
+
+  if (!codexExecutionTimeout.ok) {
+
+    return createPreExecutionReport({
+      createdAt,
+      dryRunReport,
+      status:
+        'blocked',
+      codexExecutionTimeout,
+      blockingReasons:
+        [
+          {
+            code:
+              CODEX_EXEC_TIMEOUT_INVALID_CODE,
+            message:
+              codexExecutionTimeout.error
+          }
+        ]
+    });
+  }
+
   const taskLoad =
     await loadTask(
       taskPath
@@ -495,6 +532,7 @@ export async function executeAgentTask(
       status:
         'blocked',
       cliResolution,
+      codexExecutionTimeout,
       blockingReasons:
         [
           {
@@ -525,6 +563,7 @@ export async function executeAgentTask(
       status:
         'blocked',
       cliResolution,
+      codexExecutionTimeout,
       worktree:
         worktreeResult,
       blockingReasons:
@@ -571,7 +610,9 @@ export async function executeAgentTask(
       dryRunReport,
       worktreeResult,
       commandRunner,
-      platform
+      platform,
+      timeoutMs:
+        codexExecutionTimeout.timeoutMs
     });
 
   const sourceAfterInitial =
@@ -635,7 +676,9 @@ export async function executeAgentTask(
         dryRunReport,
         worktreeResult,
         commandRunner,
-        platform
+        platform,
+        timeoutMs:
+          codexExecutionTimeout.timeoutMs
       });
   }
 
@@ -651,6 +694,7 @@ export async function executeAgentTask(
     createdAt,
     dryRunReport,
     cliResolution,
+    codexExecutionTimeout,
     worktree:
       worktreeResult,
     codexCommand,
@@ -670,14 +714,16 @@ async function runCodexExecutionPass({
   dryRunReport,
   worktreeResult,
   commandRunner,
-  platform
+  platform,
+  timeoutMs
 }) {
 
   const codexResult =
     runCodexOnce({
       command,
       prompt,
-      commandRunner
+      commandRunner,
+      timeoutMs
     });
 
   const changedFiles =
@@ -1694,6 +1740,139 @@ export function createApprovalGates(
 }
 
 
+export function resolveCodexExecTimeoutMs(
+  env =
+    process.env
+) {
+
+  const rawValue =
+    env?.[CODEX_EXEC_TIMEOUT_ENV];
+
+  const base = {
+    envName:
+      CODEX_EXEC_TIMEOUT_ENV,
+    defaultMs:
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS,
+    minMs:
+      CODEX_EXEC_TIMEOUT_MIN_MS,
+    maxMs:
+      CODEX_EXEC_TIMEOUT_MAX_MS
+  };
+
+  if (rawValue === undefined) {
+
+    return {
+      ok:
+        true,
+      ...base,
+      source:
+        'default',
+      timeoutMs:
+        CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    };
+  }
+
+  const normalized =
+    String(
+      rawValue
+    ).trim();
+
+  if (!/^-?\d+$/.test(normalized)) {
+
+    return createCodexTimeoutConfigError({
+      ...base,
+      rawValue,
+      reason:
+        'not-integer'
+    });
+  }
+
+  const timeoutMs =
+    Number(
+      normalized
+    );
+
+  if (!Number.isSafeInteger(timeoutMs)) {
+
+    return createCodexTimeoutConfigError({
+      ...base,
+      rawValue,
+      reason:
+        'not-safe-integer'
+    });
+  }
+
+  if (timeoutMs <= 0) {
+
+    return createCodexTimeoutConfigError({
+      ...base,
+      rawValue,
+      reason:
+        'non-positive'
+    });
+  }
+
+  if (timeoutMs < CODEX_EXEC_TIMEOUT_MIN_MS) {
+
+    return createCodexTimeoutConfigError({
+      ...base,
+      rawValue,
+      reason:
+        'below-minimum'
+    });
+  }
+
+  if (timeoutMs > CODEX_EXEC_TIMEOUT_MAX_MS) {
+
+    return createCodexTimeoutConfigError({
+      ...base,
+      rawValue,
+      reason:
+        'above-maximum'
+    });
+  }
+
+  return {
+    ok:
+      true,
+    ...base,
+    source:
+      'env',
+    rawValue,
+    timeoutMs
+  };
+}
+
+
+function createCodexTimeoutConfigError({
+  envName,
+  rawValue,
+  reason,
+  defaultMs,
+  minMs,
+  maxMs
+}) {
+
+  return {
+    ok:
+      false,
+    envName,
+    rawValue:
+      String(
+        rawValue
+      ),
+    errorCode:
+      CODEX_EXEC_TIMEOUT_INVALID_CODE,
+    reason,
+    defaultMs,
+    minMs,
+    maxMs,
+    error:
+      `${envName} must be an integer timeout between ${minMs} and ${maxMs} milliseconds.`
+  };
+}
+
+
 export function resolveCodexCli({
   explicitPath =
     '',
@@ -2100,7 +2279,8 @@ export function createCodexExecCommand({
 function runCodexOnce({
   command,
   prompt,
-  commandRunner
+  commandRunner,
+  timeoutMs
 }) {
 
   const result =
@@ -2113,7 +2293,7 @@ function runCodexOnce({
         input:
           prompt,
         timeout:
-          CODEX_EXEC_TIMEOUT_MS,
+          timeoutMs,
         maxBuffer:
           COMMAND_MAX_BUFFER,
         shell:
@@ -2122,7 +2302,10 @@ function runCodexOnce({
     );
 
   return summarizeCommandResult(
-    result
+    result,
+    {
+      timeoutMs
+    }
   );
 }
 
@@ -2405,10 +2588,26 @@ function createCommandFailureMessage(
 
 
 function summarizeCommandResult(
-  result
+  result,
+  {
+    timeoutMs =
+      undefined
+  } = {}
 ) {
 
-  return {
+  const errorCode =
+    result.errorCode || '';
+
+  const timedOut =
+    Boolean(
+      result.timedOut ||
+      errorCode === 'ETIMEDOUT' ||
+      /\bETIMEDOUT\b/i.test(
+        result.error || ''
+      )
+    );
+
+  const summary = {
     ok:
       result.ok,
     status:
@@ -2430,8 +2629,23 @@ function summarizeCommandResult(
         ? ''
         : createCommandFailureMessage(
             result
-          )
+          ),
+    errorCode:
+      errorCode || (
+        timedOut
+          ? 'ETIMEDOUT'
+          : ''
+      ),
+    timedOut
   };
+
+  if (timeoutMs !== undefined) {
+
+    summary.timeoutMs =
+      timeoutMs;
+  }
+
+  return summary;
 }
 
 
@@ -2754,6 +2968,13 @@ export function formatExecutionReport(
     );
   }
 
+  if (report.timeoutMs !== undefined && report.timeoutMs !== null) {
+
+    lines.push(
+      `Codex execution timeout: ${report.timeoutMs} ms`
+    );
+  }
+
   lines.push(
     `Codex executions: ${report.codexExecutions}`
   );
@@ -2767,6 +2988,13 @@ export function formatExecutionReport(
     lines.push(
       `Codex exit status: ${report.codexResult.status}`
     );
+
+    if (report.codexResult.timedOut) {
+
+      lines.push(
+        `Codex exceeded the configured execution timeout (${report.codexResult.timeoutMs} ms).`
+      );
+    }
   }
 
   if (report.postAgentScopeCheck) {
@@ -2958,6 +3186,8 @@ function createPreExecutionReport({
   status,
   cliResolution =
     null,
+  codexExecutionTimeout =
+    null,
   worktree =
     null,
   blockingReasons =
@@ -2984,6 +3214,9 @@ function createPreExecutionReport({
     worktree,
     cli:
       cliResolution,
+    codexExecutionTimeout,
+    timeoutMs:
+      codexExecutionTimeout?.timeoutMs ?? null,
     cliCommand:
       null,
     codexExecutions:
@@ -3038,6 +3271,7 @@ function createExecutionReport({
   createdAt,
   dryRunReport,
   cliResolution,
+  codexExecutionTimeout,
   worktree,
   codexCommand,
   initial,
@@ -3123,6 +3357,9 @@ function createExecutionReport({
     worktree,
     cli:
       cliResolution,
+    codexExecutionTimeout,
+    timeoutMs:
+      codexExecutionTimeout.timeoutMs,
     cliCommand:
       {
         executable:
@@ -3704,9 +3941,12 @@ function runCommand(
           maxBuffer:
             options.maxBuffer || COMMAND_MAX_BUFFER
         }
-      );
+    );
 
     if (result.error) {
+
+      const errorCode =
+        result.error.code || '';
 
       return {
         ok:
@@ -3718,7 +3958,10 @@ function runCommand(
         stderr:
           result.stderr || '',
         error:
-          result.error.message
+          result.error.message,
+        errorCode,
+        timedOut:
+          errorCode === 'ETIMEDOUT'
       };
     }
 
@@ -3739,6 +3982,9 @@ function runCommand(
 
   } catch (error) {
 
+    const errorCode =
+      error?.code || '';
+
     return {
       ok:
         false,
@@ -3749,7 +3995,10 @@ function runCommand(
       stderr:
         '',
       error:
-        error?.message || `${command} failed`
+        error?.message || `${command} failed`,
+      errorCode,
+      timedOut:
+        errorCode === 'ETIMEDOUT'
     };
   }
 }

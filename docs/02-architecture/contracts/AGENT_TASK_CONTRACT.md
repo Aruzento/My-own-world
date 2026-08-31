@@ -253,6 +253,14 @@ Execution mode is intentionally narrower than a general autonomous workflow. It:
 - re-runs scope and verification after that repair pass;
 - emits a machine-readable execution report.
 
+Codex execution timeout is finite and configurable through `MOW_CODEX_EXEC_TIMEOUT_MS`:
+
+- default: `1800000` ms, 30 minutes;
+- allowed range: `60000` to `3600000` ms, 1 to 60 minutes;
+- a valid integer override uses that exact value for the initial pass and the optional repair pass;
+- an invalid explicit value blocks execution before Codex is launched;
+- a Codex timeout is a failed execution, does not trigger automatic repair, and leaves the dedicated worktree available for inspection.
+
 Execution mode must not commit, merge, push, reset, approve owner-gated actions, expand scope, install dependencies, run verification after a scope violation or perform more than one repair attempt. The global approval policy is fixed to `never`, so unavailable approval stops execution instead of waiting for interaction. Any changed file outside the declared path rules is reported as `scope_violation`.
 
 The repair pass is not a general autonomous loop. It is allowed only after a required verification failure, with the source worktree still clean, no triggered approval gate and no scope violation. If the repair also fails, the runner reports the failure and stops permanently.

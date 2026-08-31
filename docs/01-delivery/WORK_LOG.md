@@ -6,6 +6,32 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-08-31: Owner-Directed Harness Self-Repair - Codex Execution Timeout
+
+### Disposition
+
+- Repair scope: `Make Codex execution timeout configurable and bounded`.
+- The first autonomous `0.0.1.16.1` attempt timed out at the previous fixed 10-minute runner limit with `ETIMEDOUT`.
+- Source `main` stayed clean and unchanged during the failed attempt.
+- Kept `0.0.1.16.0` Persistent Combat Session as `NEXT`, not active.
+
+### What Changed
+
+- Replaced the fixed Codex execution timeout with bounded runner configuration through `MOW_CODEX_EXEC_TIMEOUT_MS`.
+- Default Codex execution timeout is now `1800000` ms, 30 minutes.
+- Valid explicit overrides must be integer milliseconds from `60000` through `3600000`.
+- Invalid explicit overrides block before Codex launch instead of silently falling back or clamping.
+- Execution reports now expose the resolved `timeoutMs`; timed-out Codex results expose `timedOut: true` and `errorCode: ETIMEDOUT`.
+- A timed-out Codex pass remains a failed execution, does not trigger automatic repair and preserves the task worktree for inspection.
+
+### Explicit Non-Work
+
+- No autonomous Phase 16 retry, Phase 16 status change, product runtime change, task schema change, new runner, dependency change, approval/sandbox policy change, merge or source worktree mutation was performed.
+
+### Verification
+
+- Focused runner tests: `node --test tests\agentTaskRunner.test.mjs` passed with 33 tests.
+
 ## 2026-08-30: Owner-Directed Off-Plan Corrective Maintenance - Durable Event Identity Uniqueness
 
 ### Disposition

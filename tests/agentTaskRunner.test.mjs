@@ -30,11 +30,17 @@ import {
 import {
   AGENT_TASK_EXECUTION_REPORT_KIND,
   AGENT_TASK_RUNNER_REPORT_KIND,
+  CODEX_EXEC_TIMEOUT_DEFAULT_MS,
+  CODEX_EXEC_TIMEOUT_INVALID_CODE,
+  CODEX_EXEC_TIMEOUT_MAX_MS,
+  CODEX_EXEC_TIMEOUT_MIN_MS,
   createAgentTaskDryRunReport,
   createApprovalGates,
   createScopePolicy,
   evaluateChangedFilesAgainstScope,
   executeAgentTask,
+  formatExecutionReport,
+  resolveCodexExecTimeoutMs,
   resolveCodexCli
 } from '../tools/agent_task_runner.mjs';
 
@@ -552,6 +558,135 @@ test(
       report.approvalGates.overallStatus,
       'armed'
     );
+  }
+);
+
+
+test(
+  'Codex execution timeout defaults to thirty minutes',
+  () => {
+
+    const result =
+      resolveCodexExecTimeoutMs(
+        {}
+      );
+
+    assert.equal(
+      result.ok,
+      true
+    );
+
+    assert.equal(
+      result.source,
+      'default'
+    );
+
+    assert.equal(
+      result.timeoutMs,
+      1_800_000
+    );
+
+    assert.equal(
+      result.timeoutMs,
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    );
+  }
+);
+
+
+test(
+  'Codex execution timeout accepts bounded integer override values',
+  () => {
+
+    for (const value of [
+      2_700_000,
+      CODEX_EXEC_TIMEOUT_MIN_MS,
+      CODEX_EXEC_TIMEOUT_MAX_MS
+    ]) {
+
+      const result =
+        resolveCodexExecTimeoutMs({
+          MOW_CODEX_EXEC_TIMEOUT_MS:
+            String(value)
+        });
+
+      assert.equal(
+        result.ok,
+        true
+      );
+
+      assert.equal(
+        result.source,
+        'env'
+      );
+
+      assert.equal(
+        result.timeoutMs,
+        value
+      );
+    }
+  }
+);
+
+
+test(
+  'Codex execution timeout rejects invalid explicit values before execution',
+  () => {
+
+    const invalidValues =
+      [
+        [
+          'abc',
+          'not-integer'
+        ],
+        [
+          '1.5',
+          'not-integer'
+        ],
+        [
+          '0',
+          'non-positive'
+        ],
+        [
+          '-1',
+          'non-positive'
+        ],
+        [
+          String(CODEX_EXEC_TIMEOUT_MIN_MS - 1),
+          'below-minimum'
+        ],
+        [
+          String(CODEX_EXEC_TIMEOUT_MAX_MS + 1),
+          'above-maximum'
+        ]
+      ];
+
+    for (const [
+      value,
+      reason
+    ] of invalidValues) {
+
+      const result =
+        resolveCodexExecTimeoutMs({
+          MOW_CODEX_EXEC_TIMEOUT_MS:
+            value
+        });
+
+      assert.equal(
+        result.ok,
+        false
+      );
+
+      assert.equal(
+        result.errorCode,
+        CODEX_EXEC_TIMEOUT_INVALID_CODE
+      );
+
+      assert.equal(
+        result.reason,
+        reason
+      );
+    }
   }
 );
 
@@ -1146,6 +1281,16 @@ test(
     );
 
     assert.equal(
+      report.executionGuarantees.maxCodexExecutions,
+      2
+    );
+
+    assert.equal(
+      report.executionGuarantees.maxRepairAttempts,
+      1
+    );
+
+    assert.equal(
       mock.calls.some(call =>
         call.command === 'git' &&
         (
@@ -1215,6 +1360,26 @@ test(
     );
 
     assert.equal(
+      codexExecCall.timeout,
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    );
+
+    assert.equal(
+      report.timeoutMs,
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    );
+
+    assert.equal(
+      report.codexExecutionTimeout.timeoutMs,
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    );
+
+    assert.equal(
+      report.codexResult.timeoutMs,
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    );
+
+    assert.equal(
       codexExecCall.args[0],
       '--ask-for-approval'
     );
@@ -1269,6 +1434,193 @@ test(
         )
       ),
       false
+    );
+  }
+);
+
+
+test(
+  'agent task execution uses a valid configured Codex timeout',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-timeout-override.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        writeFiles:
+          [
+            {
+              file:
+                'docs/smoke.txt',
+              content:
+                'configured timeout pass\n'
+            }
+          ]
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-TIMEOUT-OVERRIDE',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          env:
+            {
+              MOW_CODEX_EXEC_TIMEOUT_MS:
+                '2700000'
+            },
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    const codexExecCall =
+      mock.calls.find(call =>
+        call.command === codexPath &&
+        call.args.includes(
+          'exec'
+        )
+      );
+
+    assert.equal(
+      report.status,
+      'passed'
+    );
+
+    assert.equal(
+      report.timeoutMs,
+      2_700_000
+    );
+
+    assert.equal(
+      report.codexExecutionTimeout.source,
+      'env'
+    );
+
+    assert.equal(
+      codexExecCall.timeout,
+      2_700_000
+    );
+
+    assert.equal(
+      report.codexResult.timeoutMs,
+      2_700_000
+    );
+  }
+);
+
+
+test(
+  'agent task execution rejects invalid Codex timeout before invoking Codex',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-invalid-timeout.exe'
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath
+      });
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-TIMEOUT-INVALID',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          env:
+            {
+              MOW_CODEX_EXEC_TIMEOUT_MS:
+                '1.5'
+            },
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'blocked'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      0
+    );
+
+    assert.equal(
+      report.worktree,
+      null
+    );
+
+    assert.equal(
+      report.timeoutMs,
+      null
+    );
+
+    assert.equal(
+      report.codexExecutionTimeout.errorCode,
+      CODEX_EXEC_TIMEOUT_INVALID_CODE
+    );
+
+    assert.equal(
+      report.blockingReasons.some(reason =>
+        reason.code === CODEX_EXEC_TIMEOUT_INVALID_CODE
+      ),
+      true
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      0
     );
   }
 );
@@ -1349,6 +1701,11 @@ test(
             codexPath,
           commandRunner:
             mock.runner,
+          env:
+            {
+              MOW_CODEX_EXEC_TIMEOUT_MS:
+                '2700000'
+            },
           disableDefaultCliCandidates:
             true
         }
@@ -1422,6 +1779,23 @@ test(
     assert.equal(
       mock.codexExecutions,
       2
+    );
+
+    assert.deepEqual(
+      mock.calls
+        .filter(call =>
+          call.command === codexPath &&
+          call.args.includes(
+            'exec'
+          )
+        )
+        .map(call =>
+          call.timeout
+        ),
+      [
+        2_700_000,
+        2_700_000
+      ]
     );
   }
 );
@@ -2332,6 +2706,160 @@ test(
 
 
 test(
+  'agent task execution reports Codex timeout without repair and preserves worktree diff',
+  async t => {
+
+    const codexPath =
+      path.join(
+        os.tmpdir(),
+        'mock-codex-timeout.exe'
+      );
+
+    const {
+      root,
+      taskFile
+    } =
+      await createGitFixture(
+        t,
+        {
+          task:
+            createSmokeExecutionTask({
+              id:
+                'OFFPLAN-CODEX-TIMEOUT',
+              includePath:
+                'docs/smoke.txt'
+            })
+        }
+      );
+
+    const mock =
+      createExecutionCommandRunner({
+        codexPath,
+        codexRuns:
+          [
+            {
+              status:
+                1,
+              error:
+                'spawnSync mock-codex-timeout.exe ETIMEDOUT',
+              errorCode:
+                'ETIMEDOUT',
+              timedOut:
+                true,
+              writeFiles:
+                [
+                  {
+                    file:
+                      'docs/smoke.txt',
+                    content:
+                      'partial timeout diff\n'
+                  }
+                ]
+            }
+          ],
+        verifyQuickStatus:
+          0
+      });
+
+    const report =
+      await executeAgentTask(
+        taskFile,
+        {
+          root,
+          codexCliPath:
+            codexPath,
+          commandRunner:
+            mock.runner,
+          disableDefaultCliCandidates:
+            true
+        }
+      );
+
+    assert.equal(
+      report.status,
+      'failed'
+    );
+
+    assert.equal(
+      report.codexExecutions,
+      1
+    );
+
+    assert.equal(
+      report.repairAttempts,
+      0
+    );
+
+    assert.equal(
+      report.repair.reason,
+      'INITIAL_CODEX_FAILED'
+    );
+
+    assert.equal(
+      report.codexResult.timedOut,
+      true
+    );
+
+    assert.equal(
+      report.codexResult.errorCode,
+      'ETIMEDOUT'
+    );
+
+    assert.equal(
+      report.codexResult.timeoutMs,
+      CODEX_EXEC_TIMEOUT_DEFAULT_MS
+    );
+
+    assert.deepEqual(
+      report.changedFiles.files,
+      [
+        'docs/smoke.txt'
+      ]
+    );
+
+    assert.equal(
+      report.verifyQuick,
+      null
+    );
+
+    assert.equal(
+      await pathExists(
+        report.worktree.path
+      ),
+      true
+    );
+
+    assert.equal(
+      report.sourceAfter.clean,
+      true
+    );
+
+    assert.equal(
+      report.sourceAfter.head,
+      report.sourceBefore.head
+    );
+
+    assert.match(
+      formatExecutionReport(
+        report
+      ),
+      /Codex exceeded the configured execution timeout/
+    );
+
+    assert.equal(
+      mock.codexExecutions,
+      1
+    );
+
+    assert.equal(
+      mock.verifyQuickExecutions,
+      0
+    );
+  }
+);
+
+
+test(
   'agent task execution blocks triggered approval before Codex invocation',
   async t => {
 
@@ -2780,7 +3308,9 @@ function createExecutionCommandRunner({
         shell:
           Boolean(
             options.shell
-          )
+          ),
+        timeout:
+          options.timeout
       });
 
       if (
@@ -2858,6 +3388,14 @@ function createExecutionCommandRunner({
               (run.status ?? codexExitStatus) === 0
                 ? ''
                 : 'codex failed\n'
+            ),
+          error:
+            run.error || '',
+          errorCode:
+            run.errorCode || '',
+          timedOut:
+            Boolean(
+              run.timedOut
             )
         });
       }
@@ -2965,7 +3503,11 @@ function createCommandResult({
   stderr =
     '',
   error =
-    ''
+    '',
+  errorCode =
+    '',
+  timedOut =
+    false
 } = {}) {
 
   return {
@@ -2975,7 +3517,9 @@ function createCommandResult({
     status,
     stdout,
     stderr,
-    error
+    error,
+    errorCode,
+    timedOut
   };
 }
 
