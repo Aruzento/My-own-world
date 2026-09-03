@@ -156,13 +156,20 @@ function parseFrontMatter(
   content
 ) {
 
+  const normalizedContent =
+    content.replaceAll(
+      '\r\n',
+      '\n'
+    );
+
   if (
-    !content.startsWith('---\n') &&
-    !content.startsWith('---\r\n')
+    !normalizedContent.startsWith(
+      '---\n'
+    )
   ) return null;
 
   const end =
-    content.indexOf(
+    normalizedContent.indexOf(
       '\n---',
       4
     );
@@ -172,18 +179,13 @@ function parseFrontMatter(
   const metadata =
     {};
 
-  const bodyStart =
-    content.startsWith('---\r\n')
-      ? 5
-      : 4;
-
   const lines =
-    content
+    normalizedContent
       .slice(
-        bodyStart,
+        4,
         end
       )
-      .split(/\r?\n/);
+      .split('\n');
 
   for (const line of lines) {
 

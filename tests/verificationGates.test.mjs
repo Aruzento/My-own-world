@@ -2,14 +2,37 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  readFile
+  mkdtemp,
+  mkdir,
+  readFile,
+  rm,
+  writeFile
 } from 'node:fs/promises';
+import {
+  tmpdir
+} from 'node:os';
+import path from 'node:path';
+import {
+  spawnSync
+} from 'node:child_process';
+import {
+  fileURLToPath
+} from 'node:url';
 
 import {
   getVerificationSteps,
   parseVerificationMode,
   VERIFICATION_MODES
 } from '../tools/run_checks.mjs';
+
+
+const AGENT_SKILL_VALIDATOR_PATH =
+  fileURLToPath(
+    new URL(
+      '../tools/validate_agent_skills.mjs',
+      import.meta.url
+    )
+  );
 
 
 test(
@@ -183,6 +206,123 @@ test(
 );
 
 
+test(
+  'agent skill validator parses LF and CRLF front matter identically',
+  async t => {
+
+    const lines =
+      [
+        '---',
+        'name: fixture-skill',
+        'description: "Valid fixture description."',
+        '---',
+        '',
+        '# Fixture Skill',
+        ''
+      ];
+
+    const lfRoot =
+      await createSkillFixture(
+        t,
+        lines.join(
+          '\n'
+        )
+      );
+
+    const crlfRoot =
+      await createSkillFixture(
+        t,
+        lines.join(
+          '\r\n'
+        )
+      );
+
+    const lfResult =
+      runAgentSkillValidator(
+        lfRoot
+      );
+
+    const crlfResult =
+      runAgentSkillValidator(
+        crlfRoot
+      );
+
+    assert.equal(
+      lfResult.status,
+      0,
+      lfResult.stderr
+    );
+
+    assert.equal(
+      crlfResult.status,
+      0,
+      crlfResult.stderr
+    );
+
+    assert.equal(
+      crlfResult.stdout,
+      lfResult.stdout
+    );
+  }
+);
+
+
+test(
+  'agent skill validator keeps malformed metadata rejections',
+  async t => {
+
+    const malformedRoot =
+      await createSkillFixture(
+        t,
+        '# Missing front matter\n'
+      );
+
+    const missingDescriptionRoot =
+      await createSkillFixture(
+        t,
+        [
+          '---',
+          'name: fixture-skill',
+          '---',
+          ''
+        ].join(
+          '\n'
+        )
+      );
+
+    const malformedResult =
+      runAgentSkillValidator(
+        malformedRoot
+      );
+
+    const missingDescriptionResult =
+      runAgentSkillValidator(
+        missingDescriptionRoot
+      );
+
+    assert.notEqual(
+      malformedResult.status,
+      0
+    );
+
+    assert.match(
+      malformedResult.stderr,
+      /missing YAML front matter/
+    );
+
+    assert.notEqual(
+      missingDescriptionResult.status,
+      0
+    );
+
+    assert.match(
+      missingDescriptionResult.stderr,
+      /missing description/
+    );
+  }
+);
+
+
 function stepIds(
   mode
 ) {
@@ -191,5 +331,73 @@ function stepIds(
     mode
   ).map(step =>
     step.id
+  );
+}
+
+
+async function createSkillFixture(
+  t,
+  content
+) {
+
+  const root =
+    await mkdtemp(
+      path.join(
+        tmpdir(),
+        'mow-agent-skill-validator-'
+      )
+    );
+
+  const skillDirectory =
+    path.join(
+      root,
+      '.agents',
+      'skills',
+      'fixture-skill'
+    );
+
+  await mkdir(
+    skillDirectory,
+    {
+      recursive: true
+    }
+  );
+
+  await writeFile(
+    path.join(
+      skillDirectory,
+      'SKILL.md'
+    ),
+    content,
+    'utf8'
+  );
+
+  t.after(
+    () => rm(
+      root,
+      {
+        recursive: true,
+        force: true
+      }
+    )
+  );
+
+  return root;
+}
+
+
+function runAgentSkillValidator(
+  root
+) {
+
+  return spawnSync(
+    process.execPath,
+    [
+      AGENT_SKILL_VALIDATOR_PATH
+    ],
+    {
+      cwd: root,
+      encoding: 'utf8'
+    }
   );
 }
