@@ -396,6 +396,22 @@ export class CampaignMapStore {
   }
 
 
+  setCombatSession(
+    combatSession
+  ) {
+
+    const nextCombatSession =
+      this.model.setCombatSession(
+        combatSession
+      );
+
+    this.markDirty();
+    this.commitToDOM();
+
+    return nextCombatSession;
+  }
+
+
   setMusic(
     music
   ) {

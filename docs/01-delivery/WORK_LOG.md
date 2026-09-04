@@ -6,6 +6,48 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-04: 0.0.1.16.3 Persistent Combat Storage
+
+### Disposition
+
+- Closed `0.0.1.16.3` at `Foundation` readiness on clean 16.2 base `441cad8d66c4027619b4d0912899fb94962b3e3f`.
+- Kept `0.0.1.16.0` NF-004 Persistent Combat Session `ACTIVE`.
+- Set `0.0.1.16.4` Lifecycle to `NEXT`, not started.
+
+### Persistence Contract
+
+- Extended the existing `CampaignMapModel` aggregate with optional `combatSession` state; no second storage, repository or save owner was introduced.
+- Valid state is normalized through `CombatSessionModel` and serialized as URI-encoded canonical JSON in `data-combat-session-state` through the existing Campaign Map serializer and page persistence lifecycle.
+- Missing, null, explicitly inactive, malformed or identity-less persisted state normalizes to `null`; serialization omits the attribute and commit removes a stale attribute.
+- Legacy Campaign Maps therefore remain maps without a Combat Session and never generate a session or participant identity merely by loading.
+- Valid session identity, lifecycle state, round, participant references and typed flags survive model-to-HTML-to-DOM-to-model round-trip.
+
+### Ownership Preserved
+
+- `CombatSessionModel` remains the sole Combat Session state-shape owner.
+- `CampaignMapModel` remains the map aggregate and DOM hydration/commit owner; `CampaignMapStore.setCombatSession()` only normalizes, replaces, marks dirty and commits through that aggregate.
+- The existing Campaign Map serializer, editor/autosave and `PageCommandService` path remain the durable page-write boundary.
+- Runtime integrity diagnostics, initiative order/roll/modifier/current-turn state and Character snapshots are excluded from the persisted Combat Session payload.
+
+### Explicit Non-Work
+
+- No model/schema version bump, eager migration, new storage path, sidecar, repository, manager, EventStore integration or backup policy was added.
+- No lifecycle transition, initiative synchronization, turn/round progression, missing-reference resolution, ready/delayed behavior, UI, attack, damage/healing, HP automation, effects, targeting, movement or dice UI work was started.
+- No real workspace was read or mutated.
+
+### Verification
+
+- Test-first regression reproduced the absent persistence boundary before implementation; the completed focused Combat Session/Campaign Map suite passed 24 tests.
+- Focused browser Campaign Map persistence regression passed 6 tests, including legacy-null behavior and exact DOM round-trip of a valid session.
+- Architecture search found no new storage owner or prohibited Combat Session copies of initiative/current-turn or Character data.
+- `npm run verify:quick` passed: encoding, syntax/import checks, 641 unit tests and diff check.
+- `npm run verify` passed: UI polish audit, 641 unit tests, disposable large-workspace performance smoke, diff check and generated manual ZIP integrity.
+- `npm run verify:full` passed: the normal gate, 198 browser tests, project file audit, 94-document index, 19 agent skill checks, 4 agent task contracts and final diff check.
+
+### Next
+
+- `0.0.1.16.4` Lifecycle.
+
 ## 2026-09-04: 0.0.1.16.2 Combat Session Model
 
 ### Disposition

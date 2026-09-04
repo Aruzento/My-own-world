@@ -1781,3 +1781,142 @@ test(
     );
   }
 );
+
+
+test(
+  'campaign-map-combat-session-round-trips-without-activating-legacy-map',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            CampaignMapModel
+          } = await import('/js/editor/campaignMapModel.js');
+
+          const {
+            serializeCampaignMapModelHTML
+          } = await import('/js/editor/campaignMapDataSerializer.js');
+
+          const legacyHTML =
+            serializeCampaignMapModelHTML({
+              title:
+                'Legacy Map',
+              model:
+                new CampaignMapModel({
+                  grid: {
+                    enabled:
+                      true,
+                    size:
+                      80
+                  }
+                })
+            });
+
+          const legacyWrapper =
+            document.createElement('div');
+
+          legacyWrapper.innerHTML =
+            legacyHTML;
+
+          const legacyMap =
+            legacyWrapper.querySelector('.campaign-map-document');
+
+          const combatHTML =
+            serializeCampaignMapModelHTML({
+              title:
+                'Combat Map',
+              model:
+                new CampaignMapModel({
+                  combatSession: {
+                    sessionId:
+                      'session-browser-round-trip',
+                    status:
+                      'paused',
+                    round:
+                      6,
+                    participants: [
+                      {
+                        participantId:
+                          'token:hero',
+                        ready:
+                          true,
+                        delayed:
+                          false
+                      }
+                    ]
+                  }
+                })
+            });
+
+          const combatWrapper =
+            document.createElement('div');
+
+          combatWrapper.innerHTML =
+            combatHTML;
+
+          const combatMap =
+            combatWrapper.querySelector('.campaign-map-document');
+
+          return {
+            legacyHasState:
+              legacyMap
+                .querySelector('.campaign-map-stage')
+                .hasAttribute('data-combat-session-state'),
+            legacySession:
+              CampaignMapModel
+                .fromElement(
+                  legacyMap
+                )
+                .combatSession,
+            combatSession:
+              CampaignMapModel
+                .fromElement(
+                  combatMap
+                )
+                .combatSession
+          };
+        }
+      );
+
+    expect(
+      result.legacyHasState
+    ).toBe(
+      false
+    );
+
+    expect(
+      result.legacySession
+    ).toBeNull();
+
+    expect(
+      result.combatSession
+    ).toEqual({
+      kind:
+        'CombatSession',
+      version:
+        1,
+      sessionId:
+        'session-browser-round-trip',
+      status:
+        'paused',
+      round:
+        6,
+      participants: [
+        {
+          participantId:
+            'token:hero',
+          ready:
+            true,
+          delayed:
+            false
+        }
+      ]
+    });
+  }
+);

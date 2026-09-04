@@ -113,6 +113,13 @@ function serializeStageAttributes(
         data.initiative || {}
       )
     ),
+    'data-combat-session-state': data.combatSession
+      ? encodeURIComponent(
+        JSON.stringify(
+          data.combatSession
+        )
+      )
+      : null,
     'data-map-music-state': encodeURIComponent(
       JSON.stringify(
         data.music || {}

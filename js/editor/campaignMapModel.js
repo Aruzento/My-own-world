@@ -24,6 +24,11 @@ import {
   normalizeCampaignMapMusic
 } from './campaignMapMusicModel.js';
 
+import {
+  COMBAT_SESSION_STATUSES,
+  CombatSessionModel
+} from '../combat/combatSessionModel.js';
+
 
 // CampaignMapModel — единый слой данных карты.
 // DOM может быть источником входного снимка, но сохранение и синхронизация
@@ -87,6 +92,11 @@ export class CampaignMapModel {
         data.initiative || {}
       ).toJSON();
 
+    this.combatSession =
+      normalizeOptionalCombatSession(
+        data.combatSession
+      );
+
     this.music =
       normalizeCampaignMapMusic(
         data.music || {}
@@ -143,6 +153,10 @@ export class CampaignMapModel {
         ),
       initiative:
         readInitiativeState(
+          stage
+        ),
+      combatSession:
+        readCombatSessionState(
           stage
         ),
       music:
@@ -246,6 +260,20 @@ export class CampaignMapModel {
           this.initiative
         )
       );
+
+    if (this.combatSession) {
+
+      stage.dataset.combatSessionState =
+        encodeURIComponent(
+          JSON.stringify(
+            this.combatSession
+          )
+        );
+
+    } else {
+
+      delete stage.dataset.combatSessionState;
+    }
 
     stage.dataset.mapMusicState =
       encodeURIComponent(
@@ -560,6 +588,19 @@ export class CampaignMapModel {
   }
 
 
+  setCombatSession(
+    combatSession
+  ) {
+
+    this.combatSession =
+      normalizeOptionalCombatSession(
+        combatSession
+      );
+
+    return this.combatSession;
+  }
+
+
   setMusic(
     music
   ) {
@@ -621,6 +662,7 @@ export class CampaignMapModel {
       tokens: this.tokens,
       shapes: this.shapes,
       initiative: this.initiative,
+      combatSession: this.combatSession,
       music: this.music
     };
   }
@@ -822,6 +864,68 @@ function readInitiativeState(
 
     return {};
   }
+}
+
+
+function readCombatSessionState(
+  stage
+) {
+
+  const raw =
+    stage?.dataset.combatSessionState || '';
+
+  if (!raw) return null;
+
+  try {
+
+    return JSON.parse(
+      decodeURIComponent(
+        raw
+      )
+    );
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+function normalizeOptionalCombatSession(
+  combatSession
+) {
+
+  if (
+    combatSession === null ||
+    combatSession === undefined
+  ) return null;
+
+  try {
+
+    const normalized =
+      new CombatSessionModel(
+        combatSession,
+        {
+          generateId: rejectMissingPersistedCombatSessionId
+        }
+      );
+
+    return normalized.status === COMBAT_SESSION_STATUSES.INACTIVE
+      ? null
+      : normalized.toJSON();
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+function rejectMissingPersistedCombatSessionId() {
+
+  throw new TypeError(
+    'Persisted Combat Session requires sessionId.'
+  );
 }
 
 
