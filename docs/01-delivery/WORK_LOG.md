@@ -6,6 +6,51 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-04: 0.0.1.16.4 Combat Session Lifecycle
+
+### Disposition
+
+- Closed `0.0.1.16.4` at `Foundation` readiness on clean 16.3 base `3b455d9a2889b29a90da82bc0efc576163e27b51`.
+- Kept `0.0.1.16.0` NF-004 Persistent Combat Session `ACTIVE`.
+- Set `0.0.1.16.5` Initiative Integration to `NEXT`, not started.
+
+### Lifecycle Contract
+
+- Added `js/combat/combatSessionLifecycle.js` as a pure domain boundary over the existing `CombatSessionModel` state owner.
+- Public operations are `startCombatSession()`, `pauseCombatSession()`, `resumeCombatSession()` and `finishCombatSession()` with structured `{ ok, operation, session }` success and `{ ok, operation, reason, session }` rejection results.
+- Valid transitions are null/inactive or finished to a new active session, active to paused, paused to active and active/paused to finished.
+- Typed rejection reasons are `invalid-transition`, `empty-roster`, `active-participant-required`, `active-participant-not-found` and `invalid-participant`.
+- Start consumes explicit `participantIds` plus `activeParticipantId` only as read-only precondition context. It validates a non-empty unique canonical roster and a resolvable active participant before invoking the existing `CombatSessionModel` identity mechanism.
+- Starting after finished always creates a new session identity, resets only the new session to round 1 and initializes new roster flags to false without mutating the finished input.
+- Pause, resume and finish preserve session identity, round, participant membership and ready/delayed flags exactly in a new canonical snapshot.
+
+### Ownership Preserved
+
+- `CombatSessionModel` remains the only Combat Session state owner; the lifecycle module retains no independent session state.
+- `CampaignMapInitiativeModel` remains the initiative/current-turn owner. Lifecycle does not import it, sort/roll/advance initiative or store `activeParticipantId`.
+- `CharacterModel`, Campaign Map runtime/persistence, PageCommandService and EventStore remain untouched.
+- Lifecycle-produced paused and finished states remain compatible with the existing 16.3 Campaign Map serialization boundary.
+
+### Explicit Non-Work
+
+- No 16.5 initiative wiring, 16.6 turn/round progression, 16.7 integrity resolution, 16.8 ready/delayed behavior, 16.9 UI or 16.10 EventStore/recovery integration was started.
+- No Campaign Map runtime method, persistence format, model version, migration, storage service or sidecar changed.
+- No attack, damage/healing, HP automation, effects, targeting, movement, range, AoE or dice UI work was added.
+- No real workspace was read or mutated.
+
+### Verification
+
+- Test-first regression failed on the absent lifecycle module before implementation.
+- Focused lifecycle/model/persistence regression passed: 23 tests.
+- Architecture search confirmed that production lifecycle code mentions `activeParticipantId` only as start precondition input and contains no initiative model/progression, current-index, storage, EventStore, DOM, Character or combat-action dependencies.
+- `npm run verify:quick` passed: encoding, syntax/import checks, 652 unit tests and diff check.
+- `npm run verify` passed: UI polish audit, 652 unit tests, disposable large-workspace performance smoke, diff check and generated manual ZIP integrity.
+- `npm run verify:full` passed: the normal gate, 198 browser tests, project file audit, 94-document index, 19 agent skill checks, 4 agent task contracts and final diff check.
+
+### Next
+
+- `0.0.1.16.5` Initiative Integration.
+
 ## 2026-09-04: 0.0.1.16.3 Persistent Combat Storage
 
 ### Disposition
