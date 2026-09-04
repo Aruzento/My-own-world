@@ -6,6 +6,47 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-04: 0.0.1.16.2 Combat Session Model
+
+### Disposition
+
+- Closed `0.0.1.16.2` at `Foundation` readiness on clean 16.1 base `10e6da0128cea779bdea9db763b97cffab22a28e`.
+- Kept `0.0.1.16.0` NF-004 Persistent Combat Session `ACTIVE`.
+- Set `0.0.1.16.3` Persistent Combat Storage to `NEXT`, not started.
+
+### Model Contract
+
+- Added `js/combat/combatSessionModel.js` as the isolated domain owner for stable session identity, lifecycle representation, round, roster membership and typed `ready` / `delayed` participant flags.
+- Normal session creation uses the existing platform `crypto.randomUUID()` convention; compatible input preserves its supplied `sessionId` and participant identities.
+- Accepted lifecycle values are exactly `inactive`, `active`, `paused` and `finished`; a newly created model defaults to `active`, round `1` and an empty roster.
+- Participant normalization retains only the canonical initiative `participantId` foreign reference and Combat Session-owned flags. Missing participant identity is rejected instead of being replaced with an array-position identity.
+- Runtime integrity uses structured `initiative-participant`, `token` and `page` reference issues. Unresolved participants remain in the roster, while `toJSON()` excludes derived integrity diagnostics so later persistence cannot treat stale diagnostic text/state as durable truth.
+
+### Ownership Preserved
+
+- `CampaignMapInitiativeModel` remains the only owner of initiative participants/order/rolls/modifiers and `activeParticipantId`.
+- `CharacterModel` remains the only Character/creature truth; no Character name, HP, AC, stats, conditions or Properties-derived snapshot is copied into Combat Session.
+- The model has no DOM, storage, PageCommandService, EventStore, CampaignMapStore or live Character/initiative dependency.
+
+### Explicit Non-Work
+
+- No Campaign Map field/serializer/persistence, migration, lifecycle command, initiative synchronization, turn or round progression, reference resolution, ready/delayed behavior, UI or combat event was implemented.
+- No attack, damage/healing, HP automation, effects, targeting, movement or dice UI work was started.
+- No real workspace was read or mutated.
+
+### Verification
+
+- Focused `CombatSessionModel` regression passed: 7 tests.
+- Architecture search found no copied current-turn/initiative fields and no PageCommandService, EventStore, DOM, storage, CharacterModel or CampaignMapInitiativeModel dependency in the model.
+- `npm run docs:index` passed: 94 indexed documents with no metadata, owner-zone or active-status drift.
+- `npm run verify:quick` passed: encoding, syntax/import checks, 636 unit tests and diff check.
+- `npm run verify` passed: UI polish audit, 636 unit tests, disposable large-workspace performance smoke, diff check and generated manual ZIP integrity.
+- Browser, desktop and `verify:full` gates were not run because this leaf adds an isolated pure domain model without UI, browser workflow, persistence or test-infrastructure integration.
+
+### Next
+
+- `0.0.1.16.3` Persistent Combat Storage.
+
 ## 2026-09-04: 0.0.1.16.1 Persistent Combat Session Architecture & Contract
 
 ### Disposition
