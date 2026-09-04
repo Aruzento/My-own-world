@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-08-28
+Updated: 2026-09-04
 
 Planning version: 2
 
@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `NEXT`, not active.
+Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `ACTIVE`.
 
-Current leaf: no implementation leaf is active until the owner explicitly starts `0.0.1.16.0`.
+Current leaf: `0.0.1.16.1` Architecture & Contract is `DONE` at Foundation readiness. `0.0.1.16.2` Combat Session Model is `NEXT`, not started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `NEXT` only. Do not implement combat sessions, attacks, damage application, HP automation, effects, targeting, dice UI or turns/rounds logic until the owner explicitly starts Phase 16.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1` is contract-only `DONE`; `0.0.1.16.2` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
 
 ## Execution Rules
 
@@ -337,7 +337,7 @@ ID: `0.0.1.16.0`
 
 NAME: NF-004 Persistent Combat Session
 
-STATUS: `NEXT`
+STATUS: `ACTIVE`
 
 GOAL: make active combat reload-safe without creating a second initiative engine.
 
@@ -345,9 +345,26 @@ WHY NOW: live combat must survive app close/reopen before broader action automat
 
 SCOPE: start, pause, resume, finish combat, participants, initiative, current turn, rounds, delayed/ready state where supported, temporary battle flags, save/reload and continue session after reopening the app.
 
-DEPENDENCIES: Phase 5 for conflict-safe writes; Phase 7 strongly recommended for session log; existing Campaign Map initiative/model/store and CharacterModel.
+DEPENDENCIES: Phase 5 conflict-safe writes and Phase 7 event/transaction foundation are closed. Existing Campaign Map initiative/model/store, CharacterModel and PageCommandService remain canonical owners. Owner started Phase 16 on 2026-09-04 from HEAD `e203a1b`.
 
 EXIT CRITERIA: active combat state persists and reloads; invalid references produce readable warnings; existing initiative architecture remains owner.
+
+CURRENT LEAF RESULTS:
+
+- `0.0.1.16.1` Architecture & Contract - `DONE` at `Foundation` readiness on 2026-09-04. Added [COMBAT_SESSION_CONTRACT.md](../02-architecture/contracts/COMBAT_SESSION_CONTRACT.md) after a focused read of current Campaign Map, Character, page persistence and EventStore owners. The contract fixes one future `CombatSessionModel` as owner of session identity/lifecycle/roster/round/local flags; keeps `CampaignMapInitiativeModel` as initiative and current-participant owner; keeps `CharacterModel` as Character truth; classifies persistence as `B`, an additive extension of the existing Campaign Map model/serializer/PageCommandService path; and keeps EventStore as audit/history rather than live state. Missing references remain diagnosable and are never silently deleted or substituted. No runtime, schema, migration, UI, event type or Combat Session behavior was implemented.
+
+PLANNED LEAF SEQUENCE:
+
+1. `0.0.1.16.2` Combat Session Model - `NEXT`, not started.
+2. `0.0.1.16.3` Persistent Combat Storage - `BLOCKED` by 16.2.
+3. `0.0.1.16.4` Lifecycle - `BLOCKED` by 16.3.
+4. `0.0.1.16.5` Initiative Integration - `BLOCKED` by 16.4.
+5. `0.0.1.16.6` Turn & Round Progression - `BLOCKED` by 16.5.
+6. `0.0.1.16.7` Missing Reference Integrity - `BLOCKED` by 16.6.
+7. `0.0.1.16.8` Ready / Delayed / Temporary Flags - `BLOCKED` by 16.7.
+8. `0.0.1.16.9` Combat UI + Reload Workflow - `BLOCKED` by 16.8.
+9. `0.0.1.16.10` Persistence / Recovery / Event Integration - `BLOCKED` by 16.9.
+10. `0.0.1.16.FINAL` Closure Gate - `BLOCKED` by 16.10.
 
 ### Phase 9 - 0.0.1.17.0 NF-005 Combat Action Pipeline
 

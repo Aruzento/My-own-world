@@ -6,6 +6,47 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-04: 0.0.1.16.1 Persistent Combat Session Architecture & Contract
+
+### Disposition
+
+- Started `0.0.1.16.0` NF-004 Persistent Combat Session from clean expected base `e203a1bd575cbd52fe7e15bae3e181255796a902`.
+- Closed `0.0.1.16.1` at `Foundation` readiness: ownership and behavior contracts are resolved, but no Combat Session runtime or user workflow exists yet.
+- Set `0.0.1.16.2` Combat Session Model to `NEXT`, not started.
+
+### Architecture Resolution
+
+- `CombatSessionModel` is the one future owner of session identity, lifecycle, roster membership, round and typed combat-local flags.
+- `CampaignMapInitiativeModel` remains the owner of initiative participants/order/rolls and the single current-participant truth, `activeParticipantId`.
+- `CharacterModel` remains the source of Character/creature calculations; Combat Session stores references rather than Character copies.
+- Round belongs only to Combat Session because current Campaign Map/initiative code has no round state.
+- Persistence is classification `B`: later leaves add Combat Session as an optional backward-compatible field inside the existing Campaign Map model/serializer/page save boundary. No database, sidecar or new persistence owner is allowed.
+- EventStore remains append-only audit/history. Live Combat Session reload never depends on event replay.
+- Missing token/page/initiative references remain represented and diagnosable; they are never silently deleted, reordered or substituted.
+
+### Contract
+
+- Added [COMBAT_SESSION_CONTRACT.md](../02-architecture/contracts/COMBAT_SESSION_CONTRACT.md) with lifecycle transitions, participant identity, initiative/current-turn relationship, round-wrap rules, reload semantics, missing-reference behavior, persistence ownership, EventStore boundary and explicit non-goals.
+- Existing maps without Combat Session data are defined as `inactive`; the exact additive serialization detail and compatibility regression belong to `0.0.1.16.3`.
+- `ready` and `delayed` are reserved as typed persisted markers only, not full Ready Action/reaction automation.
+
+### Explicit Non-Work
+
+- No runtime `.js`, tests, persistence schema, migration, UI, Campaign Map behavior, Character behavior or EventStore behavior changed.
+- No CombatAction, damage/healing, HP automation, effects, targeting, movement, turn/round runtime, dice UI or later Phase 16 leaf was implemented.
+- No real workspace was read or mutated.
+
+### Verification
+
+- `npm run docs:index` passed: 94 indexed documents, no missing/invalid metadata, owner-zone issues or active-status drift.
+- `npm run verify:quick` passed: encoding, syntax/import checks, 629 unit tests and `git diff --check`.
+- `npm run verify` passed: 629 unit tests, large-workspace performance smoke, diff check and generated manual ZIP integrity.
+- Browser, desktop and `verify:full` gates were not run because this leaf changes architecture/delivery documentation only and does not change runtime, UI, persistence or test infrastructure.
+
+### Next
+
+- `0.0.1.16.2` Combat Session Model.
+
 ## 2026-08-31: Owner-Directed Harness Self-Repair - Codex Execution Timeout
 
 ### Disposition
