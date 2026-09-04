@@ -1157,6 +1157,8 @@ test(
             codexPath,
           commandRunner:
             mock.runner,
+          env:
+            createEnvWithoutCodexExecTimeout(),
           disableDefaultCliCandidates:
             true
         }
@@ -2770,6 +2772,8 @@ test(
             codexPath,
           commandRunner:
             mock.runner,
+          env:
+            createEnvWithoutCodexExecTimeout(),
           disableDefaultCliCandidates:
             true
         }
@@ -3125,6 +3129,19 @@ async function readJsonTask(
       'utf8'
     )
   );
+}
+
+
+function createEnvWithoutCodexExecTimeout() {
+
+  const env =
+    {
+      ...process.env
+    };
+
+  delete env.MOW_CODEX_EXEC_TIMEOUT_MS;
+
+  return env;
 }
 
 
