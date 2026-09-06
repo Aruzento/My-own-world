@@ -6,6 +6,49 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-06: 0.0.1.16.5 Initiative Integration
+
+### Disposition
+
+- Closed `0.0.1.16.5` at `Foundation` readiness from clean `main`, with HEAD and origin/main both `0b07ef3ba34da1de9c1559034b3f81f6f270791c`.
+- Phase 16 remains `ACTIVE`; 16.1-16.5 are `DONE`; `0.0.1.16.6` Turn & Round Progression is `NEXT`, not started.
+- Owner resolved the paused-roster question explicitly: only active sessions accept roster reconciliation. Paused and finished sessions reject it without changing initiative or Combat state. Editing after pause requires a separate explicit resume; no implicit resume/re-pause exists.
+- `COMBAT_SESSION_CONTRACT.md` was not changed.
+
+### Integration Boundary
+
+- Added `js/editor/campaignMapCombatSessionIntegration.js`, a pure map-side coordinator importing the canonical initiative model and existing combat model/lifecycle. Neither combat-domain module imports Campaign Map/editor code.
+- `startCombatSessionFromInitiative(mapModel, options)` reads canonical initiative participant ids and active participant id, then delegates validation and session creation to `startCombatSession()`. `CampaignMapStore.startCombatSession(options)` publishes a successful result through the existing `setCombatSession()` setter.
+- Start leaves initiative object/records, order, roll, modifier, manual total and active id unchanged. Empty initiative, duplicate participant ids or a non-empty unresolved canonical active id reject before generating identity or publishing state. Missing raw active id follows only the initiative owner's existing normalization.
+- `resolveCombatSessionParticipant(mapModel)` returns `{ ok: true, participantId, initiativeParticipant }` with detached initiative details. Missing session, unresolved initiative active id and active id outside Combat membership return structured reasons. Reads never delete, replace or reorder participants in any session status.
+- `reconcileCombatSessionRoster(mapModel, initiativeData)` prepares an explicit active-session roster edit without mutating the map. `CampaignMapStore.setInitiativeRoster(initiative)` applies canonical initiative and, only when membership changes, the Combat Session snapshot; it marks dirty once and commits the whole map to DOM once.
+- Retained members keep their existing representation order and ready/delayed flags. Newly added ids append with false flags. Explicit omissions remove members. Initiative reordering/manual-value changes alone preserve the existing Combat Session object and payload. Session identity/status/round are unchanged.
+- Explicit empty `participants: []` clears active-session membership without finishing/resetting the session. Missing/malformed edit payload is rejected instead of being mistaken for intentional clearing. Duplicate replacement ids or a non-empty unresolved active id reject before partial publication.
+- Paused/finished edits reject before preparing or applying either aggregate field. Null/inactive returns `no-session`. These entry points are not wired to hydration or the existing initiative popup; final Combat UI remains 16.9.
+
+### Ownership And Safety
+
+- Combat Session stores only its existing identity/status/round and `{ participantId, ready, delayed }` members. Initiative remains the only order/roll/modifier/total and `activeParticipantId` owner. Character data is not copied.
+- Existing `data-initiative-state`, `data-combat-session-state`, model version, serializer and PageCommandService persistence remain unchanged. Integration performs no filesystem writes or EventStore append itself.
+- No Combat next/previous turn, round progression, missing-reference repair, ready/delayed behavior, UI, attacks, damage/healing, HP automation, effects or targeting was implemented.
+- Read/reconciliation work is bounded to the current map roster with linear scans/sets; no workspace scan or new dependency.
+- All validation used pure models, test DOM and disposable fixtures. No real user workspace was read or mutated. Desktop/native gates were not run because no desktop-specific behavior changed.
+
+### Verification
+
+- Test-first: initial regression failed because the integration module did not exist. A further failing behavioral regression proved missing edit payload could otherwise clear the roster; explicit payload validation now rejects it.
+- `node --test tests/campaignMapCombatSessionIntegration.test.mjs tests/combatSessionModel.test.mjs tests/combatSessionLifecycle.test.mjs tests/combatSessionPersistence.test.mjs tests/campaignMapInitiativeModel.test.mjs tests/campaignMapModel.test.mjs tests/campaignMapStore.test.mjs`: PASS, 57 tests, including 17 new integration cases.
+- `npm run test:browser -- tests/browser/campaign-map-combat-integration.spec.mjs tests/browser/campaign-map-initiative.spec.mjs tests/browser/campaign-map-data.spec.mjs`: PASS, 11 tests. New DOM regression proves explicit start, frozen paused/finished edits, explicit resume/edit, separated serialized state and reload. Existing popup and Character-to-initiative regressions pass unchanged.
+- `npm run verify:quick`: PASS, 669 unit tests plus encoding, syntax/import and diff checks.
+- `npm run verify`: PASS, 669 unit tests, UI polish audit, disposable 900-page large-workspace performance and manual ZIP integrity.
+- `npm run verify:full`: PASS, normal gate plus 199 browser tests, project file audit, 94-document index, 19 skills and 4 task contracts. Approved screenshot baselines were not updated.
+- Final architecture search found no progression, persistence, EventStore, Character or combat-action dependencies in the bridge; active-id references are input/read logic only.
+- The full gate's generated `PROJECT_FILE_AUDIT.md` refresh was reverted to its pre-task content; unrelated historical inventory churn is not part of this leaf. Its untracked-file advisory identified the new integration module before staging, not user data to delete.
+
+### Next
+
+- `0.0.1.16.6` Turn & Round Progression. Not started.
+
 ## 2026-09-04: 0.0.1.16.4 Combat Session Lifecycle
 
 ### Disposition

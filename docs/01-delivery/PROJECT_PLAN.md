@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-09-04
+Updated: 2026-09-06
 
 Planning version: 2
 
@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `ACTIVE`.
 
-Current leaf: `0.0.1.16.4` Combat Session Lifecycle is `DONE` at Foundation readiness. `0.0.1.16.5` Initiative Integration is `NEXT`, not started.
+Current leaf: `0.0.1.16.5` Initiative Integration is `DONE` at Foundation readiness. `0.0.1.16.6` Turn & Round Progression is `NEXT`, not started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1`, `0.0.1.16.2`, `0.0.1.16.3` and `0.0.1.16.4` are `DONE`; `0.0.1.16.5` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1`, `0.0.1.16.2`, `0.0.1.16.3`, `0.0.1.16.4` and `0.0.1.16.5` are `DONE`; `0.0.1.16.6` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
 
 ## Execution Rules
 
@@ -356,13 +356,15 @@ CURRENT LEAF RESULTS:
 - `0.0.1.16.3` Persistent Combat Storage - `DONE` at `Foundation` readiness on 2026-09-04. Added optional `combatSession` state to the existing `CampaignMapModel` aggregate and persisted it as URI-encoded canonical JSON in `data-combat-session-state` through the current Campaign Map serializer, editor/autosave and PageCommandService path. Absent, null, inactive, malformed or identity-less payloads normalize to `null`, so legacy maps remain maps without an active Combat Session and no session identity is fabricated. Valid payloads round-trip through `CombatSessionModel`, while runtime integrity diagnostics, initiative/current-turn state and Character snapshots stay outside durable Combat Session data. The store exposes only a narrow normalize/replace/dirty/commit setter. No model version bump, migration, lifecycle transition, initiative synchronization, turn/round progression, UI or EventStore integration was implemented.
 - `0.0.1.16.4` Combat Session Lifecycle - `DONE` at `Foundation` readiness on 2026-09-04. Added a pure combat-domain lifecycle boundary with `startCombatSession()`, `pauseCombatSession()`, `resumeCombatSession()` and `finishCombatSession()`. Start accepts only explicit canonical participant ids plus a read-only active-participant precondition, validates all input before generating a new identity and creates a fresh active round-1 session from null/inactive or finished state. Pause, resume and finish preserve session id, round, roster and local flags in a new canonical snapshot. Every unsupported transition returns a typed rejection without mutating input. The lifecycle stores no current-turn, initiative or Character state and has no map runtime, persistence, EventStore or UI dependency. No initiative synchronization, turn/round progression, integrity resolution, ready/delayed behavior or later combat work was implemented.
 
+- `0.0.1.16.5` Initiative Integration - `DONE` at `Foundation` readiness on 2026-09-06. Added the Campaign Map-side `campaignMapCombatSessionIntegration.js` bridge and narrow Store entry points for explicit start and roster edit. Start derives only participant ids and the active-id precondition from canonical initiative and reuses the existing lifecycle without rerolling, sorting or mutating initiative. Current Combat participant is a read-only derivation from initiative; unresolved references never trigger roster cleanup. Explicit roster reconciliation is active-only: retained members keep flags and representation order, additions get false flags, and only explicit omissions remove members. Paused/finished edits reject before either aggregate field or DOM changes, per owner decision; inactive has no roster to reconcile. Reorder-only edits do not rewrite Combat Session. Existing serializer/persistent format, initiative popup, combat-domain dependency direction and all later leaf boundaries remain unchanged.
+
 PLANNED LEAF SEQUENCE:
 
 1. `0.0.1.16.2` Combat Session Model - `DONE` at `Foundation` readiness on 2026-09-04.
 2. `0.0.1.16.3` Persistent Combat Storage - `DONE` at `Foundation` readiness on 2026-09-04.
 3. `0.0.1.16.4` Lifecycle - `DONE` at `Foundation` readiness on 2026-09-04.
-4. `0.0.1.16.5` Initiative Integration - `NEXT`, not started.
-5. `0.0.1.16.6` Turn & Round Progression - `BLOCKED` by 16.5.
+4. `0.0.1.16.5` Initiative Integration - `DONE` at `Foundation` readiness on 2026-09-06.
+5. `0.0.1.16.6` Turn & Round Progression - `NEXT`, not started.
 6. `0.0.1.16.7` Missing Reference Integrity - `BLOCKED` by 16.6.
 7. `0.0.1.16.8` Ready / Delayed / Temporary Flags - `BLOCKED` by 16.7.
 8. `0.0.1.16.9` Combat UI + Reload Workflow - `BLOCKED` by 16.8.

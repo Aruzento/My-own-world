@@ -2,6 +2,11 @@ import {
   CampaignMapModel
 } from './campaignMapModel.js';
 
+import {
+  startCombatSessionFromInitiative,
+  reconcileCombatSessionRoster
+} from './campaignMapCombatSessionIntegration.js';
+
 
 const storeByMap =
   new WeakMap();
@@ -409,6 +414,35 @@ export class CampaignMapStore {
     this.commitToDOM();
 
     return nextCombatSession;
+  }
+
+
+  startCombatSession(options = {}) {
+
+    const result = startCombatSessionFromInitiative(this.model, options);
+
+    if (result.ok) {
+      this.setCombatSession(result.session);
+    }
+
+    return result;
+  }
+
+
+  setInitiativeRoster(initiative) {
+
+    const result = reconcileCombatSessionRoster(this.model, initiative);
+    if (!result.ok) return result;
+
+    this.model.setInitiative(result.initiative);
+    if (result.membershipChanged) {
+      this.model.setCombatSession(result.session);
+    }
+
+    this.markDirty();
+    this.commitToDOM();
+
+    return result;
   }
 
 
