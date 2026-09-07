@@ -6,6 +6,42 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-07: 0.0.1.16.6 Turn & Round Progression
+
+### Disposition
+
+- Closed only `0.0.1.16.6` at `Foundation` readiness from clean `main`, with HEAD and origin/main both `ae942edf0168b05113994bfc61c4181994f0ae92`.
+- Phase 16 stays `ACTIVE`; 16.1-16.6 are `DONE`; `0.0.1.16.7` Missing Reference Integrity is `NEXT`, not started.
+- Existing initiative-only popup controls are deliberately unchanged. User-facing Combat controls belong to 16.9 and must call the new explicit Combat-safe Store APIs. This is not yet a complete human Combat workflow.
+
+### Progression And Publication
+
+- Extended only `campaignMapCombatSessionIntegration.js` and `CampaignMapStore` in production. Pure `advanceCombatTurn(mapModel)` / `retreatCombatTurn(mapModel)` prepare detached initiative/session snapshots and structured results. The Store exposes `nextCombatTurn()` / `previousCombatTurn()` and publishes only successful plans.
+- The bridge validates an active session, non-empty initiative and Combat rosters, the observed canonical current id and compatible unique participant identity sets before asking the initiative owner to move. Null/inactive returns `no-session`; paused/finished returns `turn-progression-not-allowed`; invalid current, empty roster, outside membership and roster mismatch return machine-readable reasons without repair, fallback selection or aggregate publication.
+- `CampaignMapInitiativeModel.nextTurn()` / `previousTurn()` remain unchanged and choose the next participant on a detached model. The produced target is checked again before publication. No second active id, turn index or initiative list is persisted in Combat Session.
+- Forward wrap is a valid last-position to first-position step. It increments Combat round exactly once through `CombatSessionModel` normalization, including a one-participant roster where the id does not change. `Number.MAX_SAFE_INTEGER` overflow is rejected as `round-limit-exceeded`, not normalized back to round 1.
+- Previous never changes round, including visual first-to-last wrap and a single participant. Direct `setActive`, sorting, manual roll/modifier/total, explicit reorder and 16.5 roster reconciliation do not become round progression.
+- Session id/status/membership representation and ready/delayed flags stay intact. No alive/dead filtering, token/page/Character resolution, implicit pause/resume/finish or flag behavior was added.
+- A private Store publication helper applies prepared initiative and, only if round changes, the canonical Combat Session replacement. It then marks dirty once and commits the entire map to DOM once. Rejections do neither. This is same-map aggregate consistency, not filesystem-wide atomicity; normal editor save/autosave still owns durable persistence.
+- Existing `data-initiative-state` and `data-combat-session-state` formats, model version, serializer, page commands and pure combat-domain dependency direction remain unchanged. No new dependency, schema, migration, sidecar or event type. No integrity repair (16.7), ready/delayed behavior (16.8), Combat UI (16.9), EventStore integration (16.10) or Phase 17+ action/HP/effects/targeting implementation.
+
+### Verification
+
+- Test-first: the new progression suite failed on the missing `advanceCombatTurn` export before production implementation. It now passes 26 behavioral cases covering both directions, repeated/single-participant rounds, lifecycle gates, empty/invalid/mismatched/duplicate identities, invalid prepared target, no dead-participant skip, unchanged manual-edit semantics, overflow, one publication and serialization/reload.
+- `node --test tests/campaignMapCombatTurnProgression.test.mjs tests/campaignMapCombatSessionIntegration.test.mjs tests/combatSessionModel.test.mjs tests/combatSessionLifecycle.test.mjs tests/combatSessionPersistence.test.mjs tests/campaignMapInitiativeModel.test.mjs tests/campaignMapModel.test.mjs tests/campaignMapStore.test.mjs`: PASS, 83 tests.
+- `npm run test:browser -- tests/browser/campaign-map-combat-integration.spec.mjs tests/browser/campaign-map-initiative.spec.mjs tests/browser/campaign-map-data.spec.mjs`: PASS, 12 tests. The added regression proves last participant / round 8 becomes first participant / round 9 in one DOM publication and survives existing serialization/reload with flags, identity and initiative values intact. Previous after reload retains round 9.
+- The initial browser observer also counted the serializer's existing later hydration commit. The test now measures only the progression call, then restores normal serialization; no production serializer change was needed.
+- `npm run verify:quick` and `npm run verify`: PASS, 695 unit tests, encoding, syntax/import and diff checks; normal verify also passed UI polish, disposable 900-page performance and manual ZIP integrity.
+- `npm run verify:full`: PASS, 695 unit tests and 200 browser tests, including approved screenshot comparisons without baseline updates; project file audit, 94-document index, 19 skills and 4 task contracts passed.
+- `npm run docs:index`, `npm run check:encoding` and `git diff --check`: PASS. Final diff/owner inspection confirms the initiative model, Combat Session model/lifecycle, persistence model/serializer, initiative popup and Combat Session contract are unchanged.
+- The generated file-audit report was inspected and its task-generated drift was excluded from the focused commit. No user/local artifact was deleted.
+
+### Scope And Residual Limits
+
+- Progression validation is linear in the current map roster, with no workspace scans. All writes performed by verification used disposable fixtures; the real user workspace was neither read nor mutated.
+- No desktop-specific path or UI changed, so desktop/native gates and manual Combat UI testing were not run. The remaining usable UI/integrity/event workflow stays in its later leaves, not implicitly claimed by this Foundation result.
+- No automatic push; one focused implementation commit only.
+
 ## 2026-09-06: 0.0.1.16.5 Initiative Integration
 
 ### Disposition

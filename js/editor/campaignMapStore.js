@@ -4,7 +4,9 @@ import {
 
 import {
   startCombatSessionFromInitiative,
-  reconcileCombatSessionRoster
+  reconcileCombatSessionRoster,
+  advanceCombatTurn,
+  retreatCombatTurn
 } from './campaignMapCombatSessionIntegration.js';
 
 
@@ -442,6 +444,30 @@ export class CampaignMapStore {
     this.markDirty();
     this.commitToDOM();
 
+    return result;
+  }
+
+
+  nextCombatTurn() {
+    return this.#publishCombatTurn(advanceCombatTurn(this.model));
+  }
+
+
+  previousCombatTurn() {
+    return this.#publishCombatTurn(retreatCombatTurn(this.model));
+  }
+
+
+  #publishCombatTurn(result) {
+    if (!result.ok) return result;
+
+    this.model.setInitiative(result.initiative);
+    if (result.round !== result.previousRound) {
+      this.model.setCombatSession(result.session);
+    }
+
+    this.markDirty();
+    this.commitToDOM();
     return result;
   }
 

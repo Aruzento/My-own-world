@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-09-06
+Updated: 2026-09-07
 
 Planning version: 2
 
@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `ACTIVE`.
 
-Current leaf: `0.0.1.16.5` Initiative Integration is `DONE` at Foundation readiness. `0.0.1.16.6` Turn & Round Progression is `NEXT`, not started.
+Current leaf: `0.0.1.16.6` Turn & Round Progression is `DONE` at Foundation readiness. `0.0.1.16.7` Missing Reference Integrity is `NEXT`, not started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1`, `0.0.1.16.2`, `0.0.1.16.3`, `0.0.1.16.4` and `0.0.1.16.5` are `DONE`; `0.0.1.16.6` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1`, `0.0.1.16.2`, `0.0.1.16.3`, `0.0.1.16.4`, `0.0.1.16.5` and `0.0.1.16.6` are `DONE`; `0.0.1.16.7` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
 
 ## Execution Rules
 
@@ -358,14 +358,16 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.16.5` Initiative Integration - `DONE` at `Foundation` readiness on 2026-09-06. Added the Campaign Map-side `campaignMapCombatSessionIntegration.js` bridge and narrow Store entry points for explicit start and roster edit. Start derives only participant ids and the active-id precondition from canonical initiative and reuses the existing lifecycle without rerolling, sorting or mutating initiative. Current Combat participant is a read-only derivation from initiative; unresolved references never trigger roster cleanup. Explicit roster reconciliation is active-only: retained members keep flags and representation order, additions get false flags, and only explicit omissions remove members. Paused/finished edits reject before either aggregate field or DOM changes, per owner decision; inactive has no roster to reconcile. Reorder-only edits do not rewrite Combat Session. Existing serializer/persistent format, initiative popup, combat-domain dependency direction and all later leaf boundaries remain unchanged.
 
+- `0.0.1.16.6` Turn & Round Progression - `DONE` at `Foundation` readiness on 2026-09-07. Added pure `advanceCombatTurn()` / `retreatCombatTurn()` in the existing map-side integration bridge and `CampaignMapStore.nextCombatTurn()` / `previousCombatTurn()`. Initiative remains the only current-participant/progression owner; CombatSessionModel remains the round normalization/state owner. Forward last-to-first wrap increments round once, including a single-participant roster; previous never changes round. Null/inactive, paused/finished, empty rosters, unresolved current id, incompatible/duplicate membership and round overflow reject without live mutation, dirty mark or DOM commit. Successful prepared initiative/session state publishes through one map aggregate dirty/DOM commit; existing serialization/reload retains the new current participant and round together. Direct selection, sorting, manual initiative values and explicit roster edits leave round unchanged; session id and ready/delayed flags survive progression. Existing initiative popup remains initiative-only; Combat UI in 16.9 must use these explicit store APIs. No persistent format change, integrity repair, flag behavior, EventStore or later combat work was added.
+
 PLANNED LEAF SEQUENCE:
 
 1. `0.0.1.16.2` Combat Session Model - `DONE` at `Foundation` readiness on 2026-09-04.
 2. `0.0.1.16.3` Persistent Combat Storage - `DONE` at `Foundation` readiness on 2026-09-04.
 3. `0.0.1.16.4` Lifecycle - `DONE` at `Foundation` readiness on 2026-09-04.
 4. `0.0.1.16.5` Initiative Integration - `DONE` at `Foundation` readiness on 2026-09-06.
-5. `0.0.1.16.6` Turn & Round Progression - `NEXT`, not started.
-6. `0.0.1.16.7` Missing Reference Integrity - `BLOCKED` by 16.6.
+5. `0.0.1.16.6` Turn & Round Progression - `DONE` at `Foundation` readiness on 2026-09-07.
+6. `0.0.1.16.7` Missing Reference Integrity - `NEXT`, not started.
 7. `0.0.1.16.8` Ready / Delayed / Temporary Flags - `BLOCKED` by 16.7.
 8. `0.0.1.16.9` Combat UI + Reload Workflow - `BLOCKED` by 16.8.
 9. `0.0.1.16.10` Persistence / Recovery / Event Integration - `BLOCKED` by 16.9.

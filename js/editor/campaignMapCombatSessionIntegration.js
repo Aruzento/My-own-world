@@ -14,7 +14,10 @@ export const CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS = Object.freeze({
   NO_SESSION: 'no-session',
   INVALID_ROSTER_EDIT: 'invalid-roster-edit',
   ROSTER_EDIT_NOT_ALLOWED: 'roster-edit-not-allowed',
-  ACTIVE_PARTICIPANT_OUTSIDE_SESSION: 'active-participant-outside-session'
+  ACTIVE_PARTICIPANT_OUTSIDE_SESSION: 'active-participant-outside-session',
+  TURN_PROGRESSION_NOT_ALLOWED: 'turn-progression-not-allowed',
+  ROSTER_MISMATCH: 'roster-mismatch',
+  ROUND_LIMIT_EXCEEDED: 'round-limit-exceeded'
 });
 
 // Pure coordination over the canonical map aggregate. Only the store publishes results.
@@ -127,5 +130,78 @@ export function reconcileCombatSessionRoster(mapModel, initiativeData) {
     initiative: initiative.toJSON(),
     session,
     membershipChanged
+  };
+}
+
+export function advanceCombatTurn(mapModel) {
+  return planCombatTurn(mapModel, true);
+}
+
+export function retreatCombatTurn(mapModel) {
+  return planCombatTurn(mapModel, false);
+}
+
+function planCombatTurn(mapModel, forward) {
+  const operation = forward ? 'next-turn' : 'previous-turn';
+  const reject = reason => ({ ok: false, operation, reason });
+  const current = mapModel.combatSession;
+  if (!current || current.status === COMBAT_SESSION_STATUSES.INACTIVE) {
+    return reject(CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.NO_SESSION);
+  }
+  if (current.status !== COMBAT_SESSION_STATUSES.ACTIVE) {
+    return reject(CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.TURN_PROGRESSION_NOT_ALLOWED);
+  }
+
+  const initiative = new CampaignMapInitiativeModel(mapModel.initiative);
+  if (!initiative.participants.length || !current.participants.length) {
+    return reject(COMBAT_SESSION_LIFECYCLE_REASONS.EMPTY_ROSTER);
+  }
+
+  // Check the observed current id before the initiative owner's defensive fallback can run.
+  const previousParticipantId = mapModel.initiative.activeParticipantId;
+  const previousIndex = initiative.participants.findIndex(member => member.participantId === previousParticipantId);
+  if (previousIndex < 0) {
+    return reject(COMBAT_SESSION_LIFECYCLE_REASONS.ACTIVE_PARTICIPANT_NOT_FOUND);
+  }
+  const memberIds = new Set(current.participants.map(member => member.participantId));
+  if (!memberIds.has(previousParticipantId)) {
+    return reject(CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.ACTIVE_PARTICIPANT_OUTSIDE_SESSION);
+  }
+  const initiativeIds = new Set(initiative.participants.map(member => member.participantId));
+  if (memberIds.size !== current.participants.length ||
+      initiativeIds.size !== initiative.participants.length ||
+      memberIds.size !== initiativeIds.size ||
+      [...memberIds].some(id => !initiativeIds.has(id))) {
+    return reject(CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.ROSTER_MISMATCH);
+  }
+
+  const participant = forward ? initiative.nextTurn() : initiative.previousTurn();
+  const participantId = initiative.activeParticipantId;
+  if (!participant || participant.participantId !== participantId || !initiative.getParticipant(participantId)) {
+    return reject(COMBAT_SESSION_LIFECYCLE_REASONS.ACTIVE_PARTICIPANT_NOT_FOUND);
+  }
+  if (!memberIds.has(participantId)) {
+    return reject(CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.ACTIVE_PARTICIPANT_OUTSIDE_SESSION);
+  }
+
+  // The single participant is both last and first; unchanged identity still counts as a wrap.
+  const wrapped = forward && previousIndex === initiative.participants.length - 1 &&
+    participantId === initiative.participants[0].participantId;
+  const previousRound = current.round;
+  const round = previousRound + (wrapped ? 1 : 0);
+  if (!Number.isSafeInteger(round) || round < 1) {
+    return reject(CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.ROUND_LIMIT_EXCEEDED);
+  }
+  const session = new CombatSessionModel({ ...current, round }).toJSON();
+  return {
+    ok: true,
+    operation,
+    initiative: initiative.toJSON(),
+    session,
+    wrapped,
+    previousParticipantId,
+    participantId,
+    previousRound,
+    round
   };
 }
