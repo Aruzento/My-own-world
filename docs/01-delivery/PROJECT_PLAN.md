@@ -10,7 +10,7 @@ owner_zone: "delivery"
 
 Updated: 2026-09-07
 
-Planning version: 2
+Planning version: 3
 
 This file is the only active implementation roadmap for MyOwnWorld. Completed history lives in [WORK_LOG.md](./WORK_LOG.md). Superseded plans live in [docs/archive](../archive/README.md) and are historical only.
 
@@ -606,6 +606,26 @@ SCOPE: full visual critic, editor polish, Graph polish, Map/live-session polish,
 DEPENDENCIES: mature real workflows from earlier phases; owner-approved polish scope.
 
 EXIT CRITERIA: critic evaluates mature workflows, not mostly empty/pre-feature surfaces; final design issues are fixed or explicitly waived; release handoff reflects the final visual state.
+
+## Deferred AI Block
+
+ID: `AI-CORE`
+
+NAME: MOW AI Core - полный AI-блок
+
+STATUS: `LATER`
+
+GOAL: встроить AI для вопросов по миру и навигации с проверяемыми источниками, локальной моделью по умолчанию и сменными providers в browser и desktop.
+
+OWNER DECISION: 2026-09-07 владелец выбрал полный объём до `Release-ready` из `MOW_AI_Core_implementation_plan.docx`: Local AI, cloud/custom providers, browser secure bridge, desktop secure transport, UI, безопасность, восстановление и все проверки. Сейчас разрешено включение материалов в будущий план; реализация AI не начата.
+
+SCOPE: [MOW_AI_CORE_PLAN.md](./MOW_AI_CORE_PLAN.md) сохраняет этапы 0–11 и все 60 подпунктов исходника, а также уточнения по изоляции workspace, отмене устаревших запросов, актуальности источников и политике облачной передачи для истории/tool results/retry. Первый полный релиз предоставляет только `READ` и `NAVIGATION`; изменение, удаление и произвольные сетевые инструменты остаются отключёнными. Конкретные модели, runtime и зависимости выбираются после измерений и проверки официальных источников.
+
+DEPENDENCIES: существующие PageRepository/PageIndex, KnowledgeGraph, safe HTML и платформенные адаптеры; будущие AI/secrets/security contracts и MOW-specific model/runtime benchmark. Не создавать вторых владельцев поиска, связей или данных мира.
+
+SCHEDULING: этот отложенный блок не меняет порядок и нумерацию Phase 0–21, текущую `ACTIVE` фазу или `NEXT` подпункт. Место в исполняемой очереди и старт AI оформляются здесь после отдельного запуска владельцем. Подробный AI-документ описывает состав работ, а этот файл остаётся единственным источником порядка и статусов.
+
+EXIT CRITERIA: после загрузки pack AI работает offline без ключа; вопросы по миру имеют проверяемые актуальные источники; неоднозначность и отсутствие данных обрабатываются явно; открытие карточек и смена provider работают; недоверенный контент не расширяет права tools; secrets, egress и Local only проверены; история/индексы/запросы изолированы между workspace; сбои и восстановление не повреждают мир. Пройдены project checks, browser/native/security/evaluation/performance gates и обновлён release handoff. Подготовка плана или отдельных contracts не закрывает AI-блок.
 
 ## Promoted Backlog Items
 
