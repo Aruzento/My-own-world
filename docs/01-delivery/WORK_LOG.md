@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-10: 0.0.1.16.8 Ready / Delayed / Temporary Flags
+
+### Disposition
+
+- Closed only `0.0.1.16.8` at `Foundation` readiness from clean `main`, with HEAD and origin/main both `ed76456a45529cd4237780a8f2c56112aee0c079` (`Add combat reference integrity diagnostics`).
+- Phase 16 stays `ACTIVE`; 16.1-16.8 are `DONE`; `0.0.1.16.9` Combat UI + Reload Workflow is `NEXT`, not started. The deferred AI Core block and its plan remain unchanged.
+- This delivers a safe domain/runtime API, not a user-facing Ready/Delay workflow. No controls, badges, combat panel or screenshot baseline changes; UI wiring belongs to 16.9 and EventStore integration to 16.10.
+
+### Marker Mutation Boundary
+
+- Added `setCombatParticipantFlags(currentSession, participantId, patch)` in `js/combat/combatSessionFlags.js`, importing only `CombatSessionModel` and its lifecycle constants. Combat Session remains the sole marker owner; no map/initiative/Character/storage dependency or second live state owner.
+- Patches must contain at least one own `ready` or `delayed` field with an actual boolean. Empty patches, unknown/mixed keys, arrays, inherited properties, accessors and non-boolean values reject; no Boolean coercion or arbitrary extension bag. Exact Combat membership id is required; invalid/duplicate identities reject without generating a replacement id or searching initiative/token/page records.
+- Narrow machine-readable rejections are `no-session`, `flags-edit-not-allowed`, `participant-not-found`, `invalid-participant` and `invalid-flags`. Active permits explicit edits; paused/finished reject, null/inactive reject. Explicit resume allows a later edit without implicit resume or automatic re-pause.
+- Success returns `{ ok: true, operation: 'set-participant-flags', participantId, changed, session }`. The detached canonical snapshot is prepared through CombatSessionModel without mutating input, and preserves session id/status/round/roster order and all unrequested flags. Idempotent requests return `changed: false` with a detached snapshot.
+- `ready` and `delayed` are independent and may both be true. Clearing either leaves the other unchanged. They do not create/execute an action, trigger or reaction, relocate initiative, skip a participant, advance a turn, alter round or auto-clear at turn boundaries.
+- Existing Combat membership is sufficient even when initiative/token/page references are unresolved. No integrity prerequisite, repair, roster reconciliation or external lookup is performed by the marker operation. Fresh integrity derivation still reports unresolved references; restoring the exact reference preserves markers and changes diagnostics only.
+- `CampaignMapStore.setCombatParticipantFlags(participantId, patch)` delegates to the pure operation and publishes only a successful changed result through the existing `setCombatSession()` owner. Real change: one dirty mark and one DOM commit. Rejected/idempotent operation: zero of both. There is no direct save or PageCommandService call; existing map save/autosave owns durability.
+- Persistent participant shape remains exactly `{ participantId, ready, delayed }`. CombatSession version 1, CampaignMap version, `data-combat-session-state`, serializer and page write ownership are unchanged. Serialize/reload retains exact markers, initiative/current participant and round; integrity/issues/references remain runtime-only. No migration.
+
+### Verification
+
+- Regression-first: the pure suite initially failed on the missing module and the Store suite on the missing method. New dedicated suites now pass 54/54: 38 pure domain cases and 16 Store/persistence interaction cases.
+- Coverage includes strict patch validation, independent two-field edits, exact participant isolation/identity, frozen input, detached/no-op results, lifecycle gates, explicit resume, missing-reference independence, zero/one publication, false defaults on start/new session, pause/resume/finish preservation, next/previous/forward-wrap round increment without flag changes, initiative selection/sort/manual values/reorder, retained/new/removed roster members and exact serialize/reload without integrity or arbitrary bags.
+- `node --test tests/combatSessionModel.test.mjs tests/combatSessionLifecycle.test.mjs tests/combatSessionFlags.test.mjs tests/combatSessionPersistence.test.mjs tests/campaignMapCombatSessionFlags.test.mjs tests/campaignMapCombatSessionIntegration.test.mjs tests/campaignMapCombatTurnProgression.test.mjs tests/campaignMapCombatSessionIntegrity.test.mjs tests/campaignMapInitiativeModel.test.mjs tests/campaignMapModel.test.mjs tests/campaignMapStore.test.mjs`: PASS, 159 tests.
+- `npm run verify:quick` and `npm run verify`: PASS, 771 unit tests, encoding, JS syntax/import checks and diff checks. Normal verify also passed UI polish, disposable 900-page performance smoke and existing manual ZIP integrity.
+- `npm run verify:full`: PASS, 771 unit tests and 200 browser tests, including existing map workflows and approved popup screenshot comparisons without baseline updates. Project file audit: 743 files, zero mojibake candidates; its one untracked-file candidate was the new intended `combatSessionFlags.js`, not a deletion request. Docs index: 95 documents; skills: 19; task contracts: 4.
+- `npm run docs:index`, `npm run check:encoding` and `git diff --check`: PASS. The generated file-audit report's unrelated inventory/timestamp drift was inspected and excluded from the focused commit; no local artifact was deleted.
+
+### Scope And Residual Limits
+
+- Exactly six files: the new pure flag module, narrow existing Store adapter, two dedicated test files and these two delivery docs. Existing lifecycle, integration bridge, initiative/model/serializer owners, Combat Session contract, dependencies and deferred AI Core content are unchanged.
+- All verification used in-memory/disposable fixtures. The real user workspace was neither read nor mutated. No desktop-specific behavior changed, so native/desktop gates were not run. No Ready Action, reaction/interrupt, delay mechanics, Character mutation, EventStore, Phase 17+ or UI implementation.
+- No automatic push; one focused implementation commit only. Next: `0.0.1.16.9`, not started.
+
 ## 2026-09-09: 0.0.1.16.7 Missing Reference Integrity
 
 ### Disposition

@@ -3,6 +3,10 @@ import {
 } from './campaignMapModel.js';
 
 import {
+  setCombatParticipantFlags
+} from '../combat/combatSessionFlags.js';
+
+import {
   deriveCombatSessionIntegrity,
   startCombatSessionFromInitiative,
   reconcileCombatSessionRoster,
@@ -406,6 +410,15 @@ export class CampaignMapStore {
 
   getCombatSessionIntegrity(deps = {}) {
     return deriveCombatSessionIntegrity(this.model, deps);
+  }
+
+
+  setCombatParticipantFlags(participantId, patch) {
+    const result = setCombatParticipantFlags(this.model.combatSession, participantId, patch);
+    if (result.ok && result.changed) {
+      this.setCombatSession(result.session);
+    }
+    return result;
   }
 
 

@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-09-09
+Updated: 2026-09-10
 
 Planning version: 3
 
@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `ACTIVE`.
 
-Current leaf: `0.0.1.16.7` Missing Reference Integrity is `DONE` at Foundation readiness. `0.0.1.16.8` Ready / Delayed / Temporary Flags is `NEXT`, not started.
+Current leaf: `0.0.1.16.8` Ready / Delayed / Temporary Flags is `DONE` at Foundation readiness. `0.0.1.16.9` Combat UI + Reload Workflow is `NEXT`, not started.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1`, `0.0.1.16.2`, `0.0.1.16.3`, `0.0.1.16.4`, `0.0.1.16.5`, `0.0.1.16.6` and `0.0.1.16.7` are `DONE`; `0.0.1.16.8` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1`, `0.0.1.16.2`, `0.0.1.16.3`, `0.0.1.16.4`, `0.0.1.16.5`, `0.0.1.16.6`, `0.0.1.16.7` and `0.0.1.16.8` are `DONE`; `0.0.1.16.9` is `NEXT` only. Do not implement later Combat Session leaves, attacks, damage application, HP automation, effects, targeting or dice UI out of order.
 
 ## Execution Rules
 
@@ -362,6 +362,8 @@ CURRENT LEAF RESULTS:
 
 - `0.0.1.16.7` Missing Reference Integrity - `DONE` at `Foundation` readiness on 2026-09-09. Added read-only `deriveCombatSessionIntegrity(mapModel, { resolvePage })` in the existing integration bridge and `CampaignMapStore.getCombatSessionIntegrity(deps)`. Combat membership is traversed in stored order; exact initiative ids resolve first, then optional token ids through `CampaignMapModel.getToken()` and page ids through injected `PageRepository.getPageById()`. Existing CombatSessionModel integrity normalization/types remain authoritative; detached reference context supplies exact token/page ids without changing its issue schema. Missing initiative emits no guessed subordinate errors; independently missing token/page emit both in that order. Active/paused/finished diagnostics never change lifecycle, round, flags, roster, current participant, tokens/pages, dirty state or DOM. Null/inactive returns `no-session`; unavailable/invalid page resolver fails rather than fabricating missing-page results. Integrity remains runtime-only, absent from JSON/HTML, and recomputes after reload or exact reference restoration/removal. No name fallback, repair, UI, EventStore, persistence/schema change, 16.8 or AI Core work was added.
 
+- `0.0.1.16.8` Ready / Delayed / Temporary Flags - `DONE` at `Foundation` readiness on 2026-09-10. Added pure `setCombatParticipantFlags(currentSession, participantId, patch)` in `js/combat/combatSessionFlags.js`, depending only on CombatSessionModel, and a narrow same-named CampaignMapStore method. Explicit patches accept only non-empty boolean `ready` / `delayed` fields for an exact existing Combat member in an active session; paused/finished/inactive/missing sessions and malformed commands reject without publication. The independent markers may both be true and have no action/reaction, trigger, turn skip or initiative reorder semantics. Unresolved initiative/token/page references do not block Combat-local edits and are never repaired. A changed canonical detached snapshot uses the existing setter for one dirty mark and one DOM commit; an idempotent request publishes nothing. Start/new-session defaults, lifecycle/progression/initiative-edit preservation, explicit roster reconciliation and exact serialize/reload behavior are covered. Persistent participant shape remains only `participantId`, `ready`, `delayed`; integrity stays runtime-only. No schema/version/migration, Character, EventStore, direct page write or UI change; UI wiring remains 16.9.
+
 PLANNED LEAF SEQUENCE:
 
 1. `0.0.1.16.2` Combat Session Model - `DONE` at `Foundation` readiness on 2026-09-04.
@@ -370,8 +372,8 @@ PLANNED LEAF SEQUENCE:
 4. `0.0.1.16.5` Initiative Integration - `DONE` at `Foundation` readiness on 2026-09-06.
 5. `0.0.1.16.6` Turn & Round Progression - `DONE` at `Foundation` readiness on 2026-09-07.
 6. `0.0.1.16.7` Missing Reference Integrity - `DONE` at `Foundation` readiness on 2026-09-09.
-7. `0.0.1.16.8` Ready / Delayed / Temporary Flags - `NEXT`, not started.
-8. `0.0.1.16.9` Combat UI + Reload Workflow - `BLOCKED` by 16.8.
+7. `0.0.1.16.8` Ready / Delayed / Temporary Flags - `DONE` at `Foundation` readiness on 2026-09-10.
+8. `0.0.1.16.9` Combat UI + Reload Workflow - `NEXT`, not started.
 9. `0.0.1.16.10` Persistence / Recovery / Event Integration - `BLOCKED` by 16.9.
 10. `0.0.1.16.FINAL` Closure Gate - `BLOCKED` by 16.10.
 
