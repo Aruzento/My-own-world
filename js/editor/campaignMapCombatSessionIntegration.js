@@ -1,4 +1,6 @@
 import {
+  COMBAT_SESSION_INTEGRITY_STATUSES,
+  COMBAT_SESSION_REFERENCE_TYPES,
   COMBAT_SESSION_STATUSES,
   CombatSessionModel
 } from '../combat/combatSessionModel.js';
@@ -60,6 +62,55 @@ export function resolveCombatSessionParticipant(mapModel) {
   }
 
   return { ok: true, participantId, initiativeParticipant };
+}
+
+// resolvePage is the synchronous PageRepository.getPageById read contract.
+// Reference context is detached output, not another persisted participant/issue schema.
+export function deriveCombatSessionIntegrity(mapModel, { resolvePage } = {}) {
+  const current = mapModel.combatSession;
+  if (!current || current.status === COMBAT_SESSION_STATUSES.INACTIVE) {
+    return { ok: false, reason: CAMPAIGN_MAP_COMBAT_INTEGRATION_REASONS.NO_SESSION };
+  }
+
+  const initiative = new CampaignMapInitiativeModel(mapModel.initiative);
+  const issues = [];
+  const references = [];
+  for (const { participantId } of current.participants) {
+    const participant = initiative.getParticipant(participantId);
+    if (!participant) {
+      issues.push({ participantId, referenceType: COMBAT_SESSION_REFERENCE_TYPES.INITIATIVE_PARTICIPANT });
+      references.push({ participantId });
+      continue;
+    }
+
+    const { tokenId, pageId } = participant;
+    references.push({ participantId, tokenId, pageId });
+    if (tokenId && !mapModel.getToken(tokenId)) {
+      issues.push({ participantId, referenceType: COMBAT_SESSION_REFERENCE_TYPES.TOKEN });
+    }
+    if (pageId) {
+      if (typeof resolvePage !== 'function') {
+        throw new TypeError('Combat integrity requires a synchronous resolvePage for page references.');
+      }
+      const page = resolvePage(pageId);
+      if (page != null && (typeof page !== 'object' || page.id !== pageId)) {
+        throw new TypeError('resolvePage must synchronously return the exact page or null.');
+      }
+      if (page == null) {
+        issues.push({ participantId, referenceType: COMBAT_SESSION_REFERENCE_TYPES.PAGE });
+      }
+    }
+  }
+
+  const { integrity } = new CombatSessionModel({
+    ...current,
+    integrity: { status: COMBAT_SESSION_INTEGRITY_STATUSES.VALID, issues }
+  }, {
+    generateId: () => {
+      throw new TypeError('Combat integrity requires an existing sessionId.');
+    }
+  });
+  return { ok: true, integrity, references };
 }
 
 // This is an explicit roster-edit boundary, never a hydration or integrity repair hook.

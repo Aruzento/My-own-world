@@ -6,6 +6,40 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-09: 0.0.1.16.7 Missing Reference Integrity
+
+### Disposition
+
+- Closed only `0.0.1.16.7` at `Foundation` readiness from clean `main`, with HEAD and origin/main both `f5bd4eef9a434ca64acb892ef0748050353a8759` (`Document deferred AI core plan`).
+- Phase 16 stays `ACTIVE`; 16.1-16.7 are `DONE`; `0.0.1.16.8` Ready / Delayed / Temporary Flags is `NEXT`, not started. The existing deferred AI Core block remains `LATER` and its plan is unchanged.
+- This is a runtime diagnostic capability, not a complete human workflow. Warning rows, controls and user-triggered UI integration remain in 16.9. No new browser wiring, auto-scan, repair or rebind action was added.
+
+### Read-Only Integrity Boundary
+
+- Added `deriveCombatSessionIntegrity(mapModel, { resolvePage })` to the existing `campaignMapCombatSessionIntegration.js`. `CampaignMapStore.getCombatSessionIntegrity(deps)` delegates without publication. No new manager, store, repository or combat-domain dependency was introduced.
+- Canonical reads remain `CampaignMapInitiativeModel.getParticipant(participantId)`, `CampaignMapModel.getToken(tokenId)` and injected `PageRepository.getPageById(pageId)` from `js/repository/pageRepository.js`. The repository already owns live page reads through `PageIndex.byId`; tests inject that public function directly. The bridge does not import application state, resolve by title/alias, read Character snapshots or scan workspace files.
+- The result is `{ ok: true, integrity, references }`. `integrity` is normalized by the existing `CombatSessionModel` using its existing `valid` / `unresolved` statuses and `initiative-participant` / `token` / `page` issue types. The schema remains `{ participantId, referenceType }`; detached `references` supplies `{ participantId, tokenId, pageId }` for resolved initiative records, or just `{ participantId }` when initiative is absent. It is result context, not another live model or persistent schema.
+- Traversal follows stored Combat membership order. Missing exact initiative id emits one initiative issue and no guessed subordinate failures. Otherwise token and page are checked independently, with token before page; both issues can be returned. Empty optional references are not errors. Duplicate names/titles and aliases never satisfy a different id.
+- Null/inactive returns `{ ok: false, reason: 'no-session' }` without identity generation. Active/paused/finished diagnose the same references without lifecycle transitions. The helper requires an existing session id and never creates one.
+- A non-empty page reference requires a synchronous resolver returning the exact page or null/undefined. A missing resolver or invalid non-null output raises `TypeError`; resolver failures propagate. These are lookup failures, not invented missing-page issues or a misleading valid report. No new diagnostic category was added.
+- Session id/status/round/membership/ready/delayed, initiative records/order/current participant, tokens/pages, dirty state and DOM remain untouched. The API does not call save/autosave, PageCommandService or EventStore. Existing 16.6 conservative progression rejection and missing-token initiative synchronization are unchanged.
+- Neither `CombatSessionModel.toJSON()`, Campaign Map persistent JSON nor `data-combat-session-state` carries integrity/issues/reference context. Reload keeps original membership and returns unchecked model integrity until a fresh derivation; exact reference restoration/removal changes only subsequent diagnostic results. Existing model version, serialization, persistence and Combat Session contract remain unchanged; no migration.
+
+### Verification
+
+- Test-first: the dedicated suite initially failed on the missing `deriveCombatSessionIntegrity` export. Its final 22 behavioral cases cover null/inactive, valid/missing/optional/exact refs, stable ordering, duplicate-name protection, all lifecycle states, detached results, zero Store publication, serialize/reload/recompute, reference restoration/removal, canonical repository updates, resolver failure, missing-token sync retention and unchanged progression rejection.
+- `node --test tests/combatSessionModel.test.mjs tests/combatSessionLifecycle.test.mjs tests/combatSessionPersistence.test.mjs tests/campaignMapInitiativeModel.test.mjs tests/campaignMapCombatSessionIntegration.test.mjs tests/campaignMapCombatTurnProgression.test.mjs tests/campaignMapCombatSessionIntegrity.test.mjs tests/campaignMapModel.test.mjs tests/campaignMapStore.test.mjs tests/pageRepository.test.mjs`: PASS, 111 tests.
+- `npm run verify:quick` and `npm run verify`: PASS, 717 unit tests, encoding, JS syntax/import checks and diff checks. Normal verify also passed UI polish, disposable 900-page performance smoke and existing manual ZIP integrity.
+- `npm run verify:full`: PASS, 717 unit tests and 200 browser tests, including existing Combat/map workflows and approved popup screenshot comparisons without baseline updates. Project file audit: 740 files, zero delete/mojibake candidates; docs index: 95 documents; skills: 19; task contracts: 4. The run completed before the interruption and its final exit status was confirmed on resume.
+- `npm run docs:index`, `npm run check:encoding` and `git diff --check`: PASS. The generated file-audit report's unrelated inventory/timestamp drift was inspected and excluded from this focused commit; no local artifact was deleted.
+
+### Scope And Residual Limits
+
+- Production changes are limited to the map integration bridge and read-only Store method, plus one dedicated test file and these two delivery docs. Pure `js/combat/*`, initiative/token/page owners, serializer, UI, persistent formats, dependencies and deferred AI Core content are unchanged.
+- Work is bounded to the current map roster with existing initiative/token lookups and indexed page-id reads, not a workspace-wide scan. No new cache/index or asynchronous lifecycle exists. The caller supplies a current read owner and reruns derivation when needed; diagnostics are not automatically persisted or published.
+- All verification used in-memory or disposable fixtures. The real user workspace was neither read nor mutated. No desktop-specific behavior changed, so native/desktop gates were not run. No manual Combat UI claim, ready/delayed behavior, EventStore integration or Phase 17+ action/HP/effects/targeting work.
+- No automatic push; one focused implementation commit only. Next: `0.0.1.16.8`, not started.
+
 ## 2026-09-07: MOW AI Core - включение полного объёма в будущий план
 
 ### Решение и результат

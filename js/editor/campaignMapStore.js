@@ -3,6 +3,7 @@ import {
 } from './campaignMapModel.js';
 
 import {
+  deriveCombatSessionIntegrity,
   startCombatSessionFromInitiative,
   reconcileCombatSessionRoster,
   advanceCombatTurn,
@@ -400,6 +401,11 @@ export class CampaignMapStore {
     this.commitToDOM();
 
     return nextInitiative;
+  }
+
+
+  getCombatSessionIntegrity(deps = {}) {
+    return deriveCombatSessionIntegrity(this.model, deps);
   }
 
 
