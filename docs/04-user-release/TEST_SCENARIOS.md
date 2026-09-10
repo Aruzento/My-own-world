@@ -26,6 +26,8 @@ owner_zone: "user-release"
 
 ## Минимальный пользовательский проход
 
+For the 16.9 Initiative/Combat session UI, first follow the current owner-acceptance route in [tester-instructions.md](../../release/latest/tester-instructions.md). It covers preparation/start, turns/rounds, independent markers, frozen lifecycle states, missing references and exact map reload. Manual acceptance is still pending; do not treat these automated checks as approval to start 16.10.
+
 1. Открыть workspace.
 2. Создать карточку.
 3. Создать карту.

@@ -172,7 +172,7 @@ function getMapPopupLabel(
       layers:
         'Слои карты',
       initiative:
-        'Инициатива карты',
+        'Бой и инициатива',
       music:
         'Музыка карты'
     };

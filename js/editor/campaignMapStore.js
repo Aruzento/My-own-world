@@ -7,6 +7,12 @@ import {
 } from '../combat/combatSessionFlags.js';
 
 import {
+  pauseCombatSession,
+  resumeCombatSession,
+  finishCombatSession
+} from '../combat/combatSessionLifecycle.js';
+
+import {
   deriveCombatSessionIntegrity,
   startCombatSessionFromInitiative,
   reconcileCombatSessionRoster,
@@ -450,6 +456,27 @@ export class CampaignMapStore {
   }
 
 
+  pauseCombatSession() {
+    const result = pauseCombatSession(this.model.combatSession);
+    if (result.ok) this.setCombatSession(result.session);
+    return result;
+  }
+
+
+  resumeCombatSession() {
+    const result = resumeCombatSession(this.model.combatSession);
+    if (result.ok) this.setCombatSession(result.session);
+    return result;
+  }
+
+
+  finishCombatSession() {
+    const result = finishCombatSession(this.model.combatSession);
+    if (result.ok) this.setCombatSession(result.session);
+    return result;
+  }
+
+
   setInitiativeRoster(initiative) {
 
     const result = reconcileCombatSessionRoster(this.model, initiative);
@@ -467,13 +494,14 @@ export class CampaignMapStore {
   }
 
 
-  nextCombatTurn() {
-    return this.#publishCombatTurn(advanceCombatTurn(this.model));
+  nextCombatTurn(initiative = this.model.initiative) {
+    // Pending manual values and progression are accepted before either is published.
+    return this.#publishCombatTurn(advanceCombatTurn({ ...this.model, initiative }));
   }
 
 
-  previousCombatTurn() {
-    return this.#publishCombatTurn(retreatCombatTurn(this.model));
+  previousCombatTurn(initiative = this.model.initiative) {
+    return this.#publishCombatTurn(retreatCombatTurn({ ...this.model, initiative }));
   }
 
 

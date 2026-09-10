@@ -66,6 +66,7 @@ import {
 } from './campaignMapExternalDrop.js';
 
 import {
+  getPageById,
   queryPages
 } from '../repository/pageRepository.js';
 
@@ -1391,6 +1392,7 @@ function getToolbarControllerDeps() {
     mapPickerDeps: getMapPickerDeps(),
     openAddKindPopup,
     openPresentationWindow,
+    resolvePage: getPageById,
     saveAndSync,
     setFogMode,
     setMapTool,

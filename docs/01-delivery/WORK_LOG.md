@@ -6,6 +6,41 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-10: 0.0.1.16.9 Combat UI + Reload Workflow
+
+### Disposition
+
+- Completed only 16.9 at automated/Foundation readiness from clean `main`; HEAD and origin/main were `ce7cd78854579bf1b4861c146e0c02c34a9ec9bb` (`Add combat participant local flags`). Phase 16 remains ACTIVE, 16.1-16.9 DONE; 16.10 is NEXT on HOLD until explicit owner manual UI acceptance. AI Core remains LATER. No automatic push.
+- Extended the existing Initiative popup and existing toolbar entry, not a separate Combat window, model, controller or save owner. Tooltip/dialog name is `Бой и инициатива`. Preparation now says `Применить`; explicit `Начать бой` uses the prepared canonical initiative without reroll/resort/current reset.
+
+### Canonical UI Boundaries
+
+- Pre-combat retains participant picker, manual totals, Roll d20, order save, direct selection and initiative-only progression. Active Combat Next/Previous call `CampaignMapStore.nextCombatTurn()` / `previousCombatTurn()`; only the explicit pre-combat branch still calls initiative `nextTurn()` / `previousTurn()`.
+- The Store accepts an optional detached prepared initiative in progression so pending manual totals and the existing turn/round operation are validated together before one aggregate publication. A rejected progression leaves both live aggregates and the form input intact, with no dirty mark, DOM commit or save. This reuses the existing progression bridge; no transaction framework or round logic was added to UI.
+- Added narrow Store pause/resume/finish wrappers over existing pure lifecycle functions and the existing `setCombatSession()` path: one dirty/DOM commit on success, zero on rejection. Active has Pause/Finish, paused has Resume/Finish, finished retains final state and offers New Combat with a new id/round 1/false markers. Paused/finished freeze progression, values, direct selection, roster and markers; no implicit resume/re-pause.
+- Current participant is read from initiative only. Round/status/flags are read from Combat Session only. Existing token highlighting remains presentation-only. Ready/Delayed use the existing flag API, independent `aria-pressed` buttons and visible checkmarks; neither executes actions nor affects progression.
+- Explicit active picker membership uses `setInitiativeRoster()`: retained flags survive, new members get false flags, explicit omissions are removed. Manual value/order/current corrections do not change round or implicitly reconcile mismatched membership in either direction. Missing Combat-only initiative members remain in a separate problems section and block ordinary picker editing rather than silently being omitted.
+- `campaignMap.js` passes canonical `getPageById` through existing toolbar deps to `getCombatSessionIntegrity`. Exact missing token/page warnings stay in normal rows; missing initiative ids have no fabricated order/total. Resolver failure is reported as unavailable diagnostics, not invented missing pages. Read/open/close/no-op operations are non-mutating; no repair.
+- One successful changed UI action awaits one existing `saveAndSync`; rejection/no-op calls it zero times. Save failure shows an inline error and leaves existing dirty/save ownership intact without claiming durability. Busy controls prevent duplicate actions; a late completion cannot replace another popup or reopen a closed popup. Marker rerenders retain unrelated pending number inputs. Lifecycle/participant-editor transitions ask for explicit initiative save first when such inputs remain.
+
+### Regression Evidence
+
+- Regression-first Store suite initially failed for missing lifecycle methods; the new suite passes 16/16 for successful/rejected lifecycle publication and prepared-input progression. Related Combat/initiative/model/Store suite: 175/175 PASS.
+- New Combat UI browser suite: 15/15 PASS. Real popup controls cover preparation/start, turns/wrap/previous, independent flags, active roster edits, direct selection, paused/finished/new, three missing-reference layers, resolver failure, no-op/read-only behavior, rejected/pending input, save failure, membership mismatch and keyboard/viewport evidence.
+- Expanded browser run: 57/57 PASS across Combat UI, existing initiative, Combat integration, map data/reload, map toolbar/UI and PopupManager lifecycle. Existing initiative tests retain pre-combat and Dice/Character parity; two fixture opens now wait for the existing opening animation frame before clicking. Existing toolbar/dialog text assertions were updated for the intentional label change, not removed.
+- Active scenario records exactly 12 saves for 12 successful mutations. Pause/resume/finish/new records four. Active roster/value/current actions record three. Prepared-input Next records one Store progression call/one save, and rejected/no-op/open/close paths record zero. Active/paused/finished serialization/reload compares full canonical initiative and Combat snapshots, including id/status/round/current/order/totals/flags; reloaded active progression continues normally.
+- Screenshot evidence was inspected for active/paused at 1280x900 and 480x720: readable round/current/rows/markers/lifecycle, no horizontal overflow, popup within viewport. Four Playwright attachments are documented in `VISUAL_REGRESSION.md`; no approved pixel baseline was changed or automatically accepted. Manual owner acceptance remains pending.
+
+### Gates And Scope
+
+- `npm run verify:quick`, `npm run verify` and `npm run verify:full`: PASS, 787/787 unit tests. Full browser suite: 215/215 PASS, including all six existing approved popup baseline comparisons without updates. Normal/full also passed syntax/import checks, UI polish, disposable 900-page performance smoke and existing manual ZIP integrity.
+- `npm run docs:index`: PASS, 95 documents, no metadata/zone/active-status contradictions. `npm run check:encoding`, `npm run ui:polish:audit` and `git diff --check`: PASS. Project file audit: 745 files, zero delete/mojibake candidates; skills: 19/19; task contracts: 4/4. Generated audit inventory/date/local-size drift was reviewed and excluded from this focused commit; no local artifact was deleted.
+- Runtime changes are limited to the existing map toolbar/deps, popup/controller, initiative CSS and narrow Store wrappers. CombatSession v1, CampaignMap version, `data-combat-session-state`, initiative schema, serializer, PageCommandService and save ownership are unchanged. No migration, new dependency, EventStore integration, attacks/damage/HP/effects/targeting or 16.10 work.
+- Automated writes use synthetic browser maps/in-memory fixtures only. No real workspace mutation. Desktop build/native smoke are not part of this leaf's automated acceptance; owner UI acceptance and later recovery/event integration remain explicit limits.
+- Release notes, tester route, visual-evidence instructions and known limits are synchronized without regenerating the full manual or changing its schema/contracts.
+
+**MANUAL OWNER ACCEPTANCE REQUIRED BEFORE 16.10.**
+
 ## 2026-09-10: 0.0.1.16.8 Ready / Delayed / Temporary Flags
 
 ### Disposition

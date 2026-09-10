@@ -283,4 +283,121 @@
     1.2fr 1fr 1fr;
 }
 
+/* Combat extends the existing initiative surface; no independent overlay layer. */
+.campaign-combat-summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mow-space-2);
+  color: var(--mow-text-primary);
+}
+
+.campaign-combat-round {
+  font-size: var(--mow-font-size-lg);
+}
+
+.campaign-combat-status {
+  font-size: var(--mow-font-size-sm);
+  color: var(--mow-text-secondary);
+}
+
+.campaign-combat-flags,
+.campaign-combat-warning {
+  grid-column: 1 / -1;
+}
+
+.campaign-combat-flags,
+.campaign-combat-lifecycle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mow-space-2);
+}
+
+.campaign-combat-flags .mow-button {
+  min-height: var(--mow-control-height-sm);
+  font-size: var(--mow-font-size-xs);
+}
+
+.campaign-combat-flag[aria-pressed="true"]::before {
+  content: "\2713";
+}
+
+.campaign-combat-warning,
+.campaign-initiative-message {
+  color: var(--mow-text-warning);
+  font-size: var(--mow-font-size-xs);
+  line-height: var(--mow-line-height-normal);
+  overflow-wrap: anywhere;
+}
+
+.campaign-initiative-message:empty {
+  display: none;
+}
+
+.campaign-combat-problems,
+.campaign-combat-unresolved {
+  display: grid;
+  gap: var(--mow-space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.campaign-combat-unresolved + .campaign-combat-unresolved {
+  border-top: 1px solid var(--mow-border-subtle);
+  padding-top: var(--mow-space-2);
+}
+
+.campaign-map-popup-section[hidden] {
+  display: none;
+}
+
+.campaign-initiative-select.mow-button {
+  min-width: 0;
+  min-height: var(--mow-control-height-sm);
+  padding: 0;
+  background: transparent;
+  border-color: transparent;
+  color: var(--mow-text-primary);
+  justify-content: flex-start;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.campaign-initiative-current-label {
+  font-size: var(--mow-font-size-xs);
+  color: var(--mow-accent-primary);
+}
+
+.campaign-initiative-order-row {
+  grid-template-columns: minmax(0, 1fr) auto 58px;
+}
+
+.campaign-initiative-order-row .campaign-initiative-meta {
+  display: none;
+}
+
+.campaign-initiative-order-row .campaign-initiative-result {
+  min-width: 0;
+  font-size: var(--mow-font-size-xs);
+}
+
+.campaign-initiative-order-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.campaign-initiative-order-actions .campaign-initiative-close-btn {
+  grid-column: 1 / -1;
+}
+
+.campaign-map-popup[data-popup-key="initiative"] button {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.campaign-initiative-turn .app-icon {
+  width: var(--mow-icon-size-sm);
+  height: var(--mow-icon-size-sm);
+}
+
 

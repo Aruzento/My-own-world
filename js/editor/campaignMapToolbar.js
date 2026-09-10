@@ -95,7 +95,7 @@ export function getMapControlsHTML() {
         ${getMapToolButton({
           className: 'campaign-initiative-btn',
           icon: 'skill',
-          tooltip: 'Инициатива'
+          tooltip: 'Бой и инициатива'
         })}
         ${getMapToolButton({
           className: 'campaign-music-btn',

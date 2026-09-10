@@ -1,5 +1,13 @@
 # Release Notes
 
+## 2026-09-10: Combat UI 16.9 - Manual Acceptance Pending
+
+- The existing Campaign Map Initiative popup is now `Бой и инициатива`. `Применить` prepares initiative; a separate `Начать бой` starts a persistent session without rerolling or resetting the selected participant.
+- Active sessions show round/current participant, independent `Готов` / `Отложен` markers, Previous/Next and Pause/Finish. Paused sessions freeze progression, values, roster and markers until explicit Resume; finished sessions retain the final state and offer `Новый бой`.
+- Missing initiative/token/page references remain visible without repair. Active/paused/finished state survives the existing map save/reload path. Marker changes preserve pending numeric input; save that input before changing lifecycle or opening participant editing.
+- Readiness is automated/Foundation only. Owner manual UI acceptance is required before 16.10. No attack/damage/HP/effect mechanics, EventStore integration or persistence migration is included. An unsuccessful save remains a save error, not a durable success; check page-save state before leaving.
+- Manual route and screenshot evidence: the 16.9 section at the top of `release/latest/tester-instructions.md`.
+
 ## 2026-08-24: Current Stabilization Handoff
 
 This `latest` handoff is for the current version-1 stabilization build. It is not a new feature sprint; it is the safer baseline after the page lifecycle, desktop, map, Properties, Knowledge Graph, data safety and documentation passes.

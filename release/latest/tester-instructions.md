@@ -1,5 +1,30 @@
 # Tester Instructions
 
+## 2026-09-10: 16.9 Combat UI Owner Acceptance
+
+Use a disposable/copied workspace, not the real campaign. This is automated/Foundation delivery, not an approved desktop release. Run `npm run dev:web` for the current source UI.
+
+1. On a map with two creatures, open `Бой и инициатива`, choose participants, enter known totals and press `Применить`. This prepares initiative only; Roll d20 and manual corrections still work before a session exists.
+2. Select the intended current participant and press `Начать бой`. Check round 1, the same current participant/order/totals and cleared markers; no reroll.
+3. Use Next through a full wrap: round increases once. Previous changes current participant but never reduces round. Direct participant selection does not change round; the corresponding existing token stays highlighted.
+4. Set Ready, Delayed and both markers on one participant. They remain through turns and do not skip/reorder anyone. Correct a number, toggle a marker and confirm the pending number remains; save the correction before Pause or participant editing.
+5. Edit participants while active. Retained members keep markers, additions start with false markers and explicit omissions leave the roster.
+6. Pause, close/reopen the map and verify round/current/order/totals/markers. All mutation controls except Resume/Finish remain disabled. Resume explicitly.
+7. Save an active round 3 session with a known current participant and mixed markers; close/reload the map, reopen this popup and compare all values. Next must continue from the restored current/round.
+8. Finish and reload: final state is read-only. New Combat gets a new session id, round 1 and cleared markers without changing prepared initiative.
+9. On disposable missing-reference fixtures, inspect token/page warnings in normal rows and Combat-only ids in `Проблемы боя`. No silent removal/replacement. Pending input + rejected Next must neither save the input nor advance the session.
+10. Check keyboard focus, Escape/return to toolbar, pressed markers and popup placement in desktop and constrained windows. Record manual acceptance or specific defects before authorizing 16.10.
+
+Focused automated route:
+
+```powershell
+npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs tests/browser/campaign-map-initiative.spec.mjs tests/browser/campaign-map-combat-integration.spec.mjs
+```
+
+The Combat UI spec attaches `combat-active-1280.png`, `combat-paused-1280.png`, `combat-active-480.png` and `combat-paused-480.png` at deterministic 1280x900 / 480x720 viewports. These are review evidence, not new approved pixel baselines. Existing approved popup baselines are unchanged.
+
+**MANUAL OWNER ACCEPTANCE REQUIRED BEFORE 16.10.**
+
 ## 2026-07-27: Current Handoff Smoke
 
 Start here when you receive the current build.

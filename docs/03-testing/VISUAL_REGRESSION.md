@@ -38,6 +38,10 @@ On platforms without an owner-approved snapshot file, including the Linux GitHub
 
 ## Автоматические Проверки
 
+### Combat UI Evidence (16.9)
+
+`tests/browser/campaign-map-combat-ui.spec.mjs` captures the existing Initiative/Combat popup in active and paused states at 1280x900 and 480x720. Deterministic fixtures expose round, current participant, initiative values, independent pressed markers and lifecycle controls. Structured checks cover viewport fit, horizontal overflow, keyboard focus and disabled states. Attachments are `combat-active-1280.png`, `combat-paused-1280.png`, `combat-active-480.png` and `combat-paused-480.png`; they are evidence only, not an approved pixel baseline. Owner manual acceptance remains required before 16.10.
+
 Запуск:
 
 ```powershell

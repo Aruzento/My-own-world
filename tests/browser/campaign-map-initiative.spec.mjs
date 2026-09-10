@@ -116,6 +116,8 @@ test(
             deps
           );
 
+          await new Promise(requestAnimationFrame);
+
           const popup =
             document.querySelector('.campaign-map-popup');
 
@@ -204,6 +206,7 @@ test(
 
           return {
             saveCount,
+            combatSession: store.getModel().combatSession,
             pickerNames,
             initiative:
               store.getModel().initiative,
@@ -227,6 +230,8 @@ test(
           };
         }
       );
+
+    expect(result.combatSession).toBeNull();
 
     expect(
       result.saveCount
@@ -384,6 +389,8 @@ test(
                 }
             }
           );
+
+          await new Promise(requestAnimationFrame);
 
           const popup =
             document.querySelector('.campaign-map-popup');
