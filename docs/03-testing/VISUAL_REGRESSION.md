@@ -40,7 +40,23 @@ On platforms without an owner-approved snapshot file, including the Linux GitHub
 
 ### Combat UI Evidence (16.9)
 
-`tests/browser/campaign-map-combat-ui.spec.mjs` captures the existing Initiative/Combat popup in active and paused states at 1280x900 and 480x720. Deterministic fixtures expose round, current participant, initiative values, independent pressed markers and lifecycle controls. Structured checks cover viewport fit, horizontal overflow, keyboard focus and disabled states. Attachments are `combat-active-1280.png`, `combat-paused-1280.png`, `combat-active-480.png` and `combat-paused-480.png`; they are evidence only, not an approved pixel baseline. Owner manual acceptance remains required before 16.10.
+The original `tests/browser/campaign-map-combat-ui.spec.mjs` evidence used two short names at 1280x900 / 480x720. It passed outer bounds and keyboard checks but missed compressed row internals. **16.9 owner manual acceptance FAILED** with realistic names/rosters; those original `combat-active-*` / `combat-paused-*` attachments are not sufficient usability evidence.
+
+Corrective 16.9.1 adds eight realistic named initiative participants plus one unresolved Combat-only member, mixed totals/flags, a current participant and a missing-page warning. Dark/gold/stone appearance and normal scale are explicit. No owner workspace is used. Every card is brought through the single list scroll area and checked for text/control/warning containment, intersections, adjacent-card separation, overflow and footer accessibility. Preparation/keyboard/lifecycle/reload checks remain active. Motion is not globally disabled for geometry tests, so animated positioning cannot be hidden by test CSS.
+
+Evidence is emitted under `test-results/campaign-map-combat-ui-rea-<test-id>-chromium/`:
+
+| Viewport | Active | Paused | Scrolled detail |
+| --- | --- | --- | --- |
+| 1280x900 | `combat-realistic-active-1280.png` | `combat-realistic-paused-1280.png` | `combat-realistic-details-1280.png` |
+| 480x720 | `combat-realistic-active-480.png` | `combat-realistic-paused-480.png` | `combat-realistic-details-480.png` |
+| 1024x768 | `combat-realistic-active-1024.png` | `combat-realistic-paused-1024.png` | `combat-realistic-details-1024.png` |
+
+Detail captures expose the longest name, warning and lower roster; partial cards at the scroll boundary are normal scrolling, not overlapping content. These screenshots require visual inspection and remain evidence only. No approved baseline is regenerated. Owner manual retest is required; 16.10 stays NEXT/HOLD.
+
+```powershell
+npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs --grep realistic
+```
 
 Запуск:
 

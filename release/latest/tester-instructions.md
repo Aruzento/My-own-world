@@ -1,5 +1,18 @@
 # Tester Instructions
 
+## 2026-09-11: 16.9.1 Realistic Roster Retest
+
+16.9 automated/Foundation passed but owner manual acceptance FAILED. This corrective needs a new owner decision; do not authorize 16.10 from test counts alone. Use only a disposable/copied workspace and the current source UI, not an old installed build.
+
+1. Repeat the existing 16.9 behavior route below with at least eight participants: `Существо3.Новая карта`, `Существо2.Новая карта`, `Громм Кровавый Торн`, `Очень Длинное Имя Персонажа Для Проверки Интерфейса`, `Лазарь`, `Рейнай`, `Азраэль`, `Страж Северных Врат`. Include varied initiative values and Ready, Delayed and both flags.
+2. At 1280x900 and 480x720, read each full wrapping name and initiative value/result. The current badge has its own slot; flags and warning text must remain below the main row. No text/control may extend into the next card.
+3. Scroll the roster to the bottom. Only that area should scroll, including unresolved-member warnings. Header, round/current navigation, Pause/Resume, Finish and Close must stay reachable without scrolling the browser page.
+4. Use Tab through name selection, initiative input and flags, Space on Ready/Delayed, and Enter on lifecycle controls. Focus must remain visible and move into the internal scroll area normally. Escape/Close returns to the toolbar.
+5. Pause and reopen: disabled states and all values remain readable. Resume/Finish remain reachable. In a disposable warning fixture, inspect the longest name with a missing-page warning and a Combat-only id with missing initiative; no repair or removal should occur.
+6. Record PASS or concrete remaining defects. Until owner PASS, 16.9 manual acceptance stays FAILED/awaiting retest and 16.10 stays NEXT/HOLD.
+
+Focused reproduction: `npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs --grep realistic`. Review `combat-realistic-{active,paused,details}-{1280,480,1024}.png` attachments documented in `docs/03-testing/VISUAL_REGRESSION.md`; these are not approved pixel baselines.
+
 ## 2026-09-10: 16.9 Combat UI Owner Acceptance
 
 Use a disposable/copied workspace, not the real campaign. This is automated/Foundation delivery, not an approved desktop release. Run `npm run dev:web` for the current source UI.

@@ -9,9 +9,15 @@ test.beforeEach(async ({ page }) => {
 });
 test.afterEach(async ({ page }) => expect(runtimeErrors.get(page)).toEqual([]));
 
-async function setup(page, status = null) {
+const realisticNames = [
+  'Существо3.Новая карта', 'Существо2.Новая карта', 'Громм Кровавый Торн',
+  'Очень Длинное Имя Персонажа Для Проверки Интерфейса',
+  'Лазарь', 'Рейнай', 'Азраэль', 'Страж Северных Врат'
+];
+
+async function setup(page, status = null, names = null) {
   await page.goto('/');
-  await page.evaluate(async status => {
+  await page.evaluate(async ({ status, names }) => {
     const { CampaignMapModel } = await import('/js/editor/campaignMapModel.js');
     const { getCampaignMapStore } = await import('/js/editor/campaignMapStore.js');
     const { serializeCampaignMapModelHTML, serializeCampaignMapDocumentHTML } = await import('/js/editor/campaignMapDataSerializer.js');
@@ -20,6 +26,8 @@ async function setup(page, status = null) {
     const { closeMapPopup } = await import('/js/editor/campaignMapPopupController.js');
     const { getPageById } = await import('/js/repository/pageRepository.js');
     const { setPages } = await import('/js/stateActions.js');
+    const { applyAppearance } = await import('/js/ui/themeManager.js');
+    applyAppearance({ theme: 'dark', accent: 'gold', background: 'stone', scale: 'normal' });
     setPages([{ id: 'page-a', title: 'Альфа' }, { id: 'page-b', title: 'Бета' }]);
     const initial = new CampaignMapModel({
       tokens: ['a', 'b', 'c'].map((tokenId, i) => ({ tokenId, type: 'creature', pageId: i < 2 ? `page-${tokenId}` : '',
@@ -32,6 +40,23 @@ async function setup(page, status = null) {
         { participantId: 'token:a', ready: true }, { participantId: 'token:b', delayed: true }
       ] } : null
     });
+    if (names) {
+      const tokens = names.map((name, i) => ({ tokenId: String.fromCharCode(97 + i), name,
+        type: 'creature', pageId: `fixture-page-${i}`, x: 10 + i * 5, y: 10, initiativeModifier: i % 3 - 1 }));
+      setPages(tokens.filter((_, i) => i !== 3).map(token => ({ id: token.pageId, title: token.name })));
+      initial.tokens = tokens;
+      if (status) {
+        initial.initiative = { activeParticipantId: 'token:c', participants: tokens.map((token, i) => ({
+          participantId: `token:${token.tokenId}`, tokenId: token.tokenId, pageId: token.pageId,
+          name: token.name, sourceMode: 'original', roll: [20, 4, 12, 18, 1, 9, 7, 15][i],
+          modifier: token.initiativeModifier, total: [20, 4, 12, 18, 1, 9, 7, 15][i] + token.initiativeModifier
+        })) };
+        initial.combatSession.participants = tokens.map((token, i) => ({
+          participantId: `token:${token.tokenId}`, ready: i % 2 === 0 || i === 3, delayed: i % 3 === 0
+        }));
+        initial.combatSession.participants.push({ participantId: 'missing:Страж-забытой-переправы', ready: true, delayed: false });
+      }
+    }
     const editor = document.querySelector('#editorArea');
     const harness = window.combatUI = { saves: 0, saved: '', failSave: false, failResolver: false };
     harness.snapshot = () => structuredClone(harness.store.getModel().toJSON());
@@ -59,10 +84,138 @@ async function setup(page, status = null) {
     harness.reload = () => harness.mount(harness.saved);
     harness.mount(serializeCampaignMapModelHTML({ title: 'Бой у переправы', model: initial }));
     harness.saved = serializeCampaignMapDocumentHTML(harness.map);
-  }, status);
+  }, { status, names });
   await page.locator('.campaign-initiative-btn').click();
   await expect(page.locator('#campaignMapPopup')).toBeVisible();
 }
+
+async function expectRosterGeometry(page) {
+  const errors = await popup(page).evaluate(root => {
+    const errors = [];
+    const rect = node => node.getBoundingClientRect();
+    const overlaps = (a, b) => Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1
+      && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1;
+    const inside = (a, b) => a.left >= b.left - 1 && a.top >= b.top - 1 && a.right <= b.right + 1 && a.bottom <= b.bottom + 1;
+    const cards = [...root.querySelectorAll('.campaign-initiative-row, .campaign-combat-unresolved')];
+    const scrollAreas = [...root.querySelectorAll('*')].filter(node =>
+      ['auto', 'scroll'].includes(getComputedStyle(node).overflowY) && node.scrollHeight > node.clientHeight + 1);
+    if (scrollAreas.length > 1 || scrollAreas.some(node => !node.classList.contains('campaign-initiative-scroll'))) errors.push('unexpected nested scrolling');
+    for (const [i, card] of cards.entries()) {
+      card.scrollIntoView({ block: 'nearest' });
+      const bounds = rect(card);
+      if (bounds.height <= 0 || card.scrollWidth > card.clientWidth + 1) errors.push(`card ${i}: size/overflow`);
+      const name = card.querySelector('.campaign-initiative-name') || card.querySelector('strong');
+      const text = document.createRange();
+      text.selectNodeContents(name);
+      const nameBounds = text.getBoundingClientRect();
+      if (!inside(nameBounds, bounds)) errors.push(`card ${i}: name outside card`);
+      const controls = [...card.querySelectorAll('input, button, .campaign-initiative-result, .campaign-combat-warning, .campaign-initiative-current-label')];
+      for (const control of controls) {
+        const controlBounds = rect(control);
+        if (!inside(controlBounds, bounds)) errors.push(`card ${i}: ${control.className} outside card`);
+        if (control !== name && !name.contains(control) && overlaps(nameBounds, controlBounds)) errors.push(`card ${i}: name overlaps ${control.className}`);
+      }
+      for (let j = 0; j < controls.length; j++) {
+        for (const other of controls.slice(j + 1)) {
+          if (!controls[j].contains(other) && !other.contains(controls[j]) && overlaps(rect(controls[j]), rect(other))) {
+            errors.push(`card ${i}: controls overlap`);
+          }
+        }
+      }
+      if (cards[i + 1] && overlaps(bounds, rect(cards[i + 1]))) errors.push(`card ${i}: overlaps next card`);
+    }
+    const bounds = rect(root);
+    if (!inside(bounds, { left: 0, top: 0, right: innerWidth, bottom: innerHeight })) errors.push(`popup outside viewport: ${JSON.stringify(bounds.toJSON())}`);
+    if (root.scrollWidth > root.clientWidth + 1 || root.scrollHeight > root.clientHeight + 1) errors.push('popup scrolls/overflows');
+    if (document.scrollingElement.scrollWidth > innerWidth + 1 || document.scrollingElement.scrollTop !== 0) errors.push('page scrolls/overflows');
+    return errors;
+  });
+  expect(errors).toEqual([]);
+}
+
+async function expectReachableFooter(page, status) {
+  const scroll = popup(page).locator('.campaign-initiative-scroll');
+  expect(await scroll.evaluate(node => node.scrollHeight > node.clientHeight)).toBe(true);
+  const lifecycle = status === 'active' ? '.campaign-combat-pause-btn' : '.campaign-combat-resume-btn';
+  for (const selector of [lifecycle, '.campaign-combat-finish-btn', '.campaign-initiative-close-btn']) {
+    const button = popup(page).locator(selector);
+    await expect(button).toBeInViewport({ ratio: 1 });
+    expect(await button.evaluate(node => {
+      const r = node.getBoundingClientRect();
+      return node.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+    })).toBe(true);
+    await button.click({ trial: true });
+  }
+}
+
+for (const viewport of [{ width: 1280, height: 900 }, { width: 480, height: 720 }, { width: 1024, height: 768 }]) {
+  test(`realistic roster geometry, footer and evidence ${viewport.width}`, async ({ page }, testInfo) => {
+    await page.setViewportSize(viewport);
+    await setup(page, 'active', realisticNames);
+    await page.evaluate(() => document.fonts.ready);
+    await expect(popup(page).locator('.campaign-initiative-order-row')).toHaveCount(8);
+    await expect(row(page, 'd')).toContainText('Не найдена страница источника');
+    await expect(row(page, 'd').locator('[aria-pressed="true"]')).toHaveCount(2);
+    for (const status of ['active', 'paused']) {
+      await expectRosterGeometry(page);
+      await expectReachableFooter(page, status);
+      await popup(page).locator('.campaign-initiative-scroll').evaluate(node => { node.scrollTop = 0; });
+      const path = testInfo.outputPath(`combat-realistic-${status}-${viewport.width}.png`);
+      await popup(page).screenshot({ path, animations: 'disabled' });
+      await testInfo.attach(`combat-realistic-${status}`, { path, contentType: 'image/png' });
+      if (status === 'active') {
+        await row(page, 'd').evaluate(node => node.scrollIntoView({ block: 'start' }));
+        const detailPath = testInfo.outputPath(`combat-realistic-details-${viewport.width}.png`);
+        await popup(page).screenshot({ path: detailPath, animations: 'disabled' });
+        await testInfo.attach('combat-realistic-details', { path: detailPath, contentType: 'image/png' });
+      }
+      if (status === 'active') await action(page, '.campaign-combat-pause-btn');
+    }
+    await popup(page).locator('.campaign-combat-resume-btn').focus();
+    await page.keyboard.press('Enter');
+    await expect(popup(page).locator('.campaign-combat-pause-btn')).toBeFocused();
+    const select = row(page, 'h').locator('.campaign-initiative-select');
+    await select.focus();
+    await expect(select).toBeInViewport({ ratio: 1 });
+    await page.keyboard.press('Tab');
+    await expect(row(page, 'h').locator('.campaign-initiative-value')).toBeFocused();
+    await page.keyboard.press('Tab');
+    const ready = row(page, 'h').locator('[data-combat-flag="ready"]');
+    await expect(ready).toBeFocused();
+    await page.keyboard.press('Space');
+    await expect(ready).toHaveAttribute('aria-pressed', 'true');
+    await expect(ready).toBeFocused();
+    await expect(ready).toBeInViewport({ ratio: 1 });
+    expect(await ready.evaluate(node => getComputedStyle(node).outlineStyle)).not.toBe('none');
+    await action(page, '.campaign-combat-finish-btn');
+    await expect(popup(page).locator('.campaign-combat-status')).toHaveText('Завершён');
+    await action(page, '.campaign-initiative-close-btn');
+    await expect(popup(page)).toBeHidden();
+    await expect(page.locator('.campaign-initiative-btn')).toBeFocused();
+  });
+}
+
+test('realistic pre-combat picker rolls, edits, applies and starts without losing long names', async ({ page }) => {
+  await page.setViewportSize({ width: 480, height: 720 });
+  await setup(page, null, realisticNames);
+  await expectRosterGeometry(page);
+  await action(page, '.campaign-initiative-roll-btn');
+  for (const input of await popup(page).locator('.campaign-initiative-value').all()) {
+    expect(Number(await input.inputValue())).toBeGreaterThanOrEqual(0);
+    expect(Number(await input.inputValue())).toBeLessThanOrEqual(21);
+  }
+  await popup(page).locator('[data-participant-id="token:d"] .campaign-initiative-value').fill('31');
+  await popup(page).locator('.campaign-initiative-checkbox[value="h"]').uncheck();
+  await action(page, '.campaign-initiative-save-btn');
+  await expect(popup(page).locator('.campaign-initiative-order-row')).toHaveCount(7);
+  await expect(row(page, 'd').locator('.campaign-initiative-value')).toHaveValue('31');
+  await expect(row(page, 'd').locator('.campaign-initiative-name')).toHaveText(realisticNames[3]);
+  await expectRosterGeometry(page);
+  await action(page, '.campaign-combat-start-btn');
+  expect((await snapshot(page)).combatSession).toMatchObject({ status: 'active', round: 1 });
+  await reload(page);
+  await expect(row(page, 'd').locator('.campaign-initiative-value')).toHaveValue('31');
+});
 
 const popup = page => page.locator('#campaignMapPopup');
 const row = (page, id) => popup(page).locator(`.campaign-initiative-order-row[data-participant-id="token:${id}"]`);

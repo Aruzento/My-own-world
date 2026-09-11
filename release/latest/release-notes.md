@@ -1,5 +1,12 @@
 # Release Notes
 
+## 2026-09-11: Combat UI 16.9.1 - Owner Retest Required
+
+- Owner manual acceptance of 16.9 failed despite automated/Foundation PASS: realistic names and controls collided in compressed rows.
+- The existing popup now separates full wrapping names/current badge, initiative input/result, Ready/Delayed and warnings. A wider responsive layout gives the roster one internal scrollbar while navigation and lifecycle/footer actions remain reachable.
+- Combat lifecycle, progression, flags, initiative edits, save/reload and formats are unchanged. 16.9.1 is automated corrective delivery, not manual acceptance. 16.10 remains NEXT/HOLD; AI Core remains LATER.
+- Retest the realistic 8+ member route in `release/latest/tester-instructions.md`; no new combat action mechanics are included.
+
 ## 2026-09-10: Combat UI 16.9 - Manual Acceptance Pending
 
 - The existing Campaign Map Initiative popup is now `Бой и инициатива`. `Применить` prepares initiative; a separate `Начать бой` starts a persistent session without rerolling or resetting the selected participant.

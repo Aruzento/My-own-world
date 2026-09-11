@@ -9,7 +9,7 @@ owner_zone: "user-release"
 
 ## Текущие заметки
 
-- Combat UI 16.9 is automated/Foundation delivery pending owner manual acceptance before 16.10. Missing-reference warnings never repair data; Combat-only missing initiative members block ordinary roster editing rather than silently removing them. Save manual initiative inputs before lifecycle/participant-editor changes. Real desktop and recovery/EventStore integration acceptance is not claimed by this leaf.
+- Combat UI 16.9 automated/Foundation passed, but owner manual acceptance FAILED due to realistic-roster layout collisions. Corrective 16.9.1 provides structured wrapping cards, one internal roster scrollbar and reachable footer; automated coverage is not an owner acceptance decision. Manual retest is required and 16.10 remains NEXT/HOLD. Missing-reference warnings never repair data; Combat-only missing initiative members block ordinary roster editing rather than silently removing them. Save manual initiative inputs before lifecycle/participant-editor changes. Real desktop and recovery/EventStore integration acceptance is not claimed by this leaf.
 
 - Desktop installed-app behavior still requires a manual pass before sending a build to another person.
 - Large maps and large real workspaces can still expose subjective UI delay even when automated performance checks are green.

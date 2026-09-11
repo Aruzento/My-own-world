@@ -215,6 +215,16 @@ function getPopupSize(
   fallbackHeight
 ) {
 
+  // Apply constraints before measuring: wrapping/scrolling may change both axes.
+  popup.style.maxWidth =
+    `calc(100vw - ${VIEWPORT_PADDING * 2}px)`;
+
+  popup.style.maxHeight =
+    `calc(100vh - ${VIEWPORT_PADDING * 2}px)`;
+
+  popup.style.overflow =
+    'auto';
+
   return {
     width: popup.offsetWidth || fallbackWidth,
     height: popup.offsetHeight || fallbackHeight
@@ -232,15 +242,6 @@ function applyPopupPosition(
     avoidGap = VIEWPORT_PADDING
   } = {}
 ) {
-
-  popup.style.maxWidth =
-    `calc(100vw - ${VIEWPORT_PADDING * 2}px)`;
-
-  popup.style.maxHeight =
-    `calc(100vh - ${VIEWPORT_PADDING * 2}px)`;
-
-  popup.style.overflow =
-    'auto';
 
   const position =
     resolvePopupPosition({

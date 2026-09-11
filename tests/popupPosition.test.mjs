@@ -2,8 +2,36 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  positionPopupAtPoint,
+  positionPopupNearAnchor,
   resolvePopupPosition
 } from '../js/ui/popupPosition.js';
+
+for (const mode of ['anchor', 'point']) {
+  test(`popup ${mode} placement measures dimensions after applying viewport constraints`, () => {
+    const previousWindow = globalThis.window;
+    globalThis.window = { innerWidth: 1280, innerHeight: 900 };
+    try {
+      const popup = {
+        style: {},
+        get offsetWidth() { return this.style.maxWidth ? 500 : 390; },
+        get offsetHeight() { return this.style.maxHeight ? 876 : 720; },
+        getBoundingClientRect() {
+          return { left: Number.parseFloat(this.style.left), top: Number.parseFloat(this.style.top) };
+        }
+      };
+      if (mode === 'anchor') {
+        positionPopupNearAnchor(popup, { getBoundingClientRect: () => ({ left: 1100, top: 80, bottom: 110 }) });
+      } else positionPopupAtPoint(popup, 1100, 118);
+      assert.equal(popup.style.left, '768px');
+      assert.equal(popup.style.top, '12px');
+      assert.equal(popup.style.overflow, 'auto');
+    } finally {
+      if (previousWindow === undefined) delete globalThis.window;
+      else globalThis.window = previousWindow;
+    }
+  });
+}
 
 
 test(

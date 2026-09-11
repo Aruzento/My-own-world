@@ -6,6 +6,29 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-11: 0.0.1.16.9.1 Combat UI Usability Fix
+
+### Disposition And Root Cause
+
+- Focused corrective from clean `main`, HEAD/origin/main `8b43a06a94d77e64bf00d0bc4c75712995287160`. 16.9 automated/Foundation originally passed; owner manual acceptance FAILED. Its two short-name screenshot fixtures and outer-popup bounds did not test realistic row internals. Readiness remains automated/Foundation, not owner-accepted Usable or Release-ready. 16.9.1 is automated DONE awaiting owner manual retest; Phase 16 ACTIVE, 16.1-16.8 DONE, 16.10 NEXT/HOLD, AI Core LATER.
+- Regression-first: all four new browser cases failed against the original UI. A grid list capped at 280px compressed multi-region cards with a 38px minimum; controls/text extended outside their rows. Flat order-row columns and a name containing the current badge compounded the problem. Long pre-combat text also exceeded its allocated area.
+- Large-popup regression additionally exposed shared positioning measuring before applying max dimensions. Separate anchor/point unit regressions failed first. The existing brand skin also supplied transition duration with default `all`, animating Initiative max-height/top and leaving stale geometry after placement.
+
+### Bounded Changes
+
+- Existing order card markup now has main/identity/current-badge and stable 64px input/result cluster regions, followed by independent flags and warnings. Name text wraps in full; cards grow to content height. The active marker is outside the name button; aria-current, labels, pressed/disabled states and data-focus-key remain intact. Picker selection, Roll d20, manual values, Apply and Start are preserved.
+- Existing popup shell/body use flex with min-height:0. One internal roster scroll area contains order and unresolved-member sections; header/summary/navigation/lifecycle/footer do not scroll. Width is 500px where possible and viewport minus normal padding when constrained. Initiative transitions are limited to paint properties. No hidden whole-card collision masking, smaller-font workaround, negative offsets, extra popup or positioning owner.
+- `popupPosition` moves its existing max-width/max-height/overflow assignment before size measurement, without API changes. PopupManager, CombatSessionModel, CampaignMapStore, initiative ownership, save/rollback, serializer, persistent schemas and Combat contract are unchanged. No EventStore, migration, dependencies, real workspace mutation, attacks/damage/HP/effects or 16.10 work.
+
+### Evidence And Handoff
+
+- Synthetic fixture: eight named initiative participants plus one unresolved Combat-only member, mixed totals, current participant, independent/both flags and a missing-page warning. Names include `Существо3.Новая карта`, `Существо2.Новая карта`, `Громм Кровавый Торн`, `Очень Длинное Имя Персонажа Для Проверки Интерфейса`, `Лазарь`, `Рейнай`, `Азраэль`, `Страж Северных Врат`.
+- DOM checks traverse every card through internal scrolling: text/control/warning containment, pairwise intersections, next-card separation, positive dimensions, horizontal overflow, one scroll region, popup viewport bounds and no page scrolling. Footer hit-testing/trial clicks and real pause/resume/finish/close, keyboard select/input/flag focus and Space/Enter activation are covered. A separate narrow pre-combat case retains long names and manual values through Start/reload.
+- Focused browser: 59/59 PASS across Combat UI (19), initiative, map UI, PopupManager lifecycle and six unchanged approved screenshot baselines. Shared positioning unit: 5/5 PASS. Active/paused and scrolled detail evidence at 1280x900, 480x720 and 1024x768 is described in `VISUAL_REGRESSION.md`; screenshots are temporary evidence, not newly approved baselines.
+- `npm run verify:quick`, `npm run verify` and `npm run verify:full`: PASS, 789/789 unit tests; full browser suite 219/219 PASS, including the six unchanged approved popup comparisons. `npm run docs:index`: PASS, 95 documents, no metadata/zone/status contradictions. `npm run check:encoding` and `git diff --check`: PASS. Generic gates also passed UI polish, disposable 900-page performance and manual ZIP integrity; project file audit: 745 files, zero delete/mojibake candidates; skills 19/19; task contracts 4/4. The audit's generated inventory/date/local-size drift was inspected and excluded from this focused commit.
+- All nine realistic active/paused/scrolled-detail screenshots were visually inspected; long names, values, markers and warnings are separated and the footer remains visible. Owner manual retest remains required regardless of automated outcome. Desktop build/native smoke are not claimed; no real workspace was opened or modified. Performance impact is bounded to popup DOM layout and one existing measurement, not a workspace scan.
+- Plan, visual policy, release notes, tester instructions and known issues record the manual FAIL and continued HOLD. No automatic push.
+
 ## 2026-09-10: 0.0.1.16.9 Combat UI + Reload Workflow
 
 ### Disposition

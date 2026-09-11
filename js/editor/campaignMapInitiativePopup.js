@@ -297,8 +297,8 @@ function renderOrderList(popup, model, diagnostics) {
     problems.innerHTML = unresolved.map(member => `
       <div class="campaign-combat-unresolved" data-participant-id="${escapeAttribute(member.participantId)}">
         <strong>${escapeHTML(member.participantId)}</strong>
-        ${getWarningsHTML(['initiative-participant'])}
         ${getFlagsHTML(member, isFrozen(model))}
+        ${getWarningsHTML(['initiative-participant'])}
       </div>`).join('');
     problems.parentElement.hidden = !unresolved.length;
   }
@@ -545,11 +545,11 @@ function getPickerHTML() {
     icon: 'skill',
     children: `
       <div class="campaign-initiative-message" role="status" aria-live="polite"></div>
-      ${getMapPopupSectionHTML({
+      <div class="campaign-initiative-scroll">${getMapPopupSectionHTML({
         label: INITIATIVE_TEXT.edit,
         key: 'participants',
         children: '<div class="campaign-initiative-list"></div>'
-      })}
+      })}</div>
       <div class="campaign-map-popup-actions campaign-initiative-actions">
         <button class="campaign-initiative-save-btn" type="button">${INITIATIVE_TEXT.apply}</button>
         <button class="campaign-initiative-roll-btn" type="button">${INITIATIVE_TEXT.rollAll}</button>
@@ -584,8 +584,10 @@ function getOrderHTML(session) {
           <button class="mow-icon-button campaign-initiative-next-btn" data-focus-key="next" type="button" title="${INITIATIVE_TEXT.next}" aria-label="${INITIATIVE_TEXT.next}" ${frozen ? 'disabled' : ''}>${iconSvg('skip-forward')}</button>
         </div>`
       })}
+      <div class="campaign-initiative-scroll">
       ${getMapPopupSectionHTML({ label: INITIATIVE_TEXT.turnTitle, key: 'order', children: '<div class="campaign-initiative-order-list"></div>' })}
       ${session ? getMapPopupSectionHTML({ label: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b \u0431\u043e\u044f', key: 'combat-problems', children: '<div class="campaign-combat-problems"></div>' }) : ''}
+      </div>
       <div class="campaign-map-popup-actions campaign-combat-lifecycle">${lifecycle}</div>
       <div class="campaign-map-popup-actions campaign-initiative-actions campaign-initiative-order-actions">
         <button class="mow-button campaign-initiative-save-order-btn" data-focus-key="order" type="button" ${frozen ? 'disabled' : ''}>${INITIATIVE_TEXT.saveOrder}</button>
@@ -633,19 +635,25 @@ function getPickerRowHTML(
 function getOrderRowHTML(participant, options = {}) {
   return `
     <div class="${getOrderRowClass(options)}" data-participant-id="${escapeAttribute(participant.participantId)}">
+      <div class="campaign-initiative-main">
+      <div class="campaign-initiative-identity">
       <button class="mow-button campaign-initiative-name campaign-initiative-select" type="button"
         data-focus-key="select:${escapeAttribute(participant.participantId)}"
         aria-label="${escapeAttribute(INITIATIVE_TEXT.setActive + ': ' + participant.name)}"
         ${options.active ? 'aria-current="true"' : ''} ${options.frozen ? 'disabled' : ''}>
-        ${escapeHTML(participant.name)}${options.active ? '<span class="campaign-initiative-current-label">\u0425\u043e\u0434</span>' : ''}
+        ${escapeHTML(participant.name)}
       </button>
-      <span class="campaign-initiative-meta">${escapeHTML(getParticipantMetaText(participant))}</span>
+      ${options.active ? '<span class="campaign-initiative-current-label">\u0425\u043e\u0434</span>' : ''}
+      </div>
+      <div class="campaign-initiative-score">
       <input class="mow-input campaign-initiative-value" type="number"
         value="${escapeAttribute(participant.total)}" data-modifier="${escapeAttribute(participant.modifier)}"
         data-focus-key="value:${escapeAttribute(participant.participantId)}"
         aria-label="${escapeAttribute(INITIATIVE_TEXT.initiative + ': ' + participant.name)}"
         ${options.frozen ? 'disabled' : ''}>
       <span class="campaign-initiative-result">${escapeHTML(getParticipantResultText(participant))}</span>
+      </div>
+      </div>
       ${options.member ? getFlagsHTML(options.member, options.frozen) : ''}
       ${getWarningsHTML(options.warnings || [])}
     </div>`;
@@ -666,7 +674,7 @@ function getWarningsHTML(types) {
     token: '\u041d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d \u0442\u043e\u043a\u0435\u043d',
     page: '\u041d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u0430 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u0430 \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0430'
   };
-  return types.map(type => `<div class="campaign-combat-warning">${escapeHTML(labels[type])}</div>`).join('');
+  return types.length ? `<div class="campaign-combat-warnings">${types.map(type => `<div class="campaign-combat-warning">${escapeHTML(labels[type])}</div>`).join('')}</div>` : '';
 }
 
 
