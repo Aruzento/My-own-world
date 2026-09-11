@@ -34,6 +34,7 @@ for (const [from, method, to] of [
 }
 
 for (const [from, method] of [
+  ['active', 'prepareNextCombatSession'], ['paused', 'prepareNextCombatSession'], [null, 'prepareNextCombatSession'],
   ['paused', 'pauseCombatSession'], ['active', 'resumeCombatSession'],
   ['finished', 'pauseCombatSession'], ['finished', 'resumeCombatSession'], ['finished', 'finishCombatSession'],
   [null, 'pauseCombatSession'], [null, 'resumeCombatSession'], [null, 'finishCombatSession']
@@ -49,6 +50,20 @@ for (const [from, method] of [
     assert.equal(store.isDirty(), false);
   });
 }
+
+test('prepare next combat publishes null once and preserves all other map state', t => {
+  const store = fixture('finished');
+  store.getModel().initiative.participants.reverse();
+  const before = structuredClone(store.getModel().toJSON());
+  const setter = t.mock.method(store, 'setCombatSession');
+  const dirty = t.mock.method(store, 'markDirty');
+  const dom = t.mock.method(store, 'commitToDOM');
+  assert.deepEqual(store.prepareNextCombatSession(), { ok: true, operation: 'prepare-next', session: null });
+  assert.deepEqual(store.getModel().toJSON(), { ...before, combatSession: null });
+  assert.deepEqual(setter.mock.calls[0].arguments, [null]);
+  for (const spy of [setter, dirty, dom]) assert.equal(spy.mock.callCount(), 1);
+  assert.equal(store.isDirty(), true);
+});
 
 for (const method of ['nextCombatTurn', 'previousCombatTurn']) {
   test(`${method} accepts pending initiative values only with successful aggregate progression`, t => {

@@ -238,11 +238,20 @@ function renderOrderPopup(popup, store, deps, anchor) {
 }
 
 
+function renderParticipantPicker(popup, store, deps, anchor) {
+  renderPickerPopup(popup, store.getModel());
+  bindPickerActions(popup, store, deps, anchor);
+  positionPopupNearAnchor(popup, anchor, {
+    avoid: () => document.querySelector('.campaign-map-properties-panel')
+  });
+}
+
+
 function bindOrderActions(popup, store, deps, anchor) {
-  const bind = (selector, operation) => {
+  const bind = (selector, operation, options) => {
     popup.querySelector(selector)?.addEventListener('click', event => {
       event.preventDefault();
-      void runPopupAction(popup, store, deps, anchor, operation);
+      void runPopupAction(popup, store, deps, anchor, operation, options);
     });
   };
   bind('.campaign-initiative-prev-btn', () => shiftInitiativeTurn(popup, store, -1));
@@ -254,6 +263,7 @@ function bindOrderActions(popup, store, deps, anchor) {
   bind('.campaign-combat-pause-btn', lifecycle(() => store.pauseCombatSession()));
   bind('.campaign-combat-resume-btn', lifecycle(() => store.resumeCombatSession()));
   bind('.campaign-combat-finish-btn', lifecycle(() => store.finishCombatSession()));
+  bind('.campaign-combat-prepare-btn', lifecycle(() => store.prepareNextCombatSession()), { showPicker: true });
   bindOrderListActions(popup, store, deps, anchor);
   popup.querySelector('.campaign-initiative-edit-btn')?.addEventListener('click', event => {
     event.preventDefault();
@@ -266,8 +276,7 @@ function bindOrderActions(popup, store, deps, anchor) {
       showMessage(popup, rejectionText('roster-mismatch'));
       return;
     }
-    renderPickerPopup(popup, store.getModel());
-    bindPickerActions(popup, store, deps, anchor);
+    renderParticipantPicker(popup, store, deps, anchor);
     popup.querySelector('.campaign-initiative-checkbox, .campaign-initiative-close-btn')?.focus();
   });
   popup.querySelector('.campaign-initiative-close-btn').addEventListener('click', closeMapPopup);
@@ -471,7 +480,7 @@ function showMessage(popup, message) {
   if (node) node.textContent = message;
 }
 
-async function runPopupAction(popup, store, deps, anchor, operation) {
+async function runPopupAction(popup, store, deps, anchor, operation, { showPicker = false } = {}) {
   if (popup.getAttribute('aria-busy') === 'true') return;
   const frame = popup.firstElementChild;
   const focusKey = document.activeElement?.dataset.focusKey;
@@ -504,7 +513,8 @@ async function runPopupAction(popup, store, deps, anchor, operation) {
       popup.removeAttribute('aria-busy');
       controls.forEach((control, i) => { control.disabled = disabled[i]; });
       if (!popup.classList.contains('hidden')) {
-        renderOrderPopup(popup, store, deps, anchor);
+        if (showPicker && !saveFailed) renderParticipantPicker(popup, store, deps, anchor);
+        else renderOrderPopup(popup, store, deps, anchor);
         // Marker updates must not discard unrelated, still-unsubmitted form input.
         for (const pending of pendingInputs) {
           const member = store.getModel().initiative.participants.find(member => member.participantId === pending.participantId);
@@ -513,7 +523,7 @@ async function runPopupAction(popup, store, deps, anchor, operation) {
         }
         if (saveFailed) showMessage(popup, '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0431\u043e\u044f. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u044f \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b.');
         const focusTarget = focusKey && popup.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]:not(:disabled)`);
-        (focusTarget || popup.querySelector('.campaign-combat-resume-btn, .campaign-combat-pause-btn, .campaign-combat-start-btn, .campaign-initiative-close-btn'))?.focus();
+        (focusTarget || popup.querySelector('.campaign-initiative-checkbox, .campaign-combat-resume-btn, .campaign-combat-pause-btn, .campaign-combat-start-btn, .campaign-combat-prepare-btn, .campaign-initiative-close-btn'))?.focus();
       }
     }
   }
@@ -563,8 +573,10 @@ function getPickerHTML() {
 function getOrderHTML(session) {
   const frozen = Boolean(session && session.status !== 'active');
   const statusText = { active: '\u0410\u043a\u0442\u0438\u0432\u0435\u043d', paused: '\u041f\u0430\u0443\u0437\u0430', finished: '\u0417\u0430\u0432\u0435\u0440\u0448\u0451\u043d' }[session?.status];
-  const lifecycle = !session || session.status === 'finished'
-    ? `<button class="mow-button campaign-combat-start-btn" data-focus-key="start" type="button">${session ? '\u041d\u043e\u0432\u044b\u0439 \u0431\u043e\u0439' : '\u041d\u0430\u0447\u0430\u0442\u044c \u0431\u043e\u0439'}</button>`
+  const lifecycle = session?.status === 'finished'
+    ? '<button class="mow-button campaign-combat-prepare-btn" data-focus-key="prepare" type="button">\u041f\u043e\u0434\u0433\u043e\u0442\u043e\u0432\u0438\u0442\u044c \u043d\u043e\u0432\u044b\u0439 \u0431\u043e\u0439</button>'
+    : !session
+    ? '<button class="mow-button campaign-combat-start-btn" data-focus-key="start" type="button">\u041d\u0430\u0447\u0430\u0442\u044c \u0431\u043e\u0439</button>'
     : `<button class="mow-button campaign-combat-${session.status === 'paused' ? 'resume' : 'pause'}-btn" data-focus-key="lifecycle" type="button">${session.status === 'paused' ? '\u041f\u0440\u043e\u0434\u043e\u043b\u0436\u0438\u0442\u044c' : '\u041f\u0430\u0443\u0437\u0430'}</button>
        <button class="mow-button campaign-combat-finish-btn" data-focus-key="finish" type="button">\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c \u0431\u043e\u0439</button>`;
   return getMapPopupFrameHTML({

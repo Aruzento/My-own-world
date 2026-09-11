@@ -1,5 +1,12 @@
 # Release Notes
 
+## 2026-09-11: Combat 16.9.2 - Prepare Before Starting Again
+
+- A finished battle now offers `Подготовить новый бой`, not an immediate new Start. The existing participant picker opens with previous initiative intact: keep/remove/add participants, Roll d20 or edit values, then Apply.
+- Apply saves initiative without starting combat. Review order/current participant, then explicitly press `Начать бой` for a fresh session id, round 1 and cleared Ready/Delayed. Ready/Delayed remain visible and independent during Combat.
+- Preparation survives save/reload as normal pre-combat initiative; `Участники` remains available. A failed save remains an error and dirty state, not durable success. No persistent format change or new preparation mode.
+- 16.9.1 layout is preserved. Automated delivery awaits owner manual acceptance of layout and flow; 16.10 remains NEXT/HOLD, AI Core LATER.
+
 ## 2026-09-11: Combat UI 16.9.1 - Owner Retest Required
 
 - Owner manual acceptance of 16.9 failed despite automated/Foundation PASS: realistic names and controls collided in compressed rows.
@@ -10,7 +17,7 @@
 ## 2026-09-10: Combat UI 16.9 - Manual Acceptance Pending
 
 - The existing Campaign Map Initiative popup is now `Бой и инициатива`. `Применить` prepares initiative; a separate `Начать бой` starts a persistent session without rerolling or resetting the selected participant.
-- Active sessions show round/current participant, independent `Готов` / `Отложен` markers, Previous/Next and Pause/Finish. Paused sessions freeze progression, values, roster and markers until explicit Resume; finished sessions retain the final state and offer `Новый бой`.
+- Active sessions show round/current participant, independent `Готов` / `Отложен` markers, Previous/Next and Pause/Finish. Paused sessions freeze progression, values, roster and markers until explicit Resume; finished sessions retain the final state. The original `Новый бой` action is superseded by the 16.9.2 preparation flow above.
 - Missing initiative/token/page references remain visible without repair. Active/paused/finished state survives the existing map save/reload path. Marker changes preserve pending numeric input; save that input before changing lifecycle or opening participant editing.
 - Readiness is automated/Foundation only. Owner manual UI acceptance is required before 16.10. No attack/damage/HP/effect mechanics, EventStore integration or persistence migration is included. An unsuccessful save remains a save error, not a durable success; check page-save state before leaving.
 - Manual route and screenshot evidence: the 16.9 section at the top of `release/latest/tester-instructions.md`.

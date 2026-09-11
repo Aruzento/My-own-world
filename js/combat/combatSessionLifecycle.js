@@ -13,7 +13,9 @@ export const COMBAT_SESSION_LIFECYCLE_OPERATIONS =
     RESUME:
       'resume',
     FINISH:
-      'finish'
+      'finish',
+    PREPARE_NEXT:
+      'prepare-next'
   });
 
 export const COMBAT_SESSION_LIFECYCLE_REASONS =
@@ -170,6 +172,20 @@ export function finishCombatSession(
     ],
     COMBAT_SESSION_STATUSES.FINISHED
   );
+}
+
+
+export function prepareNextCombatSession(currentSession) {
+  const operation = COMBAT_SESSION_LIFECYCLE_OPERATIONS.PREPARE_NEXT;
+  const current = normalizeCurrentSession(currentSession);
+  if (current?.status !== COMBAT_SESSION_STATUSES.FINISHED) {
+    return createRejectedResult(
+      operation,
+      COMBAT_SESSION_LIFECYCLE_REASONS.INVALID_TRANSITION,
+      current
+    );
+  }
+  return createSuccessResult(operation, null);
 }
 
 

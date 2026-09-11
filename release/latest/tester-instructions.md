@@ -1,5 +1,18 @@
 # Tester Instructions
 
+## 2026-09-11: 16.9.2 Prepare Next Combat Acceptance
+
+Use only a disposable/copied workspace and current source UI. Owner acceptance remains pending; 16.10 stays NEXT/HOLD. Keep the 16.9.1 realistic-roster/layout retest below.
+
+1. Finish a battle with known initiative/current participant and mixed Ready/Delayed. Until `Подготовить новый бой` is pressed, final state remains read-only.
+2. Press `Подготовить новый бой`, also checking Enter from keyboard focus. The participant picker opens with the old roster selected and the same values. No new battle has started; no reroll, sort or current-participant reset happened.
+3. Remove one participant, add another available one, use Roll d20 and enter known manual values. Press `Применить`. Review order and select the intended current participant. This still has no Combat Session.
+4. Press `Начать бой`. Verify round 1, prepared roster/current/values and false Ready/Delayed markers. Set either/both markers to confirm unchanged behavior. Save/reload and compare.
+5. Repeat Finish -> Prepare, then close/reload without Apply. The map opens in pre-combat order, not finished Combat. `Участники` opens the editable picker; preparation and an explicit new Start remain possible.
+6. Repeat at 480x720 with long names: picker/order must stay bounded, internally scrollable and footer actions reachable. Record owner PASS or specific defects, not just automated test results.
+
+Focused automated route: `npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs tests/browser/campaign-map-initiative.spec.mjs tests/browser/campaign-map-combat-integration.spec.mjs`. Disposable injected save-failure coverage verifies readable error/dirty state and reload of the last saved finished session. Never induce write failure in real campaign data.
+
 ## 2026-09-11: 16.9.1 Realistic Roster Retest
 
 16.9 automated/Foundation passed but owner manual acceptance FAILED. This corrective needs a new owner decision; do not authorize 16.10 from test counts alone. Use only a disposable/copied workspace and the current source UI, not an old installed build.
@@ -24,7 +37,7 @@ Use a disposable/copied workspace, not the real campaign. This is automated/Foun
 5. Edit participants while active. Retained members keep markers, additions start with false markers and explicit omissions leave the roster.
 6. Pause, close/reopen the map and verify round/current/order/totals/markers. All mutation controls except Resume/Finish remain disabled. Resume explicitly.
 7. Save an active round 3 session with a known current participant and mixed markers; close/reload the map, reopen this popup and compare all values. Next must continue from the restored current/round.
-8. Finish and reload: final state is read-only. New Combat gets a new session id, round 1 and cleared markers without changing prepared initiative.
+8. Finish and reload: final state is read-only. Use `Подготовить новый бой`, edit/apply initiative, then explicitly `Начать бой` as in the 16.9.2 route above. New Combat gets a new session id, round 1 and cleared markers without changing prepared initiative.
 9. On disposable missing-reference fixtures, inspect token/page warnings in normal rows and Combat-only ids in `Проблемы боя`. No silent removal/replacement. Pending input + rejected Next must neither save the input nor advance the session.
 10. Check keyboard focus, Escape/return to toolbar, pressed markers and popup placement in desktop and constrained windows. Record manual acceptance or specific defects before authorizing 16.10.
 

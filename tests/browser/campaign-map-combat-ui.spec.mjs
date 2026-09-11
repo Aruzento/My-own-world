@@ -219,6 +219,7 @@ test('realistic pre-combat picker rolls, edits, applies and starts without losin
 
 const popup = page => page.locator('#campaignMapPopup');
 const row = (page, id) => popup(page).locator(`.campaign-initiative-order-row[data-participant-id="token:${id}"]`);
+const pickerRow = (page, id) => popup(page).locator(`label.campaign-initiative-row[data-participant-id="token:${id}"]`);
 const snapshot = page => page.evaluate(() => window.combatUI.snapshot());
 async function action(page, selector) {
   await popup(page).locator(selector).click();
@@ -269,7 +270,7 @@ test('prepare without combat, start, UI progression and markers survive active r
   expect(await page.evaluate(() => window.combatUI.saves)).toBe(12);
 });
 
-test('pause resume finish and new combat use one save each and retain read-only reload state', async ({ page }) => {
+test('pause resume finish prepare and start use one save each and retain read-only reload state', async ({ page }) => {
   await setup(page, 'active');
   const original = await snapshot(page);
   await action(page, '.campaign-combat-pause-btn');
@@ -293,15 +294,106 @@ test('pause resume finish and new combat use one save each and retain read-only 
   expect((await snapshot(page)).combatSession).toEqual(finished.combatSession);
   expect((await snapshot(page)).initiative).toEqual(original.initiative);
   await expect(popup(page).locator('.campaign-combat-status')).toHaveText('Завершён');
-  await expect(popup(page).locator('.campaign-combat-start-btn')).toHaveText('Новый бой');
+  await expect(popup(page).locator('.campaign-combat-prepare-btn')).toHaveText('Подготовить новый бой');
+  await expect(popup(page).locator('.campaign-combat-start-btn')).toHaveCount(0);
   await expect(popup(page).locator('.campaign-initiative-select').first()).toBeDisabled();
+  await action(page, '.campaign-combat-prepare-btn');
+  expect(await snapshot(page)).toEqual({ ...finished, combatSession: null });
+  await action(page, '.campaign-initiative-save-btn');
+  expect((await snapshot(page)).combatSession).toBeNull();
+  expect(await page.evaluate(() => window.combatUI.saves)).toBe(4);
   await action(page, '.campaign-combat-start-btn');
   const fresh = await snapshot(page);
   expect(fresh.combatSession.sessionId).not.toBe(original.combatSession.sessionId);
   expect(fresh.combatSession).toMatchObject({ status: 'active', round: 1 });
   expect(fresh.combatSession.participants.every(member => !member.ready && !member.delayed)).toBe(true);
   expect(fresh.initiative).toEqual(original.initiative);
+  expect(await page.evaluate(() => window.combatUI.saves)).toBe(5);
+});
+
+test('finished combat prepares the existing picker before an explicit fresh start', async ({ page }) => {
+  await page.setViewportSize({ width: 480, height: 720 });
+  await setup(page, 'finished');
+  const finished = await snapshot(page);
+  const prepare = popup(page).getByRole('button', { name: 'Подготовить новый бой', exact: true });
+  await expect(prepare).toBeInViewport({ ratio: 1 });
+  await prepare.focus();
+  await page.keyboard.press('Enter');
+  await expect(popup(page).locator('.campaign-initiative-checkbox[value="a"]')).toBeFocused();
+  expect(await snapshot(page)).toEqual({ ...finished, combatSession: null });
+  await expect(popup(page).locator('.campaign-combat-start-btn')).toHaveCount(0);
+  for (const id of ['a', 'b']) {
+    await expect(pickerRow(page, id).locator('.campaign-initiative-checkbox')).toBeChecked();
+    await expect(pickerRow(page, id).locator('.campaign-initiative-value')).toHaveValue(String(finished.initiative.participants.find(p => p.tokenId === id).total));
+  }
+  await expect(pickerRow(page, 'c').locator('.campaign-initiative-checkbox')).not.toBeChecked();
+  await pickerRow(page, 'a').locator('.campaign-initiative-checkbox').uncheck();
+  await pickerRow(page, 'c').locator('.campaign-initiative-checkbox').check();
+  await action(page, '.campaign-initiative-roll-btn');
+  for (const id of ['b', 'c']) {
+    const value = Number(await pickerRow(page, id).locator('.campaign-initiative-value').inputValue());
+    expect(value).toBeGreaterThanOrEqual(1);
+    expect(value).toBeLessThanOrEqual(20);
+  }
+  expect(await snapshot(page)).toEqual({ ...finished, combatSession: null });
+  await pickerRow(page, 'b').locator('.campaign-initiative-value').fill('23');
+  await pickerRow(page, 'c').locator('.campaign-initiative-value').fill('7');
+  await expectRosterGeometry(page);
+  await action(page, '.campaign-initiative-save-btn');
+  await expect(popup(page).getByRole('button', { name: 'Начать бой', exact: true })).toBeVisible();
+  let prepared = await snapshot(page);
+  expect(prepared.combatSession).toBeNull();
+  expect(prepared.initiative.participants.map(p => [p.participantId, p.total])).toEqual([['token:b', 23], ['token:c', 7]]);
+  expect(prepared.initiative.activeParticipantId).toBe('token:b');
+  await action(page, '[data-focus-key="select:token:c"]');
+  prepared = await snapshot(page);
+  expect(prepared.initiative.activeParticipantId).toBe('token:c');
+  await action(page, '.campaign-combat-start-btn');
+  const started = await snapshot(page);
+  expect(started.initiative).toEqual(prepared.initiative);
+  expect(started.tokens).toEqual(finished.tokens);
+  expect(started.combatSession.sessionId).not.toBe(finished.combatSession.sessionId);
+  expect(started.combatSession).toMatchObject({ status: 'active', round: 1, participants: [
+    { participantId: 'token:b', ready: false, delayed: false },
+    { participantId: 'token:c', ready: false, delayed: false }
+  ] });
+  await expect(popup(page).locator('[data-combat-flag]')).toHaveCount(4);
+  await reload(page);
+  expect(await snapshot(page)).toEqual(started);
   expect(await page.evaluate(() => window.combatUI.saves)).toBe(4);
+});
+
+test('prepare save reload keeps no session and editable canonical initiative', async ({ page }) => {
+  await setup(page, 'finished');
+  const finished = await snapshot(page);
+  await action(page, '.campaign-combat-prepare-btn');
+  await page.keyboard.press('Escape');
+  await expect(popup(page)).toBeHidden();
+  await reload(page);
+  expect(await snapshot(page)).toEqual({ ...finished, combatSession: null });
+  await expect(popup(page).locator('.campaign-combat-start-btn')).toHaveText('Начать бой');
+  await action(page, '.campaign-initiative-edit-btn');
+  await pickerRow(page, 'b').locator('.campaign-initiative-value').fill('25');
+  await action(page, '.campaign-initiative-save-btn');
+  const prepared = await snapshot(page);
+  expect(prepared.combatSession).toBeNull();
+  expect(prepared.initiative.participants[0]).toMatchObject({ participantId: 'token:b', total: 25 });
+  await reload(page);
+  expect(await snapshot(page)).toEqual(prepared);
+  await action(page, '.campaign-combat-start-btn');
+  expect((await snapshot(page)).combatSession.status).toBe('active');
+});
+
+test('failed prepare save reports failure and reload retains the finished durable session', async ({ page }) => {
+  await setup(page, 'finished');
+  const finished = await snapshot(page);
+  await page.evaluate(() => { window.combatUI.failSave = true; });
+  await action(page, '.campaign-combat-prepare-btn');
+  await expect(popup(page).locator('.campaign-initiative-message')).toContainText('Не удалось сохранить');
+  expect(await page.evaluate(() => window.combatUI.store.isDirty())).toBe(true);
+  expect(await page.evaluate(() => window.combatUI.saves)).toBe(0);
+  await reload(page);
+  expect(await snapshot(page)).toEqual(finished);
 });
 
 test('active participant edits reconcile retained/new/removed markers and manual values preserve round', async ({ page }) => {

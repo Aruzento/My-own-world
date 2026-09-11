@@ -109,7 +109,7 @@ Application lifecycle states are:
 - `inactive`: no current persisted Combat Session exists for the map;
 - `active`: the session accepts explicit participant/initiative progression operations;
 - `paused`: identity, roster, initiative, current participant, round and flags are retained, but session progression is suspended;
-- `finished`: the session is terminal and retained for deterministic reload until an explicit new-session action replaces it.
+- `finished`: the session is terminal and retained for deterministic reload until an explicit new-session action replaces it or `prepare next` releases it.
 
 Valid operations and transitions:
 
@@ -120,9 +120,12 @@ Valid operations and transitions:
 | paused | resume | active | Resume the same session identity and state. |
 | active | finish | finished | Freeze session progression; preserve final state. |
 | paused | finish | finished | Finish without an implicit resume or progression. |
+| finished | prepare next | inactive (`null`) | Explicitly release the finished session, preserving canonical initiative exactly; reopen participant preparation without starting combat. |
 | finished | start new | active | Create a new session identity; this is not resuming or mutating the finished session. |
 
-All other same-session transitions are invalid. In particular, inactive cannot pause/resume/finish, active cannot resume, paused cannot pause again, and finished cannot pause/resume/advance.
+All other same-session transitions are invalid. In particular, inactive cannot pause/resume/finish, active cannot resume, paused cannot pause again, and finished cannot pause/resume/advance. `prepare next` rejects active, paused and absent sessions without mutation.
+
+The 16.9.2 UI uses `finished -> prepare next -> null -> edit/apply initiative -> explicit start`. Apply saves initiative only. The existing direct `start new` domain operation remains available, but the finished popup no longer invokes it. `prepareNextCombatSession()` owns the pure transition and `CampaignMapStore` publishes the result through its existing setter once. Preparation does not reroll, sort, reset current participant, mutate tokens/Characters or persist a preparation subview. Reload of `null` shows normal pre-combat initiative; only explicit Start creates a fresh identity, round 1 and false Ready/Delayed markers.
 
 The later lifecycle owner must return a structured rejected result for invalid transitions. It must not silently coerce status or reset initiative.
 

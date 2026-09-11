@@ -9,6 +9,8 @@ owner_zone: "user-release"
 
 ## Текущие заметки
 
+- Corrective 16.9.2 replaces immediate post-finish Start with explicit preparation through the existing picker. Its automated preparation/Apply/Start, reload and failure checks do not constitute owner manual acceptance. A failed prepare save leaves dirty runtime state and an error; reload reads the last saved state. Retest both 16.9.1 layout and 16.9.2 flow before removing the 16.10 NEXT/HOLD.
+
 - Combat UI 16.9 automated/Foundation passed, but owner manual acceptance FAILED due to realistic-roster layout collisions. Corrective 16.9.1 provides structured wrapping cards, one internal roster scrollbar and reachable footer; automated coverage is not an owner acceptance decision. Manual retest is required and 16.10 remains NEXT/HOLD. Missing-reference warnings never repair data; Combat-only missing initiative members block ordinary roster editing rather than silently removing them. Save manual initiative inputs before lifecycle/participant-editor changes. Real desktop and recovery/EventStore integration acceptance is not claimed by this leaf.
 
 - Desktop installed-app behavior still requires a manual pass before sending a build to another person.

@@ -13,6 +13,7 @@ import {
   COMBAT_SESSION_LIFECYCLE_REASONS,
   finishCombatSession,
   pauseCombatSession,
+  prepareNextCombatSession,
   resumeCombatSession,
   startCombatSession
 } from '../js/combat/combatSessionLifecycle.js';
@@ -727,6 +728,27 @@ test(
   }
 );
 
+
+test('prepare next combat clears only a finished session without mutating its input', () => {
+  const finished = createSession(COMBAT_SESSION_STATUSES.FINISHED);
+  const before = structuredClone(finished);
+  assert.deepEqual(prepareNextCombatSession(finished), {
+    ok: true, operation: 'prepare-next', session: null
+  });
+  assert.deepEqual(finished, before);
+});
+
+test('prepare next combat rejects active paused and absent sessions without mutation', () => {
+  assertRejectedTransitions([
+    null,
+    createSession(COMBAT_SESSION_STATUSES.INACTIVE),
+    createSession(COMBAT_SESSION_STATUSES.ACTIVE),
+    createSession(COMBAT_SESSION_STATUSES.PAUSED)
+  ], prepareNextCombatSession, 'prepare-next');
+  assert.deepEqual(prepareNextCombatSession(), {
+    ok: false, operation: 'prepare-next', reason: 'invalid-transition', session: null
+  });
+});
 
 function createSession(
   status,

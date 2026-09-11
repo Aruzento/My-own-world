@@ -8,6 +8,7 @@ import {
 
 import {
   pauseCombatSession,
+  prepareNextCombatSession,
   resumeCombatSession,
   finishCombatSession
 } from '../combat/combatSessionLifecycle.js';
@@ -472,6 +473,13 @@ export class CampaignMapStore {
 
   finishCombatSession() {
     const result = finishCombatSession(this.model.combatSession);
+    if (result.ok) this.setCombatSession(result.session);
+    return result;
+  }
+
+
+  prepareNextCombatSession() {
+    const result = prepareNextCombatSession(this.model.combatSession);
     if (result.ok) this.setCombatSession(result.session);
     return result;
   }
