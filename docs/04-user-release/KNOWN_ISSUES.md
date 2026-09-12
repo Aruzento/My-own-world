@@ -9,9 +9,10 @@ owner_zone: "user-release"
 
 ## Текущие заметки
 
-- Corrective 16.9.2 replaces immediate post-finish Start with explicit preparation through the existing picker. Its automated preparation/Apply/Start, reload and failure checks do not constitute owner manual acceptance. A failed prepare save leaves dirty runtime state and an error; reload reads the last saved state. Retest both 16.9.1 layout and 16.9.2 flow before removing the 16.10 NEXT/HOLD.
+- Owner manual acceptance of Combat UI 16.9/16.9.1/16.9.2 is PASS as sufficient foundation. Phase 16 remains ACTIVE pending 16.FINAL; this is not installed-desktop release acceptance.
 
-- Combat UI 16.9 automated/Foundation passed, but owner manual acceptance FAILED due to realistic-roster layout collisions. Corrective 16.9.1 provides structured wrapping cards, one internal roster scrollbar and reachable footer; automated coverage is not an owner acceptance decision. Manual retest is required and 16.10 remains NEXT/HOLD. Missing-reference warnings never repair data; Combat-only missing initiative members block ordinary roster editing rather than silently removing them. Save manual initiative inputs before lifecycle/participant-editor changes. Real desktop and recovery/EventStore integration acceptance is not claimed by this leaf.
+- Combat 16.10 saves the page before appending audit history. If append fails, the saved state remains valid and the popup says `Состояние боя сохранено, но событие не записано в журнал.` There is no automatic retry/rollback or atomic page-plus-event guarantee. Backup v1 excludes event history: restore may show an older current battle alongside newer historical facts. A filesystem failure after bytes were written can leave an uncertain audit outcome; do not retry blindly.
+- Missing-reference warnings never repair data. Combat-only missing initiative members block ordinary roster editing; save pending initiative inputs before lifecycle/participant-editor changes. No Combat undo, replay or attack/damage/HP automation is included.
 
 - Desktop installed-app behavior still requires a manual pass before sending a build to another person.
 - Large maps and large real workspaces can still expose subjective UI delay even when automated performance checks are green.

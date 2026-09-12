@@ -1,4 +1,5 @@
 import { state } from '../state.js';
+import { getStorageAdapter } from '../storage/storageAdapter.js';
 
 import {
   isCampaignMapRecord
@@ -36,7 +37,11 @@ export async function saveCampaignMapAndSync(
     return;
   }
 
+  let receipt;
   if (options.saveCurrentPage) {
+
+    const mapPageId = state.currentPage.id;
+    const storageAdapter = getStorageAdapter();
 
     options.syncCurrentMapTitle?.();
 
@@ -44,8 +49,10 @@ export async function saveCampaignMapAndSync(
       openMap
     );
 
-    await options.saveCurrentPage();
+    const result = await options.saveCurrentPage();
+    receipt = { ...result, mapPageId, storageAdapter };
   }
 
   syncPresentation();
+  return receipt;
 }

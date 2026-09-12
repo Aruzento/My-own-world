@@ -1,8 +1,23 @@
 # Tester Instructions
 
+## 2026-09-12: 16.10 Recovery And Audit
+
+Owner manual PASS for 16.9/16.9.1/16.9.2 is recorded; the former HOLD is resolved.
+Use a disposable workspace only. The map page is current truth, event history is audit only.
+
+1. Start a prepared battle; pause/resume, edit the active roster, toggle Ready/Delayed and change turns. Open the existing `Журнал событий`; check readable lifecycle/roster/flag/turn summaries. Combat entries must not offer resource Undo.
+2. Use Next from the final participant. One transaction must contain turn then round advancement. Previous and direct selection do not advance round. Pre-combat preparation and ordinary initiative corrections add no Combat events.
+3. Save state A with known id/status/round/order/totals/current/markers, then create a normal backup. Make and save later Combat B changes with audit events. Restore A through existing Settings recovery and its mandatory safety backup. Reload the map: exact state A wins; B history remains historical, never replayed.
+4. Save/reload active, paused and finished examples. No reroll, resort, identity/current reset or flag reset. Full and partial restore remain existing explicit recovery operations; backup v1 does not export event history.
+5. Failure injection is automated/disposable only. A failed state write must append no success event. After a successful state write and failed event append, expect `Состояние боя сохранено, но событие не записано в журнал.` Reload keeps saved state. No hidden retry/rollback or false save-failure claim. Corrupt history reports diagnostics without preventing valid map loading.
+
+Focused checks: `node --test tests/combatSessionEventLog.test.mjs tests/combatSessionRecoveryEvents.test.mjs` and
+`npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs`.
+No new screenshot baseline or real-workspace destructive smoke. Next is 16.FINAL, not Phase 17.
+
 ## 2026-09-11: 16.9.2 Prepare Next Combat Acceptance
 
-Use only a disposable/copied workspace and current source UI. Owner acceptance remains pending; 16.10 stays NEXT/HOLD. Keep the 16.9.1 realistic-roster/layout retest below.
+Use only a disposable/copied workspace and current source UI. Owner acceptance is now PASS; retain this preparation/layout route for future regressions.
 
 1. Finish a battle with known initiative/current participant and mixed Ready/Delayed. Until `Подготовить новый бой` is pressed, final state remains read-only.
 2. Press `Подготовить новый бой`, also checking Enter from keyboard focus. The participant picker opens with the old roster selected and the same values. No new battle has started; no reroll, sort or current-participant reset happened.
@@ -15,14 +30,14 @@ Focused automated route: `npm run test:browser -- tests/browser/campaign-map-com
 
 ## 2026-09-11: 16.9.1 Realistic Roster Retest
 
-16.9 automated/Foundation passed but owner manual acceptance FAILED. This corrective needs a new owner decision; do not authorize 16.10 from test counts alone. Use only a disposable/copied workspace and the current source UI, not an old installed build.
+16.9 initially failed owner manual review; the subsequent owner PASS accepts the corrected 16.9.1/16.9.2 foundation. Retain this regression route on a disposable/copied workspace and current source UI, not an old installed build.
 
 1. Repeat the existing 16.9 behavior route below with at least eight participants: `Существо3.Новая карта`, `Существо2.Новая карта`, `Громм Кровавый Торн`, `Очень Длинное Имя Персонажа Для Проверки Интерфейса`, `Лазарь`, `Рейнай`, `Азраэль`, `Страж Северных Врат`. Include varied initiative values and Ready, Delayed and both flags.
 2. At 1280x900 and 480x720, read each full wrapping name and initiative value/result. The current badge has its own slot; flags and warning text must remain below the main row. No text/control may extend into the next card.
 3. Scroll the roster to the bottom. Only that area should scroll, including unresolved-member warnings. Header, round/current navigation, Pause/Resume, Finish and Close must stay reachable without scrolling the browser page.
 4. Use Tab through name selection, initiative input and flags, Space on Ready/Delayed, and Enter on lifecycle controls. Focus must remain visible and move into the internal scroll area normally. Escape/Close returns to the toolbar.
 5. Pause and reopen: disabled states and all values remain readable. Resume/Finish remain reachable. In a disposable warning fixture, inspect the longest name with a missing-page warning and a Combat-only id with missing initiative; no repair or removal should occur.
-6. Record PASS or concrete remaining defects. Until owner PASS, 16.9 manual acceptance stays FAILED/awaiting retest and 16.10 stays NEXT/HOLD.
+6. Record PASS or concrete remaining defects. The owner PASS recorded above resolves the former 16.10 HOLD; a later regression must still be reported.
 
 Focused reproduction: `npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs --grep realistic`. Review `combat-realistic-{active,paused,details}-{1280,480,1024}.png` attachments documented in `docs/03-testing/VISUAL_REGRESSION.md`; these are not approved pixel baselines.
 

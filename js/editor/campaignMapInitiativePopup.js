@@ -1,4 +1,5 @@
 import { iconSvg } from '../core/icons.js';
+import { isCombatStateSaveConfirmed, logCombatSessionOperation } from '../events/combatSessionEventLog.js';
 import { positionPopupNearAnchor } from '../ui/popupPosition.js';
 
 import {
@@ -140,7 +141,7 @@ function renderPickerPopup(
 function bindPickerActions(popup, store, deps, anchor) {
   popup.querySelector('.campaign-initiative-save-btn').addEventListener('click', event => {
     event.preventDefault();
-    void runPopupAction(popup, store, deps, anchor, () => applySelectedParticipants(popup, store));
+    void runPopupAction(popup, store, deps, anchor, () => applySelectedParticipants(popup, store), { auditOperation: 'roster' });
   });
   popup.querySelector('.campaign-initiative-roll-btn').addEventListener('click', event => {
     event.preventDefault();
@@ -254,16 +255,16 @@ function bindOrderActions(popup, store, deps, anchor) {
       void runPopupAction(popup, store, deps, anchor, operation, options);
     });
   };
-  bind('.campaign-initiative-prev-btn', () => shiftInitiativeTurn(popup, store, -1));
-  bind('.campaign-initiative-next-btn', () => shiftInitiativeTurn(popup, store, 1));
+  bind('.campaign-initiative-prev-btn', () => shiftInitiativeTurn(popup, store, -1), { auditOperation: 'previous' });
+  bind('.campaign-initiative-next-btn', () => shiftInitiativeTurn(popup, store, 1), { auditOperation: 'next' });
   bind('.campaign-initiative-save-order-btn', () => saveOrderValues(popup, store, { sort: true }));
   const lifecycle = operation => () => getPendingOrderInputs(popup, store).length
     ? { ok: false, reason: 'pending-initiative-input' } : operation();
-  bind('.campaign-combat-start-btn', lifecycle(() => store.startCombatSession()));
-  bind('.campaign-combat-pause-btn', lifecycle(() => store.pauseCombatSession()));
-  bind('.campaign-combat-resume-btn', lifecycle(() => store.resumeCombatSession()));
-  bind('.campaign-combat-finish-btn', lifecycle(() => store.finishCombatSession()));
-  bind('.campaign-combat-prepare-btn', lifecycle(() => store.prepareNextCombatSession()), { showPicker: true });
+  bind('.campaign-combat-start-btn', lifecycle(() => store.startCombatSession()), { auditOperation: 'start' });
+  bind('.campaign-combat-pause-btn', lifecycle(() => store.pauseCombatSession()), { auditOperation: 'pause' });
+  bind('.campaign-combat-resume-btn', lifecycle(() => store.resumeCombatSession()), { auditOperation: 'resume' });
+  bind('.campaign-combat-finish-btn', lifecycle(() => store.finishCombatSession()), { auditOperation: 'finish' });
+  bind('.campaign-combat-prepare-btn', lifecycle(() => store.prepareNextCombatSession()), { showPicker: true, auditOperation: 'prepare-next' });
   bindOrderListActions(popup, store, deps, anchor);
   popup.querySelector('.campaign-initiative-edit-btn')?.addEventListener('click', event => {
     event.preventDefault();
@@ -362,7 +363,7 @@ function bindOrderListActions(popup, store, deps, anchor) {
         const initiative = readOrderValues(popup, store);
         if (!initiative.setActive(row.dataset.participantId)) return { ok: false, reason: 'participant-not-found' };
         return publishInitiative(store, initiative);
-      });
+      }, { auditOperation: 'select' });
     };
     row.addEventListener('click', select);
     row.querySelector('.campaign-initiative-value').addEventListener('keydown', event => {
@@ -381,7 +382,7 @@ function bindOrderListActions(popup, store, deps, anchor) {
         if (!member) return { ok: false, reason: 'participant-not-found' };
         const key = button.dataset.combatFlag;
         return store.setCombatParticipantFlags(id, { [key]: !member[key] });
-      });
+      }, { auditOperation: 'flags', participantId: button.closest('[data-participant-id]').dataset.participantId });
     });
   });
 }
@@ -480,12 +481,13 @@ function showMessage(popup, message) {
   if (node) node.textContent = message;
 }
 
-async function runPopupAction(popup, store, deps, anchor, operation, { showPicker = false } = {}) {
+async function runPopupAction(popup, store, deps, anchor, operation, { showPicker = false, auditOperation, participantId } = {}) {
   if (popup.getAttribute('aria-busy') === 'true') return;
   const frame = popup.firstElementChild;
   const focusKey = document.activeElement?.dataset.focusKey;
   const pendingInputs = getPendingOrderInputs(popup, store);
-  const before = JSON.stringify([store.getModel().initiative, store.getModel().combatSession]);
+  const capture = () => JSON.parse(JSON.stringify({ initiative: store.getModel().initiative, combatSession: store.getModel().combatSession }));
+  const before = capture();
   let result;
   try {
     result = operation();
@@ -497,14 +499,23 @@ async function runPopupAction(popup, store, deps, anchor, operation, { showPicke
     showMessage(popup, rejectionText(result?.reason));
     return;
   }
-  const changed = before !== JSON.stringify([store.getModel().initiative, store.getModel().combatSession]);
+  const after = capture();
+  const changed = JSON.stringify(before) !== JSON.stringify(after);
   popup.setAttribute('aria-busy', 'true');
   const controls = [...popup.querySelectorAll('button:not(.campaign-initiative-close-btn), input')];
   const disabled = controls.map(control => control.disabled);
   controls.forEach(control => { control.disabled = true; });
   let saveFailed = false;
+  let auditResult;
   try {
-    if (changed) await deps.saveAndSync?.();
+    if (changed) {
+      const receipt = await deps.saveAndSync?.();
+      saveFailed = !isCombatStateSaveConfirmed(receipt);
+      if (!saveFailed && auditOperation) {
+        auditResult = await logCombatSessionOperation({ operation: auditOperation, before, after, participantId,
+          mapPageId: receipt.mapPageId }, { saveResult: receipt, storageAdapter: receipt.storageAdapter });
+      }
+    }
   } catch {
     saveFailed = true;
   } finally {
@@ -522,11 +533,15 @@ async function runPopupAction(popup, store, deps, anchor, operation, { showPicke
           if (input && member?.total === pending.total) input.value = pending.value;
         }
         if (saveFailed) showMessage(popup, '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0431\u043e\u044f. \u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u044f \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b.');
+        if (auditResult?.status === 'state-persisted-event-not-written') {
+          showMessage(popup, '\u0421\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u0431\u043e\u044f \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e, \u043d\u043e \u0441\u043e\u0431\u044b\u0442\u0438\u0435 \u043d\u0435 \u0437\u0430\u043f\u0438\u0441\u0430\u043d\u043e \u0432 \u0436\u0443\u0440\u043d\u0430\u043b.');
+        }
         const focusTarget = focusKey && popup.querySelector(`[data-focus-key="${CSS.escape(focusKey)}"]:not(:disabled)`);
         (focusTarget || popup.querySelector('.campaign-initiative-checkbox, .campaign-combat-resume-btn, .campaign-combat-pause-btn, .campaign-combat-start-btn, .campaign-combat-prepare-btn, .campaign-initiative-close-btn'))?.focus();
       }
     }
   }
+  return { status: saveFailed ? 'state-not-persisted' : auditResult?.status || (changed ? 'durable' : 'unchanged') };
 }
 
 

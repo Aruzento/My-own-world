@@ -1592,7 +1592,7 @@ function syncCurrentMapTitle() {
 
 async function saveAndSync() {
 
-  await saveCampaignMapAndSync({
+  return saveCampaignMapAndSync({
     saveCurrentPage: saveCurrentPageCallback,
     syncCurrentMapTitle
   });

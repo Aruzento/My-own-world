@@ -45,7 +45,12 @@ test(
         RESOURCE_CHANGED:
           'resource.changed',
         TRANSACTION_REVERSAL_RECORDED:
-          'transaction.reversal.recorded'
+          'transaction.reversal.recorded',
+        COMBAT_SESSION_LIFECYCLE_CHANGED: 'combat.session.lifecycle.changed',
+        COMBAT_ROSTER_CHANGED: 'combat.roster.changed',
+        COMBAT_PARTICIPANT_FLAGS_CHANGED: 'combat.participant.flags.changed',
+        TURN_CHANGED: 'turn.changed',
+        ROUND_ADVANCED: 'round.advanced'
       }
     );
 

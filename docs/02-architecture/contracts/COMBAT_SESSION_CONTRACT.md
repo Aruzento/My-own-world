@@ -9,9 +9,25 @@ owner_zone: "architecture"
 
 Status: `0.0.1.16.1` architecture contract, resolved on 2026-09-04.
 
-Readiness: `Foundation`. This document fixes the ownership and persistence decisions for Phase 16. It does not implement a Combat Session runtime, storage field, lifecycle command, UI or event type.
+Readiness: original 16.1 `Foundation` contract, extended through 16.10 (`Usable`). Model, map persistence, lifecycle, UI and audit integration now exist; final Phase 16 closure remains separate.
 
 ## 1. Scope
+
+### 16.10 Recovery / Audit Boundary
+
+Owner manual acceptance of 16.9, 16.9.1 and 16.9.2 is PASS (2026-09-11); 16.10 is unblocked.
+The Campaign Map page is current state truth. EventStore is audit only, never replayed into Combat.
+An accepted popup operation captures canonical before/after state, awaits a confirmed map-page save,
+then calls `combatSessionEventLog` for one completed transaction. Forward wrap contains ordered
+`turn.changed` and `round.advanced` facts. Lifecycle, explicit active roster and Ready/Delayed changes
+have typed v1 payloads. Rejected, no-op, pre-combat and ordinary initiative value edits add no events.
+An unconfirmed/conflicting save adds no event. Append failure after save returns
+`state-persisted-event-not-written`: no rollback, no automatic retry, no claim of atomicity.
+The existing history panel presents these audit-only facts without resource Undo.
+
+Backup v1 remains pages/assets only. `.my-own-world-events/transactions.v1.jsonl` is neither included
+nor replaced/rewound by restore. Restored Combat/Initiative state wins over newer historical events;
+corrupt history does not invalidate the map. No restore event or persisted format migration is added.
 
 Persistent Combat Session is the reload-safe state surrounding an encounter on one Campaign Map. It owns session identity, lifecycle, roster membership, round number, combat-local participant flags and integrity status.
 
@@ -67,7 +83,7 @@ Combat Session must use this path. It must not write a sidecar, call `StorageAda
 
 `transactionModel`, `eventTypes` and `eventStore` remain the transaction/event-history owners. `.my-own-world-events/transactions.v1.jsonl` is append-only audit history, not live Combat Session state.
 
-Combat Session state must reload from the Campaign Map page without replaying events. Future meaningful operations may append typed facts only after their domain mutation succeeds. `turn.*` and `round.*` remain reserved and rejected until a later leaf defines explicit payload contracts.
+Combat Session state reloads from the Campaign Map page without replaying events. The 16.10 adapter appends typed facts only after confirmed durable map save. `turn.changed` and `round.advanced` are implemented; other names in those namespaces remain reserved and rejected.
 
 ## 3. State Model
 
@@ -235,7 +251,7 @@ Reload must not reroll or resort initiative, select a replacement current partic
 
 EventStore records auditable facts; Campaign Map persistence records current Combat Session state.
 
-The later integration order is:
+The 16.10 integration order is:
 
 ```text
 explicit combat-session operation
@@ -246,7 +262,7 @@ explicit combat-session operation
 
 No Phase 16 operation may be reported as successful history when its state mutation failed. If event append fails after state persistence, the result must use the honest Phase 15 incomplete-outcome contract rather than claim filesystem-wide atomicity.
 
-16.1 does not activate `turn.*`, `round.*`, action, damage, healing or effect payloads. Exact event vocabulary and restore/backup interaction are deferred to 16.10.
+The 16.10 vocabulary and pages/assets-only backup policy are defined above and in Event Transaction / Backup And Recovery contracts. Action, damage, healing and effect payloads remain future work. State and audit append are not atomic; append failure never triggers Combat rollback or replay.
 
 ## 13. Deferred Functionality
 

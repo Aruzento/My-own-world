@@ -27,6 +27,14 @@ async function setup(page, status = null, names = null) {
     const { getPageById } = await import('/js/repository/pageRepository.js');
     const { setPages } = await import('/js/stateActions.js');
     const { applyAppearance } = await import('/js/ui/themeManager.js');
+    const { createMemoryWorkspaceAdapter, createDataSafetyPage } = await import('/tests/fixtures/dataSafetyFixtures.mjs');
+    const { setStorageAdapter } = await import('/js/storage/storageAdapter.js');
+    const { persistPageContentCommand } = await import('/js/storage/pageCommandService.js');
+    const { saveCampaignMapAndSync } = await import('/js/editor/campaignMapSaveController.js');
+    const { updatePageRecordContent, parsePageRecordContent } = await import('/js/core/pageRecord.js');
+    const { state } = await import('/js/state.js');
+    const { readTransactionRecords, EVENT_TRANSACTION_LOG_PATH } = await import('/js/events/eventStore.js');
+    const { createEventHistoryViewModel } = await import('/js/ui/eventHistoryPanel.js');
     applyAppearance({ theme: 'dark', accent: 'gold', background: 'stone', scale: 'normal' });
     setPages([{ id: 'page-a', title: 'Альфа' }, { id: 'page-b', title: 'Бета' }]);
     const initial = new CampaignMapModel({
@@ -59,6 +67,22 @@ async function setup(page, status = null, names = null) {
     }
     const editor = document.querySelector('#editorArea');
     const harness = window.combatUI = { saves: 0, saved: '', failSave: false, failResolver: false };
+    const storageAdapter = createMemoryWorkspaceAdapter();
+    setStorageAdapter(storageAdapter);
+    const mapPage = createDataSafetyPage({ id: 'map-fixture', title: 'Бой у переправы', template: 'campaignMap', type: 'campaignMap' });
+    setPages([...state.pages, mapPage]);
+    state.currentPage = mapPage;
+    harness.auditAttempts = 0;
+    storageAdapter.appendText = async (path, line) => {
+      harness.auditAttempts++;
+      if (harness.failAudit) throw new Error('fixture audit failure');
+      let previous = '';
+      try { previous = await storageAdapter.readText(path); } catch { /* First append. */ }
+      await storageAdapter.writeText(path, previous + line);
+    };
+    harness.audit = () => readTransactionRecords({ storageAdapter });
+    harness.history = () => createEventHistoryViewModel({}, { storageAdapter });
+    harness.corruptHistory = () => storageAdapter.writeText(EVENT_TRANSACTION_LOG_PATH, 'invalid record\n');
     harness.snapshot = () => structuredClone(harness.store.getModel().toJSON());
     harness.mount = html => {
       closeMapPopup();
@@ -73,17 +97,24 @@ async function setup(page, status = null, names = null) {
         event.stopPropagation();
         void handleCampaignMapToolbarClick(event, map, {
           resolvePage: id => { if (harness.failResolver) throw new Error('fixture resolver'); return getPageById(id); },
-          saveAndSync: async () => {
+          saveAndSync: () => {
             if (harness.failSave) throw new Error('fixture write failure');
+            return saveCampaignMapAndSync({ saveCurrentPage: async () => {
+            if (harness.blockSave) return { writeStatus: 'conflict', conflict: true };
             harness.saves++;
             harness.saved = serializeCampaignMapDocumentHTML(map);
+            return persistPageContentCommand({ page: mapPage,
+              content: updatePageRecordContent(mapPage.content, { body: harness.saved }), reason: 'combat-browser-fixture' });
+            } });
           }
         });
       });
     };
-    harness.reload = () => harness.mount(harness.saved);
+    harness.reload = async () => harness.mount(parsePageRecordContent(await storageAdapter.readText(mapPage.path)).body);
     harness.mount(serializeCampaignMapModelHTML({ title: 'Бой у переправы', model: initial }));
     harness.saved = serializeCampaignMapDocumentHTML(harness.map);
+    mapPage.content = updatePageRecordContent(mapPage.content, { body: harness.saved });
+    await storageAdapter.writeText(mapPage.path, mapPage.content);
   }, { status, names });
   await page.locator('.campaign-initiative-btn').click();
   await expect(page.locator('#campaignMapPopup')).toBeVisible();
@@ -221,6 +252,39 @@ const popup = page => page.locator('#campaignMapPopup');
 const row = (page, id) => popup(page).locator(`.campaign-initiative-order-row[data-participant-id="token:${id}"]`);
 const pickerRow = (page, id) => popup(page).locator(`label.campaign-initiative-row[data-participant-id="token:${id}"]`);
 const snapshot = page => page.evaluate(() => window.combatUI.snapshot());
+
+test('real popup save receipt precedes ordered Combat audit; history is readable and not undoable', async ({ page }) => {
+  await setup(page, 'active');
+  await action(page, '.campaign-initiative-next-btn');
+  const audit = await page.evaluate(() => window.combatUI.audit());
+  expect(audit.records).toHaveLength(1);
+  expect(audit.records[0].record.events.map(event => event.type)).toEqual(['turn.changed', 'round.advanced']);
+  expect(audit.records[0].record.events[0].payload.mapPageId).toBe('map-fixture');
+  const saved = await snapshot(page);
+  await reload(page);
+  expect((await snapshot(page)).combatSession).toEqual(saved.combatSession);
+  const history = await page.evaluate(() => window.combatUI.history());
+  expect(history.items.every(item => !item.canUndo)).toBe(true);
+  expect(history.items.map(item => item.summary).join(' ')).toContain('Раунд: 3 → 4');
+  expect(history.items.map(item => item.summary).join(' ')).toContain('Ход: token:b → token:a');
+});
+
+test('audit failure warns after durable save; blocked saves never attempt an append', async ({ page }) => {
+  await setup(page, 'active');
+  await page.evaluate(() => { window.combatUI.blockSave = true; });
+  await action(page, '.campaign-combat-pause-btn');
+  expect(await page.evaluate(() => window.combatUI.auditAttempts)).toBe(0);
+  await reload(page);
+  expect((await snapshot(page)).combatSession.status).toBe('active');
+  await page.evaluate(() => { window.combatUI.blockSave = false; window.combatUI.failAudit = true; });
+  await action(page, '.campaign-combat-pause-btn');
+  await expect(popup(page).locator('.campaign-initiative-message')).toHaveText('Состояние боя сохранено, но событие не записано в журнал.');
+  expect(await page.evaluate(() => window.combatUI.auditAttempts)).toBe(1);
+  expect((await page.evaluate(() => window.combatUI.audit())).records).toHaveLength(0);
+  await reload(page);
+  expect((await snapshot(page)).combatSession.status).toBe('paused');
+  await expect(popup(page).locator('.campaign-combat-resume-btn')).toBeEnabled();
+});
 async function action(page, selector) {
   await popup(page).locator(selector).click();
   await expect(popup(page)).not.toHaveAttribute('aria-busy', 'true');

@@ -11,7 +11,12 @@ export const EVENT_TYPES_V1 = Object.freeze({
   ROLL_PERFORMED: 'roll.performed',
   MANUAL_CORRECTION_RECORDED: 'manual.correction.recorded',
   RESOURCE_CHANGED: 'resource.changed',
-  TRANSACTION_REVERSAL_RECORDED: 'transaction.reversal.recorded'
+  TRANSACTION_REVERSAL_RECORDED: 'transaction.reversal.recorded',
+  COMBAT_SESSION_LIFECYCLE_CHANGED: 'combat.session.lifecycle.changed',
+  COMBAT_ROSTER_CHANGED: 'combat.roster.changed',
+  COMBAT_PARTICIPANT_FLAGS_CHANGED: 'combat.participant.flags.changed',
+  TURN_CHANGED: 'turn.changed',
+  ROUND_ADVANCED: 'round.advanced'
 });
 
 export const RESERVED_FUTURE_EVENT_TYPES = Object.freeze({
@@ -86,7 +91,12 @@ const EVENT_TYPE_SCHEMAS = new Map([
   [EVENT_TYPES_V1.ROLL_PERFORMED, normalizeRollPayload],
   [EVENT_TYPES_V1.MANUAL_CORRECTION_RECORDED, normalizeManualCorrectionPayload],
   [EVENT_TYPES_V1.RESOURCE_CHANGED, normalizeResourceChangePayload],
-  [EVENT_TYPES_V1.TRANSACTION_REVERSAL_RECORDED, normalizeTransactionReversalPayload]
+  [EVENT_TYPES_V1.TRANSACTION_REVERSAL_RECORDED, normalizeTransactionReversalPayload],
+  [EVENT_TYPES_V1.COMBAT_SESSION_LIFECYCLE_CHANGED, normalizeCombatLifecycle],
+  [EVENT_TYPES_V1.COMBAT_ROSTER_CHANGED, normalizeCombatRoster],
+  [EVENT_TYPES_V1.COMBAT_PARTICIPANT_FLAGS_CHANGED, normalizeCombatFlags],
+  [EVENT_TYPES_V1.TURN_CHANGED, normalizeCombatTurn],
+  [EVENT_TYPES_V1.ROUND_ADVANCED, normalizeCombatRound]
 ]);
 
 
@@ -160,10 +170,87 @@ export function isKnownEventType(type) {
 
 export function isReservedFutureEventType(type) {
   const normalized = typeof type === 'string' ? type.trim() : '';
+  if (isKnownEventType(normalized)) return false;
   return Object.values(RESERVED_FUTURE_EVENT_TYPES)
     .some(pattern => matchesFuturePattern(normalized, pattern));
 }
 
+
+function combatPayload(payload, fields, type) {
+  const record = plainRecord(payload, 'payload', type);
+  assertAllowedKeys(record, ['sessionId', 'mapPageId', ...fields], 'combat payload', type);
+  for (const field of fields) assertHasOwn(record, field, type);
+  return {
+    sessionId: requiredString(record.sessionId, 'payload.sessionId', type),
+    ...(record.mapPageId === undefined ? {} : { mapPageId: requiredString(record.mapPageId, 'payload.mapPageId', type) })
+  };
+}
+
+function combatIds(value, field, type) {
+  const ids = normalizeStringArray(value, field, type);
+  if (new Set(ids).size !== ids.length) invalid(field, 'Participant identities must be unique.', type);
+  return ids;
+}
+
+function combatCurrent(value, type) {
+  return value === null ? null : requiredString(value, 'payload.currentParticipantId', type);
+}
+
+function normalizeCombatLifecycle(payload, type) {
+  const common = combatPayload(payload, ['operation', 'beforeStatus', 'afterStatus', 'round', 'currentParticipantId', 'participantIds'], type);
+  const transitions = { start: ['inactive:active', 'finished:active'], pause: ['active:paused'],
+    resume: ['paused:active'], finish: ['active:finished', 'paused:finished'], 'prepare-next': ['finished:inactive'] };
+  const operation = enumValue(payload.operation, Object.keys(transitions), 'payload.operation', type);
+  for (const key of ['beforeStatus', 'afterStatus']) {
+    enumValue(payload[key], ['inactive', 'active', 'paused', 'finished'], `payload.${key}`, type);
+  }
+  if (!transitions[operation].includes(`${payload.beforeStatus}:${payload.afterStatus}`)) {
+    invalid('payload.beforeStatus', 'Invalid lifecycle transition.', type);
+  }
+  return deepFreeze({ ...common, operation, beforeStatus: payload.beforeStatus, afterStatus: payload.afterStatus,
+    round: safeInteger(payload.round, 'payload.round', type, { min: 1 }),
+    currentParticipantId: combatCurrent(payload.currentParticipantId, type),
+    participantIds: combatIds(payload.participantIds, 'payload.participantIds', type) });
+}
+
+function normalizeCombatRoster(payload, type) {
+  const common = combatPayload(payload, ['beforeParticipantIds', 'afterParticipantIds', 'currentParticipantId'], type);
+  return deepFreeze({ ...common,
+    beforeParticipantIds: combatIds(payload.beforeParticipantIds, 'payload.beforeParticipantIds', type),
+    afterParticipantIds: combatIds(payload.afterParticipantIds, 'payload.afterParticipantIds', type),
+    currentParticipantId: combatCurrent(payload.currentParticipantId, type) });
+}
+
+function combatFlags(value, field, type) {
+  const flags = plainRecord(value, field, type);
+  assertAllowedKeys(flags, ['ready', 'delayed'], field, type);
+  for (const key of ['ready', 'delayed']) {
+    if (typeof flags[key] !== 'boolean') invalid(`${field}.${key}`, 'Combat flags must be boolean.', type);
+  }
+  return { ready: flags.ready, delayed: flags.delayed };
+}
+
+function normalizeCombatFlags(payload, type) {
+  const common = combatPayload(payload, ['participantId', 'before', 'after'], type);
+  return deepFreeze({ ...common, participantId: requiredString(payload.participantId, 'payload.participantId', type),
+    before: combatFlags(payload.before, 'payload.before', type), after: combatFlags(payload.after, 'payload.after', type) });
+}
+
+function normalizeCombatTurn(payload, type) {
+  const common = combatPayload(payload, ['round', 'fromParticipantId', 'toParticipantId', 'mode'], type);
+  return deepFreeze({ ...common, round: safeInteger(payload.round, 'payload.round', type, { min: 1 }),
+    fromParticipantId: requiredString(payload.fromParticipantId, 'payload.fromParticipantId', type),
+    toParticipantId: requiredString(payload.toParticipantId, 'payload.toParticipantId', type),
+    mode: enumValue(payload.mode, ['next', 'previous', 'select'], 'payload.mode', type) });
+}
+
+function normalizeCombatRound(payload, type) {
+  const common = combatPayload(payload, ['fromRound', 'toRound'], type);
+  const fromRound = safeInteger(payload.fromRound, 'payload.fromRound', type, { min: 1 });
+  const toRound = safeInteger(payload.toRound, 'payload.toRound', type, { min: 1 });
+  if (toRound !== fromRound + 1) invalid('payload.toRound', 'Round must advance by exactly one.', type);
+  return deepFreeze({ ...common, fromRound, toRound });
+}
 
 function normalizeRollPayload(payload, eventType) {
   const record = plainRecord(payload, 'payload', eventType);

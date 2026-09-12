@@ -42,7 +42,12 @@ const EVENT_TYPE_LABELS =
     [EVENT_TYPES_V1.RESOURCE_CHANGED]:
       'Изменение ресурса',
     [EVENT_TYPES_V1.TRANSACTION_REVERSAL_RECORDED]:
-      'Отмена'
+      'Отмена',
+    [EVENT_TYPES_V1.COMBAT_SESSION_LIFECYCLE_CHANGED]: 'Состояние боя',
+    [EVENT_TYPES_V1.COMBAT_ROSTER_CHANGED]: 'Состав боя изменён',
+    [EVENT_TYPES_V1.COMBAT_PARTICIPANT_FLAGS_CHANGED]: 'Отметки участника изменены',
+    [EVENT_TYPES_V1.TURN_CHANGED]: 'Смена хода',
+    [EVENT_TYPES_V1.ROUND_ADVANCED]: 'Новый раунд'
   });
 
 const EVENT_TYPE_ICONS =
@@ -1071,6 +1076,9 @@ function summarizeEvent(
   event
 ) {
 
+  const combat = summarizeCombatEvent(event);
+  if (combat) return combat;
+
   if (event.type === EVENT_TYPES_V1.ROLL_PERFORMED) {
 
     return summarizeRollEvent(
@@ -1100,6 +1108,25 @@ function summarizeEvent(
   }
 
   return 'Событие записано в журнал.';
+}
+
+function summarizeCombatEvent(event) {
+  const p = event.payload;
+  if (event.type === EVENT_TYPES_V1.COMBAT_SESSION_LIFECYCLE_CHANGED) {
+    const label = { start: 'Начало боя', pause: 'Пауза боя', resume: 'Бой продолжен',
+      finish: 'Бой завершён', 'prepare-next': 'Подготовка нового боя' }[p.operation];
+    return `${label}. Раунд ${p.round}; бой ${p.sessionId}.`;
+  }
+  if (event.type === EVENT_TYPES_V1.COMBAT_ROSTER_CHANGED) {
+    return `Состав: ${p.beforeParticipantIds.join(', ') || 'нет'} → ${p.afterParticipantIds.join(', ') || 'нет'}.`;
+  }
+  if (event.type === EVENT_TYPES_V1.COMBAT_PARTICIPANT_FLAGS_CHANGED) {
+    const flags = value => [value.ready && 'Готов', value.delayed && 'Задержан'].filter(Boolean).join(', ') || 'нет отметок';
+    return `${p.participantId}: ${flags(p.before)} → ${flags(p.after)}.`;
+  }
+  if (event.type === EVENT_TYPES_V1.TURN_CHANGED) return `Ход: ${p.fromParticipantId} → ${p.toParticipantId}. Раунд ${p.round}.`;
+  if (event.type === EVENT_TYPES_V1.ROUND_ADVANCED) return `Раунд: ${p.fromRound} → ${p.toRound}.`;
+  return '';
 }
 
 
@@ -1324,6 +1351,8 @@ function collectTransactionSummaries(
 function createFallbackLabel(
   event
 ) {
+
+  if (summarizeCombatEvent(event)) return EVENT_TYPE_LABELS[event.type];
 
   if (event.type === EVENT_TYPES_V1.ROLL_PERFORMED) {
 

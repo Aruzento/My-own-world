@@ -506,6 +506,37 @@ Implemented V1 event types:
 - `resource.changed` with `payloadVersion: 1`. Payload records a stable resource reference, finite numeric before/after/delta values, optional unit and optional reason. For the first stateful page-property consumer, the resource reference records the target and field as `kind: "page-property"` and `id: "<pageId>:<fieldKey>"`.
 - `transaction.reversal.recorded` with `payloadVersion: 1`. Payload records the original transaction id, reversal transaction id, optional reversed event ids and optional reason. Reversal is additive history; it does not delete the original transaction/event.
 
+Phase 16.10 adds these strict `payloadVersion: 1` audit contracts. All require `sessionId`;
+`mapPageId` is optional and must be a stable existing id, never a title-derived identity.
+
+| Type | Required payload fields beyond sessionId | Semantics |
+| --- | --- | --- |
+| `combat.session.lifecycle.changed` | `operation`, `beforeStatus`, `afterStatus`, `round`, `currentParticipantId`, `participantIds` | start / pause / resume / finish / prepare-next; only canonical lifecycle pairs |
+| `combat.roster.changed` | `beforeParticipantIds`, `afterParticipantIds`, `currentParticipantId` | explicit active roster membership edit, not a sort/value change |
+| `combat.participant.flags.changed` | `participantId`, `before`, `after` | each flags record has exactly boolean ready and delayed |
+| `turn.changed` | `round`, `fromParticipantId`, `toParticipantId`, `mode` | mode is next / previous / select |
+| `round.advanced` | `fromRound`, `toRound` | positive safe integers, exactly one forward increment |
+
+Participant lists contain unique non-empty ids. `currentParticipantId` may be null when unavailable.
+Unknown fields, malformed values and unsupported versions are rejected by the existing EventTypes owner.
+Other names in `turn.*` / `round.*` remain reserved; `isReservedFutureEventType()` excludes implemented types.
+
+`js/events/combatSessionEventLog.js` accepts explicit operation plus detached canonical before/after
+Combat/Initiative state. `createCombatSessionTransaction(input, { createId, now })` is independently
+testable; `logCombatSessionOperation(input, { saveResult, storageAdapter, createId, now })` additionally
+requires a confirmed PageCommandService saved receipt. Production identity/time defaults live in this
+adapter, never in the pure models. One accepted user action becomes one completed transaction; forward
+wrap emits turn then round inside that transaction. Domain rejection, no-op, pre-combat edits and
+ordinary initiative value/sort corrections add no Combat events.
+
+The popup uses the existing map save controller, which captures map page/storage context before its
+await and propagates the write receipt. Conflict, blocked, stale or absent receipts append nothing.
+After durable save, append failure returns `state-persisted-event-not-written` and the popup warns:
+`Состояние боя сохранено, но событие не записано в журнал.` No automatic rollback, retry or Combat Undo.
+This differs deliberately from the existing conditional resource compensation contract; neither is
+filesystem-wide atomic. An append error can be uncertain if bytes reached storage before the error.
+The current map remains authoritative, and history is never replayed into it.
+
 Reserved future namespaces:
 
 - `action.*`;
@@ -518,7 +549,7 @@ Reserved future namespaces:
 - `movement.*`;
 - `scene.transition.*`.
 
-Reserved future namespaces are documentation and naming direction only. They are not implemented event types in `0.0.1.15.4`; `createTypedEvent()` rejects them with structured `EVENT_TYPE_UNKNOWN` evidence marked as `reservedFuture`.
+Reserved names remain documentation and naming direction only, except the explicit `turn.changed` and `round.advanced` payload contracts activated in 16.10 above. Other future types are rejected with structured `EVENT_TYPE_UNKNOWN` evidence marked as `reservedFuture`.
 
 Vocabulary safety rules:
 
@@ -616,7 +647,7 @@ Version impact:
 - no page markdown/front-matter schema change;
 - no Dice Engine result schema change;
 - no persistent identity index, sidecar index, record version bump or event schema migration;
-- backup/restore inclusion policy is still not decided. If backups must preserve event history, `backupService` needs a later additive policy for this sidecar or a versioned backup-manifest decision.
+- Owner decision in 16.10: backup v1 stays pages/assets only. `.my-own-world-events/transactions.v1.jsonl` is excluded from snapshots and never replaced/rewound by restore. Newer audit facts may remain after restoring an older page; they are historical facts, not current state or replay input. No restore event, backup manifest change or EventStore format rewrite is introduced.
 
 ## Current Safe Baseline
 
@@ -632,7 +663,7 @@ Version impact:
 ## Current Gaps For Later Leaves
 
 - Roll events can now be appended through `logDiceRoll()` and read in the minimal Event Log UI, but there is no dedicated dice tray or roll action UI yet.
-- The first stateful page-property resource integration exists, but no broader character/map/action/damage/healing/effect integration exists yet.
-- The minimal Event Log UI exists, but no combat/session panel exists yet.
-- Backup/restore inclusion for `.my-own-world-events/` is not decided yet.
-- Reserved future event namespaces do not implement action, damage, healing, effect, turn, round, rest, movement or scene-transition behavior yet.
+- The first stateful page-property resource integration and narrow Combat audit adapter exist; broader character/action/damage/healing/effect integration remains future work.
+- The existing Combat/Initiative popup and Event History panel provide current state and audit views respectively; Combat Undo/replay is not supported.
+- Event-history backup export would require a separate approved policy/format decision; current v1 exclusion is intentional.
+- Reserved future names do not implement action, damage, healing, effect, rest, movement or scene-transition behavior. Only the explicitly listed Combat turn/round facts are implemented.

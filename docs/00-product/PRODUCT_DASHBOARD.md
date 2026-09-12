@@ -7,13 +7,13 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-08-28
+Updated: 2026-09-12
 
 ## Current Product
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 now provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is next, but not active.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 now provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is ACTIVE; 16.1-16.10 are DONE and 16.FINAL is NEXT. Combat current state lives in the Campaign Map page; the existing event history contains audit facts only. Phase 17 remains BLOCKED, AI Core LATER.
 
 ## Current Focus
 
@@ -27,8 +27,8 @@ Immediate direction:
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
-7. Next phase: `0.0.1.16.0` Persistent Combat Session is `NEXT`.
-8. No implementation phase is active until the owner explicitly starts `0.0.1.16.0`.
+7. Current phase: `0.0.1.16.0` Persistent Combat Session is `ACTIVE`.
+8. Next gate: `0.0.1.16.FINAL`; do not start Phase 17 before Combat closure.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -209,7 +209,7 @@ Recently closed:
 
 Next owner action:
 
-- Start `0.0.1.16.0` Persistent Combat Session only after explicit owner instruction. It is `NEXT`, not active.
+- Complete `0.0.1.16.FINAL` next. Phase 16 remains ACTIVE; Phase 17 is BLOCKED and AI Core is LATER.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

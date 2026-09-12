@@ -7,6 +7,18 @@ owner_zone: "architecture"
 ---
 # Backup And Recovery Contract
 
+## Event History Exclusion (16.10 Owner Decision)
+
+Backup manifest v1 and existing restore remain pages/assets only.
+`.my-own-world-events/transactions.v1.jsonl` is NOT part of a snapshot and restore never replaces,
+deletes or rewinds it. Audit history is not current-state truth. After backup A, later Combat B and
+its events, restoring A restores the Campaign Map page (including exact Combat/Initiative A) while
+B events remain historical facts. No EventStore replay or restore event is performed.
+
+The mandatory pre-restore backup/verification gate is unchanged. No new manifest field, sidecar
+format or version is added. This is not a promise that backup v1 can export/recover event history.
+Disposable integration coverage: `tests/combatSessionRecoveryEvents.test.mjs`.
+
 Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
 
 Important update: full workspace backup is no longer the default protection for every ordinary tree operation. Use the lightweight operations contract to decide whether an action needs a single-file write, operation journal, rollback snapshot, background validation, or full backup gate. Full backup remains mandatory for destructive, bulk, schema, restore, import, and repair operations.
