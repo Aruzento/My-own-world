@@ -6,6 +6,31 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-13: 0.0.1.16.FINAL Persistent Combat Session Closure Gate
+
+### Decision And Review Boundary
+
+- CLOSED / PASS at `Usable` readiness for the Persistent Combat Session foundation, not full combat gameplay or installed-desktop Release-ready. Owner manual PASS for the corrected 16.9/16.9.1/16.9.2 foundation is retained.
+- Base: clean `main`, HEAD and origin/main `895c92b4cb427c9282819d623d076515dce150bf`. Reviewed cumulative range `e203a1bd575cbd52fe7e15bae3e181255796a902..895c92b4cb427c9282819d623d076515dce150bf`, including all Phase 16 leaves and UI correctives, not just 16.10. The intervening `f5bd4ee` deferred AI Core documentation commit is outside Combat implementation; its LATER status remains unchanged.
+- No architectural/data-safety blocker or uncovered runtime correction was found. FINAL changes only nine related closure/testing documents. Stale manual-pending / 16.10 HOLD instructions were corrected without erasing the initial owner manual FAIL. No new tests, production code, baseline images or speculative abstractions were needed.
+
+### Architecture And Behavior
+
+- `CombatSessionModel` and its pure lifecycle/flags helpers own session identity, lifecycle, membership, round and independent Ready/Delayed booleans. `CampaignMapInitiativeModel` alone owns order, values and current participant; the map-side bridge plans coordinated changes and `CampaignMapStore` publishes the aggregate. No duplicate current pointer, Character snapshot or second store was introduced.
+- Start generates a fresh id/round 1/false markers from canonical initiative; pause/resume retain state; finish freezes; prepare-next releases only the finished session. Apply prepares initiative without starting. Active explicit roster edits preserve retained flags, default new flags and remove only explicit omissions; paused/finished edits reject. Forward Next wraps once (including one member); Previous/direct selection never advance or decrement round. Rejected operations publish nothing. Integrity preserves exact unresolved identities without repair/substitution, and diagnostics remain runtime-only.
+- Current Combat state uses the existing Campaign Map serializer / precondition-aware PageCommandService path with repository/index notification. Exact active/paused/finished reload preserves identity, order, totals, current participant, round and flags without reroll/resort/reset. Character/Properties ownership, Dice, StorageAdapter, PageCommandService, BackupService and EventStore implementations are unchanged across the reviewed range.
+- Explicit operation -> confirmed map-page save -> typed Combat audit append remains the event boundary. Rejected/no-op/unconfirmed/failed saves add no success history. Forward wrap produces one transaction with turn then round. Append failure leaves the persisted map intact and reports `state-persisted-event-not-written`, without automatic retry/rollback or a false atomicity claim. Combat audit is not reversible through resource Undo.
+- Backup v1 remains pages/assets only; existing mandatory pre-restore safety ownership is unchanged. Restore A reinstates exact map A while later B audit bytes remain historical. Corrupt EventStore records do not prevent valid map load or continuation; history never supplies replay-derived live state. Event history is intentionally not recoverable from backup v1, and an append failure after bytes reach storage may remain uncertain.
+- Cumulative scope search found no new attack/check/save action pipeline, hit/miss, damage/healing/HP/temp-HP/resource-cost application, effects/targeting/range/LoS/AoE, reaction/Ready Action execution, Combat Undo or replay. No dependency/Tauri change or version bump/eager migration. The approved 16.3 optional `combatSession` / `data-combat-session-state` extension and 16.10 typed v1 facts remain the only new persistent domain data; no format change occurred in FINAL.
+
+### Verification And Handoff
+
+- Focused unit/integration: 232/232 PASS across Combat model/lifecycle/flags, map integration/integrity/progression/persistence, recovery/events, initiative, EventStore/reversal and shared positioning. Focused browser: 36/36 PASS across Combat UI, Combat integration, map data and initiative, including Character-to-initiative parity.
+- Fresh required gates PASS: `npm run docs:index`, `npm run verify:quick`, `npm run verify`, `npm run check:encoding`, `git diff --check`, and one `npm run verify:full`. Unit suite: 817/817; full browser: 224/224, including six unchanged approved popup pixel comparisons. UI polish, disposable 900-page performance and manual DOCX ZIP integrity passed through existing gates. Docs: 95 with zero metadata/zone/status contradictions; skills: 19/19; task contracts: 4/4; project file audit: 748 files, zero delete/mojibake candidates.
+- Browser assertions retain realistic long-name containment, non-overlapping participant cards, one internal roster scroller, reachable lifecycle/footer controls, active/paused/finished behavior, keyboard/focus, flags and prepare-next. Representative active/scrolled 480x720 and paused 1280x900 screenshots were inspected; partial rows at scroll boundaries are expected clipping, not overlap. Evidence stays temporary; no new screenshot baseline or visual redesign.
+- Full verification finished before closure status edits. After documentation-only edits, docs index/encoding/diff checks were rerun; no production/test code changed after PASS. Generated project-file-audit inventory/date/local-size drift was inspected and excluded from this focused commit; no local artifact was deleted. No real workspace was mutated. Native desktop smoke was not required/run, and no new installed-desktop acceptance is claimed.
+- Final roadmap: Phase 16 DONE (CLOSED / PASS), 16.1-16.10 DONE, 16.FINAL PASS; Phase 17 Combat Action Pipeline NEXT / unblocked, not ACTIVE; AI Core LATER. No Phase 17 implementation was started. One focused documentation commit; no automatic push.
+
 ## 2026-09-12: 0.0.1.16.10 Persistence / Recovery / Event Integration
 
 - Base: clean main, HEAD/origin/main `ca65c392746979c4c92d7751948ce3b26d1ea86d`. Owner accepts 16.9/16.9.1/16.9.2 manual PASS as sufficient Combat foundation; prior HOLD is removed.

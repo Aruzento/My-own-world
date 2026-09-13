@@ -7,9 +7,9 @@ owner_zone: "architecture"
 ---
 # Persistent Combat Session Contract
 
-Status: `0.0.1.16.1` architecture contract, resolved on 2026-09-04.
+Status: `0.0.1.16.FINAL` CLOSED / PASS on 2026-09-13. The original 16.1 architecture decision was resolved on 2026-09-04 and remains authoritative.
 
-Readiness: original 16.1 `Foundation` contract, extended through 16.10 (`Usable`). Model, map persistence, lifecycle, UI and audit integration now exist; final Phase 16 closure remains separate.
+Readiness: `Usable` persistent-session foundation, not full combat gameplay or installed-desktop Release-ready. Cumulative review `e203a1b..895c92b` confirmed the owners and invariants below; final verification passed. Phase 17 is NEXT, not started. Closure changes no ownership, format or lifecycle rule.
 
 ## 1. Scope
 

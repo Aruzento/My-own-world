@@ -1,12 +1,19 @@
 # Release Notes
 
+## 2026-09-13: Persistent Combat Session Closure
+
+- Phase 16 is CLOSED / PASS at Usable readiness: lifecycle, explicit roster edits, current participant/rounds, independent Ready/Delayed, missing-reference warnings, exact reload and second-combat preparation are verified through the existing owners.
+- Campaign Map page remains current-state truth; EventStore is audit-only. Backup v1 excludes event history, and restore never replays it. State-save failure adds no success event; audit failure after save remains an explicit incomplete outcome without retry/rollback or atomicity claims.
+- Cumulative review: `e203a1b..895c92b`. Focused 232 unit/integration and 36 browser tests passed; final gates passed with 817 unit and 224 browser tests, including six unchanged approved popup comparisons. No runtime, test, dependency or format change was needed in FINAL; only status/testing docs were corrected.
+- Phase 17 Combat Action Pipeline is NEXT / unblocked, not ACTIVE; AI Core remains LATER. No attacks, damage/healing, HP automation, targeting, effects, Ready Action execution or Combat Undo/replay was added. Installed-desktop acceptance remains a separate release check.
+
 ## 2026-09-12: Combat 16.10 - Recovery And Audit History
 
-- Owner manual PASS accepts 16.9/16.9.1/16.9.2 as sufficient Combat foundation. Phase 16 remains ACTIVE; 16.1-16.10 DONE, 16.FINAL NEXT, Phase 17 BLOCKED, AI Core LATER.
+- Owner manual PASS accepted 16.9/16.9.1/16.9.2 as sufficient Combat foundation. At this leaf Phase 16 remained ACTIVE pending FINAL; the closure result above supersedes that status.
 - Lifecycle, explicit active roster edits, Ready/Delayed, turns and forward round wraps now appear in the existing event history. A wrapping Next is one transaction with turn then round; no pre-combat/value-correction/dice/action events are added.
 - The map page saves first. Failed or blocked saves add no successful event. If only audit append fails, the popup says `Состояние боя сохранено, но событие не записано в журнал.` The saved battle remains usable; there is no automatic rollback/retry or Combat Undo.
 - Backup v1 remains pages/assets only and excludes the event sidecar. Restoring an older map does not rewind newer historical facts and never replays events into current Combat. Page, map, event-record and backup formats are unchanged.
-- Disposable integration and browser coverage prove persistence/reload, exact restore, audit failure and corrupt-history independence. This is not an installed-desktop release approval; final closure remains 16.FINAL.
+- Disposable integration and browser coverage prove persistence/reload, exact restore, audit failure and corrupt-history independence. This is not an installed-desktop release approval; final closure is recorded above.
 
 ## 2026-09-11: Combat 16.9.2 - Prepare Before Starting Again
 

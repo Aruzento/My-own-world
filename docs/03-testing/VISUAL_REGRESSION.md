@@ -52,7 +52,7 @@ Evidence is emitted under `test-results/campaign-map-combat-ui-rea-<test-id>-chr
 | 480x720 | `combat-realistic-active-480.png` | `combat-realistic-paused-480.png` | `combat-realistic-details-480.png` |
 | 1024x768 | `combat-realistic-active-1024.png` | `combat-realistic-paused-1024.png` | `combat-realistic-details-1024.png` |
 
-Detail captures expose the longest name, warning and lower roster; partial cards at the scroll boundary are normal scrolling, not overlapping content. These screenshots require visual inspection and remain evidence only. No approved baseline is regenerated. Owner manual retest is required; 16.10 stays NEXT/HOLD.
+Detail captures expose the longest name, warning and lower roster; partial cards at the scroll boundary are normal scrolling, not overlapping content. These screenshots require visual inspection and remain evidence only. No approved baseline is regenerated. Owner manual PASS for corrected 16.9/16.9.1/16.9.2 was accepted for 16.10 and resolves the former HOLD. The 2026-09-13 Phase 16 closure reran this browser coverage and inspected representative active/scrolled 480x720 and paused 1280x900 evidence. This is sufficient Combat foundation, not installed-desktop release acceptance; the original manual FAIL above remains historical evidence.
 
 ```powershell
 npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs --grep realistic

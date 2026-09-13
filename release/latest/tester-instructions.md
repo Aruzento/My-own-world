@@ -1,5 +1,13 @@
 # Tester Instructions
 
+## 2026-09-13: Phase 16 Closure Handoff
+
+Phase 16 is CLOSED / PASS at Usable readiness. The corrected Combat UI foundation has owner manual PASS; the retained routes below remain regression instructions, not a pending 16.10 approval gate. Test current source on disposable data only. Installed-desktop release acceptance is still separate.
+
+Final verification passed: focused 232 unit/integration and 36 browser tests; `docs:index`, `verify:quick`, `verify`, `check:encoding`, `git diff --check` and one `verify:full` with 817 unit / 224 browser tests. All six approved popup screenshot comparisons passed unchanged. No native desktop smoke or real-workspace destructive operation was run.
+
+Use the recovery/audit, realistic-roster and prepare-next routes below together. Expect exact current state from the map page, audit-only history and explicit errors, never replay or automatic repair. This is a persistent-session foundation, not attack/damage/HP gameplay. Phase 17 is NEXT / unblocked, not ACTIVE; AI Core remains LATER.
+
 ## 2026-09-12: 16.10 Recovery And Audit
 
 Owner manual PASS for 16.9/16.9.1/16.9.2 is recorded; the former HOLD is resolved.
@@ -13,7 +21,7 @@ Use a disposable workspace only. The map page is current truth, event history is
 
 Focused checks: `node --test tests/combatSessionEventLog.test.mjs tests/combatSessionRecoveryEvents.test.mjs` and
 `npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs`.
-No new screenshot baseline or real-workspace destructive smoke. Next is 16.FINAL, not Phase 17.
+No new screenshot baseline or real-workspace destructive smoke. The completed 16.FINAL result is recorded above; keep this recovery route for regressions.
 
 ## 2026-09-11: 16.9.2 Prepare Next Combat Acceptance
 
@@ -43,7 +51,7 @@ Focused reproduction: `npm run test:browser -- tests/browser/campaign-map-combat
 
 ## 2026-09-10: 16.9 Combat UI Owner Acceptance
 
-Use a disposable/copied workspace, not the real campaign. This is automated/Foundation delivery, not an approved desktop release. Run `npm run dev:web` for the current source UI.
+Use a disposable/copied workspace, not the real campaign. The original automated/Foundation delivery now has owner acceptance and Phase 16 closure; it is not an approved desktop release. Run `npm run dev:web` for the current source UI.
 
 1. On a map with two creatures, open `Бой и инициатива`, choose participants, enter known totals and press `Применить`. This prepares initiative only; Roll d20 and manual corrections still work before a session exists.
 2. Select the intended current participant and press `Начать бой`. Check round 1, the same current participant/order/totals and cleared markers; no reroll.
@@ -54,7 +62,7 @@ Use a disposable/copied workspace, not the real campaign. This is automated/Foun
 7. Save an active round 3 session with a known current participant and mixed markers; close/reload the map, reopen this popup and compare all values. Next must continue from the restored current/round.
 8. Finish and reload: final state is read-only. Use `Подготовить новый бой`, edit/apply initiative, then explicitly `Начать бой` as in the 16.9.2 route above. New Combat gets a new session id, round 1 and cleared markers without changing prepared initiative.
 9. On disposable missing-reference fixtures, inspect token/page warnings in normal rows and Combat-only ids in `Проблемы боя`. No silent removal/replacement. Pending input + rejected Next must neither save the input nor advance the session.
-10. Check keyboard focus, Escape/return to toolbar, pressed markers and popup placement in desktop and constrained windows. Record manual acceptance or specific defects before authorizing 16.10.
+10. Check keyboard focus, Escape/return to toolbar, pressed markers and popup placement in desktop and constrained windows. Record PASS or specific regressions; the former approval prerequisite for 16.10 has been satisfied.
 
 Focused automated route:
 
@@ -64,7 +72,7 @@ npm run test:browser -- tests/browser/campaign-map-combat-ui.spec.mjs tests/brow
 
 The Combat UI spec attaches `combat-active-1280.png`, `combat-paused-1280.png`, `combat-active-480.png` and `combat-paused-480.png` at deterministic 1280x900 / 480x720 viewports. These are review evidence, not new approved pixel baselines. Existing approved popup baselines are unchanged.
 
-**MANUAL OWNER ACCEPTANCE REQUIRED BEFORE 16.10.**
+**Owner manual acceptance of the corrected foundation is PASS; installed-desktop release acceptance is a separate check.**
 
 ## 2026-07-27: Current Handoff Smoke
 

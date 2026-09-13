@@ -7,13 +7,13 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-09-12
+Updated: 2026-09-13
 
 ## Current Product
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 now provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is ACTIVE; 16.1-16.10 are DONE and 16.FINAL is NEXT. Combat current state lives in the Campaign Map page; the existing event history contains audit facts only. Phase 17 remains BLOCKED, AI Core LATER.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is CLOSED / PASS at `Usable` readiness; 16.1-16.10 are DONE and 16.FINAL is PASS. Combat current state lives in the Campaign Map page; the existing event history contains audit facts only. This is a persistent-session foundation, not full combat gameplay. Phase 17 is NEXT / unblocked, not ACTIVE; AI Core remains LATER.
 
 ## Current Focus
 
@@ -27,13 +27,14 @@ Immediate direction:
 4. Treat `0.0.1.11.0` Existing P1 Stabilization as closed after the final gate passed on 2026-08-24.
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
-7. Current phase: `0.0.1.16.0` Persistent Combat Session is `ACTIVE`.
-8. Next gate: `0.0.1.16.FINAL`; do not start Phase 17 before Combat closure.
+7. Closed phase: `0.0.1.16.0` Persistent Combat Session is `DONE` after 16.FINAL PASS on 2026-09-13.
+8. Next phase: `0.0.1.17.0` Combat Action Pipeline is `NEXT` / unblocked, not `ACTIVE`; implementation awaits the next owner task.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-09-13 `0.0.1.16.FINAL`: cumulative review `e203a1b..895c92b` confirmed one Combat Session owner, canonical Initiative/current participant, exact map-page continuation, second-combat preparation, non-destructive integrity diagnostics and audit-only EventStore integration. Focused 232 unit/integration and 36 browser tests passed; final gates passed with 817 unit and 224 browser tests. Owner-accepted UI remains unchanged. Closure only corrects status/testing documentation; no Phase 17 mechanics or persistent format migration.
 - 2026-08-28 `0.0.1.15.FINAL` Event / Roll / Transaction Closure Gate: closed NF-003 after the cumulative Phase 15 review and one narrow read-only reviewer. A small corrective commit tightened the gate invariants before closure: completed durable transactions now require at least one event, and the first stateful page-property transaction cannot log its write under an unrelated resource identity. The final state has one canonical Event Store, durable append/read/reload, RollResult logging, one reversible stateful page-property transaction, bounded query API, minimal “Журнал событий” UI and explicit failure/conflict/recovery semantics. No combat session, damage/HP automation, effects engine, turn/round engine, new storage owner, persistent format migration or real workspace mutation was added.
 - 2026-08-27 `0.0.1.15.11` Future Event Adapter Contract: documented the future event adapter boundary for action, damage, healing, effect, turn, round, rest, movement and scene-transition integrations. Future systems must keep their domain owners, assemble one user-intent transaction, emit one or more explicit typed events, and append through the durable Event Store without changing store internals. Added contract tests proving adapter-style transactions use public transaction/store APIs and that reserved future namespaces remain blocked until their payload contracts are implemented. No fake combat/action services, event type implementation, Character/Map schema change, Event Store rewrite, persistent format migration or real workspace mutation was added.
 - 2026-08-27 `0.0.1.15.10` Event Safety Integration: hardened the first stateful Event Log adapter so failed event append rollback cannot overwrite newer durable page state. `resource.changed` still writes through `PageCommandService`; state write failure and stale write conflict append no successful event; event append failure either rolls back safely or returns an explicit runtime outcome that state may have changed and no event became durable. Restore remains a recovery operation, not event replay: after restore, undo of an older event checks current durable state and refuses stale compensation. Event Query was verified to read the active workspace sidecar after workspace switch. No filesystem-wide atomicity claim, combat/session behavior, persistent format migration, backup format migration or real workspace mutation was added.
@@ -209,7 +210,7 @@ Recently closed:
 
 Next owner action:
 
-- Complete `0.0.1.16.FINAL` next. Phase 16 remains ACTIVE; Phase 17 is BLOCKED and AI Core is LATER.
+- Phase 16 is CLOSED / PASS. Await the owner task for `0.0.1.17.0` Combat Action Pipeline (NEXT, not ACTIVE); AI Core remains LATER.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 

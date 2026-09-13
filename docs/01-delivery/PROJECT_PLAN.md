@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-09-12
+Updated: 2026-09-13
 
 Planning version: 3
 
@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `ACTIVE`.
+Current phase: `0.0.1.16.0` NF-004 Persistent Combat Session is `DONE` (CLOSED / PASS).
 
-Current leaf: `0.0.1.16.10` Persistence / Recovery / Event Integration is `DONE` at `Usable` readiness. Owner manual acceptance of `16.9` / `16.9.1` / `16.9.2` is `PASS` as sufficient Combat foundation. `0.0.1.16.FINAL` is `NEXT`; Phase 16 remains `ACTIVE`, Phase 17 remains `BLOCKED`, AI Core remains `LATER`.
+Current leaf: `0.0.1.16.FINAL` Closure Gate is `PASS` on 2026-09-13 at `Usable` readiness. Leaves `16.1` through `16.10` are `DONE`; owner manual acceptance of `16.9` / `16.9.1` / `16.9.2` is `PASS`. Phase 16 provides a persistent Combat Session foundation, not full combat gameplay. `0.0.1.17.0` Combat Action Pipeline is `NEXT` / unblocked, not `ACTIVE`; no implementation was started. AI Core remains `LATER`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `ACTIVE`; `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `NEXT`. Do not start Phase 17, attacks, damage application, HP automation, effects, targeting or dice UI.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `DONE` (CLOSED / PASS); `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `PASS`. `0.0.1.17.0` is `NEXT` / unblocked, not `ACTIVE`; AI Core remains `LATER`. Stop after closure; no Phase 17 implementation, attacks, damage application, HP automation, effects, targeting or dice UI was started.
 
 ## Execution Rules
 
@@ -337,7 +337,9 @@ ID: `0.0.1.16.0`
 
 NAME: NF-004 Persistent Combat Session
 
-STATUS: `ACTIVE`
+STATUS: `DONE`
+
+CLOSURE: `CLOSED / PASS` on 2026-09-13, `Usable` readiness. Cumulative review `e203a1b..895c92b` and all final gates passed; see the closure evidence in [WORK_LOG.md](./WORK_LOG.md). This is not installed-desktop release acceptance or full combat gameplay.
 
 GOAL: make active combat reload-safe without creating a second initiative engine.
 
@@ -377,7 +379,7 @@ PLANNED LEAF SEQUENCE:
    Corrective `0.0.1.16.9.1` Combat UI Usability Fix - `DONE` automated on 2026-09-11, owner manual PASS recorded for the 16.10 task. The initial owner manual review of 16.9 had failed: long names/controls collided in compressed rows and lifecycle actions were hard to reach. Order cards now separate identity/current badge, initiative cluster, flags and warnings; names wrap without truncation. The existing popup is 500px where space permits, with one viewport-bounded roster scroll area and non-scrolling header/navigation/actions. Shared positioning applies existing size constraints before measuring; Initiative geometry does not animate. Eight named participants plus one unresolved Combat-only member cover geometry, keyboard, footer reachability and active/paused evidence at 1280x900, 480x720 and 1024x768. Domain/save/schema behavior is unchanged. The subsequent owner decision accepts the corrected foundation.
    Corrective `0.0.1.16.9.2` Prepare Next Combat Flow - `DONE` automated on 2026-09-11, owner manual PASS recorded for the 16.10 task. Finished popup offers `Подготовить новый бой`: pure lifecycle `finished -> null`, existing Store setter publishes once, initiative stays intact and the existing picker opens. Roster/value edits and Roll use existing initiative owners; Apply leaves no session, explicit Start creates a fresh id, round 1 and false Ready/Delayed markers. Preparation survives save/reload; failure remains a dirty save error. No schema, persistent preparation flag, new owner, EventStore or 16.10 work; corrected 16.9.1 layout remains covered.
 9. `0.0.1.16.10` Persistence / Recovery / Event Integration - `DONE` at `Usable` readiness on 2026-09-12. Campaign Map page remains current truth; a narrow Combat event adapter appends lifecycle/roster/flags/turn/round facts only after confirmed PageCommandService save. A forward wrap is one transaction with turn then round. Save rejection/failure adds no success event; append failure leaves the saved map intact with `state-persisted-event-not-written`, a readable warning and no retry/rollback. Strict typed payloads and the existing history UI expose audit-only facts without Combat Undo. Disposable integration proves exact active/paused/finished persistence, backup A restoring page A while newer B history remains, and corrupt-history independence. Backup v1 remains pages/assets only; event sidecar is explicitly excluded, never rewound or replayed. No persisted format migration or Phase 17 work.
-10. `0.0.1.16.FINAL` Closure Gate - `NEXT`; Phase 16 is not closed yet.
+10. `0.0.1.16.FINAL` Closure Gate - `PASS` on 2026-09-13. Cumulative owners, lifecycle/roster/current/round/flags, non-repairing integrity, exact persistence, prepare-next, recovery and audit boundaries passed review. Focused 232 unit/integration and 36 browser tests passed; final gates passed with 817 unit and 224 browser tests, including six unchanged approved screenshot comparisons. Only closure/testing documentation changed; no new runtime code, tests, dependency, migration or Phase 17 work. Readiness: `Usable` persistent-session foundation, not full combat gameplay or Release-ready.
 
 ### Phase 9 - 0.0.1.17.0 NF-005 Combat Action Pipeline
 
@@ -385,7 +387,9 @@ ID: `0.0.1.17.0`
 
 NAME: NF-005 Combat Action Pipeline
 
-STATUS: `BLOCKED`
+STATUS: `NEXT`
+
+UNBLOCKED: Phase 16 closure passed on 2026-09-13. Implementation is not started; activation and a bounded first action slice require the next owner task.
 
 GOAL: route combat operations through one safe pipeline.
 

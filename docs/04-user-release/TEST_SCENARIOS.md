@@ -26,7 +26,7 @@ owner_zone: "user-release"
 
 ## Минимальный пользовательский проход
 
-For the 16.9 Initiative/Combat session UI, first follow the current owner-acceptance route in [tester-instructions.md](../../release/latest/tester-instructions.md). It covers preparation/start, turns/rounds, independent markers, frozen lifecycle states, missing references and exact map reload. Manual acceptance is still pending; do not treat these automated checks as approval to start 16.10.
+For the Initiative/Combat session UI, follow the current regression route in [tester-instructions.md](../../release/latest/tester-instructions.md). It covers preparation/start, turns/rounds, independent markers, frozen lifecycle states, missing references, exact map reload and recovery/audit boundaries. Owner manual acceptance of the corrected Combat foundation is PASS; 16.FINAL closed Phase 16 on 2026-09-13. This is not installed-desktop release approval or full combat gameplay. Phase 17 is NEXT, not started.
 
 1. Открыть workspace.
 2. Создать карточку.
