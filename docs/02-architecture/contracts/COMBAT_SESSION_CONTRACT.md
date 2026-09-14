@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 Status: `0.0.1.16.FINAL` CLOSED / PASS on 2026-09-13. The original 16.1 architecture decision was resolved on 2026-09-04 and remains authoritative.
 
-Readiness: `Usable` persistent-session foundation, not full combat gameplay or installed-desktop Release-ready. Cumulative review `e203a1b..895c92b` confirmed the owners and invariants below; final verification passed. Phase 17 is NEXT, not started. Closure changes no ownership, format or lifecycle rule.
+Readiness: `Usable` persistent-session foundation, not full combat gameplay or installed-desktop Release-ready. Cumulative review `e203a1b..895c92b` confirmed the owners and invariants below; final verification passed. Phase 17 is now ACTIVE with a docs-only 17.1 Foundation contract: [Combat Action Pipeline](./COMBAT_ACTION_PIPELINE_CONTRACT.md). Its 17.2 prerequisite is NEXT; no attack runtime is implemented. Phase 16 ownership, format and lifecycle rules remain unchanged.
 
 ## 1. Scope
 

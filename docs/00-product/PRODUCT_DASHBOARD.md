@@ -7,13 +7,13 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-09-13
+Updated: 2026-09-14
 
 ## Current Product
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is CLOSED / PASS at `Usable` readiness; 16.1-16.10 are DONE and 16.FINAL is PASS. Combat current state lives in the Campaign Map page; the existing event history contains audit facts only. This is a persistent-session foundation, not full combat gameplay. Phase 17 is NEXT / unblocked, not ACTIVE; AI Core remains LATER.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is CLOSED / PASS at `Usable` readiness; 16.1-16.10 are DONE and 16.FINAL is PASS. Combat current state lives in the Campaign Map page; the existing event history contains audit facts only. This is a persistent-session foundation, not full combat gameplay. Phase 17 is ACTIVE with 17.1 complete at Foundation readiness; 17.2 Character Health Mutation Preparation is NEXT. No attack capability is implemented yet; Phase 18+ remains BLOCKED and AI Core LATER.
 
 ## Current Focus
 
@@ -28,12 +28,13 @@ Immediate direction:
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
 7. Closed phase: `0.0.1.16.0` Persistent Combat Session is `DONE` after 16.FINAL PASS on 2026-09-13.
-8. Next phase: `0.0.1.17.0` Combat Action Pipeline is `NEXT` / unblocked, not `ACTIVE`; implementation awaits the next owner task.
+8. Active phase: `0.0.1.17.0` Combat Action Pipeline. `17.1` architecture is `DONE` at `Foundation`; `17.2` Character Health Mutation Preparation is `NEXT`. The first usable single-target attack with history/Undo is planned for `17.6`.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
 Recently closed:
 
+- 2026-09-14 `0.0.1.17.1`: [Combat Action Pipeline contract](../02-architecture/contracts/COMBAT_ACTION_PIPELINE_CONTRACT.md) defines one coordinator over existing Character/Dice/page/event owners, exact actor/target identity, one attack transaction, honest failure outcomes and compensating Undo. The next prerequisite prepares HP/temp HP as one page change. Architecture only: no attack, HP mutation, action UI, new event type or generic Combat Undo implemented.
 - 2026-09-13 `0.0.1.16.FINAL`: cumulative review `e203a1b..895c92b` confirmed one Combat Session owner, canonical Initiative/current participant, exact map-page continuation, second-combat preparation, non-destructive integrity diagnostics and audit-only EventStore integration. Focused 232 unit/integration and 36 browser tests passed; final gates passed with 817 unit and 224 browser tests. Owner-accepted UI remains unchanged. Closure only corrects status/testing documentation; no Phase 17 mechanics or persistent format migration.
 - 2026-08-28 `0.0.1.15.FINAL` Event / Roll / Transaction Closure Gate: closed NF-003 after the cumulative Phase 15 review and one narrow read-only reviewer. A small corrective commit tightened the gate invariants before closure: completed durable transactions now require at least one event, and the first stateful page-property transaction cannot log its write under an unrelated resource identity. The final state has one canonical Event Store, durable append/read/reload, RollResult logging, one reversible stateful page-property transaction, bounded query API, minimal “Журнал событий” UI and explicit failure/conflict/recovery semantics. No combat session, damage/HP automation, effects engine, turn/round engine, new storage owner, persistent format migration or real workspace mutation was added.
 - 2026-08-27 `0.0.1.15.11` Future Event Adapter Contract: documented the future event adapter boundary for action, damage, healing, effect, turn, round, rest, movement and scene-transition integrations. Future systems must keep their domain owners, assemble one user-intent transaction, emit one or more explicit typed events, and append through the durable Event Store without changing store internals. Added contract tests proving adapter-style transactions use public transaction/store APIs and that reserved future namespaces remain blocked until their payload contracts are implemented. No fake combat/action services, event type implementation, Character/Map schema change, Event Store rewrite, persistent format migration or real workspace mutation was added.
@@ -210,7 +211,7 @@ Recently closed:
 
 Next owner action:
 
-- Phase 16 is CLOSED / PASS. Await the owner task for `0.0.1.17.0` Combat Action Pipeline (NEXT, not ACTIVE); AI Core remains LATER.
+- Continue with `0.0.1.17.2` Character Health Mutation Preparation (NEXT); 17.1 is complete at Foundation readiness. Phase 16 remains CLOSED / PASS, Phase 17 ACTIVE, Phase 18+ BLOCKED and AI Core LATER.
 
 Closed `0.0.1.8.10` summary after user review, updated by `0.0.1.8.11.7`: AppShell navigation is now a real rail, but it does not duplicate world content types. The left rail exposes `Дерево` as the content navigation entry, `Поиск и команды` as a real global tool, and the profile as a global rail item; cards, maps, task trackers, rules and knowledge graphs stay inside the world tree and create flows. The `Дерево` rail button shows/hides the primary sidebar, the editor expands when the tree is hidden, and resize state remains controlled by the shell. The old page-info right inspector is removed; the right-panel slot remains hidden until a future workflow has a real purpose for it. The primary sidebar follows an Explorer model: if no workspace is open, the tree area shows `Открыть папку`; once a workspace exists, root-level creation lives on the `Корень` row through `+` and folder actions. Phase 5 core content is now usable: block movement works, the first-level Add block picker is cleaned up, the card editor header/toolbar layer is visually coherent, Properties have a readable field-state language, ordinary card blocks share one visual system, card dropdowns no longer look system-default, saved templates are reachable from create, and deep page search/commands are available from the rail or `Ctrl+K`. The separate diagnostics/history bottom panel is intentionally not added as an empty surface; diagnostics/recovery bottom-panel work remains in the secondary-screens phase.
 
@@ -228,7 +229,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a canonical public facade, structured runtime results, explicit d20 advantage/disadvantage modes and natural-d20 critical metadata. Phase 15 now has a pure transaction model, durable JSONL event sidecar, strict event vocabulary and first roll-event consumer; event UI and combat integration remain the current blockers.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a canonical public facade, structured runtime results, explicit d20 advantage/disadvantage modes and natural-d20 critical metadata. Phase 15 provides typed durable history and its UI, and Phase 16 provides session audit integration. Phase 17 still needs the documented composable health write, action transaction and conditional Undo before an attack is usable.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.

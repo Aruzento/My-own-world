@@ -1,11 +1,15 @@
 # Release Notes
 
+## 2026-09-14: Phase 17 Architecture Status
+
+Phase 17 is ACTIVE; 17.1 is DONE at Foundation readiness and 17.2 Character Health Mutation Preparation is NEXT. This is documentation only: the first attack/history/Undo workflow is planned for 17.6. Phase 16 remains CLOSED / PASS; Phase 18+ remains BLOCKED and AI Core LATER. No user behavior, dependency or persistent format changed.
+
 ## 2026-09-13: Persistent Combat Session Closure
 
 - Phase 16 is CLOSED / PASS at Usable readiness: lifecycle, explicit roster edits, current participant/rounds, independent Ready/Delayed, missing-reference warnings, exact reload and second-combat preparation are verified through the existing owners.
 - Campaign Map page remains current-state truth; EventStore is audit-only. Backup v1 excludes event history, and restore never replays it. State-save failure adds no success event; audit failure after save remains an explicit incomplete outcome without retry/rollback or atomicity claims.
 - Cumulative review: `e203a1b..895c92b`. Focused 232 unit/integration and 36 browser tests passed; final gates passed with 817 unit and 224 browser tests, including six unchanged approved popup comparisons. No runtime, test, dependency or format change was needed in FINAL; only status/testing docs were corrected.
-- Phase 17 Combat Action Pipeline is NEXT / unblocked, not ACTIVE; AI Core remains LATER. No attacks, damage/healing, HP automation, targeting, effects, Ready Action execution or Combat Undo/replay was added. Installed-desktop acceptance remains a separate release check.
+- At Phase 16 closure, Phase 17 Combat Action Pipeline was NEXT / unblocked; its current architecture status is recorded above. AI Core remains LATER. No attacks, damage/healing, HP automation, targeting, effects, Ready Action execution or Combat Undo/replay was added. Installed-desktop acceptance remains a separate release check.
 
 ## 2026-09-12: Combat 16.10 - Recovery And Audit History
 

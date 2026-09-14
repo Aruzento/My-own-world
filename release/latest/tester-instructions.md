@@ -1,12 +1,16 @@
 # Tester Instructions
 
+## 2026-09-14: Phase 17 Architecture Only
+
+Phase 17 is ACTIVE, with 17.1 complete at Foundation readiness and 17.2 NEXT. There is no new attack button, targeting flow, HP automation or action Undo to test yet. The future Goblin hit/miss/history/Undo acceptance belongs to 17.6 in the Combat Action Pipeline contract. Existing Phase 16 regression routes below remain applicable; Phase 18+ is BLOCKED and AI Core LATER.
+
 ## 2026-09-13: Phase 16 Closure Handoff
 
 Phase 16 is CLOSED / PASS at Usable readiness. The corrected Combat UI foundation has owner manual PASS; the retained routes below remain regression instructions, not a pending 16.10 approval gate. Test current source on disposable data only. Installed-desktop release acceptance is still separate.
 
 Final verification passed: focused 232 unit/integration and 36 browser tests; `docs:index`, `verify:quick`, `verify`, `check:encoding`, `git diff --check` and one `verify:full` with 817 unit / 224 browser tests. All six approved popup screenshot comparisons passed unchanged. No native desktop smoke or real-workspace destructive operation was run.
 
-Use the recovery/audit, realistic-roster and prepare-next routes below together. Expect exact current state from the map page, audit-only history and explicit errors, never replay or automatic repair. This is a persistent-session foundation, not attack/damage/HP gameplay. Phase 17 is NEXT / unblocked, not ACTIVE; AI Core remains LATER.
+Use the recovery/audit, realistic-roster and prepare-next routes below together. Expect exact current state from the map page, audit-only history and explicit errors, never replay or automatic repair. This is a persistent-session foundation, not attack/damage/HP gameplay. Phase 17's current architecture-only status is recorded above; AI Core remains LATER.
 
 ## 2026-09-12: 16.10 Recovery And Audit
 
