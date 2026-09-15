@@ -32,7 +32,6 @@ description: "Change or review MOW visual tokens, themes and shared UI primitive
 - Релевантные CSS-файлы подсистемы, если меняется конкретный UI.
 - `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`, если меняется правило дизайн-системы.
 - `docs/01-delivery/WORK_LOG.md` — если требуется запись значимого решения или статуса.
-- `release/latest/release-notes.md` и `release/latest/tester-instructions.md`, если меняется пользовательское поведение или видимый UI.
 
 ## Проверки
 
