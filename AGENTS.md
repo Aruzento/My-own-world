@@ -29,13 +29,13 @@ Preserve these unless the task explicitly changes the corresponding architecture
 Use project documents as contextual references, not as mandatory pre-reading:
 
 - `README.md` — project overview or when a task crosses subsystem boundaries.
-- `docs/BLOCK_SYSTEM_CONTRACT.md` — block creation, serialization, runtime controls, or clean-save behavior.
-- `docs/SAFE_HTML_CONTRACT.md` — sanitization, persistent HTML, save/load, paste, or unsafe markup.
-- `docs/PAGE_REPOSITORY_CONTRACT.md` — page lookup, metadata, aliases, parent relationships, or indexing.
-- `docs/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md` — map performance, viewport, rendering, or performance budgets.
-- `docs/ASSET_LIFECYCLE_CONTRACT.md` — asset references, broken/orphan assets, cleanup, or asset persistence.
-- `docs/PLANS_AND_TECH_DEBT.md` — only when the task references the roadmap, changes planned status, or intentionally adds/removes technical debt.
-- `docs/WORK_LOG.md` — only for a durable architectural decision that future work genuinely needs to understand.
+- `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md` — blocks, serialization, runtime controls, clean-save.
+- `docs/02-architecture/contracts/SAFE_HTML_CONTRACT.md` — sanitization, persistent HTML, save/load, paste.
+- `docs/02-architecture/contracts/PAGE_REPOSITORY_CONTRACT.md` — page lookup, metadata, aliases, parents, indexing.
+- `docs/02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md` — map rendering and performance budgets.
+- `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md` — asset references, cleanup and persistence.
+- `docs/01-delivery/PROJECT_PLAN.md` — current roadmap/leaf when selecting work, changing status or missing task state; not a universal tech-debt owner.
+- `docs/01-delivery/WORK_LOG.md` — only the historical entry needed to understand a relevant decision.
 - `docs/MY_OWN_WORLD_FULL_MANUAL.docx` — generated reference material; do not read or regenerate it by default.
 
 If a narrower contract or test already defines the behavior, prefer it over loading broader documentation.
@@ -60,7 +60,7 @@ If a narrower contract or test already defines the behavior, prefer it over load
 
 Update documentation only when the change makes that documentation inaccurate or when the task explicitly requests a documentation update.
 
-Do not automatically update `README.md`, `docs/PLANS_AND_TECH_DEBT.md`, `docs/WORK_LOG.md`, and the generated DOCX manual together.
+Do not automatically update README, roadmap, history and the generated DOCX manual together.
 
 Regenerate `docs/MY_OWN_WORLD_FULL_MANUAL.docx` only when explicitly requested or when a release/documentation workflow specifically requires it.
 

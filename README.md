@@ -81,7 +81,7 @@ Current project truth lives in:
 
 ## AI / Codex Workflow
 
-Before a task, Codex should read `AGENTS.md`, the product dashboard, the active plan, the work log and relevant architecture contracts.
+Start with the task scope and `AGENTS.md`, then the contract and code/tests for the affected owner. Read the current plan leaf when selecting/closing roadmap work or when task state is missing; read a specific work-log entry only when its decision is needed. The product dashboard is context for product direction, not routine pre-reading.
 
 Typical scenarios live in `.agents/skills/`. Documentation should include `summary`, `read_when` and `owner_zone` metadata. Use:
 

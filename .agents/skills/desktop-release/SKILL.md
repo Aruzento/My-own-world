@@ -11,13 +11,11 @@ description: "Desktop/Tauri build, installer, storage adapters, presentation win
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md`
-- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`
-- `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md`
-- `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
+- `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md` — при изменении adapter boundary.
+- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md` — для build/release и соответствующих обязательных gates.
+- `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md` — для packaging/capabilities проверок.
+- `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md` — при изменении desktop transition architecture.
 
 ## Что Обновить После Задачи
 

@@ -11,13 +11,10 @@ description: "Реструктуризация документации, metadat
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/00-product/PRODUCT_DASHBOARD.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
 - `docs/README.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/02-architecture/AI_ONBOARDING.md`
-- `docs/01-delivery/RELEASE_PROCESS.md`
+- `docs/02-architecture/AI_ONBOARDING.md`, только если нужен обзор связей подсистем, которого нет в task/contract.
+- `docs/01-delivery/RELEASE_PROCESS.md`, если меняется release workflow.
 - `docs/archive/README.md`, если задача касается старых или перенесенных документов
 
 ## Что Обновить После Задачи

@@ -11,12 +11,10 @@ description: "Карта кампании: токены, фигуры, тума�
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md`
-- `docs/02-architecture/desktop/DESKTOP_MAP_PERFORMANCE_NOTES.md`
-- `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
+- `docs/02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md` — нужная часть при изменении map performance/rendering.
+- `docs/02-architecture/desktop/DESKTOP_MAP_PERFORMANCE_NOTES.md` — при изменении desktop map performance.
+- `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md` — при изменении map block lifecycle или save/load.
 
 ## Что Обновить После Задачи
 

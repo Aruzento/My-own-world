@@ -11,14 +11,11 @@ description: "UI, visual style, design tokens, shell refresh, popups, buttons, p
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/00-product/PRODUCT_DASHBOARD.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
 - `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`
-- `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md`
-- `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md`
-- `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md`
+- `docs/02-architecture/ui/UI_CSS_INVENTORY_REPORT.md` — нужная поверхность при migration или проверке duplicate families.
+- `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md` — при сравнении migration/screenshot evidence.
+- `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md` — нужный pattern, только если задача требует design research.
 
 ## Что Обновить После Задачи
 

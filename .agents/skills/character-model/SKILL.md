@@ -11,13 +11,11 @@ description: "Работа с CharacterModel, характеристиками, 
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/00-product/PRODUCT_DASHBOARD.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md`
-- `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md`
-- `docs/archive/ARCHIVED_EXPERIMENTS.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
+- `docs/02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md` — текущий Character owner.
+- `docs/02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md`, если затронуты свойства или расчёты.
+- `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md`, если затронуты блоки или serialization.
+- `docs/archive/ARCHIVED_EXPERIMENTS.md` — только opt-in historical reference, если текущих contract/code недостаточно для понимания происхождения решения.
 
 ## Что Обновить После Задачи
 

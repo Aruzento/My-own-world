@@ -35,10 +35,7 @@ description: "Минималистичный senior-review перед реали
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/00-product/PRODUCT_DASHBOARD.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
 - релевантный contract из `docs/02-architecture/`
 - для UI: `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`
 - для release-facing изменений: `release/latest/release-notes.md` и `release/latest/tester-instructions.md`

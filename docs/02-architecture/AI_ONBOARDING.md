@@ -7,7 +7,7 @@ owner_zone: "architecture"
 ---
 # AI Onboarding
 
-Этот документ нужен для Codex и других AI-помощников, которые будут входить в проект без полной истории переписки.
+Этот документ — справочный обзор архитектуры, когда для задачи не хватает понимания связей подсистем. Он не является обязательным pre-read: начать с task scope и `AGENTS.md`, затем открыть contract затронутого owner и ближайший code/test.
 
 ## Что Это За Проект
 
@@ -62,8 +62,8 @@ npm run test:browser
 ## Где Смотреть
 
 - `README.md` - обзор текущей архитектуры.
-- `docs/01-delivery/PROJECT_PLAN.md` - актуальный единый план.
-- `docs/01-delivery/WORK_LOG.md` - история решений.
+- `docs/01-delivery/PROJECT_PLAN.md` - нужный current-state/leaf при выборе или закрытии работы либо недостаточном состоянии в task prompt.
+- `docs/01-delivery/WORK_LOG.md` - конкретная историческая запись, если без её решения нельзя понять текущий contract/code.
 - `docs/02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md` - правила блоков.
 - `docs/02-architecture/contracts/SAFE_HTML_CONTRACT.md` - граница безопасного HTML.
 - `docs/02-architecture/contracts/PAGE_REPOSITORY_CONTRACT.md` - PageRepository/PageIndex.

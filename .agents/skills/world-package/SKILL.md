@@ -11,13 +11,10 @@ description: "Экспорт, импорт, переиспользование �
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/00-product/PRODUCT_DASHBOARD.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md`
-- `docs/02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md`
-- `docs/02-architecture/contracts/WORKSPACE_SCHEMA_CONTRACT.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
+- `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md`, если затронуты asset references/payloads.
+- `docs/02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md`, если import пишет в workspace или меняет backup/restore boundary.
+- `docs/02-architecture/contracts/WORKSPACE_SCHEMA_CONTRACT.md`, если затронуты schema/compatibility boundaries.
 - `docs/02-architecture/contracts/WORLD_PACKAGE_CONTRACT.md`
 
 ## Что Обновить После Задачи

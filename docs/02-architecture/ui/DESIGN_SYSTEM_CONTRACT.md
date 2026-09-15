@@ -36,18 +36,18 @@ This contract task did not migrate CSS or runtime UI by itself. The first runtim
 
 ## Source Documents
 
-Read these before changing UI:
+Choose only the sources needed for the UI boundary being changed; this is not a pre-read checklist:
 
-- [BRANDBOOK.md](../../00-product/BRANDBOOK.md) - product tone, Archive Hearth palette and visual boundaries.
-- [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md) - current UI/CSS inventory, duplicate control families, popup/icon/color risks and migration map.
-- [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) - Phase 0 baseline manifest for UI, CSS, icon, popup and screenshot migration evidence.
-- [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) - reference-backed UX/UI patterns for each MyOwnWorld system.
-- [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md) - active implementation roadmap and final polish phase.
-- `styles/design-tokens.css` - current token foundation and compatibility aliases.
-- `styles/ui.css` - current primitive seeds.
-- `styles/brand-system.css` - current compatibility skin; this file should shrink over time.
-- `js/ui/popupManager.js` and `js/ui/popupPosition.js` - current popup lifecycle and viewport positioning foundation.
-- `assets/icons/rpg-ui.svg` and `js/core/icons.js` - local icon sprite and icon helper foundation.
+- [BRANDBOOK.md](../../00-product/BRANDBOOK.md) - when changing product visual direction or palette.
+- [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md) - the relevant surface when planning a shared-control migration or investigating duplicate families.
+- [UI_MIGRATION_BASELINES.md](./UI_MIGRATION_BASELINES.md) - when comparing migration or screenshot evidence.
+- [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) - the relevant pattern when the task explicitly needs design research.
+- [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md) - current leaf when selecting/closing roadmap work or task state is missing.
+- `styles/design-tokens.css` - token/theme changes and compatibility aliases.
+- `styles/ui.css` - shared primitive changes.
+- `styles/brand-system.css` - compatibility skin changes; this file should shrink over time.
+- `js/ui/popupManager.js` and `js/ui/popupPosition.js` - popup lifecycle or positioning changes.
+- `assets/icons/rpg-ui.svg` and `js/core/icons.js` - icon changes.
 
 ## Product Image
 
@@ -481,8 +481,8 @@ Before any UI migration patch:
 
 1. Name the exact user action that becomes easier.
 2. Name the owner surface: AppShell, tree, editor, properties, map, graph, task tracker, rules or diagnostics.
-3. Check [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md) for duplicate families and current risk.
-4. Check [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) for the system reference pattern.
+3. Check the relevant surface in [UI_CSS_INVENTORY_REPORT.md](./UI_CSS_INVENTORY_REPORT.md) when migrating shared control families.
+4. Check the relevant pattern in [UI_UX_COMPETITOR_REFERENCE_RESEARCH.md](./UI_UX_COMPETITOR_REFERENCE_RESEARCH.md) when the migration includes design research.
 5. Use an existing semantic token or add a semantic token first.
 6. Use an allowed shared primitive or explain why a new primitive is necessary.
 7. Do not mix visual migration with business logic unless the plan item says so.

@@ -19,13 +19,10 @@ Use this skill when a task touches:
 
 ## Read Before Work
 
-- `AGENTS.md`
-- `docs/00-product/PRODUCT_DASHBOARD.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/01-delivery/DEFINITION_OF_DONE.md`
+- `AGENTS.md` and the task scope; follow its conditional documentation routes.
+- `docs/01-delivery/DEFINITION_OF_DONE.md` when assessing readiness or closing a plan item.
 - Relevant subsystem contract in `docs/02-architecture/`
-- Relevant skill for the domain, for example `map-hardening`, `character-model`, `design-system`, `desktop-release` or `minimal-change`
+- A domain skill only when its workflow applies, for example `map-hardening`, `character-model`, `design-system`, `desktop-release` or `minimal-change`.
 
 ## Slop Signals To Reject
 

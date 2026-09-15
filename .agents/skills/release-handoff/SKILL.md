@@ -11,14 +11,12 @@ description: "Подготовка release notes, tester instructions, known iss
 
 ## Что Прочитать Перед Задачей
 
-- `AGENTS.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/README.md`
+- `AGENTS.md` и task scope; использовать его условные маршруты документации.
+- `docs/README.md`, если меняется навигация release-документации.
 - `docs/01-delivery/RELEASE_PROCESS.md`
-- `docs/04-user-release/README_FOR_TESTERS.md`
-- `docs/04-user-release/TEST_SCENARIOS.md`
-- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`
+- `docs/04-user-release/README_FOR_TESTERS.md` — для затронутого tester handoff.
+- `docs/04-user-release/TEST_SCENARIOS.md` — для затронутого пользовательского smoke-маршрута.
+- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`, если handoff включает desktop build/installer.
 
 ## Что Обновить После Задачи
 
