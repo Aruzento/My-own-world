@@ -8,6 +8,8 @@ lifecycle: "temporary-audit"
 
 # Documentation Architecture Audit
 
+Final retirement/R3–R8 status is recorded in [the skills audit implementation record](./ASTRA_CONTEXT_AND_SKILLS_AUDIT.md#r3r8-implementation--2026-09-15). The owner took the personal archive; seven verified Markdown originals and two superseded skill roots are removed in the subsequent pass. The implementation/inventory below describes its earlier baseline, including paths that now exist only in Git history or the external archive. It is not a live file index or a prerequisite reading list.
+
 ## Implementation record — 2026-09-15
 
 This record describes the subsequent implementation pass from clean `main` at `650507d2458c5a205cd34a6d555f296c56c3c9d9`. The original audit/inventory below remains a dated baseline, not a live index. Baseline checks passed: docs index (98 Markdown / 3 fixture exclusions), encoding and Git diff check. No parallel documentation changes were present.

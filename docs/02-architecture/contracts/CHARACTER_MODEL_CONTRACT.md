@@ -1,7 +1,7 @@
 ---
 summary: "Contract for CharacterModel, the model-first character and creature domain layer."
 read_when:
-  - "Before changing character, creature, HP, skills, initiative, or inventory logic"
+  - "When changing CharacterModel calculations, persistence, inventory or Character-to-initiative integration"
   - "Before reading character data from card HTML"
 owner_zone: "architecture"
 ---

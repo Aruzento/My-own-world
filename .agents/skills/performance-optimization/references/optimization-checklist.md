@@ -1,5 +1,8 @@
 # Performance Optimization Checklist
 
+Scope: select only the symptom/sections relevant to the task. Web CWV/hosting examples and numerical budgets below are reference examples, not new MOW runtime requirements. Report unavailable field evidence; local measurements do not imply RUM/CrUX access.
+
+
 Quick-reference checklist of common performance optimizations, ordered by typical impact-per-effort. Use it as a triage list, not a script. Skip what does not apply.
 
 For symptom-to-fix walkthroughs, see `optimization-playbook.md`. For a structured audit report, see `audit-template.md`.

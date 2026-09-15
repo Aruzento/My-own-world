@@ -1,5 +1,8 @@
 # Optimization Playbook
 
+Scope: select only the symptom/sections relevant to the task. Web CWV/hosting examples and numerical budgets below are reference examples, not new MOW runtime requirements. Report unavailable field evidence; local measurements do not imply RUM/CrUX access.
+
+
 A step-by-step playbook for common performance problems. Pick the symptom, follow the steps.
 
 ---
@@ -298,3 +301,9 @@ A page is "performance optimized" when:
 4. Periodic re-audit scheduled (quarterly minimum)
 
 Performance is not a one-time project. New code adds weight. New features add complexity. Plan for ongoing maintenance.
+
+## Runtime profiling
+
+For MOW interaction/render/save latency, choose a representative disposable workspace fixture and specific action. Record runtime, fixture size, repeat/warm-up conditions and observed latency/counters. Use the existing subsystem diagnostics, profiler or focused performance test to locate scripting, layout, serialization, I/O or sync work.
+
+Select the smallest change supported by the trace. Re-run the same operation and fixture, inspect correctness/round-trip behavior and compare timings under the same conditions. Avoid broad scans, caching, batching or memoization without evidence and a data-freshness/ownership contract. Missing profiler or realistic fixture limits the conclusion; lab data cannot claim real-user performance.

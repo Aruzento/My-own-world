@@ -2,12 +2,12 @@
 summary: "Definition of Done and readiness levels for MyOwnWorld tasks."
 read_when:
   - "Before marking a plan item complete"
-  - "Before writing work log or final task summary"
+  - "When assigning feature readiness or reviewing closure/handoff evidence"
 owner_zone: "delivery"
 ---
 # Definition of Done
 
-Every completed task must state one readiness level. The level is evidence-based: do not claim a higher level than the user workflow, tests and handoff support.
+Feature/plan closure must state an evidence-based readiness level. Routine edits to an accepted task use its acceptance criteria and the root completion rules; they do not require reading this document or inventing a plan item. Do not claim a higher feature level than the user workflow, tests and handoff support.
 
 ## Readiness Levels
 
@@ -37,7 +37,7 @@ Use this only when automated checks, manual release checks, documentation, relea
 
 ## Task Handoff Checklist
 
-Every completed task summary or work-log entry should include:
+For feature/plan closure, include the applicable evidence below. Reuse known task context; mark irrelevant items N/A rather than inventing a plan, migration or performance claim. This checklist does not require a work-log edit for every task.
 
 - Plan ref.
 - Readiness level.
@@ -59,3 +59,11 @@ Every completed task summary or work-log entry should include:
 - P0/P1 work needs a regression test or a clear explanation for why automation is not possible yet.
 - Do not describe release notes, work log or final answer beyond the proven readiness level.
 - If a feature is not reachable in one or two obvious user actions, it is not `Usable`.
+
+## Closure Evidence
+
+- Name the observable outcome and acceptance criteria, not vague claims such as improved, polished or stabilized. A helper/model without the required integration is Foundation.
+- Verify behavior through the affected user/integration path, not only that code exists. A passing synthetic fixture proves its covered behavior; state real-workspace or environment limits.
+- For a bug fix, identify the supported root cause and regression target. Preserve P0/P1 regression responsibility above; an unavailable automated check needs a concrete explanation and available manual evidence.
+- Keep unfinished scope and the next accepted plan item visible when closing planned work. Do not call partial work done or delete its remaining obligations.
+- Use existing subsystem owners for implementation/design and diagnostics, migration/fallback when introducing a subsystem. Do not imply broader readiness from a passing local test or an old release result.

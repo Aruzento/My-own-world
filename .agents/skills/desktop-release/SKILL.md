@@ -1,13 +1,13 @@
 ---
 name: desktop-release
-description: "Desktop/Tauri build, installer, storage adapters, presentation window и release gate."
+description: "Prepare desktop builds, packaging or distribution and verify the applicable release gates."
 ---
 
 # Desktop Release Skill
 
 ## Когда Использовать
 
-Использовать при изменениях Tauri, desktop storage, asset protocol, desktop presentation, installer, release gate или desktop smoke.
+Использовать для packaging, desktop build, installer, distribution и release gate. Обычный adapter/presentation fix требует проверок затронутой границы; этот skill нужен только если задача включает build/release workflow.
 
 ## Что Прочитать Перед Задачей
 
@@ -19,18 +19,15 @@ description: "Desktop/Tauri build, installer, storage adapters, presentation win
 
 ## Что Обновить После Задачи
 
-- `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md`
-- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`
-- `docs/01-delivery/WORK_LOG.md`
-- release notes / tester instructions, если меняется сборка или установка
+- Adapter boundary или release policy — только если изменилось соответствующее правило.
+- Release notes / tester instructions — если изменились сборка, установка или передаваемый сценарий.
+- Plan/log — только при изменении статуса принятого пункта или необходимости записать значимое решение.
 
 ## Проверки
 
-- `npm run verify`
-- `npm run desktop:packaging-smoke`
-- `npm run desktop:check`
-- `npm run desktop:build`, если изменился desktop runtime или packaging
-- `npm run test:browser`, чтобы не сломать browser mode
+- Для packaging/capabilities: `npm run desktop:packaging-smoke`; для окружения сборки: `npm run desktop:check`.
+- Для build/installer/handoff соблюдать все gates `DESKTOP_RELEASE_POLICY.md`, включая нужные build/native/browser checks и ограничения confidence.
+- Сохранять browser parity и adapter/asset-protocol безопасность. Полный release gate не заменять локальным smoke; уже полученное evidence повторять при изменении build/scope или по требованию gate.
 
 ## Типовые Ошибки
 

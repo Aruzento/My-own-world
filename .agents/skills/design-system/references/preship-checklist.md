@@ -1,6 +1,17 @@
 # Pre-Ship Design Checklist
 
-Run before declaring any page or component complete. Most production design defects come from skipping these.
+Use for a scoped MOW visual/pre-ship review, applying only the affected surfaces and states. Current authority is `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md` and the existing `--mow-*` tokens, not this imported checklist.
+
+The generic web/mobile dimensions below are examples only when that surface is in scope. They do not impose 64px sections, 24px cards, a new type scale, one H1 per workbench or mobile-first behavior on MOW. Select supported viewports/themes and record what was actually checked. Preserve the applicable contrast, focus, hierarchy and interaction checks; N/A is different from unverified.
+
+## Applying the Six Standards
+
+- Tokens have semantic color, text/background, spacing, type/fallback and radius roles; reuse their current MOW definitions instead of inventing a second palette or changing brand colors by a generic percentage.
+- Measure contrast: normal text 4.5:1; large text (18pt regular or 14pt bold) 3:1; required non-text UI/graphics 3:1. Interpret applicability/exemptions through the existing [WCAG reference](../../accessibility-audit/references/wcag-quick-reference.md). Check actual theme/state backgrounds.
+- Make the primary action and scan order clear through size, weight, contrast, proximity and position. Decoration should improve task speed, readability or clarity; avoid competing primary actions and generic marketing layouts in the GM workbench.
+- Group related controls, preserve consistent spacing, icon styling and intentional component variants. Default/focus/error/disabled treatments should not drift between equivalent controls.
+- Test overflow, text readability, popup scrolling/overlap and keyboard/focus on the target viewports. Touch/iOS-specific sizing applies only when such a target is part of the task.
+- A checklist pass does not replace functional tests or the actual release gate. Report failures and missing evidence before a handoff claim.
 
 ---
 
@@ -102,7 +113,7 @@ Use a contrast checker for every pairing. Visual judgment is unreliable.
 
 ---
 
-## Mobile (375 to 390 pixel viewport)
+## Mobile (only for a scoped mobile surface; example 375 to 390 pixels)
 
 - [ ] Tested on real device or device-mode in browser
 - [ ] No horizontal scroll
@@ -115,7 +126,7 @@ Use a contrast checker for every pairing. Visual judgment is unreliable.
 
 ---
 
-## Tablet (768 to 1024 pixel viewport)
+## Tablet (only for a supported target; example 768 to 1024 pixels)
 
 - [ ] Layout transitions cleanly between mobile and desktop breakpoints
 - [ ] No awkward in-between sizing
@@ -144,10 +155,9 @@ Use a contrast checker for every pairing. Visual judgment is unreliable.
 
 ## Brand and consistency
 
-- [ ] Logo placed correctly (per brand-style-guide rules)
-- [ ] Brand colors used per brand-style-guide rules
-- [ ] Imagery direction matches brand-style-guide
-- [ ] Voice (in any UI text) matches brand-voice
+- [ ] Logo and brand colors follow the existing MOW design contract
+- [ ] Imagery follows `docs/00-product/BRANDBOOK.md` when visual intent is in scope
+- [ ] UI text follows the established wording of the affected MOW flow
 - [ ] No off-brand stock photography or generic illustrations
 
 ---
@@ -175,6 +185,6 @@ Use a contrast checker for every pairing. Visual judgment is unreliable.
 
 ## Sign-off
 
-When all boxes check, the design is ready to ship. If any box fails, document the failure, decide whether it is a launch blocker, and either fix or file a known-issue ticket before shipping.
+When all applicable checks pass, the scoped visual review is complete. This does not certify an untested build or replace release policy. If a check fails, record the failure and its impact; fix it or explicitly carry the known issue into the handoff.
 
 The checklist is the floor, not the ceiling. Great design exceeds it.

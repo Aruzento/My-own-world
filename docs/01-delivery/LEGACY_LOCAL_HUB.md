@@ -54,3 +54,7 @@ Do not move these folders unless a future owner-approved task identifies a concr
 ## 2026-09-15 Personal Export Preparation
 
 Seven Markdown assessments/chronicle documents identified by DOCUMENTATION_ARCHITECTURE_AUDIT were physically copied to the sibling `MOW_PERSONAL_ARCHIVE_EXPORT_2026-09-15` directory, outside the Git worktree. The original files remain tracked and unchanged. They have no active mandatory reading role. The maturity rubric DOCX was not exported. Current implementation owners are the active project plan, subsystem contracts and release policy; historical references remain historical. Removal from Git requires separate owner confirmation that the external archive has been taken/copied and is readable.
+
+## 2026-09-15 Confirmed Personal Export Retirement
+
+The owner confirmed taking the archive. Its actual verified location is `Z:/Мои проекты/Project 4. MOW/MOW_PERSONAL_ARCHIVE_EXPORT_2026-09-15`. All seven copies matched original SHA-256 and sizes, with readable manifest and sampled content. The seven Markdown originals are now removed from the current Git tree; the external archive, project archive and maturity rubric DOCX are preserved. Earlier placement/preparation records above describe their dates, not a current dependency. Current task readers use the plan and relevant contracts; personal exports are not part of instruction routing.

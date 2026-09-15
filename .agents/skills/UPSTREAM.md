@@ -14,7 +14,7 @@ Installer: Codex `skill-installer` using sparse git mode
 | Skill | Upstream path | MOW reason |
 |---|---|---|
 | `frontend-component-build` | `skills/frontend-component-build` | Reusable UI controls, popups, menus, forms, focus states, and accessible component contracts. |
-| `design-standards` | `skills/design-standards` | General production UI checklist for spacing, hierarchy, typography, and pre-ship visual review. |
+| `design-system` supporting references | `skills/design-standards` | Merged locally on 2026-09-15: pre-ship guarantees and all three references retained under MOW design-system; separate generic trigger retired. |
 | `code-review-web` | `skills/code-review-web` | Code review discipline for vanilla web/Tauri UI, persistence boundaries, browser failures, and regressions. |
 | `qa-testing` | `skills/qa-testing` | Smoke/regression QA structure for browser and desktop verification gates. |
 | `accessibility-audit` | `skills/accessibility-audit` | WCAG/ARIA/keyboard review for tree, modals, menus, card controls, and desktop workbench flows. |
@@ -45,6 +45,10 @@ installed in MOW because they are outside the current product scope:
 
 | Upstream reference | Mentioned by | MOW decision |
 |---|---|---|
-| `brand-identity` / `brand-identity/references/contrast-and-accessibility.md` | `design-standards`, `accessibility-audit` | Not installed. MOW already has a project-specific design-system contract and does not need generic brand-positioning skills for current engineering work. |
+| `brand-identity` / former contrast reference | Imported design guidance | Not installed. The former unavailable path is replaced by the MOW design contract, design-system preship checklist and existing accessibility-audit WCAG reference. |
 | `seo-technical` | `qa-testing` | Not installed. MOW is a local-first desktop/workbench app, not a public SEO-targeted website. |
 | `after-action-report` | `backup-and-disaster-recovery` | Not installed. Future data-safety work can use MOW's existing work log/status docs unless an incident-report skill is explicitly needed later. |
+
+## Local Workflow Adaptation — 2026-09-15
+
+Activation boundaries are scoped to the actual MOW workflow. The five multi-workflow roots now select references by branch; generic hosting, mobile, compliance and cadence examples do not create product requirements or authorize external actions. Upstream provenance above is retained for moved/adapted references.

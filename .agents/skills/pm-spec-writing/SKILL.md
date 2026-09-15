@@ -1,6 +1,6 @@
 ---
 name: pm-spec-writing
-description: "Translate ideas, feature requests, or vague concepts into specific, actionable dev briefs. Use this skill whenever the user has an idea they want to build, a feature to spec out, a bug to file, a project to scope, or needs to convert a half-formed idea into a clear implementation brief. Triggers on I want to add, we should build, can we make, what is the plan for, how do we implement, dev brief, feature spec, PRD, user story, acceptance criteria, scope this, prioritize. Also triggers when the user has a list of things they want to build and needs help converting them into well-formed tasks."
+description: "Turn an unspecced product request into a bounded, testable dev brief or feature specification."
 category: product
 catalog_summary: "PRDs, user stories, acceptance criteria, dev briefs"
 display_order: 1
@@ -14,19 +14,15 @@ Take an idea (often vague) and turn it into a specification a developer or AI ag
 
 ## When to use
 
-- Translating an idea into a buildable feature spec
-- Writing a PRD or product requirement document
-- Filing a bug report that someone else can act on
-- Scoping a project before kickoff
-- Prioritizing a backlog of feature requests
-- Writing acceptance criteria for an existing feature
-- Breaking a large initiative into shippable increments
+Use when a product request still needs a bounded dev brief/spec, acceptance criteria or an actionable bug report. Do not activate while implementing an already accepted task/contract; do not re-open settled requirements.
+
+---
 
 ## When NOT to use
 
 - Quarterly or annual planning across multiple initiatives (use `roadmap-planning`)
 - Code review or debugging existing code (use `code-review-web`)
-- Design decisions for a feature already specced (use `design-standards`)
+- Visual review for an accepted feature (use the applicable `design-system` checklist; do not reopen its product requirements)
 - User research to validate an idea (use `ux-research`)
 
 ---
@@ -48,7 +44,7 @@ Every PM workflow follows the same arc. The phases are universal even if the spe
 
 ### Phase 1: Clarify the idea
 
-Before any spec, answer four questions. If any answer is "I don't know," go back to the user.
+Resolve the following from the request, accepted contracts and current behavior. Ask only for a missing product decision that materially changes behavior, scope, persistence or public contracts. State non-blocking assumptions; do not invent requirements or require a numeric metric when an observable acceptance criterion suffices.
 
 1. **What user problem does this solve?** Not "what does it do." The problem comes first; the feature is the proposed solution.
 2. **Who specifically benefits?** Be precise. "Users" is not specific. "First-time visitors who don't convert" is.
@@ -83,59 +79,7 @@ This is not a perfect framework. Some "low impact" things are mandatory (complia
 
 Three formats based on the type of work.
 
-#### Format A: Feature spec (for new features)
-
-```
-TITLE: [Specific, action-oriented]
-
-PROBLEM
-[1-2 sentences. The user problem and current state.]
-
-USERS
-[Who specifically benefits. Be precise about the user segment.]
-
-PROPOSAL
-[1 paragraph. The proposed solution. Stay at the conceptual level.]
-
-USER STORIES
-- As a [user type], I want to [action], so that [outcome]
-- As a [user type], I want to [action], so that [outcome]
-
-ACCEPTANCE CRITERIA
-- Given [context], when [action], then [expected outcome]
-- Given [context], when [action], then [expected outcome]
-
-OUT OF SCOPE
-[What this spec explicitly does NOT cover. Important for scope control.]
-
-DEPENDENCIES
-[Other systems, APIs, designs, content needed before this can ship.]
-
-SUCCESS METRIC
-[The one primary metric that tells us this worked. With current baseline if known.]
-
-ESTIMATED EFFORT
-[Small (hours) / Medium (1-3 days) / Large (1-2 weeks) / XL (sprints)]
-
-PRIORITY
-[P0 launch blocker / P1 next sprint / P2 within quarter / P3 backlog]
-```
-
-#### Format B: Dev brief (for handing to a developer or AI agent)
-
-For tactical, ready-to-build work. Lighter than a full spec.
-
-```
-CONTEXT: [1-2 sentences explaining why this matters]
-
-TASK: [Specific files, exact changes needed]
-
-CONSTRAINTS: [What must NOT change, what to preserve]
-
-VERIFY: [Exact steps to confirm the work is done correctly]
-```
-
-The verify section is the most-skipped and most-important. Without it, "done" means whatever the implementer thinks done means.
+For a feature specification, use the needed sections of [feature-spec-template](references/feature-spec-template.md). For a tactical dev brief, use [dev-brief-template](references/dev-brief-template.md). Select one format; both require explicit scope and observable verification.
 
 #### Format C: Bug report
 
@@ -176,10 +120,10 @@ For a backlog: order by dependencies first, then by priority, then by impact/eff
 
 ## Workflow
 
-1. **Clarify.** If the idea is vague, ask the four phase-1 questions before proceeding.
+1. **Clarify.** Reuse settled requirements; ask only the material unresolved decisions from phase 1.
 2. **Scope.** Plot the work on the impact/effort grid.
 3. **Pick the right format.** Feature spec for new features, dev brief for tactical work, bug report for defects.
-4. **Write the spec.** Use the template format. Fill in every section. Empty sections are flags.
+4. **Write the spec.** Use the relevant template sections; mark unavailable evidence and non-applicable sections explicitly.
 5. **Define done.** Verify steps must be unambiguous. "Test it" is not a verify step.
 6. **Get buy-in.** Walk through the spec with whoever will build it before they start.
 7. **Sequence.** Identify the smallest shippable increment.

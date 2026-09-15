@@ -1,5 +1,7 @@
 # Restore Runbook Template
 
+Select only sections applicable to the scoped system and drill. Hosted traffic, status pages and incident channels are optional examples for hosted incidents; local MOW drills use disposable workspace copies. Communication templates are drafts, not authorization to send messages. Reuse authorization already given for the exact target/action.
+
 Fill out one of these per system that needs to be restorable. The runbook is read by a tired, panicked person at 3am. Optimize for that reader.
 
 ---

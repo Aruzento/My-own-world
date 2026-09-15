@@ -1,6 +1,6 @@
 ---
 name: accessibility-audit
-description: "Run a comprehensive WCAG accessibility audit covering perceivable, operable, understandable, and robust principles. Use this skill whenever the user wants to audit accessibility, review WCAG compliance, fix accessibility issues, prepare for accessibility certification, address an accessibility lawsuit risk, or systematically improve a site's accessibility. Triggers on accessibility audit, WCAG audit, a11y audit, accessibility compliance, ADA compliance, screen reader test, keyboard navigation, accessibility report, fix accessibility, axe scan. Also triggers when accessibility issues have been reported and need systematic remediation."
+description: "Audit keyboard, screen-reader and WCAG behavior across a specified UI flow; not a single-control fix."
 category: development
 catalog_summary: "WCAG compliance audit with remediation plan"
 display_order: 3
@@ -10,23 +10,21 @@ display_order: 3
 
 Run a thorough accessibility audit and produce a remediation plan. Stack-agnostic. Anchored to WCAG 2.1 AA, with notes on AAA where relevant.
 
-This skill goes deeper than the accessibility checks in `qa-testing` and `design-standards`. Use this when accessibility itself is the goal.
+This skill goes deeper than the surface checks in `qa-testing` and the visual checklist in `design-system`. Use this when a systemic accessibility audit is the goal.
 
 ---
 
 ## When to use
 
-- Pre-launch accessibility verification
-- Compliance preparation (ADA, EN 301 549, AODA, Section 508)
-- Remediation after an audit finding or complaint
-- Annual or quarterly accessibility health check
-- Onboarding accessibility into a team that hasn't prioritized it before
+Use for a requested systemic accessibility audit or systematic remediation across a specified UI flow. Establish the target standard, tested surfaces and available evidence. A single keyboard/control fix uses its local contract and regression test.
+
+---
 
 ## When NOT to use
 
 - General QA after deploys (use `qa-testing`)
 - Component-level accessibility implementation (use `frontend-component-build`)
-- Color contrast for design tokens (use `design-standards` or `brand-identity`)
+- Color contrast for design tokens (use the applicable contrast checks in `design-system/references/preship-checklist.md`; the WCAG reference in this skill remains available)
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: minimal-change
-description: "Минималистичный senior-review перед реализацией: сначала проверить, можно ли не строить новую систему, использовать существующий код, стандартную платформу или самый маленький безопасный патч."
+description: "Evaluate a proposed abstraction, new subsystem or substantial refactor against existing project owners."
 ---
 
 # Minimal Change Skill
@@ -11,16 +11,9 @@ description: "Минималистичный senior-review перед реали
 
 ## Когда Использовать
 
-Использовать перед задачами, где есть риск разрастания решения:
+Использовать при выборе новой abstraction/subsystem или существенного refactor, когда нужно сравнить решение с существующими owners. Это не gate перед каждой реализацией.
 
-- новая подсистема, новый блок, новый сервис или новый workflow;
-- рефакторинг крупного файла;
-- UI-фича, которую можно решить существующим popup, model API или блоком;
-- исправление бага, где соблазн переписать весь слой;
-- code review на переусложнение;
-- задача с формулировкой "сделай красиво/правильно/полностью", где сначала нужно найти самый маленький безопасный шаг.
-
-Не использовать как повод игнорировать явное требование владельца продукта. Если пользователь просит весь пункт или все подпункты, сначала выполнить объем задачи, но выбрать минимально достаточную реализацию внутри этого объема.
+Явно заданный объём выполнить полностью; выбор меньшей реализации не разрешает пропустить подпункты или продуктовые требования.
 
 ## Лестница Решения
 
@@ -37,7 +30,7 @@ description: "Минималистичный senior-review перед реали
 
 - `AGENTS.md` и task scope; использовать его условные маршруты документации.
 - релевантный contract из `docs/02-architecture/`
-- для UI: `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`
+- для изменения visual tokens/shared primitives: `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`
 - для release-facing изменений: `release/latest/release-notes.md` и `release/latest/tester-instructions.md`
 
 ## Правила Для MyOwnWorld
@@ -49,6 +42,7 @@ description: "Минималистичный senior-review перед реали
 - Не создавать новый popup/controller, если можно расширить существующий popup manager или block runtime.
 - Не вводить новую терминологию для пользователя, если можно углубить существующий путь.
 - Удаление старого пути допустимо только после проверки совместимости и миграционного/fallback сценария.
+- Для новой подсистемы определить диагностику отказов, совместимость/миграцию и fallback там, где отказ может затронуть данные или пользовательский путь; не оставлять это неявным.
 
 ## Что Нельзя Упрощать
 
@@ -77,15 +71,13 @@ description: "Минималистичный senior-review перед реали
 - `docs/01-delivery/PROJECT_PLAN.md`, если найден хвост или отложенный upgrade path.
 - релевантный contract, если изменился путь подсистемы.
 - release notes / tester instructions, если изменилось пользовательское поведение.
-- manual, если изменился пользовательский сценарий.
+- DOCX manual — только по явному запросу или когда его требует release workflow.
 
 ## Проверки
 
-- Минимум: `node tools/validate_agent_skills.mjs`, если менялся skill layer.
-- Для кодовых изменений: `npm run verify`.
-- Для UI/runtime: `npm run test:browser`.
-- Для документации: `node tools/docs_index.mjs`.
-- Для маленькой нетривиальной логики: один ближайший unit/browser regression, который упадет при поломке этой логики.
+- Focused unit/browser regression для изменённого поведения; не заменять им необходимые persistence/recovery/compatibility проверки.
+- Task-required checks и release gates сохраняются. Broader verification — при изменении архитектуры, persistence/contracts, межсистемной границы или обнаружении более широкого риска.
+- `npm run agents:validate` при изменении skills; `npm run docs:index` при изменении docs.
 
 ## Типовые Ошибки
 

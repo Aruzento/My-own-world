@@ -1,13 +1,13 @@
 ---
 name: character-model
-description: "Работа с CharacterModel, характеристиками, хитами, навыками, инвентарем и игровыми состояниями."
+description: "Change CharacterModel calculations, persistence or page/map integration, including Character-to-initiative integration."
 ---
 
 # Character Model Skill
 
 ## Когда Использовать
 
-Использовать для задач, где меняются персонажи, существа, хиты, навыки, проверки, инвентарь, эффекты, состояния, инициатива или связь карточки с картой.
+Использовать при изменении расчётов, persistence или интеграции CharacterModel с карточкой, картой и инициативой. Отдельная combat/action/initiative функция без изменения CharacterModel не включает этот skill.
 
 ## Что Прочитать Перед Задачей
 
@@ -19,17 +19,15 @@ description: "Работа с CharacterModel, характеристиками, 
 
 ## Что Обновить После Задачи
 
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- contract `CharacterModel`, если он создан или изменен
-- manual, если изменилось пользовательское поведение
-- release notes / tester instructions, если изменился видимый сценарий
+- Character contract — если изменились model/integration правила.
+- Plan — только если изменился принятый scope/status или осталась незавершённая работа.
+- Документы затронутого пользовательского сценария — если они стали неверны; DOCX только по явному запросу или release workflow.
 
 ## Проверки
 
-- `npm run verify`
-- релевантные tests для properties/character calculations
-- browser smoke, если меняется UI карточки или карты
+- Focused tests для затронутых Character/properties calculations и persistence; проверить совместимость существующих карточек и reload при изменении сохранения.
+- Targeted browser smoke при изменении UI карточки или её связи с картой.
+- Task-required checks обязательны; broader verification при изменении contracts/persistence или выявленном межсистемном риске.
 
 ## Типовые Ошибки
 

@@ -1,13 +1,13 @@
 ---
 name: release-handoff
-description: "Подготовка release notes, tester instructions, known issues и понятной передачи версии владельцу продукта."
+description: "Prepare release notes, tester instructions and known issues for a user-facing release handoff."
 ---
 
 # Release Handoff Skill
 
 ## Когда Использовать
 
-Использовать при любых задачах, которые меняют пользовательское поведение, установку, проверку, тестовые инструкции, известные риски или release candidate.
+Использовать для release notes, tester instructions и known issues в user/release workflow. Правка внутренних test instructions сама по себе не запускает handoff.
 
 ## Что Прочитать Перед Задачей
 
@@ -25,16 +25,14 @@ description: "Подготовка release notes, tester instructions, known iss
 - known issues
 - `docs/04-user-release/README_FOR_TESTERS.md`, если поменялась структура проверки или расположение инструкций
 - `docs/04-user-release/TEST_SCENARIOS.md`, если поменялся пользовательский smoke-маршрут
-- `docs/01-delivery/WORK_LOG.md`
+- `docs/01-delivery/WORK_LOG.md`, если записывается release/status решение
 - `docs/01-delivery/PROJECT_PLAN.md`, если изменился статус пункта
 
 ## Проверки
 
-- `npm run verify`
-- `node tools/docs_index.mjs`, если менялись release/user docs
-- `node tools/check_text_encoding.mjs`
-- `npm run test:browser`, если менялся UI/runtime
-- desktop gate, если менялся installer/desktop path
+- `npm run docs:index` при изменении release/user docs и `npm run check:encoding`.
+- Проверить tester path, команды, known issues и соответствие заявлений evidence конкретной версии.
+- Runtime changes требуют affected regression checks. Реальная передача installer/build требует gates desktop release policy; редактирование текста не запускает их заново.
 
 ## Типовые Ошибки
 

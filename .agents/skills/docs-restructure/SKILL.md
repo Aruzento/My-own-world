@@ -1,13 +1,13 @@
 ---
 name: docs-restructure
-description: "Реструктуризация документации, metadata, зоны docs и навигация для владельца продукта."
+description: "Move project documents or change documentation zones, metadata or navigation; not ordinary text/status edits."
 ---
 
 # Docs Restructure Skill
 
 ## Когда Использовать
 
-Использовать при изменении структуры `docs/`, добавлении metadata, переносе документов по зонам, обновлении product dashboard, plan, work log или release handoff.
+Использовать для moves, docs zones, metadata и navigation architecture. Обычная правка текста или статуса принятой фазы не включает этот skill.
 
 ## Что Прочитать Перед Задачей
 
@@ -19,20 +19,16 @@ description: "Реструктуризация документации, metadat
 
 ## Что Обновить После Задачи
 
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- `docs/README.md`, если поменялись зоны или маршруты чтения
-- `docs/archive/README.md`, если документ архивирован или восстановлен
-- `README.md`, если изменились команды или входные точки
-- `AGENTS.md`, если изменились правила для агента
+- Входящие ссылки и metadata перемещённых документов.
+- docs/README, archive registry или README — если изменились их зоны, маршруты или команды.
+- AGENTS — только при изменении действительно глобального правила.
+- Plan/log — только если затронут принятый scope/status или нужна запись решения; не связкой с DOCX.
 
 ## Проверки
 
-- `node tools/docs_index.mjs`
-- `node tools/audit_project_files.mjs`, если перемещались, архивировались или удалялись файлы
-- `node tools/check_text_encoding.mjs`
-- `node tools/validate_agent_skills.mjs`
-- `npm run verify`, если изменены scripts или ссылки, влияющие на проверки
+- `npm run docs:index`, `npm run check:encoding` и проверка изменённых входящих/исходящих ссылок.
+- `npm run agents:validate`, если затронуты skills или их пути.
+- При изменении tooling — его targeted tests; task-required checks сохраняются. File audit запускать только если нужен пересчёт inventory, не как побочный generated diff после каждого move.
 
 ## Типовые Ошибки
 

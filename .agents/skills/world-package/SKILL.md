@@ -19,17 +19,15 @@ description: "Экспорт, импорт, переиспользование �
 
 ## Что Обновить После Задачи
 
-- `docs/02-architecture/contracts/WORLD_PACKAGE_CONTRACT.md`
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- release notes / tester instructions, если появляется пользовательский импорт/экспорт
+- WORLD_PACKAGE_CONTRACT — если изменились format/import/export правила.
+- Release/tester docs — если изменился описанный пользовательский import/export.
+- Plan/log — при изменении принятого scope/status, незавершённой работы или значимого решения.
 
 ## Проверки
 
-- `npm run verify`
-- tests на export/import
-- backup/recovery tests, если импорт пишет в workspace
-- asset reference tests, если пакет содержит assets
+- Export/import round-trip tests и preview/conflict behavior.
+- Backup/recovery tests, если import пишет в workspace; asset reference tests при наличии assets; schema/compatibility checks при изменении формата.
+- Task-required checks обязательны. Broader verification при изменении persistence/contracts или межсистемном риске.
 
 ## Типовые Ошибки
 

@@ -1,13 +1,13 @@
 ---
 name: design-system
-description: "UI, visual style, design tokens, shell refresh, popups, buttons, panels, map controls, appearance themes, and accessibility."
+description: "Change or review MOW visual tokens, themes and shared UI primitives, including design-system migrations."
 ---
 
 # Design System Skill
 
 ## Когда Использовать
 
-Использовать при изменении визуального стиля MyOwnWorld: design tokens, темы, shell/sidebar/topbar/statusbar, popup, кнопки, поля, карточки, блоки, task tracker, map UI, appearance panel и hover/focus/animation states.
+Использовать для MOW visual tokens, тем, общих UI primitives, их review или design-system migration. Одиночный функциональный UI bug исправляется по ближайшему code/test; он сам по себе не требует design workflow.
 
 ## Что Прочитать Перед Задачей
 
@@ -17,21 +17,28 @@ description: "UI, visual style, design tokens, shell refresh, popups, buttons, p
 - `docs/02-architecture/ui/UI_MIGRATION_BASELINES.md` — при сравнении migration/screenshot evidence.
 - `docs/02-architecture/ui/UI_UX_COMPETITOR_REFERENCE_RESEARCH.md` — нужный pattern, только если задача требует design research.
 
+## Выбор Reference
+
+- Для visual/pre-ship review затронутых primitives: [preship checklist](references/preship-checklist.md). Он сохраняет contrast, hierarchy, states и viewport checks; MOW contract определяет реальные tokens, поверхности и плотность UI.
+- Для явного проектирования набора tokens: [token template](references/design-tokens-template.md), только нужные поля; не создавать параллельный owner существующих `--mow-*`.
+- [Tailwind patterns](references/tailwind-patterns.md) — только для явно заданной Tailwind-поверхности; не вводить Tailwind в MOW ради reference.
+
+Открывать только нужный reference. Не включать все checklist-файлы в обычный functional UI fix.
+
 ## Что Обновить После Задачи
 
 - `styles/design-tokens.css`, если появились новые цвета, размеры, motion или theme variables.
 - `styles/brand-system.css`, если меняется общий визуальный слой.
 - Релевантные CSS-файлы подсистемы, если меняется конкретный UI.
 - `docs/02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md`, если меняется правило дизайн-системы.
-- `docs/01-delivery/WORK_LOG.md`.
+- `docs/01-delivery/WORK_LOG.md` — если требуется запись значимого решения или статуса.
 - `release/latest/release-notes.md` и `release/latest/tester-instructions.md`, если меняется пользовательское поведение или видимый UI.
 
 ## Проверки
 
-- `node --check` для измененных JS-файлов.
-- `npm run verify`.
-- `npm run test:browser`, если меняется UI/runtime.
-- Targeted browser smoke для затронутой зоны: app shell, popup, campaign map, properties или task tracker.
+- Focused checks изменённых tokens/primitives и обязательные проверки design contract.
+- Functional и visual verification затронутой поверхности: keyboard/focus, popup lifecycle, themes/states. Сравнивать screenshot evidence, когда оно требуется visual policy.
+- Полный browser suite — по contract/release gate или межсистемному риску, не повторно вслед за тем же focused smoke без причины. Непроверенное явно указать.
 
 ## Типовые Ошибки
 

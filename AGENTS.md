@@ -36,6 +36,7 @@ Use project documents as contextual references, not as mandatory pre-reading:
 - `docs/02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md` — asset references, cleanup and persistence.
 - `docs/01-delivery/PROJECT_PLAN.md` — current roadmap/leaf when selecting work, changing status or missing task state; not a universal tech-debt owner.
 - `docs/01-delivery/WORK_LOG.md` — only the historical entry needed to understand a relevant decision.
+- `docs/01-delivery/DEFINITION_OF_DONE.md` — when assigning readiness or closing a feature/plan item; not a pre-read for routine edits.
 - `docs/MY_OWN_WORLD_FULL_MANUAL.docx` — generated reference material; do not read or regenerate it by default.
 
 If a narrower contract or test already defines the behavior, prefer it over loading broader documentation.
@@ -74,6 +75,8 @@ Regenerate `docs/MY_OWN_WORLD_FULL_MANUAL.docx` only when explicitly requested o
 ## Completion
 
 A task is complete when the requested behavior is implemented, relevant validation has been performed, and any documentation directly made inaccurate by the change has been updated.
+
+Review the final diff. Claims about tests, UI, migration or Git status/HEAD/commit/push require corresponding observed evidence; report anything unverified.
 
 In the final report, briefly state:
 - what changed;

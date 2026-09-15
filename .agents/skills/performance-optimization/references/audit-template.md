@@ -1,5 +1,8 @@
 # Performance Audit Report
 
+Scope: select only the symptom/sections relevant to the task. Web CWV/hosting examples and numerical budgets below are reference examples, not new MOW runtime requirements. Report unavailable field evidence; local measurements do not imply RUM/CrUX access.
+
+
 A fillable template for documenting a web performance audit. Fill every section. Empty sections signal an incomplete audit.
 
 The output is the report. The report is what the team acts on. Weak reports produce no fixes.

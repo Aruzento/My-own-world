@@ -28,4 +28,4 @@ owner_zone: "delivery"
 
 Для происхождения конкретного решения используйте нужную запись [WORK_LOG](./01-delivery/WORK_LOG.md) или [project archive registry](./archive/README.md). Research, generated manual и старые audit reports — условные references; они не задают current roadmap и не добавляют обязательную очередь чтения.
 
-`Тех. зрелость/` и `Лог особенный/` остаются tracked historical exceptions. Семь Markdown из них скопированы в соседний `MOW_PERSONAL_ARCHIVE_EXPORT_2026-09-15`; оригиналы пока сохранены. Они не нужны active workflow. Удаление возможно только после отдельного подтверждения владельца, что внешний архив забран и читается. Project archive в `docs/archive/` остаётся частью Git. Ignored `legacy/` не используется для tracked истории.
+Семь исторических Markdown оценок/летописи переданы владельцу в personal export и удалены из текущего Git tree после подтверждения и проверки копий. Это не рабочие источники; provenance сохранён в dated audit records. Рубрика DOCX в `Тех. зрелость/` и project archive в `docs/archive/` остаются в Git. Ignored `legacy/` не используется для tracked истории.

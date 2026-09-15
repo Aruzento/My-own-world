@@ -18,17 +18,15 @@ description: "Карта кампании: токены, фигуры, тума�
 
 ## Что Обновить После Задачи
 
-- `docs/01-delivery/PROJECT_PLAN.md`
-- `docs/01-delivery/WORK_LOG.md`
-- performance notes, если меняется производительность
-- release notes / tester instructions, если меняется поведение карты
+- Performance notes — если изменились измерения или бюджет.
+- Затронутый contract и пользовательские инструкции — если изменение сделало их неверными.
+- Plan/log — при изменении принятого scope/status, незавершённой работы или значимого решения.
 
 ## Проверки
 
-- `npm run verify`
-- `npm run test:browser`
-- targeted campaign map unit/browser tests
-- desktop build, если меняется presentation window или Tauri path
+- Targeted campaign map unit/browser tests по изменённому поведению.
+- Для save/load, fog/layers и presentation sync — relevant regression/round-trip/privacy checks; performance сравнивать на одинаковом fixture.
+- При изменении desktop presentation/Tauri boundary — применимые desktop проверки и gates текущей policy. Task-required и broader межсистемные проверки сохраняются.
 
 ## Типовые Ошибки
 

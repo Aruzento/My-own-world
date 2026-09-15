@@ -1,6 +1,6 @@
 ---
 name: frontend-component-build
-description: "Build production-ready frontend components with accessible markup, sensible props, defined states, and tested behavior. Use this skill whenever the user wants to build a component from scratch, refactor an existing one, design a component API, or implement a UI element with proper states and accessibility. Triggers on build a component, create a button, create a modal, create a form input, component API, props design, component states, refactor component, accessible component. Also triggers when implementing UI from a design that needs to be reusable."
+description: "Build or refactor frontend components, their APIs, states and accessible interactions, with focused verification."
 category: development
 catalog_summary: "Component architecture, props design, accessibility from the start"
 display_order: 2
@@ -10,7 +10,7 @@ display_order: 2
 
 Build production-ready components. Stack-agnostic principles. Most patterns translate to React, Vue, Svelte, or vanilla web components.
 
-This skill is about implementing a component well. For broader system design see `design-system`. For day-to-day visual decisions see `design-standards`.
+This skill is about implementing a component well. For shared visual tokens/primitives use `design-system`; a scoped visual review can use its `references/preship-checklist.md`. Those references are conditional, not a second mandatory workflow.
 
 ---
 
@@ -25,7 +25,7 @@ This skill is about implementing a component well. For broader system design see
 ## When NOT to use
 
 - Building a full design system (use `design-system`)
-- Page-level design decisions (use `design-standards`)
+- Page-level visual review (use the applicable `design-system` checklist)
 - Backend or data work (use `code-review-web`)
 - Performance-only optimization (use `performance-optimization`)
 

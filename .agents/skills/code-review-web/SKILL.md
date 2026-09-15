@@ -1,8 +1,8 @@
 ---
 name: code-review-web
-description: "Review web application code for bugs, security issues, performance problems, and stack-specific anti-patterns. Use this skill whenever the user wants to review code, debug a production issue, investigate a build failure, audit security, or check a PR before merging. Triggers on code review, review my code, debug, build error, broken, not working, why is X failing, check this code, security check, PR review, audit code, refactor. Also triggers when investigating 4xx or 5xx errors, deploy failures, environment variable issues, and CMS integration problems."
+description: "Review a scoped diff or investigate a reproduced runtime failure, with root-cause and regression evidence."
 category: development
-catalog_summary: "PR review, build error diagnosis, security and quality checks"
+catalog_summary: "Scoped diff review and reproduced runtime failures"
 display_order: 1
 ---
 
@@ -14,12 +14,9 @@ Review and debug web application code with a focus on the patterns that actually
 
 ## When to use
 
-- Reviewing a pull request before merging
-- Debugging a production issue
-- Investigating a build failure
-- Auditing security or performance of existing code
-- Investigating environment variable or configuration issues
-- Triaging a "the site is broken" report
+Use for a scoped diff review or investigation of a reproduced runtime failure. Review the affected trust boundaries and regression risks. A generic request to debug, refactor, or fix a build does not by itself require this workflow.
+
+---
 
 ## When NOT to use
 
@@ -42,7 +39,7 @@ If just a symptom is provided ("the site is broken"), the workflow's first step 
 
 ## The framework: 5 review dimensions
 
-Every code review covers five dimensions. Pick the depth based on the situation.
+Consider these dimensions within the scoped diff or reproduced failure. Apply only the actual runtime and affected trust boundaries; hosted auth/cookies/CSRF patterns do not imply new infrastructure for local MOW.
 
 ### 1. Correctness
 
@@ -106,7 +103,7 @@ Will the next person (or future you) understand this in six months?
 
 ## Common bug patterns (stack-agnostic)
 
-Patterns that recur across stacks and are worth checking on every review.
+Consult only patterns supported by the affected stack or failure evidence. These are not a prerequisite hosting/database inventory for each review.
 
 ### Build and deploy
 
@@ -157,7 +154,7 @@ Patterns that recur across stacks and are worth checking on every review.
 1. **Gather context.** What stack? What's broken or under review? Logs available?
 2. **Pick the depth.** Quick scan for a small PR. Full review for a major change. Deep dive for a production incident.
 3. **Run through the 5 dimensions.** Note issues by severity (blocker, important, minor).
-4. **Check stack-specific patterns.** Reference the appropriate stack guide.
+4. **Check stack-specific patterns.** Open a reference only for a framework actually involved in the evidence; vanilla MOW does not need Next.js or WordPress guides.
 5. **For incidents:** identify the smallest hypothesis-driven fix. Reproduce locally if possible.
 6. **Write the review.** Use the template in [`references/review-template.md`](references/review-template.md) for formal reviews.
 
@@ -176,14 +173,14 @@ Patterns that recur across stacks and are worth checking on every review.
 
 ## Debugging workflow
 
-When a production issue is reported:
+For a reproduced runtime incident, use the applicable steps below. Hosting/cache/production actions require that environment to be in scope and authorized; this is not the diff-review path.
 
 1. **Read the full error message.** Including the stack trace.
 2. **Check hosting build and function logs.** The exact failing line is usually here.
 3. **Identify the last working version.** `git log --oneline` and check recent commits.
 4. **Reproduce locally.** Confirms it's a code issue and not an environment issue.
 5. **Check environment variables.** Especially after deploys or DNS changes.
-6. **Check cache state.** Force a cache invalidation before concluding it's a code bug.
+6. **Check cache state when evidence points there.** Observe first; invalidate only the scoped cache with authorization for any external mutation.
 7. **Make the minimal fix.** Big refactors during incidents create more incidents.
 8. **Verify in production.** Check the actual fix worked, not just that the deploy succeeded.
 9. **Document.** What was the root cause? What would have prevented it? File the learnings.

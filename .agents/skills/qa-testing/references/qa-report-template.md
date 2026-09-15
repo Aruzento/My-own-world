@@ -1,5 +1,8 @@
 # QA Report: [Page or Site URL]
 
+Template scope: keep only the selected QA tier and runtime. Public-site SEO, headers, analytics, web performance and mobile matrices below are conditional hosted-web examples. For MOW desktop, record the actual release policy gates and supported surfaces instead; preserve failures and unverified evidence.
+
+
 **Date:** [YYYY-MM-DD]
 **Tier:** [Smoke / Standard / Full]
 **Tester:** [Name]

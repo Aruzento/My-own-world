@@ -6,6 +6,95 @@ owner_zone: "architecture"
 ---
 # MOW — Astra Context and Skills Audit
 
+## R3–R8 Implementation — 2026-09-15
+
+Implementation baseline: clean `main`, `bb1327d405b945e8cd9574a76ab8e273d9ed16cd`. The audit below is the original static analysis, not the final catalog. Root rules remain model-agnostic. Design guidance follows the [official skills article](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra): precise selection and conditional supporting references.
+
+The owner confirmed taking the personal archive. The actual readable directory is `Z:/Мои проекты/Project 4. MOW/MOW_PERSONAL_ARCHIVE_EXPORT_2026-09-15` (the initially supplied nested path did not exist). All seven manifest entries, original/copy SHA-256 values and sizes matched; a copied assessment was read. Source commit in the archive is `650507d2458c5a205cd34a6d555f296c56c3c9d9`. External archive contents are not modified by this pass.
+
+### Safety mapping before retiring anti-slop
+
+Each unique guarantee of the former workflow has an owner; its universal before/after recipe and automatic broad-test/doc-update bundle are replaced by the scoped root workflow (R7).
+
+| Former guarantee | Final owner / preservation |
+| --- | --- |
+| Explicit outcome, acceptance and smallest subsystem boundary | Root working style/scope; Definition of Done (DoD) Closure Evidence names observable outcomes |
+| Foundation vs MVP/Usable/Release-ready; helper without integration is not complete | DoD Readiness Levels and Closure Evidence |
+| Feature reachable in one or two obvious actions | DoD Usable rule |
+| Incomplete scope stays active; never delete remaining plan obligations | DoD Rules and Closure Evidence; next accepted item in handoff |
+| P0/P1 regression responsibility; explain unavailable automation | DoD Rules, with available manual evidence in Closure Evidence |
+| Bug root cause and regression target | DoD Closure Evidence; scoped code-review workflow |
+| Tests verify the user/integration behavior, not merely code existence | DoD Closure Evidence; affected domain tests |
+| Synthetic fixture does not certify real-workspace safety | DoD Closure Evidence and root evidence rule |
+| No vague improvement claims, partial release overclaim or hidden unverified behavior | DoD Closure Evidence/readiness and root final evidence rule |
+| Reuse owners/lifecycle and avoid premature abstractions | Root project invariants/working style; minimal-change ladder |
+| Explicit scope is completed despite choosing a smaller implementation | Root working style; minimal-change scope boundary |
+| Preserve workspace data and compatibility | Root safety/invariants; domain recovery/schema contracts |
+| New subsystem diagnostics, migration/compatibility and fallback | minimal-change MOW rules, referenced by DoD closure |
+| No decorative churn, broad restyle, new visual values without ownership | Root scope; design-system contract and merged preship checklist |
+| Dense GM workbench and clear popup primary action | Merged design checklist hierarchy/target-surface guidance; popup/design contracts |
+| Update affected contracts/user instructions, plan tails and discovered regressions | Root conditional docs updates; DoD plan/closure rules; scoped skill clauses |
+| Focused validation plus required task/release/recovery checks | Root validation, each affected skill; no runner/task semantics changed |
+
+R5 retains the three former design-standards references under design-system. Its six useful standards (tokens, measured contrast, hierarchy, spacing/proximity, target viewport behavior and component states/consistency) are preserved in the scoped preship reference. Generic mobile/Tailwind advice is conditional and creates no MOW product requirement. Accessibility, component and spec inbound routes now name the surviving owner; the unavailable imported brand-contrast path is replaced by the existing WCAG reference.
+
+### Final static comparison
+
+| Measure | Before | After |
+| --- | ---: | ---: |
+| Documents: tracked Markdown/DOCX and strategy HTML, including skill references | 163 | 159 |
+| Active/reference/router/skill documents (not mandatory reading) | 124 | 127 |
+| Fixture pages / project archive | 3 / 29 | 3 / 29 |
+| Personal-export originals in current tree | 7 | 0 |
+| Local skills | 19 | 17 |
+| Description Unicode characters / whitespace-delimited words | 6,888 / 991 | 1,690 / 225 |
+| Five router roots, UTF-8 bytes normalized to LF | 58,589 | 9,002 |
+
+Active/reference count rises by three because five selected-workflow references replace two retired roots; seven personal originals leave the tree. Five new supporting files: backup policy, dependency workflows, documentation workflows, QA tiers and conditional hosted-web checks. Three design references were moved, not discarded. No new product document, nested AGENTS, universal skill or runtime API was introduced.
+
+| Router | Before bytes | After bytes |
+| --- | ---: | ---: |
+| backup-and-disaster-recovery | 10,870 | 1,785 |
+| dependency-management | 11,002 | 1,828 |
+| documentation-strategy | 13,060 | 1,697 |
+| performance-optimization | 10,763 | 2,013 |
+| qa-testing | 12,894 | 1,679 |
+
+Outcome: KEEP 3 (frontend-component-build, map-hardening, world-package), NARROW 9, ROUTER 5, MERGED 1 (design-standards into design-system references), REMOVED 1 (anti-slop after the mapping above). KEEP workflows remain independent. R7 narrows verification/document updates without changing required task checks or release/recovery gates. R8 shortens component activation and limits Character initiative metadata to its actual integration; the earlier pass already narrowed delivery/testing metadata, so it was not rewritten again.
+
+All 17 final descriptions were reviewed: no blanket “whenever / any UI / any docs / debug / refactor” activation; component refactoring remains explicitly limited to component lifecycle/API. Design-system owns visual tokens/primitives, frontend-component-build owns component implementation, accessibility-audit owns systemic assistive-access review. Docs-restructure implements moves/zones; documentation-strategy selects an explicit audit/ownership/maintenance branch. Desktop-release prepares/verifies a candidate; release-handoff writes its user/tester materials. These are distinct selection boundaries, not a claim that a model never selects two relevant skills.
+
+### Seven archetypes — final static routing analysis
+
+Each route starts with the accepted task and root AGENTS; existing contract verification remains binding. The following is final-state analysis, not replayed model behavior.
+
+| Task | Skill and canonical context | Target code/tests | Excluded default reading |
+| --- | --- | --- | --- |
+| A. Obvious CSS/popup layout bug | No skill for an isolated rule; Popup Lifecycle only if lifecycle/focus is affected. Design-system only if shared tokens/primitives actually change | Affected CSS/controller; popup-position/lifecycle regression or targeted popup browser scenario | Design research, migration inventories, generic design/component/a11y audits, plan/log |
+| B. Narrow accepted Combat Action domain function | No generic skill; the relevant Action Pipeline contract section. Read another domain contract only when that boundary changes | Contract §3 identifies planned pure modules; the pipeline is not implemented in this baseline. Inspect nearest existing Character/Dice/Event owners and add the scoped domain test with the accepted leaf | PM spec rewrite, Character skill for unrelated combat logic, map-hardening for a pure domain function, whole session/manual/history stack |
+| C. Character HP persistence | character-model; Character contract, relevant Properties and persistent-write contracts; recovery/clean-save checks remain applicable | characterModel.js, characterIntegrationApi.js, characterCalculations.js and actual write boundary; Character/integration tests plus affected Properties browser persistence fixture | Archived experiments, whole Action Pipeline, whole work log, backup-policy framework |
+| D. Roadmap status after an accepted phase | No skill; exact PROJECT_PLAN leaf, acceptance evidence and DoD only for closure | Changed status document; docs:index/docsStatusGuard and directly affected links | docs-restructure, documentation-strategy audit, dashboard/log/DOCX bundle, unrelated product code |
+| E. Backup/recovery behavior fix | No DR skill for a code fix; Backup and Recovery contract, relevant operation/schema boundary. An explicitly requested drill selects the DR runbook branch | backupService.js/backupRestorePreview.js or changed adapter; backupService/backupRestorePreview/recoveryEndToEnd tests | All-system inventory, invented RPO/RTO, remote database/compliance branches, unrelated release suite |
+| F. Desktop release | desktop-release; Desktop Release Policy, Release Process and actual candidate/tester evidence. release-handoff only for requested handoff documents | Existing packaging/gate/build/native commands and policy-required tests for that candidate | Archived transition/spike plans, unrelated design/a11y audits; no repeated equivalent checks just because two documents mention them |
+| G. Accessibility audit of tree/popup flow | accessibility-audit; selected WCAG/ARIA/report references, relevant popup/tree behavior contract | Actual UI, keyboard/focus tests (tree-accessibility/popup lifecycle) and real screen-reader/visual checks when available | Generic design/research/history stack, SEO/headers QA, component build workflow unless implementation is actually requested |
+
+### Verification and evidence limits
+
+- PASS: `npm run docs:index` (104 docs, 3 fixture exclusions), `npm run check:encoding`, `npm run agents:validate` (17), `git diff --check` and staged diff check.
+- PASS: `node --test tests/docsStatusGuard.test.mjs tests/agentTaskContract.test.mjs tests/agentTaskRunner.test.mjs` — 42 tests. Runner execution tests use their existing controlled fixtures, not model calls; timeout, scope, approval, worktree and bounded repair safeguards remain covered.
+- PASS: external source/copy hashes before deletion and external-copy/base-Git content after deletion, seven of seven; manifest entries and sizes match. The archive remains outside the repository and is unchanged.
+- PASS: final structural check — 272 local Markdown/HTML links resolve, no unexpected export dependency, 17 historical exact-path mentions remain in dated inventories/log/archive records only. No operational tooling/test/skill/release consumer requires an exported file. The old archived assessment reference is explicitly a pre-retirement Git path. The only pre-existing unavailable imported reference identified by this work (brand contrast) was replaced; moved design references and their inbound routes resolve.
+- PASS: 508 tracked operational files under code, tooling, tests and repository config plus manifests are unchanged against the implementation baseline. No dependency/runtime/runner change, DOCX regeneration or project-archive removal occurred. Nineteen bidirectional document reference pairs remain navigational; no rule requires loading their transitive closure.
+- Observed CLI discovery: installed `codex-cli 0.153.4`, experimental app-server `skills/list` with this repository cwd and force reload returned 17 enabled repo skills and zero catalog errors (23 entries total in this probe environment). No model turn was started. This proves catalog discovery here, not skill activation or document-reading behavior. App-server startup also logged an unavailable remote featured-plugin cache request; the local catalog request completed successfully.
+- Failed then fixed: agents:validate initially found the empty former design-standards directory left after reference moves. The verified-empty directory was removed; validation then passed.
+- Unavailable auxiliary check: skill-creator `quick_validate.py` could not run because PyYAML is absent in both available Python runtimes. No dependencies/global settings were changed to satisfy this optional helper. Repository validation and the installed CLI successfully parsed all 17 skills; existing upstream catalog metadata is preserved.
+
+Counts, hashes, byte sizes, CLI responses and test results are measured facts. Reduced default reading follows from the static routes; no runtime token, billing, real model selection or global-skill-discovery improvement is claimed. The runner exposes task/report execution and dry-run safeguards, not telemetry of selected skills/read documents. Future real task observations are needed for those conclusions. No push is performed in this pass.
+
+Final self-review checked the diff for lost safety/owners, blanket triggers/read stacks, current-contract deletion, archive dependencies and production changes. Fifteen internal section links also resolve. Only documented historical mentions of retired paths remain; no extra root skill, runtime change or generated manual was added.
+
+## Original Audit Baseline
+
 ## 1. Executive Summary
 
 Аудит от 2026-09-14, **без реализации рекомендаций**. Исследован текущий local worktree после замены `AGENTS.md`:

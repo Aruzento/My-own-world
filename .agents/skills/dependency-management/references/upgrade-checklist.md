@@ -1,5 +1,7 @@
 # Major Version Upgrade Checklist
 
+Use for major/critical upgrades. Apply only the project runtime and existing release infrastructure: staged rollout/monitoring sections are conditional on an actual hosted deployment. Preserve all compatibility and regression gates; this template does not authorize deploys, subscriptions, or messages.
+
 Step-by-step checklist for upgrading a critical dependency to a new major version. The work is in the prep, not the install.
 
 ---
