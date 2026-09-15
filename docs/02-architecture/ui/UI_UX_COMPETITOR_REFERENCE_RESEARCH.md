@@ -1,9 +1,7 @@
 ---
-summary: "Competitor and reference UX/UI research for MyOwnWorld system UI redesign."
+summary: "Optional dated competitor/UI research; accepted rules live in DESIGN_SYSTEM_CONTRACT.md."
 read_when:
-  - "Before updating the design system contract"
-  - "Before migrating AppShell, editor, properties, campaign map, knowledge graph, task tracker or secondary screens"
-  - "When choosing UI references for a specific MyOwnWorld system"
+  - "When a task explicitly needs external design reference patterns"
 owner_zone: "architecture"
 ---
 

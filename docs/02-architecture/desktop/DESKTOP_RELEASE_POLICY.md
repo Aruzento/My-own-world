@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for DESKTOP_RELEASE_POLICY.md."
+summary: "Canonical desktop build and handoff gate requirements."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "Before building or handing off a desktop installer"
 owner_zone: "architecture"
 ---
 # Desktop Release Policy

@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for TABLES_CONTRACT.md."
+summary: "Persistent table structure and runtime editing/selection controls."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing table editing, resizing, clipboard or serialization"
 owner_zone: "architecture"
 ---
 # Tables Contract

@@ -37,7 +37,7 @@ Persistent HTML хранит только shell:
 - `.knowledge-graph-runtime`;
 - любые `[data-runtime="true"]` controls.
 
-Runtime layout state, временные координаты node, open context menu and viewport pan/zoom не сериализуются в persistent HTML. Когда появятся pinned positions, они должны храниться как отдельная structured graph-view state model, а не как произвольные inline styles.
+Runtime layout state, временные координаты node, open context menu and viewport pan/zoom не сериализуются в persistent HTML. Pinned positions уже сохраняются в отдельной structured graph-view state model через `js/wiki/knowledgeGraphViewState.js`, а не в произвольных inline styles. Механика view state описана в [KNOWLEDGE_GRAPH_MODEL.md](./KNOWLEDGE_GRAPH_MODEL.md).
 
 ## Relationship Model
 
@@ -139,4 +139,4 @@ Foundation визуального исследования мира состои
 
 ## UX Rule
 
-Canvas не должен превращаться в сложный редактор графов до завершения saved/pinned positions, relationship presets and performance gates. Первый экран должен оставаться похожим на карту: рабочая зона, понятный toolbar, контекстные действия по node и без лишней статистики вокруг.
+Saved/pinned positions уже реализованы; это не разрешение расширять canvas в сложный редактор графов. Relationship presets и новые performance gates требуют соответствующего scope текущего плана. Первый экран должен оставаться похожим на карту: рабочая зона, понятный toolbar, контекстные действия по node и без лишней статистики вокруг.

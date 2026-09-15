@@ -33,3 +33,19 @@ If part of an archived document is still useful, copy only the relevant idea int
 The active plan for version 1 remains `docs/01-delivery/PROJECT_PLAN.md`. Old combined plans and pre-`0.0.1.0.0` planning material stay in this archive as history only.
 
 Current working documents should link to archived plans only for historical context. If an archived idea becomes active again, copy the actionable task into `PROJECT_PLAN.md` or the relevant contract instead of restoring the old plan body.
+
+## 2026-09-15 Documentation Separation
+
+These are optional historical routes. Current owners remain at their existing active paths.
+
+| Project history | Current owner |
+| --- | --- |
+| [DESKTOP_PRESENTATION_WINDOW_SPIKE.md](./desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md) | [Desktop adapter boundaries](../02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md); [release policy](../02-architecture/desktop/DESKTOP_RELEASE_POLICY.md) |
+| [DESKTOP_PROTOTYPE_SMOKE.md](./desktop/DESKTOP_PROTOTYPE_SMOKE.md) | [Desktop adapter boundaries](../02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md); [release policy](../02-architecture/desktop/DESKTOP_RELEASE_POLICY.md) |
+| [DESKTOP_TRANSITION_STRATEGY.md](./desktop/DESKTOP_TRANSITION_STRATEGY.md) | [Desktop adapter boundaries](../02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md); [release policy](../02-architecture/desktop/DESKTOP_RELEASE_POLICY.md) |
+| [PRODUCT_DASHBOARD_HISTORY.md](documentation-2026-09-15/PRODUCT_DASHBOARD_HISTORY.md) | [PRODUCT_DASHBOARD.md](../00-product/PRODUCT_DASHBOARD.md) |
+| [DESIGN_SYSTEM_MIGRATION_HISTORY.md](documentation-2026-09-15/DESIGN_SYSTEM_MIGRATION_HISTORY.md) | [DESIGN_SYSTEM_CONTRACT.md](../02-architecture/ui/DESIGN_SYSTEM_CONTRACT.md) |
+| [UI_MIGRATION_INVENTORY_HISTORY.md](documentation-2026-09-15/UI_MIGRATION_INVENTORY_HISTORY.md) | [UI_MIGRATION_BASELINES.md](../02-architecture/ui/UI_MIGRATION_BASELINES.md) |
+| [DESKTOP_ADAPTER_IMPLEMENTATION_HISTORY.md](documentation-2026-09-15/DESKTOP_ADAPTER_IMPLEMENTATION_HISTORY.md) | [DESKTOP_ADAPTER_PLAN.md](../02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md) |
+| [RELEASE_NOTES_HISTORY.md](documentation-2026-09-15/RELEASE_NOTES_HISTORY.md) | [release-notes.md](../../release/latest/release-notes.md) |
+| [TESTER_INSTRUCTIONS_HISTORY.md](documentation-2026-09-15/TESTER_INSTRUCTIONS_HISTORY.md) | [tester-instructions.md](../../release/latest/tester-instructions.md) |

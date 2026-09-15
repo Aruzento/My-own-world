@@ -9,7 +9,7 @@ owner_zone: "user-release"
 
 ## Текущие заметки
 
-- Owner manual acceptance of Combat UI 16.9/16.9.1/16.9.2 is PASS as sufficient foundation. Phase 16 is CLOSED / PASS after 16.FINAL on 2026-09-13 at Usable readiness; this is not installed-desktop release acceptance or full combat gameplay. Phase 17 is NEXT, not ACTIVE.
+- Owner manual acceptance of Combat UI 16.9/16.9.1/16.9.2 is PASS as sufficient foundation. Phase 16 is CLOSED / PASS after 16.FINAL on 2026-09-13 at Usable readiness; this is not installed-desktop release acceptance or full combat gameplay. For the current phase and next leaf, use [PROJECT_PLAN.md](../01-delivery/PROJECT_PLAN.md); this release-risk document does not own roadmap status.
 
 - Combat 16.10 saves the page before appending audit history. If append fails, the saved state remains valid and the popup says `Состояние боя сохранено, но событие не записано в журнал.` There is no automatic retry/rollback or atomic page-plus-event guarantee. Backup v1 excludes event history: restore may show an older current battle alongside newer historical facts. A filesystem failure after bytes were written can leave an uncertain audit outcome; do not retry blindly.
 - Missing-reference warnings never repair data. Combat-only missing initiative members block ordinary roster editing; save pending initiative inputs before lifecycle/participant-editor changes. No Combat undo, replay or attack/damage/HP automation is included.

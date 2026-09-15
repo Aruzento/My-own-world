@@ -2884,10 +2884,9 @@ export function createMarkdownReport(
 
   return [
     '---',
-    `summary: "Current native desktop ${audioSmoke ? 'audio smoke' : 'click-through'} report."`,
+    `summary: "${audioSmoke ? 'Latest recorded audio smoke evidence; not proof for an untested build.' : 'Latest recorded native click-through evidence with run-specific scope.'}"`,
     'read_when:',
-    '  - "Before desktop release handoff"',
-    '  - "When validating the native Tauri window"',
+    `  - "${audioSmoke ? 'When comparing desktop audio behavior with the recorded smoke run' : 'When evaluating the native verification evidence for its recorded build or planning a new run'}"`,
     'owner_zone: "delivery"',
     '---',
     '',

@@ -8,6 +8,41 @@ lifecycle: "temporary-audit"
 
 # Documentation Architecture Audit
 
+## Implementation record — 2026-09-15
+
+This record describes the subsequent implementation pass from clean `main` at `650507d2458c5a205cd34a6d555f296c56c3c9d9`. The original audit/inventory below remains a dated baseline, not a live index. Baseline checks passed: docs index (98 Markdown / 3 fixture exclusions), encoding and Git diff check. No parallel documentation changes were present.
+
+Implemented:
+
+- Six SPLIT operations retained the active paths for PRODUCT_DASHBOARD, DESKTOP_ADAPTER_PLAN, DESIGN_SYSTEM_CONTRACT, UI_MIGRATION_BASELINES, release-notes and tester-instructions. Dated sections now live under `docs/archive/documentation-2026-09-15/`, listed in the archive registry. Current AppShell/editor interaction details were preserved in the design contract; screenshot names, approved popup/platform rules and system rows remain in the tested active manifest. Desktop adapter APIs, workspace-root safety, presentation transport/privacy and fog fallback remain active.
+- Three whole documents moved with `git mv` into `docs/archive/desktop/`: DESKTOP_PRESENTATION_WINDOW_SPIKE, DESKTOP_PROTOTYPE_SMOKE and DESKTOP_TRANSITION_STRATEGY. Historical bodies were preserved. Packaging checks now require current adapter/recovery/policy documents instead of the archived plans. The desktop skill reference is explicitly historical/conditional.
+- The seventh proposed split was rejected after local content review: LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT's NF-001 closure section contains current stale-write/recovery invariants. The file remains unchanged; splitting it merely by its closure heading would move active rules into history.
+- `docs/README.md` now maps task areas to owners without a mandatory pre-read. Onboarding delegates workflow to root. Stale Phase 17 tester snapshots and future-tense pinned-position claims were corrected by routing to current owners. Confirmed broad metadata families were narrowed; generated CURRENT-report templates were updated too, so a later report does not recreate broad triggers. Historical research, waivers, assessments and strategy presentation are distinguished from current authority. No new metadata schema was introduced.
+- MERGE count is zero: the only audit MERGE_CANDIDATE is design-standards, explicitly deferred by the implementation scope. Anti-slop remains installed. All other skill bodies/descriptions and root AGENTS are unchanged. The audit's broader skill workflow/R3/R4/R5/R6 recommendations are not implemented by this pass.
+
+Current documentation accounting: **163 documents = 124 active/reference/router/skill documents + 3 fixture pages + 29 PROJECT_ARCHIVE + 7 EXPORT_ARCHIVE originals**. Active/reference includes the temporary audit reports; it does not mean mandatory reading. Three complete documents were relocated and six historical extracts added; no export original was removed. The six active split sources decreased from 389,947 to 129,943 UTF-8 bytes (Git text normalized to LF); this is a file-size measurement, not measured model-token savings.
+
+Personal export: `C:/Users/Aruko/Documents/New project/MOW_PERSONAL_ARCHIVE_EXPORT_2026-09-15`. Its seven payload files preserve the repository paths under `repository/`, with `MANIFEST.md`, `SOURCE_COMMIT.txt` and `checksums.sha256`. Source HEAD is `650507d2458c5a205cd34a6d555f296c56c3c9d9`. Payload size: **258,099 bytes**; total including metadata: **265,470 bytes**. Node copied files; an independent PowerShell pass recomputed source/copy/manifest SHA-256, checked sizes and counts (7 payload, 3 support files), and opened both an assessment and the chronicle. All seven matched. The directory is physically outside the Git worktree and is not a symlink or tracked content. The rubric DOCX was not exported.
+
+Second graph pass: 257 local Markdown/HTML hyperlinks checked, zero missing targets; zero stale moved paths in active operational docs/tools/tests/skills; zero mandatory inbound references to the seven export originals. Fourteen remaining exact-path mentions are descriptive inventory/baseline rows in PROJECT_FILE_AUDIT and this audit. Folder policy notes explicitly retain originals pending owner confirmation. Generic prefix classification in the file auditor and optional manual-generator discovery do not require any particular assessment's existence or content; no product/release/task consumer reads them. Historical backlinks remain historical. All six extracted chunks and all moved-document body lines were checked for preservation. Nineteen bidirectional reference pairs remain (for example root/overview, brand/design, contract/contract, tester/scenarios and optional skill/reference); these are selected navigation/ownership links, not an instruction to recursively load their transitive closure.
+
+| Final verification | Result |
+| --- | --- |
+| `npm run docs:index` | PASS: 104 Markdown, 3 fixture exclusions, no metadata/zone/status-guard failures |
+| `npm run check:encoding` | PASS |
+| `npm run agents:validate` | PASS: 19 skills |
+| `node --test tests/docsStatusGuard.test.mjs tests/uiMigrationBaselines.test.mjs tests/visualRegressionPolicy.test.mjs tests/desktopReleaseGateStatus.test.mjs tests/desktopNativeSmokeStatus.test.mjs tests/desktopLargeWorkspaceSmoke.test.mjs` | PASS: 20 focused tests |
+| `npm run desktop:packaging-smoke` | PASS: static configuration/dist/document checks; no browser/native suite or build launched |
+| `node ../mow-agent-routing-audit/verify-documentation-restructure.mjs` | PASS: coverage/counts, history preservation, local links, current references, unchanged export originals/skills/root and checksums |
+| Independent PowerShell `Get-FileHash -Algorithm SHA256` verification | PASS: 7/7 source/copy/manifest hashes and sizes |
+| `git diff --check` / staged diff review | PASS; scoped documentation and four small tooling edits |
+
+The pre-existing optional imported skill reference to unavailable `brand-identity/references/contrast-and-accessibility.md` remains documented in UPSTREAM; it is outside move-related skill reference edits and is not one of the checked Markdown hyperlinks. Broader skill workflow tuning remains a separate stage.
+
+No full browser/native/release suite, DOCX regeneration, dependency update, fetch or push. Export files remain byte-identical and tracked. **EXPORT_ARCHIVE СОЗДАН. ОРИГИНАЛЫ ИЗ GIT НЕ УДАЛЕНЫ.** Removal requires a separate owner confirmation that the external archive was taken/copied and is readable.
+
+## Original audit baseline
+
 Дата: 2026-09-15. Baseline: `d13cfa5e0a7c23238b49d7aa78cb4895f3c57556`, branch `main`, исходный working tree clean. Tracking ref: `refs/remotes/origin/main` → `62483ac511da4e02267d013e1fd8f2a3d6262711`, без fetch. Снимок inventory ниже — после R1/R2, до добавления этого отчёта; сам отчёт учитывается отдельно. Commit/date в inventory означают последнее изменение файла в baseline Git, а не дату проверки его актуальности.
 
 Это временный audit/implementation artifact, **не новый источник продуктовых требований** и не default pre-read. После исполнения принятых follow-up решений оставить краткий closure record и пересмотреть необходимость полного inventory. Никаких migrations/deletions этот отчёт сам по себе не разрешает.

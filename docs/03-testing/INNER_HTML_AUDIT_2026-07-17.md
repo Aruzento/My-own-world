@@ -1,8 +1,7 @@
 ---
-summary: "Audit record for user-controlled runtime innerHTML surfaces fixed and regression-tested in 0.0.1.0.4.1-0.0.1.0.4.3."
+summary: "Historical runtime innerHTML hardening evidence from 2026-07-17."
 read_when:
-  - "When hardening runtime UI text insertion"
-  - "Before adding security regression tests for user strings"
+  - "When tracing the origin or regression coverage of a specific audited runtime text-insertion fix"
 owner_zone: "testing"
 ---
 

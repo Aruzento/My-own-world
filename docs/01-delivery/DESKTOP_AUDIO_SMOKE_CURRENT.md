@@ -1,8 +1,7 @@
 ---
-summary: "Current native desktop audio smoke report."
+summary: "Latest recorded audio smoke evidence; not proof for an untested build."
 read_when:
-  - "Before desktop release handoff"
-  - "When validating the native Tauri window"
+  - "When comparing desktop audio behavior with the recorded smoke run"
 owner_zone: "delivery"
 ---
 

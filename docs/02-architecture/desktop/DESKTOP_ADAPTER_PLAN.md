@@ -1,43 +1,19 @@
 ---
-summary: "architecture document for DESKTOP_ADAPTER_PLAN.md."
+summary: "Current browser/Tauri storage, asset and presentation adapter boundaries; historical migration steps are separate."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing desktop storage commands, asset resolution or presentation transport"
 owner_zone: "architecture"
 ---
-# Desktop Adapter Plan
 
-Дата обновления: 04.06.2026
+# Desktop Adapter Boundaries
 
-Пункт плана: **20. Desktop Adapter / Internet Resource Strategy**.
+The path is retained for existing consumers; this is the current adapter reference, not a parallel implementation plan. Current roadmap: [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md).
 
-Статус: **закрыт как desktop foundation**.
+Tauri is the current desktop target; browser mode and the workspace format remain supported. Electron is only a fallback decision if concrete WebView limitations cannot be solved within the adapter boundary. Desktop releases use [DESKTOP_RELEASE_POLICY.md](./DESKTOP_RELEASE_POLICY.md), including its mandatory gate. Backup/restore procedure: [DESKTOP_BACKUP_RESTORE_GATE.md](./DESKTOP_BACKUP_RESTORE_GATE.md). Historical design choices: [dated implementation history](../../archive/documentation-2026-09-15/DESKTOP_ADAPTER_IMPLEMENTATION_HISTORY.md).
 
-Desktop-направление больше не является только идеей или spike. В проекте есть Tauri-оболочка, adapter boundary для файлов и assets, native FS commands, backup/restore gate, отдельное окно презентации, production frontend output, installer и release policy.
+Presentation privacy: hidden non-player entities are excluded; hidden player/original tokens remain visible with their badge. Master and presentation windows communicate model-first snapshots/patches rather than accessing each other's DOM. Runtime transport and current browser regression coverage live in `js/presentation/presentationEntry.js` and `tests/browser/campaign-map-presentation.spec.mjs`.
 
-Browser-версия при этом остается основной совместимой веткой: desktop-доработки идут через адаптеры и не должны ломать запуск через обычный локальный сервер.
-
-## 20.1. Desktop Target
-
-Статус: **сделано**.
-
-Desktop-цель зафиксирована:
-
-- local-first приложение с workspace на диске;
-- стабильная работа с локальными файлами без browser permission loops;
-- поддержка больших картинок, фонов карт и будущих media-assets;
-- отдельное окно презентации для второго монитора;
-- сохранение текущего workspace-формата.
-
-## 20.2. Tauri Для Первого Spike
-
-Статус: **сделано**.
-
-Выбран Tauri, потому что приложение уже frontend-first, а Rust backend дает контролируемый доступ к файловой системе. Electron остается fallback только если системный WebView упрется в реальные ограничения, которые нельзя обойти адаптерами.
-
-## 20.3. StorageAdapter / AssetAdapter Design
-
-Статус: **сделано**.
+## StorageAdapter / AssetAdapter Design
 
 Добавлены отдельные контракты:
 
@@ -49,26 +25,8 @@ Desktop-цель зафиксирована:
 
 Главное правило: код приложения не должен хаотично обращаться к browser-only `FileSystemHandle`, если операция может пройти через adapter.
 
-## 20.4. Desktop Spike Environment
 
-Статус: **сделано**.
-
-Добавлено:
-
-- `src-tauri/`;
-- `tauri.conf.json`;
-- Rust entrypoint;
-- Tauri capabilities;
-- `npm run desktop:check`;
-- `npm run desktop:dev`;
-- `npm run desktop:build`;
-- `@tauri-apps/cli`.
-
-Текущее окружение Windows проверено: Node/npm, Rust/Cargo/rustup, Visual Studio Build Tools C++ и Windows SDK доступны через `desktop:check`.
-
-## 20.5. StorageAdapter
-
-Статус: **сделано foundation**.
+## StorageAdapter
 
 StorageAdapter закрывает:
 
@@ -82,9 +40,8 @@ StorageAdapter закрывает:
 
 Backup, restore, page writing и часть storage flow уже используют adapter-backed операции.
 
-## 20.6. AssetAdapter
 
-Статус: **сделано foundation**.
+## AssetAdapter
 
 AssetAdapter закрывает:
 
@@ -96,9 +53,8 @@ AssetAdapter закрывает:
 
 Для desktop используется Tauri asset protocol / `convertFileSrc`, а для сложных случаев есть fallback через binary read и data URL.
 
-## 20.7. Tauri FS Commands
 
-Статус: **сделано foundation**.
+## Tauri FS Commands
 
 Rust backend содержит команды:
 
@@ -117,42 +73,8 @@ Rust backend содержит команды:
 
 Обновление 17.07.2026: boundary перенесён в Rust-managed state. После выбора workspace frontend регистрирует root через `set_workspace_root`; обычные команды `read_text_file`, `write_text_file`, `read_binary_file`, `write_binary_file`, `list_directory`, `ensure_directory`, `remove_file`, `remove_directory`, `path_exists` и `resolve_asset_url` принимают только workspace-relative `path`. `remove_directory` запрещает удаление root (`""`, `"."` и canonical root). Новые пути проверяются по ближайшему существующему родителю, чтобы symlink/junction parent не уводил запись наружу. Текстовые и бинарные записи идут через temp-файл в той же папке, flush/sync и rename.
 
-## 20.7.1. Desktop Storage Hardening
 
-Статус: **сделано**.
-
-Закрыто:
-
-- adapter-backed write layer;
-- page storage без desktop pseudo-handles;
-- backup/restore через adapter;
-- asset import/resolve через adapter facade;
-- map background и карточные картинки через renderable URL;
-- storage regression tests.
-
-## 20.8. Desktop Prototype
-
-Статус: **сделано базово**.
-
-Desktop prototype запускает web UI в Tauri WebView. Workspace picker работает через Tauri dialog bridge, а не через browser-only `showDirectoryPicker`.
-
-Проверочный сценарий описан в `docs/02-architecture/desktop/DESKTOP_PROTOTYPE_SMOKE.md`.
-
-## 20.9. Desktop Backup / Restore Gate
-
-Статус: **сделано базово**.
-
-Backup/restore проверяется через adapter-backed storage tests и документ `docs/02-architecture/desktop/DESKTOP_BACKUP_RESTORE_GATE.md`. `.my-own-world-backups/` остается внутри workspace.
-
-## 20.10. Desktop Presentation Window Spike
-
-Статус: **сделано**.
-
-Добавлено отдельное окно презентации через Tauri `WebviewWindow`. Старый browser fallback сохранен.
-
-## 20.10.1. Presentation Runtime Transport
-
-Статус: **сделано базово**.
+## Presentation Runtime Transport
 
 Добавлены:
 
@@ -163,54 +85,8 @@ Backup/restore проверяется через adapter-backed storage tests и
 - собственные zoom/pan презентации;
 - popup просмотра изображения.
 
-## 20.11. Desktop Packaging Smoke
 
-Статус: **сделано**.
-
-Добавлено:
-
-- `npm run desktop:packaging-smoke`;
-- проверка Tauri config;
-- проверка capabilities;
-- проверка production frontend output;
-- проверка desktop-документов.
-
-## 20.12. Cloud Threat Model
-
-Статус: **сделано как стратегический документ**.
-
-Cloud не начинается до Safe HTML, ownership, role model, asset access policy и presentation privacy.
-
-Документ: `docs/02-architecture/security/CLOUD_THREAT_MODEL.md`.
-
-## 20.13. Backend Storage API Plan
-
-Статус: **сделано как стратегический документ**.
-
-BackendStorageAdapter, auth, ownership и sync/conflict resolution описаны как будущий путь, но не реализуются внутри desktop foundation.
-
-Документ: `docs/02-architecture/adapters/BACKEND_STORAGE_API_PLAN.md`.
-
-## 20.14. Desktop Transition
-
-Статус: **сделано foundation**.
-
-Закрыто:
-
-- desktop image runtime parity;
-- model-first presentation renderer;
-- privacy rules презентации;
-- manual desktop smoke checklist;
-- automated desktop gate;
-- production desktop frontend output;
-- installer / NSIS build;
-- release policy;
-- desktop map performance scenario;
-- dirty-region fog sync.
-
-## 20.14.9. Desktop Map Performance
-
-Статус: **сделано**.
+## Desktop Map Performance
 
 Сделано:
 
@@ -221,25 +97,13 @@ BackendStorageAdapter, auth, ownership и sync/conflict resolution описан�
 - performance scenario `desktopPresentationLargeWorkspace`;
 - стрелка расстояния поверх тумана в презентации.
 
-## 20.14.10. Dirty-Region Fog Sync
 
-Статус: **сделано**.
+## Dirty-Region Fog Sync
 
 Кисть тумана теперь записывает dirty-region. Presentation payload отправляет `fogPatch`, если менялась только малая область canvas. Renderer презентации дорисовывает patch в canvas-поверхность и не требует полной сериализации тумана на каждый мазок.
 
 Fog all / Unfog all остаются full-image fallback, потому что эти действия меняют весь canvas.
 
-## Что Вынесено Из Блока 20 В Будущее
-
-Эти задачи больше не считаются хвостами пункта 20 и должны планироваться отдельно:
-
-- расширение native smoke до installed-app и destructive-flow проверки на копии workspace;
-- native image picker, если WebView file input окажется проблемным;
-- audio/playlist assets;
-- структурированные desktop error objects;
-- desktop storage runner поверх реального Tauri окна для create/move/delete сценариев;
-- cloud/backend implementation;
-- desktop updater и signing.
 
 ## Workspace Access Diagnostics
 
@@ -255,24 +119,4 @@ The shared implementation is `js/storage/workspaceAccessDiagnostics.js`. The vis
 
 ```bash
 node tools/run_workspace_diagnostics.mjs --workspace "X:\ДНД\Мастер\По кампаниям\База" --json false
-```
-
-The 2026-07-19 owner pass uses the current large GM workspace `X:\ДНД\Мастер\По кампаниям\База`. `0.0.1.2.2` added `npm run desktop:native-smoke` for native Tauri click-through through WebView2.
-
-## Проверки Для Desktop Foundation
-
-Минимальный gate:
-
-```bash
-npm run verify
-npm run test:browser
-npm run desktop:packaging-smoke
-npm run desktop:check
-npm run desktop:build
-```
-
-Установщик собирается в:
-
-```text
-src-tauri/target/release/bundle/nsis/MyOwnWorld_0.0.0_x64-setup.exe
 ```

@@ -1,8 +1,7 @@
 ---
-summary: "Historical work log and decision record."
+summary: "Dated implementation decisions and verification history; not current roadmap or contract."
 read_when:
-  - "Before choosing the next task"
-  - "When updating delivery status"
+  - "When a specific historical decision or verification record is needed to understand current behavior"
 owner_zone: "delivery"
 ---
 

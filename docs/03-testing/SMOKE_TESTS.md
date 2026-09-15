@@ -1,8 +1,7 @@
 ---
-summary: "Smoke and regression checklist."
+summary: "Developer verification commands and subsystem regression scenarios."
 read_when:
-  - "Before verification"
-  - "When adding or changing tests"
+  - "When selecting checks for an editor, storage, tree, map or block-system change"
 owner_zone: "testing"
 ---
 # Smoke And Regression Tests

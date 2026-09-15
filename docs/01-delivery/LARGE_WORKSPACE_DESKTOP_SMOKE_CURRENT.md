@@ -1,8 +1,7 @@
 ---
-summary: "Current desktop large workspace smoke report."
+summary: "Latest recorded large-workspace smoke evidence and limitations."
 read_when:
-  - "Before desktop release handoff"
-  - "When validating a large GM workspace"
+  - "When reviewing the recorded large-workspace run or selecting a new performance check"
 owner_zone: "delivery"
 ---
 

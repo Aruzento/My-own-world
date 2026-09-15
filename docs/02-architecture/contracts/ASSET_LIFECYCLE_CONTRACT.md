@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for ASSET_LIFECYCLE_CONTRACT.md."
+summary: "Asset identity, references, import and scoped cleanup contract."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing asset references, import, missing assets or orphan cleanup"
 owner_zone: "architecture"
 ---
 # Asset Lifecycle Contract

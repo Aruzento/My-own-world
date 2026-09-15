@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for DESKTOP_PACKAGING_SMOKE.md."
+summary: "Static desktop packaging/configuration verification procedure."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing desktop packaging, capabilities or production frontend output"
 owner_zone: "architecture"
 ---
 # Desktop Packaging Smoke

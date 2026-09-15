@@ -1,11 +1,13 @@
 ---
-summary: "architecture document for DESKTOP_PROTOTYPE_SMOKE.md."
+summary: "Historical desktop foundation evidence: DESKTOP_PROTOTYPE_SMOKE.md; current boundaries live in DESKTOP_ADAPTER_PLAN.md."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
-owner_zone: "architecture"
+  - "When investigating the origin of the desktop foundation or presentation migration decision"
+owner_zone: "archive"
 ---
 ﻿# Desktop Prototype Smoke
+
+Historical document moved on 2026-09-15 from `docs/02-architecture/desktop/DESKTOP_PROTOTYPE_SMOKE.md`. Its current/next/future statements describe the original dated work. Current adapter and presentation boundaries: [DESKTOP_ADAPTER_PLAN.md](../../02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md). Current build/handoff gate: [DESKTOP_RELEASE_POLICY.md](../../02-architecture/desktop/DESKTOP_RELEASE_POLICY.md). Read this archive only for rationale, not as a prerequisite for current implementation or packaging.
+
 
 Дата создания: 02.06.2026
 

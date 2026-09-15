@@ -1,8 +1,7 @@
 ---
-summary: "Backend and storage API adapter plan."
+summary: "Deferred cloud storage, auth and conflict-resolution design; not an implemented backend."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When explicitly planning a future cloud storage or synchronization boundary"
 owner_zone: "architecture"
 ---
 # Backend Storage API Plan

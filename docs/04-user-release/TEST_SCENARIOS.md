@@ -26,7 +26,7 @@ owner_zone: "user-release"
 
 ## Минимальный пользовательский проход
 
-For the Initiative/Combat session UI, follow the current regression route in [tester-instructions.md](../../release/latest/tester-instructions.md). It covers preparation/start, turns/rounds, independent markers, frozen lifecycle states, missing references, exact map reload and recovery/audit boundaries. Owner manual acceptance of the corrected Combat foundation is PASS; 16.FINAL closed Phase 16 on 2026-09-13. This is not installed-desktop release approval or full combat gameplay. Phase 17 is NEXT, not started.
+For the Initiative/Combat session UI, follow the current regression route in [tester-instructions.md](../../release/latest/tester-instructions.md). It covers preparation/start, turns/rounds, independent markers, frozen lifecycle states, missing references, exact map reload and recovery/audit boundaries. Owner manual acceptance of the corrected Combat foundation is PASS; 16.FINAL closed Phase 16 on 2026-09-13. This is not installed-desktop release approval or full combat gameplay. Current phase and next leaf are owned by [PROJECT_PLAN.md](../01-delivery/PROJECT_PLAN.md); this scenario does not maintain a separate roadmap snapshot.
 
 1. Открыть workspace.
 2. Создать карточку.

@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for SAFE_HTML_CONTRACT.md."
+summary: "Safe persistent HTML allowlist and runtime exclusion boundary."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing sanitization, paste or persistent HTML save/load"
 owner_zone: "architecture"
 ---
 # Safe HTML Contract

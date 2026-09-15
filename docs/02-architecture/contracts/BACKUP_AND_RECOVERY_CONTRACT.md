@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for BACKUP_AND_RECOVERY_CONTRACT.md."
+summary: "Backup creation, validation, restore and recovery safety contract."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing backups, restore, recovery preview or partial recovery"
 owner_zone: "architecture"
 ---
 # Backup And Recovery Contract

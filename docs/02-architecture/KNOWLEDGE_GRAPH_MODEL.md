@@ -1,8 +1,7 @@
 ---
-summary: "Knowledge graph model and visual graph view foundation."
+summary: "Graph derivation, relationships and view-state implementation reference."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing graph derivation, pinned positions or graph view state"
 owner_zone: "architecture"
 ---
 # Knowledge Graph Model

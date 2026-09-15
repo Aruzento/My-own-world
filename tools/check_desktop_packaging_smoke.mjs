@@ -182,8 +182,8 @@ function checkDesktopDocs() {
 
   [
     'docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md',
-    'docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md',
-    'docs/02-architecture/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md',
+    'docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md',
+    'docs/02-architecture/desktop/DESKTOP_BACKUP_RESTORE_GATE.md',
     'docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md'
   ].forEach(filePath => {
 

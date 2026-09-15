@@ -1,9 +1,7 @@
 ---
-summary: "Audit-only repository maintainability and AI-slop review for 0.0.1.9.0."
+summary: "Historical maintainability findings and rationale for the closed cleanup phase."
 read_when:
-  - "Before starting repository cleanup"
-  - "When deciding whether a maintainability finding is real debt or taste"
-  - "When planning 0.0.1.10.0 cleanup slices"
+  - "When investigating a specific retained finding or prior cleanup decision"
 owner_zone: "architecture"
 ---
 

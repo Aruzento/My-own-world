@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for DESKTOP_MAP_PERFORMANCE_NOTES.md."
+summary: "Desktop map/presentation performance reference and measurement scenarios."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing desktop map/presentation performance or investigating a measured regression"
 owner_zone: "architecture"
 ---
 # Desktop Map Performance Notes

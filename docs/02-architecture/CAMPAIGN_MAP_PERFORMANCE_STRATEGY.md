@@ -1,8 +1,7 @@
 ---
-summary: "Campaign map performance strategy."
+summary: "Campaign map rendering and performance budgets."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing map rendering, viewport updates, fog or performance budgets"
 owner_zone: "architecture"
 ---
 # Campaign Map Performance Strategy

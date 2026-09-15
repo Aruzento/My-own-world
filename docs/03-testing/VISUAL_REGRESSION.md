@@ -1,8 +1,7 @@
 ---
-summary: "Visual regression checklist."
+summary: "Visual evidence policy, human review and approved popup snapshot boundaries."
 read_when:
-  - "Before verification"
-  - "When adding or changing tests"
+  - "When selecting UI visual verification or changing approved screenshot coverage"
 owner_zone: "testing"
 ---
 # Visual Evidence Smoke / UX Safety Checklist

@@ -1,8 +1,7 @@
 ---
-summary: "Release-oriented changelog."
+summary: "Release-oriented historical change summary."
 read_when:
-  - "Before choosing the next task"
-  - "When updating delivery status"
+  - "When preparing release notes or investigating a dated released change"
 owner_zone: "delivery"
 ---
 # Changelog

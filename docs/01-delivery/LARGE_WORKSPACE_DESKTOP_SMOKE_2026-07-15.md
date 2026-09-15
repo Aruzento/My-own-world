@@ -1,8 +1,7 @@
 ---
-summary: "Large GM workspace desktop verification update for 0.0.1.1.1."
+summary: "Historical large-workspace performance evidence from 2026-07-15."
 read_when:
-  - "Before desktop large workspace work"
-  - "Before closing 0.0.1.1.1"
+  - "When investigating the 2026-07-15 workspace performance baseline"
 owner_zone: "delivery"
 ---
 

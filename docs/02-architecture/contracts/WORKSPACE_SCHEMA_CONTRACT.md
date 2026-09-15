@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for WORKSPACE_SCHEMA_CONTRACT.md."
+summary: "Versioned workspace and page/model compatibility contract."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing schema versions, persistent validation or compatibility"
 owner_zone: "architecture"
 ---
 # Workspace Schema Contract

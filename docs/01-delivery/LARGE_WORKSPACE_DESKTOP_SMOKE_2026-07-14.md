@@ -1,8 +1,7 @@
 ---
-summary: "Real large workspace desktop smoke and performance probe results."
+summary: "Historical large-workspace performance evidence from 2026-07-14."
 read_when:
-  - "Before large workspace performance work"
-  - "Before desktop release verification"
+  - "When investigating the 2026-07-14 workspace performance baseline"
 owner_zone: "delivery"
 ---
 

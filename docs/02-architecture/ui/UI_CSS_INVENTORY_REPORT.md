@@ -1,9 +1,7 @@
 ---
-summary: "Detailed UI and CSS inventory for the version 1 redesign work."
+summary: "Dated UI/CSS surface inventory and migration findings; not current code counts."
 read_when:
-  - "Before changing the design system contract"
-  - "Before migrating UI primitives, overlays, AppShell, editor, map or graph UI"
-  - "When checking whether a UI fix belongs to the redesign plan or the small backlog"
+  - "When investigating a specific UI/CSS ownership or duplicate-family finding from this inventory"
 owner_zone: "architecture"
 ---
 

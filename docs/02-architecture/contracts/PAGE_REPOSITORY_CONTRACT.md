@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for PAGE_REPOSITORY_CONTRACT.md."
+summary: "Central page lookup, identity, metadata and index ownership."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing page lookup, identity, aliases, parent relationships or indexing"
 owner_zone: "architecture"
 ---
 # PageRepository Contract

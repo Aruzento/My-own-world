@@ -50,3 +50,7 @@ Reason:
 - ignored `legacy/` remains local-only and must not receive tracked historical project evidence.
 
 Do not move these folders unless a future owner-approved task identifies a concrete operational benefit.
+
+## 2026-09-15 Personal Export Preparation
+
+Seven Markdown assessments/chronicle documents identified by DOCUMENTATION_ARCHITECTURE_AUDIT were physically copied to the sibling `MOW_PERSONAL_ARCHIVE_EXPORT_2026-09-15` directory, outside the Git worktree. The original files remain tracked and unchanged. They have no active mandatory reading role. The maturity rubric DOCX was not exported. Current implementation owners are the active project plan, subsystem contracts and release policy; historical references remain historical. Removal from Git requires separate owner confirmation that the external archive has been taken/copied and is readable.

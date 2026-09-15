@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for EDITOR_HISTORY_CONTRACT.md."
+summary: "Editor undo/redo and runtime history boundaries."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing editor undo/redo, history snapshots or save interaction"
 owner_zone: "architecture"
 ---
 # Editor History Contract

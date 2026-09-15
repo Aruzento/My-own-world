@@ -1,8 +1,7 @@
 ---
-summary: "Baseline inventory for owner design correction findings A-I in 0.0.1.8.18."
+summary: "Historical owner design findings retained as evidence after the explicit waiver."
 read_when:
-  - "Before implementing 0.0.1.8.18.2-0.0.1.8.18.8"
-  - "When verifying that owner findings A-I were resolved"
+  - "When investigating the origin of a retained owner design finding or the 2026-08-10 waiver"
 owner_zone: "delivery"
 ---
 

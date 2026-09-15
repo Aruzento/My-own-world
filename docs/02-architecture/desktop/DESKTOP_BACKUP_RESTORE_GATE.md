@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for DESKTOP_BACKUP_RESTORE_GATE.md."
+summary: "Manual desktop backup/restore procedure and acceptance criteria."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When verifying desktop backup/restore or changing adapter recovery integration"
 owner_zone: "architecture"
 ---
 # Desktop Backup / Restore Gate

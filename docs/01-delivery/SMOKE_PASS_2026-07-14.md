@@ -1,8 +1,7 @@
 ---
-summary: "Manual and automated smoke pass for stabilization task 0.0.1.0.2."
+summary: "Historical stabilization smoke evidence from 2026-07-14."
 read_when:
-  - "Before fixing P0/P1 bugs"
-  - "When checking current browser and desktop readiness"
+  - "When investigating the dated 0.0.1.0.2 stabilization evidence"
 owner_zone: "delivery"
 ---
 

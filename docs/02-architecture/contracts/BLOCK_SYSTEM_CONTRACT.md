@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for BLOCK_SYSTEM_CONTRACT.md."
+summary: "Block ownership, runtime controls and persistent serialization contract."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing block creation, lifecycle, serialization or clean-save"
 owner_zone: "architecture"
 ---
 # Block System Contract

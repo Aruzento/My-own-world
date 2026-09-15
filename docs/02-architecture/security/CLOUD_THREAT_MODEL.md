@@ -1,8 +1,7 @@
 ---
-summary: "Cloud and internet threat model."
+summary: "Deferred cloud threat model and security prerequisites; not current cloud implementation."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When explicitly designing cloud access, ownership, transport or shared-workspace security"
 owner_zone: "architecture"
 ---
 # Cloud Threat Model

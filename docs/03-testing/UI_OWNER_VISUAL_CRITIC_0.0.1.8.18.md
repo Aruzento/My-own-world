@@ -1,8 +1,7 @@
 ---
-summary: "Independent owner visual critic report for 0.0.1.8.18.6."
+summary: "Historical Visual Critic findings; owner waiver did not invalidate the evidence."
 read_when:
-  - "Before closing 0.0.1.8.18.6"
-  - "Before deciding whether the owner design correction gate can continue"
+  - "When reviewing the 0.0.1.8.18 visual evidence or the explicit owner waiver"
 owner_zone: "testing"
 ---
 

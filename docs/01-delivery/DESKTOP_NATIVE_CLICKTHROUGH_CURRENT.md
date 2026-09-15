@@ -1,8 +1,7 @@
 ---
-summary: "Current native desktop click-through report."
+summary: "Latest recorded native click-through evidence with run-specific scope."
 read_when:
-  - "Before desktop release handoff"
-  - "When validating the native Tauri window"
+  - "When evaluating the native verification evidence for its recorded build or planning a new run"
 owner_zone: "delivery"
 ---
 

@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for FORMATTING_SERVICE_CONTRACT.md."
+summary: "Shared text formatting and selection ownership contract."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing inline/block formatting or editor selection behavior"
 owner_zone: "architecture"
 ---
 # FormattingService Contract

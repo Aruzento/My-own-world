@@ -1,8 +1,7 @@
 ---
-summary: "architecture document for POPUP_LIFECYCLE_CONTRACT.md."
+summary: "Shared popup ownership, positioning, modal focus and cleanup contract."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When changing popup registration, open/close, focus, keyboard or positioning behavior"
 owner_zone: "architecture"
 ---
 # Popup Lifecycle Contract

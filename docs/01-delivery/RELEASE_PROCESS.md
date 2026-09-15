@@ -1,8 +1,7 @@
 ---
-summary: "Release process, versioning, rollback, and handoff rules."
+summary: "Versioning, release handoff and rollback process."
 read_when:
-  - "Before choosing the next task"
-  - "When updating delivery status"
+  - "When preparing a release, changing version policy or planning rollback"
 owner_zone: "delivery"
 ---
 # Release Process

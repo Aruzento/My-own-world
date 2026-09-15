@@ -1,8 +1,7 @@
 ---
-summary: "Current desktop release gate report."
+summary: "Latest recorded desktop gate result and confidence level."
 read_when:
-  - "Before desktop installer handoff"
-  - "When validating desktop release readiness"
+  - "When assessing release evidence for the recorded build; rerun the gate for a new build"
 owner_zone: "delivery"
 ---
 

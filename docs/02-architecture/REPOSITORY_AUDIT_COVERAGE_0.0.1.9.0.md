@@ -1,9 +1,7 @@
 ---
-summary: "Coverage ledger for the 0.0.1.9.0 repository maintainability audit."
+summary: "Historical coverage ledger for the closed repository maintainability audit."
 read_when:
-  - "When checking what the repository audit actually reviewed"
-  - "Before challenging or extending 0.0.1.9.0 findings"
-  - "Before starting 0.0.1.10.0 cleanup"
+  - "When checking evidence coverage behind a specific historical 0.0.1.9.0 finding"
 owner_zone: "architecture"
 ---
 

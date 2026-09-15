@@ -8,6 +8,9 @@ owner_zone: "delivery"
 
 # Аудит файлов проекта
 
+Snapshot notice (2026-09-15): the tables below retain the dated file audit, not a live file index. The three desktop history paths were retargeted after their documented move; new split-history files are registered in `docs/archive/README.md`. Use `git ls-files` for the current file set and `docs/README.md` for active owners. Historical root files remain unchanged while their verified personal export awaits owner confirmation.
+
+
 Дата: 2026-08-29
 
 Исключены из построчного аудита как generated/dependency/local-only зоны: `.git/`, `node_modules/`, `dist-desktop/`, `legacy/`, `legasy/`, `src-tauri/target/`, `test-results/`, `playwright-report/`.
@@ -280,10 +283,10 @@ owner_zone: "delivery"
 | `docs/02-architecture/desktop/DESKTOP_BACKUP_RESTORE_GATE.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/desktop/DESKTOP_MAP_PERFORMANCE_NOTES.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
-| `docs/02-architecture/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
-| `docs/02-architecture/desktop/DESKTOP_PROTOTYPE_SMOKE.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/archive/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/archive/desktop/DESKTOP_PROTOTYPE_SMOKE.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
-| `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
+| `docs/archive/desktop/DESKTOP_TRANSITION_STRATEGY.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/KNOWLEDGE_GRAPH_ENTITY_CONTRACT.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/KNOWLEDGE_GRAPH_MODEL.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |
 | `docs/02-architecture/REPOSITORY_AUDIT_COVERAGE_0.0.1.9.0.md` | Документация зоны docs/architecture. | Да: держать metadata, актуальность и кодировку под контролем. | Высокая: рабочая документация с metadata, держать в актуальном docs-маршруте. |

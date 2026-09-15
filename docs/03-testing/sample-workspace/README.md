@@ -1,8 +1,7 @@
 ---
-summary: "testing document for README.md."
+summary: "Disposable sample workspace instructions for smoke scenarios."
 read_when:
-  - "Before verification"
-  - "When adding or changing tests"
+  - "When preparing the bundled disposable sample workspace for a test"
 owner_zone: "testing"
 ---
 # Sample Workspace

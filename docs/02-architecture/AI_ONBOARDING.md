@@ -1,8 +1,7 @@
 ---
-summary: "Architecture onboarding guide for AI agents."
+summary: "Optional cross-subsystem architecture overview; task workflow is owned by AGENTS.md."
 read_when:
-  - "Before changing the related subsystem"
-  - "When updating architecture decisions"
+  - "When a task requires understanding relationships between subsystems beyond its local contract"
 owner_zone: "architecture"
 ---
 # AI Onboarding
@@ -38,26 +37,9 @@ My own world - local-first приложение для ведения DnD/lore w
 - Wiki-link правило: видимый текст пользователя не перезаписывать.
 - Workspace local-first модель: данные пользователя лежат в выбранной папке.
 
-## Обязательные Проверки Перед Изменениями
+## Workflow Owner
 
-Минимум:
-
-```bash
-npm run verify
-```
-
-Если менялся UI, карта, дерево, редактор, popup, task tracker или шаблоны:
-
-```bash
-npm run test:browser
-```
-
-Если менялась архитектура или публичные правила подсистем:
-
-- обновить `README.md`;
-- обновить `docs/01-delivery/PROJECT_PLAN.md`;
-- обновить `docs/01-delivery/WORK_LOG.md`;
-- обновить `docs/MY_OWN_WORLD_FULL_MANUAL.docx` через `python tools/generate_manual_docx.py`.
+Глобальные правила scope, verification и обновления документации находятся в `AGENTS.md`. Этот обзор не добавляет обязательный pre-read, повторный verify перед edit или связку README/plan/log/DOCX. Для executable task соблюдать его verification contract; для затронутого поведения выбрать focused checks, расширяя их по риску. Release/build gates остаются обязательными в соответствующем release workflow.
 
 ## Где Смотреть
 

@@ -1,8 +1,7 @@
 ---
-summary: "Task verification and code review template."
+summary: "Evidence and readiness template for a scoped code review."
 read_when:
-  - "Before verification"
-  - "When adding or changing tests"
+  - "When preparing a code review or acceptance evidence for a completed task"
 owner_zone: "testing"
 ---
 # Code Review / Task Verification Template

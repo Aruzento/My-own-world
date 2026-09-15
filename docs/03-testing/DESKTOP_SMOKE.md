@@ -1,18 +1,17 @@
 ---
-summary: "Desktop smoke testing entry point."
+summary: "Router for selected desktop smoke procedures."
 read_when:
-  - "Before verification"
-  - "When adding or changing tests"
+  - "When selecting desktop environment, packaging, native or recovery checks"
 owner_zone: "testing"
 ---
 # Desktop Smoke
 
 Этот документ является тестовой точкой входа. Подробные инженерные материалы живут в архитектурной зоне:
 
-- `docs/02-architecture/desktop/DESKTOP_PROTOTYPE_SMOKE.md`;
+- `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md`;
 - `docs/02-architecture/desktop/DESKTOP_BACKUP_RESTORE_GATE.md`;
 - `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md`;
-- `docs/02-architecture/desktop/DESKTOP_PRESENTATION_WINDOW_SPIKE.md`.
+- `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md`.
 
 Минимальный тестовый проход:
 

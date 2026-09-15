@@ -1,8 +1,7 @@
 ---
-summary: "UX onboarding checklist."
+summary: "Human first-workspace and onboarding verification scenarios."
 read_when:
-  - "Before verification"
-  - "When adding or changing tests"
+  - "When testing first-run, workspace opening or onboarding behavior"
 owner_zone: "testing"
 ---
 # UX / Onboarding Checklist

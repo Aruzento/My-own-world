@@ -15,7 +15,7 @@ description: "Desktop/Tauri build, installer, storage adapters, presentation win
 - `docs/02-architecture/desktop/DESKTOP_ADAPTER_PLAN.md` — при изменении adapter boundary.
 - `docs/02-architecture/desktop/DESKTOP_RELEASE_POLICY.md` — для build/release и соответствующих обязательных gates.
 - `docs/02-architecture/desktop/DESKTOP_PACKAGING_SMOKE.md` — для packaging/capabilities проверок.
-- `docs/02-architecture/desktop/DESKTOP_TRANSITION_STRATEGY.md` — при изменении desktop transition architecture.
+- `docs/archive/desktop/DESKTOP_TRANSITION_STRATEGY.md` — только для происхождения исторического desktop transition решения; текущие границы находятся в `DESKTOP_ADAPTER_PLAN.md` выше.
 
 ## Что Обновить После Задачи
 
