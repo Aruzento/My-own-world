@@ -7,9 +7,9 @@ owner_zone: "architecture"
 ---
 # Combat Action Pipeline Contract
 
-Updated: 2026-09-14
+Updated: 2026-09-16
 
-Status: `0.0.1.17.1` architecture decision complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.2 is NEXT. This document specifies future behavior; it adds no executable action, event type or persistent schema. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. AI Core remains LATER.
+Status: `0.0.1.17.2` Character Health Mutation Preparation is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.3 is NEXT. No executable action, durable write, event type or UI was added. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. AI Core remains LATER.
 
 ## 1. Decision And First Product Slice
 
@@ -134,11 +134,12 @@ Health calculation reuses `applyCharacterHealthChange(model, { delta: -amount })
 
 ## 6. Prerequisite And Durable Write Boundary
 
-17.2 establishes preparation for the existing HP fields as one page change. It does not create an attack runner or standalone damage button.
+17.2 establishes `js/properties/characterHealthMutation.js#prepareCharacterHealthMutation` for the existing HP fields as one page change. It does not create an attack runner or standalone damage button.
 
 - Resolve the live repository page, read its durable content via `pageWritePreconditions`, and capture `snapshotPageForCommand(page).pageStateIdentity` against the same content used for Character resolution. Reject an unsaved/divergent runtime page instead of overwriting pending editor input.
 - Validate the exact existing Properties source/fields before calling existing draft helpers. Prepare on a detached page; preserve PageRecord identity/front matter, unrelated blocks, field layout and overrides. Read back the draft through CharacterModel/Properties and require exact intended HP/temp HP plus unchanged max and unrelated values.
-- Return a typed mutation plan; preparation itself performs no write, event append, map dirty/DOM commit or live `page.content` assignment. This replaces neither Properties nor CharacterModel.
+- Accept either a forward integer `delta`, calculated by `CharacterModel#applyCharacterHealthChange`, or exact non-negative `hpCurrent`/`hpTemp` values for later compensation. Require exactly one Character/Creature Properties block and explicit valid integer `hpCurrent`, positive `hpMax` and non-negative `hpTemp`, with current not above max. Do not default, migrate or choose among duplicate sources.
+- Return a frozen typed mutation plan with kind/version, page id, Properties source, normalized request, expected base, previous-page snapshot, detached next content, before/after tuples, ordered changed fields, unchanged guards and an explicit changed flag. Preparation itself performs no write, event append, map dirty/DOM commit or live `page.content` assignment. This replaces neither Properties nor CharacterModel.
 - The pipeline later calls `persistPageContentCommand({ page, content, previousPage, expectedBase, type: 'combat-action-health-change', reason })` once for the target page. Never call `logPagePropertyResourceChange` once per HP field. Require `writeStatus === 'saved'` and `written === true`, with no blocked/stale/conflict result, before success facts may be appended.
 - Refresh token/sheet presentation through existing Character/map read paths after the page receipt. Token snapshots are derived caches; their refresh or a later normal map save cannot become another health mutation or a second action transaction. A failed presentation refresh is separate from durable action success.
 
@@ -217,13 +218,13 @@ Local editor Ctrl+Z and PageCommandService runtime undo are separate histories, 
 
 ## 10. Bounded Implementation Sequence
 
-The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.1.
+The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.2.
 
 | Leaf | Deliverable and acceptance boundary |
 | --- | --- |
 | 17.1 | This ownership/request/event/failure/Undo contract and Phase 17 activation; Foundation only. |
-| 17.2 | **NEXT prerequisite: Character health mutation preparation.** One validated detached existing Properties page patch for current/temp HP, exact before/after/guard evidence, unchanged content preservation and parser/browser readback. No action execution, event append or UI. |
-| 17.3 | Single-target attack request and resolution. Exact current actor/target reads plus pure `ac-total-v1` hit/miss and one damage-component health plan using public Dice and Character APIs. Deterministic hit/miss/temp-HP/rejection tests; no durable action execution/UI. |
+| 17.2 | **DONE / Foundation: Character health mutation preparation.** One validated frozen detached existing Properties page patch for current/temp HP, exact base/before/after/guard evidence, forward Character math, exact inverse-ready values, unchanged content preservation and parser/browser readback. No action execution, write, event append or UI. |
+| 17.3 | **NEXT:** Single-target attack request and resolution. Exact current actor/target reads plus pure `ac-total-v1` hit/miss and one damage-component health plan using public Dice and Character APIs. Deterministic hit/miss/temp-HP/rejection tests; no durable action execution/UI. |
 | 17.4 | One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
 | 17.5 | Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
 | 17.6 | First usable Combat attack flow in the existing popup: labeled explicit attack definition, one target, result/error/pending state, history and Undo. Both Goblin acceptance routes plus temp HP, save/reload and stale references pass browser/manual checks. No new popup layout project. |
@@ -237,7 +238,7 @@ Attack first is the retained product goal; 17.2 is a narrow missing composition 
 
 ## 11. Verification And Linked Contracts
 
-17.1 changes documentation only. Existing contract tests do not require a new phrase-matching test for every contract; adding one would only mirror prose. Run docs index, project-file audit, encoding, `verify:quick`, the AGENTS-required normal `verify`, and `git diff --check`. Full/browser/native gates are omitted under the explicit docs-only AGENTS exception; no runtime, UI, tests, dependencies or real workspace contents change.
+17.2 browser coverage exercises the real Properties DOM parser/writer and proves canonical temp-HP-first calculation, both fields in one plan, exact inverse-ready values, no-op, strict invalid/ambiguous/legacy rejection, stale durable-base rejection, frozen detached evidence, unchanged front matter/content and zero write/append/live DOM side effects. Focused Character/Properties/PageCommand tests and repository production gates remain required. No real user workspace is used.
 
 Later regression targets: wrong current actor, missing exact references, copy/original-page identity, manual AC override, missing/duplicate HP fields, both HP fields in one page write, miss/no-change audit, public Dice-only dependency, zero extra standalone roll records, workspace switch/stale state, append after bytes then throw, failed/uncertain compensation, exact reload/history and manual Goblin acceptance. Tests must exercise behavior and durable fixtures, not only module names.
 

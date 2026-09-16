@@ -5,6 +5,20 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-16: 0.0.1.17.2 Character Health Mutation Preparation
+
+### Implementation And Evidence
+
+- Added `js/properties/characterHealthMutation.js` as the single Character/Properties-owned preparation boundary. It accepts a forward integer delta through canonical `CharacterModel` health calculation or exact current/temp HP values for later compensation, and returns a frozen detached plan with page/base identity, previous-page snapshot, next content, exact before/after values, ordered changed fields and unchanged guards.
+- The boundary requires exactly one Character/Creature Properties block and explicit finite safe-integer `hpCurrent`, `hpMax` and `hpTemp` values with strict ranges and current not above max. Missing, malformed, duplicate, ambiguous, empty and legacy-only writable sources reject without defaults, migration or first-block selection.
+- Preparation checks the current durable identity through existing page-write preconditions, mutates only detached DOM, then reads the result through Properties and CharacterModel. It proves intended current/temp HP, unchanged max/source/front matter/unrelated Properties/content and unchanged live input. No PageCommandService persistence, StorageAdapter write, EventStore append or Campaign Map publication occurs.
+- Browser coverage proves `10 HP + 2 temp - 5 damage -> 7 HP + 0 temp`, both changed fields in one plan, exact inverse-ready preparation, no-op, immutable caller evidence, stale-base rejection and every required invalid state. Focused Character/Properties/PageCommand tests pass (39 unit/integration and 2 browser). `docs:index`, `verify:quick`, normal `verify`, encoding and diff checks pass; `verify:full` passes 817 unit and 226 browser tests, including unchanged approved visual comparisons and project-file/agent-task validation.
+
+### Readiness And Handoff
+
+- `0.0.1.17.2` is `DONE` at `Foundation` readiness. It prepares a future page write only; it does not execute an attack, persist HP, append history, implement Undo or add UI.
+- Phase 17 remains `ACTIVE`; `0.0.1.17.3` Single-Target Attack Resolution is `NEXT`. The first manual usable attack acceptance remains 17.6. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
+
 ## 2026-09-14: 0.0.1.17.1 Combat Action Pipeline Architecture & First Slice Contract
 
 ### Decision And Evidence
