@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 Status: `0.0.1.16.FINAL` CLOSED / PASS on 2026-09-13. The original 16.1 architecture decision was resolved on 2026-09-04 and remains authoritative.
 
-Readiness: `Usable` persistent-session foundation, not full combat gameplay or installed-desktop Release-ready. Cumulative review `e203a1b..895c92b` confirmed the owners and invariants below; final verification passed. Phase 17 is ACTIVE with 17.1 and 17.2 complete at Foundation readiness: [Combat Action Pipeline](./COMBAT_ACTION_PIPELINE_CONTRACT.md). Its 17.3 attack-resolution leaf is NEXT; no attack runtime is implemented. Phase 16 ownership, format and lifecycle rules remain unchanged.
+Readiness: `Usable` persistent-session foundation, not full combat gameplay or installed-desktop Release-ready. Cumulative review `e203a1b..895c92b` confirmed the owners and invariants below; final verification passed. Phase 17 is ACTIVE with 17.1-17.3 complete at Foundation readiness: [Combat Action Pipeline](./COMBAT_ACTION_PIPELINE_CONTRACT.md). Its 17.4 durable transaction leaf is NEXT; the new attack resolver is in-memory only and does not make attack gameplay usable. Phase 16 ownership, format and lifecycle rules remain unchanged.
 
 ## 1. Scope
 

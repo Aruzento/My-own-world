@@ -5,6 +5,21 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-16: 0.0.1.17.3 Single-Target Attack Resolution
+
+### Implementation And Evidence
+
+- Added a strict frozen `CombatActionRequest` model for one explicit target, one manual labeled attack definition, `ac-total-v1`, one d20 plus explicit modifier, one normal damage component and `criticalPolicy: none`. Unknown keys, extra targets/components, unsupported policies and either malformed Dice request reject before RNG.
+- Added the non-durable `resolveSingleTargetAttack` runtime boundary. It derives the actor only from active Initiative, checks exact Combat roster participant -> token -> page -> Properties Character identities, rejects shared Character pages, reads effective AC from CharacterModel, rolls through the public Dice Engine and returns frozen runtime evidence. Equality hits; a miss consumes no damage RNG.
+- A hit accepts one non-negative safe-integer damage result and delegates health math/preparation to 17.2. Canonical temp-HP-first behavior, clamped/no-change plans and target durable-base evidence are preserved. Session/current/identity/page observations are revalidated around the asynchronous health preparation. No PageCommandService write, EventStore append, map/session/initiative mutation, live-page change or UI publication occurs.
+- Focused coverage passes 4 unit and 2 browser tests. Synthetic browser fixtures prove the required 14-vs-12 hit with 5 damage, equality hit, 7-vs-12 miss, `10/10/2 - 5 -> 7/10/0`, zero-damage no-op, immutable results, exact identity failures, invalid writable health, damage RNG failure and zero write/append/map/DOM side effects.
+- Production gates pass: `docs:index`, `verify:quick`, normal `verify`, encoding and diff checks, then `verify:full` with 821 unit/integration and 228 browser tests, including the unchanged approved visual comparisons, disposable large-workspace smoke and project/agent validation. The generated project-file audit was restored because inventory refresh is outside this leaf.
+
+### Readiness And Handoff
+
+- `0.0.1.17.3` is `DONE` at `Foundation` readiness. It resolves an attack in memory only; it does not persist HP, append action history, expose UI or implement Undo.
+- Phase 17 remains `ACTIVE`; `0.0.1.17.4` Durable Action Transaction is `NEXT`. The first manual usable attack acceptance remains 17.6. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
+
 ## 2026-09-16: 0.0.1.17.2 Character Health Mutation Preparation
 
 ### Implementation And Evidence

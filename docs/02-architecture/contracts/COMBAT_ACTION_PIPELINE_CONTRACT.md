@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 Updated: 2026-09-16
 
-Status: `0.0.1.17.2` Character Health Mutation Preparation is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.3 is NEXT. No executable action, durable write, event type or UI was added. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. AI Core remains LATER.
+Status: `0.0.1.17.3` Single-Target Attack Resolution is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.4 is NEXT. One strict attack can resolve in memory into immutable Dice/outcome/health-plan evidence, with no durable write, event type or UI. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. AI Core remains LATER.
 
 ## 1. Decision And First Product Slice
 
@@ -218,14 +218,14 @@ Local editor Ctrl+Z and PageCommandService runtime undo are separate histories, 
 
 ## 10. Bounded Implementation Sequence
 
-The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.2.
+The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.3.
 
 | Leaf | Deliverable and acceptance boundary |
 | --- | --- |
 | 17.1 | This ownership/request/event/failure/Undo contract and Phase 17 activation; Foundation only. |
 | 17.2 | **DONE / Foundation: Character health mutation preparation.** One validated frozen detached existing Properties page patch for current/temp HP, exact base/before/after/guard evidence, forward Character math, exact inverse-ready values, unchanged content preservation and parser/browser readback. No action execution, write, event append or UI. |
-| 17.3 | **NEXT:** Single-target attack request and resolution. Exact current actor/target reads plus pure `ac-total-v1` hit/miss and one damage-component health plan using public Dice and Character APIs. Deterministic hit/miss/temp-HP/rejection tests; no durable action execution/UI. |
-| 17.4 | One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
+| 17.3 | **DONE / Foundation: Single-target attack resolution.** Strict request and exact active Initiative participant -> token -> page -> Character target chain; prevalidated public Dice requests; `ac-total-v1` hit/miss; one typed damage component; detached 17.2 health plan; frozen runtime evidence; deterministic rejection/no-side-effect coverage. No write, event append, UI or Undo. |
+| 17.4 | **NEXT:** One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
 | 17.5 | Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
 | 17.6 | First usable Combat attack flow in the existing popup: labeled explicit attack definition, one target, result/error/pending state, history and Undo. Both Goblin acceptance routes plus temp HP, save/reload and stale references pass browser/manual checks. No new popup layout project. |
 | 17.7 | Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
@@ -234,11 +234,11 @@ The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJEC
 | 17.10 | Existing numeric resource changes/costs and manual GM correction through the same pipeline. Start with one page; any actor-cost plus target-damage operation waits for an explicit multi-page failure/compensation contract. Reuse current correction/resource vocabulary without double logging. |
 | 17.FINAL | Cumulative owner/failure/Undo/reload review and required gates. Verify the first manual attack routes, inventory supported action kinds and explicitly retain unsupported critical/mitigation/multi-page cases. Phase 18+ stays blocked until Phase 17 closure. |
 
-Attack first is the retained product goal; 17.2 is a narrow missing composition boundary, not a substitute product milestone. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
+Attack first is the retained product goal; 17.3 proves only its non-durable runtime resolution, not a substitute product milestone. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
 
 ## 11. Verification And Linked Contracts
 
-17.2 browser coverage exercises the real Properties DOM parser/writer and proves canonical temp-HP-first calculation, both fields in one plan, exact inverse-ready values, no-op, strict invalid/ambiguous/legacy rejection, stale durable-base rejection, frozen detached evidence, unchanged front matter/content and zero write/append/live DOM side effects. Focused Character/Properties/PageCommand tests and repository production gates remain required. No real user workspace is used.
+17.3 unit/browser coverage proves strict request keys and policies, both Dice requests validated before RNG, exact current actor/target identities, Character-owned AC, equality hit, miss without damage RNG, one component, canonical temp-HP-first health preparation, zero/clamped no-op, immutable evidence, stale/broken/unsupported rejection and zero write/append/map/session/DOM/live-page side effects. Real Properties parsing and the 17.2 durable-base read path run against synthetic pages only; no real user workspace is used.
 
 Later regression targets: wrong current actor, missing exact references, copy/original-page identity, manual AC override, missing/duplicate HP fields, both HP fields in one page write, miss/no-change audit, public Dice-only dependency, zero extra standalone roll records, workspace switch/stale state, append after bytes then throw, failed/uncertain compensation, exact reload/history and manual Goblin acceptance. Tests must exercise behavior and durable fixtures, not only module names.
 
