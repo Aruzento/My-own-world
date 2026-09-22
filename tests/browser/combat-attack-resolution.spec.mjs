@@ -220,7 +220,8 @@ test(
             async ({
               targetHealth,
               rolls,
-              mutateRequest
+              mutateRequest,
+              mutateWorld
             }) => {
 
               const world =
@@ -230,6 +231,7 @@ test(
                 makeRequest();
 
               mutateRequest?.(request);
+              mutateWorld?.(world);
 
               const targetBefore =
                 JSON.stringify(world.pages[1]);
@@ -321,12 +323,64 @@ test(
               }
             });
 
+          const effectDefense =
+            await execute({
+              rolls: [10, 3],
+              mutateWorld: world => {
+
+                const wrapper =
+                  document.createElement('div');
+
+                wrapper.innerHTML =
+                  world.pages[1].content;
+
+                const armorClass =
+                  wrapper.querySelector(
+                    '[data-property-name="armorClass"]'
+                  );
+
+                armorClass.value = '';
+                armorClass.setAttribute('value', '');
+
+                world.pages[1].content =
+                  `${wrapper.innerHTML}` +
+                  '<script type="application/json" data-character-effects>{"effects":[{"id":"shield","title":"Shield","modifiers":{"armorClass":2}}]}</script>';
+              }
+            });
+
+          const overrideDefense =
+            await execute({
+              rolls: [10],
+              mutateWorld: world => {
+
+                const wrapper =
+                  document.createElement('div');
+
+                wrapper.innerHTML =
+                  world.pages[1].content;
+
+                const armorClass =
+                  wrapper.querySelector(
+                    '[data-property-name="armorClass"]'
+                  );
+
+                armorClass.value = '16';
+                armorClass.setAttribute('value', '16');
+                armorClass.dataset.propertyManual = 'true';
+
+                world.pages[1].content =
+                  wrapper.innerHTML;
+              }
+            });
+
           return {
             hit,
             equality,
             miss,
             tempHp,
-            noOp
+            noOp,
+            effectDefense,
+            overrideDefense
           };
         }
       );
@@ -396,6 +450,18 @@ test(
     expect(result.noOp.resolution.health.mutationPlan.changed).toBe(false);
     expect(result.noOp.resolution.health.mutationPlan.changedFields).toEqual([]);
     expect(result.noOp.targetUnchanged).toBe(true);
+
+    expect(result.effectDefense.resolution.defense).toEqual({
+      kind: 'ac',
+      value: 12
+    });
+    expect(result.effectDefense.resolution.outcome).toBe('hit');
+
+    expect(result.overrideDefense.resolution.defense).toEqual({
+      kind: 'ac',
+      value: 16
+    });
+    expect(result.overrideDefense.resolution.outcome).toBe('miss');
   }
 );
 
@@ -548,9 +614,34 @@ test(
                 }
               });
 
+            const effects = {
+              reads: 0,
+              writes: 0,
+              appends: 0
+            };
+
             return {
               pages,
               mapModel,
+              effects,
+              storageAdapter: {
+                readText: async path => {
+
+                  effects.reads += 1;
+
+                  return pages.find(candidate =>
+                    candidate.path === path
+                  )?.content || '';
+                },
+                writeText: async () => {
+
+                  effects.writes += 1;
+                },
+                appendText: async () => {
+
+                  effects.appends += 1;
+                }
+              },
               resolvePage: id =>
                 pages.find(candidate => candidate.id === id) || null
             };
@@ -598,6 +689,67 @@ test(
               world.pages[1].content =
                 '<p>Legacy or empty source</p>';
             }],
+            ['missing-armor-class', world => {
+              const wrapper =
+                document.createElement('div');
+
+              wrapper.innerHTML =
+                world.pages[1].content;
+
+              wrapper.querySelector(
+                '[data-property-name="armorClass"]'
+              ).remove();
+
+              world.pages[1].content =
+                wrapper.innerHTML;
+            }],
+            ['malformed-armor-class', world => {
+              const wrapper =
+                document.createElement('div');
+
+              wrapper.innerHTML =
+                world.pages[1].content;
+
+              const armorClass =
+                wrapper.querySelector(
+                  '[data-property-name="armorClass"]'
+                );
+
+              armorClass.value = '';
+              armorClass.setAttribute(
+                'value',
+                'not-a-number'
+              );
+
+              world.pages[1].content =
+                wrapper.innerHTML;
+            }],
+            ['duplicate-armor-class', world => {
+              const wrapper =
+                document.createElement('div');
+
+              wrapper.innerHTML =
+                world.pages[1].content;
+
+              const armorClass =
+                wrapper.querySelector(
+                  '[data-property-name="armorClass"]'
+                );
+
+              armorClass.insertAdjacentHTML(
+                'afterend',
+                armorClass.outerHTML
+              );
+
+              world.pages[1].content =
+                wrapper.innerHTML;
+            }],
+            ['duplicate-properties-defense', world => {
+              world.pages[1].content +=
+                createPropertiesBlock({
+                  cardType: 'creature'
+                });
+            }],
             ['map-mismatch', (world, request) => {
               request.mapPageId = 'other-map';
             }],
@@ -607,6 +759,7 @@ test(
           ];
 
           const failures = {};
+          const rejectionEffects = {};
 
           for (const [name, mutate] of cases) {
 
@@ -635,6 +788,7 @@ test(
                   mapModel: world.mapModel,
                   pages: world.pages,
                   resolvePage: world.resolvePage,
+                  storageAdapter: world.storageAdapter,
                   randomInt: () => {
                     rngCalls += 1;
                     return 10;
@@ -657,6 +811,11 @@ test(
                     map: world.mapModel.toJSON(),
                     pages: world.pages
                   }) === before
+              };
+
+              rejectionEffects[name] = {
+                writes: world.effects.writes,
+                appends: world.effects.appends
               };
             }
           }
@@ -807,6 +966,7 @@ test(
 
           return {
             failures,
+            rejectionEffects,
             malformed,
             damageFailure: {
               code: damageFailureCode,
@@ -883,6 +1043,26 @@ test(
         rngCalls: 0,
         unchanged: true
       },
+      'missing-armor-class': {
+        code: 'COMBAT_ATTACK_DEFENSE_INVALID',
+        rngCalls: 0,
+        unchanged: true
+      },
+      'malformed-armor-class': {
+        code: 'COMBAT_ATTACK_DEFENSE_INVALID',
+        rngCalls: 0,
+        unchanged: true
+      },
+      'duplicate-armor-class': {
+        code: 'COMBAT_ATTACK_DEFENSE_INVALID',
+        rngCalls: 0,
+        unchanged: true
+      },
+      'duplicate-properties-defense': {
+        code: 'COMBAT_ATTACK_DEFENSE_INVALID',
+        rngCalls: 0,
+        unchanged: true
+      },
       'map-mismatch': {
         code: 'COMBAT_ATTACK_MAP_MISMATCH',
         rngCalls: 0,
@@ -909,6 +1089,21 @@ test(
         rngCalls: 0
       }
     });
+
+    expect(
+      Object.values(
+        result.rejectionEffects
+      )
+    ).toEqual(
+      Array(
+        Object.keys(
+          result.rejectionEffects
+        ).length
+      ).fill({
+        writes: 0,
+        appends: 0
+      })
+    );
 
     expect(result.damageFailure).toEqual({
       code: 'COMBAT_ATTACK_DAMAGE_ROLL_FAILED',

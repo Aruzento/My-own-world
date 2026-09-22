@@ -17,6 +17,10 @@ import {
 } from '../properties/characterHealthMutation.js';
 
 import {
+  getPropertiesArmorClassInputSource
+} from '../properties/propertiesCalculationEngine.js';
+
+import {
   COMBAT_SESSION_STATUSES
 } from './combatSessionModel.js';
 
@@ -472,28 +476,11 @@ function resolveAttackObservation({
     );
   }
 
-  const defenseValue =
-    getCharacterEffectiveArmorClass(
-      target.character
-    );
-
-  if (
-    !Number.isFinite(defenseValue) ||
-    defenseValue < 0
-  ) {
-
-    throw new CombatAttackResolutionError(
-      'Target Character effective armor class is invalid.',
-      {
-        code:
-          COMBAT_ATTACK_RESOLUTION_ERROR_CODES.DEFENSE_INVALID,
-        participantId:
-          target.participantId,
-        reason:
-          'invalid-effective-armor-class'
-      }
-    );
-  }
+  const defense =
+    resolveTargetDefense({
+      target,
+      pages
+    });
 
   return {
     mapPageId,
@@ -510,12 +497,7 @@ function resolveAttackObservation({
       createIdentityEvidence(
         target
       ),
-    defense: {
-      kind:
-        'ac',
-      value:
-        defenseValue
-    },
+    defense,
     actorPage:
       actor.page,
     targetPage:
@@ -523,6 +505,70 @@ function resolveAttackObservation({
     targetContent:
       target.page.content
   };
+}
+
+
+function resolveTargetDefense({
+  target,
+  pages
+}) {
+
+  const input =
+    getPropertiesArmorClassInputSource({
+      content:
+        target.page.content,
+      pages,
+      effectsModel:
+        target.character.effects
+    });
+
+  if (input.ok !== true) {
+
+    throw defenseError(
+      target,
+      input.reason
+    );
+  }
+
+  const value =
+    getCharacterEffectiveArmorClass(
+      target.character
+    );
+
+  if (
+    !Number.isFinite(value) ||
+    value < 0
+  ) {
+
+    throw defenseError(
+      target,
+      'invalid-effective-armor-class'
+    );
+  }
+
+  return {
+    kind:
+      'ac',
+    value
+  };
+}
+
+
+function defenseError(
+  target,
+  reason
+) {
+
+  return new CombatAttackResolutionError(
+    'Target Character armor class source is invalid.',
+    {
+      code:
+        COMBAT_ATTACK_RESOLUTION_ERROR_CODES.DEFENSE_INVALID,
+      participantId:
+        target.participantId,
+      reason
+    }
+  );
 }
 
 

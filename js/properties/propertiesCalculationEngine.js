@@ -289,6 +289,153 @@ export function createPropertiesCalculationModel(
 }
 
 
+export function getPropertiesArmorClassInputSource(
+  {
+    content = '',
+    pages = [],
+    effectsModel = null
+  } = {}
+) {
+
+  const propertyModels =
+    readPropertiesModelsFromHTML(
+      content
+    );
+
+  const characterProperties =
+    propertyModels.filter(model =>
+      [
+        'character',
+        'creature'
+      ].includes(
+        model.cardType
+      )
+    );
+
+  if (characterProperties.length !== 1) {
+
+    return {
+      ok: false,
+      reason:
+        characterProperties.length === 0
+          ? 'properties-defense-source-missing'
+          : 'properties-defense-source-ambiguous'
+    };
+  }
+
+  const field =
+    readArmorClassInputField(
+      content
+    );
+
+  if (
+    !field ||
+    field.count !== 1
+  ) {
+
+    return {
+      ok: false,
+      reason:
+        field?.count === 0
+          ? 'armor-class-field-missing'
+          : 'armor-class-field-ambiguous'
+    };
+  }
+
+  if (
+    isMalformedArmorClassField(
+      field
+    )
+  ) {
+
+    return {
+      ok: false,
+      reason:
+        'armor-class-field-malformed'
+    };
+  }
+
+  const properties =
+    characterProperties[0];
+
+  const manualOverride =
+    properties.manualOverrides?.['override-armorClass'] ??
+    properties.customValues?.['override-armorClass'];
+
+  if (isFiniteNumericValue(manualOverride)) {
+
+    return {
+      ok: true,
+      source: 'manual-override'
+    };
+  }
+
+  if (
+    isFiniteNumericValue(
+      getPropertyValue(
+        properties,
+        'armorClass',
+        ''
+      )
+    )
+  ) {
+
+    return {
+      ok: true,
+      source: 'properties-field'
+    };
+  }
+
+  const armorPage =
+    findArmorItemPage(
+      pages,
+      getPropertyValue(
+        properties,
+        'armorItem',
+        ''
+      )
+    );
+
+  if (
+    armorPage &&
+    isFiniteNumericValue(
+      getPropertyValue(
+        getArmorPageProperties(
+          armorPage
+        ),
+        'armorBaseAc',
+        ''
+      )
+    )
+  ) {
+
+    return {
+      ok: true,
+      source: 'armor-item'
+    };
+  }
+
+  if (
+    Number.isFinite(
+      effectsModel?.modifiers?.armorClass
+    ) &&
+    effectsModel.modifiers.armorClass !== 0
+  ) {
+
+    return {
+      ok: true,
+      source: 'effects'
+    };
+  }
+
+  return {
+    ok: false,
+    reason:
+      'armor-class-input-unresolved'
+  };
+}
+
+
 export function resolveCalculatedProperty(
   {
     key,
@@ -710,6 +857,102 @@ function resolveArmorCalculation(
       )
     ]
   };
+}
+
+
+function readArmorClassInputField(
+  content
+) {
+
+  if (
+    typeof document === 'undefined' ||
+    typeof content !== 'string'
+  ) {
+
+    return null;
+  }
+
+  const wrapper =
+    document.createElement('div');
+
+  wrapper.innerHTML =
+    content;
+
+  const blocks =
+    [
+      ...wrapper.querySelectorAll(
+        '.card-properties-block[data-block-type="properties"]'
+      )
+    ].filter(block =>
+      [
+        'character',
+        'creature'
+      ].includes(
+        block.dataset.cardType
+      )
+    );
+
+  if (blocks.length !== 1) return null;
+
+  const controls =
+    [
+      ...blocks[0].querySelectorAll(
+        '[data-property-name="armorClass"]'
+      )
+    ];
+
+  return {
+    count:
+      controls.length,
+    value:
+      String(
+        controls[0]?.value ?? ''
+      ).trim(),
+    attributeValue:
+      String(
+        controls[0]?.getAttribute(
+          'value'
+        ) ?? ''
+      ).trim()
+  };
+}
+
+
+function isMalformedArmorClassField(
+  field
+) {
+
+  return (
+    field.value !== '' &&
+    !isFiniteNumericValue(
+      field.value
+    )
+  ) || (
+    field.value === '' &&
+    field.attributeValue !== '' &&
+    !isFiniteNumericValue(
+      field.attributeValue
+    )
+  );
+}
+
+
+function isFiniteNumericValue(
+  value
+) {
+
+  if (
+    value === '' ||
+    value === null ||
+    value === undefined
+  ) {
+
+    return false;
+  }
+
+  return Number.isFinite(
+    Number(value)
+  );
 }
 
 
