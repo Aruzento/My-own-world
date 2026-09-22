@@ -4,9 +4,9 @@ import {
 
 export const BLOCK_VERSIONS = {
   text: 1,
-  items: 1,
-  spells: 1,
-  skills: 1,
+  items: 2,
+  spells: 2,
+  skills: 2,
   properties: 1,
   variables: 1,
   image: 1,
@@ -61,6 +61,22 @@ export function upgradePersistentBlocks(
       }
 
       if (
+        [
+          'items',
+          'spells',
+          'skills'
+        ].includes(type) &&
+        currentVersion < 2
+      ) {
+
+        changed =
+          upgradeLegacyListBlock(
+            block,
+            type
+          ) || changed;
+      }
+
+      if (
         currentVersion !== targetVersion
       ) {
 
@@ -87,6 +103,199 @@ export function upgradePersistentBlocks(
     });
 
   return changed;
+}
+
+
+function upgradeLegacyListBlock(
+  block,
+  type
+) {
+
+  const config =
+    getLegacyListBlockConfig(
+      type
+    );
+
+  if (!config) return false;
+
+  let changed =
+    addClassIfMissing(
+      block,
+      config.blockClass
+    );
+
+  const list =
+    block.querySelector(
+      `:scope > .${config.listClass}`
+    ) ||
+    [
+      ...block.children
+    ].find(child =>
+      child.tagName === 'DIV'
+    );
+
+  if (!list) return changed;
+
+  changed =
+    addClassIfMissing(
+      list,
+      config.listClass
+    ) || changed;
+
+  list
+    .querySelectorAll(
+      '[data-page-id]'
+    )
+    .forEach(chip => {
+
+      changed =
+        addClassIfMissing(
+          chip,
+          config.chipClass
+        ) || changed;
+
+      if (type === 'items') {
+
+        changed =
+          upgradeLegacyItemChip(
+            chip
+          ) || changed;
+
+        return;
+      }
+
+      changed =
+        upgradeLegacyDetailChip(
+          chip,
+          config.textClass
+        ) || changed;
+    });
+
+  return changed;
+}
+
+
+function getLegacyListBlockConfig(
+  type
+) {
+
+  const configs = {
+    items: {
+      blockClass: 'item-set-block',
+      listClass: 'item-set-list',
+      chipClass: 'item-set-chip'
+    },
+    spells: {
+      blockClass: 'spell-set-block',
+      listClass: 'spell-set-list',
+      chipClass: 'spell-set-chip',
+      textClass: 'spell-set-text'
+    },
+    skills: {
+      blockClass: 'skill-set-block',
+      listClass: 'skill-set-list',
+      chipClass: 'skill-set-chip',
+      textClass: 'skill-set-text'
+    }
+  };
+
+  return configs[type] || null;
+}
+
+
+function upgradeLegacyItemChip(
+  chip
+) {
+
+  let changed = false;
+
+  const quantity =
+    chip.querySelector('input');
+
+  if (quantity) {
+
+    changed =
+      addClassIfMissing(
+        quantity,
+        'item-set-quantity'
+      ) || changed;
+
+    const label =
+      quantity.closest('label');
+
+    if (label) {
+
+      changed =
+        addClassIfMissing(
+          label,
+          'item-set-quantity-label'
+        ) || changed;
+    }
+  }
+
+  const title =
+    [
+      ...chip.querySelectorAll(':scope > span')
+    ].find(span =>
+      !span.classList.contains(
+        'entity-icon'
+      )
+    );
+
+  if (title) {
+
+    changed =
+      addClassIfMissing(
+        title,
+        'item-set-title'
+      ) || changed;
+  }
+
+  return changed;
+}
+
+
+function upgradeLegacyDetailChip(
+  chip,
+  textClass
+) {
+
+  const text =
+    [
+      ...chip.querySelectorAll(':scope > span')
+    ].find(span =>
+      !span.classList.contains(
+        'entity-icon'
+      )
+    );
+
+  return text
+    ? addClassIfMissing(
+      text,
+      textClass
+    )
+    : false;
+}
+
+
+function addClassIfMissing(
+  element,
+  className
+) {
+
+  if (
+    !element ||
+    element.classList.contains(className)
+  ) {
+
+    return false;
+  }
+
+  element.classList.add(
+    className
+  );
+
+  return true;
 }
 
 function upgradeCharacterStatsToV2(

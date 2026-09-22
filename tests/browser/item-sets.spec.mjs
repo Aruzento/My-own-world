@@ -4,6 +4,372 @@ import {
 } from '@playwright/test';
 
 
+test(
+  'list card contents keep their renderer classes after save and reopen',
+  async ({ page }) => {
+
+    await page.goto(
+      '/'
+    );
+
+    const result =
+      await page.evaluate(
+        async () => {
+
+          const {
+            serializePersistentEditorHTML
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            applyBlockSystemContract
+          } = await import('/js/editor/blocks/blockContract.js');
+
+          const {
+            renderCustomBlocks
+          } = await import('/js/editor/customBlocks.js');
+
+          const {
+            editor
+          } = await import('/js/editor/editorDom.js');
+
+          editor.innerHTML = `
+            <main class="entity-main">
+              <div
+                class="template-block item-set-block"
+                data-block-type="items"
+                data-block-version="1"
+              >
+                <h2>Инвентарь</h2>
+                <div class="item-set-list">
+                  <button
+                    class="item-set-chip"
+                    type="button"
+                    data-page-id="iron-key"
+                  >
+                    <span class="item-set-title">Железный ключ</span>
+                    <label class="item-set-quantity-label">
+                      <input
+                        class="item-set-quantity"
+                        type="text"
+                        value="2"
+                      >
+                    </label>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="template-block skill-set-block"
+                data-block-type="skills"
+                data-block-version="1"
+              >
+                <h2>Навыки</h2>
+                <div class="skill-set-list">
+                  <button
+                    class="skill-set-chip"
+                    type="button"
+                    data-page-id="stealth"
+                  >
+                    <span class="skill-set-text">
+                      <strong>Скрытность</strong>
+                      <small>Тихое перемещение</small>
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="template-block spell-set-block"
+                data-block-type="spells"
+                data-block-version="1"
+              >
+                <h2>Заклинания</h2>
+                <div class="spell-set-list">
+                  <button
+                    class="spell-set-chip"
+                    type="button"
+                    data-page-id="light"
+                  >
+                    <span class="spell-set-text">
+                      <strong>Свет</strong>
+                      <small>Освещает пространство</small>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </main>
+          `;
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          renderCustomBlocks(
+            editor
+          );
+
+          const snapshot =
+            () => {
+
+              const itemChip =
+                editor.querySelector(
+                  '.item-set-chip'
+                );
+
+              const skillChip =
+                editor.querySelector(
+                  '.skill-set-chip'
+                );
+
+              const spellChip =
+                editor.querySelector(
+                  '.spell-set-chip'
+                );
+
+              return {
+                itemDisplay:
+                  getComputedStyle(
+                    itemChip
+                  ).display,
+                skillDisplay:
+                  getComputedStyle(
+                    skillChip
+                  ).display,
+                spellDisplay:
+                  getComputedStyle(
+                    spellChip
+                  ).display,
+                itemClasses:
+                  itemChip.className,
+                skillClasses:
+                  skillChip.className,
+                spellClasses:
+                  spellChip.className
+              };
+            };
+
+          const live =
+            snapshot();
+
+          const persisted =
+            serializePersistentEditorHTML(
+              editor
+            );
+
+          editor.innerHTML =
+            persisted;
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          renderCustomBlocks(
+            editor
+          );
+
+          const reopened =
+            snapshot();
+
+          editor.innerHTML =
+            persisted;
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          renderCustomBlocks(
+            editor
+          );
+
+          const restart =
+            snapshot();
+
+          editor.innerHTML = `
+            <main class="entity-main">
+              <div class="template-block" data-block-type="items" data-block-version="1">
+                <h2>Старый инвентарь</h2>
+                <div>
+                  <button type="button" data-page-id="old-key">
+                    <span>Старый ключ</span>
+                    <label><input type="text" value="3"></label>
+                  </button>
+                </div>
+              </div>
+              <div class="template-block" data-block-type="skills" data-block-version="1">
+                <h2>Старые навыки</h2>
+                <div>
+                  <button type="button" data-page-id="old-stealth">
+                    <span><strong>Скрытность</strong><small>Старое описание</small></span>
+                  </button>
+                </div>
+              </div>
+              <div class="template-block" data-block-type="spells" data-block-version="1">
+                <h2>Старые заклинания</h2>
+                <div>
+                  <button type="button" data-page-id="old-light">
+                    <span><strong>Свет</strong><small>Старое описание</small></span>
+                  </button>
+                </div>
+              </div>
+            </main>
+          `;
+
+          applyBlockSystemContract(
+            editor
+          );
+
+          renderCustomBlocks(
+            editor
+          );
+
+          const legacy =
+            snapshot();
+
+          const legacyPersisted =
+            serializePersistentEditorHTML(
+              editor
+            );
+
+          return {
+            live,
+            reopened,
+            restart,
+            persisted,
+            legacy,
+            legacyPersisted,
+            controls: {
+              itemAdd:
+                Boolean(
+                  editor.querySelector(
+                    '.item-set-add-btn[data-runtime="true"]'
+                  )
+                ),
+              skillAdd:
+                Boolean(
+                  editor.querySelector(
+                    '.skill-set-add-btn[data-runtime="true"]'
+                  )
+                ),
+              spellAdd:
+                Boolean(
+                  editor.querySelector(
+                    '.spell-set-add-btn[data-runtime="true"]'
+                  )
+                ),
+              itemRemove:
+                Boolean(
+                  editor.querySelector(
+                    '.item-set-remove[data-runtime="true"]'
+                  )
+                ),
+              skillRemove:
+                Boolean(
+                  editor.querySelector(
+                    '.skill-set-remove[data-runtime="true"]'
+                  )
+                ),
+              spellRemove:
+                Boolean(
+                  editor.querySelector(
+                    '.spell-set-remove[data-runtime="true"]'
+                  )
+                )
+            }
+          };
+        }
+      );
+
+    expect(
+      result.persisted
+    ).toContain(
+      'item-set-block'
+    );
+
+    expect(
+      result.persisted
+    ).toContain(
+      'skill-set-block'
+    );
+
+    expect(
+      result.persisted
+    ).toContain(
+      'item-set-chip'
+    );
+
+    expect(
+      result.persisted
+    ).toContain(
+      'skill-set-chip'
+    );
+
+    expect(
+      result.persisted
+    ).toContain(
+      'spell-set-chip'
+    );
+
+    expect(
+      result.legacyPersisted
+    ).toContain(
+      'item-set-title'
+    );
+
+    expect(
+      result.legacyPersisted
+    ).toContain(
+      'skill-set-text'
+    );
+
+    expect(
+      result.legacyPersisted
+    ).toContain(
+      'spell-set-text'
+    );
+
+    expect(
+      result.reopened
+    ).toEqual(
+      result.live
+    );
+
+    expect(
+      result.restart
+    ).toEqual(
+      result.live
+    );
+
+    expect(
+      result.legacy
+    ).toEqual(
+      result.live
+    );
+
+    expect(
+      result.live
+    ).toEqual({
+      itemDisplay: 'flex',
+      skillDisplay: 'grid',
+      spellDisplay: 'grid',
+      itemClasses: 'item-set-chip',
+      skillClasses: 'skill-set-chip',
+      spellClasses: 'spell-set-chip'
+    });
+
+    expect(
+      result.controls
+    ).toEqual({
+      itemAdd: true,
+      skillAdd: true,
+      spellAdd: true,
+      itemRemove: true,
+      skillRemove: true,
+      spellRemove: true
+    });
+  }
+);
+
+
 async function setupItemCreationBoundaryFixture({
   heroId,
   heroTitle,

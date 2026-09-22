@@ -73,7 +73,7 @@ export function createItemsBlock({
     <div
       class="template-block item-set-block"
       data-block-type="items"
-      data-block-version="1"
+      data-block-version="2"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -100,7 +100,7 @@ export function createSpellsBlock({
     <div
       class="template-block spell-set-block"
       data-block-type="spells"
-      data-block-version="1"
+      data-block-version="2"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
@@ -127,7 +127,7 @@ export function createSkillsBlock({
     <div
       class="template-block skill-set-block"
       data-block-type="skills"
-      data-block-version="1"
+      data-block-version="2"
       contenteditable="false"
     >
       <h2 contenteditable="false">${title}</h2>
