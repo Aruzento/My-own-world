@@ -6,8 +6,20 @@ import {
 } from '../core/pageRecord.js';
 
 import {
-  getStorageAdapter
+  getStorageAdapter,
+  isStorageWorkspaceContextCurrent
 } from './storageAdapter.js';
+
+export async function inspectPageWriteOutcome({ page, beforeContent, nextContent, workspaceContext }) {
+  if (!isStorageWorkspaceContextCurrent(workspaceContext)) return { status: 'workspace-changed' };
+  try {
+    const content = await readCurrentDurablePageContent(page, { storageAdapter: workspaceContext.adapter });
+    if (!isStorageWorkspaceContextCurrent(workspaceContext)) return { status: 'workspace-changed' };
+    return { status: content === nextContent ? 'next-content' : content === beforeContent ? 'base-content' : 'different-content' };
+  } catch (error) {
+    return { status: 'unreadable', message: String(error.message || error) };
+  }
+}
 
 
 export async function readCurrentDurablePageStateIdentity(

@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 Updated: 2026-09-16
 
-Status: `0.0.1.17.3` Single-Target Attack Resolution is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.4 is NEXT. One strict attack can resolve in memory into immutable Dice/outcome/health-plan evidence, with no durable write, event type or UI. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. AI Core remains LATER.
+Status: `0.0.1.17.4` Durable Action Transaction is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.5 is NEXT. The runtime API executes one attack with durable Character state and readable audit history. There is no supported Combat attack UI or Combat attack Undo; first manual usable acceptance remains 17.6. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. Phase 18+ remains BLOCKED; AI Core remains LATER.
 
 ## 1. Decision And First Product Slice
 
@@ -93,7 +93,7 @@ Targeting here means selecting one explicit participant. No range/LoS, position,
 
 ## 5. Minimum Typed Request, Resolution And Audit
 
-Conceptual request, to be validated in 17.3 (strict keys; no arbitrary `data` bag):
+Request validated by 17.3 (strict keys; no arbitrary `data` bag):
 
 ```js
 {
@@ -155,7 +155,7 @@ Allocate ids/time once, call `rollDice` directly, and use its immutable RollResu
 
 One action uses transaction `intentType: 'combat-attack'`, normal transaction `status: 'completed'`, and existing EventStore append result `status: 'durable'`. Runtime `started` is not durable history. Transaction `order` is not a new global counter: durable ordering stays EventStore file/log order, with strictly increasing event order inside the action.
 
-Planned event order:
+Implemented event order:
 
 1. `roll.performed`: attack RollResult.
 2. `roll.performed`: damage RollResult on hit only.
@@ -164,18 +164,18 @@ Planned event order:
 
 The full candidate transaction/payloads must validate in memory before the first write; append the completed transaction only after confirmed persistence. Miss, zero damage and fully clamped no-change hits still append a resolution transaction, with no fabricated resource change. No transaction per internal step and no early durable declaration record.
 
-| Vocabulary | Planned use and payload ownership |
+| Vocabulary | Use and payload ownership |
 | --- | --- |
 | Existing `roll.performed` v1 | Preserve canonical RollResult once. Current allowed context fields suffice: `source`, `actorId` = participantId, `actorPageId`, `targetId` = participantId, `targetPageId`, `mapPageId`, actor `tokenId`, `actionId`, optional `ruleId`/`label`. Attack/damage role uses the action's event-id links, not extra unsupported context keys. |
 | Existing `resource.changed` v1 | Sole numeric mutation fact: `{ resource: { kind: 'page-property', id: '<exact-pageId>:hpCurrent' or ':hpTemp', label }, before, after, delta, unit: 'HP', reason }`. Identity must match the actual changed field; delta = after - before. |
-| Planned `action.resolved` v1 | Action owner supplies `actionId`, `mapPageId`, `sessionId`, round observation, exact actor/target `{ participantId, tokenId, pageId }`, explicit definition/source, `hitPolicy`, defense `{ kind: 'ac', value }`, outcome `hit`/`miss`, `attackRollEventId`, resolved components `{ componentId, damageType, rollEventId, amount }`, ordered `resourceEventIds`, and health guard evidence below. Strict schema and cross-event validation belong to 17.4. |
+| Implemented `action.resolved` v1 | Action owner supplies `actionId`, `mapPageId`, `sessionId`, round observation, exact actor/target `{ participantId, tokenId, pageId }`, explicit definition/source, `hitPolicy`, defense `{ kind: 'ac', value }`, outcome `hit`/`miss`, `attackRollEventId`, resolved components `{ componentId, damageType, rollEventId, amount }`, ordered `resourceEventIds`, and health guard evidence below. Strict schema and cross-event validation are implemented in 17.4. |
 | Existing `transaction.reversal.recorded` v1 | A later Undo transaction links original transaction, reversal transaction and reversed resource event ids. Original records remain unchanged. |
 | Existing `manual.correction.recorded` v1 | Reserved for the later explicit manual-correction intent; no duplicate correction event for a normal attack. |
 | Still reserved | `action.declared`, other `action.*`, `damage.*`, `healing.*`, `effect.*`, rest/movement/scene namespaces and unimplemented turn/round names. No `attack.roll` duplicate of `roll.performed`, nor `damage.applied` duplicating component resolution and resource deltas in this first slice. |
 
 For Undo, reconstruct before/after HP/temp HP from linked resource events. `action.resolved.healthGuard` supplies `hpMax` and the values of any unchanged HP/temp HP fields, with explicit field names restricted to those existing keys. Together they describe the full original before/after health tuple without a duplicate mutation fact. Validate same page, unique fields, complete coverage, amount/health consistency, correct roll roles and references within the same transaction. No arbitrary JSON/HTML, Character snapshots or live handles in durable payloads.
 
-17.1 activates **zero** event types. `action.resolved` remains rejected as `EVENT_TYPE_UNKNOWN` / `reservedFuture` until 17.4 implements its strict payloadVersion-1 schema. EventStore still delegates vocabulary validation and must not branch on Combat. The existing `eventQuery` and Event History view model must gain explicit action summaries/target filtering where needed; UI must not parse JSONL or assume new nested references are indexed automatically.
+17.4 activates only `action.resolved` with a strict payloadVersion-1 schema. EventStore delegates vocabulary and transaction-relation validation to EventTypes; it contains no Combat-specific schema branches. EventQuery explicitly indexes action actor/target/map/session/action identities. Event History uses that query owner and renders attack outcome, defense and damage without parsing JSONL.
 
 ## 8. Failure Semantics And Recovery
 
@@ -218,15 +218,15 @@ Local editor Ctrl+Z and PageCommandService runtime undo are separate histories, 
 
 ## 10. Bounded Implementation Sequence
 
-The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.3.
+The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.4.
 
 | Leaf | Deliverable and acceptance boundary |
 | --- | --- |
 | 17.1 | This ownership/request/event/failure/Undo contract and Phase 17 activation; Foundation only. |
 | 17.2 | **DONE / Foundation: Character health mutation preparation.** One validated frozen detached existing Properties page patch for current/temp HP, exact base/before/after/guard evidence, forward Character math, exact inverse-ready values, unchanged content preservation and parser/browser readback. No action execution, write, event append or UI. |
 | 17.3 | **DONE / Foundation: Single-target attack resolution.** Strict request and exact active Initiative participant -> token -> page -> Character target chain; prevalidated public Dice requests; `ac-total-v1` hit/miss; one typed damage component; detached 17.2 health plan; frozen runtime evidence; deterministic rejection/no-side-effect coverage. No write, event append, UI or Undo. |
-| 17.4 | **NEXT:** One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
-| 17.5 | Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
+| 17.4 | **DONE / Foundation:** One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
+| 17.5 | **NEXT:** Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
 | 17.6 | First usable Combat attack flow in the existing popup: labeled explicit attack definition, one target, result/error/pending state, history and Undo. Both Goblin acceptance routes plus temp HP, save/reload and stale references pass browser/manual checks. No new popup layout project. |
 | 17.7 | Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
 | 17.8 | Direct damage and multiple typed damage components on one target through the same health/transaction/Undo boundary. Preserve component evidence; mitigation rules require their own explicit rule support. |
@@ -234,7 +234,7 @@ The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJEC
 | 17.10 | Existing numeric resource changes/costs and manual GM correction through the same pipeline. Start with one page; any actor-cost plus target-damage operation waits for an explicit multi-page failure/compensation contract. Reuse current correction/resource vocabulary without double logging. |
 | 17.FINAL | Cumulative owner/failure/Undo/reload review and required gates. Verify the first manual attack routes, inventory supported action kinds and explicitly retain unsupported critical/mitigation/multi-page cases. Phase 18+ stays blocked until Phase 17 closure. |
 
-Attack first is the retained product goal; 17.3 proves only its non-durable runtime resolution, not a substitute product milestone. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
+Attack first is the retained product goal; 17.4 supplies durable runtime execution/history, while UI and Undo remain later leaves. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
 
 ## 11. Verification And Linked Contracts
 
@@ -243,3 +243,15 @@ Attack first is the retained product goal; 17.3 proves only its non-durable runt
 Later regression targets: wrong current actor, missing exact references, copy/original-page identity, manual AC override, missing/duplicate HP fields, both HP fields in one page write, miss/no-change audit, public Dice-only dependency, zero extra standalone roll records, workspace switch/stale state, append after bytes then throw, failed/uncertain compensation, exact reload/history and manual Goblin acceptance. Tests must exercise behavior and durable fixtures, not only module names.
 
 Related canonical contracts: [Combat Session](./COMBAT_SESSION_CONTRACT.md), [Event/Transaction](./EVENT_TRANSACTION_CONTRACT.md), [Dice Engine](./DICE_ENGINE_CONTRACT.md), [Character Model](./CHARACTER_MODEL_CONTRACT.md), [DnD calculations](./DND_CALCULATION_RULES.md), [Properties](./PROPERTIES_MODEL_CONTRACT.md), [Backup/Recovery](./BACKUP_AND_RECOVERY_CONTRACT.md), [Editor History](./EDITOR_HISTORY_CONTRACT.md).
+
+## 17.4 Runtime API And Storage Evidence
+
+`executeCombatAttack(request, { getMapContext, resolvePage?, getPages?, randomInt?, createId?, now? })` in `js/combat/combatActionPipeline.js` is the durable coordinator. `getMapContext()` reads `{ mapPageId, mapModel, dirty }` from the current map/store; it must observe the current store on every call. The saved map must match its model and its durable PageCommand expected base. The resolver remains independently usable without persistence.
+
+`serializeCombatPageMutation` serializes same-adapter/target-page operations locally and is available for future 17.5 compensation. It is not a filesystem lock. Immediately before writing, the existing PageCommand/write queue rechecks the target base and synchronous current observations; no new revision/hash system is introduced. Captured storage context contains the actual adapter and root/handle. Guards cover queue waits, page publication and EventStore append I/O. A context change during an in-flight write suppresses stale publication and returns uncertain state.
+
+`createCombatAttackTransaction` creates and validates the entire completed candidate before any page write. The strict `healthGuard` is `{ hpMax, unchangedFields: [{ field, value }] }` on a hit and null on a miss. Fields are limited to `hpCurrent`/`hpTemp`; linked resource events supply the changed fields. Cross-event validation checks identities, roles, order, complete health coverage and canonical CharacterModel damage math. No HTML is stored in these facts.
+
+The frozen `CombatActionExecutionResult` v1 separates `state: unchanged | persisted | uncertain` and `audit: not-attempted | durable | unconfirmed`, with action/transaction ids, stage/reason, resolution, candidate and exact page-command/precondition evidence. Confirmed changed health writes once; miss/no-change writes zero pages. Audit is appended once after any required successful write. No automatic retry, reroll or HP rollback follows an append error. One readback reports exact-transaction-found, absent, corrupt-or-inconsistent or unreadable; even an exact match after an append error remains audit-unconfirmed. Page-write exceptions use the page-owner readback to distinguish original content, intended content or uncertain state.
+
+Tests cover hit/equality/miss, temp HP, zero/clamped damage, candidate rejection, stale target/map/session/current/mappings, adapter/root/handle changes, failed/uncertain writes and appends, no double logging, overlapping attacks, fresh page reload with missing/corrupt history, and explicit generic Undo rejection. Character pages remain authoritative. There is no atomic page-plus-log commit, cross-process lock, durable journal, attack UI or Combat Undo in this leaf.

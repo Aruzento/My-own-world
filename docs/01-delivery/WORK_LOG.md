@@ -5,6 +5,24 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-23: 0.0.1.17.4 Durable Action Transaction
+
+- Base: owner-confirmed clean `main` / `origin/main` at `16b62281dec8055aaf8d3a57f57a5e6d9124c854`, retaining the accepted 17.3.1 corrective work.
+- Added `executeCombatAttack`: existing 17.3 resolution, exact current map/session/round/participant/page observations, full candidate validation, one PageCommand write when health changes, then one completed EventStore transaction. Miss and no-change hit write no page. Canonical Dice and Character health semantics remain unchanged.
+- Activated strict `action.resolved` v1. Attack/damage RollResults and changed `hpTemp`/`hpCurrent` facts are linked inside the same transaction; minimal unchanged-health guards complete the evidence. EventTypes validates cross-event identities, roles, order, health coverage and Character-owned damage math at creation and reload. No HTML enters audit evidence.
+- Storage guards capture the actual adapter plus root/handle, cover queue waits and pre-write checks, and suppress stale page publication. Runtime target-page serialization is local only. Page-write failures keep exact receipt/readback evidence and append no success history. Append failures never roll back HP, retry or reroll; one diagnostic readback leaves audit explicitly unconfirmed even when the exact record is found.
+- Event History shows hit/miss, actor, target, defense and damage through existing query owners. Generic Undo is explicitly disabled for all attack transactions, including one-field changes. Pages remain authoritative after reload with absent/corrupt history. No attack UI, Combat Undo, schema migration, journal or cross-process atomicity was added.
+- Verification PASS: focused 113 unit tests and 42 browser tests; `docs:index`, `verify:quick`, `verify`, `check:encoding`, `git diff --check`; `verify:full` with 854 unit tests, 264 browser tests, large-workspace performance and remaining project gates. Fixtures were synthetic/disposable; no real user workspace was changed. The gate-generated historical file-audit rewrite was excluded from this leaf.
+- Delivery: Phase 17 ACTIVE; 17.1-17.4 DONE / Foundation; 17.5 NEXT and not started; 17.6 remains first manual usable attack acceptance; Phase 18+ BLOCKED; AI Core LATER.
+
+Exact changed files:
+
+- Combat: `js/combat/combatActionPipeline.js`, `js/combat/combatActionQueue.js`, `js/combat/combatAttackResolution.js`.
+- Events/history: `js/events/combatActionEventLog.js`, `js/events/combatActionEventSchema.js`, `js/events/eventTypes.js`, `js/events/eventStore.js`, `js/events/eventQuery.js`, `js/events/transactionReversal.js`, `js/ui/eventHistoryPanel.js`.
+- Storage: `js/storage/storageAdapter.js`, `js/storage/pageCommandService.js`, `js/storage/pageWritePreconditions.js`, `js/storage/writeQueue.js`.
+- Tests: `tests/combatActionEventLog.test.mjs`, `tests/eventTypes.test.mjs`, `tests/browser/combat-action-pipeline.spec.mjs`, `tests/fixtures/combatActionFixtures.mjs`.
+- Docs: `docs/01-delivery/PROJECT_PLAN.md`, `docs/01-delivery/WORK_LOG.md`, `docs/02-architecture/contracts/COMBAT_ACTION_PIPELINE_CONTRACT.md`, `docs/02-architecture/contracts/COMBAT_SESSION_CONTRACT.md`, `docs/02-architecture/contracts/EVENT_TRANSACTION_CONTRACT.md`.
+
 ## 2026-09-16: 0.0.1.17.3 Single-Target Attack Resolution
 
 ### Implementation And Evidence

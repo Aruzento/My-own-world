@@ -172,6 +172,11 @@ export function classifyTransactionReversibility(
     });
   }
 
+  if (original.intentType === 'combat-attack' || original.events.some(event => event.type === 'action.resolved')) {
+    return createReversibilityResult({ reversible: false, transactionId: original.transactionId,
+      reason: 'combat-action-undo-not-supported' });
+  }
+
   const resourceEvents =
     original.events.filter(event =>
       event.type === EVENT_TYPES_V1.RESOURCE_CHANGED

@@ -35,6 +35,7 @@ const EVENT_HISTORY_VISIBLE_LIMIT =
 
 const EVENT_TYPE_LABELS =
   Object.freeze({
+    [EVENT_TYPES_V1.ACTION_RESOLVED]: 'Атака',
     [EVENT_TYPES_V1.ROLL_PERFORMED]:
       'Бросок',
     [EVENT_TYPES_V1.MANUAL_CORRECTION_RECORDED]:
@@ -1112,6 +1113,10 @@ function summarizeEvent(
 
 function summarizeCombatEvent(event) {
   const p = event.payload;
+  if (event.type === EVENT_TYPES_V1.ACTION_RESOLVED) {
+    const damage = p.components.map(c => `${c.amount} ${c.damageType}`).join(', ');
+    return `${p.definition.label}: ${p.actor.pageId} → ${p.target.pageId}; ${p.outcome === 'hit' ? 'попадание' : 'промах'}${damage ? `; урон ${damage}` : ''}. КЗ ${p.defense.value}.`;
+  }
   if (event.type === EVENT_TYPES_V1.COMBAT_SESSION_LIFECYCLE_CHANGED) {
     const label = { start: 'Начало боя', pause: 'Пауза боя', resume: 'Бой продолжен',
       finish: 'Бой завершён', 'prepare-next': 'Подготовка нового боя' }[p.operation];

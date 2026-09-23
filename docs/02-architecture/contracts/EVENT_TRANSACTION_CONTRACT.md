@@ -537,6 +537,10 @@ This differs deliberately from the existing conditional resource compensation co
 filesystem-wide atomic. An append error can be uncertain if bytes reached storage before the error.
 The current map remains authoritative, and history is never replayed into it.
 
+Phase 17.4 adds `action.resolved` v1 through `combatActionEventSchema.js` and the existing EventTypes vocabulary. One completed `combat-attack` transaction contains attack roll, optional damage roll, changed `hpTemp` then `hpCurrent` resource facts, and the action resolution. The action payload contains exact actor/target/definition/policy/defense/outcome and event links plus minimal health guards. EventTypes delegates cross-event identity/order/coverage/math validation on both creation and reload. See [Combat Action Pipeline](./COMBAT_ACTION_PIPELINE_CONTRACT.md) for the strict shape and failure matrix.
+
+`combatActionEventLog.js` builds the complete candidate before state mutation. `CombatActionPipeline` owns one PageCommand write followed by one append; miss/no-change needs only append. EventStore preserves its shared append queue and additionally accepts captured `workspaceContext` guards. Append failure does not roll back HP: it returns unconfirmed audit plus one bounded readback. Action transactions are explicitly non-reversible through the standalone-resource classifier until 17.5.
+
 Reserved future namespaces:
 
 - `action.*`;
@@ -549,7 +553,7 @@ Reserved future namespaces:
 - `movement.*`;
 - `scene.transition.*`.
 
-Reserved names remain documentation and naming direction only, except the explicit `turn.changed` and `round.advanced` payload contracts activated in 16.10 above. Other future types are rejected with structured `EVENT_TYPE_UNKNOWN` evidence marked as `reservedFuture`.
+Reserved names remain documentation and naming direction only, except the explicit `turn.changed` and `round.advanced` contracts activated in 16.10 and `action.resolved` activated in 17.4. Other future types are rejected with structured `EVENT_TYPE_UNKNOWN` evidence marked as `reservedFuture`.
 
 Vocabulary safety rules:
 

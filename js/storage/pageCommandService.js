@@ -2,6 +2,8 @@ import {
   notifyPageUpdated
 } from '../repository/pageRepository.js';
 
+import { isStorageWorkspaceContextCurrent } from './storageAdapter.js';
+
 import {
   createWriteRevision,
   getPageWriteKey,
@@ -188,7 +190,9 @@ export async function persistPageContentCommand({
   type = 'update-page-content',
   reason = type,
   expectedBase = undefined,
-  structuredMutation = null
+  structuredMutation = null,
+  workspaceContext = null,
+  validateBeforeWrite = null
 } = {}) {
 
   const beforePage =
@@ -245,9 +249,14 @@ export async function persistPageContentCommand({
     },
     async persist(context) {
 
+      const workspaceBlocked = () => ({ state: 'stale', written: false,
+        blocked: true, blockReason: 'workspace-changed' });
+      if (workspaceContext && !isStorageWorkspaceContextCurrent(workspaceContext)) return workspaceBlocked();
+
       context.phaseResults.precondition =
         await evaluatePageWritePrecondition({
           page,
+          storageAdapter: workspaceContext?.adapter,
           expectedBase:
             expectedBase === undefined
               ? beforePage?.pageStateIdentity || null
@@ -320,13 +329,28 @@ export async function persistPageContentCommand({
         contentToPersist,
         {
           revision:
-            writeRevision
+            writeRevision,
+          workspaceContext,
+          beforeWrite: validateBeforeWrite ? async () => {
+            const precondition = await evaluatePageWritePrecondition({ page, storageAdapter: workspaceContext?.adapter,
+              expectedBase: expectedBase === undefined ? beforePage?.pageStateIdentity || null : expectedBase });
+            context.phaseResults.precondition = precondition;
+            if (!precondition.ok) return createPreconditionBlockedWriteResult({ page, type, reason, writeRevision, precondition });
+            return null;
+          } : null,
+          validateBeforeWrite
         }
       );
 
       return writeResult;
     },
     updateIndexes(context) {
+
+      if (workspaceContext && !isStorageWorkspaceContextCurrent(workspaceContext)) {
+        context.phaseResults.persist = { ...context.phaseResults.persist, state: 'stale',
+          blocked: true, blockReason: 'workspace-changed' };
+        return;
+      }
 
       const writeResult =
         context.phaseResults.persist;
@@ -402,6 +426,11 @@ export async function persistPageContentCommand({
     },
     publishEvent(context) {
 
+      if (workspaceContext && !isStorageWorkspaceContextCurrent(workspaceContext)) {
+        context.phaseResults.persist = { ...context.phaseResults.persist, state: 'stale',
+          blocked: true, blockReason: 'workspace-changed' };
+      }
+
       const writeResult =
         context.phaseResults.persist;
 
@@ -468,6 +497,8 @@ export async function persistPageContentCommand({
       error,
       context
     ) {
+
+      if (workspaceContext && !isStorageWorkspaceContextCurrent(workspaceContext)) return;
 
       if (
         context.rollbackData?.beforeContent !== undefined

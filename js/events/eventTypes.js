@@ -5,9 +5,16 @@ import {
 } from './transactionModel.js';
 
 
+import { normalizeActionResolvedPayload, assertCombatActionTransaction } from './combatActionEventSchema.js';
+
+export function assertTypedTransactionRelations(transaction) {
+  assertCombatActionTransaction(transaction);
+}
+
 export const EVENT_TYPE_PAYLOAD_VERSION = 1;
 
 export const EVENT_TYPES_V1 = Object.freeze({
+  ACTION_RESOLVED: 'action.resolved',
   ROLL_PERFORMED: 'roll.performed',
   MANUAL_CORRECTION_RECORDED: 'manual.correction.recorded',
   RESOURCE_CHANGED: 'resource.changed',
@@ -88,6 +95,10 @@ const ROLL_CONTEXT_KEYS = [
 ];
 
 const EVENT_TYPE_SCHEMAS = new Map([
+  [EVENT_TYPES_V1.ACTION_RESOLVED, payload => {
+    try { return normalizeActionResolvedPayload(payload); }
+    catch (error) { throw new EventTypeValidationError(error.message, { field: error.field, type: 'action.resolved' }); }
+  }],
   [EVENT_TYPES_V1.ROLL_PERFORMED, normalizeRollPayload],
   [EVENT_TYPES_V1.MANUAL_CORRECTION_RECORDED, normalizeManualCorrectionPayload],
   [EVENT_TYPES_V1.RESOURCE_CHANGED, normalizeResourceChangePayload],

@@ -357,6 +357,16 @@ export async function resolveSingleTargetAttack(
 }
 
 
+export function readCombatAttackObservation({
+  request, mapPageId, mapModel, pages = getAllPages(), resolvePage = getPageById
+}) {
+  const observation = resolveAttackObservation({ request: validateCombatActionRequest(request), mapPageId, mapModel, pages, resolvePage });
+  return deepFreezeCombatActionData({ mapPageId: observation.mapPageId, sessionId: observation.sessionId,
+    round: observation.round, actor: observation.actor, target: observation.target, defense: observation.defense,
+    actorContent: observation.actorPage.content, targetContent: observation.targetPage.content,
+    actorPath: observation.actorPage.path, targetPath: observation.targetPage.path });
+}
+
 function resolveAttackObservation({
   request,
   mapPageId,

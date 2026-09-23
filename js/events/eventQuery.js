@@ -509,6 +509,13 @@ function collectEntityIds(
   const ids =
     new Set();
 
+  if (event.type === 'action.resolved') {
+    for (const identity of [event.payload.actor, event.payload.target]) {
+      for (const value of Object.values(identity)) addStringId(ids, value);
+    }
+    for (const key of ['actionId', 'mapPageId', 'sessionId']) addStringId(ids, event.payload[key]);
+  }
+
   addSubjectId(
     ids,
     event.payload?.resource

@@ -1,3 +1,5 @@
+import { assertStorageWorkspaceContext } from '../storage/storageAdapter.js';
+
 import {
   getStorageAdapter
 } from '../storage/storageAdapter.js';
@@ -12,7 +14,8 @@ import {
 } from './transactionModel.js';
 
 import {
-  createTypedEvent
+  createTypedEvent,
+  assertTypedTransactionRelations
 } from './eventTypes.js';
 
 
@@ -134,6 +137,7 @@ export function createTransactionRecord(
     typedTransaction
   );
 
+  assertTypedTransactionRelations(typedTransaction);
   const {
     events,
     ...transactionMetadata
@@ -164,6 +168,13 @@ export async function appendTransactionRecord(
       options
     );
 
+  if (options.workspaceContext) {
+    assertStorageWorkspaceContext(options.workspaceContext);
+    if (storageAdapter !== options.workspaceContext.adapter) {
+      throw new Error('EventStore adapter does not belong to the captured workspace context.');
+    }
+  }
+
   const path =
     EVENT_TRANSACTION_LOG_PATH;
 
@@ -182,7 +193,8 @@ export async function appendTransactionRecord(
       storageAdapter,
       path,
       line,
-      record
+      record,
+      workspaceContext: options.workspaceContext
     })
   );
 
@@ -199,8 +211,11 @@ async function appendTransactionRecordInsideQueue({
   storageAdapter,
   path,
   line,
-  record
+  record,
+  workspaceContext
 }) {
+
+  if (workspaceContext) assertStorageWorkspaceContext(workspaceContext);
 
   const identityState =
     await ensureIdentityStateInitialized({
@@ -219,7 +234,8 @@ async function appendTransactionRecordInsideQueue({
     await appendLineToLogFile({
       storageAdapter,
       path,
-      line
+      line,
+      workspaceContext
     });
 
   } catch (error) {
@@ -813,6 +829,7 @@ function normalizeTransactionRecord(
     }
   );
 
+  assertTypedTransactionRelations(transaction);
   const {
     events,
     ...transactionMetadata
@@ -845,14 +862,19 @@ function recordToTransaction(
 async function appendLineToLogFile({
   storageAdapter,
   path,
-  line
+  line,
+  workspaceContext
 }) {
 
   try {
 
+    if (workspaceContext) assertStorageWorkspaceContext(workspaceContext);
+
     await storageAdapter.ensureDirectory(
       EVENT_STORE_ROOT
     );
+
+    if (workspaceContext) assertStorageWorkspaceContext(workspaceContext);
 
     if (typeof storageAdapter.appendText === 'function') {
 
@@ -876,6 +898,7 @@ async function appendLineToLogFile({
         ? '\n'
         : '';
 
+    if (workspaceContext) assertStorageWorkspaceContext(workspaceContext);
     await storageAdapter.writeText(
       path,
       `${previousContent}${separator}${line}`

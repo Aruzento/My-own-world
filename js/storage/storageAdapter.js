@@ -74,6 +74,41 @@ export function hasWorkspaceAccess(
   );
 }
 
+// Контекст ограничен текущим adapter и его реальным root/handle, без отдельного реестра workspace.
+export function captureStorageWorkspaceContext() {
+  const adapter = getStorageAdapter();
+  const root = adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.();
+  if (!root) throw new Error('A saved workspace is required.');
+  return Object.freeze({ adapter, root });
+}
+
+export function isStorageWorkspaceContextCurrent(context) {
+  return Boolean(context && getStorageAdapter() === context.adapter &&
+    (context.adapter.getWorkspaceRoot?.() || context.adapter.getWorkspaceHandle?.()) === context.root);
+}
+
+export function assertStorageWorkspaceContext(context) {
+  if (!isStorageWorkspaceContextCurrent(context)) {
+    const error = new Error('Storage workspace changed during the operation.');
+    error.code = 'STORAGE_WORKSPACE_CHANGED';
+    throw error;
+  }
+}
+
+// Проверяем каждую операцию, в том числе после ожидания очереди EventStore.
+export function createContextBoundStorageAdapter(context) {
+  return new Proxy(context.adapter, {
+    get(target, property) {
+      const value = target[property];
+      if (typeof value !== 'function') return value;
+      return (...args) => {
+        assertStorageWorkspaceContext(context);
+        return value.apply(target, args);
+      };
+    }
+  });
+}
+
 
 export async function queryWorkspaceWritePermission(
   storageAdapter = getStorageAdapter()

@@ -1,3 +1,5 @@
+import { isStorageWorkspaceContextCurrent } from './storageAdapter.js';
+
 const writeQueues =
   new Map();
 
@@ -370,10 +372,27 @@ export function writePageContent(
           'saving'
         );
 
+        if (options.workspaceContext && !isStorageWorkspaceContextCurrent(options.workspaceContext)) {
+          return { state: 'stale', written: false, blocked: true, blockReason: 'workspace-changed' };
+        }
+        if (options.beforeWrite) {
+          const blocked = await options.beforeWrite();
+          if (blocked) return blocked;
+          if (isStaleRevision(options.revision, writeKey)) {
+            return createWriteResult({ key: writeKey, revision: options.revision, state: 'stale', skipped: true });
+          }
+        }
+        if (options.workspaceContext && !isStorageWorkspaceContextCurrent(options.workspaceContext)) {
+          return { state: 'stale', written: false, blocked: true, blockReason: 'workspace-changed' };
+        }
+        options.validateBeforeWrite?.();
         await storageAdapter.writeText(
           page.path,
           String(content)
         );
+        if (options.workspaceContext && !isStorageWorkspaceContextCurrent(options.workspaceContext)) {
+          return { state: 'superseded-after-write', written: true, blocked: true, blockReason: 'workspace-changed' };
+        }
 
         return finishWriteResult(
           writeKey,

@@ -38,6 +38,7 @@ test(
     assert.deepEqual(
       EVENT_TYPES_V1,
       {
+        ACTION_RESOLVED: 'action.resolved',
         ROLL_PERFORMED:
           'roll.performed',
         MANUAL_CORRECTION_RECORDED:
