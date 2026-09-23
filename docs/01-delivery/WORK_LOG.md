@@ -7,6 +7,13 @@ owner_zone: "delivery"
 
 ## 2026-09-23: 0.0.1.17.4 Durable Action Transaction
 
+### Corrective: durable target observation for every outcome
+
+- A review found that the original durable target base was only guaranteed by `CharacterHealthMutationPlan` on a hit. A miss could therefore append audit evidence from runtime Character/AC bytes that did not match the target page's saved bytes.
+- `CombatActionPipeline` now captures the target page's existing PageRecord identity and validates it through `evaluatePageWritePrecondition` before the first RNG call, and again immediately before any write or EventStore append. The runtime target object/content must remain exact as well.
+- A hit continues to use the health plan's canonical expected base; the pipeline rejects it unless that base equals the captured target base. Miss, zero and clamped outcomes still write no target page, but cannot append until their target base remains confirmed.
+- Browser regressions cover unsaved/divergent miss rejection before RNG and an external durable target change after a miss roll before audit append. Focused PASS: 37 browser tests and 72 unit tests. Corrective production gates and commit/push are recorded with this delivery.
+
 - Base: owner-confirmed clean `main` / `origin/main` at `16b62281dec8055aaf8d3a57f57a5e6d9124c854`, retaining the accepted 17.3.1 corrective work.
 - Added `executeCombatAttack`: existing 17.3 resolution, exact current map/session/round/participant/page observations, full candidate validation, one PageCommand write when health changes, then one completed EventStore transaction. Miss and no-change hit write no page. Canonical Dice and Character health semantics remain unchanged.
 - Activated strict `action.resolved` v1. Attack/damage RollResults and changed `hpTemp`/`hpCurrent` facts are linked inside the same transaction; minimal unchanged-health guards complete the evidence. EventTypes validates cross-event identities, roles, order, health coverage and Character-owned damage math at creation and reload. No HTML enters audit evidence.

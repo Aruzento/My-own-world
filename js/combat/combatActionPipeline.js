@@ -3,7 +3,7 @@ import { validateCombatActionRequest, deepFreezeCombatActionData } from './comba
 import { serializeCombatPageMutation } from './combatActionQueue.js';
 import { getAllPages, getPageById } from '../repository/pageRepository.js';
 import { CampaignMapModel } from '../editor/campaignMapModel.js';
-import { parsePageRecordContent } from '../core/pageRecord.js';
+import { arePageStateIdentitiesEqual, parsePageRecordContent } from '../core/pageRecord.js';
 import { persistPageContentCommand, snapshotPageForCommand } from '../storage/pageCommandService.js';
 import { evaluatePageWritePrecondition, inspectPageWriteOutcome } from '../storage/pageWritePreconditions.js';
 import { captureStorageWorkspaceContext, assertStorageWorkspaceContext, createContextBoundStorageAdapter } from '../storage/storageAdapter.js';
@@ -60,7 +60,25 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
           assertStorageWorkspaceContext(workspaceContext);
         };
         const mapPageContent = mapPage.content;
+        const targetPage = resolvePage(before.target.pageId);
+        if (!targetPage?.path || targetPage.content !== before.targetContent) reject('COMBAT_TARGET_STALE');
+        const targetBase = snapshotPageForCommand(targetPage).pageStateIdentity;
+        const checkTarget = async () => {
+          const currentPage = resolvePage(before.target.pageId);
+          if (currentPage !== targetPage || currentPage.content !== before.targetContent) reject('COMBAT_TARGET_STALE');
+          const precondition = await evaluatePageWritePrecondition({ page: currentPage, expectedBase: targetBase, storageAdapter: adapter });
+          if (!precondition.ok) {
+            const error = new Error('COMBAT_TARGET_STALE');
+            error.code = 'COMBAT_TARGET_STALE';
+            error.precondition = precondition;
+            throw error;
+          }
+          assertStorageWorkspaceContext(workspaceContext);
+          return precondition;
+        };
         await checkMap();
+        // Каждая атака, включая miss/no-change, начинается только с durable Character/AC target.
+        await checkTarget();
         stage = 'resolution';
         resolution = await resolveSingleTargetAttack(normalized, { ...initial, pages: getPages(), resolvePage, randomInt, storageAdapter: adapter });
         stage = 'candidate-validation';
@@ -69,10 +87,11 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
         await checkMap();
         if (JSON.stringify(before) !== JSON.stringify(readObservation())) reject('COMBAT_OBSERVATION_STALE');
         const plan = resolution.health?.mutationPlan;
-        const targetPage = resolvePage(resolution.target.pageId);
+        const targetPrecondition = await checkTarget();
         if (plan) {
-          const precondition = await evaluatePageWritePrecondition({ page: targetPage, expectedBase: plan.expectedBase, storageAdapter: adapter });
-          if (!precondition.ok) return result({ ...evidence(), reason: 'COMBAT_TARGET_STALE', precondition });
+          if (!arePageStateIdentitiesEqual(plan.expectedBase, targetBase)) {
+            return result({ ...evidence(), reason: 'COMBAT_TARGET_STALE', precondition: targetPrecondition });
+          }
         }
         // Все await preflight завершены; ещё раз проверяем синхронные наблюдения перед записью.
         if (JSON.stringify(before) !== JSON.stringify(readObservation())) reject('COMBAT_OBSERVATION_STALE');
@@ -113,7 +132,8 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
           return result({ ...evidence(), state, audit: 'unconfirmed', reason: error.code || error.message, auditReadback });
         }
       } catch (error) {
-        return result({ ...evidence(), state, reason: error.code || error.message });
+        return result({ ...evidence(), state, reason: error.code || error.message,
+          ...(error.precondition ? { precondition: error.precondition } : {}) });
       }
     });
   } catch (error) { return result({ actionId: normalized.actionId, transactionId, stage: 'preflight', reason: error.code || error.message }); }

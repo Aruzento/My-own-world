@@ -55,6 +55,49 @@ for (const scenario of ['hit', 'equality', 'miss', 'zero', 'clamped']) {
   });
 }
 
+test('miss rejects a runtime target that diverges from its durable Character base before RNG', async ({ page }) => {
+  await page.goto('/');
+  const r = await page.evaluate(async () => {
+    const { createCombatActionWorld, attackRequest } = await import('/tests/fixtures/combatActionFixtures.mjs');
+    const { executeCombatAttack } = await import('/js/combat/combatActionPipeline.js');
+    const w = await createCombatActionWorld({ dice: [3] });
+    const durable = await w.original.readText(w.target.path);
+    w.target.content += '<p>Unsaved AC edit</p>';
+    const execution = await executeCombatAttack(attackRequest(), w.options);
+    return { execution, effects: w.effects, rng: w.rng.calls.length,
+      durableUnchanged: durable === await w.original.readText(w.target.path) };
+  });
+  expect(r.execution, JSON.stringify(r.execution)).toMatchObject({ ok: false, state: 'unchanged', audit: 'not-attempted', reason: 'COMBAT_TARGET_STALE' });
+  expect(r.rng).toBe(0);
+  expect(r.effects).toMatchObject({ writes: 0, appends: 0 });
+  expect(r.durableUnchanged).toBe(true);
+});
+
+test('miss rejects a durable target change after its roll and before audit append', async ({ page }) => {
+  await page.goto('/');
+  const r = await page.evaluate(async () => {
+    const { createCombatActionWorld, attackRequest } = await import('/tests/fixtures/combatActionFixtures.mjs');
+    const { executeCombatAttack } = await import('/js/combat/combatActionPipeline.js');
+    const w = await createCombatActionWorld({ dice: [3] });
+    const originalNow = w.options.now;
+    let changed = false;
+    w.options.now = () => {
+      if (!changed) {
+        changed = true;
+        w.original.writeText(w.target.path, '<!-- external durable target change -->');
+      }
+      return originalNow();
+    };
+    const execution = await executeCombatAttack(attackRequest(), w.options);
+    return { execution, effects: w.effects, rng: w.rng.calls.length,
+      durable: await w.original.readText(w.target.path) };
+  });
+  expect(r.execution, JSON.stringify(r.execution)).toMatchObject({ ok: false, state: 'unchanged', audit: 'not-attempted', reason: 'COMBAT_TARGET_STALE' });
+  expect(r.rng).toBe(1);
+  expect(r.effects).toMatchObject({ writes: 0, appends: 0 });
+  expect(r.durable).toBe('<!-- external durable target change -->');
+});
+
 for (const scenario of ['dirty-map', 'unsaved-map', 'divergent-map', 'durable-map-stale', 'target-stale',
   'actor-changed', 'session-changed', 'round-changed', 'mapping-changed', 'ac-changed',
   'candidate-invalid', 'workspace-root-before', 'workspace-adapter-before', 'workspace-handle-before', 'late-current', 'late-target']) {
