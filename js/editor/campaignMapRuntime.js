@@ -270,7 +270,8 @@ export async function restoreMapTokens(
 
 export function applyTokenHealthState(
   token,
-  pageLookup = null
+  pageLookup = null,
+  options = {}
 ) {
 
   if (
@@ -336,22 +337,27 @@ export function applyTokenHealthState(
 
   syncTokenInitiativeModifier(
     token,
-    initiativeModifier
+    initiativeModifier,
+    options
   );
 
   syncTokenCombatState(
     token,
-    characterState
+    characterState,
+    options
   );
 
   syncTokenEffectsState(
     token,
-    characterState?.effects
+    characterState?.effects,
+    options
   );
 
-  syncMapInitiativeParticipantsFromTokens(
-    token.closest('.campaign-map-document')
-  );
+  if (options.publish !== false) {
+    syncMapInitiativeParticipantsFromTokens(
+      token.closest('.campaign-map-document')
+    );
+  }
 
   if (!health) {
 
@@ -378,7 +384,8 @@ export function applyTokenHealthState(
         health.current <= 0
           ? 'dead'
           : 'alive'
-    }
+    },
+    options
   );
 
   token.style.setProperty(
@@ -411,7 +418,8 @@ function syncTokenCharacterSnapshotFromPage(
 
 function syncTokenCombatState(
   token,
-  characterState
+  characterState,
+  options = {}
 ) {
 
   if (!characterState) {
@@ -424,7 +432,8 @@ function syncTokenCombatState(
         hpTemp: '',
         armorClass: '',
         speed: ''
-      }
+      },
+      options
     );
 
     return;
@@ -443,14 +452,16 @@ function syncTokenCombatState(
         characterState.armorClass ?? '',
       speed:
         characterState.speed ?? ''
-    }
+    },
+    options
   );
 }
 
 
 function syncTokenEffectsState(
   token,
-  effectsSummary
+  effectsSummary,
+  options = {}
 ) {
 
   const conditionLabels =
@@ -528,14 +539,16 @@ function syncTokenEffectsState(
         flags.speedIsZero
           ? true
           : ''
-    }
+    },
+    options
   );
 }
 
 
 function syncTokenInitiativeModifier(
   token,
-  initiativeModifier
+  initiativeModifier,
+  options = {}
 ) {
 
   const normalized =
@@ -554,6 +567,8 @@ function syncTokenInitiativeModifier(
       normalized
     );
 
+  if (options.publish === false) return;
+
   const store =
     getCampaignMapStore(
       token.closest('.campaign-map-document')
@@ -571,7 +586,8 @@ function syncTokenInitiativeModifier(
 
 function syncTokenRecordPatch(
   token,
-  patch
+  patch,
+  options = {}
 ) {
 
   Object
@@ -589,6 +605,8 @@ function syncTokenRecordPatch(
         value
       );
     });
+
+  if (options.publish === false) return;
 
   const store =
     getCampaignMapStore(

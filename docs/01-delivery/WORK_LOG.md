@@ -5,6 +5,14 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-24: 0.0.1.17.6 First Combat Attack Workflow — ready for manual acceptance
+
+- Added the first attack workflow to the existing Initiative/Combat popup. The read-only actor comes from canonical Initiative, targets come from current Combat membership with broken and same-Character references unavailable, and the runtime-only form collects label, attack formula, damage formula and damage type.
+- Each submit creates one strict existing `CombatActionRequest` and calls `executeCombatAttack` once. Pending controls prevent duplicate submission. The popup renders hit/miss, attack total, Character AC, damage and backend health evidence, and distinguishes safe rejection, persisted/audit-unconfirmed and uncertain outcomes without retrying.
+- Normal success refreshes derived token health from the Character page. The `История` action opens the existing Event History owner; supported hits use the existing 17.5 Undo, while miss/no-change transactions remain non-reversible. No attack catalogue, map HP owner, alternate history or UI-specific combat calculation was added.
+- Browser automation covers hit plus Event History Undo, miss without damage/page write/Undo, temp HP, double-click, stale actor before RNG, append uncertainty, inactive/paused/finished sessions and broken targets. Focused PASS: 2 UI unit tests, 10 workflow browser tests and 97 existing Combat regression browser tests. Full production gate PASS: 872 unit/integration tests and 308 browser tests, including large-workspace performance, approved popup visual baselines, UI audit, docs and agent-task checks. No screenshot baseline changed. Manual hit/miss/temp-HP instructions are in `docs/03-testing/MANUAL_SMOKE_CHECKLIST.md`.
+- Delivery: Phase 17 ACTIVE; 17.1-17.5 DONE / Foundation; 17.6 `READY FOR MANUAL ACCEPTANCE`; 17.7 BLOCKED on OWNER acceptance. Phase 18+ BLOCKED; AI Core LATER. No OWNER manual PASS is claimed.
+
 ## 2026-09-24: 0.0.1.17.5 Compensating Attack Undo
 
 - Base: clean `main` / `origin/main` at `2ac9036932b2ca626ecc24a40b14132247eb0b1c` (`Fix durable target validation for combat actions`).

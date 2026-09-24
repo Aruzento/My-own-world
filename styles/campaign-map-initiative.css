@@ -378,6 +378,102 @@
   display: none;
 }
 
+.campaign-combat-attack-form,
+.campaign-combat-attack-grid {
+  display: grid;
+  gap: var(--mow-space-2);
+  min-width: 0;
+}
+
+.campaign-combat-attack-actor {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--mow-space-2);
+  min-width: 0;
+  color: var(--mow-text-secondary);
+  font-size: var(--mow-font-size-xs);
+}
+
+.campaign-combat-attack-actor strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--mow-text-primary);
+  text-align: right;
+}
+
+.campaign-combat-attack-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.campaign-combat-attack-field {
+  display: grid;
+  gap: var(--mow-space-1);
+  min-width: 0;
+  color: var(--mow-text-secondary);
+  font-size: var(--mow-font-size-xs);
+}
+
+.campaign-combat-attack-field-wide {
+  grid-column: 1 / -1;
+}
+
+.campaign-combat-attack-field .mow-input {
+  width: 100%;
+  min-width: 0;
+}
+
+.campaign-combat-attack-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--mow-space-2);
+}
+
+.campaign-combat-attack-result,
+.campaign-combat-attack-unavailable {
+  margin: 0;
+  color: var(--mow-text-secondary);
+  font-size: var(--mow-font-size-xs);
+  line-height: var(--mow-line-height-normal);
+  overflow-wrap: anywhere;
+}
+
+.campaign-combat-attack-result:empty {
+  display: none;
+}
+
+.campaign-combat-attack-result[data-tone="success"] {
+  color: var(--mow-text-success);
+}
+
+.campaign-combat-attack-result[data-tone="warning"],
+.campaign-combat-attack-unavailable {
+  color: var(--mow-text-warning);
+}
+
+.campaign-combat-attack-rolls,
+.campaign-combat-attack-health {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mow-space-1) var(--mow-space-3);
+  margin-top: var(--mow-space-1);
+}
+
+.campaign-combat-attack-form[aria-busy="true"] .campaign-combat-attack-submit::after {
+  content: "\2026";
+  margin-left: var(--mow-space-1);
+}
+
+@media (max-width: 520px) {
+  .campaign-combat-attack-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .campaign-combat-attack-field-wide {
+    grid-column: auto;
+  }
+}
+
 .campaign-initiative-select.mow-button {
   min-width: 0;
   min-height: var(--mow-control-height-sm);

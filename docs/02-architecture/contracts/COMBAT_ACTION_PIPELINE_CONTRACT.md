@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 Updated: 2026-09-24
 
-Status: `0.0.1.17.5` Compensating Attack Undo is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.6 is NEXT. The runtime API executes one durable attack; the existing Transaction Reversal / Event History flow compensates supported state-changing attacks. There is still no Combat popup attack execution workflow; first manual usable acceptance remains 17.6. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. Phase 18+ remains BLOCKED; AI Core remains LATER.
+Status: `0.0.1.17.6` First Combat Attack Workflow is implemented and `READY FOR MANUAL ACCEPTANCE`. Phase 17 is ACTIVE. The existing Initiative/Combat popup now submits one explicit manual attack through `executeCombatAttack`, presents durable and partial outcomes, and links to the existing Event History / Transaction Reversal flow. Automated coverage passed; OWNER manual acceptance is still pending, so 17.6 is not `DONE` / `Usable` and 17.7 remains BLOCKED. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. Phase 18+ remains BLOCKED; AI Core remains LATER.
 
 ## 1. Decision And First Product Slice
 
@@ -235,8 +235,8 @@ The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJEC
 | 17.3 | **DONE / Foundation: Single-target attack resolution.** Strict request and exact active Initiative participant -> token -> page -> Character target chain; prevalidated public Dice requests; `ac-total-v1` hit/miss; one typed damage component; detached 17.2 health plan; frozen runtime evidence; deterministic rejection/no-side-effect coverage. No write, event append, UI or Undo. |
 | 17.4 | **DONE / Foundation:** One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
 | 17.5 | **DONE / Foundation:** Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
-| 17.6 | **NEXT:** First usable Combat attack flow in the existing popup: labeled explicit attack definition, one target, result/error/pending state, history and Undo. Both Goblin acceptance routes plus temp HP, save/reload and stale references pass browser/manual checks. No new popup layout project. |
-| 17.7 | Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
+| 17.6 | **READY FOR MANUAL ACCEPTANCE:** Existing popup provides a runtime-only labeled attack definition, one canonical target, pending/result/error states, durable Character refresh and access to existing history/Undo. Automated hit, miss, temp HP, duplicate-submit, stale, uncertainty and lifecycle routes pass. OWNER manual acceptance remains pending. |
+| 17.7 | **BLOCKED on 17.6 acceptance:** Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
 | 17.8 | Direct damage and multiple typed damage components on one target through the same health/transaction/Undo boundary. Preserve component evidence; mitigation rules require their own explicit rule support. |
 | 17.9 | Healing and temporary-HP grants on one target using Character health ownership, explicit grant policy, persistence and Undo. |
 | 17.10 | Existing numeric resource changes/costs and manual GM correction through the same pipeline. Start with one page; any actor-cost plus target-damage operation waits for an explicit multi-page failure/compensation contract. Reuse current correction/resource vocabulary without double logging. |

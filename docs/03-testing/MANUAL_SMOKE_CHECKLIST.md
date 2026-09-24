@@ -56,6 +56,35 @@ Design check after step 15: the map must read as a graphic editor. Canvas tools 
 7. Preview an external JSON package with a required missing asset reference and no payload. Apply should be blocked before backup/import.
 8. Preview an external JSON package with a required asset and invalid base64 payload bytes. Apply should be blocked before backup/import, the same as a missing required asset.
 
+## Combat Attack 17.6 — OWNER Manual Acceptance
+
+Use only a disposable workspace with an active two-participant Combat Session. Give the target a valid Properties-backed Character source with AC 12, HP 10/10 and, for the third route, Temp HP 2. Keep Goblin as the current Initiative participant. Record the OWNER result separately; automated PASS does not complete this checklist.
+
+### Route 1 — Hit, reload and Undo
+
+1. Open the existing `Бой и инициатива` popup and confirm `Goblin` is the read-only attacker.
+2. Select the other participant as target.
+3. Enter label `Shortbow`, attack `d20 + 100`, damage `5`, and damage type `piercing`.
+4. Press `Атаковать` once. Confirm a pending state appears, then confirm hit, attack total, AC 12, damage 5 and HP `10 → 5`.
+5. Close/reopen or reload the disposable workspace and confirm target HP remains 5.
+6. Open `История` from the Combat popup. Confirm the Shortbow attack is present and offers `Отменить атаку`.
+7. Undo it. Confirm HP returns to 10, a reversal is visible and the original attack no longer offers Undo.
+8. Close/reopen or reload again and confirm restored HP remains 10.
+
+### Route 2 — Miss
+
+1. With target HP 10, enter label `Miss check`, attack `d20 - 100`, damage `5`, and type `piercing`.
+2. Attack once and confirm `Промах`, an attack total and target AC are shown, while no damage result is shown.
+3. Confirm target HP remains 10 after reopen/reload.
+4. Open Event History, confirm the miss exists and confirm it offers no Undo.
+
+### Route 3 — Temp HP and Undo
+
+1. Set the disposable target to HP 10/10 and Temp HP 2, then use attack `d20 + 100` and damage `5`.
+2. Confirm the result shows HP `10 → 7` and Temp HP `2 → 0`.
+3. Open Event History and undo the attack.
+4. Confirm one Undo restores HP 10 and Temp HP 2; reopen/reload and confirm both values persist.
+
 ## Desktop
 
 1. Start `src-tauri\target\release\my-own-world.exe`.

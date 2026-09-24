@@ -3,6 +3,15 @@ import { isCombatStateSaveConfirmed, logCombatSessionOperation } from '../events
 import { positionPopupNearAnchor } from '../ui/popupPosition.js';
 
 import {
+  executeCombatAttack
+} from '../combat/combatActionPipeline.js';
+
+import {
+  createCombatAttackPresentation,
+  createManualCombatAttackRequest
+} from './campaignMapCombatAttackUi.js';
+
+import {
   CampaignMapInitiativeModel,
   createParticipantFromToken,
   isTokenAlive,
@@ -227,10 +236,12 @@ function createParticipantFromRow(row, model, previous) {
 function renderOrderPopup(popup, store, deps, anchor) {
   const model = store.getModel();
   const session = getSession(model);
-  popup.innerHTML = getOrderHTML(session);
-  renderOrderList(popup, model, readIntegrity(store, deps));
+  const diagnostics = readIntegrity(store, deps);
+  popup.innerHTML = getOrderHTML(session, getAttackHTML(model, diagnostics));
+  renderOrderList(popup, model, diagnostics);
   syncActiveTokenHighlights(store.map, new CampaignMapInitiativeModel(model.initiative));
   bindOrderActions(popup, store, deps, anchor);
+  bindAttackActions(popup, store, deps);
   if (!popup.classList.contains('hidden')) {
     positionPopupNearAnchor(popup, anchor, {
       avoid: () => document.querySelector('.campaign-map-properties-panel')
@@ -281,6 +292,165 @@ function bindOrderActions(popup, store, deps, anchor) {
     popup.querySelector('.campaign-initiative-checkbox, .campaign-initiative-close-btn')?.focus();
   });
   popup.querySelector('.campaign-initiative-close-btn').addEventListener('click', closeMapPopup);
+}
+
+
+function bindAttackActions(popup, store, deps) {
+
+  const form = popup.querySelector('.campaign-combat-attack-form');
+
+  if (!form) return;
+
+  popup.querySelector('.campaign-combat-history-btn')?.addEventListener('click', event => {
+    event.preventDefault();
+    closeMapPopup();
+    document.getElementById('eventHistoryBtn')?.click();
+  });
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    void submitCombatAttack(form, popup, store, deps);
+  });
+}
+
+
+async function submitCombatAttack(form, popup, store, deps) {
+
+  if (form.dataset.pending === 'true') return;
+
+  const model = store.getModel();
+  const session = getSession(model);
+  const initiative = new CampaignMapInitiativeModel(model.initiative);
+  const actor = initiative.getParticipant(initiative.activeParticipantId);
+  const field = name => form.elements.namedItem(name);
+  const status = form.querySelector('.campaign-combat-attack-result');
+
+  let request;
+
+  try {
+
+    const createId = deps.createCombatActionId || (() => crypto.randomUUID());
+    const intentId = createId();
+
+    request = createManualCombatAttackRequest({
+      actionId: `combat-action:${intentId}`,
+      definitionId: `manual-attack:${intentId}`,
+      componentId: `damage:${intentId}`,
+      mapPageId: deps.getMapPageId?.(),
+      sessionId: session?.sessionId,
+      actorParticipantId: actor?.participantId,
+      targetParticipantId: field('targetParticipantId')?.value,
+      label: field('attackLabel')?.value,
+      attackFormula: field('attackFormula')?.value,
+      damageFormula: field('damageFormula')?.value,
+      damageType: field('damageType')?.value
+    });
+
+  } catch (error) {
+
+    renderAttackNotice(status, {
+      tone: 'warning',
+      status: 'invalid-request',
+      technicalReason: error.code || error.message,
+      message: '\u041f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u0435, \u0446\u0435\u043b\u044c \u0438 \u0444\u043e\u0440\u043c\u0443\u043b\u044b \u0430\u0442\u0430\u043a\u0438.'
+    });
+
+    return;
+  }
+
+  form.dataset.pending = 'true';
+  form.setAttribute('aria-busy', 'true');
+
+  const controls = [...form.querySelectorAll('[data-combat-attack-control]')];
+  const disabled = controls.map(control => control.disabled);
+
+  controls.forEach(control => { control.disabled = true; });
+  renderAttackNotice(status, {
+    tone: 'neutral',
+    status: 'pending',
+    technicalReason: '',
+    message: '\u0410\u0442\u0430\u043a\u0430 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u0435\u0442\u0441\u044f\u2026'
+  });
+
+  let result;
+
+  try {
+
+    const run = deps.executeCombatAttack || executeCombatAttack;
+
+    result = await run(request, {
+      getMapContext: () => ({
+        mapPageId: deps.getMapPageId?.(),
+        mapModel: store.getModel(),
+        dirty: store.isDirty()
+      }),
+      resolvePage: deps.resolvePage,
+      ...(deps.combatAttackExecutionOptions || {})
+    });
+
+  } catch (error) {
+
+    result = {
+      ok: false,
+      state: 'unchanged',
+      audit: 'not-attempted',
+      reason: error.code || error.message
+    };
+  }
+
+  if (popup.contains(form)) {
+
+    renderAttackNotice(status, createCombatAttackPresentation(result));
+
+    if (result?.ok && result.audit === 'durable') {
+
+      const targetTokenId = result.resolution?.target?.tokenId;
+      const token = targetTokenId
+        ? store.map?.querySelector(`.campaign-map-token[data-token-id="${CSS.escape(targetTokenId)}"]`)
+        : null;
+
+      try {
+        if (token) deps.applyTokenHealthState?.(token, null, { publish: false });
+      } catch {
+        status.dataset.refresh = 'failed';
+      }
+    }
+
+    delete form.dataset.pending;
+    form.removeAttribute('aria-busy');
+    controls.forEach((control, index) => { control.disabled = disabled[index]; });
+  }
+}
+
+
+function renderAttackNotice(node, presentation) {
+
+  if (!node) return;
+
+  node.dataset.status = presentation.status;
+  node.dataset.reason = presentation.technicalReason || '';
+  node.dataset.tone = presentation.tone || 'neutral';
+
+  if (!presentation.attackTotal && presentation.attackTotal !== 0) {
+    node.textContent = presentation.message;
+    return;
+  }
+
+  const health = presentation.healthBefore && presentation.healthAfter
+    ? `<div class="campaign-combat-attack-health">
+        <span>HP: <strong>${escapeHTML(presentation.healthBefore.hpCurrent)} \u2192 ${escapeHTML(presentation.healthAfter.hpCurrent)}</strong></span>
+        <span>Temp HP: <strong>${escapeHTML(presentation.healthBefore.hpTemp)} \u2192 ${escapeHTML(presentation.healthAfter.hpTemp)}</strong></span>
+      </div>`
+    : '<div class="campaign-combat-attack-health">HP \u043d\u0435 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u044b</div>';
+
+  node.innerHTML = `
+    <strong>${escapeHTML(presentation.label)} \u2014 ${escapeHTML(presentation.message)}</strong>
+    <div class="campaign-combat-attack-rolls">
+      <span>\u0410\u0442\u0430\u043a\u0430: <strong>${escapeHTML(presentation.attackTotal)}</strong></span>
+      <span>\u041a\u0417: <strong>${escapeHTML(presentation.armorClass)}</strong></span>
+      ${presentation.damageAmount === null ? '' : `<span>\u0423\u0440\u043e\u043d: <strong>${escapeHTML(presentation.damageAmount)} ${escapeHTML(presentation.damageType)}</strong></span>`}
+    </div>
+    ${health}`;
 }
 
 
@@ -585,7 +755,7 @@ function getPickerHTML() {
 }
 
 
-function getOrderHTML(session) {
+function getOrderHTML(session, attackHTML = '') {
   const frozen = Boolean(session && session.status !== 'active');
   const statusText = { active: '\u0410\u043a\u0442\u0438\u0432\u0435\u043d', paused: '\u041f\u0430\u0443\u0437\u0430', finished: '\u0417\u0430\u0432\u0435\u0440\u0448\u0451\u043d' }[session?.status];
   const lifecycle = session?.status === 'finished'
@@ -612,6 +782,7 @@ function getOrderHTML(session) {
         </div>`
       })}
       <div class="campaign-initiative-scroll">
+      ${attackHTML}
       ${getMapPopupSectionHTML({ label: INITIATIVE_TEXT.turnTitle, key: 'order', children: '<div class="campaign-initiative-order-list"></div>' })}
       ${session ? getMapPopupSectionHTML({ label: '\u041f\u0440\u043e\u0431\u043b\u0435\u043c\u044b \u0431\u043e\u044f', key: 'combat-problems', children: '<div class="campaign-combat-problems"></div>' }) : ''}
       </div>
@@ -621,6 +792,88 @@ function getOrderHTML(session) {
         <button class="mow-button campaign-initiative-edit-btn" data-focus-key="edit" type="button" ${frozen ? 'disabled' : ''}>${INITIATIVE_TEXT.edit}</button>
         <button class="mow-button campaign-initiative-close-btn" data-focus-key="close" type="button">${INITIATIVE_TEXT.close}</button>
       </div>`
+  });
+}
+
+
+function getAttackHTML(model, diagnostics) {
+
+  const session = getSession(model);
+
+  if (!session) return '';
+
+  const initiative = new CampaignMapInitiativeModel(model.initiative);
+  const actor = initiative.getParticipant(initiative.activeParticipantId);
+  const memberIds = new Set(session.participants.map(member => member.participantId));
+  const issueIds = new Set((diagnostics.issues || []).map(issue => issue.participantId));
+  const sessionActive = session.status === 'active';
+  const actorValid = Boolean(actor && memberIds.has(actor.participantId) && !issueIds.has(actor.participantId));
+  const targets = session.participants
+    .filter(member => member.participantId !== actor?.participantId)
+    .map(member => {
+      const participant = initiative.getParticipant(member.participantId);
+      const sameCharacter = Boolean(actor?.pageId && participant?.pageId && actor.pageId === participant.pageId);
+      const unavailable = !participant || issueIds.has(member.participantId) || sameCharacter;
+      const label = participant?.name || member.participantId;
+      const reason = sameCharacter
+        ? ' \u2014 \u0442\u043e\u0442 \u0436\u0435 \u043f\u0435\u0440\u0441\u043e\u043d\u0430\u0436'
+        : unavailable ? ' \u2014 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d' : '';
+      return {
+        unavailable,
+        html: `<option value="${escapeAttribute(member.participantId)}" ${unavailable ? 'disabled' : ''}>${escapeHTML(label + reason)}</option>`
+      };
+    });
+  const usableTargetCount = targets.filter(target => !target.unavailable).length;
+  const unavailableReason = !sessionActive
+    ? '\u0410\u0442\u0430\u043a\u0430 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u0432 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u043c \u0431\u043e\u044e.'
+    : !actorValid
+    ? '\u0422\u0435\u043a\u0443\u0449\u0438\u0439 \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a \u0431\u043e\u044f \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d.'
+    : !usableTargetCount
+    ? '\u041d\u0435\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e\u0439 \u0446\u0435\u043b\u0438.'
+    : '';
+  const disabled = unavailableReason ? 'disabled' : '';
+
+  return getMapPopupSectionHTML({
+    label: '\u0410\u0442\u0430\u043a\u0430',
+    key: 'attack',
+    children: `
+      <form class="campaign-combat-attack-form">
+        <div class="campaign-combat-attack-actor">
+          <span>\u0410\u0442\u0430\u043a\u0443\u044e\u0449\u0438\u0439</span>
+          <strong data-combat-attack-actor-id="${escapeAttribute(actor?.participantId || '')}">${escapeHTML(actor?.name || '\u041d\u0435\u0442 \u0442\u0435\u043a\u0443\u0449\u0435\u0433\u043e \u0443\u0447\u0430\u0441\u0442\u043d\u0438\u043a\u0430')}</strong>
+        </div>
+        <div class="campaign-combat-attack-grid">
+          <label class="campaign-combat-attack-field campaign-combat-attack-field-wide">
+            <span>\u0426\u0435\u043b\u044c</span>
+            <select class="mow-input" name="targetParticipantId" data-combat-attack-control ${disabled} required>
+              ${usableTargetCount ? '<option value="">\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0446\u0435\u043b\u044c</option>' : ''}
+              ${targets.map(target => target.html).join('')}
+            </select>
+          </label>
+          <label class="campaign-combat-attack-field campaign-combat-attack-field-wide">
+            <span>\u041d\u0430\u0437\u0432\u0430\u043d\u0438\u0435</span>
+            <input class="mow-input" name="attackLabel" data-combat-attack-control ${disabled} required autocomplete="off" placeholder="Shortbow">
+          </label>
+          <label class="campaign-combat-attack-field">
+            <span>\u0410\u0442\u0430\u043a\u0430</span>
+            <input class="mow-input" name="attackFormula" data-combat-attack-control ${disabled} required autocomplete="off" spellcheck="false" placeholder="d20 + 4">
+          </label>
+          <label class="campaign-combat-attack-field">
+            <span>\u0423\u0440\u043e\u043d</span>
+            <input class="mow-input" name="damageFormula" data-combat-attack-control ${disabled} required autocomplete="off" spellcheck="false" placeholder="1d6 + 2">
+          </label>
+          <label class="campaign-combat-attack-field campaign-combat-attack-field-wide">
+            <span>\u0422\u0438\u043f \u0443\u0440\u043e\u043d\u0430</span>
+            <input class="mow-input" name="damageType" data-combat-attack-control ${disabled} required autocomplete="off" placeholder="piercing">
+          </label>
+        </div>
+        ${unavailableReason ? `<p class="campaign-combat-attack-unavailable">${escapeHTML(unavailableReason)}</p>` : ''}
+        <div class="campaign-combat-attack-actions">
+          <button class="mow-button campaign-combat-attack-submit" type="submit" data-focus-key="attack" data-combat-attack-control ${disabled}>\u0410\u0442\u0430\u043a\u043e\u0432\u0430\u0442\u044c</button>
+          <button class="mow-button campaign-combat-history-btn" type="button">\u0418\u0441\u0442\u043e\u0440\u0438\u044f</button>
+        </div>
+        <div class="campaign-combat-attack-result" role="status" aria-live="polite" aria-atomic="true"></div>
+      </form>`
   });
 }
 

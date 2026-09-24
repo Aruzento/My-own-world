@@ -6,13 +6,13 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-09-16
+Updated: 2026-09-24
 
 ## Current Product
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. NF-003 provides one durable, auditable event/transaction foundation with a canonical event store, RollResult logging, one reversible page-property resource transaction, a query API and a minimal event history UI. `0.0.1.16.0` Persistent Combat Session is CLOSED / PASS at `Usable` readiness; 16.1-16.10 are DONE and 16.FINAL is PASS. Combat current state lives in the Campaign Map page; the existing event history contains audit facts only. This is a persistent-session foundation, not full combat gameplay. Phase 17 is ACTIVE with 17.1-17.3 complete at Foundation readiness; 17.4 Durable Action Transaction is NEXT. A strict single-target attack can now resolve in memory, but it cannot persist HP, append action history or provide a usable Combat attack workflow. Phase 18+ remains BLOCKED and AI Core LATER.
+The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. `0.0.1.16.0` Persistent Combat Session is CLOSED / PASS at `Usable` readiness. Phase 17 is ACTIVE: 17.1-17.5 are DONE at Foundation readiness, while 17.6 First Combat Attack Workflow is implemented and READY FOR MANUAL ACCEPTANCE. The existing Combat popup now runs one durable explicit attack and reaches existing history/Undo, but OWNER manual acceptance is pending; 17.7 remains BLOCKED. Phase 18+ remains BLOCKED and AI Core LATER.
 
 ## Current Focus
 
@@ -27,7 +27,7 @@ Immediate direction:
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
 7. Closed phase: `0.0.1.16.0` Persistent Combat Session is `DONE` after 16.FINAL PASS on 2026-09-13.
-8. Active phase: `0.0.1.17.0` Combat Action Pipeline. `17.1` architecture, `17.2` Character Health Mutation Preparation and `17.3` Single-Target Attack Resolution are `DONE` at `Foundation`; `17.4` Durable Action Transaction is `NEXT`. The first usable single-target attack with history/Undo remains planned for `17.6`.
+8. Active phase: `0.0.1.17.0` Combat Action Pipeline. `17.1`-`17.5` are `DONE` at `Foundation`; `17.6` is `READY FOR MANUAL ACCEPTANCE`, and `17.7` remains blocked until the owner accepts the first popup attack workflow.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Continue with `0.0.1.17.4` Durable Action Transaction (NEXT); 17.1-17.3 are complete at Foundation readiness. Phase 16 remains CLOSED / PASS, Phase 17 ACTIVE, Phase 18+ BLOCKED and AI Core LATER.
+- Run the documented OWNER manual acceptance for `0.0.1.17.6`; do not begin 17.7 until it passes. Phase 16 remains CLOSED / PASS, Phase 17 ACTIVE, Phase 18+ BLOCKED and AI Core LATER.
 
 ## Readiness Model
 
@@ -51,7 +51,7 @@ This prevents "done" from meaning only "a model/helper was created".
 ## Key Risks
 
 - Large real workspaces can still expose UI delay, especially in map-heavy sessions; the measurable and native `X:\ДНД\Мастер\По кампаниям\База` passes are currently green.
-- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls now have a canonical public facade, structured runtime results, explicit d20 advantage/disadvantage modes and natural-d20 critical metadata. Phase 15 provides typed durable history and its UI, Phase 16 provides session audit integration, and Phase 17 can resolve one strict single-target attack into a detached current/temp HP mutation plan. Durable action persistence, history, conditional Undo and UI are still required before an attack is usable.
+- Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls have a canonical public facade. Phase 15 provides typed durable history, Phase 16 provides session audit integration, and Phase 17 now provides durable single-target attack execution, supported compensation, and the first popup workflow. OWNER manual acceptance still gates the `Usable` claim.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
 - Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.

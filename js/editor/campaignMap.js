@@ -1388,7 +1388,9 @@ function getToolbarControllerDeps() {
 
   return {
     addMapShape,
+    applyTokenHealthState,
     changeMapImage,
+    getMapPageId: () => state.currentPage?.id || '',
     mapPickerDeps: getMapPickerDeps(),
     openAddKindPopup,
     openPresentationWindow,

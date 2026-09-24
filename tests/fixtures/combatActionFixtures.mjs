@@ -16,7 +16,8 @@ export function attackRequest() {
 }
 
 // Disposable real Properties + PageRecord + map serializer fixtures; memory storage uses the shared owner fixture.
-export async function createCombatActionWorld({ current = 10, temp = 0, dice = [10, 3] } = {}) {
+export async function createCombatActionWorld({ current = 10, temp = 0, dice = [10, 3],
+  actorName = 'actor', targetName = 'target', status = 'active' } = {}) {
   const characterPage = (id, health) => {
     const wrapper = document.createElement('div');
     wrapper.innerHTML = createPropertiesBlock({ cardType: 'character', title: id });
@@ -29,10 +30,11 @@ export async function createCombatActionWorld({ current = 10, temp = 0, dice = [
   };
   const actor = characterPage('actor-page', { current: 10, temp: 0 });
   const target = characterPage('target-page', { current, temp });
-  const tokens = ['actor', 'target'].map(tokenId => ({ tokenId, pageId: `${tokenId}-page`, name: tokenId, sourceMode: 'original' }));
+  const names = { actor: actorName, target: targetName };
+  const tokens = ['actor', 'target'].map(tokenId => ({ tokenId, pageId: `${tokenId}-page`, name: names[tokenId], sourceMode: 'original' }));
   const mapModel = new CampaignMapModel({ tokens,
     initiative: { participants: tokens.map(t => ({ ...t, participantId: `token:${t.tokenId}` })), activeParticipantId: 'token:actor' },
-    combatSession: { sessionId: 'session-1', status: 'active', round: 3,
+    combatSession: { sessionId: 'session-1', status, round: 3,
       participants: [{ participantId: 'token:actor' }, { participantId: 'token:target' }, { participantId: 'token:broken' }] } });
   const map = createDataSafetyPage({ id: 'map-1', type: 'campaignMap', template: 'campaignMap',
     body: serializeCampaignMapModelHTML({ title: 'Map', model: mapModel }) });
