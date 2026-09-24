@@ -539,7 +539,17 @@ The current map remains authoritative, and history is never replayed into it.
 
 Phase 17.4 adds `action.resolved` v1 through `combatActionEventSchema.js` and the existing EventTypes vocabulary. One completed `combat-attack` transaction contains attack roll, optional damage roll, changed `hpTemp` then `hpCurrent` resource facts, and the action resolution. The action payload contains exact actor/target/definition/policy/defense/outcome and event links plus minimal health guards. EventTypes delegates cross-event identity/order/coverage/math validation on both creation and reload. See [Combat Action Pipeline](./COMBAT_ACTION_PIPELINE_CONTRACT.md) for the strict shape and failure matrix.
 
-`combatActionEventLog.js` builds the complete candidate before state mutation. `CombatActionPipeline` owns one PageCommand write followed by one append; miss/no-change needs only append. EventStore preserves its shared append queue and additionally accepts captured `workspaceContext` guards. Append failure does not roll back HP: it returns unconfirmed audit plus one bounded readback. Action transactions are explicitly non-reversible through the standalone-resource classifier until 17.5.
+`combatActionEventLog.js` builds the complete candidate before state mutation. `CombatActionPipeline` owns one PageCommand write followed by one append; miss/no-change needs only append after durable target validation. EventStore preserves its shared append queue and additionally accepts captured `workspaceContext` guards. Append failure does not roll back HP: it returns unconfirmed audit plus one bounded readback. In 17.5, `undoTransaction` supports state-changing single-target attacks through an explicit attack branch, never through the standalone-resource writer.
+
+### 0.0.1.17.5 Attack compensation
+
+`combatAttackReversal.js` is internal to Transaction Reversal. Strict original action validation plus `healthGuard` and linked resource facts reconstruct full original before/after health. Current durable `hpCurrent`, `hpTemp`, `hpMax` must equal original AFTER. Exact Character health preparation preserves unrelated current edits; both inverse fields share one PageCommand and current expected base. Original actor/session/round need not remain active.
+
+One completed `transaction-reversal` transaction carries `reversesTransactionId`, inverse resource facts in hpTemp/hpCurrent order with `reversesEventId`, then one `transaction.reversal.recorded`. EventTypes checks exact metadata/transaction ids, unique and complete inverse links/resources, strict order, event ownership and no extra facts before the compensation write. No roll or action event is created; original records are unchanged. Generic one-resource reversals remain valid.
+
+Attack/Undo share the target queue and workspace context. Original history and existing reversal are rechecked inside the queue. Miss/no-change, changed health/max, malformed/deleted targets and double Undo reject. The candidate validates before one page write and one append. A blocked write appends nothing; uncertain write outcomes use existing page readback. Unlike the earlier standalone-resource helper, an attack compensation is never rolled back on append error. The result separately reports state (`unchanged`/`persisted`/`uncertain`) and audit (`not-attempted`/`durable`/`unconfirmed`), preserving ids and at most one generic exact-transaction readback. Exact bytes found after an exception do not imply normal append success. No automatic retry, damage reapplication, undo-of-undo or redo exists.
+
+Event History exposes a single Undo control on supported attack summaries, hides it for miss/no-change/reversed originals and retains both original and reversal history. There is still no Combat popup attack execution workflow; 17.6 remains the first usable/manual acceptance.
 
 Reserved future namespaces:
 
@@ -668,6 +678,6 @@ Version impact:
 
 - Roll events can now be appended through `logDiceRoll()` and read in the minimal Event Log UI, but there is no dedicated dice tray or roll action UI yet.
 - The first stateful page-property resource integration and narrow Combat audit adapter exist; broader character/action/damage/healing/effect integration remains future work.
-- The existing Combat/Initiative popup and Event History panel provide current state and audit views respectively; Combat Undo/replay is not supported.
+- The existing Combat/Initiative popup and Event History panel provide current state and audit views respectively. Supported state-changing attacks now have conditional history compensation; Combat session/turn Undo and history replay remain unsupported. The popup attack execution workflow remains 17.6.
 - Event-history backup export would require a separate approved policy/format decision; current v1 exclusion is intentional.
-- Reserved future names do not implement action, damage, healing, effect, rest, movement or scene-transition behavior. Only the explicitly listed Combat turn/round facts are implemented.
+- Reserved future names do not implement additional action, damage, healing, effect, rest, movement or scene-transition behavior. Only the explicitly listed Combat facts and strict single-target `action.resolved` attack contract are implemented.

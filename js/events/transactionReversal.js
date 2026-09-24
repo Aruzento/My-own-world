@@ -20,6 +20,8 @@ import {
 import {
   TRANSACTION_STATUSES
 } from './transactionModel.js';
+import { captureStorageWorkspaceContext, createContextBoundStorageAdapter } from '../storage/storageAdapter.js';
+import { classifyCombatAttackReversal, compensateCombatAttack } from './combatAttackReversal.js';
 
 
 export const TRANSACTION_REVERSAL_VERSION =
@@ -128,6 +130,10 @@ export function classifyTransactionReversibility(
     });
   }
 
+  if (original.intentType === 'combat-attack' || original.events?.some(event => event.type === 'action.resolved')) {
+    return createReversibilityResult(classifyCombatAttackReversal(original, transactions));
+  }
+
   if (original.status !== TRANSACTION_STATUSES.COMPLETED) {
 
     return createReversibilityResult({
@@ -170,11 +176,6 @@ export function classifyTransactionReversibility(
       reversedByTransactionId:
         existingReversal.transactionId
     });
-  }
-
-  if (original.intentType === 'combat-attack' || original.events.some(event => event.type === 'action.resolved')) {
-    return createReversibilityResult({ reversible: false, transactionId: original.transactionId,
-      reason: 'combat-action-undo-not-supported' });
   }
 
   const resourceEvents =
@@ -283,10 +284,15 @@ export async function undoTransaction(
       input
     );
 
+  let workspaceContext = null;
+  try { workspaceContext = captureStorageWorkspaceContext(); } catch { /* Legacy resource Undo may use a supplied adapter. */ }
+  const readAdapter = workspaceContext && (!options.storageAdapter || options.storageAdapter === workspaceContext.adapter)
+    ? createContextBoundStorageAdapter(workspaceContext) : options.storageAdapter;
+
   const transactions =
     await readEventTransactions({
       storageAdapter:
-        options.storageAdapter
+        readAdapter
     });
 
   const original =
@@ -305,6 +311,10 @@ export async function undoTransaction(
           normalized.transactionId
       }
     );
+  }
+
+  if (original.intentType === 'combat-attack' || original.events.some(event => event.type === 'action.resolved')) {
+    return compensateCombatAttack(normalized, original, workspaceContext, options);
   }
 
   const reversibility =

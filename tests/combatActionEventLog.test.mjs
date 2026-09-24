@@ -7,8 +7,11 @@ import { validateTypedEvent } from '../js/events/eventTypes.js';
 import { classifyTransactionReversibility } from '../js/events/transactionReversal.js';
 import { createCharacterModel, applyCharacterHealthChange } from '../js/character/characterModel.js';
 import { createMemoryWorkspaceAdapter } from './fixtures/dataSafetyFixtures.mjs';
+import { classifyCombatAttackReversal, createCombatAttackReversalTransaction } from '../js/events/combatAttackReversal.js';
 
 const now = () => '2026-09-22T10:00:00.000Z';
+const reversalInput = { reversalTransactionId: 'undo-1', reversalEventId: 'inverse-1', reversalMetadataEventId: 'metadata-1',
+  createdAt: now(), eventCreatedAt: now(), completedAt: now(), source: 'test', reason: 'undo', order: 0 };
 const clone = value => JSON.parse(JSON.stringify(value));
 function candidate({ temp = 2, damage = 5, hit = true } = {}) {
   const roll = value => rollDice({ formula: String(value), mode: 'normal', criticalPolicy: 'none' });
@@ -29,11 +32,66 @@ function candidate({ temp = 2, damage = 5, hit = true } = {}) {
   return createCombatAttackTransaction(resolution, { transactionId: 'transaction-1', createId: () => `event-${++id}`, now });
 }
 
+for (const config of [{ temp: 0 }, { temp: 2 }, { temp: 8 }]) {
+  test(`reversal reconstructs complete health from original resource facts and guards ${JSON.stringify(config)}`, async () => {
+    const original = candidate(config);
+    const before = JSON.stringify(original);
+    const evidence = classifyCombatAttackReversal(original);
+    assert.deepEqual(evidence.before, { hpMax: 10, hpCurrent: 10, hpTemp: config.temp });
+    const inverse = createCombatAttackReversalTransaction(original, evidence, reversalInput);
+    assert.equal(JSON.stringify(original), before);
+    assert.equal(Object.isFrozen(inverse.events.at(-1).payload), true);
+    assert.equal(classifyTransactionReversibility(original, [original, inverse]).reason, 'already-reversed');
+    assert.equal(classifyTransactionReversibility(inverse).reversible, false);
+    for (const [index, resource] of evidence.resources.entries()) {
+      assert.deepEqual(inverse.events[index].payload.resource, resource.payload.resource);
+      assert.equal(inverse.events[index].payload.before, resource.payload.after);
+      assert.equal(inverse.events[index].payload.after, resource.payload.before);
+      assert.equal(inverse.events[index].reversesEventId, resource.eventId);
+    }
+    const adapter = createMemoryWorkspaceAdapter();
+    await appendTransactionRecord(original, { storageAdapter: adapter });
+    await appendTransactionRecord(inverse, { storageAdapter: adapter });
+    assert.deepEqual((await readTransactionRecords({ storageAdapter: adapter, strict: true })).transactions, [original, inverse]);
+  });
+}
+
+const reversalMutations = {
+  'wrong original transaction': tx => { tx.reversesTransactionId = 'foreign'; },
+  'wrong reversal metadata': tx => { tx.events.at(-1).payload.reversalTransactionId = 'foreign'; },
+  'duplicate reversed ids': tx => { tx.events.at(-1).payload.reversedEventIds[1] = tx.events.at(-1).payload.reversedEventIds[0]; },
+  'missing reversed id': tx => { tx.events.at(-1).payload.reversedEventIds.pop(); },
+  'foreign inverse link': tx => { tx.events[0].reversesEventId = 'foreign'; },
+  'missing inverse link': tx => { delete tx.events[0].reversesEventId; },
+  'wrong inverse transaction': tx => { tx.events[0].transactionId = 'foreign'; },
+  'non-strict order': tx => { tx.events[1].order = tx.events[0].order; },
+  'duplicate resource': tx => { tx.events[1].payload.resource = clone(tx.events[0].payload.resource); },
+  'missing metadata': tx => { tx.events.pop(); },
+  'extra metadata': tx => { tx.events.push({ ...clone(tx.events.at(-1)), eventId: 'extra', order: 4 }); },
+  'extra roll': tx => { tx.events.unshift({ ...clone(candidate().events[0]), transactionId: tx.transactionId }); },
+  'incorrect inverse delta': tx => { tx.events[0].payload.delta = 100; }
+};
+for (const [name, mutate] of Object.entries(reversalMutations)) {
+  test(`reversal relations reject ${name} during candidate validation and durable read`, async () => {
+    const original = candidate();
+    const inverse = createCombatAttackReversalTransaction(original, classifyCombatAttackReversal(original), reversalInput);
+    const bad = clone(inverse); mutate(bad);
+    assert.throws(() => createTransactionRecord(bad));
+    const { events, ...transaction } = bad;
+    const adapter = createMemoryWorkspaceAdapter();
+    await adapter.writeText(EVENT_TRANSACTION_LOG_PATH, JSON.stringify({ ...createTransactionRecord(inverse), transaction, events }) + '\n');
+    const read = await readTransactionRecords({ storageAdapter: adapter });
+    assert.equal(read.invalidRecordCount, 1);
+    assert.equal(read.transactions.length, 0);
+  });
+}
+
 for (const config of [{ temp: 2 }, { temp: 0 }, { damage: 0 }, { hit: false }]) {
-  test(`attack event assembly, durable roundtrip and explicit Undo block ${JSON.stringify(config)}`, async () => {
+  test(`attack event assembly, durable roundtrip and Undo eligibility ${JSON.stringify(config)}`, async () => {
     const transaction = candidate(config);
     assert.equal(Object.isFrozen(transaction.events.at(-1).payload), true);
-    assert.equal(classifyTransactionReversibility(transaction).reason, 'combat-action-undo-not-supported');
+    assert.equal(classifyTransactionReversibility(transaction).reason, config.hit === false ? 'combat-attack-miss'
+      : config.damage === 0 ? 'combat-attack-no-health-change' : 'combat-attack-health-change');
     const adapter = createMemoryWorkspaceAdapter();
     await appendTransactionRecord(transaction, { storageAdapter: adapter });
     const snapshot = await readTransactionRecords({ storageAdapter: adapter });
@@ -79,6 +137,7 @@ for (const [name, mutate] of Object.entries(mutations)) {
     const transaction = clone(candidate());
     mutate(transaction);
     assert.throws(() => createTransactionRecord(transaction));
+    assert.equal(classifyTransactionReversibility(transaction).reversible, false);
     const adapter = createMemoryWorkspaceAdapter();
     let writes = 0;
     adapter.writeText = async () => { writes++; };

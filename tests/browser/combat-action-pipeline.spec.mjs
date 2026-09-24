@@ -51,7 +51,7 @@ for (const scenario of ['hit', 'equality', 'miss', 'zero', 'clamped']) {
     expect(r.rng).toBe(['miss', 'zero'].includes(scenario) ? 1 : 2);
     expect(r.execution.transaction.events.filter(e => e.type === 'resource.changed')).toHaveLength(unchanged ? 0 : 1);
     expect(JSON.stringify(r.history)).toContain(scenario === 'miss' ? 'промах' : 'попадание');
-    expect(r.history.items.every(item => item.canUndo === false)).toBe(true);
+    expect(r.history.items.filter(item => item.canUndo)).toHaveLength(unchanged ? 0 : 1);
   });
 }
 

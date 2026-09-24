@@ -6,9 +6,11 @@ import {
 
 
 import { normalizeActionResolvedPayload, assertCombatActionTransaction } from './combatActionEventSchema.js';
+import { assertTransactionReversalRelations } from './transactionReversalRelations.js';
 
 export function assertTypedTransactionRelations(transaction) {
   assertCombatActionTransaction(transaction);
+  assertTransactionReversalRelations(transaction);
 }
 
 export const EVENT_TYPE_PAYLOAD_VERSION = 1;

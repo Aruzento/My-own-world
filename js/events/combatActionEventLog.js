@@ -1,6 +1,7 @@
 import { createTransaction, appendTransactionEvent, completeTransaction } from './transactionModel.js';
 import { createTypedEvent } from './eventTypes.js';
-import { createTransactionRecord, readTransactionRecords } from './eventStore.js';
+import { createTransactionRecord } from './eventStore.js';
+export { inspectTransactionAudit as inspectCombatAttackAudit } from './transactionAuditReadback.js';
 
 export function createCombatAttackTransaction(resolution, { transactionId, createId = () => crypto.randomUUID(),
   now = () => new Date().toISOString() } = {}) {
@@ -34,19 +35,4 @@ export function createCombatAttackTransaction(resolution, { transactionId, creat
   transaction = completeTransaction(transaction, { completedAt: now() });
   createTransactionRecord(transaction);
   return transaction;
-}
-
-// Один диагностический readback, без повторного append и без восстановления HP из истории.
-export async function inspectCombatAttackAudit(transaction, storageAdapter) {
-  try {
-    const snapshot = await readTransactionRecords({ storageAdapter });
-    const matches = snapshot.transactions.filter(item => item.transactionId === transaction.transactionId);
-    if (!snapshot.invalidRecordCount && matches.length === 1 && JSON.stringify(createTransactionRecord(matches[0])) === JSON.stringify(createTransactionRecord(transaction))) {
-      return { status: 'exact-transaction-found' };
-    }
-    return { status: matches.length || snapshot.invalidRecordCount ? 'corrupt-or-inconsistent' : 'absent',
-      invalidRecordCount: snapshot.invalidRecordCount };
-  } catch (error) {
-    return { status: 'unreadable', message: String(error.message || error) };
-  }
 }

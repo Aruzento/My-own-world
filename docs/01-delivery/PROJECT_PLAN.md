@@ -8,7 +8,7 @@ owner_zone: "delivery"
 
 # Project Plan
 
-Updated: 2026-09-16
+Updated: 2026-09-24
 
 Planning version: 3
 
@@ -22,9 +22,9 @@ Owner decision: the current design is accepted for this product stage. The faile
 
 Current phase: `0.0.1.17.0` NF-005 Combat Action Pipeline is `ACTIVE`.
 
-Current leaf: `0.0.1.17.4` Durable Action Transaction is `DONE` at `Foundation` readiness on 2026-09-23. `0.0.1.17.5` Compensating Attack Undo is `NEXT`, not started. Phase 16 remains `DONE` (CLOSED / PASS) at `Usable` readiness for persistent sessions. Phase 17 can execute a durable attack and record its history through a runtime API, but has no supported Combat attack UI or Combat attack Undo. First manual usable attack acceptance remains 17.6. AI Core remains `LATER`.
+Current leaf: `0.0.1.17.5` Compensating Attack Undo is `DONE` at `Foundation` readiness on 2026-09-24. `0.0.1.17.6` First Combat Attack Workflow is `NEXT`, not started. Phase 16 remains `DONE` (CLOSED / PASS) at `Usable` readiness for persistent sessions. Phase 17 provides durable runtime attack execution and backend/history compensation for supported attacks. There is still no user-facing Combat attack execution workflow in the Combat popup. First manual usable attack acceptance remains 17.6. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `DONE` (CLOSED / PASS); `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `PASS`. `0.0.1.17.0` is `ACTIVE`; `17.1` through `17.4` are `DONE` at `Foundation`, and `17.5` is `NEXT`. Durable attack execution and history exist; no Combat attack UI or Combat Undo is implemented. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-006D`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `DONE` (CLOSED / PASS); `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `PASS`. `0.0.1.17.0` is `ACTIVE`; `17.1` through `17.5` are `DONE` at `Foundation`, and `17.6` is `NEXT`. Durable attack execution, history and supported attack compensation exist; no Combat popup attack execution workflow is implemented. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
 
 ## Execution Rules
 
@@ -401,7 +401,7 @@ DEPENDENCIES: Phase 6 dice, Phase 7 event log, Phase 8 persistent combat; Charac
 
 CANONICAL CONTRACT: [COMBAT_ACTION_PIPELINE_CONTRACT.md](../02-architecture/contracts/COMBAT_ACTION_PIPELINE_CONTRACT.md).
 
-ARCHITECTURE: `CombatActionPipeline` coordinates existing Initiative/current participant, exact token/page reads, CharacterModel, pure Dice, Properties preparation, PageCommandService and EventStore. First policy is explicit `ac-total-v1`, with no automatic D&D critical/mitigation rules. One strict `action.resolved` v1 fact links existing `roll.performed` and `resource.changed` facts; it is activated by 17.4. Undo remains the existing compensating-history owner with a future explicit single-page attack shape.
+ARCHITECTURE: `CombatActionPipeline` coordinates existing Initiative/current participant, exact token/page reads, CharacterModel, pure Dice, Properties preparation, PageCommandService and EventStore. First policy is explicit `ac-total-v1`, with no automatic D&D critical/mitigation rules. One strict `action.resolved` v1 fact links existing `roll.performed` and `resource.changed` facts; it is activated by 17.4. The existing Transaction Reversal owner now supports exact single-page attack compensation through the shared target queue and current health/base guards.
 
 PREREQUISITE: existing resource logging owns one numeric field and its own completed transaction; Character damage can change both `hpTemp` and `hpCurrent`. 17.2 therefore prepares one validated detached Properties patch before action execution. It is not a new HP model, persistence format or substitute product goal. 17.4 proves the existing workspace/precondition/write boundary and explicitly blocks premature resource Undo for action transactions.
 
@@ -413,8 +413,8 @@ PLANNED LEAF SEQUENCE:
 | `0.0.1.17.2` Character Health Mutation Preparation | `DONE` / `Foundation` | Strict existing Character/Creature Properties health source, one frozen detached current/temp HP patch, exact base/before/after/guards, unchanged state and parser/browser readback; no action runner/write/UI. |
 | `0.0.1.17.3` Single-Target Attack Resolution | `DONE` / `Foundation` | Strict typed request, exact current actor/target chain, public Dice rolls, `ac-total-v1` hit/miss and one component through the detached Character health plan; immutable runtime evidence and no durable side effects. |
 | `0.0.1.17.4` Durable Action Transaction | `DONE` / `Foundation` | One pipeline commit/write/append, strict action vocabulary and history summary, workspace/stale/failure coverage; action Undo explicitly disabled. |
-| `0.0.1.17.5` Compensating Attack Undo | `NEXT` | Exact original transaction plus current durable preconditions; inverse HP/temp HP in one page write and one new reversal transaction. |
-| `0.0.1.17.6` First Combat Attack Workflow | `BLOCKED` on 17.5 | Existing popup attack definition/target/result flow, history/Undo, reload and both manual Goblin routes; first usable vertical slice. |
+| `0.0.1.17.5` Compensating Attack Undo | `DONE` / `Foundation` | Exact original transaction plus current durable health/max/base guards; inverse HP/temp HP in one page write and one new reversal transaction. Shared queue, additive history and explicit state/audit uncertainty; no rollback/retry after append failure. |
+| `0.0.1.17.6` First Combat Attack Workflow | `NEXT` | Existing popup attack definition/target/result flow, history/Undo, reload and both manual Goblin routes; first usable vertical slice. |
 | `0.0.1.17.7` Checks And Saving Throws | `BLOCKED` on 17.6 | Existing Character calculation keys and explicit comparison policy through the same pipeline. |
 | `0.0.1.17.8` Direct And Mixed Damage | `BLOCKED` on 17.7 | Multiple typed components on one target with independent evidence and the same write/Undo path. |
 | `0.0.1.17.9` Healing And Temporary HP | `BLOCKED` on 17.8 | Character-owned healing and explicit temp-HP grant policy with durable history/Undo. |
@@ -423,7 +423,7 @@ PLANNED LEAF SEQUENCE:
 
 FIRST MANUAL ACCEPTANCE (17.6): current Goblin -> choose attack and one target -> attack roll -> hit -> one damage component -> HP decreases -> one transaction -> reload -> Undo restores HP. Also prove miss -> no damage roll/HP write -> coherent audit, and temp HP absorption with both affected fields restored together. These routes are planned, not implemented or manually passed by 17.4.
 
-EXIT CRITERIA: one action owner implements the bounded leaves above; hit/miss/history/reload/Undo pass the manual and automated acceptance; failure results distinguish page state from audit durability. Full D&D taxonomy, critical/mitigation rules and multi-page actions remain explicitly unsupported unless separately contracted. Phase 17 is still Foundation after 17.4; Phase 18+ remains BLOCKED and AI Core LATER.
+EXIT CRITERIA: one action owner implements the bounded leaves above; hit/miss/history/reload/Undo pass the manual and automated acceptance; failure results distinguish page state from audit durability. Full D&D taxonomy, critical/mitigation rules and multi-page actions remain explicitly unsupported unless separately contracted. Phase 17 is still Foundation after 17.5; Phase 18+ remains BLOCKED and AI Core LATER.
 
 ### Phase 10 - 0.0.1.18.0 NF-006 Effects & Conditions Engine
 

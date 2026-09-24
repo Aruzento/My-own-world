@@ -7,9 +7,9 @@ owner_zone: "architecture"
 ---
 # Combat Action Pipeline Contract
 
-Updated: 2026-09-16
+Updated: 2026-09-24
 
-Status: `0.0.1.17.4` Durable Action Transaction is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.5 is NEXT. The runtime API executes one attack with durable Character state and readable audit history. There is no supported Combat attack UI or Combat attack Undo; first manual usable acceptance remains 17.6. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. Phase 18+ remains BLOCKED; AI Core remains LATER.
+Status: `0.0.1.17.5` Compensating Attack Undo is complete at `Foundation` readiness. Phase 17 is ACTIVE; 17.6 is NEXT. The runtime API executes one durable attack; the existing Transaction Reversal / Event History flow compensates supported state-changing attacks. There is still no Combat popup attack execution workflow; first manual usable acceptance remains 17.6. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. Phase 18+ remains BLOCKED; AI Core remains LATER.
 
 ## 1. Decision And First Product Slice
 
@@ -202,7 +202,7 @@ BackupService remains recovery owner. Backup v1 includes pages/assets only, not 
 
 ## 9. Compensating Undo
 
-17.4 must keep action transactions non-reversible in the current classifier until 17.5 installs the exact supported action reversal shape. Otherwise the existing one-resource classifier could expose premature Undo. Do not enable a generic Combat Undo.
+17.5 installs the exact supported action reversal shape. Action transactions never fall through to the standalone one-resource writer. Miss/no-change attacks and reversal-of-reversal remain non-reversible.
 
 17.5 uses the existing `undoTransaction` entry and Event History controls:
 
@@ -216,6 +216,14 @@ Recheck competing reversal attempts under the runtime action/Undo serialization 
 
 Local editor Ctrl+Z and PageCommandService runtime undo are separate histories, not substitutes for this auditable Undo. First UI integration must not offer raw page snapshot Undo as a way to reverse an attack silently. Normal later editor changes can make action Undo stale; they never erase original facts.
 
+Implemented boundary: `transactionReversal.js#undoTransaction` routes validated attacks to the internal `combatAttackReversal.js` helper. It re-reads strict durable history inside `serializeCombatPageMutation`, reconstructs before/after tuples from resource facts plus `healthGuard`, and prepares exact `hpCurrent`/`hpTemp` against the current saved page. All three current health fields must equal original AFTER; later unrelated saved edits survive. No current actor/session/round condition is required.
+
+The complete reversal candidate and its ids validate before writing. One PageCommand uses the inverse plan's current `previousPage`, `nextContent` and `expectedBase`. Its specific command type is `combat-action-health-reversal`. Inverse resources retain original identity/unit, link `reversesEventId`, and use temp/current order followed by one `transaction.reversal.recorded`. EventTypes delegates generic reversal relations to `transactionReversalRelations.js`; EventStore remains generic.
+
+Combat Undo returns frozen `mow-transaction-reversal-result` evidence with `ok`, `status`, `state`, `audit`, stage/reason, original/reversal ids, original health tuples, detached inverse plan, transaction and receipt/readback. Only a normal confirmed page write followed by durable append is success. Uncertain writes use page-owner readback; append errors retain compensated HP and the same candidate ids, with one shared `transactionAuditReadback.js` diagnostic and no rollback/retry. Even exact audit bytes after an exception remain `audit: unconfirmed`. A retry after compensation with absent audit fails current-state validation. Local queueing blocks concurrent double compensation; no cross-process lock/atomicity is claimed.
+
+Event History offers one Undo on the action summary only for a valid state-changing attack, shows additive reversal relations, and reports persisted/uncertain compensation separately from audit failure. Standalone numeric-resource Undo keeps its earlier one-field semantics. Backend/history compensation is Foundation; the first usable Combat popup attack workflow remains 17.6.
+
 ## 10. Bounded Implementation Sequence
 
 The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJECT_PLAN.md); this table defines capability boundaries. No later leaf is implemented by 17.4.
@@ -226,15 +234,15 @@ The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJEC
 | 17.2 | **DONE / Foundation: Character health mutation preparation.** One validated frozen detached existing Properties page patch for current/temp HP, exact base/before/after/guard evidence, forward Character math, exact inverse-ready values, unchanged content preservation and parser/browser readback. No action execution, write, event append or UI. |
 | 17.3 | **DONE / Foundation: Single-target attack resolution.** Strict request and exact active Initiative participant -> token -> page -> Character target chain; prevalidated public Dice requests; `ac-total-v1` hit/miss; one typed damage component; detached 17.2 health plan; frozen runtime evidence; deterministic rejection/no-side-effect coverage. No write, event append, UI or Undo. |
 | 17.4 | **DONE / Foundation:** One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
-| 17.5 | **NEXT:** Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
-| 17.6 | First usable Combat attack flow in the existing popup: labeled explicit attack definition, one target, result/error/pending state, history and Undo. Both Goblin acceptance routes plus temp HP, save/reload and stale references pass browser/manual checks. No new popup layout project. |
+| 17.5 | **DONE / Foundation:** Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
+| 17.6 | **NEXT:** First usable Combat attack flow in the existing popup: labeled explicit attack definition, one target, result/error/pending state, history and Undo. Both Goblin acceptance routes plus temp HP, save/reload and stale references pass browser/manual checks. No new popup layout project. |
 | 17.7 | Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
 | 17.8 | Direct damage and multiple typed damage components on one target through the same health/transaction/Undo boundary. Preserve component evidence; mitigation rules require their own explicit rule support. |
 | 17.9 | Healing and temporary-HP grants on one target using Character health ownership, explicit grant policy, persistence and Undo. |
 | 17.10 | Existing numeric resource changes/costs and manual GM correction through the same pipeline. Start with one page; any actor-cost plus target-damage operation waits for an explicit multi-page failure/compensation contract. Reuse current correction/resource vocabulary without double logging. |
 | 17.FINAL | Cumulative owner/failure/Undo/reload review and required gates. Verify the first manual attack routes, inventory supported action kinds and explicitly retain unsupported critical/mitigation/multi-page cases. Phase 18+ stays blocked until Phase 17 closure. |
 
-Attack first is the retained product goal; 17.4 supplies durable runtime execution/history, while UI and Undo remain later leaves. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
+Attack first is the retained product goal; 17.4 supplies durable runtime execution/history and 17.5 supplies backend/history compensation. The first usable attack UI remains 17.6. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
 
 ## 11. Verification And Linked Contracts
 

@@ -5,6 +5,23 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-24: 0.0.1.17.5 Compensating Attack Undo
+
+- Base: clean `main` / `origin/main` at `2ac9036932b2ca626ecc24a40b14132247eb0b1c` (`Fix durable target validation for combat actions`).
+- Extended the existing `undoTransaction` owner with a narrow internal attack branch. Strict action evidence reconstructs full original health from resource facts and `healthGuard`; miss/no-change remain non-reversible. Current durable current/temp/max HP must exactly match original AFTER. Exact health preparation preserves unrelated newer saved edits without restoring historical page HTML.
+- Attack and Undo share `serializeCombatPageMutation`. The queued operation re-reads original durable history and reversal relations before preparing the current page. One PageCommand restores current-only, temp-only or both fields; one prevalidated reversal contains inverse resources in temp/current order and reversal metadata. Original history remains immutable. Sequential/concurrent double Undo rejects.
+- Added generic reversal cross-event validation and extracted shared exact-transaction diagnostic readback. Blocked writes append nothing; uncertain page writes use the page owner's readback. After confirmed compensation, failed append preserves restored HP and ids with explicit state/audit results, one diagnostic read and no retry/rollback. Retry after absent audit fails the current-state guard. Workspace changes before/during write and before append retain conservative outcomes.
+- Existing Event History offers one attack Undo button for supported state-changing attacks, shows additive reversal relations and explicit unconfirmed-compensation messages. Generic standalone resource Undo retains its one-field behavior and passes regression coverage.
+- Focused PASS: 86 unit/integration tests and 74 browser tests, including actual Properties parsing, reload before/after Undo, both-field one-write compensation, unrelated edits, max/health/deleted/malformed/stale guards, invalid candidate ids, attack/Undo queue sharing, double Undo, write/append/workspace failure matrix and History controls. `docs:index`, `verify:quick`, `verify`, encoding and diff checks pass. All fixtures are disposable; no real user workspace was changed.
+- Full production gate PASS: 870 unit/integration tests, 298 browser tests, disposable large-workspace performance, syntax/import, encoding, UI audit, docs and agent-task checks. The gate-generated historical file-audit rewrite was excluded from this leaf.
+- Delivery: Phase 17 ACTIVE; 17.1-17.5 DONE / Foundation; 17.6 NEXT and not started. Backend/history compensation exists, but no Combat popup attack execution workflow exists. 17.6 remains first manual usable acceptance; Phase 18+ BLOCKED; AI Core LATER.
+
+Exact changed files:
+
+- Runtime: `js/events/transactionReversal.js`, `js/events/combatAttackReversal.js`, `js/events/transactionReversalRelations.js`, `js/events/transactionAuditReadback.js`, `js/events/combatActionEventLog.js`, `js/events/eventTypes.js`, `js/ui/eventHistoryPanel.js`.
+- Tests: `tests/combatActionEventLog.test.mjs`, `tests/browser/combat-action-pipeline.spec.mjs`, `tests/browser/combat-attack-undo.spec.mjs`, `tests/fixtures/combatUndoFixtures.mjs`.
+- Docs: `docs/01-delivery/PROJECT_PLAN.md`, `docs/01-delivery/WORK_LOG.md`, `docs/02-architecture/contracts/COMBAT_ACTION_PIPELINE_CONTRACT.md`, `docs/02-architecture/contracts/COMBAT_SESSION_CONTRACT.md`, `docs/02-architecture/contracts/EVENT_TRANSACTION_CONTRACT.md`.
+
 ## 2026-09-23: 0.0.1.17.4 Durable Action Transaction
 
 ### Corrective: durable target observation for every outcome

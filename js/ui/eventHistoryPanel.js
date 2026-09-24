@@ -12,7 +12,6 @@ import {
 } from '../events/eventTypes.js';
 
 import {
-  EVENT_QUERY_MAX_LIMIT,
   getEventTransactionByIdFromSnapshot,
   queryEventLogFromSnapshot
 } from '../events/eventQuery.js';
@@ -252,22 +251,6 @@ export async function createEventHistoryViewModel(
       }
     );
 
-  const reversibilitySource =
-    result.returnedCount > 0
-      ? queryEventLogFromSnapshot(
-        snapshot,
-        {
-          limit:
-            EVENT_QUERY_MAX_LIMIT
-        }
-      )
-      : result;
-
-  const transactionSummaries =
-    collectTransactionSummaries(
-      reversibilitySource.items
-    );
-
   const transactionCache =
     new Map();
 
@@ -302,7 +285,7 @@ export async function createEventHistoryViewModel(
       transaction
         ? classifyTransactionReversibility(
           transaction,
-          transactionSummaries
+          snapshot.transactions
         )
         : null;
 
@@ -592,7 +575,7 @@ function createEventItem({
     const undoButton =
       createButton({
         label:
-          'Отменить изменение ресурса',
+          item.eventType === EVENT_TYPES_V1.ACTION_RESOLVED ? 'Отменить атаку' : 'Отменить изменение ресурса',
         variant:
           'ghost'
       });
@@ -605,6 +588,7 @@ function createEventItem({
       () => {
 
         void handleUndo({
+          attack: item.eventType === EVENT_TYPES_V1.ACTION_RESOLVED,
           transactionId:
             item.transactionId,
           button:
@@ -633,6 +617,7 @@ function createEventItem({
 
 
 async function handleUndo({
+  attack = false,
   transactionId,
   button,
   loadOptions,
@@ -664,7 +649,7 @@ async function handleUndo({
 
   try {
 
-    await undoTransaction(
+    const reversal = await undoTransaction(
       {
         transactionId,
         reversalTransactionId:
@@ -688,7 +673,7 @@ async function handleUndo({
         order:
           Date.now(),
         label:
-          'Отмена изменения ресурса',
+          attack ? 'Отмена атаки' : 'Отмена изменения ресурса',
         source:
           'event-history-ui',
         reason:
@@ -696,6 +681,16 @@ async function handleUndo({
       },
       loadOptions
     );
+
+    if (reversal.ok === false) {
+      const error = new Error(reversal.state === 'persisted'
+        ? 'Здоровье восстановлено, но отмена не подтверждена в журнале. Не повторяйте операцию.'
+        : reversal.state === 'uncertain'
+          ? 'Результат сохранения отмены не подтверждён. Проверьте страницу и журнал перед дальнейшими действиями.'
+          : `Отмена отклонена: ${reversal.reason}`);
+      error.reversal = reversal;
+      throw error;
+    }
 
     await loadEventHistory({
       body,
@@ -710,7 +705,8 @@ async function handleUndo({
       [
         {
           label:
-            'Отмена не выполнена',
+            error.reversal?.state === 'persisted' ? 'Здоровье восстановлено, журнал не подтверждён'
+              : error.reversal?.state === 'uncertain' ? 'Результат отмены не подтверждён' : 'Отмена не выполнена',
           tone:
             'warning'
         }
@@ -1064,9 +1060,10 @@ function createEventHistoryItemModel({
       summarizeEvent(
         event
       ),
-    relation,
+    relation: reversibility?.reversedByTransactionId
+      ? `Отменено транзакцией ${shortId(reversibility.reversedByTransactionId)}.` : relation,
     canUndo:
-      event.type === EVENT_TYPES_V1.RESOURCE_CHANGED &&
+      [EVENT_TYPES_V1.RESOURCE_CHANGED, EVENT_TYPES_V1.ACTION_RESOLVED].includes(event.type) &&
       reversibility?.reversible === true &&
       reversibility.originalEventId === event.eventId
   };
@@ -1321,38 +1318,6 @@ function formatRelation({
 }
 
 
-function collectTransactionSummaries(
-  items
-) {
-
-  const byId =
-    new Map();
-
-  for (const item of items) {
-
-    const id =
-      item.transaction?.transactionId;
-
-    if (
-      id &&
-      !byId.has(
-        id
-      )
-    ) {
-
-      byId.set(
-        id,
-        item.transaction
-      );
-    }
-  }
-
-  return [
-    ...byId.values()
-  ];
-}
-
-
 function createFallbackLabel(
   event
 ) {
@@ -1491,6 +1456,8 @@ function getReadableLoadError(
 function getReadableUndoError(
   error
 ) {
+
+  if (error.reversal) return error.message;
 
   const code =
     String(error?.code || '');
