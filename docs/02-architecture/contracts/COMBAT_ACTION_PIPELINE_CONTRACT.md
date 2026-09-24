@@ -35,7 +35,7 @@ Accepted 17.6 workflow routes to preserve and revalidate during migration:
 - Natural 3 produces total 7: miss, no damage roll, no HP/temp HP write, one auditable action transaction. Miss history remains; state Undo is unavailable because nothing changed.
 - The same hit against HP 10/temp HP 2 leaves HP 7/temp HP 0. Both fields save in one target-page write; one Undo restores both together.
 
-These routes were specified in 17.1 and implemented through 17.6; the current owner instruction accepts 17.6 as the baseline. CTV.1 does not claim a new manual execution. The first attack policy is explicitly `ac-total-v1`: attack total >= effective AC means hit, including equality. It uses `criticalPolicy: 'none'`; no natural-1/20 exception or doubled damage is claimed. D&D attack bonus derivation, critical attack rules and mitigation need explicit later rule contracts; Dice Engine's natural-d20 metadata alone does not implement them.
+These routes were specified in 17.1 and implemented through 17.6; the current owner instruction accepts 17.6 as the baseline. CTV Stage 1 does not claim a new manual execution. The first attack policy is explicitly `ac-total-v1`: attack total >= effective AC means hit, including equality. It uses `criticalPolicy: 'none'`; no natural-1/20 exception or doubled damage is claimed. D&D attack bonus derivation, critical attack rules and mitigation need explicit later rule contracts; Dice Engine's natural-d20 metadata alone does not implement them.
 
 ## 2. Repository Evidence And Ownership
 

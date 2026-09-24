@@ -5,12 +5,18 @@ read_when:
 owner_zone: "delivery"
 ---
 
-## 2026-09-24: CTV.1 architecture foundation and accepted Combat baseline
+## 2026-09-24: CTV roadmap structure corrective
+
+- The accepted Stage 1 technical architecture was not reconsidered or changed. The active CTV roadmap was corrected from an unauthorized five-item shorthand to the owner's nine independent stages.
+- Stage 1 remains DONE / Foundation; Stage 2 Schema Engine, Registry and Field Sets is the only NEXT task. Stages 3–9 remain sequentially BLOCKED. Phase 17 remains PAUSED; 17.6 remains the accepted baseline and 17.7+ stays blocked until Stage 9 closure and the parity gate.
+- This corrective changed status/routing documentation only. It does not start Stage 2 or change production code.
+
+## 2026-09-24: CTV Stage 1 architecture foundation and accepted Combat baseline
 
 - Current owner instruction supersedes the earlier same-day 17.6 not-accepted decision below: 17.6 is DONE and the accepted baseline; preserve its behavior, complete CTV, then return at 17.7. No new manual test was performed for this documentation task.
 - [Canonical design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) audits PageRecord/Properties/calculations/Character/Map/Combat and transport/recovery owners; selects one variablesJson envelope in PageRecord front matter and explicit versioned definition catalog coverage.
 - Owner confirmed legacy mapping: character/creature -> character, magic -> spell, object/note -> item with item.isObject=true; player remains a separate game-entity type. No remaining product question.
-- CTV.1 is architecture-only / Foundation. No runtime, workspace migration, Combat or Effects behavior change; CTV.2 requires a separate task. Earlier dated entries below remain historical.
+- CTV Stage 1 is architecture-only / Foundation. No runtime, workspace migration, Combat or Effects behavior change; CTV Stage 2 requires a separate task. Earlier dated entries below remain historical.
 - Checks PASS: docs:index (zero metadata/status issues), agents:validate (17), 71 focused contract tests, verify:quick (872 tests plus encoding/syntax/import paths/diff), 47 canonical-document links and a read-only PageRecord/hash/package persistence probe. Browser/desktop suites were not run for this documentation-only change.
 
 ## 2026-09-24: Phase 17 paused for the Variables / Entity architecture migration

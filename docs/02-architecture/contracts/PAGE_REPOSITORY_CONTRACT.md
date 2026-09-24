@@ -6,7 +6,7 @@ owner_zone: "architecture"
 ---
 # PageRepository Contract
 
-Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) keeps PageRecord as the persistent page aggregate and PageRepository/PageIndex as the existing identity/metadata read owners. Card Variable Store is a typed projection of the same page, not a second page database. Domain references use exact repository ids; computed/search/graph projections refresh incrementally after confirmed page commands. Current runtime behavior is unchanged in CTV.1.
+Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) keeps PageRecord as the persistent page aggregate and PageRepository/PageIndex as the existing identity/metadata read owners. Card Variable Store is a typed projection of the same page, not a second page database. Domain references use exact repository ids; computed/search/graph projections refresh incrementally after confirmed page commands. Current runtime behavior is unchanged in CTV Stage 1.
 
 Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
 

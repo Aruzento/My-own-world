@@ -10,7 +10,7 @@ owner_zone: "architecture"
 
 ## Planned Card Variables transport — 2026-09-24
 
-[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), section 11, supersedes the future portable-record target: World Package v2 must carry canonical metadata/relationships, variables and required immutable definitions separately from sanitized body, with typed reference/asset remapping. The current v1 projection below is not lossless for arbitrary PageRecord front matter. Keep v1 legacy import, reject lossy v1 export of migrated cards and reject unsupported formats before normalization. Existing preview/conflict/backup owners remain; no package format or runtime changes in CTV.1.
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), section 11, supersedes the future portable-record target: World Package v2 must carry canonical metadata/relationships, variables and required immutable definitions separately from sanitized body, with typed reference/asset remapping. The current v1 projection below is not lossless for arbitrary PageRecord front matter. Keep v1 legacy import, reject lossy v1 export of migrated cards and reject unsupported formats before normalization. Existing preview/conflict/backup owners remain; no package format or runtime changes in CTV Stage 1.
 
 Date: 2026-08-02
 

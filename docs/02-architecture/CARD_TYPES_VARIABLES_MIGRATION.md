@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 # Card Types / Variables: архитектура и миграция
 
-Дата: 2026-09-24. Этап `CTV.1`, architecture-only / `Foundation`.
+Дата: 2026-09-24. CTV Stage 1 `Архитектура новой системы типов`, architecture-only / `Foundation`.
 Исследованный baseline: `7422c9d7957201c59eddfb1ac2e2716e1cff5d66`, ветка `main`.
 
 Это единственный canonical design миграции. Документ разделяет **реализовано сейчас** и **обязательный будущий contract**; будущие имена API/файлов ниже ещё не существуют. В этом этапе нет изменения runtime, форматов, workspace или расчётов. Очередь реализации находится только в [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md).
@@ -323,12 +323,12 @@ Front-matter значения сохраняются raw-page backup уже по
 6. Extraction idempotence, partial workspace, explicit overrides vs derived numbers, multiple/malformed blocks, approved character/creature/magic/object/note mapping и unknown-type rejection, durable write/readback failure, crash/resume/rollback, preserved free content.
 7. Character/Map/Combat hit/miss/temp-HP/history/reload/Undo parity с accepted 17.6; migrated card has zero legacy HTML reads/writes; dependent armor/effects/schema changes invalidate cached values; stored source absent/invalid never becomes valid HP by defaults.
 
-Текущий CTV.1 проверяет documentation routing/status/links и действующие contracts/tests; эти будущие gates здесь **не объявляются выполненными**. Для documentation-only diff достаточно docs:index, relevant contract tests и verify:quick (encoding, syntax, import paths, all unit tests, diff check). Browser/desktop suites не запускаются без production изменения. Подробности фактического запуска фиксируются в handoff commit/task report.
+Текущий CTV Stage 1 проверяет documentation routing/status/links и действующие contracts/tests; эти будущие gates здесь **не объявляются выполненными**. Для documentation-only diff достаточно docs:index, relevant contract tests и verify:quick (encoding, syntax, import paths, all unit tests, diff check). Browser/desktop suites не запускаются без production изменения. Подробности фактического запуска фиксируются в handoff commit/task report.
 
-Фактическое evidence CTV.1: docs:index — metadata/status drift 0; agents:validate — 17/17; focused docs/PageRecord/structured-preconditions/schema/backup/WorldPackage tests — 71/71; verify:quick — 872/872, encoding/syntax/import paths/diff PASS. Read-only in-memory probe подтвердил сохранение неизвестного variablesJson при текущем PageRecord update, изменение metadataHash/stateHash при неизменном body contentHash и потерю envelope текущим World Package projection. Проверены 47 локальных ссылок этого документа. Никаких workspace writes или новых production abstractions для probe не создавалось. Browser/desktop и manual UI проверки в CTV.1 не запускались.
+Фактическое evidence CTV Stage 1: docs:index — metadata/status drift 0; agents:validate — 17/17; focused docs/PageRecord/structured-preconditions/schema/backup/WorldPackage tests — 71/71; verify:quick — 872/872, encoding/syntax/import paths/diff PASS. Read-only in-memory probe подтвердил сохранение неизвестного variablesJson при текущем PageRecord update, изменение metadataHash/stateHash при неизменном body contentHash и потерю envelope текущим World Package projection. Проверены 47 локальных ссылок этого документа. Никаких workspace writes или новых production abstractions для probe не создавалось. Browser/desktop и manual UI проверки в CTV Stage 1 не запускались.
 
 ## 15. Продуктовые решения и условия завершения
 
 Открытых продуктовых вопросов нет: legacy type mapping и смысл Игрока подтверждены владельцем в разделе 9. Неразрешённые значения конкретных повреждённых/неизвестных карточек — runtime migration review, а не незавершённое проектирование. Каталог полей при реализации подключается в утверждённом объёме, без придумывания замены отсутствующим определениям.
 
-Все определимые по репозиторию базовые boundaries выбраны выше. CTV.1 завершает архитектурный фундамент, но не весь migration project. Следующий этап требует отдельной задачи; нельзя начинать engine/store/Inspector/importer, менять Effects/Combat behavior, запускать Compendium/AI или удалять Properties runtime этим commit.
+Все определимые по репозиторию базовые boundaries выбраны выше. CTV Stage 1 завершает архитектурный фундамент, но не весь migration project. CTV Stage 2 требует отдельной задачи; нельзя начинать Schema Engine, Registry, Field Sets, store, Inspector или importer, менять Effects/Combat behavior, запускать Compendium/AI или удалять Properties runtime этим commit.
