@@ -5,6 +5,13 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-24: CTV Stage 2 Schema Engine, Registry and Field Sets
+
+- Added production data-only Type/Field Set schema validation, exact-version composition, deterministic SHA-256 semantic closure identity, immutable resolved definitions with provenance and a per-type-agnostic Registry. Cycles, missing definitions, diamond includes, semantic key conflicts, unsafe executable members and invalid nested/reference/visibility contracts block resolution.
+- Added the versioned `.my-own-world-card-types.json` storage owner. Activation uses existing `StorageAdapter` plus shared `queueWrite`, optimistic revision/full-catalog digest, immutable id/version checks, bundled transitive-closure materialization and durable readback. Bundled production definitions remain empty until the approved catalogs in Stages 5/6.
+- Existing PageRecord, Properties, CharacterModel, Combat 17.6, Campaign Map, Inventory and Effects runtime paths are untouched. No existing workspace is loaded, activated or migrated automatically. Stage 2 is DONE / Foundation; Stage 3 Variable Store and Variables / Entity API is the only NEXT task. Phase 17 remains PAUSED and 17.7+ remains blocked.
+- Checks PASS: focused Stage 2 24/24; combined Stage 2/schema/storage 87/87; docs:index with zero metadata/status drift; agents:validate 17/17; verify:quick with encoding, syntax, import paths, 896/896 unit tests and diff check. Browser/desktop suites were not run because Stage 2 has no UI or existing runtime integration.
+
 ## 2026-09-24: CTV roadmap structure corrective
 
 - The accepted Stage 1 technical architecture was not reconsidered or changed. The active CTV roadmap was corrected from an unauthorized five-item shorthand to the owner's nine independent stages.
