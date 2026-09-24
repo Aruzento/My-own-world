@@ -12,7 +12,7 @@ Updated: 2026-09-24
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The repository cleanup phase, existing P1 stabilization phase, Data Safety Completion phase, NF-001 Edit Session Conflict Protection phase, NF-002 Safe Dice Engine phase and NF-003 Event / Roll / Combat Log + Transactions phase are closed. `0.0.1.16.0` Persistent Combat Session is CLOSED / PASS at `Usable` readiness. Phase 17 is PAUSED by owner decision: 17.1-17.5 remain DONE at Foundation readiness, while 17.6 First Combat Attack Workflow is implemented but not accepted. Work on 17.6 and leaves 17.7-17.FINAL is deferred until the priority migration to declarative card types, Variables and universal Inspector is complete. No Phase 17 decision is cancelled; return to 17.6 requires a fresh assessment on the new Variables / Entity architecture. Phase 18+ remains BLOCKED and AI Core LATER.
+The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after `17.6` First Combat Attack Workflow, now DONE and accepted by the current owner instruction on 2026-09-24; this supersedes the earlier not-accepted status without claiming a new manual run. The active project is `CTV` Card Types / Variables Migration. `CTV.1` architecture is DONE / Foundation; CTV.2 requires a separate task. Preserve 17.6 behavior, complete migration and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
 
 ## Current Focus
 
@@ -27,7 +27,7 @@ Immediate direction:
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
 7. Closed phase: `0.0.1.16.0` Persistent Combat Session is `DONE` after 16.FINAL PASS on 2026-09-13.
-8. Paused phase: `0.0.1.17.0` Combat Action Pipeline. `17.1`-`17.5` are retained as `DONE` at `Foundation`; `17.6` is not accepted and `17.6` through `17.FINAL` are paused/blocked until the declarative card-type, Variables and universal Inspector migration is complete.
+8. Paused phase: `0.0.1.17.0` Combat Action Pipeline after accepted `17.6`; 17.7 through 17.FINAL remain unfinished, blocked on the active `CTV` migration project.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Complete the priority declarative card-type, Variables and universal Inspector migration. Then return to this Phase 17 context, reassess 17.6 on the new Variables / Entity architecture and make the necessary corrections before renewed manual acceptance. Phase 16 remains CLOSED / PASS, Phase 17 PAUSED, Phase 18+ BLOCKED and AI Core LATER.
+- Assign CTV.2 separately using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md). After CTV closure and 17.6 parity, resume Phase 17 at 17.7. No next-stage implementation is included in CTV.1.
 
 ## Readiness Model
 

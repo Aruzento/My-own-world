@@ -9,6 +9,10 @@ owner_zone: "architecture"
 
 # Properties System Contract
 
+## Future architecture supersession — 2026-09-24
+
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) is now the canonical future architecture. It supersedes this document's target PropertiesModel v2 JSON, Properties as the user-facing domain-data source, and future schema/UI expansion through Properties. The current v1 HTML implementation described here remains the accepted runtime until explicit migration: no automatic rewrite or removal is authorized. After per-domain cutover, values live only in PageRecord variablesJson, edited through Variables / Entity API and one universal Inspector; Properties is a temporary compatibility reader. Calculation/manual-override semantics must retain parity. See the migration document for the approved 15 types, legacy mapping and field composition; do not implement the old v2 target in parallel.
+
 Дата обновления: 20.07.2026
 
 ## Назначение

@@ -6,6 +6,10 @@ owner_zone: "architecture"
 ---
 # Backup And Recovery Contract
 
+## Planned Card Variables coverage — 2026-09-24
+
+The current v1 pages/assets behavior below is unchanged. Before production Card Variables migration, [the canonical migration design](../CARD_TYPES_VARIABLES_MIGRATION.md#11-backup-restore-переносимость-и-adapters) requires this same backupService to support v2 catalog/definition closure coverage, typed variable asset references and dependency-aware full/partial restore. Restore merges immutable definitions without removing versions needed by unselected/newer pages; digest collisions block before writes. Legacy v1 snapshots remain readable subject to exact definition availability. Event history remains excluded. These are future activation prerequisites, not implemented backup capabilities.
+
 ## Event History Exclusion (16.10 Owner Decision)
 
 Backup manifest v1 and existing restore remain pages/assets only.

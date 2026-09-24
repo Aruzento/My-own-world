@@ -6,6 +6,10 @@ owner_zone: "architecture"
 ---
 # Workspace Schema Contract
 
+## Planned Card Variables extension — 2026-09-24
+
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 4–8 and 11, defines the future page v2 variablesJson envelope, independent type/field-set versions, immutable workspace definition catalog, strict unsupported-data write guards and explicit upgrade/recovery lifecycle. Current schemaVersions remain v1 in this documentation stage. The existing body-only contentHash meaning is retained; full PageStateIdentity protects variable changes. This extension supersedes any assumption that warning-only load or normal page save can safely migrate structured card values. Unknown/malformed/future payloads must be preserved, never normalized into empty values.
+
 Дата: 01.06.2026
 
 Этот документ описывает первый слой проверки данных проекта. Его цель - не чинить данные молча, а явно находить поврежденные страницы, карты, таск-трекеры, связи и assets до того, как ошибка станет потерей пользовательской работы.

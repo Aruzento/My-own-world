@@ -8,6 +8,8 @@ owner_zone: "architecture"
 
 # Lightweight Workspace Operations Contract
 
+Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 6 and 8–11, places ordinary variable patches in the existing single-page command/queue boundary with whole-page expectedBase. Type conversion and schema/data migration require explicit preview and Tier 3 backup gates. Existing disjoint metadata preservation does not authorize merging variables JSON or applying type-only commands to migrated cards. No new queue, generic merge engine or multi-file atomicity guarantee is introduced.
+
 Date: 2026-07-19
 
 Plan refs: workspace operation hardening and active page lifecycle work.

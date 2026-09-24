@@ -5,6 +5,14 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-24: CTV.1 architecture foundation and accepted Combat baseline
+
+- Current owner instruction supersedes the earlier same-day 17.6 not-accepted decision below: 17.6 is DONE and the accepted baseline; preserve its behavior, complete CTV, then return at 17.7. No new manual test was performed for this documentation task.
+- [Canonical design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) audits PageRecord/Properties/calculations/Character/Map/Combat and transport/recovery owners; selects one variablesJson envelope in PageRecord front matter and explicit versioned definition catalog coverage.
+- Owner confirmed legacy mapping: character/creature -> character, magic -> spell, object/note -> item with item.isObject=true; player remains a separate game-entity type. No remaining product question.
+- CTV.1 is architecture-only / Foundation. No runtime, workspace migration, Combat or Effects behavior change; CTV.2 requires a separate task. Earlier dated entries below remain historical.
+- Checks PASS: docs:index (zero metadata/status issues), agents:validate (17), 71 focused contract tests, verify:quick (872 tests plus encoding/syntax/import paths/diff), 47 canonical-document links and a read-only PageRecord/hash/package persistence probe. Browser/desktop suites were not run for this documentation-only change.
+
 ## 2026-09-24: Phase 17 paused for the Variables / Entity architecture migration
 
 - OWNER did not accept `0.0.1.17.6`. Phase 17 is paused as a deliberate ordering decision while the priority migration to declarative card types, Variables and a universal Inspector is completed.

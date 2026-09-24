@@ -9,7 +9,7 @@ owner_zone: "architecture"
 
 Updated: 2026-09-24
 
-Status: `0.0.1.17.6` First Combat Attack Workflow is implemented but `PAUSED — NOT ACCEPTED`. Phase 17 is PAUSED by owner decision while the priority migration to declarative card types, Variables and universal Inspector is completed. The existing Initiative/Combat popup still submits one explicit manual attack through `executeCombatAttack`, presents durable and partial outcomes, and links to the existing Event History / Transaction Reversal flow; its automated coverage remains evidence, not manual acceptance. Decisions and completed foundations 17.1-17.5 are retained. Do not continue 17.6 or begin 17.7-17.FINAL before the migration; then reassess this contract and 17.6 on the new Variables / Entity architecture. Phase 16 remains CLOSED / PASS at `Usable` readiness for persistent sessions. Phase 18+ remains BLOCKED; AI Core remains LATER.
+Status: `0.0.1.17.6` First Combat Attack Workflow is DONE and the accepted baseline by the current owner instruction on 2026-09-24, superseding the earlier not-accepted status. Phase 17 is PAUSED while the [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) is completed. Preserve 17.6 behavior; 17.7-17.FINAL remain unfinished and blocked until migration closure and parity. No new manual test is claimed by this architecture-only stage. The migration document supersedes only the future Properties-backed source/preparation dependency: Variables / Entity API will supply it; this contract retains action policy, exact identities, durable commit, audit and Undo semantics. Phase 16 remains CLOSED / PASS; Phase 18+ BLOCKED; AI Core LATER.
 
 ## 1. Decision And First Product Slice
 
@@ -29,13 +29,13 @@ current Initiative participant in active Combat
 
 The product target stays a simple single-target attack. The smallest prerequisite is 17.2, a composable Character/Properties health-change preparation boundary. Current APIs cannot safely be composed into an attack by simply calling the existing standalone resource logger twice. No Combat Session redesign is needed.
 
-First manual acceptance, preserved for later reassessment in **17.6**:
+Accepted 17.6 workflow routes to preserve and revalidate during migration:
 
 - Goblin is the canonical current participant; the GM chooses an explicit attack and one target. With attack `d20 + 4`, target AC 12, injected natural 10 and damage `1d6 + 2` rolling 3, total 14 hits, damage 5 changes HP 10 to 5. One action transaction contains both rolls, resolution and the HP change. Reload preserves HP/history; Undo restores HP 10 through a new transaction.
 - Natural 3 produces total 7: miss, no damage roll, no HP/temp HP write, one auditable action transaction. Miss history remains; state Undo is unavailable because nothing changed.
 - The same hit against HP 10/temp HP 2 leaves HP 7/temp HP 0. Both fields save in one target-page write; one Undo restores both together.
 
-These are future fixture/manual acceptance routes, not results achieved by 17.1. The first attack policy is explicitly `ac-total-v1`: attack total >= effective AC means hit, including equality. It uses `criticalPolicy: 'none'`; no natural-1/20 exception or doubled damage is claimed. D&D attack bonus derivation, critical attack rules and mitigation need explicit later rule contracts; Dice Engine's natural-d20 metadata alone does not implement them.
+These routes were specified in 17.1 and implemented through 17.6; the current owner instruction accepts 17.6 as the baseline. CTV.1 does not claim a new manual execution. The first attack policy is explicitly `ac-total-v1`: attack total >= effective AC means hit, including equality. It uses `criticalPolicy: 'none'`; no natural-1/20 exception or doubled damage is claimed. D&D attack bonus derivation, critical attack rules and mitigation need explicit later rule contracts; Dice Engine's natural-d20 metadata alone does not implement them.
 
 ## 2. Repository Evidence And Ownership
 
@@ -235,14 +235,14 @@ The active scheduling/status owner is [PROJECT_PLAN.md](../../01-delivery/PROJEC
 | 17.3 | **DONE / Foundation: Single-target attack resolution.** Strict request and exact active Initiative participant -> token -> page -> Character target chain; prevalidated public Dice requests; `ac-total-v1` hit/miss; one typed damage component; detached 17.2 health plan; frozen runtime evidence; deterministic rejection/no-side-effect coverage. No write, event append, UI or Undo. |
 | 17.4 | **DONE / Foundation:** One durable attack transaction. Pipeline commit orchestration, captured workspace boundary, strict `action.resolved` plus existing roll/resource events, readable Event History, failure/readback and no-double-log coverage. Keep action Undo explicitly unavailable until 17.5. |
 | 17.5 | **DONE / Foundation:** Compensating single-page attack Undo through existing reversal API. Both HP fields restored together, stale/max/deleted/double-undo/append-failure cases tested after reload. |
-| 17.6 | **PAUSED — NOT ACCEPTED:** Existing popup provides a runtime-only labeled attack definition, one canonical target, pending/result/error states, durable Character refresh and access to existing history/Undo. Automated hit, miss, temp HP, duplicate-submit, stale, uncertainty and lifecycle routes remain evidence. Resume only after the declarative card-type, Variables and universal Inspector migration, then reassess on the new Variables / Entity architecture. |
-| 17.7 | **BLOCKED on migration and 17.6 reassessment:** Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
+| 17.6 | **DONE / accepted baseline:** Existing popup attack definition/target/results, durable Character refresh, history/Undo and reload. Preserve hit/miss/temp-HP/stale/uncertain behavior through the migration; no new mechanics in CTV. |
+| 17.7 | **BLOCKED on migration closure and 17.6 parity:** Ability/skill checks and saving throws through the same request/resolution/transaction owner, current Character calculations and explicit comparison policy; no implicit damage/effects. |
 | 17.8 | **BLOCKED on migration:** Direct damage and multiple typed damage components on one target through the same health/transaction/Undo boundary. Preserve component evidence; mitigation rules require their own explicit rule support. |
 | 17.9 | **BLOCKED on migration:** Healing and temporary-HP grants on one target using Character health ownership, explicit grant policy, persistence and Undo. |
 | 17.10 | **BLOCKED on migration:** Existing numeric resource changes/costs and manual GM correction through the same pipeline. Start with one page; any actor-cost plus target-damage operation waits for an explicit multi-page failure/compensation contract. Reuse current correction/resource vocabulary without double logging. |
 | 17.FINAL | **BLOCKED on migration:** Cumulative owner/failure/Undo/reload review and required gates. Verify the first manual attack routes, inventory supported action kinds and explicitly retain unsupported critical/mitigation/multi-page cases. Phase 18+ stays blocked until Phase 17 closure. |
 
-Attack first is the retained product goal; 17.4 supplies durable runtime execution/history and 17.5 supplies backend/history compensation. The first usable attack UI remains 17.6, but Phase 17 is paused until the declarative card-type, Variables and universal Inspector migration completes. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
+Attack first is the retained product goal; 17.4 supplies durable runtime execution/history and 17.5 supplies backend/history compensation. The accepted attack UI baseline is 17.6; resume at 17.7 only after the declarative card-type, Variables and universal Inspector migration completes. Effects/conditions engine belongs to Phase 18; range/LoS/AoE to Phase 19. Reactions, readied-action execution, action economy, concentration, persistence of action catalogues and full D&D taxonomy remain outside the first slice. Ready/Delayed continue to be local markers only.
 
 ## 11. Verification And Linked Contracts
 

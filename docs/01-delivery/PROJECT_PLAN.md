@@ -20,11 +20,11 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `0.0.1.17.0` NF-005 Combat Action Pipeline is `PAUSED` by owner decision.
+Current phase: `CTV` Card Types / Variables Migration Project is `ACTIVE`. `0.0.1.17.0` NF-005 Combat Action Pipeline is `PAUSED` after accepted 17.6.
 
-Current leaf: `0.0.1.17.6` First Combat Attack Workflow is implemented but `PAUSED — NOT ACCEPTED` on 2026-09-24. Automated UI, persistence, history and Undo coverage remains green, but OWNER manual acceptance did not occur. The priority architectural project is migration to declarative card types, Variables and a universal Inspector. Do not begin or continue 17.6, 17.7, 17.8, 17.9, 17.10 or 17.FINAL until that migration is complete. Then return to this Phase 17 context, reassess the current repository and resume 17.6 with any necessary changes on the new Variables / Entity architecture. Decisions, contracts and completed foundations 17.1-17.5 remain retained. Phase 16 remains `DONE` (CLOSED / PASS) at `Usable` readiness for persistent sessions. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
+Current leaf: `CTV.1` Architecture & Migration Foundation is `DONE` at `Foundation` readiness. Canonical design: [CARD_TYPES_VARIABLES_MIGRATION.md](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md). By the current owner instruction on 2026-09-24, `0.0.1.17.6` First Combat Attack Workflow is the last completed and accepted Combat baseline, superseding the earlier not-accepted status. No new manual test is claimed by this documentation stage. `CTV.2` requires a separate task; do not implement it automatically. After the migration project and 17.6 parity gate, resume at 17.7. Phase 16 remains CLOSED / PASS; Phase 18+ BLOCKED; AI Core LATER.
 
-Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `DONE` (CLOSED / PASS); `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `PASS`. `0.0.1.17.0` is `PAUSED`; 17.1 through 17.5 remain `DONE` at `Foundation`, while 17.6 is not accepted and 17.6 through 17.FINAL are deferred until the declarative card-type, Variables and universal Inspector migration is complete. On return, reassess Phase 17 against the new Variables / Entity architecture before resuming 17.6. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
+Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `DONE` (CLOSED / PASS); `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `PASS`. `0.0.1.17.0` is `PAUSED`; 17.1 through 17.5 remain `DONE` at `Foundation`; 17.6 is `DONE` and accepted by the current owner instruction. CTV migration precedes 17.7 through 17.FINAL, which remain unfinished and blocked, not cancelled. Preserve 17.6 behavior; return at 17.7 after the migration parity gate. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
 
 ## Execution Rules
 
@@ -388,7 +388,7 @@ ID: `0.0.1.17.0`
 
 NAME: NF-005 Combat Action Pipeline
 
-STATUS: `ACTIVE`
+STATUS: `PAUSED`
 
 ACTIVATED: 2026-09-14 by the owner task for 17.1, from clean `main` / origin/main `62483ac511da4e02267d013e1fd8f2a3d6262711`. Phase 16 stays CLOSED / PASS; no session redesign or new runtime capability in 17.1.
 
@@ -415,16 +415,40 @@ PLANNED LEAF SEQUENCE:
 | `0.0.1.17.3` Single-Target Attack Resolution | `DONE` / `Foundation` | Strict typed request, exact current actor/target chain, public Dice rolls, `ac-total-v1` hit/miss and one component through the detached Character health plan; immutable runtime evidence and no durable side effects. |
 | `0.0.1.17.4` Durable Action Transaction | `DONE` / `Foundation` | One pipeline commit/write/append, strict action vocabulary and history summary, workspace/stale/failure coverage; action Undo explicitly disabled. |
 | `0.0.1.17.5` Compensating Attack Undo | `DONE` / `Foundation` | Exact original transaction plus current durable health/max/base guards; inverse HP/temp HP in one page write and one new reversal transaction. Shared queue, additive history and explicit state/audit uncertainty; no rollback/retry after append failure. |
-| `0.0.1.17.6` First Combat Attack Workflow | `PAUSED — NOT ACCEPTED` | Existing popup attack definition/target/result flow, history/Undo, reload and both manual Goblin routes remain implemented and automated. Resume only after the declarative card-type, Variables and universal Inspector migration, then reassess on the new Variables / Entity architecture. |
-| `0.0.1.17.7` Checks And Saving Throws | `BLOCKED` on migration and 17.6 reassessment | Existing Character calculation keys and explicit comparison policy through the same pipeline. |
+| `0.0.1.17.6` First Combat Attack Workflow | `DONE` / accepted baseline | Accepted by the current owner instruction on 2026-09-24. Preserve attack/target/result/history/Undo/reload behavior throughout CTV; no new manual run claimed in CTV.1. |
+| `0.0.1.17.7` Checks And Saving Throws | `BLOCKED` on CTV migration closure and 17.6 parity | Existing Character calculation keys and explicit comparison policy through the same pipeline. |
 | `0.0.1.17.8` Direct And Mixed Damage | `BLOCKED` on migration and 17.7 | Multiple typed components on one target with independent evidence and the same write/Undo path. |
 | `0.0.1.17.9` Healing And Temporary HP | `BLOCKED` on migration and 17.8 | Character-owned healing and explicit temp-HP grant policy with durable history/Undo. |
 | `0.0.1.17.10` Resources And Manual Correction | `BLOCKED` on migration and 17.9 | Existing numeric resources/costs and explicit GM corrections, initially one page. Multi-page cost-plus-damage requires its own failure/compensation contract. |
 | `0.0.1.17.FINAL` Closure Gate | `BLOCKED` on migration and implementation leaves | Cumulative owner, persistence, failure, reversal and manual workflow evidence; retain explicit unsupported cases. |
 
-FIRST MANUAL ACCEPTANCE (17.6): deferred. The preserved route is current Goblin -> enter an explicit attack and choose one target -> attack roll -> hit -> one damage component -> HP decreases -> one transaction -> reload -> Undo restores HP. Also prove miss -> no damage roll/HP write -> coherent audit, and temp HP absorption with both affected fields restored together. These routes are implemented and automated, but not manually accepted. After the declarative card-type, Variables and universal Inspector migration, reassess and adapt this route before running it.
+ACCEPTED BASELINE (17.6): the current owner task accepts the completed attack workflow. Preserve Goblin -> explicit attack/target -> hit -> damage -> HP -> transaction -> reload -> Undo; also miss and temp HP absorption. Re-run these routes as migration parity evidence before resuming 17.7; do not reopen 17.6 as an unfinished feature or claim a new manual execution in CTV.1.
 
 EXIT CRITERIA: one action owner implements the bounded leaves above; hit/miss/history/reload/Undo pass the manual and automated acceptance; failure results distinguish page state from audit durability. Full D&D taxonomy, critical/mitigation rules and multi-page actions remain explicitly unsupported unless separately contracted. Phase 17 is PAUSED pending the declarative card-type, Variables and universal Inspector migration; Phase 18+ remains BLOCKED and AI Core LATER.
+
+### Card Types / Variables Migration Project — CTV
+
+ID: `CTV`
+
+NAME: Card Types / Variables Migration
+
+STATUS: `ACTIVE`
+
+ORDER: accepted `17.6` -> CTV -> `17.7` and remaining Phase 17 leaves.
+
+CANONICAL CONTRACT: [CARD_TYPES_VARIABLES_MIGRATION.md](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md). This project changes structured-data ownership through bounded implementation tasks; it does not add Combat mechanics, Effects Engine, Compendium or AI integration.
+
+| Stage | Status | Required result |
+| --- | --- | --- |
+| `CTV.1` Architecture & Migration Foundation | `DONE` / `Foundation` | Repository owners/data-flow audit, canonical PageRecord variablesJson design, metadata separation, definitions/field sets/API/resolvers/Inspector, schema and recovery lifecycle, approved legacy type mapping. Documentation only. |
+| `CTV.2` Schema / Persistence Foundation | `NEXT` — separate task required | Implement validated registry/composition and PageRecord/Variables boundaries with write guards; backup/restore/package/template/asset coverage must exist before production migration writes are enabled. Preserve 17.6 runtime behavior. |
+| `CTV.3` Universal Inspector / Catalog | `BLOCKED` on CTV.2 | Approved full catalog and reusable schema-driven fields; metadata bindings, typed refs and explicit overrides. No per-type Inspector families. |
+| `CTV.4` Legacy Extraction / Domain Cutover | `BLOCKED` on CTV.3 | Preview/backup/idempotent migration and readback; Character, Map, Combat, Inventory/Effects source/writer parity without changing domain rules. |
+| `CTV.FINAL` Compatibility / Retirement Gate | `BLOCKED` on CTV.4 | No permanent duplicate sources, safe legacy readers, portable data/recovery, accepted 17.6 workflow parity; then unblock 17.7 by a separate task. |
+
+CTV.1 does not authorize beginning CTV.2 in the same task. The type mapping was confirmed by the owner: character/creature -> character; magic -> spell; object/note -> item with item.isObject=true; player is a separate game-entity type. No unresolved product decision blocks the architecture.
+
+EXIT CRITERIA: canonical Variables ownership and schema-driven Inspector are operational, all affected writers/consumers use the approved boundary, migration/recovery/portability and 17.6 parity pass. No 17.7+ leaf becomes done or cancelled through this project.
 
 ### Phase 10 - 0.0.1.18.0 NF-006 Effects & Conditions Engine
 

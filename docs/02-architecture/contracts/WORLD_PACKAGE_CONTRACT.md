@@ -8,6 +8,10 @@ owner_zone: "architecture"
 ---
 # World Package Contract
 
+## Planned Card Variables transport — 2026-09-24
+
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), section 11, supersedes the future portable-record target: World Package v2 must carry canonical metadata/relationships, variables and required immutable definitions separately from sanitized body, with typed reference/asset remapping. The current v1 projection below is not lossless for arbitrary PageRecord front matter. Keep v1 legacy import, reject lossy v1 export of migrated cards and reject unsupported formats before normalization. Existing preview/conflict/backup owners remain; no package format or runtime changes in CTV.1.
+
 Date: 2026-08-02
 
 World Package is the project-level format for moving reusable world content between workspaces. It is not the same as Rule Tree package. Rule Tree package moves rules only; World Package can carry pages, asset references with optional file payloads, rule packages, metadata, dependencies and future fork/workshop data.

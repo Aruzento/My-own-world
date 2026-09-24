@@ -8,6 +8,10 @@ owner_zone: "architecture"
 
 # Character Model Contract
 
+## Target source boundary — 2026-09-24
+
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection; its future input is the Variables / Entity API with existing Inventory/Effects/integration owners. The current direct Properties/legacy readers and writers remain baseline evidence until explicit cutover, not the target for new consumers. Preserve health/calculation/Map/Combat behavior, migrate sources without creating a second HP owner, and do not convert every card into CharacterModel. Player is a separate game-entity type; legacy character/creature map to Character by the owner decision.
+
 Дата обновления: 14.06.2026
 
 ## Назначение

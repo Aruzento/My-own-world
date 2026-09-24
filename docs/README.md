@@ -16,6 +16,7 @@ owner_zone: "delivery"
 | Product direction / visual intent | [Product vision](./00-product/PRODUCT_VISION.md) / [Brandbook](./00-product/BRANDBOOK.md) |
 | Editor blocks / persistent HTML | [Block contract](./02-architecture/contracts/BLOCK_SYSTEM_CONTRACT.md) / [Safe HTML](./02-architecture/contracts/SAFE_HTML_CONTRACT.md) |
 | Page lookup / workspace mutations | [PageRepository](./02-architecture/contracts/PAGE_REPOSITORY_CONTRACT.md) / [Workspace operations](./02-architecture/contracts/LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md) |
+| Card Types / Variables migration | [Canonical migration architecture](./02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md); implementation order — [PROJECT_PLAN](./01-delivery/PROJECT_PLAN.md) |
 | Character / source properties | [CharacterModel](./02-architecture/contracts/CHARACTER_MODEL_CONTRACT.md) / [Properties](./02-architecture/contracts/PROPERTIES_MODEL_CONTRACT.md) |
 | Map / combat | [Map performance](./02-architecture/CAMPAIGN_MAP_PERFORMANCE_STRATEGY.md); session state — [Combat Session](./02-architecture/contracts/COMBAT_SESSION_CONTRACT.md); planned actions — [Action Pipeline](./02-architecture/contracts/COMBAT_ACTION_PIPELINE_CONTRACT.md) |
 | Backup / persistent compatibility / assets | [Recovery](./02-architecture/contracts/BACKUP_AND_RECOVERY_CONTRACT.md) / [Schema](./02-architecture/contracts/WORKSPACE_SCHEMA_CONTRACT.md) / [Asset lifecycle](./02-architecture/contracts/ASSET_LIFECYCLE_CONTRACT.md) |
