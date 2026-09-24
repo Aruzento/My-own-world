@@ -5,6 +5,12 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-24: Phase 17 paused for the Variables / Entity architecture migration
+
+- OWNER did not accept `0.0.1.17.6`. Phase 17 is paused as a deliberate ordering decision while the priority migration to declarative card types, Variables and a universal Inspector is completed.
+- `17.1` through `17.5` remain completed Foundation decisions and implementations. Their contracts, durable action/Undo boundaries, tests and unfinished roadmap are retained; nothing is cancelled or rolled back.
+- Do not continue 17.6 or start 17.7, 17.8, 17.9, 17.10 or 17.FINAL during the migration. After it completes, return to this context, inspect the current repository and reassess 17.6 on the new Variables / Entity architecture before making any required corrections and renewed manual acceptance.
+
 ## 2026-09-24: 0.0.1.17.6 First Combat Attack Workflow — ready for manual acceptance
 
 - Added the first attack workflow to the existing Initiative/Combat popup. The read-only actor comes from canonical Initiative, targets come from current Combat membership with broken and same-Character references unavailable, and the runtime-only form collects label, attack formula, damage formula and damage type.

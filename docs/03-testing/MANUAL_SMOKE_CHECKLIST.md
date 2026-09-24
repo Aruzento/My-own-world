@@ -56,9 +56,9 @@ Design check after step 15: the map must read as a graphic editor. Canvas tools 
 7. Preview an external JSON package with a required missing asset reference and no payload. Apply should be blocked before backup/import.
 8. Preview an external JSON package with a required asset and invalid base64 payload bytes. Apply should be blocked before backup/import, the same as a missing required asset.
 
-## Combat Attack 17.6 — OWNER Manual Acceptance
+## Combat Attack 17.6 — deferred OWNER Manual Acceptance
 
-Use only a disposable workspace with an active two-participant Combat Session. Give the target a valid Properties-backed Character source with AC 12, HP 10/10 and, for the third route, Temp HP 2. Keep Goblin as the current Initiative participant. Record the OWNER result separately; automated PASS does not complete this checklist.
+This acceptance is paused and must not be recorded as passed. Preserve these routes as evidence for the existing implementation. After the declarative card-type, Variables and universal Inspector migration, reassess Phase 17 and revise this checklist for the new Variables / Entity architecture before running it. Use only a disposable workspace with an active two-participant Combat Session. Give the target a valid Properties-backed Character source with AC 12, HP 10/10 and, for the third route, Temp HP 2. Keep Goblin as the current Initiative participant. Record the OWNER result separately; automated PASS does not complete this checklist.
 
 ### Route 1 — Hit, reload and Undo
 
