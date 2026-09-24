@@ -448,5 +448,5 @@ function isMissingFileError(error) {
 
   return code === 'ENOENT' ||
     code === 'NotFoundError' ||
-    /not found|cannot find|не найден/i.test(message);
+    /not found|cannot find|не найден|^missing /i.test(message);
 }

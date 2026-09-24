@@ -1,3 +1,4 @@
+import { hasStructuredPageData } from './structuredPagePolicy.js';
 import {
   ASSET_TYPES,
   normalizeAssetReference
@@ -37,7 +38,7 @@ export function collectAssetReferencesFromPage(
       page.body || page.content || ''
     );
 
-  return collectAssetReferencesFromHTML(
+  const references = collectAssetReferencesFromHTML(
     html,
     {
       pageId:
@@ -46,6 +47,10 @@ export function collectAssetReferencesFromPage(
         page.kind || page.entityKind || page.type || 'page'
     }
   );
+  // До typed asset traversal отсутствие ссылок нельзя считать доказательством orphan.
+  if (hasStructuredPageData(page)) references.push({ id: `structured-scan:${page.id || ''}`,
+    path: '', type: 'unknown', incomplete: true, owner: { pageId: page.id || '' } });
+  return references;
 }
 
 

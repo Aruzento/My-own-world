@@ -5,6 +5,15 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-24: CTV Stage 3 Variable Store and Variables / Entity API
+
+- Added PageRecord-owned one-line `variablesJson` codec and supported page v2; legacy saves remain v1 without envelope creation. Strict JSON limits/duplicates/unsafe keys and malformed/future raw preservation are covered. Body contentHash remains unchanged; full PageStateIdentity includes variables.
+- Added detached typed Store and public Entity API, lazy stored/default/effective reads, explicit overrides, exact references, custom extensions, typed validation and trusted resolver foundation. Added immutable single-use plans, atomic page patches and durable commit through existing PageCommand/shared queue with whole-page, workspace, definition-closure and readback guards. No candidate publication on failure/uncertainty.
+- Added explicit safety blocks for structured backup/restore v1, copy/templates/World Package and unguarded legacy writes; incomplete asset scans suppress orphan deletion. Portable formats v2 and their UI remain future work. Fixed semantic digest exclusion of labels/order inside actual default/options/metadata data in the existing Stage 2 owner.
+- Stage 3 is DONE / Foundation; Stage 4 Universal Inspector is the only NEXT task. No Inspector, Properties migration, automatic workspace/schema activation, domain cutover, catalog expansion, Combat/Map/Inventory/Effects behavior change. Phase 17 PAUSED; 17.6 accepted; 17.7+ blocked. No user workspace data was migrated.
+- Quality gates PASS: docs:index (zero metadata/status drift), agents:validate (17/17), verify:quick (934/934 tests, encoding, JS syntax, import paths, diff check).
+- Focused Stage 3 tests: 38/38 PASS. Affected PageRecord/Repository/Index/commands/preconditions/structured preservation/schema/catalog/storage/backup/package/asset suites: 194/194 PASS. Browser/desktop/manual gameplay suites were not run: no UI/domain cutover or desktop-specific adapter change; shared persistence safety is exercised by disposable integration fixtures.
+
 ## 2026-09-24: CTV Stage 2 Schema Engine, Registry and Field Sets
 
 - Added production data-only Type/Field Set schema validation, exact-version composition, deterministic SHA-256 semantic closure identity, immutable resolved definitions with provenance and a per-type-agnostic Registry. Cycles, missing definitions, diamond includes, semantic key conflicts, unsafe executable members and invalid nested/reference/visibility contracts block resolution.

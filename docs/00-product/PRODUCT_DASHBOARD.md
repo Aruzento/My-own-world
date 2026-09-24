@@ -12,7 +12,7 @@ Updated: 2026-09-24
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after `17.6` First Combat Attack Workflow, now DONE and accepted by the current owner instruction on 2026-09-24; this supersedes the earlier not-accepted status without claiming a new manual run. The active project is the nine-stage `CTV` Card Types / Variables Migration. Stage 1 Architecture and Stage 2 Schema Engine, Registry and Field Sets are DONE / Foundation; Stage 3 Variable Store and Variables / Entity API is the only NEXT task and requires a separate task. Preserve 17.6 behavior, complete all nine stages and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
+The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after `17.6` First Combat Attack Workflow, now DONE and accepted by the current owner instruction on 2026-09-24; this supersedes the earlier not-accepted status without claiming a new manual run. The active project is the nine-stage `CTV` Card Types / Variables Migration. Stages 1–3 Architecture, Schema/Registry and Variable Store/Entity API are DONE / Foundation; Stage 4 Universal Inspector is the only NEXT task and requires a separate task. Preserve 17.6 behavior, complete all nine stages and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
 
 ## Current Focus
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Assign CTV Stage 3 separately using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and the nine-stage order in [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md). After CTV Stage 9 closure and 17.6 parity, resume Phase 17 at 17.7. Stage 3 is not started by the Stage 2 foundation.
+- Assign CTV Stage 4 separately using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and the nine-stage order in [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md). After CTV Stage 9 closure and 17.6 parity, resume Phase 17 at 17.7. Stage 4 is not started by the Stage 3 foundation. Structured-card backup/copy/templates/packages remain explicitly blocked until lossless portability is implemented; legacy workspaces continue unchanged.
 
 ## Readiness Model
 

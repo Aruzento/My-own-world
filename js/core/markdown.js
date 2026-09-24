@@ -14,6 +14,8 @@ export function parseMarkdown(
     );
 
   return {
+    variablesJson: record.variablesJson,
+    variablesStatus: record.variablesStatus,
     id:
       record.id,
     schemaVersion:

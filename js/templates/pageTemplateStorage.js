@@ -1,3 +1,4 @@
+import { assertLegacyPortability } from '../storage/structuredPagePolicy.js';
 import {
   parseMarkdown
 } from '../core/markdown.js';
@@ -144,6 +145,7 @@ export function searchPageTemplates(
 export async function savePageAsTemplate(
   page
 ) {
+  assertLegacyPortability(page, 'Template creation');
 
   if (!page) return null;
 
@@ -197,6 +199,7 @@ export async function createPageFromTemplate(
   pageTemplate,
   parentId
 ) {
+  assertLegacyPortability(pageTemplate, 'Template instantiation');
 
   if (!pageTemplate) return null;
 
@@ -297,8 +300,9 @@ async function readWorkspaceTemplates() {
         )
     );
 
-  } catch {
+  } catch (error) {
 
+    if (error.code === 'STRUCTURED_PORTABILITY_BLOCKED') throw error;
     return null;
   }
 }
@@ -322,8 +326,9 @@ function readLocalStorageTemplates() {
       localStorage.getItem(PAGE_TEMPLATES_KEY) || '[]'
     );
 
-  } catch {
+  } catch (error) {
 
+    if (error.code === 'STRUCTURED_PORTABILITY_BLOCKED') throw error;
     return [];
   }
 }
@@ -350,6 +355,16 @@ export function parsePageTemplatesFile(
   text
 ) {
 
+  let raw;
+  try { raw = JSON.parse(text || '{}'); } catch { return []; }
+  if (raw?.version !== undefined && raw.version !== 1) {
+    const error = new Error('Unsupported template format');
+    error.code = 'STRUCTURED_PORTABILITY_BLOCKED';
+    throw error;
+  }
+  const records = Array.isArray(raw) ? raw : raw?.templates;
+  for (const template of (Array.isArray(records) ? records : [])) assertLegacyPortability(template, 'Legacy template load');
+
   try {
 
     const parsed =
@@ -375,6 +390,7 @@ function normalizeTemplates(
 ) {
 
   if (!Array.isArray(templates)) return [];
+  templates.forEach(template => assertLegacyPortability(template, 'Legacy template serialization'));
 
   return templates
     .filter(Boolean)

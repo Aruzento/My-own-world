@@ -1,6 +1,8 @@
 import {
   getStorageAdapter
 } from './storageAdapter.js';
+import { getAllPages } from '../repository/pageRepository.js';
+import { assertLegacyPortability, assertLegacyBackupCatalog } from './structuredPagePolicy.js';
 
 
 export async function listWorkspaceAssetPaths(
@@ -27,6 +29,10 @@ export async function deleteWorkspaceAssetPath(
   path,
   options = {}
 ) {
+
+  // Старый orphan preview не является разрешением удалять assets нового envelope.
+  (options.pages || getAllPages()).forEach(page => assertLegacyPortability(page, 'Asset deletion'));
+  await assertLegacyBackupCatalog(options.storageAdapter || getStorageAdapter());
 
   if (options.deleteAssetPath) {
 

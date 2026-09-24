@@ -1,3 +1,4 @@
+import { assertLegacyPortability } from './structuredPagePolicy.js';
 import {
   state
 } from '../state.js';
@@ -150,6 +151,7 @@ export async function createFolderPage(
 export async function createPageFromRecordContent(
   content
 ) {
+  assertLegacyPortability(content, 'Legacy page creation/import');
 
   if (typeof content !== 'string') {
 
@@ -169,6 +171,7 @@ export async function duplicatePageAsChild(
   parentId,
   initialTitle = ''
 ) {
+  assertLegacyPortability(sourcePage, 'Page duplication');
 
   const parsed =
     parseMarkdown(

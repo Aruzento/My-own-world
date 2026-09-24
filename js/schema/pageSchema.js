@@ -26,6 +26,9 @@ export function validatePageRecord(
 ) {
 
   const issues = [];
+  issues.push(...(page?.variablesStatus?.issues || []).map(issue => ({
+    ...issue, details: { pageId: page?.id || null }
+  })));
   const pageId =
     page?.id;
 
@@ -205,7 +208,9 @@ function createPageRecordMetadataIssues(
     );
   }
 
-  if (schemaState.isLegacy) {
+  // v1 без variablesJson остаётся поддерживаемым legacy workspace, без upgrade prompt.
+  if (schemaState.isLegacy && !(schemaState.version === 1 &&
+      (!page.variablesStatus || page.variablesStatus.mode === 'legacy'))) {
 
     issues.push(
       createSchemaIssue(

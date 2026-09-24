@@ -1,7 +1,7 @@
 export const SCHEMA_VERSIONS =
   Object.freeze({
     workspace: 1,
-    page: 1,
+    page: 2,
     campaignMap: 1,
     taskTracker: 1,
     pageTemplates: 1,

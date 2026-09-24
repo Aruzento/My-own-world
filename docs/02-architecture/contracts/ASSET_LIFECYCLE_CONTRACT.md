@@ -10,6 +10,10 @@ owner_zone: "architecture"
 
 Ассет - это внешний файл, на который ссылается страница или сущность: портрет карточки, фон карты, PNG-объект на карте, будущая музыка локации и другие медиа.
 
+## CTV Stage 3 safety floor
+
+Structured PageRecord scans return an explicit `incomplete` marker until typed/unknown/inactive asset closure scanning is implemented. Orphan detection returns no deletion candidates for an incomplete scan. `deleteWorkspaceAssetPath` rechecks loaded structured pages and the activated definition catalog before deletion, including a stale legacy orphan preview. This preserves assets held only in variables; it does not claim complete typed asset diagnostics/remapping. Legacy workspace scanning remains unchanged. See [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md#61-реализованный-ctv-stage-3-contract).
+
 ## Цели
 
 - Не сохранять временные `blob:` URL в `.md`.

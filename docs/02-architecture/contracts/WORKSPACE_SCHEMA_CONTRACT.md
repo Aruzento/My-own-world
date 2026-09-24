@@ -6,9 +6,9 @@ owner_zone: "architecture"
 ---
 # Workspace Schema Contract
 
-## Planned Card Variables extension — 2026-09-24
+## Card Variables foundation — 2026-09-24
 
-[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 4–8 and 11, defines the future page v2 variablesJson envelope, independent type/field-set versions, immutable workspace definition catalog, strict unsupported-data write guards and explicit upgrade/recovery lifecycle. Current schemaVersions remain v1 in this documentation stage. The existing body-only contentHash meaning is retained; full PageStateIdentity protects variable changes. This extension supersedes any assumption that warning-only load or normal page save can safely migrate structured card values. Unknown/malformed/future payloads must be preserved, never normalized into empty values.
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 4–8 and 11, defines the page v2 variablesJson envelope, independent type/field-set versions, immutable workspace definition catalog, strict unsupported-data write guards and explicit upgrade/recovery lifecycle. CTV Stage 3 supports page v2 and envelope v1. Legacy page creation/save remains v1 without eager migration; workspace format remains v1. PageRecord preserves malformed/future raw payloads and reports codec issues; typed schema/digest checks belong to Variable Store and command validation against the activated catalog. Missing catalog blocks structured writes; startup does not activate definitions. The existing body-only contentHash meaning is retained; full PageStateIdentity protects variable changes. This extension supersedes any assumption that warning-only load or normal page save can safely migrate structured card values. Unknown/malformed/future payloads must be preserved, never normalized into empty values.
 
 Дата: 01.06.2026
 

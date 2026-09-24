@@ -1,3 +1,4 @@
+import { assertLegacyPortability, assertLegacyBackupCatalog } from './structuredPagePolicy.js';
 import {
   state
 } from '../state.js';
@@ -170,6 +171,10 @@ async function createWorkspaceBackupMeasured(
 
   const pages =
     options.pages || state.pages || [];
+
+  await assertLegacyBackupCatalog(storageAdapter);
+  pages.forEach(page => assertLegacyPortability(page, 'Backup v1'));
+  for (const page of pages) assertLegacyPortability(await readPageBackupContent(page, storageAdapter), 'Backup v1 durable source');
 
   const includeAssets =
     options.includeAssets !== false;
@@ -818,6 +823,8 @@ async function restoreWorkspaceBackupMeasured(
   const snapshotPath =
     `${BACKUP_ROOT_DIR}/${backupId}`;
 
+  await assertLegacyBackupCatalog(storageAdapter);
+
   const manifestValidation =
     await readAndValidateBackupManifest(
       storageAdapter,
@@ -1278,6 +1285,7 @@ async function preflightBackupPages({
           `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`
         )
       );
+      assertLegacyPortability(pageContentByName.get(fileName), 'Backup v1 restore');
 
     } catch (error) {
 

@@ -54,6 +54,11 @@ test(
 
     const adapter =
       {
+        async readText() {
+          const error = new Error('Missing catalog');
+          error.code = 'ENOENT';
+          throw error;
+        },
         async removeFile(
           path
         ) {

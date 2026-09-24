@@ -10,6 +10,8 @@ owner_zone: "architecture"
 
 Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 6 and 8–11, places ordinary variable patches in the existing single-page command/queue boundary with whole-page expectedBase. Type conversion and schema/data migration require explicit preview and Tier 3 backup gates. Existing disjoint metadata preservation does not authorize merging variables JSON or applying type-only commands to migrated cards. No new queue, generic merge engine or multi-file atomicity guarantee is introduced.
 
+CTV Stage 3 implements immutable variable plans through this boundary. Structured writes require an explicit whole-page expectedBase, captured workspace, activated definition closure validation and durable readback before index publication. Async validation is followed by a repeated precondition check inside the existing queue. Stale/conflicting plans block without variable rebase; uncertain readback does not publish the candidate. Legacy direct queue callers (including old tree/aliases operations) explicitly reject structured pages until routed through the validated command path; the legacy-page behavior below is unchanged. No new variables queue or force overwrite path exists.
+
 Date: 2026-07-19
 
 Plan refs: workspace operation hardening and active page lifecycle work.

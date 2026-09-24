@@ -110,68 +110,28 @@ export function deepFreeze(value) {
 }
 
 
-function createSemanticDefinitionSnapshot(value, ownerKey = '') {
-  if (value === null || typeof value !== 'object') return value;
-
-  if (Array.isArray(value)) {
-    const projected = value.map(entry =>
-      createSemanticDefinitionSnapshot(entry, ownerKey)
-    );
-
-    if (ownerKey === 'targetTypes') {
-      return projected.sort((left, right) =>
-        String(left).localeCompare(String(right))
-      );
-    }
-
-    if (
-      projected.every(entry =>
-        entry &&
-        typeof entry === 'object' &&
-        typeof entry.key === 'string'
-      )
-    ) {
-      return projected.sort((left, right) =>
-        left.key.localeCompare(right.key)
-      );
-    }
-
-    if (
-      projected.every(entry =>
-        entry &&
-        typeof entry === 'object' &&
-        typeof entry.id === 'string' &&
-        Number.isInteger(entry.version)
-      )
-    ) {
-      return projected.sort((left, right) =>
-        `${left.id}@${left.version}`.localeCompare(`${right.id}@${right.version}`)
-      );
-    }
-
-    return projected;
-  }
-
+function createSemanticDefinitionSnapshot(value) {
+  // Исключаем presentation только в schema nodes, никогда внутри default/options data.
   const projected = {};
-
-  Object.keys(value)
-    .sort()
-    .forEach(key => {
-      if (PRESENTATION_KEYS.has(key)) return;
-
-      if (key === 'options' && Array.isArray(value[key])) {
-        projected[key] = value[key]
-          .map(option => ({ value: createSemanticDefinitionSnapshot(option.value, 'value') }))
-          .sort((left, right) =>
-            stableStringify(left.value).localeCompare(stableStringify(right.value))
-          );
-        return;
-      }
-
-      projected[key] =
-        createSemanticDefinitionSnapshot(value[key], key);
-    });
-
+  for (const key of Object.keys(value).sort()) {
+    if (PRESENTATION_KEYS.has(key)) continue;
+    if (key === 'fields' || key === 'properties') {
+      projected[key] = value[key].map(createSemanticDefinitionSnapshot)
+        .sort((left, right) => left.key.localeCompare(right.key));
+    } else if (key === 'items') {
+      projected[key] = createSemanticDefinitionSnapshot(value[key]);
+    } else if (key === 'includes') {
+      projected[key] = deepCloneData(value[key]).sort((left, right) =>
+        `${left.id}@${left.version}`.localeCompare(`${right.id}@${right.version}`));
+    } else if (key === 'targetTypes') {
+      projected[key] = [...value[key]].sort();
+    } else if (key === 'options' && Array.isArray(value[key])) {
+      projected[key] = value[key].map(option => ({ value: deepCloneData(option.value) }))
+        .sort((left, right) => stableStringify(left.value).localeCompare(stableStringify(right.value)));
+    } else {
+      projected[key] = deepCloneData(value[key]);
+    }
+  }
   return projected;
 }
 

@@ -6,7 +6,7 @@ owner_zone: "architecture"
 ---
 # PageRepository Contract
 
-Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) keeps PageRecord as the persistent page aggregate and PageRepository/PageIndex as the existing identity/metadata read owners. Card Variable Store is a typed projection of the same page, not a second page database. Domain references use exact repository ids; computed/search/graph projections refresh incrementally after confirmed page commands. Current runtime behavior is unchanged in CTV Stage 1.
+Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) keeps PageRecord as the persistent page aggregate and PageRepository/PageIndex as the existing identity/metadata read owners. Card Variable Store is a typed projection of the same page, not a second page database. Domain references use exact repository ids; computed/search/graph projections refresh incrementally after confirmed page commands. CTV Stage 3 implements detached Variable Store/Entity API projections and one incremental repository publication after verified PageCommand readback. No gameplay consumer is switched. Body and variables share whole-page PageStateIdentity; missing page is not an empty entity, and invalid/future variables never fall back to Properties.
 
 Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
 

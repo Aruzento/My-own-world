@@ -2,7 +2,8 @@ import {
   notifyPageUpdated
 } from '../repository/pageRepository.js';
 
-import { isStorageWorkspaceContextCurrent } from './storageAdapter.js';
+import { isStorageWorkspaceContextCurrent, captureStorageWorkspaceContext, assertStorageWorkspaceContext } from './storageAdapter.js';
+import { hasStructuredPageData, validateStructuredPageWrite } from './structuredPagePolicy.js';
 
 import {
   createWriteRevision,
@@ -192,8 +193,27 @@ export async function persistPageContentCommand({
   expectedBase = undefined,
   structuredMutation = null,
   workspaceContext = null,
-  validateBeforeWrite = null
+  validateBeforeWrite = null,
+  verifyPersistedContent = null
 } = {}) {
+
+  const structuredPage = hasStructuredPageData(page) || hasStructuredPageData(content);
+  const variablesCommand = type === 'update-card-variables' && Boolean(verifyPersistedContent);
+  if (structuredPage) {
+    workspaceContext ||= captureStorageWorkspaceContext();
+    verifyPersistedContent ||= async () => {
+      assertStorageWorkspaceContext(workspaceContext);
+      const durable = await readCurrentDurablePageContent(page, { storageAdapter: workspaceContext.adapter });
+      assertStorageWorkspaceContext(workspaceContext);
+      if (durable !== content) throw new Error('Structured page readback mismatch');
+    };
+  }
+  const callerValidate = validateBeforeWrite;
+  if (structuredPage) validateBeforeWrite = async () => {
+    await validateStructuredPageWrite({ beforeContent: await readCurrentDurablePageContent(page, { storageAdapter: workspaceContext?.adapter }), content, expectedBase,
+      variablesCommand, storageAdapter: workspaceContext?.adapter });
+    await callerValidate?.();
+  };
 
   const beforePage =
     previousPage ||
@@ -338,7 +358,9 @@ export async function persistPageContentCommand({
             if (!precondition.ok) return createPreconditionBlockedWriteResult({ page, type, reason, writeRevision, precondition });
             return null;
           } : null,
-          validateBeforeWrite
+          validateBeforeWrite,
+          structuredPageWrite: structuredPage,
+          verifyAfterWrite: verifyPersistedContent
         }
       );
 
@@ -414,9 +436,8 @@ export async function persistPageContentCommand({
         );
 
       } else {
-
-        page.content =
-          content;
+        if (structuredPage) applyPageRecordContentToRuntimePage(page, content);
+        else page.content = content;
       }
 
       notifyPageUpdated(
@@ -524,7 +545,7 @@ export async function persistPageContentCommand({
           context.rollbackData.beforePage
         );
 
-        notifyPageUpdated(
+        if (!structuredPage) notifyPageUpdated(
           context.rollbackData.beforePage,
           page
         );
@@ -611,6 +632,10 @@ async function createStructuredPageChangePreservation({
     normalizeStructuredMutation(
       structuredMutation
     );
+
+  if (hasStructuredPageData(beforePage) || hasStructuredPageData(content)) {
+    return createStructuredPreservationResult({ ok: false, reason: 'variables-whole-page-conflict-only', fields: [] });
+  }
 
   if (!mutation.ok) {
 
@@ -1079,6 +1104,8 @@ function applyPageRecordContentToRuntimePage(
 
   page.contentHash =
     parsed.contentHash;
+  page.variablesJson = parsed.variablesJson;
+  page.variablesStatus = parsed.variablesStatus;
 
   page.pageRecordStatus =
     parsed.pageRecordStatus;

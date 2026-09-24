@@ -26,6 +26,7 @@ export function findOrphanPaths(
   references = [],
   assetPaths = []
 ) {
+  if (references.some(reference => reference.incomplete)) return [];
 
   const used =
     new Set(

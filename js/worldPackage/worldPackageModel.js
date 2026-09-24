@@ -1,3 +1,4 @@
+import { assertLegacyPortability } from '../storage/structuredPagePolicy.js';
 import {
   normalizeWorkspacePath
 } from '../storage/storageAdapterContract.js';
@@ -24,6 +25,9 @@ export const WORLD_PACKAGE_VERSION =
 export function normalizeWorldPackageData(
   data = {}
 ) {
+  if (data?.version !== undefined && Number(data.version) !== 1) throw new Error('Unsupported World Package version');
+  if (data?.contents?.cardTypes) throw new Error('World Package v1 cannot carry definition catalog');
+  for (const page of (Array.isArray(data?.contents?.pages) ? data.contents.pages : [])) assertLegacyPortability(page, 'World Package v1 import');
 
   const source =
     isPlainObject(data)
@@ -106,6 +110,7 @@ export function createWorldPackageFromPages(
   pages = [],
   options = {}
 ) {
+  pages.forEach(page => assertLegacyPortability(page, 'World Package v1 export'));
 
   const title =
     options.title ||

@@ -1,3 +1,4 @@
+import { parsePageRecordContent } from '../core/pageRecord.js';
 import { isStorageWorkspaceContextCurrent } from './storageAdapter.js';
 
 const writeQueues =
@@ -10,8 +11,9 @@ const acceptedWriteRevisions =
   new Map();
 
 
-let storageAdapterProvider =
-  null;
+// storageAdapter регистрирует provider при загрузке взаимозависимых modules.
+// Hoisted binding не сбрасывает раннюю регистрацию и не зависит от import order.
+var storageAdapterProvider;
 
 
 export function setWriteQueueStorageAdapterProvider(
@@ -316,6 +318,16 @@ export function writePageContent(
   options = {}
 ) {
 
+  const structuredPage = parsePageRecordContent(content).variablesStatus.mode !== 'legacy' ||
+    parsePageRecordContent(page?.content || '').variablesStatus.mode !== 'legacy';
+  if (structuredPage &&
+      (!page?.path || !options.structuredPageWrite || !options.validateBeforeWrite || !options.verifyAfterWrite)) {
+    throw new Error('Structured page write requires PageCommand validation, whole-page base and readback');
+  }
+  if (structuredPage && (!storageAdapterProvider || !canUseStorageAdapter(storageAdapterProvider()))) {
+    throw new Error('Structured page requires the workspace StorageAdapter lifecycle');
+  }
+
   const writeKey =
     getPageWriteKey(
       page
@@ -385,11 +397,26 @@ export function writePageContent(
         if (options.workspaceContext && !isStorageWorkspaceContextCurrent(options.workspaceContext)) {
           return { state: 'stale', written: false, blocked: true, blockReason: 'workspace-changed' };
         }
-        options.validateBeforeWrite?.();
+        await options.validateBeforeWrite?.();
+        if (options.validateBeforeWrite && options.beforeWrite) {
+          const blocked = await options.beforeWrite();
+          if (blocked) return blocked;
+        }
+        if (isStaleRevision(options.revision, writeKey)) {
+          return createWriteResult({ key: writeKey, revision: options.revision, state: 'stale', skipped: true });
+        }
+        if (options.workspaceContext && !isStorageWorkspaceContextCurrent(options.workspaceContext)) {
+          return { state: 'stale', written: false, blocked: true, preconditionBlocked: true, blockReason: 'workspace-changed' };
+        }
         await storageAdapter.writeText(
           page.path,
           String(content)
         );
+        if (options.verifyAfterWrite) {
+          try { await options.verifyAfterWrite(); }
+          catch (error) { return { state: 'readback-uncertain', written: true, blocked: true,
+            preconditionBlocked: true, blockReason: String(error.message || error) }; }
+        }
         if (options.workspaceContext && !isStorageWorkspaceContextCurrent(options.workspaceContext)) {
           return { state: 'superseded-after-write', written: true, blocked: true, blockReason: 'workspace-changed' };
         }

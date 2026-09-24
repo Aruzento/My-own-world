@@ -1,6 +1,7 @@
 import {
   getCurrentSchemaVersion
 } from '../schema/schemaVersions.js';
+import { readPageVariables, serializePageVariables } from './pageVariablesCodec.js';
 
 
 const DEFAULT_PAGE_TITLE =
@@ -62,6 +63,8 @@ export function parsePageRecordContent(
     parseRelationshipsJson(
       frontMatter.values.relationshipsjson || ''
     );
+
+  const variablesStatus = readPageVariables(frontMatter.entries);
 
   const rawBody =
     normalizeParsedBody(
@@ -128,7 +131,7 @@ export function parsePageRecordContent(
     rawBody.trim();
 
   const parseIssues =
-    [];
+    [...variablesStatus.issues];
 
   if (!relationshipsResult.valid) {
 
@@ -142,6 +145,8 @@ export function parsePageRecordContent(
 
   return {
     ...metadata,
+    variablesJson: variablesStatus.mode === 'structured' ? variablesStatus.envelope : undefined,
+    variablesStatus,
     title:
       extractPageTitle(
         body
@@ -193,7 +198,7 @@ export function parsePageRecordContent(
 
 export function buildPageRecordContent({
   id,
-  schemaVersion = getCurrentPageSchemaVersion(),
+  schemaVersion = undefined,
   updatedAt = null,
   parent = null,
   order = Date.now(),
@@ -202,6 +207,7 @@ export function buildPageRecordContent({
   type = 'note',
   aliases = [],
   relationships = [],
+  variablesJson = undefined,
   body = '',
   frontMatter = null,
   invalidFrontMatter = {},
@@ -224,7 +230,7 @@ export function buildPageRecordContent({
     normalizePageRecordMetadata(
       {
         id,
-        schemaVersion,
+        schemaVersion: schemaVersion ?? (variablesJson === undefined ? 1 : 2),
         updatedAt:
           normalizeUpdatedAt(
             updatedAt
@@ -253,10 +259,13 @@ export function buildPageRecordContent({
   const frontMatterLines =
     buildFrontMatterLines({
       entries:
-        frontMatter?.entries || [],
+        variablesJson === undefined ? frontMatter?.entries || [] :
+          (frontMatter?.entries || []).filter(entry => entry.normalizedKey !== 'variablesjson'),
       record,
       invalidFrontMatter
     });
+
+  if (variablesJson !== undefined) frontMatterLines.push(`variablesJson: ${serializePageVariables(variablesJson)}`);
 
   return `---\n${frontMatterLines.join('\n')}\n---\n\n${outputBody}`;
 }
@@ -356,6 +365,8 @@ export function createRuntimePageFromContent({
       parsed.updatedAt,
     contentHash:
       parsed.contentHash,
+    variablesJson: parsed.variablesJson,
+    variablesStatus: parsed.variablesStatus,
     pageRecordStatus:
       parsed.pageRecordStatus,
     parent:
@@ -985,7 +996,7 @@ function parsePageSchemaVersion(
     );
 
   const currentVersion =
-    getCurrentPageSchemaVersion();
+    1; // Отсутствующая версия — legacy v1; открытие не активирует structured v2.
 
   if (!raw) {
 
