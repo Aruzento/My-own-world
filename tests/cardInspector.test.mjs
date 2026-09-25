@@ -6,7 +6,7 @@ import { CardTypeRegistry } from '../js/cardTypes/cardTypeRegistry.js';
 import { buildPageRecordContent } from '../js/core/pageRecord.js';
 import { createCardVariableSnapshot } from '../js/variables/cardVariableStore.js';
 import { createComputedResolverRegistry } from '../js/variables/computedResolvers.js';
-import { getSupportedInspectorDatatypes } from '../js/ui/cardInspector/fieldComponentRegistry.js';
+import { createObjectPropertyAdapter, getSupportedInspectorDatatypes } from '../js/ui/cardInspector/fieldComponentRegistry.js';
 import {
   buildInspectorSections,
   createInspectorDraft,
@@ -32,11 +32,29 @@ const definition = {
     field('test.kind', 'enum', { options: [{ value: 'stable-a', label: 'Shown A' }, { value: 'stable-b', label: 'Shown B' }] }),
     field('test.date', 'date'), field('test.datetime', 'datetime'), field('test.color', 'color'),
     field('test.asset', 'asset'), field('test.ref', 'reference', { targetTypes: ['test-card'] }),
-    field('test.object', 'object', { properties: [{ key: 'test.inner', label: 'Inner', datatype: 'string' }] }),
+    field('test.object', 'object', { properties: [
+      { key: 'test.inner', label: 'Inner', datatype: 'string' },
+      { key: 'test.objectKind', label: 'Object kind', datatype: 'enum', options: [{ value: 'object-a', label: 'Object A' }, { value: 'object-b', label: 'Object B' }] },
+      { key: 'test.objectFlag', label: 'Object flag', datatype: 'boolean' },
+      { key: 'test.objectCount', label: 'Object count', datatype: 'integer', min: 0 },
+      { key: 'test.objectAsset', label: 'Object asset', datatype: 'asset' },
+      { key: 'test.objectRef', label: 'Object ref', datatype: 'reference', targetTypes: ['test-card'] },
+      { key: 'test.objectRows', label: 'Object rows', datatype: 'array', items: { datatype: 'object', rowIdentityKey: 'test.objectRowId', properties: [
+        { key: 'test.objectRowId', label: 'Object row id', datatype: 'string', required: true, readonly: true },
+        { key: 'test.objectRowKind', label: 'Object row kind', datatype: 'enum', options: [{ value: 'nested-a', label: 'Nested A' }, { value: 'nested-b', label: 'Nested B' }] },
+        { key: 'test.objectRowFlag', label: 'Object row flag', datatype: 'boolean' },
+        { key: 'test.objectRowCount', label: 'Object row count', datatype: 'integer', min: 0 }
+      ] } }
+    ] }),
     field('test.array', 'array', { items: { datatype: 'string' } }),
     field('test.rows', 'array', { items: { datatype: 'object', rowIdentityKey: 'test.rowId', properties: [
       { key: 'test.rowId', label: 'Id', datatype: 'string', required: true, readonly: true },
-      { key: 'test.rowName', label: 'Row name', datatype: 'string' }
+      { key: 'test.rowName', label: 'Row name', datatype: 'string' },
+      { key: 'test.rowKind', label: 'Row kind', datatype: 'enum', options: [{ value: 'row-a', label: 'Row A' }, { value: 'row-b', label: 'Row B' }] },
+      { key: 'test.rowFlag', label: 'Row flag', datatype: 'boolean' },
+      { key: 'test.rowCount', label: 'Row count', datatype: 'integer', min: 0 },
+      { key: 'test.rowAsset', label: 'Row asset', datatype: 'asset' },
+      { key: 'test.rowRef', label: 'Row ref', datatype: 'reference', targetTypes: ['test-card'] }
     ] } }),
     field('test.formula', 'string', { format: 'formula', formula: { grammarId: 'test.formula', version: 1 } }),
     field('test.computed', 'integer', { readonly: true, nullable: true, computed: { resolverId: 'test.double', version: 1, inputs: ['test.count'], allowOverride: true } }),
@@ -94,6 +112,63 @@ test('input parsing retains invalid raw values and never turns empty number into
   assert.equal(projectDraftSnapshot(draft).values['test.count'], undefined);
   assert.deepEqual(parseInspectorInput(definition.fields.find(item => item.key === 'test.kind'), 'stable-a'), { ok: true, value: 'stable-a' });
   assert.equal(parseInspectorInput(definition.fields.find(item => item.key === 'test.kind'), 'Shown A').ok, false);
+});
+
+test('the shared parser keeps numeric, enum, boolean, asset and reference semantics at every schema depth', () => {
+  const object = definition.fields.find(item => item.key === 'test.object');
+  const row = definition.fields.find(item => item.key === 'test.rows').items;
+  const fields = [
+    definition.fields.find(item => item.key === 'test.count'),
+    object.properties.find(item => item.key === 'test.objectCount'),
+    row.properties.find(item => item.key === 'test.rowCount')
+  ];
+  for (const current of fields) {
+    assert.equal(parseInspectorInput(current, '').ok, false);
+    assert.deepEqual(parseInspectorInput(current, '0'), { ok: true, value: 0 });
+  }
+  for (const current of [object.properties.find(item => item.key === 'test.objectFlag'), row.properties.find(item => item.key === 'test.rowFlag')]) {
+    assert.deepEqual(parseInspectorInput(current, false), { ok: true, value: false });
+    assert.equal(parseInspectorInput(current, 'false').ok, false);
+  }
+  assert.deepEqual(parseInspectorInput(object.properties.find(item => item.key === 'test.objectKind'), 'object-b'), { ok: true, value: 'object-b' });
+  assert.equal(parseInspectorInput(row.properties.find(item => item.key === 'test.rowKind'), 'Row A').ok, false);
+  assert.deepEqual(parseInspectorInput(object.properties.find(item => item.key === 'test.objectAsset'), 'assets/icon.png'), { ok: true, value: { kind: 'asset', path: 'assets/icon.png' } });
+  assert.deepEqual(parseInspectorInput(row.properties.find(item => item.key === 'test.rowRef'), 'target-page'), { ok: true, value: { pageId: 'target-page' } });
+});
+
+test('nested adapters rebuild a complete parent subtree without dropping siblings or stable row identities', () => {
+  const object = definition.fields.find(item => item.key === 'test.object');
+  const rows = object.properties.find(item => item.key === 'test.objectRows');
+  let stored = {
+    'test.inner': 'keep',
+    'test.objectRows': [{ 'test.objectRowId': 'row-a', 'test.objectRowKind': 'nested-a', 'test.objectRowFlag': false }]
+  };
+  const context = { rawInputs: {}, onRawIssue: () => assert.fail('unexpected raw issue') };
+  const root = {
+    field: object, rootField: object, path: object.key, context,
+    read: () => ({ status: 'value', value: stored }),
+    set: value => { stored = value; }
+  };
+  const nestedRows = createObjectPropertyAdapter(root, rows);
+  nestedRows.set([
+    { 'test.objectRowId': 'row-a', 'test.objectRowKind': 'nested-b', 'test.objectRowFlag': false },
+    { 'test.objectRowId': 'row-b', 'test.objectRowKind': 'nested-a', 'test.objectRowFlag': true }
+  ]);
+  assert.equal(stored['test.inner'], 'keep');
+  assert.deepEqual(stored['test.objectRows'].map(item => item['test.objectRowId']), ['row-a', 'row-b']);
+  assert.equal(stored['test.objectRows'][0]['test.objectRowFlag'], false);
+});
+
+test('nested raw input is retained until that exact nested input is corrected', () => {
+  const original = createInspectorDraft(snapshot(envelope({ 'test.object': { 'test.inner': 'keep', 'test.objectCount': 3 } })));
+  const invalid = setInspectorDraftInputIssue(original, 'test.object.test.objectCount', '', 'Введите число или используйте «Сбросить».');
+  const unrelated = updateInspectorDraft(invalid, { op: 'set', key: 'test.name', value: 'Changed' });
+  assert.equal(unrelated.rawInputs['test.object.test.objectCount'], '');
+  assert.equal(validateInspectorDraft(unrelated).ok, false);
+  const corrected = updateInspectorDraft(unrelated, { op: 'set', key: 'test.object', value: { 'test.inner': 'keep', 'test.objectCount': 0 } }, { inputKey: 'test.object.test.objectCount' });
+  assert.equal(corrected.rawInputs['test.object.test.objectCount'], undefined);
+  assert.equal(validateInspectorDraft(corrected).ok, true);
+  assert.equal(projectDraftSnapshot(corrected).values['test.object']['test.inner'], 'keep');
 });
 
 test('computed values remain derived while false, zero and null overrides use key presence', () => {

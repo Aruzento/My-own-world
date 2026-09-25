@@ -5,6 +5,13 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-25: CTV Stage 4 Universal Inspector corrective
+
+- Replaced the separate nested/repeatable primitive conversion path with recursive generic value adapters. Root, object and stable-row properties now share the same datatype renderer, parser and schema validation; nested updates rebuild only their parent subtree before the existing Stage 3 guarded top-level patch.
+- Empty number/integer input remains raw invalid draft rather than becoming `0`; explicit `0` and nested/row `false` remain explicit values. Enum controls map selected DOM entries to schema stable values and blank performs unset, never coercing to the first option. Nested asset/reference values preserve their canonical structured representations.
+- Added model and Chromium regressions for nested enums, booleans, numbers, assets/references, invalid raw preservation, repeatable add/update/reorder/remove and sibling/row-identity preservation. Stage 4 status and the nine-stage roadmap are unchanged: Stage 5 remains the separate-only NEXT task.
+- Verification: focused Inspector/Entity tests 48/48 PASS; focused Chromium Inspector scenarios 4/4 PASS; `docs:index`, `agents:validate`, JavaScript syntax/import/UI-polish checks and `verify:quick` 944/944 PASS.
+
 ## 2026-09-25: CTV Stage 4 Universal Inspector
 
 - Added one production Universal Card Inspector in the existing ordinary-card right panel. It renders resolved Registry sections/fields through a datatype component registry, supports generic scalar, enum/date/color/asset/reference/object/array/stable-row controls, visibility, help/required/readonly/deprecated/provenance/validation states and custom fields without card-type branches.

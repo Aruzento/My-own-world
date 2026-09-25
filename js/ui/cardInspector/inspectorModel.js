@@ -40,12 +40,13 @@ export function updateInspectorDraft(draft, operation, options = {}) {
   } catch (error) {
     return withInputIssue(draft, operation.key, String(error.message || error), options.raw);
   }
+  const inputKey = options.inputKey || operation.key;
   const candidate = { ...draft, envelope: result.envelope, patch: compactPatch(draft.patch, operation), dirty: true };
   const validation = validateEntityValues({ envelope: candidate.envelope, definition: snapshot.definition, pageId: snapshot.pageId });
   return deepFreeze(deepCloneData({
     ...candidate,
-    rawInputs: withoutKey(draft.rawInputs, operation.key),
-    inputIssues: validation.issues
+    rawInputs: withoutKey(draft.rawInputs, inputKey),
+    inputIssues: [...draft.inputIssues.filter(issue => issue.details?.key !== inputKey), ...validation.issues]
   }));
 }
 

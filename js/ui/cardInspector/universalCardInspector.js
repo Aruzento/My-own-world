@@ -3,7 +3,7 @@ import { state } from '../../state.js';
 import { arePageStateIdentitiesEqual } from '../../core/pageRecord.js';
 import { captureStorageWorkspaceContext } from '../../storage/storageAdapter.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../../storage/cardTypeCatalogStorage.js';
-import { readEntity, prepareVariablesChange, commitVariablesChange, resolveReference } from '../../variables/entityVariables.js';
+import { readEntity, prepareVariablesChange, commitVariablesChange } from '../../variables/entityVariables.js';
 import { advanceEditorPageBase, getCurrentEditorPageBase } from '../../editor/editorSessionBase.js';
 import { hasPendingAutosaveForPage } from '../../editor/autosave.js';
 import { showAppRightPanel, hideAppRightPanel } from '../appShell.js';
@@ -16,7 +16,6 @@ import {
   readDraftValue,
   setInspectorDraftInputIssue,
   updateInspectorDraft,
-  updateInspectorDraftFromInput,
   validateInspectorDraft
 } from './inspectorModel.js';
 import { renderInspectorField } from './fieldComponentRegistry.js';
@@ -142,13 +141,16 @@ function fieldContext(field, issues, valueContext) {
     issues,
     rawInputs: active.draft.rawInputs,
     getValue: key => readDraftValue(active.draft, key, 'effective', valueContext),
-    resolveReference: key => resolveReference(projectDraftSnapshot(active.draft), key, valueContext),
     referencePages: definition => active.repository.getAllPages().filter(page => {
       if (!definition.targetTypes?.length) return true;
       return definition.targetTypes.includes(page.type);
     }),
-    onInput: (definition, raw, operation) => changeDraft(updateInspectorDraftFromInput(active.draft, definition, raw, operation)),
-    onOperation: operation => changeDraft(updateInspectorDraft(active.draft, operation)),
+    onValue: (definition, value, { inputKey = definition.key, operation = 'set' } = {}) =>
+      changeDraft(updateInspectorDraft(active.draft, { op: operation, key: definition.key, value }, { inputKey })),
+    onUnset: (definition, { inputKey = definition.key } = {}) =>
+      changeDraft(updateInspectorDraft(active.draft, { op: 'unset', key: definition.key }, { inputKey })),
+    onResetOverride: (definition, inputKey = definition.key) =>
+      changeDraft(updateInspectorDraft(active.draft, { op: 'resetOverride', key: definition.key }, { inputKey })),
     onRawIssue: (key, raw, message) => changeDraft(setInspectorDraftInputIssue(active.draft, key, raw, message))
   };
 }
