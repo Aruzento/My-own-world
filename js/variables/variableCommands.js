@@ -22,35 +22,43 @@ export function prepareVariablesChange({ pageId, expectedBase, patch, context = 
   if (!arePageStateIdentitiesEqual(expectedBase, before.pageIdentity)) throw new Error('Stale variables plan base');
   const workspace = context.workspaceContext || captureStorageWorkspaceContext();
   assertStorageWorkspaceContext(workspace);
-  const envelope = deepCloneData(before.envelope);
-  envelope.overrides ||= {};
-  const changedKeys = new Set();
-  for (const operation of patch) {
-    const field = before.definition.fieldsByKey[operation.key];
-    if (!field || field.binding.owner !== 'variables') throw new Error('Patch requires a known variable-owned field');
-    const overrideOperation = ['override', 'resetOverride'].includes(operation.op);
-    if (overrideOperation ? !field.computed?.allowOverride : field.readonly || field.computed) throw new Error('Readonly/computed field write forbidden');
-    if (overrideOperation) {
-      if (operation.op === 'resetOverride') delete envelope.overrides[field.key];
-      else { if (!hasValue(operation, 'value')) throw new Error('Missing override value'); envelope.overrides[field.key] = operation.value; }
-    } else if (operation.op === 'set') {
-      if (!hasValue(operation, 'value')) throw new Error('Missing value');
-      envelope.values[field.key] = operation.value;
-    } else if (operation.op === 'unset') delete envelope.values[field.key];
-    else applyRows(envelope, field, operation);
-    changedKeys.add(field.key);
-  }
+  const { envelope, changedKeys } = applyVariablesPatch(before, patch);
   const validation = validateEntityValues({ envelope, definition: before.definition, pageId });
   if (!validation.ok) { const error = new Error('Variable candidate validation failed'); error.issues = validation.issues; throw error; }
   const candidateContent = updatePageRecordContent(before.content, { variablesJson: envelope });
   const after = createCardVariableSnapshot({ ...page, content: candidateContent }, context.registry);
   const plan = deepFreeze(deepCloneData({ pageId, expectedBase, sourceIdentity: before.pageIdentity,
     schema: { type: before.type, version: before.schemaVersion, digest: before.schemaDigest },
-    before, after, changedKeys: [...changedKeys].sort(), candidateContent,
+    before, after, changedKeys, candidateContent,
     guards: { wholePage: true, schemaClosure: true, workspace: true, rebase: false }, diagnostics: validation.issues }));
   if (!page.path) throw new Error('Variables commit requires a durable workspace page path');
   plans.set(plan, { workspace, repository, path: page.path, used: false });
   return plan;
+}
+
+// Pure projection shared with Inspector drafts. It never touches PageRecord/runtime.
+export function applyVariablesPatch(snapshot, patch) {
+  assertJSONData(patch);
+  if (!snapshot?.definition?.fieldsByKey || !Array.isArray(patch)) throw new Error('Structured snapshot and data patch required');
+  const envelope = deepCloneData(snapshot.envelope);
+  envelope.overrides ||= {};
+  const changedKeys = new Set();
+  for (const operation of patch) {
+    const field = snapshot.definition.fieldsByKey[operation.key];
+    if (!field || field.binding.owner !== 'variables') throw new Error('Patch requires a known variable-owned field');
+    const overrideOperation = ['override', 'resetOverride'].includes(operation.op);
+    if (overrideOperation ? !field.computed?.allowOverride : field.readonly || field.computed) throw new Error('Readonly/computed field write forbidden');
+    if (overrideOperation) {
+      if (operation.op === 'resetOverride') delete envelope.overrides[field.key];
+      else { if (!hasValue(operation, 'value')) throw new Error('Missing override value'); envelope.overrides[field.key] = deepCloneData(operation.value); }
+    } else if (operation.op === 'set') {
+      if (!hasValue(operation, 'value')) throw new Error('Missing value');
+      envelope.values[field.key] = deepCloneData(operation.value);
+    } else if (operation.op === 'unset') delete envelope.values[field.key];
+    else applyRows(envelope, field, operation);
+    changedKeys.add(field.key);
+  }
+  return { envelope, changedKeys: [...changedKeys].sort() };
 }
 
 function applyRows(envelope, field, operation) {
@@ -61,7 +69,7 @@ function applyRows(envelope, field, operation) {
   const index = rows.findIndex(row => row[rowKey] === operation.rowId);
   if (operation.op === 'rowAdd') {
     if (!operation.rowId || index !== -1 || !operation.value || operation.value[rowKey] !== operation.rowId) throw new Error('Unique stable row id required');
-    rows.push(operation.value);
+    rows.push(deepCloneData(operation.value));
   } else if (operation.op === 'rowRemove') {
     if (index < 0) throw new Error('Missing row');
     rows.splice(index, 1);
@@ -71,7 +79,7 @@ function applyRows(envelope, field, operation) {
       const property = field.items.properties.find(item => item.key === key);
       if (!property || property.readonly || property.computed) throw new Error('Readonly or unknown row property');
     }
-    Object.assign(rows[index], operation.value);
+    Object.assign(rows[index], deepCloneData(operation.value));
   } else if (operation.op === 'rowReorder') {
     const ids = operation.rowIds;
     if (!Array.isArray(ids) || ids.length !== rows.length || new Set(ids).size !== rows.length || ids.some(id => !rows.some(row => row[rowKey] === id))) throw new Error('Reorder requires every stable row id exactly once');

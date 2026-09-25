@@ -41,6 +41,7 @@
 @import url('./block-character-sheet.css');
 @import url('./block-table.css');
 @import url('./card-type.css');
+@import url('./card-inspector.css');
 @import url('./backlinks.css');
 @import url('./legacy-fields.css');
 @import url('./campaign-map.css');

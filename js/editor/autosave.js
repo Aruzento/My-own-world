@@ -156,6 +156,18 @@ export function discardPendingAutosave(
 }
 
 
+export function hasPendingAutosaveForPage(
+  pageId = state.currentPage?.id
+) {
+
+  return Boolean(
+    pendingAutosave &&
+    pageId &&
+    pendingAutosave.pageId === pageId
+  );
+}
+
+
 export async function saveCurrentPage(
   editor,
   options = {}

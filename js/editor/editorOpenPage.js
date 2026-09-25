@@ -110,6 +110,11 @@ import {
   captureEditorPageBase
 } from './editorSessionBase.js';
 
+import {
+  hideUniversalCardInspector,
+  renderUniversalCardInspector
+} from '../ui/cardInspector/universalCardInspector.js';
+
 export async function openPageInEditor(
   editor,
   page,
@@ -128,6 +133,8 @@ export async function openPageInEditor(
   setCurrentPage(
     page
   );
+
+  hideUniversalCardInspector();
 
   captureEditorPageBase(
     page,
@@ -381,6 +388,13 @@ async function renderCardPage(
 
   await restoreAssetImagesWithEditor(
     editor
+  );
+
+  if (!isOpenCurrent(options)) return false;
+
+  await renderUniversalCardInspector(
+    page,
+    { editor }
   );
 
   if (!isOpenCurrent(options)) return false;

@@ -5,6 +5,15 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-25: CTV Stage 4 Universal Inspector
+
+- Added one production Universal Card Inspector in the existing ordinary-card right panel. It renders resolved Registry sections/fields through a datatype component registry, supports generic scalar, enum/date/color/asset/reference/object/array/stable-row controls, visibility, help/required/readonly/deprecated/provenance/validation states and custom fields without card-type branches.
+- Added an immutable-snapshot/ephemeral-draft boundary. Lazy defaults and computed values remain reads; stored values and explicit overrides become Stage 3 data patches. Save uses only `prepareVariablesChange` and `commitVariablesChange`; pending/stale body edits, workspace/schema changes, validation failures and uncertain readback preserve the Inspector draft instead of merging or publishing it.
+- Legacy, malformed, future/unsupported, missing-definition and missing-page modes are explicit read-only states. Exact reference IDs and stable row identities are persisted. Properties, specialized map/graph inspectors, CharacterModel, Combat 17.6, Map, Inventory, Effects and the empty production type catalog were not changed or migrated.
+- Corrected the Stage 3 implementation baseline in the canonical document to `54cb618a52dd4a9d28e2a21576b0a9dfdf3e0475`.
+- Stage 4 is DONE / Foundation; Stage 5 game-core type catalog is the only NEXT task. Phase 17 remains PAUSED, 17.6 accepted and 17.7+ blocked. Stage 5 was not started.
+- Verification: focused Inspector/Entity tests PASS; full unit suite 941/941 PASS; focused Chromium Inspector scenarios 3/3 PASS. Final docs/index/agents/verify evidence is recorded in the task report after the status update.
+
 ## 2026-09-24: CTV Stage 3 Variable Store and Variables / Entity API
 
 - Added PageRecord-owned one-line `variablesJson` codec and supported page v2; legacy saves remain v1 without envelope creation. Strict JSON limits/duplicates/unsafe keys and malformed/future raw preservation are covered. Body contentHash remains unchanged; full PageStateIdentity includes variables.

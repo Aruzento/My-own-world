@@ -92,6 +92,10 @@ import {
 } from './editorOpenPage.js';
 
 import {
+  hideUniversalCardInspector
+} from '../ui/cardInspector/universalCardInspector.js';
+
+import {
   setupEditorConflictRecovery
 } from './editConflictUi.js';
 
@@ -287,6 +291,8 @@ export function openPage(
 
 export function renderEmptyEditor() {
 
+  hideUniversalCardInspector();
+
   teardownKnowledgeGraphPage(
     editor
   );
@@ -299,6 +305,8 @@ export function renderEmptyEditor() {
 export function renderWorkspaceRecoveryEditor(
   report
 ) {
+
+  hideUniversalCardInspector();
 
   teardownKnowledgeGraphPage(
     editor

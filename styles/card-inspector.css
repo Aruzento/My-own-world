@@ -1,0 +1,158 @@
+.card-inspector {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  color: var(--mow-color-text, #e9edf3);
+  background: var(--mow-color-surface, #171a21);
+}
+
+.card-inspector > header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--mow-space-4, 16px);
+  border-bottom: 1px solid var(--mow-color-border, #343a46);
+  background: inherit;
+}
+
+.card-inspector h2,
+.card-inspector h3,
+.card-inspector p {
+  margin: 0;
+}
+
+.card-inspector__state,
+.card-inspector__form {
+  display: grid;
+  gap: var(--mow-space-4, 16px);
+  padding: var(--mow-space-4, 16px);
+}
+
+.card-inspector__section,
+.card-inspector__nested {
+  display: grid;
+  gap: var(--mow-space-3, 12px);
+  min-width: 0;
+  margin: 0;
+  padding: var(--mow-space-3, 12px);
+  border: 1px solid var(--mow-color-border, #343a46);
+  border-radius: var(--mow-radius-md, 8px);
+}
+
+.card-inspector__section > legend,
+.card-inspector__nested > legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.card-inspector__field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.card-inspector__field > label,
+.card-inspector__row label {
+  display: grid;
+  gap: 4px;
+  font-weight: 650;
+}
+
+.card-inspector__control {
+  display: grid;
+  gap: 8px;
+}
+
+.card-inspector input,
+.card-inspector textarea,
+.card-inspector select,
+.card-inspector button {
+  max-width: 100%;
+  font: inherit;
+}
+
+.card-inspector input:not([type='checkbox']),
+.card-inspector textarea,
+.card-inspector select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  color: inherit;
+  border: 1px solid var(--mow-color-border, #4a5261);
+  border-radius: var(--mow-radius-sm, 6px);
+  background: var(--mow-color-surface-raised, #20242d);
+}
+
+.card-inspector textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.card-inspector button {
+  padding: 7px 10px;
+  color: inherit;
+  border: 1px solid var(--mow-color-border, #4a5261);
+  border-radius: var(--mow-radius-sm, 6px);
+  background: var(--mow-color-surface-raised, #272c36);
+  cursor: pointer;
+}
+
+.card-inspector button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.card-inspector :focus-visible {
+  outline: 2px solid var(--mow-color-focus, #84a9ff);
+  outline-offset: 2px;
+}
+
+.card-inspector__help,
+.card-inspector__badges,
+.card-inspector__save-status {
+  color: var(--mow-color-text-muted, #a9b1c0);
+  font-size: .82rem;
+}
+
+.card-inspector__error {
+  color: var(--mow-color-danger, #ff9999);
+  font-size: .84rem;
+}
+
+.card-inspector__field-actions,
+.card-inspector__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.card-inspector__rows,
+.card-inspector__diagnostics {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.card-inspector__row {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--mow-color-border, #343a46);
+  border-radius: var(--mow-radius-sm, 6px);
+}
+
+.card-inspector__save {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px 0 0;
+  background: var(--mow-color-surface, #171a21);
+}
+
+.card-inspector__field--unsupported {
+  padding: 10px;
+  border: 1px solid var(--mow-color-danger, #ff9999);
+  border-radius: var(--mow-radius-sm, 6px);
+}
