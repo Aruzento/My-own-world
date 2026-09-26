@@ -10,7 +10,6 @@ import {
   referenceField,
   repeatableField,
   resourceRows,
-  stringArrayField,
   temporalValue,
   textOrReferenceRows
 } from './worldServiceShared.js';
@@ -80,13 +79,11 @@ export const FOLDER_DEFINITION = {
     v('folder.sortingDirection', 'Направление сортировки', 'enum', { options: options([
       ['ascending', 'По возрастанию'], ['descending', 'По убыванию']
     ]), section: 'structure' }),
-    v('folder.icon', 'Иконка', 'asset', { section: 'presentation' }),
     v('folder.color', 'Цвет', 'color', { section: 'presentation' }),
     v('folder.visibility', 'Видимость', 'enum', { options: options([
       ['visible', 'Видима'], ['hidden', 'Скрыта'], ['master', 'Только мастер'], ['inherited', 'Наследуется']
     ]), section: 'presentation' }),
-    v('folder.pinned', 'Закреплена', 'boolean', { default: false, section: 'presentation' }),
-    v('folder.archived', 'Архивирована', 'boolean', { default: false, section: 'presentation' })
+    v('folder.pinned', 'Закреплена', 'boolean', { default: false, section: 'presentation' })
   ],
   capabilities: { serviceEntity: true, groupingCard: true }, metadata: { stage: 6, catalog: 'world-service' }
 };
@@ -140,9 +137,7 @@ export const PROJECT_DEFINITION = {
       nestedField('project.attachments.name', 'Название'), nestedField('project.attachments.asset', 'Файл', 'asset'),
       nestedField('project.attachments.notes', 'Примечание', 'string', { format: 'multiline' })
     ], { section: 'structure' }),
-    referenceArrayField('project.responsibles', 'Ответственные', ['player', 'character'], { section: 'relations' }),
-    stringArrayField('project.tags', 'Теги проекта', { section: 'identity' }),
-    v('project.archived', 'Архивный', 'boolean', { default: false, section: 'presentation' })
+    referenceArrayField('project.responsibles', 'Ответственные', ['player', 'character'], { section: 'relations' })
   ],
   capabilities: { serviceEntity: true, projectCard: true }, metadata: { stage: 6, catalog: 'world-service' }
 };

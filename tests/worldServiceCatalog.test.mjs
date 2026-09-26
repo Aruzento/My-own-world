@@ -11,7 +11,7 @@ import { WORLD_SERVICE_CARD_TYPE_DEFINITIONS } from '../js/cardTypes/definitions
 import { ALL_CARD_TYPE_IDS } from '../js/cardTypes/definitions/gameCoreHelpers.js';
 import { activateCardTypeDefinitions, createCardTypeRegistryFromCatalog, readCardTypeCatalog } from '../js/storage/cardTypeCatalogStorage.js';
 import { buildPageRecordContent } from '../js/core/pageRecord.js';
-import { readEntity, resolveReference } from '../js/variables/entityVariables.js';
+import { getValue, readEntity, resolveReference } from '../js/variables/entityVariables.js';
 import { PageIndex } from '../js/repository/pageIndex.js';
 
 const oracle = JSON.parse(await readFile(new URL('./fixtures/worldServiceCatalogCompleteness.json', import.meta.url), 'utf8'));
@@ -87,6 +87,33 @@ test('domain hierarchy stays separate from PageRecord tree hierarchy', () => {
   }
 });
 
+test('Folder and Project cover common card concepts through one PageRecord owner', () => {
+  const registry = new CardTypeRegistry();
+  const mappings = oracle.sourceOwnerCoverage;
+  for (const [type, entries] of Object.entries(mappings)) for (const entry of entries) {
+    const definition = registry.getResolvedType(type, 1);
+    assert.equal(definition.fieldsByKey[entry.removedVariableKey], undefined, `${entry.removedVariableKey} must not create a second owner`);
+    assert.ok(definition.fieldsByKey[entry.commonFieldKey], `${entry.commonFieldKey} is the source-covered field`);
+    assert.deepEqual(definition.fieldsByKey[entry.commonFieldKey].binding, entry.binding);
+  }
+
+  const folderDefinition = registry.getResolvedType('folder', 1);
+  const folder = page('folder-1', 'folder', folderDefinition.digest, {});
+  const folderSnapshot = readEntity(folder.id, { registry, repository: { getPageById: id => id === folder.id ? folder : null } });
+  assert.equal(getValue(folderSnapshot, 'page.icon').source, 'page');
+  assert.equal(getValue(folderSnapshot, 'page.archived').source, 'page');
+  assert.equal(folderSnapshot.values['folder.icon'], undefined);
+  assert.equal(folderSnapshot.values['folder.archived'], undefined);
+
+  const projectDefinition = registry.getResolvedType('project', 1);
+  const project = page('project-1', 'project', projectDefinition.digest, {}, { tags: ['planning', 'world'] });
+  const projectSnapshot = readEntity(project.id, { registry, repository: { getPageById: id => id === project.id ? project : null } });
+  assert.deepEqual(getValue(projectSnapshot, 'page.tags').value, ['planning', 'world']);
+  assert.equal(getValue(projectSnapshot, 'page.archived').source, 'page');
+  assert.equal(projectSnapshot.values['project.tags'], undefined);
+  assert.equal(projectSnapshot.values['project.archived'], undefined);
+});
+
 test('mixed values and special map references preserve exact canonical identities', () => {
   const registry = new CardTypeRegistry();
   const country = registry.getResolvedType('country', 1);
@@ -114,9 +141,9 @@ test('PageIndex and exact typed references accept Stage 6 types without title fa
   assert.equal(index.searchPageResults('World country')[0].page.type, 'country');
 });
 
-function page(id, type, digest, values) {
+function page(id, type, digest, values, metadata = {}) {
   return { id, title:id, type, template:'card', path:`/pages/${id}.md`, content:buildPageRecordContent({
-    id, type, template:'card', body:`<h1>${id}</h1>`, now:'2026-09-26T00:00:00Z',
+    id, type, template:'card', body:`<h1>${id}</h1>`, now:'2026-09-26T00:00:00Z', ...metadata,
     variablesJson:{ formatVersion:1, schemaVersion:1, schemaDigest:digest, values }
   }) };
 }

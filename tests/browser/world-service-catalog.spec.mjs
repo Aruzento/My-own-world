@@ -28,12 +28,18 @@ test('Stage 6 schemas render seven types and persist complex country data generi
     setPages(pages);
     const editor=document.getElementById('editorArea'); editor.innerHTML='<p contenteditable="true" data-persistent-editable="true">Body</p>';
     const labels=[];
-    for(const record of pages.filter(x=>x.template==='card')){setCurrentPage(record);captureEditorPageBase(record,record.content);await renderUniversalCardInspector(record,{registry,editor,workspaceContext:captureStorageWorkspaceContext()});labels.push({id:record.type,fields:document.querySelectorAll('[data-field-key]').length});}
+    for(const record of pages.filter(x=>x.template==='card')){setCurrentPage(record);captureEditorPageBase(record,record.content);await renderUniversalCardInspector(record,{registry,editor,workspaceContext:captureStorageWorkspaceContext()});labels.push({id:record.type,fields:document.querySelectorAll('[data-field-key]').length,keys:[...document.querySelectorAll('[data-field-key]')].map(node=>node.dataset.fieldKey)});}
     const country=pages.find(x=>x.type==='country');setCurrentPage(country);captureEditorPageBase(country,country.content);await renderUniversalCardInspector(country,{registry,editor,workspaceContext:captureStorageWorkspaceContext()});
     window.__stage6={country,registry,editor,workspaceContext:captureStorageWorkspaceContext(),regionId:region.id}; return labels;
   });
   expect(rendered.map(x=>x.id)).toEqual(['location','region','country','organization','lore','folder','project']);
   expect(rendered.every(x=>x.fields>0)).toBe(true);
+  const folder=rendered.find(x=>x.id==='folder');
+  const project=rendered.find(x=>x.id==='project');
+  expect(folder.keys).toEqual(expect.arrayContaining(['page.icon','page.archived']));
+  expect(folder.keys).not.toEqual(expect.arrayContaining(['folder.icon','folder.archived']));
+  expect(project.keys).toEqual(expect.arrayContaining(['page.tags','page.archived']));
+  expect(project.keys).not.toEqual(expect.arrayContaining(['project.tags','project.archived']));
 
   await page.getByLabel('Форма государства',{exact:true}).selectOption({label:'Федерация'});
   await page.getByLabel('Население',{exact:true}).fill('125000');

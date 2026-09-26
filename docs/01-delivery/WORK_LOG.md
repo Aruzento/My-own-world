@@ -15,6 +15,12 @@ owner_zone: "delivery"
 - Local release evidence: Stage 6 focused tests PASS; full Chromium smoke PASS (`314/314`); `docs:index`, `agents:validate`, `check:js`, `verify:quick` and `verify` PASS (`955/955` unit/integration checks plus the large-workspace performance smoke).
 - GitHub `Verify` run `36260218403` for Stage 6 corrective HEAD `247b68e447fc23bc511810336e6a793334dfde3f` concluded `success`: both `Run verification` and `Run browser smoke` passed, with `314/314` Chromium tests. The preceding run exposed only a CI provenance-test assumption about the intentionally untracked source file; the committed oracle now pins the approved SHA unconditionally and verifies source bytes additionally when that user-owned file is present.
 
+## 2026-09-26: CTV Stage 6 common-owner corrective
+
+- Removed four duplicate Variables before Stage 6 acceptance: `folder.icon`, `folder.archived`, `project.tags` and `project.archived`. Their approved source coverage remains complete through `core.card-metadata@1`: Folder Icon → `page.icon`, Folder Archived → `page.archived`, Project Tags → `page.tags`, Project Archived → `page.archived`. This is a binding/presentation correction; it adds no metadata writer and no migration.
+- Narrow audit of the remaining seven Stage 6 definitions found no further type-owned fields duplicating common type/tags/aliases/tree parent/relationships/source/primary image/icon/order/archive/body-block owners. Domain parent Variables remain distinct from `page.parent`.
+- Updated the independent Stage 6 oracle with explicit source-to-owner coverage. Folder resolved counts are now `19/34` (owned paths `9`); Project is `36/105` (owned paths `80`). The four removed type-owned identities reduce only duplicate schema paths, not approved product field coverage.
+
 ## 2026-09-26: AppShell right-panel CI corrective
 
 - GitHub Verify browser failure on `fcebf3d…`, `8b8e198…` and `d74ae5f…` came from the pre-Stage-4 AppShell assertion that an ordinary selected card must leave the reserved panel hidden. Stage 4 correctly renders the Universal Inspector into the ordinary-card right panel, so the prior test expected an obsolete state rather than observing a race or test-state leak.
