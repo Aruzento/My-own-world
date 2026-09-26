@@ -3897,12 +3897,23 @@ test(
       page.locator('.app')
     ).toHaveAttribute(
       'data-right-panel-state',
-      'hidden'
+      'visible'
     );
 
     await expect(
       page.locator('#appRightPanel')
-    ).toBeHidden();
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#appRightPanel .card-inspector')
+    ).toBeVisible();
+
+    await expect(
+      page.locator('#appInspectorToggleBtn')
+    ).toHaveAttribute(
+      'aria-expanded',
+      'true'
+    );
 
     await expect(
       page.locator('#appInspectorPanel')
@@ -3920,6 +3931,80 @@ test(
       page.locator('.app-shell-system-panel')
     ).toHaveCount(
       0
+    );
+
+    await page.locator('#appInspectorToggleBtn').click();
+
+    await expect(
+      page.locator('.app')
+    ).toHaveAttribute(
+      'data-right-panel-state',
+      'hidden'
+    );
+
+    await expect(
+      page.locator('#appRightPanel')
+    ).toBeHidden();
+
+    await page.evaluate(
+      async () => {
+        const { state } = await import('/js/state.js');
+        const { renderUniversalCardInspector } = await import('/js/ui/cardInspector/universalCardInspector.js');
+        await renderUniversalCardInspector(state.currentPage);
+      }
+    );
+
+    await expect(
+      page.locator('.app')
+    ).toHaveAttribute(
+      'data-right-panel-state',
+      'hidden'
+    );
+
+    await page.locator('#appInspectorToggleBtn').click();
+
+    await expect(
+      page.locator('.app')
+    ).toHaveAttribute(
+      'data-right-panel-state',
+      'visible'
+    );
+
+    await expect(
+      page.locator('#appRightPanel .card-inspector')
+    ).toBeVisible();
+
+    await page.evaluate(
+      async () => {
+        const { hideUniversalCardInspector } = await import('/js/ui/cardInspector/universalCardInspector.js');
+        hideUniversalCardInspector();
+      }
+    );
+
+    await expect(
+      page.locator('.app')
+    ).toHaveAttribute(
+      'data-right-panel-state',
+      'hidden'
+    );
+
+    await expect(
+      page.locator('#appInspectorToggleBtn')
+    ).toBeHidden();
+
+    await page.evaluate(
+      async () => {
+        const { state } = await import('/js/state.js');
+        const { renderUniversalCardInspector } = await import('/js/ui/cardInspector/universalCardInspector.js');
+        await renderUniversalCardInspector(state.currentPage);
+      }
+    );
+
+    await expect(
+      page.locator('.app')
+    ).toHaveAttribute(
+      'data-right-panel-state',
+      'visible'
     );
 
     await page

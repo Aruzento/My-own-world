@@ -5,6 +5,13 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-26: AppShell right-panel CI corrective
+
+- GitHub Verify browser failure on `fcebf3d…`, `8b8e198…` and `d74ae5f…` came from the pre-Stage-4 AppShell assertion that an ordinary selected card must leave the reserved panel hidden. Stage 4 correctly renders the Universal Inspector into the ordinary-card right panel, so the prior test expected an obsolete state rather than observing a race or test-state leak.
+- Added the contextual top-bar Inspector toggle. For an active ordinary card, opening the card makes the Inspector panel visible; a user hide/show action owns panel visibility through Inspector rerenders of that same card. A special-page transition releases the Inspector and hides the panel; opening another ordinary card starts its own Inspector session. Map and Knowledge Graph workbench-local inspectors remain separate.
+- Browser regression covers initial Inspector visibility, manual hide, same-card rerender preserving hide, explicit reopen and ordinary/special page transitions. This is an AppShell/Inspector lifecycle correction only: Stage 5 catalog, Variables/Entity contracts, migration, domain cutover and Stage 6 remain untouched.
+- Verification PASS: focused AppShell regression 1/1; adjacent AppShell/Inspector/catalog Chromium suite 16/16; full Chromium browser smoke 313/313; `check:js`, `verify:quick` 950/950, CI-equivalent `npm verify`, `docs:index` and `agents:validate`. Desktop/Tauri was not run because no desktop-specific code changed.
+
 ## 2026-09-26: CTV Stage 5 game-core type catalog
 
 - Published immutable bundled v1 definitions for `player`, `character`, `item`, `skill`, `spell`, `effect`, `race` and `class`. The catalog uses exact includes of `core.card-metadata@1`, `dnd.actor-links@1`, `dnd.actor-defenses@1` and `dnd.rule-publication@1`; these sets own only semantics shared without datatype/default/reference drift.

@@ -24,6 +24,9 @@ let active = null;
 
 export async function renderUniversalCardInspector(page, options = {}) {
   const repository = options.repository || PageRepository;
+  const previousVisibility = active?.pageId === page?.id
+    ? active.panelVisibility
+    : 'visible';
   let registry = options.registry;
   let loadError = null;
   if (!registry) {
@@ -48,15 +51,32 @@ export async function renderUniversalCardInspector(page, options = {}) {
     editor: options.editor || document.getElementById('editor'),
     workspaceContext: options.workspaceContext,
     saveState: null,
-    allowDetached: Boolean(options.allowDetached)
+    allowDetached: Boolean(options.allowDetached),
+    panelVisibility: previousVisibility
   };
+  ensureInspectorToggle();
   paint();
   return true;
 }
 
 export function hideUniversalCardInspector() {
   active = null;
+  syncInspectorToggle();
   hideAppRightPanel();
+}
+
+export function toggleUniversalCardInspectorPanel() {
+  if (!active) return false;
+  active.panelVisibility = active.panelVisibility === 'visible'
+    ? 'hidden'
+    : 'visible';
+  if (active.panelVisibility === 'hidden') {
+    hideAppRightPanel();
+    syncInspectorToggle();
+    return true;
+  }
+  paint();
+  return true;
 }
 
 export function getUniversalCardInspectorState() {
@@ -76,7 +96,36 @@ function paint() {
   const source = describeInspectorSource(active.snapshot);
   if (!source.editable) panel.append(renderUnavailable(source));
   else panel.append(renderStructured());
+  if (active.panelVisibility !== 'visible') {
+    syncInspectorToggle();
+    return;
+  }
   showAppRightPanel({ content: panel, label: 'Inspector карточки' });
+  syncInspectorToggle();
+}
+
+function ensureInspectorToggle() {
+  const toggle = document.getElementById('appInspectorToggleBtn');
+  if (!toggle || toggle.dataset.cardInspectorBound === 'true') return;
+  toggle.dataset.cardInspectorBound = 'true';
+  toggle.addEventListener('click', () => {
+    toggleUniversalCardInspectorPanel();
+  });
+}
+
+function syncInspectorToggle() {
+  const toggle = document.getElementById('appInspectorToggleBtn');
+  if (!toggle) return;
+  const isAvailable = Boolean(active);
+  const isVisible = active?.panelVisibility === 'visible';
+  toggle.classList.toggle('hidden', !isAvailable);
+  toggle.disabled = !isAvailable;
+  toggle.setAttribute('aria-expanded', String(isVisible));
+  toggle.setAttribute('aria-label', isVisible ? 'Скрыть Inspector' : 'Показать Inspector');
+  toggle.setAttribute('title', isVisible ? 'Скрыть Inspector' : 'Показать Inspector');
+  toggle.dataset.tooltip = isVisible ? 'Скрыть Inspector' : 'Показать Inspector';
+  const icon = toggle.querySelector('use');
+  icon?.setAttribute('href', `./assets/icons/rpg-ui.svg#icon-${isVisible ? 'eye-off' : 'eye'}`);
 }
 
 function renderUnavailable(source) {
