@@ -181,10 +181,11 @@ function renderReference(field, context) {
     pages.filter(page => !normalized || [page.name, page.title, ...(page.aliases || [])]
       .some(text => String(text || '').toLocaleLowerCase().includes(normalized)))
       .forEach(page => select.append(enumOption(page.id, page.name || page.title || page.id)));
-    if (value.status === 'value' && ![...select.options].some(item => item.value === value.value?.pageId)) {
-      select.append(enumOption(value.value.pageId, `Недоступная ссылка: ${value.value.pageId}`));
+    const pageId = value.value?.pageId;
+    if (value.status === 'value' && pageId && ![...select.options].some(item => item.value === pageId)) {
+      select.append(enumOption(pageId, `Недоступная ссылка: ${pageId}`));
     }
-    if (value.status === 'value') select.value = value.value?.pageId || '';
+    if (value.status === 'value') select.value = pageId || '';
   };
   populate('');
   search.addEventListener('input', () => populate(search.value));

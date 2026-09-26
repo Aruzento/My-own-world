@@ -409,7 +409,7 @@ test(
       ]
     });
 
-    const resolved = registry.getResolvedType('character', 1);
+    const resolved = registry.getResolvedType('test-character', 1);
 
     assert.deepEqual(
       resolved.fields.map(entry => entry.key),
@@ -446,7 +446,7 @@ test(
     });
 
     assert.throws(
-      () => registry.getResolvedType('character', 1),
+      () => registry.getResolvedType('test-character', 1),
       error => error.code === 'CARD_TYPE_FIELD_CONFLICT'
     );
   }
@@ -473,12 +473,12 @@ test(
       ]
     });
 
-    const resolved = registry.getResolvedType('character', 1);
+    const resolved = registry.getResolvedType('test-character', 1);
     const level = resolved.fieldsByKey['dnd.level'];
 
     assert.equal(level.label, 'Уровень персонажа');
     assert.equal(level.provenance.id, 'dnd.progression');
-    assert.equal(level.presentationProvenance.id, 'character');
+    assert.equal(level.presentationProvenance.id, 'test-character');
     assert.equal(Object.isFrozen(resolved), true);
     assert.equal(Object.isFrozen(level), true);
   }
@@ -505,7 +505,7 @@ test(
     });
 
     assert.throws(
-      () => registry.getResolvedType('character', 1),
+      () => registry.getResolvedType('test-character', 1),
       error => error.code === 'CARD_TYPE_FIELD_REFERENCE_MISSING'
     );
   }
@@ -550,12 +550,12 @@ test(
     });
 
     assert.equal(
-      firstRegistry.getResolvedType('character', 1).digest,
-      secondRegistry.getResolvedType('character', 1).digest
+      firstRegistry.getResolvedType('test-character', 1).digest,
+      secondRegistry.getResolvedType('test-character', 1).digest
     );
     assert.deepEqual(
-      firstRegistry.getResolvedType('character', 1).fields.map(entry => entry.key),
-      secondRegistry.getResolvedType('character', 1).fields.map(entry => entry.key)
+      firstRegistry.getResolvedType('test-character', 1).fields.map(entry => entry.key),
+      secondRegistry.getResolvedType('test-character', 1).fields.map(entry => entry.key)
     );
   }
 );
@@ -594,13 +594,13 @@ test(
       ]
     });
 
-    assert.deepEqual(registry.listTypeVersions('character'), [1, 2]);
-    assert.ok(registry.getResolvedType('character', 1).fieldsByKey['dnd.old']);
-    assert.ok(registry.getResolvedType('character', 2).fieldsByKey['dnd.new']);
-    assert.equal(registry.diagnoseType('character', 3).status, 'unsupported');
+    assert.deepEqual(registry.listTypeVersions('test-character'), [1, 2]);
+    assert.ok(registry.getResolvedType('test-character', 1).fieldsByKey['dnd.old']);
+    assert.ok(registry.getResolvedType('test-character', 2).fieldsByKey['dnd.new']);
+    assert.equal(registry.diagnoseType('test-character', 3).status, 'unsupported');
     assert.equal(registry.diagnoseType('missing', 1).status, 'missing');
     assert.throws(
-      () => registry.getResolvedType('character'),
+      () => registry.getResolvedType('test-character'),
       error => error.code === 'CARD_TYPE_UNSUPPORTED_VERSION'
     );
   }
@@ -622,7 +622,7 @@ test(
       const registry = new CardTypeRegistry({
         activatedTypes: [typeDefinition()]
       });
-      assert.equal(registry.getResolvedType('character', 1).id, 'character');
+      assert.equal(registry.getResolvedType('test-character', 1).id, 'test-character');
     } finally {
       if (previous) {
         Object.defineProperty(globalThis, 'document', previous);
@@ -636,7 +636,7 @@ test(
 
 function typeDefinition(overrides = {}) {
   return {
-    id: 'character',
+    id: 'test-character',
     version: 1,
     label: 'Персонаж',
     includes: [],

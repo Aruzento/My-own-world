@@ -31,7 +31,7 @@ import { collectAssetReferencesFromPages } from '../js/storage/assetReferenceSca
 const f = (key, datatype = 'string', rest = {}) => ({ key, datatype, label: key, binding: { owner: 'variables' }, ...rest });
 const computed = (inputs = ['test.number']) => ({ resolverId: 'test.double', version: 1, inputs, allowOverride: true });
 const definition = {
-  id: 'character', version: 1, label: 'Test fixture only', includes: [], sections: [], fields: [
+  id: 'test-character', version: 1, label: 'Test fixture only', includes: [], sections: [], fields: [
     f('test.number', 'integer', { default: 3, min: 0, max: 100 }),
     f('test.flag', 'boolean', { default: true }), f('test.text', 'string', { default: 'default' }),
     f('test.nullable', 'number', { nullable: true }), f('test.required', 'string', { required: true }),
@@ -41,7 +41,7 @@ const definition = {
     ] }),
     f('test.result', 'integer', { computed: computed(), readonly: true, nullable: true }),
     f('test.boolResult', 'boolean', { computed: { resolverId: 'test.flag', version: 1, inputs: [], allowOverride: true } }),
-    f('test.ref', 'reference', { targetTypes: ['character'], validation: { allowSelf: false, acyclic: true } }),
+    f('test.ref', 'reference', { targetTypes: ['test-character'], validation: { allowSelf: false, acyclic: true } }),
     f('test.rows', 'array', { items: { datatype: 'object', rowIdentityKey: 'test.rowId', properties: [
       { key: 'test.rowId', label: 'Id', datatype: 'string', required: true, readonly: true },
       { key: 'test.name', label: 'Name', datatype: 'string' }
@@ -57,8 +57,8 @@ const registry = createCardTypeRegistryFromCatalog(catalog);
 const resolvers = createComputedResolverRegistry([{ id: 'test.double', version: 1,
   resolve: inputs => inputs['test.number'] * 2 }]);
 const envelope = (values = {}, rest = {}) => ({ formatVersion: 1, schemaVersion: 1,
-  schemaDigest: registry.getResolvedType('character', 1).digest, values: { 'test.required': 'present', ...values }, ...rest });
-const content = (data = envelope()) => buildPageRecordContent({ id: 'entity', type: 'character', variablesJson: data,
+  schemaDigest: registry.getResolvedType('test-character', 1).digest, values: { 'test.required': 'present', ...values }, ...rest });
+const content = (data = envelope()) => buildPageRecordContent({ id: 'entity', type: 'test-character', variablesJson: data,
   tags: ['card'], body: '<h1>Entity</h1><p>Free text</p>', now: '2026-09-24T00:00:00Z' });
 const snapshot = (data = envelope(), types = registry) => createCardVariableSnapshot({ id: 'entity', content: content(data) }, types);
 const replaceWire = raw => content().replace(/^variablesJson:.*$/m, `variablesJson: ${raw}`);
@@ -118,12 +118,12 @@ test('codec enforces byte/depth/collection limits for parsed and programmatic da
   assert.throws(() => serializePageVariables(envelope({ number: Infinity })), /non_json/);
   const cycle = {}; cycle.x = cycle;
   assert.throws(() => serializePageVariables(envelope(cycle)), /circular/);
-  assert.throws(() => serializePageVariables(envelope({}, { type: 'character' })), /duplicate_metadata_owner/);
+  assert.throws(() => serializePageVariables(envelope({}, { type: 'test-character' })), /duplicate_metadata_owner/);
 });
 
 test('metadata and full identities include variable changes while contentHash remains body-only', () => {
   const original = content();
-  const withUnknown = original.replace('type: character', 'type: character\ncustomMeta: preserve');
+  const withUnknown = original.replace('type: test-character', 'type: test-character\ncustomMeta: preserve');
   const changed = updatePageRecordContent(withUnknown, { variablesJson: envelope({ 'test.number': 4 }) });
   assert.match(changed, /customMeta: preserve/);
   const before = createPageStateIdentityFromContent(withUnknown);
@@ -213,12 +213,12 @@ test('resolver cycles, missing inputs, mutation and asynchronous/executable outp
   const cycleDef = structuredClone(definition);
   cycleDef.fields.find(field => field.key === 'test.result').computed.inputs = ['test.result'];
   const cycleRegistry = new CardTypeRegistry({ activatedTypes: [cycleDef] });
-  const entity = snapshot(envelope({}, { schemaDigest: cycleRegistry.getResolvedType('character', 1).digest }), cycleRegistry);
+  const entity = snapshot(envelope({}, { schemaDigest: cycleRegistry.getResolvedType('test-character', 1).digest }), cycleRegistry);
   assert.equal(getValue(entity, 'test.result', 'effective', { resolvers }).reason, 'computed-cycle');
   const missingDef = structuredClone(definition);
   delete missingDef.fields.find(field => field.key === 'test.number').default;
   const missingRegistry = new CardTypeRegistry({ activatedTypes: [missingDef] });
-  assert.equal(getValue(snapshot(envelope({}, { schemaDigest: missingRegistry.getResolvedType('character', 1).digest }), missingRegistry), 'test.result', 'effective', { resolvers }).status, 'unresolved');
+  assert.equal(getValue(snapshot(envelope({}, { schemaDigest: missingRegistry.getResolvedType('test-character', 1).digest }), missingRegistry), 'test.result', 'effective', { resolvers }).status, 'unresolved');
   const bad = createComputedResolverRegistry([{ id: 'test.double', version: 1, resolve: inputs => { inputs['test.number'] = 0; return 0; } }]);
   assert.equal(getValue(snapshot(), 'test.result', 'effective', { resolvers: bad }).status, 'invalid');
   const async = createComputedResolverRegistry([{ id: 'test.double', version: 1, resolve: () => Promise.resolve(2) }]);
@@ -232,14 +232,14 @@ test('references use exact page id, reject title/alias lookup, wrong types and s
   assert.equal(resolve('target').label, 'Target label');
   assert.equal(resolve('alias').reason, 'missing-target');
   assert.equal(resolve('Target label').reason, 'missing-target');
-  target.content = target.content.replace('type: character', 'type: item');
+  target.content = target.content.replace('type: test-character', 'type: item');
   assert.equal(resolve('target').reason, 'wrong-target-type');
   const self = snapshot(envelope({ 'test.ref': { pageId: 'entity' } }));
   assert.equal(resolveReference(self, 'test.ref', { registry, repository: { getPageById: () => ({ id: 'entity', content: content() }) } }).reason, 'self-reference');
 });
 
 async function fixture(data = envelope()) {
-  const base = await createEditConflictFixture({ id: 'entity', type: 'character' });
+  const base = await createEditConflictFixture({ id: 'entity', type: 'test-character' });
   base.page.content = content(data);
   await base.adapter.writeText(base.page.path, base.page.content);
   await base.adapter.writeText(CARD_TYPE_CATALOG_PATH, serializeCardTypeCatalog(catalog));
@@ -332,7 +332,7 @@ test('schema closure changes or missing catalog block plans; unrelated activatio
     } else {
       const current = await readCardTypeCatalog({ storageAdapter: adapter });
       await activateCardTypeDefinitions({ storageAdapter: adapter, expectedIdentity: current.identity,
-        types: [{ id: 'item', version: 1, label: 'Fixture', includes: [], fields: [], sections: [] }] });
+        types: [{ id: 'test-item', version: 1, label: 'Fixture', includes: [], fields: [], sections: [] }] });
     }
     const result = await commitVariablesChange(prepared);
     assert.equal(result.status, change === 'unrelated' ? 'saved' : 'failed', JSON.stringify(result));
@@ -454,7 +454,7 @@ test('resolver dependency depth is bounded and nullable reference is absent', ()
   assert.equal(getValue(entity, 'chain.n0', 'effective', { resolvers }).reason, 'computed-depth-limit');
   const nullable = structuredClone(definition); nullable.fields.find(field => field.key === 'test.ref').nullable = true;
   const nullableRegistry = new CardTypeRegistry({ bundledTypes: [nullable] });
-  const ref = snapshot(envelope({ 'test.ref': null }, { schemaDigest: nullableRegistry.getResolvedType('character', 1).digest }), nullableRegistry);
+  const ref = snapshot(envelope({ 'test.ref': null }, { schemaDigest: nullableRegistry.getResolvedType('test-character', 1).digest }), nullableRegistry);
   assert.equal(resolveReference(ref, 'test.ref').status, 'absent');
 });
 

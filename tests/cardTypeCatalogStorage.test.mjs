@@ -41,6 +41,7 @@ test(
     const activated = await activateCardTypeDefinitions({
       storageAdapter: adapter,
       expectedIdentity: initial.identity,
+      bundledTypes: [],
       bundledFieldSets: [healthFieldSet()],
       types: [typeDefinition()]
     });
@@ -52,7 +53,7 @@ test(
     );
     assert.deepEqual(
       activated.catalog.types.map(entry => entry.id),
-      ['character']
+      ['test-character']
     );
     assert.equal(
       adapter.files.has(CARD_TYPE_CATALOG_PATH),
@@ -61,7 +62,7 @@ test(
 
     const registry = createCardTypeRegistryFromCatalog(activated.catalog);
     assert.equal(
-      registry.getResolvedType('character', 1).fieldsByKey['dnd.hpCurrent'].provenance.id,
+      registry.getResolvedType('test-character', 1).fieldsByKey['dnd.hpCurrent'].provenance.id,
       'dnd.health'
     );
   }
@@ -160,7 +161,7 @@ test(
 
 function typeDefinition() {
   return {
-    id: 'character',
+    id: 'test-character',
     version: 1,
     label: 'Персонаж',
     includes: [
