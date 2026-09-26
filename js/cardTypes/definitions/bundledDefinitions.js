@@ -2,7 +2,14 @@
 // introduced by CTV Stages 5 and 6, so no representative fixture is shipped as
 // a production type definition here.
 import { GAME_CORE_CARD_TYPE_DEFINITIONS, GAME_CORE_FIELD_SET_DEFINITIONS } from './gameCoreDefinitions.js';
+import { WORLD_SERVICE_CARD_TYPE_DEFINITIONS, WORLD_SERVICE_FIELD_SET_DEFINITIONS } from './worldServiceCatalog.js';
 
-export const BUNDLED_CARD_TYPE_DEFINITIONS = GAME_CORE_CARD_TYPE_DEFINITIONS;
+export const BUNDLED_CARD_TYPE_DEFINITIONS = Object.freeze([
+  ...GAME_CORE_CARD_TYPE_DEFINITIONS,
+  ...WORLD_SERVICE_CARD_TYPE_DEFINITIONS
+]);
 
-export const BUNDLED_FIELD_SET_DEFINITIONS = GAME_CORE_FIELD_SET_DEFINITIONS;
+export const BUNDLED_FIELD_SET_DEFINITIONS = Object.freeze([
+  ...GAME_CORE_FIELD_SET_DEFINITIONS,
+  ...WORLD_SERVICE_FIELD_SET_DEFINITIONS
+]);

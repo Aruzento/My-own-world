@@ -3,6 +3,7 @@ import { createCardVariableSnapshot } from './cardVariableStore.js';
 import { deepCloneData, deepFreeze } from '../cardTypes/definitionIdentity.js';
 import { hasValue, validateVariableValue } from '../schema/cardVariablesSchema.js';
 import { EMPTY_COMPUTED_RESOLVERS } from './computedResolvers.js';
+import { isSpecialPageReferenceTarget, referenceFieldMatchesPage, referenceTargetMatchesPage } from '../cardTypes/cardReferenceTargets.js';
 export { validateEntityValues } from '../schema/cardVariablesSchema.js';
 export { prepareVariablesChange, commitVariablesChange } from './variableCommands.js';
 
@@ -106,9 +107,11 @@ export function resolveReference(snapshot, key, context = {}) {
   const target = repository.getPageById(value.value.pageId);
   if (!target) return { status: 'unresolved', reason: 'missing-target', pageId: value.value.pageId };
   const targetSnapshot = createCardVariableSnapshot(target, context.registry);
-  if (!field.targetTypes.includes(targetSnapshot.type)) return { status: 'invalid', reason: 'wrong-target-type', pageId: target.id };
-  if (!['legacy', 'structured'].includes(targetSnapshot.mode)) return { status: 'unsupported', reason: 'target-structured-data-unavailable', pageId: target.id };
-  if (!context.registry?.listTypeVersions(targetSnapshot.type).length) return { status: 'unsupported', reason: 'missing-target-definition' };
+  const targetView = { ...target, type: targetSnapshot.type || target.type };
+  if (!referenceFieldMatchesPage(field, targetView)) return { status: 'invalid', reason: 'wrong-target-type', pageId: target.id };
+  const specialTarget = field.targetTypes.find(type => isSpecialPageReferenceTarget(type) && referenceTargetMatchesPage(type, targetView));
+  if (!specialTarget && !['legacy', 'structured'].includes(targetSnapshot.mode)) return { status: 'unsupported', reason: 'target-structured-data-unavailable', pageId: target.id };
+  if (!specialTarget && !context.registry?.listTypeVersions(targetSnapshot.type).length) return { status: 'unsupported', reason: 'missing-target-definition' };
   if (field.validation?.allowSelf === false && target.id === snapshot.pageId) return { status: 'invalid', reason: 'self-reference' };
   if (field.validation?.acyclic) {
     const visited = new Set([snapshot.pageId]);
@@ -125,5 +128,5 @@ export function resolveReference(snapshot, key, context = {}) {
       current = createCardVariableSnapshot(nextPage, context.registry);
     }
   }
-  return { status: 'value', pageId: target.id, label: target.title, type: targetSnapshot.type, source: 'page-repository' };
+  return { status: 'value', pageId: target.id, label: target.title, type: targetSnapshot.type || target.type, source: 'page-repository' };
 }

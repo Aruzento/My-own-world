@@ -1,4 +1,5 @@
 import { deepCloneData } from '../../cardTypes/definitionIdentity.js';
+import { referenceFieldMatchesPage } from '../../cardTypes/cardReferenceTargets.js';
 import { hasValue, validateVariableValue } from '../../schema/cardVariablesSchema.js';
 import { createStableRowId, issueMessage, parseInspectorInput } from './inspectorModel.js';
 
@@ -350,7 +351,7 @@ function resolveReferenceValue(field, value, context) {
   if (!value || typeof value.pageId !== 'string') return { status: 'invalid', reason: 'invalid-reference' };
   const target = context.repository?.getPageById(value.pageId);
   if (!target) return { status: 'unresolved', reason: 'missing-target' };
-  if (field.targetTypes?.length && !field.targetTypes.includes(target.type)) return { status: 'invalid', reason: 'wrong-target-type' };
+  if (field.targetTypes?.length && !referenceFieldMatchesPage(field, target)) return { status: 'invalid', reason: 'wrong-target-type' };
   return { status: 'value' };
 }
 

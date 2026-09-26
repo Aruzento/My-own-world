@@ -19,6 +19,7 @@ import {
   validateInspectorDraft
 } from './inspectorModel.js';
 import { renderInspectorField } from './fieldComponentRegistry.js';
+import { referenceFieldMatchesPage } from '../../cardTypes/cardReferenceTargets.js';
 
 let active = null;
 
@@ -192,7 +193,7 @@ function fieldContext(field, issues, valueContext) {
     getValue: key => readDraftValue(active.draft, key, 'effective', valueContext),
     referencePages: definition => active.repository.getAllPages().filter(page => {
       if (!definition.targetTypes?.length) return true;
-      return definition.targetTypes.includes(page.type);
+      return referenceFieldMatchesPage(definition, page);
     }),
     onValue: (definition, value, { inputKey = definition.key, operation = 'set' } = {}) =>
       changeDraft(updateInspectorDraft(active.draft, { op: operation, key: definition.key, value }, { inputKey })),

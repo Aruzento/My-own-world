@@ -5,6 +5,15 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-26: CTV Stage 6 world and service type catalog
+
+- Published immutable bundled v1 definitions for `location`, `region`, `country`, `organization`, `lore`, `folder` and `project`; the single bundled owner now contains exactly all 15 approved Card Types. All seven reuse only `core.card-metadata@1`: similar world labels were kept type-owned because their full semantic contracts differ, so no broad synthetic Field Set was introduced.
+- Approved product source: `docs/05-hypotesis/card_types.txt`, SHA-256 `6c4e4823f998fcf997b5b6c443898d26d125b322cb42a4fe9bdf89a47e7f894f`. The user-owned source remains untracked. Source field counts are location 14, region 11, country 41, organization 33, lore 27, folder 10 and project 33; resolved top-level/total identity counts are 25/49, 22/51, 48/128, 41/85, 33/82, 21/36 and 38/108.
+- Independent static oracle `tests/fixtures/worldServiceCatalogCompleteness.json` pins source-path hashes, sections/includes, closure digests, all owned resolved paths and structural hashes over datatype/binding/default/constraint/enum/reference/nested-row metadata. Stage 5 completeness remains separate and unchanged.
+- Domain parent fields remain Variables and are distinct from read-only `page.parent`. Mixed string/reference and resource shapes use bounded stable-row objects with exact reference branches. Existing Campaign Map pages are addressed through allowlisted target `campaign-map -> type/template: campaignMap`; this preserves `{pageId}` identity without inventing a formal `map`/`scene` Card Type. Folder is not a filesystem owner and Project is not a workspace owner.
+- Focused tests cover all-15 activation/Registry resolution, immutable digests, exact reference targets including Campaign Map, PageIndex/search visibility, domain/tree separation and generic Inspector edit/save/readback. Existing workspaces are not activated or migrated; Properties, CharacterModel, Combat 17.6, Campaign Map domain data, Inventory and Effects are unchanged. Stage 7 is the only NEXT task and was not started.
+- Local release evidence: Stage 6 focused tests PASS; full Chromium smoke PASS (`314/314`); `docs:index`, `agents:validate`, `check:js`, `verify:quick` and `verify` PASS (`955/955` unit/integration checks plus the large-workspace performance smoke).
+
 ## 2026-09-26: AppShell right-panel CI corrective
 
 - GitHub Verify browser failure on `fcebf3d…`, `8b8e198…` and `d74ae5f…` came from the pre-Stage-4 AppShell assertion that an ordinary selected card must leave the reserved panel hidden. Stage 4 correctly renders the Universal Inspector into the ordinary-card right panel, so the prior test expected an obsolete state rather than observing a race or test-state leak.

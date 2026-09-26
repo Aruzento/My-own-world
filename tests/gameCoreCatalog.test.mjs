@@ -5,7 +5,8 @@ import test from 'node:test';
 
 import { validateCardTypeDefinition, validateFieldSetDefinition } from '../js/cardTypes/cardTypeSchema.js';
 import { CardTypeRegistry } from '../js/cardTypes/cardTypeRegistry.js';
-import { BUNDLED_CARD_TYPE_DEFINITIONS, BUNDLED_FIELD_SET_DEFINITIONS } from '../js/cardTypes/definitions/bundledDefinitions.js';
+import { BUNDLED_FIELD_SET_DEFINITIONS } from '../js/cardTypes/definitions/bundledDefinitions.js';
+import { GAME_CORE_CARD_TYPE_DEFINITIONS } from '../js/cardTypes/definitions/gameCoreDefinitions.js';
 import { activateCardTypeDefinitions, createCardTypeRegistryFromCatalog, readCardTypeCatalog } from '../js/storage/cardTypeCatalogStorage.js';
 import { buildPageRecordContent } from '../js/core/pageRecord.js';
 import { createCardVariableSnapshot } from '../js/variables/cardVariableStore.js';
@@ -15,10 +16,10 @@ const oracle = JSON.parse(await readFile(new URL('./fixtures/gameCoreCatalogComp
 const ids = ['player','character','item','skill','spell','effect','race','class'];
 
 test('game-core bundled catalog validates and matches the independent source oracle', () => {
-  assert.deepEqual(BUNDLED_CARD_TYPE_DEFINITIONS.map(x => x.id), ids);
-  assert.deepEqual(BUNDLED_CARD_TYPE_DEFINITIONS.map(x => x.version), ids.map(() => 1));
+  assert.deepEqual(GAME_CORE_CARD_TYPE_DEFINITIONS.map(x => x.id), ids);
+  assert.deepEqual(GAME_CORE_CARD_TYPE_DEFINITIONS.map(x => x.version), ids.map(() => 1));
   for (const definition of BUNDLED_FIELD_SET_DEFINITIONS) assert.equal(validateFieldSetDefinition(definition).ok, true);
-  for (const definition of BUNDLED_CARD_TYPE_DEFINITIONS) assert.equal(validateCardTypeDefinition(definition).ok, true);
+  for (const definition of GAME_CORE_CARD_TYPE_DEFINITIONS) assert.equal(validateCardTypeDefinition(definition).ok, true);
 
   const registry = new CardTypeRegistry();
   for (const expected of oracle.types) {
@@ -62,7 +63,7 @@ test('game-core seed activation persists exact transitive closure without eager 
   const activated = await activateCardTypeDefinitions({
     storageAdapter: adapter,
     expectedIdentity: empty.identity,
-    types: BUNDLED_CARD_TYPE_DEFINITIONS
+    types: GAME_CORE_CARD_TYPE_DEFINITIONS
   });
   assert.deepEqual(activated.catalog.types.map(x => x.id), [...ids].sort());
   assert.deepEqual(activated.catalog.fieldSets.map(x => x.id), BUNDLED_FIELD_SET_DEFINITIONS.map(x => x.id).sort());
@@ -75,7 +76,7 @@ test('game-core definitions remain data-only and use canonical metadata bindings
     assert.notEqual(typeof value, 'function');
     if (value && typeof value === 'object') for (const child of Object.values(value)) visit(child);
   };
-  visit(BUNDLED_CARD_TYPE_DEFINITIONS);
+  visit(GAME_CORE_CARD_TYPE_DEFINITIONS);
   const registry = new CardTypeRegistry();
   for (const id of ids) {
     const fields = registry.getResolvedType(id, 1).fieldsByKey;

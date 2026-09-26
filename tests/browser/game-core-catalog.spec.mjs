@@ -7,7 +7,8 @@ test('Stage 5 game-core schemas render all eight types and edit complex item dat
     const { setStorageAdapter, captureStorageWorkspaceContext } = await import('/js/storage/storageAdapter.js');
     const { setPages, setCurrentPage } = await import('/js/stateActions.js');
     const { buildPageRecordContent } = await import('/js/core/pageRecord.js');
-    const { BUNDLED_CARD_TYPE_DEFINITIONS: types, BUNDLED_FIELD_SET_DEFINITIONS: fieldSets } = await import('/js/cardTypes/definitions/bundledDefinitions.js');
+    const { BUNDLED_FIELD_SET_DEFINITIONS: fieldSets } = await import('/js/cardTypes/definitions/bundledDefinitions.js');
+    const { GAME_CORE_CARD_TYPE_DEFINITIONS: types } = await import('/js/cardTypes/definitions/gameCoreDefinitions.js');
     const { serializeCardTypeCatalog, parseCardTypeCatalog, createCardTypeRegistryFromCatalog, CARD_TYPE_CATALOG_PATH } = await import('/js/storage/cardTypeCatalogStorage.js');
     const { captureEditorPageBase } = await import('/js/editor/editorSessionBase.js');
     const { renderUniversalCardInspector } = await import('/js/ui/cardInspector/universalCardInspector.js');
