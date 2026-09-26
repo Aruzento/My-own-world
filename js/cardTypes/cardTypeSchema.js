@@ -68,6 +68,11 @@ const PAGE_BINDING_PATHS = new Set([
   'archived'
 ]);
 
+const PAGE_BINDING_PROJECTIONS = new Map([
+  ['parent', 'page-id-reference'],
+  ['relationships', 'page-relationships-v1']
+]);
+
 const CONTENT_BINDING_PATHS = new Set([
   'title',
   'primaryImage',
@@ -829,7 +834,8 @@ function validateValueShape(
         }
       );
 
-      if (descriptor.items.datatype === 'object') {
+      if (descriptor.items.datatype === 'object' &&
+          descriptor.binding?.projection !== 'page-relationships-v1') {
         validateStableRowIdentity(
           descriptor.items,
           issues,
@@ -1066,7 +1072,7 @@ function validateBinding(
 
   validateKnownKeys(
     binding,
-    new Set(['owner', 'path']),
+    new Set(['owner', 'path', 'projection']),
     'field.invalid_binding',
     'Field binding contains an unsupported property.',
     issues,
@@ -1090,6 +1096,19 @@ function validateBinding(
       'Page binding must reference an existing PageRecord metadata owner.',
       { ...context, key: field.key ?? null, path: binding.path ?? null }
     ));
+  }
+
+  if (binding.projection !== undefined) {
+    const expectedProjection = binding.owner === 'page'
+      ? PAGE_BINDING_PROJECTIONS.get(binding.path)
+      : undefined;
+    if (binding.projection !== expectedProjection || field.readonly !== true) {
+      issues.push(issue(
+        'field.invalid_binding_projection',
+        'Binding projection is not supported for this persistent owner path.',
+        { ...context, key: field.key ?? null, owner: binding.owner, path: binding.path ?? null }
+      ));
+    }
   }
 
   if (binding.owner === 'content' && !CONTENT_BINDING_PATHS.has(binding.path)) {

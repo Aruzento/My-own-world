@@ -10,7 +10,7 @@
       "sourceFieldCount": 191,
       "sourcePathsSha256": "83f7f305eca962422bbcaadc827cf14937c2ecd1febb6dc97bfd9bf982ec14c8",
       "resolvedTopLevelFields": 35,
-      "resolvedFieldIdentities": 238,
+      "resolvedFieldIdentities": 234,
       "sections": [
         "card",
         "identity",
@@ -30,7 +30,7 @@
         "dnd.actor-links@1",
         "dnd.actor-defenses@1"
       ],
-      "digest": "sha256:943a3cd49c05942c94bf70ee006fb09d9b80dec9edeb2e3133213d406112c3dc",
+      "digest": "sha256:1a9fb138d15ad6ce5e8f55006a99cae9c076c2bf86a37efa225385f7dc5e6380",
       "fields": [
         {
           "path": "dnd.armorClass",
@@ -2582,7 +2582,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -2613,7 +2614,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -2627,21 +2629,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -2660,15 +2661,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -2806,7 +2798,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -2834,7 +2826,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -2843,44 +2835,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -2890,7 +2846,7 @@
       "sourceFieldCount": 67,
       "sourcePathsSha256": "93984fdb93f6951dbe73fef89da1197567b92ae279fe57b79980b335c879b3cf",
       "resolvedTopLevelFields": 46,
-      "resolvedFieldIdentities": 108,
+      "resolvedFieldIdentities": 104,
       "sections": [
         "card",
         "identity",
@@ -2910,7 +2866,7 @@
         "dnd.actor-links@1",
         "dnd.actor-defenses@1"
       ],
-      "digest": "sha256:70b106702322dd777e14aba2bacbf9465f3d8e8fd72522c6d0e7dd9019afb166",
+      "digest": "sha256:ffd983414a338e7c1f23259be6d8dc65258dfa3bd2dcc050213f7304b6e050bc",
       "fields": [
         {
           "path": "character.abilities",
@@ -4327,7 +4283,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -4358,7 +4315,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -4372,21 +4330,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -4405,15 +4362,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -4551,7 +4499,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -4579,7 +4527,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -4588,44 +4536,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -4635,7 +4547,7 @@
       "sourceFieldCount": 72,
       "sourcePathsSha256": "41a2bee8dcfa2de6ce459357ee8613479ab95634b57d0b09c21c5a52665b34a6",
       "resolvedTopLevelFields": 44,
-      "resolvedFieldIdentities": 106,
+      "resolvedFieldIdentities": 102,
       "sections": [
         "card",
         "identity",
@@ -4651,7 +4563,7 @@
       "includes": [
         "core.card-metadata@1"
       ],
-      "digest": "sha256:869f0fbdb8d38d6a8f81a9f28968b8353599269d290036883117abe548a97bbd",
+      "digest": "sha256:782117258a0aa58869fe2e8ace0c4d7e94601780b5d41fc0c460daac4c9716ce",
       "fields": [
         {
           "path": "item.actions",
@@ -5962,7 +5874,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -5993,7 +5906,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -6007,21 +5921,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -6040,15 +5953,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -6186,7 +6090,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -6214,7 +6118,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -6223,44 +6127,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -6270,7 +6138,7 @@
       "sourceFieldCount": 86,
       "sourcePathsSha256": "46cbbfaac296a507bcb746e4da7de53763557abf6554a793fd0145d1c33c08f5",
       "resolvedTopLevelFields": 43,
-      "resolvedFieldIdentities": 118,
+      "resolvedFieldIdentities": 114,
       "sections": [
         "card",
         "identity",
@@ -6291,7 +6159,7 @@
       "includes": [
         "core.card-metadata@1"
       ],
-      "digest": "sha256:8258362c66294264ab9e9b7bfe8a34ee565ab6818daeb3dc9807bb54fa9fb2b2",
+      "digest": "sha256:28b3c482c5c89249695d4d279efdb90bf4684a4b5817a7ef12920d32c08d80dd",
       "fields": [
         {
           "path": "skill.activationCost",
@@ -7734,7 +7602,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -7765,7 +7634,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -7779,21 +7649,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -7812,15 +7681,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -7958,7 +7818,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -7986,7 +7846,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -7995,44 +7855,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -8042,7 +7866,7 @@
       "sourceFieldCount": 70,
       "sourcePathsSha256": "dc85a9d241eb0a5b8d272fa195c9a08ea71e73eda9de5aefe649c9bd84e4472b",
       "resolvedTopLevelFields": 38,
-      "resolvedFieldIdentities": 103,
+      "resolvedFieldIdentities": 99,
       "sections": [
         "card",
         "identity",
@@ -8064,7 +7888,7 @@
         "core.card-metadata@1",
         "dnd.rule-publication@1"
       ],
-      "digest": "sha256:5373d8073d7f9afc9289ebb74eb13b192ccbe99c5e20d37a68f7088a7af1459f",
+      "digest": "sha256:7c7dc3bdecf8f5c92af893ae892660761ef67f5d29b622850140359976807cc0",
       "fields": [
         {
           "path": "dnd.entityVersion",
@@ -9237,7 +9061,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -9268,7 +9093,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -9282,21 +9108,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -9315,15 +9140,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -9461,7 +9277,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -9489,7 +9305,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -9498,44 +9314,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -9545,7 +9325,7 @@
       "sourceFieldCount": 62,
       "sourcePathsSha256": "cc539bf4f7a3eaf02520009983cf0678fb263fa7d3f6aa7ffb3cfbc72fef68ec",
       "resolvedTopLevelFields": 47,
-      "resolvedFieldIdentities": 110,
+      "resolvedFieldIdentities": 106,
       "sections": [
         "card",
         "identity",
@@ -9566,7 +9346,7 @@
       "includes": [
         "core.card-metadata@1"
       ],
-      "digest": "sha256:478c390bf51bba53a4477050916c40fb4f202fa9f6c0f661681268a43e389ee6",
+      "digest": "sha256:a016af395bec4f0c876c2b0508051644f1df10b39766df1c15cabe79fc773793",
       "fields": [
         {
           "path": "effect.abilities",
@@ -11023,7 +10803,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -11054,7 +10835,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -11068,21 +10850,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -11101,15 +10882,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -11247,7 +11019,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -11275,7 +11047,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -11284,44 +11056,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -11331,7 +11067,7 @@
       "sourceFieldCount": 48,
       "sourcePathsSha256": "606f301f994eac7a28464f77706344ac97174fee3aa30e4909f9241928e1b1df",
       "resolvedTopLevelFields": 34,
-      "resolvedFieldIdentities": 97,
+      "resolvedFieldIdentities": 93,
       "sections": [
         "card",
         "identity",
@@ -11348,7 +11084,7 @@
         "core.card-metadata@1",
         "dnd.rule-publication@1"
       ],
-      "digest": "sha256:080c9eff2aaf5a49353acdc5f945e965a6081a07c0da1d71c70808f22dcc4011",
+      "digest": "sha256:650a1d6a4b90a0f4b4b0a7aa9a971d8ce745e6b71d47c2eaaaba9b63d883a109",
       "fields": [
         {
           "path": "dnd.entityVersion",
@@ -12519,7 +12255,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -12550,7 +12287,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -12564,21 +12302,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -12597,15 +12334,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -12743,7 +12471,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -12771,7 +12499,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -12780,44 +12508,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     },
@@ -12827,7 +12519,7 @@
       "sourceFieldCount": 56,
       "sourcePathsSha256": "9b4e25cbceecc7a47fe86d35e9f80b5b18328788d97deadc2bbab5f9e6401ae9",
       "resolvedTopLevelFields": 32,
-      "resolvedFieldIdentities": 107,
+      "resolvedFieldIdentities": 103,
       "sections": [
         "card",
         "identity",
@@ -12844,7 +12536,7 @@
         "core.card-metadata@1",
         "dnd.rule-publication@1"
       ],
-      "digest": "sha256:189d6d731439b1ec5dac5dbd9664bc4a9dea9852575bdf9ea02c14f3c386343f",
+      "digest": "sha256:76ef39dd37f31f698ee89a36abcd9b05551494dd0e7065c11d6f6cf277360ccb",
       "fields": [
         {
           "path": "class.effects",
@@ -14137,7 +13829,8 @@
           "datatype": "reference",
           "binding": {
             "owner": "page",
-            "path": "parent"
+            "path": "parent",
+            "projection": "page-id-reference"
           },
           "required": false,
           "nullable": true,
@@ -14168,7 +13861,8 @@
           "datatype": "array",
           "binding": {
             "owner": "page",
-            "path": "relationships"
+            "path": "relationships",
+            "projection": "page-relationships-v1"
           },
           "required": false,
           "nullable": false,
@@ -14182,21 +13876,20 @@
           "required": false,
           "nullable": false,
           "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.relationship.rowId"
-        },
-        {
-          "path": "page.relationships[].core.relationship.rowId",
-          "key": "core.relationship.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
           "hasDefault": false
         },
         {
           "path": "page.relationships[].core.relationship.targetId",
           "key": "core.relationship.targetId",
+          "datatype": "string",
+          "required": false,
+          "nullable": false,
+          "readonly": false,
+          "hasDefault": false
+        },
+        {
+          "path": "page.relationships[].core.relationship.targetTitle",
+          "key": "core.relationship.targetTitle",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -14215,15 +13908,6 @@
         {
           "path": "page.relationships[].core.relationship.label",
           "key": "core.relationship.label",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "page.relationships[].core.relationship.direction",
-          "key": "core.relationship.direction",
           "datatype": "string",
           "required": false,
           "nullable": false,
@@ -14361,7 +14045,7 @@
         {
           "path": "page.order",
           "key": "page.order",
-          "datatype": "integer",
+          "datatype": "number",
           "binding": {
             "owner": "page",
             "path": "order"
@@ -14389,7 +14073,7 @@
         {
           "path": "content.blocks",
           "key": "content.blocks",
-          "datatype": "array",
+          "datatype": "string",
           "binding": {
             "owner": "content",
             "path": "blocks"
@@ -14398,44 +14082,8 @@
           "nullable": false,
           "readonly": true,
           "hasDefault": false,
+          "format": "multiline",
           "section": "card"
-        },
-        {
-          "path": "content.blocks[]",
-          "datatype": "object",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "rowIdentityKey": "core.block.rowId"
-        },
-        {
-          "path": "content.blocks[].core.block.rowId",
-          "key": "core.block.rowId",
-          "datatype": "string",
-          "required": true,
-          "nullable": false,
-          "readonly": true,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.type",
-          "key": "core.block.type",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false
-        },
-        {
-          "path": "content.blocks[].core.block.content",
-          "key": "core.block.content",
-          "datatype": "string",
-          "required": false,
-          "nullable": false,
-          "readonly": false,
-          "hasDefault": false,
-          "format": "multiline"
         }
       ]
     }

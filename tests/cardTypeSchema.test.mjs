@@ -353,6 +353,38 @@ test(
 
 
 test(
+  'read-only PageRecord projections are explicit and relationship rows do not invent stable ids',
+  () => {
+    const valid = validateCardTypeDefinition(typeDefinition({
+      fields: [
+        field('core.parent', {
+          datatype: 'reference', nullable: true, targetTypes: ['character'], readonly: true,
+          binding: { owner: 'page', path: 'parent', projection: 'page-id-reference' }
+        }),
+        field('core.relationships', {
+          datatype: 'array', readonly: true,
+          binding: { owner: 'page', path: 'relationships', projection: 'page-relationships-v1' },
+          items: { datatype: 'object', properties: [
+            nestedField('core.relationship.type'), nestedField('core.relationship.targetId')
+          ] }
+        })
+      ]
+    }));
+    const invalid = validateCardTypeDefinition(typeDefinition({
+      fields: [field('core.parent', {
+        datatype: 'reference', targetTypes: ['character'], readonly: true,
+        binding: { owner: 'page', path: 'parent', projection: 'page-relationships-v1' }
+      })]
+    }));
+
+    assert.equal(valid.ok, true);
+    assert.equal(invalid.ok, false);
+    assert.ok(invalid.errors.some(entry => entry.code === 'field.invalid_binding_projection'));
+  }
+);
+
+
+test(
   'custom type and custom field identities follow canonical namespaces',
   () => {
     const custom = typeDefinition({

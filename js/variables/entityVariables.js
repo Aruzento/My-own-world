@@ -27,9 +27,14 @@ function readValue(snapshot, key, mode, context, path) {
   if (field.binding.owner !== 'variables') {
     if (field.binding.owner === 'presentation') return result('absent', { source: 'presentation' });
     const data = field.binding.owner === 'page' ? snapshot.metadata : snapshot.freeContent;
-    return hasValue(data, field.binding.path) ? result('value', {
-      value: data[field.binding.path], source: field.binding.owner, provenance: field.provenance
-    }) : result('unresolved', { reason: 'binding-unavailable', source: field.binding.owner });
+    if (!hasValue(data, field.binding.path)) {
+      return result('unresolved', { reason: 'binding-unavailable', source: field.binding.owner });
+    }
+    const value = projectBoundValue(field, data[field.binding.path]);
+    const validation = validateVariableValue(value, field, { pageId: snapshot.pageId, key });
+    return result(validation.ok ? 'value' : 'invalid', {
+      value, source: field.binding.owner, issues: validation.issues, provenance: field.provenance
+    });
   }
   const checked = (value, source) => {
     const validation = validateVariableValue(value, field, { pageId: snapshot.pageId, key });
@@ -61,6 +66,28 @@ function readValue(snapshot, key, mode, context, path) {
   if (hasValue(snapshot.values, key)) return checked(snapshot.values[key], 'stored');
   if (mode === 'effective' && hasValue(field, 'default')) return checked(field.default, 'default');
   return result('absent', { required: Boolean(field.required) });
+}
+
+// PageRecord keeps parent as a raw id and relationships as its compact v1
+// records. Definitions consume canonical values through this read-only boundary;
+// neither projection introduces another persistent owner.
+function projectBoundValue(field, value) {
+  if (field.binding?.projection === 'page-id-reference') {
+    return value === null || value === undefined ? null : { pageId: value };
+  }
+  if (field.binding?.projection === 'page-relationships-v1') {
+    if (!Array.isArray(value)) return value;
+    const properties = field.items?.properties || [];
+    return value.map(relationship => {
+      const projected = {};
+      for (const property of properties) {
+        const ownerKey = property.key.split('.').at(-1);
+        if (hasValue(relationship, ownerKey)) projected[property.key] = relationship[ownerKey];
+      }
+      return projected;
+    });
+  }
+  return value;
 }
 
 export function getValues(snapshot, mode = 'effective', context = {}) {

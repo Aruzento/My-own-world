@@ -103,17 +103,16 @@ const commonMetadataFields = [
   boundField('page.aliases', 'Алиасы', 'array', { owner: 'page', path: 'aliases' }, {
     items: { datatype: 'string' }, section: 'card', order: 3
   }, commonPath('Алиасы')),
-  boundField('page.parent', 'Родитель', 'reference', { owner: 'page', path: 'parent' }, {
+  boundField('page.parent', 'Родитель', 'reference', { owner: 'page', path: 'parent', projection: 'page-id-reference' }, {
     targetTypes: ALL_CARD_TYPE_IDS, nullable: true, section: 'card', order: 4
   }, commonPath('Родитель')),
-  boundField('page.relationships', 'Связи', 'array', { owner: 'page', path: 'relationships' }, {
+  boundField('page.relationships', 'Связи', 'array', { owner: 'page', path: 'relationships', projection: 'page-relationships-v1' }, {
     items: {
-      datatype: 'object', rowIdentityKey: 'core.relationship.rowId', properties: [
-        nestedField('core.relationship.rowId', 'ID связи', 'string', { required: true, readonly: true }),
+      datatype: 'object', properties: [
         nestedField('core.relationship.targetId', 'ID цели'),
+        nestedField('core.relationship.targetTitle', 'Название цели'),
         nestedField('core.relationship.type', 'Тип связи'),
-        nestedField('core.relationship.label', 'Подпись'),
-        nestedField('core.relationship.direction', 'Направление')
+        nestedField('core.relationship.label', 'Подпись')
       ]
     }, section: 'card', order: 5
   }, commonPath('Связи')),
@@ -132,20 +131,14 @@ const commonMetadataFields = [
   boundField('page.icon', 'Иконка', 'asset', { owner: 'page', path: 'iconJson' }, {
     section: 'card', order: 8
   }, commonPath('Иконка')),
-  boundField('page.order', 'Порядок', 'integer', { owner: 'page', path: 'order' }, {
+  boundField('page.order', 'Порядок', 'number', { owner: 'page', path: 'order' }, {
     section: 'card', order: 9
   }, commonPath('Порядок')),
   boundField('page.archived', 'Архивный статус', 'boolean', { owner: 'page', path: 'archived' }, {
     section: 'card', order: 10
   }, commonPath('Архивный статус')),
-  boundField('content.blocks', 'Блоки', 'array', { owner: 'content', path: 'blocks' }, {
-    items: {
-      datatype: 'object', rowIdentityKey: 'core.block.rowId', properties: [
-        nestedField('core.block.rowId', 'ID блока', 'string', { required: true, readonly: true }),
-        nestedField('core.block.type', 'Тип блока'),
-        nestedField('core.block.content', 'Содержимое', 'string', { format: 'multiline' })
-      ]
-    }, section: 'card', order: 11
+  boundField('content.blocks', 'Блоки', 'string', { owner: 'content', path: 'blocks' }, {
+    format: 'multiline', section: 'card', order: 11
   }, commonPath('Блоки'))
 ];
 

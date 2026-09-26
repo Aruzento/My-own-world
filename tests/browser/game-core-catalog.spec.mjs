@@ -18,8 +18,9 @@ test('Stage 5 game-core schemas render all eight types and edit complex item dat
     const pages=[];
     for(const definition of types){
       const resolved=registry.getResolvedType(definition.id,1);
-      const content=buildPageRecordContent({id:`stage5-${definition.id}`,type:definition.id,template:'card',body:`<h1>${definition.label}</h1>`,variablesJson:{formatVersion:1,schemaVersion:1,schemaDigest:resolved.digest,values:{}},now:'2026-09-25T00:00:00Z'});
-      const record={id:`stage5-${definition.id}`,path:`/pages/stage5-${definition.id}.md`,name:`stage5-${definition.id}.md`,title:definition.label,type:definition.id,template:'card',tags:[],aliases:[],relationships:[],parent:null,order:1,content};
+      const metadata=definition.id==='item'?{parent:'stage5-player',order:1.5,relationships:[{type:'related',targetId:'stage5-player',targetTitle:'Игрок',label:'Владелец'}]}:{parent:null,order:1,relationships:[]};
+      const content=buildPageRecordContent({id:`stage5-${definition.id}`,type:definition.id,template:'card',body:`<h1>${definition.label}</h1>`,variablesJson:{formatVersion:1,schemaVersion:1,schemaDigest:resolved.digest,values:{}},now:'2026-09-25T00:00:00Z',...metadata});
+      const record={id:`stage5-${definition.id}`,path:`/pages/stage5-${definition.id}.md`,name:`stage5-${definition.id}.md`,title:definition.label,type:definition.id,template:'card',tags:[],aliases:[],content,...metadata};
       await adapter.writeText(record.path,content); pages.push(record);
     }
     setPages(pages);
@@ -32,6 +33,11 @@ test('Stage 5 game-core schemas render all eight types and edit complex item dat
   expect(rendered.map(x=>x.id)).toEqual(['player','character','item','skill','spell','effect','race','class']);
   expect(rendered.every(x=>x.fields>0)).toBe(true);
   await expect(page.locator('[data-field-key="item.category"]')).toBeVisible();
+  await expect(page.getByLabel('Порядок',{exact:true})).toHaveValue('1.5');
+  await expect(page.getByLabel('Родитель',{exact:true})).toHaveValue('stage5-player');
+  await expect(page.getByLabel('Связи',{exact:true})).toHaveValue(/core\.relationship\.targetId/);
+  await expect(page.locator('[data-field-key="page.order"] input')).not.toHaveAttribute('aria-invalid','true');
+  await expect(page.locator('[data-field-key="page.relationships"] textarea')).not.toHaveAttribute('aria-invalid','true');
   await page.getByLabel('Количество',{exact:true}).fill('0'); await page.getByLabel('Количество',{exact:true}).press('Tab');
   await page.getByLabel('Категория',{exact:true}).selectOption({label:'Оружие'});
   await page.getByLabel('Является объектом').click();
@@ -40,7 +46,15 @@ test('Stage 5 game-core schemas render all eight types and edit complex item dat
   await damage.getByLabel('Формула').fill('1d6'); await damage.getByLabel('Формула').press('Tab');
   await page.getByRole('button',{name:'Сохранить поля'}).click();
   await expect(page.locator('.card-inspector__save-status')).toContainText('сохранены');
-  const stored=await page.evaluate(async()=>{const{parsePageRecordContent}=await import('/js/core/pageRecord.js');return parsePageRecordContent(window.__stage5.item.content).variablesJson.values;});
-  expect(stored['item.quantity']).toBe(0); expect(stored['item.category']).toBe('weapon'); expect(stored['item.isObject']).toBe(true);
-  expect(stored['item.weapon']['item.weapon.damage'][0]['item.weapon.damage.rowId']).toBe(rowId);
+  const stored=await page.evaluate(async()=>{
+    const{parsePageRecordContent}=await import('/js/core/pageRecord.js');
+    const{renderUniversalCardInspector}=await import('/js/ui/cardInspector/universalCardInspector.js');
+    const state=window.__stage5;
+    await renderUniversalCardInspector(state.item,{registry:state.registry,editor:state.editor,workspaceContext:state.workspaceContext});
+    return parsePageRecordContent(state.item.content);
+  });
+  expect(stored.variablesJson.values['item.quantity']).toBe(0); expect(stored.variablesJson.values['item.category']).toBe('weapon'); expect(stored.variablesJson.values['item.isObject']).toBe(true);
+  expect(stored.variablesJson.values['item.weapon']['item.weapon.damage'][0]['item.weapon.damage.rowId']).toBe(rowId);
+  expect(stored.order).toBe(1.5); expect(stored.parent).toBe('stage5-player');
+  expect(stored.relationships).toEqual([{type:'related',targetId:'stage5-player',targetTitle:'Игрок',label:'Владелец'}]);
 });
