@@ -1,4 +1,7 @@
 import { assertLegacyPortability, assertLegacyBackupCatalog } from './structuredPagePolicy.js';
+import { collectWorkspaceFiles, captureBackupDefinitions, readBackupDefinitions, assertBackupPageDefinitions, backupBytesDigest } from './backupDefinitionCoverage.js';
+import { CARD_TYPE_CATALOG_PATH, readCardTypeCatalog, activateCardTypeDefinitions } from './cardTypeCatalogStorage.js';
+import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
 import {
   state
 } from '../state.js';
@@ -169,18 +172,27 @@ async function createWorkspaceBackupMeasured(
       options
     );
 
-  const pages =
+  let pages =
     options.pages || state.pages || [];
 
-  await assertLegacyBackupCatalog(storageAdapter);
-  pages.forEach(page => assertLegacyPortability(page, 'Backup v1'));
-  for (const page of pages) assertLegacyPortability(await readPageBackupContent(page, storageAdapter), 'Backup v1 durable source');
+  const definitionCoverage = options.definitionCoverage === true;
+  const definitions = definitionCoverage ? await captureBackupDefinitions(storageAdapter) : null;
+  if (definitionCoverage) {
+    if (new Set(pages.map(page => page.name)).size !== pages.length || pages.some(page => !page.path || !page.name || /[\\/]/.test(page.name) || page.path.replace(/^\//, '') !== `pages/${page.name}`)) throw new Error('Ambiguous/unsupported backup page paths');
+    pages = await Promise.all(pages.map(async page => ({ ...page, content: page.path ? await storageAdapter.readText(page.path) : page.content })));
+    assertBackupPageDefinitions(pages.map(page => page.content), definitions.catalog);
+  } else {
+    await assertLegacyBackupCatalog(storageAdapter);
+    pages.forEach(page => assertLegacyPortability(page, 'Backup v1'));
+    for (const page of pages) assertLegacyPortability(await readPageBackupContent(page, storageAdapter), 'Backup v1 durable source');
+  }
 
   const includeAssets =
     options.includeAssets !== false;
 
-  const assetReferences =
-    includeAssets
+  const assetReferences = definitionCoverage && includeAssets
+    ? (await collectWorkspaceFiles(storageAdapter, 'assets')).map(file => ({ path: file.path, type: 'unknown' }))
+    : includeAssets
       ? (
         options.assetReferences ||
         collectAssetReferencesFromPages(
@@ -226,6 +238,18 @@ async function createWorkspaceBackupMeasured(
       assetReferences
     });
 
+  if (definitionCoverage) {
+    manifest.version = 2;
+    manifest.cardTypes = definitions.entry;
+    manifest.assetCoverage = includeAssets ? 'all-workspace-assets' : 'none';
+    for (const asset of manifest.assets) {
+      const bytes = await storageAdapter.readBinary(asset.path);
+      asset.bytes = bytes.byteLength;
+      asset.digest = await backupBytesDigest(bytes);
+    }
+    if (definitions.text !== null) await storageAdapter.writeText(`${snapshotPath}/${CARD_TYPE_CATALOG_PATH}`, definitions.text);
+  }
+
   for (
     let index = 0;
     index < pages.length;
@@ -239,6 +263,8 @@ async function createWorkspaceBackupMeasured(
       getBackupPageFileName(
         page
       );
+
+    if (definitionCoverage) manifest.pages[index].contentDigest = await backupBytesDigest(page.content);
 
     await storageAdapter.writeText(
       `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`,
@@ -274,6 +300,8 @@ async function createWorkspaceBackupMeasured(
   manifest.assetCount =
     copiedAssets;
 
+  if (definitionCoverage && copiedAssets !== assetReferences.length) throw new Error('Definition-aware backup asset copy incomplete');
+
   await storageAdapter.writeText(
     `${snapshotPath}/manifest.json`,
     JSON.stringify(
@@ -282,6 +310,8 @@ async function createWorkspaceBackupMeasured(
       2
     )
   );
+
+  if (definitionCoverage) await verifyWorkspaceBackup(id, { storageAdapter, definitionCoverage: true });
 
   if (options.cleanup !== false) {
 
@@ -823,7 +853,7 @@ async function restoreWorkspaceBackupMeasured(
   const snapshotPath =
     `${BACKUP_ROOT_DIR}/${backupId}`;
 
-  await assertLegacyBackupCatalog(storageAdapter);
+  if (!options.definitionCoverage) await assertLegacyBackupCatalog(storageAdapter);
 
   const manifestValidation =
     await readAndValidateBackupManifest(
@@ -844,14 +874,25 @@ async function restoreWorkspaceBackupMeasured(
   const manifest =
     manifestValidation.manifest;
 
+  if (manifest.version === 2 && !options.definitionCoverage) throw new Error('Structured recovery requires explicit definition coverage');
+  if (manifest.version === 2 && options.restoreSelection) throw new Error('Partial definition-aware restore awaits Stage 9; use explicit full recovery');
+  const backupCatalog = await readBackupDefinitions(storageAdapter, snapshotPath, manifest);
+  const currentCatalog = options.definitionCoverage ? await readCardTypeCatalog({ storageAdapter }) : null;
+  if (backupCatalog) new CardTypeRegistry({ bundledTypes: [], bundledFieldSets: [],
+    activatedTypes: currentCatalog.catalog.types, activatedFieldSets: currentCatalog.catalog.fieldSets,
+    candidateTypes: backupCatalog.types, candidateFieldSets: backupCatalog.fieldSets });
+
   const restorePlan =
     await createRestoreWritePlan({
       storageAdapter,
       snapshotPath,
       manifest,
       restoreSelection:
-        options.restoreSelection
+        options.restoreSelection,
+      definitionCoverage: options.definitionCoverage
     });
+
+  if (options.definitionCoverage) assertBackupPageDefinitions([...restorePlan.pageContentByName.values()], backupCatalog || currentCatalog.catalog);
 
   const preRestoreManifest =
     await createAndVerifyPreRestoreBackup({
@@ -872,6 +913,9 @@ async function restoreWorkspaceBackupMeasured(
     restorePlan.pages;
 
   try {
+
+    if (backupCatalog) await activateCardTypeDefinitions({ types: backupCatalog.types, fieldSets: backupCatalog.fieldSets,
+      expectedIdentity: currentCatalog.identity, storageAdapter });
 
     await storageAdapter.ensureDirectory(
       'pages'
@@ -904,6 +948,8 @@ async function restoreWorkspaceBackupMeasured(
         content
       );
 
+      if (options.definitionCoverage && await storageAdapter.readText(`pages/${fileName}`) !== content) throw new Error('Recovery page readback mismatch');
+
       restoredPages += 1;
 
       reportProgress(
@@ -927,6 +973,7 @@ async function restoreWorkspaceBackupMeasured(
           restorePlan.assets,
         assetContentByPath:
           restorePlan.assetContentByPath,
+        verifyReadback: options.definitionCoverage === true,
         onProgress:
           progress => reportProgress(
             options,
@@ -981,7 +1028,8 @@ async function createRestoreWritePlan({
   storageAdapter,
   snapshotPath,
   manifest,
-  restoreSelection = null
+  restoreSelection = null,
+  definitionCoverage = false
 }) {
 
   const pages =
@@ -1005,6 +1053,7 @@ async function createRestoreWritePlan({
         storageAdapter,
         snapshotPath,
         pages,
+        definitionCoverage,
         blockedPrefix:
           'Restore blocked'
       });
@@ -1060,6 +1109,7 @@ async function createRestoreWritePlan({
       snapshotPath,
       pages:
         selectedPages,
+      definitionCoverage,
       blockedPrefix:
         'Partial restore blocked'
     });
@@ -1266,6 +1316,7 @@ async function preflightBackupPages({
   storageAdapter,
   snapshotPath,
   pages,
+  definitionCoverage = false,
   blockedPrefix = 'Restore blocked'
 }) {
 
@@ -1285,7 +1336,8 @@ async function preflightBackupPages({
           `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`
         )
       );
-      assertLegacyPortability(pageContentByName.get(fileName), 'Backup v1 restore');
+      if (!definitionCoverage) assertLegacyPortability(pageContentByName.get(fileName), 'Backup v1 restore');
+      if (page.contentDigest && page.contentDigest !== await backupBytesDigest(pageContentByName.get(fileName))) throw new Error('Backup page integrity mismatch');
 
     } catch (error) {
 
@@ -1337,6 +1389,9 @@ async function preflightBackupAssets({
           `${snapshotPath}/${BACKUP_ASSETS_DIR}/${normalizedPath}`
         )
       );
+      // Verify the very bytes retained in the restore plan, not an earlier read.
+      const bytes = assetContentByPath.get(normalizedPath);
+      if (asset.digest && (bytes.byteLength !== asset.bytes || await backupBytesDigest(bytes) !== asset.digest)) throw new Error('Backup asset integrity mismatch');
 
       availableAssets.push(
         asset
@@ -1489,6 +1544,7 @@ async function createAndVerifyPreRestoreBackup({
           PRE_RESTORE_BACKUP_REASON,
         {
           storageAdapter,
+          definitionCoverage: options.definitionCoverage === true,
           pages:
             options.preRestorePages ||
             options.pages ||
@@ -1541,7 +1597,22 @@ async function createAndVerifyPreRestoreBackup({
     );
   }
 
+  if (options.definitionCoverage) await verifyWorkspaceBackup(manifest.id, { storageAdapter, definitionCoverage: true });
+
   return verified.manifest;
+}
+
+// Migration/recovery uses the same preflight as restore, including actual bytes.
+export async function verifyWorkspaceBackup(backupId, { storageAdapter = getStorageAdapter(), definitionCoverage = false } = {}) {
+  const snapshotPath = `${BACKUP_ROOT_DIR}/${backupId}`;
+  const validation = await readAndValidateBackupManifest(storageAdapter, snapshotPath, { backupId });
+  if (validation.restoreBlocking) throw createBackupManifestValidationError(validation);
+  const manifest = validation.manifest;
+  if (manifest.version === 2 && !definitionCoverage) throw new Error('Definition coverage required');
+  const catalog = await readBackupDefinitions(storageAdapter, snapshotPath, manifest);
+  const plan = await createRestoreWritePlan({ storageAdapter, snapshotPath, manifest, definitionCoverage });
+  if (definitionCoverage) assertBackupPageDefinitions([...plan.pageContentByName.values()], catalog || (await readCardTypeCatalog({ storageAdapter })).catalog);
+  return { manifest, pageContents: Object.fromEntries(plan.pageContentByName) };
 }
 
 
@@ -1849,7 +1920,7 @@ function validateBackupManifestStructure(
     return issues;
   }
 
-  if (manifest.version !== BACKUP_MANIFEST_SUPPORTED_VERSION) {
+  if (![BACKUP_MANIFEST_SUPPORTED_VERSION, 2].includes(manifest.version)) {
 
     issues.push(
       createManifestIssue({
@@ -1862,6 +1933,14 @@ function validateBackupManifestStructure(
       })
     );
   }
+
+  if (manifest.version === 2 && (
+    !Object.hasOwn(manifest, 'cardTypes') ||
+    !['all-workspace-assets', 'none'].includes(manifest.assetCoverage) ||
+    !Array.isArray(manifest.pages) || manifest.pages.some(page => !/^sha256:[a-f0-9]{64}$/.test(page?.contentDigest || '')) ||
+    !Array.isArray(manifest.assets) || manifest.assets.some(asset => !/^sha256:[a-f0-9]{64}$/.test(asset?.digest || '') || !Number.isSafeInteger(asset?.bytes) || asset.bytes < 0) ||
+    manifest.cardTypes !== null && (manifest.cardTypes?.path !== CARD_TYPE_CATALOG_PATH || !/^sha256:[a-f0-9]{64}$/.test(manifest.cardTypes?.digest || '') || !Number.isSafeInteger(manifest.cardTypes?.bytes))
+  )) issues.push(createManifestIssue({ code: 'manifest-definition-coverage-invalid', severity: 'error', message: 'Invalid definition-aware backup coverage.' }));
 
   if (
     typeof manifest.id !== 'string' ||
@@ -2738,6 +2817,7 @@ async function restoreBackupAssets({
   storageAdapter,
   assets = null,
   assetContentByPath = null,
+  verifyReadback = false,
   onProgress = null
 }) {
 
@@ -2783,6 +2863,7 @@ async function restoreBackupAssets({
       `assets/${normalizedPath}`,
       buffer
     );
+    if (verifyReadback && await backupBytesDigest(await storageAdapter.readBinary(`assets/${normalizedPath}`)) !== await backupBytesDigest(buffer)) throw new Error('Recovery asset readback mismatch');
 
     restored += 1;
 

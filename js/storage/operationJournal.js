@@ -71,11 +71,13 @@ export function createOperationJournalEntry({
 
 
 export async function beginWorkspaceOperation(
-  operation
+  operation,
+  adapter = getStorageAdapter(),
+  verifyReadback = false
 ) {
 
   const storageAdapter =
-    getStorageAdapter();
+    adapter;
 
   const entry =
     createOperationJournalEntry(
@@ -89,7 +91,8 @@ export async function beginWorkspaceOperation(
   await writeJournalEntry(
     storageAdapter,
     'pending',
-    entry
+    entry,
+    verifyReadback
   );
 
   return entry;
@@ -97,13 +100,15 @@ export async function beginWorkspaceOperation(
 
 
 export async function commitWorkspaceOperation(
-  entry
+  entry,
+  adapter = getStorageAdapter(),
+  verifyReadback = false
 ) {
 
   if (!entry?.id) return null;
 
   const storageAdapter =
-    getStorageAdapter();
+    adapter;
 
   const committedEntry = {
     ...entry,
@@ -119,7 +124,8 @@ export async function commitWorkspaceOperation(
   await writeJournalEntry(
     storageAdapter,
     'committed',
-    committedEntry
+    committedEntry,
+    verifyReadback
   );
 
   await removeJournalEntry(
@@ -134,13 +140,15 @@ export async function commitWorkspaceOperation(
 
 export async function failWorkspaceOperation(
   entry,
-  error
+  error,
+  adapter = getStorageAdapter(),
+  verifyReadback = false
 ) {
 
   if (!entry?.id) return null;
 
   const storageAdapter =
-    getStorageAdapter();
+    adapter;
 
   const failedEntry = {
     ...entry,
@@ -158,7 +166,8 @@ export async function failWorkspaceOperation(
   await writeJournalEntry(
     storageAdapter,
     'failed',
-    failedEntry
+    failedEntry,
+    verifyReadback
   );
 
   return failedEntry;
@@ -237,7 +246,8 @@ async function ensureJournalDirectories(
 async function writeJournalEntry(
   storageAdapter,
   status,
-  entry
+  entry,
+  verifyReadback = false
 ) {
 
   await storageAdapter.writeText(
@@ -251,6 +261,9 @@ async function writeJournalEntry(
       2
     )
   );
+  if (verifyReadback && await storageAdapter.readText(getJournalEntryPath(status, entry.id)) !== JSON.stringify(entry, null, 2)) {
+    throw new Error('Operation journal readback mismatch');
+  }
 }
 
 

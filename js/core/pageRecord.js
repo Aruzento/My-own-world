@@ -211,6 +211,8 @@ export function buildPageRecordContent({
   body = '',
   frontMatter = null,
   invalidFrontMatter = {},
+  preservedFrontMatterKeys = [],
+  preserveBody = false,
   sanitizeBody = null,
   now = null
 } = {}) {
@@ -222,7 +224,7 @@ export function buildPageRecordContent({
     );
 
   const outputBody =
-    normalizeOutputBody(
+    preserveBody ? serializedBody : normalizeOutputBody(
       serializedBody
     );
 
@@ -262,7 +264,8 @@ export function buildPageRecordContent({
         variablesJson === undefined ? frontMatter?.entries || [] :
           (frontMatter?.entries || []).filter(entry => entry.normalizedKey !== 'variablesjson'),
       record,
-      invalidFrontMatter
+      invalidFrontMatter,
+      preservedFrontMatterKeys
     });
 
   if (variablesJson !== undefined) frontMatterLines.push(`variablesJson: ${serializePageVariables(variablesJson)}`);
@@ -284,6 +287,8 @@ export function serializePageRecord(
       record?.invalidFrontMatter || {},
     sanitizeBody:
       options.sanitizeBody || null,
+    preservedFrontMatterKeys: options.preservedFrontMatterKeys || [],
+    preserveBody: options.preserveUnchangedMetadata === true,
     now:
       options.now || null
   });
@@ -315,7 +320,9 @@ export function updatePageRecordContent(
           'body'
         )
           ? metadataPatch.body
-          : parsed.rawBody,
+          : options.preserveUnchangedMetadata
+            ? splitPageFrontMatter(String(content)).body.replace(/^\r?\n/, '')
+            : parsed.rawBody,
       updatedAt:
         hasOwn(
           metadataPatch,
@@ -336,6 +343,11 @@ export function updatePageRecordContent(
     },
     {
       ...options,
+      // Explicit migration patches preserve unrelated raw metadata and omissions,
+      // instead of materializing legacy timestamp/order defaults.
+      preservedFrontMatterKeys: options.preserveUnchangedMetadata
+        ? FRONT_MATTER_FIELD_ORDER.filter(key => !Object.hasOwn(metadataPatch, key) && !(key === 'contentHash' && Object.hasOwn(metadataPatch, 'body')))
+        : [],
       now:
         options.now || null
     }
@@ -1204,7 +1216,8 @@ function parseRelationshipsJson(
 function buildFrontMatterLines({
   entries,
   record,
-  invalidFrontMatter = {}
+  invalidFrontMatter = {},
+  preservedFrontMatterKeys = []
 }) {
 
   const fieldValues =
@@ -1238,6 +1251,12 @@ function buildFrontMatterLines({
 
     if (written.has(canonicalKey)) return;
 
+    if (preservedFrontMatterKeys.includes(canonicalKey)) {
+      lines.push(entry.raw);
+      written.add(canonicalKey);
+      return;
+    }
+
     const value =
       fieldValues[canonicalKey];
 
@@ -1256,6 +1275,7 @@ function buildFrontMatterLines({
   FRONT_MATTER_FIELD_ORDER.forEach(key => {
 
     if (written.has(key)) return;
+    if (preservedFrontMatterKeys.includes(key)) return;
 
     const value =
       fieldValues[key];

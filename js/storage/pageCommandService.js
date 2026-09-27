@@ -199,6 +199,7 @@ export async function persistPageContentCommand({
 
   const structuredPage = hasStructuredPageData(page) || hasStructuredPageData(content);
   const variablesCommand = type === 'update-card-variables' && Boolean(verifyPersistedContent);
+  const migrationCommand = type === 'migrate-legacy-properties' && Boolean(verifyPersistedContent) && Boolean(validateBeforeWrite);
   if (structuredPage) {
     workspaceContext ||= captureStorageWorkspaceContext();
     verifyPersistedContent ||= async () => {
@@ -211,7 +212,7 @@ export async function persistPageContentCommand({
   const callerValidate = validateBeforeWrite;
   if (structuredPage) validateBeforeWrite = async () => {
     await validateStructuredPageWrite({ beforeContent: await readCurrentDurablePageContent(page, { storageAdapter: workspaceContext?.adapter }), content, expectedBase,
-      variablesCommand, storageAdapter: workspaceContext?.adapter });
+      variablesCommand, migrationCommand, storageAdapter: workspaceContext?.adapter });
     await callerValidate?.();
   };
 

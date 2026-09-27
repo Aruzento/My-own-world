@@ -1,0 +1,28 @@
+{
+  "character": {
+    "type": "character",
+    "body": "<h1>Legacy hero</h1><p>Free [[wiki]] text <img src=\"assets/hero.png\"></p><section class=\"card-properties-block\" data-block-type=\"properties\" data-card-type=\"character\"><input type=\"number\" data-property-name=\"hpCurrent\" value=\"0\"><input type=\"number\" data-property-name=\"hpMax\" value=\"12\"><input type=\"number\" data-property-name=\"hpTemp\"><input type=\"number\" data-property-name=\"str\" value=\"14\"><input type=\"number\" data-property-name=\"proficiencyBonus\" data-property-manual=\"false\" value=\"2\"><input type=\"number\" data-property-name=\"armorClass\" data-property-manual=\"true\" value=\"0\"><label data-property-custom=\"true\" data-property-label=\"Flag\"><input type=\"checkbox\" data-property-name=\"custom-flag\"></label><div contenteditable=\"true\" data-property-name=\"effect\"><b>Free property prose</b></div><input data-property-name=\"mystery\" value=\"\"></section><div class=\"item-set-block\"><span class=\"item-set-chip\" data-page-id=\"sword\">Sword</span></div><div data-character-effects=\"{&quot;selectedRuleIds&quot;:[&quot;rule&quot;]}\"></div>",
+    "controls": [
+      {"key":"hpCurrent","raw":"0","present":true}, {"key":"hpMax","raw":"12","present":true},
+      {"key":"hpTemp","raw":null,"present":false}, {"key":"str","raw":"14","present":true},
+      {"key":"proficiencyBonus","raw":"2","present":true,"manualState":"false"},
+      {"key":"armorClass","raw":"0","present":true,"manual":true,"manualState":"true"},
+      {"key":"custom-flag","raw":false,"present":true,"custom":true},
+      {"key":"effect","raw":"Free property prose","present":true}, {"key":"mystery","raw":"","present":true}
+    ],
+    "expectedValues": {"dnd.health":{"dnd.hpCurrent":0,"dnd.hpMax":12},"character.abilities":{"character.abilities.strength":14}}
+  },
+  "creature": {"type":"creature","body":"<section data-block-type=\"properties\" data-card-type=\"creature\"><input type=\"number\" data-property-name=\"level\" value=\"25\"></section>","controls":[{"key":"level","raw":"25","present":true}],"expectedValues":{"dnd.level":25}},
+  "magic": {"type":"magic","body":"<section data-block-type=\"properties\" data-card-type=\"magic\"><input type=\"number\" data-property-name=\"level\" value=\"0\"><select data-property-name=\"shape\"><option value=\"Круг\" selected>Круг</option></select><textarea data-property-name=\"effect\">Line 1\nLine 2</textarea></section>","controls":[{"key":"level","raw":"0","present":true},{"key":"shape","raw":"Круг","present":true},{"key":"effect","raw":"Line 1\nLine 2","present":true}],"expectedValues":{"spell.level":0}},
+  "object": {"type":"object","body":"<section data-block-type=\"properties\" data-card-type=\"object\"><input type=\"number\" data-property-name=\"durability\" value=\"0\"></section>","controls":[{"key":"durability","raw":"0","present":true}],"expectedValues":{"item.isObject":true,"item.durability":{"item.durability.current":0}}},
+  "note": {"type":"note","body":"<section data-block-type=\"properties\" data-card-type=\"note\"><textarea data-property-name=\"description\">Keep all prose</textarea></section>","controls":[{"key":"description","raw":"Keep all prose","present":true}],"expectedValues":{"item.isObject":true}},
+  "folder": {"type":"folder","body":"<section data-block-type=\"properties\" data-card-type=\"folder\"><input data-property-name=\"tags\" value=\"legacy tags\"><input type=\"checkbox\" data-property-name=\"archived\"></section>","controls":[{"key":"tags","raw":"legacy tags","present":true},{"key":"archived","raw":false,"present":true}],"expectedValues":{}},
+  "item": {"type":"item","body":"<section data-block-type=\"properties\" data-card-type=\"item\"><section data-property-compound-name=\"armorProfile\"><input type=\"number\" data-property-name=\"armorBaseAc\" value=\"15\"></section><input type=\"number\" data-property-name=\"gold\" value=\"0\"></section>","controls":[{"key":"armorBaseAc","raw":"15","present":true},{"key":"gold","raw":"0","present":true}],"expectedValues":{"item.cost":{"item.cost.gold":0},"item.armor":{"item.armor.baseAc":15}}},
+  "empty": {"type":"character","body":"<p>No Properties</p>"},
+  "malformed": {"type":"character","body":"<section data-block-type=\"properties\"><input data-property-name=\"hpCurrent\" value=\"oops\"></section>"},
+  "duplicate": {"type":"character","body":"<section data-block-type=\"properties\" data-card-type=\"character\"><input data-property-name=\"hpCurrent\" value=\"1\"><input data-property-name=\"hpCurrent\" value=\"2\"></section>"},
+  "multiple": {"type":"character","body":"<section data-block-type=\"properties\" data-card-type=\"character\"><input data-property-name=\"hpCurrent\" value=\"1\"></section><section data-block-type=\"properties\" data-card-type=\"character\"><input data-property-name=\"hpCurrent\" value=\"2\"></section>"},
+  "invalid": {"type":"character","body":"<section data-block-type=\"properties\" data-card-type=\"character\"><input type=\"number\" data-property-name=\"hpCurrent\" value=\"\"></section>"},
+  "unknown": {"type":"unknown-entity","body":"<section data-block-type=\"properties\" data-card-type=\"unknown-entity\"><input data-property-name=\"x\" value=\"2\"></section>"},
+  "reference": {"type":"character","body":"<section data-block-type=\"properties\" data-card-type=\"character\"><select data-property-name=\"armorItem\"><option value=\"Armor alias\" selected>Armor label</option></select></section>","controls":[{"key":"armorItem","raw":"Armor alias","present":true}],"expectedValues":{"dnd.armorClass":{"dnd.armorClass.source":{"dnd.armorClass.source.reference":{"pageId":"armor"}}}}}
+}

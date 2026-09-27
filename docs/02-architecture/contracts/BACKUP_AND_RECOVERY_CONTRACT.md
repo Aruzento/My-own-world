@@ -6,9 +6,15 @@ owner_zone: "architecture"
 ---
 # Backup And Recovery Contract
 
-## Planned Card Variables coverage — 2026-09-24
+## Card Variables coverage — Stage 7 foundation, 2026-09-27
 
-The v1 pages/assets behavior below remains available for legacy workspaces. CTV Stage 3 adds an explicit safety gate: backup/restore v1 rejects an activated definition catalog, structured source/destination pages and structured source backup records before destructive mutation. It must not produce a seemingly complete backup without required definitions. Full/partial structured restore and backup v2 are not implemented; risky operations requiring that backup remain blocked. Before production Card Variables migration, [the canonical migration design](../CARD_TYPES_VARIABLES_MIGRATION.md#11-backup-restore-переносимость-и-adapters) requires this same backupService to support v2 catalog/definition closure coverage, typed variable asset references and dependency-aware full/partial restore. Restore merges immutable definitions without removing versions needed by unselected/newer pages; digest collisions block before writes. Legacy v1 snapshots remain readable subject to exact definition availability. Event history remains excluded. These are future activation prerequisites, not implemented backup capabilities.
+The v1 pages/assets behavior below remains the default for legacy workspaces. Its Stage 3 safety gate still rejects activated catalogs and structured source/destination data. Stage 7 introduces an explicit `definitionCoverage:true` option in this same backupService for staged migration/recovery; it is not automatically enabled by ordinary backup UI.
+
+Opt-in manifest v2 covers durable raw pages, the exact activated catalog snapshot at its fixed path (byte length/SHA-256), and all workspace assets conservatively. Each page/asset has a byte digest. Source catalog closure is validated; snapshot bytes are verified before risky writes. No reliance on stale runtime page content or incomplete typed asset scanning. Missing/future unsupported definitions and nested/ambiguous page paths block this bounded migration backup rather than produce a lossy snapshot.
+
+Full recovery verifies source integrity and immutable definition collisions before the mandatory verified pre-restore safety backup. Definitions merge additively and are durable before pages; versions needed by newer/unselected pages remain. Restored pages receive exact durable readback; multi-file atomicity is not claimed and failures retain existing incomplete/recovery evidence. Restoring a legacy page does not reimport it; caller reloads canonical workspace state. Catalog union can retain unused activated versions safely.
+
+Definition-aware partial restore is explicitly blocked until Stage 9. Typed selective asset closure/remapping, package/template portability and ordinary UI rollout remain future work under [the canonical migration design](../CARD_TYPES_VARIABLES_MIGRATION.md#101-реализованный-ctv-stage-7-contract). Event history remains excluded. Migration snapshots and their pre-restore safety backups disable retention cleanup during the operation. Focused tests exercise the same adapter boundary on BrowserStorageAdapter/OPFS and DesktopStorageAdapter with an injected Tauri bridge; no native filesystem implementation changed.
 
 ## Event History Exclusion (16.10 Owner Decision)
 

@@ -4,12 +4,22 @@ import { deepCloneData, deepFreeze } from '../cardTypes/definitionIdentity.js';
 import { hasValue, validateVariableValue } from '../schema/cardVariablesSchema.js';
 import { EMPTY_COMPUTED_RESOLVERS } from './computedResolvers.js';
 import { isSpecialPageReferenceTarget, referenceFieldMatchesPage, referenceTargetMatchesPage } from '../cardTypes/cardReferenceTargets.js';
+import { extractLegacyProperties } from '../migration/legacyPropertiesExtraction.js';
 export { validateEntityValues } from '../schema/cardVariablesSchema.js';
 export { prepareVariablesChange, commitVariablesChange } from './variableCommands.js';
 
 export function readEntity(pageId, context = {}) {
   const repository = context.repository || PageRepository;
   return createCardVariableSnapshot(repository.getPageById(pageId), context.registry);
+}
+// Explicit temporary adapter. No merge/fallback when any envelope is present;
+// gameplay readers are intentionally not switched to this boundary in Stage 7.
+export function readEntityCompatibility(pageId, context = {}) {
+  const repository = context.repository || PageRepository;
+  const page = repository.getPageById(pageId);
+  const snapshot = createCardVariableSnapshot(page, context.registry);
+  return snapshot.mode === 'legacy' ? deepFreeze({ ...snapshot,
+    legacy: extractLegacyProperties(page, context) }) : snapshot;
 }
 export const getTypeDefinition = snapshot => snapshot.definition;
 export const getFieldDefinition = (snapshot, key) => snapshot.definition?.fieldsByKey[key] || null;

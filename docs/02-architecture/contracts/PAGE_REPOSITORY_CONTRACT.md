@@ -10,6 +10,8 @@ Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIG
 
 Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
 
+CTV Stage 7 adds explicit `migrate-legacy-properties` PageCommands with verified backup/catalog prerequisites, whole-page expectedBase and durable readback before the existing single repository publication. PageRecord's opt-in `preserveUnchangedMetadata` serialization keeps unrelated raw metadata/omissions and unchanged wire body; it does not change ordinary editor saves. The read-only Entity compatibility reader extracts legacy evidence only when no variables envelope exists. No domain consumer switches automatically; see [migration rollout and recovery](../CARD_TYPES_VARIABLES_MIGRATION.md#101-реализованный-ctv-stage-7-contract).
+
 Large-workspace mutations should update `PageRepository` / `PageIndex` incrementally instead of forcing full workspace reloads after ordinary create, rename, move, or reorder operations.
 
 `PageRepository` — будущий единый слой доступа к страницам проекта. Его задача — убрать хаотичные `state.pages.find(...)`, `state.pages.filter(...)` и ручные обходы parent-chain из feature-кода.

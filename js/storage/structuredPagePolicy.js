@@ -1,4 +1,4 @@
-import { parsePageRecordContent } from '../core/pageRecord.js';
+import { parsePageRecordContent, createPageStateIdentityFromContent, arePageStateIdentitiesEqual } from '../core/pageRecord.js';
 import { canonicalJSON } from '../core/pageVariablesCodec.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
 import { createCardVariableSnapshot } from '../variables/cardVariableStore.js';
@@ -14,15 +14,26 @@ export function assertLegacyPortability(page, operation) {
   throw error;
 }
 
-export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, storageAdapter }) {
+export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, storageAdapter }) {
   if (!hasStructuredPageData(beforeContent) && !hasStructuredPageData(content)) return;
   if (!expectedBase?.stateHash) throw new Error('Structured page requires whole-page expectedBase');
   const before = parsePageRecordContent(beforeContent);
   const after = parsePageRecordContent(content);
-  if (before.variablesStatus.mode !== 'structured' || after.variablesStatus.mode !== 'structured') throw new Error('Legacy conversion or invalid/future structured payload is read-only');
+  if (migrationCommand) {
+    const receipt = after.variablesJson?.migration;
+    if (before.variablesStatus.mode !== 'legacy' || after.variablesStatus.mode !== 'structured' ||
+        receipt?.version !== 1 || !receipt.operationId || !receipt.backupId ||
+        receipt.sourceType !== before.type || receipt.target?.type !== after.type ||
+        receipt.target?.version !== after.variablesJson.schemaVersion || receipt.target?.digest !== after.variablesJson.schemaDigest ||
+        !arePageStateIdentitiesEqual(receipt.sourceIdentity, createPageStateIdentityFromContent(beforeContent)) ||
+        !arePageStateIdentitiesEqual(expectedBase, receipt.sourceIdentity) || before.rawBody !== after.rawBody) throw new Error('Invalid migration transition');
+    const unrelatedMetadata = record => record.frontMatter.entries
+      .filter(entry => entry.raw && !['schemaversion', 'type', 'variablesjson'].includes(entry.normalizedKey)).map(entry => entry.raw);
+    if (canonicalJSON(unrelatedMetadata(before)) !== canonicalJSON(unrelatedMetadata(after))) throw new Error('Migration must preserve unrelated raw metadata');
+  } else if (before.variablesStatus.mode !== 'structured' || after.variablesStatus.mode !== 'structured') throw new Error('Legacy conversion or invalid/future structured payload is read-only');
   if (before.id !== after.id) throw new Error('Structured page identity cannot change');
-  if (before.type !== after.type) throw new Error('Structured type switching requires conversion workflow');
-  if (!variablesCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
+  if (!migrationCommand && before.type !== after.type) throw new Error('Structured type switching requires conversion workflow');
+  if (!variablesCommand && !migrationCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
   const { catalog, exists } = await readCardTypeCatalog({ storageAdapter });
   if (!exists) throw new Error('Structured page requires activated catalog');
   const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
