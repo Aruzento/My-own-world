@@ -72,6 +72,43 @@ test('mapping table references only existing variable-owned schema paths', () =>
   }
 });
 
+test('legacy armor kinds map deterministically to the item armor enum', () => {
+  const cases = { 'Нет': 'none', 'Легкий': 'light', 'Средний': 'medium', 'Тяжелый': 'heavy', 'Щит': 'shield' };
+  const page = makePage('armor-item', fixtures.item);
+  for (const [legacy, expected] of Object.entries(cases)) {
+    const plan = planExtractedProperties(page, extraction(page, [{ key: 'armorKind', raw: legacy, type: 'select', present: true }]));
+    assert.equal(plan.status, 'ready', legacy);
+    assert.equal(plan.envelope.values['item.armor']['item.armor.type'], expected);
+    assert.equal(plan.envelope.inactive.some(entry => entry.key === 'armorKind'), false);
+    assert.equal(createCardVariableSnapshot({ id: page.id, content: materializeMigrationCandidate(plan, { operationId: legacy, backupId: 'backup' }).content }, migrationRegistry()).mode, 'structured');
+  }
+});
+
+test('legacy armor tuple becomes one validated item.armor object', () => {
+  const page = makePage('armor-tuple', fixtures.item);
+  const plan = planExtractedProperties(page, extraction(page, [
+    { key: 'armorKind', raw: 'Средний', type: 'select', present: true },
+    { key: 'armorBaseAc', raw: '14', type: 'number', present: true },
+    { key: 'armorDexMax', raw: '2', type: 'number', present: true }
+  ]));
+  assert.equal(plan.status, 'ready', JSON.stringify(plan.issues));
+  assert.deepEqual(plan.envelope.values['item.armor'], {
+    'item.armor.type': 'medium', 'item.armor.baseAc': 14, 'item.armor.maxDexterity': 2
+  });
+  assert.equal(createCardVariableSnapshot({ id: page.id, content: materializeMigrationCandidate(plan, { operationId: 'tuple', backupId: 'backup' }).content }, migrationRegistry()).mode, 'structured');
+});
+
+test('unknown legacy armor kind blocks active migration and preserves raw evidence', () => {
+  const page = makePage('unknown-armor', fixtures.item);
+  const plan = planExtractedProperties(page, extraction(page, [{ key: 'armorKind', raw: 'Экзотический', type: 'select', present: true }]));
+  assert.equal(plan.status, 'blocked');
+  assert.equal(plan.envelope.values['item.armor'], undefined);
+  assert.deepEqual(plan.envelope.inactive.find(entry => entry.key === 'armorKind'), {
+    key: 'armorKind', raw: 'Экзотический', type: 'select', present: true, manual: false, manualState: null, custom: false,
+    block: 0, targetPath: ['item.armor', 'item.armor.type'], status: 'invalid', reason: 'unsupported-legacy-enum-value'
+  });
+});
+
 test('custom UUIDv5 mapping is deterministic across label edits and values validate through extensions', async () => {
   const page = makePage('hero', fixtures.character);
   const source = extraction(page, [{ key: 'custom-flag', raw: false, type: 'checkbox', custom: true, present: true, label: 'Flag' }]);

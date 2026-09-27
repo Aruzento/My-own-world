@@ -1,5 +1,5 @@
 import { extractLegacyProperties } from './legacyPropertiesExtraction.js';
-import { LEGACY_TYPE_MAPPING, LEGACY_FIELD_MAPPING, LEGACY_MANUAL_TARGETS, PROPERTIES_MIGRATION_VERSION, isLegacyCalculatedKey } from './legacyPropertiesMapping.js';
+import { LEGACY_TYPE_MAPPING, LEGACY_FIELD_MAPPING, LEGACY_MANUAL_TARGETS, PROPERTIES_MIGRATION_VERSION, isLegacyCalculatedKey, mapLegacyEnumValue } from './legacyPropertiesMapping.js';
 import { parsePageRecordContent, updatePageRecordContent, createPageStateIdentityFromContent } from '../core/pageRecord.js';
 import { deepCloneData, deepFreeze, digestCanonicalData } from '../cardTypes/definitionIdentity.js';
 import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
@@ -108,7 +108,9 @@ export function planExtractedProperties(page, extraction, { pages = [], registry
           evidence.status = 'absent'; evidence.reason = 'explicit-no-reference';
           plan.evidence.push(evidence); continue;
         }
-        const value = convert(control.raw, field, pages, record.id);
+        const enumMapping = mapLegacyEnumValue(record.type, control.key, control.raw);
+        if (!enumMapping.mapped) throw new Error('unsupported-legacy-enum-value');
+        const value = convert(enumMapping.value, field, pages, record.id);
         const validation = validateVariableValue(value, field, { pageId: record.id, key: control.key });
         if (!validation.ok) throw new Error(validation.issues[0].code);
         let target = envelope.values;

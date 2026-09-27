@@ -20,7 +20,7 @@ const actor = {
   cha: ['character.abilities', 'character.abilities.charisma']
 };
 const item = { gold: ['item.cost', 'item.cost.gold'], silver: ['item.cost', 'item.cost.silver'],
-  copper: ['item.cost', 'item.cost.copper'], armorBaseAc: ['item.armor', 'item.armor.baseAc'],
+  copper: ['item.cost', 'item.cost.copper'], armorKind: ['item.armor', 'item.armor.type'], armorBaseAc: ['item.armor', 'item.armor.baseAc'],
   armorDexMax: ['item.armor', 'item.armor.maxDexterity'] };
 // No fuzzy label inference. Unsupported shapes/units remain inactive evidence.
 export const LEGACY_FIELD_MAPPING = deepFreeze({
@@ -29,6 +29,18 @@ export const LEGACY_FIELD_MAPPING = deepFreeze({
   magic: { level: ['spell.level'] }, spell: { level: ['spell.level'] },
   skill: { skillLevel: ['skill.level'] }
 });
+
+// Versioned source-value mapping. Keys are legacy persisted values, never labels
+// resolved at runtime from the new catalog. Unknown values must remain evidence.
+export const LEGACY_ENUM_VALUE_MAPPING = deepFreeze({
+  item: { armorKind: { 'Нет': 'none', 'Легкий': 'light', 'Средний': 'medium', 'Тяжелый': 'heavy', 'Щит': 'shield' } }
+});
+
+export function mapLegacyEnumValue(type, key, raw) {
+  const values = LEGACY_ENUM_VALUE_MAPPING[type]?.[key];
+  if (!values) return { mapped: true, value: raw };
+  return Object.hasOwn(values, raw) ? { mapped: true, value: values[raw] } : { mapped: false };
+}
 
 export const LEGACY_MANUAL_TARGETS = deepFreeze({
   proficiencyBonus: ['dnd.proficiencyBonus'],
