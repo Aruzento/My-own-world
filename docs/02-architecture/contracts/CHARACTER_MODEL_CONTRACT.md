@@ -8,9 +8,9 @@ owner_zone: "architecture"
 
 # Character Model Contract
 
-## Target source boundary — 2026-09-24
+## Implemented source boundary — CTV Stage 8.1, 2026-09-27
 
-[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection; its future input is the Variables / Entity API with existing Inventory/Effects/integration owners. The current direct Properties/legacy readers and writers remain baseline evidence until explicit cutover, not the target for new consumers. Preserve health/calculation/Map/Combat behavior, migrate sources without creating a second HP owner, and do not convert every card into CharacterModel. Player is a separate game-entity type; legacy character/creature map to Character by the owner decision.
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
 
 Дата обновления: 14.06.2026
 
@@ -27,6 +27,7 @@ owner_zone: "architecture"
 ## Файлы
 
 - `js/character/characterModel.js` - нормализация модели, DnD-расчеты, HP/temp HP/death state.
+- `js/character/structuredCharacterSource.js` - typed Entity API adapter for structured Player/Character reads, provenance and exact Item armor references.
 - `js/character/inventoryModel.js` - нормализация инвентаря из блока `Предметы` и будущие чистые операции add/update/remove.
 - `js/character/effectsModel.js` - нормализация активных состояний DnD, эффектов, модификаторов и флагов боевого состояния.
 - `js/character/effectSourceResolver.js` - связывание эффектов с карточками-источниками: предметами, заклинаниями, навыками и будущими правилами.
@@ -51,7 +52,7 @@ owner_zone: "architecture"
 ```js
 createCharacterModel(options)
 createCharacterModelFromSources({ page, pages, propertiesModels, legacyDndHealth, integrations, selectedRuleIds })
-readCharacterModelFromPage(page, { pages, integrations, selectedRuleIds })
+readCharacterModelFromPage(page, { pages, integrations, selectedRuleIds, registry, repository })
 getCharacterHealth(model)
 getCharacterInitiativeModifier(model)
 getCharacterEffectiveArmorClass(model)
@@ -75,8 +76,8 @@ calculateDndCheckValue(options)
   kind: 'CharacterModel',
   version: 1,
   pageId: '...',
-  cardType: 'character' | 'creature',
-  source: 'properties' | 'legacy-dnd' | 'empty',
+  cardType: 'character' | 'creature' | 'player',
+  source: 'entity' | 'structured-unavailable' | 'properties' | 'legacy-dnd' | 'empty',
   level: 1,
   proficiencyBonus: 2,
   armorClass: 10,
@@ -101,6 +102,14 @@ calculateDndCheckValue(options)
     failures: 0,
     isDead: false
   },
+  sources: {
+    entity: false,
+    properties: false,
+    legacyDnd: false,
+    integrations: false
+  },
+  provenance: {},
+  diagnostics: [],
   inventory: {
     kind: 'InventoryModel',
     version: 1,
@@ -156,11 +165,6 @@ calculateDndCheckValue(options)
     initiative: {},
     health: {},
     byKey: {}
-  },
-  sources: {
-    properties: true,
-    legacyDnd: false,
-    integrations: false
   }
 }
 ```

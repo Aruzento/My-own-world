@@ -33,6 +33,10 @@ import {
   createRuleTreeCharacterIntegrations
 } from '../rules/ruleTreeProvider.js';
 
+import {
+  readStructuredCharacterSource
+} from './structuredCharacterSource.js';
+
 
 export const CHARACTER_ABILITY_KEYS = [
   'str',
@@ -53,6 +57,7 @@ export function createCharacterModel(
     cardType = 'character',
     source = 'empty',
     level = 1,
+    proficiencyBonus = undefined,
     armorClass = 10,
     speed = 30,
     abilities = {},
@@ -62,7 +67,9 @@ export function createCharacterModel(
     effects = {},
     integrations = {},
     calculations = {},
-    sources = {}
+    sources = {},
+    provenance = {},
+    diagnostics = []
   } = {}
 ) {
 
@@ -94,9 +101,16 @@ export function createCharacterModel(
     source,
     level: normalizedLevel,
     proficiencyBonus:
-      calculateProficiencyBonus(
-        normalizedLevel
-      ),
+      proficiencyBonus !== null &&
+      proficiencyBonus !== undefined &&
+      Number.isFinite(Number(proficiencyBonus))
+        ? normalizeInteger(
+          proficiencyBonus,
+          calculateProficiencyBonus(normalizedLevel)
+        )
+        : calculateProficiencyBonus(
+          normalizedLevel
+        ),
     armorClass:
       normalizeInteger(
         armorClass,
@@ -147,8 +161,16 @@ export function createCharacterModel(
       integrations:
         Boolean(
           sources.integrations
+        ),
+      entity:
+        Boolean(
+          sources.entity
         )
-    }
+    },
+    provenance,
+    diagnostics: Array.isArray(diagnostics)
+      ? [...diagnostics]
+      : []
   };
 }
 
@@ -266,9 +288,33 @@ export function readCharacterModelFromPage(
   {
     pages = [],
     integrations = {},
-    selectedRuleIds = []
+    selectedRuleIds = [],
+    registry = undefined,
+    repository = null
   } = {}
 ) {
+
+  const inventoryModel =
+    readInventoryModelFromHTML(
+      page?.content
+    );
+  const effectsModel =
+    readEffectsModelFromHTML(
+      page?.content
+    );
+  const structured =
+    createCharacterModelFromStructuredPage({
+      page,
+      pages,
+      inventoryModel,
+      effectsModel,
+      integrations,
+      selectedRuleIds,
+      registry,
+      repository
+    });
+
+  if (structured) return structured;
 
   return createCharacterModelFromSources({
     page,
@@ -281,16 +327,120 @@ export function readCharacterModelFromPage(
         page
       ),
     inventoryModel:
-      readInventoryModelFromHTML(
-        page?.content
-      ),
+      inventoryModel,
     effectsModel:
-      readEffectsModelFromHTML(
-        page?.content
-      ),
+      effectsModel,
     pages,
     integrations,
     selectedRuleIds
+  });
+}
+
+
+function createCharacterModelFromStructuredPage(
+  {
+    page,
+    pages,
+    inventoryModel,
+    effectsModel,
+    integrations,
+    selectedRuleIds,
+    registry,
+    repository
+  }
+) {
+  const effectiveSelectedRuleIds = [
+    ...(selectedRuleIds || []),
+    ...(effectsModel?.selectedRuleIds || [])
+  ];
+  const combinedIntegrations =
+    createCombinedIntegrations({
+      page,
+      pages,
+      integrations,
+      selectedRuleIds:
+        effectiveSelectedRuleIds
+    });
+  const combinedEffectsModel =
+    createCombinedEffectsModel({
+      inventoryModel,
+      effectsModel,
+      pages,
+      integrations:
+        combinedIntegrations
+    });
+  const source =
+    readStructuredCharacterSource(
+      page,
+      {
+        pages,
+        ...(registry ? { registry } : {}),
+        repository,
+        effectsModel:
+          combinedEffectsModel
+      }
+    );
+
+  if (source.mode === 'legacy') return null;
+
+  if (
+    source.status !== 'ready'
+  ) {
+    return createCharacterModel({
+      pageId: page?.id || '',
+      cardType:
+        normalizeCardType(
+          source.snapshot?.type || page?.type
+        ),
+      source: 'structured-unavailable',
+      inventory: inventoryModel,
+      effects: combinedEffectsModel,
+      integrations: combinedIntegrations,
+      sources: {
+        entity: true,
+        integrations:
+          hasCharacterIntegrations(
+            combinedIntegrations
+          )
+      },
+      provenance: {
+        entity: {
+          mode: source.mode,
+          status: source.status
+        }
+      },
+      diagnostics: source.diagnostics
+    });
+  }
+
+  return createCharacterModel({
+    pageId: page?.id || '',
+    cardType:
+      normalizeCardType(
+        source.cardType
+      ),
+    source: 'entity',
+    level: source.level,
+    proficiencyBonus:
+      source.proficiencyBonus,
+    armorClass: source.armorClass,
+    speed: source.speed,
+    abilities: source.abilities,
+    health: source.health,
+    deathSaves: source.deathSaves,
+    inventory: inventoryModel,
+    effects: combinedEffectsModel,
+    integrations: combinedIntegrations,
+    calculations: source.calculations,
+    sources: {
+      entity: true,
+      integrations:
+        hasCharacterIntegrations(
+          combinedIntegrations
+        )
+    },
+    provenance: source.provenance,
+    diagnostics: source.diagnostics
   });
 }
 
@@ -299,7 +449,10 @@ export function getCharacterHealth(
   model
 ) {
 
-  if (!model?.health) return null;
+  if (
+    !model?.health ||
+    model.source === 'structured-unavailable'
+  ) return null;
 
   return {
     current:
@@ -1026,9 +1179,12 @@ function normalizeCardType(
   value
 ) {
 
-  return value === 'creature'
-    ? 'creature'
-    : 'character';
+  if (
+    value === 'creature' ||
+    value === 'player'
+  ) return value;
+
+  return 'character';
 }
 
 

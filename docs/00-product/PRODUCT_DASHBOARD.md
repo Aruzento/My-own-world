@@ -12,7 +12,7 @@ Updated: 2026-09-27
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after `17.6` First Combat Attack Workflow, now DONE and accepted by the current owner instruction on 2026-09-24; this supersedes the earlier not-accepted status without claiming a new manual run. The active project is the nine-stage `CTV` Card Types / Variables Migration. Stages 1–7 through safe Properties migration are DONE / Foundation; Stage 8 domain consumers is the only NEXT task and requires a separate task. Stage 7 exposes explicit preview/backup/commit/resume/recovery APIs without normal UI rollout or automatic migration. Preserve 17.6 behavior, complete all nine stages and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
+The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after `17.6` First Combat Attack Workflow, now DONE and accepted by the current owner instruction on 2026-09-24; this supersedes the earlier not-accepted status without claiming a new manual run. The active project is the nine-stage `CTV` Card Types / Variables Migration. Stages 1–7 are DONE / Foundation and Stage 8 is ACTIVE. Stage 8.1 structured CharacterModel read-side is DONE / Foundation: valid structured Player/Character cards use Variables / Entity API, while legacy pages keep Properties and invalid/future envelopes never fall back. Combat, Map, Inventory, Effects and writer cutovers remain unfinished separate Stage 8 work. Preserve 17.6 behavior, complete all nine stages and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
 
 ## Current Focus
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Assign CTV Stage 8 separately using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md). After CTV Stage 9 closure and 17.6 parity, resume Phase 17 at 17.7. Stage 8 is not started by the Stage 7 foundation. Explicit migration has a definition-aware full backup/recovery path; ordinary structured-card backup UI, partial restore, copy/templates/packages remain blocked until final portability integration. Legacy workspaces continue unchanged.
+- Continue CTV Stage 8 only through a separate bounded domain-cutover task using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md). Stage 8.1 is closed; it did not switch Combat/Map writers, Inventory or Effects persistence. After Stage 9 closure and the 17.6 parity gate, resume Phase 17 at 17.7. Explicit migration has a definition-aware full backup/recovery path; ordinary structured-card backup UI, partial restore, copy/templates/packages remain blocked until final portability integration. Legacy workspaces continue unchanged.
 
 ## Readiness Model
 

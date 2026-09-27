@@ -11,7 +11,7 @@ owner_zone: "architecture"
 Дата: 2026-09-24. CTV Stage 1 `Архитектура новой системы типов`, architecture-only / `Foundation`.
 Исследованный baseline: `7422c9d7957201c59eddfb1ac2e2716e1cff5d66`, ветка `main`.
 
-Это единственный canonical design миграции. Исходный аудит разделов 2–3 описывает baseline Stage 1; разделы 5.1 и 6.1 фиксируют реализованные Stages 2/3. Остальные целевые contracts реализуются поэтапно, без автоматического переключения gameplay consumers. Очередь реализации находится только в [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md).
+Это единственный canonical design миграции. Исходный аудит разделов 2–3 описывает baseline Stage 1; последующие implementation sections фиксируют реализованные Stages 2–7 и Stage 8.1. Остальные consumer/writer contracts реализуются поэтапно. Очередь реализации находится только в [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md).
 
 По текущему решению владельца 17.6 First Combat Attack Workflow — последний завершённый и принятый Combat baseline. Это supersede прежней записи «PAUSED — NOT ACCEPTED», а не утверждение о новом manual test в этом этапе. Phase 17 приостановлена; 17.7–17.FINAL остаются незавершёнными и возвращаются после миграции. Сохранение поведения 17.6 обязательно при последующем переключении источников.
 
@@ -396,6 +396,16 @@ Front-matter значения сохраняются raw-page backup уже по
 - **Knowledge Graph/search** PageIndex остаётся identity/metadata/search owner. Entity API отдаёт typed searchable scalar projections и reference edges с provenance; обновление инкрементально. Нельзя индексировать raw JSON как пользовательский текст или копировать derived edges в persistent relationships. Existing explicit links/aliases сохраняют semantics.
 - **Compendium / AI retrieval** только будущие consumers explicit snapshots/definitions/provenance и free content через existing page access. Не создаются индекс/агент/сервис/сетевой канал в этом проектном этапе; не получают обход write commands.
 
+### 12.1 Реализованный CTV Stage 8.1 contract — structured CharacterModel read-side
+
+Stage 8.1 реализует один adapter [`structuredCharacterSource.js`](../../js/character/structuredCharacterSource.js) между Variables / Entity API и [`characterModel.js`](../../js/character/characterModel.js). `readCharacterModelFromPage` сначала классифицирует source через Entity snapshot. Только `legacy` без envelope вызывает прежний Properties/legacy DnD reader. Valid `structured` с capability `characterProjection` читает effective typed values через `getValue`; malformed/future/unsupported/missing-definition не вызывают Properties fallback и возвращают `structured-unavailable` с diagnostics. `inactive` migration evidence не читается как gameplay input.
+
+Structured projection поддерживает Player/Character level, proficiency, abilities, HP current/max/temp, Player death saves, walk movement, initiative modifier/bonus и AC. Ability/proficiency/health/initiative/speed используют прежние public CharacterModel semantics; Inventory blocks, Effects blocks и integration providers пока сохраняют своих owners и продолжают добавлять read-only modifiers. Provenance фиксирует exact page/type/schema version/digest и per-concept stored/default/absent/unresolved state, поэтому lazy fallback presentation не считается доказанным stored HP.
+
+Armor reference читается только как exact `{pageId}`. Referenced target обязан быть valid structured Item; `item.armor.type/baseAc/maxDexterity` читаются через Entity API и передаются в существующую pure `calculateDndArmorClass`. `none/light/medium/heavy/shield` сохраняют текущие формулы, включая medium dexterity cap. Missing, legacy, invalid или wrong-type target остаётся unresolved diagnostic; title/alias и Properties Item fallback отсутствуют.
+
+Это read-side leaf, а не полный Stage 8. Existing Properties health mutation/Combat 17.6 продолжают принимать только legacy Properties source. Campaign Map bridge и legacy health facade явно не включают structured writes; для structured card они блокируют старый writer path. Character Sheet writer, Combat/Undo, Map HP, Inventory/Effects persistence и manual/computed activation остаются отдельными Stage 8 задачами. Stage 8 остаётся `ACTIVE`; Stage 9 не разблокирован.
+
 ## 13. Технический долг, который должен исчезнуть при cutover
 
 Дубли каталогов типов в UI/icons/templates; block.data-card-type как конкурирующее определение типа; first-block selection; DOM-only Properties reader; HTML controls как domain values; persisted calculated display values; manual `override-*` hidden inputs; title/alias domain ref fallback; прямые DOM writers sheet/Map; legacy DnD block creation из Map HP; portable record field dropping; property-HTML-only asset scanning; stale PropertiesModel-v2 narrative. Устранять по owners/наборам, а не массовым рефакторингом.
@@ -424,4 +434,4 @@ Front-matter значения сохраняются raw-page backup уже по
 
 Открытых продуктовых вопросов нет: legacy type mapping и смысл Игрока подтверждены владельцем в разделе 9. Неразрешённые значения конкретных повреждённых/неизвестных карточек — runtime migration review, а не незавершённое проектирование. Каталог полей при реализации подключается в утверждённом объёме, без придумывания замены отсутствующим определениям.
 
-Все определимые по репозиторию базовые boundaries выбраны выше. Stages 1–6 создали architecture, Schema/Registry, Variables API, Inspector и все 15 catalog definitions (5.1, 6.1–6.4). Stage 7 реализовал explicit safe Properties migration foundation (10.1). Следующая отдельная задача — CTV Stage 8 `Перевод доменных систем на Variables API`. Пользовательские workspace не мигрировались; automatic activation, domain cutover, Effects/Combat behavior, Compendium/AI и удаление Properties runtime не начаты.
+Все определимые по репозиторию базовые boundaries выбраны выше. Stages 1–6 создали architecture, Schema/Registry, Variables API, Inspector и все 15 catalog definitions (5.1, 6.1–6.4). Stage 7 реализовал explicit safe Properties migration foundation (10.1). Stage 8 теперь `ACTIVE`: Stage 8.1 закрыл только structured CharacterModel read-side (12.1), а остальные domain consumers/writers остаются отдельными задачами. Пользовательские workspace не мигрировались автоматически; Combat/Map writer cutover, Inventory/Effects persistence, Compendium/AI и удаление Properties runtime не начаты.

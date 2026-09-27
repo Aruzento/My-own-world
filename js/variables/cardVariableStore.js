@@ -35,7 +35,7 @@ export function createCardVariableSnapshot(page, registry) {
     mode = 'invalid'; diagnostics.push(valueIssue('page_identity_mismatch', { pageId: page.id }, record.id));
   }
   return deepFreeze(deepCloneData({
-    pageId: record.id, mode, content: page.content,
+    pageId: record.id, mode, variablesMode: wire.mode, content: page.content,
     pageIdentity: createPageStateIdentityFromContent(page.content),
     type: record.type, schemaVersion: wire.envelope?.schemaVersion ?? null,
     schemaDigest: wire.envelope?.schemaDigest ?? null,

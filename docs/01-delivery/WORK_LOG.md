@@ -5,6 +5,15 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-27: CTV Stage 8.1 structured CharacterModel read-side
+
+- Added one `structuredCharacterSource` domain adapter. `readCharacterModelFromPage` classifies the Entity snapshot before any Properties read: absent envelope keeps the existing legacy path; valid structured Player/Character uses Entity API; malformed/future/unsupported/missing-definition returns diagnostic `structured-unavailable` with no Properties fallback. Model provenance records exact entity/schema identity and per-concept value status/source.
+- Structured projection covers level, proficiency, six abilities, HP current/max/temp, Player death saves, walk speed, initiative modifier/bonus and AC. Existing CharacterModel ability/proficiency/health rules remain. Paired legacy/structured fixtures prove semantic parity for supported outputs. Inventory, Effects and integration providers remain their existing body/domain owners and continue supplying read-only modifiers; inactive migration evidence is never activated.
+- Armor uses exact `{pageId}` only. A referenced target must be a valid structured Item; `item.armor.type/baseAc/maxDexterity` feed the existing pure armor formula. Tests cover none/light/medium/heavy/shield, medium dexterity cap, missing/wrong/legacy target diagnostics and the absence of title/alias or Item Properties fallback.
+- Safety boundaries remain closed: legacy Properties health updates, strict Combat 17.6 and Campaign Map writer bridge do not accept structured CharacterModel as a writable legacy source. The focused browser fixture proves a structured 8/20 character wins over contradictory 99/99 Properties, survives Inspector render/reload, retains body-owned Effects contribution and rejects legacy HP/Map write paths without mutating content.
+- Stage 8.1 is DONE / Foundation, while Stage 8 remains ACTIVE. Character Sheet writer, Combat/Undo, Campaign Map HP, Inventory/Effects persistence, computed/manual override activation and later domain consumers remain separate tasks. Stage 9 is still blocked; Phase 17 stays paused after accepted 17.6.
+- Verification evidence: 104/104 focused Character/Variables/Properties migration/Inventory/Effects/Map-owner unit regressions and 31/31 focused Character/Properties Chromium regressions PASS. `docs:index` (103 documents, zero drift), `agents:validate` (17/17), `check:js`, `verify:quick`, `verify` (994/994 unit/integration tests plus the large-workspace performance smoke) and the full CI Chromium command `npm run test:browser` (320/320) all PASS.
+
 ## 2026-09-27: CTV Stage 7 safe legacy Properties migration
 
 - Stage 7 corrective: approved legacy item `armorKind` is now code-owned mapped into the same `item.armor` object as base AC and dexterity cap: `Нет` → `none`, `Легкий` → `light`, `Средний` → `medium`, `Тяжелый` → `heavy`, `Щит` → `shield`. An unsupported source value blocks active mapping and is retained as raw inactive evidence. This does not change the legacy armor calculation engine or start Stage 8.

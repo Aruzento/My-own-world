@@ -32,7 +32,14 @@ export function getCampaignMapCharacterState(
       }
     );
 
-  if (model.source === 'empty') return null;
+  // Stage 8.1 establishes the Entity-backed CharacterModel only. The Map
+  // bridge/writer cutover is a later bounded leaf, so structured cards stay
+  // unavailable here instead of mixing entity reads with legacy HP writes.
+  if (
+    model.source === 'empty' ||
+    model.source === 'entity' ||
+    model.source === 'structured-unavailable'
+  ) return null;
 
   return {
     model,

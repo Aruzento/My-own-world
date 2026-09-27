@@ -52,10 +52,21 @@ export function updatePageCharacterHealth(
   options = {}
 ) {
 
+  const sourceModel =
+    readCharacterModelFromPage(
+      page
+    );
+
+  if (
+    sourceModel.source === 'entity' ||
+    sourceModel.source === 'structured-unavailable'
+  ) return null;
+
   if (
     updatePropertyHealth(
       page,
-      options
+      options,
+      sourceModel
     )
   ) {
 
@@ -152,7 +163,8 @@ function updatePropertyHealth(
     delta = 0,
     temp = null,
     mode = 'delta'
-  } = {}
+  } = {},
+  sourceModel
 ) {
 
   if (
@@ -203,9 +215,7 @@ function updatePropertyHealth(
 
   const nextModel =
     applyCharacterHealthChange(
-      readCharacterModelFromPage(
-        page
-      ),
+      sourceModel,
       {
         delta,
         temp,
