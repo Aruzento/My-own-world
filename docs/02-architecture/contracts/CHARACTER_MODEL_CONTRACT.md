@@ -12,6 +12,8 @@ owner_zone: "architecture"
 
 [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
 
+CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. It is not wired into Combat, Campaign Map, Character Sheet, Inventory or Effects.
+
 Дата обновления: 14.06.2026
 
 ## Назначение
@@ -28,6 +30,7 @@ owner_zone: "architecture"
 
 - `js/character/characterModel.js` - нормализация модели, DnD-расчеты, HP/temp HP/death state.
 - `js/character/structuredCharacterSource.js` - typed Entity API adapter for structured Player/Character reads, provenance and exact Item armor references.
+- `js/character/structuredCharacterHealth.js` - immutable prepare/commit boundary for explicit stored structured HP; delegates writes to Variables/PageCommand and performs domain readback.
 - `js/character/inventoryModel.js` - нормализация инвентаря из блока `Предметы` и будущие чистые операции add/update/remove.
 - `js/character/effectsModel.js` - нормализация активных состояний DnD, эффектов, модификаторов и флагов боевого состояния.
 - `js/character/effectSourceResolver.js` - связывание эффектов с карточками-источниками: предметами, заклинаниями, навыками и будущими правилами.
@@ -63,6 +66,8 @@ getCharacterEffectsCombatSummary(model)
 hasCharacterCondition(model, conditionKey)
 createCampaignMapCharacterTokenSnapshot(page)
 applyCharacterHealthChange(model, options)
+prepareStructuredCharacterHealthChange({ pageId, expectedBase, request, context })
+commitStructuredCharacterHealthChange(plan)
 model.calculations
 calculateAbilityModifier(score)
 calculateProficiencyBonus(level)
@@ -186,6 +191,9 @@ calculateDndCheckValue(options)
 13. Активные правила `Rule Tree` (`activeRuleIds`) могут применяться глобально через provider.
 14. Персональный выбор правил для конкретной карточки персонажа хранится в persistent JSON блока `Эффекты и состояния` как `selectedRuleIds`. `CharacterModel` объединяет эти ids с глобальными активными правилами Rule Tree.
 15. `model.calculations` является backend-объяснением расчетов. UI может показывать формулу и части расчета из него, но не должен записывать изменения напрямую в этот объект.
+16. Structured HP mutation разрешена только для exact valid `character`/`player` с `characterProjection` и явно stored complete `dnd.health`; schema defaults и presentation fallback не являются write source.
+17. Structured health plan меняет только current/temp, использует max как guard и сохраняет весь остальной `dnd.health` object. Он одноразовый, data-only и всегда проходит через Variables/PageCommand whole-page guards.
+18. Successful Variables commit подтверждается durable reread и повторной CharacterModel projection. Properties body не dual-write'ится. Combat/Map продолжают свои прежние writers до отдельных Stage 8 leaves.
 
 
 ## Map Snapshot Boundary
