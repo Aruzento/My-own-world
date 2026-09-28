@@ -1,7 +1,8 @@
 import {
-  getCharacterEffectiveArmorClass,
-  readCharacterModelFromPage
+  getCharacterEffectiveArmorClass
 } from '../character/characterModel.js';
+
+import { createPageStateIdentityFromContent } from '../core/pageRecord.js';
 
 import {
   rollDice
@@ -13,8 +14,10 @@ import {
 } from '../repository/pageRepository.js';
 
 import {
-  prepareCharacterHealthMutation
-} from '../properties/characterHealthMutation.js';
+  inspectCombatStructuredHealth,
+  prepareCombatHealthChange,
+  readCombatCharacter
+} from './combatCharacterHealth.js';
 
 import {
   getPropertiesArmorClassInputSource
@@ -148,8 +151,8 @@ export async function resolveSingleTargetAttack(
     resolvePage =
       getPageById,
     randomInt,
-    storageAdapter =
-      null
+    storageAdapter = null,
+    combatCharacterContext = null
   } = {}
 ) {
 
@@ -180,7 +183,8 @@ export async function resolveSingleTargetAttack(
       mapModel,
       pages:
         resolvedPages,
-      resolvePage
+      resolvePage,
+      combatCharacterContext
     });
 
   let attackRoll;
@@ -294,20 +298,18 @@ export async function resolveSingleTargetAttack(
 
   try {
 
-    mutationPlan =
-      await prepareCharacterHealthMutation(
-        observation.targetPage,
-        {
+    mutationPlan = await prepareCombatHealthChange({
+        page: observation.targetPage,
+        request: {
           type: 'delta',
           delta:
             -damageRoll.total
         },
-        {
-          pages:
-            resolvedPages,
-          storageAdapter
-        }
-      );
+        pages: resolvedPages,
+        storageAdapter,
+        context: combatCharacterContext,
+        expectedBase: createPageStateIdentityFromContent(observation.targetPage.content)
+      });
 
   } catch (error) {
 
@@ -358,9 +360,11 @@ export async function resolveSingleTargetAttack(
 
 
 export function readCombatAttackObservation({
-  request, mapPageId, mapModel, pages = getAllPages(), resolvePage = getPageById
+  request, mapPageId, mapModel, pages = getAllPages(), resolvePage = getPageById,
+  combatCharacterContext = null
 }) {
-  const observation = resolveAttackObservation({ request: validateCombatActionRequest(request), mapPageId, mapModel, pages, resolvePage });
+  const observation = resolveAttackObservation({ request: validateCombatActionRequest(request), mapPageId, mapModel, pages, resolvePage,
+    combatCharacterContext });
   return deepFreezeCombatActionData({ mapPageId: observation.mapPageId, sessionId: observation.sessionId,
     round: observation.round, actor: observation.actor, target: observation.target, defense: observation.defense,
     actorContent: observation.actorPage.content, targetContent: observation.targetPage.content,
@@ -372,7 +376,8 @@ function resolveAttackObservation({
   mapPageId,
   mapModel,
   pages,
-  resolvePage
+  resolvePage,
+  combatCharacterContext
 }) {
 
   const session =
@@ -461,7 +466,8 @@ function resolveAttackObservation({
         request.actor.participantId,
       mapModel,
       pages,
-      resolvePage
+      resolvePage,
+      combatCharacterContext
     });
 
   const target =
@@ -470,7 +476,8 @@ function resolveAttackObservation({
         request.target.participantId,
       mapModel,
       pages,
-      resolvePage
+      resolvePage,
+      combatCharacterContext
     });
 
   if (actor.pageId === target.pageId) {
@@ -491,6 +498,13 @@ function resolveAttackObservation({
       target,
       pages
     });
+
+  if (target.source === 'structured') {
+    inspectCombatStructuredHealth(target.page, {
+      pages,
+      context: combatCharacterContext
+    });
+  }
 
   return {
     mapPageId,
@@ -523,8 +537,8 @@ function resolveTargetDefense({
   pages
 }) {
 
-  const input =
-    getPropertiesArmorClassInputSource({
+  if (target.source === 'legacy') {
+    const input = getPropertiesArmorClassInputSource({
       content:
         target.page.content,
       pages,
@@ -532,12 +546,21 @@ function resolveTargetDefense({
         target.character.effects
     });
 
-  if (input.ok !== true) {
+    if (input.ok !== true) {
 
-    throw defenseError(
-      target,
-      input.reason
-    );
+      throw defenseError(
+        target,
+        input.reason
+      );
+    }
+  } else {
+    const provenance = target.character?.provenance?.fields?.armorClass;
+    if (
+      provenance?.status !== 'value' ||
+      !['explicit', 'item-reference'].includes(provenance.resolution)
+    ) {
+      throw defenseError(target, provenance?.resolution || provenance?.status || 'structured-defense-unavailable');
+    }
   }
 
   const value =
@@ -586,7 +609,8 @@ function resolveExactParticipant({
   participantId,
   mapModel,
   pages,
-  resolvePage
+  resolvePage,
+  combatCharacterContext
 }) {
 
   const initiativeMatches =
@@ -693,29 +717,15 @@ function resolveExactParticipant({
     );
   }
 
-  const character =
-    readCharacterModelFromPage(
-      page,
-      {
-        pages
-      }
-    );
-
-  if (
-    character?.source !== 'properties' ||
-    ![
-      'character',
-      'creature'
-    ].includes(
-      character.cardType
-    ) ||
-    character.pageId !== page.id
-  ) {
+  let active;
+  try {
+    active = readCombatCharacter(page, { pages, context: combatCharacterContext });
+  } catch (error) {
 
     throw identityError(
       COMBAT_ATTACK_RESOLUTION_ERROR_CODES.CHARACTER_UNSUPPORTED,
       participantId,
-      'properties-character-required'
+      error.reason || error.code || 'character-source-unsupported'
     );
   }
 
@@ -726,7 +736,8 @@ function resolveExactParticipant({
     pageId:
       participant.pageId,
     page,
-    character
+    character: active.character,
+    source: active.source
   };
 }
 

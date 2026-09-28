@@ -4,11 +4,13 @@ import { serializeCombatPageMutation } from './combatActionQueue.js';
 import { getAllPages, getPageById } from '../repository/pageRepository.js';
 import { CampaignMapModel } from '../editor/campaignMapModel.js';
 import { arePageStateIdentitiesEqual, parsePageRecordContent } from '../core/pageRecord.js';
-import { persistPageContentCommand, snapshotPageForCommand } from '../storage/pageCommandService.js';
-import { evaluatePageWritePrecondition, inspectPageWriteOutcome } from '../storage/pageWritePreconditions.js';
+import { snapshotPageForCommand } from '../storage/pageCommandService.js';
+import { evaluatePageWritePrecondition } from '../storage/pageWritePreconditions.js';
 import { captureStorageWorkspaceContext, assertStorageWorkspaceContext, createContextBoundStorageAdapter } from '../storage/storageAdapter.js';
 import { createCombatAttackTransaction, inspectCombatAttackAudit } from '../events/combatActionEventLog.js';
 import { appendTransactionRecord } from '../events/eventStore.js';
+import { assertCombatCharacterContextCurrent, commitCombatHealthChange,
+  createCombatCharacterContext } from './combatCharacterHealth.js';
 
 function reject(reason) {
   const error = new Error(reason);
@@ -29,7 +31,13 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
   let initial;
   try {
     initial = { ...getMapContext() };
-    const observation = readCombatAttackObservation({ request: normalized, ...initial, pages: getPages(), resolvePage });
+    const initialPages = getPages();
+    const initialPageIds = participantPageIds(initial.mapModel, normalized);
+    const combatCharacterContext = await createCombatCharacterContext({ pages: initialPages,
+      pageIds: initialPageIds, workspaceContext,
+      storageAdapter: createContextBoundStorageAdapter(workspaceContext) });
+    const observation = readCombatAttackObservation({ request: normalized, ...initial, pages: initialPages, resolvePage,
+      combatCharacterContext });
     const observedMapState = JSON.stringify(initial.mapModel.toJSON());
     return await serializeCombatPageMutation(workspaceContext, observation.target.pageId, async () => {
       let resolution = null, transaction = null, receipt = null, state = 'unchanged', stage = 'preflight';
@@ -42,7 +50,8 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
           const current = getMapContext();
           if (current.mapPageId !== initial.mapPageId || current.mapModel !== initial.mapModel || current.dirty) reject('COMBAT_CONTEXT_STALE');
           if (JSON.stringify(current.mapModel.toJSON()) !== observedMapState) reject('COMBAT_MAP_DIVERGENT');
-          return readCombatAttackObservation({ request: normalized, ...current, pages: getPages(), resolvePage });
+          return readCombatAttackObservation({ request: normalized, ...current, pages: getPages(), resolvePage,
+            combatCharacterContext });
         };
         const before = readObservation();
         const mapPage = resolvePage(normalized.mapPageId);
@@ -74,13 +83,15 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
             throw error;
           }
           assertStorageWorkspaceContext(workspaceContext);
+          await assertCombatCharacterContextCurrent(combatCharacterContext);
           return precondition;
         };
         await checkMap();
         // Каждая атака, включая miss/no-change, начинается только с durable Character/AC target.
         await checkTarget();
         stage = 'resolution';
-        resolution = await resolveSingleTargetAttack(normalized, { ...initial, pages: getPages(), resolvePage, randomInt, storageAdapter: adapter });
+        resolution = await resolveSingleTargetAttack(normalized, { ...initial, pages: getPages(), resolvePage, randomInt,
+          storageAdapter: adapter, combatCharacterContext });
         stage = 'candidate-validation';
         transaction = createCombatAttackTransaction(resolution, { transactionId, createId, now });
         stage = 'precommit';
@@ -97,26 +108,18 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
         if (JSON.stringify(before) !== JSON.stringify(readObservation())) reject('COMBAT_OBSERVATION_STALE');
         if (plan?.changed) {
           stage = 'page-write';
-          try {
-            const command = await persistPageContentCommand({ page: targetPage, content: plan.nextContent,
-              previousPage: plan.previousPage, expectedBase: plan.expectedBase, workspaceContext,
-              validateBeforeWrite: () => {
-                if (JSON.stringify(before) !== JSON.stringify(readObservation())) reject('COMBAT_OBSERVATION_STALE');
-              },
-              type: 'combat-action-health-change', reason: resolution.definition.label });
-            const { page, ...commandEvidence } = command;
-            receipt = commandEvidence;
-          } catch (error) {
-            const readback = await inspectPageWriteOutcome({ page: targetPage, beforeContent: before.targetContent,
-              nextContent: plan.nextContent, workspaceContext });
-            return result({ ...evidence(), state: readback.status === 'base-content' ? 'unchanged' : readback.status === 'next-content' ? 'persisted' : 'uncertain',
-              reason: error.code || error.message, pageReadback: readback });
-          }
-          if (receipt.writeStatus !== 'saved' || !receipt.written || receipt.blocked || receipt.stale || receipt.conflict) {
-            const pageReadback = receipt.written ? await inspectPageWriteOutcome({ page: targetPage,
-              beforeContent: before.targetContent, nextContent: plan.nextContent, workspaceContext }) : null;
-            return result({ ...evidence(), state: receipt.written ? 'uncertain' : 'unchanged',
-              reason: 'COMBAT_PAGE_WRITE_UNCONFIRMED', pageReadback });
+          const healthCommit = await commitCombatHealthChange(plan, { workspaceContext,
+            reason: resolution.definition.label,
+            validateBeforeWrite: async () => {
+              if (JSON.stringify(before) !== JSON.stringify(readObservation())) reject('COMBAT_OBSERVATION_STALE');
+              await assertCombatCharacterContextCurrent(combatCharacterContext);
+            } });
+          receipt = healthCommit.pageCommandReceipt || healthCommit.structuredResult || null;
+          if (healthCommit.status !== 'saved') {
+            return result({ ...evidence(), state: healthCommit.state || (healthCommit.written === true ? 'uncertain' : 'unchanged'),
+              reason: healthCommit.reason || 'COMBAT_PAGE_WRITE_UNCONFIRMED',
+              ...(healthCommit.pageReadback ? { pageReadback: healthCommit.pageReadback } : {}),
+              healthCommit });
           }
           state = 'persisted';
         }
@@ -142,4 +145,10 @@ export async function executeCombatAttack(request, { getMapContext, resolvePage 
 function result(evidence) {
   return deepFreezeCombatActionData({ kind: 'CombatActionExecutionResult', version: 1, ok: false,
     state: 'unchanged', audit: 'not-attempted', ...evidence });
+}
+
+function participantPageIds(mapModel, request) {
+  return [request.actor.participantId, request.target.participantId].map(participantId =>
+    (mapModel?.initiative?.participants || []).find(item => item.participantId === participantId)?.pageId
+  ).filter(Boolean);
 }

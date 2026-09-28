@@ -1,10 +1,10 @@
 import { getPageById } from '../repository/pageRepository.js';
 import { serializeCombatPageMutation } from '../combat/combatActionQueue.js';
 import { deepFreezeCombatActionData } from '../combat/combatActionModel.js';
-import { prepareCharacterHealthMutation } from '../properties/characterHealthMutation.js';
-import { persistPageContentCommand } from '../storage/pageCommandService.js';
-import { inspectPageWriteOutcome } from '../storage/pageWritePreconditions.js';
+import { snapshotPageForCommand } from '../storage/pageCommandService.js';
 import { assertStorageWorkspaceContext, createContextBoundStorageAdapter } from '../storage/storageAdapter.js';
+import { assertCombatCharacterContextCurrent, commitCombatHealthChange,
+  createCombatCharacterContext, prepareCombatHealthChange } from '../combat/combatCharacterHealth.js';
 import { createTransactionRecord, readTransactionRecords, appendTransactionRecord } from './eventStore.js';
 import { createReversalTransaction, appendTransactionEvent, completeTransaction } from './transactionModel.js';
 import { createTypedEvent } from './eventTypes.js';
@@ -92,14 +92,18 @@ export async function compensateCombatAttack(input, preliminary, workspaceContex
         const page = await resolvePage(pageId);
         if (!page?.path || page.id !== pageId) fail('TRANSACTION_REVERSAL_TARGET_NOT_FOUND');
         const beforeContent = page.content, beforePath = page.path;
+        const combatCharacterContext = await createCombatCharacterContext({ pages: [page], pageIds: [pageId],
+          workspaceContext, storageAdapter: adapter });
         stage = 'health-preparation';
         try {
-          plan = await prepareCharacterHealthMutation(page, { type: 'exact', hpCurrent: evidence.before.hpCurrent,
-            hpTemp: evidence.before.hpTemp }, { storageAdapter: adapter });
+          plan = await prepareCombatHealthChange({ page, request: { type: 'exact', hpCurrent: evidence.before.hpCurrent,
+            hpTemp: evidence.before.hpTemp }, pages: [page], context: combatCharacterContext,
+            storageAdapter: adapter, expectedBase: snapshotPageForCommand(page).pageStateIdentity });
         } catch (error) {
+          const sourceError = error.cause || error;
           // Уменьшенный hpMax может запретить exact BEFORE ещё до выдачи плана.
-          if (error.reason === 'current-exceeds-max') fail('TRANSACTION_REVERSAL_CURRENT_STATE_CONFLICT');
-          if (error.details?.precondition?.failureKind === 'current-page-missing') fail('TRANSACTION_REVERSAL_TARGET_NOT_FOUND');
+          if (error.reason === 'current-exceeds-max' || sourceError.reason === 'current-exceeds-max') fail('TRANSACTION_REVERSAL_CURRENT_STATE_CONFLICT');
+          if (sourceError.details?.precondition?.failureKind === 'current-page-missing') fail('TRANSACTION_REVERSAL_TARGET_NOT_FOUND');
           throw error;
         }
         assertStorageWorkspaceContext(workspaceContext);
@@ -111,25 +115,18 @@ export async function compensateCombatAttack(input, preliminary, workspaceContex
         // Resolver может быть async; перед PageCommand сверяем handle, внутри очереди — content/path.
         if (await resolvePage(pageId) !== page) fail('TRANSACTION_REVERSAL_CURRENT_STATE_CONFLICT');
         stage = 'page-write';
-        try {
-          const command = await persistPageContentCommand({ page, content: plan.nextContent, previousPage: plan.previousPage,
-            expectedBase: plan.expectedBase, workspaceContext, type: 'combat-action-health-reversal', reason: input.reason || 'undo',
-            validateBeforeWrite: () => {
-              assertStorageWorkspaceContext(workspaceContext);
-              if (page.content !== beforeContent || page.path !== beforePath) fail('TRANSACTION_REVERSAL_CURRENT_STATE_CONFLICT');
-              if (!options.pageResolver && getPageById(pageId) !== page) fail('TRANSACTION_REVERSAL_TARGET_NOT_FOUND');
-            } });
-          const { page: livePage, ...commandEvidence } = command;
-          receipt = commandEvidence;
-        } catch (error) {
-          const pageReadback = await inspectPageWriteOutcome({ page, beforeContent, nextContent: plan.nextContent, workspaceContext });
-          state = pageReadback.status === 'base-content' ? 'unchanged' : pageReadback.status === 'next-content' ? 'persisted' : 'uncertain';
-          return result({ reason: error.code || error.message, pageReadback });
-        }
-        if (receipt.writeStatus !== 'saved' || !receipt.written || receipt.blocked || receipt.stale || receipt.conflict) {
-          state = receipt.written ? 'uncertain' : 'unchanged';
-          const pageReadback = receipt.written ? await inspectPageWriteOutcome({ page, beforeContent, nextContent: plan.nextContent, workspaceContext }) : null;
-          return result({ reason: 'COMBAT_UNDO_PAGE_WRITE_UNCONFIRMED', pageReadback });
+        const healthCommit = await commitCombatHealthChange(plan, { workspaceContext,
+          reason: input.reason || 'undo', validateBeforeWrite: async () => {
+            assertStorageWorkspaceContext(workspaceContext);
+            if (page.content !== beforeContent || page.path !== beforePath) fail('TRANSACTION_REVERSAL_CURRENT_STATE_CONFLICT');
+            if (!options.pageResolver && getPageById(pageId) !== page) fail('TRANSACTION_REVERSAL_TARGET_NOT_FOUND');
+            await assertCombatCharacterContextCurrent(combatCharacterContext);
+          } });
+        receipt = healthCommit.pageCommandReceipt || healthCommit.structuredResult || null;
+        if (healthCommit.status !== 'saved') {
+          state = healthCommit.state || (healthCommit.written === true ? 'uncertain' : 'unchanged');
+          return result({ reason: healthCommit.reason || 'COMBAT_UNDO_PAGE_WRITE_UNCONFIRMED', healthCommit,
+            ...(healthCommit.pageReadback ? { pageReadback: healthCommit.pageReadback } : {}) });
         }
         state = 'persisted';
         stage = 'audit-append';

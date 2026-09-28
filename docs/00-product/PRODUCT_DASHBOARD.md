@@ -6,13 +6,13 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-09-27
+Updated: 2026-09-28
 
 ## Current Product
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after `17.6` First Combat Attack Workflow, now DONE and accepted by the current owner instruction on 2026-09-24; this supersedes the earlier not-accepted status without claiming a new manual run. The active project is the nine-stage `CTV` Card Types / Variables Migration. Stages 1–7 are DONE / Foundation and Stage 8 is ACTIVE. Stage 8.1 structured CharacterModel read-side and Stage 8.2 structured Character Health write boundary are DONE / Foundation: valid structured Player/Character cards use Variables / Entity API, and explicit stored HP can be safely planned/committed through PageCommand with domain readback. The command is not connected to Combat or Map. Legacy pages keep Properties and invalid/future envelopes never fall back. Combat, Map, Inventory, Effects and remaining writer cutovers are unfinished separate Stage 8 work. Preserve 17.6 behavior, complete all nine stages and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
+The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after the accepted `17.6` First Combat Attack Workflow. The active project is the nine-stage `CTV` Card Types / Variables Migration. Stages 1–7 are DONE / Foundation and Stage 8 is ACTIVE. Stages 8.1–8.3 are DONE / Foundation: valid structured Player/Character cards use Variables / Entity API, explicit stored HP has a guarded command, and the existing Combat attack/Undo workflow now selects legacy or structured owners without changing 17.6 policy/events. Legacy-only Combat remains catalog-independent; invalid/future structured envelopes never fall back. Generic Map HP, Character Sheet, Inventory, Effects and remaining writer cutovers are unfinished separate Stage 8 work. Complete all nine stages and parity, then resume at 17.7. Phase 18+ remains BLOCKED and AI Core LATER.
 
 ## Current Focus
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Continue CTV Stage 8 only through a separate bounded domain-cutover task using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md). Stages 8.1–8.2 are closed; the structured HP command remains deliberately unconnected to Combat/Map writers, Inventory or Effects persistence. After Stage 9 closure and the 17.6 parity gate, resume Phase 17 at 17.7. Explicit migration has a definition-aware full backup/recovery path; ordinary structured-card backup UI, partial restore, copy/templates/packages remain blocked until final portability integration. Legacy workspaces continue unchanged.
+- Continue CTV Stage 8 only through a separate bounded domain-cutover task using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md). Stages 8.1–8.3 are closed; Combat attack/Undo uses the structured HP command, while generic Map writers, Character Sheet, Inventory and Effects persistence remain untouched. After Stage 9 closure and the parity gate, resume Phase 17 at 17.7. Explicit migration has a definition-aware full backup/recovery path; ordinary structured-card backup UI, partial restore, copy/templates/packages remain blocked until final portability integration. Legacy workspaces continue unchanged.
 
 ## Readiness Model
 

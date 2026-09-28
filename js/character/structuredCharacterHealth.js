@@ -154,44 +154,19 @@ export function prepareStructuredCharacterHealthChange({
 
   const normalizedRequest =
     normalizeRequest(request, pageId);
-  const snapshot =
-    readEntity(pageId, {
+  const inspection = inspectStructuredCharacterHealthSource({
+    pageId,
+    expectedBase,
+    context: {
+      ...context,
       registry,
       repository
-    });
-
-  assertStructuredCharacterSource(snapshot, pageId);
-
-  if (
-    !expectedBase?.stateHash ||
-    !arePageStateIdentitiesEqual(
-      expectedBase,
-      snapshot.pageIdentity
-    )
-  ) {
-    throw healthError(
-      'Structured Character health preparation requires the exact whole-page base.',
-      STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.STALE_BASE,
-      pageId,
-      'stale-page-base'
-    );
-  }
-
-  const storedHealth =
-    readExplicitStoredHealth(snapshot, {
-      registry,
-      repository
-    });
-  const before =
-    healthTuple(storedHealth, pageId);
-  const character =
-    readCharacterModelFromPage(page, {
-      pages: context.pages || [],
-      registry,
-      repository
-    });
-
-  assertCharacterProjection(character, before, pageId);
+    }
+  });
+  const snapshot = inspection.snapshot;
+  const storedHealth = inspection.storedHealth;
+  const before = inspection.health;
+  const character = inspection.character;
 
   const after =
     resolveAfterHealth({
@@ -320,7 +295,8 @@ export function prepareStructuredCharacterHealthChange({
 
 
 export async function commitStructuredCharacterHealthChange(
-  plan
+  plan,
+  { validateBeforeWrite = null } = {}
 ) {
   const captured =
     plans.get(plan);
@@ -353,7 +329,8 @@ export async function commitStructuredCharacterHealthChange(
 
   const variablesResult =
     await commitVariablesChange(
-      captured.variablesPlan
+      captured.variablesPlan,
+      { validateBeforeWrite }
     );
 
   if (variablesResult.status !== 'saved') {
@@ -398,6 +375,75 @@ export async function commitStructuredCharacterHealthChange(
       variablesResult
     });
   }
+}
+
+
+// Read-only readiness boundary shared by Combat and future domain writers. It
+// proves that HP is explicit, schema-valid and projected by CharacterModel;
+// it never materializes defaults or reads legacy Properties.
+export function inspectStructuredCharacterHealthSource({
+  pageId,
+  expectedBase = null,
+  context = {}
+} = {}) {
+  const repository = context.repository || PageRepository;
+  const registry = context.registry;
+  const page = repository.getPageById(pageId);
+
+  if (!registry) {
+    throw healthError(
+      'Structured Character health requires the exact activated Type Registry.',
+      STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.PREPARE_BLOCKED,
+      pageId,
+      'activated-registry-required'
+    );
+  }
+
+  if (!page?.id || page.id !== pageId) {
+    throw healthError(
+      'Structured Character health requires an exact existing page.',
+      STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.UNSUPPORTED_SOURCE,
+      pageId,
+      'missing-page'
+    );
+  }
+
+  const snapshot = readEntity(pageId, { registry, repository });
+  assertStructuredCharacterSource(snapshot, pageId);
+
+  if (
+    expectedBase &&
+    (!expectedBase.stateHash ||
+      !arePageStateIdentitiesEqual(expectedBase, snapshot.pageIdentity))
+  ) {
+    throw healthError(
+      'Structured Character health preparation requires the exact whole-page base.',
+      STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.STALE_BASE,
+      pageId,
+      'stale-page-base'
+    );
+  }
+
+  const storedHealth = readExplicitStoredHealth(snapshot, { registry, repository });
+  const health = healthTuple(storedHealth, pageId);
+  const character = readCharacterModelFromPage(page, {
+    pages: context.pages || [], registry, repository
+  });
+  assertCharacterProjection(character, health, pageId);
+
+  return Object.freeze({
+    pageId,
+    snapshot,
+    pageIdentity: snapshot.pageIdentity,
+    schema: Object.freeze({
+      type: snapshot.type,
+      version: snapshot.schemaVersion,
+      digest: snapshot.schemaDigest
+    }),
+    storedHealth: deepFreeze(deepCloneData(storedHealth)),
+    health: deepFreeze(deepCloneData(health)),
+    character
+  });
 }
 
 

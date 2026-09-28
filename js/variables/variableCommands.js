@@ -87,7 +87,7 @@ function applyRows(envelope, field, operation) {
   } else throw new Error('Unsupported variable patch operation');
 }
 
-export async function commitVariablesChange(plan) {
+export async function commitVariablesChange(plan, { validateBeforeWrite = null } = {}) {
   const captured = plans.get(plan);
   if (!captured || captured.used) return { status: 'blocked', reason: 'unknown-or-used-plan', written: false };
   captured.used = true;
@@ -106,6 +106,10 @@ export async function commitVariablesChange(plan) {
       type: 'update-card-variables', expectedBase: plan.expectedBase, workspaceContext: captured.workspace,
       validateBeforeWrite: async () => {
         assertStorageWorkspaceContext(captured.workspace);
+        if (typeof validateBeforeWrite === 'function') {
+          await validateBeforeWrite();
+          assertStorageWorkspaceContext(captured.workspace);
+        }
         const { catalog, exists } = await readCardTypeCatalog({ storageAdapter: captured.workspace.adapter });
         if (!exists) throw new Error('Missing activated catalog');
         const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });

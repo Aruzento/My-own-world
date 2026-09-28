@@ -467,6 +467,7 @@ function readArmorClass({
             provenance: Object.freeze({
               status: 'value',
               source: 'entity-reference',
+              resolution: 'item-reference',
               pageId: target.id,
               field: valueProvenance(armor)
             }),
@@ -503,6 +504,7 @@ function readArmorClass({
         provenance: Object.freeze({
           status: 'unresolved',
           source: 'entity-reference',
+          resolution: 'unresolved',
           pageId: reference.pageId
         }),
         diagnostics
@@ -523,7 +525,10 @@ function readArmorClass({
         calculationPart('Эффекты', effectModifier)
       ],
       source: result.provenance.source,
-      provenance: result.provenance,
+      provenance: Object.freeze({
+        ...result.provenance,
+        resolution: 'explicit'
+      }),
       diagnostics
     };
   }
@@ -548,9 +553,13 @@ function readArmorClass({
       ? Object.freeze({
         status: 'unresolved',
         source: 'entity-reference',
+        resolution: 'unresolved',
         pageId: reference?.pageId || null
       })
-      : result.provenance,
+      : Object.freeze({
+        ...result.provenance,
+        resolution: 'calculated-unarmored'
+      }),
     diagnostics
   };
 }

@@ -7,9 +7,17 @@ owner_zone: "architecture"
 ---
 # Combat Action Pipeline Contract
 
-Updated: 2026-09-24
+Updated: 2026-09-28
 
-Status: `0.0.1.17.6` First Combat Attack Workflow is DONE and the accepted baseline by the current owner instruction on 2026-09-24, superseding the earlier not-accepted status. Phase 17 is PAUSED while the [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) is completed. Preserve 17.6 behavior; 17.7-17.FINAL remain unfinished and blocked until migration closure and parity. No new manual test is claimed by this architecture-only stage. The migration document supersedes only the future Properties-backed source/preparation dependency: Variables / Entity API will supply it; this contract retains action policy, exact identities, durable commit, audit and Undo semantics. Phase 16 remains CLOSED / PASS; Phase 18+ BLOCKED; AI Core LATER.
+Status: `0.0.1.17.6` First Combat Attack Workflow is DONE and remains the accepted behavior baseline. CTV Stage 8.3 has completed the source-owner cutover for this existing attack/Undo workflow while Phase 17 stays PAUSED: legacy participants retain Properties and valid structured participants use Variables / Entity API through the Character/Health boundary. The action policy, exact identities, RNG order, event vocabulary, durable commit, audit and compensating Undo semantics below are unchanged. 17.7-17.FINAL remain unfinished and blocked until migration closure and parity. Phase 16 remains CLOSED / PASS; Phase 18+ BLOCKED; AI Core LATER.
+
+## CTV Stage 8.3 source-owner addendum
+
+The physical HP owner is now selected before resolution through `combatCharacterHealth.js`. A legacy-only actor/target pair does not read or require the CTV catalog and keeps the accepted Properties preparation/PageCommand path. If either selected participant is structured, Combat loads the exact activated workspace catalog, constructs an activated-only Registry and rechecks its revision/digest before the page write. Valid structured `character`/`player` requires `characterProjection`; malformed/future/missing-definition entities never fall back to Properties.
+
+Structured defense is valid only from explicit structured AC or a valid exact structured Item armor reference resolved by CharacterModel. Structured health must pass the Stage 8.2 explicit stored-health readiness boundary. Both physical sources are normalized to the historical logical tuple `hpCurrent/hpMax/hpTemp`; resource identities and stable event order remain `hpTemp` then `hpCurrent`. Structured commit calls the Stage 8.2 Variables command directly, so one Combat mutation still produces at most one page write.
+
+`undoTransaction` continues to reconstruct logical evidence from the original event record and compensates through the target's current active owner. A structured target uses Stage 8.2 exact current/temp compensation with max as guard, preserving health siblings and Properties bytes. A historical legacy attack may therefore be undone after a valid migration when page identity and the full logical AFTER tuple still match. This addendum supersedes Properties-only physical-source wording in the historical implementation sections below; it does not alter the accepted 17.6 event or failure contract.
 
 ## 1. Decision And First Product Slice
 
