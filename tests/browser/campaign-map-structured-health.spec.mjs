@@ -315,6 +315,24 @@ test('Campaign Map HP UI persists structured Character health without Properties
       await fixture.adapter.readText(fixture.character.path)
     );
     const bodyAfterPersistedFailure = durable.rawBody;
+    let mapSaveAttemptedAfterProjectionFailure = false;
+    const projectionFailure = await changeTokenHp(
+      fixture.token,
+      fixture.character,
+      { delta: -1 },
+      {
+        applyTokenHealthState() {
+          throw new Error('forced token projection failure');
+        },
+        closeTokenPopup() {},
+        async saveAndSync() {
+          mapSaveAttemptedAfterProjectionFailure = true;
+        }
+      }
+    );
+    const durableAfterProjectionFailure = parsePageRecordContent(
+      await fixture.adapter.readText(fixture.character.path)
+    );
     await fixture.adapter.removeFile(CARD_TYPE_CATALOG_PATH);
     const blocked = await changeTokenHp(
       fixture.token,
@@ -331,9 +349,13 @@ test('Campaign Map HP UI persists structured Character health without Properties
     );
     return {
       result,
+      projectionFailure,
+      mapSaveAttemptedAfterProjectionFailure,
       blocked,
       tokenHp: fixture.token.dataset.hp,
       durableCurrent: durable.variablesJson.values['dnd.health']['dnd.hpCurrent'],
+      durableAfterProjectionFailureCurrent:
+        durableAfterProjectionFailure.variablesJson.values['dnd.health']['dnd.hpCurrent'],
       afterBlockedCurrent: afterBlocked.variablesJson.values['dnd.health']['dnd.hpCurrent'],
       bodyAfterPersistedFailure,
       bodyAfterBlocked: afterBlocked.rawBody
@@ -345,7 +367,11 @@ test('Campaign Map HP UI persists structured Character health without Properties
   expect(failureBoundary.result.mapSaved).toBe(false);
   expect(failureBoundary.durableCurrent).toBe(5);
   expect(failureBoundary.tokenHp).toBe('5');
+  expect(failureBoundary.projectionFailure.status).toBe('presentation-unconfirmed');
+  expect(failureBoundary.projectionFailure.healthPersisted).toBe(true);
+  expect(failureBoundary.mapSaveAttemptedAfterProjectionFailure).toBe(false);
+  expect(failureBoundary.durableAfterProjectionFailureCurrent).toBe(4);
   expect(failureBoundary.blocked.status).toBe('blocked');
-  expect(failureBoundary.afterBlockedCurrent).toBe(5);
+  expect(failureBoundary.afterBlockedCurrent).toBe(4);
   expect(failureBoundary.bodyAfterBlocked).toBe(failureBoundary.bodyAfterPersistedFailure);
 });

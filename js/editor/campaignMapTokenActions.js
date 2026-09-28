@@ -240,15 +240,14 @@ export async function changeTokenHp(
     return result;
   }
 
-  refreshLinkedCharacterTokens(
-    token,
-    page.id,
-    deps
-  );
-
   deps.closeTokenPopup();
 
   try {
+    refreshLinkedCharacterTokens(
+      token,
+      page.id,
+      deps
+    );
     await deps.saveAndSync();
   } catch (error) {
     setStatus(
