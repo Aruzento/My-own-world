@@ -277,8 +277,10 @@ test('Campaign Map HP UI persists structured Character health without Properties
     const { token, popupDeps } = fixture;
     const {
       clearTokenPopupTimer,
-      openTokenPopup
+      openTokenPopup,
+      scheduleTokenPopup
     } = await import('/js/editor/campaignMapTokenPopupController.js');
+    scheduleTokenPopup(token, popupDeps);
     clearTokenPopupTimer();
     openTokenPopup(token, popupDeps);
   });
