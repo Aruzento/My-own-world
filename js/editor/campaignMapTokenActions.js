@@ -40,9 +40,18 @@ import {
 } from './campaignMapGeometry.js';
 
 import {
-  ensurePageDndHealth,
-  updatePageDndHealth
+  ensurePageDndHealth
 } from './campaignMapHealth.js';
+
+import {
+  commitCampaignMapCharacterHealthChange,
+  prepareCampaignMapCharacterHealthChange
+} from './campaignMapCharacterHealth.js';
+
+import {
+  getCampaignMapCharacterHealth,
+  isCampaignMapStructuredPage
+} from './campaignMapCharacterBridge.js';
 
 import {
   createMapShapeElement,
@@ -193,52 +202,75 @@ export async function changeTokenHp(
     return;
   }
 
-  const previousPage =
-    snapshotPageForCommand(
-      page
-    );
+  const map =
+    token.closest('.campaign-map-document');
+  let plan;
 
-  const draftPage =
-    createDraftPage(
-      page
-    );
-
-  const result =
-    updatePageDndHealth(
-      draftPage,
-      options
-    );
-
-  if (!result) {
-
+  try {
+    plan = await prepareCampaignMapCharacterHealthChange({
+      map,
+      page,
+      intent: options
+    });
+  } catch (error) {
     setStatus(
-      'У карточки нет блока DnD с хитами'
+      'Хиты карточки недоступны для изменения'
     );
-
-    return;
+    return Object.freeze({
+      status: 'blocked',
+      written: false,
+      reason: error.reason || error.code || error.message
+    });
   }
 
-  await persistPageContentCommand({
-    page,
-    content:
-      draftPage.content,
-    previousPage,
-    type:
-      'update-page-content',
-    reason:
-      'campaign-map-token-health'
-  });
+  const result =
+    await commitCampaignMapCharacterHealthChange(
+      plan
+    );
 
-  deps.applyTokenHealthState(
-    token
+  if (
+    result.status !== 'saved' &&
+    result.status !== 'unchanged'
+  ) {
+    setStatus(
+      result.status === 'uncertain'
+        ? 'Запись хитов не подтверждена'
+        : 'Не удалось изменить хиты карточки'
+    );
+    return result;
+  }
+
+  refreshLinkedCharacterTokens(
+    token,
+    page.id,
+    deps
   );
 
   deps.closeTokenPopup();
-  await deps.saveAndSync();
+
+  try {
+    await deps.saveAndSync();
+  } catch (error) {
+    setStatus(
+      'Хиты сохранены, но состояние карты не подтверждено'
+    );
+    return Object.freeze({
+      ...result,
+      status: 'presentation-unconfirmed',
+      healthPersisted: result.status === 'saved',
+      mapSaved: false,
+      reason: error.code || error.message || 'map-save-failed'
+    });
+  }
 
   setStatus(
-    `Хиты изменены: ${result.current}/${result.max}`
+    `Хиты изменены: ${result.after.current}/${result.after.max}`
   );
+
+  return Object.freeze({
+    ...result,
+    mapSaved: true
+  });
 }
 
 
@@ -534,16 +566,48 @@ export function ensureTokenHasHealthBlock(
 
   if (!page) return null;
 
+  const map =
+    token.closest('.campaign-map-document');
+
   const health =
-    ensurePageDndHealth(
-      page
-    );
+    isCampaignMapStructuredPage(page)
+      ? getCampaignMapCharacterHealth(
+        page,
+        { map }
+      )
+      : ensurePageDndHealth(
+        page
+      );
 
   deps.applyTokenHealthState(
     token
   );
 
   return health;
+}
+
+
+function refreshLinkedCharacterTokens(
+  token,
+  pageId,
+  deps
+) {
+  const map =
+    token.closest('.campaign-map-document');
+
+  const linked = map
+    ? [...map.querySelectorAll('.campaign-map-token[data-page-id]')]
+      .filter(candidate =>
+        candidate.dataset.pageId === pageId
+      )
+    : [token];
+
+  (linked.length ? linked : [token])
+    .forEach(candidate => {
+      deps.applyTokenHealthState(
+        candidate
+      );
+    });
 }
 
 
@@ -720,34 +784,6 @@ async function normalizeDuplicatedTokenPage(
     reason:
       'campaign-map-token-duplicate-normalize'
   });
-}
-
-
-function createDraftPage(
-  page
-) {
-
-  return {
-    ...page,
-    tags:
-      Array.isArray(page?.tags)
-        ? [
-          ...page.tags
-        ]
-        : [],
-    aliases:
-      Array.isArray(page?.aliases)
-        ? [
-          ...page.aliases
-        ]
-        : [],
-    relationships:
-      Array.isArray(page?.relationships)
-        ? page.relationships.map(relationship => ({
-          ...relationship
-        }))
-        : []
-  };
 }
 
 

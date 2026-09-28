@@ -12,7 +12,7 @@ owner_zone: "architecture"
 
 [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
 
-CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. It is not wired into Combat, Campaign Map, Character Sheet, Inventory or Effects.
+CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Character Sheet, Inventory and Effects persistence are still not cut over.
 
 Дата обновления: 14.06.2026
 
@@ -45,8 +45,9 @@ CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Charact
 - `js/properties/characterCalculations.js` - совместимый фасад старого кода, который теперь должен опираться на `CharacterModel`.
 - `js/properties/propertiesModel.js` - чтение блока `Свойства`.
 - `js/properties/propertySchemas.js` - стабильные ключи полей свойств.
-- `js/editor/campaignMapHealth.js` - карта пока вызывает старый фасад, но получает данные уже через модельный слой.
-- `js/editor/campaignMapCharacterBridge.js` - мост карты к `CharacterModel`: здоровье, DEX-модификатор инициативы и команда изменения HP.
+- `js/editor/campaignMapHealth.js` - сохранённый legacy Properties/DnD health reader/writer; structured card через него не проходит.
+- `js/editor/campaignMapCharacterBridge.js` - source-aware мост карты к `CharacterModel`, bounded lifecycle context и derived token projection.
+- `js/editor/campaignMapCharacterHealth.js` - source-aware Map HP orchestration: legacy PageCommand либо Stage 8.2 Variables command; token snapshot публикуется только после confirmed Character write.
 
 ## Public API
 
@@ -193,12 +194,14 @@ calculateDndCheckValue(options)
 15. `model.calculations` является backend-объяснением расчетов. UI может показывать формулу и части расчета из него, но не должен записывать изменения напрямую в этот объект.
 16. Structured HP mutation разрешена только для exact valid `character`/`player` с `characterProjection` и явно stored complete `dnd.health`; schema defaults и presentation fallback не являются write source.
 17. Structured health plan меняет только current/temp, использует max как guard и сохраняет весь остальной `dnd.health` object. Он одноразовый, data-only и всегда проходит через Variables/PageCommand whole-page guards.
-18. Successful Variables commit подтверждается durable reread и повторной CharacterModel projection. Properties body не dual-write'ится. Combat/Map продолжают свои прежние writers до отдельных Stage 8 leaves.
+18. Successful Variables commit подтверждается durable reread и повторной CharacterModel projection. Properties body не dual-write'ится.
+19. Campaign Map Stage 8.4 читает structured Character/Player только с exact activated workspace Registry. Legacy-only map catalog-independent; invalid structured source не fallback'ится и не materialize'ит DnD block.
+20. Map `delta/restore/kill/temp` переводится в Stage 8.2 `delta/exact`. Character page пишется максимум один раз, затем все linked token snapshots reread'ятся через CharacterModel. Map save сохраняет только derived cache и не пишет HP обратно.
 
 
 ## Map Snapshot Boundary
 
-Campaign map code must use `createCampaignMapCharacterTokenSnapshot(page)` when a token is created from a character or creature page, and when saved map tokens are restored.
+Campaign map code must use `createCampaignMapCharacterTokenSnapshot(page, { map })` when a token is created from a character or creature page, and when saved map tokens are restored. The map lifecycle prepares one bounded Character context; only a map with structured links reads the exact activated catalog.
 
 The snapshot may expose only model-backed values:
 
@@ -211,6 +214,8 @@ The snapshot may expose only model-backed values:
 - combat flags such as incapacitated or speed-zero.
 
 Map UI may render these values on the token or store them in `CampaignMapModel`, but it must not parse arbitrary card HTML for combat stats when the snapshot is available.
+
+Token data is a derived cache. A Map HP action first commits the authoritative Character owner, rereads CharacterModel, refreshes every visible token linked by the same exact page id and only then saves the map. A Map save failure after confirmed Character persistence never rolls health back or retries it; reload reconstructs the cache from CharacterModel. Generic Map HP actions do not emit Combat/EventStore transactions.
 
 ## Effects / Conditions
 

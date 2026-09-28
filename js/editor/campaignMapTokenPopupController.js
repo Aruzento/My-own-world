@@ -481,7 +481,11 @@ function openTokenSkillPopup(
 
   const characterState =
     getCampaignMapCharacterState(
-      page
+      page,
+      {
+        map:
+          token.closest('.campaign-map-document')
+      }
     );
 
   const skills =

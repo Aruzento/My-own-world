@@ -58,7 +58,8 @@ import {
 import {
   createCampaignMapCharacterTokenSnapshot,
   getCampaignMapCharacterInitiativeModifier,
-  getCampaignMapCharacterState
+  getCampaignMapCharacterState,
+  prepareCampaignMapCharacterContext
 } from './campaignMapCharacterBridge.js';
 
 import {
@@ -99,6 +100,15 @@ export async function addMapToken(
       map
     );
 
+  await prepareCampaignMapCharacterContext(
+    map,
+    {
+      includePages: page
+        ? [page]
+        : []
+    }
+  );
+
   const spawnPoint =
     options.worldPoint ||
     getVisibleSpawnPoint(
@@ -120,7 +130,8 @@ export async function addMapToken(
   const characterSnapshot =
     page
       ? createCampaignMapCharacterTokenSnapshot(
-        page
+        page,
+        { map }
       )
       : null;
 
@@ -130,7 +141,8 @@ export async function addMapToken(
       page
         ? getCampaignMapCharacterInitiativeModifier(
           page,
-          0
+          0,
+          { map }
         )
         : 0
     );
@@ -197,6 +209,12 @@ export async function restoreMapTokens(
 
   const pageLookup =
     createPageLookup();
+
+  await prepareCampaignMapCharacterContext(
+    map
+  );
+
+  if (!shouldContinue()) return;
 
   const tokens =
     [...map.querySelectorAll('.campaign-map-token')];
@@ -294,7 +312,11 @@ export function applyTokenHealthState(
 
   const characterState =
     getCampaignMapCharacterState(
-      page
+      page,
+      {
+        map:
+          token.closest('.campaign-map-document')
+      }
     );
 
   const health =
@@ -404,7 +426,11 @@ function syncTokenCharacterSnapshotFromPage(
 
   const snapshot =
     createCampaignMapCharacterTokenSnapshot(
-      page
+      page,
+      {
+        map:
+          token.closest('.campaign-map-document')
+      }
     );
 
   if (!snapshot) return;

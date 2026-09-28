@@ -5,6 +5,14 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-28: CTV Stage 8.4 generic Campaign Map Character Health cutover
+
+- Added one bounded Map Character context. Map restore/add scans exact linked page ids; a legacy-only map does not read the CTV catalog, while any structured Character/Player requires the exact activated workspace Registry with no bundled fallback. Valid structured HP, AC, initiative, speed and Effects projection comes only from Stage 8.1 CharacterModel; malformed/future/missing-catalog sources stay unavailable without Properties or DnD fallback.
+- Added a separate generic Map health boundary. Existing `delta/restore/kill/temp` intents preserve the pure Character policy and are translated to Stage 8.2 `delta`/`exact`. Structured persistence performs one Variables/PageCommand write maximum, preserves all `dnd.health` siblings and contradictory Properties body, and requires explicit stored health. Legacy Character/Creature keeps the prior detached HTML plus guarded PageCommand path.
+- Token HP remains a derived cache. Only confirmed Character persistence triggers a CharacterModel reread and refresh of all visible tokens linked to the exact page id, followed by normal Map save. Stale/failed writes publish nothing. If Character HP is durable but Map presentation/save fails, health is not rolled back or repeated; reload reconstructs the snapshot from CharacterModel. Ordinary Map save never writes Character HP and generic HP actions emit no Combat events.
+- Focused tests cover legacy/catalog independence, structured Character/Player reads, conflicting Properties, invalid/missing catalog, all Map intents, temp absorption, one-write/sibling/body preservation, stale guards, Map UI damage/restore/kill/reload, save-without-write and presentation-save failure. Combat 8.3, Character Sheet, Inventory/Effects persistence and initiative ownership were not changed. Stage 8.4 is DONE / Foundation; Stage 8 remains ACTIVE and Stage 9 blocked.
+- Local verification PASS: focused Map/Character/structured-health/Combat regressions 185/185; focused Map + Combat Chromium regressions 23/23; the popup lifecycle stress rerun 3/3; `docs:index`, `agents:validate`, `check:js`, `verify:quick` and `verify` PASS with 1045/1045 unit/integration tests plus large-workspace budgets and DOCX integrity; the exact CI browser command `npm run test:browser` passes 334/334 Chromium tests. GitHub evidence is reported against the pushed Stage 8.4 commit.
+
 ## 2026-09-28: CTV Stage 8.3 source-aware Combat and compensating Undo
 
 - Added one Combat-facing Character/Health adapter. Legacy Character/Creature continues the accepted Properties preparation/PageCommand path and a legacy-only attack does not read the CTV catalog. If an actor or target is structured, Combat uses the exact activated workspace Registry, requires `characterProjection`, and rejects malformed/future/missing-definition sources without Properties fallback.
