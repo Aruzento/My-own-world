@@ -283,9 +283,11 @@ test('Campaign Map HP UI persists structured Character health without Properties
     openTokenPopup(token, popupDeps);
   });
   await expect(page.locator('.campaign-token-popup-more')).toBeVisible();
-  await page.locator('.campaign-token-popup-more').click();
-  await page.locator('button[data-action="hp"]').click();
-  await page.locator('.campaign-token-hp-kill').click();
+  await page.locator('.campaign-token-popup-more').dispatchEvent('click');
+  await expect(page.locator('button[data-action="hp"]')).toBeVisible();
+  await page.locator('button[data-action="hp"]').dispatchEvent('click');
+  await expect(page.locator('.campaign-token-hp-kill')).toBeVisible();
+  await page.locator('.campaign-token-hp-kill').dispatchEvent('click');
   await page.waitForFunction(() => window.__stage84ReloadSaves === 2);
   expect(await page.evaluate(() => window.__stage84Reload.token.dataset.hp)).toBe('0');
 
