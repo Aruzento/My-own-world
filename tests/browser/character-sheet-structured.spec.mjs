@@ -104,7 +104,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
   await expect(sheet.locator('[data-character-sheet-clear-override]')).toHaveCount(0);
 
   for (const [selector, value] of [
-    ['[data-character-sheet-field="level"]', '6'],
+    ['[data-character-sheet-field="level"]', '21'],
     ['[data-character-sheet-field="str"]', '18'],
     ['[data-character-sheet-field="hpCurrent"]', '7'],
     ['[data-character-sheet-field="hpTemp"]', '4']
@@ -125,7 +125,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
       current: values['dnd.health']['dnd.hpCurrent'],
       temp: values['dnd.health']['dnd.hpTemporary']
     };
-  })).toEqual({ level: 6, strength: 18, current: 7, temp: 4 });
+  })).toEqual({ level: 21, strength: 18, current: 7, temp: 4 });
 
   const body = page.locator('#editorArea [data-persistent-editable="true"]');
   await body.evaluate(node => {
@@ -172,7 +172,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
     };
   });
 
-  expect(persisted.values['dnd.level']).toBe(6);
+  expect(persisted.values['dnd.level']).toBe(21);
   expect(persisted.values['character.abilities']['character.abilities.strength']).toBe(18);
   expect(persisted.values['dnd.health']['dnd.hpCurrent']).toBe(7);
   expect(persisted.values['dnd.health']['dnd.hpTemporary']).toBe(4);
@@ -202,7 +202,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
     await renderCharacterSheetBlocks(window.__stage85.editor);
   }, persisted.durable);
 
-  await expect(sheet.locator('[data-character-sheet-field="level"]')).toHaveValue('6');
+  await expect(sheet.locator('[data-character-sheet-field="level"]')).toHaveValue('21');
   await expect(sheet.locator('[data-character-sheet-field="str"]')).toHaveValue('18');
   await expect(sheet.locator('[data-character-sheet-field="hpCurrent"]')).toHaveValue('7');
   await expect(sheet.locator('[data-character-sheet-field="hpTemp"]')).toHaveValue('4');

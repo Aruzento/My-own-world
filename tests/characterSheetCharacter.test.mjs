@@ -295,12 +295,33 @@ test('structured Player does not silently expand Character Sheet eligibility', a
 });
 
 
-test('structured Sheet rejects empty and out-of-domain numeric input before write', async () => {
+test('structured Sheet delegates level range semantics to the active schema', async () => {
   const valueFixture = await fixture();
   const context = await prepareCharacterSheetContext({
     page: valueFixture.page,
     pages: [valueFixture.page]
   });
+  const originalBody = parsePageRecordContent(valueFixture.page.content).rawBody;
+  for (const value of ['0', '21', '30']) {
+    const result = await commitStructuredCharacterSheetChange(
+      prepareStructuredCharacterSheetChange({
+        page: valueFixture.page,
+        field: 'level',
+        value,
+        expectedBase: createPageStateIdentityFromContent(valueFixture.page.content),
+        pages: [valueFixture.page],
+        context
+      })
+    );
+    assert.equal(result.status, 'saved', JSON.stringify(result));
+    assert.equal(result.verification.value, Number(value));
+  }
+  const parsed = parsePageRecordContent(
+    await valueFixture.adapter.readText(valueFixture.page.path)
+  );
+  assert.equal(parsed.variablesJson.values['dnd.level'], 30);
+  assert.equal(parsed.rawBody, originalBody);
+
   const attempt = (field, value) => () => prepareStructuredCharacterSheetChange({
     page: valueFixture.page,
     field,
@@ -311,7 +332,12 @@ test('structured Sheet rejects empty and out-of-domain numeric input before writ
   });
 
   assert.throws(attempt('level', ''), error => error.reason === 'integer-required');
-  assert.throws(attempt('level', '21'), error => error.reason === 'level-out-of-range');
+  assert.throws(attempt('level', '1.5'), error => error.reason === 'integer-required');
+  assert.throws(attempt('level', 'not-a-number'), error => error.reason === 'integer-required');
+  assert.throws(
+    attempt('level', '-1'),
+    error => error?.code !== 'CHARACTER_SHEET_VALUE_INVALID'
+  );
   assert.throws(attempt('str', '31'), error => error.reason === 'ability-out-of-range');
   assert.throws(attempt('hpCurrent', '-1'), error => error.reason === 'health-out-of-range');
 });

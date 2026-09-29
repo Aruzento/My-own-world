@@ -76,11 +76,13 @@ export function createCharacterModel(
   const normalizedLevel =
     normalizeInteger(
       level,
-      1,
-      {
-        min: 1,
-        max: 20
-      }
+      source === 'entity' ? 0 : 1,
+      source === 'entity'
+        ? { min: 0 }
+        : {
+          min: 1,
+          max: 20
+        }
     );
 
   const normalizedHealth =

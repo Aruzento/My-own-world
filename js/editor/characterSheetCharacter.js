@@ -294,9 +294,6 @@ function normalizeFieldValue(field, raw) {
   if (!Number.isSafeInteger(value)) {
     throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_VALUE, 'safe-integer-required');
   }
-  if (field === 'level' && (value < 1 || value > 20)) {
-    throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_VALUE, 'level-out-of-range');
-  }
   if (Object.hasOwn(ABILITY_FIELDS, field) && (value < 1 || value > 30)) {
     throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_VALUE, 'ability-out-of-range');
   }
