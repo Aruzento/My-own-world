@@ -1,5 +1,13 @@
 ﻿/* Ownership: extracted from styles/block-special.css. */
 
+/* Runtime-проекция оставляет recovery HTML неизменным. */
+.item-set-block:has(> .inventory-runtime) > .item-set-list,
+.item-set-block:has(> .inventory-runtime) > .item-set-add-btn,
+.universal-list-block:has(> .inventory-runtime) > .universal-list-list,
+.universal-list-block:has(> .inventory-runtime) > .universal-list-add-btn {
+  display: none;
+}
+
 /* =========================================
    ITEM SET INLINE VIEW
 ========================================= */

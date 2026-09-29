@@ -172,6 +172,8 @@ export function createEffectsFromInventory(
   (inventory?.items || [])
     .forEach(item => {
 
+      if (inventory.source === 'entity' && item.effectEligible !== true) return;
+
       const page =
         pageById.get(
           item.pageId

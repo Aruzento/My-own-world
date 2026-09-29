@@ -9,7 +9,7 @@ import {
 
 import {
   createInventoryModel,
-  readInventoryModelFromHTML
+  readInventoryModelFromPage
 } from './inventoryModel.js';
 
 import {
@@ -297,9 +297,7 @@ export function readCharacterModelFromPage(
 ) {
 
   const inventoryModel =
-    readInventoryModelFromHTML(
-      page?.content
-    );
+    readInventoryModelFromPage(page, { registry, repository, pages });
   const effectsModel =
     readEffectsModelFromHTML(
       page?.content

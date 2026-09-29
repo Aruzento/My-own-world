@@ -12,7 +12,7 @@ owner_zone: "architecture"
 
 [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
 
-CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Inventory and Effects persistence are still not cut over.
+CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Effects persistence is still not cut over.
 
 Дата обновления: 14.06.2026
 
@@ -31,7 +31,9 @@ CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Charact
 - `js/character/characterModel.js` - нормализация модели, DnD-расчеты, HP/temp HP/death state.
 - `js/character/structuredCharacterSource.js` - typed Entity API adapter for structured Player/Character reads, provenance and exact Item armor references.
 - `js/character/structuredCharacterHealth.js` - immutable prepare/commit boundary for explicit stored structured HP; delegates writes to Variables/PageCommand and performs domain readback.
-- `js/character/inventoryModel.js` - нормализация инвентаря из блока `Предметы` и будущие чистые операции add/update/remove.
+- `js/character/inventoryModel.js` - source-aware Inventory projection from legacy Item Set or explicit actor Entity arrays.
+- `js/character/structuredInventory.js` - guarded actor membership / Item quantity Variables commands.
+- `js/ui/inventoryItemSets.js` - runtime Item Set projection and source-aware UI integration.
 - `js/character/effectsModel.js` - нормализация активных состояний DnD, эффектов, модификаторов и флагов боевого состояния.
 - `js/character/effectSourceResolver.js` - связывание эффектов с карточками-источниками: предметами, заклинаниями, навыками и будущими правилами.
 - `js/character/characterIntegrationApi.js` - явный API внешних интеграций: Rule Tree, World Packages и другие будущие providers.
@@ -184,7 +186,7 @@ calculateDndCheckValue(options)
 4. Если нет ни одного источника, создается пустая модель с безопасными defaults, но она не должна сама записывать карточку.
 5. Карта не должна читать HP напрямую из HTML, если может обратиться к `getPageCharacterHealth()` / `CharacterModel`.
 6. Карта должна получать модификатор инициативы через `CharacterModel`, а не через ручной `modifier`, если токен создан из карточки персонажа или существа.
-7. Инвентарь читается из существующего блока `Предметы`, но расчетные подсистемы должны обращаться к `InventoryModel`, а не к `.item-set-chip` напрямую.
+7. Inventory owner выбирается per-domain: legacy Item Set либо explicit `dnd.items` + `dnd.equippedItems`; все consumers обращаются к InventoryModel, не к chips напрямую.
 8. Автоэффекты от предметов применяются только при явном блоке `Эффекты и состояния` на карточке предмета.
 9. Описание предмета, заклинания или навыка не является формулой и не должно автоматически парситься как правило.
 10. Идея старых блоков `DnD v2` и `Переменные` встроена в текущий путь: игровые переменные сущности задаются через типизированный блок `Свойства`.
@@ -202,6 +204,14 @@ calculateDndCheckValue(options)
 22. Structured Sheet пишет `dnd.level` и один nested ability score через Variables, сохраняя весь abilities object; current/temp HP пишет только Stage 8.2 exact command. Confirmed durable page становится новым editor expected base до следующего body autosave.
 23. Structured hpMax, effective AC/initiative/speed, death saves, skills/saves и manual calculated overrides остаются read-only/unavailable до отдельных approved contracts. Preserved Properties не читаются, не dual-write'ятся и не очищаются.
 
+
+## Inventory source boundary — CTV Stage 8.6
+
+`readInventoryModelFromPage(page, { registry, repository, pages })` is the sole inventory projection owner. Valid approved Character/Player with both explicit `dnd.items` and `dnd.equippedItems` uses `source: entity`, including empty arrays. Both absent retain the legacy Item Set domain; partial/invalid/future state is unavailable, never a merge or fallback. Production UI prepares an exact activated Registry context at open/refresh/picker boundaries.
+
+Entity items retain exact page ids and canonical titles. Item-owned stored `item.quantity` preserves zero; missing quantity has presentation-only `1`, provenance and disabled quantity control. Actor-owned equipped membership is additive projection, not an Item write or new equipment rule. Missing/wrong-type/invalid Item cannot provide effects. The existing effects resolver still consumes ALL eligible inventory Item pages and their explicit legacy Effects payloads.
+
+`structuredInventory.js` delegates immutable add/remove/quantity plans to Variables/PageCommand with whole-page, workspace, catalog/schema and readback guards. Remove clears both actor arrays in one write; quantity writes only Item with Item expectedBase. Runtime Item Set chips are excluded from serialization; parent Variables commits advance the editor base, Item commits do not replace it. No chip-quantity adoption, automatic migration, schema changes or Effects persistence cutover occurs.
 
 ## Map Snapshot Boundary
 

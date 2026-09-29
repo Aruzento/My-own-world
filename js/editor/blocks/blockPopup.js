@@ -525,6 +525,10 @@ function addNamedBlock(
     block
   );
 
+  import('../../ui/inventoryItemSets.js').then(({ renderInventoryItemSets }) =>
+    renderInventoryItemSets(block.closest('#editorArea'))
+  );
+
   saveCurrentPage();
 }
 

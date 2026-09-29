@@ -1,5 +1,6 @@
 ﻿import { state } from '../state.js';
 
+import { getInventorySetState, changeInventoryItemSet, renderInventoryItemSets, clearInventoryItemSetProjection } from './inventoryItemSets.js';
 import {
   saveCurrentPage
 } from '../editor/editor.js';
@@ -56,6 +57,18 @@ export function setupItemSets() {
 
   setupItemSetPicker();
 
+  document.addEventListener('input', event => {
+    const input = event.target.closest?.('.item-set-quantity');
+    if (!input || !getInventorySetState(input)) return;
+    // Inventory может сменить owner, пока старый блок ещё виден. Его input
+    // не должен попасть в body autosave как новая legacy quantity.
+    if (!input.closest('.inventory-runtime')) {
+      input.value = input.getAttribute('value') || '';
+      renderInventoryItemSets(input.closest('#editorArea'));
+    }
+    event.stopPropagation();
+  }, true);
+
   document.addEventListener(
     'click',
     async event => {
@@ -88,8 +101,11 @@ export function setupItemSets() {
 
         event.preventDefault();
 
+        const block = addButton.closest('.item-set-block, .universal-list-block');
+        await renderInventoryItemSets(addButton.closest('#editorArea'));
+
         openItemSetPicker(
-          addButton
+          block?.querySelector('.inventory-runtime .item-set-add-btn') || addButton
         );
 
         return;
@@ -300,7 +316,7 @@ function openItemSetPicker(
     );
 
   activeSetList =
-    block.querySelector(
+    (block.querySelector('.inventory-runtime') || block).querySelector(
       getSetListSelector(
         activeSetKind,
         block
@@ -349,9 +365,7 @@ function openItemSetPicker(
       activeSetKind
     );
 
-  normalizeUniversalListBlock(
-    block
-  );
+  if (!getInventorySetState(block)) normalizeUniversalListBlock(block);
 
 
   itemSetPickerAnchors.splice(
@@ -425,6 +439,8 @@ document.addEventListener(
 
       if (!block) return;
 
+      clearInventoryItemSetProjection(block);
+
       block.dataset.listKind =
         normalizeSetKind(
           kindSelect.value
@@ -445,6 +461,7 @@ document.addEventListener(
       );
 
       await saveCurrentPage();
+      await renderInventoryItemSets(block.closest('#editorArea'));
 
       return;
     }
@@ -453,6 +470,11 @@ document.addEventListener(
       event.target.closest('.item-set-quantity');
 
     if (!countInput) return;
+
+    if (await changeInventoryItemSet(countInput, {
+      type: 'quantity', pageId: countInput.closest('[data-page-id]')?.dataset.pageId,
+      quantity: countInput.value
+    })) return;
 
     const value =
       Math.max(
@@ -609,6 +631,12 @@ async function addItemToSet(
 
   if (!activeSetList) return;
 
+  if (getInventorySetState(activeSetList)) {
+    await changeInventoryItemSet(activeSetList, { type: 'add', pageId: page.id });
+    closeItemSetPicker();
+    return;
+  }
+
 
   const chip =
     document.createElement('button');
@@ -760,6 +788,8 @@ async function removeItemFromSet(
     );
 
   if (!chip) return;
+
+  if (await changeInventoryItemSet(chip, { type: 'remove', pageId: chip.dataset.pageId })) return;
 
   chip.remove();
 

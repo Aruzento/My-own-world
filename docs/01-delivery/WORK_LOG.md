@@ -5,6 +5,16 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-09-30: CTV Stage 8.6 source-aware Inventory domain cutover
+
+- Baseline `main` / `9ba1ef0799a99df905a39f9467071afdcfc34a3c`; user-owned untracked catalog reference/DOCX excluded. Bundled schemas, versions, digests and Stage 5/6 completeness artifacts remain unchanged.
+- InventoryModel now selects owner per-domain: both explicit stored actor arrays activate Entity inventory (empty is explicit); both absent keep legacy Item Set even on a structured Character; partial/invalid/future membership is unavailable without HTML mixing. Approved Character/Player and exact resolved reference fields are required.
+- Structured references resolve exact Item page ids; Item quantity 0 is preserved. Missing quantity is presentation-only 1 with provenance and read-only UI; legacy chip quantity stays minimum 1. Equipped membership comes only from actor, does not sync Item fields and does not gate existing effects. Missing/wrong/invalid Items cannot grant effects; supported legacy Effects payload remains the effect owner.
+- Detached Inventory prepare/commit wraps Variables/PageCommand: add/duplicate no-op, atomic items+equipped removal, quantity writes exact Item only. Whole-page bases, actor-link guards, activated catalog/schema closure, workspace, single-use, durable readback and InventoryModel verification remain. No automatic retry, migration or chip-quantity adoption.
+- Item Set items UI is a runtime projection; recovery HTML remains unchanged. Parent writes advance editor base; cross-page quantity never replaces it. Body autosave strips runtime and preserves updated envelope. Picker creation keeps the existing legacy Item format then adds exact actor reference via Variables; failure is surfaced without blind retry.
+- Focused Inventory tests 22/22 PASS; Chromium Inventory workflows 6/6 PASS, related Combat/Undo/Map/Sheet/legacy picker regressions 66/66 PASS. Final gates PASS: docs:index (0 drift), agents:validate (17/17), check:js, verify:quick and verify (1078/1078 unit/integration tests, large-workspace budgets and DOCX integrity), full CI-equivalent Chromium smoke (342/342). GitHub Verify must be confirmed against the pushed SHA; run id/conclusion are reported in the task handoff.
+- Stage 8.6 DONE / Foundation after gates; Stage 8 ACTIVE, Stage 9 BLOCKED. Legacy Inventory adoption, Effects persistence, equipment mechanics and remaining Sheet fields are not implemented here; no next leaf started.
+
 ## 2026-09-29: CTV Stage 8.5 source-aware Character Sheet cutover
 
 - Added one bounded Sheet Character context. Legacy Character/Creature remains Properties-owned and does not read the catalog. Any present structured envelope is classified before Properties access; only valid structured `character` with `characterProjection` uses the exact activated workspace Registry and Entity-backed CharacterModel. Player, malformed/future/missing-definition and missing-catalog sources render safe unavailable without legacy fallback.

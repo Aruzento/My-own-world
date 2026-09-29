@@ -380,6 +380,9 @@ async function renderCardPage(
     editor
   );
 
+  const { renderInventoryItemSets } = await import('../ui/inventoryItemSets.js');
+  await renderInventoryItemSets(editor);
+
   await renderCharacterSheetBlocks(
     editor
   );
