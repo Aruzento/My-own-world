@@ -95,6 +95,7 @@ test('structured Item Set UI uses Entity inventory, Item quantity, effects and d
     return parsePageRecordContent(await window.__inventory.adapter.readText('/pages/C.md')).variablesJson.values['item.quantity'];
   })).toBe(0);
   await expect(quantity).toHaveValue('0');
+  await expect(page.locator('.character-sheet-panel').filter({ hasText: 'Инвентарь' }).locator('li').filter({ hasText: 'Item C' }).locator('strong')).toHaveText('0');
   state = await page.evaluate(() => window.__inventory.read());
   expect(state.writes).toEqual(['/pages/actor.md', '/pages/C.md']);
   expect(state.body).toBe(await page.evaluate(() => window.__inventory.originalBody));

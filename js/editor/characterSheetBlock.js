@@ -583,7 +583,7 @@ function createInventoryHTML(
       ? model.inventory.items.map(item => `
         <li>
           <span>${escapeHTML(item.title)}</span>
-          <strong>${escapeHTML(item.quantity || 1)}</strong>
+          <strong>${escapeHTML(item.quantity ?? 1)}</strong>
         </li>
       `).join('')
       : '<li class="is-empty">Предметов нет</li>';
