@@ -380,7 +380,7 @@ async function renderCardPage(
     editor
   );
 
-  renderCharacterSheetBlocks(
+  await renderCharacterSheetBlocks(
     editor
   );
 

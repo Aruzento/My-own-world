@@ -75,7 +75,16 @@ export function setupAutosave(
 
   editor.addEventListener(
     'input',
-    () => {
+    event => {
+
+      // Character Sheet runtime values have an explicit source-aware writer.
+      // Scheduling body autosave here would race that PageCommand and could
+      // restore an older variables envelope from the editor session.
+      if (
+        event.target?.closest?.(
+          '.character-sheet-runtime'
+        )
+      ) return;
 
       schedulePendingAutosave(
         editor

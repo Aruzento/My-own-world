@@ -3,8 +3,7 @@ import {
   getCharacterEffectiveArmorClass,
   getCharacterEffectiveSpeed,
   getCharacterHealth,
-  getCharacterInitiativeModifier,
-  readCharacterModelFromPage
+  getCharacterInitiativeModifier
 } from '../character/characterModel.js';
 
 import {
@@ -22,6 +21,29 @@ import {
   getPropertyValue,
   readPropertiesModelsFromHTML
 } from '../properties/propertiesModel.js';
+
+import {
+  commitStructuredCharacterSheetChange,
+  createLegacyCharacterSheetContext,
+  isStructuredCharacterSheetPage,
+  prepareCharacterSheetContext,
+  prepareStructuredCharacterSheetChange,
+  readCharacterSheetCharacter
+} from './characterSheetCharacter.js';
+
+import {
+  advanceEditorPageBase,
+  getCurrentEditorPageBase
+} from './editorSessionBase.js';
+
+import {
+  hasPendingAutosaveForPage
+} from './autosave.js';
+
+import {
+  setSaveStatus,
+  setStatus
+} from '../ui/ui.js';
 
 
 const ABILITY_LABELS = {
@@ -74,6 +96,9 @@ const CHARACTER_SHEET_SKILLS = {
 
 let saveCurrentPageRef =
   null;
+
+const sheetContexts =
+  new WeakMap();
 
 
 // Лист персонажа - runtime-витрина CharacterModel.
@@ -153,14 +178,17 @@ export function renderCharacterSheetBlocks(
       )
     ].filter(Boolean);
 
-  blocks.forEach(
-    renderCharacterSheetBlock
+  return Promise.all(
+    blocks.map(block =>
+      renderCharacterSheetBlock(block)
+    )
   );
 }
 
 
 function renderCharacterSheetBlock(
-  block
+  block,
+  { refreshContext = false } = {}
 ) {
 
   const target =
@@ -183,29 +211,69 @@ function renderCharacterSheetBlock(
     target.innerHTML =
       '<div class="character-sheet-empty">Лист доступен для персонажей и существ.</div>';
 
-    return;
+    return Promise.resolve(null);
   }
 
-  const model =
-    readCharacterModelFromPage(
+  if (!isStructuredCharacterSheetPage(page)) {
+    const context = createLegacyCharacterSheetContext({
       page,
-      {
-        pages:
-          state.pages
-      }
-    );
+      pages: state.pages
+    });
+    const source = readCharacterSheetCharacter(page, {
+      pages: state.pages,
+      context
+    });
+    sheetContexts.set(block, context);
+    target.innerHTML = createCharacterSheetHTML(source.model, page, {
+      source: 'legacy'
+    });
+    return Promise.resolve(source);
+  }
 
-  target.innerHTML =
-    createCharacterSheetHTML(
-      model,
-      page
-    );
+  target.innerHTML = '<div class="character-sheet-empty">Загрузка structured-данных…</div>';
+  return renderStructuredCharacterSheetBlock(block, target, page, { refreshContext });
+}
+
+
+async function renderStructuredCharacterSheetBlock(
+  block,
+  target,
+  page,
+  { refreshContext = false } = {}
+) {
+  let context = !refreshContext
+    ? sheetContexts.get(block)
+    : null;
+  if (!context || context.pageId !== page.id || context.mode !== 'source-aware') {
+    context = await prepareCharacterSheetContext({
+      page,
+      pages: state.pages
+    });
+    sheetContexts.set(block, context);
+  }
+  const source = readCharacterSheetCharacter(page, {
+    pages: state.pages,
+    context
+  });
+  if (source.status !== 'ready' || source.source !== 'structured') {
+    target.innerHTML = `
+      <div class="character-sheet-empty" role="status">
+        Structured Character Sheet недоступен. Перезагрузите карточку после проверки catalog/schema.
+      </div>
+    `;
+    return source;
+  }
+  target.innerHTML = createCharacterSheetHTML(source.model, page, {
+    source: 'structured'
+  });
+  return source;
 }
 
 
 function createCharacterSheetHTML(
   model,
-  page
+  page,
+  { source = 'legacy' } = {}
 ) {
 
   const health =
@@ -213,13 +281,13 @@ function createCharacterSheetHTML(
       model
     );
 
-  const properties =
-    getPrimaryCharacterPropertiesModel(
-      page
-    );
+  const structured = source === 'structured';
+  const properties = structured
+    ? null
+    : getPrimaryCharacterPropertiesModel(page);
 
   return `
-    <section class="character-sheet-page">
+    <section class="character-sheet-page" data-character-sheet-source="${escapeAttribute(source)}">
       <header class="character-sheet-top">
         <section class="character-sheet-identity character-sheet-box character-sheet-corner-br">
           <span class="character-sheet-kicker">${escapeHTML(model.cardType === 'creature' ? 'Существо' : 'Персонаж')}</span>
@@ -237,7 +305,8 @@ function createCharacterSheetHTML(
             label: 'Уровень',
             value: model.level,
             field: 'level',
-            className: 'character-sheet-level'
+            className: 'character-sheet-level',
+            editable: true
           })}
           <div class="character-sheet-pb">БМ ${formatSigned(model.proficiencyBonus)}</div>
         </section>
@@ -246,9 +315,11 @@ function createCharacterSheetHTML(
           ${createEditableMetricHTML({
             label: 'Класс защиты',
             value: getCharacterEffectiveArmorClass(model),
-            field: 'armorClass',
-            override: 'armorClass',
-            calculation: model.calculations?.armorClass
+            field: structured ? '' : 'armorClass',
+            override: structured ? '' : 'armorClass',
+            calculation: model.calculations?.armorClass,
+            editable: !structured,
+            readOnlyReason: structured ? 'Effective AC редактируется через approved armor source.' : ''
           })}
         </section>
 
@@ -257,20 +328,24 @@ function createCharacterSheetHTML(
             ${createEditableMetricHTML({
               label: 'Хиты',
               value: health.current,
-              field: 'hpCurrent'
+              field: 'hpCurrent',
+              editable: true
             })}
             ${createEditableMetricHTML({
               label: 'Временные',
               value: health.temp,
-              field: 'hpTemp'
+              field: 'hpTemp',
+              editable: true
             })}
             ${createEditableMetricHTML({
               label: 'Максимум',
               value: health.max,
-              field: 'hpMax'
+              field: structured ? '' : 'hpMax',
+              editable: !structured,
+              readOnlyReason: structured ? 'Maximum HP является guard и пока не редактируется в structured Sheet.' : ''
             })}
             ${createReadOnlyMetricHTML('Кость хитов', getPropertyDisplayValue(properties, 'hitDie') || 'd?')}
-            ${createDeathSavesHTML(model)}
+            ${structured ? createReadOnlyDeathSavesHTML() : createDeathSavesHTML(model)}
           </div>
         </section>
       </header>
@@ -281,17 +356,21 @@ function createCharacterSheetHTML(
         ${createEditableMetricHTML({
           label: 'Инициатива',
           value: getCharacterInitiativeModifier(model),
-          override: 'initiative',
+          override: structured ? '' : 'initiative',
           calculation: model.calculations?.initiative,
-          signed: true
+          signed: true,
+          editable: !structured,
+          readOnlyReason: structured ? 'Effective initiative является calculated value.' : ''
         })}
         ${createEditableMetricHTML({
           label: 'Скорость',
           value: getCharacterEffectiveSpeed(model),
-          field: 'speed',
-          override: 'speed',
+          field: structured ? '' : 'speed',
+          override: structured ? '' : 'speed',
           suffix: 'фт.',
-          calculation: model.calculations?.speed
+          calculation: model.calculations?.speed,
+          editable: !structured,
+          readOnlyReason: structured ? 'Effective speed зависит от movement rows и Effects.' : ''
         })}
         ${createReadOnlyMetricHTML('П. восприятие', calculatePassivePerception(properties, model))}
         ${createReadOnlyMetricHTML('Состояния', getConditionsLabel(model))}
@@ -303,7 +382,8 @@ function createCharacterSheetHTML(
             createAbilityHTML(
               key,
               model.abilities[key],
-              properties
+              properties,
+              { structured }
             )
           ).join('')}
         </section>
@@ -341,7 +421,9 @@ function createEditableMetricHTML(
     className = '',
     suffix = '',
     signed = false,
-    calculation = null
+    calculation = null,
+    editable = true,
+    readOnlyReason = ''
   }
 ) {
 
@@ -349,17 +431,18 @@ function createEditableMetricHTML(
     calculation?.source === 'manual';
 
   return `
-    <label class="character-sheet-metric character-sheet-editable ${className} ${isManual ? 'is-manual-override' : ''}">
+    <label class="character-sheet-metric ${editable ? 'character-sheet-editable' : 'character-sheet-readonly'} ${className} ${isManual && editable ? 'is-manual-override' : ''}">
       <span>${escapeHTML(label)}</span>
       ${calculation ? createCalculationHintHTML(calculation) : ''}
       <input
         type="number"
         value="${escapeAttribute(value)}"
-        ${field ? `data-character-sheet-field="${escapeAttribute(field)}"` : ''}
-        ${override ? `data-character-sheet-override="${escapeAttribute(override)}"` : ''}
-        title="${escapeAttribute(calculation?.formula || '')}"
+        ${editable && field ? `data-character-sheet-field="${escapeAttribute(field)}"` : ''}
+        ${editable && override ? `data-character-sheet-override="${escapeAttribute(override)}"` : ''}
+        ${editable ? '' : 'disabled aria-readonly="true"'}
+        title="${escapeAttribute(readOnlyReason || calculation?.formula || '')}"
       >
-      ${override && isManual ? `
+      ${editable && override && isManual ? `
         <button
           class="character-sheet-clear-override"
           type="button"
@@ -407,7 +490,8 @@ function createCalculationHintHTML(
 function createAbilityHTML(
   key,
   ability,
-  properties
+  properties,
+  { structured = false } = {}
 ) {
 
   return `
@@ -430,7 +514,8 @@ function createAbilityHTML(
         ${createSkillRowsHTML(
           key,
           properties,
-          ability
+          ability,
+          { structured }
         )}
       </div>
     </article>
@@ -441,7 +526,8 @@ function createAbilityHTML(
 function createSkillRowsHTML(
   abilityKey,
   properties,
-  ability
+  ability,
+  { structured = false } = {}
 ) {
 
   return (
@@ -449,15 +535,16 @@ function createSkillRowsHTML(
   )
     .map(skill => {
 
-      const value =
-        getNumericPropertyValue(
+      const value = structured
+        ? '—'
+        : getNumericPropertyValue(
           properties,
           skill.key,
           ability.modifier
         );
 
       const proficient =
-        Boolean(
+        !structured && Boolean(
           getPropertyValue(
             properties,
             `${skill.key}Proficient`,
@@ -474,6 +561,16 @@ function createSkillRowsHTML(
       `;
     })
     .join('');
+}
+
+
+function createReadOnlyDeathSavesHTML() {
+  return `
+    <div class="character-sheet-death-saves character-sheet-readonly" title="Для structured Character death saves пока не имеют approved owner.">
+      <span>Хиты от смерти</span>
+      <strong>—</strong>
+    </div>
+  `;
 }
 
 
@@ -664,6 +761,10 @@ function getCurrentPageSnapshot(
 
   if (!state.currentPage) return null;
 
+  if (isStructuredCharacterSheetPage(state.currentPage)) {
+    return state.currentPage;
+  }
+
   return {
     ...state.currentPage,
     content:
@@ -685,6 +786,11 @@ async function updateCharacterSheetValue(
     );
 
   if (!editor || !state.currentPage) return;
+
+  if (isStructuredCharacterSheetPage(state.currentPage)) {
+    await updateStructuredCharacterSheetValue(block, control, editor);
+    return;
+  }
 
   const propertiesBlock =
     ensurePropertiesBlockForPage(
@@ -757,6 +863,71 @@ async function updateCharacterSheetValue(
 }
 
 
+async function updateStructuredCharacterSheetValue(
+  block,
+  control,
+  editor
+) {
+  const page = state.currentPage;
+  const field = control.dataset.characterSheetField;
+  if (!page || !field) return;
+
+  if (hasPendingAutosaveForPage(page.id)) {
+    setSaveStatus('conflict', 'Сначала сохраните изменения текста карточки.');
+    setStatus('Structured Sheet write blocked: editor body has pending changes.');
+    await renderCharacterSheetBlock(block);
+    return;
+  }
+
+  const context = sheetContexts.get(block);
+  const expectedBase = getCurrentEditorPageBase(page.id);
+  if (!context || context.mode !== 'source-aware' || !expectedBase?.stateHash) {
+    setSaveStatus('error', 'Structured Character source недоступен.');
+    await renderCharacterSheetBlock(block, { refreshContext: true });
+    return;
+  }
+
+  let plan;
+  try {
+    plan = prepareStructuredCharacterSheetChange({
+      page,
+      field,
+      value: control.value,
+      expectedBase,
+      pages: state.pages,
+      context
+    });
+  } catch (error) {
+    setSaveStatus('error', `Значение не сохранено: ${error.reason || error.message || error}`);
+    await renderCharacterSheetBlock(block, { refreshContext: true });
+    return;
+  }
+
+  setSaveStatus('saving');
+  const result = await commitStructuredCharacterSheetChange(plan);
+  if (!['saved', 'unchanged'].includes(result.status)) {
+    setSaveStatus(
+      result.status === 'uncertain' ? 'error' : 'conflict',
+      result.status === 'uncertain'
+        ? 'Значение записано не полностью подтверждённо. Перезагрузите карточку.'
+        : 'Structured Sheet write заблокирован: page/schema/workspace изменились.'
+    );
+    await renderCharacterSheetBlock(block, { refreshContext: true });
+    return;
+  }
+
+  advanceEditorPageBase(page, page.content);
+  try {
+    await renderCharacterSheetBlock(block);
+    setSaveStatus('Сохранено');
+    setStatus(result.status === 'saved' ? 'Character Sheet сохранён' : 'Значение не изменилось');
+  } catch (error) {
+    setSaveStatus('error', 'Значение сохранено, но Sheet не удалось обновить.');
+    console.error('Character Sheet refresh failed after durable write', error);
+  }
+}
+
+
 async function clearCharacterSheetOverride(
   block,
   key
@@ -770,6 +941,11 @@ async function clearCharacterSheetOverride(
     );
 
   if (!editor || !state.currentPage) return;
+
+  if (isStructuredCharacterSheetPage(state.currentPage)) {
+    await renderCharacterSheetBlock(block);
+    return;
+  }
 
   const propertiesBlock =
     ensurePropertiesBlockForPage(
