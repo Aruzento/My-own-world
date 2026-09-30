@@ -11,7 +11,7 @@ import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../stora
 // Контекст/adapter не замораживаются вместе с plan; наружу выходит только data.
 const plans = new WeakMap();
 
-export function prepareVariablesChange({ pageId, expectedBase, patch, context = {} }) {
+export function prepareVariablesChange({ pageId, expectedBase, patch, context = {}, preserveUnchangedMetadata = false }) {
   if (!expectedBase?.stateHash) throw new Error('Variables change requires whole-page expectedBase');
   assertJSONData(patch);
   if (!Array.isArray(patch) || !patch.length) throw new Error('Non-empty data patch required');
@@ -25,7 +25,10 @@ export function prepareVariablesChange({ pageId, expectedBase, patch, context = 
   const { envelope, changedKeys } = applyVariablesPatch(before, patch);
   const validation = validateEntityValues({ envelope, definition: before.definition, pageId });
   if (!validation.ok) { const error = new Error('Variable candidate validation failed'); error.issues = validation.issues; throw error; }
-  const candidateContent = updatePageRecordContent(before.content, { variablesJson: envelope });
+  // Explicit migration candidates retain metadata for deterministic preview and
+  // crash/resume identities. Ordinary interactive commands still advance time.
+  const candidateContent = updatePageRecordContent(before.content, { variablesJson: envelope },
+    preserveUnchangedMetadata ? { preserveUnchangedMetadata: true, updateTimestamp: false } : {});
   const after = createCardVariableSnapshot({ ...page, content: candidateContent }, context.registry);
   const plan = deepFreeze(deepCloneData({ pageId, expectedBase, sourceIdentity: before.pageIdentity,
     schema: { type: before.type, version: before.schemaVersion, digest: before.schemaDigest },

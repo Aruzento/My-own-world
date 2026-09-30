@@ -451,6 +451,14 @@ Player saves/skills и effective AC/initiative/speed read-only; legacy overrides
 - Нельзя автоматически мигрировать старые карточки без отдельной задачи.
 - Нельзя заставлять карту напрямую менять HTML, если изменение можно провести через model/facade слой.
 
+## Explicit Inventory adoption — CTV Stage 8.10
+
+InventoryModel ownership из Stage 8.6 не меняется. Новый explicit programmatic `js/migration/inventoryAdoption.js` переводит только valid structured Character/Player с both absent actor arrays и одним proven legacy Item Set/universal items block. Strict raw extraction не использует normalized runtime InventoryModel как migration truth. Duplicate chips в одном block суммируются по accepted legacy policy; malformed/multiple/unproven evidence блокируется.
+
+Workspace-global quantity analysis защищает shared Item owner: conflicting claims/stored quantity и missing quantity с existing Entity consumer блокируются. Exact structured Item quantity dependencies durable verified прежде actor activation. Actor atomically получает unique exact refs и empty equipped array; no equipped inference/mechanics. Durable Entity InventoryModel и CharacterModel должны показать те же membership/quantities. Body/old chips/Effects/inactive/metadata сохраняются; runtime projection не dual-write'ится.
+
+Verified full backup, existing journal, exact source/target resume и explicit full recovery принадлежат migration/storage owners. Model остаётся read projection. No automatic adoption, Item Properties migration, Effects adoption или schema change. Caller refresh/reopen после verified write использует existing Sheet/Inventory rendering, editor base принимает durable state; stale/pending body save блокирует competing adoption.
+
 ## Следующее Развитие
 
 После foundation нужно:

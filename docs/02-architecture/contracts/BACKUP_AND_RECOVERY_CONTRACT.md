@@ -16,6 +16,12 @@ Full recovery verifies source integrity and immutable definition collisions befo
 
 Definition-aware partial restore is explicitly blocked until Stage 9. Typed selective asset closure/remapping, package/template portability and ordinary UI rollout remain future work under [the canonical migration design](../CARD_TYPES_VARIABLES_MIGRATION.md#101-реализованный-ctv-stage-7-contract). Event history remains excluded. Migration snapshots and their pre-restore safety backups disable retention cleanup during the operation. Focused tests exercise the same adapter boundary on BrowserStorageAdapter/OPFS and DesktopStorageAdapter with an injected Tauri bridge; no native filesystem implementation changed.
 
+## Explicit Inventory adoption recovery — CTV Stage 8.10
+
+`inventoryAdoption.js` reuses this same `definitionCoverage:true` full backup/verify/restore path, including assets and mandatory pre-restore safety backup. No backup format/version or second journal/store is added. Adoption backup reason is `inventory-adoption`; its unique id equals the operation id. The operation journal records exact source/target page identities and actor→Item dependencies. Backup source bytes must match the read-only preview before any Item/actor write. Items are durable verified before actor arrays activate.
+
+To resume, pass the durable operation id to `inspectInventoryAdoptionResume`, then explicitly confirm `resumeInventoryAdoption`. Plans are reconstructed from verified original backup evidence; exact source is pending, exact planned target is verified-skip, any third state conflicts. No automatic retry/rollback or blind journal-value replay occurs. To recover, explicitly confirm `recoverInventoryAdoption(backupId, {confirm:true})`; full restore first creates/verifies a safety backup, then restores original actor and Item pages. Reload canonical repository/editor state after restore. Actor inventory fields are absent again and preserved legacy HTML owns Inventory; open does not adopt. Current newer/unrelated pages are protected by the existing full-restore safety snapshot. Definition-aware partial restore and a broad adoption UI remain out of scope.
+
 ## Event History Exclusion (16.10 Owner Decision)
 
 Backup manifest v1 and existing restore remain pages/assets only.
