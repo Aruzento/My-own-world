@@ -200,6 +200,7 @@ export async function persistPageContentCommand({
   const structuredPage = hasStructuredPageData(page) || hasStructuredPageData(content);
   const variablesCommand = type === 'update-card-variables' && Boolean(verifyPersistedContent);
   const migrationCommand = type === 'migrate-legacy-properties' && Boolean(verifyPersistedContent) && Boolean(validateBeforeWrite);
+  const characterGameplayCommand = type === 'activate-character-gameplay' && Boolean(verifyPersistedContent) && Boolean(validateBeforeWrite);
   const effectsAdoptionCommand = type === 'adopt-legacy-effects' && Boolean(verifyPersistedContent) && Boolean(validateBeforeWrite);
   if (structuredPage) {
     workspaceContext ||= captureStorageWorkspaceContext();
@@ -213,7 +214,7 @@ export async function persistPageContentCommand({
   const callerValidate = validateBeforeWrite;
   if (structuredPage) validateBeforeWrite = async () => {
     await validateStructuredPageWrite({ beforeContent: await readCurrentDurablePageContent(page, { storageAdapter: workspaceContext?.adapter }), content, expectedBase,
-      variablesCommand, migrationCommand, effectsAdoptionCommand, storageAdapter: workspaceContext?.adapter });
+      variablesCommand, migrationCommand, effectsAdoptionCommand, characterGameplayCommand, storageAdapter: workspaceContext?.adapter });
     await callerValidate?.();
   };
 

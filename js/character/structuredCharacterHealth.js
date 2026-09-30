@@ -1,3 +1,4 @@
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
 import {
   canonicalJSON,
   isDataObject
@@ -291,6 +292,8 @@ export function prepareStructuredCharacterHealthChange({
     pages: context.pages || [],
     path: page.path,
     name: page.name,
+    definition: snapshot.definition,
+    catalogIdentity: context.catalogIdentity,
     originalBody: record.rawBody
   });
 
@@ -321,6 +324,20 @@ export async function commitStructuredCharacterHealthChange(
   captured.used = true;
 
   if (!plan.changed) {
+    try {
+      assertStorageWorkspaceContext(captured.workspaceContext);
+      const page = captured.repository.getPageById(plan.pageId);
+      if (!page || page.path !== captured.path) throw new Error('Missing/moved health page');
+      const content = await captured.workspaceContext.adapter.readText(captured.path);
+      const catalog = await readCardTypeCatalog({ storageAdapter: captured.workspaceContext.adapter });
+      if (captured.catalogIdentity && canonicalJSON(catalog.identity) !== canonicalJSON(captured.catalogIdentity)) throw new Error('Health no-op catalog changed');
+      const registry = createCardTypeRegistryFromCatalog(catalog.catalog, { bundledTypes: [], bundledFieldSets: [] });
+      const snapshot = readEntity(plan.pageId, { registry, repository: { getPageById: () => ({ id: plan.pageId, content }) } });
+      if (!catalog.exists || !arePageStateIdentitiesEqual(snapshot.pageIdentity, plan.expectedBase) || snapshot.mode !== 'structured' ||
+          snapshot.diagnostics.some(issue => issue.severity === 'error') || canonicalJSON(snapshot.definition) !== canonicalJSON(captured.definition)) throw new Error('Health no-op source/schema changed');
+      await validateBeforeWrite?.();
+      assertStorageWorkspaceContext(captured.workspaceContext);
+    } catch (error) { return commitResult({ status: 'blocked', code: STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.COMMIT_BLOCKED, reason: error.message, written: false }); }
     return commitResult({
       status: 'unchanged',
       code: null,

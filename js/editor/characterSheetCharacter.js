@@ -1,5 +1,9 @@
+import { readCharacterGameplay } from '../character/characterGameplaySource.js';
+import { DND_CHECKS, DND_ABILITIES } from '../character/dndCheckContract.js';
+import { CHARACTER_SKILLS_KEY, CHARACTER_DEATH_KEY } from '../character/characterGameplayDefinition.js';
+import { prepareCharacterGameplayActivation, commitCharacterGameplayActivation } from '../character/characterGameplayCommands.js';
 import { canonicalJSON, isDataObject } from '../core/pageVariablesCodec.js';
-import { createRuntimePageFromContent, parsePageRecordContent } from '../core/pageRecord.js';
+import { createRuntimePageFromContent, parsePageRecordContent, createPageStateIdentityFromContent, arePageStateIdentitiesEqual } from '../core/pageRecord.js';
 import {
   commitStructuredCharacterHealthChange,
   inspectStructuredCharacterHealthSource,
@@ -35,14 +39,7 @@ export const CHARACTER_SHEET_ERROR_CODES = Object.freeze({
   DOMAIN_READBACK_FAILED: 'CHARACTER_SHEET_DOMAIN_READBACK_FAILED'
 });
 
-const ABILITY_FIELDS = Object.freeze({
-  str: 'character.abilities.strength',
-  dex: 'character.abilities.dexterity',
-  con: 'character.abilities.constitution',
-  int: 'character.abilities.intelligence',
-  wis: 'character.abilities.wisdom',
-  cha: 'character.abilities.charisma'
-});
+const ABILITY_FIELDS = Object.freeze(Object.fromEntries(Object.entries(DND_ABILITIES).map(([key, id]) => [key, `character.abilities.${id}`])));
 
 const plans = new WeakMap();
 
@@ -141,6 +138,7 @@ export function prepareStructuredCharacterSheetChange({
   let before;
   let after;
   let targetKey;
+  let activation = false;
 
   if (field === 'hpCurrent' || field === 'hpTemp' || field === 'hpMax') {
     const inspection = inspectStructuredCharacterHealthSource({
@@ -174,7 +172,13 @@ export function prepareStructuredCharacterSheetChange({
         snapshot.definition?.definition?.capabilities?.characterProjection !== true) {
       throw sheetError(CHARACTER_SHEET_ERROR_CODES.SOURCE_UNAVAILABLE, 'structured-source-unavailable');
     }
-    if (snapshot.type === 'player') {
+    if (snapshot.type === 'character' && (checkField(field) || ['deathSaveSuccesses', 'deathSaveFailures'].includes(field))) {
+      ({ targetKey, before, after } = prepareCharacterGameplayField(snapshot, field, normalized, context));
+      if (readCharacterGameplay(snapshot, context).status === 'absent') {
+        underlying = prepareCharacterGameplayActivation({ page, expectedBase, key: targetKey, value: after, context });
+        activation = true;
+      }
+    } else if (snapshot.type === 'player') {
       const patch = preparePlayerField(snapshot, field, normalized, context);
       ({ targetKey, before, after } = patch);
     } else if (field === 'level') {
@@ -204,7 +208,7 @@ export function prepareStructuredCharacterSheetChange({
       throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_FIELD, 'field-not-editable');
     }
 
-    if (!sameValue(before, after)) {
+    if (!activation && !sameValue(before, after)) {
       underlying = prepareVariablesChange({
         pageId: page.id,
         expectedBase,
@@ -226,7 +230,7 @@ export function prepareStructuredCharacterSheetChange({
       source: 'entity', rebase: false
     }
   }));
-  plans.set(plan, { used: false, underlying, context, pages, field, type: page.type,
+  plans.set(plan, { used: false, underlying, activation, context, pages, field, type: page.type,
     path: page.path, name: page.name });
   return plan;
 }
@@ -238,11 +242,17 @@ export async function commitStructuredCharacterSheetChange(plan) {
     return result('blocked', false, CHARACTER_SHEET_ERROR_CODES.WRITE_BLOCKED, 'unknown-or-used-plan');
   }
   captured.used = true;
-  if (!plan.changed) return result('unchanged', false, null, 'value-unchanged', { plan });
+  if (!plan.changed) {
+    try { await validateNoop(plan, captured); return result('unchanged', false, null, 'value-unchanged', { plan }); }
+    catch (error) { return result('blocked', false, CHARACTER_SHEET_ERROR_CODES.WRITE_BLOCKED, error.message); }
+  }
 
-  const committed = plan.targetKey === 'dnd.health'
+  const committed = captured.activation ? await commitCharacterGameplayActivation(captured.underlying) : plan.targetKey === 'dnd.health'
     ? await commitStructuredCharacterHealthChange(captured.underlying)
-    : await commitVariablesChange(captured.underlying);
+    : await commitVariablesChange(captured.underlying, { validateBeforeWrite: async () => {
+      const current = await readCardTypeCatalog({ storageAdapter: captured.context.workspaceContext.adapter });
+      if (!current.exists || canonicalJSON(current.identity) !== canonicalJSON(captured.context.catalogIdentity)) throw new Error('Catalog changed');
+    } });
   if (committed.status !== 'saved') {
     return result(
       committed.status,
@@ -271,7 +281,9 @@ export async function commitStructuredCharacterSheetChange(plan) {
       throw new Error('CharacterModel source unavailable after write');
     }
     const actual = projectedValue(source.model, captured.field);
-    const expected = plan.targetKey === 'dnd.health'
+    const expected = checkField(captured.field) || plan.targetKey === CHARACTER_DEATH_KEY
+      ? patchedValue(plan.after, captured.field, captured.type)
+      : plan.targetKey === 'dnd.health'
       ? projectedValue({ health: plan.after }, captured.field)
       : captured.type === 'player'
         ? playerPatchedValue(plan.after, captured.field)
@@ -305,6 +317,16 @@ export function isStructuredCharacterSheetPage(page) {
 
 
 function normalizeFieldValue(field, raw) {
+  const check = checkField(field);
+  if (check && ['proficient', 'expertise'].includes(check.member)) {
+    if (typeof raw !== 'boolean') throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_VALUE, 'boolean-required');
+    return raw;
+  }
+  if (check?.member === 'bonus') {
+    const text = String(raw ?? '').trim();
+    if (!text || !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(text) || !Number.isFinite(Number(text))) throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_VALUE, 'number-required');
+    return Number(text);
+  }
   const text = String(raw ?? '').trim();
   if (!/^-?\d+$/.test(text)) {
     throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_VALUE, 'integer-required');
@@ -324,6 +346,8 @@ function normalizeFieldValue(field, raw) {
 
 
 function projectedValue(model, field) {
+  const check = checkField(field);
+  if (check) return model.calculations?.checks?.byKey?.[check.key]?.inputs?.[check.member];
   if (field === 'level') return model.level;
   if (Object.hasOwn(ABILITY_FIELDS, field)) return model.abilities?.[field]?.score;
   if (field === 'hpCurrent') return model.health?.current;
@@ -358,17 +382,22 @@ function assertStructuredContext(page, context) {
 // Player objects keep their own nested identities. A Sheet edit patches an
 // explicit owner; presentation defaults never become writable evidence.
 function preparePlayerField(snapshot, field, value, context) {
-  const targetKey = field === 'level' ? 'player.progression'
+  const check = checkField(field);
+  const targetKey = check ? (check.isSave ? 'player.abilities' : 'player.skills') : field === 'level' ? 'player.progression'
     : Object.hasOwn(ABILITY_FIELDS, field) ? 'player.abilities'
     : ['deathSaveSuccesses', 'deathSaveFailures'].includes(field) ? 'player.deathSaves' : null;
   if (!targetKey) throw sheetError(CHARACTER_SHEET_ERROR_CODES.INVALID_FIELD, 'field-not-editable');
   const stored = getValue(snapshot, targetKey, 'stored', context);
-  if (stored.status !== 'value' || !isDataObject(stored.value)) {
+  if (!check && (stored.status !== 'value' || !isDataObject(stored.value))) {
     throw sheetError(CHARACTER_SHEET_ERROR_CODES.EXPLICIT_SOURCE_REQUIRED, `explicit-${targetKey}-required`);
   }
-  const before = deepCloneData(stored.value);
-  const after = deepCloneData(stored.value);
-  if (field === 'level') {
+  const before = stored.status === 'value' ? deepCloneData(stored.value) : undefined;
+  const after = deepCloneData(before || {});
+  if (check) {
+    const key = check.isSave ? `player.abilities.${check.abilityId}` : `player.skills.${check.id}`;
+    after[key] ||= {};
+    after[key][`${key}.${check.isSave ? check.member === 'proficient' ? 'saveProficient' : 'saveBonus' : check.member}`] = value;
+  } else if (field === 'level') {
     after['dnd.level'] = value;
   } else if (Object.hasOwn(ABILITY_FIELDS, field)) {
     const key = ABILITY_FIELDS[field].replace('character.', 'player.');
@@ -386,6 +415,7 @@ function preparePlayerField(snapshot, field, value, context) {
 }
 
 function playerPatchedValue(value, field) {
+  if (checkField(field)) return patchedValue(value, field, 'player');
   if (field === 'level') return value['dnd.level'];
   if (Object.hasOwn(ABILITY_FIELDS, field)) {
     const key = ABILITY_FIELDS[field].replace('character.', 'player.');
@@ -395,7 +425,11 @@ function playerPatchedValue(value, field) {
 }
 
 function readSheetPresentation(snapshot, context) {
-  if (snapshot.type !== 'player') return {};
+  const health = getValue(snapshot, 'dnd.health', 'stored', context);
+  const hitDice = snapshot.type === 'player'
+    ? (health.value?.['player.health.hitDice'] || []).map(row => row['player.health.hitDice.die']).filter(Boolean).join(', ')
+    : health.value?.['character.health.hitDice'];
+  if (snapshot.type !== 'player') return { hitDice, writable: { checks: readCharacterGameplay(snapshot, context).status !== 'unavailable', deathSaves: readCharacterGameplay(snapshot, context).status !== 'unavailable' } };
   const stored = key => getValue(snapshot, key, 'stored', context);
   const progression = stored('player.progression');
   const abilities = stored('player.abilities');
@@ -417,7 +451,8 @@ function readSheetPresentation(snapshot, context) {
       labels[id] = context.repository.getPageById(reference.pageId)?.title || '—';
     } else diagnostics.push({ field: `player.identity.${id}`, reason: 'reference-unavailable', pageId: reference.pageId });
   }
-  return deepFreeze({ identity: labels, diagnostics, writable: {
+  return deepFreeze({ identity: labels, diagnostics, hitDice, writable: {
+    checks: true,
     health: healthWritable,
     level: progression.status === 'value' && isDataObject(progression.value),
     ...Object.fromEntries(Object.entries(ABILITY_FIELDS).map(([field, characterKey]) => {
@@ -484,3 +519,43 @@ function result(status, written, code, reason, details = {}) {
     status, written, code, reason, ...details
   }));
 }
+
+export function checkField(field) {
+  const [key, member, extra] = String(field).split('.');
+  const check = DND_CHECKS.find(item => item.key === key);
+  return check && !extra && (check.isSave ? ['proficient', 'bonus'] : ['proficient', 'expertise', 'bonus']).includes(member) ? { ...check, member } : null;
+}
+function prepareCharacterGameplayField(snapshot, field, value, context) {
+  const gameplay = readCharacterGameplay(snapshot, context);
+  const check = checkField(field);
+  if (gameplay.status === 'unavailable' || check?.isSave) throw sheetError(CHARACTER_SHEET_ERROR_CODES.SOURCE_UNAVAILABLE, 'character-gameplay-unavailable');
+  const targetKey = check ? CHARACTER_SKILLS_KEY : CHARACTER_DEATH_KEY;
+  const stored = getValue(snapshot, targetKey, 'stored', context);
+  const before = stored.status === 'value' ? deepCloneData(stored.value) : undefined;
+  const after = deepCloneData(before || (check ? {} : { [`${CHARACTER_DEATH_KEY}.successes`]: 0, [`${CHARACTER_DEATH_KEY}.failures`]: 0 }));
+  if (check) {
+    const key = `${CHARACTER_SKILLS_KEY}.${check.id}`;
+    after[key] ||= {};
+    after[key][`${key}.${check.member}`] = value;
+  } else after[`${CHARACTER_DEATH_KEY}.${field === 'deathSaveSuccesses' ? 'successes' : 'failures'}`] = value;
+  return { targetKey, before, after };
+}
+function patchedValue(value, field, type) {
+  const check = checkField(field);
+  if (!check) return value[`${CHARACTER_DEATH_KEY}.${field === 'deathSaveSuccesses' ? 'successes' : 'failures'}`];
+  const key = check.isSave ? `player.abilities.${check.abilityId}` : `${type === 'player' ? 'player.skills' : CHARACTER_SKILLS_KEY}.${check.id}`;
+  return value[key][`${key}.${check.isSave ? check.member === 'proficient' ? 'saveProficient' : 'saveBonus' : check.member}`];
+}
+async function validateNoop(plan, captured) {
+  const { context } = captured;
+  assertStorageWorkspaceContext(context.workspaceContext);
+  const page = context.repository.getPageById(plan.pageId);
+  if (!page || page.path !== captured.path) throw new Error('Missing/moved page');
+  const content = await context.workspaceContext.adapter.readText(captured.path);
+  if (!arePageStateIdentitiesEqual(plan.expectedBase, createPageStateIdentityFromContent(content))) throw new Error('Stale Sheet no-op');
+  const current = await readCardTypeCatalog({ storageAdapter: context.workspaceContext.adapter });
+  if (!current.exists || canonicalJSON(current.identity) !== canonicalJSON(context.catalogIdentity)) throw new Error('Catalog changed');
+  assertStorageWorkspaceContext(context.workspaceContext);
+}
+
+export const validateStructuredCharacterSheetInput = normalizeFieldValue;

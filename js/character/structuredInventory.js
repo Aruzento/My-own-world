@@ -1,5 +1,5 @@
 import * as PageRepository from '../repository/pageRepository.js';
-import { parsePageRecordContent, arePageStateIdentitiesEqual } from '../core/pageRecord.js';
+import { parsePageRecordContent, arePageStateIdentitiesEqual, createPageStateIdentityFromContent } from '../core/pageRecord.js';
 import { canonicalJSON } from '../core/pageVariablesCodec.js';
 import { deepCloneData, deepFreeze } from '../cardTypes/definitionIdentity.js';
 import { readEntity, getValue, prepareVariablesChange, commitVariablesChange } from '../variables/entityVariables.js';
@@ -98,7 +98,7 @@ export function prepareInventoryChange({ pageId, expectedBase, request, context 
     request, before, after, changed: Boolean(underlying), expectedBase,
     schema: underlying?.schema || { type: snapshot.type, digest: snapshot.schemaDigest, version: snapshot.schemaVersion },
     guards: { wholePage: true, workspace: true, schemaClosure: true, rebase: false } }));
-  plans.set(plan, { underlying, context, used: false, targetPath: target ? context.repository.getPageById(itemId)?.path : null });
+  plans.set(plan, { underlying, context, used: false, actorPath: page.path, targetPath: target ? context.repository.getPageById(itemId)?.path : null });
   return plan;
 }
 
@@ -106,7 +106,30 @@ export async function commitInventoryChange(plan) {
   const captured = plans.get(plan);
   if (!captured || captured.used) return result('blocked', false, INVENTORY_ERROR_CODES.WRITE_BLOCKED, 'unknown-or-used-plan');
   captured.used = true;
-  if (!plan.changed) return result('unchanged', false, null, 'no-change', { plan });
+  if (!plan.changed) {
+    try {
+      const { context } = captured;
+      assertStorageWorkspaceContext(context.workspaceContext);
+      const page = context.repository.getPageById(plan.pageId);
+      if (!page || page.path !== captured.actorPath) throw new Error('Missing/moved Inventory actor');
+      const durable = await context.workspaceContext.adapter.readText(page.path);
+      const catalog = await readCardTypeCatalog({ storageAdapter: context.workspaceContext.adapter });
+      if (!catalog.exists || canonicalJSON(catalog.identity) !== canonicalJSON(context.catalogIdentity) ||
+          !arePageStateIdentitiesEqual(createPageStateIdentityFromContent(durable), plan.expectedBase)) throw new Error('Inventory no-op source changed');
+      if (plan.request.type !== 'remove') {
+        requireItem(plan.request.pageId, context);
+        const target = context.repository.getPageById(plan.request.pageId);
+        if (!target || target.path !== captured.targetPath) throw new Error('Missing/moved Item');
+        const targetContent = await context.workspaceContext.adapter.readText(target.path);
+        requireItem(plan.request.pageId, { ...context, repository: {
+          getPageById: id => id === target.id ? { ...target, content: targetContent } : context.repository.getPageById(id)
+        } });
+        if (plan.request.type === 'quantity' && !arePageStateIdentitiesEqual(createPageStateIdentityFromContent(targetContent), plan.request.expectedItemBase)) throw new Error('Item no-op source changed');
+      }
+      assertStorageWorkspaceContext(context.workspaceContext);
+      return result('unchanged', false, null, 'no-change', { plan });
+    } catch (error) { return result('blocked', false, INVENTORY_ERROR_CODES.WRITE_BLOCKED, error.message); }
+  }
   const { context } = captured;
   const committed = await commitVariablesChange(captured.underlying, { validateBeforeWrite: async () => {
     const active = await readCardTypeCatalog({ storageAdapter: context.workspaceContext.adapter });

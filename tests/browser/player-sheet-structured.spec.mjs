@@ -121,3 +121,41 @@ test('Player unavailable sources never enable legacy writers, and absent typed o
   for (const control of await sheet.locator('[data-character-sheet-death-field]').all()) await expect(control).toBeDisabled();
   expect(await page.evaluate(() => window.__playerSheet.writes.length)).toBe(0);
 });
+
+
+test('Player saves/skills controls use nested Variables owners and survive ordinary body autosave/reopen', async ({ page }) => {
+  await openPlayer(page);
+  const sheet = page.locator('#editorArea .character-sheet-page');
+  await sheet.locator('[data-character-sheet-field="saveDex.proficient"]').check();
+  await expect(sheet.locator('[data-character-sheet-check="saveDex"] strong')).toHaveText('+6');
+  for (const [field, value, key, total] of [['saveDex.bonus', '-2', 'saveDex', '+3'], ['skillPerception.bonus', '2', 'skillPerception', '+6']]) {
+    const control = sheet.locator(`[data-character-sheet-field="${field}"]`);
+    await control.fill(value); await control.press('Tab');
+    await expect(sheet.locator(`[data-character-sheet-check="${key}"] strong`)).toHaveText(total);
+  }
+  await sheet.locator('[data-character-sheet-field="skillPerception.proficient"]').check();
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+9');
+  await sheet.locator('[data-character-sheet-field="skillPerception.expertise"]').check();
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+12');
+  await sheet.locator('[data-character-sheet-field="skillPerception.expertise"]').uncheck();
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+9');
+  expect(await page.evaluate(async () => { const { parsePageRecordContent } = await import('/js/core/pageRecord.js'); const f = window.__playerSheet; return parsePageRecordContent(await f.adapter.readText(f.page.path)).rawBody === f.originalBody; })).toBe(true);
+  await page.locator('#editorArea [data-persistent-editable]').evaluate(node => { node.textContent = 'Player check body autosave'; node.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: 'x' })); });
+  await expect.poll(() => page.evaluate(async () => { const f = window.__playerSheet; return (await f.adapter.readText(f.page.path)).includes('Player check body autosave'); })).toBe(true);
+  const stored = await page.evaluate(async () => { const { parsePageRecordContent } = await import('/js/core/pageRecord.js'); const f = window.__playerSheet; return parsePageRecordContent(await f.adapter.readText(f.page.path)).variablesJson.values; });
+  expect(stored['player.abilities']['player.abilities.dexterity']).toEqual({ 'player.abilities.dexterity.score': 14, 'player.abilities.dexterity.modifier': 99, 'player.abilities.dexterity.saveProficient': true, 'player.abilities.dexterity.saveBonus': -2 });
+  expect(stored['player.skills']['player.skills.perception']).toEqual({ 'player.skills.perception.proficient': true, 'player.skills.perception.expertise': false, 'player.skills.perception.bonus': 2 });
+  await page.evaluate(async () => {
+    const { createRuntimePageFromContent, parsePageRecordContent } = await import('/js/core/pageRecord.js');
+    const { setCurrentPage, setPages } = await import('/js/stateActions.js');
+    const { captureEditorPageBase } = await import('/js/editor/editorSessionBase.js');
+    const { renderCharacterSheetBlocks } = await import('/js/editor/characterSheetBlock.js');
+    const f = window.__playerSheet, content = await f.adapter.readText(f.page.path);
+    f.page = createRuntimePageFromContent({ content, path: f.page.path, name: f.page.name });
+    setPages([f.page, f.item, f.classPage]); setCurrentPage(f.page); captureEditorPageBase(f.page, content);
+    f.editor.innerHTML = parsePageRecordContent(content).rawBody; await renderCharacterSheetBlocks(f.editor);
+  });
+  await expect(sheet.locator('[data-character-sheet-check="saveDex"] strong')).toHaveText('+3');
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+9');
+  await expect(sheet.locator('[data-character-sheet-field="saveDex.proficient"]')).toBeChecked();
+});

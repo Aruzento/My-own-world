@@ -5,6 +5,15 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-10-01: CTV Stage 8 closure
+
+- Accepted baseline main / 69795ea7d9fb51f40152ea8a90a7f0240ade10f2. No new numbered leaves; Stage 8 DONE / Foundation after gates, Stage 9 UNBLOCKED / NOT STARTED. Combat 17.6 accepted; 17.7 still waits for Stage 9/parity. Unrelated user references/DOCX excluded.
+- Player save/skill edits patch exact nested existing owners with minimal explicit optional-state materialization and sibling preservation. Accepted expertise semantics remain level 2 independently of the normal flag; no stored modifier override or new Effects check mechanics.
+- Added one optional immutable data-only dnd.character-gameplay@1 Field Set: typed 18 standard skills and death counters 0..3. Character@1/Player@1 and existing digests unchanged. Read never activates; explicit first edit uses existing catalog owner and one bounded atomic declaration/value PageCommand. Other extensions, own Effects, inactive/body/FM preserved. Generic character.skills is not repurposed.
+- Extracted canonical D&D mapping/pure ability-proficiency-check policy from legacy layer. CharacterModel now owns both actors' stable checks, structured passive perception and death projection; effective AC/init/speed/manual totals stay derived/read-only. Hidden override evidence is inactive, not an unfinished gap.
+- Final source-branch audit removed Sheet Properties presentation leaks (passive perception, hit dice and unmapped identity), bundled Registry fallback, structured effect-source Properties notes and legacy Map/DnD/calculation helper access. No-op health/Inventory/Sheet plans now recheck physical source/catalog. Inventory/own Effects before explicit adoption retain their independent legacy domain owners; activated Entity domains ignore preserved HTML. Item/provider Effects remain external.
+- Focused closure PASS (70/70); accepted Character/Health/Inventory/Effects/Combat/Map regressions PASS (108/108), earlier Sheet/calculation/source regressions PASS (48/48). Focused Character/Player production Chromium PASS (5/5); full CI-equivalent Chromium PASS twice (359/359). docs:index (0 drift), agents:validate (17/17), check:js, final verify:quick and verify PASS (1289/1289 unit/integration, large-workspace budgets, DOCX integrity). Exact pushed-HEAD GitHub Verify run/required steps are reported in the final handoff. No desktop-specific storage boundary, Stage 9 portability/retirement, new mechanics or Effects Engine work.
+
 ## 2026-09-30: CTV Stage 8.11 explicit Legacy Effects Adoption
 
 - Baseline main / 6c1758c97067c7e61157cdf270210d1bb9dda4c0; unrelated user files excluded. Character/Player@1, own-effects@1, schema versions/digests and backup/workspace format unchanged.

@@ -1,3 +1,6 @@
+import { DND_CHECK_GROUPS } from '../character/dndCheckContract.js';
+import { ensureCharacterGameplayCatalog } from '../character/characterGameplayCommands.js';
+import { checkField, validateStructuredCharacterSheetInput } from './characterSheetCharacter.js';
 import {
   CHARACTER_ABILITY_KEYS,
   getCharacterEffectiveArmorClass,
@@ -55,44 +58,7 @@ const ABILITY_LABELS = {
   cha: 'Харизма'
 };
 
-const CHARACTER_SHEET_SKILLS = {
-  str: [
-    skillRow('saveStr', 'Спасбросок'),
-    skillRow('skillAthletics', 'Атлетика')
-  ],
-  dex: [
-    skillRow('saveDex', 'Спасбросок'),
-    skillRow('skillAcrobatics', 'Акробатика'),
-    skillRow('skillSleightOfHand', 'Ловкость рук'),
-    skillRow('skillStealth', 'Скрытность')
-  ],
-  con: [
-    skillRow('saveCon', 'Спасбросок')
-  ],
-  int: [
-    skillRow('saveInt', 'Спасбросок'),
-    skillRow('skillInvestigation', 'Анализ'),
-    skillRow('skillHistory', 'История'),
-    skillRow('skillArcana', 'Магия'),
-    skillRow('skillNature', 'Природа'),
-    skillRow('skillReligion', 'Религия')
-  ],
-  wis: [
-    skillRow('saveWis', 'Спасбросок'),
-    skillRow('skillPerception', 'Восприятие'),
-    skillRow('skillSurvival', 'Выживание'),
-    skillRow('skillMedicine', 'Медицина'),
-    skillRow('skillInsight', 'Проницательность'),
-    skillRow('skillAnimalHandling', 'Уход за животными')
-  ],
-  cha: [
-    skillRow('saveCha', 'Спасбросок'),
-    skillRow('skillPerformance', 'Выступление'),
-    skillRow('skillIntimidation', 'Запугивание'),
-    skillRow('skillDeception', 'Обман'),
-    skillRow('skillPersuasion', 'Убеждение')
-  ]
-};
+const CHARACTER_SHEET_SKILLS = Object.fromEntries(DND_CHECK_GROUPS.map(group => [group.ability, group.items.map(item => skillRow(item.name, item.name.startsWith('save') ? 'Спасбросок' : item.label))]));
 
 let saveCurrentPageRef =
   null;
@@ -298,10 +264,10 @@ function createCharacterSheetHTML(
           <span class="character-sheet-kicker">${escapeHTML(player ? 'Игрок / Player' : model.cardType === 'creature' ? 'Существо' : 'Персонаж')}</span>
           <strong>${escapeHTML(getCurrentCharacterTitle(model, page))}</strong>
           <div class="character-sheet-identity-grid">
-            ${createReadOnlyLineHTML('Предыстория', getPropertyDisplayValue(properties, 'background'))}
-            ${createReadOnlyLineHTML('Класс', player ? presentation.identity?.class : getPropertyDisplayValue(properties, 'charClass'))}
-            ${createReadOnlyLineHTML('Вид', player ? presentation.identity?.race : getPropertyDisplayValue(properties, 'race'))}
-            ${createReadOnlyLineHTML('Подкласс', player ? presentation.identity?.subclass : getPropertyDisplayValue(properties, 'charSubclass'))}
+            ${createReadOnlyLineHTML('Предыстория', structured ? '—' : getPropertyDisplayValue(properties, 'background'))}
+            ${createReadOnlyLineHTML('Класс', player ? presentation.identity?.class : structured ? '—' : getPropertyDisplayValue(properties, 'charClass'))}
+            ${createReadOnlyLineHTML('Вид', player ? presentation.identity?.race : structured ? '—' : getPropertyDisplayValue(properties, 'race'))}
+            ${createReadOnlyLineHTML('Подкласс', player ? presentation.identity?.subclass : structured ? '—' : getPropertyDisplayValue(properties, 'charSubclass'))}
             ${player ? createReadOnlyLineHTML('Подвид', presentation.identity?.subrace) : ''}
           </div>
         </section>
@@ -349,8 +315,8 @@ function createCharacterSheetHTML(
               field: 'hpMax',
               editable: !player || presentation.writable?.health === true
             })}
-            ${createReadOnlyMetricHTML('Кость хитов', getPropertyDisplayValue(properties, 'hitDie') || 'd?')}
-            ${structured && !player ? createReadOnlyDeathSavesHTML() : createDeathSavesHTML(model, { disabled: player && presentation.writable?.deathSaves !== true })}
+            ${createReadOnlyMetricHTML('Кость хитов', structured ? presentation.hitDice || '—' : getPropertyDisplayValue(properties, 'hitDie') || 'd?')}
+            ${createDeathSavesHTML(model, { disabled: structured && presentation.writable?.deathSaves !== true })}
           </div>
         </section>
       </header>
@@ -388,7 +354,7 @@ function createCharacterSheetHTML(
               key,
               model.abilities[key],
               properties,
-              { structured, editable: !player || presentation.writable?.[key] === true, checks: model.calculations?.checks?.byKey }
+              { structured, player, checksEditable: presentation.writable?.checks === true, editable: !player || presentation.writable?.[key] === true, checks: model.calculations?.checks?.byKey }
             )
           ).join('')}
         </section>
@@ -496,7 +462,7 @@ function createAbilityHTML(
   key,
   ability,
   properties,
-  { structured = false, editable = true, checks = {} } = {}
+  { structured = false, player = false, checksEditable = false, editable = true, checks = {} } = {}
 ) {
 
   return `
@@ -520,7 +486,7 @@ function createAbilityHTML(
           key,
           properties,
           ability,
-          { structured, checks }
+          { structured, player, checksEditable, checks }
         )}
       </div>
     </article>
@@ -532,7 +498,7 @@ function createSkillRowsHTML(
   abilityKey,
   properties,
   ability,
-  { structured = false, checks = {} } = {}
+  { structured = false, player = false, checksEditable = false, checks = {} } = {}
 ) {
 
   return (
@@ -558,25 +524,17 @@ function createSkillRowsHTML(
           )
         );
 
+      const writable = structured && checksEditable && (!skill.key.startsWith('save') || player);
       return `
-        <div class="character-sheet-skill${structured ? ' character-sheet-readonly' : ''}" data-character-sheet-check="${escapeAttribute(skill.key)}"${structured ? ` title="${checks[skill.key] ? 'Calculated read-only.' : 'Стандартный навык пока не имеет approved structured owner.'}"` : ''}>
+        <div class="character-sheet-skill${structured && !writable ? ' character-sheet-readonly' : ''}" data-character-sheet-check="${escapeAttribute(skill.key)}"${structured ? ` title="${checks[skill.key] ? 'Calculated Entity value.' : 'Structured gameplay unavailable.'}"` : ''}>
           <span class="character-sheet-skill-dot ${proficient ? 'is-active' : ''}${checks[skill.key]?.expertise ? ' is-expertise' : ''}"${structured ? ` role="img" aria-label="${checks[skill.key]?.expertise ? 'Экспертиза' : proficient ? 'Владение' : 'Без владения'}"` : ''}></span>
           <strong>${value === '—' ? value : formatSigned(value)}</strong>
           <span>${escapeHTML(skill.label)}</span>
+          ${writable ? createCheckControlsHTML(skill, checks[skill.key]) : ''}
         </div>
       `;
     })
     .join('');
-}
-
-
-function createReadOnlyDeathSavesHTML() {
-  return `
-    <div class="character-sheet-death-saves character-sheet-readonly" title="Для structured Character death saves пока не имеют approved owner.">
-      <span>Хиты от смерти</span>
-      <strong>—</strong>
-    </div>
-  `;
 }
 
 
@@ -889,7 +847,7 @@ async function updateStructuredCharacterSheetValue(
     return;
   }
 
-  const context = sheetContexts.get(block);
+  let context = sheetContexts.get(block);
   const expectedBase = getCurrentEditorPageBase(page.id);
   if (!context || context.mode !== 'source-aware' || !expectedBase?.stateHash) {
     setSaveStatus('error', 'Structured Character source недоступен.');
@@ -899,10 +857,20 @@ async function updateStructuredCharacterSheetValue(
 
   let plan;
   try {
+    validateStructuredCharacterSheetInput(field, control.dataset.characterSheetDeathField ? getDeathSaveTrackNextValue(control) : control.type === 'checkbox' ? control.checked : control.value);
+    if (page.type === 'character' && (checkField(field) || control.dataset.characterSheetDeathField)) {
+      await ensureCharacterGameplayCatalog(context);
+      context = await prepareCharacterSheetContext({ page, pages: state.pages });
+      sheetContexts.set(block, context);
+    }
+    // Catalog/context preparation yields; do not race a new body draft or navigation.
+    if (state.currentPage?.id !== page.id || hasPendingAutosaveForPage(page.id)) {
+      throw new Error('Editor page/body changed during Sheet preparation');
+    }
     plan = prepareStructuredCharacterSheetChange({
       page,
       field,
-      value: control.dataset.characterSheetDeathField ? getDeathSaveTrackNextValue(control) : control.value,
+      value: control.dataset.characterSheetDeathField ? getDeathSaveTrackNextValue(control) : control.type === 'checkbox' ? control.checked : control.value,
       expectedBase,
       pages: state.pages,
       context
@@ -1088,8 +1056,9 @@ function calculatePassivePerception(
   properties,
   model
 ) {
-  if (model.source === 'entity' && model.cardType === 'player') {
-    return 10 + model.calculations.checks.byKey.skillPerception.value;
+  if (model.source === 'entity') {
+    const perception = model.calculations?.checks?.byKey?.skillPerception?.value;
+    return Number.isFinite(perception) ? 10 + perception : '—';
   }
 
   const perception =
@@ -1160,4 +1129,9 @@ function escapeAttribute(
   return escapeHTML(
     value
   );
+}
+
+function createCheckControlsHTML(skill, check) {
+  const checkbox = (member, label) => `<label title="${escapeAttribute(label)}"><input type="checkbox" data-character-sheet-field="${escapeAttribute(`${skill.key}.${member}`)}" aria-label="${escapeAttribute(`${skill.label}: ${label}`)}" ${check?.inputs?.[member] ? 'checked' : ''}>${escapeHTML(label)}</label>`;
+  return `<span class="character-sheet-check-controls">${checkbox('proficient', 'Владение')}${skill.key.startsWith('skill') ? checkbox('expertise', 'Экспертиза') : ''}<label>Бонус<input type="number" step="any" value="${escapeAttribute(check?.bonus || 0)}" data-character-sheet-field="${escapeAttribute(`${skill.key}.bonus`)}" aria-label="${escapeAttribute(`${skill.label}: Бонус`)}"></label></span>`;
 }

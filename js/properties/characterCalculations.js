@@ -1,3 +1,4 @@
+import { parsePageRecordContent } from '../core/pageRecord.js';
 import {
   getPropertyNumber,
   readPropertiesModelsFromHTML
@@ -82,6 +83,7 @@ export function updatePageCharacterHealth(
 export function readCharacterCalculationSources(
   page
 ) {
+  if (parsePageRecordContent(page?.content || '').variablesStatus.mode !== 'legacy') return { properties: [], legacyDnd: null, futureCharacterModel: readCharacterModelFromPage(page) };
 
   const properties =
     readPropertiesModelsFromHTML(

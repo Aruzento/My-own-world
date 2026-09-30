@@ -1,3 +1,5 @@
+import { readCharacterGameplay } from '../character/characterGameplaySource.js';
+import { CHARACTER_GAMEPLAY_ID, CHARACTER_SKILLS_KEY, CHARACTER_DEATH_KEY } from '../character/characterGameplayDefinition.js';
 import { parsePageRecordContent, createPageStateIdentityFromContent, arePageStateIdentitiesEqual } from '../core/pageRecord.js';
 import { canonicalJSON } from '../core/pageVariablesCodec.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
@@ -15,7 +17,7 @@ export function assertLegacyPortability(page, operation) {
   throw error;
 }
 
-export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, effectsAdoptionCommand = false, storageAdapter }) {
+export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, effectsAdoptionCommand = false, characterGameplayCommand = false, storageAdapter }) {
   if (!hasStructuredPageData(beforeContent) && !hasStructuredPageData(content)) return;
   if (!expectedBase?.stateHash) throw new Error('Structured page requires whole-page expectedBase');
   const before = parsePageRecordContent(beforeContent);
@@ -47,11 +49,25 @@ export async function validateStructuredPageWrite({ beforeContent, content, expe
         canonicalJSON(before.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson')) !==
         canonicalJSON(after.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson'))) throw new Error('Invalid own Effects adoption transition');
   }
-  if (!variablesCommand && !migrationCommand && !effectsAdoptionCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
+  if (characterGameplayCommand) {
+    const source = before.variablesJson, target = after.variablesJson;
+    const keys = [CHARACTER_SKILLS_KEY, CHARACTER_DEATH_KEY];
+    const present = keys.filter(key => Object.hasOwn(target.values, key));
+    const fields = source.extensions?.fields || [];
+    const expected = { ...source, values: { ...source.values, ...Object.fromEntries(present.map(key => [key, target.values[key]])) },
+      extensions: { ...(source.extensions || {}), revision: (source.extensions?.revision || 0) + 1,
+        fields: [...fields, { id: CHARACTER_GAMEPLAY_ID, version: 1 }] } };
+    if (before.type !== 'character' || keys.some(key => Object.hasOwn(source.values, key)) || present.length !== 1 ||
+        fields.some(field => field.id === CHARACTER_GAMEPLAY_ID) || canonicalJSON(expected) !== canonicalJSON(target) || before.rawBody !== after.rawBody ||
+        canonicalJSON(before.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson')) !==
+        canonicalJSON(after.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson'))) throw new Error('Invalid Character gameplay activation transition');
+  }
+  if (!variablesCommand && !migrationCommand && !effectsAdoptionCommand && !characterGameplayCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
   const { catalog, exists } = await readCardTypeCatalog({ storageAdapter });
   if (!exists) throw new Error('Structured page requires activated catalog');
   const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
   const snapshot = createCardVariableSnapshot({ id: after.id, content }, registry);
+  if (after.type === 'character' && readCharacterGameplay(snapshot, { registry }).status === 'unavailable') throw new Error('Partial/unavailable Character gameplay state');
   if (snapshot.mode !== 'structured' || snapshot.diagnostics.some(issue => issue.severity === 'error')) throw new Error('Structured page schema/values are read-only until repaired');
 }
 

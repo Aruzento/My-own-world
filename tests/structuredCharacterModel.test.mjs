@@ -407,7 +407,7 @@ test('Character saving throws use six stable check keys and the existing pure pr
     const model = readCharacterModelFromPage(page, { registry });
     assert.equal(model.source, 'entity');
     assert.equal(model.proficiencyBonus, 4);
-    assert.deepEqual(Object.keys(model.calculations.checks.byKey).sort(), mapping.map(row => row[2]).sort());
+    assert.deepEqual(Object.keys(model.calculations.checks.byKey).filter(key => key.startsWith('save')).sort(), mapping.map(row => row[2]).sort());
     for (const [id, ability, key] of mapping) {
       const check = model.calculations.checks.byKey[key];
       const proficient = selected.includes(id);
@@ -415,7 +415,7 @@ test('Character saving throws use six stable check keys and the existing pure pr
       assert.equal(check.proficient, proficient);
       assert.deepEqual(model.calculations.byKey[key], check);
     }
-    assert.equal(model.calculations.checks.byKey.skillAcrobatics, undefined);
+    assert.equal(model.calculations.checks.byKey.skillAcrobatics.value, model.abilities.dex.modifier);
     assert.equal(page.content, original);
   }
 });

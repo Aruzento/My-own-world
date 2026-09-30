@@ -527,3 +527,41 @@
     grid-column: auto;
   }
 }
+/* Structured check inputs remain ordinary accessible controls, separate from totals. */
+.character-sheet-check-controls {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0;
+  overflow: visible !important;
+  white-space: normal !important;
+}
+.character-sheet-check-controls label {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  cursor: pointer;
+}
+.character-sheet-check-controls input[type="checkbox"] {
+  position: static;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  opacity: 1;
+  pointer-events: auto;
+}
+.character-sheet-check-controls input[type="number"] {
+  width: 56px;
+  min-width: 0;
+  padding: 2px;
+  color: inherit;
+  background: var(--mow-character-sheet-paper);
+  border: 1px solid var(--mow-character-sheet-line);
+  border-radius: 3px;
+}
+.character-sheet-check-controls input:focus-visible {
+  outline: 2px solid var(--mow-character-sheet-ink);
+  outline-offset: 2px;
+}

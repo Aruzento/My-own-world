@@ -1,3 +1,4 @@
+import { parsePageRecordContent } from '../core/pageRecord.js';
 import {
   createEffectsModel,
   createLinkedCharacterEffect,
@@ -295,6 +296,7 @@ function createSourceCandidate(
 function readEffectNoteFromProperties(
   page
 ) {
+  if (parsePageRecordContent(page?.content || '').variablesStatus.mode !== 'legacy') return '';
 
   const model =
     readPropertiesModelsFromHTML(

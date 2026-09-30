@@ -1,3 +1,4 @@
+import { parsePageRecordContent } from '../core/pageRecord.js';
 import {
   createDndStatsBlock
 } from '../templates/blockTypes.js';
@@ -11,6 +12,7 @@ import {
 export function getPageDndHealth(
   page
 ) {
+  if (isStructured(page)) return null;
 
   const modelHealth =
     getPageCharacterHealth(
@@ -62,6 +64,7 @@ export function getPageDndHealth(
 export function ensurePageDndHealth(
   page
 ) {
+  if (isStructured(page)) return null;
 
   if (!page?.content) return null;
 
@@ -138,6 +141,8 @@ export function updatePageDndHealth(
     mode = 'delta'
   } = {}
 ) {
+
+  if (isStructured(page)) return null;
 
   const modelResult =
     updatePageCharacterHealth(
@@ -431,3 +436,5 @@ function clamp(
     )
   );
 }
+
+const isStructured = page => parsePageRecordContent(page?.content || '').variablesStatus.mode !== 'legacy';

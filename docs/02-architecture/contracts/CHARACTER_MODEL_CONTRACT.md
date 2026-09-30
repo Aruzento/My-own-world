@@ -8,19 +8,19 @@ owner_zone: "architecture"
 
 # Character Model Contract
 
-## Implemented source boundary — CTV Stage 8.1, 2026-09-27
+## Current source boundary — CTV Stage 8 closure, 2026-09-30
 
-[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md#stage-8-closure--done--foundation) is authoritative: Stage 8 DONE / Foundation; Stage 9 UNBLOCKED / NOT STARTED. CharacterModel is the normalized gameplay projection for structured Character/Player, not persistence/Inspector/DOM/schema parser. Exact activated Registry is mandatory; invalid/future/missing definition/catalog is unavailable. Legacy no-envelope Character/Creature is a separate catalog-independent Properties/DnD branch, never a fallback for structured core values. Independent Inventory/own Effects domains retain their sole legacy owners only until explicit domain adoption; activated Entity state never reads their HTML. Item/Rule/integration Effects remain independent providers.
 
-CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Stage 8.7 adds explicit opt-in own Effects persistence, preserving Item/provider owners. Stage 8.8 adds maximum HP editing through the same health boundary and read-only Character saving throw calculation projection; unsupported Sheet concepts retain explicit read-only gaps.
+CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Stage 8.7 adds explicit opt-in own Effects persistence, preserving Item/provider owners. Stage 8.8 adds maximum HP editing through the same health boundary and read-only Character saving throw calculation projection; Stage 8 closure adds Player save/skill writes and optional typed Character standard skills/death saves; effective totals remain deliberately derived/read-only.
 
-Дата обновления: 14.06.2026
+Дата обновления: 30.09.2026
 
 ## Назначение
 
 `CharacterModel` - это доменная модель персонажа или существа. Она нужна, чтобы карта, свойства карточек, будущий инвентарь, эффекты, инициатива и проверки читали игровые данные из одного API, а не из произвольного HTML.
 
-Модель не заменяет карточку. Карточка остается пользовательским документом. `CharacterModel` является расчетным слоем поверх:
+Модель не заменяет карточку. Карточка остается пользовательским документом. Structured model строится через Entity/domain APIs. Для legacy compatibility модель является расчетным слоем поверх:
 
 1. `PropertiesModel` из блока `Свойства`;
 2. legacy блока `Стат. блок DnD`;
@@ -122,7 +122,7 @@ calculateDndCheckValue(options)
   inventory: {
     kind: 'InventoryModel',
     version: 1,
-    source: 'items-block' | 'manual' | 'empty',
+    source: 'entity' | 'structured-unavailable' | 'items-block' | 'manual' | 'empty',
     items: [
       {
         pageId: 'item-page-id',
@@ -136,7 +136,7 @@ calculateDndCheckValue(options)
   effects: {
     kind: 'EffectsModel',
     version: 1,
-    source: 'manual' | 'effects-data' | 'empty',
+    source: 'entity' | 'manual' | 'effects-data' | 'empty',
     conditions: [],
     effects: [],
     modifiers: {
@@ -180,6 +180,8 @@ calculateDndCheckValue(options)
 
 ## Правила Источников
 
+Rules 1–4 and legacy Properties dependencies below describe only no-envelope compatibility. Structured projection selects Entity before any Properties/DOM access.
+
 1. `PropertiesModel` имеет приоритет над legacy HTML.
 2. Если `PropertiesModel` есть, но в нем нет части полей, недостающие значения получают безопасные defaults.
 3. Если `PropertiesModel` нет, `CharacterModel` может быть построен из legacy `Стат. блок DnD`.
@@ -189,20 +191,20 @@ calculateDndCheckValue(options)
 7. Inventory owner выбирается per-domain: legacy Item Set либо explicit `dnd.items` + `dnd.equippedItems`; все consumers обращаются к InventoryModel, не к chips напрямую.
 8. Автоэффекты от предметов применяются только при явном блоке `Эффекты и состояния` на карточке предмета.
 9. Описание предмета, заклинания или навыка не является формулой и не должно автоматически парситься как правило.
-10. Идея старых блоков `DnD v2` и `Переменные` встроена в текущий путь: игровые переменные сущности задаются через типизированный блок `Свойства`.
+10. Идея старых блоков `DnD v2` и `Переменные` встроена в текущий путь: для legacy variables используется блок `Свойства`; structured values имеют Entity/Variables owner.
 11. Rule Tree и World Packages не должны мутировать `CharacterModel` напрямую. Они передают эффекты через `characterIntegrationApi.js`.
 12. Целевая модель правил - отдельная сущность `ruleTree`. Карточки с тегами `rule/rules/правило/правила` остаются только backward-compatible bridge и источником импорта.
 13. Активные правила `Rule Tree` (`activeRuleIds`) могут применяться глобально через provider.
-14. Персональный выбор правил для конкретной карточки персонажа хранится в persistent JSON блока `Эффекты и состояния` как `selectedRuleIds`. `CharacterModel` объединяет эти ids с глобальными активными правилами Rule Tree.
+14. Персональный выбор правил хранится в own Effects domain: Entity `dnd.ownEffects` после activation; legacy persistent JSON только до explicit adoption. `CharacterModel` объединяет эти ids с глобальными активными правилами Rule Tree.
 15. `model.calculations` является backend-объяснением расчетов. UI может показывать формулу и части расчета из него, но не должен записывать изменения напрямую в этот объект.
 16. Structured HP mutation разрешена только для exact valid `character`/`player` с `characterProjection` и явно stored complete `dnd.health`; schema defaults и presentation fallback не являются write source.
 17. Structured health `delta/exact` меняет только current/temp и использует max как guard. Stage 8.8 добавляет отдельный `maximum` request: только safe-integer max > 0 и >= current, без clamp current; равный max — no-op. Полный `dnd.health` object и все siblings сохраняются. Plan одноразовый, data-only и всегда проходит через Variables/PageCommand whole-page guards.
 18. Successful Variables commit подтверждается durable reread и повторной CharacterModel projection. Properties body не dual-write'ится.
 19. Campaign Map Stage 8.4 читает structured Character/Player только с exact activated workspace Registry. Legacy-only map catalog-independent; invalid structured source не fallback'ится и не materialize'ит DnD block.
 20. Map `delta/restore/kill/temp` переводится в Stage 8.2 `delta/exact`. Character page пишется максимум один раз, затем все linked token snapshots reread'ятся через CharacterModel. Map save сохраняет только derived cache и не пишет HP обратно.
-21. Character Sheet Stage 8.5 определяет source до Properties access. Valid structured `character` читает только Entity-backed CharacterModel; malformed/future/missing-catalog structured source unavailable и никогда не fallback'ится. Отдельный `player` Sheet не активируется.
+21. Existing Sheet supports exact structured Character and Player; no-envelope Player does not acquire an invented legacy owner. Source is selected before Properties access.
 22. Structured Sheet пишет `dnd.level` и один nested ability score через Variables, сохраняя весь abilities object; current/temp HP пишет только health exact command, max — отдельным health maximum command. Confirmed durable page становится новым editor expected base до следующего body autosave.
-23. Effective AC/initiative/speed, Character death saves, standard skills и manual calculated overrides остаются read-only/unavailable до отдельных approved contracts. Preserved Properties не читаются, не dual-write'ятся и не очищаются.
+23. Effective AC/initiative/speed and arbitrary manual check totals remain derived/read-only. Preserved hidden overrides and inactive migration evidence are ignored by structured calculations and never reverse-mapped to base fields; this is final structured policy, not unfinished Stage 8 work.
 24. Structured Character saving throws читаются из `character.savingThrows`: strength/dexterity/constitution/intelligence/wisdom/charisma → saveStr/saveDex/saveCon/saveInt/saveWis/saveCha. `calculations.checks.byKey` и `calculations.byKey` содержат pure ability modifier + proficiency bonus при membership; proficiency read-only. Absent list не материализуется, invalid source не fallback'ится. Generic `character.skills` не является стандартным D&D skill owner.
 
 
@@ -383,9 +385,11 @@ Player current/temp/max HP используют существующий health 
 
 Player saving throws имеют stable keys strength→saveStr, dexterity→saveDex, constitution→saveCon, intelligence→saveInt, wisdom→saveWis, charisma→saveCha. Значение = score-derived modifier + proficiency bonus при `.saveProficient` + `.saveBonus`. Все 18 Player skills используют canonical `DND_SKILL_GROUPS` key/ability mapping и `calculateDndCheckValue`, proficiency level 0/1/2 (expertise) + `.bonus`. Optional absent members false/0 не materialize'ятся. `calculations.checks.byKey` и `calculations.byKey` содержат те же entries; renderer только отображает value/proficiency/expertise, не считает отдельно. Новые Effects save/skill modifiers не включаются.
 
-Player saves/skills и effective AC/initiative/speed read-only; legacy overrides не активируются. Player identity refs — Sheet-specific read projection через Entity/exact pageId/type validation, не gameplay identity expansion. Non-core Player domains остаются Inspector-owned. Character generic skills/death saves остаются explicit gaps. Schema versions/digests и Inventory/Effects owners не меняются; Stage 8 ACTIVE, Stage 9 BLOCKED.
+Player saves/skills editable через exact nested Variables owners; effective AC/initiative/speed остаются derived/read-only, legacy overrides не активируются. Player identity refs — Sheet-specific read projection через Entity/exact pageId/type validation, не gameplay identity expansion. Non-core Player domains остаются Inspector-owned. Character standard skills/death saves имеют optional typed gameplay owner; generic character.skills остаётся независимым content. Existing schema versions/digests и Inventory/Effects owners не меняются; Stage 8 DONE / Foundation, Stage 9 UNBLOCKED / NOT STARTED.
 
-### Entity Variables
+### Legacy variable compatibility (historical Properties layer)
+
+The following Properties/CardVariablesModel dependencies apply only to no-envelope legacy cards. Structured gameplay uses Entity API/domain owners described above; it does not consume Properties expressions or title/alias dependency lookup.
 
 `CharacterModel` не должен развивать старый `DnD v2` как отдельный большой HTML-блок. Его роль теперь другая:
 
@@ -459,7 +463,18 @@ Workspace-global quantity analysis защищает shared Item owner: conflicti
 
 Verified full backup, existing journal, exact source/target resume и explicit full recovery принадлежат migration/storage owners. Model остаётся read projection. No automatic adoption, Item Properties migration, Effects adoption или schema change. Caller refresh/reopen после verified write использует existing Sheet/Inventory rendering, editor base принимает durable state; stale/pending body save блокирует competing adoption.
 
-## Следующее Развитие
+
+## Structured checks and Character gameplay extension
+
+Player writers patch nested player.abilities.<ability>.saveProficient/saveBonus and player.skills.<skill>.proficient/expertise/bonus through the same bounded Sheet Variables owner. Explicit edit can minimally create absent optional members; read never materializes defaults. Score/modifier/save siblings are preserved; stored modifier is not an effective override.
+
+Character optional dnd.character-gameplay@1 owns character.standardSkills and character.deathSaves, without modifying Character@1. First explicit edit atomically adds the exact declaration/revision and requested root through a bounded PageCommand after exact catalog activation; normal edits use Variables. At least one root is required with the declaration. Other domain can be absent until its explicit edit; malformed/partial/unsupported never fallback. Existing extensions/own Effects/inactive/raw body/meta survive. Death counters are required integers 0..3 when stored, and edits preserve the other counter.
+
+One neutral dndCheckContract maps six abilities and 18 skills; dndCalculations contains the accepted pure policy. Both actors expose all stable skill/save keys in calculations.checks.byKey and calculations.byKey. Value = score-derived modifier + proficiency bonus × effective level + explicit numeric bonus. Expertise independently gives level 2, else proficient gives 1, else 0; flags are orthogonal, preserving accepted Player semantics. Absent means untrained/zero without writes. Character saves continue using character.savingThrows membership. Generic character.skills is independent content and never parsed. No new Effects save/skill modifiers are applied.
+
+Structured passive perception = 10 + skillPerception calculation. Typed hit-dice presentation comes from health through Entity, not preserved Properties. Model never reads inactive override evidence. Sheet updates editor base only after durable domain verification; no-op verifies durable source/catalog, failure/uncertain never retries or rolls back. Stage 8 owner matrix and leak audit evidence are in the canonical migration closure section.
+
+## Future product enhancements (not Stage 8 gaps)
 
 После foundation нужно:
 
@@ -474,4 +489,4 @@ Verified full backup, existing journal, exact source/target resume и explicit f
 
 Only valid activated Character/Player with absent own-effects declaration/value may explicitly adopt one proven legacy Effects block. Strict persisted evidence, never CharacterModel aggregate, becomes exact dnd.own-effects@1 + encoded dnd.ownEffects in one PageCommand. Empty is explicit; absent block skips; partial/malformed/ambiguous/richer/unsupported sources block. Captured historical source metadata stays own data; Inventory/Rule/integration contributions remain external and follow existing merge precedence without double counting.
 
-Exact immutable Field Set identity, full backup verification, operation journal, source/target resume and explicit safety-backup recovery precede adoption success. Durable own Effects + CharacterModel provenance are verified; raw body/legacy JSON and unrelated extensions/Variables stay unchanged. Active editor base advances and Effects/Sheet refreshes; normal Stage 8.7 UI edits and body autosave use the new owner. Definition/schema versions/digests do not change; automatic adoption and a new Effects Engine are not enabled. Stage 8 ACTIVE; Stage 9 BLOCKED.
+Exact immutable Field Set identity, full backup verification, operation journal, source/target resume and explicit safety-backup recovery precede adoption success. Durable own Effects + CharacterModel provenance are verified; raw body/legacy JSON and unrelated extensions/Variables stay unchanged. Active editor base advances and Effects/Sheet refreshes; normal Stage 8.7 UI edits and body autosave use the new owner. Definition/schema versions/digests do not change; automatic adoption and a new Effects Engine are not enabled. Stage 8 DONE / Foundation; Stage 9 UNBLOCKED / NOT STARTED.

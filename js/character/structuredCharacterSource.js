@@ -1,42 +1,16 @@
-import {
-  CardTypeRegistry
-} from '../cardTypes/cardTypeRegistry.js';
-
+import { readCharacterGameplay } from './characterGameplaySource.js';
 import {
   getValue,
   readEntity
 } from '../variables/entityVariables.js';
 
-import {
-  calculateDndAbilityModifier,
-  calculateDndArmorClass,
-  calculateDndCheckValue,
-  calculateDndProficiencyBonus
-} from '../properties/propertiesCalculationEngine.js';
-import { DND_SKILL_GROUPS } from '../properties/propertySchemas.js';
+import { calculateDndAbilityModifier, calculateDndCheckValue, calculateDndProficiencyBonus } from './dndCalculations.js';
+import { calculateDndArmorClass } from '../properties/propertiesCalculationEngine.js';
+import { DND_CHECKS, DND_ABILITIES } from './dndCheckContract.js';
+import { CHARACTER_SKILLS_KEY, CHARACTER_DEATH_KEY } from './characterGameplayDefinition.js';
 
 
-const DEFAULT_REGISTRY =
-  new CardTypeRegistry();
-
-const ABILITY_FIELDS = Object.freeze({
-  str: 'strength',
-  dex: 'dexterity',
-  con: 'constitution',
-  int: 'intelligence',
-  wis: 'wisdom',
-  cha: 'charisma'
-});
-
-const SAVING_THROW_KEYS = Object.freeze({
-  strength: 'saveStr',
-  dexterity: 'saveDex',
-  constitution: 'saveCon',
-  intelligence: 'saveInt',
-  wisdom: 'saveWis',
-  charisma: 'saveCha'
-});
-
+const ABILITY_FIELDS = DND_ABILITIES;
 
 // Domain adapter for the Stage 8.1 read boundary. It consumes the public
 // Entity API and returns gameplay inputs; it never parses variablesJson,
@@ -45,7 +19,7 @@ export function readStructuredCharacterSource(
   page,
   {
     pages = [],
-    registry = DEFAULT_REGISTRY,
+    registry = undefined,
     repository = null,
     effectsModel = null
   } = {}
@@ -99,14 +73,16 @@ export function readStructuredCharacterSource(
   const level = readLevel(reader, type);
   const abilities = readAbilities(reader, type);
   const health = readHealth(reader);
-  const deathSaves = readDeathSaves(reader, type);
+  const gameplay = type === 'character' ? readCharacterGameplay(snapshot, context) : null;
+  const deathSaves = readDeathSaves(reader, type, gameplay);
   const movement = reader.value('dnd.movement');
   const initiative = reader.value('dnd.initiative');
   const proficiency = readProficiency(reader, type, level.value);
   const savingThrows = type === 'character'
     ? reader.value('character.savingThrows')
     : null;
-  const skills = type === 'player' ? reader.value('player.skills') : null;
+  const skills = type === 'player' ? reader.value('player.skills') : { value: gameplay?.skills?.value, provenance: { source: 'entity', status: gameplay?.status } };
+  if (gameplay?.status === 'unavailable') reader.diagnostics.push(domainIssue('character_gameplay_unavailable', { reason: gameplay.reason }));
   const armor = readArmorClass({
     reader,
     snapshot,
@@ -381,16 +357,12 @@ function readHealth(
 
 function readDeathSaves(
   reader,
-  type
+  type,
+  gameplay
 ) {
   if (type !== 'player') {
-    return {
-      value: { successes: 0, failures: 0 },
-      provenance: Object.freeze({
-        status: 'absent',
-        source: 'schema'
-      })
-    };
+    const value = gameplay?.deathSaves?.value;
+    return { value: { successes: numberOr(value?.[`${CHARACTER_DEATH_KEY}.successes`], 0), failures: numberOr(value?.[`${CHARACTER_DEATH_KEY}.failures`], 0) }, provenance: { source: 'entity', status: gameplay?.status || 'absent' } };
   }
 
   const result = reader.value('player.deathSaves');
@@ -729,51 +701,29 @@ function createCalculationModel({
     )
   };
 
-  const checks = Object.freeze(Object.fromEntries(
-    type === 'character' ? Object.entries(ABILITY_FIELDS).map(([ability, id]) => {
-      const key = SAVING_THROW_KEYS[id];
-      const proficient = savingThrows?.value?.includes(id) === true;
-      const modifier = abilityModifiers[ability].value;
-      return [key, Object.freeze({
-        ...calculation(
-          key,
-          calculateDndCheckValue({
-            abilityModifier: modifier, proficient, proficiencyBonus: proficiency.value
-          }),
-          `${ability}Modifier + ${proficient ? 'proficiencyBonus' : '0'}`,
-          [calculationPart('Характеристика', modifier),
-            calculationPart('Владение', proficient ? proficiency.value : 0)],
-          'entity'
-        ),
-        proficient,
-        proficiencyLevel: proficient ? 1 : 0
-      })];
-    }) : DND_SKILL_GROUPS.flatMap(group => group.items.map(item => {
-      const abilityId = ABILITY_FIELDS[group.ability];
-      const abilityKey = `player.abilities.${abilityId}`;
-      const isSave = item.name.startsWith('save');
-      // Stable schema ids follow the existing calculation vocabulary, not labels.
-      const skillName = item.name.slice(5);
-      const skillId = skillName.charAt(0).toLowerCase() + skillName.slice(1);
-      const inputKey = isSave ? abilityKey : `player.skills.${skillId}`;
-      const input = isSave ? abilities.inputs?.[inputKey] : skills?.value?.[inputKey];
-      const expertise = !isSave && input?.[`${inputKey}.expertise`] === true;
-      const proficient = input?.[`${inputKey}.${isSave ? 'saveProficient' : 'proficient'}`] === true;
-      const proficiencyLevel = expertise ? 2 : proficient ? 1 : 0;
-      const bonus = numberOr(input?.[`${inputKey}.${isSave ? 'saveBonus' : 'bonus'}`], 0);
-      const modifier = abilityModifiers[group.ability].value;
-      return [item.name, Object.freeze({
-        ...calculation(item.name, calculateDndCheckValue({
-          abilityModifier: modifier, proficiencyLevel, proficiencyBonus: proficiency.value
-        }) + bonus, `${group.ability}Modifier + proficiencyBonus * ${proficiencyLevel} + bonus`, [
-          calculationPart('Характеристика', modifier),
-          calculationPart('Владение', proficiency.value * proficiencyLevel),
-          calculationPart('Бонус', bonus)
+  const checks = Object.freeze(Object.fromEntries(DND_CHECKS.map(item => {
+    const abilityKey = `player.abilities.${item.abilityId}`;
+    const root = type === 'player' ? 'player.skills' : CHARACTER_SKILLS_KEY;
+    const inputKey = item.isSave ? abilityKey : `${root}.${item.id}`;
+    const input = item.isSave ? abilities.inputs?.[inputKey] : skills?.value?.[inputKey];
+    const rawProficient = type === 'character' && item.isSave
+      ? savingThrows?.value?.includes(item.abilityId) === true
+      : input?.[`${inputKey}.${item.isSave ? 'saveProficient' : 'proficient'}`] === true;
+    const expertise = !item.isSave && input?.[`${inputKey}.expertise`] === true;
+    // Orthogonal stored flags: expertise selects level 2 even without normal proficiency.
+    const proficiencyLevel = expertise ? 2 : rawProficient ? 1 : 0;
+    const bonus = type === 'character' && item.isSave ? 0 : numberOr(input?.[`${inputKey}.${item.isSave ? 'saveBonus' : 'bonus'}`], 0);
+    const modifier = abilityModifiers[item.ability].value;
+    return [item.key, Object.freeze({
+      ...calculation(item.key, calculateDndCheckValue({ abilityModifier: modifier, proficiencyLevel, proficiencyBonus: proficiency.value }) + bonus,
+        `${item.ability}Modifier + proficiencyBonus * ${proficiencyLevel} + bonus`, [
+          calculationPart('Характеристика', modifier), calculationPart('Владение', proficiency.value * proficiencyLevel), calculationPart('Бонус', bonus)
         ], 'entity'),
-        proficient: proficiencyLevel > 0, expertise, proficiencyLevel, bonus
-      })];
-    }))
-  ));
+      proficient: proficiencyLevel > 0, expertise, proficiencyLevel, bonus,
+      inputs: Object.freeze({ proficient: rawProficient, expertise, bonus })
+    })];
+  })));
+
 
   return Object.freeze({
     kind: 'PropertiesCalculationModel',

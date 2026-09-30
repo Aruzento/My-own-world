@@ -18,7 +18,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
 
     const adapter = createMemoryStorageAdapter();
     setStorageAdapter(adapter);
-    const catalog = { formatVersion: 1, revision: 1, types, fieldSets };
+    const catalog = { formatVersion: 1, revision: 1, types, fieldSets: fieldSets.filter(field => field.id !== 'dnd.character-gameplay') };
     const registry = createCardTypeRegistryFromCatalog(catalog);
     await adapter.writeText(CARD_TYPE_CATALOG_PATH, serializeCardTypeCatalog(catalog));
     const definition = registry.getResolvedType('character', 1);
@@ -30,7 +30,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
         <input data-property-name="hpMax" value="99">
         <input data-property-name="hpTemp" value="0">
         <input data-property-name="armorClass" value="77">
-        <input data-property-name="override-speed" value="88">
+        <input data-property-name="override-speed" value="88"><input data-property-name="skillPerception" value="99"><input data-property-name="hitDie" value="d99"><input data-property-name="override-armorClass" value="99"><input data-property-name="override-initiative" value="99"><input data-property-name="saveStr" value="99">
       </section>
     `;
     const body = `
@@ -47,6 +47,8 @@ test('structured Character Sheet edits approved fields without Properties dual-w
           'dnd.level': 5,
           'character.savingThrows': ['strength', 'wisdom'],
           'character.category': 'npc',
+          'character.skills': [{ 'character.skills.rowId': 'generic', 'character.skills.name': 'Perception', 'character.skills.details': 'expertise +99' }],
+          'dnd.items': [], 'dnd.equippedItems': [],
           'character.abilities': {
             'character.abilities.strength': 16,
             'character.abilities.dexterity': 14,
@@ -117,10 +119,30 @@ test('structured Character Sheet edits approved fields without Properties dual-w
   for (const label of readonlyLabels) {
     await expect(sheet.locator('label').filter({ hasText: label }).locator('input')).toBeDisabled();
   }
-  await expect(sheet.locator('[data-character-sheet-death-field]')).toHaveCount(0);
+  await expect(sheet.locator('[data-character-sheet-death-field]')).toHaveCount(6);
   await expect(sheet.locator('[data-character-sheet-clear-override]')).toHaveCount(0);
-  await expect(sheet.locator('[data-character-sheet-check="skillAcrobatics"] strong')).toHaveText('—');
-  await expect(sheet.locator('[data-character-sheet-check="skillAcrobatics"]')).toHaveClass(/character-sheet-readonly/);
+  await expect(sheet.locator('[data-character-sheet-check="skillAcrobatics"] strong')).toHaveText('+2');
+  await expect(sheet).toContainText('5d8');
+  const beforeActivation = await page.evaluate(async () => { const { parsePageRecordContent } = await import('/js/core/pageRecord.js'); const f = window.__stage85; return parsePageRecordContent(await f.adapter.readText(f.record.path)).variablesJson; });
+  expect(beforeActivation.extensions).toBeUndefined();
+  expect(beforeActivation.values['character.standardSkills']).toBeUndefined();
+  await sheet.locator('[data-character-sheet-field="skillPerception.proficient"]').check();
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+3');
+  await sheet.locator('[data-character-sheet-field="skillPerception.expertise"]').check();
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+6');
+  const bonus = sheet.locator('[data-character-sheet-field="skillPerception.bonus"]');
+  await bonus.fill('2'); await bonus.press('Tab');
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+8');
+  await expect(sheet.locator('.character-sheet-metric').filter({ hasText: 'П. восприятие' })).toContainText('18');
+  for (const [field, index] of [['deathSaveSuccesses', 2], ['deathSaveFailures', 1]]) {
+    await sheet.locator(`[data-character-sheet-death-field="${field}"][data-character-sheet-death-index="${index}"]`).locator('..').click();
+    await expect(sheet.locator(`[data-character-sheet-death-field="${field}"][data-character-sheet-death-index="${index}"]`)).toBeChecked();
+  }
+  const activated = await page.evaluate(async () => { const { parsePageRecordContent } = await import('/js/core/pageRecord.js'); const f = window.__stage85; return parsePageRecordContent(await f.adapter.readText(f.record.path)).variablesJson; });
+  expect(activated.extensions.fields).toEqual([{ id: 'dnd.character-gameplay', version: 1 }]);
+  expect(activated.extensions.revision).toBe(1);
+  expect(activated.values['character.deathSaves']).toEqual({ 'character.deathSaves.successes': 2, 'character.deathSaves.failures': 1 });
+
 
   for (const [selector, value] of [
     ['[data-character-sheet-field="level"]', '21'],
@@ -193,6 +215,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
     };
   });
 
+  expect(persisted.values['character.standardSkills']['character.standardSkills.perception']).toEqual({ 'character.standardSkills.perception.proficient': true, 'character.standardSkills.perception.expertise': true, 'character.standardSkills.perception.bonus': 2 });
   expect(persisted.values['dnd.level']).toBe(21);
   expect(persisted.values['character.abilities']['character.abilities.strength']).toBe(18);
   expect(persisted.values['dnd.health']['dnd.hpCurrent']).toBe(7);
@@ -235,6 +258,8 @@ test('structured Character Sheet edits approved fields without Properties dual-w
   await expect(sheet.locator('[data-character-sheet-field="hpTemp"]')).toHaveValue('4');
   await expect(sheet.locator('[data-character-sheet-field="hpMax"]')).toHaveValue('30');
   await expect(sheet.locator('[data-character-sheet-check="saveStr"] strong')).toHaveText('+10');
+  await expect(sheet.locator('[data-character-sheet-check="skillPerception"] strong')).toHaveText('+14');
+  await expect(sheet.locator('[data-character-sheet-death-field="deathSaveSuccesses"][data-character-sheet-death-index="2"]')).toBeChecked();
 });
 
 

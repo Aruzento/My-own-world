@@ -1,3 +1,4 @@
+import { calculateDndAbilityModifier, calculateDndProficiencyBonus, calculateDndCheckValue } from '../character/dndCalculations.js';
 import {
   getPropertyValue,
   readPropertiesModelsFromHTML
@@ -505,83 +506,7 @@ export function createManualOverride(
 }
 
 
-export function calculateDndAbilityModifier(
-  score
-) {
-
-  const value =
-    clamp(
-      normalizeNumber(
-        score,
-        10
-      ),
-      1,
-      30
-    );
-
-  return Math.floor(
-    (value - 10) / 2
-  );
-}
-
-
-export function calculateDndProficiencyBonus(
-  level
-) {
-
-  const value =
-    clamp(
-      normalizeNumber(
-        level,
-        1
-      ),
-      1,
-      20
-    );
-
-  return 2 + Math.floor(
-    (value - 1) / 4
-  );
-}
-
-
-export function calculateDndCheckValue(
-  {
-    abilityModifier = 0,
-    proficient = false,
-    proficiencyLevel = null,
-    proficiencyBonus = 2
-  } = {}
-) {
-
-  const level =
-    proficiencyLevel === null ||
-    proficiencyLevel === undefined
-      ? (
-        proficient
-          ? 1
-          : 0
-      )
-      : clampNumber(
-        Number(proficiencyLevel) || 0,
-        0,
-        2
-      );
-
-  return normalizeNumber(
-    abilityModifier,
-    0
-  ) + (
-    level > 0
-      ? normalizeNumber(
-        proficiencyBonus,
-        2
-      ) * level
-      : 0
-  );
-}
-
-
+export { calculateDndAbilityModifier, calculateDndProficiencyBonus, calculateDndCheckValue } from '../character/dndCalculations.js';
 export function calculateDndArmorClass(
   {
     dexModifier = 0,

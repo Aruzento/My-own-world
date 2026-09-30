@@ -351,3 +351,11 @@ initiativeModifier = dexModifier + effects.initiative
 8. атаки и бонусы к атаке;
 9. автоматический расчет максимума HP по классу, уровню, кости хитов и ТЛС;
 10. explain UI: почему значение получилось именно таким.
+
+## Structured actor check ownership — Stage 8 closure
+
+`js/character/dndCheckContract.js` is the canonical six-ability/18-skill mapping shared by Character, Player and legacy schema compatibility. `dndCalculations.js` preserves the existing pure ability/proficiency/check policy. Structured Character standard checks read `character.standardSkills` from optional `dnd.character-gameplay@1`; generic `character.skills` is unrelated content. Player reads nested `player.skills` and ability save metadata. Both expose stable `calculations.checks.byKey` and `calculations.byKey`.
+
+Expertise and normal proficiency are independent typed flags: expertise selects level 2, else normal proficiency level 1, else 0. The effective level controls calculated value and presentation; toggling one flag preserves the other. Numeric bonus is added as data, not executed. Stored Player ability modifier is retained but gameplay modifier remains score-derived. Character saves retain `character.savingThrows` membership. Absent optional state is false/zero without writes; invalid state never reads Properties. No new Effects skill/save modifiers or manual total overrides.
+
+Effective AC/initiative/speed and check totals remain derived/read-only in structured Sheet. Legacy hidden overrides remain inactive/recovery evidence; final legacy retirement belongs to Stage 9.
