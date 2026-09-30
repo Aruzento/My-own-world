@@ -377,6 +377,14 @@ Structured Character foundation (CTV Stages 8.5 / 8.8):
 
 Лист персонажа не должен напрямую менять legacy DnD-блоки.
 
+Structured Player core foundation (CTV Stage 8.9) использует этот же Sheet/context и CharacterModel, exact activated Registry и capability `characterProjection`. Player без envelope unsupported; malformed/future/missing catalog никогда не получает Properties fallback. Level принадлежит nested `player.progression['dnd.level']`; scores — nested `player.abilities.<ability>.score`. Explicit stored owner обязателен; progression siblings и ability modifier/save metadata не меняются. Score-derived modifier остаётся gameplay policy, stored modifier не является override.
+
+Player current/temp/max HP используют существующий health domain command. `player.deathSaves.successes/failures` (0..3) используют guarded Variables patch explicit complete object с preservation другого count; absent source показывает 0/0 read-only без materialization. Generic Variables durable readback дополняется durable Entity-backed CharacterModel verification; confirmed write advances editor base перед body autosave. Properties/recovery, own Effects, Inventory, metadata и unrelated values preserved; no-op не пишет, uncertain не retry/rollback.
+
+Player saving throws имеют stable keys strength→saveStr, dexterity→saveDex, constitution→saveCon, intelligence→saveInt, wisdom→saveWis, charisma→saveCha. Значение = score-derived modifier + proficiency bonus при `.saveProficient` + `.saveBonus`. Все 18 Player skills используют canonical `DND_SKILL_GROUPS` key/ability mapping и `calculateDndCheckValue`, proficiency level 0/1/2 (expertise) + `.bonus`. Optional absent members false/0 не materialize'ятся. `calculations.checks.byKey` и `calculations.byKey` содержат те же entries; renderer только отображает value/proficiency/expertise, не считает отдельно. Новые Effects save/skill modifiers не включаются.
+
+Player saves/skills и effective AC/initiative/speed read-only; legacy overrides не активируются. Player identity refs — Sheet-specific read projection через Entity/exact pageId/type validation, не gameplay identity expansion. Non-core Player domains остаются Inspector-owned. Character generic skills/death saves остаются explicit gaps. Schema versions/digests и Inventory/Effects owners не меняются; Stage 8 ACTIVE, Stage 9 BLOCKED.
+
 ### Entity Variables
 
 `CharacterModel` не должен развивать старый `DnD v2` как отдельный большой HTML-блок. Его роль теперь другая:

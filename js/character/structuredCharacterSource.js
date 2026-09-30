@@ -13,6 +13,7 @@ import {
   calculateDndCheckValue,
   calculateDndProficiencyBonus
 } from '../properties/propertiesCalculationEngine.js';
+import { DND_SKILL_GROUPS } from '../properties/propertySchemas.js';
 
 
 const DEFAULT_REGISTRY =
@@ -105,6 +106,7 @@ export function readStructuredCharacterSource(
   const savingThrows = type === 'character'
     ? reader.value('character.savingThrows')
     : null;
+  const skills = type === 'player' ? reader.value('player.skills') : null;
   const armor = readArmorClass({
     reader,
     snapshot,
@@ -155,6 +157,7 @@ export function readStructuredCharacterSource(
       level,
       proficiency,
       savingThrows,
+      skills,
       abilities,
       health,
       armor,
@@ -172,6 +175,7 @@ export function readStructuredCharacterSource(
         level: level.provenance,
         proficiencyBonus: proficiency.provenance,
         ...(savingThrows ? { savingThrows: savingThrows.provenance } : {}),
+        ...(skills ? { skills: skills.provenance } : {}),
         abilities: abilities.provenance,
         health: health.provenance,
         deathSaves: deathSaves.provenance,
@@ -344,6 +348,7 @@ function readAbilities(
 
   return {
     value,
+    inputs: result.value,
     provenance: result.provenance
   };
 }
@@ -660,6 +665,7 @@ function createCalculationModel({
   level,
   proficiency,
   savingThrows,
+  skills,
   abilities,
   health,
   armor,
@@ -742,7 +748,31 @@ function createCalculationModel({
         proficient,
         proficiencyLevel: proficient ? 1 : 0
       })];
-    }) : []
+    }) : DND_SKILL_GROUPS.flatMap(group => group.items.map(item => {
+      const abilityId = ABILITY_FIELDS[group.ability];
+      const abilityKey = `player.abilities.${abilityId}`;
+      const isSave = item.name.startsWith('save');
+      // Stable schema ids follow the existing calculation vocabulary, not labels.
+      const skillName = item.name.slice(5);
+      const skillId = skillName.charAt(0).toLowerCase() + skillName.slice(1);
+      const inputKey = isSave ? abilityKey : `player.skills.${skillId}`;
+      const input = isSave ? abilities.inputs?.[inputKey] : skills?.value?.[inputKey];
+      const expertise = !isSave && input?.[`${inputKey}.expertise`] === true;
+      const proficient = input?.[`${inputKey}.${isSave ? 'saveProficient' : 'proficient'}`] === true;
+      const proficiencyLevel = expertise ? 2 : proficient ? 1 : 0;
+      const bonus = numberOr(input?.[`${inputKey}.${isSave ? 'saveBonus' : 'bonus'}`], 0);
+      const modifier = abilityModifiers[group.ability].value;
+      return [item.name, Object.freeze({
+        ...calculation(item.name, calculateDndCheckValue({
+          abilityModifier: modifier, proficiencyLevel, proficiencyBonus: proficiency.value
+        }) + bonus, `${group.ability}Modifier + proficiencyBonus * ${proficiencyLevel} + bonus`, [
+          calculationPart('Характеристика', modifier),
+          calculationPart('Владение', proficiency.value * proficiencyLevel),
+          calculationPart('Бонус', bonus)
+        ], 'entity'),
+        proficient: proficiencyLevel > 0, expertise, proficiencyLevel, bonus
+      })];
+    }))
   ));
 
   return Object.freeze({

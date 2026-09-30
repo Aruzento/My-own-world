@@ -256,7 +256,7 @@ test('invalid/future structured Character stays unavailable without catalog or P
 });
 
 
-test('structured Player does not silently expand Character Sheet eligibility', async () => {
+test('structured Player uses the approved actor Sheet while absent core owners stay read-only', async () => {
   const base = await createEditConflictFixture({
     id: 'structured-player-sheet', type: 'player', body: propertiesBody
   });
@@ -289,8 +289,10 @@ test('structured Player does not silently expand Character Sheet eligibility', a
     pages: [base.page],
     context
   });
-  assert.equal(context.mode, 'structured-unavailable');
-  assert.equal(source.status, 'unavailable');
+  assert.equal(context.mode, 'source-aware');
+  assert.equal(source.status, 'ready');
+  assert.equal(source.presentation.writable.level, false);
+  assert.equal(source.presentation.writable.deathSaves, false);
   assert.notEqual(source.model?.source, 'properties');
 });
 
