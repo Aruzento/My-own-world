@@ -6,7 +6,7 @@ import test from 'node:test';
 import { validateCardTypeDefinition, validateFieldSetDefinition } from '../js/cardTypes/cardTypeSchema.js';
 import { CardTypeRegistry } from '../js/cardTypes/cardTypeRegistry.js';
 import { BUNDLED_FIELD_SET_DEFINITIONS } from '../js/cardTypes/definitions/bundledDefinitions.js';
-import { GAME_CORE_CARD_TYPE_DEFINITIONS } from '../js/cardTypes/definitions/gameCoreDefinitions.js';
+import { GAME_CORE_CARD_TYPE_DEFINITIONS, GAME_CORE_FIELD_SET_DEFINITIONS } from '../js/cardTypes/definitions/gameCoreDefinitions.js';
 import { activateCardTypeDefinitions, createCardTypeRegistryFromCatalog, readCardTypeCatalog } from '../js/storage/cardTypeCatalogStorage.js';
 import { buildPageRecordContent } from '../js/core/pageRecord.js';
 import { createCardVariableSnapshot } from '../js/variables/cardVariableStore.js';
@@ -66,7 +66,8 @@ test('game-core seed activation persists exact transitive closure without eager 
     types: GAME_CORE_CARD_TYPE_DEFINITIONS
   });
   assert.deepEqual(activated.catalog.types.map(x => x.id), [...ids].sort());
-  assert.deepEqual(activated.catalog.fieldSets.map(x => x.id), BUNDLED_FIELD_SET_DEFINITIONS.map(x => x.id).sort());
+  assert.deepEqual(activated.catalog.fieldSets.map(x => x.id), GAME_CORE_FIELD_SET_DEFINITIONS.map(x => x.id).sort());
+  assert.equal(activated.catalog.fieldSets.some(x => x.id === 'dnd.own-effects'), false);
   const registry = createCardTypeRegistryFromCatalog(activated.catalog);
   for (const id of ids) assert.equal(registry.getResolvedType(id, 1).id, id);
 });

@@ -1,3 +1,5 @@
+import { readOwnEffectsSource } from './ownEffectsSource.js';
+
 export const CHARACTER_CONDITION_KEYS = [
   'blinded',
   'charmed',
@@ -126,12 +128,11 @@ export function createEffectsModel(
 
 
 export function readEffectsModelFromPage(
-  page
+  page,
+  context = {}
 ) {
 
-  return readEffectsModelFromHTML(
-    page?.content
-  );
+  return readOwnEffectsSource(page, context);
 }
 
 

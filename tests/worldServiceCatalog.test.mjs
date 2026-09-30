@@ -9,6 +9,7 @@ import { CardTypeRegistry } from '../js/cardTypes/cardTypeRegistry.js';
 import { BUNDLED_CARD_TYPE_DEFINITIONS, BUNDLED_FIELD_SET_DEFINITIONS } from '../js/cardTypes/definitions/bundledDefinitions.js';
 import { WORLD_SERVICE_CARD_TYPE_DEFINITIONS } from '../js/cardTypes/definitions/worldServiceCatalog.js';
 import { ALL_CARD_TYPE_IDS } from '../js/cardTypes/definitions/gameCoreHelpers.js';
+import { GAME_CORE_FIELD_SET_DEFINITIONS } from '../js/cardTypes/definitions/gameCoreDefinitions.js';
 import { activateCardTypeDefinitions, createCardTypeRegistryFromCatalog, readCardTypeCatalog } from '../js/storage/cardTypeCatalogStorage.js';
 import { buildPageRecordContent } from '../js/core/pageRecord.js';
 import { getValue, readEntity, resolveReference } from '../js/variables/entityVariables.js';
@@ -68,7 +69,8 @@ test('bundled activation resolves exactly all 15 approved Card Types', async () 
   assert.deepEqual(activated.catalog.types.map(x => x.id), [...allIds].sort());
   const registry = createCardTypeRegistryFromCatalog(activated.catalog);
   for (const id of allIds) assert.equal(registry.getResolvedType(id, 1).id, id);
-  assert.deepEqual(activated.catalog.fieldSets.map(x => x.id), BUNDLED_FIELD_SET_DEFINITIONS.map(x => x.id).sort());
+  assert.deepEqual(activated.catalog.fieldSets.map(x => x.id), GAME_CORE_FIELD_SET_DEFINITIONS.map(x => x.id).sort());
+  assert.equal(activated.catalog.fieldSets.some(x => x.id === 'dnd.own-effects'), false);
 });
 
 test('domain hierarchy stays separate from PageRecord tree hierarchy', () => {

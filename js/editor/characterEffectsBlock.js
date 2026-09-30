@@ -26,11 +26,30 @@ import {
 } from '../rules/ruleTreeProvider.js';
 
 
+import * as PageRepository from '../repository/pageRepository.js';
+import { readEntity } from '../variables/entityVariables.js';
+import { readOwnEffectsSource } from '../character/ownEffectsSource.js';
+import { prepareEffectsContext, prepareStructuredEffectsChange, commitStructuredEffectsChange } from '../character/structuredEffects.js';
+import { getCurrentEditorPageBase, advanceEditorPageBase } from './editorSessionBase.js';
+import { hasPendingAutosaveForPage } from './autosave.js';
+import { setStatus } from '../ui/ui.js';
 let saveCurrentPageRef = null;
 
+const contexts = new WeakMap();
+const pending = new Set();
+export async function prepareCharacterEffectsContext(editor) {
+  const page = state.currentPage;
+  if (!page || !(editor?.matches?.('.character-effects-block') || editor?.querySelector('.character-effects-block'))) return;
+  const context = await prepareEffectsContext({ page, repository: PageRepository });
+  if (state.currentPage === page) contexts.set(page, context);
+}
+function ownSource() {
+  const page = state.currentPage;
+  return page ? readOwnEffectsSource(page, contexts.get(page) || { repository: PageRepository }) : null;
+}
 
-// Runtime-контроллер блока эффектов. Persistent-источник остается JSON-скриптом,
-// а все кнопки и формы пересобираются при открытии карточки и не сохраняются как UI.
+
+// Own source выбирается до legacy writer. Все controls остаются runtime views.
 export function setupCharacterEffectsBlocks(
   editor,
   saveCurrentPage
@@ -199,9 +218,7 @@ export function renderCharacterEffectsBlocks(
   blocks
     .forEach(block => {
 
-      ensureEffectsDataElement(
-        block
-      );
+      if (!['entity', 'unavailable'].includes(ownSource()?.source)) ensureEffectsDataElement(block);
 
       renderEffectsBlock(
         block
@@ -213,6 +230,8 @@ export function renderCharacterEffectsBlocks(
 export function readEffectsBlockModel(
   block
 ) {
+  const own = ownSource();
+  if (['entity', 'unavailable'].includes(own?.source)) return own;
 
   return createEffectsModel(
     readEffectsJSON(
@@ -362,15 +381,22 @@ function addEffectFromSelectedSource(
     );
 
   if (!linkedEffects) return;
+  const own = readEffectsBlockModel(block);
+  if (own.source === 'entity') {
+    const target = readEntity(sourcePageId, contexts.get(state.currentPage));
+    const allowed = { item: ['item'], spell: ['spell', 'magic'], skill: ['skill'] }[sourceType] || [];
+    if (!['legacy', 'structured'].includes(target.mode) || target.diagnostics.some(issue => issue.severity === 'error') || !allowed.includes(target.type)) {
+      setStatus('Источник эффекта недоступен');
+      return;
+    }
+  }
+  const merged = mergeEffectsModels(own, linkedEffects);
+  // Explicit capture источника не должен очистить actor-owned Rule selections.
+  if (own.source === 'entity') merged.selectedRuleIds = own.selectedRuleIds;
 
   updateEffectsBlockModel(
     block,
-    mergeEffectsModels(
-      readEffectsBlockModel(
-        block
-      ),
-      linkedEffects
-    )
+    merged
   );
 }
 
@@ -434,6 +460,11 @@ function updateEffectsBlockModel(
   block,
   effectsModel
 ) {
+  const own = ownSource();
+  if (['entity', 'unavailable'].includes(own?.source)) {
+    void updateStructuredEffectsBlock(block, effectsModel);
+    return;
+  }
 
   const dataElement =
     ensureEffectsDataElement(
@@ -483,6 +514,11 @@ function renderEffectsBlock(
       'character-effects-controls'
     );
 
+  if (model.source === 'unavailable') {
+    summaryElement.textContent = 'Эффекты недоступны: ' + (model.diagnostics?.[0]?.reason || 'source-unavailable');
+    controlsElement.replaceChildren();
+    return;
+  }
   summaryElement.innerHTML =
     getSummaryHTML(
       model,
@@ -493,6 +529,35 @@ function renderEffectsBlock(
     getControlsHTML(
       block
     );
+}
+
+async function updateStructuredEffectsBlock(block, effects) {
+  const page = state.currentPage;
+  if (!page || pending.has(page.id)) return;
+  if (hasPendingAutosaveForPage(page.id)) { setStatus('Сначала дождитесь сохранения текста карточки'); return; }
+  pending.add(page.id);
+  let result;
+  try {
+    const plan = prepareStructuredEffectsChange({ pageId: page.id, expectedBase: getCurrentEditorPageBase(page.id),
+      effects: createSerializableEffectsData(effects), context: contexts.get(page) });
+    result = await commitStructuredEffectsChange(plan);
+    if (result.status === 'saved' && state.currentPage === page) advanceEditorPageBase(page, page.content);
+    setStatus(result.status === 'saved' ? 'Эффекты сохранены' : result.status === 'unchanged' ? 'Эффекты не изменены' :
+      result.status === 'uncertain' ? 'Запись эффектов не подтверждена; не повторяйте операцию' : 'Эффекты не сохранены: ' + result.reason);
+    if (state.currentPage === page) {
+      const editor = block.closest('#editorArea');
+      await prepareCharacterEffectsContext(editor);
+      renderCharacterEffectsBlocks(editor);
+      const { renderCharacterSheetBlocks } = await import('./characterSheetBlock.js');
+      await renderCharacterSheetBlocks(editor);
+    }
+  } catch (error) {
+    setStatus(result?.written ? 'Эффекты сохранены; обновление отображения не подтверждено' : 'Эффекты не сохранены: ' + error.message);
+    if (state.currentPage === page) try {
+      await prepareCharacterEffectsContext(block.closest('#editorArea'));
+      renderCharacterEffectsBlocks(block.closest('#editorArea'));
+    } catch { /* Durable data не откатывается из-за повторной ошибки presentation. */ }
+  } finally { pending.delete(page.id); }
 }
 
 

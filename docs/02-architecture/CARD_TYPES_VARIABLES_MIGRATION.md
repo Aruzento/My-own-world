@@ -11,7 +11,7 @@ owner_zone: "architecture"
 Дата: 2026-09-24. CTV Stage 1 `Архитектура новой системы типов`, architecture-only / `Foundation`.
 Исследованный baseline: `7422c9d7957201c59eddfb1ac2e2716e1cff5d66`, ветка `main`.
 
-Это единственный canonical design миграции. Исходный аудит разделов 2–3 описывает baseline Stage 1; последующие implementation sections фиксируют реализованные Stages 2–7 и Stage 8.1–8.6. Остальные consumer/writer contracts реализуются поэтапно. Очередь реализации находится только в [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md).
+Это единственный canonical design миграции. Исходный аудит разделов 2–3 описывает baseline Stage 1; последующие implementation sections фиксируют реализованные Stages 2–7 и Stage 8.1–8.7. Остальные consumer/writer contracts реализуются поэтапно. Очередь реализации находится только в [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md).
 
 По текущему решению владельца 17.6 First Combat Attack Workflow — последний завершённый и принятый Combat baseline. Это supersede прежней записи «PAUSED — NOT ACCEPTED», а не утверждение о новом manual test в этом этапе. Phase 17 приостановлена; 17.7–17.FINAL остаются незавершёнными и возвращаются после миграции. Сохранение поведения 17.6 обязательно при последующем переключении источников.
 
@@ -414,7 +414,7 @@ Domain policy переиспользует существующую pure `applyC
 
 Persistence полностью делегирована Stage 3 `prepareVariablesChange → commitVariablesChange`: один top-level `dnd.health` patch, exact activated Registry, whole-page expectedBase, schema closure, workspace, PageCommand, durable readback и single-use plan. После успешного generic commit boundary повторно читает durable PageRecord, доказывает сохранение raw body/Properties и всего structured health object, затем заново строит Stage 8.1 CharacterModel и сверяет current/max/temp/percent/down. Domain mismatch возвращает explicit uncertain result и не запускает исправляющий write. Legacy Properties body не синхронизируется и не удаляется.
 
-Сам Stage 8.2 создал boundary без production callers; последующие bounded leaves подключили Combat (8.3) и generic Campaign Map HP (8.4). Legacy health writer остаётся только для legacy pages и по-прежнему отвергает structured source. Character Sheet подключён отдельно в 8.5, Inventory в 8.6; Effects persistence ещё не переключён. Stage 8 остаётся `ACTIVE`, Stage 9 остаётся blocked.
+Сам Stage 8.2 создал boundary без production callers; последующие bounded leaves подключили Combat (8.3) и generic Campaign Map HP (8.4). Legacy health writer остаётся только для legacy pages и по-прежнему отвергает structured source. Character Sheet подключён отдельно в 8.5, Inventory в 8.6, own Effects в 8.7. Stage 8 остаётся `ACTIVE`, Stage 9 остаётся blocked.
 
 ### 12.3 Реализованный CTV Stage 8.3 contract — source-aware Combat и compensating Undo
 
@@ -452,7 +452,32 @@ References разрешаются только по `{pageId}` через reposi
 
 Item Set `items` UI — runtime projection [`inventoryItemSets.js`](../../js/ui/inventoryItemSets.js). Preserved legacy chips не читаются как active structured Inventory и не dual-write'ятся. Serializer исключает runtime; parent write принимает новый editor session base, Item quantity write не заменяет parent base. Следующий body autosave сохраняет актуальный envelope. Создание Item из picker сохраняет прежний create-item contract, затем добавляет exact actor reference через Inventory boundary; неподтверждённый второй шаг не объявляется success. Skills/spells/unrelated lists сохраняют прежние paths.
 
-Stage 8.6 — `DONE / Foundation`; Stage 8 остаётся `ACTIVE`, Stage 9 `BLOCKED`. Automatic legacy chip adoption/quantity migration не выполняется. Effects persistence, equipment mechanics и remaining Sheet gaps остаются отдельными bounded tasks. Bundled schemas, versions и digests не изменены.
+Stage 8.6 — `DONE / Foundation`; Stage 8 остаётся `ACTIVE`, Stage 9 `BLOCKED`. Automatic legacy chip adoption/quantity migration не выполняется. Own Effects persistence подключён отдельно в 8.7; equipment mechanics и remaining Sheet gaps остаются отдельными bounded tasks. Stage 8.6 не менял bundled schemas, versions и digests.
+
+### 12.7 Реализованный CTV Stage 8.7 contract — per-domain own Effects
+
+Existing `dnd.effects` / `dnd.conditions` v1 — references на Effect cards. Они не являются runtime active instances и не содержат lossless own EffectsModel payload или Rule selections. Stage 8.7 не меняет эти fields, Player/Character v1, их versions/digests или Stage 5/6 completeness. Используется уже существующий exact versioned per-page Field Set extension: optional bundled `dnd.own-effects@1`. Он не входит в automatic type closure и активируется только явно через catalog owner; этот leaf не добавляет adoption/migration или upgrade пользовательских страниц.
+
+Canonical activation evidence: activated workspace catalog содержит exact `dnd.own-effects@1`; envelope `extensions.fields` содержит `{id: 'dnd.own-effects', version: 1}`; explicit stored `values['dnd.ownEffects']` содержит все три collections:
+
+```text
+dnd.ownEffects.conditions: object[] (key, label, level, source, note)
+dnd.ownEffects.effects: object[] (id, title, sourceType, sourcePageId,
+  sourcePackageId, ruleId, duration, note, modifiers, flags)
+dnd.ownEffects.selectedRuleIds: string[]
+```
+
+Object members используют fully qualified schema keys, например `dnd.ownEffects.effects.modifiers.armorClass`. Numeric modifier maps (`abilityScores`, `abilityChecks`, `savingThrows`, `skills`) представлены reversible key/value rows, без opaque JSON или executable code. Stable row identity — existing condition key, effect id и numeric-map key; нормализация duplicates/ids/conditions/exhaustion остаётся существующей EffectsModel policy. Descriptions, notes и durations остаются data-only. Derived modifiers/flags не сохраняются.
+
+[`readOwnEffectsSource`](../../js/character/ownEffectsSource.js) — единый read boundary. Legacy envelope не требует catalog и читает `[data-character-effects]`. Valid structured Character/Player требует exact activated Registry и approved `characterProjection`: absent own state сохраняет legacy Effects domain; explicit complete empty collections означают Entity-owned empty state. Partial/malformed/noncanonical state, unsupported Field Set version/identity, invalid/future envelope или missing catalog дают `source: unavailable`, diagnostics и disabled UI без HTML fallback. `source/status/provenance` отражают owner; CharacterModel добавляет `provenance.ownEffects`.
+
+`sourcePageId`/`sourcePackageId`/`ruleId` внутри active instance сохраняют historical source metadata существующего EffectsModel, а не live Effect-card references. Удаление source page не превращает captured own instance в auto-effect. `selectedRuleIds` — existing Rule Tree rule identities, не выдуманный formal Card Type. Rule provider продолжает exact id resolution/evaluation; explicit source capture в UI проверяет exact selected page и допустимый target type через Entity API, без title/alias fallback. Этот leaf не создаёт Effect cards или новый live-reference mechanism.
+
+[`prepareStructuredEffectsChange → commitStructuredEffectsChange`](../../js/character/structuredEffects.js) принимает только own conditions/effects/selections, создаёт detached immutable plan и переиспользует Variables/PageCommand. Whole-page expectedBase, activated catalog/schema closure, workspace, single-use, durable readback и domain projection verification обязательны. No-op не пишет, но проверяет guards; blocked/failed/uncertain не выдаются за success и не запускают retry/repair. Aggregate CharacterModel/item/provider models не являются mutation payload.
+
+Existing Effects block выбирает source до legacy writer. Entity UI — runtime projection; Variables write сохраняет raw body, Properties и recovery `[data-character-effects]` без dual-write. После confirmed parent write editor base принимает durable page; обычный body autosave сохраняет новый envelope. Presentation failure не откатывает confirmed write. Absent-domain legacy editor остаётся прежним HTML owner, включая malformed legacy JSON compatibility.
+
+CharacterModel по-прежнему объединяет own Effects + eligible Inventory Item Effects + Rule Tree/integration providers. Только own state хранится в actor Variables; auto/item/rule/provider effects туда не копируются. Item Effects остаются существующим legacy domain owner; equipment gating, duration/stacking/concentration execution и новый Effects Engine не вводятся. Stage 8.7 — `DONE / Foundation`; Stage 8 `ACTIVE`, Stage 9 `BLOCKED`. Explicit legacy Effects adoption, legacy Inventory quantity migration и remaining Sheet gaps остаются отдельной работой; следующий leaf не начат.
 
 ## 13. Технический долг, который должен исчезнуть при cutover
 
@@ -482,4 +507,4 @@ Stage 8.6 — `DONE / Foundation`; Stage 8 остаётся `ACTIVE`, Stage 9 `B
 
 Открытых продуктовых вопросов нет: legacy type mapping и смысл Игрока подтверждены владельцем в разделе 9. Неразрешённые значения конкретных повреждённых/неизвестных карточек — runtime migration review, а не незавершённое проектирование. Каталог полей при реализации подключается в утверждённом объёме, без придумывания замены отсутствующим определениям.
 
-Все определимые по репозиторию базовые boundaries выбраны выше. Stages 1–6 создали architecture, Schema/Registry, Variables API, Inspector и все 15 catalog definitions (5.1, 6.1–6.4). Stage 7 реализовал explicit safe Properties migration foundation (10.1). Stage 8 теперь `ACTIVE`: Stage 8.1 закрыл structured CharacterModel read-side (12.1), Stage 8.2 добавил guarded structured-health write boundary (12.2), Stage 8.3 подключил к нему Combat 17.6 и source-aware compensating Undo (12.3), Stage 8.4 перевёл generic Campaign Map HP на тот же owner без Combat semantics (12.4), Stage 8.5 перевёл однозначные Character Sheet reads/writes level, abilities и current/temp HP (12.5), а Stage 8.6 подключил per-domain Inventory и actor membership / Item quantity writes (12.6). Остальные domain consumers/writers остаются отдельными задачами. Пользовательские workspace не мигрировались автоматически; structured hpMax/manual calculated overrides/skills/saves/Player Sheet, legacy Inventory adoption/quantity migration, Effects persistence, Compendium/AI и удаление Properties runtime не начаты.
+Все определимые по репозиторию базовые boundaries выбраны выше. Stages 1–6 создали architecture, Schema/Registry, Variables API, Inspector и все 15 catalog definitions (5.1, 6.1–6.4). Stage 7 реализовал explicit safe Properties migration foundation (10.1). Stage 8 теперь `ACTIVE`: Stage 8.1 закрыл structured CharacterModel read-side (12.1), Stage 8.2 добавил guarded structured-health write boundary (12.2), Stage 8.3 подключил к нему Combat 17.6 и source-aware compensating Undo (12.3), Stage 8.4 перевёл generic Campaign Map HP на тот же owner без Combat semantics (12.4), Stage 8.5 перевёл однозначные Character Sheet reads/writes level, abilities и current/temp HP (12.5), Stage 8.6 подключил per-domain Inventory и actor membership / Item quantity writes (12.6), Stage 8.7 добавил explicit opt-in own Effects persistence (12.7). Остальные domain consumers/writers остаются отдельными задачами. Пользовательские workspace не мигрировались автоматически; structured hpMax/manual calculated overrides/skills/saves/Player Sheet, legacy Inventory/Effects adoption/quantity migration, Effects Engine, Compendium/AI и удаление Properties runtime не начаты.

@@ -528,6 +528,10 @@ function addNamedBlock(
   import('../../ui/inventoryItemSets.js').then(({ renderInventoryItemSets }) =>
     renderInventoryItemSets(block.closest('#editorArea'))
   );
+  import('../characterEffectsBlock.js').then(async ({ prepareCharacterEffectsContext, renderCharacterEffectsBlocks }) => {
+    await prepareCharacterEffectsContext(block);
+    renderCharacterEffectsBlocks(block);
+  });
 
   saveCurrentPage();
 }

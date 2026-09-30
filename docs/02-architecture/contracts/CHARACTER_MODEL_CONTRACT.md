@@ -12,7 +12,7 @@ owner_zone: "architecture"
 
 [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
 
-CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Effects persistence is still not cut over.
+CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Stage 8.7 adds explicit opt-in own Effects persistence, preserving Item/provider owners.
 
 Дата обновления: 14.06.2026
 
@@ -241,17 +241,27 @@ Foundation поддерживает:
 - операции `addCharacterCondition`, `removeCharacterCondition`, `toggleCharacterCondition`, `addCharacterEffect`, `removeCharacterEffect`;
 - суммирование модификаторов `armorClass`, `speed`, `initiative`, `proficiencyBonus`, `abilityScores`, `abilityChecks`, `savingThrows`, `skills`;
 - флаги `isIncapacitated`, `speedIsZero`, `hasDisadvantageOnAttacks`, `attackersHaveAdvantage`, `exhaustionLevel`;
-- чтение будущего persistent JSON-источника `[data-character-effects]`.
+- source-aware чтение legacy JSON `[data-character-effects]` или explicit own Entity state.
 
 Legacy UI для эффектов существует как блок карточки `Состояния и эффекты` (`data-block-type="characterEffects"`) и остается читаемым для старых карточек. Первый уровень popup `Добавить блок` больше не должен предлагать этот специализированный блок: новый пользовательский путь идет через `Свойства`, универсальный `Блок списка`, Rule Tree и будущие режимы внутри этих базовых блоков. Расчетные подсистемы продолжают читать persistent JSON `[data-character-effects]` через `CharacterModel` / `EffectsModel`, если такой legacy-источник уже есть в карточке.
 
 ### Effects UI / Map Bridge
 
-- Блок карточки `Эффекты и состояния` хранит persistent JSON в `[data-character-effects]`.
+- При legacy Effects owner блок хранит persistent JSON в `[data-character-effects]`; Entity owner использует Variables и не переписывает recovery JSON.
 - Runtime UI блока не сохраняется как контент карточки и восстанавливается при открытии.
 - Safe HTML boundary разрешает только `script type="application/json"` с `data-character-effects`; обычные `<script>` остаются запрещенными.
 - Карта, инициатива и будущие проверки не читают `.character-effects-block` напрямую. Они обращаются к `CharacterModel` / `EffectsModel`.
 - `sourceType`, `sourcePageId`, `sourcePackageId` и `ruleId` являются мостом к инвентарю, Rule Tree и World Packages.
+
+### Own Effects source boundary — CTV Stage 8.7
+
+`readOwnEffectsSource(page, {registry, repository})` и `readEffectsModelFromPage(page, context)` выбирают owner per-domain. Legacy actor не требует catalog. Valid structured Character/Player использует exact activated Registry: absent `dnd.ownEffects` сохраняет legacy domain, а explicit complete state с exact per-page extension `dnd.own-effects@1` активирует `source: entity`, включая empty collections. Partial/malformed/future/unsupported state — unavailable без HTML fallback. CharacterModel публикует source/status/identity в `provenance.ownEffects` и domain diagnostics.
+
+Optional Field Set хранит own conditions (включая exhaustion), active effect instances с существующими source metadata/modifiers/flags и selectedRuleIds. Fully qualified nested keys и reversible numeric-map rows сохраняют existing EffectsModel payload. Historical source ids — metadata; Rule Tree selections используют existing rule ids. Immutable Player/Character v1 и reference-based `dnd.effects`/`dnd.conditions` не меняются. Нет automatic adoption/upgrade.
+
+`prepareStructuredEffectsChange` / `commitStructuredEffectsChange` сохраняют только own state через Variables/PageCommand, exact whole-page/catalog/schema/workspace guards, single-use, no-write no-op и durable domain verification. Runtime block не сериализуется; confirmed write обновляет editor base, subsequent body autosave сохраняет envelope. Recovery JSON/Properties/body не dual-write'ятся. Uncertain/presentation failure не повторяет и не откатывает write.
+
+Own + Inventory Item + Rule Tree/integration merge сохраняет existing effective AC/speed/initiative/flags. Providers и auto Item effects не становятся actor-owned persisted instances. Explicit user capture из source card сохраняет прежний контракт captured instance, при Entity owner с exact id/type validation. Item Effects persistence остаётся legacy compatibility domain. Duration/stacking/expiration/concentration engine и legacy adoption не входят в Foundation.
 
 ### Effect Sources / Auto Effects
 

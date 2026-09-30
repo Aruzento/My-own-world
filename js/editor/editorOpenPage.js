@@ -376,6 +376,8 @@ async function renderCardPage(
     editor
   );
 
+  const { prepareCharacterEffectsContext } = await import('./characterEffectsBlock.js');
+  await prepareCharacterEffectsContext(editor);
   renderCharacterEffectsBlocks(
     editor
   );

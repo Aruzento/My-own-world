@@ -18,6 +18,7 @@ import {
   hasCharacterCondition as hasEffectCondition,
   readEffectsModelFromHTML
 } from './effectsModel.js';
+import { readOwnEffectsSource } from './ownEffectsSource.js';
 
 import {
   createEffectsFromInventory,
@@ -298,10 +299,7 @@ export function readCharacterModelFromPage(
 
   const inventoryModel =
     readInventoryModelFromPage(page, { registry, repository, pages });
-  const effectsModel =
-    readEffectsModelFromHTML(
-      page?.content
-    );
+  const effectsModel = readOwnEffectsSource(page, { registry, repository, pages });
   const structured =
     createCharacterModelFromStructuredPage({
       page,
@@ -439,8 +437,8 @@ function createCharacterModelFromStructuredPage(
           combinedIntegrations
         )
     },
-    provenance: source.provenance,
-    diagnostics: source.diagnostics
+    provenance: { ...source.provenance, ownEffects: { source: effectsModel.source, status: effectsModel.status || 'legacy', ...effectsModel.provenance } },
+    diagnostics: [...source.diagnostics, ...(effectsModel.diagnostics || [])]
   });
 }
 
