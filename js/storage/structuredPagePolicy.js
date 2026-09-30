@@ -2,6 +2,7 @@ import { parsePageRecordContent, createPageStateIdentityFromContent, arePageStat
 import { canonicalJSON } from '../core/pageVariablesCodec.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
 import { createCardVariableSnapshot } from '../variables/cardVariableStore.js';
+import { OWN_EFFECTS_KEY, OWN_EFFECTS_FIELD_SET_ID } from '../character/ownEffectsDefinition.js';
 
 export function hasStructuredPageData(page) {
   return page?.variablesJson !== undefined || page?.variablesStatus?.mode && page.variablesStatus.mode !== 'legacy' ||
@@ -14,7 +15,7 @@ export function assertLegacyPortability(page, operation) {
   throw error;
 }
 
-export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, storageAdapter }) {
+export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, effectsAdoptionCommand = false, storageAdapter }) {
   if (!hasStructuredPageData(beforeContent) && !hasStructuredPageData(content)) return;
   if (!expectedBase?.stateHash) throw new Error('Structured page requires whole-page expectedBase');
   const before = parsePageRecordContent(beforeContent);
@@ -33,7 +34,20 @@ export async function validateStructuredPageWrite({ beforeContent, content, expe
   } else if (before.variablesStatus.mode !== 'structured' || after.variablesStatus.mode !== 'structured') throw new Error('Legacy conversion or invalid/future structured payload is read-only');
   if (before.id !== after.id) throw new Error('Structured page identity cannot change');
   if (!migrationCommand && before.type !== after.type) throw new Error('Structured type switching requires conversion workflow');
-  if (!variablesCommand && !migrationCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
+  if (effectsAdoptionCommand) {
+    // Explicit bounded transition, not a generic extension-edit bypass.
+    const source = before.variablesJson, target = after.variablesJson;
+    const fields = source.extensions?.fields || [];
+    const expected = { ...source, values: { ...source.values, [OWN_EFFECTS_KEY]: target.values[OWN_EFFECTS_KEY] },
+      extensions: { ...(source.extensions || {}), revision: (source.extensions?.revision || 0) + 1,
+        fields: [...fields, { id: OWN_EFFECTS_FIELD_SET_ID, version: 1 }] } };
+    if (!['character', 'player'].includes(before.type) || Object.hasOwn(source.values, OWN_EFFECTS_KEY) ||
+        fields.some(field => field.id === OWN_EFFECTS_FIELD_SET_ID) || !Object.hasOwn(target.values, OWN_EFFECTS_KEY) ||
+        canonicalJSON(expected) !== canonicalJSON(target) || before.rawBody !== after.rawBody ||
+        canonicalJSON(before.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson')) !==
+        canonicalJSON(after.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson'))) throw new Error('Invalid own Effects adoption transition');
+  }
+  if (!variablesCommand && !migrationCommand && !effectsAdoptionCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
   const { catalog, exists } = await readCardTypeCatalog({ storageAdapter });
   if (!exists) throw new Error('Structured page requires activated catalog');
   const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });

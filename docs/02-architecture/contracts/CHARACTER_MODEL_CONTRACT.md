@@ -469,3 +469,9 @@ Verified full backup, existing journal, exact source/target resume и explicit f
 4. расширить `CardVariablesModel` до зависимых и расчетных переменных, когда появится `Rule Tree`;
 5. расширить Full Character Sheet UX до редактируемого листа;
 6. подготовить интеграцию с `World Packages`.
+
+## Explicit own Effects adoption — CTV Stage 8.11
+
+Only valid activated Character/Player with absent own-effects declaration/value may explicitly adopt one proven legacy Effects block. Strict persisted evidence, never CharacterModel aggregate, becomes exact dnd.own-effects@1 + encoded dnd.ownEffects in one PageCommand. Empty is explicit; absent block skips; partial/malformed/ambiguous/richer/unsupported sources block. Captured historical source metadata stays own data; Inventory/Rule/integration contributions remain external and follow existing merge precedence without double counting.
+
+Exact immutable Field Set identity, full backup verification, operation journal, source/target resume and explicit safety-backup recovery precede adoption success. Durable own Effects + CharacterModel provenance are verified; raw body/legacy JSON and unrelated extensions/Variables stay unchanged. Active editor base advances and Effects/Sheet refreshes; normal Stage 8.7 UI edits and body autosave use the new owner. Definition/schema versions/digests do not change; automatic adoption and a new Effects Engine are not enabled. Stage 8 ACTIVE; Stage 9 BLOCKED.

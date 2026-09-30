@@ -377,3 +377,9 @@ The current API is:
 - `cleanupIncompleteWorkspaceBackups({ backupIds })` - delete only confirmed incomplete candidates.
 
 Large workspace probe results from 2026-07-14 showed that tree move/delete file writes are fast on `X:\ДНД\Мастер\База`, while full page read/parse is expensive. Tree DnD should not call full workspace reload after a successful drop.
+
+## Explicit Effects adoption recovery — CTV Stage 8.11
+
+The explicit programmatic effects-adoption operation reuses full definition-aware BackupService coverage, assets policy and verified operationJournal. Backup is verified against every affected actor source before the first atomic extension/value PageCommand. Journal stores backup id, selected actors, source/target paths/identities, exact Field Set/schema closure and per-page verification/failure checkpoints; it is not executable migration data.
+
+Resume reconstructs candidates from the verified original snapshot/catalog, accepts only exact source or domain-verified target, and rejects third states/catalog changes. It never blindly replays journal values. Recovery requires explicit confirmation and a successfully verified pre-restore safety backup through existing full restore; original body, optional extension/value state and legacy Effects owner return. Caller reloads runtime after restore; opening never auto-adopts. No new backup format, automatic rollback, cleanup or Inventory coupling.

@@ -32,7 +32,7 @@ export function readOwnEffectsSource(page, { registry, repository, pages = [] } 
       const actual = createDefinitionIdentity('fieldSet', registry.getFieldSetDefinition(OWN_EFFECTS_FIELD_SET_ID, 1));
       if (canonicalJSON(actual) !== canonicalJSON(expectedIdentity)) return unavailable('own-effects-definition-incompatible');
     }
-    if (!Object.hasOwn(snapshot.values, OWN_EFFECTS_KEY)) return legacy();
+    if (!Object.hasOwn(snapshot.values, OWN_EFFECTS_KEY)) return declared ? unavailable('own-effects-state-incomplete-or-unsupported') : legacy();
     if (!declared || stored.status !== 'value') return unavailable('own-effects-state-incomplete-or-unsupported');
     const data = decodeOwnEffects(stored.value);
     assertJSONData(data);
