@@ -392,6 +392,50 @@ test(
 );
 
 
+test('Character saving throws use six stable check keys and the existing pure proficiency policy', () => {
+  const mapping = [
+    ['strength', 'str', 'saveStr'], ['dexterity', 'dex', 'saveDex'],
+    ['constitution', 'con', 'saveCon'], ['intelligence', 'int', 'saveInt'],
+    ['wisdom', 'wis', 'saveWis'], ['charisma', 'cha', 'saveCha']
+  ];
+  for (const selected of [[], ...mapping.map(([id]) => [id]), mapping.map(([id]) => id)]) {
+    const page = structuredPage('saves', 'character', {
+      ...characterValues(), 'character.savingThrows': selected,
+      'character.skills': [{ 'character.skills.rowId': 'generic-skill', 'character.skills.name': 'Акробатика', 'character.skills.details': 'expertise +99' }]
+    }, legacyPropertiesBody({ saveStr: 99, saveDex: 99, saveStrProficient: true }));
+    const original = page.content;
+    const model = readCharacterModelFromPage(page, { registry });
+    assert.equal(model.source, 'entity');
+    assert.equal(model.proficiencyBonus, 4);
+    assert.deepEqual(Object.keys(model.calculations.checks.byKey).sort(), mapping.map(row => row[2]).sort());
+    for (const [id, ability, key] of mapping) {
+      const check = model.calculations.checks.byKey[key];
+      const proficient = selected.includes(id);
+      assert.equal(check.value, model.abilities[ability].modifier + (proficient ? model.proficiencyBonus : 0));
+      assert.equal(check.proficient, proficient);
+      assert.deepEqual(model.calculations.byKey[key], check);
+    }
+    assert.equal(model.calculations.checks.byKey.skillAcrobatics, undefined);
+    assert.equal(page.content, original);
+  }
+});
+
+test('absent savingThrows reads ability-only saves without materialization; invalid values never use Properties', () => {
+  const page = structuredPage('absent-saves', 'character', characterValues(),
+    legacyPropertiesBody({ saveStr: 99, saveStrProficient: true }));
+  const original = page.content;
+  const model = readCharacterModelFromPage(page, { registry });
+  assert.equal(model.calculations.checks.byKey.saveStr.value, -1);
+  assert.equal(model.calculations.checks.byKey.saveStr.proficient, false);
+  assert.equal(page.content, original);
+  for (const value of [['saveStr'], 'strength']) {
+    const invalid = structuredPage('invalid-saves', 'character', {
+      ...characterValues(), 'character.savingThrows': value
+    }, legacyPropertiesBody({ saveStr: 99 }));
+    assert.equal(readCharacterModelFromPage(invalid, { registry }).source, 'structured-unavailable');
+  }
+});
+
 function structuredPage(
   id,
   type,

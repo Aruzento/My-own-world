@@ -10,6 +10,7 @@ import {
 import {
   calculateDndAbilityModifier,
   calculateDndArmorClass,
+  calculateDndCheckValue,
   calculateDndProficiencyBonus
 } from '../properties/propertiesCalculationEngine.js';
 
@@ -24,6 +25,15 @@ const ABILITY_FIELDS = Object.freeze({
   int: 'intelligence',
   wis: 'wisdom',
   cha: 'charisma'
+});
+
+const SAVING_THROW_KEYS = Object.freeze({
+  strength: 'saveStr',
+  dexterity: 'saveDex',
+  constitution: 'saveCon',
+  intelligence: 'saveInt',
+  wisdom: 'saveWis',
+  charisma: 'saveCha'
 });
 
 
@@ -92,6 +102,9 @@ export function readStructuredCharacterSource(
   const movement = reader.value('dnd.movement');
   const initiative = reader.value('dnd.initiative');
   const proficiency = readProficiency(reader, type, level.value);
+  const savingThrows = type === 'character'
+    ? reader.value('character.savingThrows')
+    : null;
   const armor = readArmorClass({
     reader,
     snapshot,
@@ -141,6 +154,7 @@ export function readStructuredCharacterSource(
       type,
       level,
       proficiency,
+      savingThrows,
       abilities,
       health,
       armor,
@@ -157,6 +171,7 @@ export function readStructuredCharacterSource(
       fields: Object.freeze({
         level: level.provenance,
         proficiencyBonus: proficiency.provenance,
+        ...(savingThrows ? { savingThrows: savingThrows.provenance } : {}),
         abilities: abilities.provenance,
         health: health.provenance,
         deathSaves: deathSaves.provenance,
@@ -644,6 +659,7 @@ function createCalculationModel({
   type,
   level,
   proficiency,
+  savingThrows,
   abilities,
   health,
   armor,
@@ -707,6 +723,28 @@ function createCalculationModel({
     )
   };
 
+  const checks = Object.freeze(Object.fromEntries(
+    type === 'character' ? Object.entries(ABILITY_FIELDS).map(([ability, id]) => {
+      const key = SAVING_THROW_KEYS[id];
+      const proficient = savingThrows?.value?.includes(id) === true;
+      const modifier = abilityModifiers[ability].value;
+      return [key, Object.freeze({
+        ...calculation(
+          key,
+          calculateDndCheckValue({
+            abilityModifier: modifier, proficient, proficiencyBonus: proficiency.value
+          }),
+          `${ability}Modifier + ${proficient ? 'proficiencyBonus' : '0'}`,
+          [calculationPart('Характеристика', modifier),
+            calculationPart('Владение', proficient ? proficiency.value : 0)],
+          'entity'
+        ),
+        proficient,
+        proficiencyLevel: proficient ? 1 : 0
+      })];
+    }) : []
+  ));
+
   return Object.freeze({
     kind: 'PropertiesCalculationModel',
     version: 1,
@@ -717,11 +755,12 @@ function createCalculationModel({
     checks: Object.freeze({
       key: 'checks',
       label: 'Навыки и спасброски',
-      byKey: {}
+      byKey: checks
     }),
     byKey: Object.freeze(Object.fromEntries([
       ...Object.values(entries),
-      ...Object.values(abilityModifiers)
+      ...Object.values(abilityModifiers),
+      ...Object.values(checks)
     ].map(entry => [entry.key, entry])))
   });
 }

@@ -18,6 +18,8 @@ import {
   getCharacterHealth,
   readCharacterModelFromPage
 } from '../js/character/characterModel.js';
+import { encodeOwnEffects, OWN_EFFECTS_KEY } from '../js/character/ownEffectsDefinition.js';
+import { createSerializableEffectsData } from '../js/character/effectsModel.js';
 
 import {
   buildPageRecordContent,
@@ -574,11 +576,120 @@ test(
 );
 
 
+test('maximum request preserves the complete health object, body and unrelated values with durable model verification', async t => {
+  for (const [type, siblings] of [
+    ['character', { 'character.health.formula': '2d8', 'character.health.hitDice': '2d8' }],
+    ['player', { 'player.health.hitDice': [{
+      'player.health.hitDice.rowId': 'maximum-die', 'player.health.hitDice.die': 'd10',
+      'player.health.hitDice.current': 1, 'player.health.hitDice.maximum': 2
+    }], 'player.health.criticalThreshold': 19 }]
+  ]) {
+    await t.test(type, async () => {
+      const fixture = await structuredFixture({ type, storedHealth: { ...health(8, 20, 3), ...siblings } });
+      const original = parsePageRecordContent(fixture.page.content);
+      for (const max of [30, 8]) {
+        const plan = prepare(fixture, { type: 'maximum', hpMax: max });
+        assert.deepEqual(plan.after, { current: 8, max, temp: 3 });
+        assert.deepEqual(plan.changedFields.map(change => change.field), ['dnd.hpMax']);
+        const result = await commitStructuredCharacterHealthChange(plan);
+        assert.equal(result.status, 'saved', JSON.stringify(result));
+        const durable = parsePageRecordContent(await fixture.adapter.readText(fixture.page.path));
+        assert.deepEqual(durable.variablesJson.values['dnd.health'], { ...health(8, max, 3), ...siblings });
+        assert.equal(durable.rawBody, original.rawBody);
+        assert.deepEqual(durable.variablesJson.inactive, original.variablesJson.inactive);
+        assert.deepEqual(readCharacterModelFromPage(fixture.page, { registry }).health,
+          { current: 8, max, temp: 3, percent: 8 / max, isDown: false });
+        assert.equal((await commitStructuredCharacterHealthChange(plan)).status, 'blocked');
+      }
+      let writes = 0;
+      fixture.adapter.writeText = async () => { writes += 1; };
+      assert.equal((await commitStructuredCharacterHealthChange(
+        prepare(fixture, { type: 'maximum', hpMax: 8 })
+      )).status, 'unchanged');
+      assert.equal(writes, 0);
+    });
+  }
+});
+
+test('maximum preserves active own Effects extension, Inventory, recovery and metadata alongside health', async () => {
+  const fixture = await structuredFixture({
+    storedHealth: { ...health(8, 20, 3), 'character.health.formula': '2d8' },
+    values: {
+      [OWN_EFFECTS_KEY]: encodeOwnEffects(createSerializableEffectsData({
+        conditions: ['poisoned'], selectedRuleIds: ['selected-rule'],
+        effects: [{ id: 'own-effect', modifiers: { savingThrows: { str: 99 } } }]
+      })),
+      'dnd.items': [], 'dnd.equippedItems': [], 'character.category': 'npc'
+    },
+    extensions: { revision: 1, fields: [{ id: 'dnd.own-effects', version: 1 }] },
+    inactive: [{ key: 'hpMax', raw: 'legacy recovery max' }]
+  });
+  const original = parsePageRecordContent(fixture.page.content);
+  const result = await commitStructuredCharacterHealthChange(prepare(fixture, { type: 'maximum', hpMax: 30 }));
+  assert.equal(result.status, 'saved', JSON.stringify(result));
+  const after = parsePageRecordContent(await fixture.adapter.readText(fixture.page.path));
+  const expected = structuredClone(original.variablesJson);
+  expected.values['dnd.health']['dnd.hpMax'] = 30;
+  assert.deepEqual(after.variablesJson, expected);
+  assert.deepEqual(after.tags, original.tags);
+  assert.equal(after.rawBody, original.rawBody);
+  assert.equal(readCharacterModelFromPage(fixture.page, { registry }).calculations.checks.byKey.saveStr.value, 0);
+});
+
+test('maximum rejects unsafe requests and below-current max without clamping or writing', async () => {
+  const fixture = await structuredFixture({ storedHealth: health(8, 20, 3) });
+  for (const hpMax of [0, -1, 1.5, '30', NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    assertHealthError(() => prepare(fixture, { type: 'maximum', hpMax }),
+      STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.INVALID_REQUEST);
+  }
+  assertHealthError(() => prepare(fixture, { type: 'maximum', hpMax: 7 }),
+    STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.INVALID_HEALTH_STATE);
+  assertHealthError(() => prepare(fixture, { type: 'exact', hpCurrent: 8, hpTemp: 3, hpMax: 30 }),
+    STRUCTURED_CHARACTER_HEALTH_ERROR_CODES.INVALID_REQUEST);
+  assert.equal(await fixture.adapter.readText(fixture.page.path), fixture.originalContent);
+});
+
+test('maximum inherits Variables stale/workspace/closure/durable failure guards without retry', async t => {
+  for (const scenario of ['stale', 'workspace', 'catalog', 'missing', 'moved', 'write', 'readback']) {
+    await t.test(scenario, async () => {
+      const fixture = await structuredFixture({ storedHealth: health(8, 20, 3) });
+      const plan = prepare(fixture, { type: 'maximum', hpMax: 30 });
+      const write = fixture.adapter.writeText.bind(fixture.adapter);
+      if (scenario === 'stale') {
+        await write(fixture.page.path, updatePageRecordContent(fixture.page.content, { body: '<p>external edit</p>' }));
+      } else if (scenario === 'workspace') {
+        setStorageAdapter(createMemoryStorageAdapter());
+      } else if (scenario === 'catalog') {
+        const changed = structuredClone(catalog);
+        changed.types.find(definition => definition.id === 'character').label = 'Changed closure';
+        await write(CARD_TYPE_CATALOG_PATH, serializeCardTypeCatalog(changed));
+      } else if (scenario === 'missing' || scenario === 'moved') {
+        await fixture.adapter.removeFile(fixture.page.path);
+        if (scenario === 'moved') await write('/pages/moved.md', fixture.originalContent);
+      } else {
+        fixture.adapter.writeText = async (path, content) => {
+          if (path !== fixture.page.path) return write(path, content);
+          if (scenario === 'write') throw new Error('injected failure');
+          const envelope = structuredClone(parsePageRecordContent(content).variablesJson);
+          envelope.values['dnd.health']['dnd.hpMax'] = 25;
+          return write(path, updatePageRecordContent(content, { variablesJson: envelope }));
+        };
+      }
+      const result = await commitStructuredCharacterHealthChange(plan);
+      assert.notEqual(result.status, 'saved', JSON.stringify(result));
+      assert.ok(result.code);
+      if (scenario === 'readback') assert.equal(result.status, 'uncertain');
+      assert.equal((await commitStructuredCharacterHealthChange(plan)).status, 'blocked');
+    });
+  }
+});
+
 async function structuredFixture({
   type = 'character',
   storedHealth = health(10, 20, 0),
   values = {},
-  inactive = []
+  inactive = [],
+  extensions = undefined
 } = {}) {
   const base =
     await createEditConflictFixture({
@@ -609,7 +720,8 @@ async function structuredFixture({
       schemaDigest: definition.digest,
       values: structuredValues,
       overrides: {},
-      inactive
+      inactive,
+      ...(extensions ? { extensions } : {})
     },
     now: '2026-09-27T00:00:00Z'
   });

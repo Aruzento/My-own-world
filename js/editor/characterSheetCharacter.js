@@ -138,7 +138,7 @@ export function prepareStructuredCharacterSheetChange({
   let after;
   let targetKey;
 
-  if (field === 'hpCurrent' || field === 'hpTemp') {
+  if (field === 'hpCurrent' || field === 'hpTemp' || field === 'hpMax') {
     const inspection = inspectStructuredCharacterHealthSource({
       pageId: page.id,
       expectedBase,
@@ -147,15 +147,17 @@ export function prepareStructuredCharacterSheetChange({
     before = inspection.health;
     after = {
       current: field === 'hpCurrent' ? normalized : before.current,
-      max: before.max,
+      max: field === 'hpMax' ? normalized : before.max,
       temp: field === 'hpTemp' ? normalized : before.temp
     };
-    underlying = before.current === after.current && before.temp === after.temp
+    underlying = sameValue(before, after)
       ? null
       : prepareStructuredCharacterHealthChange({
         pageId: page.id,
         expectedBase,
-        request: { type: 'exact', hpCurrent: after.current, hpTemp: after.temp },
+        request: field === 'hpMax'
+          ? { type: 'maximum', hpMax: after.max }
+          : { type: 'exact', hpCurrent: after.current, hpTemp: after.temp },
         context: structuredContext(context, pages)
       });
     targetKey = 'dnd.health';
@@ -255,7 +257,7 @@ export async function commitStructuredCharacterSheetChange(plan) {
     }
     const actual = projectedValue(source.model, captured.field);
     const expected = plan.targetKey === 'dnd.health'
-      ? (captured.field === 'hpCurrent' ? plan.after.current : plan.after.temp)
+      ? projectedValue({ health: plan.after }, captured.field)
       : captured.field === 'level'
         ? plan.after
         : plan.after[ABILITY_FIELDS[captured.field]];
@@ -309,6 +311,7 @@ function projectedValue(model, field) {
   if (Object.hasOwn(ABILITY_FIELDS, field)) return model.abilities?.[field]?.score;
   if (field === 'hpCurrent') return model.health?.current;
   if (field === 'hpTemp') return model.health?.temp;
+  if (field === 'hpMax') return model.health?.max;
   return undefined;
 }
 

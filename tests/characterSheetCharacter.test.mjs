@@ -343,6 +343,30 @@ test('structured Sheet delegates level range semantics to the active schema', as
 });
 
 
+test('Sheet maximum edit delegates to the canonical health owner, including no-op and below-current rejection', async () => {
+  const base = await fixture();
+  const context = await prepareCharacterSheetContext({ page: base.page, pages: [base.page] });
+  const request = value => prepareStructuredCharacterSheetChange({
+    page: base.page, field: 'hpMax', value,
+    expectedBase: createPageStateIdentityFromContent(base.page.content),
+    pages: [base.page], context
+  });
+  const originalBody = parsePageRecordContent(base.page.content).rawBody;
+  const saved = await commitStructuredCharacterSheetChange(request('30'));
+  assert.equal(saved.status, 'saved', JSON.stringify(saved));
+  assert.equal(saved.verification.value, 30);
+  const durable = await base.adapter.readText(base.page.path);
+  assert.equal(parsePageRecordContent(durable).rawBody, originalBody);
+  assert.deepEqual(parsePageRecordContent(durable).variablesJson.values['dnd.health'], {
+    'dnd.hpCurrent': 8, 'dnd.hpMax': 30, 'dnd.hpTemporary': 2,
+    'character.health.formula': '5d8 + 10', 'character.health.hitDice': '5d8'
+  });
+  assert.throws(() => request('7'), error => error.reason === 'max-below-current');
+  for (const value of ['', '1.5', 'x', '0', '-1']) assert.throws(() => request(value));
+  assert.equal((await commitStructuredCharacterSheetChange(request('30'))).status, 'unchanged');
+  assert.equal(await base.adapter.readText(base.page.path), durable);
+});
+
 async function fixture() {
   const base = await createEditConflictFixture({
     id: 'structured-sheet', type: 'character', body: propertiesBody

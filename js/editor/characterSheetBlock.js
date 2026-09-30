@@ -340,9 +340,8 @@ function createCharacterSheetHTML(
             ${createEditableMetricHTML({
               label: 'Максимум',
               value: health.max,
-              field: structured ? '' : 'hpMax',
-              editable: !structured,
-              readOnlyReason: structured ? 'Maximum HP является guard и пока не редактируется в structured Sheet.' : ''
+              field: 'hpMax',
+              editable: true
             })}
             ${createReadOnlyMetricHTML('Кость хитов', getPropertyDisplayValue(properties, 'hitDie') || 'd?')}
             ${structured ? createReadOnlyDeathSavesHTML() : createDeathSavesHTML(model)}
@@ -383,7 +382,7 @@ function createCharacterSheetHTML(
               key,
               model.abilities[key],
               properties,
-              { structured }
+              { structured, checks: model.calculations?.checks?.byKey }
             )
           ).join('')}
         </section>
@@ -491,7 +490,7 @@ function createAbilityHTML(
   key,
   ability,
   properties,
-  { structured = false } = {}
+  { structured = false, checks = {} } = {}
 ) {
 
   return `
@@ -515,7 +514,7 @@ function createAbilityHTML(
           key,
           properties,
           ability,
-          { structured }
+          { structured, checks }
         )}
       </div>
     </article>
@@ -527,7 +526,7 @@ function createSkillRowsHTML(
   abilityKey,
   properties,
   ability,
-  { structured = false } = {}
+  { structured = false, checks = {} } = {}
 ) {
 
   return (
@@ -536,15 +535,16 @@ function createSkillRowsHTML(
     .map(skill => {
 
       const value = structured
-        ? '—'
+        ? (checks[skill.key]?.value ?? '—')
         : getNumericPropertyValue(
           properties,
           skill.key,
           ability.modifier
         );
 
-      const proficient =
-        !structured && Boolean(
+      const proficient = structured
+        ? checks[skill.key]?.proficient === true
+        : Boolean(
           getPropertyValue(
             properties,
             `${skill.key}Proficient`,
@@ -553,9 +553,9 @@ function createSkillRowsHTML(
         );
 
       return `
-        <div class="character-sheet-skill">
+        <div class="character-sheet-skill${structured ? ' character-sheet-readonly' : ''}" data-character-sheet-check="${escapeAttribute(skill.key)}"${structured ? ` title="${checks[skill.key] ? 'Спасбросок: calculated read-only.' : 'Стандартный навык пока не имеет approved structured owner.'}"` : ''}>
           <span class="character-sheet-skill-dot ${proficient ? 'is-active' : ''}"></span>
-          <strong>${formatSigned(value)}</strong>
+          <strong>${value === '—' ? value : formatSigned(value)}</strong>
           <span>${escapeHTML(skill.label)}</span>
         </div>
       `;

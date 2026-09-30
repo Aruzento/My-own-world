@@ -44,7 +44,8 @@ export const STRUCTURED_CHARACTER_HEALTH_PLAN_VERSION =
 export const STRUCTURED_CHARACTER_HEALTH_REQUEST_TYPES =
   Object.freeze({
     DELTA: 'delta',
-    EXACT: 'exact'
+    EXACT: 'exact',
+    MAXIMUM: 'maximum'
   });
 
 export const STRUCTURED_CHARACTER_HEALTH_ERROR_CODES =
@@ -182,11 +183,14 @@ export function prepareStructuredCharacterHealthChange({
     after.current;
   nextStoredHealth[HEALTH_FIELDS.temp] =
     after.temp;
+  nextStoredHealth[HEALTH_FIELDS.max] =
+    after.max;
 
   const changedFields =
     [
       ['current', HEALTH_FIELDS.current],
-      ['temp', HEALTH_FIELDS.temp]
+      ['temp', HEALTH_FIELDS.temp],
+      ['max', HEALTH_FIELDS.max]
     ]
       .filter(([property]) =>
         before[property] !== after[property]
@@ -749,6 +753,13 @@ function resolveAfterHealth({
     };
   }
 
+  if (request.type === STRUCTURED_CHARACTER_HEALTH_REQUEST_TYPES.MAXIMUM) {
+    if (request.hpMax < before.current) {
+      throw invalidHealth(pageId, HEALTH_FIELDS.max, 'max-below-current');
+    }
+    return { current: before.current, max: request.hpMax, temp: before.temp };
+  }
+
   if (request.hpCurrent > before.max) {
     throw invalidHealth(
       pageId,
@@ -783,7 +794,9 @@ function normalizeRequest(
       ? new Set(['type', 'delta'])
       : type === STRUCTURED_CHARACTER_HEALTH_REQUEST_TYPES.EXACT
         ? new Set(['type', 'hpCurrent', 'hpTemp'])
-        : null;
+        : type === STRUCTURED_CHARACTER_HEALTH_REQUEST_TYPES.MAXIMUM
+          ? new Set(['type', 'hpMax'])
+          : null;
 
   if (!allowed) {
     throw invalidRequest(
@@ -818,6 +831,13 @@ function normalizeRequest(
       type,
       delta: request.delta
     });
+  }
+
+  if (type === STRUCTURED_CHARACTER_HEALTH_REQUEST_TYPES.MAXIMUM) {
+    if (!Number.isSafeInteger(request.hpMax) || request.hpMax <= 0) {
+      throw invalidRequest(pageId, 'maximum-value-invalid', 'hpMax');
+    }
+    return deepFreeze({ type, hpMax: request.hpMax });
   }
 
   for (const field of ['hpCurrent', 'hpTemp']) {

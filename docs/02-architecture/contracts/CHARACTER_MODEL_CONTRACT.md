@@ -12,7 +12,7 @@ owner_zone: "architecture"
 
 [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) supersedes the future Properties-owned Entity Variables and sheet-write targets below. CharacterModel remains a normalized game projection. CTV Stage 8.1 implements deterministic source selection: a page without `variablesJson` keeps the existing Properties/legacy reader; a valid structured Player/Character with `characterProjection` capability reads gameplay fields through Variables / Entity API; any present malformed/future/unsupported envelope is diagnostic and never falls back to Properties. Inventory, Effects and integration providers retain their current owners. Combat/Map/Character Sheet writers are not cut over by this leaf. Preserve behavior without a second HP owner, and do not convert every card into CharacterModel.
 
-CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Stage 8.7 adds explicit opt-in own Effects persistence, preserving Item/provider owners.
+CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Character/Player HP domain-write boundary. Preparation requires explicit stored `dnd.health`, exact whole-page identity and activated schema closure; defaults, Properties and inactive evidence are never writable proof. The boundary preserves every nested health sibling, delegates persistence to the Variables/PageCommand pipeline and verifies durable output through a newly read Stage 8.1 CharacterModel. Stage 8.3 wires Combat to it; Stage 8.4 wires generic Campaign Map HP through a separate Map orchestration boundary. Stage 8.5 wires the Character Sheet only for exact structured Character level, ability scores and current/temp HP. Stage 8.6 connects per-domain Inventory reads/writes; Stage 8.7 adds explicit opt-in own Effects persistence, preserving Item/provider owners. Stage 8.8 adds maximum HP editing through the same health boundary and read-only Character saving throw calculation projection; unsupported Sheet concepts retain explicit read-only gaps.
 
 Дата обновления: 14.06.2026
 
@@ -50,7 +50,7 @@ CTV Stage 8.2 adds `structuredCharacterHealth.js` as the only structured Charact
 - `js/editor/campaignMapHealth.js` - сохранённый legacy Properties/DnD health reader/writer; structured card через него не проходит.
 - `js/editor/campaignMapCharacterBridge.js` - source-aware мост карты к `CharacterModel`, bounded lifecycle context и derived token projection.
 - `js/editor/campaignMapCharacterHealth.js` - source-aware Map HP orchestration: legacy PageCommand либо Stage 8.2 Variables command; token snapshot публикуется только после confirmed Character write.
-- `js/editor/characterSheetCharacter.js` - bounded Sheet source/mutation boundary: catalog-independent legacy Properties path, exact activated Registry for structured Character, Variables level/abilities and Stage 8.2 current/temp HP.
+- `js/editor/characterSheetCharacter.js` - bounded Sheet source/mutation boundary: catalog-independent legacy Properties path, exact activated Registry for structured Character, Variables level/abilities and canonical health current/temp/maximum HP commands.
 
 ## Public API
 
@@ -196,13 +196,14 @@ calculateDndCheckValue(options)
 14. Персональный выбор правил для конкретной карточки персонажа хранится в persistent JSON блока `Эффекты и состояния` как `selectedRuleIds`. `CharacterModel` объединяет эти ids с глобальными активными правилами Rule Tree.
 15. `model.calculations` является backend-объяснением расчетов. UI может показывать формулу и части расчета из него, но не должен записывать изменения напрямую в этот объект.
 16. Structured HP mutation разрешена только для exact valid `character`/`player` с `characterProjection` и явно stored complete `dnd.health`; schema defaults и presentation fallback не являются write source.
-17. Structured health plan меняет только current/temp, использует max как guard и сохраняет весь остальной `dnd.health` object. Он одноразовый, data-only и всегда проходит через Variables/PageCommand whole-page guards.
+17. Structured health `delta/exact` меняет только current/temp и использует max как guard. Stage 8.8 добавляет отдельный `maximum` request: только safe-integer max > 0 и >= current, без clamp current; равный max — no-op. Полный `dnd.health` object и все siblings сохраняются. Plan одноразовый, data-only и всегда проходит через Variables/PageCommand whole-page guards.
 18. Successful Variables commit подтверждается durable reread и повторной CharacterModel projection. Properties body не dual-write'ится.
 19. Campaign Map Stage 8.4 читает structured Character/Player только с exact activated workspace Registry. Legacy-only map catalog-independent; invalid structured source не fallback'ится и не materialize'ит DnD block.
 20. Map `delta/restore/kill/temp` переводится в Stage 8.2 `delta/exact`. Character page пишется максимум один раз, затем все linked token snapshots reread'ятся через CharacterModel. Map save сохраняет только derived cache и не пишет HP обратно.
 21. Character Sheet Stage 8.5 определяет source до Properties access. Valid structured `character` читает только Entity-backed CharacterModel; malformed/future/missing-catalog structured source unavailable и никогда не fallback'ится. Отдельный `player` Sheet не активируется.
-22. Structured Sheet пишет `dnd.level` и один nested ability score через Variables, сохраняя весь abilities object; current/temp HP пишет только Stage 8.2 exact command. Confirmed durable page становится новым editor expected base до следующего body autosave.
-23. Structured hpMax, effective AC/initiative/speed, death saves, skills/saves и manual calculated overrides остаются read-only/unavailable до отдельных approved contracts. Preserved Properties не читаются, не dual-write'ятся и не очищаются.
+22. Structured Sheet пишет `dnd.level` и один nested ability score через Variables, сохраняя весь abilities object; current/temp HP пишет только health exact command, max — отдельным health maximum command. Confirmed durable page становится новым editor expected base до следующего body autosave.
+23. Effective AC/initiative/speed, Character death saves, standard skills и manual calculated overrides остаются read-only/unavailable до отдельных approved contracts. Preserved Properties не читаются, не dual-write'ятся и не очищаются.
+24. Structured Character saving throws читаются из `character.savingThrows`: strength/dexterity/constitution/intelligence/wisdom/charisma → saveStr/saveDex/saveCon/saveInt/saveWis/saveCha. `calculations.checks.byKey` и `calculations.byKey` содержат pure ability modifier + proficiency bonus при membership; proficiency read-only. Absent list не материализуется, invalid source не fallback'ится. Generic `character.skills` не является стандартным D&D skill owner.
 
 
 ## Inventory source boundary — CTV Stage 8.6
@@ -365,12 +366,12 @@ Legacy MVP:
 7. death saves редактируются как contiguous DnD-трек: выбранная третья точка означает значение `3`, снятая вторая точка означает значение `1`;
 8. старые `Стат. блок DnD` и `Состояния и эффекты` остаются fallback-источниками.
 
-Structured Character foundation (CTV Stage 8.5):
+Structured Character foundation (CTV Stages 8.5 / 8.8):
 
 1. exact activated workspace Registry обязателен; bundled fallback запрещён;
-2. level, six ability scores, current HP и temporary HP являются editable approved owners;
-3. current/temp HP используют Stage 8.2 explicit stored-health boundary; hpMax остаётся read-only guard;
-4. effective AC, initiative, speed, death saves, skills/saves и legacy manual overrides read-only/unavailable;
+2. level, six ability scores, current/max/temporary HP являются editable approved owners;
+3. current/temp HP используют explicit stored-health exact command; maximum использует тот же boundary через `maximum`, сохраняет current/temp/siblings и блокирует max < current;
+4. saving throws показывают calculated number/proficiency из CharacterModel, read-only; effective AC, initiative, speed, Character death saves, standard skills и legacy manual overrides read-only/unavailable;
 5. Properties body не является fallback или write target; после durable command Sheet rereads CharacterModel и advances editor whole-page base;
 6. Inventory/Effects продолжают отображаться через CharacterModel, но их persistence этим leaf не меняется.
 

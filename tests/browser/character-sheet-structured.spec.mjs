@@ -45,6 +45,7 @@ test('structured Character Sheet edits approved fields without Properties dual-w
         formatVersion: 1, schemaVersion: 1, schemaDigest: definition.digest,
         values: {
           'dnd.level': 5,
+          'character.savingThrows': ['strength', 'wisdom'],
           'character.category': 'npc',
           'character.abilities': {
             'character.abilities.strength': 16,
@@ -96,18 +97,37 @@ test('structured Character Sheet edits approved fields without Properties dual-w
   await expect(sheet.locator('[data-character-sheet-field="hpCurrent"]')).toHaveValue('8');
   await expect(sheet.locator('[data-character-sheet-field="hpTemp"]')).toHaveValue('2');
 
-  const readonlyLabels = ['Максимум', 'Класс защиты', 'Инициатива', 'Скорость'];
+  const maximum = sheet.locator('[data-character-sheet-field="hpMax"]');
+  await expect(maximum).toBeEnabled();
+  const beforeRejected = await page.evaluate(() => window.__stage85.adapter.readText(window.__stage85.record.path));
+  await maximum.fill('7');
+  await maximum.press('Tab');
+  await expect(maximum).toHaveValue('20');
+  expect(await page.evaluate(() => window.__stage85.adapter.readText(window.__stage85.record.path))).toBe(beforeRejected);
+
+  for (const [key, expected, proficient] of [
+    ['saveStr', '+6', true], ['saveDex', '+2', false], ['saveCon', '+1', false],
+    ['saveInt', '+0', false], ['saveWis', '+3', true], ['saveCha', '+0', false]
+  ]) {
+    const row = sheet.locator(`[data-character-sheet-check="${key}"]`);
+    await expect(row.locator('strong')).toHaveText(expected);
+    await expect(row.locator('.is-active')).toHaveCount(proficient ? 1 : 0);
+  }
+  const readonlyLabels = ['Класс защиты', 'Инициатива', 'Скорость'];
   for (const label of readonlyLabels) {
     await expect(sheet.locator('label').filter({ hasText: label }).locator('input')).toBeDisabled();
   }
   await expect(sheet.locator('[data-character-sheet-death-field]')).toHaveCount(0);
   await expect(sheet.locator('[data-character-sheet-clear-override]')).toHaveCount(0);
+  await expect(sheet.locator('[data-character-sheet-check="skillAcrobatics"] strong')).toHaveText('—');
+  await expect(sheet.locator('[data-character-sheet-check="skillAcrobatics"]')).toHaveClass(/character-sheet-readonly/);
 
   for (const [selector, value] of [
     ['[data-character-sheet-field="level"]', '21'],
     ['[data-character-sheet-field="str"]', '18'],
     ['[data-character-sheet-field="hpCurrent"]', '7'],
-    ['[data-character-sheet-field="hpTemp"]', '4']
+    ['[data-character-sheet-field="hpTemp"]', '4'],
+    ['[data-character-sheet-field="hpMax"]', '30']
   ]) {
     const input = sheet.locator(selector);
     await input.fill(value);
@@ -123,9 +143,10 @@ test('structured Character Sheet edits approved fields without Properties dual-w
       level: values['dnd.level'],
       strength: values['character.abilities']['character.abilities.strength'],
       current: values['dnd.health']['dnd.hpCurrent'],
+      max: values['dnd.health']['dnd.hpMax'],
       temp: values['dnd.health']['dnd.hpTemporary']
     };
-  })).toEqual({ level: 21, strength: 18, current: 7, temp: 4 });
+  })).toEqual({ level: 21, strength: 18, current: 7, max: 30, temp: 4 });
 
   const body = page.locator('#editorArea [data-persistent-editable="true"]');
   await body.evaluate(node => {
@@ -176,12 +197,18 @@ test('structured Character Sheet edits approved fields without Properties dual-w
   expect(persisted.values['character.abilities']['character.abilities.strength']).toBe(18);
   expect(persisted.values['dnd.health']['dnd.hpCurrent']).toBe(7);
   expect(persisted.values['dnd.health']['dnd.hpTemporary']).toBe(4);
+  expect(persisted.values['dnd.health']['dnd.hpMax']).toBe(30);
+  expect(persisted.values['dnd.health']['character.health.formula']).toBe('5d8 + 10');
+  expect(persisted.values['dnd.health']['character.health.hitDice']).toBe('5d8');
   expect(persisted.properties.level).toBe('99');
   expect(persisted.properties.str).toBe('3');
   expect(persisted.properties.hpCurrent).toBe('99');
+  expect(persisted.properties.hpMax).toBe('99');
   expect(persisted.properties['override-speed']).toBe('88');
   expect(persisted.mapHealth.current).toBe(7);
   expect(persisted.combatHealth.current).toBe(7);
+  expect(persisted.mapHealth.max).toBe(30);
+  expect(persisted.combatHealth.max).toBe(30);
 
   await page.evaluate(async durable => {
     const { createRuntimePageFromContent, parsePageRecordContent } = await import('/js/core/pageRecord.js');
@@ -206,6 +233,8 @@ test('structured Character Sheet edits approved fields without Properties dual-w
   await expect(sheet.locator('[data-character-sheet-field="str"]')).toHaveValue('18');
   await expect(sheet.locator('[data-character-sheet-field="hpCurrent"]')).toHaveValue('7');
   await expect(sheet.locator('[data-character-sheet-field="hpTemp"]')).toHaveValue('4');
+  await expect(sheet.locator('[data-character-sheet-field="hpMax"]')).toHaveValue('30');
+  await expect(sheet.locator('[data-character-sheet-check="saveStr"] strong')).toHaveText('+10');
 });
 
 
