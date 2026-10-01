@@ -100,6 +100,9 @@ test('explicit migration preview, backup, guarded commit, reload, Inspector, ski
     const editor = document.getElementById('editorArea'); editor.innerHTML = hero.body;
     captureEditorPageBase(hero, hero.content);
     await renderUniversalCardInspector(hero, { registry, editor, workspaceContext: captureStorageWorkspaceContext() });
+    const { getUniversalCardInspectorState } = await import('/js/ui/cardInspector/universalCardInspector.js');
+    const healthSection = getUniversalCardInspectorState().sections.find(section => section.fields.some(field => field.key === 'dnd.health'));
+    document.getElementById(`inspector-tab-${healthSection.id}`)?.click();
     const input = document.querySelector('[data-field-key="dnd.health"] input[type="number"]');
     const value = input?.value;
     const preview = await previewLegacyPropertiesMigration();

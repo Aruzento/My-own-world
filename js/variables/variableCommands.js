@@ -7,14 +7,16 @@ import { validateEntityValues, hasValue } from '../schema/cardVariablesSchema.js
 import { persistPageContentCommand, snapshotPageForCommand } from '../storage/pageCommandService.js';
 import { captureStorageWorkspaceContext, assertStorageWorkspaceContext } from '../storage/storageAdapter.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
+import { applyEntityBindingPatch, readEntityBinding } from './entityBindings.js';
 
 // Контекст/adapter не замораживаются вместе с plan; наружу выходит только data.
 const plans = new WeakMap();
 
-export function prepareVariablesChange({ pageId, expectedBase, patch, context = {}, preserveUnchangedMetadata = false }) {
+export function prepareVariablesChange({ pageId, expectedBase, patch, bindingsPatch = [], context = {}, preserveUnchangedMetadata = false }) {
   if (!expectedBase?.stateHash) throw new Error('Variables change requires whole-page expectedBase');
   assertJSONData(patch);
-  if (!Array.isArray(patch) || !patch.length) throw new Error('Non-empty data patch required');
+  assertJSONData(bindingsPatch);
+  if (!Array.isArray(patch) || !Array.isArray(bindingsPatch) || !patch.length && !bindingsPatch.length) throw new Error('Non-empty data patch required');
   const repository = context.repository || PageRepository;
   const page = repository.getPageById(pageId);
   const before = createCardVariableSnapshot(page, context.registry);
@@ -27,15 +29,16 @@ export function prepareVariablesChange({ pageId, expectedBase, patch, context = 
   if (!validation.ok) { const error = new Error('Variable candidate validation failed'); error.issues = validation.issues; throw error; }
   // Explicit migration candidates retain metadata for deterministic preview and
   // crash/resume identities. Ordinary interactive commands still advance time.
-  const candidateContent = updatePageRecordContent(before.content, { variablesJson: envelope },
-    preserveUnchangedMetadata ? { preserveUnchangedMetadata: true, updateTimestamp: false } : {});
+  const candidateContent = applyEntityBindingPatch(before, patch.length ? updatePageRecordContent(before.content, { variablesJson: envelope },
+    preserveUnchangedMetadata ? { preserveUnchangedMetadata: true, updateTimestamp: false } : {}) : before.content, bindingsPatch);
   const after = createCardVariableSnapshot({ ...page, content: candidateContent }, context.registry);
   const plan = deepFreeze(deepCloneData({ pageId, expectedBase, sourceIdentity: before.pageIdentity,
     schema: { type: before.type, version: before.schemaVersion, digest: before.schemaDigest },
-    before, after, changedKeys, candidateContent,
+    before, after, changedKeys, bindingsPatch,
+    boundValues: Object.fromEntries(bindingsPatch.map(operation => [operation.key, readEntityBinding(after, before.definition.fieldsByKey[operation.key])])), candidateContent,
     guards: { wholePage: true, schemaClosure: true, workspace: true, rebase: false }, diagnostics: validation.issues }));
   if (!page.path) throw new Error('Variables commit requires a durable workspace page path');
-  plans.set(plan, { workspace, repository, path: page.path, used: false });
+  plans.set(plan, { workspace, repository, registry: context.registry, path: page.path, used: false });
   return plan;
 }
 
@@ -98,6 +101,17 @@ export async function commitVariablesChange(plan, { validateBeforeWrite = null }
   try {
     assertStorageWorkspaceContext(captured.workspace);
     if (!page || page.path !== captured.path) throw new Error('Missing or moved page');
+    if (plan.candidateContent === plan.before.content) {
+      await validateBeforeWrite?.();
+      assertStorageWorkspaceContext(captured.workspace);
+      if (await captured.workspace.adapter.readText(captured.path) !== plan.before.content) throw new Error('Stale no-op base');
+      const current = await readCardTypeCatalog({ storageAdapter: captured.workspace.adapter });
+      const registry = createCardTypeRegistryFromCatalog(current.catalog, { bundledTypes: [], bundledFieldSets: [] });
+      const snapshot = createCardVariableSnapshot(page, registry);
+      assertStorageWorkspaceContext(captured.workspace);
+      if (!current.exists || canonicalJSON(snapshot.definition) !== canonicalJSON(plan.before.definition)) throw new Error('Schema closure changed');
+      return { status: 'unchanged', written: false };
+    }
   } catch (error) {
     return { status: 'blocked', written: false, reason: String(error.message || error) };
   }
@@ -115,6 +129,10 @@ export async function commitVariablesChange(plan, { validateBeforeWrite = null }
         }
         const { catalog, exists } = await readCardTypeCatalog({ storageAdapter: captured.workspace.adapter });
         if (!exists) throw new Error('Missing activated catalog');
+        for (const operation of plan.bindingsPatch) if (operation.op === 'set') {
+          await captured.workspace.adapter.readBinary(operation.value.path);
+          assertStorageWorkspaceContext(captured.workspace);
+        }
         const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
         const snapshot = createCardVariableSnapshot({ ...page, content: plan.candidateContent }, registry);
         if (snapshot.mode !== 'structured' || snapshot.schemaDigest !== plan.schema.digest ||
@@ -127,6 +145,10 @@ export async function commitVariablesChange(plan, { validateBeforeWrite = null }
         const durable = await captured.workspace.adapter.readText(page.path);
         assertStorageWorkspaceContext(captured.workspace);
         if (durable !== plan.candidateContent || canonicalJSON(parsePageRecordContent(durable).variablesJson) !== canonicalJSON(plan.after.envelope)) throw new Error('Variable readback mismatch');
+        const snapshot = createCardVariableSnapshot({ id: plan.pageId, content: durable }, captured.registry);
+        for (const [key, expected] of Object.entries(plan.boundValues)) {
+          if (canonicalJSON(readEntityBinding(snapshot, plan.after.definition.fieldsByKey[key])) !== canonicalJSON(expected)) throw new Error('Binding readback mismatch');
+        }
       }
     });
     return { status: receipt.writeStatus === 'saved' ? 'saved' : receipt.written ? 'uncertain' : 'blocked', ...receipt };

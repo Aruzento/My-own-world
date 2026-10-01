@@ -8,9 +8,26 @@ owner_zone: "delivery"
 
 Date: 2026-10-01. Accepted source baseline: `fd2d3131e5a4b15499b1cd30302bf6c64b9a99a7`.
 
-CTV Stages 1–9: DONE / Foundation. Combat 17.6 remains accepted; 17.7 is UNBLOCKED / NOT STARTED. No new CTV leaves or gameplay mechanics were introduced.
+This is historical **technical** closure evidence, not owner acceptance. Manual owner acceptance subsequently failed. Stage 9 acceptance corrective and repeated owner review supersede the earlier CLOSED/17.7-unblocked claim; current status is in [PROJECT_PLAN](./PROJECT_PLAN.md). Combat 17.6 remains accepted; 17.7 is BLOCKED / NOT STARTED pending owner acceptance. No new CTV leaves or gameplay mechanics were introduced.
 
-## Automated evidence
+## 2026-10-02 acceptance corrective
+
+Corrective baseline: `a4250ddfca3e8793fc5629ebb7fc28c6b97dabc8`. Implementation verification is complete; repeated manual owner acceptance is **pending**, and Combat 17.7 remains blocked.
+
+| Check | Observed corrective result |
+| --- | --- |
+| Focused unit/integration | 65/65 PASS |
+| Affected Chromium across focused reruns | 27/27 PASS, including 12 new create/type/binding/tab/migration/performance owner-flow cases |
+| Full verify / unit/integration | 1335/1335 PASS |
+| CI-equivalent full Chromium | 376/376 PASS; accepted Combat 17.6/Undo, Map, Sheet, Inventory/Effects/adoption and Stage 9 portability/recovery retained |
+| docs:index / agents:validate / check:js / verify:quick | PASS |
+| Desktop automated gate | PASS / NORMAL_WORKSPACE_VALIDATED: frontend preparation, packaging, environment and cargo check |
+| Binding persistence adapters | Browser and injected Tauri Image/Icon/file-picker/save/autosave/reload scenarios PASS |
+| Inspector instrumentation | Local Player render: ~95–97 ms / 200 fields / 7 full Repository traversals before; ~4–7 ms / 11 fields / 0 traversals after. Synthetic 5,000-candidate fixture guards traversal/catalog-read counts rather than wall-clock thresholds. |
+
+This corrective does not claim native-window manual acceptance, real large-user-workspace validation or an installer handoff. Schema definitions/versions/digests and native storage format are unchanged. Repeat the six reported owner flows before accepting CTV or enabling Combat 17.7.
+
+## Historical 2026-10-01 automated evidence
 
 | Check | Observed result |
 | --- | --- |

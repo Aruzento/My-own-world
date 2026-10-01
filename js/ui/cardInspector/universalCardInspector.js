@@ -1,7 +1,8 @@
 import * as PageRepository from '../../repository/pageRepository.js';
 import { state } from '../../state.js';
 import { arePageStateIdentitiesEqual } from '../../core/pageRecord.js';
-import { captureStorageWorkspaceContext } from '../../storage/storageAdapter.js';
+import { captureStorageWorkspaceContext, assertStorageWorkspaceContext, hasWorkspaceAccess } from '../../storage/storageAdapter.js';
+import { saveAssetFile } from '../../storage/assetStorage.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../../storage/cardTypeCatalogStorage.js';
 import { readEntity, prepareVariablesChange, commitVariablesChange } from '../../variables/entityVariables.js';
 import { advanceEditorPageBase, getCurrentEditorPageBase } from '../../editor/editorSessionBase.js';
@@ -16,21 +17,30 @@ import {
   readDraftValue,
   setInspectorDraftInputIssue,
   updateInspectorDraft,
+  updateInspectorBindingDraft,
   validateInspectorDraft
 } from './inspectorModel.js';
 import { renderInspectorField } from './fieldComponentRegistry.js';
 import { referenceFieldMatchesPage } from '../../cardTypes/cardReferenceTargets.js';
+import { canEditEntityBinding } from '../../variables/entityBindings.js';
+import { renderMigrationSettings } from '../settings/migrationSettings.js';
+import { openPage } from '../../editor/editor.js';
+import { hasStructuredPageData } from '../../storage/structuredPagePolicy.js';
+import { renderTree } from '../../tree/tree.js';
 
 let active = null;
+let renderRevision = 0;
 
 export async function renderUniversalCardInspector(page, options = {}) {
+  const revision = ++renderRevision;
+  const workspaceContext = options.workspaceContext || (hasWorkspaceAccess() ? captureStorageWorkspaceContext() : null);
   const repository = options.repository || PageRepository;
   const previousVisibility = active?.pageId === page?.id
     ? active.panelVisibility
     : 'visible';
   let registry = options.registry;
   let loadError = null;
-  if (!registry) {
+  if (!registry && hasStructuredPageData(page)) {
     try {
       const { catalog } = await readCardTypeCatalog();
       registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
@@ -38,7 +48,8 @@ export async function renderUniversalCardInspector(page, options = {}) {
       loadError = error;
     }
   }
-  if (state.currentPage?.id !== page?.id && !options.allowDetached) return false;
+  if (revision !== renderRevision || state.currentPage?.id !== page?.id && !options.allowDetached) return false;
+  if (workspaceContext) try { assertStorageWorkspaceContext(workspaceContext); } catch { return false; }
   const snapshot = loadError
     ? { mode: 'missing-definition', pageId: page?.id || null, diagnostics: [{ code: 'catalog.read_failed', message: String(loadError.message || loadError), severity: 'error' }] }
     : readEntity(page?.id, { repository, registry });
@@ -50,8 +61,9 @@ export async function renderUniversalCardInspector(page, options = {}) {
     repository,
     resolvers: options.resolvers,
     editor: options.editor || document.getElementById('editor'),
-    workspaceContext: options.workspaceContext,
+    workspaceContext,
     saveState: null,
+    sectionId: null,
     allowDetached: Boolean(options.allowDetached),
     panelVisibility: previousVisibility
   };
@@ -93,6 +105,10 @@ function paint() {
   const title = document.createElement('h2');
   title.textContent = 'Inspector';
   header.append(title);
+  const migration = document.createElement('button');
+  migration.type = 'button'; migration.textContent = 'Миграция и восстановление';
+  migration.addEventListener('click', () => void showCardMigration());
+  header.append(migration);
   panel.append(header);
   const source = describeInspectorSource(active.snapshot);
   if (!source.editable) panel.append(renderUnavailable(source));
@@ -137,7 +153,18 @@ function renderUnavailable(source) {
   const message = document.createElement('p');
   message.textContent = source.message;
   container.append(title, message, renderDiagnostics(active.snapshot.diagnostics));
+  if (active.snapshot.mode === 'legacy') {
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = 'Мигрировать карточку';
+    button.addEventListener('click', () => void showCardMigration()); container.append(button);
+  }
   return container;
+}
+
+async function showCardMigration() {
+  const pageId = active.pageId;
+  const host = document.createElement('div'); host.className = 'card-inspector card-inspector__state';
+  showAppRightPanel({ content: host, label: 'Миграция карточки' });
+  await renderMigrationSettings(host, { pageId });
 }
 
 function renderStructured() {
@@ -148,9 +175,18 @@ function renderStructured() {
   const validation = validateInspectorDraft(active.draft);
   const valueContext = { resolvers: active.resolvers, repository: active.repository, registry: active.registry };
   const sections = buildInspectorSections(snapshot.definition, key => readDraftValue(active.draft, key, 'effective', valueContext));
-  for (const section of sections) {
+  active.sections = sections;
+  active.valueContext = valueContext;
+  if (!sections.some(section => section.id === active.sectionId)) active.sectionId = sections[0]?.id;
+  valueContext.referencePages = null;
+  if (sections.length > 1) form.append(renderTabs(sections, validation));
+  for (const section of sections.filter(section => section.id === active.sectionId)) {
     const fieldset = document.createElement('fieldset');
     fieldset.className = 'card-inspector__section';
+    fieldset.disabled = !active.workspaceContext || active.saveState?.status === 'saving';
+    fieldset.id = `inspector-section-${section.id}`;
+    fieldset.dataset.sectionId = section.id;
+    if (sections.length > 1) { fieldset.setAttribute('role', 'tabpanel'); fieldset.setAttribute('aria-labelledby', `inspector-tab-${section.id}`); }
     const legend = document.createElement('legend');
     legend.textContent = section.label;
     fieldset.append(legend);
@@ -186,29 +222,96 @@ function renderStructured() {
   return form;
 }
 
+function renderTabs(sections, validation) {
+  const tabs = document.createElement('div'); tabs.className = 'card-inspector__tabs';
+  tabs.setAttribute('role', 'tablist'); tabs.setAttribute('aria-label', 'Разделы карточки');
+  for (const section of sections) {
+    const tab = document.createElement('button'); tab.type = 'button'; tab.id = `inspector-tab-${section.id}`;
+    tab.setAttribute('role', 'tab'); tab.dataset.sectionId = section.id;
+    tab.setAttribute('aria-controls', `inspector-section-${section.id}`);
+    tab.setAttribute('aria-selected', String(section.id === active.sectionId));
+    tab.tabIndex = section.id === active.sectionId ? 0 : -1;
+    setTabLabel(tab, section, validation.issues);
+    tab.addEventListener('click', () => selectSection(section.id));
+    tab.addEventListener('keydown', event => {
+      const index = sections.indexOf(section);
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? sections.length - 1 :
+        event.key === 'ArrowRight' ? (index + 1) % sections.length : event.key === 'ArrowLeft' ? (index - 1 + sections.length) % sections.length : null;
+      if (next === null) return;
+      event.preventDefault(); selectSection(sections[next].id);
+    });
+    tabs.append(tab);
+  }
+  return tabs;
+}
+
+function selectSection(id) {
+  if (!active || active.sectionId === id) return;
+  active.sectionId = id; paint();
+  const tab = document.getElementById(`inspector-tab-${id}`);
+  tab?.focus({ preventScroll: true });
+  tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+function setTabLabel(tab, section, issues) {
+  const errors = issues.filter(issue => issue.severity === 'error' && section.fields.some(field =>
+    issue.details?.key === field.key || issue.details?.key?.startsWith(`${field.key}.`) || issue.details?.path?.includes(field.key)));
+  tab.textContent = `${section.label}${errors.length ? ' ⚠' : ''}`;
+  tab.dataset.hasErrors = String(errors.length > 0);
+  tab.setAttribute('aria-label', `${section.label}${errors.length ? `: ошибок ${errors.length}` : ''}`);
+}
+
 function fieldContext(field, issues, valueContext) {
+  const session = active;
   return {
     issues,
     rawInputs: active.draft.rawInputs,
+    canEditBinding: definition => canEditEntityBinding(definition) &&
+      !['invalid', 'unresolved', 'unsupported'].includes(readDraftValue(active.draft, definition.key, 'effective', valueContext).status),
     getValue: key => readDraftValue(active.draft, key, 'effective', valueContext),
-    referencePages: definition => active.repository.getAllPages().filter(page => {
+    referencePages: definition => (valueContext.referencePages ||= active.repository.getAllPages()).filter(page => {
       if (!definition.targetTypes?.length) return true;
       return referenceFieldMatchesPage(definition, page);
     }),
+    referencePageById: pageId => active.repository.getPageById(pageId),
+    isCurrent: () => active === session,
+    importAsset: async file => {
+      assertStorageWorkspaceContext(session.workspaceContext);
+      if (active !== session) return null;
+      const asset = await saveAssetFile(file, { filename: `${crypto.randomUUID()}-${file.name}`, resolveUrl: false });
+      assertStorageWorkspaceContext(session.workspaceContext);
+      return active === session ? { kind: 'asset', path: `assets/${asset.path.replace(/^assets\//, '')}` } : null;
+    },
     onValue: (definition, value, { inputKey = definition.key, operation = 'set' } = {}) =>
-      changeDraft(updateInspectorDraft(active.draft, { op: operation, key: definition.key, value }, { inputKey })),
+      changeDraft((definition.binding.owner === 'variables' ? updateInspectorDraft : updateInspectorBindingDraft)(active.draft, { op: operation, key: definition.key, value }, { inputKey }), definition.key),
     onUnset: (definition, { inputKey = definition.key } = {}) =>
-      changeDraft(updateInspectorDraft(active.draft, { op: 'unset', key: definition.key }, { inputKey })),
+      changeDraft((definition.binding.owner === 'variables' ? updateInspectorDraft : updateInspectorBindingDraft)(active.draft, { op: 'unset', key: definition.key }, { inputKey }), definition.key),
     onResetOverride: (definition, inputKey = definition.key) =>
-      changeDraft(updateInspectorDraft(active.draft, { op: 'resetOverride', key: definition.key }, { inputKey })),
-    onRawIssue: (key, raw, message) => changeDraft(setInspectorDraftInputIssue(active.draft, key, raw, message))
+      changeDraft(updateInspectorDraft(active.draft, { op: 'resetOverride', key: definition.key }, { inputKey }), definition.key),
+    onRawIssue: (key, raw, message) => changeDraft(setInspectorDraftInputIssue(active.draft, key, raw, message), field.key)
   };
 }
 
-function changeDraft(next) {
+function changeDraft(next, rootKey) {
   active.draft = next;
   active.saveState = null;
-  paint();
+  const form = document.querySelector('.card-inspector__form');
+  if (!form) return;
+  const validation = validateInspectorDraft(next);
+  active.valueContext.referencePages = null;
+  const currentSections = buildInspectorSections(projectDraftSnapshot(next).definition,
+    key => readDraftValue(next, key, 'effective', active.valueContext));
+  if (JSON.stringify(currentSections.map(section => [section.id, section.fields.map(field => field.key)])) !==
+      JSON.stringify(active.sections.map(section => [section.id, section.fields.map(field => field.key)]))) { paint(); return; }
+  // Keep the tabs/form and their focus stable; update the edited root and its
+  // visible computed projections. Inactive sections are rendered only on demand.
+  const section = active.sections.find(section => section.id === active.sectionId);
+  for (const field of section?.fields || []) if (field.key === rootKey || field.computed) {
+    const node = [...form.querySelectorAll('[data-field-key]')].find(node => node.dataset.fieldKey === field.key);
+    node?.replaceWith(renderInspectorField(field, fieldContext(field, validation.issues, active.valueContext)));
+  }
+  for (const tab of form.querySelectorAll('[role="tab"]')) setTabLabel(tab, active.sections.find(section => section.id === tab.dataset.sectionId), validation.issues);
+  form.querySelector('.card-inspector__save')?.replaceWith(renderSaveArea(validation));
 }
 
 function renderSaveArea(validation) {
@@ -221,20 +324,22 @@ function renderSaveArea(validation) {
   const button = document.createElement('button');
   button.type = 'submit';
   button.textContent = 'Сохранить поля';
-  button.disabled = !active.draft.dirty || !validation.ok;
+  button.disabled = !active.workspaceContext || !active.draft.dirty || !validation.ok || active.saveState?.status === 'saving';
   if (!validation.ok) button.title = 'Исправьте отмеченные значения перед сохранением';
   footer.append(status, button);
   return footer;
 }
 
 async function saveDraft() {
+  if (active.saveState?.status === 'saving') return;
+  const session = active;
   const validation = validateInspectorDraft(active.draft);
   if (!validation.ok) {
     active.saveState = { status: 'validation', message: 'Исправьте ошибки полей. Введённые значения сохранены в draft.' };
     paint();
     return;
   }
-  if (!active.draft.patch.length) return;
+  if (!active.draft.patch.length && !active.draft.bindingsPatch.length) return;
   const editorBase = getCurrentEditorPageBase(active.pageId);
   if (hasPendingAutosaveForPage(active.pageId) || !arePageStateIdentitiesEqual(editorBase, active.draft.sourceIdentity)) {
     active.saveState = { status: 'stale', message: 'Текст карточки изменён. Сначала сохраните или перезагрузите карточку; draft Inspector сохранён.' };
@@ -247,6 +352,7 @@ async function saveDraft() {
       pageId: active.pageId,
       expectedBase: active.draft.sourceIdentity,
       patch: active.draft.patch,
+      bindingsPatch: active.draft.bindingsPatch,
       context: {
         registry: active.registry,
         repository: active.repository,
@@ -261,7 +367,8 @@ async function saveDraft() {
   active.saveState = { status: 'saving', message: 'Сохранение…' };
   paint();
   const result = await commitVariablesChange(plan);
-  if (result.status !== 'saved') {
+  if (active !== session) return; // Navigation cannot publish into another card.
+  if (!['saved', 'unchanged'].includes(result.status)) {
     active.saveState = {
       status: result.status || 'blocked',
       message: result.status === 'uncertain'
@@ -274,6 +381,13 @@ async function saveDraft() {
   const page = active.repository.getPageById(active.pageId);
   const snapshot = readEntity(active.pageId, { repository: active.repository, registry: active.registry });
   advanceEditorPageBase(page, page.content);
+  if (active.draft.bindingsPatch.some(operation => active.snapshot.definition.fieldsByKey[operation.key].binding.owner === 'page')) renderTree();
+  // A content binding changed the body through its canonical owner. Reopen from
+  // durable PageRecord before body autosave can serialize an older portrait slot.
+  if (active.draft.bindingsPatch.some(operation => active.snapshot.definition.fieldsByKey[operation.key].binding.owner === 'content')) {
+    await openPage(page);
+    if (active?.pageId !== page.id) return;
+  }
   active.snapshot = snapshot;
   active.draft = createInspectorDraft(snapshot);
   active.saveState = { status: 'saved', message: 'Поля сохранены и проверены чтением.' };

@@ -30,7 +30,7 @@ export function createRootAdapter(field, context) {
     rootField: field,
     path: field.key,
     read: () => context.getValue(field.key),
-    set: (value, operation = writeOperation(field, field)) => context.onValue(field, value, { inputKey: field.key, operation }),
+    set: (value, operation = writeOperation(field, field), { inputKey = field.key } = {}) => context.onValue(field, value, { inputKey, operation }),
     unset: () => context.onUnset(field, { inputKey: field.key }),
     reportRaw: (raw, message) => context.onRawIssue(field.key, raw, message),
     raw: () => context.rawInputs[field.key],
@@ -44,15 +44,15 @@ export function createObjectPropertyAdapter(parent, field, path = `${parent.path
     rootField: parent.rootField,
     path,
     read: () => readObjectProperty(parent, field, path),
-    set: value => {
+    set: (value, operation, options = { inputKey: path }) => {
       const next = mutableObject(parent);
       next[field.key] = deepCloneData(value);
-      parent.set(next);
+      parent.set(next, operation, options);
     },
     unset: () => {
       const next = mutableObject(parent);
       delete next[field.key];
-      parent.set(next);
+      parent.set(next, undefined, { inputKey: path });
     },
     reportRaw: (raw, message) => parent.context.onRawIssue(path, raw, message),
     raw: () => parent.context.rawInputs[path],
@@ -71,13 +71,13 @@ function createRowAdapter(parent, descriptor, rowId) {
       const row = rows.find(item => item?.[descriptor.rowIdentityKey] === rowId);
       return row ? checkedValue(row, descriptor, 'stored', path) : { status: 'invalid', reason: 'missing-row', value: null };
     },
-    set: value => {
+    set: (value, operation, options = { inputKey: path }) => {
       const rows = currentArray(parent);
       const index = rows.findIndex(item => item?.[descriptor.rowIdentityKey] === rowId);
       if (index < 0) return parent.context.onRawIssue(path, undefined, 'Строка больше не существует.');
       const next = deepCloneData(rows);
       next[index] = deepCloneData(value);
-      parent.set(next);
+      parent.set(next, operation, options);
     },
     unset: () => {},
     reportRaw: (raw, message) => parent.context.onRawIssue(path, raw, message),
@@ -150,13 +150,32 @@ for (const datatype of ['date', 'datetime', 'color']) registerInspectorFieldComp
   return element;
 }));
 
-registerInspectorFieldComponent('asset', (field, context) => scalar(field, context, (value, adapter) => {
-  const element = document.createElement('input');
-  element.type = 'text';
-  element.placeholder = 'assets/...';
-  element.value = adapter.raw() ?? (value.status === 'value' ? value.value?.path || '' : '');
-  return element;
-}));
+registerInspectorFieldComponent('asset', (field, context) => {
+  const root = scalar(field, context, (value, adapter) => {
+    const element = document.createElement('input');
+    element.type = 'text'; element.placeholder = 'assets/...';
+    element.value = adapter.raw() ?? (value.status === 'value' ? value.value?.path || '' : '');
+    return element;
+  });
+  if (isWritable(context.adapter) && context.importAsset) {
+    const file = document.createElement('input'); file.type = 'file'; file.hidden = true;
+    file.setAttribute('aria-label', `Файл: ${field.label}`);
+    if (context.adapter.rootField.binding?.owner !== 'variables') file.accept = 'image/*';
+    const choose = actionButton('Выбрать файл', () => file.click(), false);
+    file.addEventListener('change', async () => {
+      if (!file.files?.[0]) return;
+      choose.disabled = true;
+      try {
+        const value = await context.importAsset(file.files[0]);
+        if (value) context.adapter.set(value, writeOperation(field, context.adapter.rootField));
+      } catch (error) {
+        if (context.isCurrent()) context.adapter.reportRaw(file.files[0].name, `Файл не выбран: ${error.message}`);
+      } finally { choose.disabled = false; }
+    });
+    root.querySelector('.card-inspector__field-actions').append(choose, file);
+  }
+  return root;
+});
 
 registerInspectorFieldComponent('reference', (field, context) => renderReference(field, context));
 registerInspectorFieldComponent('object', (field, context) => renderObject(field, context));
@@ -168,6 +187,13 @@ function renderReference(field, context) {
   const { adapter } = context;
   const value = adapter.read();
   const wrapper = fieldFrame(field, adapter, value, context.issues);
+  if (!isWritable(adapter)) {
+    const output = document.createElement('output'); associateControl(output, wrapper);
+    const target = value.status === 'value' && value.value?.pageId ? context.referencePageById?.(value.value.pageId) : null;
+    output.textContent = target?.title || value.value?.pageId || '—';
+    wrapper.control.append(output);
+    return wrapper.root;
+  }
   const resolution = resolveReferenceValue(field, value.value, context);
   const search = document.createElement('input');
   search.type = 'search';
@@ -319,7 +345,7 @@ function currentArray(adapter) {
 function isWritable(adapter) {
   const field = adapter.field;
   const root = adapter.rootField;
-  if (root.binding?.owner !== 'variables') return false;
+  if (root.binding?.owner !== 'variables') return Boolean(adapter.context.canEditBinding?.(root));
   if (field !== root && (field.readonly || field.computed)) return false;
   if (field === root && root.computed) return Boolean(root.computed.allowOverride);
   return !field.readonly;
@@ -389,7 +415,7 @@ function fieldFrame(field, adapter, value, issues) {
   label.textContent = `${field.label || field.key}${field.required ? ' *' : ''}`;
   const badges = document.createElement('span');
   badges.className = 'card-inspector__badges';
-  badges.textContent = [value.source, field.readonly ? 'только чтение' : '', field.deprecated ? 'устарело' : ''].filter(Boolean).join(' · ');
+  badges.textContent = [value.source, !isWritable(adapter) ? 'только чтение' : '', field.deprecated ? 'устарело' : ''].filter(Boolean).join(' · ');
   const help = document.createElement('div');
   help.id = `${id}-help`;
   help.className = 'card-inspector__help';

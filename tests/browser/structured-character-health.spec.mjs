@@ -147,6 +147,9 @@ test(
         editor,
         workspaceContext: captureStorageWorkspaceContext()
       });
+      const { getUniversalCardInspectorState } = await import('/js/ui/cardInspector/universalCardInspector.js');
+      const healthSection = getUniversalCardInspectorState().sections.find(section => section.fields.some(field => field.key === 'dnd.health'));
+      document.getElementById(`inspector-tab-${healthSection.id}`)?.click();
       const model = readCharacterModelFromPage(record, {
         pages: [record],
         registry

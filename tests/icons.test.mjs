@@ -8,6 +8,16 @@ import {
   getPageIcon,
   iconSvg
 } from '../js/core/icons.js';
+import { buildPageRecordContent, updatePageRecordBoundMetadata } from '../js/core/pageRecord.js';
+
+test('page icon reads typed PageRecord metadata, invalidates on content change and rejects unsafe paths', () => {
+  const page = { type: 'item', content: buildPageRecordContent({ id: 'icon-card', type: 'item', body: '<p>Free content</p>' }) };
+  assert.doesNotMatch(getPageIcon(page), /data-page-icon-asset/);
+  page.content = updatePageRecordBoundMetadata(page.content, 'iconJson', { kind: 'asset', path: 'assets/icon.png' });
+  assert.match(getPageIcon(page), /data-page-icon-asset="assets\/icon.png"/);
+  page.content = updatePageRecordBoundMetadata(page.content, 'iconJson', { kind: 'asset', path: 'assets/../outside.png' });
+  assert.doesNotMatch(getPageIcon(page), /data-page-icon-asset/);
+});
 
 
 test(

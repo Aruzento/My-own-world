@@ -113,6 +113,7 @@ test(
       return {
         content,
         inspectorMode: document.querySelector('.card-inspector')?.dataset.sourceMode,
+        inspectorReadOnly: document.querySelector('.card-inspector__section')?.disabled,
         source: model.source,
         properties: model.sources.properties,
         entity: model.sources.entity,
@@ -128,6 +129,7 @@ test(
     });
 
     expect(first.inspectorMode).toBe('structured');
+    expect(first.inspectorReadOnly).toBe(true);
     expect(first.source).toBe('entity');
     expect(first.properties).toBe(false);
     expect(first.entity).toBe(true);

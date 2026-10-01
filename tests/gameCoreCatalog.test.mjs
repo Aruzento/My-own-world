@@ -136,7 +136,7 @@ test('game-core metadata bindings project PageRecord owners without synthetic re
   const expectedStatuses = {
     'page.type': 'value', 'page.tags': 'value', 'page.aliases': 'value', 'page.parent': 'value',
     'page.relationships': 'value', 'page.order': 'value', 'content.blocks': 'value',
-    'content.primaryImage': 'unresolved', 'page.icon': 'unresolved', 'page.archived': 'unresolved'
+    'content.primaryImage': 'unresolved', 'page.icon': 'absent', 'page.archived': 'absent'
   };
   for (const [key, status] of Object.entries(expectedStatuses)) assert.equal(getValue(entity, key).status, status, key);
   assert.equal(resolved.fieldsByKey['core.sources'].binding.owner, 'variables');

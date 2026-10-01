@@ -12,7 +12,7 @@ Updated: 2026-10-01
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–9 are DONE / Foundation; CTV migration is CLOSED. Schema → Variables/Entity → domains → Inspector/Sheet/Combat/Map is the production architecture. Properties survives only as inert migration/recovery/old-format support. Registry owns the fifteen formal types; new cards are structured. Type change, duplicate/Templates v2/World Package v2, Backup v2/partial restore and typed assets/search/derived graph references share guarded canonical boundaries. Settings exposes explicit migration/adoption/retirement and recovery. Combat 17.6/Undo remains accepted; 17.7 is UNBLOCKED / NEXT, NOT STARTED. No automatic migration, Effects Engine or new Combat mechanics were introduced.
+The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–8 remain DONE / Foundation. Stage 9 was rejected in manual owner acceptance; its bounded implementation corrective is ready for repeated owner review after technical gates. CTV is not owner-accepted/CLOSED. The corrective covers explicit new-card type selection, working guarded type switching, owner-bound Image/Icon edits, Inspector layout/section tabs, performance and per-card safe migration. Schema → Variables/Entity → domains → views remains the architecture; Properties is not restored as a normal data owner. Portability/backup/recovery remain guarded. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED pending manual CTV acceptance.
 
 ## Current Focus
 
@@ -27,7 +27,7 @@ Immediate direction:
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
 7. Closed phase: `0.0.1.16.0` Persistent Combat Session is `DONE` after 16.FINAL PASS on 2026-09-13.
-8. Paused phase: `0.0.1.17.0` Combat Action Pipeline after accepted `17.6`; 17.7 is UNBLOCKED / NEXT, NOT STARTED; later Combat tasks retain their own dependencies.
+8. Paused phase: `0.0.1.17.0` Combat Action Pipeline after accepted `17.6`; 17.7 is BLOCKED / NOT STARTED pending repeated owner acceptance of CTV; later Combat tasks retain their own dependencies.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- CTV is CLOSED. The next separately authorized task may start Combat 17.7; this task does not start it. Ambiguous legacy evidence requires explicit review, never guessed conversion. Non-core Player editors remain Inspector-owned; Effects Engine/equipment are future product work.
+- Repeat manual acceptance: create via “+” and choose type; confirm a type change and reload; edit Image/Icon and reload; navigate sections with draft/errors intact; migrate a legacy card through preview/confirm; check responsiveness in the owner's workspace. Technical automation does not accept CTV on the owner's behalf. Combat 17.7 stays blocked. Ambiguous legacy evidence requires explicit review; Effects Engine/equipment remain future product work.
 
 ## Readiness Model
 

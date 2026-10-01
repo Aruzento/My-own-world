@@ -407,6 +407,17 @@ export function createRuntimePageFromContent({
   };
 }
 
+// Supported PageRecord JSON metadata keeps its existing front-matter owner.
+// Unknown metadata and free body are preserved by the normal record serializer.
+export function updatePageRecordBoundMetadata(content, key, value) {
+  if (!['iconJson', 'archived'].includes(key)) throw new Error('Unsupported bound page metadata');
+  const record = parsePageRecordContent(content, { generateId: false });
+  const entries = record.frontMatter.entries.filter(entry => entry.normalizedKey !== key.toLowerCase());
+  if (value !== undefined) entries.push({ key, normalizedKey: key.toLowerCase(), value: JSON.stringify(value), raw: `${key}: ${JSON.stringify(value)}` });
+  return serializePageRecord({ ...record, body: record.rawBody,
+    frontMatter: { ...record.frontMatter, entries } }, { preserveUnchangedMetadata: true, preservedFrontMatterKeys: FRONT_MATTER_FIELD_ORDER });
+}
+
 
 export function createPageContentHash(
   body

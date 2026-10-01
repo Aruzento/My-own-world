@@ -84,7 +84,7 @@ async function setup(page, { legacy = false } = {}) {
 test('Universal Inspector renders schema, commits values and keeps lazy computed/default semantics after reload', async ({ page }) => {
   await setup(page);
   await expect(page.getByRole('heading', { name: 'Inspector' })).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Основное' })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: 'Основное' })).toBeVisible();
   await expect(page.getByLabel('Количество', { exact: true })).toHaveValue('2');
   await expect(page.getByLabel('Расчёт')).toHaveValue('4');
   await page.getByLabel('Имя *').fill('Сохранённое');
@@ -120,6 +120,7 @@ test('Universal Inspector renders schema, commits values and keeps lazy computed
 
 test('reference stores exact page id and repeatable rows retain stable identity and order', async ({ page }) => {
   await setup(page);
+  await page.getByRole('tab', { name: 'Связи', exact: true }).click();
   await page.getByLabel('Поиск: Ссылка', { exact: true }).fill('Цель');
   await page.getByLabel('Ссылка', { exact: true }).selectOption('target-page');
   const rows = page.locator('[data-field-key="test.rows"]');
@@ -141,6 +142,7 @@ test('reference stores exact page id and repeatable rows retain stable identity 
 
 test('nested and repeatable fields use the same datatype semantics without enum blank corruption', async ({ page }) => {
   await setup(page);
+  await page.getByRole('tab', { name: 'Связи', exact: true }).click();
   const rootRows = page.locator('[data-field-key="test.rows"]');
   await rootRows.getByRole('button', { name: 'Добавить строку' }).click();
   await rootRows.getByRole('button', { name: 'Добавить строку' }).click();
@@ -154,8 +156,8 @@ test('nested and repeatable fields use the same datatype semantics without enum 
   await firstRow.getByLabel('Флаг строки').check();
   await firstRow.getByLabel('Флаг строки').uncheck();
   await firstRow.getByLabel('Тип строки').selectOption('enum:1');
-  await firstRow.getByLabel('Asset строки').fill('assets/first.png');
-  await firstRow.getByLabel('Asset строки').press('Tab');
+  await firstRow.getByLabel('Asset строки', { exact: true }).fill('assets/first.png');
+  await firstRow.getByLabel('Asset строки', { exact: true }).press('Tab');
   await firstRow.getByLabel('Поиск: Ссылка строки').fill('Цель');
   await firstRow.getByLabel('Ссылка строки', { exact: true }).selectOption('target-page');
   await secondRow.getByLabel('Тип строки').selectOption('enum:0');
@@ -167,8 +169,8 @@ test('nested and repeatable fields use the same datatype semantics without enum 
   await details.getByLabel('Флаг детали').check();
   await details.getByLabel('Флаг детали').uncheck();
   await details.getByLabel('Тип детали').selectOption('enum:1');
-  await details.getByLabel('Asset детали').fill('assets/detail.png');
-  await details.getByLabel('Asset детали').press('Tab');
+  await details.getByLabel('Asset детали', { exact: true }).fill('assets/detail.png');
+  await details.getByLabel('Asset детали', { exact: true }).press('Tab');
   await details.getByLabel('Поиск: Ссылка детали').fill('Цель');
   await details.getByLabel('Ссылка детали', { exact: true }).selectOption('target-page');
   const childRows = details.locator('[data-field-key="test.details.test.detailRows"]');

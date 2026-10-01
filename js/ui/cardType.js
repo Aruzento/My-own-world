@@ -10,6 +10,8 @@ import { prepareCardTypeChange, commitCardTypeChange } from '../variables/cardTy
 import { getCurrentEditorPageBase, advanceEditorPageBase } from '../editor/editorSessionBase.js';
 import { hasPendingAutosaveForPage } from '../editor/autosave.js';
 import { openConfirmPopup } from './confirmPopup.js';
+import { setStatus } from './ui.js';
+import { getPageById } from '../repository/pageRepository.js';
 
 import {
   renderTree
@@ -55,21 +57,24 @@ export function setupCardType() {
       const page = state.currentPage, targetType = select.value;
       select.value = page.type;
       syncCustomCardType(select);
-      if (hasPendingAutosaveForPage(page.id)) return;
+      if (hasPendingAutosaveForPage(page.id)) { setStatus('Сначала сохраните текст карточки перед сменой типа'); return; }
       try {
         let plan = await prepareCardTypeChange({ pageId: page.id, targetType, expectedBase: getCurrentEditorPageBase(page.id) });
         openConfirmPopup({ anchor: select.nextElementSibling, modal: true, title: 'Изменить тип карточки?',
           message: `Тип: ${CARD_TYPE_LABELS[targetType]}. Несовместимые значения сохраняются как inactive. Диагностик ссылок: ${plan.diagnostics.length}. Перед записью будет проверена резервная копия.`,
           choices: plan.restorationCandidates.map(entry => ({ value: entry.index, label: `Восстановить inactive: ${entry.path.join('.')}` })),
           confirmText: 'Изменить тип', onConfirm: async selected => {
-            if (state.currentPage?.id !== page.id || hasPendingAutosaveForPage(page.id)) return;
+            if (state.currentPage?.id !== page.id || hasPendingAutosaveForPage(page.id)) { setStatus('Карточка изменилась. Повторите preview смены типа после сохранения текста.'); return; }
             if (selected.length) plan = await prepareCardTypeChange({ pageId: page.id, targetType, expectedBase: getCurrentEditorPageBase(page.id), restoreInactive: selected.map(Number) });
             const result = await commitCardTypeChange(plan, { confirm: true });
             if (result.status === 'saved' || result.status === 'unchanged') {
-              advanceEditorPageBase(page); openPage(page); renderTree(); renderTags(page.tags);
-            } else select.title = `Изменение не подтверждено: ${result.reason || result.status}`;
+              const current = getPageById(page.id);
+              if (state.currentPage?.id === page.id) { advanceEditorPageBase(current); await openPage(current); }
+              renderTree(); renderTags(current.tags);
+              setStatus('Тип карточки сохранён и проверен');
+            } else { select.title = `Изменение не подтверждено: ${result.reason || result.status}`; setStatus(select.title); }
           } });
-      } catch (error) { select.title = `Изменение недоступно: ${error.message}`; }
+      } catch (error) { select.title = `Изменение недоступно: ${error.message}`; setStatus(select.title); }
     }
   );
 

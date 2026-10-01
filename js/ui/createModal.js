@@ -7,6 +7,7 @@ import {
 } from '../core/icons.js';
 
 import { state } from '../state.js';
+import { CANONICAL_CARD_TYPES } from '../storage/structuredPageCreation.js';
 
 import {
   createFolderPage,
@@ -195,6 +196,7 @@ export function openCreateMenu(
 
   menu =
     ensureCreateMenu();
+  renderMenu();
 
   menu.dataset.parentId =
     parentId ?? '';
@@ -348,9 +350,7 @@ function renderMenu() {
 
       item.addEventListener(
         'click',
-        async () => createPageFromMenuTemplate(
-          key
-        )
+        async () => key === 'card' ? openCardTypeCreatePicker() : createPageFromMenuTemplate(key)
       );
 
       menu.appendChild(item);
@@ -371,7 +371,9 @@ function renderMenu() {
 
 
 async function createPageFromMenuTemplate(
-  templateKey
+  templateKey,
+  type = null,
+  title = ''
 ) {
 
   closeMenu();
@@ -382,7 +384,9 @@ async function createPageFromMenuTemplate(
   const page =
     await createPage(
       templateKey,
-      parentId
+      parentId,
+      title,
+      type ? { type } : {}
     );
 
   renderTree();
@@ -392,6 +396,26 @@ async function createPageFromMenuTemplate(
     openPage(
       page
     );
+  }
+}
+
+export function openCardCreateMenu(anchor, { parentId = null, title = '' } = {}) {
+  openCreateMenu(0, 0, parentId, anchor);
+  openCardTypeCreatePicker(title);
+}
+
+function openCardTypeCreatePicker(title = '') {
+  menu.dataset.createMenuView = 'card-types';
+  menu.innerHTML = getPickerHeaderHTML('Тип новой карточки');
+  for (const type of CANONICAL_CARD_TYPES) {
+    const button = createPickerButton(type.label);
+    button.dataset.cardType = type.id;
+    button.addEventListener('click', async event => {
+      event.stopPropagation();
+      try { await createPageFromMenuTemplate('card', type.id, title); }
+      catch (error) { setStatus(`Карточка не создана: ${error.message}`); }
+    });
+    menu.append(button);
   }
 }
 

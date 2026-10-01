@@ -36,6 +36,12 @@ export function setupEmptyEditorActions(
 
       event.preventDefault();
 
+      if ((emptyCreateButton.dataset.template || 'card') === 'card') {
+        const { openCardCreateMenu } = await import('../ui/createModal.js');
+        openCardCreateMenu(emptyCreateButton);
+        return;
+      }
+
       const page =
         await createPage(
           emptyCreateButton.dataset.template || 'card'

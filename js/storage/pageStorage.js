@@ -81,7 +81,8 @@ const PAGE_TRASH_ROOT =
 export async function createPage(
   templateKey,
   parentId = null,
-  initialTitle = ''
+  initialTitle = '',
+  options = {}
 ) {
 
   const template =
@@ -107,8 +108,8 @@ export async function createPage(
       template:
         template.template || templateKey,
       type:
-        template.type || 'lore',
-      variablesJson: templateKey === 'card' ? await prepareNewCardEnvelope(template.type || 'lore', getReadyStorageAdapter()) : undefined,
+        options.type || template.type || 'lore',
+      variablesJson: templateKey === 'card' ? await prepareNewCardEnvelope(options.type || template.type || 'lore', getReadyStorageAdapter()) : undefined,
       aliases:
         [],
       body:

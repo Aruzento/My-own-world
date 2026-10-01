@@ -118,6 +118,12 @@ export function openWikiCreateMenu(
 
           closeWikiCreateMenu();
 
+          if (key === 'card') {
+            const { openCardCreateMenu } = await import('../ui/createModal.js');
+            openCardCreateMenu(sourceLink || document.getElementById('editorArea'), { title });
+            return;
+          }
+
           await createPage(
             key,
             null,

@@ -10,6 +10,7 @@ import { hasPendingAutosaveForPage } from '../../editor/autosave.js';
 import { getPageById } from '../../repository/pageRepository.js';
 import { state } from '../../state.js';
 import { openConfirmPopup } from '../confirmPopup.js';
+import { setStatus } from '../ui.js';
 
 const workflows = {
   properties: { label: '1. Тип и Properties', preview: previewLegacyPropertiesMigration, execute: executeLegacyPropertiesMigration,
@@ -23,7 +24,7 @@ const workflows = {
     recover: recoverLegacySourceRetirement }
 };
 
-export async function renderMigrationSettings(container) {
+export async function renderMigrationSettings(container, { pageId = null } = {}) {
   container.replaceChildren();
   const section = document.createElement('section');
   section.dataset.settingsSection = 'migration';
@@ -31,6 +32,7 @@ export async function renderMigrationSettings(container) {
   const hint = document.createElement('p'); hint.textContent = 'Открытие workspace ничего не конвертирует. Сначала тип/Properties, затем Inventory и собственные Effects, затем finalization. Каждый шаг требует preview и подтверждения; запись защищена резервной копией.';
   const label = document.createElement('label'); label.textContent = 'Карточки (exact pageId через запятую; пусто — весь workspace)';
   const selection = document.createElement('input'); selection.className = 'mow-input'; selection.dataset.migrationPages = 'true'; label.append(selection);
+  if (pageId) { selection.value = pageId; selection.readOnly = true; label.hidden = true; heading.textContent = 'Миграция этой карточки'; }
   const flowLabel = document.createElement('label'); flowLabel.textContent = 'Шаг';
   const flow = document.createElement('select'); flow.dataset.migrationStep = 'true'; flow.className = 'mow-input';
   for (const [value, workflow] of Object.entries(workflows)) { const option = document.createElement('option'); option.value = value; option.textContent = workflow.label; flow.append(option); }
@@ -50,6 +52,7 @@ export async function renderMigrationSettings(container) {
     try {
       if (state.currentPage && hasPendingAutosaveForPage(state.currentPage.id)) throw new Error('Сначала сохраните текст и повторите preview');
       const result = await action(); report.textContent = JSON.stringify(result, null, 2);
+      setStatus(`Миграция: ${result.status || 'не подтверждена'}${result.backupId ? `; backup ${result.backupId}` : ''}${result.reason ? `; ${result.reason}` : ''}`);
       if (result.backupId) recoveryId.value = result.backupId;
       if (['completed', 'partial', 'saved'].includes(result.status) || result.restoredPages !== undefined) await reload();
     } catch (error) { report.textContent = `Операция не подтверждена: ${error.message}. Не повторяйте uncertain write; используйте inspect/resume или backup recovery.`; }
@@ -58,11 +61,11 @@ export async function renderMigrationSettings(container) {
   previewButton.addEventListener('click', async () => {
     invalidate(); previewButton.disabled = true;
     try {
-      const ids = selection.value.split(',').map(id => id.trim()).filter(Boolean);
+      const ids = pageId ? [pageId] : selection.value.split(',').map(id => id.trim()).filter(Boolean);
       previewStep = flow.value;
       preview = await workflows[previewStep].preview({ ...(ids.length ? { pageIds: ids } : {}) });
       report.textContent = JSON.stringify(preview.actors || preview.plans || preview.summary, null, 2);
-      executeButton.disabled = false;
+      executeButton.disabled = !(preview.actors || preview.plans || preview.pages || []).some(candidate => candidate.status === 'ready');
     } catch (error) { report.textContent = `Preview недоступен: ${error.message}`; }
     finally { previewButton.disabled = false; }
   });

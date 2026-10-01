@@ -2,8 +2,10 @@ import { deepCloneData, deepFreeze } from '../../cardTypes/definitionIdentity.js
 import { hasValue, validateEntityValues, validateVariableValue } from '../../schema/cardVariablesSchema.js';
 import { applyVariablesPatch } from '../../variables/variableCommands.js';
 import { getValue } from '../../variables/entityVariables.js';
+import { canEditEntityBinding } from '../../variables/entityBindings.js';
 
 export const INSPECTOR_EDITABLE_MODE = 'structured';
+const draftSnapshots = new WeakMap();
 
 export function describeInspectorSource(snapshot) {
   const messages = {
@@ -26,6 +28,7 @@ export function createInspectorDraft(snapshot) {
     snapshot,
     envelope: deepCloneData(snapshot.envelope),
     patch: [],
+    bindingsPatch: [],
     rawInputs: {},
     inputIssues: [],
     dirty: false
@@ -42,12 +45,11 @@ export function updateInspectorDraft(draft, operation, options = {}) {
   }
   const inputKey = options.inputKey || operation.key;
   const candidate = { ...draft, envelope: result.envelope, patch: compactPatch(draft.patch, operation), dirty: true };
-  const validation = validateEntityValues({ envelope: candidate.envelope, definition: snapshot.definition, pageId: snapshot.pageId });
-  return deepFreeze(deepCloneData({
+  return deepFreeze({
     ...candidate,
     rawInputs: withoutKey(draft.rawInputs, inputKey),
-    inputIssues: [...draft.inputIssues.filter(issue => issue.details?.key !== inputKey), ...validation.issues]
-  }));
+    inputIssues: draft.inputIssues.filter(issue => issue.details?.key !== inputKey)
+  });
 }
 
 export function updateInspectorDraftFromInput(draft, field, raw, operation = 'set') {
@@ -67,16 +69,32 @@ export function validateInspectorDraft(draft) {
 }
 
 export function projectDraftSnapshot(draft) {
-  return deepFreeze(deepCloneData({
+  // Draft and its snapshot are immutable; a new edit has a new WeakMap identity.
+  // Never clone the entire definition once per nested field read.
+  if (draftSnapshots.has(draft)) return draftSnapshots.get(draft);
+  const snapshot = deepFreeze({
     ...draft.snapshot,
     envelope: draft.envelope,
     values: draft.envelope.values,
     overrides: draft.envelope.overrides || {}
-  }));
+  });
+  draftSnapshots.set(draft, snapshot);
+  return snapshot;
 }
 
 export function readDraftValue(draft, key, mode = 'effective', context = {}) {
+  const bound = draft.bindingsPatch.find(operation => operation.key === key);
+  if (bound) return bound.op === 'unset' ? { status: 'absent', source: draft.snapshot.definition.fieldsByKey[key].binding.owner } :
+    { status: 'value', value: bound.value, source: draft.snapshot.definition.fieldsByKey[key].binding.owner };
   return getValue(projectDraftSnapshot(draft), key, mode, context);
+}
+
+export function updateInspectorBindingDraft(draft, operation, { inputKey = operation.key } = {}) {
+  const field = draft.snapshot.definition.fieldsByKey[operation.key];
+  if (!canEditEntityBinding(field) || !['set', 'unset'].includes(operation.op)) return withInputIssue(draft, inputKey, 'Binding доступен только для чтения.');
+  if (operation.op === 'set' && !validateVariableValue(operation.value, field).ok) return withInputIssue(draft, inputKey, 'Некорректное значение binding.');
+  return deepFreeze({ ...draft, bindingsPatch: deepFreeze(compactPatch(draft.bindingsPatch, operation)),
+    rawInputs: withoutKey(draft.rawInputs, inputKey), inputIssues: draft.inputIssues.filter(issue => issue.details?.key !== inputKey), dirty: true });
 }
 
 export function setInspectorDraftInputIssue(draft, key, raw, message) {
@@ -146,12 +164,12 @@ export function issueMessage(issue) {
 
 function withInputIssue(draft, key, message, raw) {
   const issue = { severity: 'error', code: 'inspector.invalid_input', message, details: { key, value: raw } };
-  return deepFreeze(deepCloneData({
+  return deepFreeze({
     ...draft,
     rawInputs: { ...draft.rawInputs, [key]: raw },
     inputIssues: [...draft.inputIssues.filter(item => item.details?.key !== key), issue],
     dirty: true
-  }));
+  });
 }
 
 function compactPatch(patch, operation) {

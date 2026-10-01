@@ -41,14 +41,20 @@ test('Stage 6 schemas render seven types and persist complex country data generi
   expect(project.keys).toEqual(expect.arrayContaining(['page.tags','page.archived']));
   expect(project.keys).not.toEqual(expect.arrayContaining(['project.tags','project.archived']));
 
+  await page.getByRole('tab', { name: 'Основное', exact: true }).click();
   await page.getByLabel('Форма государства',{exact:true}).selectOption({label:'Федерация'});
+  await page.getByRole('tab', { name: 'Общество', exact: true }).click();
   await page.getByLabel('Население',{exact:true}).fill('125000');
   await page.getByLabel('Население',{exact:true}).press('Tab');
+  await page.getByRole('tab', { name: 'Представление', exact: true }).click();
   await page.locator('[data-field-key="country.mapScene"] select').selectOption('stage6-map');
+  await page.getByRole('tab', { name: 'География', exact: true }).click();
   const regions=page.locator('[data-field-key="country.regions"] textarea');
   await regions.fill('[{"pageId":"stage6-region"}]'); await regions.press('Tab');
+  await page.getByRole('tab', { name: 'Экономика', exact: true }).click();
   const economy=page.locator('[data-field-key="country.economy"]');
   await economy.getByLabel('Уровень',{exact:true}).fill('4'); await economy.getByLabel('Уровень',{exact:true}).press('Tab');
+  await page.getByRole('tab', { name: 'Управление', exact: true }).click();
   const laws=page.locator('[data-field-key="country.laws"]');
   await laws.getByRole('button',{name:'Добавить строку'}).click();
   const rowId=await laws.locator('.card-inspector__row').getAttribute('data-row-id');

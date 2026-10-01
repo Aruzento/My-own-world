@@ -26,6 +26,15 @@
 }
 
 
+.entity-icon-image {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.entity-icon > [hidden] { display: none; }
+
 .app-icon,
 .entity-icon-svg {
 

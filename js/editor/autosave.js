@@ -82,7 +82,7 @@ export function setupAutosave(
       // restore an older variables envelope from the editor session.
       if (
         event.target?.closest?.(
-          '.character-sheet-runtime, .inventory-runtime, .character-effects-controls, .character-effects-summary'
+          '.card-type-row, .character-sheet-runtime, .inventory-runtime, .character-effects-controls, .character-effects-summary'
         )
       ) return;
 

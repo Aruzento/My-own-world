@@ -5,6 +5,7 @@ import { hasValue, validateVariableValue } from '../schema/cardVariablesSchema.j
 import { EMPTY_COMPUTED_RESOLVERS } from './computedResolvers.js';
 import { isSpecialPageReferenceTarget, referenceFieldMatchesPage, referenceTargetMatchesPage } from '../cardTypes/cardReferenceTargets.js';
 import { extractLegacyProperties } from '../migration/legacyPropertiesExtraction.js';
+import { readEntityBinding } from './entityBindings.js';
 export { validateEntityValues } from '../schema/cardVariablesSchema.js';
 export { prepareVariablesChange, commitVariablesChange } from './variableCommands.js';
 
@@ -37,11 +38,9 @@ function readValue(snapshot, key, mode, context, path) {
     ...(hasValue(snapshot.values, key) ? { value: snapshot.values[key], source: 'stored-unknown' } : {}) });
   if (field.binding.owner !== 'variables') {
     if (field.binding.owner === 'presentation') return result('absent', { source: 'presentation' });
-    const data = field.binding.owner === 'page' ? snapshot.metadata : snapshot.freeContent;
-    if (!hasValue(data, field.binding.path)) {
-      return result('unresolved', { reason: 'binding-unavailable', source: field.binding.owner });
-    }
-    const value = projectBoundValue(field, data[field.binding.path]);
+    const bound = readEntityBinding(snapshot, field);
+    if (bound.status !== 'value') return result(bound.status, bound);
+    const value = projectBoundValue(field, bound.value);
     const validation = validateVariableValue(value, field, { pageId: snapshot.pageId, key });
     return result(validation.ok ? 'value' : 'invalid', {
       value, source: field.binding.owner, issues: validation.issues, provenance: field.provenance

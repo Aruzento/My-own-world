@@ -1,4 +1,51 @@
 import { BUNDLED_CARD_TYPE_DEFINITIONS } from '../cardTypes/definitions/bundledDefinitions.js';
+import { parsePageRecordContent } from './pageRecord.js';
+import { captureStorageWorkspaceContext, isStorageWorkspaceContextCurrent } from '../storage/storageAdapter.js';
+
+const pageIconCache = new WeakMap();
+let iconHydrationQueued = false;
+
+function readPageIconAsset(page) {
+  if (!page?.content) return null;
+  const cached = pageIconCache.get(page);
+  if (cached?.content === page.content) return cached.path;
+  let path = null;
+  try {
+    const headerEnd = page.content.startsWith('---') ? page.content.indexOf('\n---', 3) : -1;
+    if (headerEnd < 0 || !/^iconjson\s*:/im.test(page.content.slice(0, headerEnd))) {
+      pageIconCache.set(page, { content: page.content, path }); return null;
+    }
+    const raw = parsePageRecordContent(page.content, { generateId: false }).frontMatter.values.iconjson;
+    const value = raw && JSON.parse(raw);
+    if (value?.kind === 'asset' && Object.keys(value).every(key => ['kind', 'path'].includes(key)) && typeof value.path === 'string' && /^assets\//.test(value.path) &&
+        !/(?:^|\/)\.{1,2}(?:\/|$)|[\\:\u0000-\u001f]/.test(value.path)) path = value.path;
+  } catch { /* Malformed metadata keeps the canonical type icon. */ }
+  pageIconCache.set(page, { content: page.content, path });
+  return path;
+}
+
+function queueIconHydration() {
+  if (iconHydrationQueued || typeof document === 'undefined') return;
+  iconHydrationQueued = true;
+  queueMicrotask(async () => {
+    iconHydrationQueued = false;
+    let workspace;
+    try { workspace = captureStorageWorkspaceContext(); } catch { return; }
+    const nodes = [...document.querySelectorAll('img[data-page-icon-asset]:not([data-icon-pending])')];
+    if (!nodes.length) return;
+    nodes.forEach(node => { node.dataset.iconPending = 'true'; });
+    const { getRenderableImageURL } = await import('../storage/assetStorage.js');
+    for (const node of nodes) {
+      try {
+        if (!isStorageWorkspaceContextCurrent(workspace)) return;
+        const url = await getRenderableImageURL(node.dataset.pageIconAsset);
+        if (!node.isConnected || !isStorageWorkspaceContextCurrent(workspace)) continue;
+        node.src = url; node.hidden = false;
+        node.previousElementSibling?.setAttribute('hidden', '');
+      } catch { /* Type icon remains visible when asset presentation fails. */ }
+    }
+  });
+}
 
 const ICON_SPRITE_PATH =
   './assets/icons/rpg-ui.svg';
@@ -100,6 +147,8 @@ export function iconSvg(
 export function getPageIcon(
   page = []
 ) {
+  const customAsset = !Array.isArray(page) && readPageIconAsset(page);
+  if (customAsset) queueIconHydration();
   const tags = Array.isArray(page) ? page : page.tags || [];
   const normalized =
     tags.map(tag => String(tag).toLowerCase());
@@ -113,6 +162,7 @@ export function getPageIcon(
   return `
     <span class="entity-icon">
       ${iconSvg(iconName, 'entity-icon-svg')}
+      ${customAsset ? `<img class="entity-icon-image" data-page-icon-asset="${escapeAttribute(customAsset)}" hidden alt="">` : ''}
     </span>
   `;
 }

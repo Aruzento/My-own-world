@@ -36,8 +36,11 @@ export async function prepareCardTypeChange({ pageId, targetType, expectedBase, 
   const candidateFieldSets = targetClosure.filter(entry => entry.kind === 'fieldSet' &&
     !current.catalog.fieldSets.some(field => field.id === entry.identity.id && field.version === entry.identity.version)).map(entry => entry.definition);
   const registry = new CardTypeRegistry({ bundledTypes: [], bundledFieldSets: [],
-    activatedTypes: current.catalog.types, activatedFieldSets: current.catalog.fieldSets,
-    candidateTypes: activated ? [] : [seed], candidateFieldSets });
+    // Preview resolves the exact prospective activated catalog. Candidate source
+    // provenance is transient and must not invalidate an otherwise exact closure
+    // after the approved definition activation at commit.
+    activatedTypes: [...current.catalog.types, ...(activated ? [] : [seed])],
+    activatedFieldSets: [...current.catalog.fieldSets, ...candidateFieldSets] });
   const target = registry.getResolvedType(targetType, seed.version);
   const restorationCandidates = (source.inactive || []).flatMap((entry, index) =>
     entry.reason === 'type-change' && entry.origin?.type === targetType && entry.origin.version === target.version &&
