@@ -68,6 +68,10 @@ const AUTOSAVE_DELAY_MS =
 let pendingAutosave =
   null;
 
+// Координация редактора, не новая persistence queue: следующий save строит
+// candidate/base только после подтверждённого собственного PageCommand.
+let inFlightEditorSave = null;
+
 
 export function setupAutosave(
   editor
@@ -101,7 +105,10 @@ export function flushPendingAutosave(
   const pending =
     pendingAutosave;
 
-  if (!pending) return null;
+  if (!pending) {
+    return !editor || inFlightEditorSave?.editor === editor
+      ? inFlightEditorSave?.promise || null : null;
+  }
 
   if (
     editor &&
@@ -170,14 +177,39 @@ export function hasPendingAutosaveForPage(
 ) {
 
   return Boolean(
-    pendingAutosave &&
     pageId &&
-    pendingAutosave.pageId === pageId
+    (pendingAutosave?.pageId === pageId || inFlightEditorSave?.pageId === pageId)
   );
 }
 
 
-export async function saveCurrentPage(
+export function saveCurrentPage(editor, options = {}) {
+  const requestedPage = state.currentPage;
+  const pageId = requestedPage?.id;
+  if (!pageId) return Promise.resolve();
+  if (pendingAutosave?.pageId === pageId && pendingAutosave.editor === editor) {
+    discardPendingAutosave(editor);
+  }
+  const previous = inFlightEditorSave?.promise;
+  const promise = (async () => {
+    if (previous) {
+      const result = await previous;
+      // Ошибка/неопределённость не разрешает отложенный retry или rebase.
+      if (result?.conflict || result?.blocked || result?.stale) return result;
+    }
+    if (state.currentPage !== requestedPage) return {
+      stale: true, blocked: true, written: false, writeStatus: 'stale'
+    };
+    return persistCurrentEditorPage(editor, options);
+  })();
+  const current = { pageId, editor, promise };
+  inFlightEditorSave = current;
+  const clear = () => { if (inFlightEditorSave === current) inFlightEditorSave = null; };
+  void promise.then(clear, clear);
+  return promise;
+}
+
+async function persistCurrentEditorPage(
   editor,
   options = {}
 ) {
@@ -405,7 +437,7 @@ export async function saveCurrentPage(
 
     advanceEditorPageBase(
       page,
-      content
+      page.content
     );
 
   }

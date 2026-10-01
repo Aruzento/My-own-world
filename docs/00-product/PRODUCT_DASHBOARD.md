@@ -6,13 +6,13 @@ owner_zone: "product"
 ---
 # Product Dashboard
 
-Updated: 2026-10-01
+Updated: 2026-10-02
 
 ## Current Product
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–8 remain DONE / Foundation. Stage 9 was rejected in manual owner acceptance; its bounded implementation corrective is ready for repeated owner review after technical gates. CTV is not owner-accepted/CLOSED. The corrective covers explicit new-card type selection, working guarded type switching, owner-bound Image/Icon edits, Inspector layout/section tabs, performance and per-card safe migration. Schema → Variables/Entity → domains → views remains the architecture; Properties is not restored as a normal data owner. Portability/backup/recovery remain guarded. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED pending manual CTV acceptance.
+The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–9 have a technical Foundation implementation, but two successive manual owner acceptances failed. CTV owner acceptance is pending / recovery active; the previous broad corrective was insufficient. The active ten-step CTV Owner Acceptance Recovery is in PROJECT_PLAN: Step 1 Editor Save Lifecycle is OWNER REVIEW after technical checks; Steps 2–10 are blocked until the preceding Owner PASS. Schema → Variables/Entity → domains → views remains the architecture; Properties is not restored as a normal data owner. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED pending integrated owner acceptance.
 
 ## Current Focus
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Repeat manual acceptance: create via “+” and choose type; confirm a type change and reload; edit Image/Icon and reload; navigate sections with draft/errors intact; migrate a legacy card through preview/confirm; check responsiveness in the owner's workspace. Technical automation does not accept CTV on the owner's behalf. Combat 17.7 stays blocked. Ambiguous legacy evidence requires explicit review; Effects Engine/equipment remain future product work.
+- Perform Recovery Step 1 owner check only: create Card → repeatedly edit title/body → switch Cards → reopen → restart → verify exact saved values and no false stale conflict. Technical automation does not accept CTV on the owner's behalf. Step 2 cannot start before Step 1 Owner PASS; Combat 17.7 stays blocked.
 
 ## Readiness Model
 

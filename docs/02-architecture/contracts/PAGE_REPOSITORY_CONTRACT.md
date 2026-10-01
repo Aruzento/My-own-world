@@ -14,6 +14,8 @@ CTV Stage 7 adds explicit `migrate-legacy-properties` PageCommands with verified
 
 Large-workspace mutations should update `PageRepository` / `PageIndex` incrementally instead of forcing full workspace reloads after ordinary create, rename, move, or reorder operations.
 
+Ordinary editor title/body saves capture the candidate and whole-page expectedBase only after any preceding own editor save has completed. Verified PageCommand readback refreshes the runtime PageRecord and repository before the editor advances its session base to that confirmed content. Navigation flush includes an in-flight save even when its autosave timer has already been consumed. Failed/uncertain writes do not advance the base or trigger a queued retry; an actual external durable change still conflicts with the captured base. This editor coordination uses the existing PageCommand/write queue, not a second persistence owner.
+
 `PageRepository` — единый слой доступа к страницам проекта. Его задача — убрать хаотичные `state.pages.find(...)`, `state.pages.filter(...)` и ручные обходы parent-chain из feature-кода.
 
 ## Историческая мотивация PageRepository

@@ -20,9 +20,33 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `CTV` Card Types / Variables Migration Project is `OWNER REVIEW`. Stages 1–8 remain DONE / Foundation; Stage 9 acceptance corrective is technically complete with green automated gates. Repeated manual owner acceptance is pending. `0.0.1.17.0` NF-005 Combat Action Pipeline is `PAUSED` after accepted 17.6.
+Current phase: `CTV Owner Acceptance Recovery` is active. CTV Stages 1–9 have a technical Foundation implementation, but two successive manual owner acceptances failed. CTV owner acceptance is pending / recovery active; the previous broad corrective is not sufficient acceptance evidence. Recovery Step 1 is `OWNER REVIEW`; Steps 2–10 are `BLOCKED` on the preceding Owner PASS. `0.0.1.17.0` NF-005 Combat Action Pipeline remains `PAUSED` after accepted 17.6.
 
-Current delivery boundary: Registry → Variables/Entity → domains → views remains the production architecture. Stage 9 corrective adds explicit Card type selection, fixes activated type-change closure/UI reread, owner-bound Image/Icon edits, usable section tabs and per-card safe migration. Existing portability/backup/recovery contracts remain intact. Technical checks do not imply owner acceptance. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED pending repeated manual CTV acceptance. No new CTV stages/leaves were created.
+Current delivery boundary: Registry → Variables/Entity → domains → views remains the production architecture. The current recovery task only stabilizes ordinary editor title/body saves, navigation and editor-base synchronization. Earlier Stage 9 implementation history is retained; its workflow defects are addressed strictly in the recovery order below. Technical checks do not imply owner acceptance. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED until the integrated CTV Owner PASS. No new CTV stages/leaves are created.
+
+## CTV Owner Acceptance Recovery
+
+Reason: technical CTV Foundation exists and automated gates pass, but two consecutive manual owner acceptances exposed critical workflow defects. CTV is not owner-accepted. This is a recovery sequence for the existing implementation, not a new CTV stage hierarchy.
+
+Every recovery step has two independent completion levels:
+
+1. **Technical PASS**: implementation complete, relevant checks green, separate commit pushed.
+2. **Owner PASS**: the owner manually completes that step's acceptance scenario.
+
+The next step must not start before the previous step receives Owner PASS. Step 1 remains `OWNER REVIEW` after Technical PASS; only the owner can accept it. Steps 2–10 have not been implemented by this recovery task. Combat 17.7 remains `BLOCKED`.
+
+| Step | Scope | Owner check | Active status |
+| --- | --- | --- | --- |
+| 1. Editor Save Lifecycle | Eliminate false stale conflicts; stabilize title/body save and the confirmed durable → runtime/repository → editor-base lifecycle. | Create Card → repeatedly edit title/body → switch Cards → reopen → restart. | `OWNER REVIEW`: Technical PASS evidence in WORK_LOG; Owner PASS pending. |
+| 2. Type Switching | Confirm → commit → repository/runtime refresh → reload. | Character → Location → Lore → reopen/restart. | `BLOCKED` on Step 1 Owner PASS. |
+| 3. Inspector Variables Save | Eliminate `update-card-variables` failure; stabilize ordinary Variables writes. | 5–10 field changes → Save → switch Card → return → restart. | `BLOCKED` on Step 2 Owner PASS. |
+| 4. Image/Icon Bindings | Reliable Image/Icon writes through canonical page/content owners. | Change Icon/Image → Save → reload → replace again → restart. | `BLOCKED` on Step 3 Owner PASS. |
+| 5. Legacy Per-card Migration | Working Preview → Confirm → Migration → reload for one legacy Card. | Ordinary legacy Card + ambiguous legacy Card. | `BLOCKED` on Step 4 Owner PASS. |
+| 6. Performance Lifecycle | Find and eliminate degradation after several UI actions. | 20–30 Card opens + editing/tabs/type selector without noticeable degradation. | `BLOCKED` on Step 5 Owner PASS. |
+| 7. Inspector Information Architecture | Reorganize fields/groups without changing data architecture. | Character, Player, Item, Location, Lore. | `BLOCKED` on Step 6 Owner PASS. |
+| 8. Inspector Visual Polish | Final UX/CSS pass after information architecture approval. | Tabs, fields, groups, nested/repeatable, scroll, errors, Save footer. | `BLOCKED` on Step 7 Owner PASS. |
+| 9. Existing Workspace Migration UX | Safe handling of many legacy Cards after the per-card workflow is proven. | On a workspace copy, select several Cards → preview → migrate selected → other Cards unchanged. | `BLOCKED` on Step 8 Owner PASS. |
+| 10. Integrated Owner Acceptance Gate | Final integrated check; no new features. | Owner acceptance on the real workspace. | `BLOCKED` on Step 9 Owner PASS. |
 
 Important stop note: `RCB-021`, `RCB-001`, `RCB-001B`, `RCB-002`, `RCB-003`, `RCB-022`, `RCB-004`, `RCB-005`, `RCB-016`, `RCB-023`, `RCB-024`, `RCB-025`, `RCB-006A`, `RCB-006B`, `RCB-006C`, `RCB-007A`, `RCB-007B`, `RCB-007C`, `RCB-007D`, `RCB-026`, `RCB-027`, `RCB-017`, `RCB-018`, `RCB-019`, `RCB-028`, `RCB-008`, `RCB-009`, `RCB-010`, `RCB-020`, `RCB-011`, `RCB-012`, `RCB-013`, `RCB-014`, `RCB-015`, `RCB-029` and `RCB-030` are closed. `RCB-006`, `RCB-007`, `0.0.1.10.0`, `0.0.1.11.0`, `0.0.1.12.0`, `0.0.1.13.5`, `0.0.1.13.6`, `0.0.1.13.7`, `0.0.1.13.8`, `0.0.1.13.9`, `0.0.1.13.10`, `0.0.1.13.FINAL`, `0.0.1.13.0`, `0.0.1.14.2`, `0.0.1.14.3`, `0.0.1.14.4`, `0.0.1.14.5`, `0.0.1.14.6`, `0.0.1.14.7`, `0.0.1.14.8`, `0.0.1.14.9`, `0.0.1.14.10`, `0.0.1.14.FINAL`, `0.0.1.14.0`, `0.0.1.15.1`, `0.0.1.15.2`, `0.0.1.15.3`, `0.0.1.15.4`, `0.0.1.15.5`, `0.0.1.15.6`, `0.0.1.15.7`, `0.0.1.15.8`, `0.0.1.15.9`, `0.0.1.15.10`, `0.0.1.15.11`, `0.0.1.15.FINAL` and `0.0.1.15.0` are closed. `0.0.1.16.0` is `DONE` (CLOSED / PASS); `0.0.1.16.1` through `0.0.1.16.10`, including correctives `16.9.1` and `16.9.2`, are `DONE`. `0.0.1.16.FINAL` is `PASS`. `0.0.1.17.0` is `PAUSED`; 17.1 through 17.5 remain `DONE` at `Foundation`; 17.6 is `DONE` and accepted by the current owner instruction. CTV technical parity does not imply owner acceptance. Combat 17.7 is BLOCKED / NOT STARTED pending repeated manual CTV acceptance; later Combat tasks retain their own prerequisites. Preserve accepted 17.6 behavior. Phase 18+ remains `BLOCKED`; AI Core remains `LATER`.
 
@@ -424,7 +448,7 @@ PLANNED LEAF SEQUENCE:
 
 ACCEPTED BASELINE (17.6): the current owner task accepts the completed attack workflow. Preserve Goblin -> explicit attack/target -> hit -> damage -> HP -> transaction -> reload -> Undo; also miss and temp HP absorption. Re-run these routes as migration parity evidence before resuming 17.7; do not reopen 17.6 as an unfinished feature or claim a new manual execution in CTV Stage 1.
 
-EXIT CRITERIA: one action owner implements the bounded leaves above; hit/miss/history/reload/Undo pass the manual and automated acceptance; failure results distinguish page state from audit durability. Full D&D taxonomy, critical/mitigation rules and multi-page actions remain explicitly unsupported unless separately contracted. Phase 17 is PAUSED awaiting a separately authorized 17.7 task; the CTV migration dependency is closed. Phase 18+ remains BLOCKED and AI Core LATER.
+EXIT CRITERIA: one action owner implements the bounded leaves above; hit/miss/history/reload/Undo pass the manual and automated acceptance; failure results distinguish page state from audit durability. Full D&D taxonomy, critical/mitigation rules and multi-page actions remain explicitly unsupported unless separately contracted. Phase 17 is PAUSED; 17.7 requires the integrated CTV recovery Owner PASS and a separately authorized task. Phase 18+ remains BLOCKED and AI Core LATER.
 
 ### Card Types / Variables Migration Project — CTV
 
@@ -432,7 +456,7 @@ ID: `CTV`
 
 NAME: Card Types / Variables Migration
 
-STATUS: `OWNER REVIEW` — Stage 9 technical implementation / Foundation; acceptance corrective, owner acceptance pending.
+STATUS: recovery active / owner acceptance pending — Stages 1–9 technical Foundation implementation; two failed manual acceptances; current recovery Step 1 `OWNER REVIEW`.
 
 ORDER: accepted `17.6` -> CTV -> `17.7` and remaining Phase 17 leaves.
 
@@ -448,7 +472,7 @@ CANONICAL CONTRACT: [CARD_TYPES_VARIABLES_MIGRATION.md](../02-architecture/CARD_
 | CTV Stage 6 — `Каталог типов — мир и служебные сущности` | `DONE` / `Foundation` | Immutable bundled v1 definitions for Location, Region, Country, Organization, Lore, Folder and Project; approved-source provenance/static completeness oracle; all-15 activation/Registry/Inspector/reference/PageIndex evidence. No workspace activation, card migration or domain cutover. |
 | CTV Stage 7 — `Безопасная миграция Properties` | `DONE` / `Foundation` | Deterministic extraction/versioned mapping, explicit preview, verified definition-aware full backup/recovery, guarded per-page commits/readback, receipt/idempotence/journal resume and read-only compatibility reader. No automatic migration/UI rollout; unsupported/manual mappings preserved inactive. |
 | CTV Stage 8 — `Перевод доменных систем на Variables API` | `DONE` / `Foundation` | Entity-backed Character/Player projections and Sheet, canonical health, Combat 17.6/Undo, Map derived snapshots, Inventory/Item quantity and own Effects owners/writers. Player nested saves/skills editable; optional Character gameplay Field Set owns typed standard skills/death saves. Explicit Inventory/Effects adoption with verified backup/journal/resume/recovery; no automatic rollout. Effective totals derived/read-only, manual legacy overrides inactive. Historical 8.1–8.11 evidence is retained in canonical contracts/WORK_LOG, not a new roadmap hierarchy. |
-| CTV Stage 9 — `Удаление legacy active architecture и финальная интеграция` | `OWNER REVIEW` / technical `Foundation` | Implementation corrective addresses creation/type switching, binding-aware Image/Icon, Inspector layout/tabs, bounded render work and per-card safe migration. Existing portability, backup/journal/recovery and Stage 8 parity remain. Failed manual acceptance supersedes the earlier CLOSED claim; repeated owner acceptance is required. Combat 17.7 blocked, not started. |
+| CTV Stage 9 — `Удаление legacy active architecture и финальная интеграция` | technical `DONE` / `Foundation`; owner acceptance failed | Technical implementation and earlier corrective history are retained. Two manual acceptance failures supersede the earlier CLOSED claim. The active ten-step CTV Owner Acceptance Recovery above governs further work; Step 1 OWNER REVIEW, Steps 2–10 blocked until preceding Owner PASS. Combat 17.7 blocked, not started. |
 
 CTV Stage 1 does not authorize beginning Stage 2 in the same task. The type mapping was confirmed by the owner: character/creature -> character; magic -> spell; object/note -> item with item.isObject=true; player is a separate game-entity type. No unresolved product decision blocks the architecture.
 
