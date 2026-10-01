@@ -261,6 +261,7 @@ export async function collectWorkspaceDiagnostics(
   const assetVerification =
     buildAssetVerificationReport({
       pages,
+      registry: options.registry || (pages.some(hasStructuredPageData) ? createCardTypeRegistryFromCatalog((await readCardTypeCatalog({ storageAdapter: options.storageAdapter })).catalog, { bundledTypes: [], bundledFieldSets: [] }) : null),
       assetPaths,
       assetScanError
     });
@@ -2894,3 +2895,5 @@ function formatBytes(
 
   return `${Math.round(bytes / 1024 / 102.4) / 10} MB`;
 }
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
+import { hasStructuredPageData } from '../storage/structuredPagePolicy.js';

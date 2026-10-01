@@ -1,6 +1,6 @@
-﻿import { state } from '../state.js';
+import { state } from '../state.js';
 
-import { getInventorySetState, changeInventoryItemSet, renderInventoryItemSets, clearInventoryItemSetProjection } from './inventoryItemSets.js';
+import { getInventorySetState, changeInventoryItemSet, renderInventoryItemSets, clearInventoryItemSetProjection, refreshInventoryItemSetContext } from './inventoryItemSets.js';
 import {
   saveCurrentPage
 } from '../editor/editor.js';
@@ -40,9 +40,11 @@ import {
 
 import {
   getPageById,
-  getPagesByTag,
+  getPageIndex,
   getPagesByType
 } from '../repository/pageRepository.js';
+import { createCardVariableSnapshot } from '../variables/cardVariableStore.js';
+import { getValue } from '../variables/entityVariables.js';
 
 
 let activeSetList = null;
@@ -599,7 +601,7 @@ function renderItemSetOptions() {
       activeSetKind === 'skills'
         ? createSetOptionHTML(page)
         : `
-          ${getPageIcon(page.tags)}
+          ${getPageIcon(page)}
 
           <span class="item-set-option-title">
             ${escapeHTML(page.title || 'Без названия')}
@@ -698,11 +700,14 @@ async function createItemFromPicker() {
     return;
   }
 
+  const sourceList = activeSetList, sourcePage = state.currentPage;
   const page =
     await createItemPage(
       title
     );
 
+  if (state.currentPage !== sourcePage || activeSetList !== sourceList) throw new Error('Item создан, но Inventory page изменилась; связь не записана');
+  if (getInventorySetState(sourceList)) await refreshInventoryItemSetContext(sourceList);
   renderTree();
 
   await addItemToSet(
@@ -735,6 +740,7 @@ async function createItemPage(
         'card',
       type:
         'item',
+      variablesJson: await prepareNewCardEnvelope('item', getStorageAdapter()),
       aliases:
         [],
       relationships:
@@ -851,11 +857,11 @@ function getExpectedPageType(
   kind
 ) {
 
-  if (kind === 'spells') return 'magic';
+  if (kind === 'spells') return 'spell';
   if (kind === 'skills') return 'skill';
   if (kind === 'characters') return 'character';
-  if (kind === 'creatures') return 'creature';
-  if (kind === 'objects') return 'object';
+  if (kind === 'creatures') return 'character';
+  if (kind === 'objects') return 'item';
   return 'item';
 }
 
@@ -872,17 +878,16 @@ function getItemSetCandidatePages(
   const byId =
     new Map();
 
-  getPagesByType(
-    expectedType
-  )
-    .concat(
-      getPagesByTag(
-        expectedType
-      )
-    )
+  getPagesByType(expectedType)
     .forEach(page => {
 
       if (!page?.id) return;
+      if (kind === 'objects') {
+        const registry = getPageIndex().registry;
+        if (!registry) return;
+        const snapshot = createCardVariableSnapshot(page, registry);
+        if (snapshot.mode !== 'structured' || snapshot.diagnostics.some(issue => issue.severity === 'error') || getValue(snapshot, 'item.isObject', 'stored').value !== true) return;
+      }
 
       byId.set(
         page.id,
@@ -934,7 +939,7 @@ function createSetOptionHTML(
   ) {
 
     return `
-      ${getPageIcon(page.tags)}
+      ${getPageIcon(page)}
 
       <span class="item-set-option-title">
         ${escapeHTML(page.title || 'Без названия')}
@@ -945,7 +950,7 @@ function createSetOptionHTML(
   if (activeSetKind === 'spells') {
 
     return `
-      ${getPageIcon(page.tags)}
+      ${getPageIcon(page)}
 
       <span class="item-set-option-title spell-set-option-text">
         <strong>${escapeHTML(page.title || 'Без названия')}</strong>
@@ -954,7 +959,7 @@ function createSetOptionHTML(
   }
 
   return `
-    ${getPageIcon(page.tags)}
+    ${getPageIcon(page)}
 
     <span class="item-set-option-title spell-set-option-text">
       <strong>${escapeHTML(page.title || 'Без названия')}</strong>
@@ -975,7 +980,7 @@ function createSetChipHTML(
   ) {
 
     return `
-      ${getPageIcon(page.tags)}
+      ${getPageIcon(page)}
 
       <span class="item-set-title">
         ${escapeHTML(page.title || 'Без названия')}
@@ -1011,7 +1016,7 @@ function createSetChipHTML(
       : 'spell-set-remove';
 
   return `
-    ${getPageIcon(page.tags)}
+    ${getPageIcon(page)}
 
     <span class="${textClass}">
       <strong>${escapeHTML(page.title || 'Без названия')}</strong>
@@ -1199,3 +1204,5 @@ function getPageShortDescription(
     ?.textContent
     .trim() || '';
 }
+import { prepareNewCardEnvelope } from '../storage/structuredPageCreation.js';
+import { getStorageAdapter } from '../storage/storageAdapter.js';

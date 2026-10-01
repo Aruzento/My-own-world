@@ -33,12 +33,12 @@ export const ASSET_VERIFICATION_CATEGORIES =
 export function buildAssetVerificationReport({
   pages = [],
   assetPaths = [],
-  assetScanError = null
+  assetScanError = null, registry = null
 } = {}) {
 
   const pageById =
     createPageById(
-      pages
+      pages, { registry }
     );
 
   const references =

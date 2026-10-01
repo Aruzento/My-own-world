@@ -3,8 +3,19 @@
 import {
   parseMarkdown
 } from '../core/markdown.js';
+import { traverseTypedPage } from '../variables/typedPageTraversal.js';
 
 export class PageIndex {
+
+  setRegistry(registry) {
+    this.registry = registry;
+    for (const page of this.pages) this.searchDocuments.set(normalizeId(page.id), createSearchDocument(page, registry));
+  }
+
+  getTypedReferenceEdges(pageId = null) {
+    const documents = pageId ? [this.searchDocuments.get(normalizeId(pageId))] : [...this.searchDocuments.values()];
+    return documents.flatMap(document => document?.typedReferences || []);
+  }
 
   constructor(
     pages = []
@@ -771,7 +782,7 @@ export class PageIndex {
         page.id
       ),
       createSearchDocument(
-        page
+        page, this.registry
       )
     );
 
@@ -957,7 +968,7 @@ function snapshotIndexedPage(
 
 
 function createSearchDocument(
-  page
+  page, registry
 ) {
 
   const parsed =
@@ -985,10 +996,18 @@ function createSearchDocument(
       parsed
     );
 
+  const typedText = [], typedReferences = [];
+  traverseTypedPage(page, registry, ({ value, field, path, collection }) => {
+    if (collection === 'inactive') return;
+    if (field.datatype === 'reference' && value?.pageId) typedReferences.push({ sourceId: page.id,
+      targetId: value.pageId, sourceKey: path.join('.'), provenance: 'variables', derived: true });
+    if (['string', 'number', 'integer', 'boolean', 'enum', 'date', 'datetime'].includes(field.datatype) &&
+        value !== null && field.format !== 'formula' && field.key !== field.rowIdentityKey) typedText.push(String(value));
+  });
   const body =
     stripHtmlToText(
       parsed.body || page?.content || ''
-    );
+    ) + (typedText.length ? ` ${typedText.join(' ')}` : '');
 
   const name =
     String(page?.name || '');
@@ -1006,6 +1025,7 @@ function createSearchDocument(
     aliases,
     tags,
     body,
+    typedReferences,
     name,
     updatedAt,
     updatedAtMs:

@@ -8,9 +8,15 @@ owner_zone: "architecture"
 ---
 # World Package Contract
 
-## Planned Card Variables transport — 2026-09-24
+## Current structured transport — CTV Stage 9, 2026-10-01
 
-[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), section 11, supersedes the future portable-record target: World Package v2 must carry canonical metadata/relationships, variables and required immutable definitions separately from sanitized body, with typed reference/asset remapping. The current v1 projection below is not lossless for arbitrary PageRecord front matter. Keep v1 legacy import, reject lossy v1 export of migrated cards and reject unsupported formats before normalization. Existing preview/conflict/backup owners remain. Stage 3 enforces these blocks in the v1 model before projection/normalization; package v2 and structured reference/asset remapping remain future work. Legacy templates/duplication/raw page creation likewise reject structured inputs instead of silently stripping variables.
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) owns the final transport contract. New export is v2: `contents.pages` contains canonical portable PageRecord metadata, relationships, free body and a separate Variables envelope; `contents.cardTypes` contains the immutable type/Field Set closure. Unknown front matter is retained. V1 remains an explicit historical reader; structured export/import through v1 is blocked as lossy. Future versions reject before normalization.
+
+Import preflights the complete definition closure and collisions before page/asset writes. Same id/version/digest is reused; different digest blocks. Definitions activate additively before pages. Block/skip/copy policies remain. Copy computes the final id map first, then remaps typed references, typed inactive evidence, relationships and parent. External references remain exact unresolved ids; wiki display text is unchanged. Opaque unknown reference-bearing payload blocks affected copy rather than guessing.
+
+The shared typed collector covers nested/repeatable/override/inactive and canonical metadata assets. Rewriting is schema-aware; body assets use the existing HTML owner, never regex over Variables JSON. Asset/page writes receive physical readback. Import requires verified definition-aware backup for structured pages. Failure retains backup id and reports incomplete cleanup paths; additive immutable definitions are not falsely rolled back. Existing event history remains outside backup/restore.
+
+The v1 format below documents historical compatibility only.
 
 Date: 2026-08-02
 

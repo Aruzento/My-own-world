@@ -263,6 +263,8 @@ export async function activateCardTypeDefinitions({
         );
       }
 
+      const { setPageRepositoryRegistry } = await import('../repository/pageRepository.js');
+      setPageRepositoryRegistry(createCardTypeRegistryFromCatalog(readback.catalog, { bundledTypes: [], bundledFieldSets: [] }));
       return readback;
     }
   );

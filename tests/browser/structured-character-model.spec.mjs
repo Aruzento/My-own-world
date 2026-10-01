@@ -27,6 +27,8 @@ test(
 
       const registry = new CardTypeRegistry();
       const definition = registry.getResolvedType('character', 1);
+      const { encodeOwnEffects } = await import('/js/character/ownEffectsDefinition.js');
+      const { createSerializableEffectsData } = await import('/js/character/effectsModel.js');
       const body = `
         <section class="card-properties-block" data-block-type="properties" data-card-type="character">
           <input data-property-name="hpCurrent" value="99">
@@ -48,8 +50,10 @@ test(
           formatVersion: 1,
           schemaVersion: 1,
           schemaDigest: definition.digest,
+          extensions: { revision: 1, fields: [{ id: 'dnd.own-effects', version: 1 }] },
           values: {
             'dnd.level': 9,
+            'dnd.ownEffects': encodeOwnEffects(createSerializableEffectsData({ effects: [{ id: 'canonical-effect', title: 'Canonical effect', modifiers: { armorClass: 1, initiative: 1, speed: 5 } }] })),
             'dnd.proficiencyBonus': 4,
             'character.abilities': {
               'character.abilities.strength': 8,

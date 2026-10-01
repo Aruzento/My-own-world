@@ -2,6 +2,11 @@ import {
   buildPageRecordContent,
   createRuntimePageFromContent
 } from '../core/pageRecord.js';
+import { portablePageContent } from '../core/portablePageRecord.js';
+import { rewriteTypedPage } from '../variables/typedPageTraversal.js';
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog, activateCardTypeDefinitions } from '../storage/cardTypeCatalogStorage.js';
+import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
+import { verifyWorkspaceBackup } from '../storage/backupService.js';
 
 import {
   sanitizePersistentHTMLOnSave
@@ -16,11 +21,11 @@ import {
 } from '../storage/pageCommandService.js';
 
 import {
-  getStorageAdapter
+  getStorageAdapter, captureStorageWorkspaceContext, assertStorageWorkspaceContext
 } from '../storage/storageAdapter.js';
 
 import {
-  collectAssetReferencesFromPages
+  collectAssetReferencesFromPages, rewriteBodyAssetPaths
 } from '../storage/assetReferenceScanner.js';
 
 import {
@@ -73,6 +78,10 @@ export async function applyWorldPackagePageImport({
   conflictStrategy = 'block'
 } = {}) {
 
+  const workspace = storageAdapter === getStorageAdapter() && (storageAdapter.getWorkspaceRoot?.() || storageAdapter.getWorkspaceHandle?.())
+    ? captureStorageWorkspaceContext() : null;
+  const guard = () => { if (workspace) assertStorageWorkspaceContext(workspace); };
+
   if (!backupManifest?.id) {
 
     throw new Error(
@@ -84,6 +93,11 @@ export async function applyWorldPackagePageImport({
     normalizeWorldPackageData(
       packageData
     );
+
+  if (pkg.contents.pages.some(page => page.variablesJson)) {
+    const protection = await verifyWorkspaceBackup(backupManifest.id, { storageAdapter });
+    if (protection.manifest.version !== 2) throw new Error('Structured package import requires verified definition-aware backup');
+  }
 
   const preview =
     createWorldPackageImportPreview({
@@ -155,6 +169,23 @@ export async function applyWorldPackagePageImport({
   const pagesToImport =
     importPlan.pagesToImport;
 
+  const currentCatalog = await readCardTypeCatalog({ storageAdapter });
+  const definitions = pkg.contents.cardTypes || { types: [], fieldSets: [] };
+  // Collision and all remaps are preflighted before the first asset/page write.
+  const registry = new CardTypeRegistry({ bundledTypes: [], bundledFieldSets: [],
+    activatedTypes: currentCatalog.catalog.types, activatedFieldSets: currentCatalog.catalog.fieldSets,
+    candidateTypes: definitions.types, candidateFieldSets: definitions.fieldSets });
+  const pageIds = new Map(importPlan.entries.filter(entry => entry.action !== 'skip').map(entry => [entry.sourceId, entry.finalId]));
+  for (const entry of pagesToImport) if (pkg.version === 2) {
+    const body = rewriteImportedPageAssetPaths(entry.page.body, assetPlan.pathMap);
+    const relationships = (entry.page.relationships || []).map(relation => ({ ...relation,
+      ...(pageIds.has(relation.targetId) ? { targetId: pageIds.get(relation.targetId) } : {}) }));
+    const content = portablePageContent(entry.page, { id: entry.finalId, parent: entry.finalParent, relationships,
+      body: sanitizeBody(entry.titleChanged ? updateImportedPageTitleInBody(body, entry.finalTitle) : body) },
+      { newIdentity: entry.finalId !== entry.sourceId });
+    entry.structuredContent = rewriteTypedPage({ content }, registry, { pageIds, assetPaths: assetPlan.pathMap });
+  }
+
   const rulePackagesToImport =
     rulePackagePlan.rulePackagesToImport;
 
@@ -219,7 +250,15 @@ export async function applyWorldPackagePageImport({
     },
     async persist() {
 
+      guard();
+      if (JSON.stringify((await readCardTypeCatalog({ storageAdapter })).identity) !== JSON.stringify(currentCatalog.identity)) throw new Error('Package catalog changed after preflight');
+
+      if (pkg.version === 2 && (definitions.types.length || definitions.fieldSets.length)) await activateCardTypeDefinitions({
+        ...definitions, expectedIdentity: currentCatalog.identity, storageAdapter, bundledTypes: [], bundledFieldSets: [] });
+
       for (const entry of assetsToImport) {
+
+        guard();
 
         const parentPath =
           getParentPath(
@@ -233,16 +272,16 @@ export async function applyWorldPackagePageImport({
           );
         }
 
+        guard();
+        createdAssetPaths.push(entry.storagePath);
+        const expectedBytes = new Uint8Array(decodeAssetPayloadToArrayBuffer(entry.payload));
         await storageAdapter.writeBinary(
           entry.storagePath,
-          decodeAssetPayloadToArrayBuffer(
-            entry.payload
-          )
+          expectedBytes.buffer
         );
-
-        createdAssetPaths.push(
-          entry.storagePath
-        );
+        guard();
+        const bytes = new Uint8Array(await storageAdapter.readBinary(entry.storagePath));
+        if (bytes.length !== expectedBytes.length || bytes.some((byte, index) => byte !== expectedBytes[index])) throw new Error('Package asset durable readback mismatch');
       }
 
       if (pagesToImport.length > 0) {
@@ -253,6 +292,8 @@ export async function applyWorldPackagePageImport({
       }
 
       for (const entry of pagesToImport) {
+
+        guard();
 
         const path =
           createImportedPagePath();
@@ -275,7 +316,7 @@ export async function applyWorldPackagePageImport({
             : rewrittenBody;
 
         const content =
-          buildPageRecordContent({
+          entry.structuredContent || buildPageRecordContent({
             id:
               entry.finalId,
             parent:
@@ -295,10 +336,13 @@ export async function applyWorldPackagePageImport({
             sanitizeBody
           });
 
+        createdPaths.push(path);
         await storageAdapter.writeText(
           path,
           content
         );
+        guard();
+        if (await storageAdapter.readText(path) !== content) throw new Error('Package page durable readback mismatch');
 
         const name =
           path.split('/').pop();
@@ -311,16 +355,14 @@ export async function applyWorldPackagePageImport({
               `/${path}`
           });
 
-        createdPaths.push(
-          path
-        );
-
         createdPages.push(
           runtimePage
         );
       }
 
       for (const entry of rulePackagesToImport) {
+
+        guard();
 
         const path =
           await saveRulePackageFile(
@@ -335,6 +377,8 @@ export async function applyWorldPackagePageImport({
       }
     },
     updateIndexes() {
+
+      guard();
 
       setPages([
         ...state.pages,
@@ -401,9 +445,8 @@ export async function applyWorldPackagePageImport({
       context
     ) {
 
-      setPages(
-        context.rollbackData?.previousPages || previousPages
-      );
+      if (!workspace || storageAdapter === getStorageAdapter()) setPages(context.rollbackData?.previousPages || previousPages);
+      const incomplete = [];
 
       for (const path of createdPaths) {
 
@@ -414,7 +457,7 @@ export async function applyWorldPackagePageImport({
           );
 
         } catch {
-          // Best-effort cleanup after a failed bulk import.
+          incomplete.push(path);
         }
       }
 
@@ -427,7 +470,7 @@ export async function applyWorldPackagePageImport({
           );
 
         } catch {
-          // Best-effort cleanup after a failed bulk import.
+          incomplete.push(path);
         }
       }
 
@@ -440,9 +483,10 @@ export async function applyWorldPackagePageImport({
           );
 
         } catch {
-          // Best-effort cleanup after a failed bulk import.
+          incomplete.push(path);
         }
       }
+      if (incomplete.length) { error.incompleteImport = { backupId: backupManifest.id, paths: incomplete }; }
     },
     getResult(context) {
 
@@ -543,14 +587,17 @@ export async function createWorldPackageAssetImportReport({
 
 export async function createWorldPackageAssetPayloadExportReport({
   pages = [],
-  storageAdapter = getStorageAdapter()
+  storageAdapter = getStorageAdapter(), registry = null
 } = {}) {
+
+  if (!registry) registry = createCardTypeRegistryFromCatalog((await readCardTypeCatalog({ storageAdapter })).catalog,
+    { bundledTypes: [], bundledFieldSets: [] });
+  const collected = collectAssetReferencesFromPages(pages, { registry });
+  if (collected.some(reference => reference.incomplete)) throw new Error('Package export blocked: incomplete typed asset closure');
 
   const references =
     dedupeAssetReferences(
-      collectAssetReferencesFromPages(
-        pages
-      )
+      collected
     );
 
   const assets =
@@ -1712,137 +1759,9 @@ function dedupeAssetReferences(
 }
 
 
-function rewriteImportedPageAssetPaths(
-  body,
-  pathMap
-) {
-
-  if (
-    !pathMap ||
-    pathMap.size === 0
-  ) {
-
-    return String(body || '');
-  }
-
-  let result =
-    String(body || '');
-
-  const replacements =
-    [];
-
-  for (const [sourcePath, finalPath] of pathMap.entries()) {
-
-    replacements.push(
-      ...createAssetPathReplacementPairs(
-        sourcePath,
-        finalPath
-      )
-    );
-  }
-
-  replacements
-    .sort((left, right) =>
-      right.source.length - left.source.length
-    )
-    .forEach(({ source, target }) => {
-
-      if (!source || source === target) return;
-
-      result =
-        result.replaceAll(
-          source,
-          target
-        );
-    });
-
-  return result;
+function rewriteImportedPageAssetPaths(body, pathMap) {
+  return rewriteBodyAssetPaths(body, pathMap || new Map());
 }
-
-
-function createAssetPathReplacementPairs(
-  sourcePath,
-  finalPath
-) {
-
-  const source =
-    normalizeWorkspacePath(
-      sourcePath
-    );
-
-  const target =
-    normalizeWorkspacePath(
-      finalPath
-    );
-
-  const sourceWithoutPrefix =
-    source.replace(
-      /^assets\//,
-      ''
-    );
-
-  const targetWithoutPrefix =
-    target.replace(
-      /^assets\//,
-      ''
-    );
-
-  const rawPairs =
-    [
-      [
-        source,
-        target
-      ],
-      [
-        sourceWithoutPrefix,
-        targetWithoutPrefix
-      ],
-      [
-        `assets/${sourceWithoutPrefix}`,
-        `assets/${targetWithoutPrefix}`
-      ]
-    ];
-
-  const pairs =
-    [];
-
-  for (const [rawSource, rawTarget] of rawPairs) {
-
-    [
-      [
-        rawSource,
-        rawTarget
-      ],
-      [
-        escapeHtml(
-          rawSource
-        ),
-        escapeHtml(
-          rawTarget
-        )
-      ],
-      [
-        encodeURIComponent(
-          rawSource
-        ),
-        encodeURIComponent(
-          rawTarget
-        )
-      ]
-    ].forEach(([replacementSource, replacementTarget]) => {
-
-      pairs.push({
-        source:
-          replacementSource,
-        target:
-          replacementTarget
-      });
-    });
-  }
-
-  return pairs;
-}
-
 
 function createUniqueRulePackageId(
   sourceId,

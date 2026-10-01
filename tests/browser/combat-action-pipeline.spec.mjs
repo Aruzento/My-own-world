@@ -250,7 +250,7 @@ test('overlapping attacks serialize target health and retain independent event i
   expect(r.historyCount).toBe(2);
 });
 
-test('fresh page load uses durable Properties health even when history is corrupt or absent', async ({ page }) => {
+test('fresh page load uses durable Entity health even when history is corrupt or absent', async ({ page }) => {
   await page.goto('/');
   const saved = await page.evaluate(async () => {
     const { createCombatActionWorld, attackRequest } = await import('/tests/fixtures/combatActionFixtures.mjs');
@@ -259,7 +259,8 @@ test('fresh page load uses durable Properties health even when history is corrup
     const w = await createCombatActionWorld({ temp: 2 });
     const execution = await executeCombatAttack(attackRequest(), w.options);
     if (!execution.ok) throw new Error(JSON.stringify(execution));
-    return { page: { ...w.target, content: await w.original.readText(w.target.path) }, log: await w.original.readText(EVENT_TRANSACTION_LOG_PATH) };
+    const { CARD_TYPE_CATALOG_PATH } = await import('/js/storage/cardTypeCatalogStorage.js');
+    return { page: { ...w.target, content: await w.original.readText(w.target.path) }, catalog: await w.original.readText(CARD_TYPE_CATALOG_PATH), log: await w.original.readText(EVENT_TRANSACTION_LOG_PATH) };
   });
   await page.reload();
   const r = await page.evaluate(async saved => {
@@ -267,11 +268,13 @@ test('fresh page load uses durable Properties health even when history is corrup
     const { createMemoryWorkspaceAdapter } = await import('/tests/fixtures/dataSafetyFixtures.mjs');
     const { readTransactionRecords, EVENT_TRANSACTION_LOG_PATH } = await import('/js/events/eventStore.js');
     const adapter = createMemoryWorkspaceAdapter();
+    const { parseCardTypeCatalog, createCardTypeRegistryFromCatalog } = await import('/js/storage/cardTypeCatalogStorage.js');
+    const registry = createCardTypeRegistryFromCatalog(parseCardTypeCatalog(saved.catalog), { bundledTypes: [], bundledFieldSets: [] });
     const outputs = [];
     for (const log of [saved.log, '{broken json\n', '']) {
       await adapter.writeText(EVENT_TRANSACTION_LOG_PATH, log);
       const history = await readTransactionRecords({ storageAdapter: adapter });
-      const health = getCharacterHealth(readCharacterModelFromPage(saved.page));
+      const health = getCharacterHealth(readCharacterModelFromPage(saved.page, { registry }));
       outputs.push({ health, count: history.transactions.length });
     }
     return outputs;

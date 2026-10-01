@@ -20,10 +20,6 @@ import {
 } from './combatCharacterHealth.js';
 
 import {
-  getPropertiesArmorClassInputSource
-} from '../properties/propertiesCalculationEngine.js';
-
-import {
   COMBAT_SESSION_STATUSES
 } from './combatSessionModel.js';
 
@@ -537,23 +533,7 @@ function resolveTargetDefense({
   pages
 }) {
 
-  if (target.source === 'legacy') {
-    const input = getPropertiesArmorClassInputSource({
-      content:
-        target.page.content,
-      pages,
-      effectsModel:
-        target.character.effects
-    });
-
-    if (input.ok !== true) {
-
-      throw defenseError(
-        target,
-        input.reason
-      );
-    }
-  } else {
+  {
     const provenance = target.character?.provenance?.fields?.armorClass;
     if (
       provenance?.status !== 'value' ||

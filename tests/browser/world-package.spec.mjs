@@ -186,8 +186,9 @@ test(
       .locator('[data-world-package-apply="true"]')
       .click();
 
+    await page.waitForFunction(() => /копий:|Импорт World Package не выполнен/.test(document.querySelector('#statusbar').textContent));
     await expect(
-      page.locator('#statusbar')
+      page.locator('#statusbar'), consoleErrors.join('\n')
     ).toContainText(
       'копий: 2'
     );
@@ -1327,15 +1328,13 @@ async function seedWorldPackageWorkspace(
           `<h1>${title}</h1><p>Source body.</p>${bodyExtra}`
         ].join('\n');
 
+      const workspaceHandle = {name:'World Package Test'};
       const adapter =
         {
           kind:
             'browser',
           getWorkspaceHandle() {
-            return {
-              name:
-                'World Package Test'
-            };
+            return workspaceHandle;
           },
           async pickWorkspace() {
             return this.getWorkspaceHandle();

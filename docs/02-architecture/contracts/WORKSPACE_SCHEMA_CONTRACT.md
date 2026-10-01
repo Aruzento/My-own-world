@@ -6,9 +6,17 @@ owner_zone: "architecture"
 ---
 # Workspace Schema Contract
 
+## CTV Stage 9 production formats
+
+Normal card creation pins an activated canonical type/schema digest in PageRecord v2 and envelope v1. Registry owns the fifteen selectable formal types; legacy ids are migration mappings only. New actors explicitly store empty Inventory and own Effects domains, without materializing unrelated defaults. Existing old pages open with migration-required diagnostics and retained raw content; startup/open never converts them.
+
+Duplicate uses the full PageRecord codec and invalidates source-specific migration claims while preserving inactive evidence. Templates v2 store a portable structured seed, immutable required definitions and verified asset payloads; v1 free-content templates remain readable, but cannot create a legacy domain owner. Future template versions reject before normalization. Instance refs remain exact original ids absent explicit mapping. World Package v2 and definition-aware Backup v2 are separate versioned formats; workspace format itself is unchanged.
+
+Guarded type change prepares one atomic type/schema/envelope candidate, preserves body/tags/aliases/relationships/unknown metadata, and displaces incompatible typed values into inactive evidence. Returning to a type offers explicit validated restoration without overwriting current active values. Definition activation precedes pages; whole-page/workspace/catalog guards and verified backup remain mandatory.
+
 ## Card Variables foundation — 2026-09-24
 
-[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 4–8 and 11, defines the page v2 variablesJson envelope, independent type/field-set versions, immutable workspace definition catalog, strict unsupported-data write guards and explicit upgrade/recovery lifecycle. CTV Stage 3 supports page v2 and envelope v1. Legacy page creation/save remains v1 without eager migration; workspace format remains v1. PageRecord preserves malformed/future raw payloads and reports codec issues; typed schema/digest checks belong to Variable Store and command validation against the activated catalog. Missing catalog blocks structured writes; startup does not activate definitions. The existing body-only contentHash meaning is retained; full PageStateIdentity protects variable changes. This extension supersedes any assumption that warning-only load or normal page save can safely migrate structured card values. Unknown/malformed/future payloads must be preserved, never normalized into empty values.
+[Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md), sections 4–8 and 11, defines the page v2 variablesJson envelope, independent type/field-set versions, immutable workspace definition catalog, strict unsupported-data write guards and explicit upgrade/recovery lifecycle. CTV Stage 3 supports page v2 and envelope v1. Historical legacy pages remain readable without eager migration; normal creation is structured PageRecord v2. Workspace format remains v1. PageRecord preserves malformed/future raw payloads and reports codec issues; typed schema/digest checks belong to Variable Store and command validation against the activated catalog. Missing catalog blocks structured writes; startup does not activate definitions. The existing body-only contentHash meaning is retained; full PageStateIdentity protects variable changes. This extension supersedes any assumption that warning-only load or normal page save can safely migrate structured card values. Unknown/malformed/future payloads must be preserved, never normalized into empty values.
 
 Дата: 01.06.2026
 

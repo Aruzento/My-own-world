@@ -13,7 +13,7 @@ export const EFFECTS_ERROR_CODES = Object.freeze({ SOURCE_UNAVAILABLE: 'EFFECTS_
   INVALID_REQUEST: 'EFFECTS_INVALID_REQUEST', WRITE_BLOCKED: 'EFFECTS_WRITE_BLOCKED', READBACK_UNCERTAIN: 'EFFECTS_READBACK_UNCERTAIN' });
 const plans = new WeakMap();
 export async function prepareEffectsContext({ page, repository = PageRepository, workspaceContext = null } = {}) {
-  if (parsePageRecordContent(page?.content || '').variablesStatus.mode === 'legacy') return { mode: 'legacy', repository };
+  if (parsePageRecordContent(page?.content || '').variablesStatus.mode === 'legacy') return { mode: 'unavailable', repository, reason: 'effects-migration-required' };
   try {
     const workspace = workspaceContext || captureStorageWorkspaceContext();
     assertStorageWorkspaceContext(workspace);

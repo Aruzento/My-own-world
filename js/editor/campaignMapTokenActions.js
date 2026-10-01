@@ -5,14 +5,8 @@ import {
 } from '../core/markdown.js';
 
 import {
-  updatePageRecordContent
-} from '../core/pageRecord.js';
-
-import {
   deletePageBranch,
-  duplicatePageAsChild,
-  persistPageContentCommand,
-  snapshotPageForCommand
+  duplicatePageAsChild
 } from '../storage/storage.js';
 
 import {
@@ -38,10 +32,6 @@ import {
 import {
   clamp
 } from './campaignMapGeometry.js';
-
-import {
-  ensurePageDndHealth
-} from './campaignMapHealth.js';
 
 import {
   commitCampaignMapCharacterHealthChange,
@@ -337,18 +327,6 @@ export async function duplicateTokenAndPage(
           page.parent
         );
 
-    if (
-      !isOriginalLinkedToken(
-        token
-      )
-    ) {
-
-      await normalizeDuplicatedTokenPage(
-        duplicate,
-        tokenType
-      );
-    }
-
     const map =
       token.closest('.campaign-map-document');
 
@@ -568,15 +546,7 @@ export function ensureTokenHasHealthBlock(
   const map =
     token.closest('.campaign-map-document');
 
-  const health =
-    isCampaignMapStructuredPage(page)
-      ? getCampaignMapCharacterHealth(
-        page,
-        { map }
-      )
-      : ensurePageDndHealth(
-        page
-      );
+  const health = getCampaignMapCharacterHealth(page, { map });
 
   deps.applyTokenHealthState(
     token
@@ -712,77 +682,6 @@ function refreshPageMetaFromContent(
 
   page.aliases =
     parsed.aliases;
-}
-
-
-async function normalizeDuplicatedTokenPage(
-  page,
-  tokenType
-) {
-
-  if (!page) return;
-
-  const previousPage =
-    snapshotPageForCommand(
-      page
-    );
-
-  const previousContent =
-    page.content;
-
-  const nextTags =
-    [
-      ...new Set([
-        'card',
-        ...(page.tags || []).filter(tag =>
-          tag !== 'campaign-map' &&
-          tag !== 'campaignmap'
-        ),
-        tokenType
-      ])
-    ];
-
-  page.template =
-    'card';
-
-  page.type =
-    tokenType;
-
-  page.tags =
-    nextTags;
-
-  const content =
-    updatePageRecordContent(
-      previousContent,
-      {
-        id:
-          page.id,
-        parent:
-          page.parent ?? null,
-        order:
-          page.order ?? Date.now(),
-        tags:
-          page.tags,
-        template:
-          'card',
-        type:
-          tokenType,
-        aliases:
-          page.aliases || [],
-        relationships:
-          page.relationships || []
-      }
-    );
-
-  await persistPageContentCommand({
-    page,
-    content,
-    previousPage,
-    type:
-      'update-page-content',
-    reason:
-      'campaign-map-token-duplicate-normalize'
-  });
 }
 
 

@@ -11,12 +11,12 @@ import {
 // Проверяет ссылки страниц на ассеты и возвращает только отсутствующие файлы.
 export function findBrokenAssetReferences(
   pages = [],
-  assetPaths = []
+  assetPaths = [], options = {}
 ) {
 
   return findBrokenReferences(
     collectAssetReferencesFromPages(
-      pages
+      pages, options
     ),
     assetPaths
   );

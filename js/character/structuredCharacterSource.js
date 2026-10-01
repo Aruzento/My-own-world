@@ -4,8 +4,7 @@ import {
   readEntity
 } from '../variables/entityVariables.js';
 
-import { calculateDndAbilityModifier, calculateDndCheckValue, calculateDndProficiencyBonus } from './dndCalculations.js';
-import { calculateDndArmorClass } from '../properties/propertiesCalculationEngine.js';
+import { calculateDndAbilityModifier, calculateDndCheckValue, calculateDndProficiencyBonus, calculateDndArmorClass } from './dndCalculations.js';
 import { DND_CHECKS, DND_ABILITIES } from './dndCheckContract.js';
 import { CHARACTER_SKILLS_KEY, CHARACTER_DEATH_KEY } from './characterGameplayDefinition.js';
 

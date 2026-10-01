@@ -1,4 +1,15 @@
-// Existing pure policy, shared by Properties compatibility and Entity projections.
+// Existing pure policy, shared by historical compatibility and Entity projections.
+export function calculateDndArmorClass({ dexModifier = 0, armorKind = 'none', armorBaseAc = '', armorDexMax = '' } = {}) {
+  const dex = normalizeNumber(dexModifier, 0);
+  const optional = value => value === '' || value === null || value === undefined ? null : Number.isFinite(Number(value)) ? Math.floor(Number(value)) : null;
+  const base = optional(armorBaseAc);
+  if (armorKind === 'light') return (base ?? 11) + dex;
+  if (armorKind === 'medium') return (base ?? 12) + Math.min(dex, optional(armorDexMax) ?? 2);
+  if (armorKind === 'heavy') return base ?? 16;
+  if (armorKind === 'shield') return 10 + dex + (base ?? 2);
+  return 10 + dex;
+}
+
 export function calculateDndAbilityModifier(
   score
 ) {

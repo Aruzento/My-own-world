@@ -73,6 +73,7 @@ test(
 
                     return {
                       name,
+                      async getFile() { return { async text() { return rootFiles.get(name) || ''; } }; },
                       async createWritable() {
 
                         return createWritableFor(
@@ -243,7 +244,7 @@ aliases: []
     expect(
       result.createdType
     ).toBe(
-      'creature'
+      'character'
     );
 
     expect(
@@ -535,7 +536,7 @@ test(
               getPagesByTitle(createdPage.title)
                 .map(indexedPage => indexedPage.id),
             indexTypeIds:
-              getPagesByType('creature')
+              getPagesByType('character')
                 .map(indexedPage => indexedPage.id),
             indexTagIds:
               getPagesByTag('boundary-tag')
@@ -634,7 +635,7 @@ test(
               getPagesByTitle('Копия1 - Failure NPC')
                 .map(indexedPage => indexedPage.id),
             indexTypeFailureIds:
-              getPagesByType('creature')
+              getPagesByType('character')
                 .filter(indexedPage =>
                   String(indexedPage.title || '').includes('Failure NPC')
                 )
@@ -677,7 +678,7 @@ test(
     expect(
       result.success.type
     ).toBe(
-      'creature'
+      'character'
     );
 
     expect(
@@ -700,7 +701,7 @@ test(
     expect(
       result.success.durableContent
     ).toContain(
-      'type: creature'
+      'type: character'
     );
 
     expect(
@@ -851,6 +852,7 @@ test(
 
               return {
                 name,
+                async getFile() { return { async text() { return rootFiles.get(name) || ''; } }; },
                 async createWritable() {
 
                   return createWritableFor(
@@ -1031,7 +1033,7 @@ test(
     expect(
       currentPage.type
     ).toBe(
-      'creature'
+      'character'
     );
 
     expect(

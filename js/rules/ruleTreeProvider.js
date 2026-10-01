@@ -101,7 +101,7 @@ export function createRuleTreeCharacterIntegrations(
   {
     pages = [],
     selectedRuleIds = [],
-    page = null
+    page = null, registry, repository, effectsModel
   } = {}
 ) {
 
@@ -128,7 +128,7 @@ export function createRuleTreeCharacterIntegrations(
         ids,
       context:
         createRuleEvaluationContext({
-          page
+          page, pages, registry, repository, effectsModel
         })
     });
 

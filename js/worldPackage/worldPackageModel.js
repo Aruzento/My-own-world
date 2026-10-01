@@ -1,4 +1,7 @@
 import { assertLegacyPortability } from '../storage/structuredPagePolicy.js';
+import { exportPortablePageRecord, portablePageContent as buildPortableContent } from '../core/portablePageRecord.js';
+import { collectPageDefinitionClosure } from '../variables/typedPageTraversal.js';
+import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
 import {
   normalizeWorkspacePath
 } from '../storage/storageAdapterContract.js';
@@ -19,15 +22,23 @@ import {
 
 
 export const WORLD_PACKAGE_VERSION =
-  1;
+  2;
 
 
 export function normalizeWorldPackageData(
   data = {}
 ) {
-  if (data?.version !== undefined && Number(data.version) !== 1) throw new Error('Unsupported World Package version');
-  if (data?.contents?.cardTypes) throw new Error('World Package v1 cannot carry definition catalog');
-  for (const page of (Array.isArray(data?.contents?.pages) ? data.contents.pages : [])) assertLegacyPortability(page, 'World Package v1 import');
+  if (data?.version !== undefined && ![1, 2].includes(data.version)) throw new Error('Unsupported World Package version');
+  const version = data.version ?? WORLD_PACKAGE_VERSION;
+  if (version === 1) {
+    if (data?.contents?.cardTypes) throw new Error('World Package v1 cannot carry definition catalog');
+    for (const page of (Array.isArray(data?.contents?.pages) ? data.contents.pages : [])) assertLegacyPortability(page, 'World Package v1 import');
+  } else {
+    const definitions = data.contents?.cardTypes || { types: [], fieldSets: [] };
+    const registry = new CardTypeRegistry({ bundledTypes: [], bundledFieldSets: [], activatedTypes: definitions.types, activatedFieldSets: definitions.fieldSets });
+    const pages = (data.contents?.pages || []).map(page => ({ ...page, content: page.content || buildPortableContent(page) }));
+    collectPageDefinitionClosure(pages, registry);
+  }
 
   const source =
     isPlainObject(data)
@@ -89,9 +100,10 @@ export function normalizeWorldPackageData(
         source.dependencies
       ),
     contents: {
+      ...(version === 2 ? { cardTypes: structuredClone(data.contents?.cardTypes || { types: [], fieldSets: [] }) } : {}),
       pages:
         normalizePackagePages(
-          contents.pages
+          contents.pages, version
         ),
       assets:
         normalizePackageAssets(
@@ -110,13 +122,16 @@ export function createWorldPackageFromPages(
   pages = [],
   options = {}
 ) {
-  pages.forEach(page => assertLegacyPortability(page, 'World Package v1 export'));
+  if (options.version === 1) pages.forEach(page => assertLegacyPortability(page, 'World Package v1 export'));
+  const version = options.version ?? WORLD_PACKAGE_VERSION;
+  const cardTypes = version === 2 ? collectPageDefinitionClosure(pages, options.registry) : null;
 
   const title =
     options.title ||
     'World Package';
 
   return normalizeWorldPackageData({
+    version,
     packageId:
       options.packageId || title,
     title,
@@ -131,11 +146,10 @@ export function createWorldPackageFromPages(
     dependencies:
       options.dependencies || [],
     contents: {
+      ...(cardTypes ? { cardTypes } : {}),
       pages:
         pages.map(page =>
-          createPackagePageRecord(
-            page
-          )
+          version === 2 ? exportPortablePageRecord(page) : createPackagePageRecord(page)
         ),
       assets:
         options.assets || [],
@@ -544,11 +558,11 @@ function createPackagePageRecord(
 
 
 function normalizePackagePages(
-  pages
+  pages, version = 1
 ) {
 
   return Array.isArray(pages)
-    ? pages.map(createPackagePageRecord)
+    ? pages.map(page => version === 2 ? exportPortablePageRecord(page) : createPackagePageRecord(page))
     : [];
 }
 

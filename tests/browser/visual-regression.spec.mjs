@@ -1592,7 +1592,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             renderBackButtonIfNeeded
@@ -1677,7 +1677,7 @@ test(
             editor
           );
 
-          renderCardType();
+          await renderCardType();
 
           renderBackButtonIfNeeded(
             editor,
@@ -2404,7 +2404,7 @@ async function prepareThemeScaleWorkbench(
 
       const {
         applyBlockSystemContract
-      } = await import('/js/editor/blocks/blockContract.js');
+      } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
       const {
         renderCustomBlocks,
@@ -2564,7 +2564,7 @@ async function prepareThemeScaleWorkbench(
         editor
       );
 
-      renderCardType();
+      await renderCardType();
     }
   );
 }

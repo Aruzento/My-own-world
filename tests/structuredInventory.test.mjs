@@ -61,10 +61,10 @@ test('approved Character and Player inventory uses explicit arrays, quantities a
   }
 });
 
-test('explicit empty beats legacy; both absent retain legacy; partial/dangling state is unavailable', async () => {
+test('explicit empty beats recovery HTML; unadopted/partial/dangling state is unavailable', async () => {
   for (const [values, source] of [
     [{ 'dnd.items': [], 'dnd.equippedItems': [] }, 'entity'],
-    [{}, 'empty'], // no DOM in Node: legacy HTML owner is tested in Chromium
+    [{}, 'unavailable'],
     [{ 'dnd.items': [] }, 'unavailable'],
     [{ 'dnd.equippedItems': [] }, 'unavailable'],
     [{ 'dnd.items': refs(['A']), 'dnd.equippedItems': refs(['B']) }, 'unavailable']
@@ -76,7 +76,7 @@ test('explicit empty beats legacy; both absent retain legacy; partial/dangling s
     assert.equal(f.writes.length, 0);
   }
   const f = await fixture({ values: null, catalogActive: false });
-  assert.equal(f.context.mode, 'legacy');
+  assert.equal(f.context.mode, 'unavailable');
 });
 
 test('exact references diagnose missing/wrong/invalid Items without title fallback; quantity fallback is presentation only', async () => {

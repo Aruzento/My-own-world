@@ -14,20 +14,7 @@ import {
 } from '../state.js';
 
 import {
-  ensurePropertiesBlockForPage,
-  notifyPropertiesInput,
-  setCalculatedPropertyOverride,
-  setPropertyFieldValue
-} from '../properties/propertiesDomWriter.js';
-
-import {
-  getPropertyValue,
-  readPropertiesModelsFromHTML
-} from '../properties/propertiesModel.js';
-
-import {
   commitStructuredCharacterSheetChange,
-  createLegacyCharacterSheetContext,
   isStructuredCharacterSheetPage,
   prepareCharacterSheetContext,
   prepareStructuredCharacterSheetChange,
@@ -68,8 +55,7 @@ const sheetContexts =
 
 
 // Лист персонажа - runtime-витрина CharacterModel.
-// Он не хранит свои числа, а каждый раз собирает картину из свойств,
-// инвентаря, эффектов и старых DnD-блоков текущей карточки.
+// Entity/domain projection supplies all gameplay values; recovery HTML is inert.
 export function setupCharacterSheetBlocks(
   editor,
   saveCurrentPage
@@ -181,23 +167,8 @@ function renderCharacterSheetBlock(
   }
 
   if (!isStructuredCharacterSheetPage(page)) {
-    const context = createLegacyCharacterSheetContext({
-      page,
-      pages: state.pages
-    });
-    const source = readCharacterSheetCharacter(page, {
-      pages: state.pages,
-      context
-    });
-    if (source.status !== 'ready') {
-      target.innerHTML = '<div class="character-sheet-empty" role="status">Legacy Player Sheet недоступен.</div>';
-      return Promise.resolve(source);
-    }
-    sheetContexts.set(block, context);
-    target.innerHTML = createCharacterSheetHTML(source.model, page, {
-      source: 'legacy'
-    });
-    return Promise.resolve(source);
+    target.innerHTML = '<div class="character-sheet-empty" role="status">Требуется explicit migration: Настройки → Миграция карточек. Исходные данные сохранены.</div>';
+    return Promise.resolve(null);
   }
 
   target.innerHTML = '<div class="character-sheet-empty">Загрузка structured-данных…</div>';
@@ -243,7 +214,7 @@ async function renderStructuredCharacterSheetBlock(
 function createCharacterSheetHTML(
   model,
   page,
-  { source = 'legacy', presentation = {} } = {}
+  { source = 'structured', presentation = {} } = {}
 ) {
 
   const health =
@@ -253,9 +224,6 @@ function createCharacterSheetHTML(
 
   const structured = source === 'structured';
   const player = structured && model.cardType === 'player';
-  const properties = structured
-    ? null
-    : getPrimaryCharacterPropertiesModel(page);
 
   return `
     <section class="character-sheet-page" data-character-sheet-source="${escapeAttribute(source)}" data-character-sheet-type="${escapeAttribute(model.cardType)}">
@@ -264,10 +232,10 @@ function createCharacterSheetHTML(
           <span class="character-sheet-kicker">${escapeHTML(player ? 'Игрок / Player' : model.cardType === 'creature' ? 'Существо' : 'Персонаж')}</span>
           <strong>${escapeHTML(getCurrentCharacterTitle(model, page))}</strong>
           <div class="character-sheet-identity-grid">
-            ${createReadOnlyLineHTML('Предыстория', structured ? '—' : getPropertyDisplayValue(properties, 'background'))}
-            ${createReadOnlyLineHTML('Класс', player ? presentation.identity?.class : structured ? '—' : getPropertyDisplayValue(properties, 'charClass'))}
-            ${createReadOnlyLineHTML('Вид', player ? presentation.identity?.race : structured ? '—' : getPropertyDisplayValue(properties, 'race'))}
-            ${createReadOnlyLineHTML('Подкласс', player ? presentation.identity?.subclass : structured ? '—' : getPropertyDisplayValue(properties, 'charSubclass'))}
+            ${createReadOnlyLineHTML('Предыстория', '—')}
+            ${createReadOnlyLineHTML('Класс', player ? presentation.identity?.class : '—')}
+            ${createReadOnlyLineHTML('Вид', player ? presentation.identity?.race : '—')}
+            ${createReadOnlyLineHTML('Подкласс', player ? presentation.identity?.subclass : '—')}
             ${player ? createReadOnlyLineHTML('Подвид', presentation.identity?.subrace) : ''}
           </div>
         </section>
@@ -315,7 +283,7 @@ function createCharacterSheetHTML(
               field: 'hpMax',
               editable: !player || presentation.writable?.health === true
             })}
-            ${createReadOnlyMetricHTML('Кость хитов', structured ? presentation.hitDice || '—' : getPropertyDisplayValue(properties, 'hitDie') || 'd?')}
+            ${createReadOnlyMetricHTML('Кость хитов', presentation.hitDice || '—')}
             ${createDeathSavesHTML(model, { disabled: structured && presentation.writable?.deathSaves !== true })}
           </div>
         </section>
@@ -343,7 +311,7 @@ function createCharacterSheetHTML(
           editable: !structured,
           readOnlyReason: structured ? 'Effective speed зависит от movement rows и Effects.' : ''
         })}
-        ${createReadOnlyMetricHTML('П. восприятие', calculatePassivePerception(properties, model))}
+        ${createReadOnlyMetricHTML('П. восприятие', calculatePassivePerception(model))}
         ${createReadOnlyMetricHTML('Состояния', getConditionsLabel(model))}
       </section>
 
@@ -353,7 +321,7 @@ function createCharacterSheetHTML(
             createAbilityHTML(
               key,
               model.abilities[key],
-              properties,
+              null,
               { structured, player, checksEditable: presentation.writable?.checks === true, editable: !player || presentation.writable?.[key] === true, checks: model.calculations?.checks?.byKey }
             )
           ).join('')}
@@ -506,23 +474,8 @@ function createSkillRowsHTML(
   )
     .map(skill => {
 
-      const value = structured
-        ? (checks[skill.key]?.value ?? '—')
-        : getNumericPropertyValue(
-          properties,
-          skill.key,
-          ability.modifier
-        );
-
-      const proficient = structured
-        ? checks[skill.key]?.proficient === true
-        : Boolean(
-          getPropertyValue(
-            properties,
-            `${skill.key}Proficient`,
-            false
-          )
-        );
+      const value = checks[skill.key]?.value ?? '—';
+      const proficient = checks[skill.key]?.proficient === true;
 
       const writable = structured && checksEditable && (!skill.key.startsWith('save') || player);
       return `
@@ -753,81 +706,8 @@ async function updateCharacterSheetValue(
     );
 
   if (!editor || !state.currentPage) return;
-  if (state.currentPage.type === 'player' && !isStructuredCharacterSheetPage(state.currentPage)) return;
-
-  if (isStructuredCharacterSheetPage(state.currentPage)) {
-    await updateStructuredCharacterSheetValue(block, control, editor);
-    return;
-  }
-
-  const propertiesBlock =
-    ensurePropertiesBlockForPage(
-      editor,
-      state.currentPage
-    );
-
-  if (!propertiesBlock) return;
-
-  const field =
-    control.dataset.characterSheetField;
-
-  const override =
-    control.dataset.characterSheetOverride;
-
-  const deathField =
-    control.dataset.characterSheetDeathField;
-
-  const value =
-    deathField
-      ? getDeathSaveTrackNextValue(
-        control
-      )
-      : control.value;
-
-  let changed =
-    false;
-
-  if (field) {
-
-    changed =
-      setPropertyFieldValue(
-        propertiesBlock,
-        field,
-        value
-      ) || changed;
-  }
-
-  if (override) {
-
-    changed =
-      setCalculatedPropertyOverride(
-        propertiesBlock,
-        override,
-        value
-      ) || changed;
-  }
-
-  if (deathField) {
-
-    changed =
-      setPropertyFieldValue(
-        propertiesBlock,
-        deathField,
-        value
-      ) || changed;
-  }
-
-  if (!changed) return;
-
-  notifyPropertiesInput(
-    propertiesBlock
-  );
-
-  await saveCurrentPageRef?.();
-
-  renderCharacterSheetBlock(
-    block
-  );
+  if (!isStructuredCharacterSheetPage(state.currentPage)) return;
+  await updateStructuredCharacterSheetValue(block, control, editor);
 }
 
 
@@ -924,34 +804,6 @@ async function clearCharacterSheetOverride(
     await renderCharacterSheetBlock(block);
     return;
   }
-  if (state.currentPage.type === 'player') return;
-
-  const propertiesBlock =
-    ensurePropertiesBlockForPage(
-      editor,
-      state.currentPage
-    );
-
-  if (!propertiesBlock) return;
-
-  const changed =
-    setCalculatedPropertyOverride(
-      propertiesBlock,
-      key,
-      ''
-    );
-
-  if (!changed) return;
-
-  notifyPropertiesInput(
-    propertiesBlock
-  );
-
-  await saveCurrentPageRef?.();
-
-  renderCharacterSheetBlock(
-    block
-  );
 }
 
 
@@ -973,20 +825,6 @@ function getDeathSaveTrackNextValue(
 }
 
 
-function getPrimaryCharacterPropertiesModel(
-  page
-) {
-
-  return readPropertiesModelsFromHTML(
-    page?.content || ''
-  )
-    .find(properties =>
-      properties.cardType === 'character' ||
-      properties.cardType === 'creature'
-    ) || null;
-}
-
-
 function getCurrentCharacterTitle(
   model,
   page
@@ -1000,75 +838,11 @@ function getCurrentCharacterTitle(
 }
 
 
-function getPropertyDisplayValue(
-  properties,
-  key
-) {
-
-  const value =
-    getPropertyValue(
-      properties,
-      key,
-      ''
-    );
-
-  if (
-    value === null ||
-    value === undefined ||
-    value === false
-  ) return '';
-
-  return String(value);
-}
-
-
-function getNumericPropertyValue(
-  properties,
-  key,
-  fallback = 0
-) {
-
-  const rawValue =
-    getPropertyValue(
-      properties,
-      key,
-      fallback
-    );
-
-  if (
-    rawValue === '' ||
-    rawValue === null ||
-    rawValue === undefined
-  ) return fallback;
-
-  const value =
-    Number(
-      rawValue
-    );
-
-  return Number.isFinite(value)
-    ? value
-    : fallback;
-}
-
-
 function calculatePassivePerception(
-  properties,
   model
 ) {
-  if (model.source === 'entity') {
-    const perception = model.calculations?.checks?.byKey?.skillPerception?.value;
-    return Number.isFinite(perception) ? 10 + perception : '—';
-  }
-
-  const perception =
-    getNumericPropertyValue(
-      properties,
-      'skillPerception',
-      model.abilities?.wis?.modifier || 0
-    );
-
-  return 10 + perception;
+  const perception = model.calculations?.checks?.byKey?.skillPerception?.value;
+  return Number.isFinite(perception) ? 10 + perception : '—';
 }
 
 

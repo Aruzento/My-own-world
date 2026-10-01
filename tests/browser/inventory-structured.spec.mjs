@@ -127,24 +127,14 @@ test('structured Item Set UI uses Entity inventory, Item quantity, effects and d
   await expect(runtime.locator('[data-page-id="C"] .item-set-quantity')).toHaveValue('0');
 });
 
-test('per-domain compatibility keeps legacy Item Set owner on structured Character without inventory fields', async ({ page }) => {
-  await fixture(page, { absent: true });
-  await expect(page.locator('.inventory-runtime')).toHaveCount(0);
-  const input = page.locator('#editorArea .item-set-chip[data-page-id="B"] .item-set-quantity');
-  await expect(input).toHaveValue('99');
-  await expect(page.locator('[data-character-sheet-field="level"]')).toHaveValue('5');
-  await expect(page.locator('[data-character-sheet-field="hpCurrent"]')).toHaveValue('8');
-  await input.fill('3');
-  await input.press('Tab');
-  await expect.poll(() => page.evaluate(async () => (await window.__inventory.read()).inventory.items[0]?.quantity)).toBe(3);
-  const state = await page.evaluate(() => window.__inventory.read());
-  expect(state.inventory.source).toBe('items-block');
-  expect(state.values['dnd.items']).toBeUndefined();
-  expect(state.values['dnd.equippedItems']).toBeUndefined();
-  expect(state.values['dnd.health']['dnd.hpCurrent']).toBe(8);
-  expect(state.character.armorClass).toBe(114);
-  await reload(page);
-  await expect(input).toHaveValue('3');
+test('structured legacy inventory evidence requires explicit adoption and never edits HTML', async ({page})=>{
+ await fixture(page,{absent:true});const before=await page.evaluate(()=>window.__inventory.read());
+ await expect(page.locator('.inventory-runtime')).toContainText('недоступен');
+ await expect(page.locator('.inventory-runtime .item-set-add-btn')).toHaveCount(0);
+ await expect(page.locator('[data-character-sheet-field="level"]')).toHaveValue('5');
+ await expect(page.locator('[data-character-sheet-field="hpCurrent"]')).toHaveValue('8');
+ expect(before.inventory.source).not.toBe('items-block');expect(before.values['dnd.items']).toBeUndefined();expect(before.writes).toEqual([]);
+ await reload(page);const after=await page.evaluate(()=>window.__inventory.read());expect(after.body).toBe(before.body);expect(after.writes).toEqual([]);
 });
 
 test('empty arrays beat conflicting block; partial/future/missing catalog disables inventory UI', async ({ page }) => {
@@ -162,23 +152,11 @@ test('empty arrays beat conflicting block; partial/future/missing catalog disabl
   }
 });
 
-test('legacy Inventory quantity/add/remove remains catalog-independent', async ({ page }) => {
-  await fixture(page, { legacy: true, noCatalog: true });
-  await expect(page.locator('.inventory-runtime')).toHaveCount(0);
-  const original = page.locator('#editorArea .item-set-chip[data-page-id="B"]');
-  await original.locator('.item-set-quantity').fill('0');
-  await original.locator('.item-set-quantity').press('Tab');
-  await expect(original.locator('.item-set-quantity')).toHaveValue('1');
-  await page.locator('#editorArea .item-set-add-btn').click();
-  await page.locator('#itemSetPicker .item-set-option').filter({ hasText: 'Item C' }).click();
-  await expect(page.locator('#editorArea .item-set-chip[data-page-id="C"]')).toBeVisible();
-  await original.locator('.item-set-remove').click();
-  await expect(original).toHaveCount(0);
-  await reload(page);
-  await expect(page.locator('#editorArea .item-set-chip[data-page-id="C"]')).toBeVisible();
-  const state = await page.evaluate(() => window.__inventory.read());
-  expect(state.values).toBeNull();
-  expect(state.inventory.items.map(item => item.pageId)).toEqual(['C']);
+test('unmigrated legacy inventory is migration-required and catalog independent',async({page})=>{
+ await fixture(page,{legacy:true,noCatalog:true});await expect(page.locator('.inventory-runtime')).toContainText('недоступен');
+ await expect(page.locator('.inventory-runtime .item-set-add-btn')).toHaveCount(0);
+ const before=await page.evaluate(()=>window.__inventory.read());await reload(page);const after=await page.evaluate(()=>window.__inventory.read());
+ expect(after.body).toBe(before.body);expect(after.values).toBeNull();expect(after.writes).toEqual([]);
 });
 
 async function reload(page) {
@@ -215,7 +193,7 @@ test('creating Item from structured inventory keeps legacy Item creation and add
       actorWrites: f.writes.filter(path => path === f.actor.path).length, body: actor.rawBody };
   });
   expect(created.type).toBe('item');
-  expect(created.mode).toBe('legacy');
+  expect(created.mode).toBe('structured');
   expect(created.actorWrites).toBe(1);
   expect(created.body).toBe(await page.evaluate(() => window.__inventory.originalBody));
   await expect(chip).toHaveAttribute('data-page-id', created.id);
@@ -236,9 +214,11 @@ test('source activation while Sheet is open blocks stale legacy quantity control
     if (result.status !== 'saved') throw new Error('fixture activation failed');
     advanceEditorPageBase(f.actor, f.actor.content);
   });
-  const oldQuantity = page.locator('#editorArea .item-set-block > .item-set-list .item-set-quantity');
-  await oldQuantity.fill('7');
-  await oldQuantity.press('Tab');
+  await page.evaluate(async()=>{
+ const node=document.querySelector('#editorArea .item-set-block > .item-set-list .item-set-quantity');
+ node.value='7';node.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await reload(page);
   await expect(page.locator('#editorArea .inventory-runtime [data-page-id="A"]')).toBeVisible();
   const state = await page.evaluate(() => window.__inventory.read());
   expect(state.body).toBe(await page.evaluate(() => window.__inventory.originalBody));

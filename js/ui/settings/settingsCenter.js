@@ -32,6 +32,7 @@ import {
 import {
   renderBackupSettings
 } from './backupSettings.js';
+import { renderMigrationSettings } from './migrationSettings.js';
 
 import {
   applySettingsTooltip
@@ -886,6 +887,10 @@ async function renderSectionBody(
 ) {
 
   switch (section.renderer) {
+
+    case 'migration':
+      await renderMigrationSettings(body);
+      break;
 
     case 'appearance':
       renderAppearanceSettings(

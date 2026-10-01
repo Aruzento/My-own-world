@@ -46,12 +46,13 @@ export async function backupBytesDigest(value) {
   return `sha256:${[...new Uint8Array(hash)].map(byte => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
-export function assertBackupPageDefinitions(contents, catalog) {
+export function assertBackupPageDefinitions(contents, catalog, { requireValidValues = false } = {}) {
   const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
   for (const content of contents) {
     const record = parsePageRecordContent(content, { generateId: false });
     if (record.variablesStatus.mode === 'legacy') continue;
     const snapshot = createCardVariableSnapshot({ id: record.id, content }, registry);
     if (snapshot.mode !== 'structured') throw new Error('Backup structured definition unavailable');
+    if (requireValidValues && snapshot.diagnostics.some(issue => issue.severity === 'error')) throw new Error('Restore structured values invalid; raw backup recovery remains available');
   }
 }

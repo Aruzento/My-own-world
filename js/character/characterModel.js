@@ -356,6 +356,7 @@ function createCharacterModelFromStructuredPage(
       page,
       pages,
       integrations,
+      registry, repository, effectsModel,
       selectedRuleIds:
         effectiveSelectedRuleIds
     });
@@ -846,7 +847,7 @@ function createCombinedIntegrations(
     page,
     pages,
     integrations,
-    selectedRuleIds
+    selectedRuleIds, registry, repository, effectsModel
   }
 ) {
 
@@ -854,7 +855,7 @@ function createCombinedIntegrations(
     createRuleTreeCharacterIntegrations({
       page,
       pages,
-      selectedRuleIds
+      selectedRuleIds, registry, repository, effectsModel
     });
 
   return createCharacterIntegrations({

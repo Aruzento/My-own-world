@@ -79,7 +79,7 @@ test('Character and Player explicit state ignores legacy HTML; empty is Entity-o
     assert.equal(readEffectsModelFromPage(empty.page, empty.context).effects.length, 0);
   }
 });
-test('absent retains legacy domain; partial/invalid/future/missing catalog never mix sources', async () => {
+test('unadopted legacy evidence is migration-required; partial/invalid/future/missing catalog never mix sources', async () => {
   const absent = await fixture({ values: {}, extensions: { revision: 1, fields: [] } });
   assert.notEqual(readEffectsModelFromPage(absent.page, absent.context).source, 'entity');
   for (const options of [
@@ -96,7 +96,8 @@ test('absent retains legacy domain; partial/invalid/future/missing catalog never
     assert.equal(readEffectsModelFromPage({ ...f.page, content }, { ...f.context, repository: null }).source, 'unavailable');
   }
   const legacy = await fixture({ legacy: true, noCatalog: true });
-  assert.equal(legacy.context.mode, 'legacy');
+  assert.equal(legacy.context.mode, 'unavailable');
+  assert.equal(legacy.context.reason, 'effects-migration-required');
   assert.notEqual(readEffectsModelFromPage(legacy.page).source, 'unavailable');
   const unregistered = { getPageById() { throw new Error('Legacy Effects do not need repository/catalog'); } };
   assert.equal(readEffectsModelFromPage({ id: 'draft', type: 'character' }, { repository: unregistered }).status, 'legacy');

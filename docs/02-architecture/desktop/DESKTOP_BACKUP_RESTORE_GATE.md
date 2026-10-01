@@ -56,4 +56,4 @@ owner_zone: "architecture"
 
 ## Оставшийся хвост
 
-Автоматический Tauri UI-runner пока не подключен. Поэтому реальный клик по desktop popup backup/restore остается ручным smoke-сценарием до отдельного пункта по desktop UI automation.
+Stage 9 automation covers Browser/OPFS and injected Tauri structured create/type-change/duplicate/template/package/partial restore contracts. Native WebView2 click-through verifies a rebuilt executable on a disposable structured workspace (7/7 PASS). Native missing optional files have browser-compatible NotFoundError identity while retaining native codes. The desktop release gate includes verify/full Chromium, packaging/environment and cargo check. Installer handoff and large user-workspace confidence still follow DESKTOP_RELEASE_POLICY; this Foundation task does not claim a manual installer handoff.

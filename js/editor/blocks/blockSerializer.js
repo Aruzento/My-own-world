@@ -5,6 +5,7 @@ import {
 import {
   RUNTIME_OR_LEGACY_SELECTOR
 } from './blockRuntimeSelectors.js';
+import { restoreLegacyRecoverySources } from '../legacyRecoveryPresentation.js';
 
 export function serializePersistentEditorHTML(
   editor
@@ -42,6 +43,7 @@ export function serializePersistentEditorHTML(
     clone
   );
 
+  restoreLegacyRecoverySources(editor, clone);
   return sanitizePersistentHTMLOnSave(
     clone.innerHTML
   );

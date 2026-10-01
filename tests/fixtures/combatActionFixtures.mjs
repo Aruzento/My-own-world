@@ -17,11 +17,12 @@ export function attackRequest() {
 
 // Disposable real Properties + PageRecord + map serializer fixtures; memory storage uses the shared owner fixture.
 export async function createCombatActionWorld({ current = 10, max = 10, temp = 0, dice = [10, 3],
-  actorName = 'actor', targetName = 'target', status = 'active' } = {}) {
+  actorName = 'actor', targetName = 'target', status = 'active', rawLegacy = false } = {}) {
   const characterPage = (id, health) => {
     const wrapper = document.createElement('div');
-    wrapper.innerHTML = createPropertiesBlock({ cardType: 'character', title: id });
-    for (const [field, value] of Object.entries({ hpCurrent: health.current, hpMax: max, hpTemp: health.temp, armorClass: 12 })) {
+    wrapper.innerHTML = '<div class="card-properties-block" data-block-type="properties" data-card-type="character">' +
+      ['hpCurrent', 'hpMax', 'hpTemp', 'dex'].map(key => `<input type="number" data-property-name="${key}" value="0">`).join('') + '</div>';
+    for (const [field, value] of Object.entries({ hpCurrent: health.current, hpMax: max, hpTemp: health.temp, dex: 14 })) {
       const control = wrapper.querySelector(`[data-property-name="${field}"]`);
       control.value = String(value);
       control.setAttribute('value', String(value));
@@ -41,6 +42,35 @@ export async function createCombatActionWorld({ current = 10, max = 10, temp = 0
   const pages = [actor, target, map];
   const adapter = createMemoryWorkspaceAdapter();
   for (const p of pages) await adapter.writeText(p.path, p.content);
+  setStorageAdapter(adapter);
+  rebuildPageRepository(pages);
+  if (!rawLegacy) {
+    // Production parity starts with explicitly migrated and retired legacy actors.
+    // Setup writes precede the combat counters and never become action evidence.
+    const { previewLegacyPropertiesMigration, executeLegacyPropertiesMigration } = await import('../../js/migration/propertiesMigration.js');
+    const { previewLegacySourceRetirement, executeLegacySourceRetirement } = await import('../../js/migration/legacySourceRetirement.js');
+    const migrated = await executeLegacyPropertiesMigration(await previewLegacyPropertiesMigration({ pageIds: [actor.id, target.id] }), { confirm: true });
+    if (migrated.status !== 'completed') throw new Error(JSON.stringify(migrated));
+    const retired = await executeLegacySourceRetirement(await previewLegacySourceRetirement({ pageIds: [actor.id, target.id] }), { confirm: true });
+    if (retired.status !== 'completed') throw new Error(JSON.stringify(retired));
+    for (const page of [actor, target]) {
+      const { createRuntimePageFromContent } = await import('../../js/core/pageRecord.js');
+      Object.assign(page, createRuntimePageFromContent({ content: await adapter.readText(page.path), path: page.path, name: page.name }));
+    }
+    const { prepareVariablesChange, commitVariablesChange } = await import('../../js/variables/variableCommands.js');
+    const { createPageStateIdentityFromContent } = await import('../../js/core/pageRecord.js');
+    const { readCardTypeCatalog, createCardTypeRegistryFromCatalog } = await import('../../js/storage/cardTypeCatalogStorage.js');
+    const registry = createCardTypeRegistryFromCatalog((await readCardTypeCatalog()).catalog, { bundledTypes: [], bundledFieldSets: [] });
+    for (const page of [actor, target]) {
+      // An explicit canonical defense is a Combat precondition, never reverse-mapped from a legacy total.
+      const plan = prepareVariablesChange({ pageId: page.id, context: { registry }, expectedBase: createPageStateIdentityFromContent(page.content),
+        patch: [{ op: 'set', key: 'dnd.armorClass', value: { 'dnd.armorClass.value': 12 } }] });
+      const result = await commitVariablesChange(plan);
+      if (result.status !== 'saved') throw new Error(JSON.stringify(result));
+      const { createRuntimePageFromContent } = await import('../../js/core/pageRecord.js');
+      Object.assign(page, createRuntimePageFromContent({ content: await adapter.readText(page.path), path: page.path, name: page.name }));
+    }
+  }
   const original = { readText: adapter.readText.bind(adapter), writeText: adapter.writeText.bind(adapter) };
   const effects = { writes: 0, appends: 0, reads: 0 };
   adapter.readText = async path => { effects.reads++; return original.readText(path); };
@@ -56,16 +86,18 @@ export async function createCombatActionWorld({ current = 10, max = 10, temp = 0
   const rng = createDiceSequenceRandomInt(dice);
   let sequence = 0;
   const context = { mapPageId: map.id, mapModel, dirty: false };
-  return { actor, target, map, pages, mapModel, context, adapter, original, effects, rng,
+  const { readCardTypeCatalog, createCardTypeRegistryFromCatalog } = await import('../../js/storage/cardTypeCatalogStorage.js');
+  const registry = rawLegacy ? null : createCardTypeRegistryFromCatalog((await readCardTypeCatalog()).catalog, { bundledTypes: [], bundledFieldSets: [] });
+  return { actor, target, map, pages, mapModel, context, adapter, original, effects, rng, registry,
     options: { getMapContext: () => context, randomInt: rng.randomInt,
       createId: () => `fixture-${++sequence}`, now: () => '2026-09-22T10:00:00.000Z' } };
 }
 
 export async function createStructuredCombatActionWorld({
-  actorStructured = false, targetStructured = true, current = 8, max = 20, temp = 0,
+  actorStructured = true, targetStructured = true, current = 8, max = 20, temp = 0,
   dice = [10, 1], contradictoryProperties = true
 } = {}) {
-  const world = await createCombatActionWorld({ current, max, temp, dice });
+  const world = await createCombatActionWorld({ current, max, temp, dice, rawLegacy: true });
   const { BUNDLED_CARD_TYPE_DEFINITIONS: types,
     BUNDLED_FIELD_SET_DEFINITIONS: fieldSets } = await import('../../js/cardTypes/definitions/bundledDefinitions.js');
   const { CARD_TYPE_CATALOG_PATH, createCardTypeRegistryFromCatalog,
@@ -83,6 +115,7 @@ export async function createStructuredCombatActionWorld({
     if (contradictoryProperties) {
       for (const [field, value] of Object.entries({ hpCurrent: 99, hpMax: 99, hpTemp: 0, armorClass: 77 })) {
         const control = wrapper.querySelector(`[data-property-name="${field}"]`);
+        if (!control) continue;
         control.value = String(value);
         control.setAttribute('value', String(value));
       }

@@ -13,6 +13,7 @@ import {
 import {
   getStorageAdapter
 } from './storageAdapter.js';
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
 
 import {
   listPendingWorkspaceOperations
@@ -56,12 +57,16 @@ export async function runWorkspaceValidationCheckpoint({
     pages
   );
 
+  let registry = null;
+  try { registry = createCardTypeRegistryFromCatalog((await readCardTypeCatalog()).catalog, { bundledTypes: [], bundledFieldSets: [] }); }
+  catch { /* Incomplete definition closure remains diagnostic. */ }
+
   const validation =
     validateWorkspaceSnapshot({
       pages,
       assetReferences:
         collectAssetReferencesFromPages(
-          pages
+          pages, { registry }
         )
     });
 

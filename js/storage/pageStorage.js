@@ -1,4 +1,4 @@
-import { assertLegacyPortability } from './structuredPagePolicy.js';
+import { prepareNewCardEnvelope, validateNewPageContent, copyPageContent } from './structuredPageCreation.js';
 import {
   state
 } from '../state.js';
@@ -107,7 +107,8 @@ export async function createPage(
       template:
         template.template || templateKey,
       type:
-        template.type || 'note',
+        template.type || 'lore',
+      variablesJson: templateKey === 'card' ? await prepareNewCardEnvelope(template.type || 'lore', getReadyStorageAdapter()) : undefined,
       aliases:
         [],
       body:
@@ -135,6 +136,7 @@ export async function createFolderPage(
       tags: ['card', 'folder'],
       template: 'card',
       type: 'folder',
+      variablesJson: await prepareNewCardEnvelope('folder', getReadyStorageAdapter()),
       aliases: [],
       body: applyInitialTitle(
         template.content,
@@ -151,7 +153,6 @@ export async function createFolderPage(
 export async function createPageFromRecordContent(
   content
 ) {
-  assertLegacyPortability(content, 'Legacy page creation/import');
 
   if (typeof content !== 'string') {
 
@@ -171,12 +172,13 @@ export async function duplicatePageAsChild(
   parentId,
   initialTitle = ''
 ) {
-  assertLegacyPortability(sourcePage, 'Page duplication');
 
   const parsed =
     parseMarkdown(
       sourcePage.content
     );
+
+  if (!parsed.variablesJson && parsed.template === 'card') throw new Error('Legacy card requires explicit migration before duplication');
 
   const body =
     initialTitle
@@ -187,15 +189,9 @@ export async function duplicatePageAsChild(
       : parsed.body;
 
   const content =
-    buildPageContent({
+    copyPageContent(sourcePage.content, {
       id: crypto.randomUUID(),
       parent: parentId,
-      tags: parsed.tags,
-      template: parsed.template || 'card',
-      type: parsed.type || 'note',
-      aliases: parsed.aliases || [],
-      relationships:
-        parsed.relationships || [],
       body
     });
 
@@ -224,6 +220,8 @@ async function writePageFile(
 
   const storageAdapter =
     getReadyStorageAdapter();
+
+  await validateNewPageContent(content, storageAdapter);
 
   await storageAdapter.ensureDirectory(
     'pages'
@@ -304,6 +302,7 @@ async function writePageFile(
         path,
         content
       );
+      if (await storageAdapter.readText(path) !== content) throw new Error('Created page durable readback mismatch');
     },
     updateIndexes() {
 
@@ -383,6 +382,7 @@ function buildPageContent({
   type,
   aliases,
   relationships = [],
+  variablesJson = undefined,
   body,
   frontMatter = null,
   invalidFrontMatter = {}
@@ -397,6 +397,7 @@ function buildPageContent({
     type,
     aliases,
     relationships,
+    variablesJson,
     body,
     frontMatter,
     invalidFrontMatter

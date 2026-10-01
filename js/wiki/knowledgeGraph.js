@@ -1,6 +1,7 @@
 import {
   parseMarkdown
 } from '../core/markdown.js';
+import { getPageIndex } from '../repository/pageRepository.js';
 
 
 const WIKI_LINK_PATTERN =
@@ -270,7 +271,12 @@ export function buildKnowledgeGraph(
     [
       ...createTreeEdges(nodes),
       ...createWikiLinkEdges(nodes),
-      ...createManualRelationshipEdges(nodes)
+      ...createManualRelationshipEdges(nodes),
+      ...nodes.flatMap(node => getPageIndex().getTypedReferenceEdges(node.id).map(edge => ({
+        id: `typed:${edge.sourceId}:${edge.sourceKey}:${edge.targetId}`, from: edge.sourceId, to: edge.targetId,
+        type: 'reference', sourceKey: edge.sourceKey, provenance: 'variables', derived: true,
+        unresolved: !nodes.some(target => target.id === edge.targetId)
+      })))
     ];
 
   return {

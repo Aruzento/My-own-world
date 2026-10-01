@@ -383,19 +383,17 @@ test('generic save cannot discard/change malformed, future, missing-definition o
   }
 });
 
-test('safety floor explicitly blocks structured backup/copy/template/package and retains assets against GC', async () => {
+test('Stage 9 replaces portability safety blocks while unknown typed closure still protects assets', async () => {
   const { page, adapter } = await fixture();
-  await assert.rejects(createWorkspaceBackup({ storageAdapter: adapter, pages: [page] }), /blocked/);
-  await assert.rejects(restoreWorkspaceBackup('anything', adapter), /blocked/);
-  await assert.rejects(duplicatePageAsChild(page, null), /blocked/);
-  await assert.rejects(createPageFromRecordContent(page.content), /blocked/);
-  await assert.rejects(savePageAsTemplate(page), /blocked/);
-  await assert.rejects(createPageFromTemplate({ variablesJson: envelope() }), /blocked/);
-  assert.throws(() => parsePageTemplatesFile(JSON.stringify({ version: 2, templates: [] })), /Unsupported/);
-  assert.throws(() => createWorldPackageFromPages([page]), /blocked/);
-  assert.throws(() => normalizeWorldPackageData({ version: 2 }), /Unsupported/);
-  assert.throws(() => normalizeWorldPackageData({ contents: { pages: [{ variablesJson: envelope() }] } }), /blocked/);
-  assert.throws(() => normalizeWorldPackageData({ contents: { pages: [{ body: page.content }] } }), /blocked/);
+  const backup = await createWorkspaceBackup({ storageAdapter: adapter, pages: [page] });
+  assert.equal(backup.version, 2);
+  assert.deepEqual(parsePageTemplatesFile(JSON.stringify({ version: 2, templates: [] })), []);
+  assert.throws(() => parsePageTemplatesFile(JSON.stringify({ version: 3, templates: [] })), /Unsupported/);
+  assert.throws(() => createWorldPackageFromPages([page], { version: 1 }), /blocked/);
+  const pkg = createWorldPackageFromPages([page], { registry });
+  assert.equal(pkg.version, 2);
+  assert.deepEqual(pkg.contents.pages[0].variablesJson, parsePageRecordContent(page.content).variablesJson);
+  assert.throws(() => normalizeWorldPackageData({ version: 3 }), /Unsupported/);
   assert.deepEqual(findOrphanAssetPaths([page], ['assets/only-in-variables.png']), []);
   assert.deepEqual(findOrphanPaths(collectAssetReferencesFromPages([page]), ['assets/unknown.png']), []);
 });
@@ -461,7 +459,8 @@ test('resolver dependency depth is bounded and nullable reference is absent', ()
 test('unguarded queue writes and stale orphan deletion are blocked for structured pages', async () => {
   const { page, adapter } = await fixture();
   assert.throws(() => writePageContent(page, page.content), /PageCommand/);
-  await assert.rejects(deleteWorkspaceAssetPath('assets/unknown.png', { storageAdapter: adapter, pages: [page] }), /blocked/);
+  const unknownPage = { ...page, content: updatePageRecordContent(page.content, { variablesJson: envelope({ 'unknown.asset': { kind: 'asset', path: 'assets/unknown.png' } }) }) };
+  await assert.rejects(deleteWorkspaceAssetPath('assets/unknown.png', { storageAdapter: adapter, pages: [unknownPage] }), /blocked/);
   assert.throws(() => serializePageTemplates([{ variablesJson: envelope(), body: '' }]), /blocked/);
 });
 

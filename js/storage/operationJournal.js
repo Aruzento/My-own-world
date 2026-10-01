@@ -175,14 +175,14 @@ export async function failWorkspaceOperation(
 
 
 export async function listPendingWorkspaceOperations(
-  storageAdapter = getStorageAdapter()
+  storageAdapter = getStorageAdapter(), directory = OPERATION_JOURNAL_PENDING_DIR
 ) {
 
   try {
 
     const files =
       await storageAdapter.listFiles(
-        OPERATION_JOURNAL_PENDING_DIR
+        directory
       );
 
     const entries =
@@ -202,7 +202,7 @@ export async function listPendingWorkspaceOperations(
       ) continue;
 
       const path =
-        `${OPERATION_JOURNAL_PENDING_DIR}/${file.name}`;
+        `${directory}/${file.name}`;
 
       const content =
         await storageAdapter.readText(

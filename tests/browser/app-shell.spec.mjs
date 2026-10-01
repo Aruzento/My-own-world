@@ -535,7 +535,7 @@ test(
     await expect(
       page.locator('[data-settings-category]')
     ).toHaveCount(
-      13
+      14
     );
 
     await expect(
@@ -583,7 +583,7 @@ test(
     expect(
       settingsSurface.sidebarCount
     ).toBe(
-      13
+      14
     );
 
     await page
@@ -4670,15 +4670,13 @@ test(
 
         const files =
           new Map();
+        const workspaceHandle = { name: 'Test workspace' };
 
         setStorageAdapter({
           kind:
             'memory',
           getWorkspaceHandle() {
-            return {
-              name:
-                'Test workspace'
-            };
+            return workspaceHandle;
           },
           setWorkspaceHandle() {},
           async pickWorkspace() {
@@ -4692,7 +4690,7 @@ test(
             return {};
           },
           async readText(path) {
-            return files.get(path) || '';
+            if (!files.has(path)) throw Object.assign(new Error('missing '+path), {code:'ENOENT'}); return files.get(path);
           },
           async writeText(path, content) {
             files.set(

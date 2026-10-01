@@ -902,7 +902,7 @@ test(
     expect(
       result.afterStaleSave.propertyLevel
     ).toBe(
-      '9'
+      ''
     );
 
     expect(

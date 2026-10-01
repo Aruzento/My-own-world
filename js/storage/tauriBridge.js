@@ -75,6 +75,9 @@ export function normalizeTauriCommandError(
 
     normalized.code =
       error.code;
+    // Сохраняем native code, но предоставляем тот же missing-file contract,
+    // которым пользуются browser readers optional workspace files.
+    if (error.code === 'desktop.file_not_found') normalized.name = 'NotFoundError';
 
     normalized.path =
       error.path || null;

@@ -49,6 +49,10 @@ export function getPageIndex() {
   return pageIndex;
 }
 
+export function setPageRepositoryRegistry(registry) {
+  pageIndex.setRegistry(registry);
+}
+
 
 export function getTreeIndex() {
 

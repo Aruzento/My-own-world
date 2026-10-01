@@ -16,8 +16,8 @@ import {
 } from './blocks/blockContract.js';
 
 import {
-  DND_SKILL_GROUPS
-} from '../properties/propertySchemas.js';
+  DND_CHECK_GROUPS as DND_SKILL_GROUPS
+} from '../character/dndCheckContract.js';
 
 import {
   getCampaignMapCharacterState

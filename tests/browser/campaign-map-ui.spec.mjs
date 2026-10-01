@@ -70,36 +70,11 @@ test(
               </div>
             `;
 
-          const createPageRecord =
-            options => {
-
-              const body =
-                `<div class="entity-layout card-shell"><h1>${options.title}</h1></div>`;
-
-              return {
-                id: options.id,
-                parent: options.parent || null,
-                order: 1,
-                title: options.title,
-                type: options.type || 'note',
-                template: options.template || 'card',
-                tags: options.tags || ['card'],
-                aliases: [],
-                content: `---
-id: ${options.id}
-parent: ${options.parent || 'null'}
-order: 1
-tags: [${(options.tags || ['card']).join(', ')}]
-template: ${options.template || 'card'}
-type: ${options.type || 'note'}
-aliases: []
----
-
-${body}
-`,
-                handle: null
-              };
-            };
+          const { installStructuredActor, structuredCharacterContent } = await import('/tests/fixtures/structuredActorFixture.mjs');
+          const {buildPageRecordContent,createRuntimePageFromContent,updatePageRecordContent}=await import('/js/core/pageRecord.js');
+          const createPageRecord = options => createRuntimePageFromContent({path:'pages/'+options.id+'.md',name:options.id+'.md',content:
+            options.template==='campaignMap' ? buildPageRecordContent({...options,body:createMapShellHTML()}) :
+            updatePageRecordContent(structuredCharacterContent(options.id,{}, {}, '<h1>'+options.title+'</h1>'), {parent: options.parent || null, tags: options.tags || ['card']})});
 
           const setupFakeWorkspace =
             nextState => {
@@ -148,9 +123,10 @@ ${body}
               });
             };
 
-          setupFakeWorkspace(
-            state
-          );
+          const fixture = await installStructuredActor();
+          const originalWrite = fixture.adapter.writeText.bind(fixture.adapter);
+          state.__testWrittenFiles=[];
+          fixture.adapter.writeText=async(name,content)=>{state.__testWrittenFiles.push({id:String(content).match(/^id: (.+)$/m)?.[1]||'',name:name.split('/').pop(),content:String(content)});return originalWrite(name,content);};
 
           const mapPage =
             createPageRecord({
@@ -186,6 +162,7 @@ ${body}
               parent: mapPage.id
             });
 
+          for(const entry of [mapPage,source,player,mapChild]) await fixture.adapter.writeText(entry.path,entry.content);
           setPages([
             mapPage,
             source,
@@ -6422,50 +6399,8 @@ test(
               );
             });
 
-          const pageRecord = {
-            id:
-              'rogue-page',
-            parent:
-              null,
-            order:
-              1,
-            title:
-              'Rogue',
-            type:
-              'creature',
-            template:
-              'card',
-            tags:
-              [
-                'card',
-                'creature'
-              ],
-            aliases:
-              [],
-            content:
-              `---
-id: rogue-page
-parent: null
-order: 1
-tags: [card, creature]
-template: card
-type: creature
-aliases: []
----
-
-<div class="template-block card-properties-block card-properties-creature" data-block-type="properties" data-card-type="creature">
-  <input data-property-name="level" value="5">
-  <input data-property-name="dex" value="16">
-  <input data-property-name="skillStealth" value="3">
-  <input data-property-name="skillStealthProficient" value="2">
-</div>`,
-            handle:
-              null
-          };
-
-          setPages([
-            pageRecord
-          ]);
+          const {installStructuredActor}=await import('/tests/fixtures/structuredActorFixture.mjs');
+          const {actor:pageRecord}=await installStructuredActor({id:'rogue-page',values:{dex:16,level:5,skills:{'character.standardSkills.stealth':{'character.standardSkills.stealth.proficient':true,'character.standardSkills.stealth.expertise':true,'character.standardSkills.stealth.bonus':0}}}});
 
           document.querySelector('#editorArea').innerHTML = `
             <div class="campaign-map-document" data-campaign-map="v1" contenteditable="false">
@@ -6487,6 +6422,8 @@ aliases: []
               map
             );
 
+          const {prepareCampaignMapCharacterContext}=await import('/js/editor/campaignMapCharacterBridge.js');
+          await prepareCampaignMapCharacterContext(map,{includePages:[pageRecord]});
           const tokenRecord =
             store.addToken({
               tokenId:

@@ -14,7 +14,8 @@ export function openConfirmPopup({
   cancelText = 'Отмена',
   onConfirm,
   modal = false,
-  container = null
+  container = null,
+  choices = []
 }) {
 
   const instance =
@@ -51,7 +52,19 @@ export function openConfirmPopup({
   );
 
   instance.confirmHandler =
-    onConfirm;
+    () => onConfirm?.([...instance.element.querySelectorAll('[data-confirm-choice]:checked')].map(input => input.value));
+
+  let choiceHost = instance.element.querySelector('.confirm-popup-choices');
+  if (!choiceHost) {
+    choiceHost = document.createElement('div'); choiceHost.className = 'confirm-popup-choices';
+    instance.element.querySelector('.confirm-popup-message').after(choiceHost);
+  }
+  choiceHost.replaceChildren();
+  for (const choice of choices) {
+    const label = document.createElement('label'), input = document.createElement('input');
+    input.type = 'checkbox'; input.value = String(choice.value); input.dataset.confirmChoice = 'true';
+    label.append(input, document.createTextNode(choice.label)); choiceHost.append(label);
+  }
 
   instance.element.querySelector('.confirm-popup-title').textContent =
     title;

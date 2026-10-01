@@ -12,7 +12,7 @@ owner_zone: "architecture"
 
 ## CTV Stage 3 safety floor
 
-Structured PageRecord scans return an explicit `incomplete` marker until typed/unknown/inactive asset closure scanning is implemented. Orphan detection returns no deletion candidates for an incomplete scan. `deleteWorkspaceAssetPath` rechecks loaded structured pages and the activated definition catalog before deletion, including a stale legacy orphan preview. This preserves assets held only in variables; it does not claim complete typed asset diagnostics/remapping. Legacy workspace scanning remains unchanged. See [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md#61-реализованный-ctv-stage-3-contract).
+Stage 9 uses `typedPageTraversal` with exact activated definitions for stored typed values, nested objects/arrays, overrides, inactive values with retained definitions and canonical icon metadata. The existing collector also covers body and special-page assets. Package copy and partial restore reuse this collector. Unknown/missing/unsupported definitions or untyped ambiguous evidence produce `incomplete`; orphan detection yields no deletion candidates and destructive cleanup is blocked. Reads never materialize defaults. Structured path rewriting follows typed fields; body rewriting changes only approved asset attributes/owners and preserves user text/wiki labels.
 
 ## Цели
 

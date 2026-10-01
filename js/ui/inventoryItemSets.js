@@ -69,7 +69,19 @@ export async function renderInventoryItemSets(editor) {
   }
 }
 
-// Legacy inventory на structured page сохраняет persistent HTML workflow.
+// Explicit Item creation can activate its definition. Refresh before preparing the parent plan,
+// without retrying an old plan or changing the editor whole-page base.
+export async function refreshInventoryItemSetContext(element) {
+  const captured = getInventorySetState(element);
+  const page = captured && PageRepository.getPageById(captured.pageId);
+  if (!page || state.currentPage !== page) throw new Error('Inventory page changed after Item creation');
+  const { assertStorageWorkspaceContext } = await import('../storage/storageAdapter.js');
+  assertStorageWorkspaceContext(captured.context.workspaceContext);
+  captured.context = await prepareInventoryContext({ page, repository: PageRepository, workspaceContext: captured.context.workspaceContext });
+  captured.inventory = readInventorySource(page, captured.context);
+}
+
+// Structured inventory changes only its canonical domain owner.
 export async function changeInventoryItemSet(element, request) {
   const block = element?.closest?.('.item-set-block, .universal-list-block');
   if (block && !sets.has(block)) await renderInventoryItemSets(block.closest('#editorArea'));

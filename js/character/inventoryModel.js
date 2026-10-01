@@ -1,5 +1,6 @@
 import { getValue, readEntity } from '../variables/entityVariables.js';
 import { readStructuredCharacterSource } from './structuredCharacterSource.js';
+import { extractLegacyInventory } from '../migration/legacyInventoryExtraction.js';
 
 export function createInventoryModel(
   options = {}
@@ -61,7 +62,13 @@ export function readInventoryModelFromPage(
   }
   const items = getValue(snapshot, 'dnd.items', 'stored', context);
   const equipped = getValue(snapshot, 'dnd.equippedItems', 'stored', context);
-  if (items.status === 'absent' && equipped.status === 'absent') return readInventoryModelFromHTML(page?.content);
+  if (items.status === 'absent' && equipped.status === 'absent') {
+    if (/item-set-block|universal-list-block/.test(page?.content || '')) {
+      const evidence = extractLegacyInventory(page);
+      if (evidence.blocks.length || evidence.issues.length) return unavailable('inventory-adoption-required');
+    }
+    return createInventoryModel({ source: 'entity', status: 'ready', items: [], provenance: { pageId: snapshot.pageId, stored: false } });
+  }
   if (items.status !== 'value' || equipped.status !== 'value' ||
       !Array.isArray(items.value) || !Array.isArray(equipped.value)) return unavailable('incomplete-inventory-source');
   const ids = new Set(items.value.map(ref => ref.pageId));

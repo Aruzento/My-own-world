@@ -27,6 +27,11 @@ for (const [label, actorStructured, targetStructured] of [
       };
     }, { actorStructured, targetStructured });
 
+    if (!actorStructured || !targetStructured) {
+      expect(result.execution.ok, JSON.stringify(result.execution)).toBe(false);
+      expect(result.events).toHaveLength(0);
+      return;
+    }
     expect(result.execution.ok, JSON.stringify(result.execution)).toBe(true);
     expect(result.execution.resolution).toMatchObject({ outcome: 'hit', defense: { value: 12 },
       health: { before: { hpCurrent: 8, hpMax: 20, hpTemp: 0 },
@@ -275,8 +280,8 @@ test('Undo compensates historical legacy evidence through the current structured
   expect(result.undo).toMatchObject({ ok: true, state: 'persisted', audit: 'durable' });
   expect(result.health).toMatchObject({ 'dnd.hpCurrent': 10, 'dnd.hpMax': 20, 'dnd.hpTemporary': 0,
     'character.health.formula': 'migration', 'character.health.hitDice': '5d8' });
-  expect(result.body).toContain('data-property-name="hpCurrent"');
-  expect(result.body).toContain('value="7"');
+  expect(result.body).not.toContain('data-property-name="hpCurrent"');
+  expect(result.body).toContain('Preserved unrelated text');
 });
 
 test('structured write remains durable when attack or Undo audit append is unconfirmed', async ({ page }) => {

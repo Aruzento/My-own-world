@@ -1,6 +1,3 @@
-import {
-  hasPropertyBlockDefinition
-} from '../../templates/propertyBlockDefinitions.js';
 
 import {
   iconSvg
@@ -11,8 +8,7 @@ const PRIMARY_BLOCK_TYPE_ORDER = [
   'text',
   'list',
   'table',
-  'image',
-  'properties'
+  'image'
 ];
 
 
@@ -48,13 +44,7 @@ export function getVisibleBlockTypesForCardType(
   cardType
 ) {
 
-  return PRIMARY_BLOCK_TYPE_ORDER
-    .filter(type =>
-      type !== 'properties' ||
-      hasPropertyBlockDefinition(
-        cardType
-      )
-    );
+  return [...PRIMARY_BLOCK_TYPE_ORDER];
 }
 
 
@@ -320,16 +310,6 @@ function getTypeOptionConfig(
   cardType
 ) {
 
-  if (type === 'properties') {
-
-    return {
-      iconName: 'settings',
-      group: 'Метаданные',
-      title: 'Свойства',
-      description: `Поля карточки: ${getCardTypeLabel(cardType)}`
-    };
-  }
-
   return PRIMARY_BLOCK_TYPE_OPTIONS[type] ||
     PRIMARY_BLOCK_TYPE_OPTIONS.text;
 }
@@ -354,21 +334,6 @@ function escapeAttribute(
     value
   )
     .replace(/"/g, '&quot;');
-}
-
-
-function getCardTypeLabel(
-  cardType
-) {
-
-  const labels = {
-    character: 'Персонаж',
-    skill: 'Навык',
-    magic: 'Магия',
-    item: 'Предмет'
-  };
-
-  return labels[cardType] || cardType || 'карточка';
 }
 
 

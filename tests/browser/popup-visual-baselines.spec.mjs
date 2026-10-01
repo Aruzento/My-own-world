@@ -392,7 +392,7 @@ async function setupCardEditor(
 
       const {
         applyBlockSystemContract
-      } = await import('/js/editor/blocks/blockContract.js');
+      } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
       const {
         renderCardType
@@ -465,7 +465,7 @@ async function setupCardEditor(
         editor
       );
 
-      renderCardType();
+      await renderCardType();
     },
     {
       includeProperties

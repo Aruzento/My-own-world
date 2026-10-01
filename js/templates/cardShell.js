@@ -1,6 +1,7 @@
 import {
   createTextBlock
 } from './blockTypes.js';
+import { CANONICAL_CARD_TYPES } from '../storage/structuredPageCreation.js';
 
 
 export function createCardShellTemplate() {
@@ -52,17 +53,7 @@ export function createCardShellTemplate() {
                 <span class="card-type-label">Тип:</span>
 
                 <select class="card-type-select">
-                  <option value="character">Персонаж</option>
-                  <option value="creature">Существо</option>
-                  <option value="location">Локация</option>
-                  <option value="region">Регион</option>
-                  <option value="folder">Папка</option>
-                  <option value="magic">Магия</option>
-                  <option value="skill">Навык</option>
-                  <option value="object">Объект</option>
-                  <option value="item">Предмет</option>
-                  <option value="lore">Лор</option>
-                  <option value="note">Заметка</option>
+                  ${CANONICAL_CARD_TYPES.map(type => `<option value="${type.id}">${type.label}</option>`).join('')}
                 </select>
               </div>
 

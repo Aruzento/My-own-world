@@ -577,46 +577,9 @@ test(
             getCampaignMapStore
           } = await import('/js/editor/campaignMapStore.js');
 
-          const creaturePage = {
-            id: 'dex-creature',
-            title: 'Fast Creature',
-            type: 'creature',
-            template: 'card',
-            tags: ['card', 'creature'],
-            aliases: [],
-            content: `
-              <div class="entity-layout card-shell">
-                <section class="entity-main">
-                  <script type="application/json" data-character-effects>
-                    {
-                      "conditions": ["restrained"],
-                      "effects": [
-                        {
-                          "id": "alert",
-                          "title": "Alert",
-                          "modifiers": {
-                            "initiative": 2
-                          }
-                        }
-                      ]
-                    }
-                  </script>
-                  <div class="template-block card-properties-block card-properties-creature"
-                    data-block-type="properties"
-                    data-card-type="creature"
-                    contenteditable="false">
-                    <input data-property-name="hpCurrent" value="7">
-                    <input data-property-name="hpMax" value="12">
-                    <input data-property-name="dex" value="16">
-                  </div>
-                </section>
-              </div>
-            `
-          };
-
-          setPages([
-            creaturePage
-          ]);
+          const { installStructuredActor } = await import('/tests/fixtures/structuredActorFixture.mjs');
+          const { actor: creaturePage } = await installStructuredActor({ id:'dex-creature', values:{hpCurrent:7,hpMax:12,dex:16},
+            effects:{conditions:['restrained'],effects:[{id:'alert',title:'Alert',modifiers:{initiative:2}}]} });
 
           document.querySelector('#editorArea').innerHTML = `
             <button id="initiativeAnchor" type="button">initiative</button>
@@ -770,7 +733,7 @@ test(
 
 
 test(
-  'campaign-map-token-and-initiative-refresh-after-character-properties-save-reopen-and-reload',
+  'campaign-map-token-and-initiative-refresh-after-character-variables-save-reopen-and-reload',
   async ({ page }) => {
 
     await page.goto(
@@ -817,56 +780,9 @@ test(
             getCampaignMapStore
           } = await import('/js/editor/campaignMapStore.js');
 
-          function createCharacterContent(
-            values,
-            effects
-          ) {
-
-            const fixture =
-              document.createElement('div');
-
-            fixture.innerHTML = `
-              <div class="entity-layout card-shell">
-                <section class="entity-main">
-                  ${createPropertiesBlock({
-                    cardType: 'character'
-                  })}
-                  <script type="application/json" data-character-effects>
-                    ${JSON.stringify(effects)}
-                  </script>
-                </section>
-              </div>
-            `;
-
-            applyBlockSystemContract(
-              fixture
-            );
-
-            Object.entries(
-              values
-            ).forEach(([
-              key,
-              value
-            ]) => {
-
-              const control =
-                fixture.querySelector(
-                  `[data-property-name="${key}"]`
-                );
-
-              if (!control) return;
-
-              control.value =
-                String(value);
-
-              control.setAttribute(
-                'value',
-                String(value)
-              );
-            });
-
-            return fixture.innerHTML;
-          }
+          const { installStructuredActor, structuredCharacterContent } = await import('/tests/fixtures/structuredActorFixture.mjs');
+          await installStructuredActor({id:'sync-hero'});
+          function createCharacterContent(values,effects) { return structuredCharacterContent('sync-hero',values,effects); }
 
           const initialCharacter = {
             id: 'sync-hero',

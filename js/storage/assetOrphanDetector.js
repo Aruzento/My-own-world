@@ -10,12 +10,12 @@ import {
 // Находит файлы в assets, на которые больше нет persistent-ссылок.
 export function findOrphanAssetPaths(
   pages = [],
-  assetPaths = []
+  assetPaths = [], options = {}
 ) {
 
   return findOrphanPaths(
     collectAssetReferencesFromPages(
-      pages
+      pages, options
     ),
     assetPaths
   );

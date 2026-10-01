@@ -20,7 +20,7 @@ const plans = new WeakMap();
 // Контекст готовится на lifecycle boundary; legacy inventory не требует catalog.
 export async function prepareInventoryContext({ page, repository = PageRepository, workspaceContext = null } = {}) {
   const parsed = parsePageRecordContent(page?.content || '');
-  if (parsed.variablesStatus.mode === 'legacy') return { mode: 'legacy', registry: null, repository };
+  if (parsed.variablesStatus.mode === 'legacy') return { mode: 'unavailable', registry: null, repository, reason: 'inventory-migration-required' };
   if (!['character', 'player'].includes(parsed.type)) return { mode: 'not-inventory', registry: null, repository };
   try {
     const workspace = workspaceContext || captureStorageWorkspaceContext();
@@ -51,8 +51,9 @@ export function prepareInventoryChange({ pageId, expectedBase, request, context 
   if (!arePageStateIdentitiesEqual(expectedBase, snapshot.pageIdentity)) {
     throw inventoryError(INVENTORY_ERROR_CODES.WRITE_BLOCKED, 'stale-inventory-base');
   }
-  const before = { items: getValue(snapshot, 'dnd.items', 'stored').value,
-    equipped: getValue(snapshot, 'dnd.equippedItems', 'stored').value };
+  const storedItems = getValue(snapshot, 'dnd.items', 'stored');
+  const before = { items: storedItems.value || [],
+    equipped: getValue(snapshot, 'dnd.equippedItems', 'stored').value || [] };
   const after = deepCloneData(before);
   const itemId = request?.pageId;
   if (typeof itemId !== 'string' || !itemId || !['add', 'remove', 'quantity'].includes(request?.type)) {
@@ -65,7 +66,8 @@ export function prepareInventoryChange({ pageId, expectedBase, request, context 
     target = requireItem(itemId, context);
     if (!after.items.some(ref => ref.pageId === itemId)) {
       after.items.push({ pageId: itemId });
-      patch = [{ op: 'set', key: 'dnd.items', value: after.items }];
+      patch = [{ op: 'set', key: 'dnd.items', value: after.items },
+        ...(storedItems.status === 'absent' ? [{ op: 'set', key: 'dnd.equippedItems', value: [] }] : [])];
     }
   } else if (request.type === 'remove') {
     after.items = after.items.filter(ref => ref.pageId !== itemId);

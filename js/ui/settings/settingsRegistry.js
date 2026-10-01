@@ -19,6 +19,9 @@ export const SETTINGS_GROUPS = Object.freeze([
 
 
 export const SETTINGS_SECTIONS = Object.freeze([
+  { id: 'migration', group: 'data', title: 'Миграция карточек', icon: 'tools', renderer: 'migration',
+    description: 'Explicit migration, adoption, retirement и recovery старых карточек.',
+    keywords: ['миграция', 'migration', 'properties', 'inventory', 'effects', 'recovery', 'ctv'] },
   {
     id: 'general',
     group: 'main',

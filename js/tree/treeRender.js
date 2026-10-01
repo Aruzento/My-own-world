@@ -297,7 +297,7 @@ export function createTreePageElement(
 
   iconWrapper.innerHTML =
     getPageIcon(
-      page.tags
+      page
     );
 
   const label =

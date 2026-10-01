@@ -54,7 +54,7 @@ async function reopen(page) {
 for (const player of [false, true]) {
   test(`explicit ${player ? 'Player' : 'Character'} adoption preserves legacy list, switches owner, Item-only quantity and body autosave/reopen`, async ({ page }) => {
     await fixture(page, { player });
-    expect((await reread(page)).inventory.source).toBe('items-block');
+    expect((await reread(page)).inventory.source).toBe('unavailable');
     await expect(page.locator('#editorArea .item-set-quantity')).toHaveValue('3');
     const result = await page.evaluate(async () => {
       const { previewInventoryAdoption, executeInventoryAdoption } = await import('/js/migration/inventoryAdoption.js');
@@ -202,8 +202,8 @@ test('explicit verified recovery restores legacy owner and original Item; reopen
   expect(result.adopted.status, JSON.stringify(result)).toBe('completed');
   expect(result.restored.restoredPages).toBe(2); expect(result.itemPreserved).toBe(true);
   await reopen(page);
-  expect((await reread(page)).inventory.source).toBe('items-block');
+  expect((await reread(page)).inventory.source).toBe('unavailable');
   expect((await reread(page)).values['dnd.items']).toBeUndefined();
-  await expect(page.locator('#editorArea .inventory-runtime')).toHaveCount(0);
+  await expect(page.locator('#editorArea .inventory-runtime')).toContainText('недоступен');
   await expect(page.locator('#editorArea .item-set-quantity')).toHaveValue('3');
 });

@@ -2,14 +2,6 @@ import {
   ensureTableControls
 } from './blockTableContract.js';
 
-import {
-  ensurePropertySettingsControls
-} from '../propertiesSettingsPopup.js';
-
-import {
-  refreshPropertiesAutoCalculations,
-  setupPropertiesAutoCalculations
-} from '../propertiesAutoCalculations.js';
 
 import {
   ensureRuntimeButton,
@@ -48,17 +40,6 @@ export function ensureRuntimeControls(
     editor
   );
 
-  ensurePropertySettingsControls(
-    editor
-  );
-
-  setupPropertiesAutoCalculations(
-    editor
-  );
-
-  refreshPropertiesAutoCalculations(
-    editor
-  );
 
   ensureCardShellControls(
     editor

@@ -46,12 +46,12 @@ async function setup(page, options = {}) {
       w, map, store,
       release: () => releaseExecution?.(),
       executionCount: () => executionCount,
-      health: () => getCharacterHealth(readCharacterModelFromPage(w.target)),
+      health: () => getCharacterHealth(readCharacterModelFromPage(w.target, { registry: w.registry })),
       durableHealth: async () => getCharacterHealth(readCharacterModelFromPage({ ...w.target,
-        content: await w.original.readText(w.target.path) })),
+        content: await w.original.readText(w.target.path) }, { registry: w.registry })),
       history: () => readTransactionRecords({ storageAdapter: w.adapter }),
       snapshot: async () => ({ pages: await Promise.all(w.pages.map(async item => ({ ...item,
-        content: await w.original.readText(item.path) }))), log: await w.original.readText(EVENT_TRANSACTION_LOG_PATH) })
+        content: await w.original.readText(item.path) }))), catalog: await w.original.readText('.my-own-world-card-types.json'), log: await w.original.readText(EVENT_TRANSACTION_LOG_PATH) })
     };
     map.addEventListener('click', event => {
       if (!event.target.closest('.campaign-initiative-btn')) return;
@@ -168,12 +168,15 @@ test('durable attack health and history survive a browser reload', async ({ page
     const { createEventHistoryViewModel } = await import('/js/ui/eventHistoryPanel.js');
     const { readCharacterModelFromPage, getCharacterHealth } = await import('/js/character/characterModel.js');
     const adapter = createMemoryWorkspaceAdapter();
+    const { CARD_TYPE_CATALOG_PATH, parseCardTypeCatalog, createCardTypeRegistryFromCatalog } = await import('/js/storage/cardTypeCatalogStorage.js');
+    await adapter.writeText(CARD_TYPE_CATALOG_PATH, snapshot.catalog);
+    const registry = createCardTypeRegistryFromCatalog(parseCardTypeCatalog(snapshot.catalog), { bundledTypes: [], bundledFieldSets: [] });
     for (const item of snapshot.pages) await adapter.writeText(item.path, item.content);
     await adapter.writeText(EVENT_TRANSACTION_LOG_PATH, snapshot.log);
     setStorageAdapter(adapter);
     rebuildPageRepository(snapshot.pages);
     const target = snapshot.pages.find(item => item.id === 'target-page');
-    return { health: getCharacterHealth(readCharacterModelFromPage(target)),
+    return { health: getCharacterHealth(readCharacterModelFromPage(target, { registry })),
       history: await createEventHistoryViewModel({}, { storageAdapter: adapter }) };
   }, snapshot);
   expect(restored.health).toMatchObject({ current: 5, max: 10, temp: 0 });

@@ -103,7 +103,7 @@ export function renderBacklinks() {
 
       iconWrapper.innerHTML =
         getPageIcon(
-          page.tags
+          page
         );
 
       const title =

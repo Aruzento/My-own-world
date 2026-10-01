@@ -1,7 +1,7 @@
 import { parsePageRecordContent, createPageStateIdentityFromContent } from '../core/pageRecord.js';
 import { deepCloneData, deepFreeze } from '../cardTypes/definitionIdentity.js';
 import { validateCardTypeDefinition } from '../cardTypes/cardTypeSchema.js';
-import { validateEntityValues, valueIssue } from '../schema/cardVariablesSchema.js';
+import { validateEntityValues, validateVariableValue, valueIssue } from '../schema/cardVariablesSchema.js';
 
 export function createCardVariableSnapshot(page, registry) {
   if (!page) return deepFreeze({ mode: 'missing', pageId: null, diagnostics: [valueIssue('missing_page', {}, null)] });
@@ -34,6 +34,17 @@ export function createCardVariableSnapshot(page, registry) {
   if (record.id !== page.id) {
     mode = 'invalid'; diagnostics.push(valueIssue('page_identity_mismatch', { pageId: page.id }, record.id));
   }
+  const pageMetadata = {};
+  for (const [key, datatype] of [['iconJson', 'asset'], ['archived', 'boolean']]) {
+    const raw = record.frontMatter.values[key.toLowerCase()];
+    if (raw === undefined) continue;
+    try {
+      const value = JSON.parse(raw);
+      const field = definition?.fields.find(field => field.binding?.owner === 'page' && field.binding.path === key);
+      if (field && validateVariableValue(value, field).ok) pageMetadata[key] = value;
+      else diagnostics.push(valueIssue('invalid_page_metadata', { pageId: page.id, key, datatype }, raw));
+    } catch { diagnostics.push(valueIssue('invalid_page_metadata', { pageId: page.id, key, datatype }, raw)); }
+  }
   return deepFreeze(deepCloneData({
     pageId: record.id, mode, variablesMode: wire.mode, content: page.content,
     pageIdentity: createPageStateIdentityFromContent(page.content),
@@ -43,7 +54,7 @@ export function createCardVariableSnapshot(page, registry) {
     extensions: wire.envelope?.extensions || null, inactive: wire.envelope?.inactive || [],
     raw: wire.raw, definition, diagnostics,
     metadata: { id: record.id, type: record.type, template: record.template, tags: record.tags,
-      aliases: record.aliases, parent: record.parent, order: record.order, relationships: record.relationships },
+      aliases: record.aliases, parent: record.parent, order: record.order, relationships: record.relationships, ...pageMetadata },
     freeContent: { title: record.title, content: record.rawBody, blocks: record.rawBody }
   }));
 }

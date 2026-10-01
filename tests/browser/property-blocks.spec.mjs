@@ -84,8 +84,7 @@ test(
         'text',
         'list',
         'table',
-        'image',
-        'properties'
+        'image'
       ]
     );
 
@@ -102,8 +101,7 @@ test(
         'text',
         'list',
         'table',
-        'image',
-        'properties'
+        'image'
       ]
     );
 
@@ -882,8 +880,7 @@ test(
         'text',
         'list',
         'table',
-        'image',
-        'properties'
+        'image'
       ]
     );
 
@@ -891,7 +888,6 @@ test(
       result.optionRoles
     ).toEqual(
       [
-        'option',
         'option',
         'option',
         'option',
@@ -912,8 +908,7 @@ test(
         'Текст',
         'Списки',
         'Структура',
-        'Медиа',
-        'Метаданные'
+        'Медиа'
       ]
     );
 
@@ -924,8 +919,7 @@ test(
         'document',
         'task-tracker',
         'grid',
-        'image',
-        'settings'
+        'image'
       ]
     );
 
@@ -1077,7 +1071,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const editor =
             document.querySelector('#editorArea');
@@ -1268,7 +1262,7 @@ test(
           const {
             applyBlockSystemContract,
             serializePersistentEditorHTML
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const editor =
             document.querySelector('#editorArea');
@@ -1972,7 +1966,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             ensurePropertySettingsControls
@@ -2233,7 +2227,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const editor =
             document.querySelector('#editorArea');
@@ -2620,7 +2614,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const editor =
             document.querySelector('#editorArea');
@@ -2758,7 +2752,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             readPropertiesModelFromElement
@@ -3175,7 +3169,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             readPropertiesModelFromElement
@@ -3607,7 +3601,7 @@ test(
           const {
             applyBlockSystemContract,
             serializePersistentEditorHTML
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             readPropertiesModelsFromHTML
@@ -3727,7 +3721,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             readPropertiesModelFromElement
@@ -3872,7 +3866,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             readPropertiesModelFromElement
@@ -4312,7 +4306,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const {
             readPropertiesModelFromElement
@@ -4738,7 +4732,7 @@ test(
 
           const {
             applyBlockSystemContract
-          } = await import('/js/editor/blocks/blockContract.js');
+          } = await import('/tests/fixtures/legacyPropertiesRuntime.mjs');
 
           const wrapper =
             document.createElement('div');
@@ -4884,369 +4878,19 @@ test(
 );
 
 
-test(
-  'character-sheet-block-renders-character-model-summary',
-  async ({ page }) => {
-
-    await page.goto(
-      '/'
-    );
-
-    const result =
-      await page.evaluate(
-        async () => {
-
-          const {
-            state
-          } = await import('/js/state.js');
-
-          const {
-            createCharacterSheetBlock
-          } = await import('/js/templates/blockTypes.js');
-
-          const {
-            renderCharacterSheetBlocks
-          } = await import('/js/editor/characterSheetBlock.js');
-
-          state.currentPage = {
-            id: 'hero',
-            type: 'character',
-            content: `
-              <div class="entity-layout card-shell">
-                <div class="template-block card-properties-block" data-block-type="properties" data-card-type="character">
-                  <input data-property-name="level" value="5">
-                  <input data-property-name="armorClass" value="15">
-                  <input data-property-name="speed" value="30">
-                  <input data-property-name="hpCurrent" value="12">
-                  <input data-property-name="hpMax" value="20">
-                  <input data-property-name="dex" value="16">
-                </div>
-                <script type="application/json" data-character-effects>
-                  {
-                    "effects": [
-                      {
-                        "id": "shield",
-                        "title": "Щит",
-                        "modifiers": {
-                          "armorClass": 2
-                        }
-                      }
-                    ]
-                  }
-                </script>
-              </div>
-            `
-          };
-
-          state.pages = [
-            state.currentPage
-          ];
-
-          const editor =
-            document.createElement('div');
-
-          editor.innerHTML =
-            createCharacterSheetBlock();
-
-          renderCharacterSheetBlocks(
-            editor
-          );
-
-          return editor.textContent;
-        }
-      );
-
-    expect(
-      result
-    ).toContain(
-      'Класс защиты'
-    );
-
-    expect(
-      result
-    ).toContain(
-      '17'
-    );
-
-    expect(
-      result
-    ).toContain(
-      'Щит'
-    );
-  }
-);
-
-
-test(
-  'character-sheet-edit-writes-values-to-properties-block',
-  async ({ page }) => {
-
-    await page.goto(
-      '/'
-    );
-
-    const result =
-      await page.evaluate(
-        async () => {
-
-          const {
-            state
-          } = await import('/js/state.js');
-
-          const {
-            createCharacterSheetBlock
-          } = await import('/js/templates/blockTypes.js');
-
-          const {
-            renderCharacterSheetBlocks,
-            setupCharacterSheetBlocks
-          } = await import('/js/editor/characterSheetBlock.js');
-
-          state.currentPage = {
-            id: 'hero',
-            type: 'character',
-            content: ''
-          };
-
-          state.pages = [
-            state.currentPage
-          ];
-
-          const editor =
-            document.createElement('div');
-
-          editor.id =
-            'editorArea';
-
-          editor.innerHTML = `
-            <section class="entity-main">
-              <div class="blocks-toolbar" data-runtime="true"></div>
-              ${createCharacterSheetBlock()}
-            </section>
-          `;
-
-          let saved =
-            false;
-
-          setupCharacterSheetBlocks(
-            editor,
-            async () => {
-
-              saved =
-                true;
-            }
-          );
-
-          renderCharacterSheetBlocks(
-            editor
-          );
-
-          const levelInput =
-            editor.querySelector(
-              '[data-character-sheet-field="level"]'
-            );
-
-          levelInput.value =
-            '7';
-
-          levelInput.dispatchEvent(
-            new Event(
-              'change',
-              {
-                bubbles: true
-              }
-            )
-          );
-
-          await new Promise(resolve =>
-            setTimeout(resolve)
-          );
-
-          const propertiesBlock =
-            editor.querySelector(
-              '.card-properties-block[data-card-type="character"]'
-            );
-
-          return {
-            saved,
-            hasPropertiesBlock:
-              Boolean(propertiesBlock),
-            level:
-              propertiesBlock
-                ?.querySelector('[data-property-name="level"]')
-                ?.getAttribute('value')
-          };
-        }
-      );
-
-    expect(
-      result
-    ).toEqual({
-      saved: true,
-      hasPropertiesBlock: true,
-      level: '7'
-    });
-  }
-);
-
-
-test(
-  'character-sheet-edits-death-saves-and-clears-manual-override',
-  async ({ page }) => {
-
-    await page.goto(
-      '/'
-    );
-
-    const result =
-      await page.evaluate(
-        async () => {
-
-          const {
-            state
-          } = await import('/js/state.js');
-
-          const {
-            createCharacterSheetBlock
-          } = await import('/js/templates/blockTypes.js');
-
-          const {
-            renderCharacterSheetBlocks,
-            setupCharacterSheetBlocks
-          } = await import('/js/editor/characterSheetBlock.js');
-
-          state.currentPage = {
-            id: 'hero',
-            type: 'character',
-            content: ''
-          };
-
-          state.pages = [
-            state.currentPage
-          ];
-
-          const editor =
-            document.createElement('div');
-
-          editor.id =
-            'editorArea';
-
-          editor.innerHTML = `
-            <section class="entity-main">
-              <div class="blocks-toolbar" data-runtime="true"></div>
-              ${createCharacterSheetBlock()}
-            </section>
-          `;
-
-          let saves =
-            0;
-
-          setupCharacterSheetBlocks(
-            editor,
-            async () => {
-
-              saves += 1;
-            }
-          );
-
-          renderCharacterSheetBlocks(
-            editor
-          );
-
-          const failureInputs =
-            [
-              ...editor.querySelectorAll(
-                '[data-character-sheet-death-field="deathSaveFailures"]'
-              )
-            ];
-
-          failureInputs[0].checked =
-            true;
-
-          failureInputs[0].dispatchEvent(
-            new Event(
-              'change',
-              {
-                bubbles: true
-              }
-            )
-          );
-
-          await new Promise(resolve =>
-            setTimeout(resolve)
-          );
-
-          const speedInput =
-            editor.querySelector(
-              '[data-character-sheet-override="speed"]'
-            );
-
-          speedInput.value =
-            '45';
-
-          speedInput.dispatchEvent(
-            new Event(
-              'change',
-              {
-                bubbles: true
-              }
-            )
-          );
-
-          await new Promise(resolve =>
-            setTimeout(resolve)
-          );
-
-          const clearButton =
-            editor.querySelector(
-              '[data-character-sheet-clear-override="speed"]'
-            );
-
-          clearButton.click();
-
-          await new Promise(resolve =>
-            setTimeout(resolve)
-          );
-
-          const propertiesBlock =
-            editor.querySelector(
-              '.card-properties-block[data-card-type="character"]'
-            );
-
-          return {
-            saves,
-            deathFailures:
-              propertiesBlock
-                ?.querySelector('[data-property-name="deathSaveFailures"]')
-                ?.getAttribute('value'),
-            speedOverride:
-              propertiesBlock
-                ?.querySelector('[data-property-name="override-speed"]')
-                ?.getAttribute('value') || ''
-          };
-        }
-      );
-
-    expect(
-      result.deathFailures
-    ).toBe(
-      '1'
-    );
-
-    expect(
-      result.speedOverride
-    ).toBe(
-      ''
-    );
-
-    expect(
-      result.saves
-    ).toBeGreaterThanOrEqual(
-      3
-    );
-  }
-);
-
+for (const type of ['character', 'creature']) test('legacy '+type+' Sheet is migration-required and never creates Properties writers', async ({page}) => {
+ await page.goto('/');
+ const result=await page.evaluate(async type=>{
+  const {setPages,setCurrentPage}=await import('/js/stateActions.js');
+  const {createCharacterSheetBlock}=await import('/js/templates/blockTypes.js');
+  const {renderCharacterSheetBlocks,setupCharacterSheetBlocks}=await import('/js/editor/characterSheetBlock.js');
+  const actor={id:'legacy-sheet',type,content:'<h1>Recovery</h1><div data-block-type="properties" data-card-type="'+type+'"><input data-property-name="level" value="99"></div>'};
+  setPages([actor]);setCurrentPage(actor);const before=actor.content;const root=document.createElement('div');root.innerHTML=createCharacterSheetBlock();
+  let saves=0;setupCharacterSheetBlocks(root,()=>{saves++});renderCharacterSheetBlocks(root);
+  return {text:root.textContent,controls:root.querySelectorAll('input').length,saves,unchanged:actor.content===before};
+ },type);
+ expect(result.text).toContain('migration');expect(result.controls).toBe(0);expect(result.saves).toBe(0);expect(result.unchanged).toBe(true);
+});
 
 test(
   'universal-list-block-switches-kind-without-changing-block-type',

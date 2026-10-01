@@ -17,11 +17,22 @@ export function assertLegacyPortability(page, operation) {
   throw error;
 }
 
-export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, effectsAdoptionCommand = false, characterGameplayCommand = false, storageAdapter }) {
+export async function validateStructuredPageWrite({ beforeContent, content, expectedBase, variablesCommand, migrationCommand = false, effectsAdoptionCommand = false, characterGameplayCommand = false, typeChangePlan = null, retirementPreview = null, storageAdapter }) {
   if (!hasStructuredPageData(beforeContent) && !hasStructuredPageData(content)) return;
   if (!expectedBase?.stateHash) throw new Error('Structured page requires whole-page expectedBase');
   const before = parsePageRecordContent(beforeContent);
   const after = parsePageRecordContent(content);
+  if (retirementPreview) {
+    const { assertRetirementCandidate } = await import('../migration/legacySourceRetirement.js');
+    assertRetirementCandidate(retirementPreview, before.id, beforeContent, content);
+    if (canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Retirement cannot mutate Variables');
+  }
+  if (typeChangePlan) {
+    const { assertCardTypeChangeCandidate } = await import('../variables/cardTypeChange.js');
+    assertCardTypeChangeCandidate(typeChangePlan, beforeContent, content);
+    if (before.rawBody !== after.rawBody || canonicalJSON(before.frontMatter.entries.filter(entry => !['type', 'variablesjson'].includes(entry.normalizedKey))) !==
+        canonicalJSON(after.frontMatter.entries.filter(entry => !['type', 'variablesjson'].includes(entry.normalizedKey)))) throw new Error('Type change must preserve raw body and metadata');
+  }
   if (migrationCommand) {
     const receipt = after.variablesJson?.migration;
     if (before.variablesStatus.mode !== 'legacy' || after.variablesStatus.mode !== 'structured' ||
@@ -35,7 +46,7 @@ export async function validateStructuredPageWrite({ beforeContent, content, expe
     if (canonicalJSON(unrelatedMetadata(before)) !== canonicalJSON(unrelatedMetadata(after))) throw new Error('Migration must preserve unrelated raw metadata');
   } else if (before.variablesStatus.mode !== 'structured' || after.variablesStatus.mode !== 'structured') throw new Error('Legacy conversion or invalid/future structured payload is read-only');
   if (before.id !== after.id) throw new Error('Structured page identity cannot change');
-  if (!migrationCommand && before.type !== after.type) throw new Error('Structured type switching requires conversion workflow');
+  if (!migrationCommand && !typeChangePlan && before.type !== after.type) throw new Error('Structured type switching requires conversion workflow');
   if (effectsAdoptionCommand) {
     // Explicit bounded transition, not a generic extension-edit bypass.
     const source = before.variablesJson, target = after.variablesJson;
@@ -62,7 +73,7 @@ export async function validateStructuredPageWrite({ beforeContent, content, expe
         canonicalJSON(before.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson')) !==
         canonicalJSON(after.frontMatter.entries.filter(entry => entry.normalizedKey !== 'variablesjson'))) throw new Error('Invalid Character gameplay activation transition');
   }
-  if (!variablesCommand && !migrationCommand && !effectsAdoptionCommand && !characterGameplayCommand && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
+  if (!variablesCommand && !migrationCommand && !effectsAdoptionCommand && !characterGameplayCommand && !typeChangePlan && canonicalJSON(before.variablesJson) !== canonicalJSON(after.variablesJson)) throw new Error('Variable edits require Variables commands');
   const { catalog, exists } = await readCardTypeCatalog({ storageAdapter });
   if (!exists) throw new Error('Structured page requires activated catalog');
   const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });

@@ -901,6 +901,11 @@ test(
           clearWriteRevisions();
           clearPageCommandEvents();
 
+          const {catalog,registry}=await import('/tests/fixtures/inventoryAdoptionFixtures.mjs');
+          const {structuredCharacterContent}=await import('/tests/fixtures/structuredActorFixture.mjs');
+          const {serializeCardTypeCatalog,CARD_TYPE_CATALOG_PATH}=await import('/js/storage/cardTypeCatalogStorage.js');
+          const {setPageRepositoryRegistry}=await import('/js/repository/pageRepository.js');
+          await adapter.writeText(CARD_TYPE_CATALOG_PATH,serializeCardTypeCatalog(catalog));setPageRepositoryRegistry(registry);
           const createPage =
             ({
               id,
@@ -912,7 +917,7 @@ test(
             }) => {
 
               const content =
-                buildPageRecordContent({
+                type === 'creature' ? structuredCharacterContent(id,{hpCurrent:10,hpMax:20}, {}, body) : buildPageRecordContent({
                   id,
                   parent:
                     null,
@@ -1097,6 +1102,8 @@ test(
           hpToken.dataset.tokenId =
             'hp-token';
 
+          const {prepareCampaignMapCharacterContext}=await import('/js/editor/campaignMapCharacterBridge.js');
+          tokenDeps.mapCharacterContext=await prepareCampaignMapCharacterContext(null,{includePages:[hpPage,failedHpPage]});
           await changeTokenHp(
             hpToken,
             hpPage,
@@ -1124,7 +1131,8 @@ test(
 
           try {
 
-            await changeTokenHp(
+            hpToken.dataset.pageId=failedHpPage.id;
+            const failedResult = await changeTokenHp(
               hpToken,
               failedHpPage,
               {
@@ -1133,6 +1141,7 @@ test(
               },
               tokenDeps
             );
+            failureMessage = failedResult.reason || failedResult.error?.message || failedResult.status;
 
           } catch (error) {
 
@@ -1205,7 +1214,7 @@ test(
 
           const duplicateUpdateEvent =
             events.find(event =>
-              event.writeRevision?.metadata?.reason === 'campaign-map-token-duplicate-normalize' &&
+              event.type === 'create-page' &&
               event.status === 'completed'
             );
 
@@ -1286,13 +1295,13 @@ test(
     expect(
       result.hpSuccessContent
     ).toContain(
-      'value="7"'
+      '"dnd.hpCurrent":7'
     );
 
     expect(
       result.hpRepositoryContent
     ).toContain(
-      'value="7"'
+      '"dnd.hpCurrent":7'
     );
 
     expect(
@@ -1354,20 +1363,20 @@ test(
     ).toEqual(
       expect.objectContaining({
         type:
-          'object'
+          'character'
       })
     );
 
     expect(
       result.duplicatePage.tags
     ).toContain(
-      'object'
+      'user-tag'
     );
 
     expect(
       result.duplicateDurableContent
     ).toContain(
-      'type: object'
+      'type: character'
     );
 
     expect(
@@ -1387,14 +1396,14 @@ test(
     ).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          reason:
-            'campaign-map-token-health',
+          type:
+            'update-card-variables',
           status:
             'completed'
         }),
         expect.objectContaining({
-          reason:
-            'campaign-map-token-health',
+          type:
+            'update-card-variables',
           status:
             'failed'
         }),
@@ -1405,8 +1414,8 @@ test(
             'completed'
         }),
         expect.objectContaining({
-          reason:
-            'campaign-map-token-duplicate-normalize',
+          type:
+            'create-page',
           status:
             'completed'
         })

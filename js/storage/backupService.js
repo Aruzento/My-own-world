@@ -1,7 +1,11 @@
 import { assertLegacyPortability, assertLegacyBackupCatalog } from './structuredPagePolicy.js';
 import { collectWorkspaceFiles, captureBackupDefinitions, readBackupDefinitions, assertBackupPageDefinitions, backupBytesDigest } from './backupDefinitionCoverage.js';
-import { CARD_TYPE_CATALOG_PATH, readCardTypeCatalog, activateCardTypeDefinitions } from './cardTypeCatalogStorage.js';
+import { CARD_TYPE_CATALOG_PATH, readCardTypeCatalog, activateCardTypeDefinitions, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
+import { collectPageDefinitionClosure } from '../variables/typedPageTraversal.js';
 import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
+import { hasStructuredPageData } from './structuredPagePolicy.js';
+import { createRuntimePageFromContent } from '../core/pageRecord.js';
+import { setPages } from '../stateActions.js';
 import {
   state
 } from '../state.js';
@@ -11,7 +15,7 @@ import {
 } from './assetReferenceScanner.js';
 
 import {
-  getStorageAdapter
+  getStorageAdapter, captureStorageWorkspaceContext, assertStorageWorkspaceContext
 } from './storageAdapter.js';
 
 import {
@@ -175,7 +179,7 @@ async function createWorkspaceBackupMeasured(
   let pages =
     options.pages || state.pages || [];
 
-  const definitionCoverage = options.definitionCoverage === true;
+  const definitionCoverage = options.definitionCoverage === true || pages.some(hasStructuredPageData) || (await readCardTypeCatalog({ storageAdapter })).exists;
   const definitions = definitionCoverage ? await captureBackupDefinitions(storageAdapter) : null;
   if (definitionCoverage) {
     if (new Set(pages.map(page => page.name)).size !== pages.length || pages.some(page => !page.path || !page.name || /[\\/]/.test(page.name) || page.path.replace(/^\//, '') !== `pages/${page.name}`)) throw new Error('Ambiguous/unsupported backup page paths');
@@ -850,10 +854,11 @@ async function restoreWorkspaceBackupMeasured(
         : storageAdapterOrHandle
     });
 
+  const workspace = storageAdapter === getStorageAdapter() && (storageAdapter.getWorkspaceRoot?.() || storageAdapter.getWorkspaceHandle?.())
+    ? captureStorageWorkspaceContext() : null;
+  const guard = () => { if (workspace) assertStorageWorkspaceContext(workspace); };
   const snapshotPath =
     `${BACKUP_ROOT_DIR}/${backupId}`;
-
-  if (!options.definitionCoverage) await assertLegacyBackupCatalog(storageAdapter);
 
   const manifestValidation =
     await readAndValidateBackupManifest(
@@ -874,13 +879,9 @@ async function restoreWorkspaceBackupMeasured(
   const manifest =
     manifestValidation.manifest;
 
-  if (manifest.version === 2 && !options.definitionCoverage) throw new Error('Structured recovery requires explicit definition coverage');
-  if (manifest.version === 2 && options.restoreSelection) throw new Error('Partial definition-aware restore awaits Stage 9; use explicit full recovery');
+  options = { ...options, definitionCoverage: manifest.version === 2 || options.definitionCoverage === true };
   const backupCatalog = await readBackupDefinitions(storageAdapter, snapshotPath, manifest);
-  const currentCatalog = options.definitionCoverage ? await readCardTypeCatalog({ storageAdapter }) : null;
-  if (backupCatalog) new CardTypeRegistry({ bundledTypes: [], bundledFieldSets: [],
-    activatedTypes: currentCatalog.catalog.types, activatedFieldSets: currentCatalog.catalog.fieldSets,
-    candidateTypes: backupCatalog.types, candidateFieldSets: backupCatalog.fieldSets });
+  const currentCatalog = await readCardTypeCatalog({ storageAdapter });
 
   const restorePlan =
     await createRestoreWritePlan({
@@ -888,12 +889,23 @@ async function restoreWorkspaceBackupMeasured(
       snapshotPath,
       manifest,
       restoreSelection:
-        options.restoreSelection,
-      definitionCoverage: options.definitionCoverage
+        options.restoreSelection ? normalizeRestoreSelection(options.restoreSelection) : null,
+      definitionCoverage: options.definitionCoverage || currentCatalog.exists,
+      registry: createCardTypeRegistryFromCatalog(backupCatalog || currentCatalog?.catalog || { formatVersion: 1, revision: 0, types: [], fieldSets: [] }, { bundledTypes: [], bundledFieldSets: [] })
     });
 
-  if (options.definitionCoverage) assertBackupPageDefinitions([...restorePlan.pageContentByName.values()], backupCatalog || currentCatalog.catalog);
+  if (options.definitionCoverage || currentCatalog.exists) assertBackupPageDefinitions([...restorePlan.pageContentByName.values()], backupCatalog || currentCatalog.catalog, { requireValidValues: true });
 
+  const restoredDefinitions = backupCatalog && options.restoreSelection
+    ? collectPageDefinitionClosure([...restorePlan.pageContentByName.values()].map(content => ({ content })),
+      createCardTypeRegistryFromCatalog(backupCatalog, { bundledTypes: [], bundledFieldSets: [] })) : backupCatalog;
+  // Selected restore checks its own closure; unrelated snapshot definitions do not
+  // replace or downgrade the live catalog. Collisions precede the safety backup.
+  if (restoredDefinitions) new CardTypeRegistry({ bundledTypes: [], bundledFieldSets: [],
+    activatedTypes: currentCatalog.catalog.types, activatedFieldSets: currentCatalog.catalog.fieldSets,
+    candidateTypes: restoredDefinitions.types, candidateFieldSets: restoredDefinitions.fieldSets });
+
+  guard();
   const preRestoreManifest =
     await createAndVerifyPreRestoreBackup({
       storageAdapter,
@@ -914,7 +926,8 @@ async function restoreWorkspaceBackupMeasured(
 
   try {
 
-    if (backupCatalog) await activateCardTypeDefinitions({ types: backupCatalog.types, fieldSets: backupCatalog.fieldSets,
+    guard();
+    if (restoredDefinitions) await activateCardTypeDefinitions({ types: restoredDefinitions.types, fieldSets: restoredDefinitions.fieldSets,
       expectedIdentity: currentCatalog.identity, storageAdapter });
 
     await storageAdapter.ensureDirectory(
@@ -943,11 +956,13 @@ async function restoreWorkspaceBackupMeasured(
           fileName
         );
 
+      guard();
       await storageAdapter.writeText(
         `pages/${fileName}`,
         content
       );
 
+      guard();
       if (options.definitionCoverage && await storageAdapter.readText(`pages/${fileName}`) !== content) throw new Error('Recovery page readback mismatch');
 
       restoredPages += 1;
@@ -966,6 +981,7 @@ async function restoreWorkspaceBackupMeasured(
     restoreStage =
       'assets';
 
+    guard();
     restoredAssets =
       await restoreBackupAssets({
         storageAdapter,
@@ -980,6 +996,7 @@ async function restoreWorkspaceBackupMeasured(
             progress
           )
       });
+    guard();
 
   } catch (error) {
 
@@ -1004,7 +1021,21 @@ async function restoreWorkspaceBackupMeasured(
     });
   }
 
+  let presentationRefreshFailure = null;
+  if (storageAdapter === getStorageAdapter()) {
+    try {
+      const durablePages = [];
+      for (const file of await collectWorkspaceFiles(storageAdapter, 'pages')) if (file.name.endsWith('.md')) {
+        durablePages.push(createRuntimePageFromContent({ ...file, content: await storageAdapter.readText(file.path) }));
+      }
+      setPages(durablePages);
+    } catch (error) {
+      // Durable restore уже подтверждён: ошибка projection refresh не откатывает файлы.
+      presentationRefreshFailure = error?.message || String(error);
+    }
+  }
   return {
+    presentationRefreshFailure,
     backupId,
     preRestoreBackupId:
       preRestoreManifest.id,
@@ -1029,7 +1060,7 @@ async function createRestoreWritePlan({
   snapshotPath,
   manifest,
   restoreSelection = null,
-  definitionCoverage = false
+  definitionCoverage = false, registry = null
 }) {
 
   const pages =
@@ -1121,7 +1152,7 @@ async function createRestoreWritePlan({
       manifestAssets:
         assets,
       selectedPages,
-      pageContentByName
+      pageContentByName, registry
     });
 
   return {
@@ -1172,14 +1203,14 @@ function normalizeRestoreSelection(
 
   const pageNames =
     new Set(
-      pageNamesInput
+      [...pageNamesInput]
         .map(normalizeSelectedPageName)
         .filter(Boolean)
     );
 
   const pageIds =
     new Set(
-      pageIdsInput
+      [...pageIdsInput]
         .map(value => String(value || '').trim())
         .filter(Boolean)
     );
@@ -1432,7 +1463,7 @@ async function preflightSelectedBackupAssets({
   snapshotPath,
   manifestAssets,
   selectedPages,
-  pageContentByName
+  pageContentByName, registry
 }) {
 
   const referencedAssetPaths =
@@ -1444,7 +1475,7 @@ async function preflightSelectedBackupAssets({
             pageContentByName.get(
               page.name
             ) || ''
-        }))
+        })), { registry }
       )
         .map(reference =>
           normalizeAssetPath(
@@ -1453,6 +1484,9 @@ async function preflightSelectedBackupAssets({
         )
         .filter(Boolean)
     );
+
+  const references = collectAssetReferencesFromPages(selectedPages.map(page => ({ ...page, content: pageContentByName.get(page.name) })), { registry });
+  if (references.some(reference => reference.incomplete)) throw new Error('Partial restore blocked: incomplete typed asset closure');
 
   const assets =
     [];
@@ -1494,6 +1528,7 @@ async function preflightSelectedBackupAssets({
       )
     );
 
+  if (unresolvedAssetReferences.length) throw new Error('Partial restore blocked: missing asset dependency');
   const assetPlan =
     await preflightBackupAssets({
       storageAdapter,
@@ -1608,7 +1643,7 @@ export async function verifyWorkspaceBackup(backupId, { storageAdapter = getStor
   const validation = await readAndValidateBackupManifest(storageAdapter, snapshotPath, { backupId });
   if (validation.restoreBlocking) throw createBackupManifestValidationError(validation);
   const manifest = validation.manifest;
-  if (manifest.version === 2 && !definitionCoverage) throw new Error('Definition coverage required');
+  definitionCoverage = definitionCoverage || manifest.version === 2;
   const catalog = await readBackupDefinitions(storageAdapter, snapshotPath, manifest);
   const plan = await createRestoreWritePlan({ storageAdapter, snapshotPath, manifest, definitionCoverage });
   if (definitionCoverage) assertBackupPageDefinitions([...plan.pageContentByName.values()], catalog || (await readCardTypeCatalog({ storageAdapter })).catalog);

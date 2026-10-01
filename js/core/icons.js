@@ -1,7 +1,12 @@
+import { BUNDLED_CARD_TYPE_DEFINITIONS } from '../cardTypes/definitions/bundledDefinitions.js';
+
 const ICON_SPRITE_PATH =
   './assets/icons/rpg-ui.svg';
 
-const pageIcons = {
+// Presentation aliases only; formal ids/labels are owned by Registry definitions.
+const canonicalIcons = new Map(BUNDLED_CARD_TYPE_DEFINITIONS.map(type => [type.id,
+  type.metadata?.icon || ({ player: 'character', spell: 'magic', effect: 'magic', country: 'region', organization: 'folder', project: 'folder', race: 'character', class: 'character' }[type.id]) || type.id]));
+const legacyPageIcons = {
   character: 'character',
   creature: 'creature',
   location: 'location',
@@ -93,15 +98,15 @@ export function iconSvg(
 
 
 export function getPageIcon(
-  tags = []
+  page = []
 ) {
-
+  const tags = Array.isArray(page) ? page : page.tags || [];
   const normalized =
     tags.map(tag => String(tag).toLowerCase());
 
-  const iconName =
+  const iconName = (!Array.isArray(page) && canonicalIcons.get(page.type)) ||
     Object
-      .entries(pageIcons)
+      .entries(legacyPageIcons)
       .find(([tag]) => normalized.includes(tag))
       ?.[1] || 'document';
 

@@ -346,7 +346,9 @@ export function updatePageRecordContent(
       // Explicit migration patches preserve unrelated raw metadata and omissions,
       // instead of materializing legacy timestamp/order defaults.
       preservedFrontMatterKeys: options.preserveUnchangedMetadata
-        ? FRONT_MATTER_FIELD_ORDER.filter(key => !Object.hasOwn(metadataPatch, key) && !(key === 'contentHash' && Object.hasOwn(metadataPatch, 'body')))
+        ? FRONT_MATTER_FIELD_ORDER.filter(key => !Object.hasOwn(metadataPatch, key) &&
+          !(key === 'relationshipsJson' && Object.hasOwn(metadataPatch, 'relationships')) &&
+          !(key === 'contentHash' && Object.hasOwn(metadataPatch, 'body')))
         : [],
       now:
         options.now || null

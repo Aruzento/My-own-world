@@ -89,6 +89,7 @@ export function getCampaignMapCharacterState(
 
   const activeContext = context || getCampaignMapCharacterContext(map);
   const structured = isStructuredPage(page);
+  if (!structured) return null; // Explicit migration required; old HTML is recovery data.
   if (structured && !activeContext?.registry) return null;
 
   const model = readCharacterModelFromPage(page, {

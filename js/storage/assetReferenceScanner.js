@@ -1,4 +1,6 @@
 import { hasStructuredPageData } from './structuredPagePolicy.js';
+import { traverseTypedPage } from '../variables/typedPageTraversal.js';
+import { parsePageRecordContent } from '../core/pageRecord.js';
 import {
   ASSET_TYPES,
   normalizeAssetReference
@@ -18,24 +20,24 @@ const ATTRIBUTE_TYPES =
 
 // Собирает persistent-ссылки на ассеты из HTML страниц без запуска runtime UI.
 export function collectAssetReferencesFromPages(
-  pages = []
+  pages = [], options = {}
 ) {
 
   return pages.flatMap(page =>
     collectAssetReferencesFromPage(
-      page
+      page, options
     )
   );
 }
 
 
 export function collectAssetReferencesFromPage(
-  page = {}
+  page = {}, { registry } = {}
 ) {
 
   const html =
     String(
-      page.body || page.content || ''
+      page.content ? parsePageRecordContent(page.content).rawBody : page.body || ''
     );
 
   const references = collectAssetReferencesFromHTML(
@@ -47,9 +49,16 @@ export function collectAssetReferencesFromPage(
         page.kind || page.entityKind || page.type || 'page'
     }
   );
-  // До typed asset traversal отсутствие ссылок нельзя считать доказательством orphan.
-  if (hasStructuredPageData(page)) references.push({ id: `structured-scan:${page.id || ''}`,
-    path: '', type: 'unknown', incomplete: true, owner: { pageId: page.id || '' } });
+  if (hasStructuredPageData(page)) {
+    const result = traverseTypedPage(page, registry, ({ value, field, path }) => {
+      if (field.datatype === 'asset' && value?.path) references.push(normalizeAssetReference({
+        id: `${page.id}:${path.join('.')}`, path: value.path, type: ASSET_TYPES.image,
+        owner: { pageId: page.id, scope: 'variables', sourceKey: path.join('.') }
+      }));
+    });
+    if (!result.complete) references.push({ id: `structured-scan:${page.id || ''}`,
+      path: '', type: 'unknown', incomplete: true, diagnostics: result.diagnostics, owner: { pageId: page.id || '' } });
+  }
   return references;
 }
 
@@ -111,6 +120,26 @@ export function collectAssetReferencesFromHTML(
   return references.filter(reference =>
     reference.path
   );
+}
+
+// Only persistent asset attributes are rewritten; user text and wiki labels stay byte-identical.
+export function rewriteBodyAssetPaths(html, pathMap) {
+  const attributes = new Set([...Object.keys(ATTRIBUTE_TYPES), 'value', 'data-asset-value']);
+  return String(html || '').replace(/<[^>]+>/g, tag => tag.replace(/([\w-]+)\s*=\s*(["'])(.*?)\2/g, (raw, attribute, quote, value) => {
+    if (attribute.toLowerCase() === 'data-map-music-state') {
+      let data;
+      try { data = JSON.parse(decodeURIComponent(decodeHTMLAttribute(value))); }
+      catch { throw new Error('Map music asset rewrite is unavailable'); }
+      for (const track of [...(data.normal?.tracks || []), ...(data.battle?.tracks || [])]) if (pathMap.has(track.path)) track.path = pathMap.get(track.path);
+      return `${attribute}=${quote}${encodeURIComponent(JSON.stringify(data))}${quote}`;
+    }
+    if (!attributes.has(attribute.toLowerCase()) || ['value', 'data-asset-value'].includes(attribute.toLowerCase()) && !/data-property-asset-type\s*=/.test(tag)) return raw;
+    const decoded = decodeHTMLAttribute(value);
+    const normalized = normalizeAssetReference({ path: decoded }).path;
+    if (!pathMap.has(normalized)) return raw;
+    const replacement = pathMap.get(normalized).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    return `${attribute}=${quote}${replacement}${quote}`;
+  }));
 }
 
 

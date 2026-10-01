@@ -5,6 +5,14 @@ read_when:
 owner_zone: "delivery"
 ---
 
+## 2026-10-01: CTV Stage 9 closure / Foundation
+
+- Baseline main / fd2d3131e5a4b15499b1cd30302bf6c64b9a99a7. CTV Stages 1–9 DONE / Foundation; migration CLOSED. Combat 17.6/Undo retained; 17.7 UNBLOCKED / NEXT, NOT STARTED. No new CTV stages/leaves. User references/DOCX excluded.
+- Normal Properties/DOM data ownership and writers retired. Settings coordinates explicit Properties → Inventory/Effects adoption → receipt/equivalence-backed retirement, durable journal resume and safety-backup recovery. Unknown/free nested content blocks finalization. New cards pin canonical Registry definitions with explicit empty actor domains; guarded type changes preserve tags/body/metadata, displace incompatible values to typed inactive evidence and validate explicit restoration.
+- Full PageRecord duplicate/Templates v2/World Package v2 preserve definitions, structured seed, refs, relationships, metadata/assets and invalidate source-specific migration claims. Copy remaps typed references, blocks opaque ambiguous reference-bearing data and definition collisions. Backup v2 is automatic for structured/catalog workspaces; partial restore adds selected exact closure/assets, verifies physical bytes and refreshes Repository without deleting unrelated/newer definitions. Events sidecar remains excluded.
+- Typed asset/scalar/reference traversal powers assets/search/derived graph without raw JSON indexing or persistent relationship duplication. Audit fixed Map formal-type picker/token duplicate mutation, Item-create catalog context refresh, future-template load protection and native optional-file absence identity. Independent provider Effects stay external. Character/Player/Item definitions, existing Field Sets and their digests are unchanged.
+- Focused affected suites 96/96 PASS; full unit/integration 1322/1322 PASS; full Chromium 364/364 PASS, including Stage 8 and Combat 17.6/Undo regressions. Desktop gate PASS / NORMAL_WORKSPACE_VALIDATED (packaging/environment/cargo check), final Windows build PASS, native WebView2 click-through 7/7 PASS. Real Tauri persistence exercise 8/8 PASS: create/type change/duplicate/template/package/verified backup/partial and full restore with durable Repository reread. [Dated closure evidence](./CTV_MIGRATION_CLOSURE_EVIDENCE.md) records scope and backup IDs. No user workspace migration, installer handoff, large-workspace release-confidence or new gameplay claim.
+
 ## 2026-10-01: CTV Stage 8 closure
 
 - Accepted baseline main / 69795ea7d9fb51f40152ea8a90a7f0240ade10f2. No new numbered leaves; Stage 8 DONE / Foundation after gates, Stage 9 UNBLOCKED / NOT STARTED. Combat 17.6 accepted; 17.7 still waits for Stage 9/parity. Unrelated user references/DOCX excluded.

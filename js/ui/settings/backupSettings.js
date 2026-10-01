@@ -1082,6 +1082,7 @@ function renderRestorePreviewConfirm(
 
         try {
 
+          if (result.presentationRefreshFailure) throw new Error(result.presentationRefreshFailure);
           await reloadWorkspaceAfterRestore();
 
         } catch (refreshError) {
@@ -1207,6 +1208,7 @@ function renderRestorePreviewConfirm(
 
         try {
 
+          if (result.presentationRefreshFailure) throw new Error(result.presentationRefreshFailure);
           await reloadWorkspaceAfterRestore();
 
         } catch (refreshError) {

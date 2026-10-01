@@ -52,11 +52,6 @@ import {
   setupTables
 } from './ui/tables.js';
 
-/* Импорт поведения DnD stat block */
-import {
-  setupDndStats
-} from './ui/dndStats.js';
-
 /* Импорт backlinks */
 import {
   setupBacklinks
@@ -234,7 +229,6 @@ setupBacklinks();
 setupItemSets();
 
 /* Инициализация DnD stat block */
-setupDndStats();
 
 /* Инициализация поведения таблиц */
 setupTables();

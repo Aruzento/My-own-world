@@ -6,6 +6,10 @@ import {
   getCardVariableValue,
   readCardVariablesFromPage
 } from '../properties/cardVariablesModel.js';
+import { parsePageRecordContent } from '../core/pageRecord.js';
+import { readStructuredCharacterSource } from '../character/structuredCharacterSource.js';
+import { readOwnEffectsSource } from '../character/ownEffectsSource.js';
+import { getValue } from '../variables/entityVariables.js';
 
 
 // Rule Tree Engine превращает metadata правил в исполняемую проверку.
@@ -16,9 +20,23 @@ export function createRuleEvaluationContext(
     page = null,
     variablesModel = null,
     effectsModel = null,
-    extraValues = {}
+    extraValues = {}, registry, repository, pages = []
   } = {}
 ) {
+
+  if (page && parsePageRecordContent(page.content || '').variablesStatus.mode !== 'legacy') {
+    const source = readStructuredCharacterSource(page, { registry, repository, pages });
+    if (source.status !== 'ready') return { page, variables: { byKey: {} }, effects: null, values: {}, unavailable: true };
+    const values = { level: source.level, hpCurrent: source.health.current, hpMax: source.health.max,
+      armorClass: source.armorClass, speed: source.speed };
+    const byKey = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, { key, value }]));
+    for (const field of source.snapshot.definition.fields) {
+      const value = getValue(source.snapshot, field.key, 'effective');
+      if (value.status === 'value') byKey[field.key] = { key: field.key, value: value.value };
+    }
+    return { page, variables: { byKey }, effects: effectsModel || readOwnEffectsSource(page, { registry, repository, pages }),
+      values: { ...values, ...extraValues }, unavailable: false };
+  }
 
   const variables =
     variablesModel ||
@@ -234,6 +252,8 @@ export function evaluateRuleCondition(
       'manual condition'
     );
   }
+
+  if (context.unavailable) return createConditionResult(condition, false, '', 'Structured rule context unavailable');
 
   if (type === 'level') {
 

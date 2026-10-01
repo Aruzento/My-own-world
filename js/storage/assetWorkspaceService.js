@@ -2,7 +2,9 @@ import {
   getStorageAdapter
 } from './storageAdapter.js';
 import { getAllPages } from '../repository/pageRepository.js';
-import { assertLegacyPortability, assertLegacyBackupCatalog } from './structuredPagePolicy.js';
+import { collectAssetReferencesFromPages } from './assetReferenceScanner.js';
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
+import { normalizeAssetPath } from './assetReference.js';
 
 
 export async function listWorkspaceAssetPaths(
@@ -30,9 +32,10 @@ export async function deleteWorkspaceAssetPath(
   options = {}
 ) {
 
-  // Старый orphan preview не является разрешением удалять assets нового envelope.
-  (options.pages || getAllPages()).forEach(page => assertLegacyPortability(page, 'Asset deletion'));
-  await assertLegacyBackupCatalog(options.storageAdapter || getStorageAdapter());
+  const active = options.storageAdapter || getStorageAdapter();
+  const registry = createCardTypeRegistryFromCatalog((await readCardTypeCatalog({ storageAdapter: active })).catalog, { bundledTypes: [], bundledFieldSets: [] });
+  const references = collectAssetReferencesFromPages(options.pages || getAllPages(), { registry });
+  if (references.some(reference => reference.incomplete || normalizeAssetPath(reference.path) === normalizeAssetPath(path))) throw new Error('Asset deletion blocked: referenced or incomplete typed closure');
 
   if (options.deleteAssetPath) {
 

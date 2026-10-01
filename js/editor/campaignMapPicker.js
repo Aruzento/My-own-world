@@ -1,3 +1,6 @@
+import { getPageIndex } from '../repository/pageRepository.js';
+import { createCardVariableSnapshot } from '../variables/cardVariableStore.js';
+import { getValue } from '../variables/entityVariables.js';
 import { state } from '../state.js';
 
 import {
@@ -192,16 +195,17 @@ function renderCardPickerList(
 
   const allowedTypes =
     kind === 'player'
-      ? new Set(['character', 'creature'])
+      ? new Set(['player', 'character'])
       : kind === 'creature'
-      ? new Set(['character', 'creature'])
-      : new Set(['object']);
+      ? new Set(['player', 'character'])
+      : new Set(['item']);
 
   const pages =
     queryPages({
       type: [...allowedTypes],
       excludeUnderTemplate: 'campaignMap'
     })
+      .filter(page => getMapTokenKindForPage(page) === (kind === 'object' ? 'object' : 'creature'))
       .filter(page =>
         kind === 'player'
           ? hasPlayerTag(page)
@@ -286,31 +290,10 @@ export function getMapTokenKindForPage(
   page
 ) {
 
-  if (
-    hasPlayerTag(page) &&
-    (
-      page?.type === 'character' ||
-      page?.type === 'creature'
-    )
-  ) {
-
-    return 'creature';
-  }
-
-  if (
-    page?.type === 'object'
-  ) {
-
-    return 'object';
-  }
-
-  if (
-    page?.type === 'character' ||
-    page?.type === 'creature'
-  ) {
-
-    return 'creature';
-  }
+  const snapshot = createCardVariableSnapshot(page, getPageIndex().registry);
+  if (snapshot.mode !== 'structured' || snapshot.diagnostics.some(issue => issue.severity === 'error')) return null;
+  if (['player', 'character'].includes(snapshot.type) && snapshot.definition.definition?.capabilities?.characterProjection === true) return 'creature';
+  if (snapshot.type === 'item' && getValue(snapshot, 'item.isObject', 'stored').value === true) return 'object';
 
   return null;
 }
@@ -501,6 +484,7 @@ export function hasPlayerTag(
   page
 ) {
 
+  if (page?.type === 'player') return true;
   return (page?.tags || [])
     .map(tag =>
       String(tag || '').toLowerCase()

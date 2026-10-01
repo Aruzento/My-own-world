@@ -67,29 +67,10 @@ for (const theme of [
             renderCharacterSheetBlocks
           } = await import('/js/editor/characterSheetBlock.js');
 
-          state.currentPage = {
-            id:
-              'visual-token-character',
-            type:
-              'character',
-            content:
-              `
-                <div class="entity-layout card-shell">
-                  <div class="template-block card-properties-block" data-block-type="properties" data-card-type="character">
-                    <input data-property-name="level" value="5">
-                    <input data-property-name="armorClass" value="15">
-                    <input data-property-name="speed" value="30">
-                    <input data-property-name="hpCurrent" value="12">
-                    <input data-property-name="hpMax" value="20">
-                    <input data-property-name="dex" value="16">
-                  </div>
-                </div>
-              `
-          };
-
-          state.pages = [
-            state.currentPage
-          ];
+          const { createPlayerSheetFixture } = await import('/tests/fixtures/playerSheetFixtures.mjs');
+          const { setCurrentPage } = await import('/js/stateActions.js');
+          const fixture = await createPlayerSheetFixture();
+          setCurrentPage(fixture.page);
 
           const editor =
             document.querySelector('#editorArea');
@@ -97,7 +78,7 @@ for (const theme of [
           editor.innerHTML =
             createCharacterSheetBlock();
 
-          renderCharacterSheetBlocks(
+          await renderCharacterSheetBlocks(
             editor
           );
         }

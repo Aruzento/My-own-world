@@ -45,6 +45,8 @@ export async function prepareCharacterEffectsContext(editor) {
 }
 function ownSource() {
   const page = state.currentPage;
+  const context = page && contexts.get(page);
+  if (context?.mode === 'unavailable') return { ...createEffectsModel(), source: 'unavailable', status: 'unavailable', diagnostics: [{ reason: context.reason }] };
   return page ? readOwnEffectsSource(page, contexts.get(page) || { repository: PageRepository }) : null;
 }
 

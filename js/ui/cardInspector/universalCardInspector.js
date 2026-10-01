@@ -33,7 +33,7 @@ export async function renderUniversalCardInspector(page, options = {}) {
   if (!registry) {
     try {
       const { catalog } = await readCardTypeCatalog();
-      registry = createCardTypeRegistryFromCatalog(catalog);
+      registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
     } catch (error) {
       loadError = error;
     }

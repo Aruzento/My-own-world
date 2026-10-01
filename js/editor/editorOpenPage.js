@@ -28,10 +28,6 @@ import {
 } from '../ui/backlinks.js';
 
 import {
-  renderDndStats
-} from '../ui/dndStats.js';
-
-import {
   renderCardType
 } from '../ui/cardType.js';
 
@@ -114,6 +110,7 @@ import {
   hideUniversalCardInspector,
   renderUniversalCardInspector
 } from '../ui/cardInspector/universalCardInspector.js';
+import { presentLegacyRecoverySources } from './legacyRecoveryPresentation.js';
 
 export async function openPageInEditor(
   editor,
@@ -339,6 +336,8 @@ async function renderCardPage(
       editor
     );
 
+  presentLegacyRecoverySources(editor);
+
   applyContenteditablePolicy(
     editor
   );
@@ -389,7 +388,7 @@ async function renderCardPage(
     editor
   );
 
-  renderDndStats();
+  // Historical DnD HTML is inert recovery presentation, never runtime gameplay.
 
   await restoreAssetImagesWithEditor(
     editor

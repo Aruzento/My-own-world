@@ -5,13 +5,10 @@ import {
   inspectStructuredCharacterHealthSource,
   prepareStructuredCharacterHealthChange
 } from '../character/structuredCharacterHealth.js';
-import { prepareCharacterHealthMutation } from '../properties/characterHealthMutation.js';
 import {
   createCardTypeRegistryFromCatalog,
   readCardTypeCatalog
 } from '../storage/cardTypeCatalogStorage.js';
-import { persistPageContentCommand } from '../storage/pageCommandService.js';
-import { inspectPageWriteOutcome } from '../storage/pageWritePreconditions.js';
 import { assertStorageWorkspaceContext } from '../storage/storageAdapter.js';
 import { canonicalJSON } from '../core/pageVariablesCodec.js';
 import { deepFreezeCombatActionData } from './combatActionModel.js';
@@ -68,23 +65,21 @@ export async function assertCombatCharacterContextCurrent(context) {
 
 export function readCombatCharacter(page, { pages = [], context } = {}) {
   const mode = parsePageRecordContent(page?.content, { generateId: false }).variablesStatus.mode;
-  if (mode !== 'legacy' && !context?.registry) {
+  if (mode === 'legacy') throw combatHealthError(COMBAT_HEALTH_ERROR_CODES.SOURCE_UNSUPPORTED, 'actor-migration-required');
+  if (!context?.registry) {
     throw combatHealthError(COMBAT_HEALTH_ERROR_CODES.CATALOG_UNAVAILABLE, 'activated-catalog-required');
   }
   const character = readCharacterModelFromPage(page, {
     pages,
-    ...(mode === 'legacy' ? {} : {
-      registry: context?.registry,
-      repository: context?.repository
-    })
+    registry: context.registry,
+    repository: context.repository
   });
-  const legacy = character?.source === 'properties' && ['character', 'creature'].includes(character.cardType);
   const structured = character?.source === 'entity' && ['character', 'player'].includes(character.cardType);
-  if ((!legacy && !structured) || character.pageId !== page?.id) {
+  if (!structured || character.pageId !== page?.id) {
     throw combatHealthError(COMBAT_HEALTH_ERROR_CODES.SOURCE_UNSUPPORTED,
       character?.source === 'structured-unavailable' ? 'structured-source-unavailable' : 'character-capability-required');
   }
-  return Object.freeze({ character, source: legacy ? 'legacy' : 'structured' });
+  return Object.freeze({ character, source: 'structured' });
 }
 
 export function inspectCombatStructuredHealth(page, { pages = [], context, expectedBase = null } = {}) {
@@ -107,18 +102,16 @@ export async function prepareCombatHealthChange({
   const active = readCombatCharacter(page, { pages, context });
   let underlying;
   try {
-    underlying = active.source === 'structured'
-      ? prepareStructuredCharacterHealthChange({
+    underlying = prepareStructuredCharacterHealthChange({
         pageId: page.id,
         expectedBase,
         request,
         context: { registry: context.registry, repository: context.repository, pages,
           workspaceContext: context.workspaceContext }
-      })
-      : await prepareCharacterHealthMutation(page, request, { pages, storageAdapter });
+      });
   } catch (error) {
     throw combatHealthError(
-      active.source === 'structured' ? COMBAT_HEALTH_ERROR_CODES.HEALTH_UNAVAILABLE : COMBAT_HEALTH_ERROR_CODES.SOURCE_UNSUPPORTED,
+      COMBAT_HEALTH_ERROR_CODES.HEALTH_UNAVAILABLE,
       error.reason || error.code || 'health-preparation-failed', error
     );
   }
@@ -135,11 +128,7 @@ export async function prepareCombatHealthChange({
     kind: 'CombatCharacterHealthPlan', version: 1, pageId: page.id,
     source: active.source, request, expectedBase: underlying.expectedBase,
     before, after, changed: changedFields.length > 0, changedFields,
-    guards: { hpMax: before.hpMax, unchangedFields },
-    ...(active.source === 'legacy' ? {
-      previousPage: underlying.previousPage,
-      nextContent: underlying.nextContent
-    } : {})
+    guards: { hpMax: before.hpMax, unchangedFields }
   });
   plans.set(plan, { underlying, page, source: active.source, beforeContent: page.content });
   return plan;
@@ -151,45 +140,17 @@ export async function commitCombatHealthChange(plan, {
   const captured = plans.get(plan);
   if (!captured) return commitResult('blocked', false, 'unknown-plan');
   plans.delete(plan);
-  if (!plan.changed) return commitResult('unchanged', false, 'health-unchanged');
-
-  if (captured.source === 'structured') {
-    const result = await commitStructuredCharacterHealthChange(captured.underlying, { validateBeforeWrite });
-    return deepFreezeCombatActionData({ kind: 'CombatHealthCommitResult', version: 1,
-      status: result.status, written: result.written, reason: result.reason || '',
-      state: result.status === 'saved' ? 'persisted' : result.written === true ? 'uncertain' : 'unchanged',
+  const result = await commitStructuredCharacterHealthChange(captured.underlying, { validateBeforeWrite });
+  return deepFreezeCombatActionData({ kind: 'CombatHealthCommitResult', version: 1,
+      status: result.status, written: result.written,
+      reason: result.variablesResult?.precondition?.failureKind === 'current-page-missing'
+        ? 'TRANSACTION_REVERSAL_TARGET_NOT_FOUND' : result.reason || '',
+      // An exact candidate reread proves persisted bytes even when the command failed.
+      // It never makes the action successful or permits audit append/retry.
+      state: result.status === 'saved' || result.variablesResult?.status === 'uncertain' && result.variablesResult?.written === true && !Object.hasOwn(result.variablesResult, 'writeStatus')
+        ? 'persisted' : result.status === 'uncertain' ? 'uncertain' : 'unchanged',
       structuredResult: result,
       ...(result.variablesResult ? { pageCommandReceipt: omitPage(result.variablesResult) } : {}) });
-  }
-
-  const underlying = captured.underlying;
-  try {
-    const command = await persistPageContentCommand({
-      page: captured.page, content: underlying.nextContent,
-      previousPage: underlying.previousPage, expectedBase: underlying.expectedBase,
-      workspaceContext, validateBeforeWrite,
-      type: 'combat-action-health-change', reason
-    });
-    const receipt = omitPage(command);
-    if (receipt.writeStatus !== 'saved' || !receipt.written || receipt.blocked || receipt.stale || receipt.conflict) {
-      return deepFreezeCombatActionData({ kind: 'CombatHealthCommitResult', version: 1,
-        status: receipt.written ? 'uncertain' : 'blocked', written: receipt.written,
-        state: receipt.written ? 'uncertain' : 'unchanged',
-        reason: 'COMBAT_PAGE_WRITE_UNCONFIRMED', pageCommandReceipt: receipt });
-    }
-    return deepFreezeCombatActionData({ kind: 'CombatHealthCommitResult', version: 1,
-      status: 'saved', written: true, state: 'persisted', reason: '', pageCommandReceipt: receipt });
-  } catch (error) {
-    const pageReadback = await inspectPageWriteOutcome({
-      page: captured.page, beforeContent: captured.beforeContent,
-      nextContent: underlying.nextContent, workspaceContext
-    });
-    return deepFreezeCombatActionData({ kind: 'CombatHealthCommitResult', version: 1,
-      status: pageReadback.status === 'base-content' ? 'failed' : 'uncertain',
-      written: pageReadback.status === 'next-content' ? true : pageReadback.status === 'base-content' ? false : null,
-      state: pageReadback.status === 'next-content' ? 'persisted' : pageReadback.status === 'base-content' ? 'unchanged' : 'uncertain',
-      reason: error.code || error.message, pageReadback });
-  }
 }
 
 function normalizeHealth(value, source) {

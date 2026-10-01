@@ -4,7 +4,7 @@ export const SCHEMA_VERSIONS =
     page: 2,
     campaignMap: 1,
     taskTracker: 1,
-    pageTemplates: 1,
+    pageTemplates: 2,
     assetReferences: 1
   });
 

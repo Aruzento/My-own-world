@@ -6,13 +6,8 @@ import {
   commitStructuredCharacterHealthChange,
   prepareStructuredCharacterHealthChange
 } from '../character/structuredCharacterHealth.js';
-import {
-  persistPageContentCommand,
-  snapshotPageForCommand
-} from '../storage/pageCommandService.js';
-import { captureStorageWorkspaceContext } from '../storage/storageAdapter.js';
+import { snapshotPageForCommand } from '../storage/pageCommandService.js';
 import { state } from '../state.js';
-import { updatePageDndHealth } from './campaignMapHealth.js';
 import {
   getCampaignMapCharacterState,
   isCampaignMapStructuredPage,
@@ -47,29 +42,7 @@ export async function prepareCampaignMapCharacterHealthChange({
   }
 
   if (!isCampaignMapStructuredPage(page)) {
-    const previousPage = snapshotPageForCommand(page);
-    const draftPage = clonePage(page);
-    const after = updatePageDndHealth(draftPage, intent);
-
-    if (!after) {
-      throw mapHealthError(
-        CAMPAIGN_MAP_HEALTH_ERROR_CODES.HEALTH_UNAVAILABLE,
-        'legacy-health-unavailable'
-      );
-    }
-
-    const plan = Object.freeze({
-      kind: 'CampaignMapCharacterHealthPlan', version: 1,
-      pageId: page.id, source: 'legacy',
-      intent: Object.freeze({ ...intent }), before: null,
-      after: Object.freeze({ ...after }),
-      changed: draftPage.content !== page.content
-    });
-    plans.set(plan, {
-      page, previousPage, nextContent: draftPage.content,
-      workspaceContext: workspaceContext || captureStorageWorkspaceContext()
-    });
-    return plan;
+    throw mapHealthError(CAMPAIGN_MAP_HEALTH_ERROR_CODES.SOURCE_UNAVAILABLE, 'actor-migration-required');
   }
 
   const context = await prepareCampaignMapCharacterContext(map, {
@@ -126,13 +99,8 @@ export async function commitCampaignMapCharacterHealthChange(plan) {
   if (!captured) return mapCommitResult('blocked', false, 'unknown-or-used-plan');
   plans.delete(plan);
 
-  if (!plan.changed) {
-    return mapCommitResult('unchanged', false, 'health-unchanged', plan.after, plan.source);
-  }
-
-  if (plan.source === 'structured') {
-    const result = await commitStructuredCharacterHealthChange(captured.underlying);
-    return Object.freeze({
+  const result = await commitStructuredCharacterHealthChange(captured.underlying);
+  return Object.freeze({
       kind: 'CampaignMapCharacterHealthCommitResult', version: 1,
       status: result.status, written: result.written,
       reason: result.reason || '', source: 'structured',
@@ -143,36 +111,7 @@ export async function commitCampaignMapCharacterHealthChange(plan) {
         })
         : null,
       structuredResult: result
-    });
-  }
-
-  try {
-    const receipt = await persistPageContentCommand({
-      page: captured.page,
-      content: captured.nextContent,
-      previousPage: captured.previousPage,
-      expectedBase: captured.previousPage.pageStateIdentity,
-      workspaceContext: captured.workspaceContext,
-      type: 'update-page-content',
-      reason: 'campaign-map-token-health'
-    });
-
-    if (
-      receipt.writeStatus !== 'saved' || !receipt.written ||
-      receipt.blocked || receipt.stale || receipt.conflict
-    ) {
-      return mapCommitResult(
-        receipt.written ? 'uncertain' : 'blocked',
-        receipt.written,
-        'legacy-page-write-unconfirmed',
-        plan.after,
-        'legacy'
-      );
-    }
-    return mapCommitResult('saved', true, '', plan.after, 'legacy');
-  } catch (error) {
-    throw error;
-  }
+  });
 }
 
 
@@ -208,16 +147,4 @@ function mapHealthError(code, reason, cause = null) {
   error.code = code;
   error.reason = reason;
   return error;
-}
-
-
-function clonePage(page) {
-  return {
-    ...page,
-    tags: Array.isArray(page.tags) ? [...page.tags] : [],
-    aliases: Array.isArray(page.aliases) ? [...page.aliases] : [],
-    relationships: Array.isArray(page.relationships)
-      ? page.relationships.map(value => ({ ...value }))
-      : []
-  };
 }

@@ -183,6 +183,7 @@ async function createAssetVerificationReport(
 
     return buildAssetVerificationReport({
       pages,
+      registry: options.registry || (pages.some(hasStructuredPageData) ? createCardTypeRegistryFromCatalog((await readCardTypeCatalog({ storageAdapter: options.storageAdapter })).catalog, { bundledTypes: [], bundledFieldSets: [] }) : null),
       assetPaths
     });
 
@@ -195,6 +196,7 @@ async function createAssetVerificationReport(
     });
   }
 }
+
 
 
 function renderAssetHealthResult(
@@ -752,3 +754,5 @@ function formatAssetReferenceDetails(
   return parts.join(' · ') ||
     'asset reference';
 }
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
+import { hasStructuredPageData } from '../storage/structuredPagePolicy.js';

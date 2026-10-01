@@ -112,7 +112,7 @@ test(
 
       assert.match(
         source,
-        /\bpersistPageContentCommand\b/,
+        filePath.endsWith('campaignMapTokenActions.js') ? /\bcommitCampaignMapCharacterHealthChange\b/ : /\bpersistPageContentCommand\b/,
         `${filePath} should route page writes through PageCommandService`
       );
     }

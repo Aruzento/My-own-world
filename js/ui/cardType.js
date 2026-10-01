@@ -1,8 +1,15 @@
+import { hasStructuredPageData } from '../storage/structuredPagePolicy.js';
+import { createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
+import { createCardVariableSnapshot } from '../variables/cardVariableStore.js';
 import { state } from '../state.js';
 
-import {
-  saveCurrentPage
-} from '../editor/editor.js';
+import { openPage } from '../editor/editor.js';
+import { CANONICAL_CARD_TYPES } from '../storage/structuredPageCreation.js';
+import { readCardTypeCatalog } from '../storage/cardTypeCatalogStorage.js';
+import { prepareCardTypeChange, commitCardTypeChange } from '../variables/cardTypeChange.js';
+import { getCurrentEditorPageBase, advanceEditorPageBase } from '../editor/editorSessionBase.js';
+import { hasPendingAutosaveForPage } from '../editor/autosave.js';
+import { openConfirmPopup } from './confirmPopup.js';
 
 import {
   renderTree
@@ -24,19 +31,7 @@ import {
   getPageIcon
 } from '../core/icons.js';
 
-const CARD_TYPE_LABELS = {
-  character: 'Персонаж',
-  creature: 'Существо',
-  location: 'Локация',
-  region: 'Регион',
-  folder: 'Папка',
-  magic: 'Магия',
-  skill: 'Навык',
-  object: 'Объект',
-  item: 'Предмет',
-  lore: 'Лор',
-  note: 'Заметка'
-};
+let CARD_TYPE_LABELS = Object.fromEntries(CANONICAL_CARD_TYPES.map(type => [type.id, type.label]));
 
 let nextCardTypeControlId =
   0;
@@ -57,26 +52,24 @@ export function setupCardType() {
 
       if (!state.currentPage) return;
 
-      state.currentPage.type =
-        select.value;
-
-      state.currentPage.tags =
-        [
-          'card',
-          select.value
-        ];
-
-      await saveCurrentPage();
-
-      renderTags(
-        state.currentPage.tags
-      );
-
-      renderTree();
-
-      syncCustomCardType(
-        select
-      );
+      const page = state.currentPage, targetType = select.value;
+      select.value = page.type;
+      syncCustomCardType(select);
+      if (hasPendingAutosaveForPage(page.id)) return;
+      try {
+        let plan = await prepareCardTypeChange({ pageId: page.id, targetType, expectedBase: getCurrentEditorPageBase(page.id) });
+        openConfirmPopup({ anchor: select.nextElementSibling, modal: true, title: 'Изменить тип карточки?',
+          message: `Тип: ${CARD_TYPE_LABELS[targetType]}. Несовместимые значения сохраняются как inactive. Диагностик ссылок: ${plan.diagnostics.length}. Перед записью будет проверена резервная копия.`,
+          choices: plan.restorationCandidates.map(entry => ({ value: entry.index, label: `Восстановить inactive: ${entry.path.join('.')}` })),
+          confirmText: 'Изменить тип', onConfirm: async selected => {
+            if (state.currentPage?.id !== page.id || hasPendingAutosaveForPage(page.id)) return;
+            if (selected.length) plan = await prepareCardTypeChange({ pageId: page.id, targetType, expectedBase: getCurrentEditorPageBase(page.id), restoreInactive: selected.map(Number) });
+            const result = await commitCardTypeChange(plan, { confirm: true });
+            if (result.status === 'saved' || result.status === 'unchanged') {
+              advanceEditorPageBase(page); openPage(page); renderTree(); renderTags(page.tags);
+            } else select.title = `Изменение не подтверждено: ${result.reason || result.status}`;
+          } });
+      } catch (error) { select.title = `Изменение недоступно: ${error.message}`; }
     }
   );
 
@@ -125,7 +118,7 @@ export function setupCardType() {
 }
 
 
-export function renderCardType() {
+export async function renderCardType() {
 
   if (!state.currentPage) return;
 
@@ -135,6 +128,20 @@ export function renderCardType() {
     );
 
   if (!select) return;
+
+  const currentPage = state.currentPage;
+  let ready = false;
+  if (hasStructuredPageData(currentPage)) {
+    try {
+      const { catalog } = await readCardTypeCatalog();
+      if (state.currentPage !== currentPage) return;
+      CARD_TYPE_LABELS = Object.fromEntries(CANONICAL_CARD_TYPES.map(type => [type.id,
+        catalog.types.find(definition => definition.id === type.id && definition.version === type.version)?.label || type.label]));
+      const snapshot = createCardVariableSnapshot(currentPage, createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] }));
+      ready = snapshot.mode === 'structured' && !snapshot.diagnostics.some(issue => issue.severity === 'error');
+    } catch { ready = false; }
+  }
+  select.disabled = !ready;
 
   cleanupDetachedCardTypeMenus();
 
@@ -158,6 +165,8 @@ export function renderCardType() {
 function ensureNativeCardTypeOptions(
   select
 ) {
+
+  select.replaceChildren();
 
   Object
     .entries(CARD_TYPE_LABELS)
@@ -231,7 +240,7 @@ function ensureCustomCardType(
             data-value="${value}"
             data-popup-drag-ignore="true"
           >
-            ${getPageIcon([value])}
+            ${getPageIcon({ type: value })}
             <span class="card-type-option-label">${label}</span>
           </div>
         `)
@@ -273,7 +282,7 @@ function syncCustomCardType(
   custom
     .querySelector('.card-type-current')
     .textContent =
-      CARD_TYPE_LABELS[value] || CARD_TYPE_LABELS.note;
+      CARD_TYPE_LABELS[value] || 'Требуется миграция';
 
   getCardTypeOptions(
     custom

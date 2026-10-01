@@ -31,6 +31,8 @@ import {
 import {
   syncAssetAdapterWorkspaceRoot
 } from './assetAdapter.js';
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
+import { setPageRepositoryRegistry } from '../repository/pageRepository.js';
 
 
 let workspaceLoadGeneration =
@@ -163,17 +165,23 @@ export async function loadWorkspace() {
 
   if (!isLoadCurrent()) return false;
 
-  finishWorkspaceLoad(
-    pages
+  await finishWorkspaceLoad(
+    pages, storageAdapter, isLoadCurrent
   );
 
   return true;
 }
 
 
-function finishWorkspaceLoad(
-  pages
+async function finishWorkspaceLoad(
+  pages, storageAdapter, isLoadCurrent
 ) {
+
+  let registry = null;
+  try { registry = createCardTypeRegistryFromCatalog((await readCardTypeCatalog({ storageAdapter })).catalog, { bundledTypes: [], bundledFieldSets: [] }); }
+  catch { /* Invalid catalogs stay diagnostic/read-only; never use bundled fallback. */ }
+  if (!isLoadCurrent()) return;
+  setPageRepositoryRegistry(registry);
 
   setPages(
     pages
@@ -184,7 +192,7 @@ function finishWorkspaceLoad(
       pages: state.pages,
       assetReferences:
         collectAssetReferencesFromPages(
-          state.pages
+          state.pages, { registry }
         )
     });
 

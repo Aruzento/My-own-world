@@ -7,8 +7,9 @@ for (const scenario of ['current', 'both', 'temp', 'miss', 'zero', 'clamped']) {
       const { createCombatUndoWorld } = await import('/tests/fixtures/combatUndoFixtures.mjs');
       const { EVENT_TRANSACTION_LOG_PATH } = await import('/js/events/eventStore.js');
       const w = await createCombatUndoWorld({ scenario });
+      const { CARD_TYPE_CATALOG_PATH } = await import('/js/storage/cardTypeCatalogStorage.js');
       return { page: { ...w.target, content: await w.original.readText(w.target.path) },
-        log: await w.original.readText(EVENT_TRANSACTION_LOG_PATH), transactionId: w.attack.transactionId };
+        catalog: await w.original.readText(CARD_TYPE_CATALOG_PATH), log: await w.original.readText(EVENT_TRANSACTION_LOG_PATH), transactionId: w.attack.transactionId };
     }, scenario);
     await page.reload();
     const r = await page.evaluate(async saved => {
@@ -20,6 +21,8 @@ for (const scenario of ['current', 'both', 'temp', 'miss', 'zero', 'clamped']) {
       const { undoInput } = await import('/tests/fixtures/combatUndoFixtures.mjs');
       const { createEventHistoryViewModel } = await import('/js/ui/eventHistoryPanel.js');
       const adapter = createMemoryWorkspaceAdapter();
+      const { CARD_TYPE_CATALOG_PATH } = await import('/js/storage/cardTypeCatalogStorage.js');
+      await adapter.writeText(CARD_TYPE_CATALOG_PATH, saved.catalog);
       await adapter.writeText(saved.page.path, saved.page.content);
       await adapter.writeText(EVENT_TRANSACTION_LOG_PATH, saved.log);
       setStorageAdapter(adapter); rebuildPageRepository([saved.page]);
@@ -55,10 +58,12 @@ for (const scenario of ['current', 'both', 'temp', 'miss', 'zero', 'clamped']) {
       expect(r.after.items.find(item => item.eventType === 'action.resolved').relation).toContain('Отменено транзакцией');
     }
     await page.reload();
-    const health = await page.evaluate(async content => {
+    const health = await page.evaluate(async ({ content, catalog }) => {
       const { readCharacterModelFromPage, getCharacterHealth } = await import('/js/character/characterModel.js');
-      return getCharacterHealth(readCharacterModelFromPage({ id: 'target-page', content }));
-    }, r.content);
+      const { parseCardTypeCatalog, createCardTypeRegistryFromCatalog } = await import('/js/storage/cardTypeCatalogStorage.js');
+      const registry = createCardTypeRegistryFromCatalog(parseCardTypeCatalog(catalog), { bundledTypes: [], bundledFieldSets: [] });
+      return getCharacterHealth(readCharacterModelFromPage({ id: 'target-page', content }, { registry }));
+    }, { content: r.content, catalog: saved.catalog });
     expect(health).toMatchObject({ current: scenario === 'clamped' ? 0 : 10, max: 10, temp: scenario === 'both' ? 2 : scenario === 'temp' ? 8 : 0 });
   });
 }
@@ -72,12 +77,16 @@ for (const scenario of ['hpCurrent', 'hpTemp', 'hpMax', 'unrelated', 'deleted', 
       const w = await createCombatUndoWorld();
       const original = JSON.stringify(w.attack.transaction);
       if (['hpCurrent', 'hpTemp', 'hpMax', 'malformed'].includes(scenario)) {
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = w.target.content.slice(w.target.content.indexOf('<'));
-        wrapper.querySelector(`[data-property-name="${scenario === 'malformed' ? 'hpTemp' : scenario}"]`).setAttribute('value', scenario === 'malformed' ? 'bad' : '9');
-        w.target.content = w.target.content.slice(0, w.target.content.indexOf('<')) + wrapper.innerHTML;
+        const { parsePageRecordContent, updatePageRecordContent } = await import('/js/core/pageRecord.js');
+        const envelope = parsePageRecordContent(w.target.content).variablesJson;
+        const key = { hpCurrent: 'dnd.hpCurrent', hpMax: 'dnd.hpMax', hpTemp: 'dnd.hpTemporary', malformed: 'dnd.hpTemporary' }[scenario];
+        envelope.values['dnd.health'][key] = scenario === 'malformed' ? 'bad' : 9;
+        w.target.content = updatePageRecordContent(w.target.content, { variablesJson: envelope });
       }
-      if (['unrelated', 'divergent'].includes(scenario)) w.target.content += '<p>Later biography survives Undo</p>';
+      if (['unrelated', 'divergent'].includes(scenario)) {
+        const { parsePageRecordContent, updatePageRecordContent } = await import('/js/core/pageRecord.js');
+        w.target.content = updatePageRecordContent(w.target.content, { body: parsePageRecordContent(w.target.content).rawBody + '<p>Later biography survives Undo</p>' });
+      }
       if (scenario !== 'divergent') await w.original.writeText(w.target.path, w.target.content);
       if (scenario === 'deleted-file') await w.adapter.removeFile(w.target.path);
       const before = w.target.content;
@@ -127,19 +136,24 @@ for (const scenario of ['stale-write', 'superseded', 'write-rejected', 'write-af
     await page.goto('/');
     const r = await page.evaluate(async scenario => {
       const { createCombatUndoWorld } = await import('/tests/fixtures/combatUndoFixtures.mjs');
-      const { createWriteRevision, getPageWriteKey } = await import('/js/storage/writeQueue.js');
+      const { createWriteRevision, getPageWriteKey, getWriteRevisionState, writePageContent } = await import('/js/storage/writeQueue.js');
       const w = await createCombatUndoWorld();
       const before = w.target.content;
       const write = w.adapter.writeText, read = w.adapter.readText, append = w.adapter.appendText;
-      let failed = false, diagnosticReads = 0, targetReads = 0;
+      let failed = false, diagnosticReads = 0, injected = false, superseding;
       w.adapter.readText = async path => {
         if (failed) {
           diagnosticReads++;
           if (scenario.endsWith('unreadable')) throw new Error('unreadable fixture');
         }
-        if (path === w.target.path && ++targetReads === 2) {
+        if (path === w.target.path && !injected && getWriteRevisionState(getPageWriteKey(w.target))?.state === 'saving') {
+          injected = true;
           if (scenario === 'stale-write') await w.original.writeText(path, before + '<p>External edit</p>');
-          if (scenario === 'superseded') createWriteRevision(getPageWriteKey(w.target));
+          if (scenario === 'superseded') superseding = writePageContent(w.target, before, {
+            revision: createWriteRevision(getPageWriteKey(w.target)), structuredPageWrite: true,
+            validateBeforeWrite: async () => {}, verifyAfterWrite: async () => {},
+            beforeWrite: async () => ({ state: 'stale', written: false, blocked: true })
+          });
           if (scenario === 'workspace-before-write') w.adapter.getWorkspaceRoot = () => 'C:/different-fixture';
         }
         return read(path);
@@ -162,6 +176,7 @@ for (const scenario of ['stale-write', 'superseded', 'write-rejected', 'write-af
       };
       if (scenario === 'workspace-before-append') w.adapter.ensureDirectory = async () => { w.adapter.getWorkspaceRoot = () => 'C:/different-fixture'; };
       const undo = await w.undo();
+      await superseding;
       const diagnosticCount = diagnosticReads;
       let retry = null;
       if (scenario === 'append-absent') { failed = false; retry = await w.undo('2'); }
@@ -177,7 +192,8 @@ for (const scenario of ['stale-write', 'superseded', 'write-rejected', 'write-af
       : ['write-unreadable', 'workspace-during-write'].includes(scenario) ? 'uncertain' : 'persisted');
     if (scenario.startsWith('append-') || scenario.startsWith('write-')) expect(r.diagnosticCount).toBe(1);
     if (audit) {
-      expect(r.content).toBe(r.undo.mutationPlan.nextContent);
+      const tuple = JSON.parse(r.content.match(/^variablesJson: (.+)$/m)[1]).values['dnd.health'];
+      expect(tuple).toMatchObject({ 'dnd.hpCurrent': 10, 'dnd.hpMax': 10, 'dnd.hpTemporary': 2 });
       const states = { 'append-after-bytes': 'exact-transaction-found', 'append-corrupt': 'corrupt-or-inconsistent',
         'append-unreadable': 'unreadable', 'workspace-before-append': 'unreadable' };
       expect(r.undo.auditReadback.status).toBe(states[scenario] || 'absent');

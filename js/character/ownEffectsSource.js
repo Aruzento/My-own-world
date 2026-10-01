@@ -32,7 +32,11 @@ export function readOwnEffectsSource(page, { registry, repository, pages = [] } 
       const actual = createDefinitionIdentity('fieldSet', registry.getFieldSetDefinition(OWN_EFFECTS_FIELD_SET_ID, 1));
       if (canonicalJSON(actual) !== canonicalJSON(expectedIdentity)) return unavailable('own-effects-definition-incompatible');
     }
-    if (!Object.hasOwn(snapshot.values, OWN_EFFECTS_KEY)) return declared ? unavailable('own-effects-state-incomplete-or-unsupported') : legacy();
+    if (!Object.hasOwn(snapshot.values, OWN_EFFECTS_KEY)) {
+      if (declared) return unavailable('own-effects-state-incomplete-or-unsupported');
+      if (/data-character-effects|character-effects-block/.test(record.rawBody)) return unavailable('effects-adoption-required');
+      return { ...createEffectsModel(), source: 'entity', status: 'ready', diagnostics: [], provenance: { pageId: snapshot.pageId, stored: false } };
+    }
     if (!declared || stored.status !== 'value') return unavailable('own-effects-state-incomplete-or-unsupported');
     const data = decodeOwnEffects(stored.value);
     assertJSONData(data);

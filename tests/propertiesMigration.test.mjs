@@ -230,7 +230,8 @@ test('definition-aware backup covers catalog, verifies bytes, restores legacy an
   await restoreWorkspaceBackup(after.id, adapter, { definitionCoverage: true, preRestorePages: [page], preRestoreBackupId: 'structured-recovery-safety' });
   assert.equal(await adapter.readText(page.path), target.content);
   assert.equal((await readCardTypeCatalog({ storageAdapter: adapter })).catalog.types[0].id, 'character');
-  await assert.rejects(restoreWorkspaceBackup(after.id, adapter, { definitionCoverage: true, restoreSelection: { pageNames: [page.name] } }), /Partial definition-aware restore/);
+  await assert.rejects(restoreWorkspaceBackup(after.id, adapter, { definitionCoverage: true, restoreSelection: { pageNames: [page.name] } }), /incomplete typed asset closure/);
+  assert.equal(await adapter.readText(page.path), target.content);
   await adapter.writeText(`.my-own-world-backups/${after.id}/${CARD_TYPE_CATALOG_PATH}`, '{}');
   await assert.rejects(verifyWorkspaceBackup(after.id, { storageAdapter: adapter, definitionCoverage: true }), /integrity/);
 });

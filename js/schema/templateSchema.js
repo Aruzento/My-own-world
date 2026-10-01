@@ -7,7 +7,7 @@ import {
 
 
 export const PAGE_TEMPLATE_SCHEMA_VERSION =
-  1;
+  2;
 
 
 export function validatePageTemplatesData(
@@ -41,12 +41,12 @@ export function validatePageTemplatesData(
 
   if (
     data.version !== undefined &&
-    Number(data.version) !== PAGE_TEMPLATE_SCHEMA_VERSION
+    ![1, PAGE_TEMPLATE_SCHEMA_VERSION].includes(Number(data.version))
   ) {
 
     issues.push(
       createSchemaIssue(
-        'warning',
+        'error',
         'template.unknown_version',
         'Файл шаблонов использует неизвестную версию схемы.',
         {
@@ -105,6 +105,10 @@ function validateTemplateList(
         )
       );
 
+      return;
+    }
+    if (template.version && ![1, 2].includes(template.version)) {
+      issues.push(createSchemaIssue('error', 'template.unknown_version', 'Unsupported template version.', { index, version: template.version }));
       return;
     }
 

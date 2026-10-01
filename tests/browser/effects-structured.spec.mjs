@@ -99,16 +99,14 @@ test('structured Effects UI edits only own Variables, preserves providers/body/b
   expect(state.legacy).toBe(await page.evaluate(() => window.__fx.legacy));
   expect(state.model.armorClass).toBe(25); // selected Rule removed, Item + integration remain external
 });
-test('legacy Effects edit/save/reload is catalog independent; structured absent keeps that domain owner', async ({ page }) => {
-  for (const options of [{ legacy: true, noCatalog: true }, { absent: true }]) {
-    await fixture(page, options);
-    await addCondition(page, 'poisoned');
-    await expect.poll(() => page.evaluate(async () => (await window.__fx.read()).body.includes('poisoned'))).toBe(true);
-    await page.evaluate(() => window.__fx.reopen());
-    await expect(block(page)).toContainText('Отравлен');
-    expect((await page.evaluate(() => window.__fx.read())).values?.['dnd.ownEffects']).toBeUndefined();
-  }
+test('legacy Effects evidence is migration-required without automatic adoption or catalog dependency',async({page})=>{
+ for(const options of [{legacy:true,noCatalog:true},{absent:true}]){
+  await fixture(page,options);await expect(block(page)).toContainText('Эффекты недоступны');await expect(block(page).locator('.character-effects-add-condition')).toHaveCount(0);
+  const before=await page.evaluate(()=>window.__fx.read());await page.evaluate(()=>window.__fx.reopen());const after=await page.evaluate(()=>window.__fx.read());
+  expect(after.body).toBe(before.body);expect(after.values?.['dnd.ownEffects']).toBeUndefined();expect(after.writes).toEqual([]);
+ }
 });
+
 test('Player and explicit empty Effects remain Entity-owned; malformed legacy payload is ignored', async ({ page }) => {
   await fixture(page, { player: true, empty: true, malformedLegacy: true });
   await expect(block(page)).toContainText('Эффектов нет');

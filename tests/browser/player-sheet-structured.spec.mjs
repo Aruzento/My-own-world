@@ -110,7 +110,7 @@ test('production Player Sheet edits nested owners, health and death saves withou
 test('Player unavailable sources never enable legacy writers, and absent typed owners stay read-only', async ({ page }) => {
   for (const options of [{ noCatalog: true }, { future: true }, { legacy: true }]) {
     await openPlayer(page, options);
-    await expect(page.locator('#editorArea .character-sheet-empty')).toContainText('недоступен');
+    await expect(page.locator('#editorArea .character-sheet-empty')).toContainText(options.legacy ? 'migration' : 'недоступен');
     await expect(page.locator('#editorArea [data-character-sheet-field]')).toHaveCount(0);
   }
   await openPlayer(page, { absent: true });

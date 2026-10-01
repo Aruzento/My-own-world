@@ -1,4 +1,12 @@
 import { assertLegacyPortability } from '../storage/structuredPagePolicy.js';
+import { exportPortablePageRecord, portablePageContent } from '../core/portablePageRecord.js';
+import { collectPageDefinitionClosure } from '../variables/typedPageTraversal.js';
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog, activateCardTypeDefinitions } from '../storage/cardTypeCatalogStorage.js';
+import { prepareNewCardEnvelope, validateNewPageContent } from '../storage/structuredPageCreation.js';
+import { LEGACY_TYPE_MAPPING } from '../migration/legacyPropertiesMapping.js';
+import { collectAssetReferencesFromPages } from '../storage/assetReferenceScanner.js';
+import { backupBytesDigest } from '../storage/backupDefinitionCoverage.js';
+import { normalizeWorkspacePath } from '../storage/storageAdapterContract.js';
 import {
   parseMarkdown
 } from '../core/markdown.js';
@@ -13,7 +21,7 @@ import {
 
 import {
   getStorageAdapter,
-  hasWorkspaceAccess
+  hasWorkspaceAccess, captureStorageWorkspaceContext, assertStorageWorkspaceContext
 } from '../storage/storageAdapter.js';
 
 import {
@@ -145,7 +153,6 @@ export function searchPageTemplates(
 export async function savePageAsTemplate(
   page
 ) {
-  assertLegacyPortability(page, 'Template creation');
 
   if (!page) return null;
 
@@ -155,6 +162,7 @@ export async function savePageAsTemplate(
     );
 
   const template = {
+    version: 2,
     id: crypto.randomUUID(),
     title: page.title || parsed.title || 'Шаблон',
     createdAt: Date.now(),
@@ -166,6 +174,19 @@ export async function savePageAsTemplate(
       parsed.body
     )
   };
+
+  const current = await readCardTypeCatalog();
+  const registry = createCardTypeRegistryFromCatalog(current.catalog, { bundledTypes: [], bundledFieldSets: [] });
+  template.seed = exportPortablePageRecord(page);
+  template.seed.body = template.body;
+  template.cardTypes = collectPageDefinitionClosure([page], registry);
+  const references = collectAssetReferencesFromPages([page], { registry });
+  if (references.some(reference => reference.incomplete)) throw new Error('Template asset closure is incomplete');
+  template.assets = [];
+  for (const path of [...new Set(references.map(reference => reference.path).filter(Boolean))].sort()) {
+    const bytes = new Uint8Array(await getStorageAdapter().readBinary(path));
+    template.assets.push({ path, bytes: Array.from(bytes), digest: await backupBytesDigest(bytes) });
+  }
 
   const templates =
     getPageTemplates();
@@ -199,9 +220,11 @@ export async function createPageFromTemplate(
   pageTemplate,
   parentId
 ) {
-  assertLegacyPortability(pageTemplate, 'Template instantiation');
 
   if (!pageTemplate) return null;
+  if (pageTemplate.version && ![1, 2].includes(pageTemplate.version)) throw new Error('Unsupported template version');
+  const workspace = captureStorageWorkspaceContext();
+  const guard = () => assertStorageWorkspaceContext(workspace);
 
   const title =
     getUniqueCopyTitle(
@@ -214,8 +237,53 @@ export async function createPageFromTemplate(
       title
     );
 
+  if (pageTemplate.version === 2 && pageTemplate.seed?.variablesJson) {
+    const current = await readCardTypeCatalog();
+    guard();
+    // Immutable activation detects collisions before any instance write.
+    await activateCardTypeDefinitions({ ...pageTemplate.cardTypes, expectedIdentity: current.identity });
+    guard();
+    const adapter = getStorageAdapter();
+    const content = portablePageContent(pageTemplate.seed, {
+      id: crypto.randomUUID(), parent: parentId ?? null, order: Date.now(), body
+    }, { newIdentity: true });
+    await validateNewPageContent(content, adapter);
+    // Verify every embedded asset before any writes; a path collision never overwrites user data.
+    const missingAssets = [];
+    for (const asset of pageTemplate.assets || []) {
+      guard();
+      if (!asset.path.startsWith('assets/') || normalizeWorkspacePath(asset.path) !== asset.path ||
+          !Array.isArray(asset.bytes) || asset.bytes.some(value => !Number.isInteger(value) || value < 0 || value > 255) ||
+          await backupBytesDigest(new Uint8Array(asset.bytes)) !== asset.digest) throw new Error('Invalid template asset');
+      let existing;
+      try { existing = await adapter.readBinary(asset.path); }
+      catch (error) {
+        if (error.code !== 'ENOENT' && error.name !== 'NotFoundError' && !/^missing /i.test(error.message)) throw error;
+        missingAssets.push(asset);
+      }
+      if (existing && await backupBytesDigest(existing) !== asset.digest) throw new Error('Template asset collision');
+    }
+    for (const asset of missingAssets) {
+      guard();
+      await adapter.ensureDirectory(asset.path.slice(0, asset.path.lastIndexOf('/')));
+      await adapter.writeBinary(asset.path, new Uint8Array(asset.bytes));
+      if (await backupBytesDigest(await adapter.readBinary(asset.path)) !== asset.digest) throw new Error('Template asset readback mismatch');
+    }
+    guard();
+    return createPageFromRecordContent(content);
+  }
+
+  // An explicit old-template instance can reuse free content, but never create a new legacy owner.
+  if (/card-properties-block|data-block-type\s*=\s*["'](?:properties|dnd)["']|item-set-block|data-character-effects/.test(body)) {
+    throw Object.assign(new Error('Template requires explicit source migration/adoption before creating a structured instance'), { code: 'STRUCTURED_PORTABILITY_BLOCKED' });
+  }
+  const formalType = LEGACY_TYPE_MAPPING[pageTemplate.type || 'note'];
+  const envelope = await prepareNewCardEnvelope(formalType, getStorageAdapter());
+  guard();
+  if (['object', 'note'].includes(pageTemplate.type || 'note')) envelope.values['item.isObject'] = true;
+
   const content =
-    buildPageRecordContent(
+    (pageTemplate.seed ? (patch => portablePageContent(pageTemplate.seed, patch, { newIdentity: true })) : buildPageRecordContent)(
       {
         id:
           crypto.randomUUID(),
@@ -228,11 +296,10 @@ export async function createPageFromTemplate(
         template:
           pageTemplate.template || 'card',
         type:
-          pageTemplate.type || 'note',
-        aliases:
-          [],
-        relationships:
-          [],
+          formalType,
+        schemaVersion: 2,
+        variablesJson: envelope,
+        ...(pageTemplate.seed ? {} : { aliases: [], relationships: [] }),
         body:
           sanitizePersistentHTMLOnSave(
             body
@@ -302,8 +369,8 @@ async function readWorkspaceTemplates() {
 
   } catch (error) {
 
-    if (error.code === 'STRUCTURED_PORTABILITY_BLOCKED') throw error;
-    return null;
+    if (error.name === 'NotFoundError' || error.code === 'ENOENT' || /^(?:missing\b|(?:file )?not found\b)/i.test(error.message)) return null;
+    throw error;
   }
 }
 
@@ -328,7 +395,7 @@ function readLocalStorageTemplates() {
 
   } catch (error) {
 
-    if (error.code === 'STRUCTURED_PORTABILITY_BLOCKED') throw error;
+    if (error.code === 'STRUCTURED_PORTABILITY_BLOCKED' || /Unsupported/.test(error.message)) throw error;
     return [];
   }
 }
@@ -340,7 +407,7 @@ export function serializePageTemplates(
 
   return `${JSON.stringify(
     {
-      version: 1,
+      version: 2,
       templates: normalizeTemplates(
         templates
       )
@@ -357,31 +424,15 @@ export function parsePageTemplatesFile(
 
   let raw;
   try { raw = JSON.parse(text || '{}'); } catch { return []; }
-  if (raw?.version !== undefined && raw.version !== 1) {
+  if (raw?.version !== undefined && ![1, 2].includes(raw.version)) {
     const error = new Error('Unsupported template format');
     error.code = 'STRUCTURED_PORTABILITY_BLOCKED';
     throw error;
   }
   const records = Array.isArray(raw) ? raw : raw?.templates;
-  for (const template of (Array.isArray(records) ? records : [])) assertLegacyPortability(template, 'Legacy template load');
+  if (raw.version !== 2) for (const template of (Array.isArray(records) ? records : [])) assertLegacyPortability(template, 'Legacy template load');
 
-  try {
-
-    const parsed =
-      JSON.parse(
-        text || '{}'
-      );
-
-    return normalizeTemplates(
-      Array.isArray(parsed)
-        ? parsed
-        : parsed.templates
-    );
-
-  } catch {
-
-    return [];
-  }
+  return normalizeTemplates(records);
 }
 
 
@@ -390,11 +441,16 @@ function normalizeTemplates(
 ) {
 
   if (!Array.isArray(templates)) return [];
-  templates.forEach(template => assertLegacyPortability(template, 'Legacy template serialization'));
+  for (const template of templates) {
+    if (template.version !== undefined && ![1, 2].includes(template.version)) throw Object.assign(new Error('Unsupported template version'), { code: 'STRUCTURED_PORTABILITY_BLOCKED' });
+    if (template.version === 2 && (!template.seed || !template.cardTypes)) throw Object.assign(new Error('Incomplete template v2 seed'), { code: 'STRUCTURED_PORTABILITY_BLOCKED' });
+    if (template.version !== 2) assertLegacyPortability(template, 'Legacy template serialization');
+  }
 
   return templates
     .filter(Boolean)
     .map(template => ({
+      ...(template.version === 2 ? { version: 2, seed: structuredClone(template.seed), cardTypes: structuredClone(template.cardTypes), assets: structuredClone(template.assets || []) } : {}),
       id: template.id || crypto.randomUUID(),
       title: template.title || 'Шаблон',
       createdAt: Number(template.createdAt || Date.now()),

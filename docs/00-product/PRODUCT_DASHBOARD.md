@@ -12,7 +12,7 @@ Updated: 2026-10-01
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. Phase 17 is PAUSED after accepted `17.6`. The active project is the nine-stage `CTV` migration: Stages 1–8 are DONE / Foundation; Stage 9 is UNBLOCKED / NOT STARTED. Existing Sheet supports structured Character/Player through exact activated Entity contexts: core, canonical health, Player saves/skills editing, typed Character standard skills/death saves. Character@1/Player@1 remain immutable; the optional dnd.character-gameplay@1 Field Set is activated only by explicit edit. Effective AC/initiative/speed and manual totals are deliberately derived/read-only; preserved legacy override evidence is inactive. Inventory/own Effects adoption is explicit with verified backup/journal/resume/recovery; provider effects stay external. No automatic migration or source mixing. Stage 9 portability/retirement and parity remain next; Combat 17.7 is still blocked. Effects Engine is future Phase 18 work; AI Core remains LATER.
+The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–9 are DONE / Foundation; CTV migration is CLOSED. Schema → Variables/Entity → domains → Inspector/Sheet/Combat/Map is the production architecture. Properties survives only as inert migration/recovery/old-format support. Registry owns the fifteen formal types; new cards are structured. Type change, duplicate/Templates v2/World Package v2, Backup v2/partial restore and typed assets/search/derived graph references share guarded canonical boundaries. Settings exposes explicit migration/adoption/retirement and recovery. Combat 17.6/Undo remains accepted; 17.7 is UNBLOCKED / NEXT, NOT STARTED. No automatic migration, Effects Engine or new Combat mechanics were introduced.
 
 ## Current Focus
 
@@ -27,7 +27,7 @@ Immediate direction:
 5. Treat `0.0.1.12.0` Data Safety Completion as closed after the final gate passed on 2026-08-24.
 6. Treat `0.0.1.15.0` NF-003 Event / Roll / Combat Log + Transactions as closed after the final gate passed on 2026-08-28.
 7. Closed phase: `0.0.1.16.0` Persistent Combat Session is `DONE` after 16.FINAL PASS on 2026-09-13.
-8. Paused phase: `0.0.1.17.0` Combat Action Pipeline after accepted `17.6`; 17.7 through 17.FINAL remain unfinished, blocked on the active `CTV` migration project.
+8. Paused phase: `0.0.1.17.0` Combat Action Pipeline after accepted `17.6`; 17.7 is UNBLOCKED / NEXT, NOT STARTED; later Combat tasks retain their own dependencies.
 9. Keep current design accepted for this stage; final visual polish returns later when mature workflows exist.
 10. Keep project documentation readable for the product owner, not only for Codex.
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Stage 8 is closed. The next separately authorized task is CTV Stage 9 using the [canonical migration design](../02-architecture/CARD_TYPES_VARIABLES_MIGRATION.md) and [PROJECT_PLAN](../01-delivery/PROJECT_PLAN.md); Stage 9 has not started. Legacy compatibility/recovery HTML remains until retirement. Ordinary structured backup UI, partial restore, type switching, copy/templates/packages and final portability integration remain Stage 9 scope. Non-core Player editors stay in Inspector. Effects Engine/equipment are future product features. Resume Combat at 17.7 only after Stage 9 closure and parity.
+- CTV is CLOSED. The next separately authorized task may start Combat 17.7; this task does not start it. Ambiguous legacy evidence requires explicit review, never guessed conversion. Non-core Player editors remain Inspector-owned; Effects Engine/equipment are future product work.
 
 ## Readiness Model
 
@@ -54,7 +54,7 @@ This prevents "done" from meaning only "a model/helper was created".
 - Page lifecycle now has `PageCommandService`, `PageRecord`, trash/undo, PageIndex lifecycle, runtime write revision protection, optimistic edit-session conflict protection, workspace access diagnostics and grouped recovery/asset/link diagnostics. Dice rolls have a canonical public facade. Phase 15 provides typed durable history, Phase 16 provides session audit integration, and Phase 17 retains durable single-target attack execution, supported compensation and the first popup workflow as Foundation work. Its manual acceptance is deferred while the new declarative card-type, Variables and universal Inspector architecture is built.
 - Desktop release/native verification is currently green, but native click-through, packaging smoke and large-workspace smoke must stay part of release handoff.
 - Campaign map presentation and drawing tools are currently verified for their focused matrices; fog/layers and music still require continued regression coverage.
-- Properties and CharacterModel now have a usable card-to-map path and a simpler block creation entry, but the broader character workflow still needs release-ready polish.
+- Structured Character/Player models and canonical health power Sheet/Map/Combat. Release-ready workflow polish remains future product work; active Properties ownership is retired.
 - Knowledge Graph Phase 7 is now usable as a migrated canvas workbench with CSS/JS ownership split and command-lifecycle relationship persistence. The remaining risk is product direction, not hidden migration plumbing: `BI-026` should rethink what the graph helps a GM decide before new visible graph features.
 - The active plan owns phase/leaf status; update a product summary or bug record only when its own scope becomes inaccurate.
 

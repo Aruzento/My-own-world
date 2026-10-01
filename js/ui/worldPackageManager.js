@@ -44,6 +44,7 @@ import {
   createWorldPackageImportPreview,
   normalizeWorldPackageData
 } from '../worldPackage/worldPackageModel.js';
+import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
 
 import {
   listWorldPackageFiles,
@@ -557,6 +558,7 @@ function createExportPanel({
             pages,
             {
               title,
+              registry: createCardTypeRegistryFromCatalog((await readCardTypeCatalog()).catalog, { bundledTypes: [], bundledFieldSets: [] }),
               description:
                 descriptionInput.value,
               scope:

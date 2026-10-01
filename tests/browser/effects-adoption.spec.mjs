@@ -63,17 +63,17 @@ async function adopt(page) {
 const block = page => page.locator('#editorArea .character-effects-block').first();
 for (const player of [false, true]) test(`explicit ${player ? 'Player' : 'Character'} Effects adoption → normal UI Variables edits/autosave/reload, providers stay separate`, async ({ page }) => {
   await fixture(page, { player });
-  await expect(block(page)).toContainText('Own buff');
+  await expect(block(page)).toContainText('effects-adoption-required');
   const before = await read(page);
-  expect(before.own.source).toBe('effects-data');
-  expect(before.model.armorClass).toBe(28); expect(before.model.speed).toBe(80);
-  expect(before.model.calculations.initiative.value).toBe(12);
+  expect(before.own.source).toBe('unavailable');
   const adopted = await adopt(page);
   expect(adopted.writes).toBe(0); expect(adopted.result.status, JSON.stringify(adopted.result)).toBe('completed');
   let state = await read(page);
   expect(state.own.source).toBe('entity');
-  for (const key of ['armorClass', 'speed', 'effects']) expect(state.model[key]).toEqual(before.model[key]);
-  expect(state.own.conditions).toEqual(before.own.conditions); expect(state.own.effects).toEqual(before.own.effects);
+  expect(state.model.armorClass).toBe(28); expect(state.model.speed).toBe(80);
+  expect(state.model.calculations.initiative.value).toBe(12);
+  expect(state.own.conditions.map(condition => condition.key)).toEqual(['poisoned', 'exhaustion']);
+  expect(state.own.effects.map(effect => effect.title)).toEqual(['Own buff']);
   expect(state.own.selectedRuleIds).toEqual(['r1']); expect(state.own.effects.map(effect => effect.id)).toEqual(['own']);
   expect(state.variables.extensions.fields).toEqual([{ id: 'dnd.own-effects', version: 1 }]);
   expect(state.body).toBe(await page.evaluate(() => window.__adoptFx.originalBody));
@@ -115,9 +115,9 @@ test('empty is explicit; malformed/ambiguous/missing-catalog/partial sources do 
   const result = await adopt(page);
   await page.evaluate(async backupId => { const { recoverEffectsAdoption } = await import('/js/migration/effectsAdoption.js'); await recoverEffectsAdoption(backupId, { confirm: true }); }, result.result.backupId);
   await reload(page);
-  expect((await read(page)).own.source).toBe('effects-data');
+  expect((await read(page)).own.source).toBe('unavailable');
   expect((await read(page)).variables.values['dnd.ownEffects']).toBeUndefined();
-  await expect(block(page)).toContainText('Own buff');
+  await expect(block(page)).toContainText('effects-adoption-required');
 });
 
 test('real inert extraction preserves historical attribute evidence and rejects orphan/conflicting/duplicate JSON without executing HTML', async ({ page }) => {

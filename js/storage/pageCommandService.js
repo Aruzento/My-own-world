@@ -194,7 +194,7 @@ export async function persistPageContentCommand({
   structuredMutation = null,
   workspaceContext = null,
   validateBeforeWrite = null,
-  verifyPersistedContent = null
+  verifyPersistedContent = null, typeChangePlan = null, retirementPreview = null
 } = {}) {
 
   const structuredPage = hasStructuredPageData(page) || hasStructuredPageData(content);
@@ -214,7 +214,8 @@ export async function persistPageContentCommand({
   const callerValidate = validateBeforeWrite;
   if (structuredPage) validateBeforeWrite = async () => {
     await validateStructuredPageWrite({ beforeContent: await readCurrentDurablePageContent(page, { storageAdapter: workspaceContext?.adapter }), content, expectedBase,
-      variablesCommand, migrationCommand, effectsAdoptionCommand, characterGameplayCommand, storageAdapter: workspaceContext?.adapter });
+      variablesCommand, migrationCommand, effectsAdoptionCommand, characterGameplayCommand, typeChangePlan: type === 'change-card-type' ? typeChangePlan : null,
+      retirementPreview: type === 'retire-legacy-sources' ? retirementPreview : null, storageAdapter: workspaceContext?.adapter });
     await callerValidate?.();
   };
 

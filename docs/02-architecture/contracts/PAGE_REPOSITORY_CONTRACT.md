@@ -6,7 +6,7 @@ owner_zone: "architecture"
 ---
 # PageRepository Contract
 
-Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) keeps PageRecord as the persistent page aggregate and PageRepository/PageIndex as the existing identity/metadata read owners. Card Variable Store is a typed projection of the same page, not a second page database. Domain references use exact repository ids; computed/search/graph projections refresh incrementally after confirmed page commands. CTV Stage 3 implements detached Variable Store/Entity API projections and one incremental repository publication after verified PageCommand readback. No gameplay consumer is switched. Body and variables share whole-page PageStateIdentity; missing page is not an empty entity, and invalid/future variables never fall back to Properties.
+Target extension: [Card Types / Variables migration](../CARD_TYPES_VARIABLES_MIGRATION.md) keeps PageRecord as the persistent page aggregate and PageRepository/PageIndex as the existing identity/metadata read owners. Card Variable Store is a typed projection of the same page, not a second page database. Domain references use exact repository ids; computed/search/graph projections refresh incrementally after confirmed page commands. CTV Stage 3 implements detached Variable Store/Entity API projections and one incremental repository publication after verified PageCommand readback. Stage 9 completes gameplay consumer cutover; Properties is only historical migration/recovery support. Body and variables share whole-page PageStateIdentity; missing page is not an empty entity, and invalid/future variables never fall back to Properties.
 
 Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
 
@@ -14,9 +14,9 @@ CTV Stage 7 adds explicit `migrate-legacy-properties` PageCommands with verified
 
 Large-workspace mutations should update `PageRepository` / `PageIndex` incrementally instead of forcing full workspace reloads after ordinary create, rename, move, or reorder operations.
 
-`PageRepository` — будущий единый слой доступа к страницам проекта. Его задача — убрать хаотичные `state.pages.find(...)`, `state.pages.filter(...)` и ручные обходы parent-chain из feature-кода.
+`PageRepository` — единый слой доступа к страницам проекта. Его задача — убрать хаотичные `state.pages.find(...)`, `state.pages.filter(...)` и ручные обходы parent-chain из feature-кода.
 
-## Зачем Нужен PageRepository
+## Историческая мотивация PageRepository
 
 Сейчас разные подсистемы сами ищут страницы:
 

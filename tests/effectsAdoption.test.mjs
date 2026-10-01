@@ -177,7 +177,7 @@ test('crash/resume reconstructs verified backup source/target; third state and c
     const restored = parsePageRecordContent(await f.adapter.readText(f.actor.path));
     assert.equal(restored.variablesJson.values[OWN_EFFECTS_KEY], undefined);
     assert.equal(restored.variablesJson.extensions, undefined);
-    assert.equal(readOwnEffectsSource({ id: f.actor.id, content: await f.adapter.readText(f.actor.path) }, { registry }).status, 'legacy');
+    assert.equal(readOwnEffectsSource({ id: f.actor.id, content: await f.adapter.readText(f.actor.path) }, { registry }).status, 'unavailable');
   }
 });
 

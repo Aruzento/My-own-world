@@ -569,7 +569,7 @@ async function setupItemCreationBoundaryFixture({
 
   clearPageCommandEvents();
 
-  const heroContent =
+  let heroContent =
     buildPageRecordContent({
       id:
         heroId,
@@ -605,6 +605,9 @@ async function setupItemCreationBoundaryFixture({
         `
     });
 
+  const { prepareNewCardEnvelope } = await import('/js/storage/structuredPageCreation.js');
+  const { updatePageRecordContent } = await import('/js/core/pageRecord.js');
+  heroContent = updatePageRecordContent(heroContent, { variablesJson: await prepareNewCardEnvelope('character', adapter), schemaVersion: 2 });
   const heroPage =
     createRuntimePageFromContent({
       content:
@@ -627,6 +630,9 @@ async function setupItemCreationBoundaryFixture({
   setCurrentPage(
     heroPage
   );
+
+  const {captureEditorPageBase} = await import('/js/editor/editorSessionBase.js');
+  captureEditorPageBase(heroPage,heroPage.content);
 
   editor.innerHTML =
     parsePageRecordContent(
@@ -928,7 +934,7 @@ test(
 
     expect(
       result.initialTitles
-    ).toContain(
+    ).not.toContain(
       'Лампа'
     );
 
@@ -964,7 +970,7 @@ test(
 
     expect(
       result.updatedTitles
-    ).toContain(
+    ).not.toContain(
       'Лампа переименована'
     );
 
@@ -1218,7 +1224,7 @@ test(
     expect(
       success.durableParentContent
     ).toContain(
-      `data-page-id="${success.createdPage.id}"`
+      `"pageId":"${success.createdPage.id}"`
     );
 
     expect(

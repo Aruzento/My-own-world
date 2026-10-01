@@ -20,7 +20,7 @@ export const EFFECT_SOURCE_TYPES_WITH_PAGES = [
 
 const SOURCE_TYPE_TO_CARD_TYPE = {
   item: 'item',
-  spell: 'magic',
+  spell: 'spell',
   skill: 'skill'
 };
 
