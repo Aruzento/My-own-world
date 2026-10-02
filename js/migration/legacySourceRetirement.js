@@ -4,7 +4,7 @@ import { canonicalJSON } from '../core/pageVariablesCodec.js';
 import { deepFreeze } from '../cardTypes/definitionIdentity.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
 import { captureStorageWorkspaceContext, assertStorageWorkspaceContext } from '../storage/storageAdapter.js';
-import { createWorkspaceBackup, verifyWorkspaceBackup, restoreWorkspaceBackup } from '../storage/backupService.js';
+import { createWorkspaceBackup, consumeCreatedBackupVerification, verifyWorkspaceBackup, restoreWorkspaceBackup } from '../storage/backupService.js';
 import { collectWorkspaceFiles } from '../storage/backupDefinitionCoverage.js';
 import { persistPageContentCommand } from '../storage/pageCommandService.js';
 import { beginWorkspaceOperation, commitWorkspaceOperation, failWorkspaceOperation, OPERATION_JOURNAL_COMMITTED_DIR, OPERATION_JOURNAL_ROOT } from '../storage/operationJournal.js';
@@ -45,6 +45,7 @@ async function buildRetirementPreview({ pageIds, repository = PageRepository,
     if (file.name.endsWith('.json')) journals.push(JSON.parse(await adapter.readText(file.path)));
   }
   const actors = [], plans = [];
+  const verifiedSources = new Map();
   for (const page of pages.filter(page => !pageIds || pageIds.includes(page.id))) {
     const issues = [], removed = [];
     const snapshot = readEntity(page.id, context);
@@ -64,7 +65,8 @@ async function buildRetirementPreview({ pageIds, repository = PageRepository,
         if (!receipt?.backupId || !receipt.operationId || receipt.target?.type !== snapshot.type) issues.push('properties-migration-receipt-required');
         else {
           try {
-            const original = await verifyWorkspaceBackup(receipt.backupId, { storageAdapter: adapter });
+            if (!verifiedSources.has(receipt.backupId)) verifiedSources.set(receipt.backupId, verifyWorkspaceBackup(receipt.backupId, { storageAdapter: adapter }));
+            const original = await verifiedSources.get(receipt.backupId);
             const source = original.pageContents[page.name];
             if (!source || !arePageStateIdentitiesEqual(createPageStateIdentityFromContent(source), receipt.sourceIdentity) ||
                 properties.some(block => !parsePageRecordContent(source).rawBody.includes(block.outerHTML))) issues.push('properties-receipt-body-review-required');
@@ -128,7 +130,7 @@ async function buildRetirementPreview({ pageIds, repository = PageRepository,
   return preview;
 }
 
-export async function executeLegacySourceRetirement(preview, { confirm = false } = {}) {
+export async function executeLegacySourceRetirement(preview, { confirm = false, onProgress = null } = {}) {
   const captured = previews.get(preview);
   if (!confirm || !captured || captured.used) throw new Error('Explicit live retirement preview confirmation required');
   captured.used = true;
@@ -154,9 +156,9 @@ export async function executeLegacySourceRetirement(preview, { confirm = false }
     }
     stage = 'backup';
     const backup = captured.resume ? { id: captured.resume.journal.before.backupId } : await createWorkspaceBackup({ pages: repository.getAllPages(), storageAdapter: workspace.adapter,
-      definitionCoverage: true, includeAssets: true, cleanup: false, reason: 'legacy-retirement' });
+      definitionCoverage: true, includeAssets: true, cleanup: false, reason: 'legacy-retirement', onProgress });
     backupId = backup.id;
-    const verified = await verifyWorkspaceBackup(backupId, { storageAdapter: workspace.adapter });
+    const verified = captured.resume?.verified || await consumeCreatedBackupVerification(backup, { storageAdapter: workspace.adapter });
     for (const plan of preview.pages) if (verified.pageContents[plan.name] !== plan.sourceContent) throw new Error('Retirement backup source mismatch');
     stage = 'journal';
     journal = await beginWorkspaceOperation(captured.resume?.journal || { type: 'legacy-retirement', affectedPages: preview.pages.map(page => page.pageId),
@@ -164,6 +166,7 @@ export async function executeLegacySourceRetirement(preview, { confirm = false }
       after: { pages: preview.pages.map(page => ({ pageId: page.pageId, path: page.path, identity: page.targetIdentity, status: 'pending' })) } }, workspace.adapter, true);
     for (const plan of preview.pages) {
       await guard(); stage = `page:${plan.pageId}`;
+      onProgress?.({ label: 'Retirement', stage: 'применение', current: completed.length, total: preview.pages.length });
       if (captured.resume?.expected.get(plan.path) === plan.targetContent) {
         if (await workspace.adapter.readText(plan.path) !== plan.targetContent) throw new Error('Retirement verified-skip changed');
         completed.push(plan.pageId); continue;
@@ -218,7 +221,7 @@ async function prepareRetirementResume(operationId, options) {
     if (content !== plan.sourceContent && content !== plan.targetContent) throw new Error('Retirement third-state conflict');
     expected.set(plan.path, content);
   }
-  previews.get(preview).resume = { journal, expected };
+  previews.get(preview).resume = { journal, expected, verified: backup };
   return preview;
 }
 
@@ -230,13 +233,12 @@ export async function inspectLegacySourceRetirementResume(operationId, options =
   } catch (error) { return { status: 'conflict', operationId, reason: error.message }; }
 }
 export async function resumeLegacySourceRetirement(operationId, { confirm = false, ...options } = {}) {
-  try { const preview = await prepareRetirementResume(operationId, options); return confirm ? executeLegacySourceRetirement(preview, { confirm: true }) : { status: 'preview', preview }; }
+  try { const preview = await prepareRetirementResume(operationId, options); return confirm ? executeLegacySourceRetirement(preview, { confirm: true, onProgress: options.onProgress }) : { status: 'preview', preview }; }
   catch (error) { return { status: 'conflict', operationId, reason: error.message }; }
 }
 
-export async function recoverLegacySourceRetirement(backupId, { confirm = false, workspaceContext = captureStorageWorkspaceContext() } = {}) {
+export async function recoverLegacySourceRetirement(backupId, { confirm = false, onProgress = null, workspaceContext = captureStorageWorkspaceContext() } = {}) {
   if (!confirm) throw new Error('Explicit retirement recovery confirmation required');
   assertStorageWorkspaceContext(workspaceContext);
-  await verifyWorkspaceBackup(backupId, { storageAdapter: workspaceContext.adapter });
-  return restoreWorkspaceBackup(backupId, workspaceContext.adapter, { definitionCoverage: true });
+  return restoreWorkspaceBackup(backupId, workspaceContext.adapter, { definitionCoverage: true, onProgress });
 }

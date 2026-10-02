@@ -2174,42 +2174,10 @@ test(
     const writes =
       [];
 
-    setStorageAdapter({
-      kind: 'browser',
-      getWorkspaceHandle() {
-        return {};
-      },
-      setWorkspaceHandle() {},
-      async pickWorkspace() {
-        return {};
-      },
-      async restoreWorkspace() {
-        return {};
-      },
-      async ensureDirectory() {},
-      async getDirectoryHandle() {
-        return {};
-      },
-      async readText() {
-        return '';
-      },
-      async writeText(path, content) {
-        writes.push({
-          path,
-          content:
-            String(content)
-        });
-      },
-      async readBinary() {
-        return new ArrayBuffer(0);
-      },
-      async writeBinary() {},
-      async listFiles() {
-        return [];
-      },
-      async removeFile() {},
-      async removeDirectory() {}
-    });
+    const adapter = createMemoryStorageAdapter();
+    const originalWrite = adapter.writeText.bind(adapter);
+    adapter.writeText = async (path, content) => { writes.push({ path, content: String(content) }); return originalWrite(path, content); };
+    setStorageAdapter(adapter);
 
     setPages([
       {
@@ -2241,6 +2209,8 @@ aliases: []
     const {
       state
     } = await import('../js/state.js');
+
+    await originalWrite(state.pages[0].path, state.pages[0].content);
 
     const staleSnapshot = {
       ...state.pages[0],
@@ -2399,7 +2369,7 @@ aliases: []
 
 
 test(
-  'updatePageTreePositions batches tree writes behind one risky-operation backup',
+  'updatePageTreePositions small batch uses verified scoped journal without full backup',
   async () => {
 
     const adapter =
@@ -2508,7 +2478,7 @@ aliases: []
       backupEntries.filter(entry =>
         entry.kind === 'directory'
       ).length,
-      1
+      0
     );
 
     assert.match(
@@ -2541,7 +2511,7 @@ aliases: []
 
 
 test(
-  'updatePageTreePositions restores durable files after mid-batch write failure',
+  'wide legacy updatePageTreePositions restores durable files after mid-batch write failure',
   async () => {
 
     clearWriteRevisions();
@@ -2568,6 +2538,8 @@ test(
           2
         )
       ];
+
+    pages.push(...Array.from({ length: 9 }, (_, index) => createTreePage(`wide-extra-${index}`, null, index + 3)));
 
     for (const page of pages) {
 
@@ -2636,24 +2608,7 @@ test(
     );
 
     await assert.rejects(
-      () => updatePageTreePositions([
-        {
-          page:
-            pages[0],
-          parentId:
-            'next-parent',
-          order:
-            10
-        },
-        {
-          page:
-            pages[1],
-          parentId:
-            'next-parent',
-          order:
-            20
-        }
-      ]),
+      () => updatePageTreePositions(pages.map((page, index) => ({ page, parentId: 'next-parent', order: (index + 1) * 10 }))),
       /forced mid-batch tree write failure/
     );
 
@@ -2728,7 +2683,7 @@ test(
 
 
 test(
-  'updatePageTreePositions surfaces durable rollback write failure',
+  'wide legacy updatePageTreePositions surfaces durable rollback write failure',
   async () => {
 
     clearWriteRevisions();
@@ -2755,6 +2710,8 @@ test(
           2
         )
       ];
+
+    pages.push(...Array.from({ length: 9 }, (_, index) => createTreePage(`wide-extra-${index}`, null, index + 3)));
 
     for (const page of pages) {
 
@@ -2817,24 +2774,7 @@ test(
     );
 
     await assert.rejects(
-      () => updatePageTreePositions([
-        {
-          page:
-            pages[0],
-          parentId:
-            'next-parent',
-          order:
-            10
-        },
-        {
-          page:
-            pages[1],
-          parentId:
-            'next-parent',
-          order:
-            20
-        }
-      ]),
+      () => updatePageTreePositions(pages.map((page, index) => ({ page, parentId: 'next-parent', order: (index + 1) * 10 }))),
       error => {
 
         assert.match(
@@ -3108,7 +3048,8 @@ test(
     const result =
       await restoreWorkspaceBackup(
         'backup-adapter',
-        adapter
+        adapter,
+        { preRestorePages: [{ id: 'card-1', name: 'card.md', path: '/pages/card.md', content: 'after' }] }
       );
 
     assert.equal(

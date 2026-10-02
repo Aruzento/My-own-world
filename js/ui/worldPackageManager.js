@@ -1085,7 +1085,7 @@ function createPreviewPanel({
     async () => {
 
       if (
-        !model.packageData ||
+        applyButton.disabled || !model.packageData ||
         !canApplyPreview(
           model.preview,
           model.conflictStrategy,
@@ -1099,6 +1099,7 @@ function createPreviewPanel({
       setStatus(
         'Создаю backup перед импортом...'
       );
+      setProgressStatus({ label: 'Импорт', stage: 'подготовка резервной копии' });
 
       try {
 
@@ -1106,9 +1107,13 @@ function createPreviewPanel({
           await createWorkspaceBackup({
             reason:
               'world-package-import',
+            definitionCoverage: true,
+            includeAssets: true,
             onProgress:
               setProgressStatus
           });
+
+        setProgressStatus({ label: 'Импорт', stage: 'применение проверенного пакета' });
 
         const result =
           await applyWorldPackagePageImport({

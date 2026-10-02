@@ -265,6 +265,7 @@ tags: []
         ];
 
         for (const candidate of pages) {
+          candidate.content = createPageFile(candidate);
 
           files.set(
             candidate.path,
@@ -274,21 +275,22 @@ tags: []
           );
         }
 
+        const stableWorkspaceHandle = {};
         setStorageAdapter({
           kind: 'browser',
           getWorkspaceHandle() {
-            return {};
+            return stableWorkspaceHandle;
           },
           setWorkspaceHandle() {},
           async pickWorkspace() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async restoreWorkspace() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async ensureDirectory() {},
           async getDirectoryHandle() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async readText(path) {
             if (!files.has(path)) {
@@ -551,6 +553,7 @@ tags: []
         ];
 
         for (const candidate of pages) {
+          candidate.content = createPageFile(candidate);
 
           files.set(
             candidate.path,
@@ -565,21 +568,22 @@ tags: []
             'Tree keyboard reorder workspace'
         });
 
+        const stableWorkspaceHandle = {};
         setStorageAdapter({
           kind: 'browser',
           getWorkspaceHandle() {
-            return {};
+            return stableWorkspaceHandle;
           },
           setWorkspaceHandle() {},
           async pickWorkspace() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async restoreWorkspace() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async ensureDirectory() {},
           async getDirectoryHandle() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async readText(path) {
             if (!files.has(path)) {
@@ -909,6 +913,7 @@ tags: []
         ];
 
         for (const candidate of pages) {
+          candidate.content = createPageFile(candidate);
 
           files.set(
             candidate.path,
@@ -918,21 +923,22 @@ tags: []
           );
         }
 
+        const stableWorkspaceHandle = {};
         setStorageAdapter({
           kind: 'browser',
           getWorkspaceHandle() {
-            return {};
+            return stableWorkspaceHandle;
           },
           setWorkspaceHandle() {},
           async pickWorkspace() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async restoreWorkspace() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async ensureDirectory() {},
           async getDirectoryHandle() {
-            return {};
+            return stableWorkspaceHandle;
           },
           async readText(path) {
             if (!files.has(path)) {
@@ -1061,7 +1067,7 @@ tags: []
     );
 
     expect(
-      result.writePaths
+      result.writePaths.filter(path => path.startsWith('/pages/'))
     ).toEqual(
       [
         '/pages/page-b.md'

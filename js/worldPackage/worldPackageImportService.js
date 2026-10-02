@@ -6,7 +6,7 @@ import { portablePageContent } from '../core/portablePageRecord.js';
 import { rewriteTypedPage } from '../variables/typedPageTraversal.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog, activateCardTypeDefinitions } from '../storage/cardTypeCatalogStorage.js';
 import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
-import { verifyWorkspaceBackup } from '../storage/backupService.js';
+import { consumeCreatedBackupVerification } from '../storage/backupService.js';
 
 import {
   sanitizePersistentHTMLOnSave
@@ -95,7 +95,7 @@ export async function applyWorldPackagePageImport({
     );
 
   if (pkg.contents.pages.some(page => page.variablesJson)) {
-    const protection = await verifyWorkspaceBackup(backupManifest.id, { storageAdapter });
+    const protection = await consumeCreatedBackupVerification(backupManifest, { storageAdapter });
     if (protection.manifest.version !== 2) throw new Error('Structured package import requires verified definition-aware backup');
   }
 

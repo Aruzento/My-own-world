@@ -16,6 +16,8 @@ import {
   createRuntimePageFromContent,
   updatePageRecordContent
 } from '../core/pageRecord.js';
+import { createPageStateIdentityFromContent, parsePageRecordContent } from '../core/pageRecord.js';
+import { backupBytesDigest } from './backupDefinitionCoverage.js';
 
 import {
   templates
@@ -26,7 +28,7 @@ import {
 } from './writeQueue.js';
 
 import {
-  executePageCommand,
+  executePageCommand, persistPageContentCommand,
   registerPageUndoEntry
 } from './pageCommandService.js';
 
@@ -37,7 +39,7 @@ import {
 import {
   beginWorkspaceOperation,
   commitWorkspaceOperation,
-  failWorkspaceOperation
+  failWorkspaceOperation, OPERATION_JOURNAL_ROOT, createOperationId
 } from './operationJournal.js';
 
 import {
@@ -50,7 +52,7 @@ import {
 
 import {
   getStorageAdapter,
-  requestWorkspaceWritePermission
+  requestWorkspaceWritePermission, captureStorageWorkspaceContext, assertStorageWorkspaceContext
 } from './storageAdapter.js';
 
 import {
@@ -76,6 +78,112 @@ import {
 
 const PAGE_TRASH_ROOT =
   '.my-own-world-trash/page-deletes';
+
+// Малый move защищаем exact affected-set journal; широкую операцию — full backup.
+export const SCOPED_TREE_MOVE_LIMIT = 10;
+
+async function executeScopedTreeChanges(changes, { onProgress = null, recoveryOf = null, backupId = null } = {}) {
+  const startedAt = Date.now();
+  const workspace = captureStorageWorkspaceContext(), adapter = workspace.adapter;
+  if (new Set(changes.map(change => change.livePage.id)).size !== changes.length ||
+      new Set(changes.map(change => normalizeWorkspacePath(change.livePage.path))).size !== changes.length) throw new Error('Ambiguous tree move affected set');
+  const entries = await Promise.all(changes.map(async change => {
+    const source = change.previousContent, path = change.livePage.path;
+    if (!path || typeof source !== 'string') throw new Error('Scoped move requires durable source');
+    const target = change.recoveryContent ?? updatePageRecordContent(source, { parent: change.parentId, order: change.order });
+    return { change, path, source, target, sourceDigest: await backupBytesDigest(source), targetDigest: await backupBytesDigest(target) };
+  }));
+  const guard = async (entry, expected) => {
+    assertStorageWorkspaceContext(workspace);
+    if (entry.change.livePage.path !== entry.path || getLivePage(entry.change.livePage) !== entry.change.livePage ||
+        await adapter.readText(entry.path) !== expected) throw new Error('Stale/moved scoped tree source');
+    assertStorageWorkspaceContext(workspace);
+  };
+  for (const entry of entries) await guard(entry, entry.source);
+  const journal = await beginWorkspaceOperation({ id: `${createOperationId('scoped-tree-move')}-${crypto.randomUUID()}`, type: backupId ? 'tree-position-batch' : 'scoped-tree-move', affectedPages: entries.map(entry => entry.change.livePage.id),
+    before: { recoveryOf, backupId, pages: entries.map(entry => ({ pageId: entry.change.livePage.id, path: entry.path, content: entry.source, digest: entry.sourceDigest })) },
+    after: { pages: entries.map(entry => ({ pageId: entry.change.livePage.id, path: entry.path, content: entry.target, digest: entry.targetDigest })) }
+  }, adapter, true);
+  try {
+    for (let index = 0; index < entries.length; index += 1) {
+      const entry = entries[index], page = entry.change.livePage;
+      onProgress?.({ label: 'Перенос', stage: 'сохранение', current: index, total: entries.length });
+      const result = await persistPageContentCommand({ page, content: entry.target, type: 'move-scoped-tree-page', workspaceContext: workspace,
+        expectedBase: createPageStateIdentityFromContent(entry.source),
+        validateBeforeWrite: () => guard(entry, entry.source), verifyPersistedContent: async () => {
+          await guard(entry, entry.target);
+        } });
+      if (result.writeStatus !== 'saved') throw new Error(`Scoped move unconfirmed: ${result.writeStatus}`);
+      // Legacy PageCommand updates content only; formal tree metadata has one owner.
+      const record = parseMarkdown(entry.target);
+      page.parent = entry.change.parentId; page.order = entry.change.order;
+      page.updatedAt = record.updatedAt; page.contentHash = record.contentHash; page.pageRecordStatus = record.pageRecordStatus;
+      notifyPageMoved(entry.change.previousPage, page);
+      const { state: editorState } = await import('../state.js');
+      if (editorState.currentPage?.id === page.id) {
+        const { advanceEditorPageBase } = await import('../editor/editorSessionBase.js');
+        advanceEditorPageBase(page);
+      }
+      onProgress?.({ label: 'Перенос', stage: 'страницы', current: index + 1, total: entries.length, elapsedMs: Date.now() - startedAt });
+    }
+    await commitWorkspaceOperation(journal, adapter, true);
+    return { changedPages: entries.length, operationId: journal.id, backupId };
+  } catch (error) {
+    error.operationId = journal.id;
+    error.backupId = backupId;
+    try { await failWorkspaceOperation(journal, error, adapter, true); } catch { /* Pending verified evidence remains. */ }
+    throw error; // No uncertain retry/rollback; explicit recovery classifies physical bytes.
+  }
+}
+
+export async function inspectScopedTreeRecovery(operationId) {
+  if (typeof operationId !== 'string' || !/^[\w-]+$/.test(operationId)) throw new Error('Invalid tree operation id');
+  const workspace = captureStorageWorkspaceContext(), adapter = workspace.adapter;
+  let journal;
+  for (const directory of ['pending', 'failed', 'committed']) {
+    try { journal = JSON.parse(await adapter.readText(`${OPERATION_JOURNAL_ROOT}/${directory}/${operationId}.json`)); break; }
+    catch { /* Read the next durable journal location. */ }
+  }
+  if (journal?.version !== 1 || journal.type !== 'scoped-tree-move' || journal.id !== operationId ||
+      !Array.isArray(journal.before?.pages) || !journal.before.pages.length || journal.before.pages.length > SCOPED_TREE_MOVE_LIMIT ||
+      journal.before.pages.length !== journal.after?.pages?.length) throw new Error('Invalid scoped tree recovery evidence');
+  if (new Set(journal.before.pages.map(page => page.pageId)).size !== journal.before.pages.length ||
+      new Set(journal.after.pages.map(page => page.pageId)).size !== journal.after.pages.length) throw new Error('Ambiguous tree recovery evidence');
+  const pages = [];
+  for (const source of journal.before.pages) {
+    const target = journal.after.pages.find(entry => entry.pageId === source.pageId);
+    if (!target || target.path !== source.path || !/^\/?pages\/[^/\\]+\.md$/.test(source.path) ||
+        typeof source.content !== 'string' || typeof target.content !== 'string' ||
+        await backupBytesDigest(source.content) !== source.digest || await backupBytesDigest(target.content) !== target.digest ||
+        parseMarkdown(source.content).id !== source.pageId || parseMarkdown(target.content).id !== source.pageId) throw new Error('Tree recovery identity/digest mismatch');
+    const originalRecord = parsePageRecordContent(source.content), targetRecord = parsePageRecordContent(target.content);
+    const unrelated = record => record.frontMatter.entries.filter(entry => !['parent', 'order', 'updatedat', 'contenthash'].includes(entry.normalizedKey)).map(entry => entry.raw);
+    if (originalRecord.rawBody !== targetRecord.rawBody || JSON.stringify(unrelated(originalRecord)) !== JSON.stringify(unrelated(targetRecord))) throw new Error('Tree recovery must preserve unrelated data');
+    const page = getLivePage({ id: source.pageId });
+    let durable;
+    try { durable = await adapter.readText(source.path); } catch { /* Missing is a conflict. */ }
+    const status = !page || normalizeWorkspacePath(page.path) !== normalizeWorkspacePath(source.path) || page.content !== durable ? 'conflict' :
+      durable === source.content ? 'original' : durable === target.content ? 'recoverable' : 'conflict';
+    pages.push({ pageId: source.pageId, status });
+  }
+  assertStorageWorkspaceContext(workspace);
+  return { status: pages.some(page => page.status === 'conflict') ? 'conflict' : 'ready', operationId, pages, journal };
+}
+
+export async function recoverScopedTreeMove(operationId, { confirm = false, onProgress = null } = {}) {
+  if (!confirm) throw new Error('Explicit tree recovery confirmation required');
+  const inspected = await inspectScopedTreeRecovery(operationId);
+  if (inspected.status !== 'ready') return inspected;
+  const changes = inspected.pages.filter(entry => entry.status === 'recoverable').map(entry => {
+    const page = getLivePage({ id: entry.pageId }), source = inspected.journal.before.pages.find(value => value.pageId === page.id);
+    const original = parseMarkdown(source.content);
+    return { livePage: page, previousPage: snapshotPageForIndex(page), previousContent: page.content,
+      parentId: original.parent ?? null, order: original.order, recoveryContent: source.content };
+  });
+  if (!changes.length) return { status: 'already-original', changedPages: 0 };
+  const result = await executeScopedTreeChanges(changes, { onProgress, recoveryOf: operationId });
+  return { status: 'completed', ...result };
+}
 
 
 export async function createPage(
@@ -1546,19 +1654,34 @@ async function updatePageTreePositionsMeasured(
   const moveStartedAt =
     Date.now();
 
+  if (changes.length <= SCOPED_TREE_MOVE_LIMIT) {
+    const result = await executeScopedTreeChanges(changes, options);
+    if (!options.skipUndo) registerTreeMoveUndoEntry(changes, 'undo-page-move-batch');
+    if (!options.skipCheckpoint) { scheduleWorkspaceCheckpoint({ reason: 'after-scoped-tree-move' }); scheduleTreeOrderCompactionForChanges(changes, 'after-scoped-tree-move'); }
+    return result;
+  }
+
   if (
     shouldBackupTreePositionChanges(
       changes
     )
   ) {
 
-    await requireWorkspaceBackupBeforeRiskyOperation(
+    const backup = await requireWorkspaceBackupBeforeRiskyOperation(
       'move-page-tree-position',
       {
         onProgress:
           options.onProgress
       }
     );
+    // Same guarded per-page owner for wide structured moves; one full safety
+    // snapshot protects the wider operation, not one snapshot per page.
+    if (changes.some(change => parseMarkdown(change.previousContent).variablesStatus.mode !== 'legacy')) {
+      const result = await executeScopedTreeChanges(changes, { ...options, backupId: backup.id });
+      if (!options.skipUndo) registerTreeMoveUndoEntry(changes, 'undo-page-move-batch');
+      if (!options.skipCheckpoint) { scheduleWorkspaceCheckpoint({ reason: 'after-tree-parent-move' }); scheduleTreeOrderCompactionForChanges(changes, 'after-tree-parent-move'); }
+      return result;
+    }
   }
 
   const journalEntry =
@@ -1679,10 +1802,9 @@ function shouldBackupTreePositionChanges(
   changes
 ) {
 
-  return changes.length > 1 &&
-    changes.some(change =>
-      change.previousPage?.parent !== change.parentId
-    );
+  return changes.length > SCOPED_TREE_MOVE_LIMIT &&
+    changes.some(change => change.previousPage?.parent !== change.parentId ||
+      parseMarkdown(change.previousContent).variablesStatus.mode !== 'legacy');
 }
 
 
@@ -1700,6 +1822,16 @@ async function applyPageTreePositionChanges(
   changes,
   options = {}
 ) {
+
+  if (changes.length <= SCOPED_TREE_MOVE_LIMIT) {
+    const result = await executeScopedTreeChanges(changes, options);
+    if (!options.skipCheckpoint) { scheduleWorkspaceCheckpoint({ reason: options.reason || 'after-scoped-tree-move' }); scheduleTreeOrderCompactionForChanges(changes, options.reason || 'after-scoped-tree-move'); }
+    return result;
+  }
+
+  if (changes.some(change => parseMarkdown(change.previousContent).variablesStatus.mode !== 'legacy')) {
+    return updatePageTreePositions(changes.map(change => ({ page: change.livePage, parentId: change.parentId, order: change.order })), { ...options, skipUndo: true });
+  }
 
   const journalEntry =
     shouldJournalTreePositionChanges(

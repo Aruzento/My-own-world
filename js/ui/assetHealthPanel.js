@@ -629,8 +629,12 @@ function renderOrphanDeleteConfirm(
     'click',
     async () => {
 
+      if (confirmButton.disabled) return;
+
       confirmButton.disabled =
         true;
+
+      text.textContent = 'Подготовка резервной копии перед удалением…';
 
       try {
 
@@ -638,9 +642,16 @@ function renderOrphanDeleteConfirm(
 
           await (options.createBackup ||
             createWorkspaceBackup)({
-            reason: 'orphan-assets-delete'
+            reason: 'orphan-assets-delete',
+            // Orphans are absent from legacy body references: protect all assets,
+            // including on a workspace that has no activated catalog yet.
+            definitionCoverage: true,
+            includeAssets: true,
+            onProgress: progress => { text.textContent = `${progress.label}: ${progress.stage} ${progress.total ? `${progress.current}/${progress.total}` : ''}`; }
           });
         }
+
+        text.textContent = 'Удаление проверенного файла…';
 
         await deleteOrphanAsset(
           path,

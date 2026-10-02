@@ -1488,6 +1488,8 @@ async function applyRepairPreviewFromUI({
   applyButton
 }) {
 
+  if (applyButton.disabled) return;
+
   if (plan?.status !== 'ready') {
 
     status.dataset.repairPreviewStatus =
@@ -1972,7 +1974,7 @@ async function applySchemaRecoveryRepairs({
   button
 }) {
 
-  if (!actions.length) return;
+  if (!actions.length || button.disabled) return;
 
   button.disabled =
     true;

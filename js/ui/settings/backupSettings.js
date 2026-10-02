@@ -199,18 +199,23 @@ export async function renderBackupSettings(
     'click',
     async () => {
 
+      if (createButton.disabled) return;
+
       createButton.disabled =
         true;
 
       setStatus(
         'Создаю резервную копию...'
       );
+      setProgressStatus({ label: 'Backup', stage: 'подготовка' });
 
       try {
 
         const manifest =
           await createWorkspaceBackup({
             reason: 'manual',
+            definitionCoverage: true,
+            includeAssets: true,
             onProgress:
               setProgressStatus
           });
@@ -998,6 +1003,8 @@ function renderRestorePreviewConfirm(
   const updateRestoreActionState =
     (busy = false) => {
 
+      confirm.dataset.restoreBusy = String(busy);
+
       cancelButton.disabled =
         busy;
 
@@ -1054,6 +1061,8 @@ function renderRestorePreviewConfirm(
     'click',
     async () => {
 
+      if (confirm.dataset.restoreBusy === 'true') return;
+
       updateRestoreActionState(
         true
       );
@@ -1061,6 +1070,7 @@ function renderRestorePreviewConfirm(
       setStatus(
         'Восстанавливаю выбранные страницы...'
       );
+      setProgressStatus({ label: 'Restore', stage: 'проверка исходной копии' });
 
       try {
 
@@ -1186,6 +1196,8 @@ function renderRestorePreviewConfirm(
     'click',
     async () => {
 
+      if (confirm.dataset.restoreBusy === 'true') return;
+
       updateRestoreActionState(
         true
       );
@@ -1193,6 +1205,7 @@ function renderRestorePreviewConfirm(
       setStatus(
         'Восстанавливаю резервную копию...'
       );
+      setProgressStatus({ label: 'Restore', stage: 'проверка исходной копии' });
 
       try {
 

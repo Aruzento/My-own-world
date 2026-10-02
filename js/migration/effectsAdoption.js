@@ -8,7 +8,7 @@ import { readOwnEffectsSource } from '../character/ownEffectsSource.js';
 import { createSerializableEffectsData } from '../character/effectsModel.js';
 import { readCharacterModelFromPage } from '../character/characterModel.js';
 import { planEffectsAdoption } from './effectsAdoptionPlan.js';
-import { createWorkspaceBackup, verifyWorkspaceBackup, restoreWorkspaceBackup, BACKUP_ROOT_DIR } from '../storage/backupService.js';
+import { createWorkspaceBackup, consumeCreatedBackupVerification, verifyWorkspaceBackup, restoreWorkspaceBackup, BACKUP_ROOT_DIR } from '../storage/backupService.js';
 import { collectWorkspaceFiles } from '../storage/backupDefinitionCoverage.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog, CARD_TYPE_CATALOG_PATH } from '../storage/cardTypeCatalogStorage.js';
 import { captureStorageWorkspaceContext, assertStorageWorkspaceContext, createContextBoundStorageAdapter } from '../storage/storageAdapter.js';
@@ -33,7 +33,7 @@ export async function previewEffectsAdoption({ pageIds, repository = PageReposit
   return preview;
 }
 
-export async function executeEffectsAdoption(preview, { confirm = false } = {}) {
+export async function executeEffectsAdoption(preview, { confirm = false, onProgress = null } = {}) {
   const context = previews.get(preview);
   if (!confirm || !context || context.used) throw new Error('Explicit confirmation of live unused preview required');
   if (running) throw new Error('Effects adoption already running');
@@ -51,16 +51,18 @@ export async function executeEffectsAdoption(preview, { confirm = false } = {}) 
     }
     operationId ||= `${createOperationId('effects-adoption')}-${crypto.randomUUID()}`;
     stage = 'backup';
+    let verified = context.verified;
     if (!journal) {
       // Other actors/providers are independent; snapshot their CURRENT bytes for
       // full recovery without requiring unrelated pages to match this preview.
       context.pages = await readPages(context.adapter);
       await guardSources(context);
       const backup = await createWorkspaceBackup({ storageAdapter: context.adapter, pages: context.pages,
-        id: operationId, reason: 'effects-adoption', definitionCoverage: true, includeAssets: true, cleanup: false });
+        id: operationId, reason: 'effects-adoption', definitionCoverage: true, includeAssets: true, cleanup: false, onProgress });
       backupId = backup.id;
+      verified = await consumeCreatedBackupVerification(backup, { storageAdapter: context.adapter });
     }
-    const verified = await verifyWorkspaceBackup(backupId, { storageAdapter: context.adapter, definitionCoverage: true });
+    if (!verified) throw new Error('Verified backup evidence required');
     for (const planned of preview.pages) if (verified.pageContents[planned.name] !== planned.sourceContent) throw new Error('Backup source mismatch');
     await guardSources(context);
     stage = 'journal';
@@ -72,6 +74,7 @@ export async function executeEffectsAdoption(preview, { confirm = false } = {}) 
     else journal = await beginWorkspaceOperation(journal, context.adapter, true);
     for (const planned of preview.pages) {
       stage = `actor:${planned.pageId}`;
+      onProgress?.({ label: 'Effects', stage: 'применение', current: completedActors.length, total: preview.pages.length });
       await guardSources(context);
       if (context.expected.get(planned.path) !== planned.targetContent) {
         await guardEditor(planned, context);
@@ -175,7 +178,7 @@ export async function resumeEffectsAdoption(operationId, { confirm = false, ...o
   try {
     const { preview } = await prepareResume(operationId, options);
     if (!confirm) return { status: 'preview', preview };
-    return await executeEffectsAdoption(preview, { confirm: true });
+    return await executeEffectsAdoption(preview, { confirm: true, onProgress: options.onProgress });
   } catch (error) { return { status: 'conflict', operationId, reason: error.message }; }
 }
 async function prepareResume(operationId, { workspaceContext = captureStorageWorkspaceContext(), repository = PageRepository, ...reader } = {}) {
@@ -207,21 +210,19 @@ async function prepareResume(operationId, { workspaceContext = captureStorageWor
     if (content !== page.sourceContent && content !== page.targetContent) throw new Error('Third-state Effects adoption conflict');
     expected.set(page.path, content);
   }
-  const context = { adapter, workspaceContext, repository, registry, pages, reader, catalogIdentity: journal.before.catalogIdentity, expected, journal, used: false };
+  const context = { adapter, workspaceContext, repository, registry, pages, reader, catalogIdentity: journal.before.catalogIdentity, expected, journal, verified, used: false };
   await guardSources(context);
   for (const page of preview.pages.filter(page => expected.get(page.path) === page.targetContent)) await verifyPage(page, context);
   previews.set(preview, context);
   return { preview, context, journal };
 }
-export async function recoverEffectsAdoption(backupId, { confirm = false, workspaceContext = captureStorageWorkspaceContext() } = {}) {
+export async function recoverEffectsAdoption(backupId, { confirm = false, onProgress = null, workspaceContext = captureStorageWorkspaceContext() } = {}) {
   if (!confirm || running) throw new Error('Explicit recovery confirmation and idle adoption required');
   if (typeof backupId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(backupId)) throw new Error('Invalid backup identity');
   running = true;
   try {
     const adapter = createContextBoundStorageAdapter(workspaceContext);
-    const backup = await verifyWorkspaceBackup(backupId, { storageAdapter: adapter, definitionCoverage: true });
-    if (backup.manifest.reason !== 'effects-adoption') throw new Error('Effects adoption backup required');
-    return await restoreWorkspaceBackup(backupId, adapter, { definitionCoverage: true, preRestorePages: await readPages(adapter) });
+    return await restoreWorkspaceBackup(backupId, adapter, { definitionCoverage: true, expectedBackupReason: 'effects-adoption', preRestorePages: await readPages(adapter), onProgress });
   } finally { running = false; }
 }
 async function readPages(adapter) {

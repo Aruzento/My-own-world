@@ -7,7 +7,7 @@ import { readEntity, getValue, prepareVariablesChange, commitVariablesChange } f
 import { readInventoryModelFromPage } from '../character/inventoryModel.js';
 import { readCharacterModelFromPage } from '../character/characterModel.js';
 import { planInventoryAdoption } from './inventoryAdoptionPlan.js';
-import { createWorkspaceBackup, verifyWorkspaceBackup, restoreWorkspaceBackup, BACKUP_ROOT_DIR } from '../storage/backupService.js';
+import { createWorkspaceBackup, consumeCreatedBackupVerification, verifyWorkspaceBackup, restoreWorkspaceBackup, BACKUP_ROOT_DIR } from '../storage/backupService.js';
 import { collectWorkspaceFiles } from '../storage/backupDefinitionCoverage.js';
 import { readCardTypeCatalog, createCardTypeRegistryFromCatalog, CARD_TYPE_CATALOG_PATH } from '../storage/cardTypeCatalogStorage.js';
 import { captureStorageWorkspaceContext, assertStorageWorkspaceContext, createContextBoundStorageAdapter } from '../storage/storageAdapter.js';
@@ -32,7 +32,7 @@ export async function previewInventoryAdoption({ pageIds, repository = PageRepos
   return preview;
 }
 
-export async function executeInventoryAdoption(preview, { confirm = false } = {}) {
+export async function executeInventoryAdoption(preview, { confirm = false, onProgress = null } = {}) {
   const context = previews.get(preview);
   if (!confirm || !context || context.used) throw new Error('Explicit confirmation of live unused preview required');
   if (running) throw new Error('Inventory adoption already running');
@@ -56,12 +56,14 @@ export async function executeInventoryAdoption(preview, { confirm = false } = {}
     }
     operationId ||= `${createOperationId('inventory-adoption')}-${crypto.randomUUID()}`;
     stage = 'backup';
+    let verified = context.verified;
     if (!journal) {
       const backup = await createWorkspaceBackup({ storageAdapter: context.adapter, pages: context.pages,
-        id: operationId, reason: 'inventory-adoption', definitionCoverage: true, includeAssets: true, cleanup: false });
+        id: operationId, reason: 'inventory-adoption', definitionCoverage: true, includeAssets: true, cleanup: false, onProgress });
       backupId = backup.id;
+      verified = await consumeCreatedBackupVerification(backup, { storageAdapter: context.adapter });
     }
-    const verified = await verifyWorkspaceBackup(backupId, { storageAdapter: context.adapter, definitionCoverage: true });
+    if (!verified) throw new Error('Verified backup evidence required');
     // Full source coverage, not stale repository/cache data. Resume retains the
     // original verified snapshot and reconstructs candidates from those bytes.
     for (const page of context.pages) if (verified.pageContents[page.name] !== page.content) throw new Error('Backup source mismatch');
@@ -78,6 +80,7 @@ export async function executeInventoryAdoption(preview, { confirm = false } = {}
     else journal = await beginWorkspaceOperation(journal, context.adapter, true);
     for (const page of preview.pages) {
       stage = `${page.role}:${page.pageId}`;
+      onProgress?.({ label: 'Inventory', stage: 'применение', current: completedItems.length + completedActors.length, total: preview.pages.length });
       await guardWorkspace(context);
       if (page.role === 'actor') await verifyDependencies(preview, page.pageId, context);
       if (context.expected.get(page.path) !== page.targetContent) {
@@ -194,7 +197,7 @@ export async function resumeInventoryAdoption(operationId, { confirm = false, ..
   try {
     const { preview } = await prepareResume(operationId, options);
     if (!confirm) return { status: 'preview', preview };
-    return await executeInventoryAdoption(preview, { confirm: true });
+    return await executeInventoryAdoption(preview, { confirm: true, onProgress: options.onProgress });
   } catch (error) { return { status: 'conflict', operationId, reason: error.message }; }
 }
 
@@ -232,7 +235,7 @@ async function prepareResume(operationId, { workspaceContext = captureStorageWor
     expected.set(page.path, page.content);
   }
   const context = { adapter, workspaceContext, repository, registry, pages, reader,
-    catalogIdentity: journal.before.catalogIdentity, expected, journal, used: false };
+    catalogIdentity: journal.before.catalogIdentity, expected, journal, verified, used: false };
   await guardWorkspace(context);
   for (const page of preview.pages.filter(page => expected.get(page.path) === page.targetContent)) {
     if (page.role === 'actor') await verifyDependencies(preview, page.pageId, context);
@@ -242,15 +245,13 @@ async function prepareResume(operationId, { workspaceContext = captureStorageWor
   return { preview, context, journal };
 }
 
-export async function recoverInventoryAdoption(backupId, { confirm = false, workspaceContext = captureStorageWorkspaceContext() } = {}) {
+export async function recoverInventoryAdoption(backupId, { confirm = false, onProgress = null, workspaceContext = captureStorageWorkspaceContext() } = {}) {
   if (!confirm || running) throw new Error('Explicit recovery confirmation and idle adoption required');
   if (typeof backupId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(backupId)) throw new Error('Invalid backup identity');
   running = true;
   try {
     const adapter = createContextBoundStorageAdapter(workspaceContext);
-    const backup = await verifyWorkspaceBackup(backupId, { storageAdapter: adapter, definitionCoverage: true });
-    if (backup.manifest.reason !== 'inventory-adoption') throw new Error('Inventory adoption backup required');
-    return await restoreWorkspaceBackup(backupId, adapter, { definitionCoverage: true, preRestorePages: await readPages(adapter) });
+    return await restoreWorkspaceBackup(backupId, adapter, { definitionCoverage: true, expectedBackupReason: 'inventory-adoption', preRestorePages: await readPages(adapter), onProgress });
   } finally { running = false; }
 }
 

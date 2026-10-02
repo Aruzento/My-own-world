@@ -12,6 +12,8 @@ import { getPageById } from '../../repository/pageRepository.js';
 import { state } from '../../state.js';
 import { openConfirmPopup } from '../confirmPopup.js';
 import { setStatus } from '../ui.js';
+import { showOperationProgress, finishOperationProgress } from '../operationProgress.js';
+import { inspectScopedTreeRecovery, recoverScopedTreeMove } from '../../storage/pageStorage.js';
 
 const workflows = {
   properties: { label: '1. Тип и Properties', preview: previewLegacyPropertiesMigration, execute: executeLegacyPropertiesMigration,
@@ -48,16 +50,24 @@ export async function renderMigrationSettings(container, { pageId = null } = {})
   const invalidate = () => { preview = null; executeButton.disabled = true; };
   flow.addEventListener('change', invalidate); selection.addEventListener('input', invalidate);
   const reload = async () => { const id = state.currentPage?.id; await loadWorkspace(); const page = id && getPageById(id); if (page) await openPage(page); };
+  let running = false;
+  const progress = value => { showOperationProgress(value); report.textContent = `${value.label || 'Операция'}: ${value.stage || ''} ${value.total ? `${value.current}/${value.total}` : ''}`; };
   const run = async action => {
+    if (running) return false;
+    running = true;
     executeButton.disabled = true; previewButton.disabled = true;
+    progress({ label: 'Операция', stage: 'подготовка' });
     try {
       if (state.currentPage && hasPendingAutosaveForPage(state.currentPage.id)) throw new Error('Сначала сохраните текст и повторите preview');
       const result = await action(); report.textContent = JSON.stringify(result, null, 2);
+      const successful = ['completed', 'partial', 'saved', 'verified-skip', 'skipped', 'already-original'].includes(result.status) || result.restoredPages !== undefined;
+      finishOperationProgress({ message: `Операция: ${result.status || 'восстановлено'}${result.reason ? `; ${result.reason}` : ''}`, status: successful ? 'complete' : 'failed' });
       setStatus(`Миграция: ${result.status || 'не подтверждена'}${result.backupId ? `; backup ${result.backupId}` : ''}${result.reason ? `; ${result.reason}` : ''}`);
       if (result.backupId) recoveryId.value = result.backupId;
       if (['completed', 'partial', 'saved'].includes(result.status) || result.restoredPages !== undefined) await reload();
-    } catch (error) { report.textContent = `Операция не подтверждена: ${error.message}. Не повторяйте uncertain write; используйте inspect/resume или backup recovery.`; }
-    finally { previewButton.disabled = false; }
+      return successful ? result : false;
+    } catch (error) { report.textContent = `Операция не подтверждена: ${error.message}. Не повторяйте uncertain write; используйте inspect/resume или backup recovery.`; finishOperationProgress({ message: report.textContent, status: 'failed' }); throw error; }
+    finally { running = false; previewButton.disabled = false; }
   };
   previewButton.addEventListener('click', async () => {
     invalidate(); previewButton.disabled = true;
@@ -73,20 +83,36 @@ export async function renderMigrationSettings(container, { pageId = null } = {})
   executeButton.addEventListener('click', () => {
     const current = preview, step = previewStep;
     if (!current || step !== flow.value) return;
-    openConfirmPopup({ anchor: executeButton, modal: true, title: workflows[step].label,
+    openConfirmPopup({ anchor: executeButton, modal: true, waitForConfirm: true, title: workflows[step].label,
       message: 'Выполнить только ready candidates из этого preview? Перед первым изменением создаётся и проверяется полная резервная копия.',
-      confirmText: 'Выполнить', onConfirm: () => run(() => workflows[step].execute(current, { confirm: true })) });
+      confirmText: 'Выполнить', onConfirm: (_, feedback) => run(() => workflows[step].execute(current, { confirm: true, onProgress: value => { progress(value); feedback.setProgress(report.textContent); } })) });
   });
   recovery.addEventListener('click', () => {
     const id = recoveryId.value.trim(), workflow = workflows[flow.value]; if (!id) return;
-    openConfirmPopup({ anchor: recovery, modal: true, title: 'Восстановить исходный workspace?',
+    openConfirmPopup({ anchor: recovery, modal: true, waitForConfirm: true, title: 'Восстановить исходный workspace?',
       message: 'Будет создана pre-restore safety backup. Восстановление вернёт страницы/assets и не перематывает Event History.', confirmText: 'Восстановить',
-      onConfirm: () => run(() => workflow.recover(id, { confirm: true })) });
+      onConfirm: () => run(() => workflow.recover(id, { confirm: true, onProgress: progress })) });
   });
   section.append(heading, hint, label, flowLabel, previewButton, executeButton, report, recoveryLabel, recovery);
   const pending = [...await listPendingWorkspaceOperations(),
     ...await listPendingWorkspaceOperations(getStorageAdapter(), OPERATION_JOURNAL_FAILED_DIR),
-    ...(await listPendingWorkspaceOperations(getStorageAdapter(), OPERATION_JOURNAL_COMMITTED_DIR)).filter(entry => entry.type === 'card-type-change')];
+    ...(await listPendingWorkspaceOperations(getStorageAdapter(), OPERATION_JOURNAL_COMMITTED_DIR)).filter(entry => ['card-type-change', 'scoped-tree-move'].includes(entry.type))];
+  const treeOperations = new Set();
+  for (const journal of pending.filter(entry => entry.type === 'scoped-tree-move')) {
+    if (treeOperations.has(journal.id)) continue;
+    treeOperations.add(journal.id);
+    const row = document.createElement('div'); row.textContent = `Перенос карточек: ${journal.id}. Scoped recovery без full backup.`;
+    const inspect = document.createElement('button'); inspect.type = 'button'; inspect.textContent = 'Проверить перенос';
+    inspect.addEventListener('click', async () => {
+      try { const result = await inspectScopedTreeRecovery(journal.id); report.textContent = JSON.stringify({ ...result, journal: undefined }, null, 2); }
+      catch (error) { report.textContent = error.message; }
+    });
+    const restore = document.createElement('button'); restore.type = 'button'; restore.textContent = 'Восстановить до переноса';
+    restore.addEventListener('click', () => openConfirmPopup({ anchor: restore, modal: true, waitForConfirm: true,
+      title: 'Восстановить перенос?', message: 'Только exact original/target bytes. Изменённая третья версия блокирует recovery. Текущее состояние защищается новым scoped journal.',
+      confirmText: 'Восстановить', onConfirm: () => run(() => recoverScopedTreeMove(journal.id, { confirm: true, onProgress: progress })) }));
+    row.append(inspect, restore); section.append(row);
+  }
   const typeOperations = new Set();
   for (const journal of pending.filter(entry => entry.type === 'card-type-change')) {
     if (typeOperations.has(journal.id)) continue;
@@ -120,9 +146,9 @@ export async function renderMigrationSettings(container, { pageId = null } = {})
         catch (error) { report.textContent = error.message; }
       }); row.append(inspect);
       const resume = document.createElement('button'); resume.type = 'button'; resume.textContent = 'Продолжить';
-      resume.addEventListener('click', () => openConfirmPopup({ anchor: resume, modal: true, title: 'Продолжить проверенную операцию?',
+      resume.addEventListener('click', () => openConfirmPopup({ anchor: resume, modal: true, waitForConfirm: true, title: 'Продолжить проверенную операцию?',
         message: 'Exact source → pending; exact target → verified-skip; третье состояние блокирует продолжение.', confirmText: 'Продолжить',
-        onConfirm: () => run(() => workflow.resume(journal.type === 'properties-migration' ? journal : journal.id, { confirm: true })) })); row.append(resume);
+        onConfirm: () => run(() => workflow.resume(journal.type === 'properties-migration' ? journal : journal.id, { confirm: true, onProgress: progress })) })); row.append(resume);
     }
     section.append(row);
   }

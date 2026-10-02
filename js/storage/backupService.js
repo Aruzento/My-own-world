@@ -23,12 +23,25 @@ import {
 } from './storageAdapterContract.js';
 
 import {
-  measureWorkspaceOperation
+  measureWorkspaceOperation, yieldWorkspaceTurn
 } from '../performance/workspacePerformance.js';
 
 
 export const BACKUP_ROOT_DIR =
   '.my-own-world-backups';
+
+// Одноразовый результат уже выполненной durable verification, не cache по id.
+// JSON/старый snapshot всегда проверяется заново; receipt не переживает restart.
+const createdBackupVerifications = new WeakMap();
+
+export async function consumeCreatedBackupVerification(manifest, { storageAdapter = getStorageAdapter(), ...options } = {}) {
+  const receipt = createdBackupVerifications.get(manifest);
+  createdBackupVerifications.delete(manifest);
+  if (receipt && receipt.adapter === storageAdapter && receipt.root === (storageAdapter.getWorkspaceRoot?.() || storageAdapter.getWorkspaceHandle?.()) && receipt.identity === JSON.stringify(manifest)) {
+    return receipt.verified;
+  }
+  return verifyWorkspaceBackup(manifest.id, { ...options, storageAdapter });
+}
 
 export const BACKUP_PAGES_DIR =
   'pages';
@@ -175,6 +188,10 @@ async function createWorkspaceBackupMeasured(
     getBackupStorageAdapter(
       options
     );
+  const backupRoot = storageAdapter.getWorkspaceRoot?.() || storageAdapter.getWorkspaceHandle?.();
+  reportProgress(options, { label: 'Backup', stage: 'подготовка', current: 0, total: 0 });
+  if (options.onProgress) await yieldWorkspaceTurn();
+  if (backupRoot !== (storageAdapter.getWorkspaceRoot?.() || storageAdapter.getWorkspaceHandle?.())) throw new Error('Backup workspace changed');
 
   let pages =
     options.pages || state.pages || [];
@@ -315,7 +332,10 @@ async function createWorkspaceBackupMeasured(
     )
   );
 
-  if (definitionCoverage) await measureWorkspaceOperation('backup.verification', () => verifyWorkspaceBackup(id, { storageAdapter, definitionCoverage: true }));
+  // Creation owns full verification for every new snapshot, including legacy v1.
+  const verified = await measureWorkspaceOperation('backup.verification', () => verifyWorkspaceBackup(id, {
+    storageAdapter, definitionCoverage, onProgress: options.onProgress
+  }));
 
   if (options.cleanup !== false) {
 
@@ -326,6 +346,9 @@ async function createWorkspaceBackupMeasured(
     });
   }
 
+  if (backupRoot !== (storageAdapter.getWorkspaceRoot?.() || storageAdapter.getWorkspaceHandle?.())) throw new Error('Backup workspace changed');
+  createdBackupVerifications.set(manifest, { adapter: storageAdapter, root: backupRoot, identity: JSON.stringify(manifest), verified });
+  reportProgress(options, { label: 'Backup', stage: 'готово', current: pages.length, total: pages.length });
   return manifest;
 }
 
@@ -365,6 +388,8 @@ export async function requireWorkspaceBackupBeforeRiskyOperation(
       {
         includeAssets:
           false,
+        definitionCoverage:
+          true,
         ...options
       }
     );
@@ -878,6 +903,12 @@ async function restoreWorkspaceBackupMeasured(
 
   const manifest =
     manifestValidation.manifest;
+
+  if (options.expectedBackupReason && manifest.reason !== options.expectedBackupReason) {
+    throw new Error('Recovery backup reason does not match operation');
+  }
+
+  reportProgress(options, { label: 'Restore', stage: 'проверка исходной копии', current: 0, total: manifest.pageCount });
 
   options = { ...options, definitionCoverage: manifest.version === 2 || options.definitionCoverage === true };
   const backupCatalog = await readBackupDefinitions(storageAdapter, snapshotPath, manifest);
@@ -1579,7 +1610,7 @@ async function createAndVerifyPreRestoreBackup({
           PRE_RESTORE_BACKUP_REASON,
         {
           storageAdapter,
-          definitionCoverage: options.definitionCoverage === true,
+          definitionCoverage: true,
           pages:
             options.preRestorePages ||
             options.pages ||
@@ -1609,18 +1640,9 @@ async function createAndVerifyPreRestoreBackup({
     );
   }
 
-  const verified =
-    await readAndValidateBackupManifest(
-      storageAdapter,
-      `${BACKUP_ROOT_DIR}/${manifest.id}`,
-      {
-        backupId:
-          manifest.id
-      }
-    );
+  const verified = await consumeCreatedBackupVerification(manifest, { storageAdapter, onProgress: options.onProgress });
 
   if (
-    verified.restoreBlocking ||
     !backupManifestMatches(
       verified.manifest,
       manifest
@@ -1632,13 +1654,12 @@ async function createAndVerifyPreRestoreBackup({
     );
   }
 
-  if (options.definitionCoverage) await verifyWorkspaceBackup(manifest.id, { storageAdapter, definitionCoverage: true });
-
   return verified.manifest;
 }
 
 // Migration/recovery uses the same preflight as restore, including actual bytes.
-export async function verifyWorkspaceBackup(backupId, { storageAdapter = getStorageAdapter(), definitionCoverage = false } = {}) {
+export async function verifyWorkspaceBackup(backupId, { storageAdapter = getStorageAdapter(), definitionCoverage = false, onProgress = null } = {}) {
+  reportProgress({ onProgress }, { label: 'Backup', stage: 'проверка', current: 0, total: 0 });
   const snapshotPath = `${BACKUP_ROOT_DIR}/${backupId}`;
   const validation = await readAndValidateBackupManifest(storageAdapter, snapshotPath, { backupId });
   if (validation.restoreBlocking) throw createBackupManifestValidationError(validation);

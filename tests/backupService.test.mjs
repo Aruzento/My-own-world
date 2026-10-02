@@ -220,8 +220,11 @@ test(
         type: 'character',
         template: 'card',
         name: 'hero.md',
+        path: '/pages/hero.md',
         content: '<div data-asset="portraits/hero.png"></div>'
       };
+
+    await writeWorkspacePage(workspace, page.name, page.content);
 
     const manifest =
       await createWorkspaceBackup({
@@ -246,11 +249,16 @@ test(
       'changed-image'
     );
 
+    await writeWorkspaceAsset(workspace, 'portraits/unreferenced.png', 'preserve-orphan');
+
     const result =
       await restoreWorkspaceBackup(
         'backup-assets',
-        workspace
+        workspace,
+        { preRestorePages: [page] }
       );
+
+    assert.equal(await readBackupAsset(workspace, result.preRestoreBackupId, 'portraits/unreferenced.png'), 'preserve-orphan');
 
     assert.equal(
       result.restoredAssets,
@@ -614,6 +622,7 @@ test(
         type: 'campaignMap',
         template: 'campaignMap',
         name: 'map.md',
+        path: '/pages/map.md',
         content: '<section data-map-asset="missing-huge-map.png"></section>'
       };
 
@@ -1217,9 +1226,7 @@ class MemoryDirectoryHandle {
 
     if (!options.create) {
 
-      throw new Error(
-        `Directory not found: ${name}`
-      );
+      throw Object.assign(new Error(`Directory not found: ${name}`), { name: 'NotFoundError' });
     }
 
     const directory =

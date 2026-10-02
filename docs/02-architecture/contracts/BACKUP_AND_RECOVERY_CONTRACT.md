@@ -8,7 +8,7 @@ owner_zone: "architecture"
 
 ## Backup / Recovery Policy — Recovery Step 2 corrective
 
-Safety covers an operation's actual persistent blast radius. A single logical operation creates at most one necessary safety copy at its chosen tier; internal steps reuse that evidence. Verification has one owner for each contract. A definition-aware full backup already verifies its snapshot before returning; repeating that same complete verification is not a separate safety guarantee. Existing bulk callers are not changed by this corrective; their rollout belongs to Recovery Step 3.
+Safety covers an operation's actual persistent blast radius. A single logical operation creates at most one necessary safety copy at its chosen tier; internal steps reuse that evidence. Verification has one owner for each contract. A definition-aware full backup already verifies its snapshot before returning; repeating that same complete verification is not a separate safety guarantee. Recovery Step 3 applies this policy to the remaining production callers; the inventory below records the actual bounded and full-copy boundaries.
 
 | Tier | Operations | Protection |
 | --- | --- | --- |
@@ -26,26 +26,44 @@ Settings → Migration exposes inspection and explicit confirmed Card recovery f
 
 The confirmation paints busy/progress before asynchronous work, disables repeat submit and cancellation during commit, displays failures and closes only after confirmed success/refresh. Inbound typed-reference diagnostics and catalog index refresh yield in bounded batches; index generations prevent an older refresh overwriting a newer registry/reload. No stale cache or reference rewrite is introduced.
 
-### Remaining callers — classification, not rollout
+### Recovery Step 3 — production caller boundaries
 
-| Caller | Persistent blast radius | Current safety copy | Intended tier / follow-up |
-| --- | --- | --- | --- |
-| Properties migration | Selected pages + activated definitions | Full definition-aware workspace/assets backup + journal | C for batch; evaluate bounded single-page slice and duplicate verification in Step 3. |
-| Inventory adoption | Actors + shared Item quantity owners | Full definition-aware workspace/assets backup + journal | C; retain global dependency analysis, ordering and resume; audit repeated verification in Step 3. |
-| Effects adoption | Selected actors + Field Set activation | Full definition-aware workspace/assets backup + journal | C for batch; evaluate scoped single-page slice in Step 3. |
-| Legacy source retirement | Destructive body removal on proven selected pages | Full definition-aware workspace/assets backup + journal | C; retain backup/equivalence gate, audit one-copy/verification ownership. |
-| Repair apply / diagnostics repair | Selected independent page/link entities | Full risky-operation backup gate | C for multi-entity; scope/progress audit in Step 3. |
-| Multi-page tree positions | A bounded move set, potentially many pages | Threshold-based full backup + existing operation journal | B or C according to actual set; threshold/recovery evidence review in Step 3. |
-| Full/partial restore | Selected/current pages, definitions, assets | Mandatory verified pre-restore full safety backup | C; preserve source verification separately from verification of the new safety copy. |
-| World Package import | Imported pages/definitions/assets and conflict mapping | Full workspace backup before import | C; retain import safety, audit one-copy/progress ownership. |
-| Asset cleanup | Destructive selected asset deletion | Full workspace backup | C; retain incomplete-scan safeguards. |
-| Manual Backup Settings | User-requested whole workspace protection | Full backup, automatic definition coverage | C by explicit request; keep behavior, improve progress/count clarity in Step 3 if needed. |
+| Caller / action | Actual persistent blast radius | Tier / production protection |
+| --- | --- | --- |
+| Editor title/body, ordinary Variables, metadata | One page; no catalog/assets mutation | A: existing PageCommand/workspace/whole-page guards and physical readback, zero full backups. Variables Save UX is not changed here. |
+| Single-card type switch / recovery | One page; additive catalog activation | B: existing verified scoped page/catalog journal; no unrelated page/asset copy. |
+| Tree positions / Undo, 1–10 affected pages | Exact parent/order page candidates, no assets/catalog mutation | B: verified source/target bytes/digests in operationJournal v1, guarded per-page PageCommand and explicit Settings recovery. No full snapshot. |
+| Wide parent move or structured tree move, >10 pages | Multiple page parent/order owners | C: one full snapshot before the page batch; structured pages retain guarded per-page writes and journal. Existing wide legacy ordering/rollback compatibility remains. |
+| Properties migration, including single selected card | Selected pages plus activated/custom definition closure | C: existing full-copy reconstruction/receipt recovery. A new scoped migration reader would be required to change this safely. One snapshot; resume retains original operation/backup. |
+| Inventory adoption | Actors plus shared Item quantity owners/global dependencies | C: one full snapshot/journal, verified Items before actor activation; resume reuses original snapshot. |
+| Effects adoption, including one selected actor | Selected actors plus optional Field Set activation | C: existing backup-derived crash reconstruction/receipt evidence; retain one snapshot and original evidence on resume. |
+| Legacy source retirement | Destructive selected body fragments/equivalence receipts | C: one full snapshot; receipt snapshots verified once each per preview; resume preserves original snapshot. |
+| Repair preview apply / schema diagnostics | Selected links/pages or schema evidence | C conservatively, including current one-card repair: recovery is full-backup based and no durable scoped repair reader exists. One backup per apply, not per repair field. |
+| Full/partial restore and migration recovery | Pages, additive catalog definitions, selected assets | C: source integrity/closure validation **and** one mandatory new pre-restore safety snapshot. These protect different evidence; neither is removed. |
+| World Package import | Definitions, pages, assets, remapped references | C: one verified pre-import snapshot; no per-page snapshot. Formats/conflict policy unchanged. |
+| Asset cleanup | Destructive selected asset deletion | C: one full snapshot before deletion; fresh orphan/incomplete-scan guard remains independent. |
+| Manual Backup Settings | Explicit whole workspace protection | C: one verified full snapshot by user request, immediate progress, no repeat submit. Retention unchanged. |
+| Page trash/delete, background checkpoints | Exact trash/Undo owners; checkpoints validate existing evidence | Existing scoped trash/Undo and read-only background validation; no automatic full copy added. |
 
-Only single-card Type Switching changes tier in this corrective. Other callers retain their exact production safety behavior. Event History exclusion remains unchanged.
+All `createWorkspaceBackup`, risky-operation wrappers and verification callers were traced; [caller and structural evidence](../../03-testing/BACKUP_RECOVERY_TIERS_EVIDENCE.md) lists their production owners. Single-card migration/repair conservatively retain C because narrowing protection requires a different proven recovery contract, not merely removing a backup call. No parallel engine, public format, schema/digest or adapter change is introduced.
+
+### One verification owner and resume
+
+Creation verifies each newly created snapshot (v1 or v2) before returning success. Risky-operation wrappers, mandatory pre-restore safety, manual Settings and package/asset cleanup explicitly use existing definition-aware v2 coverage, including for legacy-only workspaces. Required asset coverage protects unreferenced/orphan files too; pages-only risky operations do not copy assets they cannot mutate. Legacy v1 snapshots remain readable/restorable and direct compatibility creation remains supported. `consumeCreatedBackupVerification` consumes that result exactly once for the same live manifest object, adapter, workspace and unchanged manifest bytes. It is an ephemeral WeakMap receipt, not an id cache or persistent format. A JSON copy, changed workspace/manifest, second consumption, restart or existing snapshot requires fresh durable verification. Callers still compare verified source bytes with exact preview sources and enforce domain closure/equivalence; those are independent contracts. Verification during later resume/recovery is necessary, not a duplicate of creation.
+
+Properties resume now verifies/reconstructs exact original source and planned target from the original journal/backup, writes checkpoints into that same operation, and does not create another full safety copy. Inventory/Effects/retirement likewise reuse freshly verified original evidence during one resume attempt. Third states and changed catalog/definition closure block; uncertain writes are not automatically replayed. Recovery is explicit and creates its own mandatory safety copy because restore is a new destructive boundary. Event History exclusion is unchanged.
+
+### Scoped tree recovery
+
+Before the first small move write, `scoped-tree-move` in existing journal v1 stores exact original/planned page bytes, ids, paths and SHA-256. A verified pending journal precedes all page writes; workspace/runtime/path/whole-page checks repeat inside PageCommand, with exact physical readback and editor-base/index publication only after confirmation. Partial/uncertain failures stop later writes and retain evidence. Recovery validates digests and restricts the delta to parent/order plus normal updatedAt/contentHash metadata; body and other front matter must match. After reload, exact source is already original, exact target can be explicitly restored through a new guarded scoped journal, and any third/missing/moved state blocks. It does not restore or downgrade the shared catalog. This is not multi-file atomicity or automatic rollback.
+
+### Immediate operation feedback
+
+Existing operationProgress/confirmation/status owners show preparation before asynchronous catalog/page work, then backup/verification/application and confirmed completion or failure. Creation yields once when progress is requested so preparation can paint. Migration/retirement confirmations remain busy during work and reject duplicate submit; manual backup, restore, package import, repair and asset cleanup also guard repeat activation. Settings recovery shares the same engine. No new global progress owner or UX redesign is added.
 
 ## Card Variables coverage — Stage 9 production integration, 2026-10-01
 
-Ordinary Backup UI automatically uses manifest v2 when durable pages contain structured data or an activated catalog exists. Pure legacy workspaces retain v1. Explicit `definitionCoverage:true` remains available for migration operations; it is no longer a hidden requirement for protecting structured cards. Validation distinguishes valid, warning and invalid/incomplete snapshots.
+Recovery Step 3 Ordinary Backup UI explicitly requests existing manifest v2/all-workspace-assets coverage, including legacy-only workspaces (which have no catalog bytes to snapshot). Structured/catalog creation also selects v2 automatically in BackupService. Direct legacy v1 compatibility creation and v1 readers/restores remain supported. Validation distinguishes valid, warning and invalid/incomplete snapshots; no new manifest version is introduced.
 
 Manifest v2 covers durable raw pages, the exact activated catalog snapshot at its fixed path (byte length/SHA-256), and workspace assets conservatively. Each page/asset has a byte digest. Source catalog closure is validated; snapshot bytes are verified before risky writes. Missing/future unsupported definitions and ambiguous page paths block protection rather than produce a lossy snapshot. Raw invalid values may be protected; structured restore validates selected values and refuses invalid domain state, retaining raw recovery/export access.
 

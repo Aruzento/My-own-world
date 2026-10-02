@@ -25,7 +25,11 @@ Implementation status:
 - `0.0.1.1.6`: implemented write revisions for page content saves and visible save states for autosave/special-save flows.
 - `0.0.1.1.7`: implemented workspace access diagnostics matrix for another disk, network path, possible external drive, outside-HOME path and read-only/write-probe failures.
 - Historical lightweight operations work already implemented `TreeIndex`, `.my-own-world-ops/` operation journal, lightweight create/move journal entries, background checkpoint queue, tree order compaction and performance gates.
-- Remaining: recovery UI for pending journal entries.
+- Recovery Step 3: explicit Settings inspection/recovery for verified scoped tree entries; older journal kinds retain their existing contracts.
+
+## Recovery Step 3 bounded tree boundary
+
+Moves/reorders/Undo affecting at most 10 pages use verified source/target bytes in existing operationJournal v1 and guarded PageCommand, without unrelated page/asset copies. Exact source/target/third classification and explicit Settings recovery survive reload; third states block. Large parent moves or structured moves (>10 pages) retain one full safety backup before the batch. The operational tiers below and backup policy A/B/C describe different dimensions; [backup caller evidence](../../03-testing/BACKUP_RECOVERY_TIERS_EVIDENCE.md) records the safety classification. No persistent format, queue or automatic recovery is added.
 
 ## Goal
 
@@ -671,7 +675,7 @@ Rules:
 | Search / wiki lookup | Tier 0 | none | none | none |
 | Create page | Tier 2 | one new page file + journal | no full backup | index update, validation |
 | Rename page | Tier 2 | one page file + journal | no full backup | index update, duplicate-title check |
-| Same-level reorder | Tier 1 | one page file | no full backup | optional order density check |
+| Same-level reorder | Tier 2 | one page file + verified scoped journal | no full backup | optional order density check |
 | Move page to another parent | Tier 2 | one page file + journal | no full backup by default | tree validation |
 | Order compaction for one parent | Tier 4 | one sibling set after action | no full backup when bounded to one parent | validation |
 | Move many pages | Tier 3 | many page files | full/scoped backup | validation, progress report |
@@ -794,8 +798,8 @@ Minimum shape:
 
 Rules:
 
-- same-level reorder does not need content snapshot if it writes one metadata field and the journal has before/after metadata;
-- parent-changing move should have at least metadata snapshot;
+- Recovery Step 3 same-level reorder stores exact before/target bytes in the scoped journal, as does a small parent move;
+- small parent-changing moves use verified exact affected-page before-images and guarded writes;
 - rename should have metadata and title/body boundary snapshot;
 - delete should use page trash because full content restore is required;
 - create should have a delete-on-rollback marker for the new file;
@@ -846,8 +850,8 @@ Order compaction is the one allowed background maintenance write in this contrac
 Initial targets for large workspace work:
 
 - pointer move/drop UI feedback: under 100 ms before visible response;
-- same-level tree reorder hot path: one page write, no backup, no full reload;
-- parent-changing one-page move: one journal write, one page write, no full reload;
+- same-level tree reorder hot path: one page write plus verified pending/committed scoped journal, no full backup/reload;
+- parent-changing one-page move: verified pending/committed journal and one page write, no full reload;
 - startup index build: bounded and measured;
 - background diagnostics: allowed to be slower, but visible as background work if it takes noticeable time.
 
@@ -878,7 +882,7 @@ If a Tier 3 backup fails:
 Required tests for implementation:
 
 - startup index build on a large fixture;
-- same-level reorder writes one page and creates no backup;
+- same-level reorder writes one page plus scoped evidence and creates no full backup;
 - parent-changing move writes journal + one page and can recover from pending journal;
 - create page updates `PageIndex` and `TreeIndex` without full reload;
 - rename updates title/alias indexes;

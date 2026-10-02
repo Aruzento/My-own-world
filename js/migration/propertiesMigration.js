@@ -2,7 +2,7 @@ import * as PageRepository from '../repository/pageRepository.js';
 import { parsePageRecordContent, createPageStateIdentityFromContent, arePageStateIdentitiesEqual } from '../core/pageRecord.js';
 import { deepCloneData, deepFreeze } from '../cardTypes/definitionIdentity.js';
 import { preparePropertiesMigration, previewPropertiesMigration, materializeMigrationCandidate } from './propertiesMigrationPlan.js';
-import { createWorkspaceBackup, verifyWorkspaceBackup, restoreWorkspaceBackup } from '../storage/backupService.js';
+import { createWorkspaceBackup, consumeCreatedBackupVerification, restoreWorkspaceBackup } from '../storage/backupService.js';
 import { collectWorkspaceFiles } from '../storage/backupDefinitionCoverage.js';
 import { readCardTypeCatalog, activateCardTypeDefinitions, createCardTypeRegistryFromCatalog } from '../storage/cardTypeCatalogStorage.js';
 import { BUNDLED_CARD_TYPE_DEFINITIONS } from '../cardTypes/definitions/bundledDefinitions.js';
@@ -45,13 +45,14 @@ async function readMigrationWorkspacePages(adapter) {
   return allPages;
 }
 
-export async function executeLegacyPropertiesMigration(preview, { confirm = false } = {}) {
+export async function executeLegacyPropertiesMigration(preview, { confirm = false, onProgress = null } = {}) {
   const context = previews.get(preview);
-  if (!confirm || !context) throw new Error('Explicit confirmation of current preview required');
+  if (!confirm || !context || context.used) throw new Error('Explicit confirmation of current unused preview required');
   if (running) throw new Error('Migration operation already running');
+  context.used = true;
   running = true;
-  let journal;
-  let backupId = null;
+  let journal = context.journal || null;
+  let backupId = journal?.before.backupId || null;
   let stage = 'backup';
   const completed = [];
   try {
@@ -59,23 +60,24 @@ export async function executeLegacyPropertiesMigration(preview, { confirm = fals
     if (!plans.length) return { status: 'skipped', preview: preview.summary, completed };
     const { adapter, workspaceContext } = context;
     assertStorageWorkspaceContext(workspaceContext);
-    const operationId = `${createOperationId('properties-migration')}-${crypto.randomUUID()}`;
+    const operationId = journal?.id || `${createOperationId('properties-migration')}-${crypto.randomUUID()}`;
     const currentPages = await readMigrationWorkspacePages(adapter);
-    const backup = await createWorkspaceBackup({ storageAdapter: adapter, pages: currentPages,
-      definitionCoverage: true, includeAssets: true, cleanup: false, id: operationId, reason: 'properties-migration' });
+    const backup = journal ? { id: backupId } : await createWorkspaceBackup({ storageAdapter: adapter, pages: currentPages,
+      definitionCoverage: true, includeAssets: true, cleanup: false, id: operationId, reason: 'properties-migration', onProgress });
     backupId = backup.id;
-    const verified = await verifyWorkspaceBackup(backup.id, { storageAdapter: adapter, definitionCoverage: true });
+    const verified = context.verified || await consumeCreatedBackupVerification(backup, { storageAdapter: adapter, definitionCoverage: true, onProgress });
     for (const plan of plans) {
       const page = context.allPages.find(page => page.id === plan.pageId);
       if (verified.pageContents[page.name] !== plan.sourceContent) throw new Error('Backup does not match preview source');
     }
     assertSchemaUpgradeAllowed({ validation: { errors: plans.flatMap(plan => plan.issues), warnings: [] },
       backupManifest: verified.manifest, upgradeName: 'CTV Properties migration v1' });
-    journal = await beginWorkspaceOperation({ id: operationId, type: 'properties-migration', affectedPages: plans.map(plan => plan.pageId),
+    journal = await beginWorkspaceOperation(journal || { id: operationId, type: 'properties-migration', affectedPages: plans.map(plan => plan.pageId),
       before: { backupId: backup.id, resumedFrom: context.resumedFrom || null, pages: plans.map(plan => ({ pageId: plan.pageId, path: plan.path, identity: plan.expectedBase })) },
       after: { pages: plans.map(plan => ({ pageId: plan.pageId, path: plan.path, identity: materializeMigrationCandidate(plan, { operationId, backupId: backup.id }).identity,
         targetType: plan.targetType, digest: plan.schemaDigest, status: 'pending' })) } }, adapter, true);
     stage = 'catalog';
+    onProgress?.({ label: 'Миграция', stage: 'применение', current: 0, total: plans.length });
     const current = await readCardTypeCatalog({ storageAdapter: adapter });
     await activateCardTypeDefinitions({ types: BUNDLED_CARD_TYPE_DEFINITIONS.filter(type => plans.some(plan => plan.targetType === type.id)),
       expectedIdentity: current.identity, storageAdapter: adapter });
@@ -83,6 +85,7 @@ export async function executeLegacyPropertiesMigration(preview, { confirm = fals
       stage = `page:${plan.pageId}`;
       await commitMigrationPage(plan, journal, context);
       completed.push(plan.pageId);
+      onProgress?.({ label: 'Миграция', stage: 'страницы', current: completed.length, total: plans.length });
       journal.after.pages.find(entry => entry.pageId === plan.pageId).status = 'verified';
       journal = await beginWorkspaceOperation(journal, adapter, true);
     }
@@ -156,19 +159,24 @@ export async function resumeLegacyPropertiesMigration(journal, options = {}) {
   for (const plan of preview.plans) {
     const original = journal.before.pages.find(page => page.pageId === plan.pageId);
     if (!arePageStateIdentitiesEqual(original.identity, plan.expectedBase)) return { status: 'conflict', pageId: plan.pageId };
+    const target = journal.after.pages.find(page => page.pageId === plan.pageId);
+    const candidate = materializeMigrationCandidate(plan, { operationId: journal.id, backupId: journal.before.backupId });
+    if (!target || !arePageStateIdentitiesEqual(target.identity, candidate.identity)) return { status: 'conflict', pageId: plan.pageId, reason: 'Migration target reconstruction changed' };
   }
-  previews.get(preview).resumedFrom = journal.id;
+  const context = previews.get(preview);
+  const { verifyWorkspaceBackup } = await import('../storage/backupService.js');
+  context.verified = await verifyWorkspaceBackup(journal.before.backupId, { storageAdapter: context.adapter, definitionCoverage: true, onProgress: options.onProgress });
+  context.journal = journal;
   if (!options.confirm) return { status: 'preview', preview };
-  return executeLegacyPropertiesMigration(preview, { confirm: true });
+  return executeLegacyPropertiesMigration(preview, { confirm: true, onProgress: options.onProgress });
 }
 
-export async function recoverLegacyPropertiesMigration(backupId, { confirm = false, workspaceContext = captureStorageWorkspaceContext() } = {}) {
+export async function recoverLegacyPropertiesMigration(backupId, { confirm = false, onProgress = null, workspaceContext = captureStorageWorkspaceContext() } = {}) {
   if (!confirm || running) throw new Error('Explicit recovery confirmation and idle migration required');
   running = true;
   try {
     const adapter = createContextBoundStorageAdapter(workspaceContext);
-    await verifyWorkspaceBackup(backupId, { storageAdapter: adapter, definitionCoverage: true });
     const current = await readMigrationWorkspacePages(adapter);
-    return await restoreWorkspaceBackup(backupId, adapter, { definitionCoverage: true, preRestorePages: current });
+    return await restoreWorkspaceBackup(backupId, adapter, { definitionCoverage: true, preRestorePages: current, onProgress });
   } finally { running = false; }
 }
