@@ -12,7 +12,7 @@ Updated: 2026-10-02
 
 MyOwnWorld is a local-first worldbuilding OS for tabletop campaigns. It combines cards, campaign maps, presentation mode, task trackers, wiki links, assets, backups, desktop packaging and rule/character foundations in one workspace format.
 
-The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–9 have a technical Foundation implementation, but two successive manual owner acceptances failed. CTV owner acceptance is pending / recovery active; the previous broad corrective was insufficient. The active ten-step CTV Owner Acceptance Recovery is in PROJECT_PLAN: Step 1 Editor Save Lifecycle is OWNER REVIEW after technical checks; Steps 2–10 are blocked until the preceding Owner PASS. Schema → Variables/Entity → domains → views remains the architecture; Properties is not restored as a normal data owner. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED pending integrated owner acceptance.
+The earlier foundation phases and Phase 16 remain closed. CTV Stages 1–9 have a technical Foundation implementation, but integrated owner acceptance is pending / recovery active after two failed manual checks. The active ten-step CTV Owner Acceptance Recovery is in PROJECT_PLAN: Step 1 Editor Save Lifecycle has Technical PASS + OWNER PASS, explicitly confirmed on 2026-10-02. Step 2 Type Switching is OWNER REVIEW after technical checks; Steps 3–10 remain blocked until the preceding Owner PASS. Schema → Variables/Entity → domains → views remains the architecture; Properties is not restored as a normal data owner. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED pending integrated owner acceptance.
 
 ## Current Focus
 
@@ -35,7 +35,7 @@ Dated delivery evidence is in [dated implementation history](../archive/document
 
 Next owner action:
 
-- Perform Recovery Step 1 owner check only: create Card → repeatedly edit title/body → switch Cards → reopen → restart → verify exact saved values and no false stale conflict. Technical automation does not accept CTV on the owner's behalf. Step 2 cannot start before Step 1 Owner PASS; Combat 17.7 stays blocked.
+- Perform Recovery Step 2 owner check only: create Character → edit title/body and Character-specific fields → wait for save → confirm Location → verify UI/content/reopen → confirm Lore → verify UI/content/restart. Technical automation does not accept Step 2 on the owner's behalf. Step 3 cannot start before Step 2 Owner PASS; Combat 17.7 stays blocked.
 
 ## Readiness Model
 

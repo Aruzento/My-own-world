@@ -9,7 +9,7 @@ import { traverseTypedPage, collectPageDefinitionClosure, rewriteTypedPage } fro
 import { collectAssetReferencesFromPages } from '../js/storage/assetReferenceScanner.js';
 import { createWorldPackageFromPages, normalizeWorldPackageData } from '../js/worldPackage/worldPackageModel.js';
 import { applyWorldPackagePageImport } from '../js/worldPackage/worldPackageImportService.js';
-import { createWorkspaceBackup, restoreWorkspaceBackupSelection } from '../js/storage/backupService.js';
+import { createWorkspaceBackup, verifyWorkspaceBackup, restoreWorkspaceBackupSelection } from '../js/storage/backupService.js';
 import { prepareCardTypeChange, commitCardTypeChange } from '../js/variables/cardTypeChange.js';
 import { getPageById, getAllPages, getPageIndex, setPageRepositoryRegistry } from '../js/repository/pageRepository.js';
 import { updatePageRecordContent } from '../js/core/pageRecord.js';
@@ -188,6 +188,8 @@ test('guarded type change preserves tags/body/relationships, moves incompatible 
   assert.equal(f.writes.length, 0);
   const result = await commitCardTypeChange(plan, { confirm: true });
   assert.equal(result.status, 'saved', JSON.stringify(result));
+  const backup = await verifyWorkspaceBackup(result.backupId, { storageAdapter: f.adapter });
+  assert.equal(backup.pageContents[f.page.name], plan.sourceContent);
   const after = parsePageRecordContent(await f.adapter.readText(f.page.path));
   assert.equal(after.type, 'character');
   assert.deepEqual(after.tags, before.tags);
@@ -208,6 +210,25 @@ test('same-type no-op verifies durable base and stale type switch never writes',
   f.writes.length = 0;
   assert.equal((await commitCardTypeChange(plan, { confirm: true })).status, 'blocked');
   assert.equal(f.writes.length, 0);
+});
+
+test('type switching keeps incompatible inbound typed refs diagnostic and never rewrites their owner', async () => {
+  const f = await createPlayerSheetFixture();
+  const { createPage } = await import('../js/storage/pageStorage.js');
+  const { prepareVariablesChange, commitVariablesChange } = await import('../js/variables/variableCommands.js');
+  const inbound = await createPage('card', null, undefined, { type: 'lore' });
+  const refPlan = prepareVariablesChange({ pageId: inbound.id, expectedBase: createPageStateIdentityFromContent(inbound.content),
+    context: { registry: playerRegistry }, patch: [{ op: 'set', key: 'lore.players', value: [{ pageId: f.page.id }] }] });
+  assert.equal((await commitVariablesChange(refPlan)).status, 'saved');
+  const original = await f.adapter.readText(inbound.path);
+  f.writes.length = 0;
+  const plan = await prepareCardTypeChange({ pageId: f.page.id, targetType: 'character', expectedBase: createPageStateIdentityFromContent(f.page.content) });
+  assert.deepEqual(plan.diagnostics.filter(issue => issue.pageId === inbound.id), [{ pageId: inbound.id,
+    sourceKey: 'values.lore.players.0', targetPageId: f.page.id, reason: 'incompatible-target-type' }]);
+  assert.equal(f.writes.length, 0);
+  assert.equal((await commitCardTypeChange(plan, { confirm: true })).status, 'saved');
+  assert.equal(await f.adapter.readText(inbound.path), original);
+  assert.ok(!f.writes.includes(inbound.path));
 });
 
 test('PageIndex searches typed scalars and derives exact ref edges without raw envelope noise', async () => {

@@ -20,9 +20,9 @@ This file is the only active implementation roadmap for MyOwnWorld. Completed hi
 
 Owner decision: the current design is accepted for this product stage. The failed Visual Critic evidence from `0.0.1.8.18.6` remains valid historical evidence and future polish debt, but it no longer blocks development. This does not mean the design is final, the critic was wrong, or every finding was fixed. It means the UI is sufficient to continue product work now.
 
-Current phase: `CTV Owner Acceptance Recovery` is active. CTV Stages 1–9 have a technical Foundation implementation, but two successive manual owner acceptances failed. CTV owner acceptance is pending / recovery active; the previous broad corrective is not sufficient acceptance evidence. Recovery Step 1 is `OWNER REVIEW`; Steps 2–10 are `BLOCKED` on the preceding Owner PASS. `0.0.1.17.0` NF-005 Combat Action Pipeline remains `PAUSED` after accepted 17.6.
+Current phase: `CTV Owner Acceptance Recovery` is active. CTV Stages 1–9 have a technical Foundation implementation, but two successive integrated manual owner acceptances failed. CTV owner acceptance is pending / recovery active; the previous broad corrective is not sufficient acceptance evidence. Recovery Step 1 has Technical PASS and OWNER PASS, explicitly confirmed by the owner on 2026-10-02 after full manual checking. Step 2 is `OWNER REVIEW`; Steps 3–10 remain `BLOCKED` on the preceding Owner PASS. `0.0.1.17.0` NF-005 Combat Action Pipeline remains `PAUSED` after accepted 17.6.
 
-Current delivery boundary: Registry → Variables/Entity → domains → views remains the production architecture. The current recovery task only stabilizes ordinary editor title/body saves, navigation and editor-base synchronization. Earlier Stage 9 implementation history is retained; its workflow defects are addressed strictly in the recovery order below. Technical checks do not imply owner acceptance. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED until the integrated CTV Owner PASS. No new CTV stages/leaves are created.
+Current delivery boundary: Registry → Variables/Entity → domains → views remains the production architecture. Recovery Step 2 proves the existing guarded Type Switching workflow on the accepted Step 1 baseline: normal UI Character → Location → Lore, durable/readback/runtime/Inspector agreement, preserved content/inactive evidence and explicit blocked outcomes. No production refactor or new persistent format is needed. Earlier Stage 9 implementation history is retained; recovery proceeds strictly in the order below. Technical checks do not imply Step 2 or integrated owner acceptance. Combat 17.6/Undo remains accepted; 17.7 is BLOCKED / NOT STARTED until the integrated CTV Owner PASS. No new CTV stages/leaves are created.
 
 ## CTV Owner Acceptance Recovery
 
@@ -33,12 +33,12 @@ Every recovery step has two independent completion levels:
 1. **Technical PASS**: implementation complete, relevant checks green, separate commit pushed.
 2. **Owner PASS**: the owner manually completes that step's acceptance scenario.
 
-The next step must not start before the previous step receives Owner PASS. Step 1 remains `OWNER REVIEW` after Technical PASS; only the owner can accept it. Steps 2–10 have not been implemented by this recovery task. Combat 17.7 remains `BLOCKED`.
+The next step must not start before the previous step receives Owner PASS. Step 1 is closed after the owner's explicit manual PASS on 2026-10-02; the false stale conflict no longer reproduces for the owner. Step 2 remains `OWNER REVIEW` after Technical PASS, with Owner PASS pending. Steps 3–10 have not been implemented by this recovery task. Combat 17.7 remains `BLOCKED`.
 
 | Step | Scope | Owner check | Active status |
 | --- | --- | --- | --- |
-| 1. Editor Save Lifecycle | Eliminate false stale conflicts; stabilize title/body save and the confirmed durable → runtime/repository → editor-base lifecycle. | Create Card → repeatedly edit title/body → switch Cards → reopen → restart. | `OWNER REVIEW`: Technical PASS evidence in WORK_LOG; Owner PASS pending. |
-| 2. Type Switching | Confirm → commit → repository/runtime refresh → reload. | Character → Location → Lore → reopen/restart. | `BLOCKED` on Step 1 Owner PASS. |
+| 1. Editor Save Lifecycle | Eliminate false stale conflicts; stabilize title/body save and the confirmed durable → runtime/repository → editor-base lifecycle. | Create Card → repeatedly edit title/body → switch Cards → reopen → restart. | `DONE`: Technical PASS + OWNER PASS; full manual acceptance confirmed by the owner on 2026-10-02. |
+| 2. Type Switching | Confirm → commit → repository/runtime refresh → reload. | Character → Location → Lore → reopen/restart. | `OWNER REVIEW`: Technical PASS evidence in WORK_LOG; Owner PASS pending. |
 | 3. Inspector Variables Save | Eliminate `update-card-variables` failure; stabilize ordinary Variables writes. | 5–10 field changes → Save → switch Card → return → restart. | `BLOCKED` on Step 2 Owner PASS. |
 | 4. Image/Icon Bindings | Reliable Image/Icon writes through canonical page/content owners. | Change Icon/Image → Save → reload → replace again → restart. | `BLOCKED` on Step 3 Owner PASS. |
 | 5. Legacy Per-card Migration | Working Preview → Confirm → Migration → reload for one legacy Card. | Ordinary legacy Card + ambiguous legacy Card. | `BLOCKED` on Step 4 Owner PASS. |
@@ -456,7 +456,7 @@ ID: `CTV`
 
 NAME: Card Types / Variables Migration
 
-STATUS: recovery active / owner acceptance pending — Stages 1–9 technical Foundation implementation; two failed manual acceptances; current recovery Step 1 `OWNER REVIEW`.
+STATUS: recovery active / integrated owner acceptance pending — Stages 1–9 technical Foundation implementation; Step 1 OWNER PASS, current recovery Step 2 `OWNER REVIEW`.
 
 ORDER: accepted `17.6` -> CTV -> `17.7` and remaining Phase 17 leaves.
 
@@ -472,7 +472,7 @@ CANONICAL CONTRACT: [CARD_TYPES_VARIABLES_MIGRATION.md](../02-architecture/CARD_
 | CTV Stage 6 — `Каталог типов — мир и служебные сущности` | `DONE` / `Foundation` | Immutable bundled v1 definitions for Location, Region, Country, Organization, Lore, Folder and Project; approved-source provenance/static completeness oracle; all-15 activation/Registry/Inspector/reference/PageIndex evidence. No workspace activation, card migration or domain cutover. |
 | CTV Stage 7 — `Безопасная миграция Properties` | `DONE` / `Foundation` | Deterministic extraction/versioned mapping, explicit preview, verified definition-aware full backup/recovery, guarded per-page commits/readback, receipt/idempotence/journal resume and read-only compatibility reader. No automatic migration/UI rollout; unsupported/manual mappings preserved inactive. |
 | CTV Stage 8 — `Перевод доменных систем на Variables API` | `DONE` / `Foundation` | Entity-backed Character/Player projections and Sheet, canonical health, Combat 17.6/Undo, Map derived snapshots, Inventory/Item quantity and own Effects owners/writers. Player nested saves/skills editable; optional Character gameplay Field Set owns typed standard skills/death saves. Explicit Inventory/Effects adoption with verified backup/journal/resume/recovery; no automatic rollout. Effective totals derived/read-only, manual legacy overrides inactive. Historical 8.1–8.11 evidence is retained in canonical contracts/WORK_LOG, not a new roadmap hierarchy. |
-| CTV Stage 9 — `Удаление legacy active architecture и финальная интеграция` | technical `DONE` / `Foundation`; owner acceptance failed | Technical implementation and earlier corrective history are retained. Two manual acceptance failures supersede the earlier CLOSED claim. The active ten-step CTV Owner Acceptance Recovery above governs further work; Step 1 OWNER REVIEW, Steps 2–10 blocked until preceding Owner PASS. Combat 17.7 blocked, not started. |
+| CTV Stage 9 — `Удаление legacy active architecture и финальная интеграция` | technical `DONE` / `Foundation`; integrated owner acceptance pending | Technical implementation and earlier corrective history are retained. Two integrated manual acceptance failures supersede the earlier CLOSED claim. The active ten-step CTV Owner Acceptance Recovery above governs further work; Step 1 OWNER PASS, Step 2 OWNER REVIEW, Steps 3–10 blocked until preceding Owner PASS. Combat 17.7 blocked, not started. |
 
 CTV Stage 1 does not authorize beginning Stage 2 in the same task. The type mapping was confirmed by the owner: character/creature -> character; magic -> spell; object/note -> item with item.isObject=true; player is a separate game-entity type. No unresolved product decision blocks the architecture.
 
