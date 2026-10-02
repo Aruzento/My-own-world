@@ -2,6 +2,7 @@ import { assertLegacyPortability, assertLegacyBackupCatalog } from './structured
 import { collectWorkspaceFiles, captureBackupDefinitions, readBackupDefinitions, assertBackupPageDefinitions, backupBytesDigest } from './backupDefinitionCoverage.js';
 import { CARD_TYPE_CATALOG_PATH, readCardTypeCatalog, activateCardTypeDefinitions, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
 import { collectPageDefinitionClosure } from '../variables/typedPageTraversal.js';
+import { collectProtectedOperationBackupIds } from './operationJournal.js';
 import { CardTypeRegistry } from '../cardTypes/cardTypeRegistry.js';
 import { hasStructuredPageData } from './structuredPagePolicy.js';
 import { createRuntimePageFromContent } from '../core/pageRecord.js';
@@ -771,6 +772,7 @@ async function cleanupIncompleteWorkspaceBackupsMeasured({
       storageAdapter,
       workspaceHandle
     });
+  const cleanupRoot = adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.();
 
   const requestedIds =
     new Set(
@@ -812,6 +814,8 @@ async function cleanupIncompleteWorkspaceBackupsMeasured({
       ...requestedIds
     ];
 
+  await collectProtectedOperationBackupIds(adapter);
+
   for (
     let index = 0;
     index < ids.length;
@@ -826,7 +830,9 @@ async function cleanupIncompleteWorkspaceBackupsMeasured({
         id
       );
 
-    if (!backup) {
+    const protectedIds = await collectProtectedOperationBackupIds(adapter);
+    if (cleanupRoot !== (adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.())) throw new Error('Backup cleanup blocked: workspace changed');
+    if (!backup || protectedIds.has(id)) {
 
       skipped += 1;
       continue;
@@ -1727,6 +1733,7 @@ async function cleanupWorkspaceBackupsMeasured({
       storageAdapter,
       workspaceHandle
     });
+  const cleanupRoot = adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.();
 
   if (!Number.isFinite(keepLatest) || keepLatest < BACKUP_MIN_RETENTION) {
 
@@ -1745,8 +1752,11 @@ async function cleanupWorkspaceBackupsMeasured({
       keepLatest
     );
 
+  await collectProtectedOperationBackupIds(adapter);
+
   let removed =
     0;
+  let protectedCount = 0;
 
   for (
     let index = 0;
@@ -1756,6 +1766,11 @@ async function cleanupWorkspaceBackupsMeasured({
 
     const backup =
       toRemove[index];
+
+    // Recheck immediately before deletion: a new pending operation may now own it.
+    const protectedIds = await collectProtectedOperationBackupIds(adapter);
+    if (cleanupRoot !== (adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.())) throw new Error('Backup cleanup blocked: workspace changed');
+    if (protectedIds.has(backup.id)) { protectedCount += 1; continue; }
 
     try {
 
@@ -1789,6 +1804,7 @@ async function cleanupWorkspaceBackupsMeasured({
 
   return {
     removed,
+    protected: protectedCount,
     kept:
       backups.length - removed
   };

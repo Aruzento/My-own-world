@@ -13,6 +13,27 @@ async function backupPanel(page) {
   return page.locator('[data-settings-page="backup"]');
 }
 
+test('Backup Settings cleanup visibly protects unresolved journal recovery snapshot', async ({ page }) => {
+  await fixture(page);
+  await page.evaluate(async () => {
+    const { createWorkspaceBackup, setBackupRetentionLimit } = await import('/js/storage/backupService.js');
+    const { beginWorkspaceOperation, failWorkspaceOperation } = await import('/js/storage/operationJournal.js');
+    const f = window.__tiers;
+    for (const id of ['recovery-old', 'newest']) {
+      const manifest = await createWorkspaceBackup({ pages: f.pages, id, cleanup: false });
+      manifest.createdAt = id === 'recovery-old' ? '2020-01-01T00:00:00Z' : '2026-01-01T00:00:00Z';
+      await f.adapter.writeText(`.my-own-world-backups/${id}/manifest.json`, JSON.stringify(manifest));
+    }
+    const journal = await beginWorkspaceOperation({ id: 'unresolved', type: 'inventory-adoption', before: { backupId: 'recovery-old' } }, f.adapter, true);
+    await failWorkspaceOperation(journal, new Error('uncertain'), f.adapter, true);
+    setBackupRetentionLimit(1);
+  });
+  const panel = await backupPanel(page);
+  await panel.getByRole('button', { name: 'Очистить старые' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'сохранено для recovery: 1' })).toBeVisible();
+  expect(await page.evaluate(async () => Boolean(await window.__tiers.adapter.readText('.my-own-world-backups/recovery-old/manifest.json')))).toBe(true);
+});
+
 test('manual full backup paints progress before slow phase, rejects double submit, verifies exactly one snapshot', async ({ page }) => {
   await fixture(page);
   const panel = await backupPanel(page);

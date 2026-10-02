@@ -416,6 +416,8 @@ Backup create/restore/cleanup should also be wrapped with workspace performance 
 
 The settings popup exposes a retention limit control. The limit is persisted in local storage as `myOwnWorld.backup.retentionLimit`, clamped to `1..200`, and used by `createWorkspaceBackup()` cleanup. Manual cleanup from the settings popup must use the same limit and must never remove every backup.
 
+Retention is subordinate to unresolved recovery evidence. Before deleting a snapshot, cleanup strictly rereads existing operationJournal v1 pending/failed/committed records. A pending/failed `before.backupId` protects that snapshot beyond the ordinary limit until an exact same-id/type/source-before committed receipt exists. A different source receipt cannot release it. Corrupt, future or unreadable journals block cleanup before deletion; the UI reader's empty-list fallback is never used for this destructive decision. Workspace changes block deletion. Settings reports copies retained for recovery. This does not change the configured retention limit, journal/backup format, or automatically restore data. Explicit incomplete-backup cleanup likewise preserves journal-owned raw recovery evidence.
+
 ## Incomplete Backup Cleanup
 
 An incomplete backup is a directory inside `.my-own-world-backups/` that does not have a readable `manifest.json`.

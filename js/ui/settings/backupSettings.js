@@ -363,7 +363,7 @@ function createBackupRetentionControls({
           });
 
         finishProgressStatus(
-          `Очистка резервных копий: удалено ${result.removed}`
+          `Очистка резервных копий: удалено ${result.removed}${result.protected ? `; сохранено для recovery: ${result.protected}` : ''}`
         );
 
         await onCleanup?.();

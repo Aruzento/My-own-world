@@ -224,6 +224,51 @@ export async function listPendingWorkspaceOperations(
   }
 }
 
+// Destructive cleanup must not use the UI reader's [] fallback on corrupt evidence.
+export async function collectProtectedOperationBackupIds(adapter = getStorageAdapter()) {
+  const root = adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.();
+  const entries = [];
+  for (const status of ['pending', 'failed', 'committed']) {
+    const directory = `${OPERATION_JOURNAL_ROOT}/${status}`;
+    let files;
+    try { files = await adapter.listFiles(directory); }
+    catch (error) {
+      if (error?.name === 'NotFoundError' || error?.code === 'ENOENT') continue;
+      throw new Error('Backup cleanup blocked: operation journal cannot be read', { cause: error });
+    }
+    for (const file of files) {
+      if (file.kind && file.kind !== 'file') continue;
+      if (!String(file.name || '').endsWith('.json')) continue;
+      if (!/^[^/\\]+\.json$/.test(file.name)) throw new Error('Backup cleanup blocked: invalid journal path');
+      let entry;
+      try { entry = JSON.parse(await adapter.readText(`${directory}/${file.name}`)); }
+      catch (error) { throw new Error('Backup cleanup blocked: invalid operation journal', { cause: error }); }
+      if (entry?.version !== 1 || entry.status !== status || `${entry.id}.json` !== file.name ||
+          typeof entry.type !== 'string' || !entry.before || typeof entry.before !== 'object' || Array.isArray(entry.before)) {
+        throw new Error('Backup cleanup blocked: unsupported operation journal');
+      }
+      if (entry.before.backupId != null && (typeof entry.before.backupId !== 'string' || !entry.before.backupId)) {
+        throw new Error('Backup cleanup blocked: invalid recovery backup identity');
+      }
+      entries.push(entry);
+    }
+  }
+  const recoveryIdentity = entry => JSON.stringify([entry.id, entry.type, entry.before]);
+  const committed = new Set(entries.filter(entry => entry.status === 'committed' && entry.before.backupId).map(recoveryIdentity));
+  const protectedIds = new Set();
+  for (const entry of entries) {
+    if (entry.status === 'committed' || !entry.before.backupId) continue;
+    // Resume can leave the failed checkpoint behind. Only the exact same operation's
+    // durable terminal receipt releases its source snapshot, never a matching id alone.
+    const terminal = committed.has(recoveryIdentity(entry));
+    if (!terminal) protectedIds.add(entry.before.backupId);
+  }
+  if (root !== (adapter.getWorkspaceRoot?.() || adapter.getWorkspaceHandle?.())) {
+    throw new Error('Backup cleanup blocked: workspace changed during journal scan');
+  }
+  return protectedIds;
+}
+
 
 async function ensureJournalDirectories(
   storageAdapter

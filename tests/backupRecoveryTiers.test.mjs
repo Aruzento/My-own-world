@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { adoptionFixture, record } from './fixtures/inventoryAdoptionFixtures.mjs';
 import { effectsAdoptionFixture } from './fixtures/effectsAdoptionFixtures.mjs';
-import { createWorkspaceBackup, consumeCreatedBackupVerification, restoreWorkspaceBackup } from '../js/storage/backupService.js';
+import { createWorkspaceBackup, consumeCreatedBackupVerification, restoreWorkspaceBackup, cleanupWorkspaceBackups, cleanupIncompleteWorkspaceBackups } from '../js/storage/backupService.js';
+import { beginWorkspaceOperation, failWorkspaceOperation, commitWorkspaceOperation } from '../js/storage/operationJournal.js';
 import { persistPageContentCommand } from '../js/storage/pageCommandService.js';
 import { updatePageTreePositions, inspectScopedTreeRecovery, recoverScopedTreeMove } from '../js/storage/pageStorage.js';
 import { prepareVariablesChange, commitVariablesChange } from '../js/variables/entityVariables.js';
@@ -18,6 +19,62 @@ import { readCardTypeCatalog, createCardTypeRegistryFromCatalog } from '../js/st
 
 const fullCopies = f => f.writes.filter(write => /\/manifest.json$/.test(write.path));
 const verificationCount = () => getWorkspacePerformanceEvents().filter(event => event.operation === 'backup.verification').length;
+
+test('retention protects unresolved recovery evidence until exact committed operation', async () => {
+  const f = await adoptionFixture();
+  for (const id of ['old', 'new']) {
+    const manifest = await createWorkspaceBackup({ pages: f.pages, id, cleanup: false });
+    manifest.createdAt = id === 'old' ? '2020-01-01T00:00:00Z' : '2026-01-01T00:00:00Z';
+    await f.adapter.writeText(`.my-own-world-backups/${id}/manifest.json`, JSON.stringify(manifest));
+  }
+  const copies = fullCopies(f).length;
+  const journal = await beginWorkspaceOperation({ id: 'retain', type: 'inventory-adoption', before: { backupId: 'old', pages: ['actor'] } }, f.adapter, true);
+  assert.equal((await cleanupWorkspaceBackups({ keepLatest: 1 })).removed, 0);
+  await failWorkspaceOperation(journal, new Error('uncertain'), f.adapter, true);
+  // A terminal receipt with the same id but a different source cannot release evidence.
+  await commitWorkspaceOperation({ ...journal, before: { backupId: 'new', pages: ['actor'] } }, f.adapter, true);
+  assert.equal((await cleanupWorkspaceBackups({ keepLatest: 1 })).removed, 0);
+  await commitWorkspaceOperation(journal, f.adapter, true);
+  assert.equal((await cleanupWorkspaceBackups({ keepLatest: 1 })).removed, 1);
+  await assert.rejects(f.adapter.readText('.my-own-world-backups/old/manifest.json'));
+  assert.ok(await f.adapter.readText('.my-own-world-backups/new/manifest.json'));
+  assert.equal(fullCopies(f).length, copies);
+});
+
+test('unreadable/future journal blocks destructive cleanup before any snapshot deletion', async () => {
+  const f = await adoptionFixture();
+  for (const id of ['one', 'two']) await createWorkspaceBackup({ pages: f.pages, id, cleanup: false });
+  await f.adapter.ensureDirectory('.my-own-world-ops/pending');
+  for (const content of ['{malformed', JSON.stringify({ version: 2, id: 'unknown', status: 'pending', type: 'future', before: {} })]) {
+    await f.adapter.writeText('.my-own-world-ops/pending/unknown.json', content);
+    await assert.rejects(cleanupWorkspaceBackups({ keepLatest: 1 }), /cleanup blocked/i);
+    assert.ok(await f.adapter.readText('.my-own-world-backups/one/manifest.json'));
+    assert.ok(await f.adapter.readText('.my-own-world-backups/two/manifest.json'));
+  }
+  const list = f.adapter.listFiles.bind(f.adapter);
+  f.adapter.listFiles = async path => { if (path.includes('.my-own-world-ops')) throw new Error('permission denied'); return list(path); };
+  await assert.rejects(cleanupWorkspaceBackups({ keepLatest: 1 }), /journal cannot be read/i);
+  f.adapter.listFiles = list;
+  await f.adapter.writeText('.my-own-world-ops/pending/unknown.json', JSON.stringify({ version: 1, id: 'unknown', status: 'pending', type: 'inventory-adoption', before: { backupId: 'one' } }));
+  const read = f.adapter.readText.bind(f.adapter), getRoot = f.adapter.getWorkspaceRoot.bind(f.adapter);
+  let root = getRoot();
+  f.adapter.getWorkspaceRoot = () => root;
+  f.adapter.readText = async path => { const content = await read(path); if (path.includes('/pending/')) root = {}; return content; };
+  await assert.rejects(cleanupWorkspaceBackups({ keepLatest: 1 }), /workspace changed/i);
+  f.adapter.getWorkspaceRoot = getRoot; f.adapter.readText = read;
+  assert.ok(await read('.my-own-world-backups/one/manifest.json'));
+  assert.ok(await read('.my-own-world-backups/two/manifest.json'));
+});
+
+test('incomplete cleanup also preserves journal-owned raw recovery evidence', async () => {
+  const f = await adoptionFixture();
+  await f.adapter.ensureDirectory('.my-own-world-backups/incomplete/pages');
+  await f.adapter.writeText('.my-own-world-backups/incomplete/pages/raw.md', 'raw recovery');
+  await beginWorkspaceOperation({ id: 'incomplete-owner', type: 'inventory-adoption', before: { backupId: 'incomplete' } }, f.adapter, true);
+  const result = await cleanupIncompleteWorkspaceBackups({ backupIds: ['incomplete'] });
+  assert.equal(result.removed, 0); assert.equal(result.skipped, 1);
+  assert.equal(await f.adapter.readText('.my-own-world-backups/incomplete/pages/raw.md'), 'raw recovery');
+});
 
 test('Tier A title/body and ordinary Variables write never create full backup', async () => {
   const f = await adoptionFixture({ actors: [{ id: 'actor', blocks: [] }] });

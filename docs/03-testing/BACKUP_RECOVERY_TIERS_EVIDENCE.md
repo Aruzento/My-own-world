@@ -44,11 +44,13 @@ Run `node tools/probe_backup_recovery_tiers.mjs`. Disposable MemoryStorageAdapte
 | Bytes read / written | 4,242,594 / 909,328 | 2,924,158 / 909,328 | 950,135 / 8,561 |
 | Observed elapsed ms | 296 | 170 | 110 |
 
-Small move's four writes are two page writes plus pending/committed journal; catalog schema validation still reads exact activated definitions. Zero full copy does not mean zero safety work. No timing budgets or retention rules changed. Historical single-card Type Switching before/after evidence remains in [its Step 2 report](./TYPE_SWITCHING_SCOPED_RECOVERY_EVIDENCE.md).
+Small move's four writes are two page writes plus pending/committed journal; catalog schema validation still reads exact activated definitions. Zero full copy does not mean zero safety work. No timing budgets or configured retention limits changed. Historical single-card Type Switching before/after evidence remains in [its Step 2 report](./TYPE_SWITCHING_SCOPED_RECOVERY_EVIDENCE.md).
 
 ## Structural and failure acceptance
 
 `tests/backupRecoveryTiers.test.mjs` covers routine zero-backup writes; one-use verification receipts and corrupted/reused evidence; one Tier C copy/verification; resume without hidden snapshots; restore's mandatory separate safety copy; small scoped move/recovery/reload; stale/workspace/journal/write/readback failures stopping further writes; third state blocking; wide structured batch with one copy.
+
+Final safety review found retention could previously evict a failed operation's original resume backup. Both retention and explicit incomplete cleanup now strictly protect journal-owned evidence. Tests prove pending/failed snapshots survive `keepLatest=1`, a different-source committed receipt cannot release them, an exact terminal receipt allows ordinary retention, and malformed/future evidence blocks deletion. A production Backup Settings Chromium case verifies the visible protected-copy count. No new snapshot, persistent format or automatic recovery is introduced.
 
 `tests/browser/backup-recovery-tiers.spec.mjs` uses production Backup/Migration Settings: manual busy/progress before held async work; duplicate clicks produce one copy; visible backup failure; verified legacy orphan protection before deletion; source restore plus one pre-safety snapshot; Inventory Item-before-actor verification; scoped tree reload/recovery; Properties checkpoint resume with the original receipt/backup. Existing Type Switching, editor, portability, Combat, Map and adoption regressions remain quality gates. Native/storage-adapter implementation and persistent formats are unchanged; existing injected-Tauri contract coverage remains applicable.
 
@@ -56,7 +58,8 @@ Small move's four writes are two page writes plus pending/committed journal; cat
 
 - Focused unit/integration owners: 292/292 PASS; additional legacy full coverage/restore/adapter/timing slice: 140/140 PASS.
 - Focused Chromium: core/type/editor/portability 41/41 PASS; backup/asset UI 14/14 PASS.
-- verify:quick: 1362/1362 PASS. Final npm verify: 1362/1362 PASS, including existing large-workspace budgets and standard project checks.
-- Final CI-equivalent `npm run test:browser`: 397/397 PASS, including Combat 17.6/Undo, Map, Sheet, Inventory/Effects/adoption and injected-Tauri portability/recovery.
+- Final retention/backup/journal focused checks: 28/28 PASS; affected Backup Settings Chromium: 8/8 PASS, including protected recovery evidence. Wrong-root fixture getter and statusbar selector in new tests were corrected; no production contract or timing budget was relaxed.
+- verify:quick: 1365/1365 PASS. Final npm verify: 1365/1365 PASS, including existing large-workspace budgets and standard project checks.
+- Final CI-equivalent `npm run test:browser`: 398/398 PASS, including Combat 17.6/Undo, Map, Sheet, Inventory/Effects/adoption and injected-Tauri portability/recovery. The pre-retention Step 3 push also passed exact-HEAD GitHub Verify run 37075482257.
 - Existing timing and app-shell intermittent failures were repeated independently and final gates passed without relaxing budgets/timeouts. No generic native/adapter implementation or format version changed; no additional native packaging build was required.
 - Step 3 remains OWNER REVIEW pending the owner's manual routine/scoped/risky/manual-backup/restore checklist. Steps 4–16 are not implemented.
