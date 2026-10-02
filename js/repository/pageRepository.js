@@ -53,6 +53,10 @@ export function setPageRepositoryRegistry(registry) {
   pageIndex.setRegistry(registry);
 }
 
+export function setPageRepositoryRegistryYielding(registry, guard) {
+  return pageIndex.setRegistryYielding(registry, guard);
+}
+
 
 export function getTreeIndex() {
 

@@ -2,7 +2,8 @@ import { previewLegacyPropertiesMigration, executeLegacyPropertiesMigration, ins
 import { previewInventoryAdoption, executeInventoryAdoption, inspectInventoryAdoptionResume, resumeInventoryAdoption, recoverInventoryAdoption } from '../../migration/inventoryAdoption.js';
 import { previewEffectsAdoption, executeEffectsAdoption, inspectEffectsAdoptionResume, resumeEffectsAdoption, recoverEffectsAdoption } from '../../migration/effectsAdoption.js';
 import { previewLegacySourceRetirement, executeLegacySourceRetirement, recoverLegacySourceRetirement, inspectLegacySourceRetirementResume, resumeLegacySourceRetirement } from '../../migration/legacySourceRetirement.js';
-import { listPendingWorkspaceOperations, OPERATION_JOURNAL_FAILED_DIR } from '../../storage/operationJournal.js';
+import { listPendingWorkspaceOperations, OPERATION_JOURNAL_FAILED_DIR, OPERATION_JOURNAL_COMMITTED_DIR } from '../../storage/operationJournal.js';
+import { inspectCardTypeChangeRecovery, prepareCardTypeRecovery, commitCardTypeChange } from '../../variables/cardTypeChange.js';
 import { getStorageAdapter } from '../../storage/storageAdapter.js';
 import { loadWorkspace } from '../../storage/workspaceStorage.js';
 import { openPage } from '../../editor/editor.js';
@@ -84,7 +85,31 @@ export async function renderMigrationSettings(container, { pageId = null } = {})
   });
   section.append(heading, hint, label, flowLabel, previewButton, executeButton, report, recoveryLabel, recovery);
   const pending = [...await listPendingWorkspaceOperations(),
-    ...await listPendingWorkspaceOperations(getStorageAdapter(), OPERATION_JOURNAL_FAILED_DIR)];
+    ...await listPendingWorkspaceOperations(getStorageAdapter(), OPERATION_JOURNAL_FAILED_DIR),
+    ...(await listPendingWorkspaceOperations(getStorageAdapter(), OPERATION_JOURNAL_COMMITTED_DIR)).filter(entry => entry.type === 'card-type-change')];
+  const typeOperations = new Set();
+  for (const journal of pending.filter(entry => entry.type === 'card-type-change')) {
+    if (typeOperations.has(journal.id)) continue;
+    typeOperations.add(journal.id);
+    const row = document.createElement('div');
+    row.textContent = `Смена типа: ${journal.id}. Recovery затрагивает только карточку; shared catalog не откатывается.`;
+    const inspect = document.createElement('button'); inspect.type = 'button'; inspect.textContent = 'Проверить recovery';
+    inspect.addEventListener('click', async () => {
+      try { report.textContent = JSON.stringify(await inspectCardTypeChangeRecovery(journal.id), null, 2); }
+      catch (error) { report.textContent = `Recovery недоступен: ${error.message}`; }
+    });
+    const recover = document.createElement('button'); recover.type = 'button'; recover.textContent = 'Восстановить карточку до смены типа';
+    recover.addEventListener('click', async () => {
+      try {
+        if (state.currentPage && hasPendingAutosaveForPage(state.currentPage.id)) throw new Error('Сначала сохраните текст');
+        const plan = await prepareCardTypeRecovery(journal.id);
+        openConfirmPopup({ anchor: recover, modal: true, title: 'Восстановить карточку?', waitForConfirm: true,
+          message: 'Только exact planned state. Third-state конфликт блокируется. Текущее состояние защищается scoped recovery-копией; definitions других карточек не удаляются.',
+          confirmText: 'Восстановить', onConfirm: (_, feedback) => run(() => commitCardTypeChange(plan, { confirm: true, onProgress: feedback.setProgress })) });
+      } catch (error) { report.textContent = `Recovery не подтверждён: ${error.message}`; }
+    });
+    row.append(inspect, recover); section.append(row);
+  }
   for (const journal of pending.filter(entry => ['properties-migration', 'inventory-adoption', 'effects-adoption', 'legacy-retirement'].includes(entry.type))) {
     const workflow = workflows[journal.type === 'properties-migration' ? 'properties' : journal.type === 'inventory-adoption' ? 'inventory' : journal.type === 'effects-adoption' ? 'effects' : 'retirement'];
     const row = document.createElement('p'); row.textContent = `Незавершено: ${journal.id}; backup: ${journal.before?.backupId || '—'}`;

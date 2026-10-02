@@ -4,12 +4,29 @@ import {
   parseMarkdown
 } from '../core/markdown.js';
 import { traverseTypedPage } from '../variables/typedPageTraversal.js';
+import { nowMs, yieldWorkspaceTurn } from '../performance/workspacePerformance.js';
 
 export class PageIndex {
 
   setRegistry(registry) {
+    this.registryGeneration = (this.registryGeneration || 0) + 1;
     this.registry = registry;
     for (const page of this.pages) this.searchDocuments.set(normalizeId(page.id), createSearchDocument(page, registry));
+  }
+
+  async setRegistryYielding(registry, guard = () => {}) {
+    const generation = this.registryGeneration = (this.registryGeneration || 0) + 1;
+    this.registry = registry;
+    let batchStart = nowMs();
+    for (const id of this.pages.map(page => page.id)) {
+      guard();
+      if (generation !== this.registryGeneration) return;
+      // A lifecycle write/delete during the yield owns its current index entry.
+      const page = this.getPageById(id);
+      if (page) this.searchDocuments.set(normalizeId(id), createSearchDocument(page, registry));
+      if (nowMs() - batchStart >= 8) { await yieldWorkspaceTurn(); batchStart = nowMs(); }
+    }
+    guard();
   }
 
   getTypedReferenceEdges(pageId = null) {
@@ -30,6 +47,7 @@ export class PageIndex {
   rebuild(
     pages = []
   ) {
+    this.registryGeneration = (this.registryGeneration || 0) + 1;
 
     if (!this.recentOpenRecords) {
 

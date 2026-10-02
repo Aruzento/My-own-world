@@ -222,7 +222,7 @@ test('external durable write after preview visibly blocks confirmation without o
   await expect(page.locator('.card-type-current')).toHaveText('Персонаж');
 });
 
-test('backup failure is visible after confirm and leaves the exact Character source unchanged', async ({ page }) => {
+test('scoped recovery failure is visible after confirm and leaves the exact Character source unchanged', async ({ page }) => {
   await createCharacter(page);
   await choose(page, 'location');
   await expect(page.getByRole('button', { name: 'Изменить тип', exact: true })).toBeVisible();
@@ -230,13 +230,13 @@ test('backup failure is visible after confirm and leaves the exact Character sou
     const f = window.__type, write = f.adapter.writeText.bind(f.adapter);
     f.writes.length = 0;
     f.adapter.writeText = async (path, content) => {
-      if (path.startsWith('.my-own-world-backups/')) throw new Error('Injected backup unavailable');
+      if (path.startsWith('.my-own-world-ops/pending/')) throw new Error('Injected recovery unavailable');
       return write(path, content);
     };
     return f.adapter.readText(f.page.path);
   });
   await page.getByRole('button', { name: 'Изменить тип', exact: true }).click();
-  await expect(page.locator('#statusbar')).toContainText('Injected backup unavailable');
+  await expect(page.locator('#statusbar')).toContainText('Injected recovery unavailable');
   await expect(page.locator('#statusbar')).toBeVisible();
   const result = await page.evaluate(async () => {
     const f = window.__type; return { writes: f.writes.filter(write => write.path === f.page.path).length,
@@ -252,4 +252,80 @@ test('same-type confirmation validates current source without page, catalog or b
   await confirm(page, 'character', 'Персонаж');
   expect(await page.evaluate(() => window.__type.writes.length)).toBe(0);
   await exactState(page, 'character');
+});
+
+test('confirm paints busy before storage, prevents double submit and performs one scoped operation without asset/full backup I/O', async ({ page }) => {
+  await createCharacter(page);
+  await choose(page, 'location');
+  await page.evaluate(() => {
+    const f = window.__type, write = f.adapter.writeText.bind(f.adapter);
+    let first = true; f.writes.length = 0;
+    const barrier = new Promise(resolve => { f.release = resolve; });
+    f.adapter.listFiles = f.adapter.readBinary = f.adapter.writeBinary = async () => { throw new Error('Forbidden workspace/assets traversal'); };
+    f.adapter.writeText = async (path, content) => {
+      if (first && path.includes('/pending/')) {
+        first = false; f.started = true;
+        f.busyBeforeStorage = document.querySelector('.confirm-popup-modal')?.getAttribute('aria-busy') === 'true';
+        await barrier;
+      }
+      return write(path, content);
+    };
+  });
+  const dialog = page.locator('.confirm-popup-modal');
+  await page.getByRole('button', { name: 'Изменить тип', exact: true }).click();
+  await expect(dialog).toHaveAttribute('aria-busy', 'true');
+  await expect(dialog.locator('.confirm-popup-confirm')).toBeDisabled();
+  await expect(dialog.locator('.confirm-popup-cancel')).toBeDisabled();
+  await expect(dialog.locator('.confirm-popup-progress')).toBeVisible();
+  await expect(dialog.locator('.confirm-popup-progress')).toContainText('recovery');
+  await expect.poll(() => page.evaluate(() => window.__type.started)).toBe(true);
+  expect(await page.evaluate(() => window.__type.busyBeforeStorage)).toBe(true);
+  await page.evaluate(() => {
+    // Even an artificial duplicate DOM submit cannot start another handler.
+    document.querySelector('.confirm-popup-confirm').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    window.__type.release();
+  });
+  await expect(page.locator('.card-type-current')).toHaveText('Локация');
+  await expect(dialog).toBeHidden();
+  const { writes, cardPath } = await page.evaluate(() => ({ writes: window.__type.writes.map(write => write.path), cardPath: window.__type.page.path }));
+  expect(writes.filter(path => path === cardPath)).toHaveLength(1);
+  expect(writes.filter(path => path.includes('/pending/'))).toHaveLength(1);
+  expect(writes.filter(path => path.includes('/committed/'))).toHaveLength(1);
+  expect(writes.some(path => path.includes('.my-own-world-backups/') || path.includes('assets/'))).toBe(false);
+  await exactState(page, 'location');
+});
+
+test('scoped type recovery survives workspace restart and restores exact original Card from Settings', async ({ page }) => {
+  await createCharacter(page);
+  const original = await page.evaluate(async () => window.__type.adapter.readText(window.__type.page.path));
+  await confirm(page, 'location', 'Локация');
+  const files = await page.evaluate(async () => {
+    const f = window.__type;
+    const { listPendingWorkspaceOperations, OPERATION_JOURNAL_COMMITTED_DIR } = await import('/js/storage/operationJournal.js');
+    const entry = (await listPendingWorkspaceOperations(f.adapter, OPERATION_JOURNAL_COMMITTED_DIR)).find(entry => entry.type === 'card-type-change');
+    return { id: f.page.id, operationId: entry.id, files: await Promise.all([f.page.path, '.my-own-world-card-types.json', `${OPERATION_JOURNAL_COMMITTED_DIR}/${entry.id}.json`]
+      .map(async path => [path, await f.adapter.readText(path)])) };
+  });
+  await page.reload();
+  await page.evaluate(async ({ id, files, operationId }) => {
+    const { createMemoryStorageAdapter } = await import('/tests/fixtures/editConflictFixtures.mjs');
+    const { setStorageAdapter } = await import('/js/storage/storageAdapter.js');
+    const { loadWorkspace } = await import('/js/storage/workspaceStorage.js');
+    const { getPageById } = await import('/js/repository/pageRepository.js');
+    const { openPage } = await import('/js/editor/editor.js');
+    const { renderMigrationSettings } = await import('/js/ui/settings/migrationSettings.js');
+    const adapter = createMemoryStorageAdapter(); setStorageAdapter(adapter);
+    for (const [path, content] of files) await adapter.writeText(path, content);
+    await loadWorkspace(); const current = getPageById(id); await openPage(current);
+    window.__type = { adapter, page: current, operationId };
+    const host = document.createElement('div'); host.id = 'type-recovery-settings'; document.body.append(host);
+    await renderMigrationSettings(host);
+  }, files);
+  await page.locator('#type-recovery-settings').getByRole('button', { name: 'Проверить recovery', exact: true }).click();
+  await expect(page.locator('[data-migration-report]')).toContainText('recoverable');
+  await page.locator('#type-recovery-settings').getByRole('button', { name: 'Восстановить карточку до смены типа', exact: true }).click();
+  await page.getByRole('button', { name: 'Восстановить', exact: true }).click();
+  await expect(page.locator('[data-migration-report]')).toContainText('"status": "saved"');
+  await expect(page.locator('.card-type-current')).toHaveText('Персонаж');
+  expect(await page.evaluate(async () => window.__type.adapter.readText(window.__type.page.path))).toBe(original);
 });

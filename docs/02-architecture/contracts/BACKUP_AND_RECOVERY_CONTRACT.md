@@ -6,6 +6,43 @@ owner_zone: "architecture"
 ---
 # Backup And Recovery Contract
 
+## Backup / Recovery Policy — Recovery Step 2 corrective
+
+Safety covers an operation's actual persistent blast radius. A single logical operation creates at most one necessary safety copy at its chosen tier; internal steps reuse that evidence. Verification has one owner for each contract. A definition-aware full backup already verifies its snapshot before returning; repeating that same complete verification is not a separate safety guarantee. Existing bulk callers are not changed by this corrective; their rollout belongs to Recovery Step 3.
+
+| Tier | Operations | Protection |
+| --- | --- | --- |
+| A — routine reversible writes | Title/body, ordinary Variables and single-card metadata edits | Whole-page expectedBase/workspace/schema guards, PageCommand rollback and durable readback; existing journal/Undo where applicable. No automatic full workspace backup. |
+| B — scoped structural operations | A known bounded set of persistent owners, including one Card's type change | Verified before-image/target evidence for affected owners through existing journal/StorageAdapter, immutable command plan, guarded persistence, explicit recovery. Do not copy unrelated pages/assets. |
+| C — bulk/destructive/recovery | Bulk migration, destructive retirement, multi-entity repair, restore/import, asset-wide cleanup, explicit manual full backup | Existing verified definition-aware full workspace backup is appropriate; mandatory pre-restore safety remains. No hidden automatic rollback, retry or false multi-file atomicity. |
+
+### Single-card type-change scoped boundary
+
+`cardTypeChange.js` uses existing operationJournal **version 1**, operation type `card-type-change`. Before any catalog/page mutation, one verified pending record captures the exact source page path/id/bytes/SHA-256 and raw catalog bytes/SHA-256, plus exact planned page/catalog targets. There is one affected Card and zero affected assets. No new workspace/backup format, storage adapter or recovery store is introduced.
+
+Commit requires the live single-use immutable plan, current workspace, exact physical source/path/base and catalog identity, candidate validation and exact schema closure. Catalog activation uses the existing immutable additive catalog owner; it never overwrites definitions. Page persistence remains queued PageCommand with repeated stale checks and physical reread. Confirmed writes update Repository/index/runtime and editor base. The committed journal is durably verified; checkpoint/readback uncertainty is reported even if the page may already be saved. Failure retains original pending/failed evidence and classifies page/catalog as source, target, third or unreadable; subsequent writes stop. No automatic retry/rollback occurs.
+
+Settings → Migration exposes inspection and explicit confirmed Card recovery for pending/failed/completed type operations. Recovery validates evidence digests and source/target definitions, rereads physical state and accepts only the exact original or planned page; third state, missing/moved page, stale runtime/base or invalid catalog blocks. A later valid additive catalog is acceptable only when it still validates the exact original schema closure. **Recovery never restores an older shared catalog** or removes definitions needed by other cards. Raw catalog before/target bytes remain evidence; an invalid/third catalog requiring repair is diagnosed, never blindly replayed. Exact-original state is a guarded no-op; exact-target restoration uses a fresh live PageCommand plan with a verified scoped before-image of the current state. Body, metadata, Variables and inactive evidence return to exact original page bytes.
+
+The confirmation paints busy/progress before asynchronous work, disables repeat submit and cancellation during commit, displays failures and closes only after confirmed success/refresh. Inbound typed-reference diagnostics and catalog index refresh yield in bounded batches; index generations prevent an older refresh overwriting a newer registry/reload. No stale cache or reference rewrite is introduced.
+
+### Remaining callers — classification, not rollout
+
+| Caller | Persistent blast radius | Current safety copy | Intended tier / follow-up |
+| --- | --- | --- | --- |
+| Properties migration | Selected pages + activated definitions | Full definition-aware workspace/assets backup + journal | C for batch; evaluate bounded single-page slice and duplicate verification in Step 3. |
+| Inventory adoption | Actors + shared Item quantity owners | Full definition-aware workspace/assets backup + journal | C; retain global dependency analysis, ordering and resume; audit repeated verification in Step 3. |
+| Effects adoption | Selected actors + Field Set activation | Full definition-aware workspace/assets backup + journal | C for batch; evaluate scoped single-page slice in Step 3. |
+| Legacy source retirement | Destructive body removal on proven selected pages | Full definition-aware workspace/assets backup + journal | C; retain backup/equivalence gate, audit one-copy/verification ownership. |
+| Repair apply / diagnostics repair | Selected independent page/link entities | Full risky-operation backup gate | C for multi-entity; scope/progress audit in Step 3. |
+| Multi-page tree positions | A bounded move set, potentially many pages | Threshold-based full backup + existing operation journal | B or C according to actual set; threshold/recovery evidence review in Step 3. |
+| Full/partial restore | Selected/current pages, definitions, assets | Mandatory verified pre-restore full safety backup | C; preserve source verification separately from verification of the new safety copy. |
+| World Package import | Imported pages/definitions/assets and conflict mapping | Full workspace backup before import | C; retain import safety, audit one-copy/progress ownership. |
+| Asset cleanup | Destructive selected asset deletion | Full workspace backup | C; retain incomplete-scan safeguards. |
+| Manual Backup Settings | User-requested whole workspace protection | Full backup, automatic definition coverage | C by explicit request; keep behavior, improve progress/count clarity in Step 3 if needed. |
+
+Only single-card Type Switching changes tier in this corrective. Other callers retain their exact production safety behavior. Event History exclusion remains unchanged.
+
 ## Card Variables coverage — Stage 9 production integration, 2026-10-01
 
 Ordinary Backup UI automatically uses manifest v2 when durable pages contain structured data or an activated catalog exists. Pure legacy workspaces retain v1. Explicit `definitionCoverage:true` remains available for migration operations; it is no longer a hidden requirement for protecting structured cards. Validation distinguishes valid, warning and invalid/incomplete snapshots.
@@ -38,7 +75,7 @@ Disposable integration coverage: `tests/combatSessionRecoveryEvents.test.mjs`.
 
 Related contract: [LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md](./LIGHTWEIGHT_WORKSPACE_OPERATIONS_CONTRACT.md).
 
-Important update: full workspace backup is no longer the default protection for every ordinary tree operation. Use the lightweight operations contract to decide whether an action needs a single-file write, operation journal, rollback snapshot, background validation, or full backup gate. Full backup remains mandatory for destructive, bulk, schema, restore, import, and repair operations.
+Important update: full workspace backup is no longer the default protection for every ordinary tree operation. Use the tiers above and lightweight operations contract to choose a single-file write, journal, scoped snapshot, background validation or full backup. Single-card type change uses verified scoped evidence; existing destructive/bulk schema migration, restore/import and repair gates retain full protection.
 
 Дата: 01.06.2026
 
@@ -334,7 +371,7 @@ The approved real workspace `X:\ДНД\Мастер\По кампаниям\Ба
 
 ## Automatic Snapshots And Retention UI
 
-`requireWorkspaceBackupBeforeRiskyOperation()` is the required gate for risky operations that mutate or delete workspace data. If the snapshot cannot be created, the operation must stop before changing files or in-memory page metadata.
+`requireWorkspaceBackupBeforeRiskyOperation()` remains the required full-copy gate for its existing bulk/destructive/recovery callers. Bounded single-card type change uses the scoped journal gate above instead. If the operation's required evidence cannot be created and verified, it must stop before changing files or in-memory page metadata.
 
 Risky-operation snapshots are page-first by default: they store page files and a manifest, but skip asset copying unless explicitly requested. This keeps tree delete/move reliable on large legacy workspaces where missing or heavy media files can make full manual backups slow or fragile. Manual backups may still include assets.
 

@@ -15,6 +15,11 @@ export function nowMs() {
   return Date.now();
 }
 
+// Give input/paint a turn during bounded workspace scans; no cache or new queue.
+export function yieldWorkspaceTurn() {
+  return new Promise(resolve => setTimeout(resolve, 0));
+}
+
 
 export function recordWorkspacePerformance(
   event

@@ -180,11 +180,11 @@ async function createWorkspaceBackupMeasured(
     options.pages || state.pages || [];
 
   const definitionCoverage = options.definitionCoverage === true || pages.some(hasStructuredPageData) || (await readCardTypeCatalog({ storageAdapter })).exists;
-  const definitions = definitionCoverage ? await captureBackupDefinitions(storageAdapter) : null;
+  const definitions = definitionCoverage ? await measureWorkspaceOperation('backup.definition-capture', () => captureBackupDefinitions(storageAdapter)) : null;
   if (definitionCoverage) {
     if (new Set(pages.map(page => page.name)).size !== pages.length || pages.some(page => !page.path || !page.name || /[\\/]/.test(page.name) || page.path.replace(/^\//, '') !== `pages/${page.name}`)) throw new Error('Ambiguous/unsupported backup page paths');
-    pages = await Promise.all(pages.map(async page => ({ ...page, content: page.path ? await storageAdapter.readText(page.path) : page.content })));
-    assertBackupPageDefinitions(pages.map(page => page.content), definitions.catalog);
+    pages = await measureWorkspaceOperation('backup.page-reads', () => Promise.all(pages.map(async page => ({ ...page, content: page.path ? await storageAdapter.readText(page.path) : page.content }))), { counts: { pages: pages.length } });
+    await measureWorkspaceOperation('backup.definition-validation', () => assertBackupPageDefinitions(pages.map(page => page.content), definitions.catalog), { counts: { pages: pages.length } });
   } else {
     await assertLegacyBackupCatalog(storageAdapter);
     pages.forEach(page => assertLegacyPortability(page, 'Backup v1'));
@@ -195,7 +195,7 @@ async function createWorkspaceBackupMeasured(
     options.includeAssets !== false;
 
   const assetReferences = definitionCoverage && includeAssets
-    ? (await collectWorkspaceFiles(storageAdapter, 'assets')).map(file => ({ path: file.path, type: 'unknown' }))
+    ? (await measureWorkspaceOperation('backup.asset-enumeration', () => collectWorkspaceFiles(storageAdapter, 'assets'))).map(file => ({ path: file.path, type: 'unknown' }))
     : includeAssets
       ? (
         options.assetReferences ||
@@ -246,15 +246,15 @@ async function createWorkspaceBackupMeasured(
     manifest.version = 2;
     manifest.cardTypes = definitions.entry;
     manifest.assetCoverage = includeAssets ? 'all-workspace-assets' : 'none';
-    for (const asset of manifest.assets) {
+    await measureWorkspaceOperation('backup.asset-digests', async () => { for (const asset of manifest.assets) {
       const bytes = await storageAdapter.readBinary(asset.path);
       asset.bytes = bytes.byteLength;
       asset.digest = await backupBytesDigest(bytes);
-    }
+    } }, { counts: { assets: manifest.assets.length } });
     if (definitions.text !== null) await storageAdapter.writeText(`${snapshotPath}/${CARD_TYPE_CATALOG_PATH}`, definitions.text);
   }
 
-  for (
+  await measureWorkspaceOperation('backup.page-writes', async () => { for (
     let index = 0;
     index < pages.length;
     index += 1
@@ -287,10 +287,10 @@ async function createWorkspaceBackupMeasured(
         total: pages.length
       }
     );
-  }
+  } }, { counts: { pages: pages.length } });
 
   const copiedAssets =
-    await copyAssetsToBackup({
+    await measureWorkspaceOperation('backup.asset-copy', () => copyAssetsToBackup({
       storageAdapter,
       snapshotPath,
       assetReferences,
@@ -299,7 +299,7 @@ async function createWorkspaceBackupMeasured(
           options,
           progress
         )
-    });
+    }), { counts: { assets: assetReferences.length } });
 
   manifest.assetCount =
     copiedAssets;
@@ -315,7 +315,7 @@ async function createWorkspaceBackupMeasured(
     )
   );
 
-  if (definitionCoverage) await verifyWorkspaceBackup(id, { storageAdapter, definitionCoverage: true });
+  if (definitionCoverage) await measureWorkspaceOperation('backup.verification', () => verifyWorkspaceBackup(id, { storageAdapter, definitionCoverage: true }));
 
   if (options.cleanup !== false) {
 

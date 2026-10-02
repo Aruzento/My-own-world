@@ -1,5 +1,6 @@
 import {
   captureStorageWorkspaceContext,
+  assertStorageWorkspaceContext,
   createContextBoundStorageAdapter,
   getStorageAdapter
 } from './storageAdapter.js';
@@ -7,6 +8,7 @@ import {
 import {
   queueWrite
 } from './writeQueue.js';
+import { measureWorkspaceOperation } from '../performance/workspacePerformance.js';
 
 import {
   CardTypeRegistry,
@@ -141,6 +143,7 @@ export async function activateCardTypeDefinitions({
   expectedIdentity,
   storageAdapter = null,
   workspaceContext = null,
+  yieldIndexRefresh = false,
   bundledTypes = BUNDLED_CARD_TYPE_DEFINITIONS,
   bundledFieldSets = BUNDLED_FIELD_SET_DEFINITIONS
 } = {}) {
@@ -263,8 +266,11 @@ export async function activateCardTypeDefinitions({
         );
       }
 
-      const { setPageRepositoryRegistry } = await import('../repository/pageRepository.js');
-      setPageRepositoryRegistry(createCardTypeRegistryFromCatalog(readback.catalog, { bundledTypes: [], bundledFieldSets: [] }));
+      const repository = await import('../repository/pageRepository.js');
+      const resolved = createCardTypeRegistryFromCatalog(readback.catalog, { bundledTypes: [], bundledFieldSets: [] });
+      await measureWorkspaceOperation('catalog.repository-refresh', () => yieldIndexRefresh
+        ? repository.setPageRepositoryRegistryYielding(resolved, () => { if (workspaceContext) assertStorageWorkspaceContext(workspaceContext); })
+        : repository.setPageRepositoryRegistry(resolved));
       return readback;
     }
   );

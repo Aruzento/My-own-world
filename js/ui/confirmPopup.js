@@ -15,13 +15,20 @@ export function openConfirmPopup({
   onConfirm,
   modal = false,
   container = null,
-  choices = []
+  choices = [],
+  waitForConfirm = false
 }) {
 
   const instance =
     getConfirmInstance({
       modal
     });
+  if (instance.busy) return;
+  instance.waitForConfirm = waitForConfirm;
+  instance.element.removeAttribute('aria-busy');
+  instance.element.querySelector('.confirm-popup-confirm').disabled = false;
+  instance.element.querySelector('.confirm-popup-cancel').disabled = false;
+  instance.element.querySelector('.confirm-popup-progress').hidden = true;
 
   mountConfirmInstance(
     instance,
@@ -52,7 +59,12 @@ export function openConfirmPopup({
   );
 
   instance.confirmHandler =
-    () => onConfirm?.([...instance.element.querySelectorAll('[data-confirm-choice]:checked')].map(input => input.value));
+    () => onConfirm?.([...instance.element.querySelectorAll('[data-confirm-choice]:checked')].map(input => input.value), {
+      setProgress: message => {
+        const progress = instance.element.querySelector('.confirm-popup-progress');
+        progress.hidden = false; progress.textContent = message;
+      }
+    });
 
   let choiceHost = instance.element.querySelector('.confirm-popup-choices');
   if (!choiceHost) {
@@ -162,6 +174,7 @@ function getConfirmInstance({
   element.innerHTML = `
     <div class="confirm-popup-title" id="${titleId}"></div>
     <div class="confirm-popup-message" id="${messageId}"></div>
+    <div class="confirm-popup-progress" role="status" aria-live="polite" hidden></div>
 
     <div class="confirm-popup-actions">
       <button class="confirm-popup-cancel" type="button" data-overlay-autofocus="true">Отмена</button>
@@ -179,7 +192,9 @@ function getConfirmInstance({
       null,
     controller:
       null,
-    modal
+    modal,
+    busy: false,
+    waitForConfirm: false
   };
 
   document.body.appendChild(
@@ -201,15 +216,32 @@ function getConfirmInstance({
     .addEventListener(
       'click',
       async () => {
+        if (instance.busy) return;
 
         const handler =
           instance.confirmHandler;
 
-        instance.controller?.close();
-
-        if (handler) {
-
-          await handler();
+        if (!instance.waitForConfirm) {
+          instance.controller?.close();
+          await handler?.();
+          return;
+        }
+        instance.busy = true;
+        element.setAttribute('aria-busy', 'true');
+        const confirm = element.querySelector('.confirm-popup-confirm'), cancel = element.querySelector('.confirm-popup-cancel');
+        confirm.disabled = true; cancel.disabled = true; confirm.textContent = 'Изменение…';
+        element.querySelectorAll('[data-confirm-choice]').forEach(input => { input.disabled = true; });
+        const progress = element.querySelector('.confirm-popup-progress');
+        progress.hidden = false; progress.textContent = 'Подготовка смены типа…';
+        // Paint the operation state before starting schema/storage work.
+        await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+        let close = false;
+        try { close = await handler?.() !== false; }
+        catch (error) { progress.textContent = `Не выполнено: ${error.message}`; }
+        finally {
+          instance.busy = false; element.setAttribute('aria-busy', 'false');
+          if (close) instance.controller?.close();
+          else { cancel.disabled = false; cancel.textContent = 'Закрыть'; confirm.textContent = 'Не выполнено'; }
         }
       }
     );
@@ -242,6 +274,7 @@ function getConfirmInstance({
 function closeConfirmInstance(
   instance
 ) {
+  if (instance.busy) return;
 
   instance.element.classList.add(
     'hidden'

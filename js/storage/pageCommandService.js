@@ -4,6 +4,7 @@ import {
 
 import { isStorageWorkspaceContextCurrent, captureStorageWorkspaceContext, assertStorageWorkspaceContext } from './storageAdapter.js';
 import { hasStructuredPageData, validateStructuredPageWrite } from './structuredPagePolicy.js';
+import { measureWorkspaceOperation } from '../performance/workspacePerformance.js';
 
 import {
   createWriteRevision,
@@ -120,10 +121,9 @@ export async function executePageCommand(
         phase
       );
 
-      const phaseResult =
-        await handler(
-          context
-        );
+      const phaseResult = command.type === 'change-card-type'
+        ? await measureWorkspaceOperation(`type-change.command.${phase}`, () => handler(context))
+        : await handler(context);
 
       if (phase === 'createRollback') {
 

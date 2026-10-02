@@ -9,8 +9,8 @@ import { traverseTypedPage, collectPageDefinitionClosure, rewriteTypedPage } fro
 import { collectAssetReferencesFromPages } from '../js/storage/assetReferenceScanner.js';
 import { createWorldPackageFromPages, normalizeWorldPackageData } from '../js/worldPackage/worldPackageModel.js';
 import { applyWorldPackagePageImport } from '../js/worldPackage/worldPackageImportService.js';
-import { createWorkspaceBackup, verifyWorkspaceBackup, restoreWorkspaceBackupSelection } from '../js/storage/backupService.js';
-import { prepareCardTypeChange, commitCardTypeChange } from '../js/variables/cardTypeChange.js';
+import { createWorkspaceBackup, restoreWorkspaceBackupSelection } from '../js/storage/backupService.js';
+import { prepareCardTypeChange, commitCardTypeChange, prepareCardTypeRecovery } from '../js/variables/cardTypeChange.js';
 import { getPageById, getAllPages, getPageIndex, setPageRepositoryRegistry } from '../js/repository/pageRepository.js';
 import { updatePageRecordContent } from '../js/core/pageRecord.js';
 import { createDesktopStorageAdapter } from '../js/storage/desktopStorageAdapter.js';
@@ -61,9 +61,10 @@ test('injected Tauri adapter shares structured creation, type change, duplicate,
   const originalStorage = globalThis.localStorage;
   const localValues = new Map();
   globalThis.localStorage = {getItem:key=>localValues.get(key)||null,setItem:(key,value)=>localValues.set(key,String(value))};
-  const calls = [];
+  const calls = [], fsCalls = [];
   globalThis.__TAURI__ = {core:{async invoke(command, payload) {
     calls.push(command);
+    fsCalls.push({ command, path: payload.path });
     if (command === 'set_workspace_root') return payload.workspaceRoot;
     const methods = {ensure_directory:'ensureDirectory',read_text_file:'readText',write_text_file:'writeText',append_text_file:'appendText',list_directory:'listFiles',remove_file:'removeFile',remove_directory:'removeDirectory'};
     if (command === 'read_binary_file') return Array.from(new Uint8Array(await f.adapter.readBinary(payload.path)));
@@ -77,8 +78,19 @@ test('injected Tauri adapter shares structured creation, type change, duplicate,
     const { createPage, duplicatePageAsChild } = await import('../js/storage/pageStorage.js');
     const page = await createPage('card',null);
     assert.equal(parsePageRecordContent(await adapter.readText(page.path)).variablesStatus.mode,'structured');
+    const original = await adapter.readText(page.path), typeCallStart = fsCalls.length;
     const change = await prepareCardTypeChange({pageId:page.id,targetType:'item',expectedBase:createPageStateIdentityFromContent(page.content)});
-    assert.equal((await commitCardTypeChange(change,{confirm:true})).status,'saved');
+    const changed = await commitCardTypeChange(change,{confirm:true});
+    assert.equal(changed.status,'saved');
+    const unrelatedIO = ({ command, path }) => ['read_binary_file','write_binary_file'].includes(command) ||
+      (command === 'list_directory' && !path.startsWith('.my-own-world-ops/'));
+    assert.ok(!fsCalls.slice(typeCallStart).some(unrelatedIO));
+    const recovery = await prepareCardTypeRecovery(changed.operationId), recoveryCallStart = fsCalls.length;
+    assert.equal((await commitCardTypeChange(recovery,{confirm:true})).status,'saved');
+    assert.equal(await adapter.readText(page.path), original);
+    assert.ok(!fsCalls.slice(recoveryCallStart).some(unrelatedIO));
+    const again = await prepareCardTypeChange({pageId:page.id,targetType:'item',expectedBase:createPageStateIdentityFromContent(getPageById(page.id).content)});
+    assert.equal((await commitCardTypeChange(again,{confirm:true})).status,'saved');
     const current = getPageById(page.id);
     const duplicate = await duplicatePageAsChild(current,null);
     assert.equal(parsePageRecordContent(await adapter.readText(duplicate.path)).type,'item');
@@ -188,8 +200,10 @@ test('guarded type change preserves tags/body/relationships, moves incompatible 
   assert.equal(f.writes.length, 0);
   const result = await commitCardTypeChange(plan, { confirm: true });
   assert.equal(result.status, 'saved', JSON.stringify(result));
-  const backup = await verifyWorkspaceBackup(result.backupId, { storageAdapter: f.adapter });
-  assert.equal(backup.pageContents[f.page.name], plan.sourceContent);
+  const recovery = JSON.parse(await f.adapter.readText(`.my-own-world-ops/committed/${result.operationId}.json`));
+  assert.equal(recovery.before.page.content, plan.sourceContent);
+  assert.equal(recovery.affectedPages.length, 1);
+  assert.ok(!f.writes.some(path => String(path).startsWith('.my-own-world-backups/')));
   const after = parsePageRecordContent(await f.adapter.readText(f.page.path));
   assert.equal(after.type, 'character');
   assert.deepEqual(after.tags, before.tags);
