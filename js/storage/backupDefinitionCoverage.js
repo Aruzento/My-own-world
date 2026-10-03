@@ -1,9 +1,10 @@
 import { CARD_TYPE_CATALOG_PATH, readCardTypeCatalog, parseCardTypeCatalog, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
 import { createCardVariableSnapshot } from '../variables/cardVariableStore.js';
 import { parsePageRecordContent } from '../core/pageRecord.js';
+import { yieldWorkspaceTurn } from '../performance/workspacePerformance.js';
 
 // Part of backupService: bounded Stage 7 coverage, no second backup store.
-export async function collectWorkspaceFiles(adapter, directory) {
+export async function collectWorkspaceFiles(adapter, directory, onProgress = null) {
   const files = [];
   let entries;
   try { entries = await adapter.listFiles(directory); }
@@ -11,11 +12,12 @@ export async function collectWorkspaceFiles(adapter, directory) {
     if (error.code === 'ENOENT' || error.name === 'NotFoundError' || /^missing /i.test(error.message)) return [];
     throw error;
   }
-  for (const entry of entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) {
+  for (const [index, entry] of entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0).entries()) {
     if (!entry.name || /[\\/]|^\.{1,2}$/.test(entry.name)) throw new Error('Unsafe workspace entry');
     const path = `${directory}/${entry.name}`;
-    if (entry.kind === 'directory') files.push(...await collectWorkspaceFiles(adapter, path));
+    if (entry.kind === 'directory') files.push(...await collectWorkspaceFiles(adapter, path, onProgress));
     else files.push({ name: entry.name, path });
+    if ((index + 1) % 25 === 0) { onProgress?.(); await yieldWorkspaceTurn(); }
   }
   return files;
 }
@@ -49,10 +51,24 @@ export async function backupBytesDigest(value) {
 export function assertBackupPageDefinitions(contents, catalog, { requireValidValues = false } = {}) {
   const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
   for (const content of contents) {
-    const record = parsePageRecordContent(content, { generateId: false });
-    if (record.variablesStatus.mode === 'legacy') continue;
-    const snapshot = createCardVariableSnapshot({ id: record.id, content }, registry);
-    if (snapshot.mode !== 'structured') throw new Error('Backup structured definition unavailable');
-    if (requireValidValues && snapshot.diagnostics.some(issue => issue.severity === 'error')) throw new Error('Restore structured values invalid; raw backup recovery remains available');
+    assertBackupPageDefinition(content, registry, requireValidValues);
   }
+}
+
+// Same validation contract, bounded traversal for the user-visible full backup.
+export async function assertBackupPageDefinitionsIncrementally(contents, catalog, { requireValidValues = false, onProgress = null } = {}) {
+  const registry = createCardTypeRegistryFromCatalog(catalog, { bundledTypes: [], bundledFieldSets: [] });
+  for (let index = 0; index < contents.length; index += 1) {
+    assertBackupPageDefinition(contents[index], registry, requireValidValues);
+    onProgress?.(index + 1, contents.length);
+    if ((index + 1) % 25 === 0) await yieldWorkspaceTurn();
+  }
+}
+
+function assertBackupPageDefinition(content, registry, requireValidValues) {
+  const record = parsePageRecordContent(content, { generateId: false });
+  if (record.variablesStatus.mode === 'legacy') return;
+  const snapshot = createCardVariableSnapshot({ id: record.id, content }, registry);
+  if (snapshot.mode !== 'structured') throw new Error('Backup structured definition unavailable');
+  if (requireValidValues && snapshot.diagnostics.some(issue => issue.severity === 'error')) throw new Error('Restore structured values invalid; raw backup recovery remains available');
 }

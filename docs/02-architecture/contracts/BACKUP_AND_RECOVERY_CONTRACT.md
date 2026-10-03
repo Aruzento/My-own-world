@@ -406,11 +406,13 @@ Tree reorder/move must create one risky-operation snapshot per user drop, not on
 Long-running backup and restore operations should accept an optional `onProgress(progress)` callback. The callback payload is intentionally simple and UI-neutral:
 
 - `label` - visible operation label, for example `Backup`;
-- `stage` - current phase, for example `страницы`, `assets`, `cleanup`;
+- `stage` - current phase: reading pages, validating structure, finding/hashing files, copying pages/files, verifying backup presence/bytes/structure, cleanup and complete;
 - `current` - completed item count;
 - `total` - total item count when known.
 
 The current UI may render this in the statusbar through `createProgressMessage()`. Future modal progress UI should reuse the same callback shape instead of inventing another contract.
+
+Counters belong to the current phase entity: page reads/copies use page totals, file hashes/copies use asset totals, file-presence verification uses pages plus assets. Unknown totals are indeterminate (no page denominator or fake zero percent). Each heavy phase reports before its first awaited operation; progress continues through creation-owned verification. Durable page reads have at most eight in-flight requests in deterministic batches; traversal, digest, copy and verification loops yield through the existing workspace-turn owner in bounded batches (25 elements, 24 for page-read batches). No hashing, coverage or physical readback is omitted. Synchronous exceptions and rejected promises from progress observers are isolated from backup outcome and verification receipts. Manual Settings disables repeated submit until completion, reports errors and restores the button; successful presentation follows verified completion. Tiers, snapshot format, retention protection and mandatory restore safety are unchanged.
 
 Backup create/restore/cleanup should also be wrapped with workspace performance measurement so large workspace work can be diagnosed after the fact. Performance events are diagnostic runtime data, not persistent workspace content.
 

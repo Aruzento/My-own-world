@@ -54,12 +54,14 @@ export function showOperationProgress(
     `${normalized.percent}%`;
 
   element.querySelector('.operation-progress-percent').textContent =
-    `${normalized.percent}%`;
+    normalized.determinate ? `${normalized.percent}%` : '…';
 
-  element.setAttribute(
+  if (normalized.determinate) element.setAttribute(
     'aria-valuenow',
     String(normalized.percent)
   );
+  else element.removeAttribute('aria-valuenow');
+  element.setAttribute('aria-valuetext', normalized.message);
 
   return normalized.message;
 }
@@ -96,6 +98,8 @@ export function finishOperationProgress({
 
   progressElement.querySelector('.operation-progress-stage').textContent =
     message;
+  progressElement.setAttribute('aria-valuetext', message);
+  if (status !== 'failed') progressElement.setAttribute('aria-valuenow', '100');
 
   progressElement.querySelector('.operation-progress-fill').style.width =
     status === 'failed'
@@ -268,6 +272,7 @@ function normalizeProgress({
 
   return {
     label,
+    determinate: safeTotal > 0,
     percent,
     message:
       createProgressMessage({

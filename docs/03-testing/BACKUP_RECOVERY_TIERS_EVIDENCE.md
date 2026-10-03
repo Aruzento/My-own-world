@@ -6,6 +6,30 @@ owner_zone: "testing"
 ---
 # Backup recovery tiers — Step 3 evidence
 
+## Manual heavy-backup progress corrective — 2026-10-03
+
+Owner FAIL on `8ad758d8af2da45a0988aec6fb833317453b2a0d`: manual backup remained visually at preparation `0/1326`. The source asset-digest loop had no progress; durable reads and synchronous structure/verification work also lacked bounded phase reporting/yields. A disposable large fixture completed both before and after, with no deadlock. This does not establish throughput or absence of adapter problems on the owner's real filesystem.
+
+Reproduce with `node tools/probe_backup_progress.mjs`: 1,326 valid structured pages, 64 assets / 16,777,216 bytes, MemoryStorageAdapter with simulated 1 ms source-page read latency. BEFORE was measured on the accepted baseline; AFTER uses this corrective. Times are observations, never CI budgets. Definition validation and verification dominate baseline CPU work; asset hashing is fast in memory but remains potentially slow on real storage.
+
+| Phase | BEFORE ms / progress events | AFTER ms / progress events |
+| --- | ---: | ---: |
+| Definition capture | 57 / 0 | 56 / 0 |
+| Durable page reads | 5 / 0 | 3506 / 167 |
+| Structure validation | 460 / 0 | 883 / 1327 |
+| Asset enumeration | 1 / 0 | 31 / 2 |
+| Asset digest | 18 / 0 | 51 / 65 |
+| Page copy | 57 / 1326 | 842 / 1327 |
+| Asset copy | 16 / 64 | 52 / 65 |
+| Creation-owned verification | 554 / 1 | 2630 / 4111 |
+| Entire backup | 1183 / 1394 | 8085 / 7068 |
+
+Peak source reads fall from 1,326 to 8; maximum timer heartbeat gap from 464 ms to 61 ms (144 versus 697 turns). Total fixture time increases with bounded simulated I/O and Windows yield timers: this is responsiveness evidence, not a throughput improvement claim. Phase counters now cover page reads, structure checks, file hashes, page/file copies and backup presence/page-byte/file-byte/structure verification; unknown totals remain indeterminate. Every heavy loop admits event-loop turns. Digest requirements, single verification ownership/receipt, coverage, retention and restore semantics remain intact. No extra snapshot or retry is introduced.
+
+Regression coverage: four unit/integration tests check exact counters/digests, synchronous and asynchronous observer failure, source asset-read failure with incomplete evidence and no source mutation, bounded reads and timer turns during every heavy traversal. Three production Chromium tests hold read/hash/copy/verification phases, assert correct visible counters/running state, double-submit rejection, failure/button recovery and indeterminate accessibility. Existing Step 3 and scoped Step 2 regression suites remain gates. Step 3 is OWNER REVIEW; Steps 4–16 and Combat 17.7 remain blocked.
+
+Corrective technical checks: focused unit/integration 59/59 and Chromium 11/11 PASS; full npm run verify 1369/1369 and full Chromium 401/401 PASS. No timing budgets, adapter/native formats, recovery tiers or future recovery steps changed. Manual native/user-workspace acceptance remains pending.
+
 Baseline: `7cbb922a81a2f4ffbcdb64f30204ba195dcc93d0`. Steps 1 and 2 have explicit Owner PASS. Step 3 technical checks do not grant Owner PASS; Steps 4–16 and Combat 17.7 remain blocked.
 
 ## Production caller inventory

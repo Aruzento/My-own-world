@@ -1,5 +1,5 @@
 import { assertLegacyPortability, assertLegacyBackupCatalog } from './structuredPagePolicy.js';
-import { collectWorkspaceFiles, captureBackupDefinitions, readBackupDefinitions, assertBackupPageDefinitions, backupBytesDigest } from './backupDefinitionCoverage.js';
+import { collectWorkspaceFiles, captureBackupDefinitions, readBackupDefinitions, assertBackupPageDefinitions, assertBackupPageDefinitionsIncrementally, backupBytesDigest } from './backupDefinitionCoverage.js';
 import { CARD_TYPE_CATALOG_PATH, readCardTypeCatalog, activateCardTypeDefinitions, createCardTypeRegistryFromCatalog } from './cardTypeCatalogStorage.js';
 import { collectPageDefinitionClosure } from '../variables/typedPageTraversal.js';
 import { collectProtectedOperationBackupIds } from './operationJournal.js';
@@ -34,6 +34,17 @@ export const BACKUP_ROOT_DIR =
 // Одноразовый результат уже выполненной durable verification, не cache по id.
 // JSON/старый snapshot всегда проверяется заново; receipt не переживает restart.
 const createdBackupVerifications = new WeakMap();
+const failedProgressCallbacks = new WeakSet();
+
+async function beginBackupPhase(options, stage, total = 0) {
+  reportProgress(options, { label: 'Backup', stage, current: 0, total });
+  if (options.onProgress) await yieldWorkspaceTurn();
+}
+
+async function advanceBackupPhase(options, stage, current, total) {
+  reportProgress(options, { label: 'Backup', stage, current, total });
+  if (current % 25 === 0) await yieldWorkspaceTurn();
+}
 
 export async function consumeCreatedBackupVerification(manifest, { storageAdapter = getStorageAdapter(), ...options } = {}) {
   const receipt = createdBackupVerifications.get(manifest);
@@ -201,19 +212,41 @@ async function createWorkspaceBackupMeasured(
   const definitions = definitionCoverage ? await measureWorkspaceOperation('backup.definition-capture', () => captureBackupDefinitions(storageAdapter)) : null;
   if (definitionCoverage) {
     if (new Set(pages.map(page => page.name)).size !== pages.length || pages.some(page => !page.path || !page.name || /[\\/]/.test(page.name) || page.path.replace(/^\//, '') !== `pages/${page.name}`)) throw new Error('Ambiguous/unsupported backup page paths');
-    pages = await measureWorkspaceOperation('backup.page-reads', () => Promise.all(pages.map(async page => ({ ...page, content: page.path ? await storageAdapter.readText(page.path) : page.content }))), { counts: { pages: pages.length } });
-    await measureWorkspaceOperation('backup.definition-validation', () => assertBackupPageDefinitions(pages.map(page => page.content), definitions.catalog), { counts: { pages: pages.length } });
+    pages = await measureWorkspaceOperation('backup.page-reads', async () => {
+      await beginBackupPhase(options, 'чтение страниц', pages.length);
+      const readPages = [];
+      // At most eight in-flight reads, deterministic source order, no filesystem burst.
+      for (let index = 0; index < pages.length; index += 8) {
+        readPages.push(...await Promise.all(pages.slice(index, index + 8).map(async page => ({ ...page,
+          content: page.path ? await storageAdapter.readText(page.path) : page.content }))));
+        reportProgress(options, { label: 'Backup', stage: 'чтение страниц', current: readPages.length, total: pages.length });
+        if (readPages.length % 24 === 0) await yieldWorkspaceTurn();
+      }
+      return readPages;
+    }, { counts: { pages: pages.length } });
+    await measureWorkspaceOperation('backup.definition-validation', async () => {
+      await beginBackupPhase(options, 'проверка структуры', pages.length);
+      await assertBackupPageDefinitionsIncrementally(pages.map(page => page.content), definitions.catalog, {
+        onProgress: (current, total) => reportProgress(options, { label: 'Backup', stage: 'проверка структуры', current, total })
+      });
+    }, { counts: { pages: pages.length } });
   } else {
     await assertLegacyBackupCatalog(storageAdapter);
     pages.forEach(page => assertLegacyPortability(page, 'Backup v1'));
-    for (const page of pages) assertLegacyPortability(await readPageBackupContent(page, storageAdapter), 'Backup v1 durable source');
+    await beginBackupPhase(options, 'чтение страниц', pages.length);
+    for (let index = 0; index < pages.length; index += 1) {
+      assertLegacyPortability(await readPageBackupContent(pages[index], storageAdapter), 'Backup v1 durable source');
+      await advanceBackupPhase(options, 'чтение страниц', index + 1, pages.length);
+    }
   }
 
   const includeAssets =
     options.includeAssets !== false;
 
+  await beginBackupPhase(options, 'поиск файлов');
+
   const assetReferences = definitionCoverage && includeAssets
-    ? (await measureWorkspaceOperation('backup.asset-enumeration', () => collectWorkspaceFiles(storageAdapter, 'assets'))).map(file => ({ path: file.path, type: 'unknown' }))
+    ? (await measureWorkspaceOperation('backup.asset-enumeration', () => collectWorkspaceFiles(storageAdapter, 'assets', () => reportProgress(options, { label: 'Backup', stage: 'поиск файлов', current: 0, total: 0 })))).map(file => ({ path: file.path, type: 'unknown' }))
     : includeAssets
       ? (
         options.assetReferences ||
@@ -238,9 +271,9 @@ async function createWorkspaceBackupMeasured(
     options,
     {
       label: 'Backup',
-      stage: 'подготовка',
+      stage: 'подготовка копии',
       current: 0,
-      total: pages.length
+      total: 0
     }
   );
 
@@ -264,48 +297,47 @@ async function createWorkspaceBackupMeasured(
     manifest.version = 2;
     manifest.cardTypes = definitions.entry;
     manifest.assetCoverage = includeAssets ? 'all-workspace-assets' : 'none';
-    await measureWorkspaceOperation('backup.asset-digests', async () => { for (const asset of manifest.assets) {
-      const bytes = await storageAdapter.readBinary(asset.path);
-      asset.bytes = bytes.byteLength;
-      asset.digest = await backupBytesDigest(bytes);
-    } }, { counts: { assets: manifest.assets.length } });
+    await measureWorkspaceOperation('backup.asset-digests', async () => {
+      await beginBackupPhase(options, 'проверка файлов', manifest.assets.length);
+      for (const [index, asset] of manifest.assets.entries()) {
+        const bytes = await storageAdapter.readBinary(asset.path);
+        asset.bytes = bytes.byteLength;
+        asset.digest = await backupBytesDigest(bytes);
+        await advanceBackupPhase(options, 'проверка файлов', index + 1, manifest.assets.length);
+      }
+    }, { counts: { assets: manifest.assets.length } });
     if (definitions.text !== null) await storageAdapter.writeText(`${snapshotPath}/${CARD_TYPE_CATALOG_PATH}`, definitions.text);
   }
 
-  await measureWorkspaceOperation('backup.page-writes', async () => { for (
-    let index = 0;
-    index < pages.length;
-    index += 1
-  ) {
+  await measureWorkspaceOperation('backup.page-writes', async () => {
+    await beginBackupPhase(options, 'копирование страниц', pages.length);
+    for (
+      let index = 0;
+      index < pages.length;
+      index += 1
+    ) {
 
-    const page =
-      pages[index];
+      const page =
+        pages[index];
 
-    const fileName =
-      getBackupPageFileName(
-        page
+      const fileName =
+        getBackupPageFileName(
+          page
+        );
+
+      if (definitionCoverage) manifest.pages[index].contentDigest = await backupBytesDigest(page.content);
+
+      await storageAdapter.writeText(
+        `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`,
+        await readPageBackupContent(
+          page,
+          storageAdapter
+        )
       );
 
-    if (definitionCoverage) manifest.pages[index].contentDigest = await backupBytesDigest(page.content);
-
-    await storageAdapter.writeText(
-      `${snapshotPath}/${BACKUP_PAGES_DIR}/${fileName}`,
-      await readPageBackupContent(
-        page,
-        storageAdapter
-      )
-    );
-
-    reportProgress(
-      options,
-      {
-        label: 'Backup',
-        stage: 'страницы',
-        current: index + 1,
-        total: pages.length
-      }
-    );
-  } }, { counts: { pages: pages.length } });
+      await advanceBackupPhase(options, 'копирование страниц', index + 1, pages.length);
+    }
+  }, { counts: { pages: pages.length } });
 
   const copiedAssets =
     await measureWorkspaceOperation('backup.asset-copy', () => copyAssetsToBackup({
@@ -315,7 +347,7 @@ async function createWorkspaceBackupMeasured(
       onProgress:
         progress => reportProgress(
           options,
-          progress
+          { ...progress, elapsedMs: Date.now() - options.__progressStartedAt }
         )
     }), { counts: { assets: assetReferences.length } });
 
@@ -335,15 +367,18 @@ async function createWorkspaceBackupMeasured(
 
   // Creation owns full verification for every new snapshot, including legacy v1.
   const verified = await measureWorkspaceOperation('backup.verification', () => verifyWorkspaceBackup(id, {
-    storageAdapter, definitionCoverage, onProgress: options.onProgress
+    storageAdapter, definitionCoverage, onProgress: options.onProgress ? progress => reportProgress(options, { ...progress, elapsedMs: Date.now() - options.__progressStartedAt }) : null
   }));
 
   if (options.cleanup !== false) {
 
+    await beginBackupPhase(options, 'очистка старых копий');
+
     await cleanupWorkspaceBackups({
       storageAdapter,
       keepLatest:
-        options.keepLatest ?? getBackupRetentionLimit()
+        options.keepLatest ?? getBackupRetentionLimit(),
+      onProgress: progress => reportProgress(options, progress)
     });
   }
 
@@ -1097,7 +1132,7 @@ async function createRestoreWritePlan({
   snapshotPath,
   manifest,
   restoreSelection = null,
-  definitionCoverage = false, registry = null
+  definitionCoverage = false, registry = null, verificationProgress = null
 }) {
 
   const pages =
@@ -1122,6 +1157,7 @@ async function createRestoreWritePlan({
         snapshotPath,
         pages,
         definitionCoverage,
+        verificationProgress,
         blockedPrefix:
           'Restore blocked'
       });
@@ -1131,6 +1167,7 @@ async function createRestoreWritePlan({
         storageAdapter,
         snapshotPath,
         assets,
+        verificationProgress,
         allowLegacyMissing:
           isLegacyPartialAssetManifest(
             manifest,
@@ -1385,13 +1422,16 @@ async function preflightBackupPages({
   snapshotPath,
   pages,
   definitionCoverage = false,
+  verificationProgress = null,
   blockedPrefix = 'Restore blocked'
 }) {
 
   const pageContentByName =
     new Map();
 
-  for (const page of pages) {
+  if (verificationProgress) await beginBackupPhase(verificationProgress, 'проверка резервной копии: страницы', pages.length);
+
+  for (const [index, page] of pages.entries()) {
 
     const fileName =
       page.name;
@@ -1406,6 +1446,7 @@ async function preflightBackupPages({
       );
       if (!definitionCoverage) assertLegacyPortability(pageContentByName.get(fileName), 'Backup v1 restore');
       if (page.contentDigest && page.contentDigest !== await backupBytesDigest(pageContentByName.get(fileName))) throw new Error('Backup page integrity mismatch');
+      if (verificationProgress) await advanceBackupPhase(verificationProgress, 'проверка резервной копии: страницы', index + 1, pages.length);
 
     } catch (error) {
 
@@ -1428,6 +1469,7 @@ async function preflightBackupAssets({
   snapshotPath,
   assets,
   allowLegacyMissing = false,
+  verificationProgress = null,
   blockedPrefix = 'Restore blocked'
 }) {
 
@@ -1440,7 +1482,8 @@ async function preflightBackupAssets({
   const assetContentByPath =
     new Map();
 
-  for (const asset of assets) {
+  if (verificationProgress) await beginBackupPhase(verificationProgress, 'проверка резервной копии: файлы', assets.length);
+  for (const [index, asset] of assets.entries()) {
 
     const normalizedPath =
       normalizeAssetPath(
@@ -1464,6 +1507,7 @@ async function preflightBackupAssets({
       availableAssets.push(
         asset
       );
+      if (verificationProgress) await advanceBackupPhase(verificationProgress, 'проверка резервной копии: файлы', index + 1, assets.length);
 
     } catch (error) {
 
@@ -1665,15 +1709,21 @@ async function createAndVerifyPreRestoreBackup({
 
 // Migration/recovery uses the same preflight as restore, including actual bytes.
 export async function verifyWorkspaceBackup(backupId, { storageAdapter = getStorageAdapter(), definitionCoverage = false, onProgress = null } = {}) {
-  reportProgress({ onProgress }, { label: 'Backup', stage: 'проверка', current: 0, total: 0 });
+  const progress = { onProgress };
+  await beginBackupPhase(progress, 'проверка');
   const snapshotPath = `${BACKUP_ROOT_DIR}/${backupId}`;
-  const validation = await readAndValidateBackupManifest(storageAdapter, snapshotPath, { backupId });
+  const validation = await readAndValidateBackupManifest(storageAdapter, snapshotPath, { backupId, verificationProgress: progress });
   if (validation.restoreBlocking) throw createBackupManifestValidationError(validation);
   const manifest = validation.manifest;
   definitionCoverage = definitionCoverage || manifest.version === 2;
   const catalog = await readBackupDefinitions(storageAdapter, snapshotPath, manifest);
-  const plan = await createRestoreWritePlan({ storageAdapter, snapshotPath, manifest, definitionCoverage });
-  if (definitionCoverage) assertBackupPageDefinitions([...plan.pageContentByName.values()], catalog || (await readCardTypeCatalog({ storageAdapter })).catalog);
+  const plan = await createRestoreWritePlan({ storageAdapter, snapshotPath, manifest, definitionCoverage, verificationProgress: progress });
+  if (definitionCoverage) {
+    await beginBackupPhase(progress, 'проверка резервной копии: структура', plan.pageContentByName.size);
+    await assertBackupPageDefinitionsIncrementally([...plan.pageContentByName.values()], catalog || (await readCardTypeCatalog({ storageAdapter })).catalog, {
+      onProgress: (current, total) => reportProgress(progress, { label: 'Backup', stage: 'проверка резервной копии: структура', current, total })
+    });
+  }
   return { manifest, pageContents: Object.fromEntries(plan.pageContentByName) };
 }
 
@@ -1849,7 +1899,8 @@ async function readAndValidateBackupManifest(
     snapshotPath,
     manifest:
       manifestResult.manifest,
-    issues
+    issues,
+    verificationProgress: options.verificationProgress
   });
 
   return createBackupManifestValidationResult({
@@ -2330,7 +2381,8 @@ async function validateBackupManifestFiles({
   storageAdapter,
   snapshotPath,
   manifest,
-  issues
+  issues,
+  verificationProgress = null
 }) {
 
   if (!manifest || typeof manifest !== 'object') return;
@@ -2342,7 +2394,9 @@ async function validateBackupManifestFiles({
       ? manifest.pages
       : [];
 
-  for (const page of pages) {
+  const totalFiles = pages.length + (Array.isArray(manifest.assets) ? manifest.assets.length : 0);
+  if (verificationProgress) await beginBackupPhase(verificationProgress, 'проверка резервной копии: наличие файлов', totalFiles);
+  for (const [index, page] of pages.entries()) {
 
     if (
       !page ||
@@ -2372,6 +2426,7 @@ async function validateBackupManifestFiles({
         })
       );
     }
+    if (verificationProgress) await advanceBackupPhase(verificationProgress, 'проверка резервной копии: наличие файлов', index + 1, totalFiles);
   }
 
   const assets =
@@ -2387,7 +2442,7 @@ async function validateBackupManifestFiles({
     ) &&
     manifest.assetCount === assets.length;
 
-  for (const asset of assets) {
+  for (const [index, asset] of assets.entries()) {
 
     if (
       !asset ||
@@ -2426,6 +2481,7 @@ async function validateBackupManifestFiles({
         })
       );
     }
+    if (verificationProgress) await advanceBackupPhase(verificationProgress, 'проверка резервной копии: наличие файлов', pages.length + index + 1, totalFiles);
   }
 }
 
@@ -2833,6 +2889,8 @@ async function copyAssetsToBackup({
 
   let copied =
     0;
+  const progress = { onProgress };
+  await beginBackupPhase(progress, 'копирование файлов', assetReferences.length);
 
   for (
     let index = 0;
@@ -2864,12 +2922,7 @@ async function copyAssetsToBackup({
 
       copied += 1;
 
-      onProgress?.({
-        label: 'Backup',
-        stage: 'assets',
-        current: index + 1,
-        total: assetReferences.length
-      });
+      await advanceBackupPhase(progress, 'копирование файлов', index + 1, assetReferences.length);
 
     } catch (error) {
 
@@ -2956,22 +3009,36 @@ function reportProgress(
   progress
 ) {
 
-  if (typeof options?.onProgress !== 'function') return;
+  const callback = options?.onProgress;
+  if (typeof callback !== 'function') return;
 
-  if (!options.__progressStartedAt) {
+  try {
+    if (!options.__progressStartedAt) {
 
-    options.__progressStartedAt =
-      Date.now();
-  }
-
-  options.onProgress(
-    {
-      ...progress,
-      elapsedMs:
-        progress.elapsedMs ??
-        Date.now() - options.__progressStartedAt
+      options.__progressStartedAt =
+        Date.now();
     }
-  );
+
+    const observation = callback(
+      {
+        ...progress,
+        elapsedMs:
+          progress.elapsedMs ??
+          Date.now() - options.__progressStartedAt
+      }
+    );
+    if (typeof observation?.catch === 'function') observation.catch(error => warnProgressFailure(callback, error));
+  } catch (error) {
+    warnProgressFailure(callback, error);
+  }
+}
+
+function warnProgressFailure(callback, error) {
+  // Presentation is observational: never turn verified persistence into uncertainty.
+  if (!failedProgressCallbacks.has(callback)) {
+    failedProgressCallbacks.add(callback);
+    console.warn('Backup progress callback failed; persistence continues.', error);
+  }
 }
 
 

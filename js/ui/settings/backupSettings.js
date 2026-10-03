@@ -207,7 +207,9 @@ export async function renderBackupSettings(
       setStatus(
         'Создаю резервную копию...'
       );
-      setProgressStatus({ label: 'Backup', stage: 'подготовка' });
+      // Progress presentation cannot prevent the guarded backup from starting.
+      try { setProgressStatus({ label: 'Backup', stage: 'подготовка' }); }
+      catch (error) { console.warn('Backup progress presentation unavailable.', error); }
 
       try {
 
@@ -220,9 +222,9 @@ export async function renderBackupSettings(
               setProgressStatus
           });
 
-        finishProgressStatus(
+        try { finishProgressStatus(
           `Резервная копия создана: ${manifest.pageCount} страниц`
-        );
+        ); } catch (error) { console.warn('Verified backup progress presentation unavailable.', error); }
 
         await renderBackupList(
           list,
